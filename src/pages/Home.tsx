@@ -21,16 +21,18 @@ export default function Home() {
   }, [seedDemoData]);
 
   // Redirect to active ride if one exists
-  if (rideState.isActive) {
-    navigate('/ride');
-    return null;
-  }
+  useEffect(() => {
+    if (rideState.isActive) {
+      navigate('/ride');
+    }
+  }, [rideState.isActive, navigate]);
 
   // Redirect to lobby if in a convoy
-  if (convoy.isActive) {
-    navigate('/lobby');
-    return null;
-  }
+  useEffect(() => {
+    if (convoy.isActive) {
+      navigate('/lobby');
+    }
+  }, [convoy.isActive, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">

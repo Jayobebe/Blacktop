@@ -1,8 +1,9 @@
-import { useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { useRideHistory } from './useRideHistory';
 
 const SPEED_SMOOTHING_FACTOR = 0.3;
+const MIN_SPEED_THRESHOLD = 1; // mph - ignore speeds below this (GPS noise when stationary)
 
 // Shared state
 type Listener = () => void;
@@ -59,34 +60,62 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function handlePositionUpdate(position: GeolocationPosition) {
-  const { latitude, longitude, speed } = position.coords;
+  const { latitude, longitude, speed: deviceSpeed, accuracy } = position.coords;
   const timestamp = position.timestamp;
   
-  // Convert m/s to mph, default to 0 if null
-  let currentSpeed = speed !== null ? speed * 2.237 : 0;
+  let calculatedSpeed = 0;
+  let distanceIncrement = 0;
+
+  // Calculate speed from GPS position change (more reliable than device speed)
+  if (lastPosition) {
+    const timeDeltaSeconds = (timestamp - lastPosition.timestamp) / 1000;
+    
+    if (timeDeltaSeconds > 0 && timeDeltaSeconds < 30) { // Ignore stale readings
+      distanceIncrement = calculateDistance(
+        lastPosition.lat,
+        lastPosition.lng,
+        latitude,
+        longitude
+      );
+      
+      // Calculate speed: distance (miles) / time (hours)
+      const timeDeltaHours = timeDeltaSeconds / 3600;
+      calculatedSpeed = distanceIncrement / timeDeltaHours;
+      
+      // Sanity checks
+      // Ignore unrealistic speeds (> 200 mph likely GPS glitch)
+      if (calculatedSpeed > 200) {
+        calculatedSpeed = smoothedSpeed; // Keep previous speed
+        distanceIncrement = 0; // Don't count this distance
+      }
+      
+      // Ignore unrealistic distance jumps (GPS glitches)
+      if (distanceIncrement > 0.5) {
+        distanceIncrement = 0;
+        calculatedSpeed = smoothedSpeed;
+      }
+    }
+  }
+
+  // Use device speed as fallback if calculated speed seems wrong and device speed is available
+  const deviceSpeedMph = deviceSpeed !== null ? deviceSpeed * 2.237 : 0;
+  
+  // Prefer calculated speed, but use device speed if we have no movement data yet
+  let currentSpeed = calculatedSpeed;
+  if (calculatedSpeed === 0 && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
+    currentSpeed = deviceSpeedMph;
+  }
   
   // Apply exponential smoothing to reduce GPS jitter
   smoothedSpeed = SPEED_SMOOTHING_FACTOR * currentSpeed + (1 - SPEED_SMOOTHING_FACTOR) * smoothedSpeed;
-  currentSpeed = Math.max(0, Math.round(smoothedSpeed));
-
-  let distanceIncrement = 0;
-  if (lastPosition) {
-    distanceIncrement = calculateDistance(
-      lastPosition.lat,
-      lastPosition.lng,
-      latitude,
-      longitude
-    );
-    // Ignore unrealistic distance jumps (GPS glitches)
-    if (distanceIncrement > 0.5) {
-      distanceIncrement = 0;
-    }
-  }
+  
+  // Round and apply minimum threshold
+  const displaySpeed = smoothedSpeed < MIN_SPEED_THRESHOLD ? 0 : Math.round(smoothedSpeed);
 
   const gpsPoint: GpsPoint = {
     lat: latitude,
     lng: longitude,
-    speed: currentSpeed,
+    speed: displaySpeed,
     timestamp,
   };
 
@@ -94,8 +123,8 @@ function handlePositionUpdate(position: GeolocationPosition) {
 
   setRideState(prev => ({
     ...prev,
-    currentSpeed,
-    maxSpeed: Math.max(prev.maxSpeed, currentSpeed),
+    currentSpeed: displaySpeed,
+    maxSpeed: Math.max(prev.maxSpeed, displaySpeed),
     distance: prev.distance + distanceIncrement,
     gpsPoints: [...prev.gpsPoints, gpsPoint],
   }));
