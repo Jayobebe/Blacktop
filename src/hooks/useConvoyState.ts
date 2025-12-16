@@ -131,11 +131,27 @@ export function useConvoyState() {
   };
 
   const createConvoy = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
+    
+    // Auto sign in anonymously if not authenticated
     if (!user) {
-      toast.error('Please sign in first');
-      return null;
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        toast.error('Failed to connect');
+        return null;
+      }
+      user = data.user;
+      
+      // Create profile for new anonymous user
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          display_name: profile.name || 'Anonymous',
+        });
+      }
     }
+
+    if (!user) return null;
 
     // Generate code using database function
     const { data: codeData } = await supabase.rpc('generate_convoy_code');
@@ -191,9 +207,28 @@ export function useConvoyState() {
   }, [profile.name]);
 
   const joinConvoy = useCallback(async (code: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    let { data: { user } } = await supabase.auth.getUser();
+    
+    // Auto sign in anonymously if not authenticated
     if (!user) {
-      toast.error('Please sign in first');
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        toast.error('Failed to connect');
+        return false;
+      }
+      user = data.user;
+      
+      // Create profile for new anonymous user
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          display_name: profile.name || 'Anonymous',
+        });
+      }
+    }
+
+    if (!user) {
+      toast.error('Failed to connect');
       return false;
     }
 
