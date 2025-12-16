@@ -1,21 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Play, Mic, MicOff, Crown, User } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DestinationSearch } from '@/components/DestinationSearch';
 
 export default function Lobby() {
   const navigate = useNavigate();
-  const { convoy, leaveConvoy, setDestination, clearDestination } = useConvoyState();
+  const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, allMembersNavigated } = useConvoyState();
   const { startRide } = useActiveRide();
   const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const hasStartedRide = useRef(false);
 
   // Connect to voice channel when entering lobby
   useEffect(() => {
@@ -36,6 +37,18 @@ export default function Lobby() {
     }
   }, [convoy.isActive, navigate]);
 
+  // Auto-start ride when all members have navigated
+  useEffect(() => {
+    if (allMembersNavigated && convoy.destination && !hasStartedRide.current) {
+      hasStartedRide.current = true;
+      toast.success('All riders ready - starting ride!');
+      const success = startRide(true);
+      if (success) {
+        navigate('/ride');
+      }
+    }
+  }, [allMembersNavigated, convoy.destination, startRide, navigate]);
+
   const handleCopyCode = async () => {
     if (!convoy.code) return;
     try {
@@ -45,13 +58,6 @@ export default function Lobby() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Failed to copy');
-    }
-  };
-
-  const handleStartRide = () => {
-    const success = startRide(true);
-    if (success) {
-      navigate('/ride');
     }
   };
 
@@ -90,9 +96,22 @@ export default function Lobby() {
           destination={convoy.destination}
           onSetDestination={setDestination}
           onClearDestination={clearDestination}
+          onNavigate={markAsNavigated}
           isLeader={convoy.isLeader}
         />
       </section>
+
+      {/* Status message */}
+      {convoy.destination && (
+        <div className="mb-4 text-center animate-fade-in">
+          <p className="text-sm text-muted-foreground">
+            {allMembersNavigated 
+              ? 'All riders ready - starting ride...'
+              : `Waiting for all riders to tap Navigate (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
+            }
+          </p>
+        </div>
+      )}
 
       {/* Members List */}
       <div className="flex-1 animate-slide-up delay-100 relative z-0">
@@ -125,9 +144,14 @@ export default function Lobby() {
                   {member.isLeader ? 'Leader' : 'Rider'}
                 </p>
               </div>
-              {member.isReady && (
-                <span className="text-xs text-accent bg-accent/10 px-2 py-1 rounded">
+              {member.hasNavigated ? (
+                <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-1 rounded">
+                  <Navigation className="w-3 h-3" />
                   Ready
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                  Waiting
                 </span>
               )}
             </div>
@@ -156,15 +180,6 @@ export default function Lobby() {
 
       {/* Action Buttons */}
       <div className="space-y-3 animate-slide-up delay-300">
-        {convoy.isLeader && (
-          <Button
-            onClick={handleStartRide}
-            className="w-full h-14 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground touch-target"
-          >
-            <Play className="w-5 h-5 mr-2" />
-            START RIDE
-          </Button>
-        )}
 
         {!showLeaveConfirm ? (
           <Button

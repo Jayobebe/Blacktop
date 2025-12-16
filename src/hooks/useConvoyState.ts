@@ -104,6 +104,7 @@ export function useConvoyState() {
         id,
         user_id,
         joined_at,
+        has_navigated,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
       .eq('convoy_id', convoyId);
@@ -120,6 +121,7 @@ export function useConvoyState() {
         name: m.profiles?.display_name || 'Unknown',
         isLeader: m.user_id === convoyData?.leader_id,
         isReady: true,
+        hasNavigated: m.has_navigated || false,
         joinedAt: m.joined_at,
       }));
 
@@ -191,6 +193,7 @@ export function useConvoyState() {
       name: profile.name,
       isLeader: true,
       isReady: true,
+      hasNavigated: false,
       joinedAt: new Date().toISOString(),
     };
 
@@ -269,6 +272,7 @@ export function useConvoyState() {
         id,
         user_id,
         joined_at,
+        has_navigated,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
       .eq('convoy_id', convoy.id);
@@ -278,6 +282,7 @@ export function useConvoyState() {
       name: m.profiles?.display_name || 'Unknown',
       isLeader: m.user_id === convoy.leader_id,
       isReady: true,
+      hasNavigated: m.has_navigated || false,
       joinedAt: m.joined_at,
     }));
 
@@ -384,6 +389,24 @@ export function useConvoyState() {
     }));
   }, [state.id, state.isLeader]);
 
+  const markAsNavigated = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !state.id) return;
+
+    const { error } = await supabase
+      .from('convoy_members')
+      .update({ has_navigated: true })
+      .eq('convoy_id', state.id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Failed to mark as navigated:', error);
+    }
+  }, [state.id]);
+
+  // Check if all members have navigated
+  const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
+
   return {
     convoy: state,
     createConvoy,
@@ -391,6 +414,8 @@ export function useConvoyState() {
     leaveConvoy,
     setDestination,
     clearDestination,
+    markAsNavigated,
+    allMembersNavigated,
   };
 }
 
