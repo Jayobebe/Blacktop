@@ -18,7 +18,7 @@ export default function JoinConvoy() {
     setCode(value);
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (code.length !== 6) {
       toast.error('Please enter a valid 6-character code');
       return;
@@ -26,17 +26,15 @@ export default function JoinConvoy() {
 
     setIsJoining(true);
     
-    // Simulate network delay
-    setTimeout(() => {
-      const success = joinConvoy(code);
+    try {
+      const success = await joinConvoy(code);
       if (success) {
         toast.success('Joined convoy successfully');
         navigate('/lobby');
-      } else {
-        toast.error('Failed to join convoy');
       }
+    } finally {
       setIsJoining(false);
-    }, 500);
+    }
   };
 
   return (
