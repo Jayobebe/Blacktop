@@ -204,4 +204,17 @@
   .safe-top {
     padding-top: max(0.5rem, env(safe-area-inset-top));
   }
+
+  /* Landscape utilities */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .landscape-compact {
+      @apply py-2;
+    }
+    .landscape-hidden {
+      @apply hidden;
+    }
+    .landscape-small {
+      @apply text-sm;
+    }
+  }
 }

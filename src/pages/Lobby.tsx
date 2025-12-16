@@ -72,136 +72,138 @@ export default function Lobby() {
   if (!convoy.isActive) return null;
 
   return (
-    <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
-      {/* Header with Code */}
-      <header className="mb-4 animate-fade-in">
-        <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Convoy Code</p>
-        <button
-          onClick={handleCopyCode}
-          className="flex items-center gap-2 bg-card border border-border rounded-lg px-4 py-2 hover:bg-muted transition-colors"
-        >
-          <span className="font-mono text-2xl font-bold tracking-widest">{convoy.code}</span>
-          {copied ? (
-            <Check className="w-5 h-5 text-accent" />
-          ) : (
-            <Copy className="w-5 h-5 text-muted-foreground" />
-          )}
-        </button>
-      </header>
-
-      {/* Destination Section */}
-      <section className="mb-4 animate-slide-up relative z-50">
-        <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Destination</p>
-        <DestinationSearch
-          destination={convoy.destination}
-          onSetDestination={setDestination}
-          onClearDestination={clearDestination}
-          onNavigate={markAsNavigated}
-          isLeader={convoy.isLeader}
-        />
-      </section>
-
-      {/* Status message */}
-      {convoy.destination && (
-        <div className="mb-4 text-center animate-fade-in">
-          <p className="text-sm text-muted-foreground">
-            {allMembersNavigated 
-              ? 'All riders ready - starting ride...'
-              : `Waiting for all riders to tap Navigate (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
-            }
-          </p>
-        </div>
-      )}
-
-      {/* Members List */}
-      <div className="flex-1 animate-slide-up delay-100 relative z-0">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Riders ({convoy.members.length})
-          </h2>
+    <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom landscape-compact md:p-6 lg:p-8">
+      {/* Header with Code - compact on landscape */}
+      <header className="mb-3 md:mb-4 animate-fade-in flex items-center justify-between">
+        <div>
+          <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Convoy Code</p>
+          <button
+            onClick={handleCopyCode}
+            className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1.5 md:px-4 md:py-2 hover:bg-muted transition-colors"
+          >
+            <span className="font-mono text-xl md:text-2xl font-bold tracking-widest">{convoy.code}</span>
+            {copied ? (
+              <Check className="w-4 h-4 md:w-5 md:h-5 text-accent" />
+            ) : (
+              <Copy className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            )}
+          </button>
         </div>
         
-        <div className="space-y-2">
-          {convoy.members.map((member, index) => (
-            <div
-              key={member.id}
-              className="flex items-center gap-3 bg-card border border-border rounded-lg p-3 animate-slide-up"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center",
-                member.isLeader ? "bg-accent/20" : "bg-secondary"
-              )}>
-                {member.isLeader ? (
-                  <Crown className="w-4 h-4 text-accent" />
-                ) : (
-                  <User className="w-4 h-4 text-muted-foreground" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-sm">{member.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {member.isLeader ? 'Leader' : 'Rider'}
-                </p>
-              </div>
-              {member.hasNavigated ? (
-                <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-1 rounded">
-                  <Navigation className="w-3 h-3" />
-                  Ready
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                  Waiting
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Voice Toggle */}
-      <div className="flex justify-center mb-4 animate-slide-up delay-200">
+        {/* Voice Toggle - moved to header on wider screens */}
         <button
           onClick={toggleMute}
           className={cn(
-            "w-14 h-14 rounded-full flex items-center justify-center transition-all touch-target",
+            "w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all touch-target",
             !isMuted
               ? "bg-ptt-active shadow-glow"
               : "bg-ptt-inactive hover:bg-muted"
           )}
         >
           {isMuted ? (
-            <MicOff className="w-6 h-6 text-foreground" />
+            <MicOff className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
           ) : (
-            <Mic className="w-6 h-6 text-background" />
+            <Mic className="w-5 h-5 md:w-6 md:h-6 text-background" />
           )}
         </button>
+      </header>
+
+      {/* Main content - horizontal layout on wider screens */}
+      <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6">
+        {/* Left side - Destination */}
+        <div className="md:flex-1 md:max-w-md animate-slide-up relative z-50">
+          <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Destination</p>
+          <DestinationSearch
+            destination={convoy.destination}
+            onSetDestination={setDestination}
+            onClearDestination={clearDestination}
+            onNavigate={markAsNavigated}
+            isLeader={convoy.isLeader}
+          />
+          
+          {/* Status message */}
+          {convoy.destination && (
+            <div className="mt-3 text-center md:text-left animate-fade-in">
+              <p className="text-sm text-muted-foreground">
+                {allMembersNavigated 
+                  ? 'All riders ready - starting ride...'
+                  : `Waiting for riders (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
+                }
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Right side - Members List */}
+        <div className="flex-1 animate-slide-up delay-100 relative z-0">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Riders ({convoy.members.length})
+            </h2>
+          </div>
+          
+          <div className="space-y-2 md:max-h-[300px] md:overflow-y-auto md:pr-2">
+            {convoy.members.map((member, index) => (
+              <div
+                key={member.id}
+                className="flex items-center gap-3 bg-card border border-border rounded-lg p-2.5 md:p-3 animate-slide-up"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className={cn(
+                  "w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0",
+                  member.isLeader ? "bg-accent/20" : "bg-secondary"
+                )}>
+                  {member.isLeader ? (
+                    <Crown className="w-4 h-4 text-accent" />
+                  ) : (
+                    <User className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{member.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {member.isLeader ? 'Leader' : 'Rider'}
+                  </p>
+                </div>
+                {member.hasNavigated ? (
+                  <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-1 rounded flex-shrink-0">
+                    <Navigation className="w-3 h-3" />
+                    Ready
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
+                    Waiting
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="space-y-3 animate-slide-up delay-300">
-
+      {/* Action Buttons - horizontal on wider screens */}
+      <div className="mt-4 md:mt-6 animate-slide-up delay-300">
         {!showLeaveConfirm ? (
           <Button
             onClick={() => setShowLeaveConfirm(true)}
             variant="outline"
-            className="w-full h-12 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
+            className="w-full md:w-auto md:min-w-[200px] h-11 md:h-12 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Leave Convoy
           </Button>
         ) : (
-          <div className="space-y-2">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
             <Button
               onClick={handleLeave}
-              className="w-full h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
+              className="h-11 md:h-12 md:min-w-[180px] bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
             >
               Confirm Leave
             </Button>
             <Button
               onClick={() => setShowLeaveConfirm(false)}
               variant="ghost"
-              className="w-full h-10 touch-target"
+              className="h-10 md:h-12 touch-target"
             >
               Cancel
             </Button>
