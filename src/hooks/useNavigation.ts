@@ -60,15 +60,17 @@ export function useNavigation() {
           fallback = `https://www.google.com/maps/dir/?api=1&destination=${dLat},${dLng}&travelmode=driving`;
           break;
         case 'apple':
-          // Apple Maps: use saddr for source (current location) and daddr for destination
+          // Apple Maps: simpler format for better compatibility
           primary = isIOS
-            ? `maps://?saddr=Current%20Location&daddr=${dLat},${dLng}`
-            : `https://maps.apple.com/?saddr=Current%20Location&daddr=${dLat},${dLng}`;
-          fallback = `https://maps.apple.com/?daddr=${dLat},${dLng}`;
+            ? `maps://?daddr=${dLat},${dLng}&dirflg=d`
+            : `https://maps.apple.com/?daddr=${dLat},${dLng}&dirflg=d`;
+          fallback = `https://maps.apple.com/?daddr=${dLat},${dLng}&dirflg=d`;
           break;
         case 'waze':
-          // Waze: use universal link format for better reliability on both platforms
-          primary = `https://waze.com/ul?ll=${dLat},${dLng}&navigate=yes`;
+          // Waze: use app scheme on mobile, universal link on desktop
+          primary = (isIOS || isAndroid)
+            ? `waze://?ll=${dLat},${dLng}&navigate=yes`
+            : `https://waze.com/ul?ll=${dLat},${dLng}&navigate=yes`;
           fallback = `https://waze.com/ul?ll=${dLat},${dLng}&navigate=yes`;
           break;
       }
