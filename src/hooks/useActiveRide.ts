@@ -23,6 +23,7 @@ let rideState: ActiveRideState = {
 let watchId: number | null = null;
 let durationInterval: ReturnType<typeof setInterval> | null = null;
 let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
+let rideStartedAtMs: number | null = null;
 let smoothedSpeed = 0;
 
 function getSnapshot(): ActiveRideState {
@@ -62,54 +63,50 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 function handlePositionUpdate(position: GeolocationPosition) {
   const { latitude, longitude, speed: deviceSpeed, accuracy } = position.coords;
   const timestamp = position.timestamp;
-  
+
+  // If accuracy is very poor, don't trust this point for distance/speed.
+  const accuracyOk = accuracy == null || accuracy <= 80;
+
   let calculatedSpeed = 0;
   let distanceIncrement = 0;
 
   // Calculate speed from GPS position change (more reliable than device speed)
-  if (lastPosition) {
+  if (lastPosition && accuracyOk) {
     const timeDeltaSeconds = (timestamp - lastPosition.timestamp) / 1000;
-    
-    if (timeDeltaSeconds > 0 && timeDeltaSeconds < 30) { // Ignore stale readings
+
+    // Ignore stale or implausible deltas
+    if (timeDeltaSeconds >= 0.4 && timeDeltaSeconds < 120) {
       distanceIncrement = calculateDistance(
         lastPosition.lat,
         lastPosition.lng,
         latitude,
         longitude
       );
-      
-      // Calculate speed: distance (miles) / time (hours)
+
       const timeDeltaHours = timeDeltaSeconds / 3600;
-      calculatedSpeed = distanceIncrement / timeDeltaHours;
-      
-      // Sanity checks
-      // Ignore unrealistic speeds (> 200 mph likely GPS glitch)
-      if (calculatedSpeed > 200) {
-        calculatedSpeed = smoothedSpeed; // Keep previous speed
-        distanceIncrement = 0; // Don't count this distance
-      }
-      
-      // Ignore unrealistic distance jumps (GPS glitches)
-      if (distanceIncrement > 0.5) {
-        distanceIncrement = 0;
+      calculatedSpeed = timeDeltaHours > 0 ? distanceIncrement / timeDeltaHours : 0;
+
+      // Sanity checks for GPS glitches
+      if (calculatedSpeed > 200 || distanceIncrement > 0.5) {
         calculatedSpeed = smoothedSpeed;
+        distanceIncrement = 0;
       }
     }
   }
 
-  // Use device speed as fallback if calculated speed seems wrong and device speed is available
-  const deviceSpeedMph = deviceSpeed !== null ? deviceSpeed * 2.237 : 0;
-  
-  // Prefer calculated speed, but use device speed if we have no movement data yet
+  // Device speed fallback (m/s -> mph)
+  const deviceSpeedMph = deviceSpeed != null ? deviceSpeed * 2.237 : 0;
+
+  // Prefer calculated speed; fall back to device speed when we don't have enough movement data yet.
   let currentSpeed = calculatedSpeed;
-  if (calculatedSpeed === 0 && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
+  if (currentSpeed === 0 && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
     currentSpeed = deviceSpeedMph;
   }
-  
-  // Apply exponential smoothing to reduce GPS jitter
+
+  // Apply exponential smoothing to reduce jitter
   smoothedSpeed = SPEED_SMOOTHING_FACTOR * currentSpeed + (1 - SPEED_SMOOTHING_FACTOR) * smoothedSpeed;
-  
-  // Round and apply minimum threshold
+
+  // Round and apply minimum threshold (ignore drift)
   const displaySpeed = smoothedSpeed < MIN_SPEED_THRESHOLD ? 0 : Math.round(smoothedSpeed);
 
   const gpsPoint: GpsPoint = {
@@ -119,6 +116,7 @@ function handlePositionUpdate(position: GeolocationPosition) {
     timestamp,
   };
 
+  // Always update lastPosition so future deltas can recover quickly
   lastPosition = { lat: latitude, lng: longitude, timestamp };
 
   setRideState(prev => ({
@@ -147,6 +145,7 @@ export function useActiveRide() {
     }
 
     const startedAt = new Date().toISOString();
+    rideStartedAtMs = Date.now();
     smoothedSpeed = 0;
     lastPosition = null;
 
@@ -161,24 +160,27 @@ export function useActiveRide() {
       gpsPoints: [],
     }));
 
-    // Start GPS tracking
-    watchId = navigator.geolocation.watchPosition(
-      handlePositionUpdate,
-      handlePositionError,
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 1000,
-      }
-    );
+    const geoOptions: PositionOptions = {
+      enableHighAccuracy: true,
+      timeout: 30000,
+      maximumAge: 0,
+    };
 
-    // Start duration counter
+    // Prime GPS with a one-time read (often prevents early TIMEOUTs)
+    navigator.geolocation.getCurrentPosition(handlePositionUpdate, handlePositionError, geoOptions);
+
+    // Start GPS tracking
+    watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handlePositionError, geoOptions);
+
+    // Duration counter based on wall-clock time (so short rides still count)
     durationInterval = setInterval(() => {
+      if (!rideStartedAtMs) return;
+      const seconds = Math.max(0, Math.floor((Date.now() - rideStartedAtMs) / 1000));
       setRideState(prev => ({
         ...prev,
-        duration: prev.duration + 1,
+        duration: seconds,
       }));
-    }, 1000);
+    }, 500);
 
     return true;
   }, []);
@@ -198,22 +200,27 @@ export function useActiveRide() {
 
     // Save the ride
     const currentState = rideState;
-    if (currentState.startedAt && currentState.duration > 0) {
+    const nowIso = new Date().toISOString();
+    const finalDuration = rideStartedAtMs
+      ? Math.max(0, Math.floor((Date.now() - rideStartedAtMs) / 1000))
+      : currentState.duration;
+
+    if (currentState.startedAt && finalDuration > 0) {
       const ride: RideSession = {
         id: crypto.randomUUID(),
         startedAt: currentState.startedAt,
-        endedAt: new Date().toISOString(),
+        endedAt: nowIso,
         isConvoyRide: currentState.isConvoyMode,
         distance: currentState.distance,
-        duration: currentState.duration,
-        averageSpeed: currentState.duration > 0 
-          ? (currentState.distance / (currentState.duration / 3600)) 
-          : 0,
+        duration: finalDuration,
+        averageSpeed: finalDuration > 0 ? (currentState.distance / (finalDuration / 3600)) : 0,
         maxSpeed: currentState.maxSpeed,
         gpsPoints: currentState.gpsPoints,
       };
       addRideRef.current(ride);
     }
+
+    rideStartedAtMs = null;
 
     setRideState(() => ({
       isActive: false,
