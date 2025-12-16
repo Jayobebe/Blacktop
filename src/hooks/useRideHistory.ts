@@ -3,6 +3,7 @@ import { useLocalStorage } from './useLocalStorage';
 import { RideSession, RideStats } from '@/types/blacktop';
 
 const RIDES_KEY = 'blacktop_rides';
+const SEEDED_KEY = 'blacktop_demo_seeded';
 
 function generateDemoRides(): RideSession[] {
   const now = Date.now();
@@ -16,7 +17,7 @@ function generateDemoRides(): RideSession[] {
       endedAt: new Date(now - 1 * hour).toISOString(),
       isConvoyRide: true,
       distance: 45.2,
-      duration: 3420, // 57 mins
+      duration: 3420,
       averageSpeed: 47,
       maxSpeed: 78,
       gpsPoints: [],
@@ -27,7 +28,7 @@ function generateDemoRides(): RideSession[] {
       endedAt: new Date(now - 1 * day - 1 * hour).toISOString(),
       isConvoyRide: false,
       distance: 82.7,
-      duration: 5400, // 1.5 hours
+      duration: 5400,
       averageSpeed: 55,
       maxSpeed: 92,
       gpsPoints: [],
@@ -38,7 +39,7 @@ function generateDemoRides(): RideSession[] {
       endedAt: new Date(now - 3 * day - 2 * hour).toISOString(),
       isConvoyRide: true,
       distance: 67.3,
-      duration: 4800, // 80 mins
+      duration: 4800,
       averageSpeed: 50,
       maxSpeed: 85,
       gpsPoints: [],
@@ -49,7 +50,7 @@ function generateDemoRides(): RideSession[] {
       endedAt: new Date(now - 5 * day - 1 * hour).toISOString(),
       isConvoyRide: false,
       distance: 28.4,
-      duration: 2100, // 35 mins
+      duration: 2100,
       averageSpeed: 48,
       maxSpeed: 71,
       gpsPoints: [],
@@ -60,7 +61,7 @@ function generateDemoRides(): RideSession[] {
       endedAt: new Date(now - 7 * day - 2 * hour).toISOString(),
       isConvoyRide: true,
       distance: 124.8,
-      duration: 9000, // 2.5 hours
+      duration: 9000,
       averageSpeed: 50,
       maxSpeed: 88,
       gpsPoints: [],
@@ -70,6 +71,7 @@ function generateDemoRides(): RideSession[] {
 
 export function useRideHistory() {
   const [rides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
+  const [hasSeeded, setHasSeeded] = useLocalStorage<boolean>(SEEDED_KEY, false);
 
   const addRide = useCallback((ride: RideSession) => {
     setRides(prev => [ride, ...prev]);
@@ -98,13 +100,15 @@ export function useRideHistory() {
 
   const burnAllData = useCallback(() => {
     clearRides();
-  }, [clearRides]);
+    setHasSeeded(true); // Mark as seeded so demo data won't come back
+  }, [clearRides, setHasSeeded]);
 
   const seedDemoData = useCallback(() => {
-    if (rides.length === 0) {
+    if (rides.length === 0 && !hasSeeded) {
       setRides(generateDemoRides());
+      setHasSeeded(true);
     }
-  }, [rides.length, setRides]);
+  }, [rides.length, hasSeeded, setRides, setHasSeeded]);
 
   return {
     rides,
