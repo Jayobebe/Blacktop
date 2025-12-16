@@ -424,6 +424,24 @@ export function useConvoyState() {
     }
   }, [state.id]);
 
+  const resetNavigationStatus = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !state.id) return;
+
+    // Reset local state
+    setConvoyState((prev) => ({
+      ...prev,
+      members: prev.members.map(m => ({ ...m, hasNavigated: false })),
+    }));
+
+    // Reset in database for current user
+    await supabase
+      .from('convoy_members')
+      .update({ has_navigated: false })
+      .eq('convoy_id', state.id)
+      .eq('user_id', user.id);
+  }, [state.id]);
+
   // Check if all members have navigated
   const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
 
@@ -435,6 +453,7 @@ export function useConvoyState() {
     setDestination,
     clearDestination,
     markAsNavigated,
+    resetNavigationStatus,
     allMembersNavigated,
   };
 }

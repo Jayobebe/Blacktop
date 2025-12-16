@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useConvoyState } from '@/hooks/useConvoyState';
 import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, Navigation, Users } from 'lucide-react';
 import { formatDuration, formatDistance } from '@/lib/format';
@@ -13,6 +14,7 @@ export default function ActiveRide() {
   const { rideState, endRide } = useActiveRide();
   const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
   const { openNavigation } = useNavigation();
+  const { resetNavigationStatus } = useConvoyState();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   // Connect to voice channel if convoy mode
@@ -34,12 +36,20 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, navigate]);
 
-  const handleEndRide = () => {
+  const handleEndRide = async () => {
     if (isConnected) {
       disconnect();
     }
+    const wasConvoyMode = rideState.isConvoyMode;
     endRide();
-    navigate('/');
+    
+    // Reset navigation status for next ride if in convoy mode
+    if (wasConvoyMode) {
+      await resetNavigationStatus();
+      navigate('/lobby');
+    } else {
+      navigate('/');
+    }
   };
 
   if (!rideState.isActive) return null;

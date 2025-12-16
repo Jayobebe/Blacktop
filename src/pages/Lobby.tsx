@@ -18,6 +18,11 @@ export default function Lobby() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const hasStartedRide = useRef(false);
 
+  // Reset ride started flag when entering/returning to lobby
+  useEffect(() => {
+    hasStartedRide.current = false;
+  }, []);
+
   // Connect to voice channel when entering lobby
   useEffect(() => {
     if (!isConnected) {
