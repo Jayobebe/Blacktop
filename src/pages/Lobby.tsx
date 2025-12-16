@@ -25,7 +25,7 @@ export default function Lobby() {
   const navigate = useNavigate();
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
   const { startRide } = useActiveRide();
-  const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
+  const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
@@ -36,9 +36,9 @@ export default function Lobby() {
     hasStartedRide.current = false;
   }, []);
 
-  // Connect to voice channel when entering lobby
+  // Connect to voice channel when entering lobby with valid convoy
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected && convoy.id) {
       connect();
     }
     return () => {
@@ -46,7 +46,7 @@ export default function Lobby() {
         disconnect();
       }
     };
-  }, []);
+  }, [convoy.id]);
 
   // Redirect if not in a convoy
   useEffect(() => {
