@@ -49,6 +49,7 @@ export function useVoiceChannel(convoyId?: string) {
   const levelCheckIntervalRef = useRef<number | null>(null);
   const isSpeakingRef = useRef<boolean>(false);
   const speakingTimeoutRef = useRef<number | null>(null);
+  const isMutedRef = useRef<boolean>(true); // Ref to avoid stale closure
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -98,34 +99,59 @@ export function useVoiceChannel(convoyId?: string) {
 
   // Start audio level monitoring for speaking detection
   const startAudioLevelMonitoring = useCallback(() => {
-    if (!localStreamRef.current) return;
+    if (!localStreamRef.current) {
+      console.log('[Voice] No local stream for audio monitoring');
+      return;
+    }
     
     console.log('[Voice] Starting audio level monitoring');
     
     audioContextRef.current = new AudioContext();
+    
+    // Resume context if suspended (browser autoplay policy)
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume().then(() => {
+        console.log('[Voice] AudioContext resumed');
+      });
+    }
+    
     analyserRef.current = audioContextRef.current.createAnalyser();
-    analyserRef.current.fftSize = 256;
-    analyserRef.current.smoothingTimeConstant = 0.5;
+    analyserRef.current.fftSize = 512;
+    analyserRef.current.smoothingTimeConstant = 0.3;
     
     const source = audioContextRef.current.createMediaStreamSource(localStreamRef.current);
     source.connect(analyserRef.current);
     
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    // Use time domain data for better voice detection
+    const dataArray = new Uint8Array(analyserRef.current.fftSize);
     
     levelCheckIntervalRef.current = window.setInterval(() => {
-      if (!analyserRef.current || !channelRef.current || !userIdRef.current) return;
+      if (!analyserRef.current || !channelRef.current || !userIdRef.current) {
+        return;
+      }
       
-      analyserRef.current.getByteFrequencyData(dataArray);
+      // Get time domain data (waveform) for RMS calculation
+      analyserRef.current.getByteTimeDomainData(dataArray);
       
-      // Calculate average volume level
-      const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-      const normalizedLevel = average / 255;
+      // Calculate RMS (root mean square) for better volume detection
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const normalized = (dataArray[i] - 128) / 128; // Normalize to -1 to 1
+        sum += normalized * normalized;
+      }
+      const rms = Math.sqrt(sum / dataArray.length);
       
       const wasSpeaking = isSpeakingRef.current;
-      const isNowSpeaking = normalizedLevel > SPEAKING_THRESHOLD && !state.isMuted;
+      const isNowSpeaking = rms > SPEAKING_THRESHOLD && !isMutedRef.current;
+      
+      // Debug log occasionally
+      if (Math.random() < 0.02) {
+        console.log(`[Voice] RMS: ${rms.toFixed(3)}, muted: ${isMutedRef.current}, speaking: ${isNowSpeaking}`);
+      }
       
       if (isNowSpeaking && !wasSpeaking) {
         // Started speaking
+        console.log('[Voice] Started speaking, user:', userIdRef.current);
         isSpeakingRef.current = true;
         if (speakingTimeoutRef.current) {
           clearTimeout(speakingTimeoutRef.current);
@@ -144,6 +170,7 @@ export function useVoiceChannel(convoyId?: string) {
           ...prev,
           speakingUsers: new Set([...prev.speakingUsers, userIdRef.current!]),
         }));
+        console.log('[Voice] Updated speakingUsers, added:', userIdRef.current);
       } else if (!isNowSpeaking && wasSpeaking) {
         // Stopped speaking - debounce to avoid flickering
         if (!speakingTimeoutRef.current) {
@@ -168,7 +195,7 @@ export function useVoiceChannel(convoyId?: string) {
         }
       }
     }, 50); // Check every 50ms for responsive detection
-  }, [state.isMuted]);
+  }, []); // No deps - uses refs to avoid stale closures
 
   // Create peer connection for a remote user
   const createPeerConnection = useCallback((remoteUserId: string): RTCPeerConnection => {
@@ -445,6 +472,7 @@ export function useVoiceChannel(convoyId?: string) {
     if (!state.isConnected || !localStreamRef.current) return;
     
     const newMutedState = !state.isMuted;
+    isMutedRef.current = newMutedState; // Update ref for audio level detection
     
     localStreamRef.current.getAudioTracks().forEach(track => {
       track.enabled = !newMutedState;
