@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Users, Copy, Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -10,10 +10,18 @@ export default function CreateConvoy() {
   const { createConvoy } = useConvoyState();
   const [copied, setCopied] = useState(false);
   const [convoyCode, setConvoyCode] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const handleCreate = () => {
-    const { code } = createConvoy();
-    setConvoyCode(code);
+  const handleCreate = async () => {
+    setIsCreating(true);
+    try {
+      const result = await createConvoy();
+      if (result) {
+        setConvoyCode(result.code);
+      }
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleCopyCode = async () => {
@@ -57,9 +65,17 @@ export default function CreateConvoy() {
             </p>
             <Button
               onClick={handleCreate}
+              disabled={isCreating}
               className="w-full max-w-xs h-14 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground touch-target"
             >
-              Generate Convoy Code
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Generate Convoy Code'
+              )}
             </Button>
           </>
         ) : (
