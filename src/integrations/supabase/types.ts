@@ -14,13 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      convoy_members: {
+        Row: {
+          convoy_id: string
+          current_lat: number | null
+          current_lng: number | null
+          current_speed: number | null
+          distance_driven: number | null
+          id: string
+          is_speaking: boolean | null
+          joined_at: string | null
+          last_seen: string | null
+          top_speed: number | null
+          user_id: string
+        }
+        Insert: {
+          convoy_id: string
+          current_lat?: number | null
+          current_lng?: number | null
+          current_speed?: number | null
+          distance_driven?: number | null
+          id?: string
+          is_speaking?: boolean | null
+          joined_at?: string | null
+          last_seen?: string | null
+          top_speed?: number | null
+          user_id: string
+        }
+        Update: {
+          convoy_id?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          current_speed?: number | null
+          distance_driven?: number | null
+          id?: string
+          is_speaking?: boolean | null
+          joined_at?: string | null
+          last_seen?: string | null
+          top_speed?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convoy_members_convoy_id_fkey"
+            columns: ["convoy_id"]
+            isOneToOne: false
+            referencedRelation: "convoys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convoy_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      convoys: {
+        Row: {
+          code: string
+          created_at: string | null
+          destination_address: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          destination_name: string | null
+          destination_set_at: string | null
+          id: string
+          is_active: boolean | null
+          leader_id: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          destination_address?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
+          destination_set_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          destination_address?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
+          destination_set_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convoys_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          lifetime_top_speed: number | null
+          total_distance: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name: string
+          id: string
+          lifetime_top_speed?: number | null
+          total_distance?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          lifetime_top_speed?: number | null
+          total_distance?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_convoy_code: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
