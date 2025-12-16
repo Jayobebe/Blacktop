@@ -2,10 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
+import CreateConvoy from "./pages/CreateConvoy";
+import JoinConvoy from "./pages/JoinConvoy";
+import Lobby from "./pages/Lobby";
 import ActiveRide from "./pages/ActiveRide";
 import History from "./pages/History";
 import RideDetail from "./pages/RideDetail";
@@ -29,6 +32,9 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/create-convoy" element={<CreateConvoy />} />
+      <Route path="/join-convoy" element={<JoinConvoy />} />
+      <Route path="/lobby" element={<Lobby />} />
       <Route path="/ride" element={<ActiveRide />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
