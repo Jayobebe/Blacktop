@@ -1,42 +1,15 @@
-export interface ConvoyMember {
-  id: string;
-  name: string;
-  avatar?: string;
+export interface ConvoyState {
+  id: string | null;
+  code: string | null;
   isLeader: boolean;
-  isSpeaking: boolean;
-  isOnline: boolean;
-  currentSpeed: number;
-  topSpeed: number;
-  distanceDriven: number;
-  joinedAt: Date;
+  members: ConvoyMemberInfo[];
+  isActive: boolean;
 }
 
-export interface Convoy {
+export interface ConvoyMemberInfo {
   id: string;
   name: string;
-  code: string;
-  members: ConvoyMember[];
-  destination?: Destination;
-  createdAt: Date;
-  totalDistance: number;
-  groupTopSpeed: number;
-}
-
-export interface Destination {
-  id: string;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-  setBy: string;
-  setAt: Date;
-}
-
-export interface ConvoyStats {
-  groupDistance: number;
-  groupTopSpeed: number;
-  personalDistance: number;
-  personalTopSpeed: number;
-  averageSpeed: number;
-  tripDuration: number;
+  isLeader: boolean;
+  isReady: boolean;
+  joinedAt: string;
 }
