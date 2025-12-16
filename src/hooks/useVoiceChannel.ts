@@ -4,13 +4,13 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
-  userId: string;
+  oderId: string;
 }
 
 interface VoiceChannelState {
   isConnected: boolean;
   isMuted: boolean;
-  activeSpeakers: string[];
+  speakingUsers: Set<string>; // User IDs currently speaking
 }
 
 const ICE_SERVERS: RTCIceServer[] = [
@@ -27,11 +27,14 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   channelCount: 1,
 };
 
+const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
+const SPEAKING_DEBOUNCE_MS = 150; // Debounce time for speaking state changes
+
 export function useVoiceChannel(convoyId?: string) {
   const [state, setState] = useState<VoiceChannelState>({
     isConnected: false,
     isMuted: true,
-    activeSpeakers: [],
+    speakingUsers: new Set(),
   });
 
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -39,10 +42,32 @@ export function useVoiceChannel(convoyId?: string) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const userIdRef = useRef<string | null>(null);
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  
+  // Audio level detection refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const levelCheckIntervalRef = useRef<number | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
+  const speakingTimeoutRef = useRef<number | null>(null);
 
   // Cleanup function
   const cleanup = useCallback(() => {
     console.log('[Voice] Cleaning up voice channel');
+    
+    // Stop audio level monitoring
+    if (levelCheckIntervalRef.current) {
+      clearInterval(levelCheckIntervalRef.current);
+      levelCheckIntervalRef.current = null;
+    }
+    if (speakingTimeoutRef.current) {
+      clearTimeout(speakingTimeoutRef.current);
+      speakingTimeoutRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
     
     // Stop local stream
     if (localStreamRef.current) {
@@ -70,6 +95,80 @@ export function useVoiceChannel(convoyId?: string) {
       channelRef.current = null;
     }
   }, []);
+
+  // Start audio level monitoring for speaking detection
+  const startAudioLevelMonitoring = useCallback(() => {
+    if (!localStreamRef.current) return;
+    
+    console.log('[Voice] Starting audio level monitoring');
+    
+    audioContextRef.current = new AudioContext();
+    analyserRef.current = audioContextRef.current.createAnalyser();
+    analyserRef.current.fftSize = 256;
+    analyserRef.current.smoothingTimeConstant = 0.5;
+    
+    const source = audioContextRef.current.createMediaStreamSource(localStreamRef.current);
+    source.connect(analyserRef.current);
+    
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    
+    levelCheckIntervalRef.current = window.setInterval(() => {
+      if (!analyserRef.current || !channelRef.current || !userIdRef.current) return;
+      
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      // Calculate average volume level
+      const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const normalizedLevel = average / 255;
+      
+      const wasSpeaking = isSpeakingRef.current;
+      const isNowSpeaking = normalizedLevel > SPEAKING_THRESHOLD && !state.isMuted;
+      
+      if (isNowSpeaking && !wasSpeaking) {
+        // Started speaking
+        isSpeakingRef.current = true;
+        if (speakingTimeoutRef.current) {
+          clearTimeout(speakingTimeoutRef.current);
+          speakingTimeoutRef.current = null;
+        }
+        
+        // Broadcast speaking state
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'speaking-state',
+          payload: { oderId: userIdRef.current, isSpeaking: true },
+        });
+        
+        // Update local state
+        setState(prev => ({
+          ...prev,
+          speakingUsers: new Set([...prev.speakingUsers, userIdRef.current!]),
+        }));
+      } else if (!isNowSpeaking && wasSpeaking) {
+        // Stopped speaking - debounce to avoid flickering
+        if (!speakingTimeoutRef.current) {
+          speakingTimeoutRef.current = window.setTimeout(() => {
+            isSpeakingRef.current = false;
+            
+            if (channelRef.current && userIdRef.current) {
+              channelRef.current.send({
+                type: 'broadcast',
+                event: 'speaking-state',
+                payload: { oderId: userIdRef.current, isSpeaking: false },
+              });
+              
+              setState(prev => {
+                const newSet = new Set(prev.speakingUsers);
+                newSet.delete(userIdRef.current!);
+                return { ...prev, speakingUsers: newSet };
+              });
+            }
+            speakingTimeoutRef.current = null;
+          }, SPEAKING_DEBOUNCE_MS);
+        }
+      }
+    }, 50); // Check every 50ms for responsive detection
+  }, [state.isMuted]);
 
   // Create peer connection for a remote user
   const createPeerConnection = useCallback((remoteUserId: string): RTCPeerConnection => {
@@ -128,7 +227,7 @@ export function useVoiceChannel(convoyId?: string) {
       audio.play().catch(err => console.error('[Voice] Audio play error:', err));
     };
 
-    peersRef.current.set(remoteUserId, { pc, userId: remoteUserId });
+    peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
     return pc;
   }, []);
 
@@ -264,6 +363,20 @@ export function useVoiceChannel(convoyId?: string) {
           handleSignaling({ type: 'ice-candidate', ...payload }))
         .on('broadcast', { event: 'user-left' }, ({ payload }) => 
           handleSignaling({ type: 'user-left', ...payload }))
+        .on('broadcast', { event: 'speaking-state' }, ({ payload }) => {
+          // Update speaking state from remote user
+          const { oderId, isSpeaking } = payload;
+          console.log(`[Voice] Speaking state from ${oderId}: ${isSpeaking}`);
+          setState(prev => {
+            const newSet = new Set(prev.speakingUsers);
+            if (isSpeaking) {
+              newSet.add(oderId);
+            } else {
+              newSet.delete(oderId);
+            }
+            return { ...prev, speakingUsers: newSet };
+          });
+        })
         .on('presence', { event: 'sync' }, () => {
           const presenceState = channel.presenceState();
           console.log('[Voice] Presence sync:', presenceState);
@@ -287,6 +400,9 @@ export function useVoiceChannel(convoyId?: string) {
 
       channelRef.current = channel;
       
+      // Start audio level monitoring for speaking detection
+      startAudioLevelMonitoring();
+      
       setState(prev => ({
         ...prev,
         isConnected: true,
@@ -300,7 +416,7 @@ export function useVoiceChannel(convoyId?: string) {
       cleanup();
       return false;
     }
-  }, [convoyId, handleSignaling, cleanup]);
+  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring]);
 
   // Disconnect from voice channel
   const disconnect = useCallback(() => {
@@ -320,7 +436,7 @@ export function useVoiceChannel(convoyId?: string) {
     setState({
       isConnected: false,
       isMuted: true,
-      activeSpeakers: [],
+      speakingUsers: new Set(),
     });
   }, [cleanup]);
 
@@ -335,7 +451,24 @@ export function useVoiceChannel(convoyId?: string) {
       console.log(`[Voice] Track enabled: ${track.enabled}`);
     });
     
-    setState(prev => ({ ...prev, isMuted: newMutedState }));
+    // Clear own speaking state when muting
+    if (newMutedState && userIdRef.current) {
+      isSpeakingRef.current = false;
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'speaking-state',
+          payload: { oderId: userIdRef.current, isSpeaking: false },
+        });
+      }
+      setState(prev => {
+        const newSet = new Set(prev.speakingUsers);
+        newSet.delete(userIdRef.current!);
+        return { ...prev, isMuted: newMutedState, speakingUsers: newSet };
+      });
+    } else {
+      setState(prev => ({ ...prev, isMuted: newMutedState }));
+    }
   }, [state.isConnected, state.isMuted]);
 
   // Cleanup on unmount
