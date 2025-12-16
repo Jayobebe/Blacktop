@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Play, Mic, MicOff, Crown, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { DestinationSearch } from '@/components/DestinationSearch';
 
 export default function Lobby() {
   const navigate = useNavigate();
-  const { convoy, leaveConvoy } = useConvoyState();
+  const { convoy, leaveConvoy, setDestination, clearDestination } = useConvoyState();
   const { startRide } = useActiveRide();
   const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
   const [copied, setCopied] = useState(false);
@@ -67,7 +68,7 @@ export default function Lobby() {
   return (
     <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
       {/* Header with Code */}
-      <header className="mb-6 animate-fade-in">
+      <header className="mb-4 animate-fade-in">
         <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Convoy Code</p>
         <button
           onClick={handleCopyCode}
@@ -82,10 +83,21 @@ export default function Lobby() {
         </button>
       </header>
 
+      {/* Destination Section */}
+      <section className="mb-4 animate-slide-up">
+        <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Destination</p>
+        <DestinationSearch
+          destination={convoy.destination}
+          onSetDestination={setDestination}
+          onClearDestination={clearDestination}
+          isLeader={convoy.isLeader}
+        />
+      </section>
+
       {/* Members List */}
-      <div className="flex-1 animate-slide-up">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="flex-1 animate-slide-up delay-100">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Riders ({convoy.members.length})
           </h2>
         </div>
@@ -94,21 +106,21 @@ export default function Lobby() {
           {convoy.members.map((member, index) => (
             <div
               key={member.id}
-              className="flex items-center gap-3 bg-card border border-border rounded-lg p-4 animate-slide-up"
+              className="flex items-center gap-3 bg-card border border-border rounded-lg p-3 animate-slide-up"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center",
+                "w-9 h-9 rounded-full flex items-center justify-center",
                 member.isLeader ? "bg-accent/20" : "bg-secondary"
               )}>
                 {member.isLeader ? (
-                  <Crown className="w-5 h-5 text-accent" />
+                  <Crown className="w-4 h-4 text-accent" />
                 ) : (
-                  <User className="w-5 h-5 text-muted-foreground" />
+                  <User className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
               <div className="flex-1">
-                <p className="font-medium">{member.name}</p>
+                <p className="font-medium text-sm">{member.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {member.isLeader ? 'Leader' : 'Rider'}
                 </p>
@@ -124,26 +136,26 @@ export default function Lobby() {
       </div>
 
       {/* Voice Toggle */}
-      <div className="flex justify-center mb-6 animate-slide-up delay-100">
+      <div className="flex justify-center mb-4 animate-slide-up delay-200">
         <button
           onClick={toggleMute}
           className={cn(
-            "w-16 h-16 rounded-full flex items-center justify-center transition-all touch-target",
+            "w-14 h-14 rounded-full flex items-center justify-center transition-all touch-target",
             !isMuted
               ? "bg-ptt-active shadow-glow"
               : "bg-ptt-inactive hover:bg-muted"
           )}
         >
           {isMuted ? (
-            <MicOff className="w-7 h-7 text-foreground" />
+            <MicOff className="w-6 h-6 text-foreground" />
           ) : (
-            <Mic className="w-7 h-7 text-background" />
+            <Mic className="w-6 h-6 text-background" />
           )}
         </button>
       </div>
 
       {/* Action Buttons */}
-      <div className="space-y-3 animate-slide-up delay-200">
+      <div className="space-y-3 animate-slide-up delay-300">
         {convoy.isLeader && (
           <Button
             onClick={handleStartRide}
