@@ -4,18 +4,31 @@ import { useConvoyState } from '@/hooks/useConvoyState';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DestinationSearch } from '@/components/DestinationSearch';
 
+// Unique colors for convoy members
+const MEMBER_COLORS = [
+  { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+  { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+  { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
+  { bg: 'bg-pink-500/20', text: 'text-pink-400', border: 'border-pink-500/30' },
+  { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+  { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
+  { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+];
+
 export default function Lobby() {
   const navigate = useNavigate();
-  const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, allMembersNavigated } = useConvoyState();
+  const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
   const { startRide } = useActiveRide();
   const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const hasStartedRide = useRef(false);
 
   // Reset ride started flag when entering/returning to lobby
@@ -80,6 +93,27 @@ export default function Lobby() {
     }
     await leaveConvoy();
     navigate('/');
+  };
+
+  const handleTransferLeadership = async (userId: string) => {
+    const success = await transferLeadership(userId);
+    if (success) {
+      setTransferTarget(null);
+    }
+  };
+
+  // Sort members: leader first, then by join time
+  const sortedMembers = [...convoy.members].sort((a, b) => {
+    if (a.isLeader) return -1;
+    if (b.isLeader) return 1;
+    return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+  });
+
+  // Assign consistent colors based on join order (excluding leader who gets accent color)
+  const getMemberColor = (index: number, isLeader: boolean) => {
+    if (isLeader) return { bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/30' };
+    // Non-leaders get colors from the array (index - 1 since leader is always index 0)
+    return MEMBER_COLORS[(index - 1) % MEMBER_COLORS.length];
   };
 
   if (!convoy.isActive) return null;
@@ -156,40 +190,86 @@ export default function Lobby() {
           </div>
           
           <div className="space-y-2 md:max-h-[300px] md:overflow-y-auto md:pr-2">
-            {convoy.members.map((member, index) => (
-              <div
-                key={member.id}
-                className="flex items-center gap-3 bg-card border border-border rounded-lg p-2.5 md:p-3 animate-slide-up"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className={cn(
-                  "w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0",
-                  member.isLeader ? "bg-accent/20" : "bg-secondary"
-                )}>
-                  {member.isLeader ? (
-                    <Crown className="w-4 h-4 text-accent" />
-                  ) : (
-                    <User className="w-4 h-4 text-muted-foreground" />
+            {sortedMembers.map((member, index) => {
+              const color = getMemberColor(index, member.isLeader);
+              const isTransferring = transferTarget === member.userId;
+              
+              return (
+                <div
+                  key={member.id}
+                  className={cn(
+                    "flex items-center gap-3 bg-card border rounded-lg p-2.5 md:p-3 animate-slide-up transition-colors",
+                    color.border
+                  )}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className={cn(
+                    "w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0",
+                    color.bg
+                  )}>
+                    {member.isLeader ? (
+                      <Crown className={cn("w-4 h-4", color.text)} />
+                    ) : (
+                      <User className={cn("w-4 h-4", color.text)} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn("font-medium text-sm truncate", color.text)}>{member.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {member.isLeader ? 'Leader' : 'Rider'}
+                    </p>
+                  </div>
+                  
+                  {/* Transfer leadership button (for leader viewing non-leaders) */}
+                  {convoy.isLeader && !member.isLeader && convoy.members.length > 1 && (
+                    <>
+                      {isTransferring ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => handleTransferLeadership(member.userId)}
+                          >
+                            Confirm
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            onClick={() => setTransferTarget(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setTransferTarget(member.userId)}
+                          className="p-1.5 rounded hover:bg-muted transition-colors"
+                          title="Transfer leadership"
+                        >
+                          <ArrowRightLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Navigation status */}
+                  {!isTransferring && (
+                    member.hasNavigated ? (
+                      <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-1 rounded flex-shrink-0">
+                        <Navigation className="w-3 h-3" />
+                        Ready
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
+                        Waiting
+                      </span>
+                    )
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {member.isLeader ? 'Leader' : 'Rider'}
-                  </p>
-                </div>
-                {member.hasNavigated ? (
-                  <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-1 rounded flex-shrink-0">
-                    <Navigation className="w-3 h-3" />
-                    Ready
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
-                    Waiting
-                  </span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

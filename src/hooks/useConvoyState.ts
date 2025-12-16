@@ -472,6 +472,34 @@ export function useConvoyState() {
     }));
   }, [state.id, state.isLeader]);
 
+  // Transfer leadership to another member
+  const transferLeadership = useCallback(async (newLeaderUserId: string) => {
+    if (!state.id || !state.isLeader) return false;
+
+    const { error } = await supabase
+      .from('convoys')
+      .update({ leader_id: newLeaderUserId })
+      .eq('id', state.id);
+
+    if (error) {
+      toast.error('Failed to transfer leadership');
+      return false;
+    }
+
+    // Update local state
+    setConvoyState((prev) => ({
+      ...prev,
+      isLeader: false,
+      members: prev.members.map(m => ({
+        ...m,
+        isLeader: m.userId === newLeaderUserId,
+      })),
+    }));
+
+    toast.success('Leadership transferred');
+    return true;
+  }, [state.id, state.isLeader]);
+
   // Check if all members have navigated
   const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
 
@@ -485,6 +513,7 @@ export function useConvoyState() {
     markAsNavigated,
     resetNavigationStatus,
     endConvoyRide,
+    transferLeadership,
     allMembersNavigated,
   };
 }
