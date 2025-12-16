@@ -1,89 +1,115 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { useRideHistory } from './useRideHistory';
 
 const SPEED_SMOOTHING_FACTOR = 0.3;
 
-export function useActiveRide() {
-  const { addRide } = useRideHistory();
-  const [rideState, setRideState] = useState<ActiveRideState>({
-    isActive: false,
-    startedAt: null,
-    isConvoyMode: false,
-    currentSpeed: 0,
-    maxSpeed: 0,
-    distance: 0,
-    duration: 0,
-    gpsPoints: [],
-  });
+// Shared state
+type Listener = () => void;
+const listeners = new Set<Listener>();
 
-  const watchIdRef = useRef<number | null>(null);
-  const lastPositionRef = useRef<{ lat: number; lng: number; timestamp: number } | null>(null);
-  const smoothedSpeedRef = useRef(0);
-  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+let rideState: ActiveRideState = {
+  isActive: false,
+  startedAt: null,
+  isConvoyMode: false,
+  currentSpeed: 0,
+  maxSpeed: 0,
+  distance: 0,
+  duration: 0,
+  gpsPoints: [],
+};
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 3959; // Earth's radius in miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+let watchId: number | null = null;
+let durationInterval: ReturnType<typeof setInterval> | null = null;
+let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
+let smoothedSpeed = 0;
+
+function getSnapshot(): ActiveRideState {
+  return rideState;
+}
+
+function getServerSnapshot(): ActiveRideState {
+  return rideState;
+}
+
+function subscribe(listener: Listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function emitChange() {
+  listeners.forEach(l => l());
+}
+
+function setRideState(updater: (prev: ActiveRideState) => ActiveRideState) {
+  rideState = updater(rideState);
+  emitChange();
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function handlePositionUpdate(position: GeolocationPosition) {
+  const { latitude, longitude, speed } = position.coords;
+  const timestamp = position.timestamp;
+  
+  // Convert m/s to mph, default to 0 if null
+  let currentSpeed = speed !== null ? speed * 2.237 : 0;
+  
+  // Apply exponential smoothing to reduce GPS jitter
+  smoothedSpeed = SPEED_SMOOTHING_FACTOR * currentSpeed + (1 - SPEED_SMOOTHING_FACTOR) * smoothedSpeed;
+  currentSpeed = Math.max(0, Math.round(smoothedSpeed));
+
+  let distanceIncrement = 0;
+  if (lastPosition) {
+    distanceIncrement = calculateDistance(
+      lastPosition.lat,
+      lastPosition.lng,
+      latitude,
+      longitude
+    );
+    // Ignore unrealistic distance jumps (GPS glitches)
+    if (distanceIncrement > 0.5) {
+      distanceIncrement = 0;
+    }
+  }
+
+  const gpsPoint: GpsPoint = {
+    lat: latitude,
+    lng: longitude,
+    speed: currentSpeed,
+    timestamp,
   };
 
-  const handlePositionUpdate = useCallback((position: GeolocationPosition) => {
-    const { latitude, longitude, speed } = position.coords;
-    const timestamp = position.timestamp;
-    
-    // Convert m/s to mph, default to 0 if null
-    let currentSpeed = speed !== null ? speed * 2.237 : 0;
-    
-    // Apply exponential smoothing to reduce GPS jitter
-    smoothedSpeedRef.current = 
-      SPEED_SMOOTHING_FACTOR * currentSpeed + 
-      (1 - SPEED_SMOOTHING_FACTOR) * smoothedSpeedRef.current;
-    
-    currentSpeed = Math.max(0, Math.round(smoothedSpeedRef.current));
+  lastPosition = { lat: latitude, lng: longitude, timestamp };
 
-    let distanceIncrement = 0;
-    if (lastPositionRef.current) {
-      distanceIncrement = calculateDistance(
-        lastPositionRef.current.lat,
-        lastPositionRef.current.lng,
-        latitude,
-        longitude
-      );
-      // Ignore unrealistic distance jumps (GPS glitches)
-      if (distanceIncrement > 0.5) {
-        distanceIncrement = 0;
-      }
-    }
+  setRideState(prev => ({
+    ...prev,
+    currentSpeed,
+    maxSpeed: Math.max(prev.maxSpeed, currentSpeed),
+    distance: prev.distance + distanceIncrement,
+    gpsPoints: [...prev.gpsPoints, gpsPoint],
+  }));
+}
 
-    const gpsPoint: GpsPoint = {
-      lat: latitude,
-      lng: longitude,
-      speed: currentSpeed,
-      timestamp,
-    };
+function handlePositionError(error: GeolocationPositionError) {
+  console.warn('GPS Error:', error.message);
+}
 
-    lastPositionRef.current = { lat: latitude, lng: longitude, timestamp };
-
-    setRideState(prev => ({
-      ...prev,
-      currentSpeed,
-      maxSpeed: Math.max(prev.maxSpeed, currentSpeed),
-      distance: prev.distance + distanceIncrement,
-      gpsPoints: [...prev.gpsPoints, gpsPoint],
-    }));
-  }, []);
-
-  const handlePositionError = useCallback((error: GeolocationPositionError) => {
-    console.warn('GPS Error:', error.message);
-    // Don't stop the ride on GPS error, just log it
-  }, []);
+export function useActiveRide() {
+  const { addRide } = useRideHistory();
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const addRideRef = useRef(addRide);
+  addRideRef.current = addRide;
 
   const startRide = useCallback((isConvoyMode: boolean = false) => {
     if (!navigator.geolocation) {
@@ -92,10 +118,10 @@ export function useActiveRide() {
     }
 
     const startedAt = new Date().toISOString();
-    smoothedSpeedRef.current = 0;
-    lastPositionRef.current = null;
+    smoothedSpeed = 0;
+    lastPosition = null;
 
-    setRideState({
+    setRideState(() => ({
       isActive: true,
       startedAt,
       isConvoyMode,
@@ -104,10 +130,10 @@ export function useActiveRide() {
       distance: 0,
       duration: 0,
       gpsPoints: [],
-    });
+    }));
 
     // Start GPS tracking
-    watchIdRef.current = navigator.geolocation.watchPosition(
+    watchId = navigator.geolocation.watchPosition(
       handlePositionUpdate,
       handlePositionError,
       {
@@ -118,7 +144,7 @@ export function useActiveRide() {
     );
 
     // Start duration counter
-    durationIntervalRef.current = setInterval(() => {
+    durationInterval = setInterval(() => {
       setRideState(prev => ({
         ...prev,
         duration: prev.duration + 1,
@@ -126,40 +152,41 @@ export function useActiveRide() {
     }, 1000);
 
     return true;
-  }, [handlePositionUpdate, handlePositionError]);
+  }, []);
 
   const endRide = useCallback(() => {
     // Stop GPS tracking
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
     }
 
     // Stop duration counter
-    if (durationIntervalRef.current) {
-      clearInterval(durationIntervalRef.current);
-      durationIntervalRef.current = null;
+    if (durationInterval) {
+      clearInterval(durationInterval);
+      durationInterval = null;
     }
 
     // Save the ride
-    if (rideState.startedAt && rideState.duration > 0) {
+    const currentState = rideState;
+    if (currentState.startedAt && currentState.duration > 0) {
       const ride: RideSession = {
         id: crypto.randomUUID(),
-        startedAt: rideState.startedAt,
+        startedAt: currentState.startedAt,
         endedAt: new Date().toISOString(),
-        isConvoyRide: rideState.isConvoyMode,
-        distance: rideState.distance,
-        duration: rideState.duration,
-        averageSpeed: rideState.duration > 0 
-          ? (rideState.distance / (rideState.duration / 3600)) 
+        isConvoyRide: currentState.isConvoyMode,
+        distance: currentState.distance,
+        duration: currentState.duration,
+        averageSpeed: currentState.duration > 0 
+          ? (currentState.distance / (currentState.duration / 3600)) 
           : 0,
-        maxSpeed: rideState.maxSpeed,
-        gpsPoints: rideState.gpsPoints,
+        maxSpeed: currentState.maxSpeed,
+        gpsPoints: currentState.gpsPoints,
       };
-      addRide(ride);
+      addRideRef.current(ride);
     }
 
-    setRideState({
+    setRideState(() => ({
       isActive: false,
       startedAt: null,
       isConvoyMode: false,
@@ -168,23 +195,11 @@ export function useActiveRide() {
       distance: 0,
       duration: 0,
       gpsPoints: [],
-    });
-  }, [rideState, addRide]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
-      if (durationIntervalRef.current) {
-        clearInterval(durationIntervalRef.current);
-      }
-    };
+    }));
   }, []);
 
   return {
-    rideState,
+    rideState: state,
     startRide,
     endRide,
   };
