@@ -25,7 +25,7 @@ export default function Lobby() {
   const navigate = useNavigate();
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
   const { startRide } = useActiveRide();
-  const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
+  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
@@ -208,19 +208,22 @@ export default function Lobby() {
             {sortedMembers.map((member, index) => {
               const color = getMemberColor(index, member.isLeader);
               const isTransferring = transferTarget === member.userId;
+              const isSpeaking = speakingUsers.has(member.userId);
               
               return (
                 <div
                   key={member.id}
                   className={cn(
-                    "flex items-center gap-3 bg-card border rounded-lg p-2.5 md:p-3 animate-slide-up transition-colors",
-                    color.border
+                    "flex items-center gap-3 bg-card border rounded-lg p-2.5 md:p-3 animate-slide-up transition-all",
+                    color.border,
+                    isSpeaking && "ring-2 ring-accent ring-offset-2 ring-offset-background"
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className={cn(
-                    "w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0",
-                    color.bg
+                    "w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
+                    color.bg,
+                    isSpeaking && "shadow-[0_0_12px_4px] shadow-accent/60 scale-110"
                   )}>
                     {member.isLeader ? (
                       <Crown className={cn("w-4 h-4", color.text)} />
