@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, Navigation, Users } from 'lucide-react';
 import { formatDuration, formatDistance } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide } = useActiveRide();
   const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
   const { openNavigation } = useNavigation();
-  const { resetNavigationStatus } = useConvoyState();
+  const { convoy, resetNavigationStatus, endConvoyRide } = useConvoyState();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   // Connect to voice channel if convoy mode
@@ -36,16 +37,36 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, navigate]);
 
+  // Non-leaders: listen for leader ending the ride (destination cleared)
+  useEffect(() => {
+    if (rideState.isConvoyMode && !convoy.isLeader && rideState.isActive) {
+      // If we're in convoy mode, not the leader, and destination gets cleared, leader ended the ride
+      if (convoy.isActive && !convoy.destination) {
+        toast.info('Leader ended the ride');
+        endRide();
+        navigate('/lobby');
+      }
+    }
+  }, [convoy.destination, convoy.isLeader, convoy.isActive, rideState.isConvoyMode, rideState.isActive, endRide, navigate]);
+
   const handleEndRide = async () => {
     if (isConnected) {
       disconnect();
     }
+    
     const wasConvoyMode = rideState.isConvoyMode;
+    const wasLeader = convoy.isLeader;
+    
     endRide();
     
-    // Reset navigation status for next ride if in convoy mode
     if (wasConvoyMode) {
-      await resetNavigationStatus();
+      if (wasLeader) {
+        // Leader ends ride for everyone
+        await endConvoyRide();
+      } else {
+        // Member just resets their own status
+        await resetNavigationStatus();
+      }
       navigate('/lobby');
     } else {
       navigate('/');
@@ -65,7 +86,7 @@ export default function ActiveRide() {
             {rideState.isConvoyMode && (
               <span className="flex items-center gap-1 text-accent text-sm font-medium px-2 py-1 bg-accent/10 rounded">
                 <Users className="w-4 h-4" />
-                CONVOY
+                {convoy.isLeader ? 'LEADER' : 'CONVOY'}
               </span>
             )}
             <span className="text-muted-foreground text-sm">Ride Active</span>
@@ -149,7 +170,7 @@ export default function ActiveRide() {
             className="w-full md:w-auto md:min-w-[200px] h-12 md:h-14 text-base md:text-lg font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
           >
             <Square className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-            END RIDE
+            {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY RIDE' : 'END RIDE'}
           </Button>
         ) : (
           <div className="flex flex-col md:flex-row gap-2 md:gap-3">
@@ -157,7 +178,7 @@ export default function ActiveRide() {
               onClick={handleEndRide}
               className="h-12 md:h-14 md:min-w-[200px] text-base md:text-lg font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
             >
-              CONFIRM END
+              {rideState.isConvoyMode && convoy.isLeader ? 'END FOR ALL' : 'CONFIRM END'}
             </Button>
             <Button
               onClick={() => setShowEndConfirm(false)}
