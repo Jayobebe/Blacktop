@@ -442,6 +442,36 @@ export function useConvoyState() {
       .eq('user_id', user.id);
   }, [state.id]);
 
+  // Leader ends the convoy ride - clears destination and resets all members' navigation status
+  const endConvoyRide = useCallback(async () => {
+    if (!state.id || !state.isLeader) return;
+
+    // Clear destination in database (this triggers realtime for all members)
+    await supabase
+      .from('convoys')
+      .update({
+        destination_name: null,
+        destination_address: null,
+        destination_lat: null,
+        destination_lng: null,
+        destination_set_at: null,
+      })
+      .eq('id', state.id);
+
+    // Reset all members' navigation status
+    await supabase
+      .from('convoy_members')
+      .update({ has_navigated: false })
+      .eq('convoy_id', state.id);
+
+    // Update local state
+    setConvoyState((prev) => ({
+      ...prev,
+      destination: null,
+      members: prev.members.map(m => ({ ...m, hasNavigated: false })),
+    }));
+  }, [state.id, state.isLeader]);
+
   // Check if all members have navigated
   const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
 
@@ -454,6 +484,7 @@ export function useConvoyState() {
     clearDestination,
     markAsNavigated,
     resetNavigationStatus,
+    endConvoyRide,
     allMembersNavigated,
   };
 }
