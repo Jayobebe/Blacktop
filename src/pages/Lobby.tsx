@@ -96,6 +96,12 @@ export default function Lobby() {
   };
 
   const handleTransferLeadership = async (userId: string) => {
+    // Prevent transferring to demo members
+    if (userId.startsWith('demo-')) {
+      toast.error('Cannot transfer to demo members');
+      setTransferTarget(null);
+      return;
+    }
     const success = await transferLeadership(userId);
     if (success) {
       setTransferTarget(null);
