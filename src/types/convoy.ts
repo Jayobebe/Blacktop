@@ -22,4 +22,8 @@ export interface ConvoyMemberInfo {
   isReady: boolean;
   hasNavigated: boolean;
   joinedAt: string;
+  // Live stats
+  currentSpeed?: number;
+  topSpeed?: number;
+  distanceDriven?: number;
 }

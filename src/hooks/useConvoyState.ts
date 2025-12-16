@@ -105,6 +105,9 @@ export function useConvoyState() {
         user_id,
         joined_at,
         has_navigated,
+        current_speed,
+        top_speed,
+        distance_driven,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
       .eq('convoy_id', convoyId);
@@ -124,6 +127,9 @@ export function useConvoyState() {
         isReady: true,
         hasNavigated: m.has_navigated || false,
         joinedAt: m.joined_at,
+        currentSpeed: m.current_speed || 0,
+        topSpeed: m.top_speed || 0,
+        distanceDriven: m.distance_driven || 0,
       }));
 
       console.log('[Convoy] Refreshed members:', members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated })));
