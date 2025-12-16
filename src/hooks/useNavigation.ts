@@ -51,24 +51,24 @@ export function useNavigation() {
 
       switch (app) {
         case 'google':
+          // Use universal links for better reliability
           primary = isIOS
             ? `comgooglemaps://?daddr=${dLat},${dLng}&directionsmode=driving`
             : isAndroid
-              ? `google.navigation:q=${dLat},${dLng}&mode=d`
+              ? `google.navigation:q=${dLat},${dLng}`
               : `https://www.google.com/maps/dir/?api=1&destination=${dLat},${dLng}&travelmode=driving`;
           fallback = `https://www.google.com/maps/dir/?api=1&destination=${dLat},${dLng}&travelmode=driving`;
           break;
         case 'apple':
-          // Apple Maps only exists on iOS; use web fallback elsewhere.
+          // Apple Maps: use saddr for source (current location) and daddr for destination
           primary = isIOS
-            ? `maps://maps.apple.com/?daddr=${dLat},${dLng}&dirflg=d`
-            : `https://maps.apple.com/?daddr=${dLat},${dLng}&dirflg=d`;
-          fallback = `https://maps.apple.com/?daddr=${dLat},${dLng}&dirflg=d`;
+            ? `maps://?saddr=Current%20Location&daddr=${dLat},${dLng}`
+            : `https://maps.apple.com/?saddr=Current%20Location&daddr=${dLat},${dLng}`;
+          fallback = `https://maps.apple.com/?daddr=${dLat},${dLng}`;
           break;
         case 'waze':
-          primary = (isIOS || isAndroid)
-            ? `waze://?ll=${dLat},${dLng}&navigate=yes`
-            : `https://waze.com/ul?ll=${dLat},${dLng}&navigate=yes`;
+          // Waze: use universal link format for better reliability on both platforms
+          primary = `https://waze.com/ul?ll=${dLat},${dLng}&navigate=yes`;
           fallback = `https://waze.com/ul?ll=${dLat},${dLng}&navigate=yes`;
           break;
       }
