@@ -39,15 +39,23 @@ export default function Lobby() {
 
   // Auto-start ride when all members have navigated
   useEffect(() => {
+    console.log('[Lobby] Checking auto-start:', {
+      allMembersNavigated,
+      hasDestination: !!convoy.destination,
+      hasStarted: hasStartedRide.current,
+      members: convoy.members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated }))
+    });
+
     if (allMembersNavigated && convoy.destination && !hasStartedRide.current) {
       hasStartedRide.current = true;
+      console.log('[Lobby] All riders ready, starting ride!');
       toast.success('All riders ready - starting ride!');
       const success = startRide(true);
       if (success) {
         navigate('/ride');
       }
     }
-  }, [allMembersNavigated, convoy.destination, startRide, navigate]);
+  }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate]);
 
   const handleCopyCode = async () => {
     if (!convoy.code) return;
