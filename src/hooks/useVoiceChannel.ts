@@ -2,14 +2,14 @@ import { useState, useCallback, useRef } from 'react';
 
 interface VoiceChannelState {
   isConnected: boolean;
-  isPTTActive: boolean;
+  isMuted: boolean;
   memberCount: number;
 }
 
 export function useVoiceChannel() {
   const [state, setState] = useState<VoiceChannelState>({
     isConnected: false,
-    isPTTActive: false,
+    isMuted: true,
     memberCount: 0,
   });
 
@@ -21,11 +21,17 @@ export function useVoiceChannel() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
       
+      // Start muted by default
+      stream.getAudioTracks().forEach(track => {
+        track.enabled = false;
+      });
+      
       // In a real implementation, this would connect to a WebRTC server
       setState(prev => ({
         ...prev,
         isConnected: true,
-        memberCount: 1, // Just the user for now
+        isMuted: true,
+        memberCount: 1,
       }));
       
       return true;
@@ -44,28 +50,28 @@ export function useVoiceChannel() {
 
     setState({
       isConnected: false,
-      isPTTActive: false,
+      isMuted: true,
       memberCount: 0,
     });
   }, []);
 
-  const startPTT = useCallback(() => {
-    if (!state.isConnected) return;
+  const toggleMute = useCallback(() => {
+    if (!state.isConnected || !mediaStreamRef.current) return;
     
-    // In a real implementation, this would unmute/transmit audio
-    setState(prev => ({ ...prev, isPTTActive: true }));
-  }, [state.isConnected]);
-
-  const stopPTT = useCallback(() => {
-    // In a real implementation, this would mute/stop transmitting
-    setState(prev => ({ ...prev, isPTTActive: false }));
-  }, []);
+    const newMutedState = !state.isMuted;
+    
+    // Toggle audio tracks
+    mediaStreamRef.current.getAudioTracks().forEach(track => {
+      track.enabled = !newMutedState;
+    });
+    
+    setState(prev => ({ ...prev, isMuted: newMutedState }));
+  }, [state.isConnected, state.isMuted]);
 
   return {
     ...state,
     connect,
     disconnect,
-    startPTT,
-    stopPTT,
+    toggleMute,
   };
 }

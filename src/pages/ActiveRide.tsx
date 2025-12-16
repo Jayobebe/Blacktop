@@ -4,14 +4,14 @@ import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, Navigation, Users, MapPin } from 'lucide-react';
+import { Square, Mic, MicOff, Navigation, Users } from 'lucide-react';
 import { formatDuration, formatDistance } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide } = useActiveRide();
-  const { isConnected, isPTTActive, connect, disconnect, startPTT, stopPTT } = useVoiceChannel();
+  const { isConnected, isMuted, connect, disconnect, toggleMute } = useVoiceChannel();
   const { openNavigation } = useNavigation();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
@@ -98,27 +98,30 @@ export default function ActiveRide() {
         </div>
       </div>
 
-      {/* PTT Button (Convoy Mode Only) */}
+      {/* Voice Toggle Button (Convoy Mode Only) */}
       {rideState.isConvoyMode && (
-        <div className="flex justify-center mb-6 animate-slide-up">
+        <div className="flex flex-col items-center mb-6 animate-slide-up">
           <button
-            onTouchStart={startPTT}
-            onTouchEnd={stopPTT}
-            onMouseDown={startPTT}
-            onMouseUp={stopPTT}
-            onMouseLeave={stopPTT}
+            onClick={toggleMute}
             className={cn(
               "w-24 h-24 rounded-full flex items-center justify-center transition-all touch-target-lg",
-              isPTTActive
-                ? "bg-ptt-active scale-110 animate-ptt-pulse shadow-glow"
+              !isMuted
+                ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
                 : "bg-ptt-inactive hover:bg-muted"
             )}
           >
-            <Mic className={cn(
-              "w-10 h-10 transition-colors",
-              isPTTActive ? "text-background" : "text-foreground"
-            )} />
+            {isMuted ? (
+              <MicOff className="w-10 h-10 text-foreground" />
+            ) : (
+              <Mic className="w-10 h-10 text-background" />
+            )}
           </button>
+          <p className={cn(
+            "mt-3 text-sm font-medium transition-colors",
+            !isMuted ? "text-accent" : "text-muted-foreground"
+          )}>
+            {isMuted ? "Tap to unmute" : "Live"}
+          </p>
         </div>
       )}
 
