@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useRideHistory } from '@/hooks/useRideHistory';
@@ -10,9 +11,14 @@ import { formatDuration, formatDistance } from '@/lib/format';
 export default function Home() {
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { stats } = useRideHistory();
+  const { stats, seedDemoData } = useRideHistory();
   const { rideState } = useActiveRide();
   const { convoy } = useConvoyState();
+
+  // Seed demo data on first load if no rides exist
+  useEffect(() => {
+    seedDemoData();
+  }, [seedDemoData]);
 
   // Redirect to active ride if one exists
   if (rideState.isActive) {
