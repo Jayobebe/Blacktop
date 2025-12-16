@@ -19,6 +19,7 @@ interface DestinationSearchProps {
   destination: ConvoyDestination | null;
   onSetDestination: (destination: ConvoyDestination) => void;
   onClearDestination: () => void;
+  onNavigate?: () => void;
   isLeader: boolean;
 }
 
@@ -72,6 +73,7 @@ export function DestinationSearch({
   destination,
   onSetDestination,
   onClearDestination,
+  onNavigate,
   isLeader,
 }: DestinationSearchProps) {
   const { openNavigation } = useNavigation();
@@ -162,6 +164,7 @@ export function DestinationSearch({
   const handleNavigate = () => {
     if (!destination) return;
     openNavigation(destination.lat, destination.lng, destination.name);
+    onNavigate?.();
   };
 
   // Show destination card if set

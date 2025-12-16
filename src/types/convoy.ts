@@ -19,5 +19,6 @@ export interface ConvoyMemberInfo {
   name: string;
   isLeader: boolean;
   isReady: boolean;
+  hasNavigated: boolean;
   joinedAt: string;
 }

@@ -21,6 +21,7 @@ export type Database = {
           current_lng: number | null
           current_speed: number | null
           distance_driven: number | null
+          has_navigated: boolean
           id: string
           is_speaking: boolean | null
           joined_at: string | null
@@ -34,6 +35,7 @@ export type Database = {
           current_lng?: number | null
           current_speed?: number | null
           distance_driven?: number | null
+          has_navigated?: boolean
           id?: string
           is_speaking?: boolean | null
           joined_at?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           current_lng?: number | null
           current_speed?: number | null
           distance_driven?: number | null
+          has_navigated?: boolean
           id?: string
           is_speaking?: boolean | null
           joined_at?: string | null
