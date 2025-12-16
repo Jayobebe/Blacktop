@@ -12,13 +12,26 @@ const defaultProfile: UserProfile = {
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
+// useSyncExternalStore requires getSnapshot() to return the *same reference*
+// when underlying data hasn't changed, otherwise React can get stuck in a rerender loop.
+let cachedRaw: string | null = null;
+let cachedProfile: UserProfile = defaultProfile;
+
 function readProfile(): UserProfile {
   try {
     const raw = window.localStorage.getItem(PROFILE_KEY);
-    if (!raw) return defaultProfile;
+
+    if (raw === cachedRaw) return cachedProfile;
+
+    cachedRaw = raw;
+
+    if (!raw) {
+      cachedProfile = defaultProfile;
+      return cachedProfile;
+    }
 
     const parsed = JSON.parse(raw) as Partial<UserProfile>;
-    return {
+    cachedProfile = {
       name: typeof parsed.name === 'string' ? parsed.name : '',
       createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : '',
       preferredNavApp:
@@ -26,9 +39,13 @@ function readProfile(): UserProfile {
           ? parsed.preferredNavApp
           : 'google',
     };
+
+    return cachedProfile;
   } catch (e) {
     console.error('Failed to read profile:', e);
-    return defaultProfile;
+    cachedRaw = null;
+    cachedProfile = defaultProfile;
+    return cachedProfile;
   }
 }
 
