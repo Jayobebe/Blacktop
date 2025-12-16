@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
-import { UserProfile, NavigationApp } from '@/types/blacktop';
+import { useCallback, useSyncExternalStore } from 'react';
+import { NavigationApp, UserProfile } from '@/types/blacktop';
 
 const PROFILE_KEY = 'blacktop_profile';
 
@@ -10,22 +9,72 @@ const defaultProfile: UserProfile = {
   preferredNavApp: 'google',
 };
 
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function readProfile(): UserProfile {
+  try {
+    const raw = window.localStorage.getItem(PROFILE_KEY);
+    if (!raw) return defaultProfile;
+
+    const parsed = JSON.parse(raw) as Partial<UserProfile>;
+    return {
+      name: typeof parsed.name === 'string' ? parsed.name : '',
+      createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : '',
+      preferredNavApp:
+        parsed.preferredNavApp === 'google' || parsed.preferredNavApp === 'waze' || parsed.preferredNavApp === 'apple'
+          ? parsed.preferredNavApp
+          : 'google',
+    };
+  } catch (e) {
+    console.error('Failed to read profile:', e);
+    return defaultProfile;
+  }
+}
+
+function writeProfile(profile: UserProfile) {
+  window.localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+}
+
+function emitChange() {
+  listeners.forEach((l) => l());
+}
+
+function subscribe(listener: Listener) {
+  listeners.add(listener);
+
+  // Keep multiple tabs in sync
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === PROFILE_KEY) listener();
+  };
+  window.addEventListener('storage', onStorage);
+
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
 export function useProfile() {
-  const [profile, setProfile] = useLocalStorage<UserProfile>(PROFILE_KEY, defaultProfile);
+  const profile = useSyncExternalStore(subscribe, readProfile, () => defaultProfile);
 
   const createProfile = useCallback((name: string) => {
-    setProfile({
-      name,
+    const next: UserProfile = {
+      name: name.trim(),
       createdAt: new Date().toISOString(),
       preferredNavApp: 'google',
-    });
-  }, [setProfile]);
+    };
+    writeProfile(next);
+    emitChange();
+  }, []);
 
   const updateNavApp = useCallback((app: NavigationApp) => {
-    setProfile(prev => ({ ...prev, preferredNavApp: app }));
-  }, [setProfile]);
+    const next: UserProfile = { ...profile, preferredNavApp: app };
+    writeProfile(next);
+    emitChange();
+  }, [profile]);
 
-  const hasProfile = profile.name !== '';
+  const hasProfile = profile.name.trim().length > 0;
 
   return {
     profile,
@@ -34,3 +83,4 @@ export function useProfile() {
     updateNavApp,
   };
 }
+
