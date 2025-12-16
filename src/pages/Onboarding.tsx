@@ -3,17 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
   const { createProfile } = useProfile();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      createProfile(name.trim());
+    if (!name.trim()) return;
+
+    setIsCreating(true);
+    try {
+      await createProfile(name.trim());
       navigate('/');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -41,15 +48,23 @@ export default function Onboarding() {
               className="h-14 text-lg bg-secondary border-border focus:border-primary"
               maxLength={20}
               autoFocus
+              disabled={isCreating}
             />
           </div>
 
           <Button
             type="submit"
-            disabled={!name.trim()}
+            disabled={!name.trim() || isCreating}
             className="w-full h-14 text-lg font-semibold touch-target"
           >
-            Get Started
+            {isCreating ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Setting up...
+              </>
+            ) : (
+              'Get Started'
+            )}
           </Button>
         </form>
 
