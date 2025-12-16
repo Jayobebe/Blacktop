@@ -52,22 +52,26 @@ const mockSearch = async (query: string): Promise<SearchResult[]> => {
   ];
 };
 
-function getNavigationUrl(destination: ConvoyDestination): string {
-  const { lat, lng } = destination;
+function openNavigation(destination: ConvoyDestination): void {
+  const { lat, lng, name } = destination;
+  const encodedName = encodeURIComponent(name);
   
-  // Detect platform and return appropriate deep link
+  // Detect platform
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const isAndroid = /Android/.test(navigator.userAgent);
   
   if (isIOS) {
-    // Apple Maps deep link
-    return `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
+    // Apple Maps - use location.href for deep links
+    window.location.href = `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
   } else if (isAndroid) {
-    // Google Maps deep link for Android
-    return `google.navigation:q=${lat},${lng}&mode=d`;
+    // Google Maps intent URL for Android
+    window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=&travelmode=driving`;
   } else {
-    // Fallback to Google Maps web
-    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    // Desktop - open in new tab
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
+      '_blank'
+    );
   }
 }
 
@@ -119,7 +123,7 @@ export function DestinationSearch({
 
   const handleNavigate = () => {
     if (!destination) return;
-    window.open(getNavigationUrl(destination), '_blank');
+    openNavigation(destination);
   };
 
   // Show destination card if set
