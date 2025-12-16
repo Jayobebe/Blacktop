@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ConvoyDestination } from '@/types/convoy';
+import { useNavigation } from '@/hooks/useNavigation';
 
 interface SearchResult {
   id: string;
@@ -52,35 +53,13 @@ const mockSearch = async (query: string): Promise<SearchResult[]> => {
   ];
 };
 
-function openNavigation(destination: ConvoyDestination): void {
-  const { lat, lng, name } = destination;
-  const encodedName = encodeURIComponent(name);
-  
-  // Detect platform
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
-  
-  if (isIOS) {
-    // Apple Maps - use location.href for deep links
-    window.location.href = `maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
-  } else if (isAndroid) {
-    // Google Maps intent URL for Android
-    window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=&travelmode=driving`;
-  } else {
-    // Desktop - open in new tab
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
-      '_blank'
-    );
-  }
-}
-
 export function DestinationSearch({
   destination,
   onSetDestination,
   onClearDestination,
   isLeader,
 }: DestinationSearchProps) {
+  const { openNavigation } = useNavigation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -123,7 +102,7 @@ export function DestinationSearch({
 
   const handleNavigate = () => {
     if (!destination) return;
-    openNavigation(destination);
+    openNavigation(destination.lat, destination.lng, destination.name);
   };
 
   // Show destination card if set
