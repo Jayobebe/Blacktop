@@ -170,7 +170,7 @@ export function DestinationSearch({
   }
 
   return (
-    <div className="relative">
+    <div className="relative z-50 isolate">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -185,7 +185,7 @@ export function DestinationSearch({
       </div>
       
       {showResults && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10 animate-fade-in">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 pointer-events-auto animate-fade-in">
           {results.map((result) => (
             <button
               key={result.id}
