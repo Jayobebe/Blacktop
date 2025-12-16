@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import { ConvoyState, ConvoyMemberInfo } from '@/types/convoy';
+import { ConvoyState, ConvoyMemberInfo, ConvoyDestination } from '@/types/convoy';
 import { useProfile } from './useProfile';
 
 type Listener = () => void;
@@ -11,6 +11,7 @@ let convoyState: ConvoyState = {
   isLeader: false,
   members: [],
   isActive: false,
+  destination: null,
 };
 
 function getSnapshot(): ConvoyState {
@@ -65,14 +66,13 @@ export function useConvoyState() {
       isLeader: true,
       members: [member],
       isActive: true,
+      destination: null,
     }));
 
     return { id, code };
   }, [profile.name]);
 
   const joinConvoy = useCallback((code: string) => {
-    // In a real implementation, this would verify the code with the server
-    // For now, we'll simulate joining
     const member: ConvoyMemberInfo = {
       id: crypto.randomUUID(),
       name: profile.name,
@@ -86,7 +86,6 @@ export function useConvoyState() {
       code: code.toUpperCase(),
       isLeader: false,
       members: [
-        // Simulated leader
         {
           id: crypto.randomUUID(),
           name: 'Convoy Leader',
@@ -97,6 +96,7 @@ export function useConvoyState() {
         member,
       ],
       isActive: true,
+      destination: null,
     }));
 
     return true;
@@ -109,6 +109,21 @@ export function useConvoyState() {
       isLeader: false,
       members: [],
       isActive: false,
+      destination: null,
+    }));
+  }, []);
+
+  const setDestination = useCallback((destination: ConvoyDestination) => {
+    setConvoyState((prev) => ({
+      ...prev,
+      destination,
+    }));
+  }, []);
+
+  const clearDestination = useCallback(() => {
+    setConvoyState((prev) => ({
+      ...prev,
+      destination: null,
     }));
   }, []);
 
@@ -117,5 +132,7 @@ export function useConvoyState() {
     createConvoy,
     joinConvoy,
     leaveConvoy,
+    setDestination,
+    clearDestination,
   };
 }
