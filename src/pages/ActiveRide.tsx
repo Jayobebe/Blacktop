@@ -86,11 +86,9 @@ export default function ActiveRide() {
 
   if (!rideState.isActive) return null;
 
-  // Sort members: leader first
+  // Sort members by top speed (highest first)
   const sortedMembers = [...convoy.members].sort((a, b) => {
-    if (a.isLeader) return -1;
-    if (b.isLeader) return 1;
-    return 0;
+    return (b.topSpeed || 0) - (a.topSpeed || 0);
   });
 
   const getMemberColor = (index: number, isLeader: boolean) => {
