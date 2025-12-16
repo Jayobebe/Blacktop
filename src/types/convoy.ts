@@ -16,6 +16,7 @@ export interface ConvoyState {
 
 export interface ConvoyMemberInfo {
   id: string;
+  userId: string;
   name: string;
   isLeader: boolean;
   isReady: boolean;

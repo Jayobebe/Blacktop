@@ -118,12 +118,15 @@ export function useConvoyState() {
     if (membersData) {
       const members: ConvoyMemberInfo[] = membersData.map((m: any) => ({
         id: m.id,
+        userId: m.user_id,
         name: m.profiles?.display_name || 'Unknown',
         isLeader: m.user_id === convoyData?.leader_id,
         isReady: true,
         hasNavigated: m.has_navigated || false,
         joinedAt: m.joined_at,
       }));
+
+      console.log('[Convoy] Refreshed members:', members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated })));
 
       setConvoyState((prev) => ({
         ...prev,
@@ -190,6 +193,7 @@ export function useConvoyState() {
 
     const member: ConvoyMemberInfo = {
       id: user.id,
+      userId: user.id,
       name: profile.name,
       isLeader: true,
       isReady: true,
@@ -279,6 +283,7 @@ export function useConvoyState() {
 
     const members: ConvoyMemberInfo[] = (membersData || []).map((m: any) => ({
       id: m.id,
+      userId: m.user_id,
       name: m.profiles?.display_name || 'Unknown',
       isLeader: m.user_id === convoy.leader_id,
       isReady: true,
@@ -393,6 +398,19 @@ export function useConvoyState() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !state.id) return;
 
+    console.log('[Convoy] Marking user as navigated:', user.id);
+
+    // Update local state immediately for responsive UI
+    setConvoyState((prev) => ({
+      ...prev,
+      members: prev.members.map(m => 
+        m.userId === user.id
+          ? { ...m, hasNavigated: true }
+          : m
+      ),
+    }));
+
+    // Persist to database
     const { error } = await supabase
       .from('convoy_members')
       .update({ has_navigated: true })
@@ -400,7 +418,9 @@ export function useConvoyState() {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Failed to mark as navigated:', error);
+      console.error('[Convoy] Failed to mark as navigated:', error);
+    } else {
+      console.log('[Convoy] Successfully marked as navigated in DB');
     }
   }, [state.id]);
 
