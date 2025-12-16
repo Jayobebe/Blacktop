@@ -84,7 +84,7 @@ export default function Lobby() {
       </header>
 
       {/* Destination Section */}
-      <section className="mb-4 animate-slide-up">
+      <section className="mb-4 animate-slide-up relative z-50">
         <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Destination</p>
         <DestinationSearch
           destination={convoy.destination}
@@ -95,7 +95,7 @@ export default function Lobby() {
       </section>
 
       {/* Members List */}
-      <div className="flex-1 animate-slide-up delay-100">
+      <div className="flex-1 animate-slide-up delay-100 relative z-0">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Riders ({convoy.members.length})
