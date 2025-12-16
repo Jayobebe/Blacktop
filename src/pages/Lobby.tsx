@@ -103,7 +103,16 @@ export default function Lobby() {
   };
 
   // Sort members: leader first, then by join time
-  const sortedMembers = [...convoy.members].sort((a, b) => {
+  // Add demo members if only one real member (for showcase)
+  const demoMembers = convoy.members.length === 1 ? [
+    ...convoy.members,
+    { id: 'demo-1', oderId: 'demo-user-1', name: 'Marcus', isLeader: false, isReady: true, hasNavigated: true, joinedAt: new Date().toISOString() },
+    { id: 'demo-2', oderId: 'demo-user-2', name: 'Sarah', isLeader: false, isReady: true, hasNavigated: false, joinedAt: new Date().toISOString() },
+    { id: 'demo-3', oderId: 'demo-user-3', name: 'Jake', isLeader: false, isReady: true, hasNavigated: true, joinedAt: new Date().toISOString() },
+    { id: 'demo-4', oderId: 'demo-user-4', name: 'Riley', isLeader: false, isReady: true, hasNavigated: false, joinedAt: new Date().toISOString() },
+  ] as any[] : convoy.members;
+
+  const sortedMembers = [...demoMembers].sort((a, b) => {
     if (a.isLeader) return -1;
     if (b.isLeader) return 1;
     return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
