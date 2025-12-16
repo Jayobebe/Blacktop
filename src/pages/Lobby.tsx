@@ -55,11 +55,11 @@ export default function Lobby() {
     }
   };
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
     if (isConnected) {
       disconnect();
     }
-    leaveConvoy();
+    await leaveConvoy();
     navigate('/');
   };
 
