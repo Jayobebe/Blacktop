@@ -52,21 +52,20 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-5 safe-top safe-bottom landscape-compact md:p-6 lg:p-8">
-      {/* Install Banner */}
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+      {/* Install Banner - hidden in landscape */}
       {showInstallBanner && (
-        <div className="mb-4 bg-accent/10 border border-accent/20 rounded-2xl p-3 flex items-center gap-3 animate-slide-up">
-          <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Download className="w-5 h-5 text-accent" />
+        <div className="mb-3 bg-accent/10 border border-accent/20 rounded-xl p-2 flex items-center gap-2 animate-slide-up landscape-hidden">
+          <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Download className="w-4 h-4 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium">Install Blacktop</p>
-            <p className="text-xs text-muted-foreground">Add to home screen for the best experience</p>
+            <p className="text-xs font-medium">Install Blacktop</p>
           </div>
           <Button
             size="sm"
             onClick={() => navigate('/install')}
-            className="flex-shrink-0"
+            className="flex-shrink-0 h-7 text-xs"
           >
             Install
           </Button>
@@ -74,112 +73,108 @@ export default function Home() {
             onClick={dismissInstallBanner}
             className="p-1 rounded-full hover:bg-secondary/50 flex-shrink-0"
           >
-            <X className="w-4 h-4 text-muted-foreground" />
+            <X className="w-3 h-3 text-muted-foreground" />
           </button>
         </div>
       )}
 
-      {/* Header */}
-      <header className="flex items-center justify-between mb-6 animate-fade-in">
+      {/* Header - compact */}
+      <header className="flex items-center justify-between mb-3 md:mb-4 animate-fade-in">
         <div>
-          <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">Welcome back</p>
-          <h1 className="text-2xl md:text-3xl font-display font-semibold tracking-tight">{profile.name}</h1>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5 landscape-hidden">Welcome back</p>
+          <h1 className="text-xl md:text-2xl font-display font-semibold tracking-tight">{profile.name}</h1>
         </div>
         <button
           onClick={() => navigate('/settings')}
-          className="p-3 rounded-2xl bg-secondary/50 hover:bg-secondary border border-border/30 transition-all duration-200 touch-target"
+          className="p-2 rounded-xl bg-secondary/50 hover:bg-secondary border border-border/30 transition-all duration-200 touch-target"
         >
-          <Settings className="w-5 h-5 text-muted-foreground" />
+          <Settings className="w-4 h-4 text-muted-foreground" />
         </button>
       </header>
 
-      {/* Main content - horizontal layout on wider screens */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-5 lg:gap-6">
-        {/* Quick Stats - side panel on desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-2 gap-3 animate-slide-up lg:w-72 lg:flex-shrink-0">
+      {/* Main content - horizontal layout */}
+      <div className="flex-1 flex flex-row gap-3 md:gap-4 min-h-0">
+        {/* Quick Stats - side panel */}
+        <div className="grid grid-cols-2 gap-2 w-40 md:w-48 flex-shrink-0 content-start">
           {[
-            { label: 'Total Rides', value: stats.totalRides, unit: null },
+            { label: 'Rides', value: stats.totalRides, unit: null },
             { label: 'Distance', value: formatDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
-            { label: 'Top Speed', value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) },
-            { label: 'Time Riding', value: formatDuration(stats.totalDuration), unit: null },
+            { label: 'Top', value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) },
+            { label: 'Time', value: formatDuration(stats.totalDuration), unit: null },
           ].map((stat, i) => (
             <div 
               key={stat.label}
-              className="bg-card/50 backdrop-blur-sm rounded-2xl p-4 border border-border/30 animate-slide-up"
+              className="bg-card/50 backdrop-blur-sm rounded-xl p-2 md:p-3 border border-border/30 animate-slide-up"
               style={{ animationDelay: `${i * 50}ms` }}
             >
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-1.5">{stat.label}</p>
-              <p className="text-2xl font-mono font-semibold tracking-tight">
+              <p className="text-muted-foreground text-[9px] uppercase tracking-widest mb-0.5">{stat.label}</p>
+              <p className="text-base md:text-lg font-mono font-semibold tracking-tight">
                 {stat.value}
-                {stat.unit && <span className="text-sm text-muted-foreground/70 ml-1 font-normal">{stat.unit}</span>}
+                {stat.unit && <span className="text-[10px] text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
               </p>
             </div>
           ))}
         </div>
 
         {/* Convoy Buttons - main area */}
-        <div className="flex-1 flex flex-col md:flex-row lg:flex-col gap-3 animate-slide-up delay-100">
+        <div className="flex-1 flex flex-col gap-2 md:gap-3 animate-slide-up delay-100">
           <button
             onClick={() => navigate('/create-convoy')}
-            className="flex-1 min-h-[110px] md:min-h-[130px] bg-accent hover:bg-accent/90 text-accent-foreground rounded-3xl flex flex-col items-center justify-center gap-2 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+            className="flex-1 min-h-[70px] bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
           >
-            <div className="w-14 h-14 rounded-2xl bg-accent-foreground/10 flex items-center justify-center">
-              <Users className="w-7 h-7" />
+            <div className="w-10 h-10 rounded-xl bg-accent-foreground/10 flex items-center justify-center">
+              <Users className="w-5 h-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight">Start Convoy</span>
-            <span className="text-xs opacity-70 landscape-hidden">Create a new ride group</span>
+            <div className="text-left">
+              <span className="text-base font-semibold tracking-tight block">Start Convoy</span>
+              <span className="text-[10px] opacity-70 landscape-hidden">Create a new ride group</span>
+            </div>
           </button>
 
           <button
             onClick={() => navigate('/join-convoy')}
-            className="flex-1 min-h-[90px] md:min-h-[110px] bg-card/50 hover:bg-secondary border border-border/40 hover:border-border rounded-3xl flex flex-col items-center justify-center gap-2 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            className="flex-1 min-h-[60px] bg-card/50 hover:bg-secondary border border-border/40 hover:border-border rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
           >
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
-              <UserPlus className="w-6 h-6 text-muted-foreground" />
+            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
+              <UserPlus className="w-4 h-4 text-muted-foreground" />
             </div>
-            <span className="text-base font-semibold tracking-tight">Join Convoy</span>
-            <span className="text-xs text-muted-foreground landscape-hidden">Enter a convoy code</span>
+            <div className="text-left">
+              <span className="text-sm font-semibold tracking-tight block">Join Convoy</span>
+              <span className="text-[10px] text-muted-foreground landscape-hidden">Enter a convoy code</span>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <nav className="flex justify-around mt-5 pt-4 border-t border-border/30 animate-slide-up delay-200 md:justify-center md:gap-6">
+      {/* Bottom Navigation - compact */}
+      <nav className="flex justify-around mt-3 pt-2 border-t border-border/30 animate-slide-up delay-200">
         <button
           onClick={() => navigate('/demo')}
-          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl hover:bg-accent/10 text-accent transition-all duration-200 touch-target group"
+          className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-accent/10 text-accent transition-all duration-200 touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <Play className="w-5 h-5" />
-          </div>
-          <span className="text-[11px] font-medium">Demo</span>
+          <Play className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Demo</span>
         </button>
         <button
           onClick={() => navigate('/history')}
-          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl hover:bg-secondary/50 transition-all duration-200 touch-target group"
+          className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-secondary/50 transition-all duration-200 touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <History className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <span className="text-[11px] text-muted-foreground font-medium">History</span>
+          <History className="w-5 h-5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground font-medium">History</span>
         </button>
         <button
           onClick={() => navigate('/stats')}
-          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl hover:bg-secondary/50 transition-all duration-200 touch-target group"
+          className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-secondary/50 transition-all duration-200 touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <BarChart3 className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <span className="text-[11px] text-muted-foreground font-medium">Stats</span>
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground font-medium">Stats</span>
         </button>
         <button
           onClick={() => navigate('/settings')}
-          className="flex flex-col items-center gap-1.5 p-3 rounded-2xl hover:bg-secondary/50 transition-all duration-200 touch-target group"
+          className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-secondary/50 transition-all duration-200 touch-target"
         >
-          <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <Settings className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <span className="text-[11px] text-muted-foreground font-medium">Settings</span>
+          <Settings className="w-5 h-5 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground font-medium">Settings</span>
         </button>
       </nav>
     </div>

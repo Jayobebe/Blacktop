@@ -11,7 +11,7 @@ import { ConvoyMemberInfo } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route, Signal, SignalLow, SignalMedium, SignalHigh } from 'lucide-react';
+import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -201,119 +201,111 @@ export default function ActiveRide() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background p-4 safe-top safe-bottom landscape-compact md:p-6 lg:p-8">
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6">
+      {/* Main content area - always horizontal in landscape */}
+      <div className="flex-1 flex flex-row gap-3 md:gap-4 min-h-0">
         {/* Left side - Speed and Stats */}
-        <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <div className="flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0">
+          {/* Header - compact */}
+          <div className="flex items-center gap-2 mb-2 md:mb-4">
             {rideState.isConvoyMode && (
-              <span className="flex items-center gap-1 text-accent text-sm font-medium px-2 py-1 bg-accent/10 rounded">
-                <Users className="w-4 h-4" />
+              <span className="flex items-center gap-1 text-accent text-xs font-medium px-2 py-0.5 bg-accent/10 rounded">
+                <Users className="w-3 h-3" />
                 {convoy.isLeader ? 'LEADER' : 'CONVOY'}
               </span>
             )}
-            <span className="text-muted-foreground text-sm">Ride Active</span>
-            {/* GPS Signal Indicator */}
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
           </div>
 
+          {/* Speed Display - responsive sizing */}
           <div className="text-center">
-            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-2">Current Speed</p>
+            <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">Speed</p>
             <div className={cn(
-              "font-mono text-7xl md:text-8xl lg:text-9xl font-bold transition-all",
+              "font-mono font-bold transition-all leading-none",
+              "text-5xl md:text-7xl lg:text-8xl landscape-speed-text",
               formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 130 : 80) && "text-warning animate-speed-glow",
               formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 160 : 100) && "text-destructive"
             )}>
               {formatSpeed(rideState.currentSpeed, settings.speedUnit)}
             </div>
-            <p className="text-muted-foreground text-lg">{getSpeedLabel(settings.speedUnit)}</p>
+            <p className="text-muted-foreground text-xs">{getSpeedLabel(settings.speedUnit)}</p>
           </div>
 
-          {/* Stats Grid */}
-          <div className="flex gap-6 md:gap-8 mt-6 md:mt-8">
+          {/* Stats Row - compact horizontal */}
+          <div className="flex gap-4 md:gap-6 mt-3 md:mt-4">
             <div className="text-center">
-              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
-              <p className="font-mono text-xl md:text-2xl font-bold">
+              <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Dist</p>
+              <p className="font-mono text-base md:text-lg font-bold">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
-                <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
+                <span className="text-[10px] text-muted-foreground ml-0.5">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
             <div className="text-center">
-              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Duration</p>
-              <p className="font-mono text-xl md:text-2xl font-bold">{formatDuration(rideState.duration)}</p>
+              <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Time</p>
+              <p className="font-mono text-base md:text-lg font-bold">{formatDuration(rideState.duration)}</p>
             </div>
             <div className="text-center">
-              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
-              <p className="font-mono text-xl md:text-2xl font-bold">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
+              <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Max</p>
+              <p className="font-mono text-base md:text-lg font-bold">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
             </div>
           </div>
+        </div>
 
-          {/* Controls row */}
-          <div className="flex items-center gap-4 mt-6 md:mt-8">
-            {/* Navigation button */}
+        {/* Center - Controls */}
+        <div className="flex flex-col items-center justify-center gap-2 md:gap-3 px-2">
+          {/* Navigation button */}
+          <Button
+            variant="ghost"
+            onClick={() => openNavigation()}
+            className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-secondary hover:bg-muted touch-target"
+          >
+            <Navigation className="w-5 h-5 md:w-6 md:h-6" />
+          </Button>
+
+          {/* Voice Toggle Button (Convoy Mode Only) */}
+          {rideState.isConvoyMode && (
+            <button
+              onClick={toggleMute}
+              className={cn(
+                "w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all touch-target",
+                !isMuted
+                  ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
+                  : "bg-ptt-inactive hover:bg-muted"
+              )}
+            >
+              {isMuted ? (
+                <MicOff className="w-6 h-6 md:w-7 md:h-7 text-foreground" />
+              ) : (
+                <Mic className="w-6 h-6 md:w-7 md:h-7 text-background" />
+              )}
+            </button>
+          )}
+
+          {/* Toggle members panel button */}
+          {rideState.isConvoyMode && (
             <Button
               variant="ghost"
-              onClick={() => openNavigation()}
-              className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-secondary hover:bg-muted touch-target"
+              onClick={() => setShowMembers(!showMembers)}
+              className={cn(
+                "h-10 w-10 md:h-12 md:w-12 rounded-full touch-target",
+                showMembers ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
+              )}
             >
-              <Navigation className="w-6 h-6 md:w-7 md:h-7" />
+              <Users className="w-5 h-5 md:w-6 md:h-6" />
             </Button>
-
-            {/* Voice Toggle Button (Convoy Mode Only) */}
-            {rideState.isConvoyMode && (
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={toggleMute}
-                  className={cn(
-                    "w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all touch-target-lg",
-                    !isMuted
-                      ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
-                      : "bg-ptt-inactive hover:bg-muted"
-                  )}
-                >
-                  {isMuted ? (
-                    <MicOff className="w-8 h-8 md:w-10 md:h-10 text-foreground" />
-                  ) : (
-                    <Mic className="w-8 h-8 md:w-10 md:h-10 text-background" />
-                  )}
-                </button>
-                <p className={cn(
-                  "mt-2 text-xs md:text-sm font-medium transition-colors",
-                  !isMuted ? "text-accent" : "text-muted-foreground"
-                )}>
-                  {isMuted ? "Muted" : "Live"}
-                </p>
-              </div>
-            )}
-
-            {/* Toggle members panel button */}
-            {rideState.isConvoyMode && (
-              <Button
-                variant="ghost"
-                onClick={() => setShowMembers(!showMembers)}
-                className={cn(
-                  "h-14 w-14 md:h-16 md:w-16 rounded-full touch-target",
-                  showMembers ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
-                )}
-              >
-                <Users className="w-6 h-6 md:w-7 md:h-7" />
-              </Button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Right side - Convoy Members Panel */}
         {rideState.isConvoyMode && showMembers && (
-          <div className="lg:w-80 animate-slide-up">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-                <Users className="w-4 h-4" />
+          <div className="w-56 md:w-64 lg:w-72 animate-slide-up flex-shrink-0">
+            <div className="bg-card border border-border rounded-xl p-2 md:p-3 h-full flex flex-col">
+              <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                <Users className="w-3 h-3" />
                 Convoy ({convoy.members.length})
               </h3>
               
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
                 {sortedMembers.map((member, index) => {
                   const color = getMemberColor(index, member.isLeader);
                   const isSpeaking = speakingUsers.has(member.userId);
@@ -322,49 +314,41 @@ export default function ActiveRide() {
                     <div
                       key={member.id}
                       className={cn(
-                        "flex items-center gap-3 p-2.5 rounded-lg border transition-all",
+                        "flex items-center gap-2 p-1.5 rounded-lg border transition-all",
                         color.bg,
-                        isSpeaking ? `ring-2 ${color.ring} border-transparent` : "border-border/50"
+                        isSpeaking ? `ring-1 ${color.ring} border-transparent` : "border-border/50"
                       )}
                     >
                       {/* Avatar with speaking glow */}
                       <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
+                        "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
                         color.bg,
-                        isSpeaking && "shadow-[0_0_12px_4px] shadow-accent/60 scale-110"
+                        isSpeaking && "shadow-[0_0_8px_2px] shadow-accent/60 scale-105"
                       )}>
                         {member.isLeader ? (
-                          <Crown className={cn("w-5 h-5", color.text)} />
+                          <Crown className={cn("w-3.5 h-3.5", color.text)} />
                         ) : (
-                          <User className={cn("w-5 h-5", color.text)} />
+                          <User className={cn("w-3.5 h-3.5", color.text)} />
                         )}
                       </div>
                       
-                      {/* Name and speaking indicator */}
+                      {/* Name */}
                       <div className="flex-1 min-w-0">
-                        <p className={cn("font-medium text-sm truncate", color.text)}>
+                        <p className={cn("font-medium text-xs truncate", color.text)}>
                           {member.name}
-                          {isSpeaking && <span className="ml-1 text-xs opacity-75">🎤</span>}
+                          {isSpeaking && <span className="ml-1 text-[10px] opacity-75">🎤</span>}
                         </p>
                         {settings.showSpeedRankings && (
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Gauge className="w-3 h-3" />
-                              {formatSpeed(member.currentSpeed || 0, settings.speedUnit)} {settings.speedUnit}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Route className="w-3 h-3" />
-                              {formatDistance(member.distanceDriven || 0, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
-                            </span>
-                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatSpeed(member.currentSpeed || 0, settings.speedUnit)} {settings.speedUnit}
+                          </p>
                         )}
                       </div>
                       
-                      {/* Top speed badge - only if rankings enabled */}
+                      {/* Top speed badge - compact */}
                       {settings.showSpeedRankings && (
                         <div className="text-right flex-shrink-0">
-                          <p className="text-xs text-muted-foreground">Top</p>
-                          <p className={cn("font-mono text-sm font-bold", color.text)}>
+                          <p className={cn("font-mono text-xs font-bold", color.text)}>
                             {formatSpeed(member.topSpeed || 0, settings.speedUnit)}
                           </p>
                         </div>
@@ -378,29 +362,32 @@ export default function ActiveRide() {
         )}
       </div>
 
-      {/* End Ride Button - bottom on mobile, fixed position on desktop */}
-      <div className="mt-4 md:mt-0 md:absolute md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:w-auto animate-slide-up delay-100">
+      {/* End Ride Button - always at bottom, compact */}
+      <div className="mt-2 md:mt-3 flex justify-center animate-slide-up">
         {!showEndConfirm ? (
           <Button
             onClick={() => setShowEndConfirm(true)}
             variant="outline"
-            className="w-full md:w-auto md:min-w-[200px] h-12 md:h-14 text-base md:text-lg font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
+            size="sm"
+            className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
-            <Square className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-            {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY RIDE' : 'END RIDE'}
+            <Square className="w-3.5 h-3.5 mr-1.5" />
+            {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY' : 'END RIDE'}
           </Button>
         ) : (
-          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+          <div className="flex gap-2">
             <Button
               onClick={handleEndRide}
-              className="h-12 md:h-14 md:min-w-[200px] text-base md:text-lg font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
+              size="sm"
+              className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              {rideState.isConvoyMode && convoy.isLeader ? 'END FOR ALL' : 'CONFIRM END'}
+              {rideState.isConvoyMode && convoy.isLeader ? 'END FOR ALL' : 'CONFIRM'}
             </Button>
             <Button
               onClick={() => setShowEndConfirm(false)}
               variant="ghost"
-              className="h-10 md:h-14 touch-target"
+              size="sm"
+              className="h-9 md:h-10"
             >
               Cancel
             </Button>

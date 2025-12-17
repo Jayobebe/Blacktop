@@ -135,47 +135,47 @@ export default function Lobby() {
   if (!convoy.isActive) return null;
 
   return (
-    <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom landscape-compact md:p-6 lg:p-8">
-      {/* Header with Code - compact on landscape */}
-      <header className="mb-3 md:mb-4 animate-fade-in flex items-center justify-between">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6">
+      {/* Header with Code - compact */}
+      <header className="mb-2 md:mb-3 animate-fade-in flex items-center justify-between">
         <div>
-          <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Convoy Code</p>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5">Convoy Code</p>
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1.5 md:px-4 md:py-2 hover:bg-muted transition-colors"
+            className="flex items-center gap-2 bg-card border border-border rounded-lg px-2 py-1 hover:bg-muted transition-colors"
           >
-            <span className="font-mono text-xl md:text-2xl font-bold tracking-widest">{convoy.code}</span>
+            <span className="font-mono text-lg md:text-xl font-bold tracking-widest">{convoy.code}</span>
             {copied ? (
-              <Check className="w-4 h-4 md:w-5 md:h-5 text-accent" />
+              <Check className="w-4 h-4 text-accent" />
             ) : (
-              <Copy className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+              <Copy className="w-4 h-4 text-muted-foreground" />
             )}
           </button>
         </div>
         
-        {/* Voice Toggle - moved to header on wider screens */}
+        {/* Voice Toggle */}
         <button
           onClick={toggleMute}
           className={cn(
-            "w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all touch-target",
+            "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all touch-target",
             !isMuted
               ? "bg-ptt-active shadow-glow"
               : "bg-ptt-inactive hover:bg-muted"
           )}
         >
           {isMuted ? (
-            <MicOff className="w-5 h-5 md:w-6 md:h-6 text-foreground" />
+            <MicOff className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
           ) : (
-            <Mic className="w-5 h-5 md:w-6 md:h-6 text-background" />
+            <Mic className="w-4 h-4 md:w-5 md:h-5 text-background" />
           )}
         </button>
       </header>
 
-      {/* Main content - horizontal layout on wider screens */}
-      <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6">
+      {/* Main content - horizontal layout */}
+      <div className="flex-1 flex flex-row gap-3 md:gap-4 min-h-0">
         {/* Left side - Destination */}
-        <div className="md:flex-1 md:max-w-md animate-slide-up relative z-50">
-          <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Destination</p>
+        <div className="flex-1 flex flex-col animate-slide-up relative z-50 min-w-0">
+          <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">Destination</p>
           <DestinationSearch
             destination={convoy.destination}
             onSetDestination={setDestination}
@@ -186,11 +186,11 @@ export default function Lobby() {
           
           {/* Status message */}
           {convoy.destination && (
-            <div className="mt-3 text-center md:text-left animate-fade-in">
-              <p className="text-sm text-muted-foreground">
+            <div className="mt-2 animate-fade-in">
+              <p className="text-xs text-muted-foreground">
                 {allMembersNavigated 
-                  ? 'All riders ready - starting ride...'
-                  : `Waiting for riders (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
+                  ? 'All riders ready!'
+                  : `Waiting (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
                 }
               </p>
             </div>
@@ -198,14 +198,14 @@ export default function Lobby() {
         </div>
 
         {/* Right side - Members List */}
-        <div className="flex-1 animate-slide-up delay-100 relative z-0">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="w-52 md:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
               Riders ({convoy.members.length})
             </h2>
           </div>
           
-          <div className="space-y-2 md:max-h-[300px] md:overflow-y-auto md:pr-2">
+          <div className="space-y-1 overflow-y-auto flex-1 min-h-0 pr-1">
             {sortedMembers.map((member, index) => {
               const color = getMemberColor(index, member.isLeader);
               const isTransferring = transferTarget === member.userId;
@@ -215,74 +215,57 @@ export default function Lobby() {
                 <div
                   key={member.id}
                   className={cn(
-                    "flex items-center gap-3 bg-card border rounded-lg p-2.5 md:p-3 animate-slide-up transition-all",
+                    "flex items-center gap-2 bg-card border rounded-lg p-1.5 animate-slide-up transition-all",
                     color.border,
-                    isSpeaking && "ring-2 ring-accent ring-offset-2 ring-offset-background"
+                    isSpeaking && "ring-1 ring-accent ring-offset-1 ring-offset-background"
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className={cn(
-                    "w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
+                    "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
                     color.bg,
-                    isSpeaking && "shadow-[0_0_12px_4px] shadow-accent/60 scale-110"
+                    isSpeaking && "shadow-[0_0_8px_2px] shadow-accent/60 scale-105"
                   )}>
                     {member.isLeader ? (
-                      <Crown className={cn("w-4 h-4", color.text)} />
+                      <Crown className={cn("w-3.5 h-3.5", color.text)} />
                     ) : (
-                      <User className={cn("w-4 h-4", color.text)} />
+                      <User className={cn("w-3.5 h-3.5", color.text)} />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn("font-medium text-sm truncate", color.text)}>{member.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {member.isLeader ? 'Leader' : 'Rider'}
-                    </p>
+                    <p className={cn("font-medium text-xs truncate", color.text)}>{member.name}</p>
                   </div>
                   
-                  {/* Transfer leadership button (for leader viewing non-leaders) */}
-                  {convoy.isLeader && !member.isLeader && sortedMembers.length > 1 && (
-                    <>
-                      {isTransferring ? (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-xs"
-                            onClick={() => handleTransferLeadership(member.userId)}
-                          >
-                            Confirm
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-xs text-muted-foreground"
-                            onClick={() => setTransferTarget(null)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setTransferTarget(member.userId)}
-                          className="p-1.5 rounded hover:bg-muted transition-colors"
-                          title="Transfer leadership"
-                        >
-                          <ArrowRightLeft className="w-3.5 h-3.5 text-muted-foreground" />
-                        </button>
-                      )}
-                    </>
+                  {/* Transfer leadership button */}
+                  {convoy.isLeader && !member.isLeader && sortedMembers.length > 1 && !isTransferring && (
+                    <button
+                      onClick={() => setTransferTarget(member.userId)}
+                      className="p-1 rounded hover:bg-muted transition-colors"
+                    >
+                      <ArrowRightLeft className="w-3 h-3 text-muted-foreground" />
+                    </button>
+                  )}
+
+                  {isTransferring && (
+                    <div className="flex items-center gap-0.5">
+                      <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px]" onClick={() => handleTransferLeadership(member.userId)}>
+                        OK
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-muted-foreground" onClick={() => setTransferTarget(null)}>
+                        ✕
+                      </Button>
+                    </div>
                   )}
                   
                   {/* Navigation status */}
                   {!isTransferring && (
                     member.hasNavigated ? (
-                      <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-1 rounded flex-shrink-0">
-                        <Navigation className="w-3 h-3" />
-                        Ready
+                      <span className="flex items-center gap-0.5 text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded flex-shrink-0">
+                        <Navigation className="w-2.5 h-2.5" />
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
-                        Waiting
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex-shrink-0">
+                        Wait
                       </span>
                     )
                   )}
@@ -293,29 +276,32 @@ export default function Lobby() {
         </div>
       </div>
 
-      {/* Action Buttons - horizontal on wider screens */}
-      <div className="mt-4 md:mt-6 animate-slide-up delay-300">
+      {/* Action Buttons - compact */}
+      <div className="mt-2 md:mt-3 animate-slide-up delay-300">
         {!showLeaveConfirm ? (
           <Button
             onClick={() => setShowLeaveConfirm(true)}
             variant="outline"
-            className="w-full md:w-auto md:min-w-[200px] h-11 md:h-12 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
+            size="sm"
+            className="h-9 px-4 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Leave Convoy
+            <LogOut className="w-3.5 h-3.5 mr-1.5" />
+            Leave
           </Button>
         ) : (
-          <div className="flex flex-col md:flex-row gap-2 md:gap-3">
+          <div className="flex gap-2">
             <Button
               onClick={handleLeave}
-              className="h-11 md:h-12 md:min-w-[180px] bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
+              size="sm"
+              className="h-9 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Confirm Leave
             </Button>
             <Button
               onClick={() => setShowLeaveConfirm(false)}
               variant="ghost"
-              className="h-10 md:h-12 touch-target"
+              size="sm"
+              className="h-9"
             >
               Cancel
             </Button>
