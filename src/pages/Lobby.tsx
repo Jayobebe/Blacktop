@@ -165,7 +165,8 @@ export default function Lobby() {
       if (isConnected) {
         disconnect();
       }
-      await leaveConvoy();
+      // Pass true to skip deactivation since we just transferred leadership
+      await leaveConvoy(true);
       navigate('/');
     }
   };
