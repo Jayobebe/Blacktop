@@ -381,36 +381,35 @@ export default function ActiveRide() {
 
           {/* Speed Display - large and prominent */}
           <div className="text-center">
-            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1 landscape:hidden">Speed</p>
             <div className={cn(
-              "font-mono font-bold transition-all leading-none",
-              "text-8xl md:text-9xl lg:text-[10rem] landscape:text-7xl",
+              "font-mono font-black transition-all leading-none",
+              "text-[7rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem]",
               formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 130 : 80) && "text-warning animate-speed-glow",
               formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 160 : 100) && "text-destructive"
             )}>
               {formatSpeed(rideState.currentSpeed, settings.speedUnit)}
             </div>
-            <p className="text-muted-foreground text-sm landscape:text-xs">{getSpeedLabel(settings.speedUnit)}</p>
+            <p className="text-muted-foreground text-base landscape:text-sm -mt-3">{getSpeedLabel(settings.speedUnit)}</p>
           </div>
 
           {/* Stats Row - larger and more visible */}
-          <div className="flex gap-6 md:gap-10 mt-4 landscape:mt-3 md:mt-6">
+          <div className="flex gap-8 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
             <div className="text-center min-w-0">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5">Distance</p>
-              <p className="font-mono text-xl landscape:text-lg md:text-2xl font-bold truncate">
+              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
+              <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
-                <span className="text-xs text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
+                <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
             <div className="text-center min-w-0">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5">Time</p>
-              <p className="font-mono text-xl landscape:text-lg md:text-2xl font-bold truncate">{formatDuration(rideState.duration)}</p>
+              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
+              <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
             <div className="text-center min-w-0">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5">Max</p>
-              <p className="font-mono text-xl landscape:text-lg md:text-2xl font-bold truncate">
+              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
+              <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">
                 {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
-                <span className="text-xs text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
+                <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
               </p>
             </div>
           </div>
