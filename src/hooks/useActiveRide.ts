@@ -3,8 +3,8 @@ import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { useRideHistory } from './useRideHistory';
 import { supabase } from '@/integrations/supabase/client';
 
-const SPEED_SMOOTHING_FACTOR = 0.3;
-const MIN_SPEED_THRESHOLD = 1; // mph - ignore speeds below this (GPS noise when stationary)
+const SPEED_SMOOTHING_FACTOR = 0.6; // Higher = more responsive (Waze-like)
+const MIN_SPEED_THRESHOLD = 0.5; // mph - lower threshold to show movement earlier
 const MAX_ACCURACY_THRESHOLD = 150; // meters - allow less accurate positions
 const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
 const MAX_DISTANCE_JUMP = 1; // miles - reject distance jumps larger than this
@@ -138,7 +138,7 @@ function handlePositionUpdate(position: GeolocationPosition) {
   // Apply exponential smoothing to reduce jitter
   smoothedSpeed = SPEED_SMOOTHING_FACTOR * currentSpeed + (1 - SPEED_SMOOTHING_FACTOR) * smoothedSpeed;
 
-  // Round and apply minimum threshold (ignore drift)
+  // Apply minimum threshold (ignore drift) but don't over-round for responsiveness
   const displaySpeed = smoothedSpeed < MIN_SPEED_THRESHOLD ? 0 : Math.round(smoothedSpeed);
 
   const gpsPoint: GpsPoint = {
@@ -235,8 +235,8 @@ export function useActiveRide(convoyId?: string | null) {
 
     const geoOptions: PositionOptions = {
       enableHighAccuracy: true,
-      timeout: 30000,
-      maximumAge: 1000, // Allow slightly stale positions to reduce battery usage
+      timeout: 10000,
+      maximumAge: 0, // Always get fresh position (like Waze)
     };
 
     console.log('[GPS] Starting ride tracking with options:', geoOptions);
