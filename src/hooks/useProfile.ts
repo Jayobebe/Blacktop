@@ -81,7 +81,7 @@ export function useProfile() {
         .from('profiles')
         .select('display_name')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error || !data?.display_name) {
         // No valid profile in database - clear local storage and require onboarding
@@ -104,6 +104,21 @@ export function useProfile() {
     }
     setIsLoading(false);
   };
+
+  const resetIdentity = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+
+    window.localStorage.removeItem(PROFILE_KEY);
+    setProfile(defaultProfile);
+    setUser(null);
+    setIsValidSession(false);
+    setIsLoading(false);
+  }, []);
 
   // Sync local profile with state
   useEffect(() => {
@@ -196,5 +211,6 @@ export function useProfile() {
     createProfile,
     updateNavApp,
     updateName,
+    resetIdentity,
   };
 }
