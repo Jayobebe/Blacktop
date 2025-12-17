@@ -143,12 +143,9 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, showSummary, endingFlow, navigate]);
 
-  // Sync convoy pause state with ride tracking
-  useEffect(() => {
-    if (rideState.isConvoyMode) {
-      setRidePaused(convoy.isPaused);
-    }
-  }, [convoy.isPaused, rideState.isConvoyMode, setRidePaused]);
+  // Track if this ride was started individually (not via leader broadcast)
+  // We don't auto-sync pause state on mount - only respond to explicit broadcasts
+  // This prevents individually started rides from being paused immediately
 
   // Subscribe to convoy control channel for 'end-ride' broadcast from leader
   useEffect(() => {
