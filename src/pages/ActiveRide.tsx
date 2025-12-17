@@ -265,43 +265,41 @@ export default function ActiveRide() {
     }
 
     // CRITICAL: If leader in convoy mode, broadcast 'end-ride' BEFORE ending ride
-    // This ensures the control channel is still active when sending
+    // IMPORTANT: Don't rely on an existing channel ref; always await SUBSCRIBED for reliable delivery.
     if (wasConvoyMode && wasLeader && convoyId) {
       console.log('[ActiveRide] Leader broadcasting end-ride to all members');
       try {
-        if (controlChannelRef.current) {
-          console.log('[ActiveRide] Using existing control channel for end-ride broadcast');
-          await controlChannelRef.current.send({
-            type: 'broadcast',
-            event: 'end-ride',
-            payload: { at: Date.now() },
-          });
-          // Wait for message to be delivered
-          await new Promise(resolve => setTimeout(resolve, 300));
-          console.log('[ActiveRide] End-ride broadcast sent successfully');
-        } else {
-          // Fallback: create new channel if ref not available
-          console.log('[ActiveRide] Creating new channel for end-ride broadcast');
-          const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
-          await new Promise<void>((resolve) => {
-            broadcastChannel.subscribe(async (status) => {
-              if (status !== 'SUBSCRIBED') return;
+        const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`, {
+          config: { broadcast: { self: false } },
+        });
+
+        await new Promise<void>((resolve, reject) => {
+          broadcastChannel.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
               try {
                 await broadcastChannel.send({
                   type: 'broadcast',
                   event: 'end-ride',
                   payload: { at: Date.now() },
                 });
-                console.log('[ActiveRide] End-ride broadcast sent via new channel');
+                console.log('[ActiveRide] End-ride broadcast sent successfully');
+              } catch (err) {
+                reject(err);
+                return;
               } finally {
+                // Small delay to help flush the message before channel cleanup
                 setTimeout(() => {
                   supabase.removeChannel(broadcastChannel);
                   resolve();
-                }, 300);
+                }, 150);
               }
-            });
+            }
+
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              reject(new Error(`Broadcast channel failed: ${status}`));
+            }
           });
-        }
+        });
       } catch (err) {
         console.error('[ActiveRide] Failed to broadcast end-ride:', err);
       }
