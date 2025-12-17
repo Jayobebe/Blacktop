@@ -3,12 +3,13 @@ import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { useRideHistory } from './useRideHistory';
 import { supabase } from '@/integrations/supabase/client';
 
-const SPEED_SMOOTHING_FACTOR = 0.6; // Higher = more responsive (Waze-like)
-const MIN_SPEED_THRESHOLD = 0.5; // mph - lower threshold to show movement earlier
-const MAX_ACCURACY_THRESHOLD = 150; // meters - allow less accurate positions
+const SPEED_SMOOTHING_FACTOR = 0.75; // Higher = more responsive to current reading
+const MIN_SPEED_THRESHOLD = 0.3; // mph - very low threshold to catch movement early
+const MAX_ACCURACY_THRESHOLD = 200; // meters - accept moderately poor GPS
 const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
-const MAX_DISTANCE_JUMP = 1; // miles - reject distance jumps larger than this
+const MAX_DISTANCE_JUMP = 0.5; // miles - tighter check for GPS jumps
 const CONVOY_SYNC_INTERVAL = 2000; // ms - sync to database every 2 seconds
+const SPEED_CHANGE_THRESHOLD = 5; // mph - if speed changes more than this, reduce smoothing
 
 // Shared state
 type Listener = () => void;
@@ -115,30 +116,35 @@ function handlePositionUpdate(position: GeolocationPosition) {
     }
   }
 
-  // Device speed from GPS chip (m/s -> mph) - often more accurate via Doppler
+  // Device speed from GPS chip (m/s -> mph) - Doppler-based, very accurate for vehicles
   const deviceSpeedMph = deviceSpeed != null && deviceSpeed >= 0 ? deviceSpeed * 2.237 : null;
 
-  // Prefer device speed when available (GPS chip's Doppler is more accurate for vehicles)
-  // Fall back to calculated speed only when device speed is unavailable
+  // Prefer device speed - it's hardware-measured and more accurate than position deltas
   let currentSpeed: number;
   let speedSource: 'device' | 'calculated' | 'none' = 'none';
   
-  if (deviceSpeedMph != null && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
+  if (deviceSpeedMph != null) {
+    // Trust device speed even at low values (it can accurately report 0)
     currentSpeed = deviceSpeedMph;
     speedSource = 'device';
-    console.log('[GPS] Using device speed:', deviceSpeedMph.toFixed(1), 'mph');
-  } else if (calculatedSpeed > MIN_SPEED_THRESHOLD) {
+  } else if (calculatedSpeed > 0) {
+    // Fall back to calculated speed only when device speed unavailable
     currentSpeed = calculatedSpeed;
     speedSource = 'calculated';
-    console.log('[GPS] Using calculated speed:', calculatedSpeed.toFixed(1), 'mph');
   } else {
     currentSpeed = 0;
   }
 
-  // Apply exponential smoothing to reduce jitter
-  smoothedSpeed = SPEED_SMOOTHING_FACTOR * currentSpeed + (1 - SPEED_SMOOTHING_FACTOR) * smoothedSpeed;
+  // Adaptive smoothing: less smoothing when speed is changing rapidly (acceleration/braking)
+  const speedDelta = Math.abs(currentSpeed - smoothedSpeed);
+  const adaptiveFactor = speedDelta > SPEED_CHANGE_THRESHOLD 
+    ? Math.min(0.9, SPEED_SMOOTHING_FACTOR + 0.15) // More responsive during rapid changes
+    : SPEED_SMOOTHING_FACTOR;
 
-  // Apply minimum threshold (ignore drift) but don't over-round for responsiveness
+  // Apply exponential smoothing
+  smoothedSpeed = adaptiveFactor * currentSpeed + (1 - adaptiveFactor) * smoothedSpeed;
+
+  // Apply minimum threshold to filter GPS drift when stationary
   const displaySpeed = smoothedSpeed < MIN_SPEED_THRESHOLD ? 0 : Math.round(smoothedSpeed);
 
   const gpsPoint: GpsPoint = {
