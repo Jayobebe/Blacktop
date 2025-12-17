@@ -41,15 +41,15 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
         }
       })
       .on('broadcast', { event: 'rescue_acknowledged' }, (payload) => {
-        const { requestId, byLeader } = payload.payload as { requestId: string; byLeader: boolean };
+        const { requestId, byLeader, riderUserId } = payload.payload as { requestId: string; byLeader: boolean; riderUserId?: string };
         
-        if (!isLeader) {
+        if (!isLeader && riderUserId === userId) {
           // Non-leader: their rescue was acknowledged
           setHasPendingRescue(false);
           if (byLeader) {
-            toast.success('Leader is coming to get you!');
+            toast.success('Help is on the way! Leader added your location as a waypoint.');
           }
-        } else {
+        } else if (isLeader) {
           // Leader: remove from list
           setRescueRequests(prev => prev.filter(r => r.id !== requestId));
         }
@@ -94,13 +94,13 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     return true;
   }, [convoyId, userId, userName]);
 
-  const acknowledgeRescue = useCallback(async (requestId: string) => {
+  const acknowledgeRescue = useCallback(async (requestId: string, riderUserId?: string) => {
     if (!channelRef.current) return;
 
     await channelRef.current.send({
       type: 'broadcast',
       event: 'rescue_acknowledged',
-      payload: { requestId, byLeader: true },
+      payload: { requestId, byLeader: true, riderUserId },
     });
 
     setRescueRequests(prev => prev.filter(r => r.id !== requestId));

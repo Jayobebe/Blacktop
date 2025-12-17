@@ -663,39 +663,41 @@ export function useConvoyState() {
 
     const newPausedState = !state.isPaused;
 
-    // Update in database
-    const { error } = await supabase
-      .from('convoys')
-      .update({ 
-        is_paused: newPausedState,
-        paused_at: newPausedState ? new Date().toISOString() : null,
-      })
-      .eq('id', state.id);
-
-    if (error) {
-      toast.error('Failed to toggle pause');
-      return;
-    }
-
-    // Broadcast pause/resume to all members for immediate effect
-    const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
-    await broadcastChannel.subscribe();
-    await broadcastChannel.send({
-      type: 'broadcast',
-      event: newPausedState ? 'pause-ride' : 'resume-ride',
-      payload: {},
-    });
-    // Give time for broadcast to propagate
-    await new Promise(resolve => setTimeout(resolve, 100));
-    supabase.removeChannel(broadcastChannel);
-
-    // Update local state immediately
+    // Update local state immediately for responsive UI
     setConvoyState((prev) => ({
       ...prev,
       isPaused: newPausedState,
     }));
 
     toast.success(newPausedState ? 'Ride paused' : 'Ride resumed');
+
+    // Broadcast immediately to all members (don't wait for database)
+    const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
+    broadcastChannel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        broadcastChannel.send({
+          type: 'broadcast',
+          event: newPausedState ? 'pause-ride' : 'resume-ride',
+          payload: {},
+        }).then(() => {
+          supabase.removeChannel(broadcastChannel);
+        });
+      }
+    });
+
+    // Update database in background (don't await)
+    supabase
+      .from('convoys')
+      .update({ 
+        is_paused: newPausedState,
+        paused_at: newPausedState ? new Date().toISOString() : null,
+      })
+      .eq('id', state.id)
+      .then(({ error }) => {
+        if (error) {
+          console.error('[Convoy] Failed to persist pause state:', error);
+        }
+      });
   }, [state.id, state.isLeader, state.isPaused]);
 
   // Check if all members have navigated
