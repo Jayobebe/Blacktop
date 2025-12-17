@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useProfile } from "@/hooks/useProfile";
+import { useSettings } from "@/hooks/useSettings";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
@@ -23,6 +24,7 @@ const queryClient = new QueryClient();
 
 function AppRoutes() {
   const { hasProfile } = useProfile();
+  useSettings(); // Initialize accent color on app load
 
   if (!hasProfile) {
     return (
