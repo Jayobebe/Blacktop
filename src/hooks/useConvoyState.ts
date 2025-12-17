@@ -609,6 +609,17 @@ export function useConvoyState() {
       return false;
     }
 
+    // Broadcast leadership change to all members for immediate update
+    const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
+    await broadcastChannel.subscribe();
+    await broadcastChannel.send({
+      type: 'broadcast',
+      event: 'leadership-changed',
+      payload: { newLeaderUserId },
+    });
+    await new Promise(resolve => setTimeout(resolve, 100));
+    supabase.removeChannel(broadcastChannel);
+
     // Update local state
     setConvoyState((prev) => ({
       ...prev,
