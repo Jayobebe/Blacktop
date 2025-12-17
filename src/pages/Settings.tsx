@@ -7,7 +7,8 @@ import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart } from 'lucide-react';
+import { AccentColorPicker } from '@/components/AccentColorPicker';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +20,7 @@ export default function Settings() {
   const { profile, updateName } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
@@ -166,6 +167,20 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground mt-3">
             Blacktop will open your preferred navigation app for directions
           </p>
+        </section>
+
+        {/* Accent Color Section */}
+        <section className="bg-card rounded-lg p-4 border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Palette className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Accent Color
+            </h2>
+          </div>
+          <AccentColorPicker 
+            selected={settings.accentColor} 
+            onSelect={setAccentColor} 
+          />
         </section>
 
         {/* Units Section */}
