@@ -89,7 +89,7 @@ export default function Home() {
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{profile.name}</h1>
         </div>
-        <BTLogo size="sm" />
+        <BTLogo size="md" />
       </header>
 
       {/* Main content */}
