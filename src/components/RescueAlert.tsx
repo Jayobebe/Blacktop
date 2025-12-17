@@ -13,7 +13,7 @@ export function RescueAlert({ requests, onAddWaypoint, onDismiss }: RescueAlertP
   if (requests.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90vw] max-w-sm space-y-2 animate-slide-up">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90vw] max-w-sm space-y-2 animate-slide-up landscape:top-2 landscape:max-w-xs landscape:w-auto">
       {requests.map((request) => (
         <div
           key={request.id}
@@ -22,8 +22,8 @@ export function RescueAlert({ requests, onAddWaypoint, onDismiss }: RescueAlertP
             "border border-destructive-foreground/20"
           )}
         >
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-destructive-foreground/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+          <div className="flex items-start gap-3 landscape:gap-2">
+            <div className="w-10 h-10 landscape:w-8 landscape:h-8 rounded-full bg-destructive-foreground/20 flex items-center justify-center flex-shrink-0 animate-pulse">
               <MapPin className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
