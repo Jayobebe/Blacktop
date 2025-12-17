@@ -6,8 +6,7 @@ import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { useSettings } from '@/hooks/useSettings';
 import { useWakeLock } from '@/hooks/useWakeLock';
-import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
-// useRideNotification removed - users want uninterrupted music playback
+// Background audio keepalive removed to avoid OS "media" notification and not interrupt user music.
 import { ConvoyMemberInfo } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
@@ -95,10 +94,6 @@ export default function ActiveRide() {
       wakeLock.release();
     };
   }, [rideState.isActive]);
-
-  // Keep audio alive in background for convoy voice
-  useBackgroundAudio(rideState.isConvoyMode && isConnected);
-
 
   // Keep track of members for when ride ends
   useEffect(() => {

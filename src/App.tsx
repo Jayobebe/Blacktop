@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,34 +20,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function NotificationCleanup() {
-  useEffect(() => {
-    // If a previously-created "Blacktop Active" notification is still hanging around,
-    // replace it (same tag) and immediately close it.
-    try {
-      if ("Notification" in window && Notification.permission === "granted") {
-        const n = new Notification("", {
-          tag: "blacktop-ride",
-          silent: true,
-        });
-        n.close();
-      }
-    } catch {
-      // Ignore (some browsers restrict programmatic notifications)
-    }
-
-    // Also close any service-worker notifications, if the UA routes them that way.
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .getRegistration()
-        .then((reg) => reg?.getNotifications({ tag: "blacktop-ride" }))
-        .then((notifs) => notifs?.forEach((n) => n.close()))
-        .catch(() => undefined);
-    }
-  }, []);
-
-  return null;
-}
 
 function AppRoutes() {
   const { hasProfile } = useProfile();
@@ -85,7 +56,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <NotificationCleanup />
         <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
