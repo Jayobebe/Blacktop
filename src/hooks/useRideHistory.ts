@@ -80,6 +80,12 @@ export function useRideHistory() {
     setRides(prev => [ride, ...prev]);
   }, [setRides]);
 
+  const updateRideBadge = useCallback((rideId: string, badge: 'speed-demon' | 'journeyman' | 'rocksteady') => {
+    setRides(prev => prev.map(r => 
+      r.id === rideId ? { ...r, earnedBadge: badge } : r
+    ));
+  }, [setRides]);
+
   const deleteRide = useCallback((rideId: string) => {
     setRides(prev => prev.filter(r => r.id !== rideId));
   }, [setRides]);
@@ -129,6 +135,7 @@ export function useRideHistory() {
     rides,
     stats,
     addRide,
+    updateRideBadge,
     deleteRide,
     burnAllData,
     seedDemoData,

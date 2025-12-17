@@ -306,7 +306,7 @@ export function useActiveRide(convoyId?: string | null) {
     return true;
   }, [convoyId]);
 
-  const endRide = useCallback(async () => {
+  const endRide = useCallback(async (): Promise<string | null> => {
     // Stop GPS tracking
     if (watchId !== null) {
       if (isNative) {
@@ -338,9 +338,12 @@ export function useActiveRide(convoyId?: string | null) {
       ? Math.max(0, Math.floor((Date.now() - rideStartedAtMs) / 1000))
       : currentState.duration;
 
+    let savedRideId: string | null = null;
+
     if (currentState.startedAt && finalDuration > 0) {
+      const rideId = crypto.randomUUID();
       const ride: RideSession = {
-        id: crypto.randomUUID(),
+        id: rideId,
         startedAt: currentState.startedAt,
         endedAt: nowIso,
         isConvoyRide: currentState.isConvoyMode,
@@ -351,6 +354,7 @@ export function useActiveRide(convoyId?: string | null) {
         gpsPoints: currentState.gpsPoints,
       };
       addRideRef.current(ride);
+      savedRideId = rideId;
     }
 
     rideStartedAtMs = null;
@@ -366,6 +370,8 @@ export function useActiveRide(convoyId?: string | null) {
       gpsPoints: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
     }));
+
+    return savedRideId;
   }, []);
 
   return {

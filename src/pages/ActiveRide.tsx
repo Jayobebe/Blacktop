@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
@@ -7,7 +7,9 @@ import { useConvoyState } from '@/hooks/useConvoyState';
 import { useSettings } from '@/hooks/useSettings';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
-import { ConvoyMemberInfo } from '@/types/convoy';
+import { useRideHistory } from '@/hooks/useRideHistory';
+import { useProfile } from '@/hooks/useProfile';
+import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
 import { Button } from '@/components/ui/button';
@@ -77,6 +79,8 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
+  const { updateRideBadge } = useRideHistory();
+  const { user } = useProfile();
   const wakeLock = useWakeLock();
   // Keep audio session alive in background only when in convoy with other members
   useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
@@ -85,6 +89,7 @@ export default function ActiveRide() {
   const [showSummary, setShowSummary] = useState(false);
   const [endingFlow, setEndingFlow] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
+  const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
 
   // Keep screen awake during active ride
@@ -161,7 +166,8 @@ export default function ActiveRide() {
       setFinalMembers(membersRef.current);
     }
 
-    await endRide();
+    const rideId = await endRide();
+    setSavedRideId(rideId);
 
     if (wasConvoyMode) {
       if (wasLeader) {
@@ -178,6 +184,12 @@ export default function ActiveRide() {
     }
   };
 
+  const handleBadgeEarned = useCallback((badge: BadgeType) => {
+    if (savedRideId) {
+      updateRideBadge(savedRideId, badge);
+    }
+  }, [savedRideId, updateRideBadge]);
+
   const handleCloseSummary = () => {
     setShowSummary(false);
     navigate('/lobby');
@@ -185,7 +197,14 @@ export default function ActiveRide() {
 
   // Show summary after convoy ride ends
   if (showSummary && finalMembers.length > 0) {
-    return <RideSummary members={finalMembers} onClose={handleCloseSummary} />;
+    return (
+      <RideSummary 
+        members={finalMembers} 
+        currentUserId={user?.id}
+        onBadgeEarned={handleBadgeEarned}
+        onClose={handleCloseSummary} 
+      />
+    );
   }
 
   if (!rideState.isActive) return null;
