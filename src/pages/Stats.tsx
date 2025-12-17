@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/hooks/useRideHistory';
+import { useSettings } from '@/hooks/useSettings';
 import { ArrowLeft, Route, Gauge, Clock, TrendingUp, Hash, Users } from 'lucide-react';
-import { formatDuration, formatDistance } from '@/lib/format';
+import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 
 export default function Stats() {
   const navigate = useNavigate();
   const { stats } = useRideHistory();
+  const { settings } = useSettings();
 
   const statCards = [
     {
@@ -17,8 +19,8 @@ export default function Stats() {
     {
       icon: Route,
       label: 'Total Distance',
-      value: formatDistance(stats.totalDistance),
-      unit: 'miles',
+      value: formatDistance(stats.totalDistance, settings.distanceUnit),
+      unit: getDistanceLabel(settings.distanceUnit),
     },
     {
       icon: Clock,
@@ -29,14 +31,14 @@ export default function Stats() {
     {
       icon: TrendingUp,
       label: 'Personal Top Speed',
-      value: Math.round(stats.personalTopSpeed).toString(),
-      unit: 'mph',
+      value: formatSpeed(stats.personalTopSpeed, settings.speedUnit).toString(),
+      unit: getSpeedLabel(settings.speedUnit),
     },
     {
       icon: Gauge,
       label: 'Average Ride Length',
-      value: formatDistance(stats.averageRideLength),
-      unit: 'miles',
+      value: formatDistance(stats.averageRideLength, settings.distanceUnit),
+      unit: getDistanceLabel(settings.distanceUnit),
     },
     {
       icon: Users,

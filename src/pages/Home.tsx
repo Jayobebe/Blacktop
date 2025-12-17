@@ -4,9 +4,10 @@ import { useProfile } from '@/hooks/useProfile';
 import { useRideHistory } from '@/hooks/useRideHistory';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useConvoyState } from '@/hooks/useConvoyState';
+import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, Play } from 'lucide-react';
-import { formatDuration, formatDistance } from '@/lib/format';
+import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Home() {
   const { stats, seedDemoData } = useRideHistory();
   const { rideState } = useActiveRide();
   const { convoy } = useConvoyState();
+  const { settings } = useSettings();
 
   // Seed demo data on first load if no rides exist
   useEffect(() => {
@@ -60,11 +62,11 @@ export default function Home() {
           </div>
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
-            <p className="text-2xl font-mono font-bold">{formatDistance(stats.totalDistance)}</p>
+            <p className="text-2xl font-mono font-bold">{formatDistance(stats.totalDistance, settings.distanceUnit)}<span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span></p>
           </div>
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Top Speed</p>
-            <p className="text-2xl font-mono font-bold">{Math.round(stats.personalTopSpeed)}<span className="text-sm text-muted-foreground ml-1">mph</span></p>
+            <p className="text-2xl font-mono font-bold">{formatSpeed(stats.personalTopSpeed, settings.speedUnit)}<span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span></p>
           </div>
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time Riding</p>
