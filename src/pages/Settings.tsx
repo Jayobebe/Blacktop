@@ -6,7 +6,7 @@ import { useRideHistory } from '@/hooks/useRideHistory';
 import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 
@@ -15,7 +15,7 @@ export default function Settings() {
   const { profile } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
 
   const navApps: { id: NavigationApp; label: string }[] = [
@@ -90,6 +90,42 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground mt-3">
             Blacktop will open your preferred navigation app for directions
           </p>
+        </section>
+
+        {/* Units Section */}
+        <section className="bg-card rounded-lg p-4 border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <Gauge className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Units
+            </h2>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium">Speed</p>
+                <p className="text-xs text-muted-foreground">Display speed in MPH or KPH</p>
+              </div>
+              <button
+                onClick={toggleSpeedUnit}
+                className="px-4 py-2 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-sm"
+              >
+                {settings.speedUnit.toUpperCase()}
+              </button>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium">Distance</p>
+                <p className="text-xs text-muted-foreground">Display distance in miles or kilometers</p>
+              </div>
+              <button
+                onClick={toggleDistanceUnit}
+                className="px-4 py-2 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-sm"
+              >
+                {settings.distanceUnit === 'miles' ? 'MILES' : 'KM'}
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* Convoy Display Section */}
