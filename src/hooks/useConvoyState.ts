@@ -200,6 +200,8 @@ export function useConvoyState() {
   }, [state.id]);
 
   const refreshMembers = async (convoyId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { data: membersData } = await supabase
       .from('convoy_members')
       .select(`
@@ -240,9 +242,30 @@ export function useConvoyState() {
 
       console.log('[Convoy] Refreshed members:', members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated })));
 
+      // Auto-promote last remaining member to leader
+      if (members.length === 1 && user && members[0].userId === user.id && !members[0].isLeader) {
+        console.log('[Convoy] Auto-promoting last remaining member to leader');
+        const { error } = await supabase
+          .from('convoys')
+          .update({ leader_id: user.id })
+          .eq('id', convoyId);
+        
+        if (!error) {
+          toast.success('You are now the convoy leader');
+          setConvoyState((prev) => ({
+            ...prev,
+            isLeader: true,
+            members: members.map(m => ({ ...m, isLeader: m.userId === user.id })),
+          }));
+          return;
+        }
+      }
+
       setConvoyState((prev) => ({
         ...prev,
         members,
+        // Update isLeader if current user's leadership status changed
+        isLeader: user ? members.some(m => m.userId === user.id && m.isLeader) : prev.isLeader,
       }));
     }
   };
