@@ -35,7 +35,7 @@ export default function DemoRide() {
 
   const getMemberColor = (index: number, isLeader: boolean) => {
     if (isLeader) return { bg: 'bg-accent/20', text: 'text-accent', ring: 'ring-accent/50' };
-    return MEMBER_COLORS[(index - 1) % MEMBER_COLORS.length];
+    return MEMBER_COLORS[index % MEMBER_COLORS.length];
   };
 
   // Sort members by top speed (highest first)
