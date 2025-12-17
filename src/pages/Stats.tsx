@@ -43,9 +43,9 @@ export default function Stats() {
     },
     {
       icon: Users,
-      label: 'Convoy Rides',
+      label: 'Total Convoys',
       value: stats.convoyRides.toString(),
-      unit: 'rides',
+      unit: 'convoys',
     },
   ];
 
