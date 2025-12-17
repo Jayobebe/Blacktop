@@ -165,29 +165,55 @@ async function searchNearbyPOIs(
   }
 }
 
+function containsPostalCode(query: string, countryCode: string | null): boolean {
+  const q = query.trim().toUpperCase();
+  if (!q) return false;
+
+  // UK postcode (e.g., "PR8 5PH", "SW1A 1AA")
+  const uk = /\b([A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2})\b/i;
+  // US ZIP (e.g., "90210" or "90210-1234")
+  const us = /\b\d{5}(?:-\d{4})?\b/;
+  // Canada (e.g., "M5V 2T6")
+  const ca = /\b[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z]\s?\d[ABCEGHJ-NPRSTV-Z]\d\b/i;
+
+  // If we know the country, we can bias the check, but any match counts.
+  if (countryCode === 'GB') return uk.test(q);
+  if (countryCode === 'US') return us.test(q);
+  if (countryCode === 'CA') return ca.test(q);
+
+  return uk.test(q) || us.test(q) || ca.test(q);
+}
+
 // Nominatim for general text search
 async function searchPlaces(
-  query: string, 
+  query: string,
   userLocation: UserLocation | null,
   countryCode: string | null
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
+  const isPostal = containsPostalCode(query, countryCode);
+  const preferNearby = !!userLocation && !isPostal;
+
   const params = new URLSearchParams({
     q: query,
     format: 'json',
     addressdetails: '1',
-    limit: '12',
+    limit: preferNearby ? '20' : '25',
   });
 
   if (countryCode) {
     params.append('countrycodes', countryCode);
   }
 
-  if (userLocation) {
-    const delta = 0.5;
-    params.append('viewbox', `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`);
-    params.append('bounded', '0');
+  // Nearby-first: strict bounding box so we don't jump to other cities.
+  if (userLocation && preferNearby) {
+    const delta = 0.18; // ~20km-ish; keeps results local
+    params.append(
+      'viewbox',
+      `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`
+    );
+    params.append('bounded', '1');
   }
 
   try {
@@ -200,30 +226,33 @@ async function searchPlaces(
     const data = await response.json();
 
     let results: SearchResult[] = data.map((place: any) => {
+      const lat = parseFloat(place.lat);
+      const lng = parseFloat(place.lon);
+
       const result: SearchResult = {
         id: place.place_id.toString(),
         name: place.name || place.display_name.split(',')[0],
         address: place.display_name,
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon),
+        lat,
+        lng,
         type: place.type,
       };
-      
+
       if (userLocation) {
-        result.distance = calculateDistance(
-          userLocation.lat, userLocation.lng,
-          result.lat, result.lng
-        );
+        result.distance = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
       }
-      
+
       return result;
     });
 
     if (userLocation) {
-      results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      results = results
+        .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+        // Hard clamp for nearby searches (keeps it convenient)
+        .filter((r) => !preferNearby || (r.distance || 0) <= 30);
     }
 
-    return results.slice(0, 6);
+    return results.slice(0, 8);
   } catch (error) {
     console.error('Place search failed:', error);
     return [];
@@ -320,9 +349,17 @@ export function DestinationSearch({
       setResults([]);
       return;
     }
-    
+
+    const isPostal = containsPostalCode(searchQuery, countryCode);
+
+    // Nearby-first behavior requires a location. If the user wants far-away, they can type a postcode.
+    if (!userLocation && !isPostal) {
+      setResults([]);
+      return;
+    }
+
     setIsSearching(true);
-    
+
     try {
       const searchResults = await searchPlaces(searchQuery, userLocation, countryCode);
       // Only update if this is still the latest search
@@ -340,6 +377,17 @@ export function DestinationSearch({
       }
     }
   }, [userLocation, countryCode]);
+
+  // If location becomes available after the user already typed, rerun the nearby search.
+  useEffect(() => {
+    if (!userLocation) return;
+    if (activeCategory) return;
+    if (query.length < 2) return;
+    if (containsPostalCode(query, countryCode)) return;
+
+    const currentSearchId = ++searchIdRef.current;
+    performSearch(query, currentSearchId);
+  }, [userLocation, query, activeCategory, countryCode, performSearch]);
 
   const handleSearch = useCallback((searchQuery: string) => {
     setQuery(searchQuery);
@@ -439,7 +487,13 @@ export function DestinationSearch({
   }, []);
 
   const showRecent = query.length < 2 && !activeCategory && recentLocations.length > 0;
-  const displayResults = showRecent ? recentLocations : results;
+  const isPostalSearch = query.length >= 2 && containsPostalCode(query, countryCode);
+  const rawDisplayResults = showRecent ? recentLocations : results;
+  const displayResults = rawDisplayResults.map((r) => {
+    if (!userLocation) return r;
+    if (r.distance !== undefined) return r;
+    return { ...r, distance: calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng) };
+  });
   const hasDisplayContent = displayResults.length > 0 || isSearching;
 
   if (destination) {
@@ -563,7 +617,13 @@ export function DestinationSearch({
           ) : displayResults.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <MapPin className="w-6 h-6 mx-auto mb-2 opacity-50" />
-              <span className="text-sm">No results found</span>
+              <span className="text-sm">
+                {!userLocation && query.length >= 2 && !isPostalSearch
+                  ? "Tap the target icon to enable nearby search."
+                  : userLocation && !isPostalSearch
+                    ? "No nearby matches. Try a postcode to search farther."
+                    : "No results found"}
+              </span>
             </div>
           ) : (
             displayResults.map((result, index) => (
@@ -590,11 +650,11 @@ export function DestinationSearch({
                   <p className="font-semibold truncate">{result.name}</p>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{result.address}</p>
                 </div>
-                {result.distance !== undefined && !showRecent && (
+                {result.distance !== undefined && (
                   <div className="flex-shrink-0 text-right">
                     <span className="text-sm font-medium text-accent">
-                      {result.distance < 1 
-                        ? `${Math.round(result.distance * 1000)}m` 
+                      {result.distance < 1
+                        ? `${Math.round(result.distance * 1000)}m`
                         : `${result.distance.toFixed(1)}km`}
                     </span>
                   </div>
