@@ -245,11 +245,11 @@ export default function Settings() {
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-accent" />
             <h2 className="text-sm font-semibold text-accent uppercase tracking-wide">
-              Support Blacktop
+              Enjoying BlackTop?
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Enjoying Blacktop? Buy me a coffee to support continued development.
+            how about leaving a lil something to take the edge off?...
           </p>
           <Button
             onClick={handleTip}
@@ -257,7 +257,7 @@ export default function Settings() {
             className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold touch-target"
           >
             <Heart className="w-4 h-4 mr-2" />
-            {isTipping ? 'Opening...' : 'Leave a Tip ($5)'}
+            {isTipping ? 'Opening...' : 'Donate $5'}
           </Button>
         </section>
 
