@@ -83,7 +83,6 @@ export default function Home() {
         <div>
           <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5 landscape:hidden">Welcome back</p>
           <h1 className="text-xl md:text-2xl font-display font-semibold tracking-tight">{profile.name}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5 landscape:hidden">Ride logging & convoy communication</p>
         </div>
         <button
           onClick={() => navigate('/settings')}
