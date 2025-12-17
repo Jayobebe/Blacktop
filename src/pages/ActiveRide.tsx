@@ -90,6 +90,7 @@ export default function ActiveRide() {
   const [endingFlow, setEndingFlow] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
+  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
 
   // Keep screen awake during active ride
@@ -161,6 +162,15 @@ export default function ActiveRide() {
     const wasConvoyMode = rideState.isConvoyMode;
     const wasLeader = convoy.isLeader;
 
+    // Capture final ride stats before ending
+    const avgSpeed = rideState.duration > 0 ? (rideState.distance / (rideState.duration / 3600)) : 0;
+    setFinalRideStats({
+      duration: rideState.duration,
+      distance: rideState.distance,
+      maxSpeed: rideState.maxSpeed,
+      averageSpeed: avgSpeed,
+    });
+
     // Capture final members before ending for badge summary
     if (wasConvoyMode && membersRef.current.length > 0) {
       setFinalMembers(membersRef.current);
@@ -201,6 +211,7 @@ export default function ActiveRide() {
       <RideSummary 
         members={finalMembers} 
         currentUserId={user?.id}
+        rideStats={finalRideStats || undefined}
         onBadgeEarned={handleBadgeEarned}
         onClose={handleCloseSummary} 
       />
