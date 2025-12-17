@@ -163,7 +163,7 @@ export function useActiveRide() {
     const geoOptions: PositionOptions = {
       enableHighAccuracy: true,
       timeout: 30000,
-      maximumAge: 0,
+      maximumAge: 1000, // Allow slightly stale positions to reduce battery usage
     };
 
     // Prime GPS with a one-time read (often prevents early TIMEOUTs)

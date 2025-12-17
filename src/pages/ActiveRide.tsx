@@ -5,6 +5,8 @@ import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { useSettings } from '@/hooks/useSettings';
+import { useWakeLock } from '@/hooks/useWakeLock';
+import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { ConvoyMemberInfo } from '@/types/convoy';
 import { RideSummary } from '@/components/RideSummary';
 import { Button } from '@/components/ui/button';
@@ -30,11 +32,25 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
+  const wakeLock = useWakeLock();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
+
+  // Keep screen awake during active ride
+  useEffect(() => {
+    if (rideState.isActive) {
+      wakeLock.request();
+    }
+    return () => {
+      wakeLock.release();
+    };
+  }, [rideState.isActive]);
+
+  // Keep audio alive in background for convoy voice
+  useBackgroundAudio(rideState.isConvoyMode && isConnected);
 
   // Keep track of members for when ride ends
   useEffect(() => {
