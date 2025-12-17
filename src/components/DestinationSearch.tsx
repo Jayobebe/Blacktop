@@ -40,11 +40,12 @@ interface QuickCategory {
 const RECENT_LOCATIONS_KEY = 'blacktop_recent_locations';
 const MAX_RECENT_LOCATIONS = 4;
 
+// OSM amenity tags for Overpass API
 const quickCategories: QuickCategory[] = [
-  { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'gas station' },
-  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant' },
-  { id: 'coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" />, query: 'coffee shop' },
-  { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'convenience store' },
+  { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'fuel' },
+  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
+  { id: 'coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" />, query: 'cafe' },
+  { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
 ];
 
 function getRecentLocations(): SearchResult[] {
@@ -94,13 +95,64 @@ async function getCountryCode(lat: number, lng: number): Promise<string | null> 
 }
 
 // Max distance in km for category searches (nearby places)
-const MAX_NEARBY_DISTANCE_KM = 25;
+const MAX_NEARBY_DISTANCE_KM = 15;
+const OVERPASS_RADIUS_M = 15000; // 15km radius for Overpass queries
 
+// Search using Overpass API for POIs (much better for amenities)
+async function searchPOIsOverpass(
+  amenityQuery: string,
+  userLocation: UserLocation
+): Promise<SearchResult[]> {
+  const amenities = amenityQuery.split('|').map(a => `node["amenity"="${a}"](around:${OVERPASS_RADIUS_M},${userLocation.lat},${userLocation.lng});`).join('');
+  
+  const query = `
+    [out:json][timeout:10];
+    (
+      ${amenities}
+    );
+    out body 20;
+  `;
+
+  try {
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: `data=${encodeURIComponent(query)}`,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+
+    if (!response.ok) throw new Error('Overpass search failed');
+
+    const data = await response.json();
+
+    const results: SearchResult[] = data.elements
+      .filter((el: any) => el.tags?.name)
+      .map((el: any) => {
+        const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
+        return {
+          id: el.id.toString(),
+          name: el.tags.name,
+          address: [el.tags['addr:street'], el.tags['addr:city']].filter(Boolean).join(', ') || el.tags.brand || 'Nearby',
+          lat: el.lat,
+          lng: el.lon,
+          distance,
+          type: el.tags.amenity,
+        };
+      })
+      .sort((a: SearchResult, b: SearchResult) => (a.distance || 0) - (b.distance || 0))
+      .slice(0, 8);
+
+    return results;
+  } catch (error) {
+    console.error('Overpass search failed:', error);
+    return [];
+  }
+}
+
+// Nominatim for general text search
 async function searchPlaces(
   query: string, 
   userLocation: UserLocation | null,
-  countryCode: string | null,
-  isCategory: boolean = false
+  countryCode: string | null
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
@@ -108,18 +160,17 @@ async function searchPlaces(
     q: query,
     format: 'json',
     addressdetails: '1',
-    limit: '20', // Fetch more to filter by distance
+    limit: '12',
   });
 
   if (countryCode) {
     params.append('countrycodes', countryCode);
   }
 
-  // Tighter viewbox for category searches (nearby POIs)
   if (userLocation) {
-    const delta = isCategory ? 0.15 : 0.5; // ~15km for categories, ~50km for general
+    const delta = 0.5;
     params.append('viewbox', `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`);
-    params.append('bounded', isCategory ? '1' : '0'); // Strict bounds for categories
+    params.append('bounded', '0');
   }
 
   try {
@@ -151,14 +202,8 @@ async function searchPlaces(
       return result;
     });
 
-    // Sort by distance
     if (userLocation) {
       results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-      
-      // For category searches, filter to only nearby results
-      if (isCategory) {
-        results = results.filter(r => (r.distance || 0) < MAX_NEARBY_DISTANCE_KM);
-      }
     }
 
     return results.slice(0, 6);
@@ -261,7 +306,7 @@ export function DestinationSearch({
     setIsSearching(true);
     
     try {
-      const searchResults = await searchPlaces(searchQuery, userLocation, countryCode, false);
+      const searchResults = await searchPlaces(searchQuery, userLocation, countryCode);
       setResults(searchResults);
     } catch (error) {
       console.error('Search failed:', error);
@@ -298,8 +343,15 @@ export function DestinationSearch({
     setIsSearching(true);
     
     try {
-      const searchResults = await searchPlaces(category.query, userLocation, countryCode, true);
-      setResults(searchResults);
+      // Use Overpass API for category searches (much better for POIs)
+      if (userLocation) {
+        const searchResults = await searchPOIsOverpass(category.query, userLocation);
+        setResults(searchResults);
+      } else {
+        // Fallback to Nominatim if no location
+        const searchResults = await searchPlaces(category.query, null, countryCode);
+        setResults(searchResults);
+      }
     } catch {
       setResults([]);
     } finally {
