@@ -187,27 +187,48 @@ export default function Settings() {
             </h2>
           </div>
           <div className="space-y-2">
-            {navApps.map((app) => (
-              <button
-                key={app.id}
-                onClick={() => updateNavApp(app.id)}
-                className={cn(
-                  "w-full flex items-center justify-between p-3 rounded-lg border transition-colors touch-target",
-                  preferredNavApp === app.id
-                    ? "border-accent bg-accent/10"
-                    : "border-border hover:bg-muted"
-                )}
-              >
-                <span className={cn(
-                  preferredNavApp === app.id ? "text-accent font-medium" : "text-foreground"
-                )}>
-                  {app.label}
-                </span>
-                {preferredNavApp === app.id && (
-                  <ExternalLink className="w-4 h-4 text-accent" />
-                )}
-              </button>
-            ))}
+            {navApps.map((app) => {
+              const isSelected = preferredNavApp === app.id;
+              const testUrl = app.id === 'google' 
+                ? 'https://www.google.com/maps' 
+                : app.id === 'apple' 
+                  ? 'https://maps.apple.com/' 
+                  : 'https://waze.com/ul';
+              
+              return (
+                <div
+                  key={app.id}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-lg border transition-colors",
+                    isSelected
+                      ? "border-accent bg-accent/10"
+                      : "border-border"
+                  )}
+                >
+                  <button
+                    onClick={() => updateNavApp(app.id)}
+                    className={cn(
+                      "flex-1 text-left touch-target",
+                      isSelected ? "text-accent font-medium" : "text-foreground hover:text-accent"
+                    )}
+                  >
+                    {app.label}
+                  </button>
+                  <button
+                    onClick={() => window.open(testUrl, '_blank')}
+                    className={cn(
+                      "p-2 rounded-md transition-colors",
+                      isSelected 
+                        ? "text-accent hover:bg-accent/20" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}
+                    title={`Open ${app.label}`}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
             Blacktop will open your preferred navigation app for directions
