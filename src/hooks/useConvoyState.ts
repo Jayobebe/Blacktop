@@ -613,7 +613,7 @@ export function useConvoyState() {
   const endConvoyRide = useCallback(async () => {
     if (!state.id || !state.isLeader) return;
 
-    // Clear destination in database (this triggers realtime for all members)
+    // Clear destination and ride_ended_at in database (this triggers realtime for all members)
     await supabase
       .from('convoys')
       .update({
@@ -622,6 +622,7 @@ export function useConvoyState() {
         destination_lat: null,
         destination_lng: null,
         destination_set_at: null,
+        ride_ended_at: null, // Clear so next ride can be started
       })
       .eq('id', state.id);
 

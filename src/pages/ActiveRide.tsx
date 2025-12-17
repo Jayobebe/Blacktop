@@ -165,78 +165,107 @@ export default function ActiveRide() {
   const convoyMembersRef = useRef(convoy.members);
   convoyMembersRef.current = convoy.members;
 
-  // Subscribe to convoy control channel for 'end-ride' broadcast from leader
+  // Helper function to handle ride end (reusable for both broadcast and realtime)
+  const handleRideEndedByLeader = useCallback(() => {
+    if (endingFlowRef.current) return; // Already ending
+    console.log('[ActiveRide] Ride ended by leader');
+    toast.info('Leader ended the ride');
+    setEndingFlow(true);
+    
+    // Disconnect voice immediately (use ref for fresh values)
+    if (voiceChannelRef.current.isConnected) {
+      voiceChannelRef.current.disconnect();
+    }
+    
+    // Capture final ride stats before ending (use ref for fresh state)
+    const currentRideState = rideStateRef.current;
+    const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
+    setFinalRideStats({
+      duration: currentRideState.duration,
+      distance: currentRideState.distance,
+      maxSpeed: currentRideState.maxSpeed,
+      averageSpeed: avgSpeed,
+    });
+    
+    // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
+    const members = membersRef.current.length > 0 ? membersRef.current : convoyMembersRef.current;
+    if (members.length > 0) {
+      setFinalMembers(members);
+    }
+    
+    // Show summary immediately
+    setShowSummary(true);
+    
+    // Run cleanup in background (non-blocking)
+    (async () => {
+      const rideId = await endRide();
+      setSavedRideId(rideId);
+      resetNavigationStatus().catch(err => console.warn('[ActiveRide] Cleanup error:', err));
+    })();
+  }, [endRide, resetNavigationStatus]);
+
+  // Subscribe to convoy control channel for broadcasts AND realtime convoy changes
   useEffect(() => {
     if (!convoy.id || !rideState.isConvoyMode) return;
 
-    const channel = supabase.channel(`convoy-control:${convoy.id}`, {
+    // Control channel for broadcasts (pause/resume/end-ride)
+    const controlChannel = supabase.channel(`convoy-control:${convoy.id}`, {
       config: { broadcast: { self: false } },
     });
 
-    channel.on('broadcast', { event: 'end-ride' }, () => {
-      if (endingFlowRef.current) return; // Already ending
-      console.log('[ActiveRide] Received end-ride broadcast from leader');
-      toast.info('Leader ended the ride');
-      setEndingFlow(true);
-      
-      // Disconnect voice immediately (use ref for fresh values)
-      if (voiceChannelRef.current.isConnected) {
-        voiceChannelRef.current.disconnect();
-      }
-      
-      // Capture final ride stats before ending (use ref for fresh state)
-      const currentRideState = rideStateRef.current;
-      const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
-      setFinalRideStats({
-        duration: currentRideState.duration,
-        distance: currentRideState.distance,
-        maxSpeed: currentRideState.maxSpeed,
-        averageSpeed: avgSpeed,
-      });
-      
-      // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
-      const members = membersRef.current.length > 0 ? membersRef.current : convoyMembersRef.current;
-      if (members.length > 0) {
-        setFinalMembers(members);
-      }
-      
-      // Show summary immediately for convoy rides
-      setShowSummary(true);
-      
-      // Run cleanup in background (non-blocking)
-      (async () => {
-        const rideId = await endRide();
-        setSavedRideId(rideId);
-        resetNavigationStatus().catch(err => console.warn('[ActiveRide] Cleanup error:', err));
-      })();
+    controlChannel.on('broadcast', { event: 'end-ride' }, () => {
+      handleRideEndedByLeader();
     });
 
-    // Listen for pause/resume broadcasts from leader
-    channel.on('broadcast', { event: 'pause-ride' }, () => {
+    controlChannel.on('broadcast', { event: 'pause-ride' }, () => {
       console.log('[ActiveRide] Received pause-ride broadcast from leader');
       toast.info('Leader paused the ride');
       setRidePaused(true);
     });
 
-    channel.on('broadcast', { event: 'resume-ride' }, () => {
+    controlChannel.on('broadcast', { event: 'resume-ride' }, () => {
       console.log('[ActiveRide] Received resume-ride broadcast from leader');
       toast.info('Leader resumed the ride');
       setRidePaused(false);
     });
 
-    channel.subscribe((status) => {
+    controlChannel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         console.log('[ActiveRide] Subscribed to convoy control channel');
       }
     });
 
-    controlChannelRef.current = channel;
+    controlChannelRef.current = controlChannel;
+
+    // DURABLE: Also subscribe to realtime convoy changes to detect ride_ended_at
+    // This ensures non-leaders end their ride even if they missed the broadcast
+    const realtimeChannel = supabase
+      .channel(`convoy-realtime:${convoy.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'convoys',
+          filter: `id=eq.${convoy.id}`,
+        },
+        (payload) => {
+          const newConvoy = payload.new as any;
+          // If ride_ended_at is set and we're not the leader, end our ride
+          if (newConvoy.ride_ended_at && !convoy.isLeader) {
+            console.log('[ActiveRide] Detected ride_ended_at via realtime');
+            handleRideEndedByLeader();
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(controlChannel);
+      supabase.removeChannel(realtimeChannel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id, rideState.isConvoyMode, endRide, resetNavigationStatus, setRidePaused]);
+  }, [convoy.id, convoy.isLeader, rideState.isConvoyMode, setRidePaused, handleRideEndedByLeader]);
 
   const handleEndRide = async () => {
     setEndingFlow(true);
@@ -264,9 +293,17 @@ export default function ActiveRide() {
       setFinalMembers(membersRef.current);
     }
 
-    // CRITICAL: If leader in convoy mode, broadcast 'end-ride' BEFORE ending ride
+    // CRITICAL: If leader in convoy mode, set ride_ended_at AND broadcast 'end-ride'
     if (wasConvoyMode && wasLeader && convoyId) {
-      console.log('[ActiveRide] Leader broadcasting end-ride to all members');
+      console.log('[ActiveRide] Leader ending ride for all members');
+      
+      // Set ride_ended_at in database (durable - survives missed broadcasts)
+      await supabase
+        .from('convoys')
+        .update({ ride_ended_at: new Date().toISOString() })
+        .eq('id', convoyId);
+      
+      // Also broadcast for immediate notification (best effort)
       try {
         const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`, {
           config: { broadcast: { self: false } },
@@ -282,8 +319,7 @@ export default function ActiveRide() {
             }
           };
 
-          // Timeout fallback - always resolve after 2s max
-          const timeout = setTimeout(done, 2000);
+          const timeout = setTimeout(done, 1500);
 
           broadcastChannel.subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
@@ -293,29 +329,25 @@ export default function ActiveRide() {
                   event: 'end-ride',
                   payload: { at: Date.now() },
                 });
-                console.log('[ActiveRide] End-ride broadcast sent successfully');
+                console.log('[ActiveRide] End-ride broadcast sent');
               } catch (err) {
-                console.error('[ActiveRide] Broadcast send error:', err);
+                console.error('[ActiveRide] Broadcast error:', err);
               }
-              // Small delay to help flush the message before channel cleanup
               clearTimeout(timeout);
-              setTimeout(done, 150);
+              setTimeout(done, 100);
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              console.warn('[ActiveRide] Broadcast channel issue:', status);
               clearTimeout(timeout);
               done();
             }
           });
         });
       } catch (err) {
-        console.error('[ActiveRide] Failed to broadcast end-ride:', err);
+        console.error('[ActiveRide] Broadcast failed:', err);
       }
     }
 
-    // Show summary immediately for convoy rides (after broadcast sent)
-    if (wasConvoyMode) {
-      setShowSummary(true);
-    }
+    // ALWAYS show summary for every ride (solo or convoy)
+    setShowSummary(true);
 
     // Now safe to end the ride (control channel broadcast already sent)
     const rideId = await endRide();
@@ -335,10 +367,6 @@ export default function ActiveRide() {
     Promise.all(cleanupPromises).catch(err => {
       console.warn('[ActiveRide] Cleanup error:', err);
     });
-
-    if (!wasConvoyMode) {
-      navigate('/');
-    }
   };
 
   const handleBadgesEarned = useCallback((badges: BadgeType[]) => {
@@ -351,7 +379,12 @@ export default function ActiveRide() {
 
   const handleCloseSummary = () => {
     setShowSummary(false);
-    navigate('/lobby');
+    // Navigate to lobby for convoy rides, home for solo rides
+    if (finalMembers.length > 0) {
+      navigate('/lobby');
+    } else {
+      navigate('/');
+    }
   };
 
   const handleRescue = async () => {
@@ -543,8 +576,8 @@ export default function ActiveRide() {
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
 
-          {/* Voice Controls (Convoy Mode with multiple members only) */}
-          {rideState.isConvoyMode && convoy.members.length > 1 && (
+          {/* Voice Controls (Convoy Mode) */}
+          {rideState.isConvoyMode && (
             <div className="flex items-center gap-2">
               {/* Voice disconnect/connect button */}
               <button
