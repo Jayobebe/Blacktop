@@ -116,16 +116,56 @@ const categoryToNominatimQuery: Record<string, string> = {
   'supermarket|convenience': 'supermarket',
 };
 
-// Search nearby POIs using Nominatim with amenity keywords
+// Search nearby POIs (categories) using Overpass first (best for amenities),
+// then fall back to Nominatim bounded search.
 async function searchNearbyPOIs(
   amenityQuery: string,
   userLocation: UserLocation,
   countryCode: string | null
 ): Promise<SearchResult[]> {
-  // Convert amenity query to better Nominatim search term
-  const searchTerm = categoryToNominatimQuery[amenityQuery] || amenityQuery.split('|')[0];
+  const amenities = amenityQuery.split('|').filter(Boolean);
 
-  // Tight viewbox around user location (~15-20km), strict bounded.
+  // 1) Overpass: best chance to find actual cafes/fuel/etc near you
+  try {
+    const overpass = await callPlaceSearch<Array<{ id: string; lat: number; lon: number; tags: Record<string, any> }>>({
+      kind: 'overpass',
+      lat: userLocation.lat,
+      lon: userLocation.lng,
+      radius_m: 15000,
+      amenities,
+      limit: 80,
+    });
+
+    let results: SearchResult[] = (overpass || []).map((el) => {
+      const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
+      const name = el.tags?.name || el.tags?.brand || el.tags?.operator || 'Nearby';
+      const address = [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']]
+        .filter(Boolean)
+        .join(', ') || String(el.tags?.['addr:full'] || '');
+
+      return {
+        id: `op:${el.id}`,
+        name,
+        address: address || name,
+        lat: el.lat,
+        lng: el.lon,
+        type: el.tags?.amenity,
+        distance,
+      };
+    });
+
+    results = results
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+      .filter((r) => (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM)
+      .slice(0, 8);
+
+    if (results.length > 0) return results;
+  } catch {
+    // ignore and fallback
+  }
+
+  // 2) Nominatim bounded fallback
+  const searchTerm = categoryToNominatimQuery[amenityQuery] || amenities[0] || amenityQuery;
   const delta = 0.12;
   const viewbox = `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`;
 
@@ -155,7 +195,6 @@ async function searchNearbyPOIs(
       };
     });
 
-    // Sort by distance and filter to nearby only
     results = results
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .filter((r) => (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM)
@@ -187,7 +226,7 @@ function containsPostalCode(query: string, countryCode: string | null): boolean 
   return uk.test(q) || us.test(q) || ca.test(q);
 }
 
-// Nominatim for general text search
+// Nominatim for general text search (nearby-first; if no nearby results, expand)
 async function searchPlaces(
   query: string,
   userLocation: UserLocation | null,
@@ -198,21 +237,35 @@ async function searchPlaces(
   const isPostal = containsPostalCode(query, countryCode);
   const preferNearby = !!userLocation && !isPostal;
 
-  const viewbox = userLocation && preferNearby
+  const nearViewbox = userLocation
     ? `${userLocation.lng - 0.18},${userLocation.lat + 0.18},${userLocation.lng + 0.18},${userLocation.lat - 0.18}`
     : null;
 
   try {
-    const data = await callPlaceSearch<any[]>({
+    // 1) Nearby-first (strict bounds) for non-postal searches
+    const primary = await callPlaceSearch<any[]>({
       kind: 'search',
       q: query,
       countryCode,
-      viewbox,
-      bounded: userLocation && preferNearby ? '1' : '0',
+      viewbox: preferNearby ? nearViewbox : null,
+      bounded: preferNearby ? '1' : '0',
       limit: preferNearby ? 25 : 30,
     });
 
-    let results: SearchResult[] = (data || []).map((place: any) => {
+    // 2) If nothing nearby and user didn't type a postcode/ZIP, broaden to anywhere
+    const usedExpanded = preferNearby && (!primary || primary.length === 0);
+    const secondary = usedExpanded
+      ? await callPlaceSearch<any[]>({
+          kind: 'search',
+          q: query,
+          countryCode,
+          viewbox: null,
+          bounded: '0',
+          limit: 30,
+        })
+      : primary;
+
+    let results: SearchResult[] = (secondary || []).map((place: any) => {
       const lat = parseFloat(place.lat);
       const lng = parseFloat(place.lon);
 
@@ -233,10 +286,12 @@ async function searchPlaces(
     });
 
     if (userLocation) {
-      results = results
-        .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-        // Hard clamp for nearby searches (keeps it convenient)
-        .filter((r) => !preferNearby || (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM);
+      results = results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+
+      // Only clamp to "nearby" when we actually found nearby results.
+      if (!usedExpanded) {
+        results = results.filter((r) => !preferNearby || (r.distance || 0) <= 30);
+      }
     }
 
     return results.slice(0, 8);
