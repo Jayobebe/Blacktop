@@ -189,11 +189,50 @@ export default function Settings() {
           <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
-              const testUrl = app.id === 'google' 
-                ? 'https://www.google.com/maps' 
-                : app.id === 'apple' 
-                  ? 'https://maps.apple.com/' 
-                  : 'https://waze.com/ul';
+              
+              const handleOpenApp = () => {
+                const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+                const isAndroid = /Android/.test(navigator.userAgent);
+                
+                let appUrl = '';
+                let fallbackUrl = '';
+                
+                if (app.id === 'google') {
+                  appUrl = 'https://www.google.com/maps';
+                  fallbackUrl = isIOS 
+                    ? 'https://apps.apple.com/app/google-maps/id585027354'
+                    : isAndroid 
+                      ? 'https://play.google.com/store/apps/details?id=com.google.android.apps.maps'
+                      : 'https://www.google.com/maps';
+                } else if (app.id === 'apple') {
+                  appUrl = 'https://maps.apple.com/';
+                  fallbackUrl = isIOS 
+                    ? 'https://maps.apple.com/'
+                    : 'https://www.apple.com/maps/';
+                } else if (app.id === 'waze') {
+                  appUrl = 'https://waze.com/ul';
+                  fallbackUrl = isIOS 
+                    ? 'https://apps.apple.com/app/waze-navigation-live-traffic/id323229106'
+                    : isAndroid 
+                      ? 'https://play.google.com/store/apps/details?id=com.waze'
+                      : 'https://www.waze.com/download';
+                }
+                
+                // Try opening the app via universal link
+                const newWindow = window.open(appUrl, '_blank');
+                
+                // If on mobile and the app might not be installed, set up fallback
+                if ((isIOS || isAndroid) && newWindow) {
+                  setTimeout(() => {
+                    // If we're still here after timeout, app likely didn't open
+                    // The universal links should handle this automatically,
+                    // but we provide the fallback URL as backup
+                    if (document.hidden === false && appUrl !== fallbackUrl) {
+                      window.open(fallbackUrl, '_blank');
+                    }
+                  }, 1500);
+                }
+              };
               
               return (
                 <div
@@ -215,7 +254,7 @@ export default function Settings() {
                     {app.label}
                   </button>
                   <button
-                    onClick={() => window.open(testUrl, '_blank')}
+                    onClick={handleOpenApp}
                     className={cn(
                       "p-2 rounded-md transition-colors",
                       isSelected 
