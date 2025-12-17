@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/hooks/useRideHistory';
 import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
+import { RidePhotos } from '@/components/RidePhotos';
 import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { useState } from 'react';
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rides, deleteRide } = useRideHistory();
+  const { rides, deleteRide, addRidePhoto, removeRidePhoto } = useRideHistory();
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -89,6 +90,15 @@ export default function RideDetail() {
           <p className="font-mono text-3xl font-bold">{formatSpeed(ride.maxSpeed, settings.speedUnit)}</p>
           <p className="text-sm text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
         </div>
+      </div>
+
+      {/* Photos Section */}
+      <div className="bg-card rounded-lg p-4 border border-border mb-4 animate-slide-up">
+        <RidePhotos
+          photos={ride.photos || []}
+          onAddPhoto={(photo) => addRidePhoto(ride.id, photo)}
+          onRemovePhoto={(photoId) => removeRidePhoto(ride.id, photoId)}
+        />
       </div>
 
       {/* GPS Points Info */}

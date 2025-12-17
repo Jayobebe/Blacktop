@@ -10,6 +10,13 @@ export interface BadgeCounts {
   rocksteady: number;
 }
 
+export interface RidePhoto {
+  id: string;
+  dataUrl: string; // base64 encoded image
+  addedAt: string;
+  caption?: string;
+}
+
 export interface RideSession {
   id: string;
   name?: string; // Optional custom name for the ride
@@ -22,6 +29,7 @@ export interface RideSession {
   maxSpeed: number; // in mph
   gpsPoints: GpsPoint[];
   earnedBadge?: 'speed-demon' | 'journeyman' | 'rocksteady'; // Badge earned in this ride
+  photos?: RidePhoto[]; // Local-only photos
 }
 
 export interface GpsPoint {
