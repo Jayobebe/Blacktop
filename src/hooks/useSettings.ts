@@ -16,7 +16,13 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export function useSettings() {
-  const [settings, setSettings] = useLocalStorage<AppSettings>('blacktop-settings', DEFAULT_SETTINGS);
+  const [storedSettings, setSettings] = useLocalStorage<Partial<AppSettings>>('blacktop-settings', DEFAULT_SETTINGS);
+  
+  // Merge stored settings with defaults to handle missing fields from older versions
+  const settings: AppSettings = {
+    ...DEFAULT_SETTINGS,
+    ...storedSettings,
+  };
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => ({
