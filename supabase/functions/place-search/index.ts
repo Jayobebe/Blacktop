@@ -21,6 +21,15 @@ type ReverseBody = {
   zoom?: number;
 };
 
+type OverpassBody = {
+  kind: "overpass";
+  lat: number;
+  lon: number;
+  radius_m?: number;
+  amenities: string[];
+  limit?: number;
+};
+
 function asBounded(v: SearchBody["bounded"]): "0" | "1" | undefined {
   if (v === undefined || v === null) return undefined;
   if (v === true) return "1";
@@ -30,13 +39,102 @@ function asBounded(v: SearchBody["bounded"]): "0" | "1" | undefined {
   return undefined;
 }
 
+function escapeRegexPart(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function fetchOverpass(query: string) {
+  const endpoints = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+  ];
+
+  let lastError: unknown = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
+          "User-Agent": "Blacktop-App/1.0",
+        },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`Overpass ${res.status}: ${text.slice(0, 200)}`);
+      }
+
+      return JSON.parse(text);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+
+  throw lastError ?? new Error("Overpass failed");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody;
+
+    if (body.kind === "overpass") {
+      if (typeof body.lat !== "number" || typeof body.lon !== "number") {
+        return new Response(JSON.stringify({ error: "Missing lat/lon" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      const amenities = Array.isArray(body.amenities) ? body.amenities.filter(Boolean) : [];
+      if (amenities.length === 0) {
+        return new Response(JSON.stringify([]), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      const radius = Math.max(1000, Math.min(50000, body.radius_m ?? 15000));
+      const regex = amenities.map(escapeRegexPart).join("|");
+      const limit = Math.max(1, Math.min(100, body.limit ?? 60));
+
+      const query = `
+        [out:json][timeout:10];
+        (
+          node["amenity"~"^(${regex})$"](around:${radius},${body.lat},${body.lon});
+        );
+        out body ${limit};
+      `;
+
+      const data = await fetchOverpass(query);
+
+      const elements = Array.isArray(data?.elements) ? data.elements : [];
+      // Return a slim payload for the client
+      const slim = elements
+        .filter((el: any) => typeof el?.lat === "number" && typeof el?.lon === "number")
+        .map((el: any) => ({
+          id: String(el.id),
+          lat: el.lat,
+          lon: el.lon,
+          tags: el.tags ?? {},
+        }));
+
+      return new Response(JSON.stringify(slim), {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=30",
+        },
+        status: 200,
+      });
+    }
 
     let url: URL;
 
@@ -53,6 +151,8 @@ serve(async (req) => {
       url.searchParams.set("q", q);
       url.searchParams.set("format", "json");
       url.searchParams.set("addressdetails", "1");
+      url.searchParams.set("namedetails", "1");
+      url.searchParams.set("extratags", "1");
 
       if (body.countryCode) {
         url.searchParams.set("countrycodes", body.countryCode);
@@ -92,7 +192,6 @@ serve(async (req) => {
 
     const upstream = await fetch(url.toString(), {
       headers: {
-        // Nominatim asks for an identifying UA; server-side we can set it.
         "User-Agent": "Blacktop-App/1.0",
         "Accept": "application/json",
       },
