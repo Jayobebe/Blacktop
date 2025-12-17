@@ -1,15 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(true);
   const { createProfile } = useProfile();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches;
+    setIsStandalone(standalone);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +88,20 @@ export default function Onboarding() {
             Blacktop is a ride logging tool, not a racing app.
           </p>
         </div>
+
+        {/* Install prompt - only shown in browser mode */}
+        {!isStandalone && (
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/install')}
+              className="w-full h-12 text-sm gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Install App for Best Experience
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
