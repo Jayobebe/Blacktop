@@ -334,8 +334,8 @@ export default function Settings() {
           </div>
           <div className="flex items-center justify-between py-2">
             <div>
-              <p className="text-sm font-medium">Show Speed Rankings</p>
-              <p className="text-xs text-muted-foreground">Display speed stats and rankings during rides</p>
+              <p className="text-sm font-medium">Show Convoy Metrics</p>
+              <p className="text-xs text-muted-foreground">Display speed stats and metrics during rides</p>
             </div>
             <Switch 
               checked={settings.showSpeedRankings} 
