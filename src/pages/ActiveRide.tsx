@@ -78,8 +78,8 @@ export default function ActiveRide() {
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
   const wakeLock = useWakeLock();
-  // Keep audio session alive in background for voice chat during convoy rides
-  useBackgroundAudio(rideState.isConvoyMode && isConnected);
+  // Keep audio session alive in background only when in convoy with other members
+  useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
