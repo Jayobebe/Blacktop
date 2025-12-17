@@ -47,8 +47,8 @@ const MAX_RECENT_LOCATIONS = 4;
 const quickCategories: QuickCategory[] = [
   { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'fuel' },
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
-  { id: 'coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" />, query: 'cafe' },
   { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
+  { id: 'coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" />, query: 'cafe' },
 ];
 
 function getRecentLocations(): SearchResult[] {
