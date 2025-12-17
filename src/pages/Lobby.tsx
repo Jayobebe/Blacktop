@@ -15,6 +15,11 @@ import { WaypointList } from '@/components/WaypointList';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 
+interface UserLocation {
+  lat: number;
+  lng: number;
+}
+
 export default function Lobby() {
   const navigate = useNavigate();
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
@@ -27,11 +32,43 @@ export default function Lobby() {
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const [showAddWaypoint, setShowAddWaypoint] = useState(false);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [countryCode, setCountryCode] = useState<string | null>(null);
   const hasStartedRide = useRef(false);
   const prevReadyToStart = useRef<boolean | null>(null);
   const controlChannelRef = useRef<any>(null);
   const longPressTimerRef = useRef<number | null>(null);
   const didLongPressRef = useRef(false);
+
+  // Fetch user location on mount (available for all members, not just leaders)
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const loc = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(loc);
+          // Get country code for better search results
+          try {
+            const { data } = await supabase.functions.invoke('place-search', {
+              body: { kind: 'reverse', lat: loc.lat, lon: loc.lng, zoom: 3 },
+            });
+            if (data?.address?.country_code) {
+              setCountryCode(data.address.country_code.toUpperCase());
+            }
+          } catch {
+            // Ignore errors
+          }
+        },
+        (error) => {
+          console.warn('[Lobby] Could not get location:', error.message);
+        },
+        { enableHighAccuracy: false, timeout: 10000 }
+      );
+    }
+  }, []);
 
   // Reset ride started flag ONLY when destination is cleared (new ride cycle)
   useEffect(() => {
@@ -295,6 +332,8 @@ export default function Lobby() {
                 onClearDestination={() => {}}
                 onNavigate={() => {}}
                 isLeader={convoy.isLeader}
+                userLocation={userLocation}
+                countryCode={countryCode}
               />
             </div>
           ) : (
@@ -361,6 +400,8 @@ export default function Lobby() {
                     }
                   }}
                   isLeader={convoy.isLeader}
+                  userLocation={userLocation}
+                  countryCode={countryCode}
                 />
               )}
             </div>

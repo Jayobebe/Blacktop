@@ -24,6 +24,8 @@ interface DestinationSearchProps {
   onClearDestination: () => void;
   onNavigate?: () => void;
   isLeader: boolean;
+  userLocation?: UserLocation | null;
+  countryCode?: string | null;
 }
 
 interface UserLocation {
@@ -307,15 +309,17 @@ export function DestinationSearch({
   onClearDestination,
   onNavigate,
   isLeader,
+  userLocation: externalUserLocation,
+  countryCode: externalCountryCode,
 }: DestinationSearchProps) {
   const { openNavigation } = useNavigation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [internalUserLocation, setInternalUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [countryCode, setCountryCode] = useState<string | null>(null);
+  const [internalCountryCode, setInternalCountryCode] = useState<string | null>(null);
   const [recentLocations, setRecentLocations] = useState<SearchResult[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -323,11 +327,18 @@ export function DestinationSearch({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
 
+  // Use external location if provided, otherwise use internal
+  const userLocation = externalUserLocation ?? internalUserLocation;
+  const countryCode = externalCountryCode ?? internalCountryCode;
+
   useEffect(() => {
     setRecentLocations(getRecentLocations());
   }, []);
 
+  // Only fetch location internally if not provided externally
   useEffect(() => {
+    if (externalUserLocation) return; // Skip if location is provided externally
+    
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -335,9 +346,9 @@ export function DestinationSearch({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          setUserLocation(loc);
+          setInternalUserLocation(loc);
           const code = await getCountryCode(loc.lat, loc.lng);
-          if (code) setCountryCode(code);
+          if (code) setInternalCountryCode(code);
         },
         (error) => {
           console.warn('Could not get location:', error.message);
@@ -345,7 +356,7 @@ export function DestinationSearch({
         { enableHighAccuracy: false, timeout: 10000 }
       );
     }
-  }, []);
+  }, [externalUserLocation]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -372,9 +383,9 @@ export function DestinationSearch({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
-        setUserLocation(loc);
+        setInternalUserLocation(loc);
         const code = await getCountryCode(loc.lat, loc.lng);
-        if (code) setCountryCode(code);
+        if (code) setInternalCountryCode(code);
         toast.success('Location updated');
         setIsLocating(false);
       },
