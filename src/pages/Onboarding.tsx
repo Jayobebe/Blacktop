@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
+import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type PermissionStatus = 'pending' | 'granted' | 'denied' | 'prompt';
@@ -286,17 +286,39 @@ export default function Onboarding() {
           </p>
         </div>
 
-        {/* Install prompt - only shown in browser mode, hidden in landscape */}
+        {/* Install instructions - only shown in browser mode, hidden in landscape */}
         {!isStandalone && (
-          <div className="mt-4 pt-4 border-t border-border/50 landscape:hidden">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/install')}
-              className="w-full h-10 text-sm gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Install App
-            </Button>
+          <div className="mt-4 pt-4 border-t border-border/50 landscape:hidden space-y-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="font-medium">Install for the best experience</span>
+            </div>
+            
+            {/* iOS Instructions */}
+            <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">iPhone / iPad</p>
+              <div className="flex items-center gap-2 text-[11px] text-foreground">
+                <span className="flex items-center gap-1">
+                  <Share className="w-3 h-3" /> Tap Share
+                </span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                <span className="flex items-center gap-1">
+                  <PlusSquare className="w-3 h-3" /> Add to Home Screen
+                </span>
+              </div>
+            </div>
+
+            {/* Android Instructions */}
+            <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Android</p>
+              <div className="flex items-center gap-2 text-[11px] text-foreground">
+                <span className="flex items-center gap-1">
+                  <MoreVertical className="w-3 h-3" /> Tap Menu
+                </span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                <span>Install app / Add to Home</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
