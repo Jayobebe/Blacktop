@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, Coffee, UtensilsCrossed, ShoppingCart, Building2 } from 'lucide-react';
+import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -48,7 +48,7 @@ const quickCategories: QuickCategory[] = [
   { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'fuel' },
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
   { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
-  { id: 'coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" />, query: 'cafe' },
+  { id: '24h', label: '24h', icon: <Clock className="w-4 h-4" />, query: '24h' },
 ];
 
 function getRecentLocations(): SearchResult[] {
@@ -114,8 +114,8 @@ const MAX_NEARBY_DISTANCE_KM = 15;
 const categoryToNominatimQuery: Record<string, string> = {
   'fuel': 'petrol station',
   'restaurant|fast_food|cafe': 'restaurant',
-  'cafe': 'cafe coffee',
   'supermarket|convenience': 'supermarket',
+  '24h': '24 hour store',
 };
 
 // Search nearby POIs (categories) using Overpass first (best for amenities),
@@ -125,7 +125,8 @@ async function searchNearbyPOIs(
   userLocation: UserLocation,
   countryCode: string | null
 ): Promise<SearchResult[]> {
-  const amenities = amenityQuery.split('|').filter(Boolean);
+  const is24hSearch = amenityQuery === '24h';
+  const amenities = is24hSearch ? [] : amenityQuery.split('|').filter(Boolean);
 
   // 1) Overpass: best chance to find actual cafes/fuel/etc near you
   try {
@@ -135,6 +136,7 @@ async function searchNearbyPOIs(
       lon: userLocation.lng,
       radius_m: 15000,
       amenities,
+      filter24h: is24hSearch,
       limit: 80,
     });
 
