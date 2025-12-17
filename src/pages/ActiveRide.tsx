@@ -78,7 +78,7 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
-  const { updateRideBadge } = useRideHistory();
+  const { updateRideBadges } = useRideHistory();
   const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
@@ -210,11 +210,11 @@ export default function ActiveRide() {
     }
   };
 
-  const handleBadgeEarned = useCallback((badge: BadgeType) => {
-    if (savedRideId) {
-      updateRideBadge(savedRideId, badge);
+  const handleBadgesEarned = useCallback((badges: BadgeType[]) => {
+    if (savedRideId && badges.length > 0) {
+      updateRideBadges(savedRideId, badges);
     }
-  }, [savedRideId, updateRideBadge]);
+  }, [savedRideId, updateRideBadges]);
 
   const handleCloseSummary = () => {
     setShowSummary(false);
@@ -261,7 +261,7 @@ export default function ActiveRide() {
         members={finalMembers} 
         currentUserId={user?.id}
         rideStats={finalRideStats || undefined}
-        onBadgeEarned={handleBadgeEarned}
+        onBadgesEarned={handleBadgesEarned}
         onClose={handleCloseSummary} 
       />
     );
