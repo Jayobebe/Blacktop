@@ -265,7 +265,6 @@ export default function ActiveRide() {
     }
 
     // CRITICAL: If leader in convoy mode, broadcast 'end-ride' BEFORE ending ride
-    // IMPORTANT: Don't rely on an existing channel ref; always await SUBSCRIBED for reliable delivery.
     if (wasConvoyMode && wasLeader && convoyId) {
       console.log('[ActiveRide] Leader broadcasting end-ride to all members');
       try {
@@ -273,7 +272,19 @@ export default function ActiveRide() {
           config: { broadcast: { self: false } },
         });
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
+          let resolved = false;
+          const done = () => {
+            if (!resolved) {
+              resolved = true;
+              supabase.removeChannel(broadcastChannel);
+              resolve();
+            }
+          };
+
+          // Timeout fallback - always resolve after 2s max
+          const timeout = setTimeout(done, 2000);
+
           broadcastChannel.subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
               try {
@@ -284,19 +295,15 @@ export default function ActiveRide() {
                 });
                 console.log('[ActiveRide] End-ride broadcast sent successfully');
               } catch (err) {
-                reject(err);
-                return;
-              } finally {
-                // Small delay to help flush the message before channel cleanup
-                setTimeout(() => {
-                  supabase.removeChannel(broadcastChannel);
-                  resolve();
-                }, 150);
+                console.error('[ActiveRide] Broadcast send error:', err);
               }
-            }
-
-            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-              reject(new Error(`Broadcast channel failed: ${status}`));
+              // Small delay to help flush the message before channel cleanup
+              clearTimeout(timeout);
+              setTimeout(done, 150);
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              console.warn('[ActiveRide] Broadcast channel issue:', status);
+              clearTimeout(timeout);
+              done();
             }
           });
         });
