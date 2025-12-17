@@ -15,6 +15,7 @@ let convoyState: ConvoyState = {
   members: [],
   isActive: false,
   destination: null,
+  waypoints: [],
 };
 
 function getSnapshot(): ConvoyState {
@@ -220,6 +221,7 @@ export function useConvoyState() {
       members: [member],
       isActive: true,
       destination: null,
+      waypoints: [],
     }));
 
     return { id: convoy.id, code: convoy.code };
@@ -321,6 +323,7 @@ export function useConvoyState() {
       members,
       isActive: true,
       destination,
+      waypoints: [],
     }));
 
     return true;
@@ -353,6 +356,7 @@ export function useConvoyState() {
       members: [],
       isActive: false,
       destination: null,
+      waypoints: [],
     }));
   }, [state.id, state.isLeader]);
 

@@ -77,6 +77,53 @@ export type Database = {
           },
         ]
       }
+      convoy_waypoints: {
+        Row: {
+          address: string | null
+          completed_at: string | null
+          convoy_id: string
+          created_at: string
+          id: string
+          is_completed: boolean
+          lat: number
+          lng: number
+          name: string
+          order_index: number
+        }
+        Insert: {
+          address?: string | null
+          completed_at?: string | null
+          convoy_id: string
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          lat: number
+          lng: number
+          name: string
+          order_index?: number
+        }
+        Update: {
+          address?: string | null
+          completed_at?: string | null
+          convoy_id?: string
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          lat?: number
+          lng?: number
+          name?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convoy_waypoints_convoy_id_fkey"
+            columns: ["convoy_id"]
+            isOneToOne: false
+            referencedRelation: "convoys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convoys: {
         Row: {
           code: string

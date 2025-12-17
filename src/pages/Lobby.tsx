@@ -3,21 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
+import { useWaypoints } from '@/hooks/useWaypoints';
+import { useNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, ChevronRight, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DestinationSearch } from '@/components/DestinationSearch';
 import { getMemberColorStyles } from '@/lib/memberColors';
+import { ConvoyDestination } from '@/types/convoy';
 
 export default function Lobby() {
   const navigate = useNavigate();
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
   const { startRide } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
+  const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
+  const { openNavigation } = useNavigation();
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
+  const [showAddWaypoint, setShowAddWaypoint] = useState(false);
   const hasStartedRide = useRef(false);
   const prevReadyToStart = useRef<boolean | null>(null);
 
@@ -160,19 +166,137 @@ export default function Lobby() {
 
       {/* Main content - vertical in portrait, horizontal in landscape */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
-        {/* Destination */}
-        <div className="flex-1 flex flex-col animate-slide-up relative z-50 min-w-0">
-          <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">Destination</p>
-          <DestinationSearch
-            destination={convoy.destination}
-            onSetDestination={setDestination}
-            onClearDestination={clearDestination}
-            onNavigate={markAsNavigated}
-            isLeader={convoy.isLeader}
-          />
+        {/* Destination & Waypoints */}
+        <div className="flex-1 flex flex-col animate-slide-up relative z-50 min-w-0 overflow-hidden">
+          {/* Waypoints List */}
+          {waypoints.length > 0 && (
+            <div className="mb-2">
+              <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">
+                Route ({completedCount}/{totalCount} stops)
+              </p>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {waypoints.map((wp, index) => (
+                  <div
+                    key={wp.id}
+                    className={cn(
+                      "flex items-center gap-2 bg-card border border-border rounded-lg p-2 text-xs",
+                      wp.isCompleted && "opacity-50"
+                    )}
+                  >
+                    <span className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0",
+                      wp.isCompleted ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
+                    )}>
+                      {wp.isCompleted ? '✓' : index + 1}
+                    </span>
+                    <span className={cn("flex-1 truncate", wp.isCompleted && "line-through")}>
+                      {wp.name}
+                    </span>
+                    {convoy.isLeader && !wp.isCompleted && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => completeWaypoint(wp.id)}
+                          className="p-1 hover:bg-accent/20 rounded text-accent"
+                          title="Mark complete"
+                        >
+                          <Check className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => removeWaypoint(wp.id)}
+                          className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                          title="Remove"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add Waypoint / Current Destination */}
+          {showAddWaypoint ? (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-wide">Add Stop</p>
+                <button
+                  onClick={() => setShowAddWaypoint(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <DestinationSearch
+                destination={null}
+                onSetDestination={async (dest: ConvoyDestination) => {
+                  await addWaypoint({
+                    name: dest.name,
+                    address: dest.address,
+                    lat: dest.lat,
+                    lng: dest.lng,
+                  });
+                  setShowAddWaypoint(false);
+                }}
+                onClearDestination={() => {}}
+                onNavigate={() => {}}
+                isLeader={convoy.isLeader}
+              />
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-wide">
+                  {nextWaypoint ? 'Next Stop' : 'Destination'}
+                </p>
+                {convoy.isLeader && (
+                  <button
+                    onClick={() => setShowAddWaypoint(true)}
+                    className="flex items-center gap-1 text-[10px] text-accent hover:text-accent/80"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Stop
+                  </button>
+                )}
+              </div>
+              
+              {nextWaypoint ? (
+                <div className="bg-card border border-accent/30 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{nextWaypoint.name}</p>
+                      {nextWaypoint.address && (
+                        <p className="text-xs text-muted-foreground truncate">{nextWaypoint.address}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      openNavigation(nextWaypoint.lat, nextWaypoint.lng, nextWaypoint.name);
+                      markAsNavigated();
+                    }}
+                    className="w-full mt-2 h-10 bg-accent hover:bg-accent/90 text-accent-foreground"
+                  >
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Navigate
+                  </Button>
+                </div>
+              ) : (
+                <DestinationSearch
+                  destination={convoy.destination}
+                  onSetDestination={setDestination}
+                  onClearDestination={clearDestination}
+                  onNavigate={markAsNavigated}
+                  isLeader={convoy.isLeader}
+                />
+              )}
+            </div>
+          )}
           
           {/* Status message */}
-          {convoy.destination && (
+          {(convoy.destination || nextWaypoint) && (
             <div className="mt-2 animate-fade-in">
               <p className="text-xs text-muted-foreground">
                 {allMembersNavigated 

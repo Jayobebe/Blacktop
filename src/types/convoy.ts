@@ -5,6 +5,17 @@ export interface ConvoyDestination {
   lng: number;
 }
 
+export interface ConvoyWaypoint {
+  id: string;
+  name: string;
+  address?: string;
+  lat: number;
+  lng: number;
+  orderIndex: number;
+  isCompleted: boolean;
+  completedAt?: string;
+}
+
 export interface ConvoyState {
   id: string | null;
   code: string | null;
@@ -12,6 +23,7 @@ export interface ConvoyState {
   members: ConvoyMemberInfo[];
   isActive: boolean;
   destination: ConvoyDestination | null;
+  waypoints: ConvoyWaypoint[];
 }
 
 export interface ConvoyMemberInfo {
