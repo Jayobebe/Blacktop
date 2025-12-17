@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DemoTooltip, DemoSuccess } from '@/components/DemoTooltip';
+import { haptics } from '@/lib/haptics';
 import { 
   Users, UserPlus, History, BarChart3, Settings, Play, 
   Copy, Check, Mic, MicOff, Crown, User, Navigation, 
@@ -11,7 +13,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Demo step definitions - comprehensive flow
 type DemoStep = 
   | 'welcome'
   | 'onboarding' 
@@ -53,25 +54,15 @@ const STEP_TITLES: Record<DemoStep, string> = {
   'complete': 'Demo Complete',
 };
 
-const STEP_DESCRIPTIONS: Record<DemoStep, string> = {
-  'welcome': 'Experience every feature in this guided tour',
-  'onboarding': 'No email, no password — just your name',
-  'home': 'Your ride stats at a glance',
-  'create-convoy': 'Generate a shareable code instantly',
-  'lobby-empty': 'Where your convoy assembles',
-  'lobby-members': 'Toggle voice chat with your group',
-  'lobby-waypoints': 'Plan multiple stops on your route',
-  'lobby-reorder': 'Easily reorganize your journey',
-  'active-ride': 'Real-time speed, distance & GPS',
-  'active-rescue': 'Lost rider? Send your location',
-  'rescue-response': 'Leader adds them as a waypoint',
-  'ride-end': 'End for yourself or entire convoy',
-  'badge-summary': 'Earn Speed Demon, Journeyman & Rocksteady',
-  'history': 'Browse and manage past rides',
-  'history-photos': 'Attach memories to your rides',
-  'stats': 'Lifetime achievements & badges',
-  'settings': 'Units, nav app & the Burn Button',
-  'complete': 'Ready to hit the road!',
+const STEP_INTERACTIONS: Partial<Record<DemoStep, string>> = {
+  'onboarding': 'Type your name to continue',
+  'create-convoy': 'Tap the code to copy it',
+  'lobby-members': 'Tap the mic button to unmute',
+  'lobby-reorder': 'Drag a waypoint to reorder',
+  'active-ride': 'Tap the mic to toggle voice',
+  'active-rescue': 'Tap the RESCUE button',
+  'rescue-response': 'Tap Add Waypoint to help',
+  'settings': 'Try changing a setting',
 };
 
 export default function DemoRide() {
@@ -84,8 +75,14 @@ export default function DemoRide() {
   const [maxSpeed, setMaxSpeed] = useState(0);
   const [distance, setDistance] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showRescueAlert, setShowRescueAlert] = useState(false);
   const [waypointOrder, setWaypointOrder] = useState([0, 1, 2]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  
+  // Interactive state tracking
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState<'mph' | 'kph'>('mph');
+  const [selectedNavApp, setSelectedNavApp] = useState(0);
 
   // Simulate ride when on active-ride step
   useEffect(() => {
@@ -104,18 +101,58 @@ export default function DemoRide() {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Show rescue alert after delay
+  // Reset interaction state on step change
   useEffect(() => {
-    if (step === 'rescue-response') {
-      setShowRescueAlert(true);
-    } else {
-      setShowRescueAlert(false);
-    }
+    setHasInteracted(false);
+    setShowSuccess(false);
   }, [step]);
+
+  const triggerSuccess = useCallback(() => {
+    haptics.success();
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      nextStep();
+    }, 600);
+  }, []);
+
+  const handleInteraction = useCallback((action: string) => {
+    setHasInteracted(true);
+    haptics.medium();
+    
+    // Auto-advance after certain interactions
+    if (['copy', 'unmute', 'reorder', 'rescue', 'add-waypoint', 'setting'].includes(action)) {
+      setTimeout(triggerSuccess, 300);
+    }
+  }, [triggerSuccess]);
 
   const handleCopy = () => {
     setCopied(true);
+    handleInteraction('copy');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleMicToggle = () => {
+    setIsMuted(!isMuted);
+    if (isMuted) {
+      handleInteraction('unmute');
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+    haptics.light();
+  };
+
+  const handleDrop = (dropIndex: number) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+    
+    const newOrder = [...waypointOrder];
+    const [removed] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(dropIndex, 0, removed);
+    setWaypointOrder(newOrder);
+    setDraggedIndex(null);
+    handleInteraction('reorder');
   };
 
   const steps: DemoStep[] = [
@@ -149,8 +186,15 @@ export default function DemoRide() {
     { name: 'Jake', isLeader: false, color: 'green', speed: 0, topSpeed: 71, distance: 10.2 },
   ];
 
+  // Check if step requires interaction before continuing
+  const requiresInteraction = step in STEP_INTERACTIONS;
+  const canContinue = !requiresInteraction || hasInteracted || 
+    (step === 'onboarding' && demoName.length >= 2);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <DemoSuccess show={showSuccess} />
+      
       {/* Demo Header */}
       <div className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="h-1 bg-secondary">
@@ -162,7 +206,9 @@ export default function DemoRide() {
         <div className="flex items-center justify-between px-4 py-2.5">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{STEP_TITLES[step]}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{STEP_DESCRIPTIONS[step]}</p>
+            <p className="text-[10px] text-muted-foreground truncate">
+              {STEP_INTERACTIONS[step] || `Step ${steps.indexOf(step) + 1} of ${steps.length}`}
+            </p>
           </div>
           <Button variant="ghost" size="sm" onClick={exitDemo} className="text-muted-foreground hover:text-foreground flex-shrink-0">
             Exit
@@ -179,10 +225,10 @@ export default function DemoRide() {
               <Play className="w-12 h-12 text-accent" />
             </div>
             <h1 className="text-3xl font-semibold text-center mb-2 tracking-tight">
-              Blacktop Demo
+              Interactive Demo
             </h1>
             <p className="text-muted-foreground text-center text-sm mb-8">
-              The complete ride companion experience
+              Learn by doing — tap, drag, and explore!
             </p>
             <div className="grid grid-cols-2 gap-3 text-sm max-w-xs w-full">
               {[
@@ -204,7 +250,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Onboarding */}
+        {/* Onboarding - Interactive name input */}
         {step === 'onboarding' && (
           <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
             <div className="w-full max-w-sm">
@@ -219,12 +265,20 @@ export default function DemoRide() {
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
                     Profile Name
                   </label>
-                  <Input
-                    value={demoName}
-                    onChange={(e) => setDemoName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="h-14 text-lg"
-                  />
+                  <DemoTooltip 
+                    hint="Type your name" 
+                    position="top" 
+                    pulse={!demoName}
+                    className="w-full"
+                  >
+                    <Input
+                      value={demoName}
+                      onChange={(e) => setDemoName(e.target.value)}
+                      placeholder="Enter your name"
+                      className="h-14 text-lg"
+                      autoFocus
+                    />
+                  </DemoTooltip>
                 </div>
                 <div className="p-4 bg-accent/10 border border-accent/20 rounded-xl space-y-2">
                   <p className="text-sm text-accent font-medium">🔒 No account required</p>
@@ -289,7 +343,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Create Convoy */}
+        {/* Create Convoy - Interactive copy */}
         {step === 'create-convoy' && (
           <div className="p-5 animate-fade-in">
             <div className="text-center mb-8">
@@ -302,12 +356,17 @@ export default function DemoRide() {
 
             <div className="bg-card/50 border border-border/30 rounded-2xl p-6 text-center mb-5">
               <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Convoy Code</p>
-              <button onClick={handleCopy} className="flex items-center justify-center gap-4 mx-auto">
-                <span className="font-mono text-4xl font-semibold tracking-[0.2em]">XK7M9P</span>
-                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-                  {copied ? <Check className="w-5 h-5 text-accent" /> : <Copy className="w-5 h-5 text-muted-foreground" />}
-                </div>
-              </button>
+              <DemoTooltip hint="Tap to copy" position="bottom" pulse={!copied}>
+                <button onClick={handleCopy} className="flex items-center justify-center gap-4 mx-auto">
+                  <span className="font-mono text-4xl font-semibold tracking-[0.2em]">XK7M9P</span>
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+                    copied ? "bg-accent" : "bg-secondary"
+                  )}>
+                    {copied ? <Check className="w-5 h-5 text-accent-foreground" /> : <Copy className="w-5 h-5 text-muted-foreground" />}
+                  </div>
+                </button>
+              </DemoTooltip>
             </div>
 
             <div className="p-3 bg-secondary/50 rounded-xl text-sm text-muted-foreground">
@@ -350,22 +409,24 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Lobby with Members - Voice */}
+        {/* Lobby with Members - Interactive Voice */}
         {step === 'lobby-members' && (
           <div className="p-5 animate-fade-in">
             <header className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-2 bg-card/50 border border-border/30 rounded-xl px-3 py-2">
                 <span className="font-mono text-lg font-semibold tracking-wider">XK7M9P</span>
               </div>
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center transition-all",
-                  !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80 border border-border/30"
-                )}
-              >
-                {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-accent-foreground" />}
-              </button>
+              <DemoTooltip hint="Tap to unmute" position="left" pulse={isMuted}>
+                <button
+                  onClick={handleMicToggle}
+                  className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center transition-all",
+                    !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80 border border-border/30"
+                  )}
+                >
+                  {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-accent-foreground" />}
+                </button>
+              </DemoTooltip>
             </header>
 
             <div className="mb-5">
@@ -464,7 +525,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Lobby Reorder */}
+        {/* Lobby Reorder - Interactive Drag */}
         {step === 'lobby-reorder' && (
           <div className="p-5 animate-fade-in">
             <header className="mb-4 flex items-center justify-between">
@@ -473,21 +534,34 @@ export default function DemoRide() {
 
             <div className="space-y-2 mb-5">
               {waypointOrder.map((wpIndex, i) => (
-                <div 
-                  key={wpIndex} 
-                  className={cn(
-                    "flex items-center gap-2 bg-card/50 border rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all",
-                    i === 1 ? "border-accent border-dashed scale-[1.02] shadow-lg" : "border-border/30"
-                  )}
+                <DemoTooltip 
+                  key={wpIndex}
+                  hint={i === 0 && !hasInteracted ? "Drag me!" : ""} 
+                  position="right" 
+                  pulse={i === 0 && !hasInteracted}
+                  showArrow={i === 0 && !hasInteracted}
+                  className="w-full"
                 >
-                  <GripVertical className="w-4 h-4 text-muted-foreground" />
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
-                    {i + 1}
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{waypoints[wpIndex].name}</p>
+                  <div 
+                    draggable
+                    onDragStart={() => handleDragStart(i)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleDrop(i)}
+                    className={cn(
+                      "flex items-center gap-2 bg-card/50 border rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all",
+                      draggedIndex === i ? "border-accent border-dashed scale-[1.02] shadow-lg" : "border-border/30",
+                      i === 0 && !hasInteracted && "animate-wiggle"
+                    )}
+                  >
+                    <GripVertical className="w-4 h-4 text-muted-foreground" />
+                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{waypoints[wpIndex].name}</p>
+                    </div>
                   </div>
-                </div>
+                </DemoTooltip>
               ))}
             </div>
 
@@ -500,7 +574,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Active Ride */}
+        {/* Active Ride - Interactive mic */}
         {step === 'active-ride' && (
           <div className="p-5 animate-fade-in">
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -542,12 +616,14 @@ export default function DemoRide() {
               <button className="w-12 h-12 rounded-xl bg-secondary/80 flex items-center justify-center">
                 <Navigation className="w-5 h-5 text-muted-foreground" />
               </button>
-              <button className={cn(
-                "w-16 h-16 rounded-2xl flex items-center justify-center transition-all",
-                !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80"
-              )} onClick={() => setIsMuted(!isMuted)}>
-                {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7 text-accent-foreground" />}
-              </button>
+              <DemoTooltip hint="Try toggling" position="top" pulse={isMuted}>
+                <button className={cn(
+                  "w-16 h-16 rounded-2xl flex items-center justify-center transition-all",
+                  !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80"
+                )} onClick={handleMicToggle}>
+                  {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7 text-accent-foreground" />}
+                </button>
+              </DemoTooltip>
               <button className="w-12 h-12 rounded-xl bg-accent/15 text-accent flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </button>
@@ -567,7 +643,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Active Rescue */}
+        {/* Active Rescue - Interactive button */}
         {step === 'active-rescue' && (
           <div className="p-5 animate-fade-in">
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -590,10 +666,15 @@ export default function DemoRide() {
               </div>
             </div>
 
-            <button className="w-full h-14 rounded-xl border-2 border-warning text-warning hover:bg-warning hover:text-warning-foreground flex items-center justify-center gap-3 transition-all mb-4 animate-pulse">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-semibold">RESCUE</span>
-            </button>
+            <DemoTooltip hint="Tap for help!" position="top" pulse={!hasInteracted}>
+              <button 
+                onClick={() => handleInteraction('rescue')}
+                className="w-full h-14 rounded-xl border-2 border-warning text-warning hover:bg-warning hover:text-warning-foreground flex items-center justify-center gap-3 transition-all mb-4 animate-pulse"
+              >
+                <AlertTriangle className="w-5 h-5" />
+                <span className="font-semibold">RESCUE</span>
+              </button>
+            </DemoTooltip>
 
             <div className="p-3 bg-warning/10 border border-warning/20 rounded-xl">
               <p className="text-sm text-warning flex items-center gap-2">
@@ -604,7 +685,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Rescue Response */}
+        {/* Rescue Response - Interactive add waypoint */}
         {step === 'rescue-response' && (
           <div className="p-5 animate-fade-in relative">
             {/* Rescue Alert Overlay */}
@@ -617,9 +698,15 @@ export default function DemoRide() {
                   <p className="font-semibold text-sm">Jake needs rescue!</p>
                   <p className="text-xs opacity-80">Add them as a waypoint to navigate</p>
                   <div className="flex gap-2 mt-2">
-                    <Button size="sm" className="h-7 bg-background text-foreground hover:bg-background/90 text-xs">
-                      <UserPlus className="w-3 h-3 mr-1" /> Add Waypoint
-                    </Button>
+                    <DemoTooltip hint="Tap to help" position="bottom" pulse={!hasInteracted}>
+                      <Button 
+                        size="sm" 
+                        className="h-7 bg-background text-foreground hover:bg-background/90 text-xs"
+                        onClick={() => handleInteraction('add-waypoint')}
+                      >
+                        <UserPlus className="w-3 h-3 mr-1" /> Add Waypoint
+                      </Button>
+                    </DemoTooltip>
                     <Button size="sm" variant="ghost" className="h-7 text-xs opacity-70">
                       <X className="w-3 h-3" />
                     </Button>
@@ -860,7 +947,7 @@ export default function DemoRide() {
           </div>
         )}
 
-        {/* Settings */}
+        {/* Settings - Interactive */}
         {step === 'settings' && (
           <div className="p-5 animate-fade-in">
             <h1 className="text-xl font-semibold mb-4">Settings</h1>
@@ -868,20 +955,42 @@ export default function DemoRide() {
             <div className="space-y-3 mb-6">
               <div className="bg-card/50 border border-border/30 rounded-xl p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Speed Unit</p>
-                <div className="flex gap-2">
-                  <button className="flex-1 h-9 rounded-lg bg-accent text-accent-foreground text-sm font-medium">mph</button>
-                  <button className="flex-1 h-9 rounded-lg bg-secondary text-sm">kph</button>
-                </div>
+                <DemoTooltip hint="Try changing" position="right" pulse={!hasInteracted && selectedUnit === 'mph'}>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => { setSelectedUnit('mph'); handleInteraction('setting'); }}
+                      className={cn(
+                        "flex-1 h-9 rounded-lg text-sm font-medium transition-colors",
+                        selectedUnit === 'mph' ? "bg-accent text-accent-foreground" : "bg-secondary"
+                      )}
+                    >
+                      mph
+                    </button>
+                    <button 
+                      onClick={() => { setSelectedUnit('kph'); handleInteraction('setting'); }}
+                      className={cn(
+                        "flex-1 h-9 rounded-lg text-sm font-medium transition-colors",
+                        selectedUnit === 'kph' ? "bg-accent text-accent-foreground" : "bg-secondary"
+                      )}
+                    >
+                      kph
+                    </button>
+                  </div>
+                </DemoTooltip>
               </div>
 
               <div className="bg-card/50 border border-border/30 rounded-xl p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Navigation App</p>
                 <div className="flex gap-2">
                   {['Google', 'Apple', 'Waze'].map((app, i) => (
-                    <button key={app} className={cn(
-                      "flex-1 h-9 rounded-lg text-sm font-medium",
-                      i === 0 ? "bg-accent text-accent-foreground" : "bg-secondary"
-                    )}>
+                    <button 
+                      key={app} 
+                      onClick={() => { setSelectedNavApp(i); handleInteraction('setting'); }}
+                      className={cn(
+                        "flex-1 h-9 rounded-lg text-sm font-medium transition-colors",
+                        selectedNavApp === i ? "bg-accent text-accent-foreground" : "bg-secondary"
+                      )}
+                    >
                       {app}
                     </button>
                   ))}
@@ -895,11 +1004,12 @@ export default function DemoRide() {
                     <button 
                       key={color}
                       className={cn(
-                        "w-8 h-8 rounded-full",
-                        color === 'orange' && "bg-orange-500 ring-2 ring-offset-2 ring-offset-background ring-orange-500",
+                        "w-8 h-8 rounded-full transition-all",
+                        color === 'orange' && "bg-orange-500",
                         color === 'blue' && "bg-blue-500",
                         color === 'pink' && "bg-pink-500",
-                        color === 'green' && "bg-green-500"
+                        color === 'green' && "bg-green-500",
+                        i === 0 && "ring-2 ring-offset-2 ring-offset-background ring-orange-500"
                       )}
                     />
                   ))}
@@ -931,10 +1041,10 @@ export default function DemoRide() {
               <Check className="w-10 h-10 text-accent" />
             </div>
             <h1 className="text-2xl font-semibold text-center mb-2">
-              Demo Complete!
+              You're Ready!
             </h1>
             <p className="text-muted-foreground text-center text-sm max-w-xs mb-8">
-              You've explored all of Blacktop's features. Ready to hit the road?
+              You've mastered all of Blacktop's features. Time to hit the road!
             </p>
             
             <div className="grid grid-cols-2 gap-2 text-xs max-w-xs w-full mb-8">
@@ -956,8 +1066,13 @@ export default function DemoRide() {
       {/* Bottom Navigation */}
       {step !== 'complete' && (
         <div className="fixed bottom-0 left-0 right-0 p-4 glass">
-          <Button onClick={nextStep} className="w-full h-12 rounded-xl font-semibold">
-            {step === 'welcome' ? 'Start Tour' : 'Continue'} <ArrowRight className="w-4 h-4 ml-2" />
+          <Button 
+            onClick={nextStep} 
+            className="w-full h-12 rounded-xl font-semibold"
+            disabled={!canContinue}
+          >
+            {step === 'welcome' ? 'Start Tour' : canContinue ? 'Continue' : STEP_INTERACTIONS[step]} 
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       )}
