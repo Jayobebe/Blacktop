@@ -9,21 +9,21 @@ interface RideSummaryProps {
 }
 
 export function RideSummary({ members, onClose }: RideSummaryProps) {
-  const badges = calculateBadges(members);
+  const badgesMap = calculateBadges(members);
   
-  // Get badge winners in display order
-  const badgeWinners: { member: ConvoyMemberInfo; badge: MemberBadge }[] = [];
+  // Get all badge awards as flat list for display
+  const badgeAwards: { member: ConvoyMemberInfo; badge: MemberBadge }[] = [];
   
   members.forEach(member => {
-    const badge = badges.get(member.userId);
-    if (badge) {
-      badgeWinners.push({ member, badge });
-    }
+    const memberBadges = badgesMap.get(member.userId) || [];
+    memberBadges.forEach(badge => {
+      badgeAwards.push({ member, badge });
+    });
   });
 
   // Sort by badge type priority: speed-demon, journeyman, rocksteady
   const badgeOrder = { 'speed-demon': 0, 'journeyman': 1, 'rocksteady': 2 };
-  badgeWinners.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
+  badgeAwards.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
@@ -45,11 +45,11 @@ export function RideSummary({ members, onClose }: RideSummaryProps) {
         </div>
 
         {/* Badges */}
-        {badgeWinners.length > 0 ? (
+        {badgeAwards.length > 0 ? (
           <div className="space-y-4">
-            {badgeWinners.map(({ member, badge }) => (
+            {badgeAwards.map(({ member, badge }, index) => (
               <div
-                key={member.userId}
+                key={`${member.userId}-${badge.type}`}
                 className={cn(
                   "flex items-center gap-4 p-4 rounded-xl border transition-all",
                   badge.type === 'speed-demon' && "bg-yellow-500/10 border-yellow-500/30",
