@@ -102,6 +102,7 @@ export default function ActiveRide() {
   const [endingFlow, setEndingFlow] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
+  const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
@@ -109,6 +110,15 @@ export default function ActiveRide() {
   
   // Update ref on each render to avoid stale closures
   rideStateRef.current = rideState;
+
+  // Save pending badges once savedRideId becomes available
+  useEffect(() => {
+    if (savedRideId && pendingBadges.length > 0) {
+      console.log('[ActiveRide] Saving pending badges:', pendingBadges, 'to ride:', savedRideId);
+      updateRideBadges(savedRideId, pendingBadges);
+      setPendingBadges([]); // Clear after saving
+    }
+  }, [savedRideId, pendingBadges, updateRideBadges]);
 
   // Keep screen awake during active ride
   useEffect(() => {
@@ -258,27 +268,40 @@ export default function ActiveRide() {
     if (wasConvoyMode && wasLeader && convoyId) {
       console.log('[ActiveRide] Leader broadcasting end-ride to all members');
       cleanupPromises.push(
-        new Promise<void>((resolve) => {
-          const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
-
-          broadcastChannel.subscribe(async (status) => {
-            if (status !== 'SUBSCRIBED') return;
-
-            try {
-              await broadcastChannel.send({
-                type: 'broadcast',
-                event: 'end-ride',
-                payload: {},
+        (async () => {
+          // Use existing control channel if subscribed, otherwise create new one
+          if (controlChannelRef.current) {
+            console.log('[ActiveRide] Using existing control channel for end-ride broadcast');
+            await controlChannelRef.current.send({
+              type: 'broadcast',
+              event: 'end-ride',
+              payload: { at: Date.now() },
+            });
+            // Small delay to ensure message is flushed
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } else {
+            // Fallback: create new channel if ref not available
+            console.log('[ActiveRide] Creating new channel for end-ride broadcast');
+            const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
+            await new Promise<void>((resolve) => {
+              broadcastChannel.subscribe(async (status) => {
+                if (status !== 'SUBSCRIBED') return;
+                try {
+                  await broadcastChannel.send({
+                    type: 'broadcast',
+                    event: 'end-ride',
+                    payload: { at: Date.now() },
+                  });
+                } finally {
+                  setTimeout(() => {
+                    supabase.removeChannel(broadcastChannel);
+                    resolve();
+                  }, 100);
+                }
               });
-            } finally {
-              // Small delay to ensure message is flushed before cleanup
-              setTimeout(() => {
-                supabase.removeChannel(broadcastChannel);
-                resolve();
-              }, 100);
-            }
-          });
-        })
+            });
+          }
+        })()
       );
     }
 
@@ -306,10 +329,12 @@ export default function ActiveRide() {
   };
 
   const handleBadgesEarned = useCallback((badges: BadgeType[]) => {
-    if (savedRideId && badges.length > 0) {
-      updateRideBadges(savedRideId, badges);
+    if (badges.length > 0) {
+      console.log('[ActiveRide] Badges earned:', badges);
+      // Store badges - they'll be saved when savedRideId becomes available
+      setPendingBadges(badges);
     }
-  }, [savedRideId, updateRideBadges]);
+  }, []);
 
   const handleCloseSummary = () => {
     setShowSummary(false);
