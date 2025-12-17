@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock } from 'lucide-react';
+import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, Coffee, UtensilsCrossed, ShoppingCart, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ interface SearchResult {
   lat: number;
   lng: number;
   distance?: number;
+  type?: string;
 }
 
 interface DestinationSearchProps {
@@ -29,8 +30,22 @@ interface UserLocation {
   lng: number;
 }
 
+interface QuickCategory {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  query: string;
+}
+
 const RECENT_LOCATIONS_KEY = 'blacktop_recent_locations';
 const MAX_RECENT_LOCATIONS = 4;
+
+const quickCategories: QuickCategory[] = [
+  { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'gas station' },
+  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant' },
+  { id: 'coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" />, query: 'coffee shop' },
+  { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'convenience store' },
+];
 
 function getRecentLocations(): SearchResult[] {
   try {
@@ -44,9 +59,7 @@ function getRecentLocations(): SearchResult[] {
 function saveRecentLocation(location: SearchResult) {
   try {
     const recent = getRecentLocations();
-    // Remove if already exists (to move to top)
     const filtered = recent.filter(l => l.id !== location.id);
-    // Add to top, keep max 4
     const updated = [location, ...filtered].slice(0, MAX_RECENT_LOCATIONS);
     localStorage.setItem(RECENT_LOCATIONS_KEY, JSON.stringify(updated));
   } catch {
@@ -54,9 +67,8 @@ function saveRecentLocation(location: SearchResult) {
   }
 }
 
-// Calculate distance between two coordinates (Haversine formula)
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a = 
@@ -67,7 +79,6 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 }
 
-// Get country code from coordinates using reverse geocoding
 async function getCountryCode(lat: number, lng: number): Promise<string | null> {
   try {
     const response = await fetch(
@@ -82,7 +93,6 @@ async function getCountryCode(lat: number, lng: number): Promise<string | null> 
   }
 }
 
-// Search places using OpenStreetMap Nominatim
 async function searchPlaces(
   query: string, 
   userLocation: UserLocation | null,
@@ -94,27 +104,22 @@ async function searchPlaces(
     q: query,
     format: 'json',
     addressdetails: '1',
-    limit: '10', // Fetch more to filter better
+    limit: '8',
   });
 
-  // Restrict to user's country if detected
   if (countryCode) {
     params.append('countrycodes', countryCode);
   }
 
-  // Bias results toward user's location with tighter bounding
   if (userLocation) {
-    // ~50km radius viewbox
-    const delta = 0.45;
+    const delta = 0.35;
     params.append('viewbox', `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`);
     params.append('bounded', '0');
   }
 
   try {
     const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-      headers: {
-        'User-Agent': 'Blacktop-App/1.0',
-      },
+      headers: { 'User-Agent': 'Blacktop-App/1.0' },
     });
 
     if (!response.ok) throw new Error('Search failed');
@@ -128,9 +133,9 @@ async function searchPlaces(
         address: place.display_name,
         lat: parseFloat(place.lat),
         lng: parseFloat(place.lon),
+        type: place.type,
       };
       
-      // Calculate distance if we have user location
       if (userLocation) {
         result.distance = calculateDistance(
           userLocation.lat, userLocation.lng,
@@ -141,13 +146,11 @@ async function searchPlaces(
       return result;
     });
 
-    // Sort by distance if available, prioritize closer results
     if (userLocation) {
       results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
     }
 
-    // Return top 5 results
-    return results.slice(0, 5);
+    return results.slice(0, 6);
   } catch (error) {
     console.error('Place search failed:', error);
     return [];
@@ -170,15 +173,15 @@ export function DestinationSearch({
   const [isLocating, setIsLocating] = useState(false);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [recentLocations, setRecentLocations] = useState<SearchResult[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load recent locations on mount
   useEffect(() => {
     setRecentLocations(getRecentLocations());
   }, []);
 
-  // Get user's location and country code on mount
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -188,8 +191,6 @@ export function DestinationSearch({
             lng: position.coords.longitude,
           };
           setUserLocation(loc);
-          
-          // Get country code for better filtering
           const code = await getCountryCode(loc.lat, loc.lng);
           if (code) setCountryCode(code);
         },
@@ -199,6 +200,18 @@ export function DestinationSearch({
         { enableHighAccuracy: false, timeout: 10000 }
       );
     }
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+        setActiveCategory(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLocate = () => {
@@ -215,15 +228,12 @@ export function DestinationSearch({
           lng: position.coords.longitude,
         };
         setUserLocation(loc);
-        
-        // Update country code
         const code = await getCountryCode(loc.lat, loc.lng);
         if (code) setCountryCode(code);
-        
         toast.success('Location updated');
         setIsLocating(false);
       },
-      (error) => {
+      () => {
         toast.error('Could not get location');
         setIsLocating(false);
       },
@@ -253,8 +263,8 @@ export function DestinationSearch({
   const handleSearch = useCallback((searchQuery: string) => {
     setQuery(searchQuery);
     setShowResults(true);
+    setActiveCategory(null);
     
-    // Clear previous debounce
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
@@ -264,18 +274,33 @@ export function DestinationSearch({
       return;
     }
     
-    // Debounce search by 300ms
+    // Fast 150ms debounce
     debounceRef.current = setTimeout(() => {
       performSearch(searchQuery);
-    }, 300);
+    }, 150);
   }, [performSearch]);
+
+  const handleCategoryClick = async (category: QuickCategory) => {
+    setActiveCategory(category.id);
+    setQuery('');
+    setShowResults(true);
+    setIsSearching(true);
+    
+    try {
+      const searchResults = await searchPlaces(category.query, userLocation, countryCode);
+      setResults(searchResults);
+    } catch {
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleFocus = () => {
     setShowResults(true);
   };
 
   const handleSelectResult = (result: SearchResult) => {
-    // Save to recent locations
     saveRecentLocation(result);
     setRecentLocations(getRecentLocations());
     
@@ -288,6 +313,7 @@ export function DestinationSearch({
     setQuery('');
     setResults([]);
     setShowResults(false);
+    setActiveCategory(null);
   };
 
   const handleNavigate = () => {
@@ -296,7 +322,6 @@ export function DestinationSearch({
     onNavigate?.();
   };
 
-  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
@@ -305,27 +330,25 @@ export function DestinationSearch({
     };
   }, []);
 
-  // Determine what to show in dropdown
-  const showRecent = query.length < 2 && recentLocations.length > 0;
+  const showRecent = query.length < 2 && !activeCategory && recentLocations.length > 0;
   const displayResults = showRecent ? recentLocations : results;
   const hasDisplayContent = displayResults.length > 0 || isSearching;
 
-  // Show destination card if set
   if (destination) {
     return (
-      <div className="bg-card border border-border rounded-lg p-4 animate-fade-in">
+      <div className="bg-card border border-border rounded-xl p-4 animate-fade-in">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
             <MapPin className="w-5 h-5 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">{destination.name}</p>
+            <p className="font-semibold truncate">{destination.name}</p>
             <p className="text-xs text-muted-foreground truncate">{destination.address}</p>
           </div>
           {isLeader && (
             <button
               onClick={onClearDestination}
-              className="p-1 hover:bg-muted rounded transition-colors"
+              className="p-1.5 hover:bg-muted rounded-lg transition-colors"
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
@@ -334,19 +357,18 @@ export function DestinationSearch({
         
         <Button
           onClick={handleNavigate}
-          className="w-full mt-3 bg-accent hover:bg-accent/90 text-accent-foreground"
+          className="w-full mt-3 bg-accent hover:bg-accent/90 text-accent-foreground h-12 text-base font-semibold"
         >
-          <Navigation className="w-4 h-4 mr-2" />
+          <Navigation className="w-5 h-5 mr-2" />
           Navigate
         </Button>
       </div>
     );
   }
 
-  // Show search for leader only
   if (!isLeader) {
     return (
-      <div className="bg-card border border-border rounded-lg p-4 text-center">
+      <div className="bg-card border border-border rounded-xl p-4 text-center">
         <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">Waiting for leader to set destination...</p>
       </div>
@@ -354,7 +376,28 @@ export function DestinationSearch({
   }
 
   return (
-    <div className="relative z-50 isolate">
+    <div ref={containerRef} className="relative z-50 isolate space-y-3">
+      {/* Quick category buttons */}
+      <div className="flex gap-2">
+        {quickCategories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => handleCategoryClick(cat)}
+            className={cn(
+              "flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border transition-all",
+              "active:scale-95",
+              activeCategory === cat.id
+                ? "bg-accent text-accent-foreground border-accent"
+                : "bg-card border-border hover:bg-muted"
+            )}
+          >
+            {cat.icon}
+            <span className="text-xs font-medium">{cat.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search input */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -363,8 +406,8 @@ export function DestinationSearch({
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             onFocus={handleFocus}
-            placeholder={userLocation ? "Search nearby places..." : "Search destination..."}
-            className="pl-10 pr-10 bg-card border-border"
+            placeholder={userLocation ? "Search nearby..." : "Search destination..."}
+            className="pl-10 pr-10 bg-card border-border h-12 text-base"
           />
           {isSearching && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
@@ -374,7 +417,7 @@ export function DestinationSearch({
           onClick={handleLocate}
           disabled={isLocating}
           className={cn(
-            "p-3 rounded-lg border transition-colors",
+            "p-3 rounded-xl border transition-colors h-12 w-12 flex items-center justify-center",
             userLocation 
               ? "bg-accent/10 border-accent text-accent" 
               : "bg-card border-border text-muted-foreground hover:bg-muted"
@@ -382,57 +425,71 @@ export function DestinationSearch({
           title="Use my location"
         >
           {isLocating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
-            <LocateFixed className="w-4 h-4" />
+            <LocateFixed className="w-5 h-5" />
           )}
         </button>
       </div>
       
-      {userLocation && (
-        <p className="text-xs text-muted-foreground mt-1">
-          Searching near your location{countryCode ? ` (${countryCode})` : ''}
-        </p>
-      )}
-      
+      {/* Results dropdown */}
       {showResults && hasDisplayContent && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 pointer-events-auto animate-fade-in">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto">
           {showRecent && (
-            <div className="px-3 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5">
-              <Clock className="w-3 h-3" />
-              Recent
+            <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+              <Clock className="w-3.5 h-3.5" />
+              Recent destinations
             </div>
           )}
-          {isSearching && query.length >= 2 ? (
-            <div className="p-4 text-center text-muted-foreground text-sm">
-              <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2" />
-              Searching...
+          {activeCategory && !isSearching && (
+            <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+              {quickCategories.find(c => c.id === activeCategory)?.icon}
+              <span>Nearby {quickCategories.find(c => c.id === activeCategory)?.label}</span>
+            </div>
+          )}
+          {isSearching ? (
+            <div className="p-6 text-center text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <span className="text-sm">Finding places...</span>
+            </div>
+          ) : displayResults.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground">
+              <MapPin className="w-6 h-6 mx-auto mb-2 opacity-50" />
+              <span className="text-sm">No results found</span>
             </div>
           ) : (
-            displayResults.map((result) => (
+            displayResults.map((result, index) => (
               <button
                 key={result.id}
                 onClick={() => handleSelectResult(result)}
                 className={cn(
-                  "w-full flex items-center gap-3 p-3 text-left",
-                  "hover:bg-muted transition-colors border-b border-border last:border-0"
+                  "w-full flex items-center gap-3 p-4 text-left",
+                  "hover:bg-accent/10 active:bg-accent/20 transition-colors",
+                  index !== displayResults.length - 1 && "border-b border-border"
                 )}
               >
-                {showRecent ? (
-                  <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                ) : (
-                  <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                )}
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
+                  showRecent ? "bg-muted" : "bg-accent/10"
+                )}>
+                  {showRecent ? (
+                    <Clock className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <MapPin className="w-5 h-5 text-accent" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate text-sm">{result.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                  <p className="font-semibold truncate">{result.name}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{result.address}</p>
                 </div>
                 {result.distance !== undefined && !showRecent && (
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {result.distance < 1 
-                      ? `${Math.round(result.distance * 1000)}m` 
-                      : `${result.distance.toFixed(1)}km`}
-                  </span>
+                  <div className="flex-shrink-0 text-right">
+                    <span className="text-sm font-medium text-accent">
+                      {result.distance < 1 
+                        ? `${Math.round(result.distance * 1000)}m` 
+                        : `${result.distance.toFixed(1)}km`}
+                    </span>
+                  </div>
                 )}
               </button>
             ))
