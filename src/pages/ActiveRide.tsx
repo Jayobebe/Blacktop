@@ -348,12 +348,10 @@ export default function ActiveRide() {
             <Button
               variant="outline"
               onClick={async () => {
-                console.log('[UI] Pause/resume clicked', { isLeader: convoy.isLeader, isPaused: convoy.isPaused, convoyId: convoy.id });
-                toast('Toggling pause...');
                 try {
                   await togglePause();
                 } catch (e) {
-                  console.error('[UI] togglePause threw', e);
+                  console.error('[UI] togglePause error', e);
                   toast.error('Pause failed');
                 }
               }}
@@ -411,16 +409,12 @@ export default function ActiveRide() {
               {/* Voice disconnect/connect button */}
               <button
                 onClick={async () => {
-                  console.log('[UI] Voice connect/disconnect clicked', { isConnected, convoyId: convoy.id });
-
                   try {
                     if (isConnected) {
                       disconnect();
                       toast.success('Left voice channel', { description: 'Saving battery' });
                     } else {
-                      toast('Connecting voice...');
                       const success = await connect();
-                      console.log('[UI] Voice connect result', { success });
                       if (success) {
                         toast.success('Joined voice channel');
                       } else {
@@ -428,7 +422,7 @@ export default function ActiveRide() {
                       }
                     }
                   } catch (e) {
-                    console.error('[UI] Voice button threw', e);
+                    console.error('[Voice] Button error', e);
                     toast.error('Voice action failed');
                   }
                 }}
