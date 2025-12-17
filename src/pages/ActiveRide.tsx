@@ -672,7 +672,7 @@ export default function ActiveRide() {
               size="sm"
               className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              {rideState.isConvoyMode && convoy.isLeader ? 'END FOR ALL' : 'CONFIRM'}
+              END RIDE
             </Button>
             <Button
               onClick={() => setShowEndConfirm(false)}
