@@ -23,12 +23,13 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
-  sampleRate: 48000,
+  sampleRate: 24000, // Lower sample rate for battery optimization (was 48000)
   channelCount: 1,
 };
 
 const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
 const SPEAKING_DEBOUNCE_MS = 150; // Debounce time for speaking state changes
+const AUDIO_CHECK_INTERVAL_MS = 100; // Check audio levels every 100ms (was 50ms) for battery savings
 
 export function useVoiceChannel(convoyId?: string) {
   const [state, setState] = useState<VoiceChannelState>({
@@ -194,7 +195,7 @@ export function useVoiceChannel(convoyId?: string) {
           }, SPEAKING_DEBOUNCE_MS);
         }
       }
-    }, 50); // Check every 50ms for responsive detection
+    }, AUDIO_CHECK_INTERVAL_MS); // Battery-optimized interval
   }, []); // No deps - uses refs to avoid stale closures
 
   // Create peer connection for a remote user

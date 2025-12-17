@@ -87,6 +87,17 @@
     font-weight: 600;
     letter-spacing: -0.02em;
   }
+
+  /* Smooth page transitions */
+  #root {
+    view-transition-name: root;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 @layer components {
@@ -402,5 +413,25 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground));
+  }
+
+  /* Reduced motion support - battery saver and accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    
+    .animate-ptt-pulse,
+    .animate-burn-pulse,
+    .animate-speed-glow,
+    .animate-float,
+    .animate-pulse-soft,
+    .animate-shimmer {
+      animation: none !important;
+    }
   }
 }
