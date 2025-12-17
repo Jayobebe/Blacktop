@@ -156,8 +156,16 @@ export function useConvoyState() {
           table: 'convoys',
           filter: `id=eq.${state.id}`,
         },
-        (payload) => {
+        async (payload) => {
           const convoy = payload.new as any;
+          const oldConvoy = payload.old as any;
+          
+          // If leader_id changed, refresh members to update leadership status
+          if (convoy.leader_id !== oldConvoy.leader_id) {
+            console.log('[Convoy] Leadership changed via realtime, refreshing members');
+            await refreshMembers(state.id!);
+          }
+          
           // Update destination from realtime
           if (convoy.destination_name || convoy.destination_lat) {
             setConvoyState((prev) => ({
@@ -455,7 +463,7 @@ export function useConvoyState() {
     return true;
   }, []);
 
-  const leaveConvoy = useCallback(async () => {
+  const leaveConvoy = useCallback(async (skipDeactivation = false) => {
     const convoyId = state.id;
     const wasLeader = state.isLeader;
     
@@ -486,8 +494,9 @@ export function useConvoyState() {
           if (error) console.warn('[Convoy] Failed to remove membership:', error);
         });
 
-      // If leader, deactivate convoy
-      if (wasLeader) {
+      // If leader and not skipping deactivation, deactivate convoy
+      // Skip when leadership was just transferred (caller passes skipDeactivation=true)
+      if (wasLeader && !skipDeactivation) {
         supabase
           .from('convoys')
           .update({ is_active: false })
