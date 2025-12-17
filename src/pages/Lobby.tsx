@@ -4,7 +4,7 @@ import { useConvoyState } from '@/hooks/useConvoyState';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DestinationSearch } from '@/components/DestinationSearch';
@@ -277,7 +277,25 @@ export default function Lobby() {
       </div>
 
       {/* Action Buttons - compact */}
-      <div className="mt-2 md:mt-3 animate-slide-up delay-300">
+      <div className="mt-2 md:mt-3 animate-slide-up delay-300 flex items-center gap-2">
+        {/* Start Ride button - only show when destination is set */}
+        {convoy.destination && !showLeaveConfirm && (
+          <Button
+            onClick={() => {
+              hasStartedRide.current = true;
+              const success = startRide(true, convoy.id);
+              if (success) {
+                navigate('/ride');
+              }
+            }}
+            size="sm"
+            className="h-9 px-4"
+          >
+            <Play className="w-3.5 h-3.5 mr-1.5" />
+            Start Ride
+          </Button>
+        )}
+        
         {!showLeaveConfirm ? (
           <Button
             onClick={() => setShowLeaveConfirm(true)}
