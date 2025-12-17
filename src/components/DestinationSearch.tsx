@@ -109,7 +109,7 @@ async function getCountryCode(lat: number, lng: number): Promise<string | null> 
 }
 
 // Max distance in km for category searches (nearby places)
-const MAX_NEARBY_DISTANCE_KM = 15;
+const MAX_NEARBY_DISTANCE_KM = 30;
 
 // OSM amenity to Nominatim search term mapping for better results
 const categoryToNominatimQuery: Record<string, string> = {
@@ -135,7 +135,7 @@ async function searchNearbyPOIs(
       kind: 'overpass',
       lat: userLocation.lat,
       lon: userLocation.lng,
-      radius_m: 15000,
+      radius_m: 30000,
       amenities,
       filter24h: is24hSearch,
       limit: 80,
@@ -171,7 +171,7 @@ async function searchNearbyPOIs(
 
   // 2) Nominatim bounded fallback
   const searchTerm = categoryToNominatimQuery[amenityQuery] || amenities[0] || amenityQuery;
-  const delta = 0.12;
+  const delta = 0.27; // ~30km
   const viewbox = `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`;
 
   try {
@@ -484,19 +484,20 @@ export function DestinationSearch({
     const currentSearchId = ++searchIdRef.current;
     
     try {
-      // Use Nominatim with POI-specific queries
-      if (userLocation) {
-        const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode);
-        // Only update if this is still the latest search
+      // Require location for category searches
+      if (!userLocation) {
+        // No location - show empty with message
         if (searchIdRef.current === currentSearchId) {
-          setResults(searchResults);
+          setResults([]);
+          toast.error('Location required for nearby search');
         }
-      } else {
-        // Fallback to general search if no location
-        const searchResults = await searchPlaces(category.query.split('|')[0], null, countryCode);
-        if (searchIdRef.current === currentSearchId) {
-          setResults(searchResults);
-        }
+        return;
+      }
+      
+      const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode);
+      // Only update if this is still the latest search
+      if (searchIdRef.current === currentSearchId) {
+        setResults(searchResults);
       }
     } catch {
       if (searchIdRef.current === currentSearchId) {
