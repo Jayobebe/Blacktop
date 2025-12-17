@@ -22,6 +22,7 @@ export interface ConvoyMemberInfo {
   isReady: boolean;
   hasNavigated: boolean;
   joinedAt: string;
+  accentColor?: string; // User's selected accent color
   // Live stats
   currentSpeed?: number;
   topSpeed?: number;

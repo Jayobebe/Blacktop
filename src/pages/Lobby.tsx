@@ -8,18 +8,7 @@ import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLe
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DestinationSearch } from '@/components/DestinationSearch';
-
-// Unique colors for convoy members
-const MEMBER_COLORS = [
-  { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-  { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
-  { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
-  { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
-  { bg: 'bg-pink-500/20', text: 'text-pink-400', border: 'border-pink-500/30' },
-  { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
-];
+import { getMemberColorStyles } from '@/lib/memberColors';
 
 export default function Lobby() {
   const navigate = useNavigate();
@@ -125,11 +114,9 @@ export default function Lobby() {
     return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
   });
 
-  // Assign consistent colors based on join order (excluding leader who gets accent color)
-  const getMemberColor = (index: number, isLeader: boolean) => {
-    if (isLeader) return { bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/30' };
-    // Non-leaders get colors from the array (index - 1 since leader is always index 0)
-    return MEMBER_COLORS[(index - 1) % MEMBER_COLORS.length];
+  // Get color styles for a member based on their accent color
+  const getMemberStyles = (member: typeof sortedMembers[0]) => {
+    return getMemberColorStyles(member.accentColor);
   };
 
   if (!convoy.isActive) return null;
@@ -207,7 +194,7 @@ export default function Lobby() {
           
           <div className="space-y-1 overflow-y-auto flex-1 min-h-0 pr-1">
             {sortedMembers.map((member, index) => {
-              const color = getMemberColor(index, member.isLeader);
+              const colorStyles = getMemberStyles(member);
               const isTransferring = transferTarget === member.userId;
               const isSpeaking = speakingUsers.has(member.userId);
               
@@ -216,24 +203,32 @@ export default function Lobby() {
                   key={member.id}
                   className={cn(
                     "flex items-center gap-2 bg-card border rounded-lg p-1.5 animate-slide-up transition-all",
-                    color.border,
-                    isSpeaking && "ring-1 ring-accent ring-offset-1 ring-offset-background"
+                    isSpeaking && "ring-1 ring-offset-1 ring-offset-background"
                   )}
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  style={{ 
+                    animationDelay: `${index * 50}ms`,
+                    borderColor: colorStyles.border,
+                    ...(isSpeaking ? { '--tw-ring-color': colorStyles.ring } as React.CSSProperties : {})
+                  }}
                 >
-                  <div className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
-                    color.bg,
-                    isSpeaking && "shadow-[0_0_8px_2px] shadow-accent/60 scale-105"
-                  )}>
+                  <div 
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
+                      isSpeaking && "scale-105"
+                    )}
+                    style={{ 
+                      backgroundColor: colorStyles.bg,
+                      boxShadow: isSpeaking ? colorStyles.glow : undefined
+                    }}
+                  >
                     {member.isLeader ? (
-                      <Crown className={cn("w-3.5 h-3.5", color.text)} />
+                      <Crown className="w-3.5 h-3.5" style={{ color: colorStyles.text }} />
                     ) : (
-                      <User className={cn("w-3.5 h-3.5", color.text)} />
+                      <User className="w-3.5 h-3.5" style={{ color: colorStyles.text }} />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn("font-medium text-xs truncate", color.text)}>{member.name}</p>
+                    <p className="font-medium text-xs truncate" style={{ color: colorStyles.text }}>{member.name}</p>
                   </div>
                   
                   {/* Transfer leadership button */}

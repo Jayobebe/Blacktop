@@ -17,6 +17,7 @@ import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow,
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { getMemberColorStyles } from '@/lib/memberColors';
 
 // GPS Signal Indicator Component
 function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
@@ -62,15 +63,10 @@ function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
   );
 }
 
-// Member colors for visual distinction
-const MEMBER_COLORS = [
-  { bg: 'bg-emerald-500/20', text: 'text-emerald-400', ring: 'ring-emerald-500/50' },
-  { bg: 'bg-blue-500/20', text: 'text-blue-400', ring: 'ring-blue-500/50' },
-  { bg: 'bg-purple-500/20', text: 'text-purple-400', ring: 'ring-purple-500/50' },
-  { bg: 'bg-orange-500/20', text: 'text-orange-400', ring: 'ring-orange-500/50' },
-  { bg: 'bg-pink-500/20', text: 'text-pink-400', ring: 'ring-pink-500/50' },
-  { bg: 'bg-cyan-500/20', text: 'text-cyan-400', ring: 'ring-cyan-500/50' },
-];
+// Get color styles for a member based on their accent color
+const getMemberStyles = (member: ConvoyMemberInfo) => {
+  return getMemberColorStyles(member.accentColor);
+};
 
 export default function ActiveRide() {
   const navigate = useNavigate();
@@ -225,10 +221,6 @@ export default function ActiveRide() {
     ? [...convoy.members].sort((a, b) => (b.topSpeed || 0) - (a.topSpeed || 0))
     : convoy.members;
 
-  const getMemberColor = (index: number, isLeader: boolean) => {
-    if (isLeader) return { bg: 'bg-accent/20', text: 'text-accent', ring: 'ring-accent/50' };
-    return MEMBER_COLORS[index % MEMBER_COLORS.length];
-  };
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6">
@@ -337,7 +329,7 @@ export default function ActiveRide() {
               
               <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
                 {sortedMembers.map((member, index) => {
-                  const color = getMemberColor(index, member.isLeader);
+                  const colorStyles = getMemberStyles(member);
                   const isSpeaking = speakingUsers.has(member.userId);
                   
                   return (
@@ -345,26 +337,34 @@ export default function ActiveRide() {
                       key={member.id}
                       className={cn(
                         "flex items-center gap-2 p-1.5 rounded-lg border transition-all",
-                        color.bg,
-                        isSpeaking ? `ring-1 ${color.ring} border-transparent` : "border-border/50"
+                        isSpeaking ? "ring-1 border-transparent" : "border-border/50"
                       )}
+                      style={{
+                        backgroundColor: colorStyles.bg,
+                        ...(isSpeaking ? { '--tw-ring-color': colorStyles.ring } as React.CSSProperties : {})
+                      }}
                     >
                       {/* Avatar with speaking glow */}
-                      <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
-                        color.bg,
-                        isSpeaking && "shadow-[0_0_8px_2px] shadow-accent/60 scale-105"
-                      )}>
+                      <div 
+                        className={cn(
+                          "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200",
+                          isSpeaking && "scale-105"
+                        )}
+                        style={{
+                          backgroundColor: colorStyles.bg,
+                          boxShadow: isSpeaking ? colorStyles.glow : undefined
+                        }}
+                      >
                         {member.isLeader ? (
-                          <Crown className={cn("w-3.5 h-3.5", color.text)} />
+                          <Crown className="w-3.5 h-3.5" style={{ color: colorStyles.text }} />
                         ) : (
-                          <User className={cn("w-3.5 h-3.5", color.text)} />
+                          <User className="w-3.5 h-3.5" style={{ color: colorStyles.text }} />
                         )}
                       </div>
                       
                       {/* Name */}
                       <div className="flex-1 min-w-0">
-                        <p className={cn("font-medium text-xs truncate", color.text)}>
+                        <p className="font-medium text-xs truncate" style={{ color: colorStyles.text }}>
                           {member.name}
                           {isSpeaking && <span className="ml-1 text-[10px] opacity-75">🎤</span>}
                         </p>
@@ -378,7 +378,7 @@ export default function ActiveRide() {
                       {/* Top speed badge - compact */}
                       {settings.showSpeedRankings && (
                         <div className="text-right flex-shrink-0">
-                          <p className={cn("font-mono text-xs font-bold", color.text)}>
+                          <p className="font-mono text-xs font-bold" style={{ color: colorStyles.text }}>
                             {formatSpeed(member.topSpeed || 0, settings.speedUnit)}
                           </p>
                         </div>

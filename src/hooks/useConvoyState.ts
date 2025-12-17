@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { ConvoyState, ConvoyMemberInfo, ConvoyDestination } from '@/types/convoy';
 import { useProfile } from './useProfile';
+import { useSettings, ACCENT_COLORS } from './useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -41,6 +42,7 @@ function setConvoyState(updater: (prev: ConvoyState) => ConvoyState) {
 export function useConvoyState() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { profile } = useProfile();
+  const { settings } = useSettings();
 
   // Subscribe to realtime convoy updates
   useEffect(() => {
@@ -108,6 +110,7 @@ export function useConvoyState() {
         current_speed,
         top_speed,
         distance_driven,
+        accent_color,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
       .eq('convoy_id', convoyId);
@@ -127,6 +130,7 @@ export function useConvoyState() {
         isReady: true,
         hasNavigated: m.has_navigated || false,
         joinedAt: m.joined_at,
+        accentColor: m.accent_color || 'orange',
         currentSpeed: m.current_speed || 0,
         topSpeed: m.top_speed || 0,
         distanceDriven: m.distance_driven || 0,
@@ -185,12 +189,13 @@ export function useConvoyState() {
       return null;
     }
 
-    // Add self as member
+    // Add self as member with accent color
     const { error: memberError } = await supabase
       .from('convoy_members')
       .insert({
         convoy_id: convoy.id,
         user_id: user.id,
+        accent_color: settings.accentColor,
       });
 
     if (memberError) {
@@ -205,6 +210,7 @@ export function useConvoyState() {
       isReady: true,
       hasNavigated: false,
       joinedAt: new Date().toISOString(),
+      accentColor: settings.accentColor,
     };
 
     setConvoyState(() => ({
@@ -258,12 +264,13 @@ export function useConvoyState() {
       return false;
     }
 
-    // Add self as member
+    // Add self as member with accent color
     const { error: memberError } = await supabase
       .from('convoy_members')
       .insert({
         convoy_id: convoy.id,
         user_id: user.id,
+        accent_color: settings.accentColor,
       });
 
     if (memberError) {
@@ -283,6 +290,7 @@ export function useConvoyState() {
         user_id,
         joined_at,
         has_navigated,
+        accent_color,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
       .eq('convoy_id', convoy.id);
@@ -295,6 +303,7 @@ export function useConvoyState() {
       isReady: true,
       hasNavigated: m.has_navigated || false,
       joinedAt: m.joined_at,
+      accentColor: m.accent_color || 'orange',
     }));
 
     // Parse destination if set

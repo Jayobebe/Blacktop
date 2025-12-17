@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       convoy_members: {
         Row: {
+          accent_color: string | null
           convoy_id: string
           current_lat: number | null
           current_lng: number | null
@@ -30,6 +31,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accent_color?: string | null
           convoy_id: string
           current_lat?: number | null
           current_lng?: number | null
@@ -44,6 +46,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accent_color?: string | null
           convoy_id?: string
           current_lat?: number | null
           current_lng?: number | null
