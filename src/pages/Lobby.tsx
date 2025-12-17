@@ -24,7 +24,7 @@ const MEMBER_COLORS = [
 export default function Lobby() {
   const navigate = useNavigate();
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
-  const { startRide } = useActiveRide();
+  const { startRide } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -68,7 +68,7 @@ export default function Lobby() {
       hasStartedRide.current = true;
       console.log('[Lobby] All riders ready, starting ride!');
       toast.success('All riders ready - starting ride!');
-      const success = startRide(true);
+      const success = startRide(true, convoy.id);
       if (success) {
         navigate('/ride');
       }

@@ -1,12 +1,14 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { useRideHistory } from './useRideHistory';
+import { supabase } from '@/integrations/supabase/client';
 
 const SPEED_SMOOTHING_FACTOR = 0.3;
 const MIN_SPEED_THRESHOLD = 1; // mph - ignore speeds below this (GPS noise when stationary)
 const MAX_ACCURACY_THRESHOLD = 150; // meters - allow less accurate positions
 const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
 const MAX_DISTANCE_JUMP = 1; // miles - reject distance jumps larger than this
+const CONVOY_SYNC_INTERVAL = 2000; // ms - sync to database every 2 seconds
 
 // Shared state
 type Listener = () => void;
@@ -25,9 +27,11 @@ let rideState: ActiveRideState = {
 
 let watchId: number | null = null;
 let durationInterval: ReturnType<typeof setInterval> | null = null;
+let convoySyncInterval: ReturnType<typeof setInterval> | null = null;
 let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
 let rideStartedAtMs: number | null = null;
 let smoothedSpeed = 0;
+let currentConvoyId: string | null = null;
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -156,13 +160,44 @@ function handlePositionError(error: GeolocationPositionError) {
   // Error codes: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
 }
 
-export function useActiveRide() {
+// Sync stats to database for convoy members
+async function syncConvoyStats() {
+  if (!currentConvoyId || !rideState.isActive) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase
+    .from('convoy_members')
+    .update({
+      current_speed: Math.round(rideState.currentSpeed),
+      top_speed: Math.round(rideState.maxSpeed),
+      distance_driven: Number(rideState.distance.toFixed(2)),
+      current_lat: lastPosition?.lat,
+      current_lng: lastPosition?.lng,
+      last_seen: new Date().toISOString(),
+    })
+    .eq('convoy_id', currentConvoyId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.warn('[Convoy] Failed to sync stats:', error.message);
+  } else {
+    console.log('[Convoy] Synced stats:', { 
+      speed: Math.round(rideState.currentSpeed), 
+      topSpeed: Math.round(rideState.maxSpeed),
+      distance: rideState.distance.toFixed(2) 
+    });
+  }
+}
+
+export function useActiveRide(convoyId?: string | null) {
   const { addRide } = useRideHistory();
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const addRideRef = useRef(addRide);
   addRideRef.current = addRide;
 
-  const startRide = useCallback((isConvoyMode: boolean = false) => {
+  const startRide = useCallback((isConvoyMode: boolean = false, activeConvoyId?: string | null) => {
     if (!navigator.geolocation) {
       console.error('Geolocation not supported');
       return false;
@@ -172,6 +207,7 @@ export function useActiveRide() {
     rideStartedAtMs = Date.now();
     smoothedSpeed = 0;
     lastPosition = null;
+    currentConvoyId = activeConvoyId || convoyId || null;
 
     setRideState(() => ({
       isActive: true,
@@ -183,6 +219,12 @@ export function useActiveRide() {
       duration: 0,
       gpsPoints: [],
     }));
+
+    // Start convoy sync if in convoy mode
+    if (isConvoyMode && currentConvoyId) {
+      console.log('[Convoy] Starting stats sync for convoy:', currentConvoyId);
+      convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
+    }
 
     const geoOptions: PositionOptions = {
       enableHighAccuracy: true,
@@ -210,9 +252,9 @@ export function useActiveRide() {
     }, 500);
 
     return true;
-  }, []);
+  }, [convoyId]);
 
-  const endRide = useCallback(() => {
+  const endRide = useCallback(async () => {
     // Stop GPS tracking
     if (watchId !== null) {
       navigator.geolocation.clearWatch(watchId);
@@ -224,6 +266,14 @@ export function useActiveRide() {
       clearInterval(durationInterval);
       durationInterval = null;
     }
+
+    // Stop convoy sync and do final sync
+    if (convoySyncInterval) {
+      clearInterval(convoySyncInterval);
+      convoySyncInterval = null;
+      await syncConvoyStats(); // Final sync before ending
+    }
+    currentConvoyId = null;
 
     // Save the ride
     const currentState = rideState;
