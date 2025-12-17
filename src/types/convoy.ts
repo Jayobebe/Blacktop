@@ -26,4 +26,59 @@ export interface ConvoyMemberInfo {
   currentSpeed?: number;
   topSpeed?: number;
   distanceDriven?: number;
+  stationaryTime?: number; // seconds at 0 speed
+}
+
+export type BadgeType = 'speed-demon' | 'journeyman' | 'rocksteady';
+
+export interface MemberBadge {
+  type: BadgeType;
+  label: string;
+  emoji: string;
+}
+
+export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, MemberBadge> {
+  const badges = new Map<string, MemberBadge>();
+  
+  if (members.length === 0) return badges;
+
+  // Speed Demon - highest top speed
+  const speedDemon = members.reduce((prev, curr) => 
+    (curr.topSpeed || 0) > (prev.topSpeed || 0) ? curr : prev
+  );
+  if ((speedDemon.topSpeed || 0) > 0) {
+    badges.set(speedDemon.userId, { 
+      type: 'speed-demon', 
+      label: 'Speed Demon', 
+      emoji: '⚡' 
+    });
+  }
+
+  // Journeyman - most distance covered
+  const journeyman = members.reduce((prev, curr) => 
+    (curr.distanceDriven || 0) > (prev.distanceDriven || 0) ? curr : prev
+  );
+  if ((journeyman.distanceDriven || 0) > 0 && journeyman.userId !== speedDemon.userId) {
+    badges.set(journeyman.userId, { 
+      type: 'journeyman', 
+      label: 'Journeyman', 
+      emoji: '🛣️' 
+    });
+  }
+
+  // Rocksteady - longest time at 0 speed
+  const rocksteady = members.reduce((prev, curr) => 
+    (curr.stationaryTime || 0) > (prev.stationaryTime || 0) ? curr : prev
+  );
+  if ((rocksteady.stationaryTime || 0) > 0 && 
+      rocksteady.userId !== speedDemon.userId && 
+      rocksteady.userId !== journeyman.userId) {
+    badges.set(rocksteady.userId, { 
+      type: 'rocksteady', 
+      label: 'Rocksteady', 
+      emoji: '🪨' 
+    });
+  }
+
+  return badges;
 }
