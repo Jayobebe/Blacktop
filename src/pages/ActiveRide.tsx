@@ -121,17 +121,14 @@ export default function ActiveRide() {
     }
   }, [convoy.members]);
 
-  // Connect to voice channel if convoy mode with multiple members
+  // Cleanup voice channel on unmount (no auto-connect - users must explicitly join)
   useEffect(() => {
-    if (rideState.isConvoyMode && convoy.members.length > 1 && !isConnected) {
-      connect();
-    }
     return () => {
       if (isConnected) {
         disconnect();
       }
     };
-  }, [rideState.isConvoyMode, convoy.members.length, isConnected, connect, disconnect]);
+  }, [isConnected, disconnect]);
 
   // Redirect if no active ride (but don't interrupt the explicit "end ride" flow / summary)
   useEffect(() => {
@@ -420,11 +417,11 @@ export default function ActiveRide() {
                       disconnect();
                       toast.success('Left voice channel', { description: 'Saving battery' });
                     } else {
-                      const success = await connect();
-                      if (success) {
+                      const result = await connect();
+                      if (result.success) {
                         toast.success('Joined voice channel');
                       } else {
-                        toast.error('Failed to join voice channel', { description: 'Check microphone permissions' });
+                        toast.error('Failed to join voice channel', { description: result.error || 'Check microphone permissions' });
                       }
                     }
                   } catch (e) {

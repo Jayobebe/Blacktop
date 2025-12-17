@@ -39,16 +39,15 @@ export default function Lobby() {
     }
   }, [convoy.destination]);
 
-  // Connect to voice channel when entering lobby with valid convoy
+  // Cleanup voice channel when leaving lobby (no auto-connect - users must explicitly join)
   useEffect(() => {
     if (!convoy.id) return;
-    if (!isConnected) {
-      connect();
-    }
     return () => {
-      disconnect();
+      if (isConnected) {
+        disconnect();
+      }
     };
-  }, [convoy.id, isConnected, connect, disconnect]);
+  }, [convoy.id, isConnected, disconnect]);
 
   // Convoy control channel (e.g., leader start-for-all)
   useEffect(() => {
@@ -188,9 +187,9 @@ export default function Lobby() {
           onClick={async () => {
             try {
               if (!isConnected) {
-                const ok = await connect();
-                if (!ok) {
-                  toast.error('Failed to join voice', { description: 'Check microphone permission' });
+                const result = await connect();
+                if (!result.success) {
+                  toast.error('Failed to join voice', { description: result.error || 'Check microphone permission' });
                   return;
                 }
                 toast.success('Joined voice channel');
