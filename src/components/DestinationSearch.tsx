@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ConvoyDestination } from '@/types/convoy';
 import { useNavigation } from '@/hooks/useNavigation';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface SearchResult {
@@ -80,14 +81,24 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 }
 
+type PlaceSearchReverseResponse = { address?: { country_code?: string } };
+
+async function callPlaceSearch<T>(payload: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('place-search', {
+    body: payload,
+  });
+  if (error) throw error;
+  return data as T;
+}
+
 async function getCountryCode(lat: number, lng: number): Promise<string | null> {
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=3`,
-      { headers: { 'User-Agent': 'Blacktop-App/1.0' } }
-    );
-    if (!response.ok) return null;
-    const data = await response.json();
+    const data = await callPlaceSearch<PlaceSearchReverseResponse>({
+      kind: 'reverse',
+      lat,
+      lon: lng,
+      zoom: 3,
+    });
     return data.address?.country_code?.toUpperCase() || null;
   } catch {
     return null;
@@ -113,49 +124,41 @@ async function searchNearbyPOIs(
 ): Promise<SearchResult[]> {
   // Convert amenity query to better Nominatim search term
   const searchTerm = categoryToNominatimQuery[amenityQuery] || amenityQuery.split('|')[0];
-  
-  const params = new URLSearchParams({
-    q: searchTerm,
-    format: 'json',
-    addressdetails: '1',
-    limit: '15',
-  });
 
-  if (countryCode) {
-    params.append('countrycodes', countryCode);
-  }
-
-  // Tight viewbox around user location (~10km)
-  const delta = 0.1;
-  params.append('viewbox', `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`);
-  params.append('bounded', '1'); // Strict bounds
+  // Tight viewbox around user location (~15-20km), strict bounded.
+  const delta = 0.12;
+  const viewbox = `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`;
 
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-      headers: { 'User-Agent': 'Blacktop-App/1.0' },
+    const data = await callPlaceSearch<any[]>({
+      kind: 'search',
+      q: searchTerm,
+      countryCode,
+      viewbox,
+      bounded: '1',
+      limit: 25,
     });
 
-    if (!response.ok) throw new Error('Search failed');
+    let results: SearchResult[] = (data || []).map((place: any) => {
+      const lat = parseFloat(place.lat);
+      const lng = parseFloat(place.lon);
+      const distance = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
 
-    const data = await response.json();
-
-    let results: SearchResult[] = data.map((place: any) => {
-      const result: SearchResult = {
+      return {
         id: place.place_id.toString(),
-        name: place.name || place.display_name.split(',')[0],
+        name: place.name || String(place.display_name || '').split(',')[0],
         address: place.display_name,
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon),
+        lat,
+        lng,
         type: place.type,
-        distance: calculateDistance(userLocation.lat, userLocation.lng, parseFloat(place.lat), parseFloat(place.lon)),
+        distance,
       };
-      return result;
     });
 
     // Sort by distance and filter to nearby only
     results = results
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-      .filter(r => (r.distance || 0) < MAX_NEARBY_DISTANCE_KM)
+      .filter((r) => (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM)
       .slice(0, 8);
 
     return results;
@@ -195,43 +198,27 @@ async function searchPlaces(
   const isPostal = containsPostalCode(query, countryCode);
   const preferNearby = !!userLocation && !isPostal;
 
-  const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: preferNearby ? '20' : '25',
-  });
-
-  if (countryCode) {
-    params.append('countrycodes', countryCode);
-  }
-
-  // Nearby-first: strict bounding box so we don't jump to other cities.
-  if (userLocation && preferNearby) {
-    const delta = 0.18; // ~20km-ish; keeps results local
-    params.append(
-      'viewbox',
-      `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`
-    );
-    params.append('bounded', '1');
-  }
+  const viewbox = userLocation && preferNearby
+    ? `${userLocation.lng - 0.18},${userLocation.lat + 0.18},${userLocation.lng + 0.18},${userLocation.lat - 0.18}`
+    : null;
 
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-      headers: { 'User-Agent': 'Blacktop-App/1.0' },
+    const data = await callPlaceSearch<any[]>({
+      kind: 'search',
+      q: query,
+      countryCode,
+      viewbox,
+      bounded: userLocation && preferNearby ? '1' : '0',
+      limit: preferNearby ? 25 : 30,
     });
 
-    if (!response.ok) throw new Error('Search failed');
-
-    const data = await response.json();
-
-    let results: SearchResult[] = data.map((place: any) => {
+    let results: SearchResult[] = (data || []).map((place: any) => {
       const lat = parseFloat(place.lat);
       const lng = parseFloat(place.lon);
 
       const result: SearchResult = {
         id: place.place_id.toString(),
-        name: place.name || place.display_name.split(',')[0],
+        name: place.name || String(place.display_name || '').split(',')[0],
         address: place.display_name,
         lat,
         lng,
@@ -249,7 +236,7 @@ async function searchPlaces(
       results = results
         .sort((a, b) => (a.distance || 0) - (b.distance || 0))
         // Hard clamp for nearby searches (keeps it convenient)
-        .filter((r) => !preferNearby || (r.distance || 0) <= 30);
+        .filter((r) => !preferNearby || (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM);
     }
 
     return results.slice(0, 8);
