@@ -16,7 +16,7 @@ import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
 import { RescueAlert } from '@/components/RescueAlert';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -396,23 +396,54 @@ export default function ActiveRide() {
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
 
-          {/* Voice Toggle Button (Convoy Mode Only) */}
+          {/* Voice Controls (Convoy Mode Only) */}
           {rideState.isConvoyMode && (
-            <button
-              onClick={toggleMute}
-              className={cn(
-                "w-16 h-16 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
-                !isMuted
-                  ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
-                  : "bg-ptt-inactive hover:bg-muted"
+            <div className="flex items-center gap-2">
+              {/* Voice disconnect/connect button */}
+              <button
+                onClick={() => {
+                  if (isConnected) {
+                    disconnect();
+                    toast.success('Left voice channel', { description: 'Saving battery' });
+                  } else {
+                    connect();
+                    toast.success('Joined voice channel');
+                  }
+                }}
+                className={cn(
+                  "w-10 h-10 landscape:w-9 landscape:h-9 rounded-full flex items-center justify-center transition-all touch-target",
+                  isConnected
+                    ? "bg-destructive/20 hover:bg-destructive/30 text-destructive"
+                    : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
+                )}
+                title={isConnected ? "Leave voice channel (saves battery)" : "Join voice channel"}
+              >
+                {isConnected ? (
+                  <PhoneOff className="w-4 h-4" />
+                ) : (
+                  <Phone className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Mute toggle button - only show when connected */}
+              {isConnected && (
+                <button
+                  onClick={toggleMute}
+                  className={cn(
+                    "w-16 h-16 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
+                    !isMuted
+                      ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
+                      : "bg-ptt-inactive hover:bg-muted"
+                  )}
+                >
+                  {isMuted ? (
+                    <MicOff className="w-7 h-7 landscape:w-6 landscape:h-6 text-foreground" />
+                  ) : (
+                    <Mic className="w-7 h-7 landscape:w-6 landscape:h-6 text-background" />
+                  )}
+                </button>
               )}
-            >
-              {isMuted ? (
-                <MicOff className="w-7 h-7 landscape:w-6 landscape:h-6 text-foreground" />
-              ) : (
-                <Mic className="w-7 h-7 landscape:w-6 landscape:h-6 text-background" />
-              )}
-            </button>
+            </div>
           )}
 
           {/* Toggle members panel button */}
