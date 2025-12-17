@@ -54,6 +54,7 @@ export function useVoiceChannel(convoyId?: string) {
   const isMutedRef = useRef<boolean>(true); // Ref to avoid stale closure
   const isConnectingRef = useRef<boolean>(false); // Guard against multiple connection attempts
   const refreshIntervalRef = useRef<number | null>(null); // Periodic refresh for connection maintenance
+  const pendingCandidatesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map()); // Store ICE candidates received before remote description
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -99,6 +100,9 @@ export function useVoiceChannel(convoyId?: string) {
       audio.remove();
     });
     audioElementsRef.current.clear();
+    
+    // Clear pending ICE candidates
+    pendingCandidatesRef.current.clear();
 
     // Unsubscribe from channel
     if (channelRef.current) {
@@ -289,51 +293,143 @@ export function useVoiceChannel(convoyId?: string) {
     // Ignore our own messages
     if (from === userIdRef.current) return;
 
-    console.log(`[Voice] Received signaling: ${type} from ${from}`);
+    console.log(`[Voice] Received signaling: ${type} from ${from}, our ID: ${userIdRef.current}`);
 
     switch (type) {
       case 'user-joined': {
-        // New user joined, create offer if we have a higher user ID (to avoid both creating offers)
-        if (userIdRef.current && userIdRef.current > from) {
-          const pc = createPeerConnection(from);
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          
-          channelRef.current?.send({
-            type: 'broadcast',
-            event: 'offer',
-            payload: {
-              offer,
-              from: userIdRef.current,
-              to: from,
-            },
-          });
+        if (!userIdRef.current || !channelRef.current || !localStreamRef.current) {
+          console.warn('[Voice] Not ready to handle user-joined - missing refs');
+          return;
+        }
+        
+        // Always create an offer when a new user joins and we don't have a connection to them
+        // The receiver will handle duplicate connections gracefully
+        const existingPeer = peersRef.current.get(from);
+        if (existingPeer && existingPeer.pc.connectionState === 'connected') {
+          console.log(`[Voice] Already connected to ${from}, skipping offer`);
+          return;
+        }
+        
+        // Clean up any existing failed connection
+        if (existingPeer) {
+          console.log(`[Voice] Cleaning up stale connection to ${from}`);
+          existingPeer.pc.close();
+          peersRef.current.delete(from);
+          audioElementsRef.current.get(from)?.remove();
+          audioElementsRef.current.delete(from);
+        }
+        
+        // Use deterministic ordering: higher ID creates offer
+        if (userIdRef.current > from) {
+          console.log(`[Voice] Creating offer to ${from} (we have higher ID)`);
+          try {
+            const pc = createPeerConnection(from);
+            const offerDesc = await pc.createOffer();
+            await pc.setLocalDescription(offerDesc);
+            
+            channelRef.current.send({
+              type: 'broadcast',
+              event: 'offer',
+              payload: {
+                offer: offerDesc,
+                from: userIdRef.current,
+                to: from,
+              },
+            });
+            console.log(`[Voice] Offer sent to ${from}`);
+          } catch (err) {
+            console.error('[Voice] Error creating offer:', err);
+          }
+        } else {
+          console.log(`[Voice] Waiting for offer from ${from} (they have higher ID)`);
         }
         break;
       }
 
       case 'offer': {
-        const pc = peersRef.current.get(from)?.pc || createPeerConnection(from);
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
+        if (!userIdRef.current || !channelRef.current) {
+          console.warn('[Voice] Not ready to handle offer');
+          return;
+        }
         
-        channelRef.current?.send({
-          type: 'broadcast',
-          event: 'answer',
-          payload: {
-            answer,
-            from: userIdRef.current,
-            to: from,
-          },
-        });
+        console.log(`[Voice] Received offer from ${from}`);
+        
+        try {
+          // Clean up any existing connection first
+          const existingPeer = peersRef.current.get(from);
+          if (existingPeer) {
+            existingPeer.pc.close();
+            peersRef.current.delete(from);
+            audioElementsRef.current.get(from)?.remove();
+            audioElementsRef.current.delete(from);
+          }
+          
+          const pc = createPeerConnection(from);
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          
+          // Process any pending ICE candidates after setting remote description
+          const pendingCandidates = pendingCandidatesRef.current.get(from);
+          if (pendingCandidates && pendingCandidates.length > 0) {
+            console.log(`[Voice] Processing ${pendingCandidates.length} pending ICE candidates for ${from}`);
+            for (const cand of pendingCandidates) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(cand));
+              } catch (e) {
+                console.warn('[Voice] Error adding pending ICE candidate:', e);
+              }
+            }
+            pendingCandidatesRef.current.delete(from);
+          }
+          
+          const answerDesc = await pc.createAnswer();
+          await pc.setLocalDescription(answerDesc);
+          
+          channelRef.current.send({
+            type: 'broadcast',
+            event: 'answer',
+            payload: {
+              answer: answerDesc,
+              from: userIdRef.current,
+              to: from,
+            },
+          });
+          console.log(`[Voice] Answer sent to ${from}`);
+        } catch (err) {
+          console.error('[Voice] Error handling offer:', err);
+        }
         break;
       }
 
       case 'answer': {
+        console.log(`[Voice] Received answer from ${from}`);
         const peer = peersRef.current.get(from);
         if (peer) {
-          await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
+          try {
+            if (peer.pc.signalingState === 'have-local-offer') {
+              await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
+              console.log(`[Voice] Remote description set for ${from}`);
+              
+              // Process any pending ICE candidates
+              const pendingCandidates = pendingCandidatesRef.current.get(from);
+              if (pendingCandidates && pendingCandidates.length > 0) {
+                console.log(`[Voice] Processing ${pendingCandidates.length} pending ICE candidates for ${from}`);
+                for (const cand of pendingCandidates) {
+                  try {
+                    await peer.pc.addIceCandidate(new RTCIceCandidate(cand));
+                  } catch (e) {
+                    console.warn('[Voice] Error adding pending ICE candidate:', e);
+                  }
+                }
+                pendingCandidatesRef.current.delete(from);
+              }
+            } else {
+              console.warn(`[Voice] Ignoring answer - wrong state: ${peer.pc.signalingState}`);
+            }
+          } catch (err) {
+            console.error('[Voice] Error setting remote description:', err);
+          }
+        } else {
+          console.warn(`[Voice] No peer connection for answer from ${from}`);
         }
         break;
       }
@@ -342,7 +438,18 @@ export function useVoiceChannel(convoyId?: string) {
         const peer = peersRef.current.get(from);
         if (peer && candidate) {
           try {
-            await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));
+            // Only add ICE candidates when we have a remote description
+            if (peer.pc.remoteDescription) {
+              await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));
+              console.log(`[Voice] ICE candidate added from ${from}`);
+            } else {
+              console.log(`[Voice] Queuing ICE candidate from ${from} - no remote description yet`);
+              // Store candidate for later
+              if (!pendingCandidatesRef.current.has(from)) {
+                pendingCandidatesRef.current.set(from, []);
+              }
+              pendingCandidatesRef.current.get(from)!.push(candidate);
+            }
           } catch (err) {
             console.error('[Voice] Error adding ICE candidate:', err);
           }
@@ -351,6 +458,7 @@ export function useVoiceChannel(convoyId?: string) {
       }
 
       case 'user-left': {
+        console.log(`[Voice] User left: ${from}`);
         const peer = peersRef.current.get(from);
         if (peer) {
           peer.pc.close();
@@ -358,6 +466,12 @@ export function useVoiceChannel(convoyId?: string) {
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
         }
+        // Clear from speaking users
+        setState(prev => {
+          const newSet = new Set(prev.speakingUsers);
+          newSet.delete(from);
+          return { ...prev, speakingUsers: newSet };
+        });
         break;
       }
     }
