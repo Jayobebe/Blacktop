@@ -99,9 +99,9 @@ export default function History() {
                         <p className="font-medium truncate">{displayName}</p>
                         <button
                           onClick={(e) => handleEditStart(ride.id, ride.name || '', e)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-all"
+                          className="p-1 rounded hover:bg-muted transition-all"
                         >
-                          <Pencil className="w-3 h-3 text-muted-foreground hover:text-accent" />
+                          <Pencil className="w-3 h-3 text-accent" />
                         </button>
                       </div>
                     )}
