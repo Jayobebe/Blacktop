@@ -7,7 +7,7 @@ import { useConvoyState } from '@/hooks/useConvoyState';
 import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route } from 'lucide-react';
-import { formatDuration, formatDistance } from '@/lib/format';
+import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -119,19 +119,22 @@ export default function ActiveRide() {
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-2">Current Speed</p>
             <div className={cn(
               "font-mono text-7xl md:text-8xl lg:text-9xl font-bold transition-all",
-              rideState.currentSpeed > 80 && "text-warning animate-speed-glow",
-              rideState.currentSpeed > 100 && "text-destructive"
+              formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 130 : 80) && "text-warning animate-speed-glow",
+              formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 160 : 100) && "text-destructive"
             )}>
-              {Math.round(rideState.currentSpeed)}
+              {formatSpeed(rideState.currentSpeed, settings.speedUnit)}
             </div>
-            <p className="text-muted-foreground text-lg">MPH</p>
+            <p className="text-muted-foreground text-lg">{getSpeedLabel(settings.speedUnit)}</p>
           </div>
 
           {/* Stats Grid */}
           <div className="flex gap-6 md:gap-8 mt-6 md:mt-8">
             <div className="text-center">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
-              <p className="font-mono text-xl md:text-2xl font-bold">{formatDistance(rideState.distance)}</p>
+              <p className="font-mono text-xl md:text-2xl font-bold">
+                {formatDistance(rideState.distance, settings.distanceUnit)}
+                <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
+              </p>
             </div>
             <div className="text-center">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Duration</p>
@@ -139,7 +142,7 @@ export default function ActiveRide() {
             </div>
             <div className="text-center">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
-              <p className="font-mono text-xl md:text-2xl font-bold">{Math.round(rideState.maxSpeed)}</p>
+              <p className="font-mono text-xl md:text-2xl font-bold">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
             </div>
           </div>
 
@@ -243,11 +246,11 @@ export default function ActiveRide() {
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Gauge className="w-3 h-3" />
-                              {member.currentSpeed || 0} mph
+                              {formatSpeed(member.currentSpeed || 0, settings.speedUnit)} {settings.speedUnit}
                             </span>
                             <span className="flex items-center gap-1">
                               <Route className="w-3 h-3" />
-                              {formatDistance(member.distanceDriven || 0)}
+                              {formatDistance(member.distanceDriven || 0, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
                             </span>
                           </div>
                         )}
@@ -258,7 +261,7 @@ export default function ActiveRide() {
                         <div className="text-right flex-shrink-0">
                           <p className="text-xs text-muted-foreground">Top</p>
                           <p className={cn("font-mono text-sm font-bold", color.text)}>
-                            {member.topSpeed || 0}
+                            {formatSpeed(member.topSpeed || 0, settings.speedUnit)}
                           </p>
                         </div>
                       )}
