@@ -18,11 +18,12 @@ import { toast } from 'sonner';
 export default function Settings() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { profile, updateName } = useProfile();
+  const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
   const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
+  const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
   const [isTipping, setIsTipping] = useState(false);
@@ -80,6 +81,20 @@ export default function Settings() {
     }
   };
 
+  const handleResetIdentity = async () => {
+    if (resetStep === 0) {
+      setResetStep(1);
+      return;
+    }
+
+    if (resetStep === 1) {
+      await resetIdentity();
+      toast.success('Identity reset — welcome back.');
+      setResetStep(2);
+      setTimeout(() => setResetStep(0), 2500);
+    }
+  };
+
   const handleBurn = () => {
     if (burnStep === 0) {
       setBurnStep(1);
@@ -132,7 +147,35 @@ export default function Settings() {
               {profile.name}
               <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
             </button>
-          )}
+           )}
+
+          <div className="mt-4">
+            {resetStep === 2 ? (
+              <p className="text-sm text-accent text-center py-2">Reset complete</p>
+            ) : (
+              <Button
+                onClick={handleResetIdentity}
+                variant={resetStep === 1 ? 'destructive' : 'outline'}
+                className="w-full touch-target"
+              >
+                {resetStep === 0 ? 'Reset identity' : 'Confirm reset'}
+              </Button>
+            )}
+
+            {resetStep === 1 && (
+              <Button
+                onClick={() => setResetStep(0)}
+                variant="ghost"
+                className="w-full mt-2 touch-target"
+              >
+                Cancel
+              </Button>
+            )}
+
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Use this if an uninstall/reinstall kept your old name.
+            </p>
+          </div>
         </section>
 
         {/* Navigation App Section */}
