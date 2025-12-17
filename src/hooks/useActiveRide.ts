@@ -110,13 +110,20 @@ function handlePositionUpdate(position: GeolocationPosition) {
     }
   }
 
-  // Device speed fallback (m/s -> mph)
-  const deviceSpeedMph = deviceSpeed != null ? deviceSpeed * 2.237 : 0;
+  // Device speed from GPS chip (m/s -> mph) - often more accurate via Doppler
+  const deviceSpeedMph = deviceSpeed != null && deviceSpeed >= 0 ? deviceSpeed * 2.237 : null;
 
-  // Prefer calculated speed; fall back to device speed when we don't have enough movement data yet.
-  let currentSpeed = calculatedSpeed;
-  if (currentSpeed === 0 && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
+  // Prefer device speed when available (GPS chip's Doppler is more accurate for vehicles)
+  // Fall back to calculated speed only when device speed is unavailable
+  let currentSpeed: number;
+  if (deviceSpeedMph != null && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
     currentSpeed = deviceSpeedMph;
+    console.log('[GPS] Using device speed:', deviceSpeedMph.toFixed(1), 'mph');
+  } else if (calculatedSpeed > MIN_SPEED_THRESHOLD) {
+    currentSpeed = calculatedSpeed;
+    console.log('[GPS] Using calculated speed:', calculatedSpeed.toFixed(1), 'mph');
+  } else {
+    currentSpeed = 0;
   }
 
   // Apply exponential smoothing to reduce jitter
