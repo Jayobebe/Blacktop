@@ -82,6 +82,7 @@ export default function ActiveRide() {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
+  const [endingFlow, setEndingFlow] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
 
@@ -124,40 +125,53 @@ export default function ActiveRide() {
     };
   }, [rideState.isConvoyMode]);
 
-  // Redirect if no active ride
+  // Redirect if no active ride (but don't interrupt the explicit "end ride" flow / summary)
   useEffect(() => {
-    if (!rideState.isActive) {
+    if (!rideState.isActive && !showSummary && !endingFlow) {
       navigate('/');
     }
-  }, [rideState.isActive, navigate]);
+  }, [rideState.isActive, showSummary, endingFlow, navigate]);
 
   // Non-leaders: listen for leader ending the ride (destination cleared)
   useEffect(() => {
-    if (rideState.isConvoyMode && !convoy.isLeader && rideState.isActive) {
-      // If we're in convoy mode, not the leader, and destination gets cleared, leader ended the ride
-      if (convoy.isActive && !convoy.destination) {
-        toast.info('Leader ended the ride');
-        endRide();
+    if (!(rideState.isConvoyMode && !convoy.isLeader && rideState.isActive)) return;
+
+    // If we're in convoy mode, not the leader, and destination gets cleared, leader ended the ride
+    if (convoy.isActive && !convoy.destination) {
+      toast.info('Leader ended the ride');
+      setEndingFlow(true);
+      (async () => {
+        await endRide();
         navigate('/lobby');
-      }
+      })();
     }
-  }, [convoy.destination, convoy.isLeader, convoy.isActive, rideState.isConvoyMode, rideState.isActive, endRide, navigate]);
+  }, [
+    convoy.destination,
+    convoy.isLeader,
+    convoy.isActive,
+    rideState.isConvoyMode,
+    rideState.isActive,
+    endRide,
+    navigate,
+  ]);
 
   const handleEndRide = async () => {
+    setEndingFlow(true);
+
     if (isConnected) {
       disconnect();
     }
-    
+
     const wasConvoyMode = rideState.isConvoyMode;
     const wasLeader = convoy.isLeader;
-    
+
     // Capture final members before ending for badge summary
     if (wasConvoyMode && membersRef.current.length > 0) {
       setFinalMembers(membersRef.current);
     }
-    
-    endRide();
-    
+
+    await endRide();
+
     if (wasConvoyMode) {
       if (wasLeader) {
         // Leader ends ride for everyone
