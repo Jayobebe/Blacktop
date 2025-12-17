@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DemoTooltip, DemoSuccess } from '@/components/DemoTooltip';
 import { haptics } from '@/lib/haptics';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import { 
   Users, UserPlus, History, BarChart3, Settings, Play, 
   Copy, Check, Mic, MicOff, Crown, User, Navigation, 
@@ -67,6 +68,7 @@ const STEP_INTERACTIONS: Partial<Record<DemoStep, string>> = {
 
 export default function DemoRide() {
   const navigate = useNavigate();
+  const wakeLock = useWakeLock();
   const [step, setStep] = useState<DemoStep>('welcome');
   const [demoName, setDemoName] = useState('');
   const [copied, setCopied] = useState(false);
@@ -83,6 +85,20 @@ export default function DemoRide() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<'mph' | 'kph'>('mph');
   const [selectedNavApp, setSelectedNavApp] = useState(0);
+
+  // Keep screen awake during active ride demo steps
+  const isActiveRideStep = ['active-ride', 'active-rescue', 'rescue-response', 'ride-end'].includes(step);
+  
+  useEffect(() => {
+    if (isActiveRideStep) {
+      wakeLock.request();
+    }
+    return () => {
+      if (isActiveRideStep) {
+        wakeLock.release();
+      }
+    };
+  }, [isActiveRideStep]);
 
   // Simulate ride when on active-ride step
   useEffect(() => {
