@@ -1,14 +1,17 @@
-import { ConvoyMemberInfo, calculateBadges, MemberBadge } from '@/types/convoy';
+import { useEffect } from 'react';
+import { ConvoyMemberInfo, calculateBadges, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
 import { Trophy, Crown, User, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RideSummaryProps {
   members: ConvoyMemberInfo[];
+  currentUserId?: string;
+  onBadgeEarned?: (badge: BadgeType) => void;
   onClose: () => void;
 }
 
-export function RideSummary({ members, onClose }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, onBadgeEarned, onClose }: RideSummaryProps) {
   const badgesMap = calculateBadges(members);
   
   // Get all badge awards as flat list for display
@@ -24,6 +27,16 @@ export function RideSummary({ members, onClose }: RideSummaryProps) {
   // Sort by badge type priority: speed-demon, journeyman, rocksteady
   const badgeOrder = { 'speed-demon': 0, 'journeyman': 1, 'rocksteady': 2 };
   badgeAwards.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
+
+  // Report the current user's first earned badge (if any)
+  useEffect(() => {
+    if (currentUserId && onBadgeEarned) {
+      const userBadges = badgesMap.get(currentUserId);
+      if (userBadges && userBadges.length > 0) {
+        onBadgeEarned(userBadges[0].type);
+      }
+    }
+  }, [currentUserId, onBadgeEarned, badgesMap]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
