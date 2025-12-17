@@ -137,14 +137,14 @@ export default function Lobby() {
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6">
       {/* Header with Code - compact */}
-      <header className="mb-2 md:mb-3 animate-fade-in flex items-center justify-between">
+      <header className="mb-2 landscape:mb-1 md:mb-3 animate-fade-in flex items-center justify-between">
         <div>
-          <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5">Convoy Code</p>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5 landscape:hidden">Convoy Code</p>
           <button
             onClick={handleCopyCode}
             className="flex items-center gap-2 bg-card border border-border rounded-lg px-2 py-1 hover:bg-muted transition-colors"
           >
-            <span className="font-mono text-lg md:text-xl font-bold tracking-widest">{convoy.code}</span>
+            <span className="font-mono text-lg landscape:text-base md:text-xl font-bold tracking-widest">{convoy.code}</span>
             {copied ? (
               <Check className="w-4 h-4 text-accent" />
             ) : (
@@ -157,7 +157,7 @@ export default function Lobby() {
         <button
           onClick={toggleMute}
           className={cn(
-            "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all touch-target",
+            "w-10 h-10 landscape:w-9 landscape:h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all touch-target",
             !isMuted
               ? "bg-ptt-active shadow-glow"
               : "bg-ptt-inactive hover:bg-muted"
@@ -171,9 +171,9 @@ export default function Lobby() {
         </button>
       </header>
 
-      {/* Main content - horizontal layout */}
-      <div className="flex-1 flex flex-row gap-3 md:gap-4 min-h-0">
-        {/* Left side - Destination */}
+      {/* Main content - vertical in portrait, horizontal in landscape */}
+      <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
+        {/* Destination */}
         <div className="flex-1 flex flex-col animate-slide-up relative z-50 min-w-0">
           <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">Destination</p>
           <DestinationSearch
@@ -197,8 +197,8 @@ export default function Lobby() {
           )}
         </div>
 
-        {/* Right side - Members List */}
-        <div className="w-52 md:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0">
+        {/* Members List */}
+        <div className="landscape:w-52 md:landscape:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0 max-h-[40vh] landscape:max-h-none">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
               Riders ({convoy.members.length})
