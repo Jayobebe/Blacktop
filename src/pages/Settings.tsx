@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { AccentColorPicker } from '@/components/AccentColorPicker';
+import { BTLogo } from '@/components/BTLogo';
 import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
@@ -99,7 +100,8 @@ export default function Settings() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-2xl font-display font-bold">Settings</h1>
+        <h1 className="text-2xl font-display font-bold flex-1">Settings</h1>
+        <BTLogo size="md" />
       </header>
 
       <div className="space-y-6 animate-fade-in">
