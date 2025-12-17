@@ -31,10 +31,12 @@ export default function Lobby() {
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const hasStartedRide = useRef(false);
 
-  // Reset ride started flag when entering/returning to lobby
+  // Reset ride started flag ONLY when destination is cleared (new ride cycle)
   useEffect(() => {
-    hasStartedRide.current = false;
-  }, []);
+    if (!convoy.destination) {
+      hasStartedRide.current = false;
+    }
+  }, [convoy.destination]);
 
   // Connect to voice channel when entering lobby with valid convoy
   useEffect(() => {
