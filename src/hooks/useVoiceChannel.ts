@@ -363,17 +363,30 @@ export function useVoiceChannel(convoyId?: string) {
     }
   }, [createPeerConnection]);
 
+  // Check and request microphone permission
+  const checkMicrophonePermission = useCallback(async (): Promise<'granted' | 'denied' | 'prompt'> => {
+    if ('permissions' in navigator) {
+      try {
+        const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        return result.state as 'granted' | 'denied' | 'prompt';
+      } catch {
+        return 'prompt';
+      }
+    }
+    return 'prompt';
+  }, []);
+
   // Connect to voice channel
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     if (!convoyId) {
       console.error('[Voice] No convoy ID provided');
-      return false;
+      return { success: false, error: 'No convoy ID' };
     }
 
     // Guard against multiple simultaneous connection attempts
     if (isConnectingRef.current || state.isConnected) {
       console.log('[Voice] Already connecting or connected, skipping');
-      return state.isConnected;
+      return { success: state.isConnected };
     }
     
     isConnectingRef.current = true;
@@ -381,19 +394,47 @@ export function useVoiceChannel(convoyId?: string) {
     try {
       console.log('[Voice] Connecting to voice channel for convoy:', convoyId);
 
+      // Check microphone permission first
+      const permissionStatus = await checkMicrophonePermission();
+      console.log('[Voice] Microphone permission status:', permissionStatus);
+      
+      if (permissionStatus === 'denied') {
+        console.error('[Voice] Microphone permission denied');
+        isConnectingRef.current = false;
+        return { 
+          success: false, 
+          error: 'Microphone access denied. Please enable it in your device settings to use voice chat.' 
+        };
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('[Voice] No authenticated user');
         isConnectingRef.current = false;
-        return false;
+        return { success: false, error: 'Not authenticated' };
       }
       userIdRef.current = user.id;
 
       // Get microphone access with optimized settings
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: AUDIO_CONSTRAINTS,
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: AUDIO_CONSTRAINTS,
+        });
+      } catch (mediaError: any) {
+        console.error('[Voice] Failed to get microphone access:', mediaError);
+        isConnectingRef.current = false;
+        
+        if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
+          return { 
+            success: false, 
+            error: 'Microphone access denied. Please enable it in your device settings to use voice chat.' 
+          };
+        }
+        return { success: false, error: 'Failed to access microphone. Please try again.' };
+      }
+      
       localStreamRef.current = stream;
       
       // Start muted by default
@@ -482,14 +523,14 @@ export function useVoiceChannel(convoyId?: string) {
 
       isConnectingRef.current = false;
       console.log('[Voice] Connected successfully');
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('[Voice] Failed to connect:', error);
       isConnectingRef.current = false;
       cleanup();
-      return false;
+      return { success: false, error: 'Failed to connect to voice channel' };
     }
-  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected]);
+  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission]);
 
   // Disconnect from voice channel
   const disconnect = useCallback(() => {
