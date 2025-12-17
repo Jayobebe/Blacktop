@@ -329,6 +329,14 @@ export default function Lobby() {
                     onClick={() => {
                       openNavigation(nextWaypoint.lat, nextWaypoint.lng, nextWaypoint.name);
                       markAsNavigated();
+                      // Start ride and go to active ride page
+                      if (!hasStartedRide.current) {
+                        hasStartedRide.current = true;
+                        const success = startRide(true, convoy.id);
+                        if (success) {
+                          navigate('/ride');
+                        }
+                      }
                     }}
                     className="w-full mt-2 h-10 bg-accent hover:bg-accent/90 text-accent-foreground"
                   >
@@ -341,7 +349,17 @@ export default function Lobby() {
                   destination={convoy.destination}
                   onSetDestination={setDestination}
                   onClearDestination={clearDestination}
-                  onNavigate={markAsNavigated}
+                  onNavigate={() => {
+                    markAsNavigated();
+                    // Start ride and go to active ride page
+                    if (!hasStartedRide.current) {
+                      hasStartedRide.current = true;
+                      const success = startRide(true, convoy.id);
+                      if (success) {
+                        navigate('/ride');
+                      }
+                    }
+                  }}
                   isLeader={convoy.isLeader}
                 />
               )}
