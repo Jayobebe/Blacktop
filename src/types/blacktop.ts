@@ -40,6 +40,12 @@ export interface RideStats {
   badges: BadgeCounts;
 }
 
+export interface GpsStatus {
+  accuracy: number | null; // in meters
+  lastUpdate: number | null; // timestamp
+  source: 'device' | 'calculated' | 'none';
+}
+
 export interface ActiveRideState {
   isActive: boolean;
   startedAt: string | null;
@@ -49,6 +55,7 @@ export interface ActiveRideState {
   distance: number;
   duration: number;
   gpsPoints: GpsPoint[];
+  gpsStatus: GpsStatus;
 }
 
 export type NavigationApp = 'google' | 'waze' | 'apple';

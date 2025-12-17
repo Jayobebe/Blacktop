@@ -23,6 +23,7 @@ let rideState: ActiveRideState = {
   distance: 0,
   duration: 0,
   gpsPoints: [],
+  gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
 };
 
 let watchId: number | null = null;
@@ -120,11 +121,15 @@ function handlePositionUpdate(position: GeolocationPosition) {
   // Prefer device speed when available (GPS chip's Doppler is more accurate for vehicles)
   // Fall back to calculated speed only when device speed is unavailable
   let currentSpeed: number;
+  let speedSource: 'device' | 'calculated' | 'none' = 'none';
+  
   if (deviceSpeedMph != null && deviceSpeedMph > MIN_SPEED_THRESHOLD) {
     currentSpeed = deviceSpeedMph;
+    speedSource = 'device';
     console.log('[GPS] Using device speed:', deviceSpeedMph.toFixed(1), 'mph');
   } else if (calculatedSpeed > MIN_SPEED_THRESHOLD) {
     currentSpeed = calculatedSpeed;
+    speedSource = 'calculated';
     console.log('[GPS] Using calculated speed:', calculatedSpeed.toFixed(1), 'mph');
   } else {
     currentSpeed = 0;
@@ -152,6 +157,7 @@ function handlePositionUpdate(position: GeolocationPosition) {
     maxSpeed: Math.max(prev.maxSpeed, displaySpeed),
     distance: prev.distance + distanceIncrement,
     gpsPoints: [...prev.gpsPoints, gpsPoint],
+    gpsStatus: { accuracy, lastUpdate: timestamp, source: speedSource },
   }));
 }
 
@@ -218,6 +224,7 @@ export function useActiveRide(convoyId?: string | null) {
       distance: 0,
       duration: 0,
       gpsPoints: [],
+      gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
     }));
 
     // Start convoy sync if in convoy mode
@@ -308,6 +315,7 @@ export function useActiveRide(convoyId?: string | null) {
       distance: 0,
       duration: 0,
       gpsPoints: [],
+      gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
     }));
   }, []);
 
