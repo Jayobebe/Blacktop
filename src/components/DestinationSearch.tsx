@@ -233,6 +233,7 @@ export function DestinationSearch({
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
 
   useEffect(() => {
     setRecentLocations(getRecentLocations());
@@ -297,7 +298,7 @@ export function DestinationSearch({
     );
   };
 
-  const performSearch = useCallback(async (searchQuery: string) => {
+  const performSearch = useCallback(async (searchQuery: string, currentSearchId: number) => {
     if (searchQuery.length < 2) {
       setResults([]);
       return;
@@ -307,12 +308,19 @@ export function DestinationSearch({
     
     try {
       const searchResults = await searchPlaces(searchQuery, userLocation, countryCode);
-      setResults(searchResults);
+      // Only update if this is still the latest search
+      if (searchIdRef.current === currentSearchId) {
+        setResults(searchResults);
+      }
     } catch (error) {
       console.error('Search failed:', error);
-      setResults([]);
+      if (searchIdRef.current === currentSearchId) {
+        setResults([]);
+      }
     } finally {
-      setIsSearching(false);
+      if (searchIdRef.current === currentSearchId) {
+        setIsSearching(false);
+      }
     }
   }, [userLocation, countryCode]);
 
@@ -330,32 +338,52 @@ export function DestinationSearch({
       return;
     }
     
+    // Increment search ID to invalidate any pending searches
+    const currentSearchId = ++searchIdRef.current;
+    
     // Fast 150ms debounce
     debounceRef.current = setTimeout(() => {
-      performSearch(searchQuery);
+      performSearch(searchQuery, currentSearchId);
     }, 150);
   }, [performSearch]);
 
   const handleCategoryClick = async (category: QuickCategory) => {
+    // Clear any pending text searches
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
     setActiveCategory(category.id);
     setQuery('');
     setShowResults(true);
     setIsSearching(true);
     
+    // Increment search ID to invalidate any pending searches
+    const currentSearchId = ++searchIdRef.current;
+    
     try {
       // Use Overpass API for category searches (much better for POIs)
       if (userLocation) {
         const searchResults = await searchPOIsOverpass(category.query, userLocation);
-        setResults(searchResults);
+        // Only update if this is still the latest search
+        if (searchIdRef.current === currentSearchId) {
+          setResults(searchResults);
+        }
       } else {
         // Fallback to Nominatim if no location
         const searchResults = await searchPlaces(category.query, null, countryCode);
-        setResults(searchResults);
+        if (searchIdRef.current === currentSearchId) {
+          setResults(searchResults);
+        }
       }
     } catch {
-      setResults([]);
+      if (searchIdRef.current === currentSearchId) {
+        setResults([]);
+      }
     } finally {
-      setIsSearching(false);
+      if (searchIdRef.current === currentSearchId) {
+        setIsSearching(false);
+      }
     }
   };
 
