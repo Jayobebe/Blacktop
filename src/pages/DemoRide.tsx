@@ -103,9 +103,6 @@ export default function DemoRide() {
           />
         </div>
         <div className="flex items-center justify-between px-5 py-3">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">
-            Demo Mode
-          </span>
           <span className="text-sm font-medium">
             {STEP_TITLES[step]}
           </span>
