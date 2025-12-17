@@ -39,25 +39,71 @@ export function useProfile() {
   const [profile, setProfile] = useState<UserProfile>(() => readLocalProfile());
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isValidSession, setIsValidSession] = useState(false);
 
-  // Initialize auth state
+  // Initialize auth state and validate session
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
-        setIsLoading(false);
+        
+        // If session exists, verify profile exists in database
+        if (session?.user) {
+          setTimeout(() => {
+            validateProfile(session.user.id);
+          }, 0);
+        } else {
+          setIsValidSession(false);
+          setIsLoading(false);
+        }
       }
     );
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      setIsLoading(false);
+      if (session?.user) {
+        validateProfile(session.user.id);
+      } else {
+        setIsValidSession(false);
+        setIsLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Validate that the user has a profile in the database
+  const validateProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data?.display_name) {
+        // No valid profile in database - clear local storage and require onboarding
+        window.localStorage.removeItem(PROFILE_KEY);
+        setProfile(defaultProfile);
+        setIsValidSession(false);
+      } else {
+        // Valid profile exists - sync local state
+        const localProfile = readLocalProfile();
+        if (localProfile.name !== data.display_name) {
+          const updated = { ...localProfile, name: data.display_name };
+          writeLocalProfile(updated);
+          setProfile(updated);
+        }
+        setIsValidSession(true);
+      }
+    } catch (e) {
+      console.error('Failed to validate profile:', e);
+      setIsValidSession(false);
+    }
+    setIsLoading(false);
+  };
 
   // Sync local profile with state
   useEffect(() => {
@@ -108,6 +154,7 @@ export function useProfile() {
     };
     writeLocalProfile(next);
     setProfile(next);
+    setIsValidSession(true);
   }, [user, profile.preferredNavApp]);
 
   const updateNavApp = useCallback((app: NavigationApp) => {
@@ -138,7 +185,8 @@ export function useProfile() {
     setProfile(next);
   }, [user, profile]);
 
-  const hasProfile = profile.name.trim().length > 0;
+  // hasProfile requires both local profile AND valid database session
+  const hasProfile = profile.name.trim().length > 0 && isValidSession;
 
   return {
     profile,
