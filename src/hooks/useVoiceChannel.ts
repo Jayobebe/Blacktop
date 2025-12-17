@@ -51,6 +51,7 @@ export function useVoiceChannel(convoyId?: string) {
   const isSpeakingRef = useRef<boolean>(false);
   const speakingTimeoutRef = useRef<number | null>(null);
   const isMutedRef = useRef<boolean>(true); // Ref to avoid stale closure
+  const isConnectingRef = useRef<boolean>(false); // Guard against multiple connection attempts
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -349,6 +350,14 @@ export function useVoiceChannel(convoyId?: string) {
       return false;
     }
 
+    // Guard against multiple simultaneous connection attempts
+    if (isConnectingRef.current || state.isConnected) {
+      console.log('[Voice] Already connecting or connected, skipping');
+      return state.isConnected;
+    }
+    
+    isConnectingRef.current = true;
+
     try {
       console.log('[Voice] Connecting to voice channel for convoy:', convoyId);
 
@@ -356,6 +365,7 @@ export function useVoiceChannel(convoyId?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('[Voice] No authenticated user');
+        isConnectingRef.current = false;
         return false;
       }
       userIdRef.current = user.id;
@@ -437,18 +447,23 @@ export function useVoiceChannel(convoyId?: string) {
         isMuted: true,
       }));
 
+      isConnectingRef.current = false;
       console.log('[Voice] Connected successfully');
       return true;
     } catch (error) {
       console.error('[Voice] Failed to connect:', error);
+      isConnectingRef.current = false;
       cleanup();
       return false;
     }
-  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring]);
+  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected]);
 
   // Disconnect from voice channel
   const disconnect = useCallback(() => {
     console.log('[Voice] Disconnecting from voice channel');
+    
+    // Reset connecting flag
+    isConnectingRef.current = false;
     
     // Announce we're leaving
     if (channelRef.current && userIdRef.current) {
