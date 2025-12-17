@@ -46,6 +46,102 @@ export function useConvoyState() {
   const { profile } = useProfile();
   const { settings } = useSettings();
 
+  // Restore convoy state from database on mount (handles page reload)
+  useEffect(() => {
+    // Skip if we already have an active convoy loaded
+    if (state.isActive) return;
+
+    const restoreConvoySession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if user is a member of any active convoy
+      const { data: membership } = await supabase
+        .from('convoy_members')
+        .select(`
+          convoy_id,
+          convoys!inner (
+            id,
+            code,
+            name,
+            leader_id,
+            destination_name,
+            destination_address,
+            destination_lat,
+            destination_lng,
+            is_active,
+            is_paused
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('convoys.is_active', true)
+        .maybeSingle();
+
+      if (!membership?.convoys) {
+        console.log('[Convoy] No active convoy membership found');
+        return;
+      }
+
+      const convoy = membership.convoys as any;
+      console.log('[Convoy] Restoring convoy session:', convoy.code);
+
+      // Fetch all members
+      const { data: membersData } = await supabase
+        .from('convoy_members')
+        .select(`
+          id,
+          user_id,
+          joined_at,
+          has_navigated,
+          current_speed,
+          top_speed,
+          distance_driven,
+          stationary_time,
+          accent_color,
+          profiles!convoy_members_user_id_fkey(display_name)
+        `)
+        .eq('convoy_id', convoy.id);
+
+      const members: ConvoyMemberInfo[] = (membersData || []).map((m: any) => ({
+        id: m.id,
+        userId: m.user_id,
+        name: m.profiles?.display_name || 'Unknown',
+        isLeader: m.user_id === convoy.leader_id,
+        isReady: true,
+        hasNavigated: m.has_navigated || false,
+        joinedAt: m.joined_at,
+        accentColor: m.accent_color || 'orange',
+        currentSpeed: m.current_speed || 0,
+        topSpeed: m.top_speed || 0,
+        distanceDriven: m.distance_driven || 0,
+        stationaryTime: m.stationary_time || 0,
+      }));
+
+      // Parse destination if set
+      const destination = convoy.destination_name ? {
+        name: convoy.destination_name,
+        address: convoy.destination_address || '',
+        lat: convoy.destination_lat,
+        lng: convoy.destination_lng,
+      } : null;
+
+      setConvoyState(() => ({
+        id: convoy.id,
+        code: convoy.code,
+        isLeader: convoy.leader_id === user.id,
+        members,
+        isActive: true,
+        destination,
+        waypoints: [],
+        isPaused: convoy.is_paused || false,
+      }));
+
+      toast.success('Convoy session restored');
+    };
+
+    restoreConvoySession();
+  }, [state.isActive]);
+
   // Subscribe to realtime convoy updates
   useEffect(() => {
     if (!state.id) return;
