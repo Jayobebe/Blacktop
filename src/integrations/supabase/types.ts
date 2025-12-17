@@ -142,6 +142,7 @@ export type Database = {
           leader_id: string | null
           name: string
           paused_at: string | null
+          ride_ended_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -158,6 +159,7 @@ export type Database = {
           leader_id?: string | null
           name: string
           paused_at?: string | null
+          ride_ended_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -174,6 +176,7 @@ export type Database = {
           leader_id?: string | null
           name?: string
           paused_at?: string | null
+          ride_ended_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
