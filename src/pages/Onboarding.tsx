@@ -27,16 +27,18 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 safe-top safe-bottom">
       <div className="w-full max-w-sm animate-fade-in">
-        <h1 className="text-4xl font-display font-bold text-center mb-2 tracking-tight">
-          BLACKTOP
-        </h1>
-        <p className="text-muted-foreground text-center mb-12">
-          Your ride companion
-        </p>
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-semibold tracking-tight mb-3">
+            BLACKTOP
+          </h1>
+          <p className="text-muted-foreground">
+            Your ride companion
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="space-y-3">
+            <label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
               Profile Name
             </label>
             <Input
@@ -45,7 +47,7 @@ export default function Onboarding() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name"
-              className="h-14 text-lg bg-secondary border-border focus:border-primary"
+              className="h-14 text-lg"
               maxLength={20}
               autoFocus
               disabled={isCreating}
@@ -55,7 +57,7 @@ export default function Onboarding() {
           <Button
             type="submit"
             disabled={!name.trim() || isCreating}
-            className="w-full h-14 text-lg font-semibold touch-target"
+            className="w-full h-14 text-base font-semibold rounded-2xl touch-target"
           >
             {isCreating ? (
               <>
@@ -68,7 +70,7 @@ export default function Onboarding() {
           </Button>
         </form>
 
-        <p className="text-xs text-muted-foreground text-center mt-8 px-4">
+        <p className="text-xs text-muted-foreground text-center mt-10 px-4 leading-relaxed">
           Blacktop is a ride logging and communication tool, not a racing or enforcement-avoidance app.
         </p>
       </div>
