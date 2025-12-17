@@ -6,10 +6,11 @@ import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useWaypoints } from '@/hooks/useWaypoints';
 import { useNavigation } from '@/hooks/useNavigation';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, ChevronRight, Plus } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DestinationSearch } from '@/components/DestinationSearch';
+import { WaypointList } from '@/components/WaypointList';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 
@@ -18,7 +19,7 @@ export default function Lobby() {
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
   const { startRide } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
-  const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
+  const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { openNavigation } = useNavigation();
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -169,52 +170,15 @@ export default function Lobby() {
         {/* Destination & Waypoints */}
         <div className="flex-1 flex flex-col animate-slide-up relative z-50 min-w-0 overflow-hidden">
           {/* Waypoints List */}
-          {waypoints.length > 0 && (
-            <div className="mb-2">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">
-                Route ({completedCount}/{totalCount} stops)
-              </p>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {waypoints.map((wp, index) => (
-                  <div
-                    key={wp.id}
-                    className={cn(
-                      "flex items-center gap-2 bg-card border border-border rounded-lg p-2 text-xs",
-                      wp.isCompleted && "opacity-50"
-                    )}
-                  >
-                    <span className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0",
-                      wp.isCompleted ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
-                    )}>
-                      {wp.isCompleted ? '✓' : index + 1}
-                    </span>
-                    <span className={cn("flex-1 truncate", wp.isCompleted && "line-through")}>
-                      {wp.name}
-                    </span>
-                    {convoy.isLeader && !wp.isCompleted && (
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => completeWaypoint(wp.id)}
-                          className="p-1 hover:bg-accent/20 rounded text-accent"
-                          title="Mark complete"
-                        >
-                          <Check className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => removeWaypoint(wp.id)}
-                          className="p-1 hover:bg-destructive/20 rounded text-destructive"
-                          title="Remove"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <WaypointList
+            waypoints={waypoints}
+            isLeader={convoy.isLeader}
+            onComplete={completeWaypoint}
+            onRemove={removeWaypoint}
+            onReorder={reorderWaypoints}
+            completedCount={completedCount}
+            totalCount={totalCount}
+          />
 
           {/* Add Waypoint / Current Destination */}
           {showAddWaypoint ? (
