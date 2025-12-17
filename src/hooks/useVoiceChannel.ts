@@ -589,6 +589,33 @@ export function useVoiceChannel(convoyId?: string) {
     }
   }, [state.isConnected, state.isMuted]);
 
+  // Refresh voice connection when returning from nav app (visibility change)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && state.isConnected && channelRef.current && userIdRef.current) {
+        console.log('[Voice] App visible - refreshing voice connection');
+        // Re-announce presence to reconnect with peers
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'user-joined',
+          payload: { from: userIdRef.current },
+        });
+        
+        // Resume AudioContext if it was suspended (iOS/Safari)
+        if (audioContextRef.current?.state === 'suspended') {
+          audioContextRef.current.resume().then(() => {
+            console.log('[Voice] AudioContext resumed after visibility change');
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [state.isConnected]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
