@@ -22,7 +22,8 @@ function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
     ? Math.floor((Date.now() - gpsStatus.lastUpdate) / 1000)
     : null;
   
-  const isStale = timeSinceUpdate !== null && timeSinceUpdate > 5;
+  // More lenient stale threshold (10s instead of 5s)
+  const isStale = timeSinceUpdate !== null && timeSinceUpdate > 10;
   const accuracy = gpsStatus.accuracy;
   
   // Determine signal quality
@@ -49,8 +50,9 @@ function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
       title = accuracy ? `GPS: Weak (±${Math.round(accuracy)}m)` : 'GPS: Active';
     }
   } else if (isStale) {
-    signalColor = 'text-destructive/70';
-    title = 'GPS signal lost';
+    // Use warning/orange instead of destructive/red for stale GPS
+    signalColor = 'text-orange-400';
+    title = 'GPS signal slow';
   }
   
   return (
