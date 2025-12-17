@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/hooks/useRideHistory';
@@ -7,11 +7,14 @@ import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Settings() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { profile, updateName } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
@@ -20,7 +23,15 @@ export default function Settings() {
   const [burnStep, setBurnStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
+  const [isTipping, setIsTipping] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const tipStatus = searchParams.get('tip');
+    if (tipStatus === 'success') {
+      toast.success('Thank you for your support!');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (isEditingName && nameInputRef.current) {
@@ -50,6 +61,22 @@ export default function Settings() {
     { id: 'waze', label: 'Waze' },
     { id: 'apple', label: 'Apple Maps' },
   ];
+
+  const handleTip = async () => {
+    setIsTipping(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-tip');
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating tip session:', error);
+      toast.error('Failed to open tip jar. Please try again.');
+    } finally {
+      setIsTipping(false);
+    }
+  };
 
   const handleBurn = () => {
     if (burnStep === 0) {
@@ -211,6 +238,27 @@ export default function Settings() {
             <li>• No cloud sync by default</li>
             <li>• Voice data is never recorded or stored</li>
           </ul>
+        </section>
+
+        {/* Tip Jar Section */}
+        <section className="bg-card rounded-lg p-4 border border-accent/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-accent" />
+            <h2 className="text-sm font-semibold text-accent uppercase tracking-wide">
+              Support Blacktop
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Enjoying Blacktop? Buy me a coffee to support continued development.
+          </p>
+          <Button
+            onClick={handleTip}
+            disabled={isTipping}
+            className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold touch-target"
+          >
+            <Heart className="w-4 h-4 mr-2" />
+            {isTipping ? 'Opening...' : 'Leave a Tip ($5)'}
+          </Button>
         </section>
 
         {/* Burn Button Section */}
