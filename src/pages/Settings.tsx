@@ -369,7 +369,7 @@ export default function Settings() {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            how about leaving a lil something to take the edge off?...
+            Help keep us ad-free!
           </p>
           <Button
             onClick={handleTip}
