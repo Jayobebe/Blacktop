@@ -456,25 +456,10 @@ export function useConvoyState() {
   }, []);
 
   const leaveConvoy = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const convoyId = state.id;
+    const wasLeader = state.isLeader;
     
-    if (user && state.id) {
-      // Remove self from convoy_members
-      await supabase
-        .from('convoy_members')
-        .delete()
-        .eq('convoy_id', state.id)
-        .eq('user_id', user.id);
-
-      // If leader, deactivate convoy
-      if (state.isLeader) {
-        await supabase
-          .from('convoys')
-          .update({ is_active: false })
-          .eq('id', state.id);
-      }
-    }
-
+    // Clear state immediately (optimistic update) for instant UI response
     setConvoyState(() => ({
       id: null,
       code: null,
@@ -485,6 +470,33 @@ export function useConvoyState() {
       waypoints: [],
       isPaused: false,
     }));
+
+    // Run database cleanup in background (non-blocking)
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !convoyId) return;
+
+      // Remove self from convoy_members
+      supabase
+        .from('convoy_members')
+        .delete()
+        .eq('convoy_id', convoyId)
+        .eq('user_id', user.id)
+        .then(({ error }) => {
+          if (error) console.warn('[Convoy] Failed to remove membership:', error);
+        });
+
+      // If leader, deactivate convoy
+      if (wasLeader) {
+        supabase
+          .from('convoys')
+          .update({ is_active: false })
+          .eq('id', convoyId)
+          .then(({ error }) => {
+            if (error) console.warn('[Convoy] Failed to deactivate convoy:', error);
+          });
+      }
+    })();
   }, [state.id, state.isLeader]);
 
   const setDestination = useCallback(async (destination: ConvoyDestination) => {
