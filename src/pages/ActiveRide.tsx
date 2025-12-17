@@ -16,7 +16,7 @@ import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
 import { RescueAlert } from '@/components/RescueAlert';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle } from 'lucide-react';
+import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -74,7 +74,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide } = useActiveRide();
-  const { convoy, resetNavigationStatus, endConvoyRide } = useConvoyState();
+  const { convoy, resetNavigationStatus, endConvoyRide, togglePause } = useConvoyState();
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
@@ -291,6 +291,12 @@ export default function ActiveRide() {
                 {convoy.isLeader ? 'LEADER' : 'CONVOY'}
               </span>
             )}
+            {convoy.isPaused && (
+              <span className="flex items-center gap-1 text-warning text-xs font-medium px-2 py-0.5 bg-warning/10 rounded animate-pulse">
+                <Pause className="w-3 h-3" />
+                PAUSED
+              </span>
+            )}
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
           </div>
 
@@ -330,6 +336,32 @@ export default function ActiveRide() {
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
+          {/* Pause button (leaders only) */}
+          {rideState.isConvoyMode && convoy.isLeader && (
+            <Button
+              variant="outline"
+              onClick={togglePause}
+              className={cn(
+                "h-12 landscape:h-10 px-3 rounded-full touch-target",
+                convoy.isPaused 
+                  ? "bg-accent/20 text-accent border-accent" 
+                  : "border-muted-foreground/50 text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              {convoy.isPaused ? (
+                <>
+                  <Play className="w-5 h-5 landscape:w-4 landscape:h-4" />
+                  <span className="ml-2 text-xs font-semibold">RESUME</span>
+                </>
+              ) : (
+                <>
+                  <Pause className="w-5 h-5 landscape:w-4 landscape:h-4" />
+                  <span className="ml-2 text-xs font-semibold">PAUSE</span>
+                </>
+              )}
+            </Button>
+          )}
+
           {/* Rescue button (non-leaders only) */}
           {rideState.isConvoyMode && !convoy.isLeader && (
             <Button

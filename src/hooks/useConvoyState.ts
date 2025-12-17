@@ -16,6 +16,7 @@ let convoyState: ConvoyState = {
   isActive: false,
   destination: null,
   waypoints: [],
+  isPaused: false,
 };
 
 function getSnapshot(): ConvoyState {
@@ -71,11 +72,13 @@ export function useConvoyState() {
                 lat: convoy.destination_lat,
                 lng: convoy.destination_lng,
               } : null,
+              isPaused: convoy.is_paused || false,
             }));
           } else {
             setConvoyState((prev) => ({
               ...prev,
               destination: null,
+              isPaused: convoy.is_paused || false,
             }));
           }
         }
@@ -222,6 +225,7 @@ export function useConvoyState() {
       isActive: true,
       destination: null,
       waypoints: [],
+      isPaused: false,
     }));
 
     return { id: convoy.id, code: convoy.code };
@@ -324,6 +328,7 @@ export function useConvoyState() {
       isActive: true,
       destination,
       waypoints: [],
+      isPaused: convoy.is_paused || false,
     }));
 
     return true;
@@ -357,6 +362,7 @@ export function useConvoyState() {
       isActive: false,
       destination: null,
       waypoints: [],
+      isPaused: false,
     }));
   }, [state.id, state.isLeader]);
 
@@ -519,6 +525,35 @@ export function useConvoyState() {
     return true;
   }, [state.id, state.isLeader]);
 
+  // Toggle pause state for the convoy (leader only)
+  const togglePause = useCallback(async () => {
+    if (!state.id || !state.isLeader) return;
+
+    const newPausedState = !state.isPaused;
+
+    // Update in database
+    const { error } = await supabase
+      .from('convoys')
+      .update({ 
+        is_paused: newPausedState,
+        paused_at: newPausedState ? new Date().toISOString() : null,
+      })
+      .eq('id', state.id);
+
+    if (error) {
+      toast.error('Failed to toggle pause');
+      return;
+    }
+
+    // Update local state immediately
+    setConvoyState((prev) => ({
+      ...prev,
+      isPaused: newPausedState,
+    }));
+
+    toast.success(newPausedState ? 'Ride paused' : 'Ride resumed');
+  }, [state.id, state.isLeader, state.isPaused]);
+
   // Check if all members have navigated
   const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
 
@@ -533,6 +568,7 @@ export function useConvoyState() {
     resetNavigationStatus,
     endConvoyRide,
     transferLeadership,
+    togglePause,
     allMembersNavigated,
   };
 }
