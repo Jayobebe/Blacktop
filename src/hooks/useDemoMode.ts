@@ -128,34 +128,48 @@ export function useDemoMode() {
         const distanceIncrement = newSpeed / 3600 * 0.5; // 0.5 second intervals
         const newDistance = prev.distance + distanceIncrement;
 
-        // Update all members with varied behavior for different badges
+        // Update all members with varied behavior
+        // Leader (index 0) should win ALL badges: top speed, most distance, most stationary time
         const updatedMembers = prev.members.map((member, index) => {
           let memberSpeed: number;
           let stationaryIncrement = 0;
           
-          // Give each member a different behavior pattern
-          if (index === 2) {
-            // SpeedDemon - fastest rider, aggressive acceleration
-            const speedBase = 60 + Math.sin((elapsedSeconds + index) / 3) * 35;
-            memberSpeed = Math.max(5, Math.min(140, speedBase + (Math.random() - 0.3) * 20));
-          } else if (index === 1) {
-            // RoadRunner - consistent high distance, moderate speed
-            memberSpeed = 55 + Math.sin((elapsedSeconds + index) / 6) * 15 + (Math.random() - 0.5) * 10;
-            memberSpeed = Math.max(40, Math.min(80, memberSpeed));
-          } else if (index === 4) {
-            // NightRider - frequently stops, gets Rocksteady badge
-            const stopChance = Math.sin(elapsedSeconds / 4);
-            if (stopChance > 0.3) {
+          if (index === 0) {
+            // Leader (You) - wins all badges
+            // High speed bursts for Speed Demon + consistent movement for Journeyman
+            // Also accumulate stationary time for Rocksteady
+            const phase = elapsedSeconds % 10;
+            if (phase < 2) {
+              // Brief stops to accumulate stationary time
               memberSpeed = 0;
-              stationaryIncrement = 0.5; // Add 0.5 seconds of stationary time
+              stationaryIncrement = 0.5;
+            } else {
+              // High speed riding - ensures top speed and good distance
+              memberSpeed = 70 + Math.sin(elapsedSeconds / 2) * 30 + (Math.random() - 0.3) * 15;
+              memberSpeed = Math.max(60, Math.min(130, memberSpeed));
+            }
+          } else if (index === 2) {
+            // SpeedDemon name - fast but not as fast as leader
+            const speedBase = 50 + Math.sin((elapsedSeconds + index) / 3) * 30;
+            memberSpeed = Math.max(5, Math.min(110, speedBase + (Math.random() - 0.3) * 15));
+          } else if (index === 1) {
+            // RoadRunner - good distance but less than leader
+            memberSpeed = 45 + Math.sin((elapsedSeconds + index) / 6) * 15 + (Math.random() - 0.5) * 10;
+            memberSpeed = Math.max(30, Math.min(70, memberSpeed));
+          } else if (index === 4) {
+            // NightRider - stops sometimes but less than leader
+            const stopChance = Math.sin(elapsedSeconds / 6);
+            if (stopChance > 0.5) {
+              memberSpeed = 0;
+              stationaryIncrement = 0.5;
             } else {
               memberSpeed = 35 + Math.random() * 25;
             }
           } else {
             // Others - normal varied speeds
-            const memberBaseSpeed = 40 + (index * 5) + Math.sin((elapsedSeconds + index * 2) / 4) * 25;
+            const memberBaseSpeed = 35 + (index * 3) + Math.sin((elapsedSeconds + index * 2) / 4) * 20;
             const memberVariation = (Math.random() - 0.5) * 15;
-            memberSpeed = Math.max(0, Math.min(100, memberBaseSpeed + memberVariation));
+            memberSpeed = Math.max(0, Math.min(90, memberBaseSpeed + memberVariation));
             if (memberSpeed < 5) {
               memberSpeed = 0;
               stationaryIncrement = 0.5;

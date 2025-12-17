@@ -37,17 +37,20 @@ export interface MemberBadge {
   emoji: string;
 }
 
-export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, MemberBadge> {
-  const badges = new Map<string, MemberBadge>();
+export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, MemberBadge[]> {
+  const badges = new Map<string, MemberBadge[]>();
   
   if (members.length === 0) return badges;
+
+  // Initialize empty arrays for all members
+  members.forEach(m => badges.set(m.userId, []));
 
   // Speed Demon - highest top speed
   const speedDemon = members.reduce((prev, curr) => 
     (curr.topSpeed || 0) > (prev.topSpeed || 0) ? curr : prev
   );
   if ((speedDemon.topSpeed || 0) > 0) {
-    badges.set(speedDemon.userId, { 
+    badges.get(speedDemon.userId)?.push({ 
       type: 'speed-demon', 
       label: 'Speed Demon', 
       emoji: '⚡' 
@@ -58,8 +61,8 @@ export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, Member
   const journeyman = members.reduce((prev, curr) => 
     (curr.distanceDriven || 0) > (prev.distanceDriven || 0) ? curr : prev
   );
-  if ((journeyman.distanceDriven || 0) > 0 && journeyman.userId !== speedDemon.userId) {
-    badges.set(journeyman.userId, { 
+  if ((journeyman.distanceDriven || 0) > 0) {
+    badges.get(journeyman.userId)?.push({ 
       type: 'journeyman', 
       label: 'Journeyman', 
       emoji: '🛣️' 
@@ -70,10 +73,8 @@ export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, Member
   const rocksteady = members.reduce((prev, curr) => 
     (curr.stationaryTime || 0) > (prev.stationaryTime || 0) ? curr : prev
   );
-  if ((rocksteady.stationaryTime || 0) > 0 && 
-      rocksteady.userId !== speedDemon.userId && 
-      rocksteady.userId !== journeyman.userId) {
-    badges.set(rocksteady.userId, { 
+  if ((rocksteady.stationaryTime || 0) > 0) {
+    badges.get(rocksteady.userId)?.push({ 
       type: 'rocksteady', 
       label: 'Rocksteady', 
       emoji: '🪨' 
