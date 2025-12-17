@@ -692,18 +692,25 @@ export function useConvoyState() {
 
     toast.success(newPausedState ? 'Ride paused' : 'Ride resumed');
 
-    // Broadcast immediately to all members (don't wait for database)
+    // Broadcast to all members - await subscription before sending
     const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
-    broadcastChannel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        broadcastChannel.send({
-          type: 'broadcast',
-          event: newPausedState ? 'pause-ride' : 'resume-ride',
-          payload: {},
-        }).then(() => {
-          supabase.removeChannel(broadcastChannel);
-        });
-      }
+    
+    await new Promise<void>((resolve) => {
+      broadcastChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Convoy] Broadcasting', newPausedState ? 'pause-ride' : 'resume-ride');
+          await broadcastChannel.send({
+            type: 'broadcast',
+            event: newPausedState ? 'pause-ride' : 'resume-ride',
+            payload: {},
+          });
+          // Small delay to ensure message is sent before cleanup
+          setTimeout(() => {
+            supabase.removeChannel(broadcastChannel);
+            resolve();
+          }, 100);
+        }
+      });
     });
 
     // Update database in background (don't await)

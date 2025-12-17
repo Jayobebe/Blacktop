@@ -31,6 +31,7 @@ const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
 const SPEAKING_DEBOUNCE_MS = 150; // Debounce time for speaking state changes
 const AUDIO_CHECK_INTERVAL_MS = 100; // Check audio levels every 100ms (was 50ms) for battery savings
 const VOICE_REFRESH_INTERVAL_MS = 10000; // Re-announce presence every 10 seconds
+const VOICE_STATE_KEY = 'blacktop_voice_state'; // Persist voice connection intent
 
 export function useVoiceChannel(convoyId?: string) {
   const [state, setState] = useState<VoiceChannelState>({
@@ -629,6 +630,18 @@ export function useVoiceChannel(convoyId?: string) {
         }
       }, VOICE_REFRESH_INTERVAL_MS);
       
+      // Persist voice connection state for restoration after nav app
+      try {
+        localStorage.setItem(VOICE_STATE_KEY, JSON.stringify({ 
+          convoyId, 
+          connected: true,
+          muted: true,
+          timestamp: Date.now() 
+        }));
+      } catch (e) {
+        console.warn('[Voice] Failed to persist voice state:', e);
+      }
+      
       setState(prev => ({
         ...prev,
         isConnected: true,
@@ -647,11 +660,19 @@ export function useVoiceChannel(convoyId?: string) {
   }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission]);
 
   // Disconnect from voice channel
+  // Disconnect from voice channel
   const disconnect = useCallback(() => {
     console.log('[Voice] Disconnecting from voice channel');
     
     // Reset connecting flag
     isConnectingRef.current = false;
+    
+    // Clear persisted voice state
+    try {
+      localStorage.removeItem(VOICE_STATE_KEY);
+    } catch (e) {
+      console.warn('[Voice] Failed to clear voice state:', e);
+    }
     
     // Announce we're leaving
     if (channelRef.current && userIdRef.current) {
@@ -682,6 +703,18 @@ export function useVoiceChannel(convoyId?: string) {
       track.enabled = !newMutedState;
       console.log(`[Voice] Track enabled: ${track.enabled}`);
     });
+    
+    // Update mute state in persisted storage
+    try {
+      const stored = localStorage.getItem(VOICE_STATE_KEY);
+      if (stored) {
+        const voiceState = JSON.parse(stored);
+        voiceState.muted = newMutedState;
+        localStorage.setItem(VOICE_STATE_KEY, JSON.stringify(voiceState));
+      }
+    } catch (e) {
+      console.warn('[Voice] Failed to persist mute state:', e);
+    }
     
     // Clear own speaking state when muting
     if (newMutedState && userIdRef.current) {
@@ -729,6 +762,35 @@ export function useVoiceChannel(convoyId?: string) {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [state.isConnected]);
+
+  // Auto-reconnect voice if returning from nav app with persisted state
+  useEffect(() => {
+    if (!convoyId || state.isConnected || isConnectingRef.current) return;
+    
+    try {
+      const stored = localStorage.getItem(VOICE_STATE_KEY);
+      if (stored) {
+        const voiceState = JSON.parse(stored);
+        // Only auto-reconnect if it's the same convoy and within 5 minutes
+        if (voiceState.convoyId === convoyId && 
+            voiceState.connected && 
+            (Date.now() - voiceState.timestamp) < 5 * 60 * 1000) {
+          console.log('[Voice] Auto-reconnecting voice channel after page reload');
+          connect().then(result => {
+            if (result.success && !voiceState.muted) {
+              // Restore mute state
+              toggleMute();
+            }
+          });
+        } else {
+          // Clear stale voice state
+          localStorage.removeItem(VOICE_STATE_KEY);
+        }
+      }
+    } catch (e) {
+      console.warn('[Voice] Failed to restore voice state:', e);
+    }
+  }, [convoyId, state.isConnected, connect, toggleMute]);
 
   // Cleanup on unmount
   useEffect(() => {
