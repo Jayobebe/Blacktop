@@ -85,12 +85,7 @@ export default function Home() {
           <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5 landscape:hidden">Welcome back</p>
           <h1 className="text-xl md:text-2xl font-display font-semibold tracking-tight">{profile.name}</h1>
         </div>
-        <button
-          onClick={() => navigate('/settings')}
-          className="transition-all duration-200 hover:scale-105 active:scale-95 touch-target"
-        >
-          <BTLogo size="sm" />
-        </button>
+        <BTLogo size="md" />
       </header>
 
       {/* Main content - vertical in portrait, horizontal in landscape */}
