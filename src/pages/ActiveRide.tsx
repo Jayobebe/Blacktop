@@ -318,8 +318,8 @@ export default function ActiveRide() {
     });
     
     if (success) {
-      await acknowledgeRescue(request.id);
-      toast.success(`Added ${request.userName}'s location as waypoint`);
+      await acknowledgeRescue(request.id, request.userId);
+      toast.success(`Waypoint added for ${request.userName}`);
     } else {
       console.error('[ActiveRide] Failed to add rescue waypoint');
       toast.error('Failed to add rescue waypoint');
