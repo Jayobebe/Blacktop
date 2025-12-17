@@ -11,7 +11,7 @@ import CreateConvoy from "./pages/CreateConvoy";
 import JoinConvoy from "./pages/JoinConvoy";
 import Lobby from "./pages/Lobby";
 import ActiveRide from "./pages/ActiveRide";
-import DemoRide from "./pages/DemoRide";
+import DemoShowcase from "./pages/DemoShowcase";
 import History from "./pages/History";
 import RideDetail from "./pages/RideDetail";
 import Stats from "./pages/Stats";
@@ -50,7 +50,7 @@ function AppRoutes() {
       <Route path="/join-convoy" element={<JoinConvoy />} />
       <Route path="/lobby" element={<Lobby />} />
       <Route path="/ride" element={<ActiveRide />} />
-      <Route path="/demo" element={<DemoRide />} />
+      <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
       <Route path="/stats" element={<Stats />} />

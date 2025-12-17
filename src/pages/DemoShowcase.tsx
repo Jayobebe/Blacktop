@@ -1,0 +1,819 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { haptics } from '@/lib/haptics';
+import { 
+  Users, Mic, Navigation, AlertTriangle, Trophy, Camera, 
+  Gauge, Flame, Route, Shield, ChevronRight, Play, X,
+  Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
+  Zap, Eye, Phone, Settings, BarChart3, History
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface Feature {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: React.ElementType;
+  color: string;
+  mockup: React.ReactNode;
+}
+
+export default function DemoShowcase() {
+  const navigate = useNavigate();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+
+  // Animated values for mockups
+  const [speed, setSpeed] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const features: Feature[] = [
+    {
+      id: 'intro',
+      title: 'BLACKTOP',
+      subtitle: 'Ride Logging & Convoy Communication',
+      description: 'Privacy-first companion for motorcyclists and drivers. No account required. Your data stays on your device.',
+      icon: Shield,
+      color: 'accent',
+      mockup: <IntroMockup />
+    },
+    {
+      id: 'convoy',
+      title: 'Convoy Mode',
+      subtitle: 'Ride Together, Stay Connected',
+      description: 'Create or join a convoy with up to 8 riders. Share a simple code and everyone\'s in. Real-time sync keeps the group together.',
+      icon: Users,
+      color: 'accent',
+      mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />
+    },
+    {
+      id: 'voice',
+      title: 'Voice Communication',
+      subtitle: 'Talk Hands-Free While Riding',
+      description: 'Crystal clear voice chat with your convoy. Toggle mute anytime. Disconnect to save battery. Works alongside your music.',
+      icon: Mic,
+      color: 'voice-active',
+      mockup: <VoiceMockup />
+    },
+    {
+      id: 'waypoints',
+      title: 'Multi-Waypoint Routes',
+      subtitle: 'Plan Stops Along the Way',
+      description: 'Leaders set multiple destinations. Drag to reorder. Navigate to each stop in sequence. Everyone sees the same route.',
+      icon: Route,
+      color: 'accent',
+      mockup: <WaypointsMockup />
+    },
+    {
+      id: 'tracking',
+      title: 'Live Ride Tracking',
+      subtitle: 'Speed, Distance, Duration',
+      description: 'Real-time GPS tracking with large, glove-friendly display. Works in background while you use navigation apps.',
+      icon: Gauge,
+      color: 'speed-active',
+      mockup: <TrackingMockup speed={speed} distance={distance} />
+    },
+    {
+      id: 'rescue',
+      title: 'Rescue System',
+      subtitle: 'Never Leave Anyone Behind',
+      description: 'Lost riders tap RESCUE to send their location to the leader. Leader adds it as a waypoint to bring the group back.',
+      icon: AlertTriangle,
+      color: 'destructive',
+      mockup: <RescueMockup />
+    },
+    {
+      id: 'badges',
+      title: 'Badge Awards',
+      subtitle: 'Celebrate Every Ride',
+      description: 'Earn badges in convoy rides: Speed Demon for top speed, Journeyman for most distance, Rocksteady for patience.',
+      icon: Trophy,
+      color: 'accent',
+      mockup: <BadgesMockup />
+    },
+    {
+      id: 'history',
+      title: 'Ride History & Photos',
+      subtitle: 'Relive Your Adventures',
+      description: 'Every ride saved with stats. Attach up to 10 photos per ride. All stored locally on your device.',
+      icon: Camera,
+      color: 'accent',
+      mockup: <HistoryMockup />
+    },
+    {
+      id: 'stats',
+      title: 'Lifetime Statistics',
+      subtitle: 'Track Your Progress',
+      description: 'Total rides, distance traveled, top speed achieved, badges earned. See your riding journey at a glance.',
+      icon: BarChart3,
+      color: 'accent',
+      mockup: <StatsMockup />
+    },
+    {
+      id: 'privacy',
+      title: 'Burn Button',
+      subtitle: 'Your Data, Your Control',
+      description: 'One tap to permanently delete all ride history, stats, and convoy data. Your profile name stays. Total privacy.',
+      icon: Flame,
+      color: 'burn',
+      mockup: <BurnMockup />
+    },
+    {
+      id: 'complete',
+      title: 'Ready to Ride?',
+      subtitle: 'Start Your First Convoy',
+      description: 'Everything you need for group rides. No signup, no tracking, no ads. Just you and the road.',
+      icon: Play,
+      color: 'accent',
+      mockup: <CompleteMockup />
+    }
+  ];
+
+  const currentFeature = features[currentIndex];
+  const progress = ((currentIndex + 1) / features.length) * 100;
+
+  // Animate speed/distance for tracking mockup
+  useEffect(() => {
+    if (currentFeature.id !== 'tracking') return;
+    
+    const interval = setInterval(() => {
+      setSpeed(prev => {
+        const newSpeed = Math.max(45, Math.min(88, prev + (Math.random() - 0.4) * 8));
+        return Math.round(newSpeed);
+      });
+      setDistance(prev => prev + 0.03);
+    }, 400);
+
+    return () => clearInterval(interval);
+  }, [currentFeature.id]);
+
+  // Reset states when changing features
+  useEffect(() => {
+    setCopied(false);
+    setAnimationKey(prev => prev + 1);
+    if (currentFeature.id === 'tracking') {
+      setSpeed(62);
+      setDistance(4.2);
+    }
+  }, [currentIndex]);
+
+  const goNext = useCallback(() => {
+    if (currentIndex >= features.length - 1 || isTransitioning) return;
+    
+    haptics.medium();
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setCurrentIndex(prev => prev + 1);
+      setIsTransitioning(false);
+    }, 300);
+  }, [currentIndex, features.length, isTransitioning]);
+
+  const goPrev = useCallback(() => {
+    if (currentIndex <= 0 || isTransitioning) return;
+    
+    haptics.light();
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      setCurrentIndex(prev => prev - 1);
+      setIsTransitioning(false);
+    }, 300);
+  }, [currentIndex, isTransitioning]);
+
+  const exitDemo = () => {
+    haptics.light();
+    navigate('/');
+  };
+
+  const startApp = () => {
+    haptics.success();
+    navigate('/');
+  };
+
+  const isLastSlide = currentIndex === features.length - 1;
+  const isFirstSlide = currentIndex === 0;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+      {/* Progress bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-secondary">
+        <div 
+          className="h-full bg-accent transition-all duration-500 ease-out" 
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {/* Header */}
+      <header className="fixed top-1 left-0 right-0 z-40 flex items-center justify-between px-4 py-3">
+        <button 
+          onClick={goPrev}
+          disabled={isFirstSlide}
+          className={cn(
+            "text-sm font-medium transition-opacity",
+            isFirstSlide ? "opacity-0 pointer-events-none" : "opacity-70 hover:opacity-100"
+          )}
+        >
+          Back
+        </button>
+        <div className="flex items-center gap-1.5">
+          {features.map((_, i) => (
+            <div 
+              key={i}
+              className={cn(
+                "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                i === currentIndex 
+                  ? "w-4 bg-accent" 
+                  : i < currentIndex 
+                    ? "bg-accent/50" 
+                    : "bg-muted-foreground/30"
+              )}
+            />
+          ))}
+        </div>
+        <button 
+          onClick={exitDemo}
+          className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
+        >
+          Skip
+        </button>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col pt-16 pb-32">
+        <div 
+          key={animationKey}
+          className={cn(
+            "flex-1 flex flex-col px-6 transition-all duration-300",
+            isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          )}
+        >
+          {/* Icon */}
+          <div className="flex justify-center mb-4 pt-4 animate-slide-down">
+            <div className={cn(
+              "w-16 h-16 rounded-2xl flex items-center justify-center",
+              currentFeature.color === 'burn' && "bg-[hsl(var(--burn))]/20",
+              currentFeature.color === 'voice-active' && "bg-[hsl(var(--voice-active))]/20",
+              currentFeature.color === 'speed-active' && "bg-[hsl(var(--speed-active))]/20",
+              currentFeature.color === 'destructive' && "bg-destructive/20",
+              currentFeature.color === 'accent' && "bg-accent/15"
+            )}>
+              <currentFeature.icon className={cn(
+                "w-8 h-8",
+                currentFeature.color === 'burn' && "text-[hsl(var(--burn))]",
+                currentFeature.color === 'voice-active' && "text-[hsl(var(--voice-active))]",
+                currentFeature.color === 'speed-active' && "text-[hsl(var(--speed-active))]",
+                currentFeature.color === 'destructive' && "text-destructive",
+                currentFeature.color === 'accent' && "text-accent"
+              )} />
+            </div>
+          </div>
+
+          {/* Title & Description */}
+          <div className="text-center mb-6 animate-fade-in">
+            <h1 className="text-3xl font-semibold tracking-tight mb-1">
+              {currentFeature.title}
+            </h1>
+            <p className={cn(
+              "text-sm font-medium mb-3",
+              currentFeature.color === 'burn' && "text-[hsl(var(--burn))]",
+              currentFeature.color === 'voice-active' && "text-[hsl(var(--voice-active))]",
+              currentFeature.color === 'speed-active' && "text-[hsl(var(--speed-active))]",
+              currentFeature.color === 'destructive' && "text-destructive",
+              currentFeature.color === 'accent' && "text-accent"
+            )}>
+              {currentFeature.subtitle}
+            </p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto leading-relaxed">
+              {currentFeature.description}
+            </p>
+          </div>
+
+          {/* Mockup Area */}
+          <div className="flex-1 flex items-center justify-center animate-scale-in delay-100">
+            {currentFeature.mockup}
+          </div>
+        </div>
+      </main>
+
+      {/* Bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 safe-bottom">
+        {isLastSlide ? (
+          <Button 
+            onClick={startApp}
+            className="w-full h-14 text-lg font-semibold rounded-2xl bg-accent hover:bg-accent/90 text-accent-foreground"
+          >
+            Get Started
+          </Button>
+        ) : (
+          <Button 
+            onClick={goNext}
+            className="w-full h-14 text-lg font-semibold rounded-2xl bg-accent hover:bg-accent/90 text-accent-foreground group"
+          >
+            <span>Continue</span>
+            <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ MOCKUP COMPONENTS ============
+
+function IntroMockup() {
+  const features = [
+    { icon: Users, label: 'Convoy' },
+    { icon: Mic, label: 'Voice' },
+    { icon: Route, label: 'Routes' },
+    { icon: Gauge, label: 'Tracking' },
+    { icon: Trophy, label: 'Badges' },
+    { icon: Shield, label: 'Privacy' },
+  ];
+
+  return (
+    <div className="w-full max-w-xs">
+      <div className="grid grid-cols-3 gap-3">
+        {features.map(({ icon: Icon, label }, i) => (
+          <div 
+            key={label}
+            className="aspect-square bg-card/50 rounded-2xl border border-border/30 flex flex-col items-center justify-center gap-2 animate-scale-in"
+            style={{ animationDelay: `${i * 80}ms` }}
+          >
+            <Icon className="w-6 h-6 text-accent" />
+            <span className="text-[10px] text-muted-foreground">{label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 p-3 bg-accent/10 rounded-xl border border-accent/20 animate-slide-up delay-500">
+        <p className="text-xs text-center text-accent">🔒 No account required</p>
+      </div>
+    </div>
+  );
+}
+
+function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      {/* Code Card */}
+      <div className="bg-card/50 rounded-2xl border border-border/30 p-5 animate-slide-up">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center mb-3">
+          Convoy Code
+        </p>
+        <button 
+          onClick={onCopy}
+          className="w-full flex items-center justify-center gap-3"
+        >
+          <span className="font-mono text-3xl font-semibold tracking-[0.15em]">XK7M9P</span>
+          <div className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+            copied ? "bg-accent" : "bg-secondary"
+          )}>
+            {copied ? (
+              <Check className="w-5 h-5 text-accent-foreground" />
+            ) : (
+              <Copy className="w-5 h-5 text-muted-foreground" />
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* Members Preview */}
+      <div className="space-y-2 animate-slide-up delay-200">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+          Riders (4/8)
+        </p>
+        {[
+          { name: 'You', isLeader: true, color: 'bg-orange-500' },
+          { name: 'Marcus', isLeader: false, color: 'bg-blue-500' },
+          { name: 'Sarah', isLeader: false, color: 'bg-pink-500' },
+          { name: 'Jake', isLeader: false, color: 'bg-green-500' },
+        ].map((member, i) => (
+          <div 
+            key={member.name}
+            className={cn(
+              "flex items-center gap-3 p-2.5 rounded-xl animate-slide-up",
+              member.isLeader ? "bg-accent/10 border border-accent/20" : "bg-card/30"
+            )}
+            style={{ animationDelay: `${300 + i * 80}ms` }}
+          >
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", member.color)}>
+              {member.isLeader ? (
+                <Crown className="w-4 h-4 text-white" />
+              ) : (
+                <span className="text-xs font-semibold text-white">{member.name[0]}</span>
+              )}
+            </div>
+            <span className={cn("text-sm font-medium", member.isLeader && "text-accent")}>
+              {member.name}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VoiceMockup() {
+  const [speaking, setSpeaking] = useState<number | null>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpeaking(prev => {
+        const options = [null, 0, 1, 2];
+        return options[Math.floor(Math.random() * options.length)];
+      });
+    }, 1200);
+    return () => clearInterval(interval);
+  }, []);
+
+  const members = [
+    { name: 'You', color: 'bg-orange-500' },
+    { name: 'Marcus', color: 'bg-blue-500' },
+    { name: 'Sarah', color: 'bg-pink-500' },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-6">
+      {/* Voice Visualizer */}
+      <div className="flex items-center justify-center gap-1 h-16">
+        {[...Array(12)].map((_, i) => (
+          <div 
+            key={i}
+            className="w-1.5 bg-[hsl(var(--voice-active))] rounded-full transition-all duration-150"
+            style={{ 
+              height: speaking !== null ? `${20 + Math.random() * 40}px` : '8px',
+              opacity: speaking !== null ? 0.8 : 0.3
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Members */}
+      <div className="space-y-2">
+        {members.map((member, i) => (
+          <div 
+            key={member.name}
+            className={cn(
+              "flex items-center gap-3 p-3 rounded-xl transition-all duration-300 animate-slide-up",
+              speaking === i 
+                ? "bg-[hsl(var(--voice-active))]/15 border border-[hsl(var(--voice-active))]/30 shadow-[0_0_20px_hsl(var(--voice-active)/0.2)]" 
+                : "bg-card/30"
+            )}
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+              member.color,
+              speaking === i && "ring-2 ring-[hsl(var(--voice-active))]"
+            )}>
+              <span className="text-sm font-semibold text-white">{member.name[0]}</span>
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm">{member.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {speaking === i ? 'Speaking...' : 'Connected'}
+              </p>
+            </div>
+            {speaking === i && (
+              <Volume2 className="w-5 h-5 text-[hsl(var(--voice-active))] animate-pulse-soft" />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Controls hint */}
+      <div className="flex justify-center gap-3 animate-fade-in delay-300">
+        <div className="px-4 py-2 bg-secondary/50 rounded-xl text-xs text-muted-foreground">
+          🎤 Toggle Mute
+        </div>
+        <div className="px-4 py-2 bg-secondary/50 rounded-xl text-xs text-muted-foreground">
+          🔌 Disconnect
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WaypointsMockup() {
+  const waypoints = [
+    { name: 'Gas Station', icon: '⛽', completed: true },
+    { name: 'Mountain Diner', icon: '🍔', completed: false },
+    { name: 'Sunset Point', icon: '🌅', completed: false },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      {waypoints.map((wp, i) => (
+        <div 
+          key={wp.name}
+          className={cn(
+            "flex items-center gap-3 p-4 rounded-xl border animate-slide-up",
+            wp.completed 
+              ? "bg-accent/10 border-accent/20" 
+              : "bg-card/50 border-border/30"
+          )}
+          style={{ animationDelay: `${i * 120}ms` }}
+        >
+          <div className="flex items-center justify-center w-10 h-10 text-xl">
+            {wp.icon}
+          </div>
+          <div className="flex-1">
+            <p className={cn(
+              "font-medium text-sm",
+              wp.completed && "text-accent"
+            )}>
+              {wp.name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {wp.completed ? '✓ Completed' : `Stop ${i + 1}`}
+            </p>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="w-1 h-1 bg-muted-foreground/40 rounded-full" />
+            <div className="w-1 h-1 bg-muted-foreground/40 rounded-full" />
+            <div className="w-1 h-1 bg-muted-foreground/40 rounded-full" />
+          </div>
+        </div>
+      ))}
+      <div className="text-center pt-2 animate-fade-in delay-400">
+        <p className="text-xs text-muted-foreground">Drag handles to reorder</p>
+      </div>
+    </div>
+  );
+}
+
+function TrackingMockup({ speed, distance }: { speed: number; distance: number }) {
+  return (
+    <div className="w-full max-w-xs text-center space-y-6">
+      {/* Speed Display */}
+      <div className="animate-scale-in">
+        <p className="text-[6rem] font-mono font-black leading-none text-accent animate-speed-glow">
+          {speed}
+        </p>
+        <p className="text-muted-foreground text-sm -mt-2">mph</p>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-3 animate-slide-up delay-200">
+        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+          <p className="text-xs text-muted-foreground mb-1">Distance</p>
+          <p className="font-mono text-lg font-semibold">{distance.toFixed(1)}</p>
+          <p className="text-[10px] text-muted-foreground">mi</p>
+        </div>
+        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+          <p className="text-xs text-muted-foreground mb-1">Time</p>
+          <p className="font-mono text-lg font-semibold">12:34</p>
+        </div>
+        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+          <p className="text-xs text-muted-foreground mb-1">Max</p>
+          <p className="font-mono text-lg font-semibold">92</p>
+          <p className="text-[10px] text-muted-foreground">mph</p>
+        </div>
+      </div>
+
+      {/* Background tracking hint */}
+      <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
+        <p className="text-xs text-accent">📱 Continues tracking in background</p>
+      </div>
+    </div>
+  );
+}
+
+function RescueMockup() {
+  const [showAlert, setShowAlert] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowAlert(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      {/* Rescue Button */}
+      <div className="flex justify-center animate-scale-in">
+        <div className="w-24 h-24 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center animate-pulse-soft">
+          <AlertTriangle className="w-10 h-10 text-destructive" />
+        </div>
+      </div>
+
+      {/* Alert Card */}
+      {showAlert && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 animate-scale-in">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-semibold text-white">J</span>
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-destructive">Jake needs rescue!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Location shared • 2.4 mi away
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <div className="flex-1 py-2 bg-destructive/20 rounded-xl text-center">
+              <span className="text-xs font-medium text-destructive">Add Waypoint</span>
+            </div>
+            <div className="flex-1 py-2 bg-secondary/50 rounded-xl text-center">
+              <span className="text-xs font-medium text-muted-foreground">Dismiss</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="text-center animate-fade-in delay-500">
+        <p className="text-xs text-muted-foreground">
+          Lost riders send location to leader
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BadgesMockup() {
+  const badges = [
+    { name: 'Speed Demon', emoji: '⚡', desc: 'Top Speed', color: 'bg-yellow-500/20 border-yellow-500/30' },
+    { name: 'Journeyman', emoji: '🛣️', desc: 'Most Distance', color: 'bg-blue-500/20 border-blue-500/30' },
+    { name: 'Rocksteady', emoji: '🪨', desc: 'Most Patient', color: 'bg-stone-500/20 border-stone-500/30' },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      {badges.map((badge, i) => (
+        <div 
+          key={badge.name}
+          className={cn(
+            "flex items-center gap-4 p-4 rounded-2xl border animate-slide-up",
+            badge.color
+          )}
+          style={{ animationDelay: `${i * 150}ms` }}
+        >
+          <div className="text-3xl">{badge.emoji}</div>
+          <div className="flex-1">
+            <p className="font-semibold">{badge.name}</p>
+            <p className="text-xs text-muted-foreground">{badge.desc}</p>
+          </div>
+          <Trophy className="w-5 h-5 text-accent" />
+        </div>
+      ))}
+      <div className="text-center pt-2 animate-fade-in delay-500">
+        <p className="text-xs text-muted-foreground">Earned in convoy rides with 2+ members</p>
+      </div>
+    </div>
+  );
+}
+
+function HistoryMockup() {
+  const rides = [
+    { date: 'Today', distance: '45.2 mi', time: '1:23:45', badge: '⚡' },
+    { date: 'Yesterday', distance: '28.7 mi', time: '0:52:18', badge: '🛣️' },
+    { date: 'Dec 14', distance: '62.1 mi', time: '2:05:33', badge: null },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      {rides.map((ride, i) => (
+        <div 
+          key={i}
+          className="bg-card/50 rounded-xl border border-border/30 p-4 animate-slide-up"
+          style={{ animationDelay: `${i * 120}ms` }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium">{ride.date}</p>
+            {ride.badge && <span className="text-lg">{ride.badge}</span>}
+          </div>
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Route className="w-3 h-3" /> {ride.distance}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" /> {ride.time}
+            </span>
+          </div>
+        </div>
+      ))}
+      <div className="flex items-center justify-center gap-2 pt-2 animate-fade-in delay-400">
+        <Camera className="w-4 h-4 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">Tap ride to add photos</p>
+      </div>
+    </div>
+  );
+}
+
+function StatsMockup() {
+  const stats = [
+    { label: 'Total Rides', value: '47' },
+    { label: 'Distance', value: '1,248', unit: 'mi' },
+    { label: 'Top Speed', value: '112', unit: 'mph' },
+    { label: 'Ride Time', value: '32:15' },
+  ];
+
+  return (
+    <div className="w-full max-w-xs">
+      <div className="grid grid-cols-2 gap-3">
+        {stats.map((stat, i) => (
+          <div 
+            key={stat.label}
+            className="bg-card/50 rounded-2xl border border-border/30 p-4 text-center animate-scale-in"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <p className="text-2xl font-mono font-bold">
+              {stat.value}
+              {stat.unit && <span className="text-sm text-muted-foreground ml-1">{stat.unit}</span>}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 animate-slide-up delay-400">
+        {['⚡ 12', '🛣️ 8', '🪨 5'].map((badge, i) => (
+          <div key={i} className="bg-accent/10 rounded-xl p-2 text-center">
+            <span className="text-sm">{badge}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BurnMockup() {
+  const [burned, setBurned] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBurned(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="w-full max-w-xs text-center space-y-6">
+      <div 
+        className={cn(
+          "w-24 h-24 mx-auto rounded-full flex items-center justify-center transition-all duration-500",
+          burned 
+            ? "bg-[hsl(var(--burn))]/30 animate-burn-pulse" 
+            : "bg-secondary"
+        )}
+      >
+        <Flame className={cn(
+          "w-12 h-12 transition-colors duration-500",
+          burned ? "text-[hsl(var(--burn))]" : "text-muted-foreground"
+        )} />
+      </div>
+
+      <div className="space-y-3 animate-fade-in delay-200">
+        <div className={cn(
+          "py-2 px-4 rounded-xl text-sm transition-all duration-500",
+          burned ? "bg-[hsl(var(--burn))]/10 text-[hsl(var(--burn))]" : "bg-secondary text-muted-foreground"
+        )}>
+          {burned ? '✓ All data deleted' : 'Ride history'}
+        </div>
+        <div className={cn(
+          "py-2 px-4 rounded-xl text-sm transition-all duration-500 delay-100",
+          burned ? "bg-[hsl(var(--burn))]/10 text-[hsl(var(--burn))]" : "bg-secondary text-muted-foreground"
+        )}>
+          {burned ? '✓ All data deleted' : 'Statistics'}
+        </div>
+        <div className={cn(
+          "py-2 px-4 rounded-xl text-sm transition-all duration-500 delay-200",
+          burned ? "bg-[hsl(var(--burn))]/10 text-[hsl(var(--burn))]" : "bg-secondary text-muted-foreground"
+        )}>
+          {burned ? '✓ All data deleted' : 'Convoy data'}
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground animate-fade-in delay-500">
+        Profile name is kept • Irreversible
+      </p>
+    </div>
+  );
+}
+
+function CompleteMockup() {
+  return (
+    <div className="w-full max-w-xs text-center space-y-6">
+      <div className="w-20 h-20 mx-auto rounded-3xl bg-accent/20 flex items-center justify-center animate-float">
+        <Play className="w-10 h-10 text-accent" />
+      </div>
+
+      <div className="space-y-4 animate-slide-up delay-200">
+        <div className="flex items-center justify-center gap-3">
+          <Shield className="w-5 h-5 text-accent" />
+          <span className="text-sm">No signup required</span>
+        </div>
+        <div className="flex items-center justify-center gap-3">
+          <Eye className="w-5 h-5 text-accent" />
+          <span className="text-sm">No tracking or ads</span>
+        </div>
+        <div className="flex items-center justify-center gap-3">
+          <Phone className="w-5 h-5 text-accent" />
+          <span className="text-sm">Data stays on device</span>
+        </div>
+      </div>
+    </div>
+  );
+}
