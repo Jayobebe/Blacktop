@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useNavigation } from '@/hooks/useNavigation';
@@ -6,17 +6,44 @@ import { useRideHistory } from '@/hooks/useRideHistory';
 import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { profile } = useProfile();
+  const { profile, updateName } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
   const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(profile.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  const handleNameSave = () => {
+    if (editedName.trim() && editedName.trim() !== profile.name) {
+      updateName(editedName.trim());
+    }
+    setIsEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameSave();
+    } else if (e.key === 'Escape') {
+      setEditedName(profile.name);
+      setIsEditingName(false);
+    }
+  };
 
   const navApps: { id: NavigationApp; label: string }[] = [
     { id: 'google', label: 'Google Maps' },
@@ -53,7 +80,29 @@ export default function Settings() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             Profile
           </h2>
-          <p className="text-lg font-medium">{profile.name}</p>
+          {isEditingName ? (
+            <Input
+              ref={nameInputRef}
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onBlur={handleNameSave}
+              onKeyDown={handleNameKeyDown}
+              maxLength={20}
+              className="text-lg font-medium h-12"
+              placeholder="Enter your name"
+            />
+          ) : (
+            <button
+              onClick={() => {
+                setEditedName(profile.name);
+                setIsEditingName(true);
+              }}
+              className="flex items-center gap-2 text-lg font-medium hover:text-accent transition-colors group w-full text-left"
+            >
+              {profile.name}
+              <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+            </button>
+          )}
         </section>
 
         {/* Navigation App Section */}

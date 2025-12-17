@@ -116,6 +116,28 @@ export function useProfile() {
     setProfile(next);
   }, [profile]);
 
+  const updateName = useCallback(async (name: string) => {
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName === profile.name) return;
+
+    // Update in database if authenticated
+    if (user) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ display_name: trimmedName })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Failed to update profile name:', error);
+      }
+    }
+
+    // Update locally
+    const next: UserProfile = { ...profile, name: trimmedName };
+    writeLocalProfile(next);
+    setProfile(next);
+  }, [user, profile]);
+
   const hasProfile = profile.name.trim().length > 0;
 
   return {
@@ -125,5 +147,6 @@ export function useProfile() {
     user,
     createProfile,
     updateNavApp,
+    updateName,
   };
 }
