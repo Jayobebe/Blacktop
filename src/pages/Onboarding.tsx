@@ -31,20 +31,23 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 safe-top safe-bottom">
-      <div className="w-full max-w-sm animate-fade-in">
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-semibold tracking-tight mb-3">
-            BLACKTOP
-          </h1>
-          <p className="text-muted-foreground text-sm mb-4">
-            Ride logging & convoy communication
-          </p>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs text-accent font-medium">No account required</span>
-          </div>
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
+      {/* Branding - left side in landscape */}
+      <div className="text-center landscape:text-left landscape:flex-1 landscape:max-w-xs">
+        <h1 className="text-5xl landscape:text-4xl font-semibold tracking-tight mb-3">
+          BLACKTOP
+        </h1>
+        <p className="text-muted-foreground text-sm mb-4">
+          Ride logging & convoy communication
+        </p>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
+          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="text-xs text-accent font-medium">No account required</span>
         </div>
+      </div>
+
+      {/* Form - right side in landscape */}
+      <div className="w-full max-w-sm landscape:flex-1 landscape:max-w-xs">
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
@@ -80,25 +83,25 @@ export default function Onboarding() {
           </Button>
         </form>
 
-        <div className="text-center mt-8 px-4 space-y-2">
+        <div className="text-center mt-4 landscape:mt-2 px-4 space-y-2">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Your data stays on your device. No cloud sync, no tracking, no ads.
           </p>
-          <p className="text-[10px] text-muted-foreground/60">
+          <p className="text-[10px] text-muted-foreground/60 landscape:hidden">
             Blacktop is a ride logging tool, not a racing app.
           </p>
         </div>
 
-        {/* Install prompt - only shown in browser mode */}
+        {/* Install prompt - only shown in browser mode, hidden in landscape */}
         {!isStandalone && (
-          <div className="mt-8 pt-6 border-t border-border/50">
+          <div className="mt-4 pt-4 border-t border-border/50 landscape:hidden">
             <Button
               variant="outline"
               onClick={() => navigate('/install')}
-              className="w-full h-12 text-sm gap-2"
+              className="w-full h-10 text-sm gap-2"
             >
               <Download className="w-4 h-4" />
-              Install App for Best Experience
+              Install App
             </Button>
           </div>
         )}

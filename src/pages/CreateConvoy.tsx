@@ -41,70 +41,82 @@ export default function CreateConvoy() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-8">
+      <header className="flex items-center gap-4 mb-4 landscape:mb-2 flex-shrink-0">
         <button
           onClick={() => navigate('/')}
-          className="p-3 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
+          className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
         </button>
-        <h1 className="text-2xl font-display font-bold">Start Convoy</h1>
+        <h1 className="text-xl landscape:text-lg font-display font-bold">Start Convoy</h1>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
+      <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-4 landscape:gap-8 animate-fade-in min-h-0">
         {!convoyCode ? (
           <>
-            <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center mb-6">
-              <Users className="w-12 h-12 text-accent" />
+            {/* Icon and description */}
+            <div className="flex flex-col items-center landscape:items-start landscape:flex-1 landscape:max-w-xs">
+              <div className="w-20 h-20 landscape:w-16 landscape:h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 landscape:mb-2">
+                <Users className="w-10 h-10 landscape:w-8 landscape:h-8 text-accent" />
+              </div>
+              <h2 className="text-lg landscape:text-base font-display font-semibold mb-1">Create Your Convoy</h2>
+              <p className="text-muted-foreground text-center landscape:text-left text-sm landscape:text-xs max-w-xs">
+                Start a new convoy and share the code with your riding crew
+              </p>
             </div>
-            <h2 className="text-xl font-display font-semibold mb-2">Create Your Convoy</h2>
-            <p className="text-muted-foreground text-center mb-8 max-w-xs">
-              Start a new convoy and share the code with your riding crew
-            </p>
-            <Button
-              onClick={handleCreate}
-              disabled={isCreating}
-              className="w-full max-w-xs h-14 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground touch-target"
-            >
-              {isCreating ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Generate Convoy Code'
-              )}
-            </Button>
+            {/* Button */}
+            <div className="landscape:flex-1 landscape:max-w-xs w-full max-w-xs">
+              <Button
+                onClick={handleCreate}
+                disabled={isCreating}
+                className="w-full h-12 landscape:h-10 text-base landscape:text-sm font-semibold bg-accent hover:bg-accent/90 text-accent-foreground touch-target"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Generate Convoy Code'
+                )}
+              </Button>
+            </div>
           </>
         ) : (
           <>
-            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-4">
-              Your Convoy Code
-            </p>
-            <button
-              onClick={handleCopyCode}
-              className="flex items-center gap-3 bg-card border-2 border-accent rounded-xl px-6 py-4 mb-4 hover:bg-accent/5 transition-colors"
-            >
-              <span className="font-mono text-4xl font-bold tracking-widest text-accent">
-                {convoyCode}
-              </span>
-              {copied ? (
-                <Check className="w-6 h-6 text-accent" />
-              ) : (
-                <Copy className="w-6 h-6 text-muted-foreground" />
-              )}
-            </button>
-            <p className="text-muted-foreground text-sm text-center mb-8 max-w-xs">
-              Share this code with your crew so they can join your convoy
-            </p>
-            <Button
-              onClick={handleContinue}
-              className="w-full max-w-xs h-14 text-lg font-semibold touch-target"
-            >
-              Continue to Lobby
-            </Button>
+            {/* Code display - left side in landscape */}
+            <div className="flex flex-col items-center landscape:items-start landscape:flex-1 landscape:max-w-xs">
+              <p className="text-muted-foreground text-sm uppercase tracking-wide mb-3 landscape:mb-2">
+                Your Convoy Code
+              </p>
+              <button
+                onClick={handleCopyCode}
+                className="flex items-center gap-3 bg-card border-2 border-accent rounded-xl px-5 py-3 landscape:px-4 landscape:py-2 hover:bg-accent/5 transition-colors"
+              >
+                <span className="font-mono text-3xl landscape:text-2xl font-bold tracking-widest text-accent">
+                  {convoyCode}
+                </span>
+                {copied ? (
+                  <Check className="w-5 h-5 text-accent" />
+                ) : (
+                  <Copy className="w-5 h-5 text-muted-foreground" />
+                )}
+              </button>
+              <p className="text-muted-foreground text-sm landscape:text-xs text-center landscape:text-left mt-3 landscape:mt-2 max-w-xs">
+                Share this code with your crew so they can join your convoy
+              </p>
+            </div>
+            {/* Continue button - right side in landscape */}
+            <div className="landscape:flex-1 landscape:max-w-xs w-full max-w-xs">
+              <Button
+                onClick={handleContinue}
+                className="w-full h-12 landscape:h-10 text-base landscape:text-sm font-semibold touch-target"
+              >
+                Continue to Lobby
+              </Button>
+            </div>
           </>
         )}
       </div>
