@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDemoMode } from '@/hooks/useDemoMode';
 import { useSettings } from '@/hooks/useSettings';
-import { calculateBadges } from '@/types/convoy';
+import { ConvoyMemberInfo } from '@/types/convoy';
+import { RideSummary } from '@/components/RideSummary';
 import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route, Play } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
@@ -24,6 +25,16 @@ export default function DemoRide() {
   const { settings } = useSettings();
   const [showMembers, setShowMembers] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [showSummary, setShowSummary] = useState(false);
+  const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
+  const membersRef = useRef<ConvoyMemberInfo[]>([]);
+
+  // Keep track of members for when ride ends
+  useEffect(() => {
+    if (demoState.members.length > 0) {
+      membersRef.current = demoState.members;
+    }
+  }, [demoState.members]);
 
   // Start demo on mount
   useEffect(() => {
@@ -32,7 +43,14 @@ export default function DemoRide() {
   }, [startDemo, stopDemo]);
 
   const handleEndDemo = () => {
+    // Capture final members before stopping
+    setFinalMembers(membersRef.current);
     stopDemo();
+    setShowSummary(true);
+  };
+
+  const handleCloseSummary = () => {
+    setShowSummary(false);
     navigate('/');
   };
 
@@ -46,8 +64,10 @@ export default function DemoRide() {
     return (b.topSpeed || 0) - (a.topSpeed || 0);
   });
 
-  // Calculate badges for members
-  const memberBadges = useMemo(() => calculateBadges(demoState.members), [demoState.members]);
+  // Show summary after ride ends
+  if (showSummary) {
+    return <RideSummary members={finalMembers} onClose={handleCloseSummary} />;
+  }
 
   if (!demoState.isActive) {
     return (
@@ -214,23 +234,10 @@ export default function DemoRide() {
                       
                       {/* Name and stats */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className={cn("font-medium text-sm truncate", color.text)}>
-                            {member.name}
-                            {isSpeaking && <span className="ml-1 text-xs opacity-75">🎤</span>}
-                          </p>
-                          {/* Badge */}
-                          {memberBadges.has(member.userId) && (
-                            <span className={cn(
-                              "text-xs px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap",
-                              memberBadges.get(member.userId)?.type === 'speed-demon' && "bg-yellow-500/20 text-yellow-400",
-                              memberBadges.get(member.userId)?.type === 'journeyman' && "bg-blue-500/20 text-blue-400",
-                              memberBadges.get(member.userId)?.type === 'rocksteady' && "bg-stone-500/20 text-stone-400"
-                            )}>
-                              {memberBadges.get(member.userId)?.emoji} {memberBadges.get(member.userId)?.label}
-                            </span>
-                          )}
-                        </div>
+                        <p className={cn("font-medium text-sm truncate", color.text)}>
+                          {member.name}
+                          {isSpeaking && <span className="ml-1 text-xs opacity-75">🎤</span>}
+                        </p>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Gauge className="w-3 h-3" />
