@@ -7,6 +7,7 @@ import { useConvoyState } from '@/hooks/useConvoyState';
 import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, Play, Download, X } from 'lucide-react';
+import { BTLogo } from '@/components/BTLogo';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 
 export default function Home() {
@@ -86,9 +87,9 @@ export default function Home() {
         </div>
         <button
           onClick={() => navigate('/settings')}
-          className="p-2 rounded-xl bg-secondary/50 hover:bg-secondary border border-border/30 transition-all duration-200 touch-target"
+          className="transition-all duration-200 hover:scale-105 active:scale-95 touch-target"
         >
-          <Settings className="w-4 h-4 text-muted-foreground" />
+          <BTLogo size="sm" />
         </button>
       </header>
 
