@@ -55,7 +55,7 @@ export default function Home() {
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
       {/* Install Banner - hidden in landscape */}
       {showInstallBanner && (
-        <div className="mb-3 bg-accent/10 border border-accent/20 rounded-xl p-2 flex items-center gap-2 animate-slide-up landscape-hidden">
+        <div className="mb-3 bg-accent/10 border border-accent/20 rounded-xl p-2 flex items-center gap-2 animate-slide-up landscape:hidden">
           <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0">
             <Download className="w-4 h-4 text-accent" />
           </div>
@@ -79,9 +79,9 @@ export default function Home() {
       )}
 
       {/* Header - compact */}
-      <header className="flex items-center justify-between mb-3 md:mb-4 animate-fade-in">
+      <header className="flex items-center justify-between mb-3 landscape:mb-2 md:mb-4 animate-fade-in">
         <div>
-          <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5 landscape-hidden">Welcome back</p>
+          <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5 landscape:hidden">Welcome back</p>
           <h1 className="text-xl md:text-2xl font-display font-semibold tracking-tight">{profile.name}</h1>
         </div>
         <button
@@ -92,10 +92,10 @@ export default function Home() {
         </button>
       </header>
 
-      {/* Main content - horizontal layout */}
-      <div className="flex-1 flex flex-row gap-3 md:gap-4 min-h-0">
-        {/* Quick Stats - side panel */}
-        <div className="grid grid-cols-2 gap-2 w-40 md:w-48 flex-shrink-0 content-start">
+      {/* Main content - vertical in portrait, horizontal in landscape */}
+      <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-4 landscape:grid-cols-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start">
           {[
             { label: 'Rides', value: stats.totalRides, unit: null },
             { label: 'Distance', value: formatDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
@@ -116,31 +116,31 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Convoy Buttons - main area */}
+        {/* Convoy Buttons */}
         <div className="flex-1 flex flex-col gap-2 md:gap-3 animate-slide-up delay-100">
           <button
             onClick={() => navigate('/create-convoy')}
-            className="flex-1 min-h-[70px] bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+            className="flex-1 min-h-[70px] landscape:min-h-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
           >
-            <div className="w-10 h-10 rounded-xl bg-accent-foreground/10 flex items-center justify-center">
-              <Users className="w-5 h-5" />
+            <div className="w-10 h-10 landscape:w-8 landscape:h-8 rounded-xl bg-accent-foreground/10 flex items-center justify-center">
+              <Users className="w-5 h-5 landscape:w-4 landscape:h-4" />
             </div>
             <div className="text-left">
               <span className="text-base font-semibold tracking-tight block">Start Convoy</span>
-              <span className="text-[10px] opacity-70 landscape-hidden">Create a new ride group</span>
+              <span className="text-[10px] opacity-70 landscape:hidden">Create a new ride group</span>
             </div>
           </button>
 
           <button
             onClick={() => navigate('/join-convoy')}
-            className="flex-1 min-h-[60px] bg-card/50 hover:bg-secondary border border-border/40 hover:border-border rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            className="flex-1 min-h-[60px] landscape:min-h-0 bg-card/50 hover:bg-secondary border border-border/40 hover:border-border rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
           >
-            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
-              <UserPlus className="w-4 h-4 text-muted-foreground" />
+            <div className="w-9 h-9 landscape:w-7 landscape:h-7 rounded-lg bg-secondary flex items-center justify-center">
+              <UserPlus className="w-4 h-4 landscape:w-3.5 landscape:h-3.5 text-muted-foreground" />
             </div>
             <div className="text-left">
               <span className="text-sm font-semibold tracking-tight block">Join Convoy</span>
-              <span className="text-[10px] text-muted-foreground landscape-hidden">Enter a convoy code</span>
+              <span className="text-[10px] text-muted-foreground landscape:hidden">Enter a convoy code</span>
             </div>
           </button>
         </div>

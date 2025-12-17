@@ -202,12 +202,12 @@ export default function ActiveRide() {
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6">
-      {/* Main content area - always horizontal in landscape */}
-      <div className="flex-1 flex flex-row gap-3 md:gap-4 min-h-0">
-        {/* Left side - Speed and Stats */}
+      {/* Main content area - vertical in portrait, horizontal in landscape */}
+      <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
+        {/* Speed and Stats */}
         <div className="flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0">
           {/* Header - compact */}
-          <div className="flex items-center gap-2 mb-2 md:mb-4">
+          <div className="flex items-center gap-2 mb-2 landscape:mb-1 md:mb-4">
             {rideState.isConvoyMode && (
               <span className="flex items-center gap-1 text-accent text-xs font-medium px-2 py-0.5 bg-accent/10 rounded">
                 <Users className="w-3 h-3" />
@@ -219,10 +219,10 @@ export default function ActiveRide() {
 
           {/* Speed Display - responsive sizing */}
           <div className="text-center">
-            <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">Speed</p>
+            <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1 landscape:hidden">Speed</p>
             <div className={cn(
               "font-mono font-bold transition-all leading-none",
-              "text-5xl md:text-7xl lg:text-8xl landscape-speed-text",
+              "text-6xl md:text-7xl lg:text-8xl landscape:text-5xl",
               formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 130 : 80) && "text-warning animate-speed-glow",
               formatSpeed(rideState.currentSpeed, settings.speedUnit) > (settings.speedUnit === 'kph' ? 160 : 100) && "text-destructive"
             )}>
@@ -232,34 +232,34 @@ export default function ActiveRide() {
           </div>
 
           {/* Stats Row - compact horizontal */}
-          <div className="flex gap-4 md:gap-6 mt-3 md:mt-4">
+          <div className="flex gap-4 md:gap-6 mt-3 landscape:mt-2 md:mt-4">
             <div className="text-center">
               <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Dist</p>
-              <p className="font-mono text-base md:text-lg font-bold">
+              <p className="font-mono text-base landscape:text-sm md:text-lg font-bold">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
                 <span className="text-[10px] text-muted-foreground ml-0.5">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
             <div className="text-center">
               <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Time</p>
-              <p className="font-mono text-base md:text-lg font-bold">{formatDuration(rideState.duration)}</p>
+              <p className="font-mono text-base landscape:text-sm md:text-lg font-bold">{formatDuration(rideState.duration)}</p>
             </div>
             <div className="text-center">
               <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Max</p>
-              <p className="font-mono text-base md:text-lg font-bold">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
+              <p className="font-mono text-base landscape:text-sm md:text-lg font-bold">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
             </div>
           </div>
         </div>
 
-        {/* Center - Controls */}
-        <div className="flex flex-col items-center justify-center gap-2 md:gap-3 px-2">
+        {/* Controls - row in portrait, column in landscape */}
+        <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
           {/* Navigation button */}
           <Button
             variant="ghost"
             onClick={() => openNavigation()}
-            className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-secondary hover:bg-muted touch-target"
+            className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
           >
-            <Navigation className="w-5 h-5 md:w-6 md:h-6" />
+            <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
 
           {/* Voice Toggle Button (Convoy Mode Only) */}
@@ -267,16 +267,16 @@ export default function ActiveRide() {
             <button
               onClick={toggleMute}
               className={cn(
-                "w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all touch-target",
+                "w-16 h-16 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
                 !isMuted
                   ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
                   : "bg-ptt-inactive hover:bg-muted"
               )}
             >
               {isMuted ? (
-                <MicOff className="w-6 h-6 md:w-7 md:h-7 text-foreground" />
+                <MicOff className="w-7 h-7 landscape:w-6 landscape:h-6 text-foreground" />
               ) : (
-                <Mic className="w-6 h-6 md:w-7 md:h-7 text-background" />
+                <Mic className="w-7 h-7 landscape:w-6 landscape:h-6 text-background" />
               )}
             </button>
           )}
@@ -287,18 +287,18 @@ export default function ActiveRide() {
               variant="ghost"
               onClick={() => setShowMembers(!showMembers)}
               className={cn(
-                "h-10 w-10 md:h-12 md:w-12 rounded-full touch-target",
+                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full touch-target",
                 showMembers ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
               )}
             >
-              <Users className="w-5 h-5 md:w-6 md:h-6" />
+              <Users className="w-6 h-6 landscape:w-5 landscape:h-5" />
             </Button>
           )}
         </div>
 
-        {/* Right side - Convoy Members Panel */}
+        {/* Convoy Members Panel - bottom in portrait, right side in landscape */}
         {rideState.isConvoyMode && showMembers && (
-          <div className="w-56 md:w-64 lg:w-72 animate-slide-up flex-shrink-0">
+          <div className="landscape:w-56 md:landscape:w-64 animate-slide-up flex-shrink-0 max-h-[30vh] landscape:max-h-none overflow-hidden">
             <div className="bg-card border border-border rounded-xl p-2 md:p-3 h-full flex flex-col">
               <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
                 <Users className="w-3 h-3" />
