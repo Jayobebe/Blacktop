@@ -17,7 +17,7 @@ import { ConvoyDestination } from '@/types/convoy';
 
 export default function Lobby() {
   const navigate = useNavigate();
-  const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated } = useConvoyState();
+  const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
   const { startRide } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
@@ -70,9 +70,10 @@ export default function Lobby() {
     });
 
     // Listen for leadership change broadcast
-    channel.on('broadcast', { event: 'leadership-changed' }, (payload: any) => {
+    channel.on('broadcast', { event: 'leadership-changed' }, async (payload: any) => {
       console.log('[Lobby] Leadership changed:', payload);
-      // The realtime subscription will update the state, but show a toast
+      // Force refresh convoy state to ensure new leader gets updated isLeader flag
+      await refreshConvoyState();
       toast.info('Leadership has been transferred');
     });
 
@@ -88,7 +89,7 @@ export default function Lobby() {
       supabase.removeChannel(channel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id, navigate, startRide]);
+  }, [convoy.id, navigate, startRide, refreshConvoyState]);
 
   // Redirect if not in a convoy
   useEffect(() => {

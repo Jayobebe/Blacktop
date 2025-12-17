@@ -724,6 +724,13 @@ export function useConvoyState() {
   // Check if all members have navigated
   const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
 
+  // Expose refresh function for external callers (e.g., leadership change broadcast)
+  const refreshConvoyState = useCallback(async () => {
+    if (state.id) {
+      await refreshMembers(state.id);
+    }
+  }, [state.id]);
+
   return {
     convoy: state,
     createConvoy,
@@ -737,6 +744,7 @@ export function useConvoyState() {
     transferLeadership,
     togglePause,
     allMembersNavigated,
+    refreshConvoyState,
   };
 }
 
