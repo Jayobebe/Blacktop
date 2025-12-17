@@ -151,11 +151,10 @@ export function useRideHistory() {
   }, [clearRides, setHasSeeded]);
 
   const seedDemoData = useCallback(() => {
-    if (rides.length === 0 && !hasSeeded) {
-      setRides(generateDemoRides());
-      setHasSeeded(true);
-    }
-  }, [rides.length, hasSeeded, setRides, setHasSeeded]);
+    // Don't seed demo data on fresh installs - users should start with clean stats
+    // Demo data was confusing users into thinking they had existing rides
+    // Keep this function for manual demo seeding if needed in the future
+  }, []);
 
   return {
     rides,

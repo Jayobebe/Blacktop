@@ -179,12 +179,13 @@ export default function ActiveRide() {
         averageSpeed: avgSpeed,
       });
       
-      // Capture final members for badge summary
-      if (membersRef.current.length > 0) {
-        setFinalMembers(membersRef.current);
+      // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
+      const members = membersRef.current.length > 0 ? membersRef.current : convoy.members;
+      if (members.length > 0) {
+        setFinalMembers(members);
       }
       
-      // Show summary immediately
+      // Show summary immediately for convoy rides
       setShowSummary(true);
       
       // Run cleanup in background (non-blocking)
@@ -336,16 +337,16 @@ export default function ActiveRide() {
     });
     
     if (success) {
-      await acknowledgeRescue(request.id, request.userId);
-      toast.success(`Waypoint added for ${request.userName}`);
+      // Pass riderName for toast confirmation to both leader and rescuee
+      await acknowledgeRescue(request.id, request.userId, request.userName);
     } else {
       console.error('[ActiveRide] Failed to add rescue waypoint');
       toast.error('Failed to add rescue waypoint');
     }
   };
 
-  // Show summary after convoy ride ends
-  if (showSummary && finalMembers.length > 0) {
+  // Show summary after convoy ride ends - show if we have stats even if no members (solo ride)
+  if (showSummary) {
     return (
       <RideSummary 
         members={finalMembers} 
