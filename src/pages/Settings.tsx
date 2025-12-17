@@ -344,8 +344,8 @@ export default function Settings() {
               </div>
               <input
                 type="range"
-                min={settings.speedUnit === 'mph' ? 40 : 60}
-                max={settings.speedUnit === 'mph' ? 120 : 200}
+                min={25}
+                max={250}
                 step={5}
                 value={settings.amberSpeedThreshold}
                 onChange={(e) => {
@@ -353,7 +353,7 @@ export default function Settings() {
                   updateSetting('amberSpeedThreshold', newAmber);
                   // Ensure red is always higher than amber
                   if (settings.redSpeedThreshold <= newAmber) {
-                    updateSetting('redSpeedThreshold', newAmber + 10);
+                    updateSetting('redSpeedThreshold', Math.min(newAmber + 10, 250));
                   }
                 }}
                 className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-warning"
@@ -373,8 +373,8 @@ export default function Settings() {
               </div>
               <input
                 type="range"
-                min={settings.speedUnit === 'mph' ? 50 : 80}
-                max={settings.speedUnit === 'mph' ? 150 : 250}
+                min={25}
+                max={250}
                 step={5}
                 value={settings.redSpeedThreshold}
                 onChange={(e) => {
