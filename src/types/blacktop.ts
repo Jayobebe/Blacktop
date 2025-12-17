@@ -28,7 +28,7 @@ export interface RideSession {
   averageSpeed: number; // in mph
   maxSpeed: number; // in mph
   gpsPoints: GpsPoint[];
-  earnedBadge?: 'speed-demon' | 'journeyman' | 'rocksteady'; // Badge earned in this ride
+  earnedBadges?: ('speed-demon' | 'journeyman' | 'rocksteady')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
 }
 

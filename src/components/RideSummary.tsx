@@ -17,37 +17,42 @@ interface RideSummaryProps {
   members: ConvoyMemberInfo[];
   currentUserId?: string;
   rideStats?: RideStats;
-  onBadgeEarned?: (badge: BadgeType) => void;
+  onBadgesEarned?: (badges: BadgeType[]) => void;
   onClose: () => void;
 }
 
-export function RideSummary({ members, currentUserId, rideStats, onBadgeEarned, onClose }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned, onClose }: RideSummaryProps) {
   const { settings } = useSettings();
-  const badgesMap = calculateBadges(members);
+  
+  // Only calculate badges for convoy rides with 2+ members
+  const shouldCalculateBadges = members.length >= 2;
+  const badgesMap = shouldCalculateBadges ? calculateBadges(members) : new Map();
   
   // Get all badge awards as flat list for display
   const badgeAwards: { member: ConvoyMemberInfo; badge: MemberBadge }[] = [];
   
-  members.forEach(member => {
-    const memberBadges = badgesMap.get(member.userId) || [];
-    memberBadges.forEach(badge => {
-      badgeAwards.push({ member, badge });
+  if (shouldCalculateBadges) {
+    members.forEach(member => {
+      const memberBadges = badgesMap.get(member.userId) || [];
+      memberBadges.forEach(badge => {
+        badgeAwards.push({ member, badge });
+      });
     });
-  });
+  }
 
   // Sort by badge type priority: speed-demon, journeyman, rocksteady
   const badgeOrder = { 'speed-demon': 0, 'journeyman': 1, 'rocksteady': 2 };
   badgeAwards.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
 
-  // Report the current user's first earned badge (if any)
+  // Report all of the current user's earned badges (convoy rides only)
   useEffect(() => {
-    if (currentUserId && onBadgeEarned) {
+    if (currentUserId && onBadgesEarned && shouldCalculateBadges) {
       const userBadges = badgesMap.get(currentUserId);
       if (userBadges && userBadges.length > 0) {
-        onBadgeEarned(userBadges[0].type);
+        onBadgesEarned(userBadges.map(b => b.type));
       }
     }
-  }, [currentUserId, onBadgeEarned, badgesMap]);
+  }, [currentUserId, onBadgesEarned, badgesMap, shouldCalculateBadges]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
