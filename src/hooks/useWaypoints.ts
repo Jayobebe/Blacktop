@@ -7,6 +7,22 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
   const [waypoints, setWaypoints] = useState<ConvoyWaypoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Broadcast waypoint update to all members
+  const broadcastWaypointUpdate = useCallback(async () => {
+    if (!convoyId) return;
+    
+    const channel = supabase.channel(`convoy-control:${convoyId}`);
+    await channel.subscribe();
+    await channel.send({
+      type: 'broadcast',
+      event: 'waypoints-updated',
+      payload: {},
+    });
+    // Give time for broadcast to propagate
+    await new Promise(resolve => setTimeout(resolve, 100));
+    supabase.removeChannel(channel);
+  }, [convoyId]);
+
   // Fetch waypoints
   const fetchWaypoints = useCallback(async () => {
     if (!convoyId) {
@@ -39,13 +55,14 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     setWaypoints(mapped);
   }, [convoyId]);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates and broadcast events
   useEffect(() => {
     if (!convoyId) return;
 
     fetchWaypoints();
 
-    const channel = supabase
+    // Database realtime subscription
+    const dbChannel = supabase
       .channel(`waypoints-${convoyId}`)
       .on(
         'postgres_changes',
@@ -61,8 +78,21 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       )
       .subscribe();
 
+    // Broadcast channel for immediate updates
+    const controlChannel = supabase.channel(`convoy-control:${convoyId}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    controlChannel.on('broadcast', { event: 'waypoints-updated' }, () => {
+      console.log('[Waypoints] Received waypoints-updated broadcast');
+      fetchWaypoints();
+    });
+
+    controlChannel.subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(dbChannel);
+      supabase.removeChannel(controlChannel);
     };
   }, [convoyId, fetchWaypoints]);
 
@@ -104,8 +134,12 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     }
 
     console.log('[Waypoints] Added waypoint:', waypoint.name);
+    
+    // Broadcast to all members
+    await broadcastWaypointUpdate();
+    
     return true;
-  }, [convoyId, isLeader, waypoints.length]);
+  }, [convoyId, isLeader, waypoints.length, broadcastWaypointUpdate]);
 
   // Remove a waypoint
   const removeWaypoint = useCallback(async (waypointId: string) => {
@@ -136,8 +170,11 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       }
     }
 
+    // Broadcast to all members
+    await broadcastWaypointUpdate();
+
     return true;
-  }, [convoyId, isLeader, waypoints]);
+  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
 
   // Mark waypoint as completed
   const completeWaypoint = useCallback(async (waypointId: string) => {
@@ -156,8 +193,11 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       return false;
     }
 
+    // Broadcast to all members
+    await broadcastWaypointUpdate();
+
     return true;
-  }, [convoyId, isLeader]);
+  }, [convoyId, isLeader, broadcastWaypointUpdate]);
 
   // Clear all waypoints
   const clearAllWaypoints = useCallback(async () => {
@@ -177,8 +217,11 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       return false;
     }
 
+    // Broadcast to all members
+    await broadcastWaypointUpdate();
+
     return true;
-  }, [convoyId, isLeader]);
+  }, [convoyId, isLeader, broadcastWaypointUpdate]);
 
   // Reorder waypoints
   const reorderWaypoints = useCallback(async (fromIndex: number, toIndex: number) => {
@@ -198,7 +241,10 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
         .update({ order_index: i })
         .eq('id', newOrder[i].id);
     }
-  }, [convoyId, isLeader, waypoints]);
+
+    // Broadcast to all members
+    await broadcastWaypointUpdate();
+  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
 
   // Get next incomplete waypoint
   const nextWaypoint = waypoints.find(w => !w.isCompleted);
