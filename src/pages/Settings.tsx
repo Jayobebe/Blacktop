@@ -106,23 +106,24 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-6">
+      <header className="flex items-center gap-4 mb-4 landscape:mb-2 flex-shrink-0">
         <button
           onClick={() => navigate('/')}
-          className="p-3 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
+          className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
         </button>
-        <h1 className="text-2xl font-display font-bold flex-1">Settings</h1>
+        <h1 className="text-xl landscape:text-lg font-display font-bold flex-1">Settings</h1>
         <BTLogo size="md" />
       </header>
 
-      <div className="space-y-6 animate-fade-in">
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-4 landscape:space-y-3 animate-fade-in">
         {/* Profile Section */}
-        <section className="bg-card rounded-lg p-4 border border-border">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
             Profile
           </h2>
           {isEditingName ? (
@@ -133,7 +134,7 @@ export default function Settings() {
               onBlur={handleNameSave}
               onKeyDown={handleNameKeyDown}
               maxLength={20}
-              className="text-lg font-medium h-12"
+              className="text-base font-medium h-10"
               placeholder="Enter your name"
             />
           ) : (
@@ -142,20 +143,21 @@ export default function Settings() {
                 setEditedName(profile.name);
                 setIsEditingName(true);
               }}
-              className="flex items-center gap-2 text-lg font-medium hover:text-accent transition-colors group w-full text-left"
+              className="flex items-center gap-2 text-base font-medium hover:text-accent transition-colors group w-full text-left"
             >
               {profile.name}
-              <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+              <Pencil className="w-3.5 h-3.5 text-muted-foreground group-hover:text-accent transition-colors" />
             </button>
            )}
 
-          <div className="mt-4">
+          <div className="mt-3">
             {resetStep === 2 ? (
-              <p className="text-sm text-accent text-center py-2">Reset complete</p>
+              <p className="text-sm text-accent text-center py-1.5">Reset complete</p>
             ) : (
               <Button
                 onClick={handleResetIdentity}
                 variant={resetStep === 1 ? 'destructive' : 'outline'}
+                size="sm"
                 className="w-full touch-target"
               >
                 {resetStep === 0 ? 'Reset identity' : 'Confirm reset'}
@@ -166,27 +168,28 @@ export default function Settings() {
               <Button
                 onClick={() => setResetStep(0)}
                 variant="ghost"
-                className="w-full mt-2 touch-target"
+                size="sm"
+                className="w-full mt-1.5 touch-target"
               >
                 Cancel
               </Button>
             )}
 
-            <p className="text-xs text-muted-foreground text-center mt-2">
+            <p className="text-[10px] text-muted-foreground text-center mt-1.5">
               Use this if an uninstall/reinstall kept your old name.
             </p>
           </div>
         </section>
 
         {/* Navigation App Section */}
-        <section className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Navigation className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <Navigation className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Navigation App
             </h2>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
               
@@ -218,15 +221,10 @@ export default function Settings() {
                       : 'https://www.waze.com/download';
                 }
                 
-                // Try opening the app via universal link
                 const newWindow = window.open(appUrl, '_blank');
                 
-                // If on mobile and the app might not be installed, set up fallback
                 if ((isIOS || isAndroid) && newWindow) {
                   setTimeout(() => {
-                    // If we're still here after timeout, app likely didn't open
-                    // The universal links should handle this automatically,
-                    // but we provide the fallback URL as backup
                     if (document.hidden === false && appUrl !== fallbackUrl) {
                       window.open(fallbackUrl, '_blank');
                     }
@@ -238,7 +236,7 @@ export default function Settings() {
                 <div
                   key={app.id}
                   className={cn(
-                    "w-full flex items-center justify-between p-3 rounded-lg border transition-colors",
+                    "w-full flex items-center justify-between p-2.5 rounded-lg border transition-colors",
                     isSelected
                       ? "border-accent bg-accent/10"
                       : "border-border"
@@ -247,7 +245,7 @@ export default function Settings() {
                   <button
                     onClick={() => updateNavApp(app.id)}
                     className={cn(
-                      "flex-1 text-left touch-target",
+                      "flex-1 text-left text-sm touch-target",
                       isSelected ? "text-accent font-medium" : "text-foreground hover:text-accent"
                     )}
                   >
@@ -256,29 +254,29 @@ export default function Settings() {
                   <button
                     onClick={handleOpenApp}
                     className={cn(
-                      "p-2 rounded-md transition-colors",
+                      "p-1.5 rounded-md transition-colors",
                       isSelected 
                         ? "text-accent hover:bg-accent/20" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     title={`Open ${app.label}`}
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                 </div>
               );
             })}
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
+          <p className="text-[10px] text-muted-foreground mt-2">
             Blacktop will open your preferred navigation app for directions
           </p>
         </section>
 
         {/* Accent Color Section */}
-        <section className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 mb-4">
-            <Palette className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+          <div className="flex items-center gap-2 mb-3 landscape:mb-2">
+            <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Accent Color
             </h2>
           </div>
@@ -289,34 +287,34 @@ export default function Settings() {
         </section>
 
         {/* Units Section */}
-        <section className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Gauge className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Units
             </h2>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between py-1.5">
               <div>
                 <p className="text-sm font-medium">Speed</p>
-                <p className="text-xs text-muted-foreground">Display speed in MPH or KPH</p>
+                <p className="text-[10px] text-muted-foreground">MPH or KPH</p>
               </div>
               <button
                 onClick={toggleSpeedUnit}
-                className="px-4 py-2 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-sm"
+                className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-xs"
               >
                 {settings.speedUnit.toUpperCase()}
               </button>
             </div>
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-1.5">
               <div>
                 <p className="text-sm font-medium">Distance</p>
-                <p className="text-xs text-muted-foreground">Display distance in miles or kilometers</p>
+                <p className="text-[10px] text-muted-foreground">Miles or kilometers</p>
               </div>
               <button
                 onClick={toggleDistanceUnit}
-                className="px-4 py-2 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-sm"
+                className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-xs"
               >
                 {settings.distanceUnit === 'miles' ? 'MILES' : 'KM'}
               </button>
@@ -325,17 +323,17 @@ export default function Settings() {
         </section>
 
         {/* Convoy Display Section */}
-        <section className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Convoy Display
             </h2>
           </div>
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-1">
             <div>
               <p className="text-sm font-medium">Show Convoy Metrics</p>
-              <p className="text-xs text-muted-foreground">Display speed stats and metrics during rides</p>
+              <p className="text-[10px] text-muted-foreground">Speed stats during rides</p>
             </div>
             <Switch 
               checked={settings.showSpeedRankings} 
@@ -344,75 +342,75 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Privacy Section */}
-        <section className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        {/* Privacy Section - hidden in landscape */}
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border landscape:hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Privacy & Battery
             </h2>
           </div>
-          <ul className="space-y-2 text-sm text-muted-foreground">
+          <ul className="space-y-1 text-xs text-muted-foreground">
             <li>• All ride data stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
-            <li>• No cloud sync by default</li>
             <li>• Voice data is never recorded or stored</li>
           </ul>
-          <p className="text-xs text-muted-foreground/70 mt-3 pt-3 border-t border-border/50">
-            Battery use increases while a ride is active, similar to navigation apps.
+          <p className="text-[10px] text-muted-foreground/70 mt-2 pt-2 border-t border-border/50">
+            Battery use increases while a ride is active.
           </p>
         </section>
 
         {/* Tip Jar Section */}
-        <section className="bg-card rounded-lg p-4 border border-accent/30">
-          <div className="flex items-center gap-2 mb-3">
-            <Heart className="w-4 h-4 text-accent" />
-            <h2 className="text-sm font-semibold text-accent uppercase tracking-wide">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-accent/30">
+          <div className="flex items-center gap-2 mb-2">
+            <Heart className="w-3.5 h-3.5 text-accent" />
+            <h2 className="text-xs font-semibold text-accent uppercase tracking-wide">
               Enjoying BlackTop?
             </h2>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-xs text-muted-foreground mb-2">
             Help keep us ad-free!
           </p>
           <Button
             onClick={handleTip}
             disabled={isTipping}
-            className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold touch-target"
+            size="sm"
+            className="w-full h-10 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold touch-target"
           >
-            <Heart className="w-4 h-4 mr-2" />
+            <Heart className="w-3.5 h-3.5 mr-2" />
             {isTipping ? 'Opening...' : 'Donate $5'}
           </Button>
         </section>
 
         {/* Burn Button Section */}
-        <section className="bg-card rounded-lg p-4 border border-destructive/30">
-          <div className="flex items-center gap-2 mb-3">
-            <Flame className="w-4 h-4 text-burn" />
-            <h2 className="text-sm font-semibold text-burn uppercase tracking-wide">
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-destructive/30">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="w-3.5 h-3.5 text-burn" />
+            <h2 className="text-xs font-semibold text-burn uppercase tracking-wide">
               Burn Button
             </h2>
           </div>
           
-          <p className="text-sm text-muted-foreground mb-4">
-            Permanently delete all ride data ({stats.totalRides} rides, {stats.totalDistance.toFixed(1)} miles).
-            Your profile name will be retained.
+          <p className="text-xs text-muted-foreground mb-2">
+            Permanently delete all ride data ({stats.totalRides} rides, {stats.totalDistance.toFixed(1)} mi).
           </p>
 
           {burnStep === 2 ? (
-            <div className="text-center py-4">
-              <p className="text-accent font-medium">All data burned</p>
+            <div className="text-center py-2">
+              <p className="text-accent font-medium text-sm">All data burned</p>
             </div>
           ) : (
             <Button
               onClick={handleBurn}
               variant={burnStep === 1 ? "destructive" : "outline"}
+              size="sm"
               className={cn(
-                "w-full h-14 text-lg font-semibold touch-target transition-all",
+                "w-full h-10 font-semibold touch-target transition-all",
                 burnStep === 0 && "border-burn text-burn hover:bg-burn hover:text-background",
                 burnStep === 1 && "animate-burn-pulse"
               )}
             >
-              <Flame className="w-5 h-5 mr-2" />
+              <Flame className="w-4 h-4 mr-2" />
               {burnStep === 0 ? "BURN ALL DATA" : "CONFIRM BURN"}
             </Button>
           )}
@@ -421,20 +419,21 @@ export default function Settings() {
             <Button
               onClick={() => setBurnStep(0)}
               variant="ghost"
-              className="w-full mt-3 touch-target"
+              size="sm"
+              className="w-full mt-2 touch-target"
             >
               Cancel
             </Button>
           )}
 
-          <p className="text-xs text-destructive text-center mt-3">
+          <p className="text-[10px] text-destructive text-center mt-2">
             This action cannot be undone
           </p>
         </section>
 
         {/* Legal Disclaimer */}
-        <p className="text-xs text-muted-foreground text-center px-4 pb-4">
-          Blacktop is a ride logging and communication tool, not a racing or enforcement-avoidance app.
+        <p className="text-[10px] text-muted-foreground text-center px-4 pb-2">
+          Blacktop is a ride logging tool, not a racing or enforcement-avoidance app.
         </p>
       </div>
     </div>

@@ -33,104 +33,110 @@ export default function RideDetail() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between mb-4 landscape:mb-2 flex-shrink-0">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/history')}
-            className="p-3 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
+            className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
           </button>
           <div>
-            <h1 className="text-xl font-display font-bold">{formatDate(ride.startedAt)}</h1>
-            <p className="text-sm text-muted-foreground">{formatTime(ride.startedAt)}</p>
+            <h1 className="text-lg landscape:text-base font-display font-bold">{formatDate(ride.startedAt)}</h1>
+            <p className="text-xs text-muted-foreground">{formatTime(ride.startedAt)}</p>
           </div>
         </div>
         {ride.isConvoyRide && (
-          <span className="flex items-center gap-1 text-sm text-accent bg-accent/10 px-3 py-1 rounded">
-            <Users className="w-4 h-4" />
+          <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded">
+            <Users className="w-3.5 h-3.5" />
             Convoy
           </span>
         )}
       </header>
 
-      {/* Main Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in">
-        <div className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <MapPin className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wide">Distance</span>
+      {/* Main content - scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+        {/* Stats Grid - horizontal layout in landscape */}
+        <div className="grid grid-cols-2 landscape:grid-cols-4 gap-2 mb-4 animate-fade-in">
+          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase tracking-wide">Distance</span>
+            </div>
+            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatDistance(ride.distance, settings.distanceUnit)}</p>
+            <p className="text-xs text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</p>
           </div>
-          <p className="font-mono text-3xl font-bold">{formatDistance(ride.distance, settings.distanceUnit)}</p>
-          <p className="text-sm text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</p>
+          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase tracking-wide">Duration</span>
+            </div>
+            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatDuration(ride.duration)}</p>
+            <p className="text-xs text-muted-foreground">h:mm:ss</p>
+          </div>
+          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+              <Gauge className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase tracking-wide">Avg Speed</span>
+            </div>
+            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatSpeed(ride.averageSpeed, settings.speedUnit)}</p>
+            <p className="text-xs text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
+          </div>
+          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase tracking-wide">Max Speed</span>
+            </div>
+            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatSpeed(ride.maxSpeed, settings.speedUnit)}</p>
+            <p className="text-xs text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
+          </div>
         </div>
-        <div className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Clock className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wide">Duration</span>
-          </div>
-          <p className="font-mono text-3xl font-bold">{formatDuration(ride.duration)}</p>
-          <p className="text-sm text-muted-foreground">h:mm:ss</p>
+
+        {/* Photos Section */}
+        <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border mb-3 animate-slide-up">
+          <RidePhotos
+            photos={ride.photos || []}
+            onAddPhoto={(photo) => addRidePhoto(ride.id, photo)}
+            onRemovePhoto={(photoId) => removeRidePhoto(ride.id, photoId)}
+          />
         </div>
-        <div className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Gauge className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wide">Avg Speed</span>
-          </div>
-          <p className="font-mono text-3xl font-bold">{formatSpeed(ride.averageSpeed, settings.speedUnit)}</p>
-          <p className="text-sm text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
-        </div>
-        <div className="bg-card rounded-lg p-4 border border-border">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs uppercase tracking-wide">Max Speed</span>
-          </div>
-          <p className="font-mono text-3xl font-bold">{formatSpeed(ride.maxSpeed, settings.speedUnit)}</p>
-          <p className="text-sm text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
+
+        {/* GPS Points Info */}
+        <div className="bg-card rounded-lg p-2.5 border border-border mb-3 animate-slide-up">
+          <p className="text-xs text-muted-foreground">
+            {ride.gpsPoints.length} GPS points recorded
+          </p>
         </div>
       </div>
 
-      {/* Photos Section */}
-      <div className="bg-card rounded-lg p-4 border border-border mb-4 animate-slide-up">
-        <RidePhotos
-          photos={ride.photos || []}
-          onAddPhoto={(photo) => addRidePhoto(ride.id, photo)}
-          onRemovePhoto={(photoId) => removeRidePhoto(ride.id, photoId)}
-        />
-      </div>
-
-      {/* GPS Points Info */}
-      <div className="bg-card rounded-lg p-4 border border-border mb-6 animate-slide-up">
-        <p className="text-sm text-muted-foreground">
-          {ride.gpsPoints.length} GPS points recorded
-        </p>
-      </div>
-
-      {/* Delete Button */}
-      <div className="mt-auto animate-slide-up delay-100">
+      {/* Delete Button - fixed at bottom */}
+      <div className="flex-shrink-0 mt-2 animate-slide-up delay-100">
         {!showDeleteConfirm ? (
           <Button
             onClick={() => setShowDeleteConfirm(true)}
             variant="outline"
-            className="w-full h-12 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
+            size="sm"
+            className="w-full h-10 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Ride
           </Button>
         ) : (
-          <div className="space-y-3">
+          <div className="flex gap-2">
             <Button
               onClick={handleDelete}
-              className="w-full h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
+              size="sm"
+              className="flex-1 h-10 bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
             >
               Confirm Delete
             </Button>
             <Button
               onClick={() => setShowDeleteConfirm(false)}
               variant="ghost"
-              className="w-full h-12 touch-target"
+              size="sm"
+              className="flex-1 h-10 touch-target"
             >
               Cancel
             </Button>
