@@ -143,8 +143,17 @@ export default function Lobby() {
   };
 
   const handleLeave = async () => {
-    // If leader with other members, must transfer leadership first
+    // If leader with other members, handle leadership transfer
     if (convoy.isLeader && convoy.members.length > 1) {
+      // If exactly 2 members, auto-transfer to the other member
+      if (convoy.members.length === 2) {
+        const otherMember = convoy.members.find(m => !m.isLeader);
+        if (otherMember) {
+          await handleTransferAndLeave(otherMember.userId);
+          return;
+        }
+      }
+      // More than 2 members - show selection UI
       setShowLeaderSelect(true);
       setShowLeaveConfirm(false);
       return;
