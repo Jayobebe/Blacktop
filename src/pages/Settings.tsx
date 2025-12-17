@@ -349,7 +349,7 @@ export default function Settings() {
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Privacy
+              Privacy & Battery
             </h2>
           </div>
           <ul className="space-y-2 text-sm text-muted-foreground">
@@ -358,6 +358,9 @@ export default function Settings() {
             <li>• No cloud sync by default</li>
             <li>• Voice data is never recorded or stored</li>
           </ul>
+          <p className="text-xs text-muted-foreground/70 mt-3 pt-3 border-t border-border/50">
+            Battery use increases while a ride is active, similar to navigation apps.
+          </p>
         </section>
 
         {/* Tip Jar Section */}
