@@ -4,6 +4,9 @@ import { useRideHistory } from './useRideHistory';
 
 const SPEED_SMOOTHING_FACTOR = 0.3;
 const MIN_SPEED_THRESHOLD = 1; // mph - ignore speeds below this (GPS noise when stationary)
+const MAX_ACCURACY_THRESHOLD = 150; // meters - allow less accurate positions
+const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
+const MAX_DISTANCE_JUMP = 1; // miles - reject distance jumps larger than this
 
 // Shared state
 type Listener = () => void;
@@ -64,14 +67,22 @@ function handlePositionUpdate(position: GeolocationPosition) {
   const { latitude, longitude, speed: deviceSpeed, accuracy } = position.coords;
   const timestamp = position.timestamp;
 
-  // If accuracy is very poor, don't trust this point for distance/speed.
-  const accuracyOk = accuracy == null || accuracy <= 80;
+  // Log GPS data for debugging
+  console.log('[GPS] Position update:', { 
+    lat: latitude.toFixed(6), 
+    lng: longitude.toFixed(6), 
+    accuracy: accuracy?.toFixed(0), 
+    deviceSpeed: deviceSpeed?.toFixed(1) 
+  });
+
+  // If accuracy is very poor, still track but with caution
+  const accuracyOk = accuracy == null || accuracy <= MAX_ACCURACY_THRESHOLD;
 
   let calculatedSpeed = 0;
   let distanceIncrement = 0;
 
   // Calculate speed from GPS position change (more reliable than device speed)
-  if (lastPosition && accuracyOk) {
+  if (lastPosition) {
     const timeDeltaSeconds = (timestamp - lastPosition.timestamp) / 1000;
 
     // Ignore stale or implausible deltas
@@ -86,10 +97,15 @@ function handlePositionUpdate(position: GeolocationPosition) {
       const timeDeltaHours = timeDeltaSeconds / 3600;
       calculatedSpeed = timeDeltaHours > 0 ? distanceIncrement / timeDeltaHours : 0;
 
-      // Sanity checks for GPS glitches
-      if (calculatedSpeed > 200 || distanceIncrement > 0.5) {
+      // Sanity checks for GPS glitches - use constants
+      if (calculatedSpeed > MAX_SPEED_SANITY || distanceIncrement > MAX_DISTANCE_JUMP) {
+        console.log('[GPS] Rejected glitch:', { calculatedSpeed, distanceIncrement });
         calculatedSpeed = smoothedSpeed;
         distanceIncrement = 0;
+      } else if (!accuracyOk) {
+        // Poor accuracy - use reduced weight for distance
+        console.log('[GPS] Poor accuracy, reducing distance weight');
+        distanceIncrement *= 0.5;
       }
     }
   }
@@ -129,7 +145,8 @@ function handlePositionUpdate(position: GeolocationPosition) {
 }
 
 function handlePositionError(error: GeolocationPositionError) {
-  console.warn('GPS Error:', error.message);
+  console.warn('[GPS] Error:', error.code, error.message);
+  // Error codes: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
 }
 
 export function useActiveRide() {
@@ -166,11 +183,14 @@ export function useActiveRide() {
       maximumAge: 1000, // Allow slightly stale positions to reduce battery usage
     };
 
+    console.log('[GPS] Starting ride tracking with options:', geoOptions);
+
     // Prime GPS with a one-time read (often prevents early TIMEOUTs)
     navigator.geolocation.getCurrentPosition(handlePositionUpdate, handlePositionError, geoOptions);
 
     // Start GPS tracking
     watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handlePositionError, geoOptions);
+    console.log('[GPS] Watch started, id:', watchId);
 
     // Duration counter based on wall-clock time (so short rides still count)
     durationInterval = setInterval(() => {
