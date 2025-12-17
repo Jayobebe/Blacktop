@@ -261,16 +261,27 @@ export default function ActiveRide() {
     if (wasConvoyMode && wasLeader && convoyId) {
       console.log('[ActiveRide] Leader broadcasting end-ride to all members');
       cleanupPromises.push(
-        (async () => {
+        new Promise<void>((resolve) => {
           const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
-          await broadcastChannel.subscribe();
-          await broadcastChannel.send({
-            type: 'broadcast',
-            event: 'end-ride',
-            payload: {},
+
+          broadcastChannel.subscribe(async (status) => {
+            if (status !== 'SUBSCRIBED') return;
+
+            try {
+              await broadcastChannel.send({
+                type: 'broadcast',
+                event: 'end-ride',
+                payload: {},
+              });
+            } finally {
+              // Small delay to ensure message is flushed before cleanup
+              setTimeout(() => {
+                supabase.removeChannel(broadcastChannel);
+                resolve();
+              }, 100);
+            }
           });
-          supabase.removeChannel(broadcastChannel);
-        })()
+        })
       );
     }
 
