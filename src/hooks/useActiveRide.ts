@@ -39,6 +39,9 @@ let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
 let rideStartedAtMs: number | null = null;
 let smoothedSpeed = 0;
 let currentConvoyId: string | null = null;
+let isPaused = false;
+let totalPausedTime = 0;
+let pausedAtMs: number | null = null;
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -76,6 +79,17 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 // Unified position handler for both web and native
 function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: number | null | undefined, accuracy: number | null | undefined, timestamp: number) {
+  // Skip distance tracking when paused
+  if (isPaused) {
+    // Still update GPS status but don't accumulate distance
+    setRideState(prev => ({
+      ...prev,
+      currentSpeed: 0,
+      gpsStatus: { accuracy: accuracy ?? null, lastUpdate: timestamp, source: 'none' },
+    }));
+    return;
+  }
+
   // Log GPS data for debugging
   console.log('[GPS] Position update:', { 
     lat: latitude.toFixed(6), 
@@ -236,6 +250,9 @@ export function useActiveRide(convoyId?: string | null) {
     smoothedSpeed = 0;
     lastPosition = null;
     currentConvoyId = activeConvoyId || convoyId || null;
+    isPaused = false;
+    totalPausedTime = 0;
+    pausedAtMs = null;
 
     setRideState(() => ({
       isActive: true,
@@ -294,9 +311,12 @@ export function useActiveRide(convoyId?: string | null) {
     }
 
     // Duration counter based on wall-clock time (so short rides still count)
+    // Subtracts paused time from the total
     durationInterval = setInterval(() => {
-      if (!rideStartedAtMs) return;
-      const seconds = Math.max(0, Math.floor((Date.now() - rideStartedAtMs) / 1000));
+      if (!rideStartedAtMs || isPaused) return;
+      const totalElapsed = Date.now() - rideStartedAtMs;
+      const activeTime = totalElapsed - totalPausedTime;
+      const seconds = Math.max(0, Math.floor(activeTime / 1000));
       setRideState(prev => ({
         ...prev,
         duration: seconds,
@@ -374,9 +394,27 @@ export function useActiveRide(convoyId?: string | null) {
     return savedRideId;
   }, []);
 
+  const setRidePaused = useCallback((paused: boolean) => {
+    if (paused && !isPaused) {
+      // Starting pause
+      isPaused = true;
+      pausedAtMs = Date.now();
+      console.log('[Ride] Paused');
+    } else if (!paused && isPaused) {
+      // Resuming from pause
+      if (pausedAtMs) {
+        totalPausedTime += Date.now() - pausedAtMs;
+      }
+      isPaused = false;
+      pausedAtMs = null;
+      console.log('[Ride] Resumed, total paused time:', totalPausedTime);
+    }
+  }, []);
+
   return {
     rideState: state,
     startRide,
     endRide,
+    setRidePaused,
   };
 }

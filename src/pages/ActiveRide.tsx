@@ -73,7 +73,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 
 export default function ActiveRide() {
   const navigate = useNavigate();
-  const { rideState, endRide } = useActiveRide();
+  const { rideState, endRide, setRidePaused } = useActiveRide();
   const { convoy, resetNavigationStatus, endConvoyRide, togglePause } = useConvoyState();
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { openNavigation } = useNavigation();
@@ -137,6 +137,13 @@ export default function ActiveRide() {
       navigate('/');
     }
   }, [rideState.isActive, showSummary, endingFlow, navigate]);
+
+  // Sync convoy pause state with ride tracking
+  useEffect(() => {
+    if (rideState.isConvoyMode) {
+      setRidePaused(convoy.isPaused);
+    }
+  }, [convoy.isPaused, rideState.isConvoyMode, setRidePaused]);
 
   // Non-leaders: listen for leader ending the ride (destination cleared)
   useEffect(() => {
