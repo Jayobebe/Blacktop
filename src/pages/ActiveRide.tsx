@@ -163,33 +163,35 @@ export default function ActiveRide() {
       console.log('[ActiveRide] Received end-ride broadcast from leader');
       toast.info('Leader ended the ride');
       setEndingFlow(true);
+      
+      // Disconnect voice immediately
+      if (isConnected) {
+        disconnect();
+      }
+      
+      // Capture final ride stats before ending (use ref for fresh state)
+      const currentRideState = rideStateRef.current;
+      const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
+      setFinalRideStats({
+        duration: currentRideState.duration,
+        distance: currentRideState.distance,
+        maxSpeed: currentRideState.maxSpeed,
+        averageSpeed: avgSpeed,
+      });
+      
+      // Capture final members for badge summary
+      if (membersRef.current.length > 0) {
+        setFinalMembers(membersRef.current);
+      }
+      
+      // Show summary immediately
+      setShowSummary(true);
+      
+      // Run cleanup in background (non-blocking)
       (async () => {
-        if (isConnected) {
-          disconnect();
-        }
-        
-        // Capture final ride stats before ending (same as leader flow)
-        // Use ref to get fresh state values, avoiding stale closure
-        const currentRideState = rideStateRef.current;
-        const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
-        setFinalRideStats({
-          duration: currentRideState.duration,
-          distance: currentRideState.distance,
-          maxSpeed: currentRideState.maxSpeed,
-          averageSpeed: avgSpeed,
-        });
-        
-        // Capture final members for badge summary
-        if (membersRef.current.length > 0) {
-          setFinalMembers(membersRef.current);
-        }
-        
         const rideId = await endRide();
         setSavedRideId(rideId);
-        await resetNavigationStatus();
-        
-        // Show summary instead of navigating away
-        setShowSummary(true);
+        resetNavigationStatus().catch(err => console.warn('[ActiveRide] Cleanup error:', err));
       })();
     });
 
@@ -223,6 +225,7 @@ export default function ActiveRide() {
   const handleEndRide = async () => {
     setEndingFlow(true);
 
+    // Disconnect voice immediately (non-blocking)
     if (isConnected) {
       disconnect();
     }
@@ -245,35 +248,50 @@ export default function ActiveRide() {
       setFinalMembers(membersRef.current);
     }
 
-    // If leader in convoy mode, broadcast 'end-ride' to all members BEFORE ending
-    if (wasConvoyMode && wasLeader && convoyId) {
-      console.log('[ActiveRide] Leader broadcasting end-ride to all members');
-      const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
-      await broadcastChannel.subscribe();
-      await broadcastChannel.send({
-        type: 'broadcast',
-        event: 'end-ride',
-        payload: {},
-      });
-      // Give time for broadcast to propagate
-      await new Promise(resolve => setTimeout(resolve, 100));
-      supabase.removeChannel(broadcastChannel);
+    // Show summary immediately for convoy rides (don't wait for cleanup)
+    if (wasConvoyMode) {
+      setShowSummary(true);
     }
 
+    // Run cleanup operations in parallel/background
+    const cleanupPromises: Promise<any>[] = [];
+
+    // If leader in convoy mode, broadcast 'end-ride' to all members
+    if (wasConvoyMode && wasLeader && convoyId) {
+      console.log('[ActiveRide] Leader broadcasting end-ride to all members');
+      cleanupPromises.push(
+        (async () => {
+          const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
+          await broadcastChannel.subscribe();
+          await broadcastChannel.send({
+            type: 'broadcast',
+            event: 'end-ride',
+            payload: {},
+          });
+          supabase.removeChannel(broadcastChannel);
+        })()
+      );
+    }
+
+    // End the ride and get the ID
     const rideId = await endRide();
     setSavedRideId(rideId);
 
+    // Cleanup convoy state in background
     if (wasConvoyMode) {
       if (wasLeader) {
-        // Leader ends ride for everyone
-        await endConvoyRide();
+        cleanupPromises.push(endConvoyRide());
       } else {
-        // Member just resets their own status
-        await resetNavigationStatus();
+        cleanupPromises.push(resetNavigationStatus());
       }
-      // Show summary before navigating
-      setShowSummary(true);
-    } else {
+    }
+
+    // Wait for cleanup but don't block UI
+    Promise.all(cleanupPromises).catch(err => {
+      console.warn('[ActiveRide] Cleanup error:', err);
+    });
+
+    if (!wasConvoyMode) {
       navigate('/');
     }
   };

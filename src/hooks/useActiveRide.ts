@@ -382,7 +382,7 @@ export function useActiveRide(convoyId?: string | null) {
 
   const endRide = useCallback(async (): Promise<string | null> => {
     // Stop GPS tracking using helper
-    await stopGpsWatch();
+    stopGpsWatch(); // Don't await - non-blocking
 
     // Stop duration counter
     if (durationInterval) {
@@ -390,11 +390,15 @@ export function useActiveRide(convoyId?: string | null) {
       durationInterval = null;
     }
 
-    // Stop convoy sync and do final sync
+    // Stop convoy sync interval
     if (convoySyncInterval) {
       clearInterval(convoySyncInterval);
       convoySyncInterval = null;
-      await syncConvoyStats(); // Final sync before ending
+    }
+    
+    // Final sync in background (non-blocking)
+    if (currentConvoyId) {
+      syncConvoyStats().catch(err => console.warn('[Convoy] Final sync error:', err));
     }
     currentConvoyId = null;
 
