@@ -167,7 +167,7 @@ export default function Onboarding() {
 
   if (step === 'permissions') {
     return (
-      <div className="h-screen max-h-screen overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
+      <div className="h-screen max-h-screen overflow-auto flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
         {/* Branding */}
         <div className="text-center landscape:text-left landscape:flex-1 landscape:max-w-xs">
           <h1 className="text-5xl landscape:text-4xl font-semibold tracking-tight mb-3">
@@ -219,6 +219,40 @@ export default function Onboarding() {
               Voice chat will be unavailable without microphone access
             </p>
           )}
+
+          {/* Install instructions - always show on onboarding */}
+          <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="font-medium">Install for the best experience</span>
+            </div>
+            
+            {/* iOS Instructions */}
+            <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">iPhone / iPad</p>
+              <div className="flex items-center gap-2 text-[11px] text-foreground">
+                <span className="flex items-center gap-1">
+                  <Share className="w-3 h-3" /> Tap Share
+                </span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                <span className="flex items-center gap-1">
+                  <PlusSquare className="w-3 h-3" /> Add to Home Screen
+                </span>
+              </div>
+            </div>
+
+            {/* Android Instructions */}
+            <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
+              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Android</p>
+              <div className="flex items-center gap-2 text-[11px] text-foreground">
+                <span className="flex items-center gap-1">
+                  <MoreVertical className="w-3 h-3" /> Tap Menu
+                </span>
+                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                <span>Install app / Add to Home</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -286,41 +320,39 @@ export default function Onboarding() {
           </p>
         </div>
 
-        {/* Install instructions - only shown in browser mode, hidden in landscape */}
-        {!isStandalone && (
-          <div className="mt-4 pt-4 border-t border-border/50 landscape:hidden space-y-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Smartphone className="w-3.5 h-3.5" />
-              <span className="font-medium">Install for the best experience</span>
-            </div>
-            
-            {/* iOS Instructions */}
-            <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
-              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">iPhone / iPad</p>
-              <div className="flex items-center gap-2 text-[11px] text-foreground">
-                <span className="flex items-center gap-1">
-                  <Share className="w-3 h-3" /> Tap Share
-                </span>
-                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                <span className="flex items-center gap-1">
-                  <PlusSquare className="w-3 h-3" /> Add to Home Screen
-                </span>
-              </div>
-            </div>
-
-            {/* Android Instructions */}
-            <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
-              <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Android</p>
-              <div className="flex items-center gap-2 text-[11px] text-foreground">
-                <span className="flex items-center gap-1">
-                  <MoreVertical className="w-3 h-3" /> Tap Menu
-                </span>
-                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                <span>Install app / Add to Home</span>
-              </div>
+        {/* Install instructions - always show on onboarding */}
+        <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="font-medium">Install for the best experience</span>
+          </div>
+          
+          {/* iOS Instructions */}
+          <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
+            <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">iPhone / iPad</p>
+            <div className="flex items-center gap-2 text-[11px] text-foreground">
+              <span className="flex items-center gap-1">
+                <Share className="w-3 h-3" /> Tap Share
+              </span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+              <span className="flex items-center gap-1">
+                <PlusSquare className="w-3 h-3" /> Add to Home Screen
+              </span>
             </div>
           </div>
-        )}
+
+          {/* Android Instructions */}
+          <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
+            <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Android</p>
+            <div className="flex items-center gap-2 text-[11px] text-foreground">
+              <span className="flex items-center gap-1">
+                <MoreVertical className="w-3 h-3" /> Tap Menu
+              </span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+              <span>Install app / Add to Home</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
