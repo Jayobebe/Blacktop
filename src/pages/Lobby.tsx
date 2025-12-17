@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useConvoyState } from '@/hooks/useConvoyState';
+import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/hooks/useConvoyState';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useWaypoints } from '@/hooks/useWaypoints';
@@ -424,7 +424,7 @@ export default function Lobby() {
         <div className="landscape:w-52 md:landscape:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0 max-h-[40vh] landscape:max-h-none">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Riders ({convoy.members.length})
+              Riders ({convoy.members.length}/{MAX_CONVOY_MEMBERS})
             </h2>
           </div>
           

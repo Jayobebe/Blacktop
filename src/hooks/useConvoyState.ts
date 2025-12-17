@@ -5,6 +5,8 @@ import { useSettings, ACCENT_COLORS } from './useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export const MAX_CONVOY_MEMBERS = 8;
+
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
@@ -396,6 +398,19 @@ export function useConvoyState() {
 
     if (error || !convoy) {
       toast.error('Convoy not found');
+      return false;
+    }
+
+    // Check member count before joining
+    const { count: memberCount } = await supabase
+      .from('convoy_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('convoy_id', convoy.id);
+
+    if (memberCount !== null && memberCount >= MAX_CONVOY_MEMBERS) {
+      toast.error(`Convoy full (${MAX_CONVOY_MEMBERS}/${MAX_CONVOY_MEMBERS})`, {
+        description: 'Ask the leader to create a second convoy for overflow riders.',
+      });
       return false;
     }
 
