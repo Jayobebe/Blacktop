@@ -643,6 +643,18 @@ export function useConvoyState() {
       return;
     }
 
+    // Broadcast pause/resume to all members for immediate effect
+    const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
+    await broadcastChannel.subscribe();
+    await broadcastChannel.send({
+      type: 'broadcast',
+      event: newPausedState ? 'pause-ride' : 'resume-ride',
+      payload: {},
+    });
+    // Give time for broadcast to propagate
+    await new Promise(resolve => setTimeout(resolve, 100));
+    supabase.removeChannel(broadcastChannel);
+
     // Update local state immediately
     setConvoyState((prev) => ({
       ...prev,

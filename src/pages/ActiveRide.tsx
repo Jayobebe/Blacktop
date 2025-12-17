@@ -193,6 +193,19 @@ export default function ActiveRide() {
       })();
     });
 
+    // Listen for pause/resume broadcasts from leader
+    channel.on('broadcast', { event: 'pause-ride' }, () => {
+      console.log('[ActiveRide] Received pause-ride broadcast from leader');
+      toast.info('Leader paused the ride');
+      setRidePaused(true);
+    });
+
+    channel.on('broadcast', { event: 'resume-ride' }, () => {
+      console.log('[ActiveRide] Received resume-ride broadcast from leader');
+      toast.info('Leader resumed the ride');
+      setRidePaused(false);
+    });
+
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         console.log('[ActiveRide] Subscribed to convoy control channel');
@@ -205,7 +218,7 @@ export default function ActiveRide() {
       supabase.removeChannel(channel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id, rideState.isConvoyMode, endRide, resetNavigationStatus, navigate, isConnected, disconnect, endingFlow]);
+  }, [convoy.id, rideState.isConvoyMode, endRide, resetNavigationStatus, navigate, isConnected, disconnect, endingFlow, setRidePaused]);
 
   const handleEndRide = async () => {
     setEndingFlow(true);
