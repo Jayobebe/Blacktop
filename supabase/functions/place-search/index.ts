@@ -105,7 +105,7 @@ serve(async (req) => {
         });
       }
 
-      const radius = Math.max(1000, Math.min(50000, body.radius_m ?? 15000));
+      const radius = Math.max(1000, Math.min(50000, body.radius_m ?? 30000));
       const limit = Math.max(1, Math.min(100, body.limit ?? 60));
 
       let query: string;
