@@ -105,27 +105,66 @@ export default function Settings() {
     }
   };
 
+  const handleOpenNavApp = (appId: NavigationApp) => {
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    let appUrl = '';
+    let fallbackUrl = '';
+    
+    if (appId === 'google') {
+      appUrl = 'https://www.google.com/maps';
+      fallbackUrl = isIOS 
+        ? 'https://apps.apple.com/app/google-maps/id585027354'
+        : isAndroid 
+          ? 'https://play.google.com/store/apps/details?id=com.google.android.apps.maps'
+          : 'https://www.google.com/maps';
+    } else if (appId === 'apple') {
+      appUrl = 'https://maps.apple.com/';
+      fallbackUrl = isIOS 
+        ? 'https://maps.apple.com/'
+        : 'https://www.apple.com/maps/';
+    } else if (appId === 'waze') {
+      appUrl = 'https://waze.com/ul';
+      fallbackUrl = isIOS 
+        ? 'https://apps.apple.com/app/waze-navigation-live-traffic/id323229106'
+        : isAndroid 
+          ? 'https://play.google.com/store/apps/details?id=com.waze'
+          : 'https://www.waze.com/download';
+    }
+    
+    const newWindow = window.open(appUrl, '_blank');
+    
+    if ((isIOS || isAndroid) && newWindow) {
+      setTimeout(() => {
+        if (document.hidden === false && appUrl !== fallbackUrl) {
+          window.open(fallbackUrl, '_blank');
+        }
+      }, 1500);
+    }
+  };
+
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-4 landscape:mb-2 flex-shrink-0">
+      <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
         <button
           onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
+          className="p-2.5 landscape:p-2 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
         >
           <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
         </button>
-        <h1 className="text-xl landscape:text-lg font-display font-bold flex-1">Settings</h1>
+        <div className="flex-1">
+          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Settings</h1>
+        </div>
         <BTLogo size="md" />
       </header>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-4 landscape:space-y-3 animate-fade-in">
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
         {/* Profile Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            Profile
-          </h2>
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Profile</p>
           {isEditingName ? (
             <Input
               ref={nameInputRef}
@@ -134,7 +173,7 @@ export default function Settings() {
               onBlur={handleNameSave}
               onKeyDown={handleNameKeyDown}
               maxLength={20}
-              className="text-base font-medium h-10"
+              className="text-lg font-medium h-12 rounded-xl"
               placeholder="Enter your name"
             />
           ) : (
@@ -143,22 +182,22 @@ export default function Settings() {
                 setEditedName(profile.name);
                 setIsEditingName(true);
               }}
-              className="flex items-center gap-2 text-base font-medium hover:text-accent transition-colors group w-full text-left"
+              className="flex items-center gap-3 text-lg font-semibold hover:text-accent transition-colors group w-full text-left"
             >
               {profile.name}
-              <Pencil className="w-3.5 h-3.5 text-muted-foreground group-hover:text-accent transition-colors" />
+              <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
             </button>
            )}
 
-          <div className="mt-3">
+          <div className="mt-4 pt-4 border-t border-border/30">
             {resetStep === 2 ? (
-              <p className="text-sm text-accent text-center py-1.5">Reset complete</p>
+              <p className="text-sm text-accent text-center py-2">Reset complete</p>
             ) : (
               <Button
                 onClick={handleResetIdentity}
                 variant={resetStep === 1 ? 'destructive' : 'outline'}
                 size="sm"
-                className="w-full touch-target"
+                className="w-full h-10 rounded-xl touch-target"
               >
                 {resetStep === 0 ? 'Reset identity' : 'Confirm reset'}
               </Button>
@@ -169,116 +208,72 @@ export default function Settings() {
                 onClick={() => setResetStep(0)}
                 variant="ghost"
                 size="sm"
-                className="w-full mt-1.5 touch-target"
+                className="w-full mt-2 touch-target"
               >
                 Cancel
               </Button>
             )}
 
-            <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-              Use this if an uninstall/reinstall kept your old name.
+            <p className="text-[10px] text-muted-foreground text-center mt-2">
+              Use if an uninstall/reinstall kept your old name
             </p>
           </div>
         </section>
 
         {/* Navigation App Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Navigation className="w-3.5 h-3.5 text-muted-foreground" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Navigation App
-            </h2>
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-75">
+          <div className="flex items-center gap-2 mb-3">
+            <Navigation className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Navigation App</p>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
-              
-              const handleOpenApp = () => {
-                const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-                const isAndroid = /Android/.test(navigator.userAgent);
-                
-                let appUrl = '';
-                let fallbackUrl = '';
-                
-                if (app.id === 'google') {
-                  appUrl = 'https://www.google.com/maps';
-                  fallbackUrl = isIOS 
-                    ? 'https://apps.apple.com/app/google-maps/id585027354'
-                    : isAndroid 
-                      ? 'https://play.google.com/store/apps/details?id=com.google.android.apps.maps'
-                      : 'https://www.google.com/maps';
-                } else if (app.id === 'apple') {
-                  appUrl = 'https://maps.apple.com/';
-                  fallbackUrl = isIOS 
-                    ? 'https://maps.apple.com/'
-                    : 'https://www.apple.com/maps/';
-                } else if (app.id === 'waze') {
-                  appUrl = 'https://waze.com/ul';
-                  fallbackUrl = isIOS 
-                    ? 'https://apps.apple.com/app/waze-navigation-live-traffic/id323229106'
-                    : isAndroid 
-                      ? 'https://play.google.com/store/apps/details?id=com.waze'
-                      : 'https://www.waze.com/download';
-                }
-                
-                const newWindow = window.open(appUrl, '_blank');
-                
-                if ((isIOS || isAndroid) && newWindow) {
-                  setTimeout(() => {
-                    if (document.hidden === false && appUrl !== fallbackUrl) {
-                      window.open(fallbackUrl, '_blank');
-                    }
-                  }, 1500);
-                }
-              };
-              
               return (
                 <div
                   key={app.id}
                   className={cn(
-                    "w-full flex items-center justify-between p-2.5 rounded-lg border transition-colors",
+                    "w-full flex items-center justify-between p-3 rounded-xl border transition-colors",
                     isSelected
-                      ? "border-accent bg-accent/10"
-                      : "border-border"
+                      ? "border-accent/40 bg-accent/10"
+                      : "border-border/30 bg-card/30"
                   )}
                 >
                   <button
                     onClick={() => updateNavApp(app.id)}
                     className={cn(
-                      "flex-1 text-left text-sm touch-target",
-                      isSelected ? "text-accent font-medium" : "text-foreground hover:text-accent"
+                      "flex-1 text-left text-sm touch-target font-medium",
+                      isSelected ? "text-accent" : "text-foreground hover:text-accent"
                     )}
                   >
                     {app.label}
                   </button>
                   <button
-                    onClick={handleOpenApp}
+                    onClick={() => handleOpenNavApp(app.id)}
                     className={cn(
-                      "p-1.5 rounded-md transition-colors",
+                      "p-2 rounded-lg transition-colors",
                       isSelected 
                         ? "text-accent hover:bg-accent/20" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                     title={`Open ${app.label}`}
                   >
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <ExternalLink className="w-4 h-4" />
                   </button>
                 </div>
               );
             })}
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2">
-            Blacktop will open your preferred navigation app for directions
+          <p className="text-[10px] text-muted-foreground mt-3">
+            Blacktop opens your preferred app for directions
           </p>
         </section>
 
         {/* Accent Color Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-          <div className="flex items-center gap-2 mb-3 landscape:mb-2">
-            <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Accent Color
-            </h2>
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-100">
+          <div className="flex items-center gap-2 mb-3">
+            <Palette className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Accent Color</p>
           </div>
           <AccentColorPicker 
             selected={settings.accentColor} 
@@ -287,34 +282,32 @@ export default function Settings() {
         </section>
 
         {/* Units Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Units
-            </h2>
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-150">
+          <div className="flex items-center gap-2 mb-3">
+            <Gauge className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Units</p>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between py-1.5">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Speed</p>
                 <p className="text-[10px] text-muted-foreground">MPH or KPH</p>
               </div>
               <button
                 onClick={toggleSpeedUnit}
-                className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-xs"
+                className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted transition-colors font-mono font-semibold text-sm"
               >
                 {settings.speedUnit.toUpperCase()}
               </button>
             </div>
-            <div className="flex items-center justify-between py-1.5">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Distance</p>
                 <p className="text-[10px] text-muted-foreground">Miles or kilometers</p>
               </div>
               <button
                 onClick={toggleDistanceUnit}
-                className="px-3 py-1.5 rounded-lg bg-secondary hover:bg-muted transition-colors font-mono font-medium text-xs"
+                className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted transition-colors font-mono font-semibold text-sm"
               >
                 {settings.distanceUnit === 'miles' ? 'MILES' : 'KM'}
               </button>
@@ -323,20 +316,18 @@ export default function Settings() {
         </section>
 
         {/* Speed Alert Thresholds */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Speed Alerts
-            </h2>
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Speed Alerts</p>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Amber threshold */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm font-medium text-warning">Amber Warning</p>
-                  <p className="text-[10px] text-muted-foreground">Speed display turns amber</p>
+                  <p className="text-[10px] text-muted-foreground">Display turns amber</p>
                 </div>
                 <span className="font-mono text-sm font-bold text-warning">
                   {settings.amberSpeedThreshold} {settings.speedUnit}
@@ -351,12 +342,11 @@ export default function Settings() {
                 onChange={(e) => {
                   const newAmber = Number(e.target.value);
                   updateSetting('amberSpeedThreshold', newAmber);
-                  // Ensure red is always higher than amber
                   if (settings.redSpeedThreshold <= newAmber) {
                     updateSetting('redSpeedThreshold', Math.min(newAmber + 10, 250));
                   }
                 }}
-                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-warning"
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-warning"
               />
             </div>
 
@@ -365,7 +355,7 @@ export default function Settings() {
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm font-medium text-destructive">Red Alert</p>
-                  <p className="text-[10px] text-muted-foreground">Speed display turns red</p>
+                  <p className="text-[10px] text-muted-foreground">Display turns red</p>
                 </div>
                 <span className="font-mono text-sm font-bold text-destructive">
                   {settings.redSpeedThreshold} {settings.speedUnit}
@@ -379,26 +369,23 @@ export default function Settings() {
                 value={settings.redSpeedThreshold}
                 onChange={(e) => {
                   const newRed = Number(e.target.value);
-                  // Ensure red is always higher than amber
                   if (newRed > settings.amberSpeedThreshold) {
                     updateSetting('redSpeedThreshold', newRed);
                   }
                 }}
-                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-destructive"
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-destructive"
               />
             </div>
           </div>
         </section>
 
         {/* Convoy Display Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-3.5 h-3.5 text-muted-foreground" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Convoy Display
-            </h2>
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Convoy Display</p>
           </div>
-          <div className="flex items-center justify-between py-1">
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Show Convoy Metrics</p>
               <p className="text-[10px] text-muted-foreground">Speed stats during rides</p>
@@ -410,71 +397,63 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Privacy Section - hidden in landscape */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border landscape:hidden">
-          <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-3.5 h-3.5 text-muted-foreground" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Privacy & Battery
-            </h2>
+        {/* Privacy Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200 landscape:hidden">
+          <div className="flex items-center gap-2 mb-3">
+            <Shield className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Privacy & Battery</p>
           </div>
-          <ul className="space-y-1 text-xs text-muted-foreground">
+          <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li>• All ride data stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
             <li>• Voice data is never recorded or stored</li>
           </ul>
-          <p className="text-[10px] text-muted-foreground/70 mt-2 pt-2 border-t border-border/50">
+          <p className="text-[10px] text-muted-foreground/70 mt-3 pt-3 border-t border-border/30">
             Battery use increases while a ride is active.
           </p>
         </section>
 
         {/* Tip Jar Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-accent/30">
-          <div className="flex items-center gap-2 mb-2">
-            <Heart className="w-3.5 h-3.5 text-accent" />
-            <h2 className="text-xs font-semibold text-accent uppercase tracking-wide">
-              Enjoying BlackTop?
-            </h2>
+        <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-accent" />
+            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
           </div>
-          <p className="text-xs text-muted-foreground mb-2">
+          <p className="text-xs text-muted-foreground mb-3">
             Help keep us ad-free!
           </p>
           <Button
             onClick={handleTip}
             disabled={isTipping}
-            size="sm"
-            className="w-full h-10 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold touch-target"
+            className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
           >
-            <Heart className="w-3.5 h-3.5 mr-2" />
+            <Heart className="w-4 h-4 mr-2" />
             {isTipping ? 'Opening...' : 'Donate $5'}
           </Button>
         </section>
 
         {/* Burn Button Section */}
-        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-destructive/30">
-          <div className="flex items-center gap-2 mb-2">
-            <Flame className="w-3.5 h-3.5 text-burn" />
-            <h2 className="text-xs font-semibold text-burn uppercase tracking-wide">
-              Burn Button
-            </h2>
+        <section className="bg-[hsl(var(--burn))]/5 rounded-2xl p-4 landscape:p-3 border border-[hsl(var(--burn))]/30 animate-slide-up delay-300">
+          <div className="flex items-center gap-2 mb-3">
+            <Flame className="w-4 h-4 text-[hsl(var(--burn))]" />
+            <p className="text-[10px] text-[hsl(var(--burn))] uppercase tracking-widest font-semibold">Burn Button</p>
           </div>
           
-          <p className="text-xs text-muted-foreground mb-2">
+          <p className="text-xs text-muted-foreground mb-3">
             Permanently delete all ride data ({stats.totalRides} rides, {stats.totalDistance.toFixed(1)} mi).
           </p>
 
           {burnStep === 2 ? (
-            <div className="text-center py-2">
-              <p className="text-accent font-medium text-sm">All data burned</p>
+            <div className="text-center py-3">
+              <p className="text-accent font-semibold">All data burned</p>
             </div>
           ) : (
             <Button
               onClick={handleBurn}
               variant={burnStep === 1 ? "destructive" : "outline"}
-              size="sm"
               className={cn(
-                "w-full h-10 font-semibold touch-target transition-all",
-                burnStep === 0 && "border-burn text-burn hover:bg-burn hover:text-background",
+                "w-full h-11 font-semibold touch-target rounded-xl transition-all",
+                burnStep === 0 && "border-[hsl(var(--burn))] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background",
                 burnStep === 1 && "animate-burn-pulse"
               )}
             >
@@ -487,20 +466,19 @@ export default function Settings() {
             <Button
               onClick={() => setBurnStep(0)}
               variant="ghost"
-              size="sm"
               className="w-full mt-2 touch-target"
             >
               Cancel
             </Button>
           )}
 
-          <p className="text-[10px] text-destructive text-center mt-2">
+          <p className="text-[10px] text-destructive text-center mt-3">
             This action cannot be undone
           </p>
         </section>
 
         {/* Legal Disclaimer */}
-        <p className="text-[10px] text-muted-foreground text-center px-4 pb-2">
+        <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
           Blacktop is a ride logging tool, not a racing or enforcement-avoidance app.
         </p>
       </div>
