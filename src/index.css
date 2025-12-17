@@ -384,7 +384,7 @@
   }
 
   /* Landscape utilities - comprehensive for no-scroll experience */
-  @media (orientation: landscape) and (max-height: 500px) {
+  @media (orientation: landscape) {
     .landscape-compact {
       @apply py-1 px-3;
     }
@@ -413,7 +413,7 @@
   }
 
   /* Even more compact for very short screens */
-  @media (orientation: landscape) and (max-height: 400px) {
+  @media (orientation: landscape) and (max-height: 500px) {
     .landscape-ultra-compact {
       @apply py-0.5 px-2;
     }
