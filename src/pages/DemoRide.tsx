@@ -57,7 +57,6 @@ const STEP_TITLES: Record<DemoStep, string> = {
 
 const STEP_INTERACTIONS: Partial<Record<DemoStep, string>> = {
   'onboarding': 'Type your name to continue',
-  'create-convoy': 'Tap the code to copy it',
   'lobby-members': 'Tap the mic button to unmute',
   'lobby-reorder': 'Drag a waypoint to reorder',
   'active-ride': 'Tap the mic to toggle voice',
@@ -154,14 +153,14 @@ export default function DemoRide() {
     haptics.medium();
     
     // Auto-advance after certain interactions
-    if (['copy', 'unmute', 'reorder', 'rescue', 'add-waypoint', 'setting'].includes(action)) {
+    if (['unmute', 'reorder', 'rescue', 'add-waypoint', 'setting'].includes(action)) {
       setTimeout(() => triggerSuccess(nextStep), 300);
     }
   }, [triggerSuccess, nextStep]);
 
   const handleCopy = () => {
     setCopied(true);
-    handleInteraction('copy');
+    haptics.medium();
     setTimeout(() => setCopied(false), 2000);
   };
 
