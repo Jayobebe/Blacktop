@@ -27,6 +27,7 @@ type OverpassBody = {
   lon: number;
   radius_m?: number;
   amenities: string[];
+  filter24h?: boolean;
   limit?: number;
 };
 
@@ -94,7 +95,10 @@ serve(async (req) => {
       }
 
       const amenities = Array.isArray(body.amenities) ? body.amenities.filter(Boolean) : [];
-      if (amenities.length === 0) {
+      const filter24h = body.filter24h === true;
+      
+      // For 24h search, we don't require amenities
+      if (amenities.length === 0 && !filter24h) {
         return new Response(JSON.stringify([]), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -102,16 +106,30 @@ serve(async (req) => {
       }
 
       const radius = Math.max(1000, Math.min(50000, body.radius_m ?? 15000));
-      const regex = amenities.map(escapeRegexPart).join("|");
       const limit = Math.max(1, Math.min(100, body.limit ?? 60));
 
-      const query = `
-        [out:json][timeout:10];
-        (
-          node["amenity"~"^(${regex})$"](around:${radius},${body.lat},${body.lon});
-        );
-        out body ${limit};
-      `;
+      let query: string;
+      
+      if (filter24h) {
+        // Search for any place open 24 hours (gas stations, stores, restaurants, etc.)
+        query = `
+          [out:json][timeout:15];
+          (
+            node["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
+            node["opening_hours:covid19"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
+          );
+          out body ${limit};
+        `;
+      } else {
+        const regex = amenities.map(escapeRegexPart).join("|");
+        query = `
+          [out:json][timeout:10];
+          (
+            node["amenity"~"^(${regex})$"](around:${radius},${body.lat},${body.lon});
+          );
+          out body ${limit};
+        `;
+      }
 
       const data = await fetchOverpass(query);
 
