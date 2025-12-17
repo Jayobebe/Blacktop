@@ -5,36 +5,73 @@ import { Input } from '@/components/ui/input';
 import { 
   Users, UserPlus, History, BarChart3, Settings, Play, 
   Copy, Check, Mic, MicOff, Crown, User, Navigation, 
-  Square, Trophy, ArrowRight, ChevronRight
+  Square, Trophy, ArrowRight, ChevronRight, MapPin, Plus,
+  GripVertical, AlertTriangle, Camera, Image, Flame,
+  Gauge, Clock, TrendingUp, Route, Phone, X, Volume2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Demo step definitions
+// Demo step definitions - comprehensive flow
 type DemoStep = 
   | 'welcome'
   | 'onboarding' 
   | 'home'
   | 'create-convoy'
-  | 'lobby'
-  | 'lobby-destination'
+  | 'lobby-empty'
+  | 'lobby-members'
+  | 'lobby-waypoints'
+  | 'lobby-reorder'
   | 'active-ride'
+  | 'active-rescue'
+  | 'rescue-response'
   | 'ride-end'
   | 'badge-summary'
+  | 'history'
+  | 'history-photos'
   | 'stats'
+  | 'settings'
   | 'complete';
 
 const STEP_TITLES: Record<DemoStep, string> = {
   'welcome': 'Welcome to Blacktop',
-  'onboarding': 'Create Your Profile',
+  'onboarding': 'Privacy-First Profile',
   'home': 'Home Dashboard',
   'create-convoy': 'Start a Convoy',
-  'lobby': 'Convoy Lobby',
-  'lobby-destination': 'Set Destination',
-  'active-ride': 'Active Ride',
+  'lobby-empty': 'Convoy Lobby',
+  'lobby-members': 'Voice Communication',
+  'lobby-waypoints': 'Multi-Waypoint Routes',
+  'lobby-reorder': 'Drag to Reorder',
+  'active-ride': 'Live Ride Tracking',
+  'active-rescue': 'Rescue Feature',
+  'rescue-response': 'Leader Response',
   'ride-end': 'Ending the Ride',
   'badge-summary': 'Badge Awards',
+  'history': 'Ride History',
+  'history-photos': 'Ride Photos',
   'stats': 'Your Statistics',
+  'settings': 'Settings & Privacy',
   'complete': 'Demo Complete',
+};
+
+const STEP_DESCRIPTIONS: Record<DemoStep, string> = {
+  'welcome': 'Experience every feature in this guided tour',
+  'onboarding': 'No email, no password — just your name',
+  'home': 'Your ride stats at a glance',
+  'create-convoy': 'Generate a shareable code instantly',
+  'lobby-empty': 'Where your convoy assembles',
+  'lobby-members': 'Toggle voice chat with your group',
+  'lobby-waypoints': 'Plan multiple stops on your route',
+  'lobby-reorder': 'Easily reorganize your journey',
+  'active-ride': 'Real-time speed, distance & GPS',
+  'active-rescue': 'Lost rider? Send your location',
+  'rescue-response': 'Leader adds them as a waypoint',
+  'ride-end': 'End for yourself or entire convoy',
+  'badge-summary': 'Earn Speed Demon, Journeyman & Rocksteady',
+  'history': 'Browse and manage past rides',
+  'history-photos': 'Attach memories to your rides',
+  'stats': 'Lifetime achievements & badges',
+  'settings': 'Units, nav app & the Burn Button',
+  'complete': 'Ready to hit the road!',
 };
 
 export default function DemoRide() {
@@ -47,10 +84,12 @@ export default function DemoRide() {
   const [maxSpeed, setMaxSpeed] = useState(0);
   const [distance, setDistance] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [showRescueAlert, setShowRescueAlert] = useState(false);
+  const [waypointOrder, setWaypointOrder] = useState([0, 1, 2]);
 
   // Simulate ride when on active-ride step
   useEffect(() => {
-    if (step !== 'active-ride') return;
+    if (step !== 'active-ride' && step !== 'active-rescue') return;
     
     const interval = setInterval(() => {
       setSpeed(prev => {
@@ -65,17 +104,28 @@ export default function DemoRide() {
     return () => clearInterval(interval);
   }, [step]);
 
+  // Show rescue alert after delay
+  useEffect(() => {
+    if (step === 'rescue-response') {
+      setShowRescueAlert(true);
+    } else {
+      setShowRescueAlert(false);
+    }
+  }, [step]);
+
   const handleCopy = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const steps: DemoStep[] = [
+    'welcome', 'onboarding', 'home', 'create-convoy', 'lobby-empty', 
+    'lobby-members', 'lobby-waypoints', 'lobby-reorder', 'active-ride',
+    'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
+    'history', 'history-photos', 'stats', 'settings', 'complete'
+  ];
+
   const nextStep = () => {
-    const steps: DemoStep[] = [
-      'welcome', 'onboarding', 'home', 'create-convoy', 'lobby', 
-      'lobby-destination', 'active-ride', 'ride-end', 'badge-summary', 
-      'stats', 'complete'
-    ];
     const currentIndex = steps.indexOf(step);
     if (currentIndex < steps.length - 1) {
       setStep(steps[currentIndex + 1]);
@@ -84,13 +134,20 @@ export default function DemoRide() {
 
   const exitDemo = () => navigate('/');
 
-  // Progress indicator
-  const steps: DemoStep[] = [
-    'welcome', 'onboarding', 'home', 'create-convoy', 'lobby', 
-    'lobby-destination', 'active-ride', 'ride-end', 'badge-summary', 
-    'stats', 'complete'
-  ];
   const progress = ((steps.indexOf(step) + 1) / steps.length) * 100;
+
+  const waypoints = [
+    { name: 'Gas Station', address: '1234 Highway 1', completed: false },
+    { name: 'Mountain View Diner', address: '5678 Ridge Road', completed: false },
+    { name: 'Sunset Point', address: 'Overlook Drive', completed: false },
+  ];
+
+  const demoMembers = [
+    { name: demoName || 'You', isLeader: true, color: 'orange', speed: speed, topSpeed: maxSpeed, distance: distance },
+    { name: 'Marcus', isLeader: false, color: 'blue', speed: 62, topSpeed: 78, distance: 12.4 },
+    { name: 'Sarah', isLeader: false, color: 'pink', speed: 58, topSpeed: 82, distance: 11.8 },
+    { name: 'Jake', isLeader: false, color: 'green', speed: 0, topSpeed: 71, distance: 10.2 },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -102,38 +159,46 @@ export default function DemoRide() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex items-center justify-between px-5 py-3">
-          <span className="text-sm font-medium">
-            {STEP_TITLES[step]}
-          </span>
-          <Button variant="ghost" size="sm" onClick={exitDemo} className="text-muted-foreground hover:text-foreground">
+        <div className="flex items-center justify-between px-4 py-2.5">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{STEP_TITLES[step]}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{STEP_DESCRIPTIONS[step]}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={exitDemo} className="text-muted-foreground hover:text-foreground flex-shrink-0">
             Exit
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 pt-20 pb-28">
+      <div className="flex-1 pt-20 pb-28 overflow-y-auto">
         {/* Welcome Screen */}
         {step === 'welcome' && (
           <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
-            <div className="w-20 h-20 rounded-3xl bg-accent/15 flex items-center justify-center mb-8 animate-float">
-              <Play className="w-10 h-10 text-accent" />
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-8 animate-float border border-accent/20">
+              <Play className="w-12 h-12 text-accent" />
             </div>
-            <h1 className="text-3xl font-semibold text-center mb-3 tracking-tight">
-              Interactive Demo
+            <h1 className="text-3xl font-semibold text-center mb-2 tracking-tight">
+              Blacktop Demo
             </h1>
-            <p className="text-muted-foreground text-center max-w-sm mb-10">
-              Experience all of Blacktop's features in this guided walkthrough
+            <p className="text-muted-foreground text-center text-sm mb-8">
+              The complete ride companion experience
             </p>
-            <div className="space-y-4 text-sm text-muted-foreground max-w-xs">
-              {['Create your profile', 'Start a convoy', 'Track your ride', 'Earn badges'].map((item, i) => (
-                <p key={i} className="flex items-center gap-3 animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
-                  <span className="w-6 h-6 rounded-lg bg-accent/15 flex items-center justify-center">
-                    <ChevronRight className="w-4 h-4 text-accent" />
-                  </span>
-                  {item}
-                </p>
+            <div className="grid grid-cols-2 gap-3 text-sm max-w-xs w-full">
+              {[
+                { icon: Users, label: 'Convoy Mode' },
+                { icon: Route, label: 'Multi-Waypoints' },
+                { icon: Mic, label: 'Voice Chat' },
+                { icon: AlertTriangle, label: 'Rescue System' },
+                { icon: Trophy, label: 'Badge Awards' },
+                { icon: Camera, label: 'Ride Photos' },
+                { icon: Gauge, label: 'Live Tracking' },
+                { icon: Flame, label: 'Burn Button' },
+              ].map(({ icon: Icon, label }, i) => (
+                <div key={i} className="flex items-center gap-2 p-2.5 bg-card/50 rounded-xl border border-border/30 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                  <Icon className="w-4 h-4 text-accent" />
+                  <span className="text-xs">{label}</span>
+                </div>
               ))}
             </div>
           </div>
@@ -146,10 +211,10 @@ export default function DemoRide() {
               <h1 className="text-4xl font-semibold text-center mb-2 tracking-tight">
                 BLACKTOP
               </h1>
-              <p className="text-muted-foreground text-center mb-12">
-                Your ride companion
+              <p className="text-muted-foreground text-center mb-10 text-sm">
+                Privacy-first ride companion
               </p>
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
                     Profile Name
@@ -161,11 +226,9 @@ export default function DemoRide() {
                     className="h-14 text-lg"
                   />
                 </div>
-                <div className="p-4 bg-accent/10 border border-accent/20 rounded-2xl">
-                  <p className="text-sm text-accent flex items-start gap-3">
-                    <span className="text-lg">💡</span>
-                    <span>No email or password required — just your name to get started</span>
-                  </p>
+                <div className="p-4 bg-accent/10 border border-accent/20 rounded-xl space-y-2">
+                  <p className="text-sm text-accent font-medium">🔒 No account required</p>
+                  <p className="text-xs text-muted-foreground">No email, no phone, no tracking. Just ride.</p>
                 </div>
               </div>
             </div>
@@ -175,56 +238,51 @@ export default function DemoRide() {
         {/* Home */}
         {step === 'home' && (
           <div className="p-5 animate-fade-in">
-            <header className="flex items-center justify-between mb-6">
+            <header className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">Welcome back</p>
+                <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-1">Welcome back</p>
                 <h1 className="text-2xl font-semibold tracking-tight">{demoName || 'Rider'}</h1>
               </div>
-              <button className="p-3 rounded-2xl bg-secondary/50 border border-border/30">
+              <button className="p-2.5 rounded-xl bg-secondary/50 border border-border/30">
                 <Settings className="w-5 h-5 text-muted-foreground" />
               </button>
             </header>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-4 gap-2 mb-5">
               {[
-                { label: 'Total Rides', value: '12' },
+                { label: 'Rides', value: '12' },
                 { label: 'Distance', value: '348', unit: 'mi' },
-                { label: 'Top Speed', value: '92', unit: 'mph' },
-                { label: 'Time', value: '8:24:30' },
+                { label: 'Top', value: '92', unit: 'mph' },
+                { label: 'Time', value: '8:24' },
               ].map((stat, i) => (
-                <div key={i} className="bg-card/50 backdrop-blur-sm rounded-2xl p-4 border border-border/30 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                  <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-1.5">{stat.label}</p>
-                  <p className="text-2xl font-mono font-semibold">{stat.value}{stat.unit && <span className="text-sm text-muted-foreground/70 ml-1 font-normal">{stat.unit}</span>}</p>
+                <div key={i} className="bg-card/50 rounded-xl p-2.5 border border-border/30 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                  <p className="text-muted-foreground text-[9px] uppercase tracking-widest mb-1">{stat.label}</p>
+                  <p className="text-lg font-mono font-semibold">{stat.value}<span className="text-[10px] text-muted-foreground/70 ml-0.5">{stat.unit}</span></p>
                 </div>
               ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="h-28 bg-accent hover:bg-accent/90 text-accent-foreground rounded-3xl flex flex-col items-center justify-center transition-all">
-                <div className="w-12 h-12 rounded-2xl bg-accent-foreground/10 flex items-center justify-center mb-2">
-                  <Users className="w-6 h-6" />
-                </div>
-                <span className="font-semibold tracking-tight">Start Convoy</span>
+            <div className="space-y-2.5 mb-5">
+              <div className="h-24 bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl flex items-center justify-center gap-3">
+                <Users className="w-6 h-6" />
+                <span className="font-semibold">Start Convoy</span>
               </div>
-              <div className="h-24 bg-card/50 hover:bg-secondary border border-border/40 rounded-3xl flex flex-col items-center justify-center transition-all">
-                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-2">
-                  <UserPlus className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <span className="font-medium tracking-tight">Join Convoy</span>
+              <div className="h-20 bg-card/50 border border-border/40 rounded-2xl flex items-center justify-center gap-3">
+                <UserPlus className="w-5 h-5 text-muted-foreground" />
+                <span className="font-medium">Join Convoy</span>
               </div>
             </div>
 
-            <div className="flex justify-around mt-6 pt-4 border-t border-border/30">
+            <div className="flex justify-around pt-3 border-t border-border/30">
               {[
+                { icon: Play, label: 'Demo', active: true },
                 { icon: History, label: 'History' },
                 { icon: BarChart3, label: 'Stats' },
                 { icon: Settings, label: 'Settings' },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex flex-col items-center gap-1.5 p-3">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+              ].map(({ icon: Icon, label, active }) => (
+                <div key={label} className={cn("flex flex-col items-center gap-1 p-2", active && "text-accent")}>
+                  <Icon className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{label}</span>
                 </div>
               ))}
             </div>
@@ -234,164 +292,210 @@ export default function DemoRide() {
         {/* Create Convoy */}
         {step === 'create-convoy' && (
           <div className="p-5 animate-fade-in">
-            <div className="text-center mb-10">
-              <div className="w-16 h-16 rounded-3xl bg-accent/15 flex items-center justify-center mx-auto mb-5">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-accent/15 flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-accent" />
               </div>
-              <h1 className="text-2xl font-semibold mb-2 tracking-tight">Convoy Created!</h1>
-              <p className="text-muted-foreground">Share this code with your group</p>
+              <h1 className="text-2xl font-semibold mb-2">Convoy Created!</h1>
+              <p className="text-muted-foreground text-sm">Share this code with your group</p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/30 rounded-3xl p-8 text-center mb-6">
+            <div className="bg-card/50 border border-border/30 rounded-2xl p-6 text-center mb-5">
               <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Convoy Code</p>
-              <button
-                onClick={handleCopy}
-                className="flex items-center justify-center gap-4 mx-auto group"
-              >
+              <button onClick={handleCopy} className="flex items-center justify-center gap-4 mx-auto">
                 <span className="font-mono text-4xl font-semibold tracking-[0.2em]">XK7M9P</span>
-                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-muted transition-colors">
-                  {copied ? (
-                    <Check className="w-5 h-5 text-accent" />
-                  ) : (
-                    <Copy className="w-5 h-5 text-muted-foreground" />
-                  )}
+                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                  {copied ? <Check className="w-5 h-5 text-accent" /> : <Copy className="w-5 h-5 text-muted-foreground" />}
                 </div>
               </button>
             </div>
 
-            <div className="p-4 bg-accent/10 border border-accent/20 rounded-2xl">
-              <p className="text-sm text-accent flex items-start gap-3">
-                <span className="text-lg">💡</span>
-                <span>Others can join using this code from "Join Convoy" on the home screen</span>
-              </p>
+            <div className="p-3 bg-secondary/50 rounded-xl text-sm text-muted-foreground">
+              💡 Others join using this code from the home screen
             </div>
           </div>
         )}
 
-        {/* Lobby */}
-        {step === 'lobby' && (
+        {/* Lobby Empty */}
+        {step === 'lobby-empty' && (
           <div className="p-5 animate-fade-in">
             <header className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-2">Convoy Code</p>
-                <div className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2.5">
-                  <span className="font-mono text-xl font-semibold tracking-[0.15em]">XK7M9P</span>
-                  <Copy className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-2 bg-card/50 border border-border/30 rounded-xl px-3 py-2">
+                <span className="font-mono text-lg font-semibold tracking-wider">XK7M9P</span>
+                <Copy className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <button className="w-12 h-12 rounded-xl bg-secondary/80 border border-border/30 flex items-center justify-center">
+                <MicOff className="w-5 h-5" />
+              </button>
+            </header>
+
+            <div className="mb-5">
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Riders (1)</p>
+              <div className="bg-accent/10 border border-accent/20 rounded-xl p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-accent" />
                 </div>
+                <div className="flex-1">
+                  <p className="font-medium text-accent">{demoName || 'You'}</p>
+                  <p className="text-xs text-muted-foreground">Leader</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Waiting for riders to join...</p>
+              <p className="text-xs mt-1">Share your convoy code</p>
+            </div>
+          </div>
+        )}
+
+        {/* Lobby with Members - Voice */}
+        {step === 'lobby-members' && (
+          <div className="p-5 animate-fade-in">
+            <header className="mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2 bg-card/50 border border-border/30 rounded-xl px-3 py-2">
+                <span className="font-mono text-lg font-semibold tracking-wider">XK7M9P</span>
               </div>
               <button
                 onClick={() => setIsMuted(!isMuted)}
                 className={cn(
-                  "w-14 h-14 rounded-2xl flex items-center justify-center transition-all",
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-all",
                   !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80 border border-border/30"
                 )}
               >
-                {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6 text-accent-foreground" />}
+                {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-accent-foreground" />}
               </button>
             </header>
 
             <div className="mb-5">
               <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Riders (4)</p>
-              <div className="space-y-2.5">
-                {[
-                  { name: demoName || 'You', isLeader: true },
-                  { name: 'Marcus', isLeader: false },
-                  { name: 'Sarah', isLeader: false },
-                  { name: 'Jake', isLeader: false },
-                ].map((member, i) => (
+              <div className="space-y-2">
+                {demoMembers.map((member, i) => (
                   <div key={i} className={cn(
-                    "flex items-center gap-3 p-3 rounded-2xl border transition-all animate-slide-up",
-                    member.isLeader ? "bg-accent/10 border-accent/20" : "bg-card/50 border-border/30"
+                    "flex items-center gap-3 p-3 rounded-xl border animate-slide-up",
+                    member.isLeader ? "bg-accent/10 border-accent/20" : "bg-card/50 border-border/30",
+                    !isMuted && i === 1 && "ring-2 ring-blue-400/50"
                   )} style={{ animationDelay: `${i * 75}ms` }}>
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center",
-                      member.isLeader ? "bg-accent/20" : "bg-secondary"
+                      member.isLeader ? "bg-accent/20" : `bg-${member.color}-500/20`
                     )}>
                       {member.isLeader ? <Crown className="w-5 h-5 text-accent" /> : <User className="w-5 h-5 text-muted-foreground" />}
                     </div>
                     <div className="flex-1">
-                      <p className={cn("font-medium text-sm", member.isLeader && "text-accent")}>{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.isLeader ? 'Leader' : 'Rider'}</p>
+                      <p className={cn("font-medium text-sm", member.isLeader && "text-accent")}>
+                        {member.name}
+                        {!isMuted && i === 1 && <Volume2 className="w-3 h-3 inline ml-1 text-blue-400" />}
+                      </p>
                     </div>
-                    <span className="text-[11px] text-muted-foreground bg-secondary/80 px-3 py-1.5 rounded-full">Waiting</span>
+                    <span className="text-[11px] text-muted-foreground bg-secondary/80 px-2.5 py-1 rounded-full">
+                      Waiting
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 bg-accent/10 border border-accent/20 rounded-2xl">
-              <p className="text-sm text-accent flex items-start gap-3">
-                <span className="text-lg">💡</span>
-                <span>As leader, you control the destination. Others will follow your navigation.</span>
+            <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
+              <p className="text-sm text-accent flex items-center gap-2">
+                <Mic className="w-4 h-4" />
+                <span>Toggle voice chat — no push-to-talk needed</span>
               </p>
             </div>
           </div>
         )}
 
-        {/* Lobby with Destination */}
-        {step === 'lobby-destination' && (
+        {/* Lobby with Waypoints */}
+        {step === 'lobby-waypoints' && (
           <div className="p-5 animate-fade-in">
-            <header className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-2">Convoy Code</p>
-                <div className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2.5">
-                  <span className="font-mono text-xl font-semibold tracking-[0.15em]">XK7M9P</span>
-                </div>
+            <header className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 bg-card/50 border border-border/30 rounded-xl px-3 py-2">
+                <span className="font-mono text-base font-semibold tracking-wider">XK7M9P</span>
               </div>
-              <button className="w-14 h-14 rounded-2xl flex items-center justify-center bg-secondary/80 border border-border/30">
-                <MicOff className="w-6 h-6" />
+              <button className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
+                <Mic className="w-4 h-4 text-accent-foreground" />
               </button>
             </header>
 
-            <div className="mb-5">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Destination</p>
-              <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center">
-                  <Navigation className="w-6 h-6 text-accent" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-accent">Mountain View Diner</p>
-                  <p className="text-xs text-muted-foreground">1234 Highway 1, Mountain View</p>
-                </div>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-widest">Route (3 stops)</p>
+                <button className="flex items-center gap-1 text-[10px] text-accent">
+                  <Plus className="w-3 h-3" /> Add Stop
+                </button>
               </div>
-            </div>
-
-            <div className="mb-5">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Riders (4)</p>
-              <div className="space-y-2.5">
-                {[
-                  { name: demoName || 'You', isLeader: true, ready: true },
-                  { name: 'Marcus', isLeader: false, ready: true },
-                  { name: 'Sarah', isLeader: false, ready: true },
-                  { name: 'Jake', isLeader: false, ready: false },
-                ].map((member, i) => (
-                  <div key={i} className={cn(
-                    "flex items-center gap-3 p-3 rounded-2xl border",
-                    member.isLeader ? "bg-accent/10 border-accent/20" : "bg-card/50 border-border/30"
-                  )}>
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
-                      member.isLeader ? "bg-accent/20" : "bg-secondary"
-                    )}>
-                      {member.isLeader ? <Crown className="w-5 h-5 text-accent" /> : <User className="w-5 h-5 text-muted-foreground" />}
+              <div className="space-y-2">
+                {waypoints.map((wp, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-card/50 border border-border/30 rounded-xl p-2.5 animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{wp.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{wp.address}</p>
                     </div>
-                    <div className="flex-1">
-                      <p className={cn("font-medium text-sm", member.isLeader && "text-accent")}>{member.name}</p>
+                    <div className="flex gap-1">
+                      <Check className="w-4 h-4 text-accent" />
+                      <X className="w-4 h-4 text-destructive" />
                     </div>
-                    {member.ready ? (
-                      <span className="flex items-center gap-1.5 text-[11px] text-accent bg-accent/15 px-3 py-1.5 rounded-full">
-                        <Navigation className="w-3 h-3" /> Ready
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-muted-foreground bg-secondary/80 px-3 py-1.5 rounded-full">Waiting</span>
-                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground">
-              Waiting for riders (3/4)
+            <div className="mb-4">
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-2">Next Stop</p>
+              <div className="bg-accent/10 border border-accent/20 rounded-xl p-3 flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-accent" />
+                <div className="flex-1">
+                  <p className="font-medium text-accent text-sm">Gas Station</p>
+                  <p className="text-[10px] text-muted-foreground">1234 Highway 1</p>
+                </div>
+                <Button size="sm" className="h-8 bg-accent text-accent-foreground">
+                  <Navigation className="w-3 h-3 mr-1" /> Navigate
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-3 bg-secondary/50 rounded-xl text-sm text-muted-foreground">
+              💡 Plan multiple stops — riders navigate one at a time
+            </div>
+          </div>
+        )}
+
+        {/* Lobby Reorder */}
+        {step === 'lobby-reorder' && (
+          <div className="p-5 animate-fade-in">
+            <header className="mb-4 flex items-center justify-between">
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest">Reorder Waypoints</p>
+            </header>
+
+            <div className="space-y-2 mb-5">
+              {waypointOrder.map((wpIndex, i) => (
+                <div 
+                  key={wpIndex} 
+                  className={cn(
+                    "flex items-center gap-2 bg-card/50 border rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all",
+                    i === 1 ? "border-accent border-dashed scale-[1.02] shadow-lg" : "border-border/30"
+                  )}
+                >
+                  <GripVertical className="w-4 h-4 text-muted-foreground" />
+                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{waypoints[wpIndex].name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
+              <p className="text-sm text-accent flex items-center gap-2">
+                <GripVertical className="w-4 h-4" />
+                <span>Drag handles to reorder your route</span>
+              </p>
             </div>
           </div>
         )}
@@ -399,51 +503,143 @@ export default function DemoRide() {
         {/* Active Ride */}
         {step === 'active-ride' && (
           <div className="p-5 animate-fade-in">
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <span className="flex items-center gap-2 text-accent text-xs font-medium px-4 py-2 bg-accent/15 rounded-full">
-                <Users className="w-4 h-4" /> LEADER
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <span className="flex items-center gap-2 text-accent text-xs font-medium px-3 py-1.5 bg-accent/15 rounded-full">
+                <Users className="w-3 h-3" /> LEADER
               </span>
-              <span className="text-muted-foreground text-xs">Ride Active</span>
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                GPS Active
+              </span>
             </div>
 
-            <div className="text-center mb-10">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Current Speed</p>
+            <div className="text-center mb-8">
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-2">Speed</p>
               <div className={cn(
-                "font-mono text-8xl font-semibold transition-all tracking-tight",
+                "font-mono text-7xl font-semibold transition-all tracking-tight",
                 speed > 80 && "text-warning",
                 speed > 90 && "text-destructive"
               )}>
                 {speed}
               </div>
-              <p className="text-muted-foreground text-base mt-1">mph</p>
+              <p className="text-muted-foreground text-sm">mph</p>
             </div>
 
-            <div className="flex justify-center gap-10 mb-10">
+            <div className="flex justify-center gap-8 mb-8">
               {[
-                { label: 'Distance', value: distance.toFixed(1), unit: 'mi' },
-                { label: 'Duration', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` },
-                { label: 'Max', value: Math.round(maxSpeed).toString() },
+                { icon: MapPin, label: 'Dist', value: distance.toFixed(1), unit: 'mi' },
+                { icon: Clock, label: 'Time', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` },
+                { icon: TrendingUp, label: 'Max', value: Math.round(maxSpeed).toString() },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
-                  <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-1.5">{stat.label}</p>
-                  <p className="font-mono text-xl font-semibold">{stat.value}{stat.unit && <span className="text-sm text-muted-foreground/70 ml-1 font-normal">{stat.unit}</span>}</p>
+                  <stat.icon className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                  <p className="font-mono text-lg font-semibold">{stat.value}<span className="text-xs text-muted-foreground ml-0.5">{stat.unit}</span></p>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center justify-center gap-5">
-              <button className="w-14 h-14 rounded-2xl bg-secondary/80 border border-border/30 flex items-center justify-center">
-                <Navigation className="w-6 h-6 text-muted-foreground" />
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <button className="w-12 h-12 rounded-xl bg-secondary/80 flex items-center justify-center">
+                <Navigation className="w-5 h-5 text-muted-foreground" />
               </button>
               <button className={cn(
-                "w-20 h-20 rounded-3xl flex items-center justify-center transition-all",
-                !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80 border border-border/30"
+                "w-16 h-16 rounded-2xl flex items-center justify-center transition-all",
+                !isMuted ? "bg-accent shadow-glow" : "bg-secondary/80"
               )} onClick={() => setIsMuted(!isMuted)}>
-                {isMuted ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8 text-accent-foreground" />}
+                {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7 text-accent-foreground" />}
               </button>
-              <button className="w-14 h-14 rounded-2xl bg-accent/15 text-accent flex items-center justify-center">
-                <Users className="w-6 h-6" />
+              <button className="w-12 h-12 rounded-xl bg-accent/15 text-accent flex items-center justify-center">
+                <Users className="w-5 h-5" />
               </button>
+            </div>
+
+            <div className="bg-card/50 border border-border/30 rounded-xl p-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Convoy (4)</p>
+              <div className="flex gap-2">
+                {demoMembers.slice(0, 4).map((m, i) => (
+                  <div key={i} className="flex-1 text-center">
+                    <p className="text-[10px] truncate">{m.name}</p>
+                    <p className="font-mono text-sm font-semibold">{Math.round(m.speed)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Rescue */}
+        {step === 'active-rescue' && (
+          <div className="p-5 animate-fade-in">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <span className="flex items-center gap-2 text-muted-foreground text-xs font-medium px-3 py-1.5 bg-secondary rounded-full">
+                <User className="w-3 h-3" /> MEMBER
+              </span>
+            </div>
+
+            <div className="text-center mb-6">
+              <p className="font-mono text-6xl font-semibold">{speed}</p>
+              <p className="text-muted-foreground text-sm">mph</p>
+            </div>
+
+            <div className="flex justify-center gap-8 mb-6">
+              <div className="text-center">
+                <p className="font-mono text-lg font-semibold">{distance.toFixed(1)} mi</p>
+              </div>
+              <div className="text-center">
+                <p className="font-mono text-lg font-semibold">{Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}</p>
+              </div>
+            </div>
+
+            <button className="w-full h-14 rounded-xl border-2 border-warning text-warning hover:bg-warning hover:text-warning-foreground flex items-center justify-center gap-3 transition-all mb-4 animate-pulse">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="font-semibold">RESCUE</span>
+            </button>
+
+            <div className="p-3 bg-warning/10 border border-warning/20 rounded-xl">
+              <p className="text-sm text-warning flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Lost? Tap to send your location to the leader</span>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Rescue Response */}
+        {step === 'rescue-response' && (
+          <div className="p-5 animate-fade-in relative">
+            {/* Rescue Alert Overlay */}
+            <div className="absolute top-0 left-4 right-4 bg-destructive/95 text-destructive-foreground rounded-xl p-3 shadow-lg animate-slide-up z-10">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-destructive-foreground/20 flex items-center justify-center animate-pulse">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">Jake needs rescue!</p>
+                  <p className="text-xs opacity-80">Add them as a waypoint to navigate</p>
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" className="h-7 bg-background text-foreground hover:bg-background/90 text-xs">
+                      <UserPlus className="w-3 h-3 mr-1" /> Add Waypoint
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs opacity-70">
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-24">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <span className="flex items-center gap-2 text-accent text-xs font-medium px-3 py-1.5 bg-accent/15 rounded-full">
+                  <Crown className="w-3 h-3" /> LEADER VIEW
+                </span>
+              </div>
+
+              <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
+                <p className="text-sm text-accent">
+                  Leader receives rescue alert and can add the lost rider's location as a waypoint
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -451,30 +647,33 @@ export default function DemoRide() {
         {/* Ride End */}
         {step === 'ride-end' && (
           <div className="p-5 animate-fade-in">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-semibold mb-2 tracking-tight">End Ride?</h2>
-              <p className="text-muted-foreground">This will end the ride for all convoy members</p>
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-semibold mb-1">End Ride?</h2>
+              <p className="text-sm text-muted-foreground">This will end for all convoy members</p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/30 rounded-3xl p-6 mb-6">
-              <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-5">Ride Summary</h3>
-              <div className="grid grid-cols-2 gap-5">
+            <div className="bg-card/50 border border-border/30 rounded-xl p-4 mb-5">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Ride Summary</p>
+              <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: 'Distance', value: `${distance.toFixed(1)} mi` },
-                  { label: 'Duration', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` },
-                  { label: 'Top Speed', value: `${Math.round(maxSpeed)} mph` },
-                  { label: 'Avg Speed', value: `${Math.round(maxSpeed * 0.6)} mph` },
+                  { icon: MapPin, label: 'Distance', value: `${distance.toFixed(1)} mi` },
+                  { icon: Clock, label: 'Duration', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` },
+                  { icon: TrendingUp, label: 'Top Speed', value: `${Math.round(maxSpeed)} mph` },
+                  { icon: Gauge, label: 'Avg Speed', value: `${Math.round(maxSpeed * 0.6)} mph` },
                 ].map((stat, i) => (
-                  <div key={i}>
-                    <p className="text-muted-foreground text-xs mb-1">{stat.label}</p>
-                    <p className="font-mono text-2xl font-semibold">{stat.value}</p>
+                  <div key={i} className="flex items-center gap-2">
+                    <stat.icon className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                      <p className="font-mono text-lg font-semibold">{stat.value}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <Button className="w-full h-14 text-base font-semibold bg-destructive hover:bg-destructive/90 rounded-2xl">
-              <Square className="w-5 h-5 mr-2" /> END RIDE
+            <Button className="w-full h-12 bg-destructive hover:bg-destructive/90 rounded-xl">
+              <Square className="w-4 h-4 mr-2" /> END CONVOY
             </Button>
           </div>
         )}
@@ -482,26 +681,26 @@ export default function DemoRide() {
         {/* Badge Summary */}
         {step === 'badge-summary' && (
           <div className="p-5 animate-fade-in">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center">
-                <Trophy className="w-7 h-7 text-accent" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold tracking-tight">Ride Complete</h2>
+                <h2 className="text-lg font-semibold">Ride Complete!</h2>
                 <p className="text-sm text-muted-foreground">Badge Awards</p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
-                { type: 'speed-demon', emoji: '⚡', label: 'Speed Demon', name: demoName || 'You', color: 'yellow' },
-                { type: 'journeyman', emoji: '🛣️', label: 'Journeyman', name: demoName || 'You', color: 'blue' },
-                { type: 'rocksteady', emoji: '🪨', label: 'Rocksteady', name: demoName || 'You', color: 'stone' },
+                { emoji: '⚡', label: 'Speed Demon', desc: 'Highest top speed', name: demoName || 'You', color: 'yellow' },
+                { emoji: '🛣️', label: 'Journeyman', desc: 'Most distance covered', name: 'Marcus', color: 'blue' },
+                { emoji: '🪨', label: 'Rocksteady', desc: 'Longest time stationary', name: 'Jake', color: 'stone' },
               ].map((badge, i) => (
                 <div
                   key={i}
                   className={cn(
-                    "flex items-center gap-4 p-5 rounded-2xl border animate-slide-up",
+                    "flex items-center gap-3 p-4 rounded-xl border animate-slide-up",
                     badge.color === 'yellow' && "bg-yellow-500/10 border-yellow-500/20",
                     badge.color === 'blue' && "bg-blue-500/10 border-blue-500/20",
                     badge.color === 'stone' && "bg-stone-500/10 border-stone-500/20"
@@ -509,7 +708,7 @@ export default function DemoRide() {
                   style={{ animationDelay: `${i * 150}ms` }}
                 >
                   <div className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center text-3xl",
+                    "w-12 h-12 rounded-xl flex items-center justify-center text-2xl",
                     badge.color === 'yellow' && "bg-yellow-500/20",
                     badge.color === 'blue' && "bg-blue-500/20",
                     badge.color === 'stone' && "bg-stone-500/20"
@@ -518,20 +717,95 @@ export default function DemoRide() {
                   </div>
                   <div className="flex-1">
                     <p className={cn(
-                      "font-semibold text-lg",
+                      "font-semibold",
                       badge.color === 'yellow' && "text-yellow-400",
                       badge.color === 'blue' && "text-blue-400",
                       badge.color === 'stone' && "text-stone-400"
                     )}>
                       {badge.label}
                     </p>
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Crown className="w-4 h-4 text-accent" />
-                      <span>{badge.name}</span>
-                    </div>
+                    <p className="text-xs text-muted-foreground">{badge.desc}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{badge.name}</p>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* History */}
+        {step === 'history' && (
+          <div className="p-5 animate-fade-in">
+            <h1 className="text-xl font-semibold mb-4">Ride History</h1>
+            
+            <div className="space-y-2">
+              {[
+                { date: 'Today', time: '2:30 PM', distance: '45.2', duration: '57:00', speed: '78', convoy: true },
+                { date: 'Yesterday', time: '10:15 AM', distance: '82.7', duration: '1:30:00', speed: '92', convoy: false },
+                { date: 'Dec 15', time: '3:45 PM', distance: '67.3', duration: '1:20:00', speed: '85', convoy: true, hasPhotos: true },
+              ].map((ride, i) => (
+                <div key={i} className="bg-card/50 border border-border/30 rounded-xl p-3 animate-slide-up" style={{ animationDelay: `${i * 75}ms` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="font-medium text-sm">{ride.date}</p>
+                      <p className="text-xs text-muted-foreground">{ride.time}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      {ride.convoy && (
+                        <span className="text-[10px] bg-accent/15 text-accent px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Users className="w-2.5 h-2.5" /> Convoy
+                        </span>
+                      )}
+                      {ride.hasPhotos && (
+                        <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Image className="w-2.5 h-2.5" /> 3
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-4 text-xs text-muted-foreground">
+                    <span>{ride.distance} mi</span>
+                    <span>{ride.duration}</span>
+                    <span>Max {ride.speed} mph</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* History Photos */}
+        {step === 'history-photos' && (
+          <div className="p-5 animate-fade-in">
+            <h1 className="text-xl font-semibold mb-1">Dec 15 Ride</h1>
+            <p className="text-sm text-muted-foreground mb-4">67.3 mi • 1:20:00</p>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-muted-foreground text-[10px] uppercase tracking-widest flex items-center gap-1">
+                  <Image className="w-3 h-3" /> Photos (3/10)
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map((_, i) => (
+                  <div key={i} className="aspect-square rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-border/30 flex items-center justify-center animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                    <Camera className="w-6 h-6 text-muted-foreground/50" />
+                  </div>
+                ))}
+                <button className="aspect-square rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center gap-1 hover:border-accent/50 transition-colors">
+                  <Plus className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">Add</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
+              <p className="text-sm text-accent flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                <span>Attach up to 10 photos per ride — stored locally</span>
+              </p>
             </div>
           </div>
         )}
@@ -539,72 +813,113 @@ export default function DemoRide() {
         {/* Stats */}
         {step === 'stats' && (
           <div className="p-5 animate-fade-in">
-            <h1 className="text-2xl font-semibold mb-6 tracking-tight">Statistics</h1>
+            <h1 className="text-xl font-semibold mb-4">Statistics</h1>
 
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-accent" />
-                </div>
-                <h2 className="text-base font-semibold">Convoy Badges</h2>
-                <span className="ml-auto text-sm text-muted-foreground">6 earned</span>
+            <div className="mb-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy className="w-4 h-4 text-accent" />
+                <h2 className="text-sm font-semibold">Convoy Badges</h2>
+                <span className="ml-auto text-xs text-muted-foreground">6 earned</span>
               </div>
               
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { emoji: '⚡', count: 3, label: 'Speed Demon', color: 'yellow' },
-                  { emoji: '🛣️', count: 2, label: 'Journeyman', color: 'blue' },
-                  { emoji: '🪨', count: 1, label: 'Rocksteady', color: 'stone' },
+                  { emoji: '⚡', count: 3, color: 'yellow' },
+                  { emoji: '🛣️', count: 2, color: 'blue' },
+                  { emoji: '🪨', count: 1, color: 'stone' },
                 ].map((badge, i) => (
                   <div
                     key={i}
                     className={cn(
-                      "flex flex-col items-center p-4 rounded-2xl border",
+                      "flex flex-col items-center p-3 rounded-xl border",
                       badge.color === 'yellow' && "bg-yellow-500/10 border-yellow-500/20",
                       badge.color === 'blue' && "bg-blue-500/10 border-blue-500/20",
                       badge.color === 'stone' && "bg-stone-500/10 border-stone-500/20"
                     )}
                   >
-                    <span className="text-3xl mb-2">{badge.emoji}</span>
-                    <span className={cn(
-                      "font-mono text-2xl font-semibold",
-                      badge.color === 'yellow' && "text-yellow-400",
-                      badge.color === 'blue' && "text-blue-400",
-                      badge.color === 'stone' && "text-stone-400"
-                    )}>
-                      {badge.count}
-                    </span>
-                    <span className={cn(
-                      "text-[10px] font-medium text-center mt-1",
-                      badge.color === 'yellow' && "text-yellow-400",
-                      badge.color === 'blue' && "text-blue-400",
-                      badge.color === 'stone' && "text-stone-400"
-                    )}>
-                      {badge.label}
-                    </span>
+                    <span className="text-2xl mb-1">{badge.emoji}</span>
+                    <span className="font-mono text-xl font-semibold">{badge.count}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
-                { emoji: '🏍️', label: 'Total Rides', value: '13', unit: 'rides' },
-                { emoji: '📍', label: 'Total Distance', value: '352', unit: 'mi' },
-                { emoji: '⏱️', label: 'Time Riding', value: '8:35:45', unit: '' },
-                { emoji: '🚀', label: 'Top Speed', value: Math.round(maxSpeed).toString(), unit: 'mph' },
+                { label: 'Total Rides', value: '13' },
+                { label: 'Total Distance', value: '352 mi' },
+                { label: 'Time Riding', value: '8:35' },
+                { label: 'Top Speed', value: `${Math.round(maxSpeed)} mph` },
               ].map((stat, i) => (
-                <div key={i} className="bg-card/50 backdrop-blur-sm rounded-2xl p-4 border border-border/30 flex items-center gap-4 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                  <span className="text-2xl">{stat.emoji}</span>
-                  <div className="flex-1">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-                    <p className="font-mono text-2xl font-semibold">
-                      {stat.value}
-                      {stat.unit && <span className="text-sm text-muted-foreground/70 ml-1 font-normal">{stat.unit}</span>}
-                    </p>
-                  </div>
+                <div key={i} className="bg-card/50 rounded-xl p-3 border border-border/30 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="font-mono text-lg font-semibold">{stat.value}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Settings */}
+        {step === 'settings' && (
+          <div className="p-5 animate-fade-in">
+            <h1 className="text-xl font-semibold mb-4">Settings</h1>
+
+            <div className="space-y-3 mb-6">
+              <div className="bg-card/50 border border-border/30 rounded-xl p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Speed Unit</p>
+                <div className="flex gap-2">
+                  <button className="flex-1 h-9 rounded-lg bg-accent text-accent-foreground text-sm font-medium">mph</button>
+                  <button className="flex-1 h-9 rounded-lg bg-secondary text-sm">kph</button>
+                </div>
+              </div>
+
+              <div className="bg-card/50 border border-border/30 rounded-xl p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Navigation App</p>
+                <div className="flex gap-2">
+                  {['Google', 'Apple', 'Waze'].map((app, i) => (
+                    <button key={app} className={cn(
+                      "flex-1 h-9 rounded-lg text-sm font-medium",
+                      i === 0 ? "bg-accent text-accent-foreground" : "bg-secondary"
+                    )}>
+                      {app}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-card/50 border border-border/30 rounded-xl p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Accent Color</p>
+                <div className="flex gap-2">
+                  {['orange', 'blue', 'pink', 'green'].map((color, i) => (
+                    <button 
+                      key={color}
+                      className={cn(
+                        "w-8 h-8 rounded-full",
+                        color === 'orange' && "bg-orange-500 ring-2 ring-offset-2 ring-offset-background ring-orange-500",
+                        color === 'blue' && "bg-blue-500",
+                        color === 'pink' && "bg-pink-500",
+                        color === 'green' && "bg-green-500"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+              <div className="flex items-start gap-3">
+                <Flame className="w-5 h-5 text-destructive flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-destructive text-sm">Burn Button</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Permanently delete all ride data, stats, and convoy history. Your profile name is preserved.
+                  </p>
+                  <Button size="sm" variant="destructive" className="mt-3 h-8">
+                    Burn All Data
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -612,17 +927,27 @@ export default function DemoRide() {
         {/* Complete */}
         {step === 'complete' && (
           <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
-            <div className="w-20 h-20 rounded-3xl bg-accent/15 flex items-center justify-center mb-8">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center mb-6">
               <Check className="w-10 h-10 text-accent" />
             </div>
-            <h1 className="text-3xl font-semibold text-center mb-3 tracking-tight">
+            <h1 className="text-2xl font-semibold text-center mb-2">
               Demo Complete!
             </h1>
-            <p className="text-muted-foreground text-center max-w-sm mb-10">
-              You've seen all of Blacktop's features. Ready to start your own ride?
+            <p className="text-muted-foreground text-center text-sm max-w-xs mb-8">
+              You've explored all of Blacktop's features. Ready to hit the road?
             </p>
-            <Button onClick={exitDemo} className="h-14 px-10 text-base font-semibold rounded-2xl">
-              Get Started <ArrowRight className="w-5 h-5 ml-2" />
+            
+            <div className="grid grid-cols-2 gap-2 text-xs max-w-xs w-full mb-8">
+              {['Convoy Mode', 'Voice Chat', 'Multi-Waypoints', 'Rescue System', 'Live Tracking', 'Badge Awards', 'Ride Photos', 'Burn Button'].map((feature, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-muted-foreground">
+                  <Check className="w-3 h-3 text-accent" />
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <Button onClick={exitDemo} className="h-12 px-8 rounded-xl">
+              Get Started <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         )}
@@ -630,9 +955,9 @@ export default function DemoRide() {
 
       {/* Bottom Navigation */}
       {step !== 'complete' && (
-        <div className="fixed bottom-0 left-0 right-0 p-5 glass">
-          <Button onClick={nextStep} className="w-full h-14 text-base font-semibold rounded-2xl">
-            {step === 'welcome' ? 'Start Demo' : 'Continue'} <ArrowRight className="w-5 h-5 ml-2" />
+        <div className="fixed bottom-0 left-0 right-0 p-4 glass">
+          <Button onClick={nextStep} className="w-full h-12 rounded-xl font-semibold">
+            {step === 'welcome' ? 'Start Tour' : 'Continue'} <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       )}
