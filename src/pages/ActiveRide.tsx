@@ -401,13 +401,17 @@ export default function ActiveRide() {
             <div className="flex items-center gap-2">
               {/* Voice disconnect/connect button */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (isConnected) {
                     disconnect();
                     toast.success('Left voice channel', { description: 'Saving battery' });
                   } else {
-                    connect();
-                    toast.success('Joined voice channel');
+                    const success = await connect();
+                    if (success) {
+                      toast.success('Joined voice channel');
+                    } else {
+                      toast.error('Failed to join voice channel', { description: 'Check microphone permissions' });
+                    }
                   }
                 }}
                 className={cn(
