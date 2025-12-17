@@ -264,60 +264,60 @@ export default function ActiveRide() {
       setFinalMembers(membersRef.current);
     }
 
-    // Show summary immediately for convoy rides (don't wait for cleanup)
+    // CRITICAL: If leader in convoy mode, broadcast 'end-ride' BEFORE ending ride
+    // This ensures the control channel is still active when sending
+    if (wasConvoyMode && wasLeader && convoyId) {
+      console.log('[ActiveRide] Leader broadcasting end-ride to all members');
+      try {
+        if (controlChannelRef.current) {
+          console.log('[ActiveRide] Using existing control channel for end-ride broadcast');
+          await controlChannelRef.current.send({
+            type: 'broadcast',
+            event: 'end-ride',
+            payload: { at: Date.now() },
+          });
+          // Wait for message to be delivered
+          await new Promise(resolve => setTimeout(resolve, 300));
+          console.log('[ActiveRide] End-ride broadcast sent successfully');
+        } else {
+          // Fallback: create new channel if ref not available
+          console.log('[ActiveRide] Creating new channel for end-ride broadcast');
+          const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
+          await new Promise<void>((resolve) => {
+            broadcastChannel.subscribe(async (status) => {
+              if (status !== 'SUBSCRIBED') return;
+              try {
+                await broadcastChannel.send({
+                  type: 'broadcast',
+                  event: 'end-ride',
+                  payload: { at: Date.now() },
+                });
+                console.log('[ActiveRide] End-ride broadcast sent via new channel');
+              } finally {
+                setTimeout(() => {
+                  supabase.removeChannel(broadcastChannel);
+                  resolve();
+                }, 300);
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('[ActiveRide] Failed to broadcast end-ride:', err);
+      }
+    }
+
+    // Show summary immediately for convoy rides (after broadcast sent)
     if (wasConvoyMode) {
       setShowSummary(true);
     }
 
-    // Run cleanup operations in parallel/background
-    const cleanupPromises: Promise<any>[] = [];
-
-    // If leader in convoy mode, broadcast 'end-ride' to all members
-    if (wasConvoyMode && wasLeader && convoyId) {
-      console.log('[ActiveRide] Leader broadcasting end-ride to all members');
-      cleanupPromises.push(
-        (async () => {
-          // Use existing control channel if subscribed, otherwise create new one
-          if (controlChannelRef.current) {
-            console.log('[ActiveRide] Using existing control channel for end-ride broadcast');
-            await controlChannelRef.current.send({
-              type: 'broadcast',
-              event: 'end-ride',
-              payload: { at: Date.now() },
-            });
-            // Small delay to ensure message is flushed
-            await new Promise(resolve => setTimeout(resolve, 100));
-          } else {
-            // Fallback: create new channel if ref not available
-            console.log('[ActiveRide] Creating new channel for end-ride broadcast');
-            const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
-            await new Promise<void>((resolve) => {
-              broadcastChannel.subscribe(async (status) => {
-                if (status !== 'SUBSCRIBED') return;
-                try {
-                  await broadcastChannel.send({
-                    type: 'broadcast',
-                    event: 'end-ride',
-                    payload: { at: Date.now() },
-                  });
-                } finally {
-                  setTimeout(() => {
-                    supabase.removeChannel(broadcastChannel);
-                    resolve();
-                  }, 100);
-                }
-              });
-            });
-          }
-        })()
-      );
-    }
-
-    // End the ride and get the ID
+    // Now safe to end the ride (control channel broadcast already sent)
     const rideId = await endRide();
     setSavedRideId(rideId);
 
     // Cleanup convoy state in background
+    const cleanupPromises: Promise<any>[] = [];
     if (wasConvoyMode) {
       if (wasLeader) {
         cleanupPromises.push(endConvoyRide());
