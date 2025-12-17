@@ -11,6 +11,7 @@ import { useRideHistory } from '@/hooks/useRideHistory';
 import { useProfile } from '@/hooks/useProfile';
 import { useRescue } from '@/hooks/useRescue';
 import { useWaypoints } from '@/hooks/useWaypoints';
+import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
@@ -103,7 +104,7 @@ export default function ActiveRide() {
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
-  const hadDestinationRef = useRef<boolean>(false); // Track if we ever had a destination (to detect leader ending ride)
+  const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
 
   // Keep screen awake during active ride
   useEffect(() => {
@@ -131,13 +132,6 @@ export default function ActiveRide() {
     };
   }, [isConnected, disconnect]);
 
-  // Initialize destination tracking ref on mount if we already have a destination
-  useEffect(() => {
-    if (convoy.destination) {
-      hadDestinationRef.current = true;
-    }
-  }, []); // Only on mount
-
   // Redirect if no active ride (but don't interrupt the explicit "end ride" flow / summary)
   useEffect(() => {
     if (!rideState.isActive && !showSummary && !endingFlow) {
@@ -152,38 +146,42 @@ export default function ActiveRide() {
     }
   }, [convoy.isPaused, rideState.isConvoyMode, setRidePaused]);
 
-  // Non-leaders: listen for leader ending the ride (destination cleared)
-  // Only trigger if we previously had a destination and it was cleared
+  // Subscribe to convoy control channel for 'end-ride' broadcast from leader
   useEffect(() => {
-    if (!(rideState.isConvoyMode && !convoy.isLeader && rideState.isActive)) return;
+    if (!convoy.id || !rideState.isConvoyMode) return;
 
-    // Track that we've seen a destination
-    if (convoy.destination) {
-      hadDestinationRef.current = true;
-      return;
-    }
+    const channel = supabase.channel(`convoy-control:${convoy.id}`, {
+      config: { broadcast: { self: false } },
+    });
 
-    // Only end ride if we HAD a destination before and now it's gone
-    // This prevents false triggers during state restoration or initial load
-    if (convoy.isActive && !convoy.destination && hadDestinationRef.current) {
-      console.log('[ActiveRide] Destination cleared by leader - ending ride for member');
+    channel.on('broadcast', { event: 'end-ride' }, () => {
+      if (endingFlow) return; // Already ending
+      console.log('[ActiveRide] Received end-ride broadcast from leader');
       toast.info('Leader ended the ride');
       setEndingFlow(true);
-      hadDestinationRef.current = false; // Reset for next ride
       (async () => {
+        if (isConnected) {
+          disconnect();
+        }
         await endRide();
+        await resetNavigationStatus();
         navigate('/lobby');
       })();
-    }
-  }, [
-    convoy.destination,
-    convoy.isLeader,
-    convoy.isActive,
-    rideState.isConvoyMode,
-    rideState.isActive,
-    endRide,
-    navigate,
-  ]);
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[ActiveRide] Subscribed to convoy control channel');
+      }
+    });
+
+    controlChannelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      controlChannelRef.current = null;
+    };
+  }, [convoy.id, rideState.isConvoyMode, endRide, resetNavigationStatus, navigate, isConnected, disconnect, endingFlow]);
 
   const handleEndRide = async () => {
     setEndingFlow(true);
@@ -194,6 +192,7 @@ export default function ActiveRide() {
 
     const wasConvoyMode = rideState.isConvoyMode;
     const wasLeader = convoy.isLeader;
+    const convoyId = convoy.id;
 
     // Capture final ride stats before ending
     const avgSpeed = rideState.duration > 0 ? (rideState.distance / (rideState.duration / 3600)) : 0;
@@ -207,6 +206,21 @@ export default function ActiveRide() {
     // Capture final members before ending for badge summary
     if (wasConvoyMode && membersRef.current.length > 0) {
       setFinalMembers(membersRef.current);
+    }
+
+    // If leader in convoy mode, broadcast 'end-ride' to all members BEFORE ending
+    if (wasConvoyMode && wasLeader && convoyId) {
+      console.log('[ActiveRide] Leader broadcasting end-ride to all members');
+      const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`);
+      await broadcastChannel.subscribe();
+      await broadcastChannel.send({
+        type: 'broadcast',
+        event: 'end-ride',
+        payload: {},
+      });
+      // Give time for broadcast to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      supabase.removeChannel(broadcastChannel);
     }
 
     const rideId = await endRide();
