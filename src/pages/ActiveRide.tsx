@@ -4,6 +4,7 @@ import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/hooks/useConvoyState';
+import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route } from 'lucide-react';
 import { formatDuration, formatDistance } from '@/lib/format';
@@ -26,6 +27,7 @@ export default function ActiveRide() {
   const { convoy, resetNavigationStatus, endConvoyRide } = useConvoyState();
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { openNavigation } = useNavigation();
+  const { settings } = useSettings();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
 
@@ -86,10 +88,10 @@ export default function ActiveRide() {
 
   if (!rideState.isActive) return null;
 
-  // Sort members by top speed (highest first)
-  const sortedMembers = [...convoy.members].sort((a, b) => {
-    return (b.topSpeed || 0) - (a.topSpeed || 0);
-  });
+  // Sort members by top speed (highest first) if rankings enabled, otherwise by join time
+  const sortedMembers = settings.showSpeedRankings 
+    ? [...convoy.members].sort((a, b) => (b.topSpeed || 0) - (a.topSpeed || 0))
+    : convoy.members;
 
   const getMemberColor = (index: number, isLeader: boolean) => {
     if (isLeader) return { bg: 'bg-accent/20', text: 'text-accent', ring: 'ring-accent/50' };
@@ -231,31 +233,35 @@ export default function ActiveRide() {
                         )}
                       </div>
                       
-                      {/* Name and stats */}
+                      {/* Name and speaking indicator */}
                       <div className="flex-1 min-w-0">
                         <p className={cn("font-medium text-sm truncate", color.text)}>
                           {member.name}
                           {isSpeaking && <span className="ml-1 text-xs opacity-75">🎤</span>}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Gauge className="w-3 h-3" />
-                            {member.currentSpeed || 0} mph
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Route className="w-3 h-3" />
-                            {formatDistance(member.distanceDriven || 0)}
-                          </span>
-                        </div>
+                        {settings.showSpeedRankings && (
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Gauge className="w-3 h-3" />
+                              {member.currentSpeed || 0} mph
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Route className="w-3 h-3" />
+                              {formatDistance(member.distanceDriven || 0)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       
-                      {/* Top speed badge */}
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-muted-foreground">Top</p>
-                        <p className={cn("font-mono text-sm font-bold", color.text)}>
-                          {member.topSpeed || 0}
-                        </p>
-                      </div>
+                      {/* Top speed badge - only if rankings enabled */}
+                      {settings.showSpeedRankings && (
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-xs text-muted-foreground">Top</p>
+                          <p className={cn("font-mono text-sm font-bold", color.text)}>
+                            {member.topSpeed || 0}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
