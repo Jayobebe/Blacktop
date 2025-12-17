@@ -105,6 +105,10 @@ export default function ActiveRide() {
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
+  const rideStateRef = useRef(rideState); // Keep fresh ref for broadcast handler
+  
+  // Update ref on each render to avoid stale closures
+  rideStateRef.current = rideState;
 
   // Keep screen awake during active ride
   useEffect(() => {
@@ -163,9 +167,29 @@ export default function ActiveRide() {
         if (isConnected) {
           disconnect();
         }
-        await endRide();
+        
+        // Capture final ride stats before ending (same as leader flow)
+        // Use ref to get fresh state values, avoiding stale closure
+        const currentRideState = rideStateRef.current;
+        const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
+        setFinalRideStats({
+          duration: currentRideState.duration,
+          distance: currentRideState.distance,
+          maxSpeed: currentRideState.maxSpeed,
+          averageSpeed: avgSpeed,
+        });
+        
+        // Capture final members for badge summary
+        if (membersRef.current.length > 0) {
+          setFinalMembers(membersRef.current);
+        }
+        
+        const rideId = await endRide();
+        setSavedRideId(rideId);
         await resetNavigationStatus();
-        navigate('/lobby');
+        
+        // Show summary instead of navigating away
+        setShowSummary(true);
       })();
     });
 
