@@ -277,25 +277,8 @@ export default function Lobby() {
       </div>
 
       {/* Action Buttons - compact */}
-      <div className="mt-2 md:mt-3 animate-slide-up delay-300 flex items-center gap-2">
-        {/* Start Ride button - only show when destination is set */}
-        {convoy.destination && !showLeaveConfirm && (
-          <Button
-            onClick={() => {
-              hasStartedRide.current = true;
-              const success = startRide(true, convoy.id);
-              if (success) {
-                navigate('/ride');
-              }
-            }}
-            size="sm"
-            className="h-9 px-4"
-          >
-            <Play className="w-3.5 h-3.5 mr-1.5" />
-            Start Ride
-          </Button>
-        )}
-        
+      <div className="mt-2 md:mt-3 animate-slide-up delay-300 flex items-center justify-between">
+        {/* Leave button */}
         {!showLeaveConfirm ? (
           <Button
             onClick={() => setShowLeaveConfirm(true)}
@@ -313,7 +296,7 @@ export default function Lobby() {
               size="sm"
               className="h-9 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              Confirm Leave
+              Confirm
             </Button>
             <Button
               onClick={() => setShowLeaveConfirm(false)}
@@ -324,6 +307,24 @@ export default function Lobby() {
               Cancel
             </Button>
           </div>
+        )}
+
+        {/* Start Ride button - always visible */}
+        {!showLeaveConfirm && (
+          <Button
+            onClick={() => {
+              hasStartedRide.current = true;
+              const success = startRide(true, convoy.id);
+              if (success) {
+                navigate('/ride');
+              }
+            }}
+            size="sm"
+            className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <Play className="w-3.5 h-3.5 mr-1.5" />
+            Start Ride
+          </Button>
         )}
       </div>
     </div>
