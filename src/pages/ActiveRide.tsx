@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { useSettings } from '@/hooks/useSettings';
+import { calculateBadges } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
@@ -92,6 +93,9 @@ export default function ActiveRide() {
   const sortedMembers = settings.showSpeedRankings 
     ? [...convoy.members].sort((a, b) => (b.topSpeed || 0) - (a.topSpeed || 0))
     : convoy.members;
+
+  // Calculate badges for members
+  const memberBadges = useMemo(() => calculateBadges(convoy.members), [convoy.members]);
 
   const getMemberColor = (index: number, isLeader: boolean) => {
     if (isLeader) return { bg: 'bg-accent/20', text: 'text-accent', ring: 'ring-accent/50' };
@@ -238,10 +242,23 @@ export default function ActiveRide() {
                       
                       {/* Name and speaking indicator */}
                       <div className="flex-1 min-w-0">
-                        <p className={cn("font-medium text-sm truncate", color.text)}>
-                          {member.name}
-                          {isSpeaking && <span className="ml-1 text-xs opacity-75">🎤</span>}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={cn("font-medium text-sm truncate", color.text)}>
+                            {member.name}
+                            {isSpeaking && <span className="ml-1 text-xs opacity-75">🎤</span>}
+                          </p>
+                          {/* Badge */}
+                          {memberBadges.has(member.userId) && (
+                            <span className={cn(
+                              "text-xs px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap",
+                              memberBadges.get(member.userId)?.type === 'speed-demon' && "bg-yellow-500/20 text-yellow-400",
+                              memberBadges.get(member.userId)?.type === 'journeyman' && "bg-blue-500/20 text-blue-400",
+                              memberBadges.get(member.userId)?.type === 'rocksteady' && "bg-stone-500/20 text-stone-400"
+                            )}>
+                              {memberBadges.get(member.userId)?.emoji} {memberBadges.get(member.userId)?.label}
+                            </span>
+                          )}
+                        </div>
                         {settings.showSpeedRankings && (
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">

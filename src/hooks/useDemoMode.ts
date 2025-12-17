@@ -98,6 +98,7 @@ export function useDemoMode() {
       currentSpeed: 0,
       topSpeed: 0,
       distanceDriven: 0,
+      stationaryTime: 0,
     }));
 
     setDemoState({
@@ -127,23 +128,55 @@ export function useDemoMode() {
         const distanceIncrement = newSpeed / 3600 * 0.5; // 0.5 second intervals
         const newDistance = prev.distance + distanceIncrement;
 
-        // Update all members with realistic but varied speeds
+        // Update all members with varied behavior for different badges
         const updatedMembers = prev.members.map((member, index) => {
-          // Each member has their own speed pattern
-          const memberBaseSpeed = 40 + (index * 5) + Math.sin((elapsedSeconds + index * 2) / 4) * 25;
-          const memberVariation = (Math.random() - 0.5) * 15;
-          const memberSpeed = Math.max(0, Math.min(130, memberBaseSpeed + memberVariation));
+          let memberSpeed: number;
+          let stationaryIncrement = 0;
+          
+          // Give each member a different behavior pattern
+          if (index === 2) {
+            // SpeedDemon - fastest rider, aggressive acceleration
+            const speedBase = 60 + Math.sin((elapsedSeconds + index) / 3) * 35;
+            memberSpeed = Math.max(5, Math.min(140, speedBase + (Math.random() - 0.3) * 20));
+          } else if (index === 1) {
+            // RoadRunner - consistent high distance, moderate speed
+            memberSpeed = 55 + Math.sin((elapsedSeconds + index) / 6) * 15 + (Math.random() - 0.5) * 10;
+            memberSpeed = Math.max(40, Math.min(80, memberSpeed));
+          } else if (index === 4) {
+            // NightRider - frequently stops, gets Rocksteady badge
+            const stopChance = Math.sin(elapsedSeconds / 4);
+            if (stopChance > 0.3) {
+              memberSpeed = 0;
+              stationaryIncrement = 0.5; // Add 0.5 seconds of stationary time
+            } else {
+              memberSpeed = 35 + Math.random() * 25;
+            }
+          } else {
+            // Others - normal varied speeds
+            const memberBaseSpeed = 40 + (index * 5) + Math.sin((elapsedSeconds + index * 2) / 4) * 25;
+            const memberVariation = (Math.random() - 0.5) * 15;
+            memberSpeed = Math.max(0, Math.min(100, memberBaseSpeed + memberVariation));
+            if (memberSpeed < 5) {
+              memberSpeed = 0;
+              stationaryIncrement = 0.5;
+            }
+          }
+          
           const memberTopSpeed = Math.max(member.topSpeed || 0, memberSpeed);
           
           // Accumulate member distance
           const memberDistanceIncrement = memberSpeed / 3600 * 0.5;
           const memberDistance = (member.distanceDriven || 0) + memberDistanceIncrement;
+          
+          // Track stationary time
+          const memberStationaryTime = (member.stationaryTime || 0) + stationaryIncrement;
 
           return {
             ...member,
             currentSpeed: Math.round(memberSpeed),
             topSpeed: Math.round(memberTopSpeed),
             distanceDriven: memberDistance,
+            stationaryTime: memberStationaryTime,
           };
         });
 
