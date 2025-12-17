@@ -54,8 +54,12 @@ export function useRideNotification({
       });
 
       notificationRef.current.onclick = () => {
-        // Focus the window/tab when notification is clicked
+        // Focus the window/tab and navigate to active ride when notification is clicked
         window.focus();
+        // Navigate to active ride page
+        if (window.location.pathname !== '/active-ride') {
+          window.location.href = '/active-ride';
+        }
         notificationRef.current?.close();
       };
 
