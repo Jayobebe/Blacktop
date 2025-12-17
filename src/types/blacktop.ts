@@ -12,6 +12,7 @@ export interface BadgeCounts {
 
 export interface RideSession {
   id: string;
+  name?: string; // Optional custom name for the ride
   startedAt: string;
   endedAt: string | null;
   isConvoyRide: boolean;
