@@ -162,24 +162,7 @@ export default function Stats() {
         ))}
       </div>
 
-      {/* Icon Preview - TEMPORARY */}
-      <div className="mt-8 p-4 bg-card rounded-lg border border-border">
-        <h3 className="text-sm font-semibold mb-4 text-center">App Icon Options</h3>
-        <div className="flex justify-center gap-4">
-          <div className="flex flex-col items-center gap-2">
-            <img src="/pwa-512x512.png" alt="Icon 1" className="w-20 h-20 rounded-xl" />
-            <span className="text-xs text-muted-foreground">1</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <img src="/pwa-192x192.png" alt="Icon 2" className="w-20 h-20 rounded-xl" />
-            <span className="text-xs text-muted-foreground">2</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <img src="/apple-touch-icon.png" alt="Icon 3" className="w-20 h-20 rounded-xl" />
-            <span className="text-xs text-muted-foreground">3</span>
-          </div>
-        </div>
-      </div>
+
 
       {/* Disclaimer */}
       <p className="text-xs text-muted-foreground text-center mt-8 px-4">
