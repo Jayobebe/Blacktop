@@ -15,6 +15,7 @@ import History from "./pages/History";
 import RideDetail from "./pages/RideDetail";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/install" element={<Install />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
