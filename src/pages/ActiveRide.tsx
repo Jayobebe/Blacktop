@@ -75,7 +75,9 @@ export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused } = useActiveRide();
   const { convoy, resetNavigationStatus, endConvoyRide, togglePause } = useConvoyState();
-  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
+  // Only use voice channel for convoy rides with other members
+  const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
+  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
   const { updateRideBadges } = useRideHistory();
@@ -119,15 +121,17 @@ export default function ActiveRide() {
     }
   }, [convoy.members]);
 
-  // Connect to voice channel if convoy mode
+  // Connect to voice channel if convoy mode with multiple members
   useEffect(() => {
-    if (rideState.isConvoyMode && !isConnected) {
+    if (rideState.isConvoyMode && convoy.members.length > 1 && !isConnected) {
       connect();
     }
     return () => {
-      disconnect();
+      if (isConnected) {
+        disconnect();
+      }
     };
-  }, [rideState.isConvoyMode, isConnected, connect, disconnect]);
+  }, [rideState.isConvoyMode, convoy.members.length, isConnected, connect, disconnect]);
 
   // Redirect if no active ride (but don't interrupt the explicit "end ride" flow / summary)
   useEffect(() => {
@@ -405,8 +409,8 @@ export default function ActiveRide() {
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
 
-          {/* Voice Controls (Convoy Mode Only) */}
-          {rideState.isConvoyMode && (
+          {/* Voice Controls (Convoy Mode with multiple members only) */}
+          {rideState.isConvoyMode && convoy.members.length > 1 && (
             <div className="flex items-center gap-2">
               {/* Voice disconnect/connect button */}
               <button

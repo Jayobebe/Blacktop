@@ -3,19 +3,93 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type PermissionStatus = 'pending' | 'granted' | 'denied' | 'prompt';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true);
+  const [step, setStep] = useState<'permissions' | 'profile'>('permissions');
+  const [locationPermission, setLocationPermission] = useState<PermissionStatus>('pending');
+  const [micPermission, setMicPermission] = useState<PermissionStatus>('pending');
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
+  const [isRequestingMic, setIsRequestingMic] = useState(false);
   const { createProfile } = useProfile();
   const navigate = useNavigate();
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches;
     setIsStandalone(standalone);
+    checkPermissions();
   }, []);
+
+  const checkPermissions = async () => {
+    // Check location permission
+    if ('permissions' in navigator) {
+      try {
+        const locationResult = await navigator.permissions.query({ name: 'geolocation' });
+        setLocationPermission(locationResult.state as PermissionStatus);
+        locationResult.onchange = () => {
+          setLocationPermission(locationResult.state as PermissionStatus);
+        };
+      } catch {
+        setLocationPermission('prompt');
+      }
+
+      try {
+        const micResult = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        setMicPermission(micResult.state as PermissionStatus);
+        micResult.onchange = () => {
+          setMicPermission(micResult.state as PermissionStatus);
+        };
+      } catch {
+        setMicPermission('prompt');
+      }
+    } else {
+      setLocationPermission('prompt');
+      setMicPermission('prompt');
+    }
+  };
+
+  const requestLocationPermission = async () => {
+    setIsRequestingLocation(true);
+    try {
+      await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+      setLocationPermission('granted');
+    } catch (error: any) {
+      if (error.code === 1) {
+        setLocationPermission('denied');
+      } else {
+        setLocationPermission('prompt');
+      }
+    } finally {
+      setIsRequestingLocation(false);
+    }
+  };
+
+  const requestMicPermission = async () => {
+    setIsRequestingMic(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      setMicPermission('granted');
+    } catch {
+      setMicPermission('denied');
+    } finally {
+      setIsRequestingMic(false);
+    }
+  };
+
+  const allPermissionsGranted = locationPermission === 'granted' && micPermission === 'granted';
+  const canContinue = locationPermission === 'granted'; // Mic is optional but location is required
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +103,126 @@ export default function Onboarding() {
       setIsCreating(false);
     }
   };
+
+  const PermissionItem = ({ 
+    icon: Icon, 
+    title, 
+    description, 
+    status, 
+    isRequesting, 
+    onRequest,
+    required = false
+  }: { 
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    status: PermissionStatus;
+    isRequesting: boolean;
+    onRequest: () => void;
+    required?: boolean;
+  }) => (
+    <div className={cn(
+      "flex items-center gap-3 p-3 rounded-xl border transition-all",
+      status === 'granted' ? "bg-emerald-500/10 border-emerald-500/30" :
+      status === 'denied' ? "bg-destructive/10 border-destructive/30" :
+      "bg-card border-border"
+    )}>
+      <div className={cn(
+        "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
+        status === 'granted' ? "bg-emerald-500/20" :
+        status === 'denied' ? "bg-destructive/20" :
+        "bg-accent/20"
+      )}>
+        <Icon className={cn(
+          "w-5 h-5",
+          status === 'granted' ? "text-emerald-400" :
+          status === 'denied' ? "text-destructive" :
+          "text-accent"
+        )} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm">{title}</p>
+          {required && <span className="text-[10px] text-muted-foreground">(required)</span>}
+        </div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      {status === 'granted' ? (
+        <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+      ) : status === 'denied' ? (
+        <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onRequest}
+          disabled={isRequesting}
+          className="flex-shrink-0 h-8"
+        >
+          {isRequesting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Allow'}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (step === 'permissions') {
+    return (
+      <div className="h-screen max-h-screen overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
+        {/* Branding */}
+        <div className="text-center landscape:text-left landscape:flex-1 landscape:max-w-xs">
+          <h1 className="text-5xl landscape:text-4xl font-semibold tracking-tight mb-3">
+            BLACKTOP
+          </h1>
+          <p className="text-muted-foreground text-sm mb-2">
+            Grant permissions to enable all features
+          </p>
+        </div>
+
+        {/* Permissions */}
+        <div className="w-full max-w-sm landscape:flex-1 landscape:max-w-xs space-y-4">
+          <PermissionItem
+            icon={MapPin}
+            title="Location"
+            description="Track speed, distance, and share location with convoy"
+            status={locationPermission}
+            isRequesting={isRequestingLocation}
+            onRequest={requestLocationPermission}
+            required
+          />
+
+          <PermissionItem
+            icon={Mic}
+            title="Microphone"
+            description="Voice chat with your convoy riders"
+            status={micPermission}
+            isRequesting={isRequestingMic}
+            onRequest={requestMicPermission}
+          />
+
+          {locationPermission === 'denied' && (
+            <p className="text-xs text-destructive text-center">
+              Location access is required. Please enable it in your device settings.
+            </p>
+          )}
+
+          <Button
+            onClick={() => setStep('profile')}
+            disabled={!canContinue}
+            className="w-full h-12 text-base font-semibold rounded-2xl touch-target mt-6"
+          >
+            Continue
+            <ChevronRight className="w-5 h-5 ml-1" />
+          </Button>
+
+          {!allPermissionsGranted && canContinue && (
+            <p className="text-xs text-muted-foreground text-center">
+              Voice chat will be unavailable without microphone access
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
