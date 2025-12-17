@@ -93,10 +93,14 @@ async function getCountryCode(lat: number, lng: number): Promise<string | null> 
   }
 }
 
+// Max distance in km for category searches (nearby places)
+const MAX_NEARBY_DISTANCE_KM = 25;
+
 async function searchPlaces(
   query: string, 
   userLocation: UserLocation | null,
-  countryCode: string | null
+  countryCode: string | null,
+  isCategory: boolean = false
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
@@ -104,17 +108,18 @@ async function searchPlaces(
     q: query,
     format: 'json',
     addressdetails: '1',
-    limit: '8',
+    limit: '20', // Fetch more to filter by distance
   });
 
   if (countryCode) {
     params.append('countrycodes', countryCode);
   }
 
+  // Tighter viewbox for category searches (nearby POIs)
   if (userLocation) {
-    const delta = 0.35;
+    const delta = isCategory ? 0.15 : 0.5; // ~15km for categories, ~50km for general
     params.append('viewbox', `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`);
-    params.append('bounded', '0');
+    params.append('bounded', isCategory ? '1' : '0'); // Strict bounds for categories
   }
 
   try {
@@ -146,8 +151,14 @@ async function searchPlaces(
       return result;
     });
 
+    // Sort by distance
     if (userLocation) {
       results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      
+      // For category searches, filter to only nearby results
+      if (isCategory) {
+        results = results.filter(r => (r.distance || 0) < MAX_NEARBY_DISTANCE_KM);
+      }
     }
 
     return results.slice(0, 6);
@@ -250,7 +261,7 @@ export function DestinationSearch({
     setIsSearching(true);
     
     try {
-      const searchResults = await searchPlaces(searchQuery, userLocation, countryCode);
+      const searchResults = await searchPlaces(searchQuery, userLocation, countryCode, false);
       setResults(searchResults);
     } catch (error) {
       console.error('Search failed:', error);
@@ -287,7 +298,7 @@ export function DestinationSearch({
     setIsSearching(true);
     
     try {
-      const searchResults = await searchPlaces(category.query, userLocation, countryCode);
+      const searchResults = await searchPlaces(category.query, userLocation, countryCode, true);
       setResults(searchResults);
     } catch {
       setResults([]);
