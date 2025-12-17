@@ -66,9 +66,18 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     };
   }, [convoyId, fetchWaypoints]);
 
-  // Add a waypoint
+  // Add a waypoint (leader only, but works during active ride)
   const addWaypoint = useCallback(async (waypoint: Omit<ConvoyWaypoint, 'id' | 'orderIndex' | 'isCompleted' | 'completedAt'>) => {
-    if (!convoyId || !isLeader) return;
+    if (!convoyId) {
+      console.error('[Waypoints] No convoy ID');
+      return false;
+    }
+    
+    if (!isLeader) {
+      console.error('[Waypoints] Only leader can add waypoints');
+      toast.error('Only the leader can add waypoints');
+      return false;
+    }
 
     setIsLoading(true);
 
@@ -94,6 +103,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       return false;
     }
 
+    console.log('[Waypoints] Added waypoint:', waypoint.name);
     return true;
   }, [convoyId, isLeader, waypoints.length]);
 

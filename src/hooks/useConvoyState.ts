@@ -114,6 +114,7 @@ export function useConvoyState() {
         current_speed,
         top_speed,
         distance_driven,
+        stationary_time,
         accent_color,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
@@ -138,6 +139,7 @@ export function useConvoyState() {
         currentSpeed: m.current_speed || 0,
         topSpeed: m.top_speed || 0,
         distanceDriven: m.distance_driven || 0,
+        stationaryTime: m.stationary_time || 0,
       }));
 
       console.log('[Convoy] Refreshed members:', members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated })));

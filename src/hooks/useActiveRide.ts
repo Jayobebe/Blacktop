@@ -18,6 +18,10 @@ let stationaryCount = 0;
 const STATIONARY_THRESHOLD = 3; // Number of zero-speed readings before throttling
 const THROTTLE_SKIP_COUNT = 2; // Skip this many updates when stationary (process every 3rd)
 
+// Track stationary time for Rocksteady badge
+let stationaryTimeSeconds = 0;
+let lastStationaryCheck: number | null = null;
+
 // Check if running as native app
 const isNative = Capacitor.isNativePlatform();
 
@@ -99,7 +103,17 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
   const deviceSpeedMphQuick = deviceSpeed != null && deviceSpeed >= 0 ? deviceSpeed * 2.237 : null;
   const isStationary = deviceSpeedMphQuick !== null && deviceSpeedMphQuick < MIN_SPEED_THRESHOLD;
   
+  // Track stationary time for Rocksteady badge
+  const now = Date.now();
   if (isStationary) {
+    if (lastStationaryCheck !== null) {
+      const elapsed = (now - lastStationaryCheck) / 1000;
+      if (elapsed > 0 && elapsed < 10) { // Sanity check - max 10 seconds between updates
+        stationaryTimeSeconds += elapsed;
+      }
+    }
+    lastStationaryCheck = now;
+    
     stationaryCount++;
     // When stationary for a while, process fewer updates to save battery
     if (stationaryCount > STATIONARY_THRESHOLD && stationaryCount % (THROTTLE_SKIP_COUNT + 1) !== 0) {
@@ -108,6 +122,7 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
     }
   } else {
     stationaryCount = 0; // Reset when moving
+    lastStationaryCheck = null;
   }
 
   // Log GPS data for debugging (less verbose when stationary)
@@ -287,6 +302,7 @@ async function syncConvoyStats() {
       current_lat: lastPosition?.lat,
       current_lng: lastPosition?.lng,
       last_seen: new Date().toISOString(),
+      stationary_time: Math.round(stationaryTimeSeconds),
     })
     .eq('convoy_id', currentConvoyId)
     .eq('user_id', user.id);
@@ -297,7 +313,8 @@ async function syncConvoyStats() {
     console.log('[Convoy] Synced stats:', { 
       speed: Math.round(rideState.currentSpeed), 
       topSpeed: Math.round(rideState.maxSpeed),
-      distance: rideState.distance.toFixed(2) 
+      distance: rideState.distance.toFixed(2),
+      stationaryTime: Math.round(stationaryTimeSeconds)
     });
   }
 }
@@ -321,6 +338,8 @@ export function useActiveRide(convoyId?: string | null) {
     currentConvoyId = activeConvoyId || convoyId || null;
     isPaused = false;
     totalPausedTime = 0;
+    stationaryTimeSeconds = 0; // Reset stationary tracking
+    lastStationaryCheck = null;
     pausedAtMs = null;
     stationaryCount = 0; // Reset battery optimization counter
 

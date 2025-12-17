@@ -30,6 +30,7 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
 const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
 const SPEAKING_DEBOUNCE_MS = 150; // Debounce time for speaking state changes
 const AUDIO_CHECK_INTERVAL_MS = 100; // Check audio levels every 100ms (was 50ms) for battery savings
+const VOICE_REFRESH_INTERVAL_MS = 10000; // Re-announce presence every 10 seconds
 
 export function useVoiceChannel(convoyId?: string) {
   const [state, setState] = useState<VoiceChannelState>({
@@ -52,10 +53,17 @@ export function useVoiceChannel(convoyId?: string) {
   const speakingTimeoutRef = useRef<number | null>(null);
   const isMutedRef = useRef<boolean>(true); // Ref to avoid stale closure
   const isConnectingRef = useRef<boolean>(false); // Guard against multiple connection attempts
+  const refreshIntervalRef = useRef<number | null>(null); // Periodic refresh for connection maintenance
 
   // Cleanup function
   const cleanup = useCallback(() => {
     console.log('[Voice] Cleaning up voice channel');
+    
+    // Stop periodic refresh
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
     
     // Stop audio level monitoring
     if (levelCheckIntervalRef.current) {
@@ -440,6 +448,19 @@ export function useVoiceChannel(convoyId?: string) {
       
       // Start audio level monitoring for speaking detection
       startAudioLevelMonitoring();
+      
+      // Start periodic refresh to maintain connections when returning from nav app
+      refreshIntervalRef.current = window.setInterval(() => {
+        if (channelRef.current && userIdRef.current) {
+          console.log('[Voice] Periodic refresh - re-announcing presence');
+          // Re-announce presence to trigger reconnection with any lost peers
+          channelRef.current.send({
+            type: 'broadcast',
+            event: 'user-joined',
+            payload: { from: userIdRef.current },
+          });
+        }
+      }, VOICE_REFRESH_INTERVAL_MS);
       
       setState(prev => ({
         ...prev,
