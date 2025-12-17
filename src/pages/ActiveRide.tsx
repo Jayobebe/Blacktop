@@ -347,11 +347,20 @@ export default function ActiveRide() {
           {rideState.isConvoyMode && convoy.isLeader && (
             <Button
               variant="outline"
-              onClick={togglePause}
+              onClick={async () => {
+                console.log('[UI] Pause/resume clicked', { isLeader: convoy.isLeader, isPaused: convoy.isPaused, convoyId: convoy.id });
+                toast('Toggling pause...');
+                try {
+                  await togglePause();
+                } catch (e) {
+                  console.error('[UI] togglePause threw', e);
+                  toast.error('Pause failed');
+                }
+              }}
               className={cn(
                 "h-12 landscape:h-10 px-3 rounded-full touch-target",
-                convoy.isPaused 
-                  ? "bg-accent/20 text-accent border-accent" 
+                convoy.isPaused
+                  ? "bg-accent/20 text-accent border-accent"
                   : "border-muted-foreground/50 text-muted-foreground hover:bg-secondary"
               )}
             >
@@ -402,16 +411,25 @@ export default function ActiveRide() {
               {/* Voice disconnect/connect button */}
               <button
                 onClick={async () => {
-                  if (isConnected) {
-                    disconnect();
-                    toast.success('Left voice channel', { description: 'Saving battery' });
-                  } else {
-                    const success = await connect();
-                    if (success) {
-                      toast.success('Joined voice channel');
+                  console.log('[UI] Voice connect/disconnect clicked', { isConnected, convoyId: convoy.id });
+
+                  try {
+                    if (isConnected) {
+                      disconnect();
+                      toast.success('Left voice channel', { description: 'Saving battery' });
                     } else {
-                      toast.error('Failed to join voice channel', { description: 'Check microphone permissions' });
+                      toast('Connecting voice...');
+                      const success = await connect();
+                      console.log('[UI] Voice connect result', { success });
+                      if (success) {
+                        toast.success('Joined voice channel');
+                      } else {
+                        toast.error('Failed to join voice channel', { description: 'Check microphone permissions' });
+                      }
                     }
+                  } catch (e) {
+                    console.error('[UI] Voice button threw', e);
+                    toast.error('Voice action failed');
                   }
                 }}
                 className={cn(
