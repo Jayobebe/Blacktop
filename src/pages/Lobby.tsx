@@ -30,6 +30,7 @@ export default function Lobby() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const hasStartedRide = useRef(false);
+  const prevReadyToStart = useRef<boolean | null>(null);
 
   // Reset ride started flag ONLY when destination is cleared (new ride cycle)
   useEffect(() => {
@@ -57,16 +58,27 @@ export default function Lobby() {
     }
   }, [convoy.isActive, navigate]);
 
-  // Auto-start ride when all members have navigated
+  // Auto-start ride when the "ready to start" state flips from false -> true
   useEffect(() => {
+    const readyToStart = Boolean(convoy.destination) && allMembersNavigated;
+
     console.log('[Lobby] Checking auto-start:', {
       allMembersNavigated,
       hasDestination: !!convoy.destination,
+      readyToStart,
+      prevReadyToStart: prevReadyToStart.current,
       hasStarted: hasStartedRide.current,
       members: convoy.members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated }))
     });
 
-    if (allMembersNavigated && convoy.destination && !hasStartedRide.current) {
+    // Don't auto-start from the initial lobby render; only when state changes to ready.
+    if (prevReadyToStart.current === null) {
+      prevReadyToStart.current = readyToStart;
+      return;
+    }
+
+    // Only start on the rising edge (prevents immediate re-trigger when returning to lobby)
+    if (readyToStart && !prevReadyToStart.current && !hasStartedRide.current) {
       hasStartedRide.current = true;
       console.log('[Lobby] All riders ready, starting ride!');
       toast.success('All riders ready - starting ride!');
@@ -75,7 +87,9 @@ export default function Lobby() {
         navigate('/ride');
       }
     }
-  }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate]);
+
+    prevReadyToStart.current = readyToStart;
+  }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate, convoy.id]);
 
   const handleCopyCode = async () => {
     if (!convoy.code) return;
