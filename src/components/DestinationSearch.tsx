@@ -96,54 +96,71 @@ async function getCountryCode(lat: number, lng: number): Promise<string | null> 
 
 // Max distance in km for category searches (nearby places)
 const MAX_NEARBY_DISTANCE_KM = 15;
-const OVERPASS_RADIUS_M = 15000; // 15km radius for Overpass queries
 
-// Search using Overpass API for POIs (much better for amenities)
-async function searchPOIsOverpass(
+// OSM amenity to Nominatim search term mapping for better results
+const categoryToNominatimQuery: Record<string, string> = {
+  'fuel': 'petrol station',
+  'restaurant|fast_food|cafe': 'restaurant',
+  'cafe': 'cafe coffee',
+  'supermarket|convenience': 'supermarket',
+};
+
+// Search nearby POIs using Nominatim with amenity keywords
+async function searchNearbyPOIs(
   amenityQuery: string,
-  userLocation: UserLocation
+  userLocation: UserLocation,
+  countryCode: string | null
 ): Promise<SearchResult[]> {
-  const amenities = amenityQuery.split('|').map(a => `node["amenity"="${a}"](around:${OVERPASS_RADIUS_M},${userLocation.lat},${userLocation.lng});`).join('');
+  // Convert amenity query to better Nominatim search term
+  const searchTerm = categoryToNominatimQuery[amenityQuery] || amenityQuery.split('|')[0];
   
-  const query = `
-    [out:json][timeout:10];
-    (
-      ${amenities}
-    );
-    out body 20;
-  `;
+  const params = new URLSearchParams({
+    q: searchTerm,
+    format: 'json',
+    addressdetails: '1',
+    limit: '15',
+  });
+
+  if (countryCode) {
+    params.append('countrycodes', countryCode);
+  }
+
+  // Tight viewbox around user location (~10km)
+  const delta = 0.1;
+  params.append('viewbox', `${userLocation.lng - delta},${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`);
+  params.append('bounded', '1'); // Strict bounds
 
   try {
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: `data=${encodeURIComponent(query)}`,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+      headers: { 'User-Agent': 'Blacktop-App/1.0' },
     });
 
-    if (!response.ok) throw new Error('Overpass search failed');
+    if (!response.ok) throw new Error('Search failed');
 
     const data = await response.json();
 
-    const results: SearchResult[] = data.elements
-      .filter((el: any) => el.tags?.name)
-      .map((el: any) => {
-        const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
-        return {
-          id: el.id.toString(),
-          name: el.tags.name,
-          address: [el.tags['addr:street'], el.tags['addr:city']].filter(Boolean).join(', ') || el.tags.brand || 'Nearby',
-          lat: el.lat,
-          lng: el.lon,
-          distance,
-          type: el.tags.amenity,
-        };
-      })
-      .sort((a: SearchResult, b: SearchResult) => (a.distance || 0) - (b.distance || 0))
+    let results: SearchResult[] = data.map((place: any) => {
+      const result: SearchResult = {
+        id: place.place_id.toString(),
+        name: place.name || place.display_name.split(',')[0],
+        address: place.display_name,
+        lat: parseFloat(place.lat),
+        lng: parseFloat(place.lon),
+        type: place.type,
+        distance: calculateDistance(userLocation.lat, userLocation.lng, parseFloat(place.lat), parseFloat(place.lon)),
+      };
+      return result;
+    });
+
+    // Sort by distance and filter to nearby only
+    results = results
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+      .filter(r => (r.distance || 0) < MAX_NEARBY_DISTANCE_KM)
       .slice(0, 8);
 
     return results;
   } catch (error) {
-    console.error('Overpass search failed:', error);
+    console.error('Nearby POI search failed:', error);
     return [];
   }
 }
@@ -362,16 +379,16 @@ export function DestinationSearch({
     const currentSearchId = ++searchIdRef.current;
     
     try {
-      // Use Overpass API for category searches (much better for POIs)
+      // Use Nominatim with POI-specific queries
       if (userLocation) {
-        const searchResults = await searchPOIsOverpass(category.query, userLocation);
+        const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode);
         // Only update if this is still the latest search
         if (searchIdRef.current === currentSearchId) {
           setResults(searchResults);
         }
       } else {
-        // Fallback to Nominatim if no location
-        const searchResults = await searchPlaces(category.query, null, countryCode);
+        // Fallback to general search if no location
+        const searchResults = await searchPlaces(category.query.split('|')[0], null, countryCode);
         if (searchIdRef.current === currentSearchId) {
           setResults(searchResults);
         }
