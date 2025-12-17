@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/hooks/useRideHistory';
 import { useSettings } from '@/hooks/useSettings';
-import { ArrowLeft, Route, Gauge, Clock, TrendingUp, Hash, Users } from 'lucide-react';
+import { ArrowLeft, Route, Gauge, Clock, TrendingUp, Hash, Users, Trophy, Zap, Map, Mountain } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export default function Stats() {
   const navigate = useNavigate();
@@ -48,6 +49,35 @@ export default function Stats() {
     },
   ];
 
+  const badgeCards = [
+    {
+      type: 'speed-demon',
+      emoji: '⚡',
+      label: 'Speed Demon',
+      description: 'Highest top speed in convoy',
+      count: stats.badges.speedDemon,
+      color: 'yellow',
+    },
+    {
+      type: 'journeyman',
+      emoji: '🛣️',
+      label: 'Journeyman',
+      description: 'Most distance covered',
+      count: stats.badges.journeyman,
+      color: 'blue',
+    },
+    {
+      type: 'rocksteady',
+      emoji: '🪨',
+      label: 'Rocksteady',
+      description: 'Longest time stationary',
+      count: stats.badges.rocksteady,
+      color: 'stone',
+    },
+  ];
+
+  const totalBadges = stats.badges.speedDemon + stats.badges.journeyman + stats.badges.rocksteady;
+
   return (
     <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
       {/* Header */}
@@ -61,13 +91,56 @@ export default function Stats() {
         <h1 className="text-2xl font-display font-bold">Statistics</h1>
       </header>
 
+      {/* Badges Section */}
+      <div className="mb-6 animate-fade-in">
+        <div className="flex items-center gap-2 mb-3">
+          <Trophy className="w-5 h-5 text-accent" />
+          <h2 className="text-lg font-display font-semibold">Convoy Badges</h2>
+          <span className="ml-auto text-sm text-muted-foreground">{totalBadges} earned</span>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-3">
+          {badgeCards.map((badge, index) => (
+            <div
+              key={badge.type}
+              className={cn(
+                "flex flex-col items-center p-4 rounded-xl border transition-all animate-slide-up",
+                badge.color === 'yellow' && "bg-yellow-500/10 border-yellow-500/30",
+                badge.color === 'blue' && "bg-blue-500/10 border-blue-500/30",
+                badge.color === 'stone' && "bg-stone-500/10 border-stone-500/30",
+                badge.count === 0 && "opacity-50"
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <span className="text-3xl mb-2">{badge.emoji}</span>
+              <span className={cn(
+                "font-mono text-2xl font-bold",
+                badge.color === 'yellow' && "text-yellow-400",
+                badge.color === 'blue' && "text-blue-400",
+                badge.color === 'stone' && "text-stone-400"
+              )}>
+                {badge.count}
+              </span>
+              <span className={cn(
+                "text-xs font-medium text-center mt-1",
+                badge.color === 'yellow' && "text-yellow-400",
+                badge.color === 'blue' && "text-blue-400",
+                badge.color === 'stone' && "text-stone-400"
+              )}>
+                {badge.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid gap-3 animate-fade-in">
         {statCards.map((stat, index) => (
           <div
             key={stat.label}
             className="bg-card rounded-lg p-4 border border-border animate-slide-up"
-            style={{ animationDelay: `${index * 50}ms` }}
+            style={{ animationDelay: `${(index + 3) * 50}ms` }}
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-secondary rounded-lg">

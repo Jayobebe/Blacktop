@@ -21,6 +21,7 @@ function generateDemoRides(): RideSession[] {
       averageSpeed: 47,
       maxSpeed: 78,
       gpsPoints: [],
+      earnedBadge: 'speed-demon',
     },
     {
       id: crypto.randomUUID(),
@@ -43,6 +44,7 @@ function generateDemoRides(): RideSession[] {
       averageSpeed: 50,
       maxSpeed: 85,
       gpsPoints: [],
+      earnedBadge: 'journeyman',
     },
     {
       id: crypto.randomUUID(),
@@ -65,6 +67,7 @@ function generateDemoRides(): RideSession[] {
       averageSpeed: 50,
       maxSpeed: 88,
       gpsPoints: [],
+      earnedBadge: 'rocksteady',
     },
   ];
 }
@@ -87,6 +90,17 @@ export function useRideHistory() {
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
     const personalTopSpeed = Math.max(0, ...completedRides.map(r => r.maxSpeed));
     const convoyRides = completedRides.filter(r => r.isConvoyRide).length;
+    
+    // Count badges
+    const badges = completedRides.reduce(
+      (acc, r) => {
+        if (r.earnedBadge === 'speed-demon') acc.speedDemon++;
+        else if (r.earnedBadge === 'journeyman') acc.journeyman++;
+        else if (r.earnedBadge === 'rocksteady') acc.rocksteady++;
+        return acc;
+      },
+      { speedDemon: 0, journeyman: 0, rocksteady: 0 }
+    );
 
     return {
       totalRides: completedRides.length,
@@ -95,6 +109,7 @@ export function useRideHistory() {
       personalTopSpeed,
       averageRideLength: completedRides.length > 0 ? totalDistance / completedRides.length : 0,
       convoyRides,
+      badges,
     };
   }, [rides]);
 
