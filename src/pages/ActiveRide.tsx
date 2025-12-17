@@ -125,11 +125,9 @@ export default function ActiveRide() {
       connect();
     }
     return () => {
-      if (isConnected) {
-        disconnect();
-      }
+      disconnect();
     };
-  }, [rideState.isConvoyMode]);
+  }, [rideState.isConvoyMode, isConnected, connect, disconnect]);
 
   // Redirect if no active ride (but don't interrupt the explicit "end ride" flow / summary)
   useEffect(() => {

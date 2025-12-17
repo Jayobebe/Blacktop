@@ -5,6 +5,7 @@ import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useWaypoints } from '@/hooks/useWaypoints';
 import { useNavigation } from '@/hooks/useNavigation';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +28,9 @@ export default function Lobby() {
   const [showAddWaypoint, setShowAddWaypoint] = useState(false);
   const hasStartedRide = useRef(false);
   const prevReadyToStart = useRef<boolean | null>(null);
+  const controlChannelRef = useRef<any>(null);
+  const longPressTimerRef = useRef<number | null>(null);
+  const didLongPressRef = useRef(false);
 
   // Reset ride started flag ONLY when destination is cleared (new ride cycle)
   useEffect(() => {
@@ -37,15 +41,47 @@ export default function Lobby() {
 
   // Connect to voice channel when entering lobby with valid convoy
   useEffect(() => {
-    if (!isConnected && convoy.id) {
+    if (!convoy.id) return;
+    if (!isConnected) {
       connect();
     }
     return () => {
-      if (isConnected) {
-        disconnect();
-      }
+      disconnect();
     };
-  }, [convoy.id]);
+  }, [convoy.id, isConnected, connect, disconnect]);
+
+  // Convoy control channel (e.g., leader start-for-all)
+  useEffect(() => {
+    if (!convoy.id) return;
+
+    const channel = supabase.channel(`convoy-control:${convoy.id}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    channel.on('broadcast', { event: 'start-ride' }, () => {
+      if (hasStartedRide.current) return;
+      hasStartedRide.current = true;
+      console.log('[Lobby] Received start-ride broadcast');
+      toast.success('Leader started the ride');
+      const success = startRide(true, convoy.id);
+      if (success) {
+        navigate('/ride');
+      }
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[Lobby] Subscribed to convoy control channel');
+      }
+    });
+
+    controlChannelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      controlChannelRef.current = null;
+    };
+  }, [convoy.id, navigate, startRide]);
 
   // Redirect if not in a convoy
   useEffect(() => {
@@ -149,7 +185,22 @@ export default function Lobby() {
         
         {/* Voice Toggle */}
         <button
-          onClick={toggleMute}
+          onClick={async () => {
+            try {
+              if (!isConnected) {
+                const ok = await connect();
+                if (!ok) {
+                  toast.error('Failed to join voice', { description: 'Check microphone permission' });
+                  return;
+                }
+                toast.success('Joined voice channel');
+              }
+              toggleMute();
+            } catch (e) {
+              console.error('[Lobby] Voice toggle error', e);
+              toast.error('Voice action failed');
+            }
+          }}
           className={cn(
             "w-10 h-10 landscape:w-9 landscape:h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all touch-target",
             !isMuted
@@ -396,6 +447,12 @@ export default function Lobby() {
         {!showLeaveConfirm && (
           <Button
             onClick={() => {
+              // If a long-press fired, ignore the subsequent click
+              if (didLongPressRef.current) {
+                didLongPressRef.current = false;
+                return;
+              }
+
               // Individual start - just this rider
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
@@ -405,49 +462,62 @@ export default function Lobby() {
             }}
             onContextMenu={(e) => {
               e.preventDefault();
-              // Long-press (right-click on desktop) - leader starts for all
-              if (convoy.isLeader) {
+              // Desktop long-press (right-click) - leader starts for all
+              if (!convoy.isLeader) return;
+
+              hasStartedRide.current = true;
+              const success = startRide(true, convoy.id);
+              if (success) {
+                toast.success('Starting ride for all riders');
+                controlChannelRef.current?.send({
+                  type: 'broadcast',
+                  event: 'start-ride',
+                  payload: { at: Date.now() },
+                });
+                navigate('/ride');
+              }
+            }}
+            onTouchStart={() => {
+              didLongPressRef.current = false;
+
+              if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current);
+              }
+
+              longPressTimerRef.current = window.setTimeout(() => {
+                if (!convoy.isLeader) return;
+
+                didLongPressRef.current = true;
                 hasStartedRide.current = true;
+
                 const success = startRide(true, convoy.id);
                 if (success) {
                   toast.success('Starting ride for all riders');
+                  controlChannelRef.current?.send({
+                    type: 'broadcast',
+                    event: 'start-ride',
+                    payload: { at: Date.now() },
+                  });
                   navigate('/ride');
                 }
+              }, 500);
+            }}
+            onTouchEnd={() => {
+              if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
               }
             }}
-            onTouchStart={(e) => {
-              // Track touch start for long-press detection
-              const target = e.currentTarget;
-              const longPressTimer = setTimeout(() => {
-                if (convoy.isLeader) {
-                  hasStartedRide.current = true;
-                  const success = startRide(true, convoy.id);
-                  if (success) {
-                    toast.success('Starting ride for all riders');
-                    navigate('/ride');
-                  }
-                }
-              }, 500); // 500ms for long press
-              target.dataset.longPressTimer = String(longPressTimer);
-            }}
-            onTouchEnd={(e) => {
-              const timer = e.currentTarget.dataset.longPressTimer;
-              if (timer) {
-                clearTimeout(Number(timer));
-                delete e.currentTarget.dataset.longPressTimer;
-              }
-            }}
-            onTouchMove={(e) => {
+            onTouchMove={() => {
               // Cancel long press if finger moves
-              const timer = e.currentTarget.dataset.longPressTimer;
-              if (timer) {
-                clearTimeout(Number(timer));
-                delete e.currentTarget.dataset.longPressTimer;
+              if (longPressTimerRef.current) {
+                clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
               }
             }}
             size="sm"
             className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-            title={convoy.isLeader ? "Tap to start your ride, hold to start for all" : "Start your ride"}
+            title={convoy.isLeader ? 'Tap to start your ride, hold to start for all' : 'Start your ride'}
           >
             <Play className="w-3.5 h-3.5 mr-1.5" />
             Start Ride
