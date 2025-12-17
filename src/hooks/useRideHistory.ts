@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import { RideSession, RideStats } from '@/types/blacktop';
+import { RideSession, RideStats, RidePhoto } from '@/types/blacktop';
 
 const RIDES_KEY = 'blacktop_rides';
 const SEEDED_KEY = 'blacktop_demo_seeded';
@@ -96,6 +96,22 @@ export function useRideHistory() {
     setRides(prev => prev.filter(r => r.id !== rideId));
   }, [setRides]);
 
+  const addRidePhoto = useCallback((rideId: string, photo: RidePhoto) => {
+    setRides(prev => prev.map(r => 
+      r.id === rideId 
+        ? { ...r, photos: [...(r.photos || []), photo] }
+        : r
+    ));
+  }, [setRides]);
+
+  const removeRidePhoto = useCallback((rideId: string, photoId: string) => {
+    setRides(prev => prev.map(r => 
+      r.id === rideId 
+        ? { ...r, photos: (r.photos || []).filter(p => p.id !== photoId) }
+        : r
+    ));
+  }, [setRides]);
+
   const stats: RideStats = useMemo(() => {
     const completedRides = rides.filter(r => r.endedAt !== null);
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
@@ -144,6 +160,8 @@ export function useRideHistory() {
     updateRideBadge,
     updateRideName,
     deleteRide,
+    addRidePhoto,
+    removeRidePhoto,
     burnAllData,
     seedDemoData,
   };
