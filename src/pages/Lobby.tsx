@@ -240,20 +240,20 @@ export default function Lobby() {
   if (!convoy.isActive) return null;
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6">
-      {/* Header with Code - compact */}
-      <header className="mb-2 landscape:mb-1 md:mb-3 animate-fade-in flex items-center justify-between">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+      {/* Header with Code */}
+      <header className="mb-3 landscape:mb-2 md:mb-4 animate-fade-in flex items-center justify-between">
         <div>
-          <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5 landscape:hidden">Convoy Code</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">Convoy Code</p>
           <button
             onClick={handleCopyCode}
-            className="flex items-center gap-2 bg-card border border-border rounded-lg px-2 py-1 hover:bg-muted transition-colors"
+            className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2 hover:bg-secondary transition-colors"
           >
-            <span className="font-mono text-lg landscape:text-base md:text-xl font-bold tracking-widest">{convoy.code}</span>
+            <span className="font-mono text-2xl landscape:text-xl md:text-3xl font-bold tracking-[0.15em]">{convoy.code}</span>
             {copied ? (
-              <Check className="w-4 h-4 text-accent" />
+              <Check className="w-5 h-5 text-accent" />
             ) : (
-              <Copy className="w-4 h-4 text-muted-foreground" />
+              <Copy className="w-5 h-5 text-muted-foreground" />
             )}
           </button>
         </div>
@@ -277,10 +277,10 @@ export default function Lobby() {
             }
           }}
           className={cn(
-            "w-10 h-10 landscape:w-9 landscape:h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all touch-target",
+            "w-12 h-12 landscape:w-10 landscape:h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all touch-target",
             !isMuted
               ? "bg-ptt-active shadow-glow"
-              : "bg-ptt-inactive hover:bg-muted"
+              : "bg-card/50 border border-border/30 hover:bg-secondary"
           )}
         >
           {isMuted ? (
@@ -309,8 +309,8 @@ export default function Lobby() {
           {/* Add Waypoint / Current Destination */}
           {showAddWaypoint ? (
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-muted-foreground text-[10px] uppercase tracking-wide">Add Stop</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Add Stop</p>
                 <button
                   onClick={() => setShowAddWaypoint(false)}
                   className="text-muted-foreground hover:text-foreground"
@@ -338,8 +338,8 @@ export default function Lobby() {
             </div>
           ) : (
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-muted-foreground text-[10px] uppercase tracking-wide">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                   {nextWaypoint ? 'Next Stop' : 'Destination'}
                 </p>
                 {convoy.isLeader && (
@@ -354,7 +354,7 @@ export default function Lobby() {
               </div>
               
               {nextWaypoint ? (
-                <div className="bg-card border border-accent/30 rounded-lg p-3">
+                <div className="bg-card/50 border border-accent/30 rounded-2xl p-4">
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
@@ -377,7 +377,7 @@ export default function Lobby() {
                         }
                       }
                     }}
-                    className="w-full mt-2 h-10 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className="w-full mt-3 h-11 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-semibold"
                   >
                     <Navigation className="w-4 h-4 mr-2" />
                     Navigate
