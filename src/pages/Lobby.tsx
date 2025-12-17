@@ -392,18 +392,62 @@ export default function Lobby() {
           </div>
         )}
 
-        {/* Start Ride button - always visible */}
+        {/* Start Ride button - tap for individual start, long-press (leader only) for all */}
         {!showLeaveConfirm && (
           <Button
             onClick={() => {
+              // Individual start - just this rider
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
               if (success) {
                 navigate('/ride');
               }
             }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              // Long-press (right-click on desktop) - leader starts for all
+              if (convoy.isLeader) {
+                hasStartedRide.current = true;
+                const success = startRide(true, convoy.id);
+                if (success) {
+                  toast.success('Starting ride for all riders');
+                  navigate('/ride');
+                }
+              }
+            }}
+            onTouchStart={(e) => {
+              // Track touch start for long-press detection
+              const target = e.currentTarget;
+              const longPressTimer = setTimeout(() => {
+                if (convoy.isLeader) {
+                  hasStartedRide.current = true;
+                  const success = startRide(true, convoy.id);
+                  if (success) {
+                    toast.success('Starting ride for all riders');
+                    navigate('/ride');
+                  }
+                }
+              }, 500); // 500ms for long press
+              target.dataset.longPressTimer = String(longPressTimer);
+            }}
+            onTouchEnd={(e) => {
+              const timer = e.currentTarget.dataset.longPressTimer;
+              if (timer) {
+                clearTimeout(Number(timer));
+                delete e.currentTarget.dataset.longPressTimer;
+              }
+            }}
+            onTouchMove={(e) => {
+              // Cancel long press if finger moves
+              const timer = e.currentTarget.dataset.longPressTimer;
+              if (timer) {
+                clearTimeout(Number(timer));
+                delete e.currentTarget.dataset.longPressTimer;
+              }
+            }}
             size="sm"
             className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
+            title={convoy.isLeader ? "Tap to start your ride, hold to start for all" : "Start your ride"}
           >
             <Play className="w-3.5 h-3.5 mr-1.5" />
             Start Ride

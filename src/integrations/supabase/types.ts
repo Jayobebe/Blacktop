@@ -27,6 +27,7 @@ export type Database = {
           is_speaking: boolean | null
           joined_at: string | null
           last_seen: string | null
+          stationary_time: number | null
           top_speed: number | null
           user_id: string
         }
@@ -42,6 +43,7 @@ export type Database = {
           is_speaking?: boolean | null
           joined_at?: string | null
           last_seen?: string | null
+          stationary_time?: number | null
           top_speed?: number | null
           user_id: string
         }
@@ -57,6 +59,7 @@ export type Database = {
           is_speaking?: boolean | null
           joined_at?: string | null
           last_seen?: string | null
+          stationary_time?: number | null
           top_speed?: number | null
           user_id?: string
         }

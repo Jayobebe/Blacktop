@@ -241,6 +241,7 @@ export default function ActiveRide() {
   };
 
   const handleAddRescueWaypoint = async (request: typeof rescueRequests[0]) => {
+    console.log('[ActiveRide] Adding rescue waypoint for', request.userName);
     const success = await addWaypoint({
       name: `Rescue: ${request.userName}`,
       address: `Lat: ${request.lat.toFixed(4)}, Lng: ${request.lng.toFixed(4)}`,
@@ -251,6 +252,9 @@ export default function ActiveRide() {
     if (success) {
       await acknowledgeRescue(request.id);
       toast.success(`Added ${request.userName}'s location as waypoint`);
+    } else {
+      console.error('[ActiveRide] Failed to add rescue waypoint');
+      toast.error('Failed to add rescue waypoint');
     }
   };
 
