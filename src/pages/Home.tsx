@@ -120,14 +120,14 @@ export default function Home() {
         <div className="flex-1 flex flex-col gap-3 animate-slide-up delay-200">
           <button
             onClick={() => navigate('/create-convoy')}
-            className="flex-1 min-h-[72px] landscape:min-h-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+            className="flex-1 min-h-[72px] landscape:min-h-0 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
           >
-            <div className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-xl bg-accent-foreground/10 flex items-center justify-center">
-              <Users className="w-6 h-6 landscape:w-5 landscape:h-5" />
+            <div className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Users className="w-6 h-6 landscape:w-5 landscape:h-5 text-accent" />
             </div>
             <div className="text-left">
-              <span className="text-lg font-semibold tracking-tight block">Start Convoy</span>
-              <span className="text-xs opacity-80 landscape:hidden">Create a new ride group</span>
+              <span className="text-lg font-semibold tracking-tight block text-accent">Start Convoy</span>
+              <span className="text-xs text-accent/70 landscape:hidden">Create a new ride group</span>
             </div>
           </button>
 
