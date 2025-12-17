@@ -22,6 +22,8 @@ export interface AppSettings {
   speedUnit: SpeedUnit;
   distanceUnit: DistanceUnit;
   accentColor: AccentColor;
+  amberSpeedThreshold: number; // Speed at which display turns amber/warning
+  redSpeedThreshold: number;   // Speed at which display turns red/danger
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -29,6 +31,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   speedUnit: 'mph',
   distanceUnit: 'miles',
   accentColor: 'orange',
+  amberSpeedThreshold: 80,  // Default 80 mph
+  redSpeedThreshold: 100,   // Default 100 mph
 };
 
 export function useSettings() {
