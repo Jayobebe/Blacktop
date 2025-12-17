@@ -9,11 +9,14 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useRideHistory } from '@/hooks/useRideHistory';
 import { useProfile } from '@/hooks/useProfile';
+import { useRescue } from '@/hooks/useRescue';
+import { useWaypoints } from '@/hooks/useWaypoints';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
+import { RescueAlert } from '@/components/RescueAlert';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh } from 'lucide-react';
+import { Square, Mic, MicOff, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -76,8 +79,18 @@ export default function ActiveRide() {
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
   const { updateRideBadge } = useRideHistory();
-  const { user } = useProfile();
+  const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
+  const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
+  const { 
+    rescueRequests, 
+    hasPendingRescue, 
+    sendRescueRequest, 
+    acknowledgeRescue, 
+    dismissRescue,
+    cancelRescueRequest 
+  } = useRescue(convoy.id, convoy.isLeader, user?.id || null, profile.name || null);
+  
   // Keep audio session alive in background only when in convoy with other members
   useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
@@ -201,6 +214,39 @@ export default function ActiveRide() {
     navigate('/lobby');
   };
 
+  const handleRescue = async () => {
+    // Get current location from ride state or request fresh position
+    const gpsPoints = rideState.gpsPoints;
+    if (gpsPoints.length > 0) {
+      const lastPoint = gpsPoints[gpsPoints.length - 1];
+      await sendRescueRequest(lastPoint.lat, lastPoint.lng);
+    } else {
+      // Try to get current position
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          await sendRescueRequest(position.coords.latitude, position.coords.longitude);
+        },
+        () => {
+          toast.error('Unable to get your location');
+        }
+      );
+    }
+  };
+
+  const handleAddRescueWaypoint = async (request: typeof rescueRequests[0]) => {
+    const success = await addWaypoint({
+      name: `Rescue: ${request.userName}`,
+      address: `Lat: ${request.lat.toFixed(4)}, Lng: ${request.lng.toFixed(4)}`,
+      lat: request.lat,
+      lng: request.lng,
+    });
+    
+    if (success) {
+      await acknowledgeRescue(request.id);
+      toast.success(`Added ${request.userName}'s location as waypoint`);
+    }
+  };
+
   // Show summary after convoy ride ends
   if (showSummary && finalMembers.length > 0) {
     return (
@@ -224,6 +270,15 @@ export default function ActiveRide() {
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6">
+      {/* Rescue Alerts (Leader only) */}
+      {convoy.isLeader && (
+        <RescueAlert
+          requests={rescueRequests}
+          onAddWaypoint={handleAddRescueWaypoint}
+          onDismiss={dismissRescue}
+        />
+      )}
+
       {/* Main content area - vertical in portrait, horizontal in landscape */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
         {/* Speed and Stats */}
@@ -275,6 +330,24 @@ export default function ActiveRide() {
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
+          {/* Rescue button (non-leaders only) */}
+          {rideState.isConvoyMode && !convoy.isLeader && (
+            <Button
+              variant={hasPendingRescue ? "secondary" : "outline"}
+              onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
+              disabled={false}
+              className={cn(
+                "h-12 landscape:h-10 px-3 rounded-full touch-target",
+                hasPendingRescue 
+                  ? "bg-warning/20 text-warning border-warning animate-pulse" 
+                  : "border-warning text-warning hover:bg-warning hover:text-warning-foreground"
+              )}
+            >
+              <AlertTriangle className="w-5 h-5 landscape:w-4 landscape:h-4" />
+              <span className="ml-2 text-xs font-semibold">{hasPendingRescue ? 'CANCEL' : 'RESCUE'}</span>
+            </Button>
+          )}
+
           {/* Navigation button */}
           <Button
             variant="ghost"
