@@ -1,14 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/hooks/useRideHistory';
+import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp } from 'lucide-react';
-import { formatDuration, formatDistance, formatDate, formatTime } from '@/lib/format';
+import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useState } from 'react';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { rides, deleteRide } = useRideHistory();
+  const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const ride = rides.find(r => r.id === id);
@@ -60,8 +62,8 @@ export default function RideDetail() {
             <MapPin className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wide">Distance</span>
           </div>
-          <p className="font-mono text-3xl font-bold">{formatDistance(ride.distance)}</p>
-          <p className="text-sm text-muted-foreground">miles</p>
+          <p className="font-mono text-3xl font-bold">{formatDistance(ride.distance, settings.distanceUnit)}</p>
+          <p className="text-sm text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</p>
         </div>
         <div className="bg-card rounded-lg p-4 border border-border">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -76,16 +78,16 @@ export default function RideDetail() {
             <Gauge className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wide">Avg Speed</span>
           </div>
-          <p className="font-mono text-3xl font-bold">{Math.round(ride.averageSpeed)}</p>
-          <p className="text-sm text-muted-foreground">mph</p>
+          <p className="font-mono text-3xl font-bold">{formatSpeed(ride.averageSpeed, settings.speedUnit)}</p>
+          <p className="text-sm text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
         </div>
         <div className="bg-card rounded-lg p-4 border border-border">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wide">Max Speed</span>
           </div>
-          <p className="font-mono text-3xl font-bold">{Math.round(ride.maxSpeed)}</p>
-          <p className="text-sm text-muted-foreground">mph</p>
+          <p className="font-mono text-3xl font-bold">{formatSpeed(ride.maxSpeed, settings.speedUnit)}</p>
+          <p className="text-sm text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
         </div>
       </div>
 

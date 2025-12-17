@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/hooks/useRideHistory';
+import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Clock, MapPin } from 'lucide-react';
-import { formatDuration, formatDistance, formatDate } from '@/lib/format';
+import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel } from '@/lib/format';
 
 export default function History() {
   const navigate = useNavigate();
   const { rides } = useRideHistory();
+  const { settings } = useSettings();
 
   return (
     <div className="min-h-screen flex flex-col p-4 safe-top safe-bottom">
@@ -54,13 +56,13 @@ export default function History() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono text-lg font-bold">{formatDistance(ride.distance)}</p>
-                  <p className="text-xs text-muted-foreground">miles</p>
+                  <p className="font-mono text-lg font-bold">{formatDistance(ride.distance, settings.distanceUnit)}</p>
+                  <p className="text-xs text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</p>
                 </div>
               </div>
               <div className="flex gap-4 text-sm text-muted-foreground">
-                <span>Avg: {Math.round(ride.averageSpeed)} mph</span>
-                <span>Max: {Math.round(ride.maxSpeed)} mph</span>
+                <span>Avg: {formatSpeed(ride.averageSpeed, settings.speedUnit)} {settings.speedUnit}</span>
+                <span>Max: {formatSpeed(ride.maxSpeed, settings.speedUnit)} {settings.speedUnit}</span>
               </div>
             </button>
           ))
