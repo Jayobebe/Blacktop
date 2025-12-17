@@ -306,6 +306,22 @@
     }
   }
 
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @keyframes draw-check {
+    0% { stroke-dasharray: 0 100; }
+    100% { stroke-dasharray: 100 0; }
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3deg); }
+    75% { transform: rotate(3deg); }
+  }
+
   .animate-fade-in {
     animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
@@ -346,6 +362,19 @@
     background: linear-gradient(90deg, transparent, hsl(220 15% 100% / 0.05), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 1.5s ease-in-out infinite;
+  }
+
+  .animate-draw-check {
+    stroke-dasharray: 100;
+    animation: draw-check 0.4s ease-out forwards;
+  }
+
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out infinite;
   }
 
   /* Stagger delays - more refined timing */
