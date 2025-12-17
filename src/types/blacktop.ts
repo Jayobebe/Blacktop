@@ -4,6 +4,12 @@ export interface UserProfile {
   preferredNavApp: 'google' | 'waze' | 'apple';
 }
 
+export interface BadgeCounts {
+  speedDemon: number;
+  journeyman: number;
+  rocksteady: number;
+}
+
 export interface RideSession {
   id: string;
   startedAt: string;
@@ -14,6 +20,7 @@ export interface RideSession {
   averageSpeed: number; // in mph
   maxSpeed: number; // in mph
   gpsPoints: GpsPoint[];
+  earnedBadge?: 'speed-demon' | 'journeyman' | 'rocksteady'; // Badge earned in this ride
 }
 
 export interface GpsPoint {
@@ -30,6 +37,7 @@ export interface RideStats {
   personalTopSpeed: number; // in mph
   averageRideLength: number; // in miles
   convoyRides: number;
+  badges: BadgeCounts;
 }
 
 export interface ActiveRideState {
