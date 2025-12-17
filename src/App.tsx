@@ -23,8 +23,17 @@ const queryClient = new QueryClient();
 
 
 function AppRoutes() {
-  const { hasProfile } = useProfile();
+  const { hasProfile, isLoading } = useProfile();
   useSettings(); // Initialize accent color on app load
+
+  // Show nothing while checking auth/profile status
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!hasProfile) {
     return (
