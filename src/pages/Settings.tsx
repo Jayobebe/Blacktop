@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/hooks/useRideHistory';
+import { useSettings } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +15,7 @@ export default function Settings() {
   const { profile } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
+  const { settings, toggleSpeedRankings } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
 
   const navApps: { id: NavigationApp; label: string }[] = [
@@ -87,6 +90,26 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground mt-3">
             Blacktop will open your preferred navigation app for directions
           </p>
+        </section>
+
+        {/* Convoy Display Section */}
+        <section className="bg-card rounded-lg p-4 border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Convoy Display
+            </h2>
+          </div>
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <p className="text-sm font-medium">Show Speed Rankings</p>
+              <p className="text-xs text-muted-foreground">Display speed stats and rankings during rides</p>
+            </div>
+            <Switch 
+              checked={settings.showSpeedRankings} 
+              onCheckedChange={toggleSpeedRankings}
+            />
+          </div>
         </section>
 
         {/* Privacy Section */}
