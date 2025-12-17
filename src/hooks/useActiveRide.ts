@@ -224,6 +224,53 @@ function handlePositionError(error: GeolocationPositionError | any) {
   console.warn('[GPS] Error:', error.code || error, error.message || '');
 }
 
+// Helper: Start GPS watch
+async function startGpsWatch() {
+  console.log('[GPS] Starting watch, native:', isNative);
+  
+  if (isNative) {
+    try {
+      const permissions = await Geolocation.requestPermissions();
+      console.log('[GPS] Permissions:', permissions);
+
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+      handleNativePosition(position);
+
+      watchId = await Geolocation.watchPosition(
+        { enableHighAccuracy: true },
+        handleNativePosition
+      );
+      console.log('[GPS] Native watch started, id:', watchId);
+    } catch (error) {
+      console.error('[GPS] Native error:', error);
+      handlePositionError(error);
+    }
+  } else {
+    const geoOptions: PositionOptions = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    };
+
+    navigator.geolocation.getCurrentPosition(handleWebPosition, handlePositionError, geoOptions);
+    watchId = navigator.geolocation.watchPosition(handleWebPosition, handlePositionError, geoOptions);
+    console.log('[GPS] Web watch started, id:', watchId);
+  }
+}
+
+// Helper: Stop GPS watch
+async function stopGpsWatch() {
+  if (watchId !== null) {
+    console.log('[GPS] Stopping watch, id:', watchId);
+    if (isNative) {
+      await Geolocation.clearWatch({ id: watchId as string });
+    } else {
+      navigator.geolocation.clearWatch(watchId as number);
+    }
+    watchId = null;
+  }
+}
+
 // Sync stats to database for convoy members
 async function syncConvoyStats() {
   if (!currentConvoyId || !rideState.isActive) return;
@@ -295,43 +342,8 @@ export function useActiveRide(convoyId?: string | null) {
       convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
     }
 
-    console.log('[GPS] Starting ride tracking, native:', isNative);
-
-    if (isNative) {
-      // Native Capacitor geolocation with background support
-      (async () => {
-        try {
-          // Request permissions
-          const permissions = await Geolocation.requestPermissions();
-          console.log('[GPS] Permissions:', permissions);
-
-          // Prime GPS
-          const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-          handleNativePosition(position);
-
-          // Start watching with background support
-          watchId = await Geolocation.watchPosition(
-            { enableHighAccuracy: true },
-            handleNativePosition
-          );
-          console.log('[GPS] Native watch started, id:', watchId);
-        } catch (error) {
-          console.error('[GPS] Native error:', error);
-          handlePositionError(error);
-        }
-      })();
-    } else {
-      // Web geolocation (no background support)
-      const geoOptions: PositionOptions = {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      };
-
-      navigator.geolocation.getCurrentPosition(handleWebPosition, handlePositionError, geoOptions);
-      watchId = navigator.geolocation.watchPosition(handleWebPosition, handlePositionError, geoOptions);
-      console.log('[GPS] Web watch started, id:', watchId);
-    }
+    // Start GPS tracking using helper
+    startGpsWatch();
 
     // Duration counter based on wall-clock time (so short rides still count)
     // Subtracts paused time from the total
@@ -350,15 +362,8 @@ export function useActiveRide(convoyId?: string | null) {
   }, [convoyId]);
 
   const endRide = useCallback(async (): Promise<string | null> => {
-    // Stop GPS tracking
-    if (watchId !== null) {
-      if (isNative) {
-        await Geolocation.clearWatch({ id: watchId as string });
-      } else {
-        navigator.geolocation.clearWatch(watchId as number);
-      }
-      watchId = null;
-    }
+    // Stop GPS tracking using helper
+    await stopGpsWatch();
 
     // Stop duration counter
     if (durationInterval) {
@@ -419,18 +424,21 @@ export function useActiveRide(convoyId?: string | null) {
 
   const setRidePaused = useCallback((paused: boolean) => {
     if (paused && !isPaused) {
-      // Starting pause
+      // Starting pause - stop GPS to save battery
       isPaused = true;
       pausedAtMs = Date.now();
-      console.log('[Ride] Paused');
+      stopGpsWatch();
+      console.log('[Ride] Paused - GPS stopped to save battery');
     } else if (!paused && isPaused) {
-      // Resuming from pause
+      // Resuming from pause - restart GPS
       if (pausedAtMs) {
         totalPausedTime += Date.now() - pausedAtMs;
       }
       isPaused = false;
       pausedAtMs = null;
-      console.log('[Ride] Resumed, total paused time:', totalPausedTime);
+      stationaryCount = 0; // Reset throttle counter
+      startGpsWatch();
+      console.log('[Ride] Resumed - GPS restarted, total paused time:', totalPausedTime);
     }
   }, []);
 
