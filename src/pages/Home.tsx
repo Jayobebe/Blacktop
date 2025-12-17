@@ -120,9 +120,9 @@ export default function Home() {
         <div className="flex-1 flex flex-col gap-2 md:gap-3 animate-slide-up delay-100">
           <button
             onClick={() => navigate('/create-convoy')}
-            className="flex-1 min-h-[70px] landscape:min-h-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+            className="flex-1 min-h-[70px] landscape:min-h-0 bg-transparent hover:bg-accent/10 border-2 border-accent text-accent rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
           >
-            <div className="w-10 h-10 landscape:w-8 landscape:h-8 rounded-xl bg-accent-foreground/10 flex items-center justify-center">
+            <div className="w-10 h-10 landscape:w-8 landscape:h-8 rounded-xl bg-accent/10 flex items-center justify-center">
               <Users className="w-5 h-5 landscape:w-4 landscape:h-4" />
             </div>
             <div className="text-left">
