@@ -13,6 +13,11 @@ const MAX_DISTANCE_JUMP = 0.5; // miles - tighter check for GPS jumps
 const CONVOY_SYNC_INTERVAL = 2000; // ms - sync to database every 2 seconds
 const SPEED_CHANGE_THRESHOLD = 5; // mph - if speed changes more than this, reduce smoothing
 
+// Battery optimization: track consecutive stationary readings
+let stationaryCount = 0;
+const STATIONARY_THRESHOLD = 3; // Number of zero-speed readings before throttling
+const THROTTLE_SKIP_COUNT = 2; // Skip this many updates when stationary (process every 3rd)
+
 // Check if running as native app
 const isNative = Capacitor.isNativePlatform();
 
@@ -90,14 +95,31 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
     return;
   }
 
-  // Log GPS data for debugging
-  console.log('[GPS] Position update:', { 
-    lat: latitude.toFixed(6), 
-    lng: longitude.toFixed(6), 
-    accuracy: accuracy?.toFixed(0), 
-    deviceSpeed: deviceSpeed?.toFixed(1),
-    native: isNative
-  });
+  // Battery optimization: throttle updates when stationary
+  const deviceSpeedMphQuick = deviceSpeed != null && deviceSpeed >= 0 ? deviceSpeed * 2.237 : null;
+  const isStationary = deviceSpeedMphQuick !== null && deviceSpeedMphQuick < MIN_SPEED_THRESHOLD;
+  
+  if (isStationary) {
+    stationaryCount++;
+    // When stationary for a while, process fewer updates to save battery
+    if (stationaryCount > STATIONARY_THRESHOLD && stationaryCount % (THROTTLE_SKIP_COUNT + 1) !== 0) {
+      console.log('[GPS] Throttling stationary update, count:', stationaryCount);
+      return;
+    }
+  } else {
+    stationaryCount = 0; // Reset when moving
+  }
+
+  // Log GPS data for debugging (less verbose when stationary)
+  if (!isStationary || stationaryCount <= STATIONARY_THRESHOLD) {
+    console.log('[GPS] Position update:', { 
+      lat: latitude.toFixed(6), 
+      lng: longitude.toFixed(6), 
+      accuracy: accuracy?.toFixed(0), 
+      deviceSpeed: deviceSpeed?.toFixed(1),
+      native: isNative
+    });
+  }
 
   // If accuracy is very poor, still track but with caution
   const accuracyOk = accuracy == null || accuracy <= MAX_ACCURACY_THRESHOLD;
@@ -253,6 +275,7 @@ export function useActiveRide(convoyId?: string | null) {
     isPaused = false;
     totalPausedTime = 0;
     pausedAtMs = null;
+    stationaryCount = 0; // Reset battery optimization counter
 
     setRideState(() => ({
       isActive: true,
