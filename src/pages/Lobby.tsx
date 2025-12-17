@@ -587,7 +587,7 @@ export default function Lobby() {
                 navigate('/ride');
               }
             }}
-            onContextMenu={(e) => {
+            onContextMenu={async (e) => {
               e.preventDefault();
               // Desktop long-press (right-click) - leader starts for all
               if (!convoy.isLeader) return;
@@ -596,11 +596,15 @@ export default function Lobby() {
               const success = startRide(true, convoy.id);
               if (success) {
                 toast.success('Starting ride for all riders');
-                controlChannelRef.current?.send({
-                  type: 'broadcast',
-                  event: 'start-ride',
-                  payload: { at: Date.now() },
-                });
+                if (controlChannelRef.current) {
+                  console.log('[Lobby] Leader sending start-ride broadcast (desktop)');
+                  await controlChannelRef.current.send({
+                    type: 'broadcast',
+                    event: 'start-ride',
+                    payload: { at: Date.now() },
+                  });
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                }
                 navigate('/ride');
               }
             }}
@@ -611,7 +615,7 @@ export default function Lobby() {
                 clearTimeout(longPressTimerRef.current);
               }
 
-              longPressTimerRef.current = window.setTimeout(() => {
+              longPressTimerRef.current = window.setTimeout(async () => {
                 if (!convoy.isLeader) return;
 
                 didLongPressRef.current = true;
@@ -620,11 +624,19 @@ export default function Lobby() {
                 const success = startRide(true, convoy.id);
                 if (success) {
                   toast.success('Starting ride for all riders');
-                  controlChannelRef.current?.send({
-                    type: 'broadcast',
-                    event: 'start-ride',
-                    payload: { at: Date.now() },
-                  });
+                  
+                  // Use the existing control channel if subscribed, otherwise create temp channel
+                  if (controlChannelRef.current) {
+                    console.log('[Lobby] Leader sending start-ride broadcast');
+                    await controlChannelRef.current.send({
+                      type: 'broadcast',
+                      event: 'start-ride',
+                      payload: { at: Date.now() },
+                    });
+                    // Small delay to ensure broadcast propagates
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                  }
+                  
                   navigate('/ride');
                 }
               }, 500);
