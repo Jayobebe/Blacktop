@@ -96,12 +96,6 @@ export default function Lobby() {
   };
 
   const handleTransferLeadership = async (userId: string) => {
-    // Prevent transferring to demo members
-    if (userId.startsWith('demo-')) {
-      toast.error('Cannot transfer to demo members');
-      setTransferTarget(null);
-      return;
-    }
     const success = await transferLeadership(userId);
     if (success) {
       setTransferTarget(null);
@@ -109,16 +103,7 @@ export default function Lobby() {
   };
 
   // Sort members: leader first, then by join time
-  // Add demo members if only one real member (for showcase)
-  const demoMembers = convoy.members.length === 1 ? [
-    ...convoy.members,
-    { id: 'demo-1', userId: 'demo-user-1', name: 'Marcus', isLeader: false, isReady: true, hasNavigated: true, joinedAt: new Date().toISOString() },
-    { id: 'demo-2', userId: 'demo-user-2', name: 'Sarah', isLeader: false, isReady: true, hasNavigated: false, joinedAt: new Date().toISOString() },
-    { id: 'demo-3', userId: 'demo-user-3', name: 'Jake', isLeader: false, isReady: true, hasNavigated: true, joinedAt: new Date().toISOString() },
-    { id: 'demo-4', userId: 'demo-user-4', name: 'Riley', isLeader: false, isReady: true, hasNavigated: false, joinedAt: new Date().toISOString() },
-  ] as any[] : convoy.members;
-
-  const sortedMembers = [...demoMembers].sort((a, b) => {
+  const sortedMembers = [...convoy.members].sort((a, b) => {
     if (a.isLeader) return -1;
     if (b.isLeader) return 1;
     return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
