@@ -24,6 +24,7 @@ export default function Lobby() {
   const { openNavigation } = useNavigation();
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const [showAddWaypoint, setShowAddWaypoint] = useState(false);
   const hasStartedRide = useRef(false);
@@ -66,6 +67,13 @@ export default function Lobby() {
       if (success) {
         navigate('/ride');
       }
+    });
+
+    // Listen for leadership change broadcast
+    channel.on('broadcast', { event: 'leadership-changed' }, (payload: any) => {
+      console.log('[Lobby] Leadership changed:', payload);
+      // The realtime subscription will update the state, but show a toast
+      toast.info('Leadership has been transferred');
     });
 
     channel.subscribe((status) => {
@@ -135,11 +143,31 @@ export default function Lobby() {
   };
 
   const handleLeave = async () => {
+    // If leader with other members, must transfer leadership first
+    if (convoy.isLeader && convoy.members.length > 1) {
+      setShowLeaderSelect(true);
+      setShowLeaveConfirm(false);
+      return;
+    }
+    
     if (isConnected) {
       disconnect();
     }
     await leaveConvoy();
     navigate('/');
+  };
+
+  // Transfer leadership and then leave
+  const handleTransferAndLeave = async (newLeaderUserId: string) => {
+    const success = await transferLeadership(newLeaderUserId);
+    if (success) {
+      setShowLeaderSelect(false);
+      if (isConnected) {
+        disconnect();
+      }
+      await leaveConvoy();
+      navigate('/');
+    }
   };
 
   const handleTransferLeadership = async (userId: string) => {
@@ -411,8 +439,38 @@ export default function Lobby() {
 
       {/* Action Buttons - compact */}
       <div className="mt-2 md:mt-3 animate-slide-up delay-300 flex items-center justify-between">
-        {/* Leave button */}
-        {!showLeaveConfirm ? (
+        {/* Leave button / Leader selection */}
+        {showLeaderSelect ? (
+          <div className="flex flex-col gap-2 w-full max-w-xs">
+            <p className="text-xs text-muted-foreground">Select new leader before leaving:</p>
+            <div className="flex flex-wrap gap-2">
+              {convoy.members.filter(m => !m.isLeader).map(member => {
+                const colorStyles = getMemberColorStyles(member.accentColor);
+                return (
+                  <Button
+                    key={member.userId}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                    style={{ borderColor: colorStyles.border, color: colorStyles.text }}
+                    onClick={() => handleTransferAndLeave(member.userId)}
+                  >
+                    <Crown className="w-3 h-3 mr-1" />
+                    {member.name}
+                  </Button>
+                );
+              })}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 px-3 text-xs text-muted-foreground"
+                onClick={() => setShowLeaderSelect(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : !showLeaveConfirm ? (
           <Button
             onClick={() => setShowLeaveConfirm(true)}
             variant="outline"
