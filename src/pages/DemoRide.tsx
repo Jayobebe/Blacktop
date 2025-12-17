@@ -123,12 +123,29 @@ export default function DemoRide() {
     setShowSuccess(false);
   }, [step]);
 
-  const triggerSuccess = useCallback(() => {
+  const steps: DemoStep[] = [
+    'welcome', 'onboarding', 'home', 'create-convoy', 'lobby-empty', 
+    'lobby-members', 'lobby-waypoints', 'lobby-reorder', 'active-ride',
+    'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
+    'history', 'history-photos', 'stats', 'settings', 'complete'
+  ];
+
+  const nextStep = useCallback(() => {
+    setStep(currentStep => {
+      const currentIndex = steps.indexOf(currentStep);
+      if (currentIndex < steps.length - 1) {
+        return steps[currentIndex + 1];
+      }
+      return currentStep;
+    });
+  }, []);
+
+  const triggerSuccess = useCallback((advanceStep: () => void) => {
     haptics.success();
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
-      nextStep();
+      advanceStep();
     }, 600);
   }, []);
 
@@ -138,9 +155,9 @@ export default function DemoRide() {
     
     // Auto-advance after certain interactions
     if (['copy', 'unmute', 'reorder', 'rescue', 'add-waypoint', 'setting'].includes(action)) {
-      setTimeout(triggerSuccess, 300);
+      setTimeout(() => triggerSuccess(nextStep), 300);
     }
-  }, [triggerSuccess]);
+  }, [triggerSuccess, nextStep]);
 
   const handleCopy = () => {
     setCopied(true);
@@ -169,20 +186,6 @@ export default function DemoRide() {
     setWaypointOrder(newOrder);
     setDraggedIndex(null);
     handleInteraction('reorder');
-  };
-
-  const steps: DemoStep[] = [
-    'welcome', 'onboarding', 'home', 'create-convoy', 'lobby-empty', 
-    'lobby-members', 'lobby-waypoints', 'lobby-reorder', 'active-ride',
-    'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
-    'history', 'history-photos', 'stats', 'settings', 'complete'
-  ];
-
-  const nextStep = () => {
-    const currentIndex = steps.indexOf(step);
-    if (currentIndex < steps.length - 1) {
-      setStep(steps[currentIndex + 1]);
-    }
   };
 
   const exitDemo = () => navigate('/');
