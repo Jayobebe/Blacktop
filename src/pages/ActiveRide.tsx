@@ -323,20 +323,20 @@ export default function ActiveRide() {
 
           {/* Stats Row - compact horizontal */}
           <div className="flex gap-4 md:gap-6 mt-3 landscape:mt-2 md:mt-4">
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Dist</p>
-              <p className="font-mono text-base landscape:text-sm md:text-lg font-bold">
+              <p className="font-mono text-sm landscape:text-xs md:text-base font-bold truncate">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
                 <span className="text-[10px] text-muted-foreground ml-0.5">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Time</p>
-              <p className="font-mono text-base landscape:text-sm md:text-lg font-bold">{formatDuration(rideState.duration)}</p>
+              <p className="font-mono text-sm landscape:text-xs md:text-base font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className="text-muted-foreground text-[9px] uppercase tracking-wide">Max</p>
-              <p className="font-mono text-base landscape:text-sm md:text-lg font-bold">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
+              <p className="font-mono text-sm landscape:text-xs md:text-base font-bold truncate">{formatSpeed(rideState.maxSpeed, settings.speedUnit)}</p>
             </div>
           </div>
         </div>
