@@ -111,12 +111,13 @@ serve(async (req) => {
       let query: string;
       
       if (filter24h) {
-        // Search for shops/stores open 24 hours
+        // Search for shops and petrol stations open 24 hours
         query = `
           [out:json][timeout:15];
           (
             node["shop"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
-            node["amenity"~"fuel|convenience"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
+            node["amenity"="fuel"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
+            node["amenity"="convenience"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
           );
           out body ${limit};
         `;

@@ -5,6 +5,7 @@ import { useActiveRide } from '@/hooks/useActiveRide';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { useWaypoints } from '@/hooks/useWaypoints';
 import { useNavigation } from '@/hooks/useNavigation';
+import { useSettings } from '@/hooks/useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus } from 'lucide-react';
@@ -27,6 +28,7 @@ export default function Lobby() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { openNavigation } = useNavigation();
+  const { settings } = useSettings();
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
@@ -334,6 +336,7 @@ export default function Lobby() {
                 isLeader={convoy.isLeader}
                 userLocation={userLocation}
                 countryCode={countryCode}
+                distanceUnit={settings.distanceUnit}
               />
             </div>
           ) : (
@@ -402,6 +405,7 @@ export default function Lobby() {
                   isLeader={convoy.isLeader}
                   userLocation={userLocation}
                   countryCode={countryCode}
+                  distanceUnit={settings.distanceUnit}
                 />
               )}
             </div>
