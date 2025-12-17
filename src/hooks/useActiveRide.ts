@@ -1,4 +1,4 @@
-import { useCallback, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
@@ -12,6 +12,8 @@ const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
 const MAX_DISTANCE_JUMP = 0.5; // miles - tighter check for GPS jumps
 const CONVOY_SYNC_INTERVAL = 2000; // ms - sync to database every 2 seconds
 const SPEED_CHANGE_THRESHOLD = 5; // mph - if speed changes more than this, reduce smoothing
+
+const RIDE_STATE_KEY = 'blacktop_active_ride';
 
 // Battery optimization: track consecutive stationary readings
 let stationaryCount = 0;
@@ -29,7 +31,39 @@ const isNative = Capacitor.isNativePlatform();
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
-let rideState: ActiveRideState = {
+// Try to restore ride state from localStorage
+function loadPersistedState(): ActiveRideState | null {
+  try {
+    const stored = localStorage.getItem(RIDE_STATE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Validate it's still an active ride
+      if (parsed && parsed.isActive && parsed.startedAt) {
+        console.log('[Ride] Restored persisted ride state');
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('[Ride] Failed to restore persisted state:', e);
+  }
+  return null;
+}
+
+function persistState(state: ActiveRideState) {
+  try {
+    if (state.isActive) {
+      localStorage.setItem(RIDE_STATE_KEY, JSON.stringify(state));
+    } else {
+      localStorage.removeItem(RIDE_STATE_KEY);
+    }
+  } catch (e) {
+    console.warn('[Ride] Failed to persist state:', e);
+  }
+}
+
+const restoredState = loadPersistedState();
+
+let rideState: ActiveRideState = restoredState || {
   isActive: false,
   startedAt: null,
   isConvoyMode: false,
@@ -45,12 +79,13 @@ let watchId: number | string | null = null;
 let durationInterval: ReturnType<typeof setInterval> | null = null;
 let convoySyncInterval: ReturnType<typeof setInterval> | null = null;
 let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
-let rideStartedAtMs: number | null = null;
+let rideStartedAtMs: number | null = restoredState?.startedAt ? new Date(restoredState.startedAt).getTime() : null;
 let smoothedSpeed = 0;
 let currentConvoyId: string | null = null;
 let isPaused = false;
 let totalPausedTime = 0;
 let pausedAtMs: number | null = null;
+let hasRestoredGps = false; // Track if we've already restored GPS for this session
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -71,6 +106,7 @@ function emitChange() {
 
 function setRideState(updater: (prev: ActiveRideState) => ActiveRideState) {
   rideState = updater(rideState);
+  persistState(rideState); // Persist on every state change
   emitChange();
 }
 
@@ -325,6 +361,43 @@ export function useActiveRide(convoyId?: string | null) {
   const addRideRef = useRef(addRide);
   addRideRef.current = addRide;
 
+  // Resume GPS tracking if we have an active ride from restored state
+  useEffect(() => {
+    if (state.isActive && !hasRestoredGps && watchId === null) {
+      console.log('[Ride] Resuming GPS tracking for restored ride');
+      hasRestoredGps = true;
+      
+      // Restore rideStartedAtMs from startedAt if not set
+      if (!rideStartedAtMs && state.startedAt) {
+        rideStartedAtMs = new Date(state.startedAt).getTime();
+      }
+      
+      // Start GPS tracking
+      startGpsWatch();
+      
+      // Start duration counter
+      if (!durationInterval) {
+        durationInterval = setInterval(() => {
+          if (!rideStartedAtMs || isPaused) return;
+          const totalElapsed = Date.now() - rideStartedAtMs;
+          const activeTime = totalElapsed - totalPausedTime;
+          const seconds = Math.max(0, Math.floor(activeTime / 1000));
+          setRideState(prev => ({
+            ...prev,
+            duration: seconds,
+          }));
+        }, 500);
+      }
+      
+      // Start convoy sync if in convoy mode
+      if (state.isConvoyMode && convoyId && !convoySyncInterval) {
+        currentConvoyId = convoyId;
+        console.log('[Convoy] Resuming stats sync for convoy:', convoyId);
+        convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
+      }
+    }
+  }, [state.isActive, state.isConvoyMode, state.startedAt, convoyId]);
+
   const startRide = useCallback((isConvoyMode: boolean = false, activeConvoyId?: string | null) => {
     if (!navigator.geolocation) {
       console.error('Geolocation not supported');
@@ -342,6 +415,7 @@ export function useActiveRide(convoyId?: string | null) {
     lastStationaryCheck = null;
     pausedAtMs = null;
     stationaryCount = 0; // Reset battery optimization counter
+    hasRestoredGps = true; // Mark as handled so restoration effect doesn't double-start
 
     setRideState(() => ({
       isActive: true,
