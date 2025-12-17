@@ -143,14 +143,14 @@ export default function Stats() {
             style={{ animationDelay: `${(index + 3) * 50}ms` }}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-secondary rounded-lg">
+              <div className="p-2 bg-secondary rounded-lg flex-shrink-0">
                 <stat.icon className="w-5 h-5 text-muted-foreground" />
               </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide truncate">
                   {stat.label}
                 </p>
-                <p className="font-mono text-2xl font-bold">
+                <p className="font-mono text-xl md:text-2xl font-bold truncate">
                   {stat.value}
                   {stat.unit && (
                     <span className="text-sm text-muted-foreground ml-1">{stat.unit}</span>

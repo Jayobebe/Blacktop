@@ -100,11 +100,11 @@ export default function Home() {
           ].map((stat, i) => (
             <div 
               key={stat.label}
-              className="bg-card/50 backdrop-blur-sm rounded-xl p-2 md:p-3 border border-border/30 animate-slide-up"
+              className="bg-card/50 backdrop-blur-sm rounded-xl p-2 md:p-3 border border-border/30 animate-slide-up overflow-hidden"
               style={{ animationDelay: `${i * 50}ms` }}
             >
-              <p className="text-muted-foreground text-[9px] uppercase tracking-widest mb-0.5">{stat.label}</p>
-              <p className="text-base md:text-lg font-mono font-semibold tracking-tight">
+              <p className="text-muted-foreground text-[9px] uppercase tracking-widest mb-0.5 truncate">{stat.label}</p>
+              <p className="text-sm md:text-base font-mono font-semibold tracking-tight truncate">
                 {stat.value}
                 {stat.unit && <span className="text-[10px] text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
               </p>
