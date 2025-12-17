@@ -5,7 +5,7 @@ import { useRideHistory } from '@/hooks/useRideHistory';
 import { useActiveRide } from '@/hooks/useActiveRide';
 import { useConvoyState } from '@/hooks/useConvoyState';
 import { Button } from '@/components/ui/button';
-import { History, BarChart3, Settings, Users, UserPlus } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, Play } from 'lucide-react';
 import { formatDuration, formatDistance } from '@/lib/format';
 
 export default function Home() {
@@ -101,6 +101,13 @@ export default function Home() {
 
       {/* Bottom Navigation */}
       <nav className="flex justify-around mt-4 md:mt-6 pt-4 border-t border-border animate-slide-up delay-200 md:justify-center md:gap-8">
+        <button
+          onClick={() => navigate('/demo')}
+          className="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-accent/20 text-accent transition-colors touch-target"
+        >
+          <Play className="w-6 h-6" />
+          <span className="text-xs">Demo</span>
+        </button>
         <button
           onClick={() => navigate('/history')}
           className="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-secondary transition-colors touch-target"
