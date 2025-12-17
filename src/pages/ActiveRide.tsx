@@ -9,12 +9,57 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useRideNotification } from '@/hooks/useRideNotification';
 import { ConvoyMemberInfo } from '@/types/convoy';
+import { GpsStatus } from '@/types/blacktop';
 import { RideSummary } from '@/components/RideSummary';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route } from 'lucide-react';
+import { Square, Mic, MicOff, Navigation, Users, Crown, User, Gauge, Route, Signal, SignalLow, SignalMedium, SignalHigh } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+// GPS Signal Indicator Component
+function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
+  const timeSinceUpdate = gpsStatus.lastUpdate 
+    ? Math.floor((Date.now() - gpsStatus.lastUpdate) / 1000)
+    : null;
+  
+  const isStale = timeSinceUpdate !== null && timeSinceUpdate > 5;
+  const accuracy = gpsStatus.accuracy;
+  
+  // Determine signal quality
+  let SignalIcon = Signal;
+  let signalColor = 'text-muted-foreground/50';
+  let title = 'Waiting for GPS...';
+  
+  if (gpsStatus.source !== 'none' && !isStale) {
+    if (accuracy !== null && accuracy <= 10) {
+      SignalIcon = SignalHigh;
+      signalColor = 'text-emerald-400';
+      title = `GPS: Excellent (±${Math.round(accuracy)}m)`;
+    } else if (accuracy !== null && accuracy <= 30) {
+      SignalIcon = SignalMedium;
+      signalColor = 'text-accent';
+      title = `GPS: Good (±${Math.round(accuracy)}m)`;
+    } else if (accuracy !== null && accuracy <= 100) {
+      SignalIcon = SignalLow;
+      signalColor = 'text-yellow-400';
+      title = `GPS: Fair (±${Math.round(accuracy)}m)`;
+    } else {
+      SignalIcon = SignalLow;
+      signalColor = 'text-orange-400';
+      title = accuracy ? `GPS: Weak (±${Math.round(accuracy)}m)` : 'GPS: Active';
+    }
+  } else if (isStale) {
+    signalColor = 'text-destructive/70';
+    title = 'GPS signal lost';
+  }
+  
+  return (
+    <div className="flex items-center gap-1" title={title}>
+      <SignalIcon className={cn("w-3.5 h-3.5 transition-colors", signalColor)} />
+    </div>
+  );
+}
 
 // Member colors for visual distinction
 const MEMBER_COLORS = [
@@ -165,6 +210,8 @@ export default function ActiveRide() {
               </span>
             )}
             <span className="text-muted-foreground text-sm">Ride Active</span>
+            {/* GPS Signal Indicator */}
+            <GpsIndicator gpsStatus={rideState.gpsStatus} />
           </div>
 
           <div className="text-center">
