@@ -1,4 +1,6 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
+import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { useRideHistory } from './useRideHistory';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +12,9 @@ const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
 const MAX_DISTANCE_JUMP = 0.5; // miles - tighter check for GPS jumps
 const CONVOY_SYNC_INTERVAL = 2000; // ms - sync to database every 2 seconds
 const SPEED_CHANGE_THRESHOLD = 5; // mph - if speed changes more than this, reduce smoothing
+
+// Check if running as native app
+const isNative = Capacitor.isNativePlatform();
 
 // Shared state
 type Listener = () => void;
@@ -27,7 +32,7 @@ let rideState: ActiveRideState = {
   gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
 };
 
-let watchId: number | null = null;
+let watchId: number | string | null = null;
 let durationInterval: ReturnType<typeof setInterval> | null = null;
 let convoySyncInterval: ReturnType<typeof setInterval> | null = null;
 let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
@@ -69,16 +74,15 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-function handlePositionUpdate(position: GeolocationPosition) {
-  const { latitude, longitude, speed: deviceSpeed, accuracy } = position.coords;
-  const timestamp = position.timestamp;
-
+// Unified position handler for both web and native
+function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: number | null | undefined, accuracy: number | null | undefined, timestamp: number) {
   // Log GPS data for debugging
   console.log('[GPS] Position update:', { 
     lat: latitude.toFixed(6), 
     lng: longitude.toFixed(6), 
     accuracy: accuracy?.toFixed(0), 
-    deviceSpeed: deviceSpeed?.toFixed(1) 
+    deviceSpeed: deviceSpeed?.toFixed(1),
+    native: isNative
   });
 
   // If accuracy is very poor, still track but with caution
@@ -163,13 +167,25 @@ function handlePositionUpdate(position: GeolocationPosition) {
     maxSpeed: Math.max(prev.maxSpeed, displaySpeed),
     distance: prev.distance + distanceIncrement,
     gpsPoints: [...prev.gpsPoints, gpsPoint],
-    gpsStatus: { accuracy, lastUpdate: timestamp, source: speedSource },
+    gpsStatus: { accuracy: accuracy ?? null, lastUpdate: timestamp, source: speedSource },
   }));
 }
 
-function handlePositionError(error: GeolocationPositionError) {
-  console.warn('[GPS] Error:', error.code, error.message);
-  // Error codes: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
+// Web geolocation handler
+function handleWebPosition(position: GeolocationPosition) {
+  const { latitude, longitude, speed, accuracy } = position.coords;
+  handlePositionUpdate(latitude, longitude, speed, accuracy, position.timestamp);
+}
+
+// Native Capacitor geolocation handler
+function handleNativePosition(position: Position | null) {
+  if (!position) return;
+  const { latitude, longitude, speed, accuracy } = position.coords;
+  handlePositionUpdate(latitude, longitude, speed, accuracy, position.timestamp);
+}
+
+function handlePositionError(error: GeolocationPositionError | any) {
+  console.warn('[GPS] Error:', error.code || error, error.message || '');
 }
 
 // Sync stats to database for convoy members
@@ -239,20 +255,43 @@ export function useActiveRide(convoyId?: string | null) {
       convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
     }
 
-    const geoOptions: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0, // Always get fresh position (like Waze)
-    };
+    console.log('[GPS] Starting ride tracking, native:', isNative);
 
-    console.log('[GPS] Starting ride tracking with options:', geoOptions);
+    if (isNative) {
+      // Native Capacitor geolocation with background support
+      (async () => {
+        try {
+          // Request permissions
+          const permissions = await Geolocation.requestPermissions();
+          console.log('[GPS] Permissions:', permissions);
 
-    // Prime GPS with a one-time read (often prevents early TIMEOUTs)
-    navigator.geolocation.getCurrentPosition(handlePositionUpdate, handlePositionError, geoOptions);
+          // Prime GPS
+          const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+          handleNativePosition(position);
 
-    // Start GPS tracking
-    watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handlePositionError, geoOptions);
-    console.log('[GPS] Watch started, id:', watchId);
+          // Start watching with background support
+          watchId = await Geolocation.watchPosition(
+            { enableHighAccuracy: true },
+            handleNativePosition
+          );
+          console.log('[GPS] Native watch started, id:', watchId);
+        } catch (error) {
+          console.error('[GPS] Native error:', error);
+          handlePositionError(error);
+        }
+      })();
+    } else {
+      // Web geolocation (no background support)
+      const geoOptions: PositionOptions = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      };
+
+      navigator.geolocation.getCurrentPosition(handleWebPosition, handlePositionError, geoOptions);
+      watchId = navigator.geolocation.watchPosition(handleWebPosition, handlePositionError, geoOptions);
+      console.log('[GPS] Web watch started, id:', watchId);
+    }
 
     // Duration counter based on wall-clock time (so short rides still count)
     durationInterval = setInterval(() => {
@@ -270,7 +309,11 @@ export function useActiveRide(convoyId?: string | null) {
   const endRide = useCallback(async () => {
     // Stop GPS tracking
     if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
+      if (isNative) {
+        await Geolocation.clearWatch({ id: watchId as string });
+      } else {
+        navigator.geolocation.clearWatch(watchId as number);
+      }
       watchId = null;
     }
 

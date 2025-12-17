@@ -14,6 +14,12 @@ const config: CapacitorConfig = {
   },
   android: {
     backgroundColor: '#0a0a0a'
+  },
+  plugins: {
+    Geolocation: {
+      // iOS: Request "always" permission for background tracking
+      // Android: Uses foreground service for background tracking
+    }
   }
 };
 
