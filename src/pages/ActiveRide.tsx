@@ -103,6 +103,7 @@ export default function ActiveRide() {
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
+  const hadDestinationRef = useRef<boolean>(false); // Track if we ever had a destination (to detect leader ending ride)
 
   // Keep screen awake during active ride
   useEffect(() => {
@@ -130,6 +131,13 @@ export default function ActiveRide() {
     };
   }, [isConnected, disconnect]);
 
+  // Initialize destination tracking ref on mount if we already have a destination
+  useEffect(() => {
+    if (convoy.destination) {
+      hadDestinationRef.current = true;
+    }
+  }, []); // Only on mount
+
   // Redirect if no active ride (but don't interrupt the explicit "end ride" flow / summary)
   useEffect(() => {
     if (!rideState.isActive && !showSummary && !endingFlow) {
@@ -145,13 +153,23 @@ export default function ActiveRide() {
   }, [convoy.isPaused, rideState.isConvoyMode, setRidePaused]);
 
   // Non-leaders: listen for leader ending the ride (destination cleared)
+  // Only trigger if we previously had a destination and it was cleared
   useEffect(() => {
     if (!(rideState.isConvoyMode && !convoy.isLeader && rideState.isActive)) return;
 
-    // If we're in convoy mode, not the leader, and destination gets cleared, leader ended the ride
-    if (convoy.isActive && !convoy.destination) {
+    // Track that we've seen a destination
+    if (convoy.destination) {
+      hadDestinationRef.current = true;
+      return;
+    }
+
+    // Only end ride if we HAD a destination before and now it's gone
+    // This prevents false triggers during state restoration or initial load
+    if (convoy.isActive && !convoy.destination && hadDestinationRef.current) {
+      console.log('[ActiveRide] Destination cleared by leader - ending ride for member');
       toast.info('Leader ended the ride');
       setEndingFlow(true);
+      hadDestinationRef.current = false; // Reset for next ride
       (async () => {
         await endRide();
         navigate('/lobby');
