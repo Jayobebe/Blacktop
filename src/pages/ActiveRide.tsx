@@ -370,12 +370,13 @@ export default function ActiveRide() {
   };
 
   const handleBadgesEarned = useCallback((badges: BadgeType[]) => {
-    if (badges.length > 0) {
+    // Only save badges for convoy rides with 2+ members - solo rides never earn badges
+    if (badges.length > 0 && rideState.isConvoyMode && convoy.members.length >= 2) {
       console.log('[ActiveRide] Badges earned:', badges);
       // Store badges - they'll be saved when savedRideId becomes available
       setPendingBadges(badges);
     }
-  }, []);
+  }, [rideState.isConvoyMode, convoy.members.length]);
 
   const handleCloseSummary = () => {
     setShowSummary(false);
