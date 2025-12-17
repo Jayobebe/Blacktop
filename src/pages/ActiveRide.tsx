@@ -157,6 +157,14 @@ export default function ActiveRide() {
   // We don't auto-sync pause state on mount - only respond to explicit broadcasts
   // This prevents individually started rides from being paused immediately
 
+  // Refs for stable access in callbacks (avoid stale closures)
+  const voiceChannelRef = useRef({ isConnected, disconnect });
+  voiceChannelRef.current = { isConnected, disconnect };
+  const endingFlowRef = useRef(endingFlow);
+  endingFlowRef.current = endingFlow;
+  const convoyMembersRef = useRef(convoy.members);
+  convoyMembersRef.current = convoy.members;
+
   // Subscribe to convoy control channel for 'end-ride' broadcast from leader
   useEffect(() => {
     if (!convoy.id || !rideState.isConvoyMode) return;
@@ -166,14 +174,14 @@ export default function ActiveRide() {
     });
 
     channel.on('broadcast', { event: 'end-ride' }, () => {
-      if (endingFlow) return; // Already ending
+      if (endingFlowRef.current) return; // Already ending
       console.log('[ActiveRide] Received end-ride broadcast from leader');
       toast.info('Leader ended the ride');
       setEndingFlow(true);
       
-      // Disconnect voice immediately
-      if (isConnected) {
-        disconnect();
+      // Disconnect voice immediately (use ref for fresh values)
+      if (voiceChannelRef.current.isConnected) {
+        voiceChannelRef.current.disconnect();
       }
       
       // Capture final ride stats before ending (use ref for fresh state)
@@ -187,7 +195,7 @@ export default function ActiveRide() {
       });
       
       // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
-      const members = membersRef.current.length > 0 ? membersRef.current : convoy.members;
+      const members = membersRef.current.length > 0 ? membersRef.current : convoyMembersRef.current;
       if (members.length > 0) {
         setFinalMembers(members);
       }
@@ -228,7 +236,7 @@ export default function ActiveRide() {
       supabase.removeChannel(channel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id, rideState.isConvoyMode, endRide, resetNavigationStatus, navigate, isConnected, disconnect, endingFlow, setRidePaused]);
+  }, [convoy.id, rideState.isConvoyMode, endRide, resetNavigationStatus, setRidePaused]);
 
   const handleEndRide = async () => {
     setEndingFlow(true);
