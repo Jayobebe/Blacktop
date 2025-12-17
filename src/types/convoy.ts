@@ -24,6 +24,7 @@ export interface ConvoyState {
   isActive: boolean;
   destination: ConvoyDestination | null;
   waypoints: ConvoyWaypoint[];
+  isPaused: boolean;
 }
 
 export interface ConvoyMemberInfo {

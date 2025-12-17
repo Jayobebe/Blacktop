@@ -135,8 +135,10 @@ export type Database = {
           destination_set_at: string | null
           id: string
           is_active: boolean | null
+          is_paused: boolean
           leader_id: string | null
           name: string
+          paused_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -149,8 +151,10 @@ export type Database = {
           destination_set_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_paused?: boolean
           leader_id?: string | null
           name: string
+          paused_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -163,8 +167,10 @@ export type Database = {
           destination_set_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_paused?: boolean
           leader_id?: string | null
           name?: string
+          paused_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
