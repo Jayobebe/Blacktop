@@ -257,11 +257,23 @@ export function useVoiceChannel(convoyId?: string) {
         audio = document.createElement('audio');
         audio.autoplay = true;
         audio.setAttribute('playsinline', 'true');
+        // iOS Safari is much more reliable if the element exists in the DOM
+        audio.style.display = 'none';
+        document.body.appendChild(audio);
         audioElementsRef.current.set(remoteUserId, audio);
       }
-      
+
       audio.srcObject = event.streams[0];
-      audio.play().catch(err => console.error('[Voice] Audio play error:', err));
+      audio.play().catch((err) => {
+        console.warn('[Voice] Audio play blocked (will retry on next tap):', err);
+        window.addEventListener(
+          'pointerdown',
+          () => {
+            audio?.play().catch((e2) => console.warn('[Voice] Audio play retry failed:', e2));
+          },
+          { once: true }
+        );
+      });
     };
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
