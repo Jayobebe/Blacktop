@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { AccentColorPicker } from '@/components/AccentColorPicker';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +21,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -318,6 +318,74 @@ export default function Settings() {
               >
                 {settings.distanceUnit === 'miles' ? 'MILES' : 'KM'}
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Speed Alert Thresholds */}
+        <section className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Speed Alerts
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {/* Amber threshold */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-sm font-medium text-warning">Amber Warning</p>
+                  <p className="text-[10px] text-muted-foreground">Speed display turns amber</p>
+                </div>
+                <span className="font-mono text-sm font-bold text-warning">
+                  {settings.amberSpeedThreshold} {settings.speedUnit}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={settings.speedUnit === 'mph' ? 40 : 60}
+                max={settings.speedUnit === 'mph' ? 120 : 200}
+                step={5}
+                value={settings.amberSpeedThreshold}
+                onChange={(e) => {
+                  const newAmber = Number(e.target.value);
+                  updateSetting('amberSpeedThreshold', newAmber);
+                  // Ensure red is always higher than amber
+                  if (settings.redSpeedThreshold <= newAmber) {
+                    updateSetting('redSpeedThreshold', newAmber + 10);
+                  }
+                }}
+                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-warning"
+              />
+            </div>
+
+            {/* Red threshold */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-sm font-medium text-destructive">Red Alert</p>
+                  <p className="text-[10px] text-muted-foreground">Speed display turns red</p>
+                </div>
+                <span className="font-mono text-sm font-bold text-destructive">
+                  {settings.redSpeedThreshold} {settings.speedUnit}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={settings.speedUnit === 'mph' ? 50 : 80}
+                max={settings.speedUnit === 'mph' ? 150 : 250}
+                step={5}
+                value={settings.redSpeedThreshold}
+                onChange={(e) => {
+                  const newRed = Number(e.target.value);
+                  // Ensure red is always higher than amber
+                  if (newRed > settings.amberSpeedThreshold) {
+                    updateSetting('redSpeedThreshold', newRed);
+                  }
+                }}
+                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-destructive"
+              />
             </div>
           </div>
         </section>
