@@ -95,7 +95,7 @@ export default function Home() {
       {/* Main content */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
         {/* Quick Stats */}
-        <div className="grid grid-cols-4 landscape:grid-cols-2 gap-2 landscape:w-36 md:landscape:w-44 flex-shrink-0 landscape:content-start">
+        <div className="grid grid-cols-4 landscape:grid-cols-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start">
           {[
             { label: 'Rides', value: stats.totalRides, unit: null },
             { label: 'Distance', value: formatDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
@@ -104,13 +104,13 @@ export default function Home() {
           ].map((stat, i) => (
             <div 
               key={stat.label}
-              className="bg-card/50 rounded-2xl p-3 border border-border/30 animate-scale-in overflow-hidden"
+              className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 truncate">{stat.label}</p>
-              <p className="text-lg md:text-xl font-mono font-bold tracking-tight truncate">
+              <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
+              <p className="text-base md:text-lg font-mono font-bold tracking-tighter leading-tight">
                 {stat.value}
-                {stat.unit && <span className="text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
+                {stat.unit && <span className="text-[10px] md:text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
               </p>
             </div>
           ))}
