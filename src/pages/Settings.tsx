@@ -346,7 +346,7 @@ export default function Settings() {
                     updateSetting('redSpeedThreshold', Math.min(newAmber + 10, 250));
                   }
                 }}
-                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-warning"
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
               />
             </div>
 
@@ -373,7 +373,7 @@ export default function Settings() {
                     updateSetting('redSpeedThreshold', newRed);
                   }
                 }}
-                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-destructive"
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
               />
             </div>
           </div>
