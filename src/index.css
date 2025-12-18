@@ -184,8 +184,51 @@
     @apply border-accent/50 bg-secondary;
     box-shadow: var(--shadow-inset), 0 0 0 3px hsl(var(--accent) / 0.15);
   }
-}
+  /* Custom slider styles for speed alerts */
+  .slider-amber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--warning));
+    cursor: pointer;
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 2px 4px hsl(0 0% 0% / 0.3);
+  }
 
+  .slider-amber::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--warning));
+    cursor: pointer;
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 2px 4px hsl(0 0% 0% / 0.3);
+  }
+
+  .slider-red::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--destructive));
+    cursor: pointer;
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 2px 4px hsl(0 0% 0% / 0.3);
+  }
+
+  .slider-red::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: hsl(var(--destructive));
+    cursor: pointer;
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 2px 4px hsl(0 0% 0% / 0.3);
+  }
+}
 @layer utilities {
   .font-display {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
