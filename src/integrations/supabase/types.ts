@@ -143,6 +143,7 @@ export type Database = {
           name: string
           paused_at: string | null
           ride_ended_at: string | null
+          ride_started_at: string | null
           updated_at: string | null
         }
         Insert: {
@@ -160,6 +161,7 @@ export type Database = {
           name: string
           paused_at?: string | null
           ride_ended_at?: string | null
+          ride_started_at?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -177,6 +179,7 @@ export type Database = {
           name?: string
           paused_at?: string | null
           ride_ended_at?: string | null
+          ride_started_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
