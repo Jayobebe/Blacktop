@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 export default function Home() {
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { stats, seedDemoData } = useRideHistory();
+  const { stats } = useRideHistory();
   const { rideState } = useActiveRide();
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
@@ -28,11 +28,6 @@ export default function Home() {
       setShowInstallBanner(true);
     }
   }, []);
-
-  // Seed demo data on first load if no rides exist
-  useEffect(() => {
-    seedDemoData();
-  }, [seedDemoData]);
 
   // Redirect to active ride if one exists
   useEffect(() => {
