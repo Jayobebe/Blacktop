@@ -13,45 +13,47 @@ export function RescueAlert({ requests, onAddWaypoint, onDismiss }: RescueAlertP
   if (requests.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90vw] max-w-sm space-y-2 animate-slide-up landscape:top-2 landscape:max-w-xs landscape:w-auto">
-      {requests.map((request) => (
-        <div
-          key={request.id}
-          className={cn(
-            "bg-destructive/95 backdrop-blur-sm text-destructive-foreground rounded-xl p-3 shadow-lg",
-            "border border-destructive-foreground/20"
-          )}
-        >
-          <div className="flex items-start gap-3 landscape:gap-2">
-            <div className="w-10 h-10 landscape:w-8 landscape:h-8 rounded-full bg-destructive-foreground/20 flex items-center justify-center flex-shrink-0 animate-pulse">
-              <MapPin className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm">{request.userName} needs rescue!</p>
-              <p className="text-xs opacity-80 mt-0.5">Add them as a waypoint to navigate</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
+      <div className="w-[90vw] max-w-sm space-y-3 animate-scale-in">
+        {requests.map((request) => (
+          <div
+            key={request.id}
+            className={cn(
+              "bg-destructive text-destructive-foreground rounded-2xl p-4 shadow-2xl",
+              "border-2 border-destructive-foreground/30"
+            )}
+          >
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-destructive-foreground/20 flex items-center justify-center animate-pulse">
+                <MapPin className="w-7 h-7" />
+              </div>
+              <div>
+                <p className="font-bold text-lg">{request.userName} needs rescue!</p>
+                <p className="text-sm opacity-80 mt-1">Add them as a waypoint to navigate to their location</p>
+              </div>
               
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-3 mt-2 w-full">
                 <Button
-                  size="sm"
+                  size="lg"
                   onClick={() => onAddWaypoint(request)}
-                  className="h-8 bg-background text-foreground hover:bg-background/90"
+                  className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
                 >
-                  <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                  <UserPlus className="w-5 h-5 mr-2" />
                   Add Waypoint
                 </Button>
                 <Button
-                  size="sm"
+                  size="lg"
                   variant="ghost"
                   onClick={() => onDismiss(request.id)}
-                  className="h-8 text-destructive-foreground/70 hover:text-destructive-foreground hover:bg-destructive-foreground/10"
+                  className="h-12 px-4 text-destructive-foreground/70 hover:text-destructive-foreground hover:bg-destructive-foreground/10"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
