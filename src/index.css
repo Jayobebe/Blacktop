@@ -30,7 +30,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    /* True amber - distinct from accent (orange) */
+    --warning: 45 100% 50%;
     --warning-foreground: 220 15% 6%;
 
     --border: 220 12% 18%;
@@ -290,10 +291,19 @@
 
   @keyframes speed-glow {
     0%, 100% {
-      text-shadow: 0 0 15px hsl(var(--speed-active) / 0.4);
+      text-shadow: 0 0 15px hsl(var(--warning) / 0.4);
     }
     50% {
-      text-shadow: 0 0 30px hsl(var(--speed-active) / 0.7);
+      text-shadow: 0 0 30px hsl(var(--warning) / 0.7);
+    }
+  }
+
+  @keyframes speed-glow-red {
+    0%, 100% {
+      text-shadow: 0 0 20px hsl(var(--destructive) / 0.5);
+    }
+    50% {
+      text-shadow: 0 0 40px hsl(var(--destructive) / 0.8);
     }
   }
 
@@ -356,6 +366,10 @@
 
   .animate-speed-glow {
     animation: speed-glow 1.5s ease-in-out infinite;
+  }
+
+  .animate-speed-glow-red {
+    animation: speed-glow-red 1s ease-in-out infinite;
   }
 
   .animate-shimmer {
