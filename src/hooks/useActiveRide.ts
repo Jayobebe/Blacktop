@@ -479,9 +479,13 @@ export function useActiveRide(convoyId?: string | null) {
     // Save the ride
     const currentState = rideState;
     const nowIso = new Date().toISOString();
-    const finalDuration = rideStartedAtMs
-      ? Math.max(0, Math.floor((Date.now() - rideStartedAtMs) / 1000))
-      : currentState.duration;
+    // Use the already-calculated duration from state (which correctly excludes paused time)
+    // Fallback to wall-clock calculation minus paused time if state duration is 0
+    const finalDuration = currentState.duration > 0 
+      ? currentState.duration 
+      : rideStartedAtMs
+        ? Math.max(0, Math.floor((Date.now() - rideStartedAtMs - totalPausedTime) / 1000))
+        : 0;
 
     let savedRideId: string | null = null;
 
