@@ -30,8 +30,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* True amber - distinct from accent (orange) */
-    --warning: 45 100% 50%;
+    /* True amber/yellow - clearly distinct from orange accent */
+    --warning: 48 100% 50%;
     --warning-foreground: 220 15% 6%;
 
     --border: 220 12% 18%;
