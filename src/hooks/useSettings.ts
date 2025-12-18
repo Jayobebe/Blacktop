@@ -49,7 +49,11 @@ export function useSettings() {
     const color = ACCENT_COLORS.find(c => c.id === settings.accentColor) || ACCENT_COLORS[0];
     document.documentElement.style.setProperty('--accent', color.hsl);
     document.documentElement.style.setProperty('--ring', color.ring);
-    document.documentElement.style.setProperty('--warning', color.hsl);
+
+    // Keep warning (amber) independent of the chosen accent color
+    // (this ensures Speed Alerts are always amber/red for all users)
+    document.documentElement.style.removeProperty('--warning');
+
     document.documentElement.style.setProperty('--speed-active', color.hsl);
     document.documentElement.style.setProperty('--ptt-active', color.hsl);
   }, [settings.accentColor]);
