@@ -454,13 +454,21 @@ export default function Lobby() {
         <button
           onClick={async () => {
             try {
+              // User gesture - try to unlock audio on iOS
+              // Create and play a silent audio to unlock audio context
+              const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
+              silentAudio.volume = 0.01;
+              silentAudio.play().catch(() => {});
+              
               if (!isConnected) {
                 const result = await connect();
                 if (!result.success) {
                   toast.error('Failed to join voice', { description: result.error || 'Check microphone permission' });
                   return;
                 }
-                toast.success('Joined voice channel');
+                toast.success('Joined voice channel', { description: 'Tap again to unmute' });
+                // Don't toggle mute on first connect - user needs to tap again to unmute
+                return;
               }
               toggleMute();
             } catch (e) {
@@ -472,11 +480,15 @@ export default function Lobby() {
             "w-12 h-12 landscape:w-10 landscape:h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all touch-target",
             !isMuted
               ? "bg-ptt-active shadow-glow"
-              : "bg-card/50 border border-border/30 hover:bg-secondary"
+              : isConnected
+                ? "bg-accent/20 border border-accent/50 hover:bg-accent/30"
+                : "bg-card/50 border border-border/30 hover:bg-secondary"
           )}
         >
-          {isMuted ? (
-            <MicOff className="w-4 h-4 md:w-5 md:h-5 text-foreground" />
+          {!isConnected ? (
+            <MicOff className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+          ) : isMuted ? (
+            <MicOff className="w-4 h-4 md:w-5 md:h-5 text-accent" />
           ) : (
             <Mic className="w-4 h-4 md:w-5 md:h-5 text-background" />
           )}

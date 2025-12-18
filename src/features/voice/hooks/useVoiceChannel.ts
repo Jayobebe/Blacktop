@@ -221,9 +221,16 @@ export function useVoiceChannel(convoyId?: string) {
     // Add local tracks to the connection
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
-        console.log(`[Voice] Adding local track to peer ${remoteUserId}`);
+        console.log(`[Voice] Adding local track to peer ${remoteUserId}:`, {
+          kind: track.kind,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState
+        });
         pc.addTrack(track, localStreamRef.current!);
       });
+    } else {
+      console.warn(`[Voice] No local stream when creating peer for ${remoteUserId}`);
     }
 
     // Handle ICE candidates
@@ -245,40 +252,89 @@ export function useVoiceChannel(convoyId?: string) {
     // Handle connection state changes
     pc.onconnectionstatechange = () => {
       console.log(`[Voice] Connection state with ${remoteUserId}: ${pc.connectionState}`);
+      if (pc.connectionState === 'connected') {
+        console.log(`[Voice] Successfully connected to ${remoteUserId}`);
+      }
       if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        console.warn(`[Voice] Connection ${pc.connectionState} with ${remoteUserId}`);
         // Attempt to reconnect
         peersRef.current.delete(remoteUserId);
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
       }
     };
+    
+    // Handle ICE connection state changes (more granular)
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[Voice] ICE state with ${remoteUserId}: ${pc.iceConnectionState}`);
+    };
+    
+    // Handle ICE gathering state
+    pc.onicegatheringstatechange = () => {
+      console.log(`[Voice] ICE gathering state with ${remoteUserId}: ${pc.iceGatheringState}`);
+    };
 
     // Handle incoming remote tracks
     pc.ontrack = (event) => {
-      console.log(`[Voice] Received remote track from ${remoteUserId}`);
+      console.log(`[Voice] Received remote track from ${remoteUserId}`, event.streams);
+      
+      if (!event.streams || event.streams.length === 0) {
+        console.warn(`[Voice] No streams in track event from ${remoteUserId}`);
+        return;
+      }
+      
+      const remoteStream = event.streams[0];
+      console.log(`[Voice] Remote stream tracks:`, remoteStream.getTracks().map(t => ({
+        kind: t.kind,
+        enabled: t.enabled,
+        muted: t.muted,
+        readyState: t.readyState
+      })));
       
       let audio = audioElementsRef.current.get(remoteUserId);
       if (!audio) {
         audio = document.createElement('audio');
         audio.autoplay = true;
         audio.setAttribute('playsinline', 'true');
+        // iOS Safari requires these attributes
+        audio.setAttribute('webkit-playsinline', 'true');
+        // Set volume explicitly
+        audio.volume = 1.0;
         // iOS Safari is much more reliable if the element exists in the DOM
-        audio.style.display = 'none';
+        audio.style.cssText = 'position: absolute; left: -9999px; top: -9999px;';
         document.body.appendChild(audio);
         audioElementsRef.current.set(remoteUserId, audio);
+        console.log(`[Voice] Created audio element for ${remoteUserId}`);
       }
 
-      audio.srcObject = event.streams[0];
-      audio.play().catch((err) => {
-        console.warn('[Voice] Audio play blocked (will retry on next tap):', err);
-        window.addEventListener(
-          'pointerdown',
-          () => {
-            audio?.play().catch((e2) => console.warn('[Voice] Audio play retry failed:', e2));
-          },
-          { once: true }
-        );
-      });
+      audio.srcObject = remoteStream;
+      
+      // Force play with multiple retry strategies
+      const tryPlay = async () => {
+        try {
+          await audio!.play();
+          console.log(`[Voice] Audio playing for ${remoteUserId}`);
+        } catch (err: any) {
+          console.warn(`[Voice] Audio play blocked for ${remoteUserId}:`, err.name, err.message);
+          
+          // On iOS/Safari, we need a user gesture - set up listeners
+          const playOnGesture = async () => {
+            try {
+              await audio?.play();
+              console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
+            } catch (e2) {
+              console.warn('[Voice] Audio play retry failed:', e2);
+            }
+          };
+          
+          // Listen for any user interaction
+          ['pointerdown', 'touchstart', 'click'].forEach(eventType => {
+            document.addEventListener(eventType, playOnGesture, { once: true, passive: true });
+          });
+        }
+      };
+      
+      tryPlay();
     };
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
@@ -720,14 +776,30 @@ export function useVoiceChannel(convoyId?: string) {
 
   // Toggle mute
   const toggleMute = useCallback(() => {
-    if (!state.isConnected || !localStreamRef.current) return;
+    if (!state.isConnected || !localStreamRef.current) {
+      console.warn('[Voice] Cannot toggle mute - not connected or no stream');
+      return;
+    }
     
     const newMutedState = !state.isMuted;
     isMutedRef.current = newMutedState; // Update ref for audio level detection
     
+    console.log(`[Voice] Toggling mute: ${state.isMuted} -> ${newMutedState}`);
+    
     localStreamRef.current.getAudioTracks().forEach(track => {
       track.enabled = !newMutedState;
-      console.log(`[Voice] Track enabled: ${track.enabled}`);
+      console.log(`[Voice] Track "${track.label}" enabled: ${track.enabled}, readyState: ${track.readyState}`);
+    });
+    
+    // Log peer connection states for debugging
+    peersRef.current.forEach((peer, oderId) => {
+      console.log(`[Voice] Peer ${oderId} connection state: ${peer.pc.connectionState}, ICE: ${peer.pc.iceConnectionState}`);
+      const senders = peer.pc.getSenders();
+      senders.forEach(sender => {
+        if (sender.track) {
+          console.log(`[Voice] Sender track to ${oderId}: kind=${sender.track.kind}, enabled=${sender.track.enabled}`);
+        }
+      });
     });
     
     // Update mute state in persisted storage
