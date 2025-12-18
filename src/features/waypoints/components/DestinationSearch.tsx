@@ -630,7 +630,9 @@ export function DestinationSearch({
             className="pl-10 pr-10 bg-card border-border h-12 text-base"
           />
           {isSearching && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+            </div>
           )}
         </div>
         <button
