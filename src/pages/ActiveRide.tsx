@@ -568,13 +568,18 @@ export default function ActiveRide() {
               <button
                 onClick={async () => {
                   try {
+                    // User gesture - try to unlock audio on iOS
+                    const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
+                    silentAudio.volume = 0.01;
+                    silentAudio.play().catch(() => {});
+                    
                     if (isConnected) {
                       disconnect();
                       toast.success('Left voice channel', { description: 'Saving battery' });
                     } else {
                       const result = await connect();
                       if (result.success) {
-                        toast.success('Joined voice channel');
+                        toast.success('Joined voice channel', { description: 'Tap mic to unmute' });
                       } else {
                         toast.error('Failed to join voice channel', { description: result.error || 'Check microphone permissions' });
                       }
@@ -602,7 +607,13 @@ export default function ActiveRide() {
               {/* Mute toggle button - only show when connected */}
               {isConnected && (
                 <button
-                  onClick={toggleMute}
+                  onClick={() => {
+                    // User gesture - try to unlock audio on iOS
+                    const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
+                    silentAudio.volume = 0.01;
+                    silentAudio.play().catch(() => {});
+                    toggleMute();
+                  }}
                   className={cn(
                     "w-16 h-16 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
                     !isMuted
