@@ -479,12 +479,27 @@ export function useVoiceChannel(convoyId?: string) {
   }, [createPeerConnection]);
 
   // Check and request microphone permission
+  // Note: iOS Safari doesn't reliably support permissions.query for microphone
+  // so we treat 'prompt' and unknown states as "try anyway"
   const checkMicrophonePermission = useCallback(async (): Promise<'granted' | 'denied' | 'prompt'> => {
+    // iOS Safari doesn't support permissions.query for microphone reliably
+    // Check if we're on iOS/Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isIOS || isSafari) {
+      console.log('[Voice] iOS/Safari detected - skipping permissions API check');
+      // On iOS/Safari, we can't reliably check permissions - just return 'prompt' to try anyway
+      return 'prompt';
+    }
+    
     if ('permissions' in navigator) {
       try {
         const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
         return result.state as 'granted' | 'denied' | 'prompt';
-      } catch {
+      } catch (e) {
+        console.log('[Voice] Permissions API not available for microphone:', e);
         return 'prompt';
       }
     }
@@ -509,17 +524,15 @@ export function useVoiceChannel(convoyId?: string) {
     try {
       console.log('[Voice] Connecting to voice channel for convoy:', convoyId);
 
-      // Check microphone permission first
+      // Check microphone permission first (but on iOS/Safari this may not be reliable)
       const permissionStatus = await checkMicrophonePermission();
       console.log('[Voice] Microphone permission status:', permissionStatus);
       
+      // Only reject if permissions API explicitly says denied (not on iOS/Safari)
+      // We'll let the actual getUserMedia call be the source of truth
       if (permissionStatus === 'denied') {
-        console.error('[Voice] Microphone permission denied');
-        isConnectingRef.current = false;
-        return { 
-          success: false, 
-          error: 'Microphone access denied. Please enable it in your device settings to use voice chat.' 
-        };
+        console.warn('[Voice] Microphone permission appears denied, but will try getUserMedia anyway');
+        // Don't return early - let getUserMedia try and give us the real error
       }
 
       // Get current user
@@ -541,11 +554,24 @@ export function useVoiceChannel(convoyId?: string) {
         console.error('[Voice] Failed to get microphone access:', mediaError);
         isConnectingRef.current = false;
         
+        // Detect iOS/Safari for more specific error messages
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        
         if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
+          if (isIOS) {
+            return { 
+              success: false, 
+              error: 'Microphone access denied. On iOS, go to Settings → Safari → Microphone, then enable access for this site.' 
+            };
+          }
           return { 
             success: false, 
-            error: 'Microphone access denied. Please enable it in your device settings to use voice chat.' 
+            error: 'Microphone access denied. Please enable it in your browser or device settings.' 
           };
+        }
+        if (mediaError.name === 'NotFoundError') {
+          return { success: false, error: 'No microphone found. Please connect a microphone and try again.' };
         }
         return { success: false, error: 'Failed to access microphone. Please try again.' };
       }
