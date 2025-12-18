@@ -300,23 +300,11 @@ export function useVoiceChannel(convoyId?: string) {
         audio.setAttribute('webkit-playsinline', 'true');
         // Set volume explicitly
         audio.volume = 1.0;
-        // IMPORTANT: Keep element visible but small/transparent for Bluetooth routing
-        // Hidden elements (display:none, visibility:hidden, or off-screen) can prevent
-        // proper audio routing to Bluetooth devices on mobile
-        audio.style.cssText = 'position: fixed; bottom: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -1;';
+        // iOS Safari is much more reliable if the element exists in the DOM
+        audio.style.cssText = 'position: absolute; left: -9999px; top: -9999px;';
         document.body.appendChild(audio);
         audioElementsRef.current.set(remoteUserId, audio);
         console.log(`[Voice] Created audio element for ${remoteUserId}`);
-        
-        // Try to set audio output to the default device (helps with Bluetooth routing)
-        // setSinkId is not available on all browsers (especially iOS Safari)
-        if ('setSinkId' in audio && typeof (audio as any).setSinkId === 'function') {
-          (audio as any).setSinkId('default').then(() => {
-            console.log(`[Voice] Audio output set to default device for ${remoteUserId}`);
-          }).catch((err: any) => {
-            console.warn(`[Voice] Could not set audio output device:`, err.message);
-          });
-        }
       }
 
       audio.srcObject = remoteStream;
@@ -324,14 +312,8 @@ export function useVoiceChannel(convoyId?: string) {
       // Force play with multiple retry strategies
       const tryPlay = async () => {
         try {
-          // On mobile, ensure audio context is active
-          if (audioContextRef.current?.state === 'suspended') {
-            await audioContextRef.current.resume();
-            console.log('[Voice] Resumed AudioContext before playing');
-          }
-          
           await audio!.play();
-          console.log(`[Voice] Audio playing for ${remoteUserId}, paused: ${audio!.paused}, volume: ${audio!.volume}`);
+          console.log(`[Voice] Audio playing for ${remoteUserId}`);
         } catch (err: any) {
           console.warn(`[Voice] Audio play blocked for ${remoteUserId}:`, err.name, err.message);
           
