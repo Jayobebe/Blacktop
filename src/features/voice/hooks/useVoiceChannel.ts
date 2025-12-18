@@ -17,33 +17,14 @@ const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
-  { urls: 'stun:stun4.l.google.com:19302' },
-  // Free TURN servers for NAT traversal (critical for mobile-to-mobile)
-  {
-    urls: 'turn:openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
 ];
 
-// Cross-platform audio constraints - don't force sampleRate on iOS
 const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
-  // Removed sampleRate - iOS doesn't support forced sample rates
-  // Removed channelCount - let browser choose optimal
+  sampleRate: 24000, // Lower sample rate for battery optimization (was 48000)
+  channelCount: 1,
 };
 
 const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
@@ -296,23 +277,13 @@ export function useVoiceChannel(convoyId?: string) {
     // Handle incoming remote tracks
     pc.ontrack = (event) => {
       console.log(`[Voice] Received remote track from ${remoteUserId}`, event.streams);
-      console.log(`[Voice] Track details:`, {
-        kind: event.track.kind,
-        enabled: event.track.enabled,
-        muted: event.track.muted,
-        readyState: event.track.readyState,
-        id: event.track.id,
-      });
       
-      // Get stream - create one from track if not provided
-      let remoteStream: MediaStream;
-      if (event.streams && event.streams.length > 0) {
-        remoteStream = event.streams[0];
-      } else {
-        console.log(`[Voice] No stream provided, creating from track for ${remoteUserId}`);
-        remoteStream = new MediaStream([event.track]);
+      if (!event.streams || event.streams.length === 0) {
+        console.warn(`[Voice] No streams in track event from ${remoteUserId}`);
+        return;
       }
       
+      const remoteStream = event.streams[0];
       console.log(`[Voice] Remote stream tracks:`, remoteStream.getTracks().map(t => ({
         kind: t.kind,
         enabled: t.enabled,
@@ -320,70 +291,43 @@ export function useVoiceChannel(convoyId?: string) {
         readyState: t.readyState
       })));
       
-      // Remove any existing audio element first
-      const existingAudio = audioElementsRef.current.get(remoteUserId);
-      if (existingAudio) {
-        existingAudio.pause();
-        existingAudio.srcObject = null;
-        existingAudio.remove();
-        audioElementsRef.current.delete(remoteUserId);
+      let audio = audioElementsRef.current.get(remoteUserId);
+      if (!audio) {
+        audio = document.createElement('audio');
+        audio.autoplay = true;
+        audio.setAttribute('playsinline', 'true');
+        // iOS Safari requires these attributes
+        audio.setAttribute('webkit-playsinline', 'true');
+        // Set volume explicitly
+        audio.volume = 1.0;
+        // iOS Safari is much more reliable if the element exists in the DOM
+        audio.style.cssText = 'position: absolute; left: -9999px; top: -9999px;';
+        document.body.appendChild(audio);
+        audioElementsRef.current.set(remoteUserId, audio);
+        console.log(`[Voice] Created audio element for ${remoteUserId}`);
       }
-      
-      // Create new audio element with all necessary attributes
-      const audio = document.createElement('audio');
-      audio.id = `voice-audio-${remoteUserId}`;
-      audio.autoplay = true;
-      audio.playsInline = true;
-      audio.muted = false; // CRITICAL: must not be muted
-      audio.volume = 1.0;
-      audio.setAttribute('playsinline', 'true');
-      audio.setAttribute('webkit-playsinline', 'true');
-      // Position off-screen but in DOM
-      audio.style.cssText = 'position: fixed; left: -9999px; top: -9999px; pointer-events: none;';
-      document.body.appendChild(audio);
-      audioElementsRef.current.set(remoteUserId, audio);
-      console.log(`[Voice] Created audio element for ${remoteUserId}`);
-      
-      // Set srcObject
+
       audio.srcObject = remoteStream;
       
-      // Monitor track events
-      event.track.onended = () => console.log(`[Voice] Track ended from ${remoteUserId}`);
-      event.track.onmute = () => console.log(`[Voice] Track muted from ${remoteUserId}`);
-      event.track.onunmute = () => console.log(`[Voice] Track unmuted from ${remoteUserId}`);
-
-      // Multi-attempt play with exponential backoff
-      const tryPlay = async (attempt = 1): Promise<void> => {
-        const maxAttempts = 5;
-        
+      // Force play with multiple retry strategies
+      const tryPlay = async () => {
         try {
-          // Ensure not muted before playing
-          audio.muted = false;
-          audio.volume = 1.0;
-          
-          await audio.play();
-          console.log(`[Voice] Audio playing for ${remoteUserId} (attempt ${attempt})`);
+          await audio!.play();
+          console.log(`[Voice] Audio playing for ${remoteUserId}`);
         } catch (err: any) {
-          console.warn(`[Voice] Audio play attempt ${attempt} blocked for ${remoteUserId}:`, err.name, err.message);
+          console.warn(`[Voice] Audio play blocked for ${remoteUserId}:`, err.name, err.message);
           
-          if (attempt < maxAttempts) {
-            // Retry with delay
-            await new Promise(resolve => setTimeout(resolve, 200 * attempt));
-            return tryPlay(attempt + 1);
-          }
-          
-          // Final fallback: wait for user gesture
-          console.log(`[Voice] Setting up gesture-based play for ${remoteUserId}`);
+          // On iOS/Safari, we need a user gesture - set up listeners
           const playOnGesture = async () => {
             try {
-              audio.muted = false;
-              await audio.play();
+              await audio?.play();
               console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
             } catch (e2) {
-              console.warn('[Voice] Audio play after gesture failed:', e2);
+              console.warn('[Voice] Audio play retry failed:', e2);
             }
           };
           
+          // Listen for any user interaction
           ['pointerdown', 'touchstart', 'click'].forEach(eventType => {
             document.addEventListener(eventType, playOnGesture, { once: true, passive: true });
           });
@@ -391,11 +335,6 @@ export function useVoiceChannel(convoyId?: string) {
       };
       
       tryPlay();
-      
-      // Also monitor audio element state
-      audio.onplay = () => console.log(`[Voice] Audio onplay for ${remoteUserId}`);
-      audio.onplaying = () => console.log(`[Voice] Audio onplaying for ${remoteUserId}`);
-      audio.onerror = (e) => console.error(`[Voice] Audio error for ${remoteUserId}:`, e);
     };
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
@@ -695,11 +634,9 @@ export function useVoiceChannel(convoyId?: string) {
       
       localStreamRef.current = stream;
       
-      // IMPORTANT: Keep tracks ENABLED initially so they're properly negotiated
-      // Muting happens at the UI level - we disable tracks AFTER peer connections are established
+      // Start muted by default
       stream.getAudioTracks().forEach(track => {
-        track.enabled = true; // Must be enabled for WebRTC negotiation
-        console.log('[Voice] Audio track initialized:', track.label, 'enabled:', track.enabled);
+        track.enabled = false;
       });
 
       // Create signaling channel
@@ -780,21 +717,17 @@ export function useVoiceChannel(convoyId?: string) {
         localStorage.setItem(VOICE_STATE_KEY, JSON.stringify({ 
           convoyId, 
           connected: true,
-          muted: false, // Start unmuted since tracks are enabled
+          muted: true,
           timestamp: Date.now() 
         }));
       } catch (e) {
         console.warn('[Voice] Failed to persist voice state:', e);
       }
       
-      // Wait a moment for peer connections to establish, then allow muting
-      // Tracks stay enabled during initial negotiation
-      isMutedRef.current = false;
-      
       setState(prev => ({
         ...prev,
         isConnected: true,
-        isMuted: false, // Start unmuted - tracks need to be enabled for negotiation
+        isMuted: true,
       }));
 
       isConnectingRef.current = false;
