@@ -37,6 +37,7 @@ export default function Lobby() {
   const hasStartedRide = useRef(false);
   const prevReadyToStart = useRef<boolean | null>(null);
   const controlChannelRef = useRef<any>(null);
+  const controlChannelSubscribed = useRef(false);
   const longPressTimerRef = useRef<number | null>(null);
   const didLongPressRef = useRef(false);
 
@@ -115,14 +116,19 @@ export default function Lobby() {
     });
 
     channel.subscribe((status) => {
+      console.log('[Lobby] Control channel status:', status);
       if (status === 'SUBSCRIBED') {
+        controlChannelSubscribed.current = true;
         console.log('[Lobby] Subscribed to convoy control channel');
+      } else {
+        controlChannelSubscribed.current = false;
       }
     });
 
     controlChannelRef.current = channel;
 
     return () => {
+      controlChannelSubscribed.current = false;
       supabase.removeChannel(channel);
       controlChannelRef.current = null;
     };
@@ -598,14 +604,21 @@ export default function Lobby() {
               const success = startRide(true, convoy.id);
               if (success) {
                 toast.success('Starting ride for all riders');
-                if (controlChannelRef.current) {
+                if (controlChannelRef.current && controlChannelSubscribed.current) {
                   console.log('[Lobby] Leader sending start-ride broadcast (desktop)');
-                  await controlChannelRef.current.send({
-                    type: 'broadcast',
-                    event: 'start-ride',
-                    payload: { at: Date.now() },
-                  });
-                  await new Promise(resolve => setTimeout(resolve, 100));
+                  try {
+                    const result = await controlChannelRef.current.send({
+                      type: 'broadcast',
+                      event: 'start-ride',
+                      payload: { at: Date.now() },
+                    });
+                    console.log('[Lobby] Desktop broadcast result:', result);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                  } catch (err) {
+                    console.error('[Lobby] Desktop broadcast error:', err);
+                  }
+                } else {
+                  console.warn('[Lobby] Control channel not subscribed, desktop broadcast skipped');
                 }
                 navigate('/ride');
               }
@@ -627,16 +640,23 @@ export default function Lobby() {
                 if (success) {
                   toast.success('Starting ride for all riders');
                   
-                  // Use the existing control channel if subscribed, otherwise create temp channel
-                  if (controlChannelRef.current) {
+                  // Use the existing control channel if subscribed
+                  if (controlChannelRef.current && controlChannelSubscribed.current) {
                     console.log('[Lobby] Leader sending start-ride broadcast');
-                    await controlChannelRef.current.send({
-                      type: 'broadcast',
-                      event: 'start-ride',
-                      payload: { at: Date.now() },
-                    });
-                    // Small delay to ensure broadcast propagates
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    try {
+                      const result = await controlChannelRef.current.send({
+                        type: 'broadcast',
+                        event: 'start-ride',
+                        payload: { at: Date.now() },
+                      });
+                      console.log('[Lobby] Broadcast result:', result);
+                      // Wait for broadcast to propagate
+                      await new Promise(resolve => setTimeout(resolve, 200));
+                    } catch (err) {
+                      console.error('[Lobby] Broadcast error:', err);
+                    }
+                  } else {
+                    console.warn('[Lobby] Control channel not subscribed, broadcast skipped');
                   }
                   
                   navigate('/ride');
