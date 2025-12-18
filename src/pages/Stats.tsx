@@ -70,7 +70,7 @@ export default function Stats() {
       type: 'fallback',
       emoji: '🪨',
       label: 'Fallback',
-      description: 'Most patient',
+      description: 'Longest stationary',
       count: stats.badges.fallback,
       color: 'stone',
     },
