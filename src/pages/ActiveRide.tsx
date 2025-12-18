@@ -73,7 +73,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused } = useActiveRide();
-  const { convoy, resetNavigationStatus, endConvoyRide, togglePause } = useConvoyState();
+  const { convoy, resetNavigationStatus, endConvoyRide } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
@@ -151,15 +151,6 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, showSummary, endingFlow, navigate]);
 
-  // Sync pause state from convoy to ride tracking (fallback if broadcast is missed)
-  // This ensures all members pause when leader pauses via database realtime update
-  useEffect(() => {
-    if (!rideState.isConvoyMode || convoy.isLeader) return;
-    
-    // Non-leaders: sync pause state from convoy (database) to ride tracking
-    setRidePaused(convoy.isPaused);
-  }, [convoy.isPaused, convoy.isLeader, rideState.isConvoyMode, setRidePaused]);
-
   // Refs for stable access in callbacks (avoid stale closures)
   const voiceChannelRef = useRef({ isConnected, disconnect });
   voiceChannelRef.current = { isConnected, disconnect };
@@ -224,18 +215,6 @@ export default function ActiveRide() {
       handleRideEndedByLeader();
     });
 
-    controlChannel.on('broadcast', { event: 'pause-ride' }, () => {
-      console.log('[ActiveRide] Received pause-ride broadcast from leader');
-      toast.info('Leader paused the ride');
-      setRidePaused(true);
-    });
-
-    controlChannel.on('broadcast', { event: 'resume-ride' }, () => {
-      console.log('[ActiveRide] Received resume-ride broadcast from leader');
-      toast.info('Leader resumed the ride');
-      setRidePaused(false);
-    });
-
     controlChannel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         console.log('[ActiveRide] Subscribed to convoy control channel');
@@ -272,7 +251,7 @@ export default function ActiveRide() {
       supabase.removeChannel(realtimeChannel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id, convoy.isLeader, rideState.isConvoyMode, setRidePaused, handleRideEndedByLeader]);
+  }, [convoy.id, convoy.isLeader, rideState.isConvoyMode, handleRideEndedByLeader]);
 
   const handleEndRide = async () => {
     // Use flushSync to ensure state updates are applied BEFORE endRide() triggers external store re-render
@@ -487,7 +466,7 @@ export default function ActiveRide() {
                 {convoy.isLeader ? 'LEADER' : 'CONVOY'}
               </span>
             )}
-            {convoy.isPaused && (
+            {rideState.isPaused && (
               <span className="flex items-center gap-1 text-warning text-xs font-medium px-2 py-0.5 bg-warning/10 rounded animate-pulse">
                 <Pause className="w-3 h-3" />
                 PAUSED
@@ -535,42 +514,33 @@ export default function ActiveRide() {
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
-          {/* Pause button (leaders only) */}
-          {rideState.isConvoyMode && convoy.isLeader && (
-            <Button
-              variant="outline"
-              onClick={async () => {
-                try {
-                  const newPausedState = !convoy.isPaused;
-                  // Pause/resume local ride tracking for the leader
-                  setRidePaused(newPausedState);
-                  // Broadcast to other members
-                  await togglePause();
-                } catch (e) {
-                  console.error('[UI] togglePause error', e);
-                  toast.error('Pause failed');
-                }
-              }}
-              className={cn(
-                "h-12 landscape:h-10 px-3 rounded-full touch-target",
-                convoy.isPaused
-                  ? "bg-accent/20 text-accent border-accent"
-                  : "border-muted-foreground/50 text-muted-foreground hover:bg-secondary"
-              )}
-            >
-              {convoy.isPaused ? (
-                <>
-                  <Play className="w-5 h-5 landscape:w-4 landscape:h-4" />
-                  <span className="ml-2 text-xs font-semibold">RESUME</span>
-                </>
-              ) : (
-                <>
-                  <Pause className="w-5 h-5 landscape:w-4 landscape:h-4" />
-                  <span className="ml-2 text-xs font-semibold">PAUSE</span>
-                </>
-              )}
-            </Button>
-          )}
+          {/* Pause button (individual - all riders) */}
+          <Button
+            variant="outline"
+            onClick={() => {
+              const nextPaused = !rideState.isPaused;
+              setRidePaused(nextPaused);
+              toast.info(nextPaused ? 'Ride paused' : 'Ride resumed');
+            }}
+            className={cn(
+              "h-12 landscape:h-10 px-3 rounded-full touch-target",
+              rideState.isPaused
+                ? "bg-accent/20 text-accent border-accent"
+                : "border-muted-foreground/50 text-muted-foreground hover:bg-secondary"
+            )}
+          >
+            {rideState.isPaused ? (
+              <>
+                <Play className="w-5 h-5 landscape:w-4 landscape:h-4" />
+                <span className="ml-2 text-xs font-semibold">RESUME</span>
+              </>
+            ) : (
+              <>
+                <Pause className="w-5 h-5 landscape:w-4 landscape:h-4" />
+                <span className="ml-2 text-xs font-semibold">PAUSE</span>
+              </>
+            )}
+          </Button>
 
           {/* Rescue button (non-leaders only) */}
           {rideState.isConvoyMode && !convoy.isLeader && (

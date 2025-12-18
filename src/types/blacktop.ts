@@ -59,6 +59,7 @@ export interface ActiveRideState {
   isActive: boolean;
   startedAt: string | null;
   isConvoyMode: boolean;
+  isPaused: boolean;
   currentSpeed: number;
   maxSpeed: number;
   distance: number;
