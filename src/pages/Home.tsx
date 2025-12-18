@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, Play, Download, X } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import { cn } from '@/lib/utils';
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -143,20 +143,15 @@ export default function Home() {
       {/* Bottom Navigation */}
       <nav className="flex justify-around mt-4 pt-3 border-t border-border/30 animate-slide-up delay-300">
         {[
-          { icon: Play, label: 'Demo', path: '/demo', active: true },
-          { icon: History, label: 'History', path: '/history', active: false },
-          { icon: BarChart3, label: 'Stats', path: '/stats', active: false },
-          { icon: Settings, label: 'Settings', path: '/settings', active: false },
-        ].map(({ icon: Icon, label, path, active }) => (
+          { icon: Play, label: 'Demo', path: '/demo' },
+          { icon: History, label: 'History', path: '/history' },
+          { icon: BarChart3, label: 'Stats', path: '/stats' },
+          { icon: Settings, label: 'Settings', path: '/settings' },
+        ].map(({ icon: Icon, label, path }) => (
           <button
             key={label}
             onClick={() => navigate(path)}
-            className={cn(
-              "flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 touch-target",
-              active 
-                ? "text-accent hover:bg-accent/10" 
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-            )}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 touch-target text-accent hover:bg-accent/10"
           >
             <Icon className="w-5 h-5" />
             <span className="text-[10px] font-medium">{label}</span>
