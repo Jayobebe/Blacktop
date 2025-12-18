@@ -525,6 +525,10 @@ export default function ActiveRide() {
               variant="outline"
               onClick={async () => {
                 try {
+                  const newPausedState = !convoy.isPaused;
+                  // Pause/resume local ride tracking for the leader
+                  setRidePaused(newPausedState);
+                  // Broadcast to other members
                   await togglePause();
                 } catch (e) {
                   console.error('[UI] togglePause error', e);
