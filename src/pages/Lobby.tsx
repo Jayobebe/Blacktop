@@ -226,6 +226,67 @@ export default function Lobby() {
     ]);
   };
 
+  const sendStartRideBroadcast = async () => {
+    const sendTwice = async (ch: any) => {
+      const at = Date.now();
+      const result1 = await ch.send({
+        type: 'broadcast',
+        event: 'start-ride',
+        payload: { at },
+      });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const result2 = await ch.send({
+        type: 'broadcast',
+        event: 'start-ride',
+        payload: { at, retry: true },
+      });
+      console.log('[Lobby] start-ride broadcast results:', { result1, result2 });
+    };
+
+    // First try: existing channel
+    try {
+      const ready = await waitForControlChannel();
+      if (controlChannelRef.current && ready) {
+        await sendTwice(controlChannelRef.current);
+        return true;
+      }
+    } catch (e) {
+      console.warn('[Lobby] start-ride send via existing channel failed, trying fallback', e);
+    }
+
+    // Fallback: temporary sender channel on the same topic (survives Lobby unmount timing)
+    if (!convoy.id) return false;
+
+    const temp = supabase.channel(`convoy-control:${convoy.id}`, {
+      config: { broadcast: { self: true } },
+    });
+
+    const tempReady = await new Promise<boolean>((resolve) => {
+      const t = window.setTimeout(() => resolve(false), 1500);
+      temp.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          window.clearTimeout(t);
+          resolve(true);
+        }
+        if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+          window.clearTimeout(t);
+          resolve(false);
+        }
+      });
+    });
+
+    try {
+      if (tempReady) {
+        await sendTwice(temp);
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    } finally {
+      supabase.removeChannel(temp);
+    }
+
+    return tempReady;
+  };
+
   const handleCopyCode = async () => {
     if (!convoy.code) return;
     try {
@@ -657,30 +718,13 @@ export default function Lobby() {
               if (success) {
                 toast.success('Starting ride for all riders');
 
-                const ready = await waitForControlChannel();
-                if (controlChannelRef.current && ready) {
-                  console.log('[Lobby] Leader sending start-ride broadcast (desktop)');
-                  try {
-                    const result1 = await controlChannelRef.current.send({
-                      type: 'broadcast',
-                      event: 'start-ride',
-                      payload: { at: Date.now() },
-                    });
-                    await new Promise((resolve) => setTimeout(resolve, 150));
-                    const result2 = await controlChannelRef.current.send({
-                      type: 'broadcast',
-                      event: 'start-ride',
-                      payload: { at: Date.now(), retry: true },
-                    });
-                    console.log('[Lobby] Desktop broadcast results:', { result1, result2 });
-                    await new Promise((resolve) => setTimeout(resolve, 200));
-                  } catch (err) {
-                    console.error('[Lobby] Desktop broadcast error:', err);
-                  }
-                } else {
-                  console.warn('[Lobby] Control channel not ready, desktop broadcast skipped');
+                const sent = await sendStartRideBroadcast();
+                if (!sent) {
+                  toast.error('Could not signal other riders', { description: 'They can still tap Start Ride.' });
                 }
 
+                // Give followers a moment to receive before we leave the lobby
+                await new Promise((resolve) => setTimeout(resolve, 600));
                 navigate('/ride');
               }
             }}
@@ -701,30 +745,13 @@ export default function Lobby() {
                 if (success) {
                   toast.success('Starting ride for all riders');
 
-                  const ready = await waitForControlChannel();
-                  if (controlChannelRef.current && ready) {
-                    console.log('[Lobby] Leader sending start-ride broadcast');
-                    try {
-                      const result1 = await controlChannelRef.current.send({
-                        type: 'broadcast',
-                        event: 'start-ride',
-                        payload: { at: Date.now() },
-                      });
-                      await new Promise((resolve) => setTimeout(resolve, 150));
-                      const result2 = await controlChannelRef.current.send({
-                        type: 'broadcast',
-                        event: 'start-ride',
-                        payload: { at: Date.now(), retry: true },
-                      });
-                      console.log('[Lobby] Broadcast results:', { result1, result2 });
-                      await new Promise((resolve) => setTimeout(resolve, 200));
-                    } catch (err) {
-                      console.error('[Lobby] Broadcast error:', err);
-                    }
-                  } else {
-                    console.warn('[Lobby] Control channel not ready, broadcast skipped');
+                  const sent = await sendStartRideBroadcast();
+                  if (!sent) {
+                    toast.error('Could not signal other riders', { description: 'They can still tap Start Ride.' });
                   }
 
+                  // Give followers a moment to receive before we leave the lobby
+                  await new Promise((resolve) => setTimeout(resolve, 600));
                   navigate('/ride');
                 }
               }, 500);
