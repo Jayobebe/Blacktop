@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Copy, Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function CreateConvoy() {
   const navigate = useNavigate();
@@ -86,9 +87,21 @@ export default function CreateConvoy() {
           </>
         ) : (
           <>
-            {/* Code display - left side in landscape */}
+            {/* Code display with QR - left side in landscape */}
             <div className="flex flex-col items-center landscape:items-start landscape:flex-1 landscape:max-w-xs">
-              <p className="text-muted-foreground text-sm uppercase tracking-wide mb-3 landscape:mb-2">
+              {/* QR Code */}
+              <div className="bg-white p-4 rounded-2xl mb-4 landscape:mb-3">
+                <QRCodeSVG
+                  value={convoyCode}
+                  size={140}
+                  level="H"
+                  includeMargin={false}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+              </div>
+              
+              <p className="text-muted-foreground text-sm uppercase tracking-wide mb-2 landscape:mb-1">
                 Your Convoy Code
               </p>
               <button
@@ -105,7 +118,7 @@ export default function CreateConvoy() {
                 )}
               </button>
               <p className="text-muted-foreground text-sm landscape:text-xs text-center landscape:text-left mt-3 landscape:mt-2 max-w-xs">
-                Share this code with your crew so they can join your convoy
+                Share this code or scan the QR with your crew
               </p>
             </div>
             {/* Continue button - right side in landscape */}
