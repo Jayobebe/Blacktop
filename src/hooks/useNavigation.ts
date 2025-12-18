@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useProfile } from './useProfile';
+import { useProfile } from '@/features/profile';
 
 function isIOSDevice() {
   return /iPhone|iPad|iPod/.test(navigator.userAgent);

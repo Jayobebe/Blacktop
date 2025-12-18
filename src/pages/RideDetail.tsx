@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRideHistory } from '@/hooks/useRideHistory';
-import { useSettings } from '@/hooks/useSettings';
+import { useRideHistory, RidePhotos } from '@/features/ride';
+import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { RidePhotos } from '@/components/RidePhotos';
 import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useState } from 'react';

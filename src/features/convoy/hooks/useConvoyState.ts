@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { ConvoyState, ConvoyMemberInfo, ConvoyDestination } from '@/types/convoy';
-import { useProfile } from './useProfile';
-import { useSettings, ACCENT_COLORS } from './useSettings';
+import { useProfile } from '@/features/profile';
+import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 

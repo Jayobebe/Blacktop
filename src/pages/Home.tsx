@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProfile } from '@/hooks/useProfile';
-import { useRideHistory } from '@/hooks/useRideHistory';
-import { useActiveRide } from '@/hooks/useActiveRide';
-import { useConvoyState } from '@/hooks/useConvoyState';
-import { useSettings } from '@/hooks/useSettings';
+import { useProfile } from '@/features/profile';
+import { useRideHistory, useActiveRide } from '@/features/ride';
+import { useConvoyState } from '@/features/convoy';
+import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, Play, Download, X } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';

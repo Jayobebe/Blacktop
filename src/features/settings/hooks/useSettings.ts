@@ -1,4 +1,4 @@
-import { useLocalStorage } from './useLocalStorage';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEffect } from 'react';
 
 export type SpeedUnit = 'mph' | 'kph';
