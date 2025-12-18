@@ -514,50 +514,42 @@ export default function ActiveRide() {
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
-          {/* Pause button (individual - all riders) */}
-          <Button
-            variant="outline"
+          {/* Pause/Resume button (individual - all riders) - circular icon-only */}
+          <button
             onClick={() => {
               const nextPaused = !rideState.isPaused;
               setRidePaused(nextPaused);
               toast.info(nextPaused ? 'Ride paused' : 'Ride resumed');
             }}
             className={cn(
-              "h-12 landscape:h-10 px-3 rounded-full touch-target",
+              "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full flex items-center justify-center transition-all touch-target",
               rideState.isPaused
-                ? "bg-accent/20 text-accent border-accent"
-                : "border-muted-foreground/50 text-muted-foreground hover:bg-secondary"
+                ? "bg-accent/20 text-accent"
+                : "bg-secondary hover:bg-muted text-muted-foreground"
             )}
+            title={rideState.isPaused ? "Resume ride" : "Pause ride"}
           >
             {rideState.isPaused ? (
-              <>
-                <Play className="w-5 h-5 landscape:w-4 landscape:h-4" />
-                <span className="ml-2 text-xs font-semibold">RESUME</span>
-              </>
+              <Play className="w-6 h-6 landscape:w-5 landscape:h-5" />
             ) : (
-              <>
-                <Pause className="w-5 h-5 landscape:w-4 landscape:h-4" />
-                <span className="ml-2 text-xs font-semibold">PAUSE</span>
-              </>
+              <Pause className="w-6 h-6 landscape:w-5 landscape:h-5" />
             )}
-          </Button>
+          </button>
 
-          {/* Rescue button (non-leaders only) */}
+          {/* Rescue button (non-leaders only) - circular icon-only */}
           {rideState.isConvoyMode && !convoy.isLeader && (
-            <Button
-              variant={hasPendingRescue ? "secondary" : "outline"}
+            <button
               onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
-              disabled={false}
               className={cn(
-                "h-12 landscape:h-10 px-3 rounded-full touch-target",
+                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full flex items-center justify-center transition-all touch-target",
                 hasPendingRescue 
-                  ? "bg-warning/20 text-warning border-warning animate-pulse" 
-                  : "border-warning text-warning hover:bg-warning hover:text-warning-foreground"
+                  ? "bg-warning/20 text-warning animate-pulse" 
+                  : "bg-secondary hover:bg-warning/20 text-warning"
               )}
+              title={hasPendingRescue ? "Cancel rescue request" : "Request rescue"}
             >
-              <AlertTriangle className="w-5 h-5 landscape:w-4 landscape:h-4" />
-              <span className="ml-2 text-xs font-semibold">{hasPendingRescue ? 'CANCEL' : 'RESCUE'}</span>
-            </Button>
+              <AlertTriangle className="w-6 h-6 landscape:w-5 landscape:h-5" />
+            </button>
           )}
 
           {/* Navigation button */}
