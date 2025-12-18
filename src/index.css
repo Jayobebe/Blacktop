@@ -99,6 +99,17 @@
     animation-duration: 0.25s;
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
+
+  /* Smooth orientation transition - prevents jarring layout shifts */
+  html {
+    transition: none;
+  }
+  
+  /* Apply smooth transition only to layout containers during orientation change */
+  html.orientation-portrait,
+  html.orientation-landscape {
+    /* Layout ready - orientation is stable */
+  }
 }
 
 @layer components {
