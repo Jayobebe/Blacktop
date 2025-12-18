@@ -226,6 +226,13 @@ export default function Lobby() {
     }
   }, [convoy.isActive, navigate]);
 
+  // Auto-hide QR overlay after 15 seconds
+  useEffect(() => {
+    if (!showQR) return;
+    const timer = setTimeout(() => setShowQR(false), 15000);
+    return () => clearTimeout(timer);
+  }, [showQR]);
+
   // Auto-start ride when the "ready to start" state flips from false -> true
   useEffect(() => {
     const readyToStart = Boolean(convoy.destination) && allMembersNavigated;
@@ -434,14 +441,10 @@ export default function Lobby() {
               )}
             </button>
           </div>
-          {/* QR Code Button - hold to show */}
+          {/* QR Code Button - tap to show for 15s */}
           <button
-            onMouseDown={() => setShowQR(true)}
-            onMouseUp={() => setShowQR(false)}
-            onMouseLeave={() => setShowQR(false)}
-            onTouchStart={() => setShowQR(true)}
-            onTouchEnd={() => setShowQR(false)}
-            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors"
+            onClick={() => setShowQR(true)}
+            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors select-none"
           >
             <QrCode className="w-6 h-6 text-muted-foreground" />
           </button>
@@ -480,9 +483,12 @@ export default function Lobby() {
         </button>
       </header>
 
-      {/* QR Code Overlay - shows while button held */}
+      {/* QR Code Overlay - tap to dismiss or auto-hide after 15s */}
       {showQR && convoy.code && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in"
+          onClick={() => setShowQR(false)}
+        >
           <div className="bg-white p-6 rounded-3xl shadow-2xl">
             <QRCodeSVG
               value={convoy.code}
