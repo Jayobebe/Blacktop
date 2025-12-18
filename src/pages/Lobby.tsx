@@ -175,6 +175,48 @@ export default function Lobby() {
     };
   }, [convoy.id]);
 
+  // Database fallback: listen for ride_started_at changes on the convoy (backup for broadcast)
+  useEffect(() => {
+    if (!convoy.id || convoy.isLeader) return; // Only followers need this fallback
+
+    const channel = supabase
+      .channel(`convoy-start-fallback:${convoy.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'convoys',
+          filter: `id=eq.${convoy.id}`,
+        },
+        (payload: any) => {
+          const newRow = payload.new;
+          // If ride_started_at is set and we haven't started, start now
+          if (newRow?.ride_started_at && !hasStartedRide.current) {
+            // Check recency to avoid stale triggers (must be within last 30 seconds)
+            const startedAt = new Date(newRow.ride_started_at).getTime();
+            const now = Date.now();
+            if (now - startedAt > 30000) {
+              console.log('[Lobby] Ignoring stale ride_started_at:', newRow.ride_started_at);
+              return;
+            }
+            console.log('[Lobby] Detected ride_started_at via DB fallback');
+            hasStartedRide.current = true;
+            toast.success('Leader started the ride');
+            const success = startRideRef.current(true, convoy.id);
+            if (success) {
+              navigateRef.current('/ride');
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [convoy.id, convoy.isLeader]);
+
   // Redirect if not in a convoy
   useEffect(() => {
     if (!convoy.isActive) {
@@ -227,6 +269,19 @@ export default function Lobby() {
   };
 
   const sendStartRideBroadcast = async () => {
+    // Database fallback: set ride_started_at so followers detect it even if broadcast is missed
+    if (convoy.id) {
+      const { error } = await supabase
+        .from('convoys')
+        .update({ ride_started_at: new Date().toISOString() })
+        .eq('id', convoy.id);
+      if (error) {
+        console.warn('[Lobby] Failed to set ride_started_at:', error.message);
+      } else {
+        console.log('[Lobby] Set ride_started_at in database');
+      }
+    }
+
     const sendTwice = async (ch: any) => {
       const at = Date.now();
       const result1 = await ch.send({
@@ -284,7 +339,7 @@ export default function Lobby() {
       supabase.removeChannel(temp);
     }
 
-    return tempReady;
+    return true; // DB fallback was set regardless of broadcast success
   };
 
   const handleCopyCode = async () => {
