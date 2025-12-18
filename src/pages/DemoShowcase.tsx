@@ -90,7 +90,7 @@ export default function DemoShowcase() {
       id: 'badges',
       title: 'Badge Awards',
       subtitle: 'Celebrate Every Ride',
-      description: 'Earn badges in convoy rides: Speed Demon for top speed, Journeyman for most distance, Fallback for patience.',
+      description: 'Earn badges in convoy rides: Speed Demon for top speed, Journeyman for most distance, Fallback for longest stationary.',
       icon: Trophy,
       color: 'accent',
       mockup: <BadgesMockup />
@@ -639,7 +639,7 @@ function BadgesMockup() {
   const badges = [
     { name: 'Speed Demon', emoji: '⚡', desc: 'Top Speed', color: 'bg-yellow-500/20 border-yellow-500/30' },
     { name: 'Journeyman', emoji: '🛣️', desc: 'Most Distance', color: 'bg-blue-500/20 border-blue-500/30' },
-    { name: 'Fallback', emoji: '🪨', desc: 'Most Patient', color: 'bg-stone-500/20 border-stone-500/30' },
+    { name: 'Fallback', emoji: '🪨', desc: 'Longest Stationary', color: 'bg-stone-500/20 border-stone-500/30' },
   ];
 
   return (
