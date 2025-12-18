@@ -20,7 +20,7 @@ let stationaryCount = 0;
 const STATIONARY_THRESHOLD = 3; // Number of zero-speed readings before throttling
 const THROTTLE_SKIP_COUNT = 2; // Skip this many updates when stationary (process every 3rd)
 
-// Track stationary time for Rocksteady badge
+// Track stationary time for Fallback badge
 let stationaryTimeSeconds = 0;
 let lastStationaryCheck: number | null = null;
 
@@ -139,7 +139,7 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
   const deviceSpeedMphQuick = deviceSpeed != null && deviceSpeed >= 0 ? deviceSpeed * 2.237 : null;
   const isStationary = deviceSpeedMphQuick !== null && deviceSpeedMphQuick < MIN_SPEED_THRESHOLD;
   
-  // Track stationary time for Rocksteady badge
+  // Track stationary time for Fallback badge
   const now = Date.now();
   if (isStationary) {
     if (lastStationaryCheck !== null) {

@@ -67,7 +67,7 @@ function generateDemoRides(): RideSession[] {
       averageSpeed: 50,
       maxSpeed: 88,
       gpsPoints: [],
-      earnedBadges: ['rocksteady'],
+      earnedBadges: ['fallback'],
     },
   ];
 }
@@ -80,7 +80,7 @@ export function useRideHistory() {
     setRides(prev => [ride, ...prev]);
   }, [setRides]);
 
-  const updateRideBadges = useCallback((rideId: string, badges: ('speed-demon' | 'journeyman' | 'rocksteady')[]) => {
+  const updateRideBadges = useCallback((rideId: string, badges: ('speed-demon' | 'journeyman' | 'fallback')[]) => {
     setRides(prev => prev.map(r => 
       r.id === rideId ? { ...r, earnedBadges: badges } : r
     ));
@@ -126,12 +126,12 @@ export function useRideHistory() {
           r.earnedBadges.forEach(badge => {
             if (badge === 'speed-demon') acc.speedDemon++;
             else if (badge === 'journeyman') acc.journeyman++;
-            else if (badge === 'rocksteady') acc.rocksteady++;
+            else if (badge === 'fallback') acc.fallback++;
           });
         }
         return acc;
       },
-      { speedDemon: 0, journeyman: 0, rocksteady: 0 }
+      { speedDemon: 0, journeyman: 0, fallback: 0 }
     );
 
     return {
