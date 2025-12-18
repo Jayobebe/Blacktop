@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Crown, User, X, Clock, Route, Gauge, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings } from '@/features/settings';
 
 interface RideStats {
   duration: number;

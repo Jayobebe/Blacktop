@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { ACCENT_COLORS, AccentColor } from '@/hooks/useSettings';
+import { ACCENT_COLORS, AccentColor } from '@/features/settings';
 import { Check } from 'lucide-react';
 
 interface AccentColorPickerProps {

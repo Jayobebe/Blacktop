@@ -1,6 +1,6 @@
 import { MapPin, UserPlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { RescueRequest } from '@/hooks/useRescue';
+import { RescueRequest } from '@/features/rescue';
 import { cn } from '@/lib/utils';
 
 interface RescueAlertProps {

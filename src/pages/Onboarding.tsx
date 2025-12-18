@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare } from 'lucide-react';

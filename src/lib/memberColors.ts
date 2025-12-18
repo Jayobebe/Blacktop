@@ -1,4 +1,4 @@
-import { AccentColor, ACCENT_COLORS } from '@/hooks/useSettings';
+import { AccentColor, ACCENT_COLORS } from '@/features/settings';
 
 // Map accent color to tailwind-compatible inline styles
 export function getMemberColorStyles(accentColor: string = 'orange') {

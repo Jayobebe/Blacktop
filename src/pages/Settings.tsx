@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/features/profile';
 import { useNavigation } from '@/hooks/useNavigation';
-import { useRideHistory } from '@/hooks/useRideHistory';
-import { useSettings } from '@/hooks/useSettings';
+import { useRideHistory } from '@/features/ride';
+import { useSettings, AccentColorPicker } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { AccentColorPicker } from '@/components/AccentColorPicker';
 import { BTLogo } from '@/components/BTLogo';
 import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto } from '@/types/blacktop';
 
 const RIDES_KEY = 'blacktop_rides';

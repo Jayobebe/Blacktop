@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRideHistory } from '@/hooks/useRideHistory';
-import { useSettings } from '@/hooks/useSettings';
+import { useRideHistory } from '@/features/ride';
+import { useSettings } from '@/features/settings';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Users, Clock, Route, Pencil, Trophy } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel } from '@/lib/format';

@@ -1,18 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/hooks/useConvoyState';
-import { useActiveRide } from '@/hooks/useActiveRide';
-import { useVoiceChannel } from '@/hooks/useVoiceChannel';
-import { useWaypoints } from '@/hooks/useWaypoints';
+import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/features/convoy';
+import { useActiveRide } from '@/features/ride';
+import { useVoiceChannel } from '@/features/voice';
+import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
 import { useNavigation } from '@/hooks/useNavigation';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { DestinationSearch } from '@/components/DestinationSearch';
-import { WaypointList } from '@/components/WaypointList';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 

@@ -1,4 +1,4 @@
-import type { SpeedUnit, DistanceUnit } from '@/hooks/useSettings';
+import type { SpeedUnit, DistanceUnit } from '@/features/settings';
 
 const MPH_TO_KPH = 1.60934;
 const MILES_TO_KM = 1.60934;

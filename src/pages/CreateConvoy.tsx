@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useConvoyState } from '@/hooks/useConvoyState';
+import { useConvoyState } from '@/features/convoy';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Copy, Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
