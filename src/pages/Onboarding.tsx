@@ -27,6 +27,11 @@ export default function Onboarding() {
   }, []);
 
   const checkPermissions = async () => {
+    // Detect iOS/Safari - permissions API doesn't work reliably for microphone
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
     // Check location permission
     if ('permissions' in navigator) {
       try {
@@ -39,14 +44,20 @@ export default function Onboarding() {
         setLocationPermission('prompt');
       }
 
-      try {
-        const micResult = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        setMicPermission(micResult.state as PermissionStatus);
-        micResult.onchange = () => {
-          setMicPermission(micResult.state as PermissionStatus);
-        };
-      } catch {
+      // For microphone, iOS/Safari doesn't support permissions.query reliably
+      if (isIOS || isSafari) {
+        console.log('[Onboarding] iOS/Safari detected - microphone permissions API not reliable');
         setMicPermission('prompt');
+      } else {
+        try {
+          const micResult = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          setMicPermission(micResult.state as PermissionStatus);
+          micResult.onchange = () => {
+            setMicPermission(micResult.state as PermissionStatus);
+          };
+        } catch {
+          setMicPermission('prompt');
+        }
       }
     } else {
       setLocationPermission('prompt');
