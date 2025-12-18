@@ -40,7 +40,10 @@ function loadPersistedState(): ActiveRideState | null {
       // Validate it's still an active ride
       if (parsed && parsed.isActive && parsed.startedAt) {
         console.log('[Ride] Restored persisted ride state');
-        return parsed;
+        return {
+          ...parsed,
+          isPaused: Boolean(parsed.isPaused),
+        } as ActiveRideState;
       }
     }
   } catch (e) {
@@ -67,6 +70,7 @@ let rideState: ActiveRideState = restoredState || {
   isActive: false,
   startedAt: null,
   isConvoyMode: false,
+  isPaused: false,
   currentSpeed: 0,
   maxSpeed: 0,
   distance: 0,
@@ -82,9 +86,9 @@ let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
 let rideStartedAtMs: number | null = restoredState?.startedAt ? new Date(restoredState.startedAt).getTime() : null;
 let smoothedSpeed = 0;
 let currentConvoyId: string | null = null;
-let isPaused = false;
+let isPaused = restoredState?.isPaused ?? false;
 let totalPausedTime = 0;
-let pausedAtMs: number | null = null;
+let pausedAtMs: number | null = isPaused ? Date.now() : null;
 let hasRestoredGps = false; // Track if we've already restored GPS for this session
 
 function getSnapshot(): ActiveRideState {
@@ -363,7 +367,7 @@ export function useActiveRide(convoyId?: string | null) {
 
   // Resume GPS tracking if we have an active ride from restored state
   useEffect(() => {
-    if (state.isActive && !hasRestoredGps && watchId === null) {
+    if (state.isActive && !state.isPaused && !hasRestoredGps && watchId === null) {
       console.log('[Ride] Resuming GPS tracking for restored ride');
       hasRestoredGps = true;
       
@@ -396,7 +400,7 @@ export function useActiveRide(convoyId?: string | null) {
         convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
       }
     }
-  }, [state.isActive, state.isConvoyMode, state.startedAt, convoyId]);
+  }, [state.isActive, state.isPaused, state.isConvoyMode, state.startedAt, convoyId]);
 
   const startRide = useCallback((isConvoyMode: boolean = false, activeConvoyId?: string | null) => {
     if (!navigator.geolocation) {
@@ -421,6 +425,7 @@ export function useActiveRide(convoyId?: string | null) {
       isActive: true,
       startedAt,
       isConvoyMode,
+      isPaused: false,
       currentSpeed: 0,
       maxSpeed: 0,
       distance: 0,
@@ -512,6 +517,7 @@ export function useActiveRide(convoyId?: string | null) {
       isActive: false,
       startedAt: null,
       isConvoyMode: false,
+      isPaused: false,
       currentSpeed: 0,
       maxSpeed: 0,
       distance: 0,
@@ -529,6 +535,7 @@ export function useActiveRide(convoyId?: string | null) {
       isPaused = true;
       pausedAtMs = Date.now();
       stopGpsWatch();
+      setRideState(prev => ({ ...prev, isPaused: true, currentSpeed: 0 }));
       console.log('[Ride] Paused - GPS stopped to save battery');
     } else if (!paused && isPaused) {
       // Resuming from pause - restart GPS
@@ -539,6 +546,7 @@ export function useActiveRide(convoyId?: string | null) {
       pausedAtMs = null;
       stationaryCount = 0; // Reset throttle counter
       startGpsWatch();
+      setRideState(prev => ({ ...prev, isPaused: false }));
       console.log('[Ride] Resumed - GPS restarted, total paused time:', totalPausedTime);
     }
   }, []);
