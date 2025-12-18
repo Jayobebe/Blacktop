@@ -151,9 +151,14 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, showSummary, endingFlow, navigate]);
 
-  // Track if this ride was started individually (not via leader broadcast)
-  // We don't auto-sync pause state on mount - only respond to explicit broadcasts
-  // This prevents individually started rides from being paused immediately
+  // Sync pause state from convoy to ride tracking (fallback if broadcast is missed)
+  // This ensures all members pause when leader pauses via database realtime update
+  useEffect(() => {
+    if (!rideState.isConvoyMode || convoy.isLeader) return;
+    
+    // Non-leaders: sync pause state from convoy (database) to ride tracking
+    setRidePaused(convoy.isPaused);
+  }, [convoy.isPaused, convoy.isLeader, rideState.isConvoyMode, setRidePaused]);
 
   // Refs for stable access in callbacks (avoid stale closures)
   const voiceChannelRef = useRef({ isConnected, disconnect });
