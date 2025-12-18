@@ -3,78 +3,9 @@ import { useLocalStorage } from './useLocalStorage';
 import { RideSession, RideStats, RidePhoto } from '@/types/blacktop';
 
 const RIDES_KEY = 'blacktop_rides';
-const SEEDED_KEY = 'blacktop_demo_seeded';
-
-function generateDemoRides(): RideSession[] {
-  const now = Date.now();
-  const hour = 3600 * 1000;
-  const day = 24 * hour;
-
-  return [
-    {
-      id: crypto.randomUUID(),
-      startedAt: new Date(now - 2 * hour).toISOString(),
-      endedAt: new Date(now - 1 * hour).toISOString(),
-      isConvoyRide: true,
-      distance: 45.2,
-      duration: 3420,
-      averageSpeed: 47,
-      maxSpeed: 78,
-      gpsPoints: [],
-      earnedBadges: ['speed-demon'],
-    },
-    {
-      id: crypto.randomUUID(),
-      startedAt: new Date(now - 1 * day - 3 * hour).toISOString(),
-      endedAt: new Date(now - 1 * day - 1 * hour).toISOString(),
-      isConvoyRide: false,
-      distance: 82.7,
-      duration: 5400,
-      averageSpeed: 55,
-      maxSpeed: 92,
-      gpsPoints: [],
-    },
-    {
-      id: crypto.randomUUID(),
-      startedAt: new Date(now - 3 * day - 4 * hour).toISOString(),
-      endedAt: new Date(now - 3 * day - 2 * hour).toISOString(),
-      isConvoyRide: true,
-      distance: 67.3,
-      duration: 4800,
-      averageSpeed: 50,
-      maxSpeed: 85,
-      gpsPoints: [],
-      earnedBadges: ['journeyman'],
-    },
-    {
-      id: crypto.randomUUID(),
-      startedAt: new Date(now - 5 * day - 2 * hour).toISOString(),
-      endedAt: new Date(now - 5 * day - 1 * hour).toISOString(),
-      isConvoyRide: false,
-      distance: 28.4,
-      duration: 2100,
-      averageSpeed: 48,
-      maxSpeed: 71,
-      gpsPoints: [],
-    },
-    {
-      id: crypto.randomUUID(),
-      startedAt: new Date(now - 7 * day - 5 * hour).toISOString(),
-      endedAt: new Date(now - 7 * day - 2 * hour).toISOString(),
-      isConvoyRide: true,
-      distance: 124.8,
-      duration: 9000,
-      averageSpeed: 50,
-      maxSpeed: 88,
-      gpsPoints: [],
-      earnedBadges: ['fallback'],
-    },
-  ];
-}
 
 export function useRideHistory() {
   const [rides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
-  const [hasSeeded, setHasSeeded] = useLocalStorage<boolean>(SEEDED_KEY, false);
 
   const addRide = useCallback((ride: RideSession) => {
     setRides(prev => [ride, ...prev]);
@@ -147,14 +78,7 @@ export function useRideHistory() {
 
   const burnAllData = useCallback(() => {
     clearRides();
-    setHasSeeded(true); // Mark as seeded so demo data won't come back
-  }, [clearRides, setHasSeeded]);
-
-  const seedDemoData = useCallback(() => {
-    // Don't seed demo data on fresh installs - users should start with clean stats
-    // Demo data was confusing users into thinking they had existing rides
-    // Keep this function for manual demo seeding if needed in the future
-  }, []);
+  }, [clearRides]);
 
   return {
     rides,
@@ -166,6 +90,5 @@ export function useRideHistory() {
     addRidePhoto,
     removeRidePhoto,
     burnAllData,
-    seedDemoData,
   };
 }
