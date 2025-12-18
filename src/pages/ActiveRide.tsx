@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
 import { useVoiceChannel } from '@/features/voice';
@@ -167,31 +168,35 @@ export default function ActiveRide() {
     if (endingFlowRef.current) return; // Already ending
     console.log('[ActiveRide] Ride ended by leader');
     toast.info('Leader ended the ride');
-    setEndingFlow(true);
     
-    // Disconnect voice immediately (use ref for fresh values)
+    // Use flushSync to ensure state updates are applied BEFORE endRide() triggers external store re-render
+    flushSync(() => {
+      setEndingFlow(true);
+      
+      // Capture final ride stats before ending (use ref for fresh state)
+      const currentRideState = rideStateRef.current;
+      const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
+      setFinalRideStats({
+        duration: currentRideState.duration,
+        distance: currentRideState.distance,
+        maxSpeed: currentRideState.maxSpeed,
+        averageSpeed: avgSpeed,
+      });
+      
+      // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
+      const members = membersRef.current.length > 0 ? membersRef.current : convoyMembersRef.current;
+      if (members.length > 0) {
+        setFinalMembers(members);
+      }
+      
+      // Show summary immediately
+      setShowSummary(true);
+    });
+    
+    // Disconnect voice (use ref for fresh values)
     if (voiceChannelRef.current.isConnected) {
       voiceChannelRef.current.disconnect();
     }
-    
-    // Capture final ride stats before ending (use ref for fresh state)
-    const currentRideState = rideStateRef.current;
-    const avgSpeed = currentRideState.duration > 0 ? (currentRideState.distance / (currentRideState.duration / 3600)) : 0;
-    setFinalRideStats({
-      duration: currentRideState.duration,
-      distance: currentRideState.distance,
-      maxSpeed: currentRideState.maxSpeed,
-      averageSpeed: avgSpeed,
-    });
-    
-    // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
-    const members = membersRef.current.length > 0 ? membersRef.current : convoyMembersRef.current;
-    if (members.length > 0) {
-      setFinalMembers(members);
-    }
-    
-    // Show summary immediately
-    setShowSummary(true);
     
     // Run cleanup in background (non-blocking)
     (async () => {
@@ -265,7 +270,10 @@ export default function ActiveRide() {
   }, [convoy.id, convoy.isLeader, rideState.isConvoyMode, setRidePaused, handleRideEndedByLeader]);
 
   const handleEndRide = async () => {
-    setEndingFlow(true);
+    // Use flushSync to ensure state updates are applied BEFORE endRide() triggers external store re-render
+    flushSync(() => {
+      setEndingFlow(true);
+    });
 
     // Disconnect voice immediately (non-blocking)
     if (isConnected) {
@@ -278,17 +286,21 @@ export default function ActiveRide() {
 
     // Capture final ride stats before ending
     const avgSpeed = rideState.duration > 0 ? (rideState.distance / (rideState.duration / 3600)) : 0;
-    setFinalRideStats({
-      duration: rideState.duration,
-      distance: rideState.distance,
-      maxSpeed: rideState.maxSpeed,
-      averageSpeed: avgSpeed,
-    });
+    
+    // Use flushSync to ensure state is applied before endRide
+    flushSync(() => {
+      setFinalRideStats({
+        duration: rideState.duration,
+        distance: rideState.distance,
+        maxSpeed: rideState.maxSpeed,
+        averageSpeed: avgSpeed,
+      });
 
-    // Capture final members before ending for badge summary
-    if (wasConvoyMode && membersRef.current.length > 0) {
-      setFinalMembers(membersRef.current);
-    }
+      // Capture final members before ending for badge summary
+      if (wasConvoyMode && membersRef.current.length > 0) {
+        setFinalMembers(membersRef.current);
+      }
+    });
 
     // CRITICAL: If leader in convoy mode, set ride_ended_at AND broadcast 'end-ride'
     if (wasConvoyMode && wasLeader && convoyId) {
@@ -343,8 +355,10 @@ export default function ActiveRide() {
       }
     }
 
-    // ALWAYS show summary for every ride (solo or convoy)
-    setShowSummary(true);
+    // ALWAYS show summary for every ride (solo or convoy) - flush before endRide
+    flushSync(() => {
+      setShowSummary(true);
+    });
 
     // Now safe to end the ride (control channel broadcast already sent)
     const rideId = await endRide();
@@ -437,7 +451,7 @@ export default function ActiveRide() {
     );
   }
 
-  if (!rideState.isActive) return null;
+  if (!rideState.isActive && !endingFlow) return null;
 
   // Sort members by top speed (highest first) if rankings enabled, otherwise by join time
   const sortedMembers = settings.showSpeedRankings 
