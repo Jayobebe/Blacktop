@@ -8,11 +8,12 @@ import { useNavigation } from '@/hooks/useNavigation';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface UserLocation {
   lat: number;
@@ -28,6 +29,7 @@ export default function Lobby() {
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
@@ -417,18 +419,31 @@ export default function Lobby() {
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
       {/* Header with Code */}
       <header className="mb-3 landscape:mb-2 md:mb-4 animate-fade-in flex items-center justify-between">
-        <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">Convoy Code</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">Convoy Code</p>
+            <button
+              onClick={handleCopyCode}
+              className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2 hover:bg-secondary transition-colors"
+            >
+              <span className="font-mono text-2xl landscape:text-xl md:text-3xl font-bold tracking-[0.15em]">{convoy.code}</span>
+              {copied ? (
+                <Check className="w-5 h-5 text-accent" />
+              ) : (
+                <Copy className="w-5 h-5 text-muted-foreground" />
+              )}
+            </button>
+          </div>
+          {/* QR Code Button - hold to show */}
           <button
-            onClick={handleCopyCode}
-            className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2 hover:bg-secondary transition-colors"
+            onMouseDown={() => setShowQR(true)}
+            onMouseUp={() => setShowQR(false)}
+            onMouseLeave={() => setShowQR(false)}
+            onTouchStart={() => setShowQR(true)}
+            onTouchEnd={() => setShowQR(false)}
+            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors"
           >
-            <span className="font-mono text-2xl landscape:text-xl md:text-3xl font-bold tracking-[0.15em]">{convoy.code}</span>
-            {copied ? (
-              <Check className="w-5 h-5 text-accent" />
-            ) : (
-              <Copy className="w-5 h-5 text-muted-foreground" />
-            )}
+            <QrCode className="w-6 h-6 text-muted-foreground" />
           </button>
         </div>
         
@@ -465,7 +480,23 @@ export default function Lobby() {
         </button>
       </header>
 
-      {/* Main content - vertical in portrait, horizontal in landscape */}
+      {/* QR Code Overlay - shows while button held */}
+      {showQR && convoy.code && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white p-6 rounded-3xl shadow-2xl">
+            <QRCodeSVG
+              value={convoy.code}
+              size={220}
+              level="H"
+              includeMargin
+              bgColor="#ffffff"
+              fgColor="#000000"
+            />
+            <p className="text-center mt-3 font-mono text-xl font-bold text-black tracking-[0.15em]">{convoy.code}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
         {/* Destination & Waypoints */}
         <div className="flex-1 flex flex-col animate-slide-up relative z-50 min-w-0 overflow-hidden">
