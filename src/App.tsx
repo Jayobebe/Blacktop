@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
+import { OrientationProvider } from "@/hooks/useOrientationLock";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
@@ -63,13 +64,15 @@ function AppRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
+    <OrientationProvider debounceMs={400}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </OrientationProvider>
   </QueryClientProvider>
 );
 
