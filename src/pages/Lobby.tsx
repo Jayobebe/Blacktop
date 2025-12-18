@@ -38,8 +38,26 @@ export default function Lobby() {
   const prevReadyToStart = useRef<boolean | null>(null);
   const controlChannelRef = useRef<any>(null);
   const controlChannelSubscribed = useRef(false);
+  const controlChannelReady = useRef<Promise<boolean> | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
   const didLongPressRef = useRef(false);
+
+  // Keep latest callbacks stable for realtime subscriptions (prevents teardown/recreate on re-renders)
+  const startRideRef = useRef(startRide);
+  const navigateRef = useRef(navigate);
+  const refreshConvoyStateRef = useRef(refreshConvoyState);
+
+  useEffect(() => {
+    startRideRef.current = startRide;
+  }, [startRide]);
+
+  useEffect(() => {
+    navigateRef.current = navigate;
+  }, [navigate]);
+
+  useEffect(() => {
+    refreshConvoyStateRef.current = refreshConvoyState;
+  }, [refreshConvoyState]);
 
   // Fetch user location on mount (available for all members, not just leaders)
   useEffect(() => {
@@ -92,6 +110,18 @@ export default function Lobby() {
   useEffect(() => {
     if (!convoy.id) return;
 
+    // One-time promise we can await before sending broadcasts (prevents "send before subscribed")
+    let settled = false;
+    let resolveReady: (ready: boolean) => void = () => {};
+    controlChannelReady.current = new Promise<boolean>((resolve) => {
+      resolveReady = resolve;
+    });
+    const settle = (ready: boolean) => {
+      if (settled) return;
+      settled = true;
+      resolveReady(ready);
+    };
+
     const channel = supabase.channel(`convoy-control:${convoy.id}`, {
       config: { broadcast: { self: false } },
     });
@@ -101,38 +131,49 @@ export default function Lobby() {
       hasStartedRide.current = true;
       console.log('[Lobby] Received start-ride broadcast');
       toast.success('Leader started the ride');
-      const success = startRide(true, convoy.id);
+      const success = startRideRef.current(true, convoy.id);
       if (success) {
-        navigate('/ride');
+        navigateRef.current('/ride');
       }
     });
 
     // Listen for leadership change broadcast
     channel.on('broadcast', { event: 'leadership-changed' }, async (payload: any) => {
       console.log('[Lobby] Leadership changed:', payload);
-      // Force refresh convoy state to ensure new leader gets updated isLeader flag
-      await refreshConvoyState();
+      await refreshConvoyStateRef.current();
       toast.info('Leadership has been transferred');
     });
 
     channel.subscribe((status) => {
       console.log('[Lobby] Control channel status:', status);
+
       if (status === 'SUBSCRIBED') {
         controlChannelSubscribed.current = true;
+        settle(true);
         console.log('[Lobby] Subscribed to convoy control channel');
-      } else {
-        controlChannelSubscribed.current = false;
+        return;
       }
+
+      // Treat terminal states as not-ready
+      if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+        controlChannelSubscribed.current = false;
+        settle(false);
+        return;
+      }
+
+      controlChannelSubscribed.current = false;
     });
 
     controlChannelRef.current = channel;
 
     return () => {
       controlChannelSubscribed.current = false;
+      settle(false);
+      controlChannelReady.current = null;
       supabase.removeChannel(channel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id, navigate, startRide, refreshConvoyState]);
+  }, [convoy.id]);
 
   // Redirect if not in a convoy
   useEffect(() => {
@@ -173,6 +214,17 @@ export default function Lobby() {
 
     prevReadyToStart.current = readyToStart;
   }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate, convoy.id]);
+
+  const waitForControlChannel = async (timeoutMs = 1500) => {
+    if (controlChannelSubscribed.current) return true;
+    const p = controlChannelReady.current;
+    if (!p) return false;
+
+    return await Promise.race([
+      p,
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), timeoutMs)),
+    ]);
+  };
 
   const handleCopyCode = async () => {
     if (!convoy.code) return;
@@ -604,22 +656,31 @@ export default function Lobby() {
               const success = startRide(true, convoy.id);
               if (success) {
                 toast.success('Starting ride for all riders');
-                if (controlChannelRef.current && controlChannelSubscribed.current) {
+
+                const ready = await waitForControlChannel();
+                if (controlChannelRef.current && ready) {
                   console.log('[Lobby] Leader sending start-ride broadcast (desktop)');
                   try {
-                    const result = await controlChannelRef.current.send({
+                    const result1 = await controlChannelRef.current.send({
                       type: 'broadcast',
                       event: 'start-ride',
                       payload: { at: Date.now() },
                     });
-                    console.log('[Lobby] Desktop broadcast result:', result);
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise((resolve) => setTimeout(resolve, 150));
+                    const result2 = await controlChannelRef.current.send({
+                      type: 'broadcast',
+                      event: 'start-ride',
+                      payload: { at: Date.now(), retry: true },
+                    });
+                    console.log('[Lobby] Desktop broadcast results:', { result1, result2 });
+                    await new Promise((resolve) => setTimeout(resolve, 200));
                   } catch (err) {
                     console.error('[Lobby] Desktop broadcast error:', err);
                   }
                 } else {
-                  console.warn('[Lobby] Control channel not subscribed, desktop broadcast skipped');
+                  console.warn('[Lobby] Control channel not ready, desktop broadcast skipped');
                 }
+
                 navigate('/ride');
               }
             }}
@@ -639,26 +700,31 @@ export default function Lobby() {
                 const success = startRide(true, convoy.id);
                 if (success) {
                   toast.success('Starting ride for all riders');
-                  
-                  // Use the existing control channel if subscribed
-                  if (controlChannelRef.current && controlChannelSubscribed.current) {
+
+                  const ready = await waitForControlChannel();
+                  if (controlChannelRef.current && ready) {
                     console.log('[Lobby] Leader sending start-ride broadcast');
                     try {
-                      const result = await controlChannelRef.current.send({
+                      const result1 = await controlChannelRef.current.send({
                         type: 'broadcast',
                         event: 'start-ride',
                         payload: { at: Date.now() },
                       });
-                      console.log('[Lobby] Broadcast result:', result);
-                      // Wait for broadcast to propagate
-                      await new Promise(resolve => setTimeout(resolve, 200));
+                      await new Promise((resolve) => setTimeout(resolve, 150));
+                      const result2 = await controlChannelRef.current.send({
+                        type: 'broadcast',
+                        event: 'start-ride',
+                        payload: { at: Date.now(), retry: true },
+                      });
+                      console.log('[Lobby] Broadcast results:', { result1, result2 });
+                      await new Promise((resolve) => setTimeout(resolve, 200));
                     } catch (err) {
                       console.error('[Lobby] Broadcast error:', err);
                     }
                   } else {
-                    console.warn('[Lobby] Control channel not subscribed, broadcast skipped');
+                    console.warn('[Lobby] Control channel not ready, broadcast skipped');
                   }
-                  
+
                   navigate('/ride');
                 }
               }, 500);
