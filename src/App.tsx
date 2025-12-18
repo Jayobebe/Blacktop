@@ -64,7 +64,7 @@ function AppRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <OrientationProvider debounceMs={400}>
+    <OrientationProvider debounceMs={800}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
