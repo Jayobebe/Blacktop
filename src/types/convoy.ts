@@ -43,7 +43,7 @@ export interface ConvoyMemberInfo {
   stationaryTime?: number; // seconds at 0 speed
 }
 
-export type BadgeType = 'speed-demon' | 'journeyman' | 'rocksteady';
+export type BadgeType = 'speed-demon' | 'journeyman' | 'fallback';
 
 export interface MemberBadge {
   type: BadgeType;
@@ -83,14 +83,14 @@ export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, Member
     });
   }
 
-  // Rocksteady - longest time at 0 speed
-  const rocksteady = members.reduce((prev, curr) => 
+  // Fallback - longest time at 0 speed
+  const fallback = members.reduce((prev, curr) => 
     (curr.stationaryTime || 0) > (prev.stationaryTime || 0) ? curr : prev
   );
-  if ((rocksteady.stationaryTime || 0) > 0) {
-    badges.get(rocksteady.userId)?.push({ 
-      type: 'rocksteady', 
-      label: 'Rocksteady', 
+  if ((fallback.stationaryTime || 0) > 0) {
+    badges.get(fallback.userId)?.push({ 
+      type: 'fallback', 
+      label: 'Fallback', 
       emoji: '🪨' 
     });
   }

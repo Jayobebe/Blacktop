@@ -800,7 +800,7 @@ export default function DemoRide() {
               {[
                 { emoji: '⚡', label: 'Speed Demon', desc: 'Highest top speed', name: demoName || 'You', color: 'yellow' },
                 { emoji: '🛣️', label: 'Journeyman', desc: 'Most distance covered', name: 'Marcus', color: 'blue' },
-                { emoji: '🪨', label: 'Rocksteady', desc: 'Longest time stationary', name: 'Jake', color: 'stone' },
+                { emoji: '🪨', label: 'Fallback', desc: 'Most patient rider', name: 'Jake', color: 'stone' },
               ].map((badge, i) => (
                 <div
                   key={i}

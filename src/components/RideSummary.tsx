@@ -40,8 +40,8 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
     });
   }
 
-  // Sort by badge type priority: speed-demon, journeyman, rocksteady
-  const badgeOrder = { 'speed-demon': 0, 'journeyman': 1, 'rocksteady': 2 };
+  // Sort by badge type priority: speed-demon, journeyman, fallback
+  const badgeOrder = { 'speed-demon': 0, 'journeyman': 1, 'fallback': 2 };
   badgeAwards.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
 
   // Report all of the current user's earned badges (convoy rides only)
@@ -120,7 +120,7 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
                     "flex items-center gap-4 p-4 rounded-xl border transition-all",
                     badge.type === 'speed-demon' && "bg-yellow-500/10 border-yellow-500/30",
                     badge.type === 'journeyman' && "bg-blue-500/10 border-blue-500/30",
-                    badge.type === 'rocksteady' && "bg-stone-500/10 border-stone-500/30"
+                    badge.type === 'fallback' && "bg-stone-500/10 border-stone-500/30"
                   )}
                 >
                   {/* Badge icon */}
@@ -128,7 +128,7 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
                     "w-14 h-14 rounded-full flex items-center justify-center text-3xl flex-shrink-0",
                     badge.type === 'speed-demon' && "bg-yellow-500/20",
                     badge.type === 'journeyman' && "bg-blue-500/20",
-                    badge.type === 'rocksteady' && "bg-stone-500/20"
+                    badge.type === 'fallback' && "bg-stone-500/20"
                   )}>
                     {badge.emoji}
                   </div>
@@ -139,7 +139,7 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
                       "font-bold text-lg",
                       badge.type === 'speed-demon' && "text-yellow-400",
                       badge.type === 'journeyman' && "text-blue-400",
-                      badge.type === 'rocksteady' && "text-stone-400"
+                      badge.type === 'fallback' && "text-stone-400"
                     )}>
                       {badge.label}
                     </p>

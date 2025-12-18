@@ -7,7 +7,7 @@ export interface UserProfile {
 export interface BadgeCounts {
   speedDemon: number;
   journeyman: number;
-  rocksteady: number;
+  fallback: number;
 }
 
 export interface RidePhoto {
@@ -28,7 +28,7 @@ export interface RideSession {
   averageSpeed: number; // in mph
   maxSpeed: number; // in mph
   gpsPoints: GpsPoint[];
-  earnedBadges?: ('speed-demon' | 'journeyman' | 'rocksteady')[]; // Badges earned in this ride (convoy only)
+  earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
 }
 

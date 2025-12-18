@@ -67,16 +67,16 @@ export default function Stats() {
       color: 'blue',
     },
     {
-      type: 'rocksteady',
+      type: 'fallback',
       emoji: '🪨',
-      label: 'Rocksteady',
+      label: 'Fallback',
       description: 'Most patient',
-      count: stats.badges.rocksteady,
+      count: stats.badges.fallback,
       color: 'stone',
     },
   ];
 
-  const totalBadges = stats.badges.speedDemon + stats.badges.journeyman + stats.badges.rocksteady;
+  const totalBadges = stats.badges.speedDemon + stats.badges.journeyman + stats.badges.fallback;
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
