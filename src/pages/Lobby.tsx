@@ -492,7 +492,6 @@ export default function Lobby() {
               bgColor="#ffffff"
               fgColor="#000000"
             />
-            <p className="text-center mt-3 font-mono text-xl font-bold text-black tracking-[0.15em]">{convoy.code}</p>
           </div>
         </div>
       )}
