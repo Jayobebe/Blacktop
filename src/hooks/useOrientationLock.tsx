@@ -76,8 +76,8 @@ function RotationTray({
         onClick={onToggle}
         className={cn(
           'absolute right-0 top-1/2 -translate-y-1/2 translate-x-full',
-          'w-6 h-12 bg-card border border-l-0 border-border rounded-r-lg',
-          'flex items-center justify-center touch-target',
+          'w-4 h-8 bg-card border border-l-0 border-border rounded-r-md',
+          'flex items-center justify-center',
           'hover:bg-secondary transition-colors',
           hasPending && 'border-accent bg-accent/10'
         )}
@@ -85,7 +85,7 @@ function RotationTray({
       >
         <ChevronRight
           className={cn(
-            'w-4 h-4 transition-transform duration-300',
+            'w-3 h-3 transition-transform duration-300',
             isOpen && 'rotate-180',
             hasPending && 'text-accent'
           )}
