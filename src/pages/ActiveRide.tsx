@@ -455,9 +455,17 @@ export default function ActiveRide() {
       )}
 
       {/* Main content area - vertical in portrait, horizontal in landscape */}
-      <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden">
+      <div className={cn(
+        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden",
+        // Center content in landscape when solo or when convoy members panel is collapsed
+        (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
+      )}>
         {/* Speed and Stats */}
-        <div className="flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0">
+        <div className={cn(
+          "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
+          // In landscape, don't let it grow beyond content when centered
+          (!rideState.isConvoyMode || !showMembers) && "landscape:flex-none"
+        )}>
           {/* Header - compact */}
           <div className="flex items-center gap-2 mb-2 landscape:mb-1 md:mb-4">
             {rideState.isConvoyMode && (
