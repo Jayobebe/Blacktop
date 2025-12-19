@@ -150,7 +150,9 @@ export function OrientationProvider({
 
   return (
     <OrientationContext.Provider value={ctxValue}>
-      {children}
+      <div className="orientation-shell">
+        {children}
+      </div>
       <RotationTray
         isOpen={trayOpen}
         onToggle={() => setTrayOpen((o) => !o)}

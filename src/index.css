@@ -100,6 +100,51 @@
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /*
+   * Manual rotation lock: keeps the UI visually fixed when device rotates.
+   * JS adds html.app-portrait or html.app-landscape to indicate accepted orientation.
+   */
+  .orientation-shell {
+    min-height: 100vh;
+    width: 100%;
+    background: hsl(var(--background));
+  }
+
+  /* Device is landscape, but app is locked to portrait - counter-rotate */
+  @media (orientation: landscape) {
+    html.app-portrait .orientation-shell {
+      position: fixed;
+      top: 0;
+      left: 100vw;
+      width: 100vh;
+      height: 100vw;
+      transform: rotate(-90deg);
+      transform-origin: top left;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    html.app-portrait body {
+      overflow: hidden;
+    }
+  }
+
+  /* Device is portrait, but app is locked to landscape - counter-rotate */
+  @media (orientation: portrait) {
+    html.app-landscape .orientation-shell {
+      position: fixed;
+      top: 100vh;
+      left: 0;
+      width: 100vh;
+      height: 100vw;
+      transform: rotate(90deg);
+      transform-origin: top left;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    html.app-landscape body {
+      overflow: hidden;
+    }
+  }
 }
 
 @layer components {
