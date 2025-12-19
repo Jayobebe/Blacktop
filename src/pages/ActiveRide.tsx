@@ -568,9 +568,9 @@ export default function ActiveRide() {
               <button
                 onClick={async () => {
                   try {
-                    // CRITICAL: Unlock iOS audio immediately on user gesture
-                    await unlockIOSAudio();
-                    
+                    // CRITICAL: Unlock iOS audio immediately on user gesture (fire-and-forget, never blocks)
+                    unlockIOSAudio();
+
                     if (isConnected) {
                       disconnect();
                       toast.success('Left voice channel', { description: 'Saving battery' });
