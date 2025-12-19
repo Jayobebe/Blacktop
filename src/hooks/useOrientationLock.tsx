@@ -58,7 +58,10 @@ function RotationTray({
           onClick={onRotate}
           size="sm"
           variant={hasPending ? 'default' : 'secondary'}
-          className="h-10 px-3 rounded-lg touch-target"
+          className={cn(
+            "h-10 px-3 rounded-lg touch-target transition-shadow duration-300",
+            isOpen && hasPending && "shadow-[0_0_20px_hsl(var(--accent)/0.6)]"
+          )}
           disabled={!hasPending}
         >
           <RotateCcw className="w-4 h-4 mr-2" />
@@ -76,7 +79,7 @@ function RotationTray({
         onClick={onToggle}
         className={cn(
           'absolute right-0 top-1/2 -translate-y-1/2 translate-x-full',
-          'w-4 h-8 bg-card border border-l-0 border-border rounded-r-md',
+          'w-6 h-12 bg-card border border-l-0 border-border rounded-r-lg',
           'flex items-center justify-center',
           'hover:bg-secondary transition-colors',
           hasPending && 'border-accent bg-accent/10'
