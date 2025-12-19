@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
-import { useVoiceChannel } from '@/features/voice';
+import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/features/convoy';
 import { useSettings } from '@/features/settings';
@@ -568,10 +568,8 @@ export default function ActiveRide() {
               <button
                 onClick={async () => {
                   try {
-                    // User gesture - try to unlock audio on iOS
-                    const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
-                    silentAudio.volume = 0.01;
-                    silentAudio.play().catch(() => {});
+                    // CRITICAL: Unlock iOS audio immediately on user gesture
+                    await unlockIOSAudio();
                     
                     if (isConnected) {
                       disconnect();

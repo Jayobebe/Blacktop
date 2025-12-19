@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/features/convoy';
 import { useActiveRide } from '@/features/ride';
-import { useVoiceChannel } from '@/features/voice';
+import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
 import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
@@ -470,10 +470,8 @@ export default function Lobby() {
           <button
             onClick={async () => {
               try {
-                // User gesture - try to unlock audio on iOS
-                const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
-                silentAudio.volume = 0.01;
-                silentAudio.play().catch(() => {});
+                // CRITICAL: Unlock iOS audio immediately on user gesture
+                await unlockIOSAudio();
                 
                 if (!isConnected) {
                   const result = await connect();
