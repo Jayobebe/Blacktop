@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 interface OrientationContextType {
   orientation: 'portrait' | 'landscape';
@@ -6,15 +6,11 @@ interface OrientationContextType {
 
 const OrientationContext = createContext<OrientationContextType | null>(null);
 
-function getOrientation(): 'portrait' | 'landscape' {
+// Threshold in degrees - device must tilt past this angle to trigger rotation
+const ROTATION_THRESHOLD = 80;
+
+function getOrientationFromDimensions(): 'portrait' | 'landscape' {
   if (typeof window === 'undefined') return 'portrait';
-  
-  // Use Screen Orientation API - only fires when device fully commits to portrait/landscape
-  if (screen.orientation?.type) {
-    return screen.orientation.type.startsWith('portrait') ? 'portrait' : 'landscape';
-  }
-  
-  // Fallback to window dimensions
   return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
 }
 
@@ -25,32 +21,101 @@ export function useOrientationLock() {
 
 export function OrientationProvider({
   children,
-  debounceMs = 250,
 }: {
   children: React.ReactNode;
-  debounceMs?: number;
 }) {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => getOrientation());
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => getOrientationFromDimensions());
+  const lastConfirmedOrientation = useRef(orientation);
 
   useEffect(() => {
-    let t: number | null = null;
+    // Check if DeviceOrientationEvent is available
+    const hasDeviceOrientation = 'DeviceOrientationEvent' in window;
+    
+    if (!hasDeviceOrientation) {
+      // Fallback: use resize/orientationchange but with hysteresis
+      let pendingOrientation: 'portrait' | 'landscape' | null = null;
+      let confirmTimer: number | null = null;
+      
+      const onViewportChange = () => {
+        const newOrientation = getOrientationFromDimensions();
+        
+        if (newOrientation !== lastConfirmedOrientation.current) {
+          if (pendingOrientation === newOrientation) {
+            // Already pending, wait for timer
+            return;
+          }
+          
+          pendingOrientation = newOrientation;
+          
+          if (confirmTimer) window.clearTimeout(confirmTimer);
+          
+          // Require orientation to be stable for 500ms before confirming
+          confirmTimer = window.setTimeout(() => {
+            if (pendingOrientation && getOrientationFromDimensions() === pendingOrientation) {
+              lastConfirmedOrientation.current = pendingOrientation;
+              setOrientation(pendingOrientation);
+            }
+            pendingOrientation = null;
+          }, 500);
+        }
+      };
 
-    const onViewportChange = () => {
-      if (t) window.clearTimeout(t);
-      t = window.setTimeout(() => {
-        setOrientation(getOrientation());
-      }, debounceMs);
+      window.addEventListener('resize', onViewportChange);
+      window.addEventListener('orientationchange', onViewportChange);
+
+      return () => {
+        if (confirmTimer) window.clearTimeout(confirmTimer);
+        window.removeEventListener('resize', onViewportChange);
+        window.removeEventListener('orientationchange', onViewportChange);
+      };
+    }
+
+    // Use DeviceOrientation API for precise angle detection
+    let stableOrientation: 'portrait' | 'landscape' = lastConfirmedOrientation.current;
+    let stableStartTime: number | null = null;
+    const STABLE_DURATION = 300; // ms orientation must be stable
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      const gamma = event.gamma ?? 0; // Left/right tilt (-90 to 90)
+      const beta = event.beta ?? 0;   // Front/back tilt (-180 to 180)
+      
+      // Calculate the effective tilt angle from vertical
+      // gamma: 0 = upright, ±90 = fully sideways
+      const absGamma = Math.abs(gamma);
+      
+      // Determine target orientation based on tilt angle
+      let targetOrientation: 'portrait' | 'landscape';
+      
+      if (absGamma >= ROTATION_THRESHOLD) {
+        // Device is tilted more than threshold degrees - landscape
+        targetOrientation = 'landscape';
+      } else if (absGamma <= (90 - ROTATION_THRESHOLD)) {
+        // Device is within threshold of vertical - portrait
+        targetOrientation = 'portrait';
+      } else {
+        // In the dead zone - keep current orientation
+        return;
+      }
+
+      // Check if orientation has been stable
+      if (targetOrientation !== stableOrientation) {
+        stableOrientation = targetOrientation;
+        stableStartTime = Date.now();
+      } else if (stableStartTime && Date.now() - stableStartTime >= STABLE_DURATION) {
+        // Orientation has been stable long enough
+        if (targetOrientation !== lastConfirmedOrientation.current) {
+          lastConfirmedOrientation.current = targetOrientation;
+          setOrientation(targetOrientation);
+        }
+      }
     };
 
-    window.addEventListener('resize', onViewportChange);
-    window.addEventListener('orientationchange', onViewportChange);
+    window.addEventListener('deviceorientation', handleOrientation);
 
     return () => {
-      if (t) window.clearTimeout(t);
-      window.removeEventListener('resize', onViewportChange);
-      window.removeEventListener('orientationchange', onViewportChange);
+      window.removeEventListener('deviceorientation', handleOrientation);
     };
-  }, [debounceMs]);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.remove('app-portrait', 'app-landscape');
