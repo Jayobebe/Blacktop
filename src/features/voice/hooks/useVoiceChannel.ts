@@ -19,12 +19,19 @@ const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun2.l.google.com:19302' },
 ];
 
-const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
-  echoCancellation: true,
-  noiseSuppression: true,
-  autoGainControl: true,
-  sampleRate: 24000, // Lower sample rate for battery optimization (was 48000)
-  channelCount: 1,
+const AUDIO_INPUT_KEY = 'blacktop_audio_input';
+const AUDIO_OUTPUT_KEY = 'blacktop_audio_output';
+
+const getAudioConstraints = (): MediaTrackConstraints => {
+  const savedDevice = localStorage.getItem(AUDIO_INPUT_KEY);
+  return {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+    sampleRate: 24000, // Lower sample rate for battery optimization (was 48000)
+    channelCount: 1,
+    ...(savedDevice && savedDevice !== 'default' ? { deviceId: { exact: savedDevice } } : {}),
+  };
 };
 
 const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
@@ -305,6 +312,14 @@ export function useVoiceChannel(convoyId?: string) {
         document.body.appendChild(audio);
         audioElementsRef.current.set(remoteUserId, audio);
         console.log(`[Voice] Created audio element for ${remoteUserId}`);
+        
+        // Set output device if supported (Chrome/Edge) and selected
+        const savedOutput = localStorage.getItem(AUDIO_OUTPUT_KEY);
+        if (savedOutput && savedOutput !== 'default' && 'setSinkId' in audio) {
+          (audio as any).setSinkId(savedOutput)
+            .then(() => console.log(`[Voice] Set audio output to ${savedOutput}`))
+            .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
+        }
       }
 
       audio.srcObject = remoteStream;
@@ -604,7 +619,7 @@ export function useVoiceChannel(convoyId?: string) {
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          audio: AUDIO_CONSTRAINTS,
+          audio: getAudioConstraints(),
         });
       } catch (mediaError: any) {
         console.error('[Voice] Failed to get microphone access:', mediaError);
