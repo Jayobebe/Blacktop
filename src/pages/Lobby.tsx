@@ -470,9 +470,9 @@ export default function Lobby() {
           <button
             onClick={async () => {
               try {
-                // CRITICAL: Unlock iOS audio immediately on user gesture
-                await unlockIOSAudio();
-                
+                // CRITICAL: Unlock iOS audio immediately on user gesture (fire-and-forget, never blocks)
+                unlockIOSAudio();
+
                 if (!isConnected) {
                   const result = await connect();
                   if (!result.success) {

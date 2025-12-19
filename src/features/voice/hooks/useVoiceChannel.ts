@@ -55,7 +55,8 @@ let globalAudioUnlocked = false;
 let unlockAudioContext: AudioContext | null = null;
 
 // Call this function on ANY user gesture to unlock audio on iOS
-export const unlockIOSAudio = async (): Promise<void> => {
+// IMPORTANT: This function is fire-and-forget, never blocks, never throws
+export const unlockIOSAudio = (): void => {
   if (globalAudioUnlocked) return;
   
   const isIOS = isIOSDevice();
@@ -63,38 +64,41 @@ export const unlockIOSAudio = async (): Promise<void> => {
   
   console.log('[Voice] Attempting to unlock audio, iOS:', isIOS, 'Safari:', isSafari);
   
-  try {
-    // Create an AudioContext and resume it - this "unlocks" Web Audio on iOS
-    if (!unlockAudioContext) {
-      unlockAudioContext = new AudioContext();
-    }
-    
-    if (unlockAudioContext.state === 'suspended') {
-      await unlockAudioContext.resume();
-    }
-    
-    // Also play a silent audio element to unlock HTMLAudioElement playback
-    const silentAudio = document.createElement('audio');
-    silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-    silentAudio.volume = 0.01;
-    silentAudio.muted = false;
-    silentAudio.setAttribute('playsinline', 'true');
-    silentAudio.setAttribute('webkit-playsinline', 'true');
-    
+  // Fire-and-forget - don't await, don't block button handlers
+  (async () => {
     try {
-      await silentAudio.play();
-      silentAudio.pause();
-      silentAudio.remove();
+      // Create an AudioContext and resume it - this "unlocks" Web Audio on iOS
+      if (!unlockAudioContext) {
+        unlockAudioContext = new AudioContext();
+      }
+      
+      if (unlockAudioContext.state === 'suspended') {
+        await unlockAudioContext.resume();
+      }
+      
+      // Also play a silent audio element to unlock HTMLAudioElement playback
+      const silentAudio = document.createElement('audio');
+      silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      silentAudio.volume = 0.01;
+      silentAudio.muted = false;
+      silentAudio.setAttribute('playsinline', 'true');
+      silentAudio.setAttribute('webkit-playsinline', 'true');
+      
+      try {
+        await silentAudio.play();
+        silentAudio.pause();
+        silentAudio.remove();
+      } catch (e) {
+        // Ignore errors - the attempt itself helps unlock
+        console.log('[Voice] Silent audio play attempt:', e);
+      }
+      
+      globalAudioUnlocked = true;
+      console.log('[Voice] Audio unlocked successfully');
     } catch (e) {
-      // Ignore errors - the attempt itself helps unlock
-      console.log('[Voice] Silent audio play attempt:', e);
+      console.warn('[Voice] Failed to unlock audio:', e);
     }
-    
-    globalAudioUnlocked = true;
-    console.log('[Voice] Audio unlocked successfully');
-  } catch (e) {
-    console.warn('[Voice] Failed to unlock audio:', e);
-  }
+  })();
 };
 
 export function useVoiceChannel(convoyId?: string) {
