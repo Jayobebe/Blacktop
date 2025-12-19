@@ -72,6 +72,7 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
     refreshDevices,
     isLoading,
     error,
+    supportsOutputSelection,
   } = useAudioDevices();
 
   if (error) {
@@ -124,25 +125,37 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
         </div>
       </div>
 
-      {/* Speaker Selection */}
-      <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">Speaker</p>
-        <div className="space-y-1.5">
-          {audioOutputs.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-1">No speakers found</p>
-          ) : (
-            audioOutputs.map(device => (
-              <DeviceButton
-                key={device.deviceId}
-                device={device}
-                isSelected={selectedOutput === device.deviceId}
-                onClick={() => selectOutput(device.deviceId)}
-                compact={compact}
-              />
-            ))
-          )}
+      {/* Speaker Selection - only show if browser supports it */}
+      {supportsOutputSelection ? (
+        <div>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">Speaker</p>
+          <div className="space-y-1.5">
+            {audioOutputs.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-1">No speakers found</p>
+            ) : (
+              audioOutputs.map(device => (
+                <DeviceButton
+                  key={device.deviceId}
+                  device={device}
+                  isSelected={selectedOutput === device.deviceId}
+                  onClick={() => selectOutput(device.deviceId)}
+                  compact={compact}
+                />
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-muted/50 rounded-xl p-3 border border-border/30">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Speaker</p>
+          <p className="text-xs text-muted-foreground">
+            Your browser doesn't support speaker selection. Audio will play through your phone's current output device.
+          </p>
+          <p className="text-[10px] text-muted-foreground/70 mt-1">
+            Tip: Set your Bluetooth as system audio in phone settings.
+          </p>
+        </div>
+      )}
 
       <p className="text-[10px] text-muted-foreground">
         Connect Bluetooth first, then tap refresh.
