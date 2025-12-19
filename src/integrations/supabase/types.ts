@@ -80,6 +80,48 @@ export type Database = {
           },
         ]
       }
+      convoy_messages: {
+        Row: {
+          content: string
+          convoy_id: string
+          created_at: string
+          id: string
+          sender_name: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          convoy_id: string
+          created_at?: string
+          id?: string
+          sender_name: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          convoy_id?: string
+          created_at?: string
+          id?: string
+          sender_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convoy_messages_convoy_id_fkey"
+            columns: ["convoy_id"]
+            isOneToOne: false
+            referencedRelation: "convoys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convoy_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convoy_waypoints: {
         Row: {
           address: string | null
