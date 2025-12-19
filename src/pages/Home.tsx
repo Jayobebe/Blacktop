@@ -129,14 +129,14 @@ export default function Home() {
 
             <button
               onClick={() => navigate('/solo-lobby')}
-              className="flex-1 bg-transparent border-[3px] border-muted-foreground/50 text-foreground hover:bg-muted/30 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
             >
-              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-muted/50 flex items-center justify-center">
-                <User className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
+              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                <User className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
               </div>
               <div className="text-left">
-                <span className="text-base font-semibold tracking-tight block">Solo</span>
-                <span className="text-xs text-muted-foreground landscape:hidden">Ride alone</span>
+                <span className="text-base font-semibold tracking-tight block text-accent">Solo</span>
+                <span className="text-xs text-accent/70 landscape:hidden">Ride alone</span>
               </div>
             </button>
           </div>
