@@ -5,7 +5,7 @@ import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { History, BarChart3, Settings, Users, UserPlus, Play, Download, X } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 
@@ -110,20 +110,36 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Convoy Buttons */}
+        {/* Ride Buttons */}
         <div className="flex-1 flex flex-col gap-3 animate-slide-up delay-200">
-          <button
-            onClick={() => navigate('/create-convoy')}
-            className="flex-1 min-h-[72px] landscape:min-h-0 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
-          >
-            <div className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-              <Users className="w-6 h-6 landscape:w-5 landscape:h-5 text-accent" />
-            </div>
-            <div className="text-left">
-              <span className="text-lg font-semibold tracking-tight block text-accent">Start Convoy</span>
-              <span className="text-xs text-accent/70 landscape:hidden">Create a new ride group</span>
-            </div>
-          </button>
+          {/* Start Buttons Row */}
+          <div className="flex gap-2 min-h-[72px] landscape:min-h-0">
+            <button
+              onClick={() => navigate('/create-convoy')}
+              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+            >
+              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Users className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
+              </div>
+              <div className="text-left">
+                <span className="text-base font-semibold tracking-tight block text-accent">Convoy</span>
+                <span className="text-[10px] text-accent/70 landscape:hidden">Group ride</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/solo-lobby')}
+              className="flex-1 bg-transparent border-[3px] border-muted-foreground/50 text-foreground hover:bg-muted/30 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            >
+              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-muted/50 flex items-center justify-center">
+                <User className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
+              </div>
+              <div className="text-left">
+                <span className="text-base font-semibold tracking-tight block">Solo</span>
+                <span className="text-[10px] text-muted-foreground landscape:hidden">Ride alone</span>
+              </div>
+            </button>
+          </div>
 
           <button
             onClick={() => navigate('/join-convoy')}
