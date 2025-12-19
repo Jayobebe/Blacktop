@@ -46,6 +46,9 @@ export function OrientationProvider({ children, debounceMs = 400 }: { children: 
     return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
   });
 
+  // Track viewport dimensions for counter-rotation sizing
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+
   // Detect device orientation changes
   useEffect(() => {
     let timeoutId: number | null = null;
@@ -58,10 +61,14 @@ export function OrientationProvider({ children, debounceMs = 400 }: { children: 
       timeoutId = window.setTimeout(() => {
         const width = window.innerWidth;
         const height = window.innerHeight;
+        setViewportSize({ width, height });
         const newOrientation = width > height ? 'landscape' : 'portrait';
         setDeviceOrientation(newOrientation);
       }, debounceMs);
     };
+
+    // Initial size
+    setViewportSize({ width: window.innerWidth, height: window.innerHeight });
 
     window.addEventListener('resize', checkDeviceOrientation);
     window.addEventListener('orientationchange', checkDeviceOrientation);
@@ -95,10 +102,58 @@ export function OrientationProvider({ children, debounceMs = 400 }: { children: 
     applyRotation,
   };
 
+  // Calculate counter-rotation styles when orientations don't match
+  const needsCounterRotation = hasPendingRotation;
+  
+  let wrapperStyle: React.CSSProperties = {};
+  
+  if (needsCounterRotation) {
+    // Device is in a different orientation than what app wants
+    // We need to rotate the content to counter the device rotation
+    const isDeviceLandscape = deviceOrientation === 'landscape';
+    
+    if (isDeviceLandscape && appOrientation === 'portrait') {
+      // Device rotated to landscape, but app wants portrait
+      // Rotate content -90deg and swap dimensions
+      wrapperStyle = {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: viewportSize.height,
+        height: viewportSize.width,
+        transform: 'rotate(-90deg)',
+        transformOrigin: 'top left',
+        marginLeft: viewportSize.width,
+        overflow: 'hidden',
+      };
+    } else if (!isDeviceLandscape && appOrientation === 'landscape') {
+      // Device rotated to portrait, but app wants landscape
+      // Rotate content 90deg and swap dimensions
+      wrapperStyle = {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: viewportSize.height,
+        height: viewportSize.width,
+        transform: 'rotate(90deg)',
+        transformOrigin: 'top left',
+        marginTop: viewportSize.height,
+        overflow: 'hidden',
+      };
+    }
+  }
+
   return React.createElement(
     OrientationContext.Provider,
     { value: contextValue },
-    children,
+    React.createElement(
+      'div',
+      { 
+        style: needsCounterRotation ? wrapperStyle : { minHeight: '100vh' },
+        className: 'orientation-wrapper'
+      },
+      children
+    ),
     hasPendingRotation && React.createElement(
       'button',
       {
