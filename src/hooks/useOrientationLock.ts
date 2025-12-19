@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 
 interface OrientationContextType {
@@ -13,9 +13,8 @@ const OrientationContext = createContext<OrientationContextType | null>(null);
 export function useOrientationLock() {
   const context = useContext(OrientationContext);
   if (!context) {
-    // Fallback for when used outside provider
-    return typeof window !== 'undefined' && window.innerWidth > window.innerHeight 
-      ? 'landscape' 
+    return typeof window !== 'undefined' && window.innerWidth > window.innerHeight
+      ? 'landscape'
       : 'portrait';
   }
   return context.orientation;
@@ -30,59 +29,57 @@ export function useOrientationControl() {
 }
 
 /**
- * Component that manages orientation with manual rotation control.
- * The app orientation only changes when the user explicitly approves it.
+ * Manual orientation lock:
+ * - UI stays visually in the current "app orientation" even if the device rotates.
+ * - A bottom button appears when device orientation differs.
+ * - Only tapping the button updates the app orientation.
  */
-export function OrientationProvider({ children, debounceMs = 400 }: { children: React.ReactNode; debounceMs?: number }) {
-  // The orientation the app is currently displaying
-  const [appOrientation, setAppOrientation] = useState<'portrait' | 'landscape'>(() => {
+export function OrientationProvider({
+  children,
+  debounceMs = 400,
+}: {
+  children: React.ReactNode;
+  debounceMs?: number;
+}) {
+  const getCurrentDeviceOrientation = useCallback((): 'portrait' | 'landscape' => {
     if (typeof window === 'undefined') return 'portrait';
     return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-  });
-  
-  // The actual device orientation
-  const [deviceOrientation, setDeviceOrientation] = useState<'portrait' | 'landscape'>(() => {
-    if (typeof window === 'undefined') return 'portrait';
-    return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-  });
+  }, []);
 
-  // Track viewport dimensions for counter-rotation sizing
-  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [appOrientation, setAppOrientation] = useState<'portrait' | 'landscape'>(() => getCurrentDeviceOrientation());
+  const [deviceOrientation, setDeviceOrientation] = useState<'portrait' | 'landscape'>(() => getCurrentDeviceOrientation());
 
-  // Detect device orientation changes
+  // Keep body from scrolling when we counter-rotate the app shell.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
+  // Detect device orientation changes (debounced)
   useEffect(() => {
     let timeoutId: number | null = null;
 
-    const checkDeviceOrientation = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
+    const onViewportChange = () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
       timeoutId = window.setTimeout(() => {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        setViewportSize({ width, height });
-        const newOrientation = width > height ? 'landscape' : 'portrait';
-        setDeviceOrientation(newOrientation);
+        setDeviceOrientation(getCurrentDeviceOrientation());
       }, debounceMs);
     };
 
-    // Initial size
-    setViewportSize({ width: window.innerWidth, height: window.innerHeight });
-
-    window.addEventListener('resize', checkDeviceOrientation);
-    window.addEventListener('orientationchange', checkDeviceOrientation);
+    window.addEventListener('resize', onViewportChange);
+    window.addEventListener('orientationchange', onViewportChange);
 
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      window.removeEventListener('resize', checkDeviceOrientation);
-      window.removeEventListener('orientationchange', checkDeviceOrientation);
+      if (timeoutId) window.clearTimeout(timeoutId);
+      window.removeEventListener('resize', onViewportChange);
+      window.removeEventListener('orientationchange', onViewportChange);
     };
-  }, [debounceMs]);
+  }, [debounceMs, getCurrentDeviceOrientation]);
 
-  // Apply orientation class to document
+  // Publish app orientation as a class/CSS var (useful for any CSS overrides elsewhere)
   useEffect(() => {
     document.documentElement.classList.remove('orientation-portrait', 'orientation-landscape');
     document.documentElement.classList.add(`orientation-${appOrientation}`);
@@ -102,70 +99,51 @@ export function OrientationProvider({ children, debounceMs = 400 }: { children: 
     applyRotation,
   };
 
-  // Calculate counter-rotation styles when orientations don't match
+  // IMPORTANT: When the device rotates but we are not "allowing" rotation yet,
+  // we counter-rotate the app shell so the UI stays visually locked.
   const needsCounterRotation = hasPendingRotation;
-  
-  let wrapperStyle: React.CSSProperties = {};
-  
-  if (needsCounterRotation) {
-    // Device is in a different orientation than what app wants
-    // We need to rotate the content to counter the device rotation
-    const isDeviceLandscape = deviceOrientation === 'landscape';
-    
-    if (isDeviceLandscape && appOrientation === 'portrait') {
-      // Device rotated to landscape, but app wants portrait
-      // Rotate content -90deg and swap dimensions
-      wrapperStyle = {
+
+  const shellStyle: React.CSSProperties = needsCounterRotation
+    ? {
         position: 'fixed',
         top: 0,
         left: 0,
-        width: viewportSize.height,
-        height: viewportSize.width,
-        transform: 'rotate(-90deg)',
+        width: '100vh',
+        height: '100vw',
         transformOrigin: 'top left',
-        marginLeft: viewportSize.width,
+        transform:
+          deviceOrientation === 'landscape' && appOrientation === 'portrait'
+            ? 'rotate(90deg) translateY(-100%)'
+            : deviceOrientation === 'portrait' && appOrientation === 'landscape'
+              ? 'rotate(-90deg) translateX(-100%)'
+              : undefined,
+        background: 'hsl(var(--background))',
+        overflow: 'hidden',
+      }
+    : {
+        minHeight: '100vh',
+        width: '100vw',
+        background: 'hsl(var(--background))',
         overflow: 'hidden',
       };
-    } else if (!isDeviceLandscape && appOrientation === 'landscape') {
-      // Device rotated to portrait, but app wants landscape
-      // Rotate content 90deg and swap dimensions
-      wrapperStyle = {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: viewportSize.height,
-        height: viewportSize.width,
-        transform: 'rotate(90deg)',
-        transformOrigin: 'top left',
-        marginTop: viewportSize.height,
-        overflow: 'hidden',
-      };
-    }
-  }
 
   return React.createElement(
     OrientationContext.Provider,
     { value: contextValue },
-    React.createElement(
-      'div',
-      { 
-        style: needsCounterRotation ? wrapperStyle : { minHeight: '100vh' },
-        className: 'orientation-wrapper'
-      },
-      children
-    ),
-    hasPendingRotation && React.createElement(
-      'button',
-      {
-        onClick: applyRotation,
-        className: 'fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-full shadow-lg animate-fade-in touch-target',
-        style: { 
-          backdropFilter: 'blur(8px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-        }
-      },
-      React.createElement(RotateCcw, { className: 'w-4 h-4' }),
-      React.createElement('span', { className: 'text-sm font-medium' }, 'Rotate')
-    )
+    React.createElement('div', { className: 'orientation-shell', style: shellStyle }, children),
+    hasPendingRotation &&
+      React.createElement(
+        'button',
+        {
+          onClick: applyRotation,
+          className:
+            'fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-full shadow-lg animate-fade-in touch-target',
+          style: {
+            backdropFilter: 'blur(8px)',
+          },
+        },
+        React.createElement(RotateCcw, { className: 'w-4 h-4' }),
+        React.createElement('span', { className: 'text-sm font-medium' }, 'Rotate')
+      )
   );
 }
