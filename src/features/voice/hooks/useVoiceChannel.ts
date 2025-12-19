@@ -403,11 +403,12 @@ export function useVoiceChannel(convoyId?: string) {
           }
           
           // Reset audio element state before playing
-          audio!.pause();
-          audio!.currentTime = 0;
           audio!.muted = false;
           audio!.volume = 1.0;
-          
+
+          // IMPORTANT: Do NOT touch currentTime for MediaStream-backed audio; it can break playback.
+          await audio!.play();
+
           await audio!.play();
           console.log(`[Voice] Audio playing successfully for ${remoteUserId}`);
         } catch (err: any) {
@@ -680,9 +681,9 @@ export function useVoiceChannel(convoyId?: string) {
     
     isConnectingRef.current = true;
     
-    // CRITICAL: Unlock iOS audio immediately on this user gesture
-    // This must happen synchronously within the user gesture callback chain
-    await unlockIOSAudio();
+    // CRITICAL: Unlock iOS audio immediately on this user gesture.
+    // NOTE: Do NOT `await` here. Awaiting yields the call stack and can break iOS gesture requirements.
+    unlockIOSAudio();
 
     try {
       console.log('[Voice] Connecting to voice channel for convoy:', convoyId);
@@ -741,11 +742,14 @@ export function useVoiceChannel(convoyId?: string) {
       }
       
       localStreamRef.current = stream;
-      
+
       // Start muted by default
       stream.getAudioTracks().forEach(track => {
         track.enabled = false;
       });
+
+      // Start audio level monitoring as early as possible (important for iOS gesture policies)
+      startAudioLevelMonitoring();
 
       // Create signaling channel
       const channel = supabase.channel(`voice:${convoyId}`, {
@@ -803,10 +807,9 @@ export function useVoiceChannel(convoyId?: string) {
       });
 
       channelRef.current = channel;
-      
-      // Start audio level monitoring for speaking detection
-      startAudioLevelMonitoring();
-      
+
+      // Audio level monitoring already started above (after getUserMedia)
+
       // Start periodic refresh to maintain connections when returning from nav app
       refreshIntervalRef.current = window.setInterval(() => {
         if (channelRef.current && userIdRef.current) {
