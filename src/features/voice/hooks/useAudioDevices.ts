@@ -20,6 +20,9 @@ export function useAudioDevices() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Check if audio output selection is supported (not on Safari/iOS)
+  const supportsOutputSelection = 'setSinkId' in HTMLAudioElement.prototype;
 
   const refreshDevices = useCallback(async () => {
     setIsLoading(true);
@@ -113,5 +116,6 @@ export function useAudioDevices() {
     refreshDevices,
     isLoading,
     error,
+    supportsOutputSelection,
   };
 }
