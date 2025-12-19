@@ -6,8 +6,15 @@ interface OrientationContextType {
 
 const OrientationContext = createContext<OrientationContextType | null>(null);
 
-function inferOrientation(): 'portrait' | 'landscape' {
+function getOrientation(): 'portrait' | 'landscape' {
   if (typeof window === 'undefined') return 'portrait';
+  
+  // Use Screen Orientation API - only fires when device fully commits to portrait/landscape
+  if (screen.orientation?.type) {
+    return screen.orientation.type.startsWith('portrait') ? 'portrait' : 'landscape';
+  }
+  
+  // Fallback to window dimensions
   return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
 }
 
@@ -23,7 +30,7 @@ export function OrientationProvider({
   children: React.ReactNode;
   debounceMs?: number;
 }) {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => inferOrientation());
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => getOrientation());
 
   useEffect(() => {
     let t: number | null = null;
@@ -31,7 +38,7 @@ export function OrientationProvider({
     const onViewportChange = () => {
       if (t) window.clearTimeout(t);
       t = window.setTimeout(() => {
-        setOrientation(inferOrientation());
+        setOrientation(getOrientation());
       }, debounceMs);
     };
 
