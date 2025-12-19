@@ -43,8 +43,8 @@ export default function RideDetail() {
             <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
           </button>
           <div>
-            <h1 className="text-lg landscape:text-base font-display font-bold">{formatDate(ride.startedAt)}</h1>
-            <p className="text-xs text-muted-foreground">{formatTime(ride.startedAt)}</p>
+            <h1 className="text-lg landscape:text-base font-display font-bold">{ride.name || formatDate(ride.startedAt)}</h1>
+            <p className="text-xs text-muted-foreground">{formatDate(ride.startedAt)} • {formatTime(ride.startedAt)}</p>
           </div>
         </div>
         {ride.isConvoyRide && (
