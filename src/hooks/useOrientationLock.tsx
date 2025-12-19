@@ -39,9 +39,8 @@ export function useOrientationControl() {
 
 /**
  * Manual orientation controller.
- * - Rotating the phone ONLY shows a blocking overlay + button.
- * - Underlying app may rotate with the viewport, but it is hidden and non-interactive.
- * - Only pressing the button dismisses the overlay and "accepts" the rotation.
+ * - Rotating the phone ONLY shows a bottom button.
+ * - The UI stays visually locked via CSS (see index.css) until you press the button.
  */
 export function OrientationProvider({
   children,
@@ -73,7 +72,7 @@ export function OrientationProvider({
     };
   }, [debounceMs]);
 
-  // Expose the accepted app orientation via class (can be used for CSS targeting later).
+  // Tell CSS what orientation the app has accepted.
   useEffect(() => {
     document.documentElement.classList.remove('app-portrait', 'app-landscape');
     document.documentElement.classList.add(`app-${appOrientation}`);
@@ -97,31 +96,14 @@ export function OrientationProvider({
 
   return (
     <OrientationContext.Provider value={ctxValue}>
-      {children}
+      <div className="app-viewport">{children}</div>
 
       {hasPendingRotation && (
-        <div
-          className="fixed inset-0 z-[9998] bg-background/95 backdrop-blur-sm flex flex-col"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Rotate screen"
-        >
-          <div className="flex-1 flex items-center justify-center px-6 text-center">
-            <div className="max-w-sm animate-fade-in">
-              <p className="text-sm text-muted-foreground">Rotation is locked.</p>
-              <h2 className="mt-1 text-lg font-display font-bold">Press Rotate to continue</h2>
-            </div>
-          </div>
-
-          <div className="p-4 safe-bottom">
-            <Button
-              onClick={applyRotation}
-              className="w-full h-12 rounded-full touch-target"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
-              Rotate
-            </Button>
-          </div>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[min(24rem,calc(100vw-2rem))]">
+          <Button onClick={applyRotation} className="w-full h-12 rounded-full touch-target">
+            <RotateCcw className="w-4 h-4 mr-2" aria-hidden="true" />
+            Rotate
+          </Button>
         </div>
       )}
     </OrientationContext.Provider>
