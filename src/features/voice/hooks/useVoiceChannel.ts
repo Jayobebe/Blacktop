@@ -24,13 +24,31 @@ const AUDIO_OUTPUT_KEY = 'blacktop_audio_output';
 
 const getAudioConstraints = (): MediaTrackConstraints => {
   const savedDevice = localStorage.getItem(AUDIO_INPUT_KEY);
+  const deviceConstraint = savedDevice && savedDevice !== 'default'
+    ? { deviceId: { exact: savedDevice } }
+    : {};
+
+  // iOS/Safari can behave poorly with strict sampleRate constraints.
+  // Let the browser pick the native rate, but keep core voice processing toggles.
+  const isiOSOrSafari = isIOSDevice() || isSafariBrowser();
+
+  if (isiOSOrSafari) {
+    return {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+      ...deviceConstraint,
+    };
+  }
+
   return {
     echoCancellation: true,
     noiseSuppression: true,
     autoGainControl: true,
     sampleRate: 24000, // Lower sample rate for battery optimization (was 48000)
     channelCount: 1,
-    ...(savedDevice && savedDevice !== 'default' ? { deviceId: { exact: savedDevice } } : {}),
+    ...deviceConstraint,
   };
 };
 
@@ -391,57 +409,69 @@ export function useVoiceChannel(convoyId?: string) {
       // Set srcObject before playing
       audio.srcObject = remoteStream;
       
-      // Multi-strategy play function for iOS compatibility
+      // Multi-strategy play function for iOS/Safari compatibility
       const tryPlay = async (attempt: number = 1) => {
         const maxAttempts = 3;
         console.log(`[Voice] Play attempt ${attempt}/${maxAttempts} for ${remoteUserId}`);
-        
+
+        // iOS/Safari sometimes needs repeated "unlock" nudges.
+        if (isIOS || isSafari) {
+          unlockIOSAudio();
+        }
+
         try {
-          // Ensure audio context is running (iOS requirement)
+          // Ensure unlock AudioContext is running (iOS requirement)
           if (unlockAudioContext && unlockAudioContext.state === 'suspended') {
             await unlockAudioContext.resume();
           }
-          
-          // Reset audio element state before playing
+
+          // Ensure element is configured correctly
           audio!.muted = false;
           audio!.volume = 1.0;
+          audio!.autoplay = true;
+          audio!.setAttribute('playsinline', 'true');
+          audio!.setAttribute('webkit-playsinline', 'true');
 
-          // IMPORTANT: Do NOT touch currentTime for MediaStream-backed audio; it can break playback.
-          await audio!.play();
-
+          // IMPORTANT: Do NOT touch currentTime for MediaStream-backed audio.
           await audio!.play();
           console.log(`[Voice] Audio playing successfully for ${remoteUserId}`);
         } catch (err: any) {
-          console.warn(`[Voice] Audio play attempt ${attempt} failed for ${remoteUserId}:`, err.name, err.message);
-          
+          console.warn(`[Voice] Audio play attempt ${attempt} failed for ${remoteUserId}:`, err?.name, err?.message);
+
           if (attempt < maxAttempts) {
-            // Retry after a short delay
-            setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
-          } else {
-            // Final fallback - set up gesture listeners
-            console.log(`[Voice] Setting up gesture-based playback for ${remoteUserId}`);
-            
-            const playOnGesture = async () => {
-              try {
-                audio!.muted = false;
-                audio!.volume = 1.0;
-                await audio?.play();
-                console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
-              } catch (e2) {
-                console.warn('[Voice] Audio play after gesture failed:', e2);
-              }
-            };
-            
-            // Listen for any user interaction
-            ['pointerdown', 'touchstart', 'click', 'touchend'].forEach(eventType => {
-              document.addEventListener(eventType, playOnGesture, { once: true, passive: true });
-            });
+            setTimeout(() => void tryPlay(attempt + 1), 250 * attempt);
+            return;
           }
+
+          // Final fallback - play on next user gesture
+          console.log(`[Voice] Setting up gesture-based playback for ${remoteUserId}`);
+
+          const playOnGesture = async () => {
+            try {
+              audio!.muted = false;
+              audio!.volume = 1.0;
+              await audio!.play();
+              console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
+            } catch (e2) {
+              console.warn('[Voice] Audio play after gesture failed:', e2);
+            }
+          };
+
+          ['pointerdown', 'touchstart', 'click', 'touchend'].forEach((eventType) => {
+            document.addEventListener(eventType, playOnGesture, { once: true, passive: true });
+          });
         }
       };
-      
+
+      // Bind media readiness events once per element (Safari can delay actual playout)
+      if (!audio.dataset.voiceReadyBound) {
+        audio.dataset.voiceReadyBound = '1';
+        audio.addEventListener('loadedmetadata', () => void tryPlay(1), { passive: true });
+        audio.addEventListener('canplay', () => void tryPlay(1), { passive: true });
+      }
+
       // Small delay to ensure stream is fully attached
-      setTimeout(() => tryPlay(), 50);
+      setTimeout(() => void tryPlay(1), 50);
     };
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
@@ -896,7 +926,20 @@ export function useVoiceChannel(convoyId?: string) {
     isMutedRef.current = newMutedState; // Update ref for audio level detection
     
     console.log(`[Voice] Toggling mute: ${state.isMuted} -> ${newMutedState}`);
-    
+
+    // iOS/Safari: resuming AudioContext MUST happen on a user gesture.
+    // Doing it here ensures speaking detection works after unmuting.
+    if (!newMutedState) {
+      unlockIOSAudio();
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          console.log('[Voice] AudioContext resumed on unmute');
+        }).catch((e) => {
+          console.warn('[Voice] AudioContext resume failed on unmute:', e);
+        });
+      }
+    }
+
     localStreamRef.current.getAudioTracks().forEach(track => {
       track.enabled = !newMutedState;
       console.log(`[Voice] Track "${track.label}" enabled: ${track.enabled}, readyState: ${track.readyState}`);
