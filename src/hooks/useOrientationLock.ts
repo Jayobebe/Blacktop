@@ -32,7 +32,7 @@ export function useOrientationControl() {
 }
 
 export function OrientationProvider({ children, debounceMs = 300 }: { children: React.ReactNode; debounceMs?: number }) {
-  // What orientation the app is currently showing
+  // What orientation the app is currently using for layout
   const [appOrientation, setAppOrientation] = useState<'portrait' | 'landscape'>(() => {
     if (typeof window === 'undefined') return 'portrait';
     return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
@@ -66,10 +66,10 @@ export function OrientationProvider({ children, debounceMs = 300 }: { children: 
     };
   }, [debounceMs]);
 
-  // Apply orientation class to document for CSS targeting
+  // Apply app orientation class to document for CSS targeting
   useEffect(() => {
-    document.documentElement.classList.remove('orientation-portrait', 'orientation-landscape');
-    document.documentElement.classList.add(`orientation-${appOrientation}`);
+    document.documentElement.classList.remove('app-portrait', 'app-landscape');
+    document.documentElement.classList.add(`app-${appOrientation}`);
   }, [appOrientation]);
 
   const hasPendingRotation = deviceOrientation !== appOrientation;
@@ -85,52 +85,10 @@ export function OrientationProvider({ children, debounceMs = 300 }: { children: 
     applyRotation,
   };
 
-  // Counter-rotate the content when device orientation differs from app orientation
-  // This keeps the visual layout locked until the user presses the button
-  let shellStyle: React.CSSProperties = {
-    minHeight: '100vh',
-    width: '100%',
-  };
-
-  if (hasPendingRotation) {
-    // Device rotated but app hasn't accepted yet - counter-rotate to keep layout stable
-    if (deviceOrientation === 'landscape' && appOrientation === 'portrait') {
-      // Device went landscape, app wants portrait
-      // Rotate content 90deg clockwise and swap dimensions
-      shellStyle = {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vh',
-        height: '100vw',
-        transform: 'rotate(90deg) translateY(-100%)',
-        transformOrigin: 'top left',
-        overflow: 'auto',
-      };
-    } else if (deviceOrientation === 'portrait' && appOrientation === 'landscape') {
-      // Device went portrait, app wants landscape
-      // Rotate content 90deg counter-clockwise and swap dimensions
-      shellStyle = {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vh',
-        height: '100vw',
-        transform: 'rotate(-90deg) translateX(-100%)',
-        transformOrigin: 'top left',
-        overflow: 'auto',
-      };
-    }
-  }
-
   return React.createElement(
     OrientationContext.Provider,
     { value: contextValue },
-    React.createElement(
-      'div',
-      { style: shellStyle, className: 'orientation-shell' },
-      children
-    ),
+    children,
     hasPendingRotation && React.createElement(
       'button',
       {
