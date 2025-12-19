@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/features/convoy';
 import { useActiveRide } from '@/features/ride';
 import { useVoiceChannel } from '@/features/voice';
+import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
@@ -34,6 +35,7 @@ export default function Lobby() {
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const [showAddWaypoint, setShowAddWaypoint] = useState(false);
+  const [showAudioDevices, setShowAudioDevices] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const hasStartedRide = useRef(false);
@@ -450,50 +452,94 @@ export default function Lobby() {
           </button>
         </div>
         
-        {/* Voice Toggle */}
-        <button
-          onClick={async () => {
-            try {
-              // User gesture - try to unlock audio on iOS
-              // Create and play a silent audio to unlock audio context
-              const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
-              silentAudio.volume = 0.01;
-              silentAudio.play().catch(() => {});
-              
-              if (!isConnected) {
-                const result = await connect();
-                if (!result.success) {
-                  toast.error('Failed to join voice', { description: result.error || 'Check microphone permission' });
+        {/* Voice Toggle + Audio Device Picker */}
+        <div className="flex items-center gap-2">
+          {/* Audio Device Picker Button */}
+          <button
+            onClick={() => setShowAudioDevices(true)}
+            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors"
+            title="Select audio device"
+          >
+            <Headphones className="w-5 h-5 text-muted-foreground" />
+          </button>
+          
+          {/* Voice Toggle */}
+          <button
+            onClick={async () => {
+              try {
+                // User gesture - try to unlock audio on iOS
+                const silentAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleQsMR6LR1cloBA8KZaLe0sdaAAsHWZ/hzq9MAAAIA1if4M6vTAAACQNPkt3Jp0kA');
+                silentAudio.volume = 0.01;
+                silentAudio.play().catch(() => {});
+                
+                if (!isConnected) {
+                  const result = await connect();
+                  if (!result.success) {
+                    toast.error('Failed to join voice', { description: result.error || 'Check microphone permission' });
+                    return;
+                  }
+                  toast.success('Joined voice channel', { description: 'Tap again to unmute' });
                   return;
                 }
-                toast.success('Joined voice channel', { description: 'Tap again to unmute' });
-                // Don't toggle mute on first connect - user needs to tap again to unmute
-                return;
+                toggleMute();
+              } catch (e) {
+                console.error('[Lobby] Voice toggle error', e);
+                toast.error('Voice action failed');
               }
-              toggleMute();
-            } catch (e) {
-              console.error('[Lobby] Voice toggle error', e);
-              toast.error('Voice action failed');
-            }
-          }}
-          className={cn(
-            "w-12 h-12 landscape:w-10 landscape:h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all touch-target",
-            !isMuted
-              ? "bg-ptt-active shadow-glow"
-              : isConnected
-                ? "bg-accent/20 border border-accent/50 hover:bg-accent/30"
-                : "bg-card/50 border border-border/30 hover:bg-secondary"
-          )}
-        >
-          {!isConnected ? (
-            <MicOff className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-          ) : isMuted ? (
-            <MicOff className="w-4 h-4 md:w-5 md:h-5 text-accent" />
-          ) : (
-            <Mic className="w-4 h-4 md:w-5 md:h-5 text-background" />
-          )}
-        </button>
+            }}
+            className={cn(
+              "w-12 h-12 landscape:w-10 landscape:h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all touch-target",
+              !isMuted
+                ? "bg-ptt-active shadow-glow"
+                : isConnected
+                  ? "bg-accent/20 border border-accent/50 hover:bg-accent/30"
+                  : "bg-card/50 border border-border/30 hover:bg-secondary"
+            )}
+          >
+            {!isConnected ? (
+              <MicOff className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            ) : isMuted ? (
+              <MicOff className="w-4 h-4 md:w-5 md:h-5 text-accent" />
+            ) : (
+              <Mic className="w-4 h-4 md:w-5 md:h-5 text-background" />
+            )}
+          </button>
+        </div>
       </header>
+
+      {/* Audio Device Selector Overlay */}
+      {showAudioDevices && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
+          onClick={() => setShowAudioDevices(false)}
+        >
+          <div 
+            className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Headphones className="w-4 h-4 text-accent" />
+                <h3 className="font-semibold text-sm">Voice Chat Audio</h3>
+              </div>
+              <button
+                onClick={() => setShowAudioDevices(false)}
+                className="p-1 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <AudioDeviceSelector compact />
+            <Button
+              onClick={() => setShowAudioDevices(false)}
+              className="w-full mt-4"
+              size="sm"
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* QR Code Overlay - tap to dismiss or auto-hide after 15s */}
       {showQR && convoy.code && (
