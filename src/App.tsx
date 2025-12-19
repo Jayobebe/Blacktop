@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
 import JoinConvoy from "./pages/JoinConvoy";
 import Lobby from "./pages/Lobby";
+import SoloLobby from "./pages/SoloLobby";
 import ActiveRide from "./pages/ActiveRide";
 import DemoShowcase from "./pages/DemoShowcase";
 import History from "./pages/History";
@@ -50,6 +51,7 @@ function AppRoutes() {
       <Route path="/create-convoy" element={<CreateConvoy />} />
       <Route path="/join-convoy" element={<JoinConvoy />} />
       <Route path="/lobby" element={<Lobby />} />
+      <Route path="/solo-lobby" element={<SoloLobby />} />
       <Route path="/ride" element={<ActiveRide />} />
       <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/history" element={<History />} />
