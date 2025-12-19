@@ -49,7 +49,7 @@ function RotationTray({
     <div
       className={cn(
         'fixed left-0 top-1/2 -translate-y-1/2 z-[9999] flex items-center transition-transform duration-300 ease-out',
-        isOpen ? 'translate-x-0' : '-translate-x-[calc(100%-1.5rem)]'
+        isOpen ? 'translate-x-0' : '-translate-x-full'
       )}
     >
       {/* Tray content */}
