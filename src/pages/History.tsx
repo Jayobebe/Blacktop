@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, Clock, Route, Pencil, Trophy } from 'lucide-react';
+import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -110,10 +110,15 @@ export default function History() {
                       </div>
                     )}
                     <div className="flex items-center gap-2 mt-1">
-                      {ride.isConvoyRide && (
+                      {ride.isConvoyRide ? (
                         <span className="flex items-center gap-1 text-[10px] text-accent bg-accent/10 px-2 py-0.5 rounded-lg font-medium">
                           <Users className="w-2.5 h-2.5" />
                           Convoy
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-lg font-medium">
+                          <User className="w-2.5 h-2.5" />
+                          Solo
                         </span>
                       )}
                       {hasBadges && (
