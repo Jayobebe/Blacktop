@@ -1,100 +1,116 @@
-import { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { RotateCcw } from 'lucide-react';
+
+interface OrientationContextType {
+  orientation: 'portrait' | 'landscape';
+  deviceOrientation: 'portrait' | 'landscape';
+  hasPendingRotation: boolean;
+  applyRotation: () => void;
+}
+
+const OrientationContext = createContext<OrientationContextType | null>(null);
+
+export function useOrientationLock() {
+  const context = useContext(OrientationContext);
+  if (!context) {
+    // Fallback for when used outside provider
+    return typeof window !== 'undefined' && window.innerWidth > window.innerHeight 
+      ? 'landscape' 
+      : 'portrait';
+  }
+  return context.orientation;
+}
+
+export function useOrientationControl() {
+  const context = useContext(OrientationContext);
+  if (!context) {
+    throw new Error('useOrientationControl must be used within OrientationProvider');
+  }
+  return context;
+}
 
 /**
- * Hook that provides debounced orientation detection with dead zone to prevent
- * rapid layout changes from small device movements.
- * 
- * Uses both a time delay and aspect ratio threshold for hysteresis.
- * The dead zone means the aspect ratio must exceed a threshold before switching.
+ * Component that manages orientation with manual rotation control.
+ * The app orientation only changes when the user explicitly approves it.
  */
-export function useOrientationLock(debounceMs: number = 500, deadZoneRatio: number = 0.15) {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => {
+export function OrientationProvider({ children, debounceMs = 400 }: { children: React.ReactNode; debounceMs?: number }) {
+  // The orientation the app is currently displaying
+  const [appOrientation, setAppOrientation] = useState<'portrait' | 'landscape'>(() => {
+    if (typeof window === 'undefined') return 'portrait';
+    return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+  });
+  
+  // The actual device orientation
+  const [deviceOrientation, setDeviceOrientation] = useState<'portrait' | 'landscape'>(() => {
     if (typeof window === 'undefined') return 'portrait';
     return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
   });
 
+  // Detect device orientation changes
   useEffect(() => {
     let timeoutId: number | null = null;
-    let lastOrientation = orientation;
 
-    const getOrientationWithDeadZone = (currentOrientation: 'portrait' | 'landscape'): 'portrait' | 'landscape' | null => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const aspectRatio = width / height;
-      
-      // Dead zone: only switch if aspect ratio is clearly past the threshold
-      // For landscape: aspect ratio must be > 1 + deadZone (e.g., > 1.15)
-      // For portrait: aspect ratio must be < 1 - deadZone (e.g., < 0.85)
-      const landscapeThreshold = 1 + deadZoneRatio;
-      const portraitThreshold = 1 - deadZoneRatio;
-      
-      if (currentOrientation === 'portrait') {
-        // Currently portrait - only switch to landscape if clearly wider
-        if (aspectRatio > landscapeThreshold) {
-          return 'landscape';
-        }
-      } else {
-        // Currently landscape - only switch to portrait if clearly taller
-        if (aspectRatio < portraitThreshold) {
-          return 'portrait';
-        }
+    const checkDeviceOrientation = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
       
-      // Within dead zone - keep current orientation
-      return null;
+      timeoutId = window.setTimeout(() => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const newOrientation = width > height ? 'landscape' : 'portrait';
+        setDeviceOrientation(newOrientation);
+      }, debounceMs);
     };
 
-    const checkOrientation = () => {
-      const newOrientation = getOrientationWithDeadZone(lastOrientation);
-      
-      // Only trigger change if we're clearly in a new orientation (outside dead zone)
-      if (newOrientation && newOrientation !== lastOrientation) {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
-        timeoutId = window.setTimeout(() => {
-          // Re-check after debounce to make sure it's stable
-          const confirmedOrientation = getOrientationWithDeadZone(lastOrientation);
-          if (confirmedOrientation && confirmedOrientation !== lastOrientation) {
-            lastOrientation = confirmedOrientation;
-            setOrientation(confirmedOrientation);
-          }
-        }, debounceMs);
-      }
-    };
-
-    // Check on resize and orientation change events
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('resize', checkDeviceOrientation);
+    window.addEventListener('orientationchange', checkDeviceOrientation);
 
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
+      window.removeEventListener('resize', checkDeviceOrientation);
+      window.removeEventListener('orientationchange', checkDeviceOrientation);
     };
-  }, [debounceMs, deadZoneRatio, orientation]);
+  }, [debounceMs]);
 
-  return orientation;
-}
-
-/**
- * Component that applies a CSS class to the body based on orientation,
- * with debouncing to prevent rapid changes.
- */
-export function OrientationProvider({ children, debounceMs = 500 }: { children: React.ReactNode; debounceMs?: number }) {
-  const orientation = useOrientationLock(debounceMs);
-
+  // Apply orientation class to document
   useEffect(() => {
-    // Apply orientation class to document for CSS targeting
     document.documentElement.classList.remove('orientation-portrait', 'orientation-landscape');
-    document.documentElement.classList.add(`orientation-${orientation}`);
-    
-    // Also set a CSS custom property
-    document.documentElement.style.setProperty('--current-orientation', orientation);
-  }, [orientation]);
+    document.documentElement.classList.add(`orientation-${appOrientation}`);
+    document.documentElement.style.setProperty('--current-orientation', appOrientation);
+  }, [appOrientation]);
 
-  return children;
+  const hasPendingRotation = deviceOrientation !== appOrientation;
+
+  const applyRotation = useCallback(() => {
+    setAppOrientation(deviceOrientation);
+  }, [deviceOrientation]);
+
+  const contextValue: OrientationContextType = {
+    orientation: appOrientation,
+    deviceOrientation,
+    hasPendingRotation,
+    applyRotation,
+  };
+
+  return React.createElement(
+    OrientationContext.Provider,
+    { value: contextValue },
+    children,
+    hasPendingRotation && React.createElement(
+      'button',
+      {
+        onClick: applyRotation,
+        className: 'fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-full shadow-lg animate-fade-in touch-target',
+        style: { 
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+        }
+      },
+      React.createElement(RotateCcw, { className: 'w-4 h-4' }),
+      React.createElement('span', { className: 'text-sm font-medium' }, 'Rotate')
+    )
+  );
 }
