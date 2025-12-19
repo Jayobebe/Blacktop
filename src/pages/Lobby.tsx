@@ -4,9 +4,11 @@ import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/features/convoy';
 import { useActiveRide } from '@/features/ride';
 import { useVoiceChannel } from '@/features/voice';
 import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
+import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useSettings } from '@/features/settings';
+import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones } from 'lucide-react';
@@ -29,6 +31,7 @@ export default function Lobby() {
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
+  const { profile, user } = useProfile();
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -690,8 +693,20 @@ export default function Lobby() {
           )}
         </div>
 
+        {/* Lobby Chat */}
+        {convoy.id && user?.id && (
+          <div className="flex-1 min-h-[120px] max-h-[200px] landscape:max-h-none animate-slide-up delay-75">
+            <LobbyChat
+              convoyId={convoy.id}
+              userId={user.id}
+              userName={profile.name || 'Rider'}
+              members={convoy.members.map(m => ({ userId: m.userId, accentColor: m.accentColor }))}
+            />
+          </div>
+        )}
+
         {/* Members List */}
-        <div className="landscape:w-52 md:landscape:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0 max-h-[40vh] landscape:max-h-none">
+        <div className="landscape:w-52 md:landscape:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0 max-h-[35vh] landscape:max-h-none">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
               Riders ({convoy.members.length}/{MAX_CONVOY_MEMBERS})
