@@ -40,6 +40,63 @@ const AUDIO_CHECK_INTERVAL_MS = 100; // Check audio levels every 100ms (was 50ms
 const VOICE_REFRESH_INTERVAL_MS = 10000; // Re-announce presence every 10 seconds
 const VOICE_STATE_KEY = 'blacktop_voice_state'; // Persist voice connection intent
 
+// iOS/Safari detection
+const isIOSDevice = (): boolean => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+const isSafariBrowser = (): boolean => {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+};
+
+// Global audio unlock state - iOS Safari requires audio to be "unlocked" via user gesture
+let globalAudioUnlocked = false;
+let unlockAudioContext: AudioContext | null = null;
+
+// Call this function on ANY user gesture to unlock audio on iOS
+export const unlockIOSAudio = async (): Promise<void> => {
+  if (globalAudioUnlocked) return;
+  
+  const isIOS = isIOSDevice();
+  const isSafari = isSafariBrowser();
+  
+  console.log('[Voice] Attempting to unlock audio, iOS:', isIOS, 'Safari:', isSafari);
+  
+  try {
+    // Create an AudioContext and resume it - this "unlocks" Web Audio on iOS
+    if (!unlockAudioContext) {
+      unlockAudioContext = new AudioContext();
+    }
+    
+    if (unlockAudioContext.state === 'suspended') {
+      await unlockAudioContext.resume();
+    }
+    
+    // Also play a silent audio element to unlock HTMLAudioElement playback
+    const silentAudio = document.createElement('audio');
+    silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    silentAudio.volume = 0.01;
+    silentAudio.muted = false;
+    silentAudio.setAttribute('playsinline', 'true');
+    silentAudio.setAttribute('webkit-playsinline', 'true');
+    
+    try {
+      await silentAudio.play();
+      silentAudio.pause();
+      silentAudio.remove();
+    } catch (e) {
+      // Ignore errors - the attempt itself helps unlock
+      console.log('[Voice] Silent audio play attempt:', e);
+    }
+    
+    globalAudioUnlocked = true;
+    console.log('[Voice] Audio unlocked successfully');
+  } catch (e) {
+    console.warn('[Voice] Failed to unlock audio:', e);
+  }
+};
+
 export function useVoiceChannel(convoyId?: string) {
   const [state, setState] = useState<VoiceChannelState>({
     isConnected: false,
@@ -298,6 +355,9 @@ export function useVoiceChannel(convoyId?: string) {
         readyState: t.readyState
       })));
       
+      const isIOS = isIOSDevice();
+      const isSafari = isSafariBrowser();
+      
       let audio = audioElementsRef.current.get(remoteUserId);
       if (!audio) {
         audio = document.createElement('audio');
@@ -307,49 +367,76 @@ export function useVoiceChannel(convoyId?: string) {
         audio.setAttribute('webkit-playsinline', 'true');
         // Set volume explicitly
         audio.volume = 1.0;
+        // iOS Safari specific - muted must be false for audio to play
+        audio.muted = false;
         // iOS Safari is much more reliable if the element exists in the DOM
         audio.style.cssText = 'position: absolute; left: -9999px; top: -9999px;';
         document.body.appendChild(audio);
         audioElementsRef.current.set(remoteUserId, audio);
-        console.log(`[Voice] Created audio element for ${remoteUserId}`);
+        console.log(`[Voice] Created audio element for ${remoteUserId}, iOS: ${isIOS}, Safari: ${isSafari}`);
         
-        // Set output device if supported (Chrome/Edge) and selected
+        // Set output device if supported (Chrome/Edge) and selected - NOT available on iOS/Safari
         const savedOutput = localStorage.getItem(AUDIO_OUTPUT_KEY);
-        if (savedOutput && savedOutput !== 'default' && 'setSinkId' in audio) {
+        if (savedOutput && savedOutput !== 'default' && 'setSinkId' in audio && !isIOS && !isSafari) {
           (audio as any).setSinkId(savedOutput)
             .then(() => console.log(`[Voice] Set audio output to ${savedOutput}`))
             .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
         }
       }
 
+      // Set srcObject before playing
       audio.srcObject = remoteStream;
       
-      // Force play with multiple retry strategies
-      const tryPlay = async () => {
+      // Multi-strategy play function for iOS compatibility
+      const tryPlay = async (attempt: number = 1) => {
+        const maxAttempts = 3;
+        console.log(`[Voice] Play attempt ${attempt}/${maxAttempts} for ${remoteUserId}`);
+        
         try {
+          // Ensure audio context is running (iOS requirement)
+          if (unlockAudioContext && unlockAudioContext.state === 'suspended') {
+            await unlockAudioContext.resume();
+          }
+          
+          // Reset audio element state before playing
+          audio!.pause();
+          audio!.currentTime = 0;
+          audio!.muted = false;
+          audio!.volume = 1.0;
+          
           await audio!.play();
-          console.log(`[Voice] Audio playing for ${remoteUserId}`);
+          console.log(`[Voice] Audio playing successfully for ${remoteUserId}`);
         } catch (err: any) {
-          console.warn(`[Voice] Audio play blocked for ${remoteUserId}:`, err.name, err.message);
+          console.warn(`[Voice] Audio play attempt ${attempt} failed for ${remoteUserId}:`, err.name, err.message);
           
-          // On iOS/Safari, we need a user gesture - set up listeners
-          const playOnGesture = async () => {
-            try {
-              await audio?.play();
-              console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
-            } catch (e2) {
-              console.warn('[Voice] Audio play retry failed:', e2);
-            }
-          };
-          
-          // Listen for any user interaction
-          ['pointerdown', 'touchstart', 'click'].forEach(eventType => {
-            document.addEventListener(eventType, playOnGesture, { once: true, passive: true });
-          });
+          if (attempt < maxAttempts) {
+            // Retry after a short delay
+            setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
+          } else {
+            // Final fallback - set up gesture listeners
+            console.log(`[Voice] Setting up gesture-based playback for ${remoteUserId}`);
+            
+            const playOnGesture = async () => {
+              try {
+                audio!.muted = false;
+                audio!.volume = 1.0;
+                await audio?.play();
+                console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
+              } catch (e2) {
+                console.warn('[Voice] Audio play after gesture failed:', e2);
+              }
+            };
+            
+            // Listen for any user interaction
+            ['pointerdown', 'touchstart', 'click', 'touchend'].forEach(eventType => {
+              document.addEventListener(eventType, playOnGesture, { once: true, passive: true });
+            });
+          }
         }
       };
       
-      tryPlay();
+      // Small delay to ensure stream is fully attached
+      setTimeout(() => tryPlay(), 50);
     };
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
@@ -553,11 +640,8 @@ export function useVoiceChannel(convoyId?: string) {
   // Note: iOS Safari doesn't reliably support permissions.query for microphone
   // so we treat 'prompt' and unknown states as "try anyway"
   const checkMicrophonePermission = useCallback(async (): Promise<'granted' | 'denied' | 'prompt'> => {
-    // iOS Safari doesn't support permissions.query for microphone reliably
-    // Check if we're on iOS/Safari
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = isIOSDevice();
+    const isSafari = isSafariBrowser();
     
     if (isIOS || isSafari) {
       console.log('[Voice] iOS/Safari detected - skipping permissions API check');
@@ -591,6 +675,10 @@ export function useVoiceChannel(convoyId?: string) {
     }
     
     isConnectingRef.current = true;
+    
+    // CRITICAL: Unlock iOS audio immediately on this user gesture
+    // This must happen synchronously within the user gesture callback chain
+    await unlockIOSAudio();
 
     try {
       console.log('[Voice] Connecting to voice channel for convoy:', convoyId);
@@ -625,9 +713,7 @@ export function useVoiceChannel(convoyId?: string) {
         console.error('[Voice] Failed to get microphone access:', mediaError);
         isConnectingRef.current = false;
         
-        // Detect iOS/Safari for more specific error messages
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOS = isIOSDevice();
         
         if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
           if (isIOS) {
@@ -643,6 +729,9 @@ export function useVoiceChannel(convoyId?: string) {
         }
         if (mediaError.name === 'NotFoundError') {
           return { success: false, error: 'No microphone found. Please connect a microphone and try again.' };
+        }
+        if (mediaError.name === 'NotReadableError' || mediaError.name === 'AbortError') {
+          return { success: false, error: 'Microphone is in use by another app. Please close other apps using the microphone.' };
         }
         return { success: false, error: 'Failed to access microphone. Please try again.' };
       }

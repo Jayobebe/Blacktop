@@ -1,1 +1,1 @@
-export { useVoiceChannel } from './hooks/useVoiceChannel';
+export { useVoiceChannel, unlockIOSAudio } from './hooks/useVoiceChannel';
