@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Headphones } from 'lucide-react';
-import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -279,15 +278,6 @@ export default function Settings() {
             selected={settings.accentColor} 
             onSelect={setAccentColor} 
           />
-        </section>
-
-        {/* Audio Device Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-100">
-          <div className="flex items-center gap-2 mb-3">
-            <Headphones className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Voice Chat Audio</p>
-          </div>
-          <AudioDeviceSelector />
         </section>
 
         {/* Units Section */}
