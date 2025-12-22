@@ -353,7 +353,7 @@ export function LiveStreamViewer({
         "fixed z-50 bg-black overflow-hidden transition-all duration-300 ease-out",
         isFullscreen 
           ? "inset-0" 
-          : "bottom-0 right-0 left-0 h-[45vh] rounded-t-2xl landscape:left-auto landscape:top-0 landscape:bottom-0 landscape:w-[40vw] landscape:h-full landscape:rounded-t-none landscape:rounded-l-2xl"
+          : "right-3 w-[52vw] h-[22vh] rounded-2xl bottom-[max(0.75rem,env(safe-area-inset-bottom))] landscape:right-0 landscape:bottom-0 landscape:top-0 landscape:w-[40vw] landscape:h-full landscape:rounded-none landscape:rounded-l-2xl"
       )}
       onClick={toggleSize}
     >
