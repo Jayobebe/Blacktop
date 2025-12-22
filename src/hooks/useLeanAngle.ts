@@ -8,7 +8,36 @@ interface LeanAngleState {
   permissionGranted: boolean;
 }
 
-const SMOOTHING_FACTOR = 0.3; // Lower = smoother, higher = more responsive
+// Lower = smoother, higher = more responsive
+const SMOOTHING_FACTOR = 0.2;
+const MAX_LEAN = 90;
+
+function getScreenAngle(): number {
+  const screenAngle = (globalThis as any)?.screen?.orientation?.angle;
+  if (typeof screenAngle === 'number') return screenAngle;
+  const legacy = (globalThis as any)?.orientation;
+  if (typeof legacy === 'number') return legacy;
+  return 0;
+}
+
+function rotateXYForScreen(x: number, y: number, angleDeg: number) {
+  const a = ((angleDeg % 360) + 360) % 360;
+  switch (a) {
+    case 90:
+      return { x: y, y: -x };
+    case 180:
+      return { x: -x, y: -y };
+    case 270:
+      return { x: -y, y: x };
+    case 0:
+    default:
+      return { x, y };
+  }
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
 
 export function useLeanAngle(isActive: boolean = false) {
   const [state, setState] = useState<LeanAngleState>({
@@ -23,33 +52,54 @@ export function useLeanAngle(isActive: boolean = false) {
   const maxLeanLeftRef = useRef(0);
   const maxLeanRightRef = useRef(0);
 
-  // Request permission for iOS 13+
+  // Request permission for iOS 13+ (orientation + motion)
   const requestPermission = useCallback(async () => {
-    // Check if DeviceOrientationEvent is available
-    if (typeof DeviceOrientationEvent === 'undefined') {
-      console.log('[LeanAngle] DeviceOrientationEvent not supported');
+    const hasOrientation = typeof DeviceOrientationEvent !== 'undefined';
+    const hasMotion = typeof DeviceMotionEvent !== 'undefined';
+
+    if (!hasOrientation && !hasMotion) {
+      console.log('[LeanAngle] Device sensors not supported');
       return false;
     }
 
-    // iOS 13+ requires permission
-    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-      try {
-        const permission = await (DeviceOrientationEvent as any).requestPermission();
-        if (permission === 'granted') {
-          setState(prev => ({ ...prev, permissionGranted: true, isSupported: true }));
-          return true;
+    let granted = false;
+
+    // iOS 13+ requires explicit permission
+    const requestOrientation = async () => {
+      if (hasOrientation && typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+        try {
+          const permission = await (DeviceOrientationEvent as any).requestPermission();
+          return permission === 'granted';
+        } catch (err) {
+          console.error('[LeanAngle] Orientation permission request failed:', err);
         }
-        console.log('[LeanAngle] Permission denied');
-        return false;
-      } catch (err) {
-        console.error('[LeanAngle] Permission request failed:', err);
-        return false;
       }
-    }
+      return false;
+    };
+
+    const requestMotion = async () => {
+      if (hasMotion && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+        try {
+          const permission = await (DeviceMotionEvent as any).requestPermission();
+          return permission === 'granted';
+        } catch (err) {
+          console.error('[LeanAngle] Motion permission request failed:', err);
+        }
+      }
+      return false;
+    };
+
+    // Try to request both (either being granted is enough for our purposes)
+    const [o, m] = await Promise.all([requestOrientation(), requestMotion()]);
+    granted = o || m;
 
     // Android and older iOS don't need permission
-    setState(prev => ({ ...prev, permissionGranted: true, isSupported: true }));
-    return true;
+    if (!granted && (!hasOrientation || typeof (DeviceOrientationEvent as any).requestPermission !== 'function') && (!hasMotion || typeof (DeviceMotionEvent as any).requestPermission !== 'function')) {
+      granted = true;
+    }
+
+    setState(prev => ({ ...prev, permissionGranted: granted, isSupported: true }));
+    return granted;
   }, []);
 
   // Reset max values (call when starting a new ride)
@@ -68,73 +118,37 @@ export function useLeanAngle(isActive: boolean = false) {
   useEffect(() => {
     if (!isActive) return;
 
-    // Check support
-    if (typeof DeviceOrientationEvent === 'undefined') {
+    const hasMotion = typeof DeviceMotionEvent !== 'undefined';
+    const hasOrientation = typeof DeviceOrientationEvent !== 'undefined';
+
+    if (!hasMotion && !hasOrientation) {
       console.log('[LeanAngle] Not supported on this device');
       return;
     }
 
     setState(prev => ({ ...prev, isSupported: true }));
 
-    const handleOrientation = (event: DeviceOrientationEvent) => {
-      const { beta, gamma } = event;
-      
-      if (beta === null || gamma === null) return;
+    // Preferred: gravity vector (much more accurate and less "sensitive" than gamma)
+    const handleMotion = (event: DeviceMotionEvent) => {
+      const g = event.accelerationIncludingGravity;
+      if (!g || g.x == null || g.y == null) return;
 
-      // Convert to radians for accurate calculation
-      const betaRad = (beta * Math.PI) / 180;
-      const gammaRad = (gamma * Math.PI) / 180;
-      
-      // Calculate true lean angle using proper trigonometry
-      // When device is upright, we need to project gamma onto the horizontal plane
-      // This accounts for the non-linear relationship between gamma and actual lean
-      
-      let leanAngle: number;
-      
-      // Calculate the effective lean based on device orientation
-      // Using atan2 for proper angle calculation accounting for beta
-      const absBeta = Math.abs(beta);
-      
-      if (absBeta > 45 && absBeta < 135) {
-        // Device is upright (facing rider)
-        // Calculate the true roll angle by accounting for pitch (beta)
-        // When beta = 90, cos(beta - 90) = cos(0) = 1, so lean = gamma
-        // When beta deviates, we scale accordingly
-        const pitchFromUpright = Math.abs(beta - 90) * (Math.PI / 180);
-        const correctionFactor = Math.cos(pitchFromUpright);
-        
-        // Apply correction - gamma is less reliable as device tilts away from 90°
-        leanAngle = gamma * correctionFactor;
-        
-        // Also account for gamma singularity near ±90° beta
-        if (beta > 90) {
-          leanAngle = -leanAngle;
-        }
-      } else {
-        // Device is more horizontal (flat)
-        leanAngle = gamma;
-      }
-      
-      // Clamp to reasonable range (-60 to 60 degrees)
-      leanAngle = Math.max(-60, Math.min(60, leanAngle));
+      const angle = getScreenAngle();
+      const rotated = rotateXYForScreen(g.x, g.y, angle);
 
-      // Apply smoothing
+      // If device is facing the rider (screen vertical), this gives a stable roll angle.
+      // 0 = upright, + = right lean, - = left lean
+      let leanAngle = (Math.atan2(rotated.x, -rotated.y) * 180) / Math.PI;
+      leanAngle = clamp(leanAngle, -MAX_LEAN, MAX_LEAN);
+
       smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (leanAngle - smoothedLean.current);
-      
       const currentLean = Math.round(smoothedLean.current);
-      
-      // Track max lean angles
+
       if (currentLean < 0) {
-        // Leaning left
-        const leftAngle = Math.abs(currentLean);
-        if (leftAngle > maxLeanLeftRef.current) {
-          maxLeanLeftRef.current = leftAngle;
-        }
+        const left = Math.abs(currentLean);
+        if (left > maxLeanLeftRef.current) maxLeanLeftRef.current = left;
       } else if (currentLean > 0) {
-        // Leaning right
-        if (currentLean > maxLeanRightRef.current) {
-          maxLeanRightRef.current = currentLean;
-        }
+        if (currentLean > maxLeanRightRef.current) maxLeanRightRef.current = currentLean;
       }
 
       setState(prev => ({
@@ -146,14 +160,56 @@ export function useLeanAngle(isActive: boolean = false) {
       }));
     };
 
-    window.addEventListener('deviceorientation', handleOrientation, true);
+    // Fallback: orientation angles
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      const { beta, gamma } = event;
+      if (beta == null || gamma == null) return;
+
+      // Basic correction when device is roughly upright
+      const absBeta = Math.abs(beta);
+      let leanAngle = gamma;
+      if (absBeta > 45 && absBeta < 135) {
+        const pitchFromUpright = Math.abs(beta - 90) * (Math.PI / 180);
+        leanAngle = gamma * Math.cos(pitchFromUpright);
+        if (beta > 90) leanAngle = -leanAngle;
+      }
+
+      leanAngle = clamp(leanAngle, -MAX_LEAN, MAX_LEAN);
+
+      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (leanAngle - smoothedLean.current);
+      const currentLean = Math.round(smoothedLean.current);
+
+      if (currentLean < 0) {
+        const left = Math.abs(currentLean);
+        if (left > maxLeanLeftRef.current) maxLeanLeftRef.current = left;
+      } else if (currentLean > 0) {
+        if (currentLean > maxLeanRightRef.current) maxLeanRightRef.current = currentLean;
+      }
+
+      setState(prev => ({
+        ...prev,
+        currentLean,
+        maxLeanLeft: maxLeanLeftRef.current,
+        maxLeanRight: maxLeanRightRef.current,
+        permissionGranted: true,
+      }));
+    };
+
+    if (hasMotion) {
+      window.addEventListener('devicemotion', handleMotion, true);
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
 
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation, true);
+      if (hasMotion) {
+        window.removeEventListener('devicemotion', handleMotion, true);
+      } else {
+        window.removeEventListener('deviceorientation', handleOrientation, true);
+      }
     };
   }, [isActive]);
 
-  // Get the absolute max lean (whichever side was higher)
   const maxLean = Math.max(state.maxLeanLeft, state.maxLeanRight);
 
   return {
