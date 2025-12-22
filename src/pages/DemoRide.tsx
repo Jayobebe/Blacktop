@@ -10,7 +10,7 @@ import {
   Copy, Check, Mic, MicOff, Crown, User, Navigation, 
   Square, Trophy, ArrowRight, ChevronRight, MapPin, Plus,
   GripVertical, AlertTriangle, Camera, Image, Flame,
-  Gauge, Clock, TrendingUp, Route, Phone, X, Volume2
+  Gauge, Clock, TrendingUp, Route, Phone, X, Volume2, Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +24,7 @@ type DemoStep =
   | 'lobby-waypoints'
   | 'lobby-reorder'
   | 'active-ride'
+  | 'action-cam'
   | 'active-rescue'
   | 'rescue-response'
   | 'ride-end'
@@ -44,6 +45,7 @@ const STEP_TITLES: Record<DemoStep, string> = {
   'lobby-waypoints': 'Multi-Waypoint Routes',
   'lobby-reorder': 'Drag to Reorder',
   'active-ride': 'Live Ride Tracking',
+  'action-cam': 'Action Cam Overlay',
   'active-rescue': 'Rescue Feature',
   'rescue-response': 'Leader Response',
   'ride-end': 'Ending the Ride',
@@ -85,8 +87,12 @@ export default function DemoRide() {
   const [selectedUnit, setSelectedUnit] = useState<'mph' | 'kph'>('mph');
   const [selectedNavApp, setSelectedNavApp] = useState(0);
 
+  // Lean angle state for action cam demo
+  const [leanAngle, setLeanAngle] = useState(0);
+  const [maxLean, setMaxLean] = useState(0);
+
   // Keep screen awake during active ride demo steps
-  const isActiveRideStep = ['active-ride', 'active-rescue', 'rescue-response', 'ride-end'].includes(step);
+  const isActiveRideStep = ['active-ride', 'action-cam', 'active-rescue', 'rescue-response', 'ride-end'].includes(step);
   
   useEffect(() => {
     if (isActiveRideStep) {
@@ -99,9 +105,9 @@ export default function DemoRide() {
     };
   }, [isActiveRideStep]);
 
-  // Simulate ride when on active-ride step
+  // Simulate ride when on active-ride or action-cam step
   useEffect(() => {
-    if (step !== 'active-ride' && step !== 'active-rescue') return;
+    if (step !== 'active-ride' && step !== 'action-cam' && step !== 'active-rescue') return;
     
     const interval = setInterval(() => {
       setSpeed(prev => {
@@ -111,6 +117,13 @@ export default function DemoRide() {
       });
       setDistance(prev => prev + 0.02);
       setDuration(prev => prev + 1);
+      // Simulate lean angle swinging side to side
+      setLeanAngle(prev => {
+        const newLean = Math.sin(Date.now() / 800) * 35 + (Math.random() - 0.5) * 10;
+        const clampedLean = Math.max(-45, Math.min(45, newLean));
+        setMaxLean(m => Math.max(m, Math.abs(clampedLean)));
+        return Math.round(clampedLean);
+      });
     }, 500);
 
     return () => clearInterval(interval);
@@ -125,7 +138,7 @@ export default function DemoRide() {
   const steps: DemoStep[] = [
     'welcome', 'onboarding', 'home', 'create-convoy', 'lobby-empty', 
     'lobby-members', 'lobby-waypoints', 'lobby-reorder', 'active-ride',
-    'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
+    'action-cam', 'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
     'history', 'history-photos', 'stats', 'settings', 'complete'
   ];
 
@@ -257,6 +270,7 @@ export default function DemoRide() {
                 { icon: Trophy, label: 'Badge Awards' },
                 { icon: Camera, label: 'Ride Photos' },
                 { icon: Gauge, label: 'Live Tracking' },
+                { icon: Video, label: 'Action Cam' },
                 { icon: Flame, label: 'Burn Button' },
               ].map(({ icon: Icon, label }, i) => (
                 <div key={i} className="flex items-center gap-2 p-2.5 bg-card/50 rounded-xl border border-border/30 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
@@ -656,6 +670,98 @@ export default function DemoRide() {
                     <p className="font-mono text-sm font-semibold">{Math.round(m.speed)}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Action Cam Overlay Demo */}
+        {step === 'action-cam' && (
+          <div className="p-5 animate-fade-in">
+            <div className="text-center mb-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Video className="w-5 h-5 text-accent" />
+                <span className="text-sm font-medium text-accent">Action Cam Connected</span>
+              </div>
+              <p className="text-muted-foreground text-xs">Stats overlay on your footage</p>
+            </div>
+
+            {/* Simulated action cam view */}
+            <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl overflow-hidden aspect-video mb-4 border border-border/30">
+              {/* Fake road/scene background */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
+              
+              {/* Overlay content */}
+              <div className="absolute inset-0 flex flex-col justify-end p-4">
+                {/* Lean angle arc - positioned above stats */}
+                <div className="flex justify-center mb-2">
+                  <svg viewBox="0 0 120 70" className="w-28 h-16">
+                    {/* White arc background */}
+                    <path
+                      d="M 10 55 A 50 50 0 0 1 110 55"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.35)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    {/* Moving indicator dot */}
+                    {(() => {
+                      const clampedLean = Math.max(-60, Math.min(60, leanAngle));
+                      const angle = Math.PI - ((clampedLean + 60) / 120) * Math.PI;
+                      const cx = 60 + Math.cos(angle) * 50;
+                      const cy = 55 - Math.abs(Math.sin(angle)) * 50;
+                      const absLean = Math.abs(leanAngle);
+                      const ratio = absLean / 45;
+                      const hue = ratio < 0.5 ? 120 - ratio * 120 : 60 - (ratio - 0.5) * 120;
+                      const color = absLean >= 45 ? '#ef4444' : `hsl(${Math.max(0, hue)}, 85%, 50%)`;
+                      return <circle cx={cx} cy={cy} r="5" fill={color} />;
+                    })()}
+                  </svg>
+                </div>
+
+                {/* Lean angle number */}
+                <p className="text-center text-white font-bold text-lg mb-1">{Math.abs(leanAngle)}°</p>
+
+                {/* Stats row */}
+                <div className="flex items-end justify-between text-white">
+                  {/* Distance */}
+                  <div>
+                    <p className="font-bold text-xl">{distance.toFixed(1)} mi</p>
+                  </div>
+
+                  {/* Center: Max + Speed */}
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400">MAX {Math.round(maxSpeed)} MPH</p>
+                    <p className="font-bold text-2xl">{speed} MPH</p>
+                  </div>
+
+                  {/* Duration */}
+                  <div className="text-right">
+                    <p className="font-bold text-xl">{Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recording indicator */}
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/80 text-white text-xs">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                REC
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="p-3 bg-card/50 border border-border/30 rounded-xl">
+                <p className="text-sm flex items-center gap-2">
+                  <Video className="w-4 h-4 text-accent" />
+                  <span>Connect DJI Action cameras via RTMP</span>
+                </p>
+              </div>
+              <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
+                <p className="text-sm text-accent flex items-center gap-2">
+                  <Gauge className="w-4 h-4" />
+                  <span>Lean angle + speed overlay burned into footage</span>
+                </p>
               </div>
             </div>
           </div>
