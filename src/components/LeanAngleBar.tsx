@@ -11,12 +11,9 @@ interface LeanAngleBarProps {
 export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, className }: LeanAngleBarProps) {
   const absLean = Math.abs(currentLean);
   const isOverThreshold = absLean >= threshold;
-
-  const RANGE = 90;
-  const clampedLean = Math.max(-RANGE, Math.min(RANGE, currentLean));
-
-  // Map lean angle to bar position: -90° = 0%, 0° = 50%, +90° = 100%
-  const position = ((clampedLean + RANGE) / (RANGE * 2)) * 100;
+  
+  // Map lean angle to bar position: -60° = 0%, 0° = 50%, +60° = 100%
+  const position = ((currentLean + 60) / 120) * 100;
   const clampedPosition = Math.max(0, Math.min(100, position));
   
   // Get color based on lean angle and threshold

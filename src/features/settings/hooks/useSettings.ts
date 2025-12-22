@@ -191,7 +191,7 @@ export function useSettings() {
   };
 
   const setLeanAngleThreshold = (threshold: number) => {
-    updateSetting('leanAngleThreshold', Math.max(0, Math.min(90, threshold)));
+    updateSetting('leanAngleThreshold', threshold);
   };
 
   return {
