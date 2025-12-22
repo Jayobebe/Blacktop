@@ -24,6 +24,8 @@ export interface AppSettings {
   accentColor: AccentColor;
   amberSpeedThreshold: number; // Speed at which display turns amber/warning
   redSpeedThreshold: number;   // Speed at which display turns red/danger
+  liveStreamingEnabled: boolean; // Enable live camera streaming feature
+  streamKey: string; // Unique stream key for RTMP ingest
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -33,6 +35,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   accentColor: 'orange',
   amberSpeedThreshold: 80,  // Default 80 mph
   redSpeedThreshold: 100,   // Default 100 mph
+  liveStreamingEnabled: false,
+  streamKey: '',
 };
 
 export function useSettings() {
@@ -81,6 +85,24 @@ export function useSettings() {
     updateSetting('accentColor', color);
   };
 
+  const toggleLiveStreaming = () => {
+    updateSetting('liveStreamingEnabled', !settings.liveStreamingEnabled);
+  };
+
+  const setStreamKey = (key: string) => {
+    updateSetting('streamKey', key);
+  };
+
+  const generateStreamKey = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let key = 'bt_';
+    for (let i = 0; i < 16; i++) {
+      key += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setStreamKey(key);
+    return key;
+  };
+
   return {
     settings,
     updateSetting,
@@ -88,5 +110,8 @@ export function useSettings() {
     toggleSpeedUnit,
     toggleDistanceUnit,
     setAccentColor,
+    toggleLiveStreaming,
+    setStreamKey,
+    generateStreamKey,
   };
 }
