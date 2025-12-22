@@ -178,7 +178,7 @@ export function LiveStreamViewer({
 
       ctx.restore();
 
-      // Live lean angle text UNDER the arc (flat white, no glow)
+      // Live lean angle text just above max speed (flat white, no glow)
       ctx.save();
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
@@ -187,10 +187,10 @@ export function LiveStreamViewer({
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
+      ctx.textBaseline = 'alphabetic';
       ctx.font = 'bold 18px Inter, system-ui, sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(absLean + String.fromCharCode(176), arcCenterX, arcCenterY + 6);
+      ctx.fillText(absLean + String.fromCharCode(176), arcCenterX, canvas.height - 75);
       ctx.restore();
     }
     
