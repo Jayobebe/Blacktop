@@ -469,7 +469,10 @@ export default function ActiveRide() {
 
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6">
+    <div className={cn(
+      "h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300",
+      showLiveStream && "pb-[47vh] landscape:pb-3 landscape:pr-[42vw]"
+    )}>
       {/* Rescue Alerts (Leader only) */}
       {convoy.isLeader && (
         <RescueAlert
