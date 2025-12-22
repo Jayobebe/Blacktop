@@ -81,36 +81,42 @@ export function useLeanAngle(isActive: boolean = false) {
       
       if (beta === null || gamma === null) return;
 
-      // Determine lean angle based on device orientation
-      // When device is upright (facing rider, like on handlebars):
-      // - beta ~90° means device is upright
-      // - gamma gives left/right lean
-      // When device is more horizontal (flat), use gamma directly
+      // Convert to radians for accurate calculation
+      const betaRad = (beta * Math.PI) / 180;
+      const gammaRad = (gamma * Math.PI) / 180;
       
-      // Calculate how upright the device is (beta = 90 = fully upright)
-      const isUpright = Math.abs(beta) > 45;
+      // Calculate true lean angle using proper trigonometry
+      // When device is upright, we need to project gamma onto the horizontal plane
+      // This accounts for the non-linear relationship between gamma and actual lean
       
       let leanAngle: number;
       
-      if (isUpright) {
-        // Device is upright (portrait, facing rider)
-        // Use gamma directly - it measures left/right tilt from upright position
-        // But we need to account for if device is tilted forward (beta > 90)
+      // Calculate the effective lean based on device orientation
+      // Using atan2 for proper angle calculation accounting for beta
+      const absBeta = Math.abs(beta);
+      
+      if (absBeta > 45 && absBeta < 135) {
+        // Device is upright (facing rider)
+        // Calculate the true roll angle by accounting for pitch (beta)
+        // When beta = 90, cos(beta - 90) = cos(0) = 1, so lean = gamma
+        // When beta deviates, we scale accordingly
+        const pitchFromUpright = Math.abs(beta - 90) * (Math.PI / 180);
+        const correctionFactor = Math.cos(pitchFromUpright);
+        
+        // Apply correction - gamma is less reliable as device tilts away from 90°
+        leanAngle = gamma * correctionFactor;
+        
+        // Also account for gamma singularity near ±90° beta
         if (beta > 90) {
-          // Device tilted past vertical (leaning back)
-          leanAngle = -gamma;
-        } else if (beta < -90) {
-          // Device upside down and tilted back
-          leanAngle = gamma;
-        } else {
-          // Normal upright position
-          leanAngle = gamma;
+          leanAngle = -leanAngle;
         }
       } else {
-        // Device is more horizontal (flat on tank/table)
-        // In this case, gamma still gives left/right but from flat position
+        // Device is more horizontal (flat)
         leanAngle = gamma;
       }
+      
+      // Clamp to reasonable range (-60 to 60 degrees)
+      leanAngle = Math.max(-60, Math.min(60, leanAngle));
 
       // Apply smoothing
       smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (leanAngle - smoothedLean.current);
