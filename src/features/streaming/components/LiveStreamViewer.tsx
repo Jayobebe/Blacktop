@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Video, VideoOff, Maximize2, Minimize2, Download } from 'lucide-react';
+import { Video, VideoOff, X, Download } from 'lucide-react';
 import { useSettings } from '@/features/settings';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -11,8 +11,8 @@ interface LiveStreamViewerProps {
   maxSpeed: number;
   distance: number;
   duration: number;
-  isRecording?: boolean;
-  onRecordingChange?: (recording: boolean) => void;
+  isVisible: boolean;
+  onClose: () => void;
 }
 
 export function LiveStreamViewer({
@@ -21,25 +21,25 @@ export function LiveStreamViewer({
   maxSpeed,
   distance,
   duration,
-  isRecording = false,
-  onRecordingChange,
+  isVisible,
+  onClose,
 }: LiveStreamViewerProps) {
   const { settings } = useSettings();
   const [isConnected, setIsConnected] = useState(false);
   const [broadcasterConnected, setBroadcasterConnected] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   
   const wsRef = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   // Format time
   const formatDuration = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     if (hrs > 0) {
       return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -105,7 +105,7 @@ export function LiveStreamViewer({
 
   // Connect to stream relay
   useEffect(() => {
-    if (!streamKey || !settings.liveStreamingEnabled) return;
+    if (!streamKey || !settings.liveStreamingEnabled || !isVisible) return;
     
     const wsUrl = `wss://xwagsaqsomzrubfpjaad.supabase.co/functions/v1/stream-relay?streamKey=${streamKey}&role=viewer`;
     
@@ -171,8 +171,10 @@ export function LiveStreamViewer({
         setIsConnected(false);
         setBroadcasterConnected(false);
         
-        // Attempt reconnect after 3 seconds
-        setTimeout(connect, 3000);
+        // Attempt reconnect after 3 seconds if still visible
+        if (isVisible) {
+          setTimeout(connect, 3000);
+        }
       };
       
       wsRef.current.onerror = (error) => {
@@ -187,7 +189,7 @@ export function LiveStreamViewer({
         wsRef.current.close();
       }
     };
-  }, [streamKey, settings.liveStreamingEnabled, drawOverlay]);
+  }, [streamKey, settings.liveStreamingEnabled, isVisible, drawOverlay]);
 
   // Redraw overlay when stats change
   useEffect(() => {
@@ -238,30 +240,24 @@ export function LiveStreamViewer({
     setRecordedChunks([]);
   };
 
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
+  // Toggle between small and fullscreen
+  const toggleSize = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
-  if (!settings.liveStreamingEnabled) {
+  if (!settings.liveStreamingEnabled || !isVisible) {
     return null;
   }
 
   return (
     <div 
-      ref={containerRef}
       className={cn(
-        "relative rounded-xl overflow-hidden bg-black border border-border/30",
-        isFullscreen ? "fixed inset-0 z-50 rounded-none" : "aspect-video"
+        "fixed z-50 bg-black overflow-hidden transition-all duration-300 ease-out",
+        isFullscreen 
+          ? "inset-0" 
+          : "bottom-0 right-0 left-0 h-[45vh] rounded-t-2xl landscape:left-auto landscape:top-0 landscape:bottom-0 landscape:w-[40vw] landscape:h-full landscape:rounded-t-none landscape:rounded-l-2xl"
       )}
+      onClick={toggleSize}
     >
       <canvas
         ref={canvasRef}
@@ -272,7 +268,7 @@ export function LiveStreamViewer({
       
       {/* Connection status overlay */}
       {!broadcasterConnected && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80" onClick={(e) => e.stopPropagation()}>
           {isConnected ? (
             <>
               <VideoOff className="w-12 h-12 text-muted-foreground mb-4" />
@@ -288,40 +284,71 @@ export function LiveStreamViewer({
         </div>
       )}
       
-      {/* Controls */}
-      <div className="absolute top-2 right-2 flex gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleFullscreen}
-          className="bg-black/50 hover:bg-black/70 text-white h-8 w-8"
-        >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </Button>
-        
+      {/* Close button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="absolute top-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+      
+      {/* Size hint */}
+      <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/50 text-white text-xs">
+        {isFullscreen ? 'Tap to minimize' : 'Tap to expand'}
+      </div>
+      
+      {/* Recording controls */}
+      <div className="absolute bottom-3 right-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
         {recordedChunks.length > 0 && (
           <Button
             variant="ghost"
             size="icon"
             onClick={downloadRecording}
-            className="bg-black/50 hover:bg-black/70 text-white h-8 w-8"
+            className="bg-black/50 hover:bg-black/70 text-white h-9 w-9"
           >
             <Download className="w-4 h-4" />
           </Button>
         )}
-      </div>
-      
-      {/* Recording controls */}
-      <div className="absolute bottom-2 right-2">
         <Button
           variant={isRecording ? "destructive" : "secondary"}
           size="sm"
-          onClick={() => onRecordingChange?.(!isRecording)}
-          className="h-8 text-xs"
+          onClick={() => setIsRecording(!isRecording)}
+          className="h-9 text-xs"
         >
-          {isRecording ? 'Stop Recording' : 'Record'}
+          {isRecording ? 'Stop Rec' : 'Record'}
         </Button>
       </div>
     </div>
+  );
+}
+
+// Floating toggle button component
+interface StreamToggleButtonProps {
+  onClick: () => void;
+  isStreamActive: boolean;
+}
+
+export function StreamToggleButton({ onClick, isStreamActive }: StreamToggleButtonProps) {
+  const { settings } = useSettings();
+  
+  if (!settings.liveStreamingEnabled) {
+    return null;
+  }
+  
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "fixed bottom-20 right-3 z-40 p-3 rounded-full shadow-lg transition-all",
+        "bg-card/90 border border-border/50 backdrop-blur-sm",
+        "hover:scale-105 active:scale-95",
+        isStreamActive && "bg-accent text-accent-foreground"
+      )}
+    >
+      <Video className="w-5 h-5" />
+    </button>
   );
 }

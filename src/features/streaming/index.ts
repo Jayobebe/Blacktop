@@ -1,1 +1,1 @@
-export { LiveStreamViewer } from './components/LiveStreamViewer';
+export { LiveStreamViewer, StreamToggleButton } from './components/LiveStreamViewer';

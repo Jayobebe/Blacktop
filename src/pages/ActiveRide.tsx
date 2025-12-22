@@ -11,6 +11,7 @@ import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { useRescue, RescueAlert } from '@/features/rescue';
 import { useWaypoints } from '@/features/waypoints';
+import { LiveStreamViewer, StreamToggleButton } from '@/features/streaming';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
@@ -102,6 +103,7 @@ export default function ActiveRide() {
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
+  const [showLiveStream, setShowLiveStream] = useState(false);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
   const rideStateRef = useRef(rideState); // Keep fresh ref for broadcast handler
@@ -758,6 +760,23 @@ export default function ActiveRide() {
           </div>
         )}
       </div>
+
+      {/* Live Stream Toggle Button */}
+      <StreamToggleButton 
+        onClick={() => setShowLiveStream(true)} 
+        isStreamActive={showLiveStream}
+      />
+
+      {/* Live Stream Viewer */}
+      <LiveStreamViewer
+        streamKey={settings.streamKey}
+        currentSpeed={rideState.currentSpeed}
+        maxSpeed={rideState.maxSpeed}
+        distance={rideState.distance}
+        duration={rideState.duration}
+        isVisible={showLiveStream}
+        onClose={() => setShowLiveStream(false)}
+      />
     </div>
   );
 }
