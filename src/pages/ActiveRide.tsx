@@ -13,7 +13,7 @@ import { useRescue, RescueAlert } from '@/features/rescue';
 import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer, StreamToggleButton } from '@/features/streaming';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
-import { LeanAngleArc } from '@/components/LeanAngleArc';
+import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
@@ -532,7 +532,17 @@ export default function ActiveRide() {
               {formatSpeed(rideState.currentSpeed, settings.speedUnit)}
             </div>
             <p className="text-muted-foreground text-base landscape:text-sm -mt-3">{getSpeedLabel(settings.speedUnit)}</p>
-          </div>
+            
+            {/* Lean Angle Bar - below speed when enabled */}
+            {settings.leanAngleEnabled && (
+              <div className="mt-2 landscape:mt-1">
+                <LeanAngleBar 
+                  currentLean={leanAngle.currentLean}
+                  maxLean={leanAngle.maxLean}
+                  threshold={settings.leanAngleThreshold}
+                />
+              </div>
+            )}
 
           {/* Stats Row - larger and more visible */}
           <div className="flex gap-8 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
@@ -555,16 +565,7 @@ export default function ActiveRide() {
               </p>
           </div>
 
-          {/* Lean Angle Arc - only show when enabled */}
-          {settings.leanAngleEnabled && (
-            <div className="mt-4 landscape:mt-2">
-              <LeanAngleArc 
-                currentLean={leanAngle.currentLean}
-                maxLean={leanAngle.maxLean}
-                threshold={settings.leanAngleThreshold}
-              />
-            </div>
-          )}
+        </div>
         </div>
         </div>
 
