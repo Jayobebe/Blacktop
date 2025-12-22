@@ -96,19 +96,19 @@ export function LiveStreamViewer({
     const speedUnit = settings.speedUnit.toUpperCase();
     const distanceUnit = settings.distanceUnit === 'miles' ? 'mi' : 'km';
     
-    // Speed (large, left side)
-    ctx.fillText(`${Math.round(currentSpeed)} ${speedUnit}`, 20, canvas.height - 25);
+    // Distance (left side)
+    ctx.fillText(`${distance.toFixed(1)} ${distanceUnit}`, 20, canvas.height - 25);
     
-    // Max speed (smaller, next to speed)
+    // Max speed label (smaller, left side below distance)
     ctx.font = '16px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#888888';
     ctx.fillText(`MAX ${Math.round(maxSpeed)} ${speedUnit}`, 20, canvas.height - 55);
     
-    // Distance (center)
+    // Speed (center, large)
     ctx.textAlign = 'center';
     ctx.font = 'bold 24px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(`${distance.toFixed(1)} ${distanceUnit}`, canvas.width / 2, canvas.height - 25);
+    ctx.fillText(`${Math.round(currentSpeed)} ${speedUnit}`, canvas.width / 2, canvas.height - 25);
     
     // Duration (right side)
     ctx.textAlign = 'right';
