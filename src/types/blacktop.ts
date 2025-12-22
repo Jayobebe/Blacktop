@@ -21,8 +21,10 @@ export interface RideRecording {
   id: string;
   filename: string;
   blobUrl?: string; // Temporary URL for pending download
+  thumbnailUrl?: string; // Thumbnail image from the recording
   savedAt?: string; // When it was saved to device
   duration?: number; // Recording duration in seconds
+  size?: number; // File size in bytes
 }
 
 export interface RideSession {
