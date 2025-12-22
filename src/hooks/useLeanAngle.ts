@@ -77,14 +77,43 @@ export function useLeanAngle(isActive: boolean = false) {
     setState(prev => ({ ...prev, isSupported: true }));
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      // gamma is the left-to-right tilt in degrees (-90 to 90)
-      // Positive = tilted right, Negative = tilted left
-      const gamma = event.gamma;
+      const { beta, gamma } = event;
       
-      if (gamma === null) return;
+      if (beta === null || gamma === null) return;
+
+      // Determine lean angle based on device orientation
+      // When device is upright (facing rider, like on handlebars):
+      // - beta ~90° means device is upright
+      // - gamma gives left/right lean
+      // When device is more horizontal (flat), use gamma directly
+      
+      // Calculate how upright the device is (beta = 90 = fully upright)
+      const isUpright = Math.abs(beta) > 45;
+      
+      let leanAngle: number;
+      
+      if (isUpright) {
+        // Device is upright (portrait, facing rider)
+        // Use gamma directly - it measures left/right tilt from upright position
+        // But we need to account for if device is tilted forward (beta > 90)
+        if (beta > 90) {
+          // Device tilted past vertical (leaning back)
+          leanAngle = -gamma;
+        } else if (beta < -90) {
+          // Device upside down and tilted back
+          leanAngle = gamma;
+        } else {
+          // Normal upright position
+          leanAngle = gamma;
+        }
+      } else {
+        // Device is more horizontal (flat on tank/table)
+        // In this case, gamma still gives left/right but from flat position
+        leanAngle = gamma;
+      }
 
       // Apply smoothing
-      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (gamma - smoothedLean.current);
+      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (leanAngle - smoothedLean.current);
       
       const currentLean = Math.round(smoothedLean.current);
       
