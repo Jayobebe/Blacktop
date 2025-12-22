@@ -178,17 +178,19 @@ export function LiveStreamViewer({
 
       ctx.restore();
 
-      // Live lean angle text above arc (flat white, completely separate context)
+      // Live lean angle text UNDER the arc (flat white, no glow)
       ctx.save();
       ctx.shadowBlur = 0;
-      ctx.shadowColor = 'rgba(0,0,0,0)';
+      ctx.shadowColor = 'transparent';
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
       ctx.textAlign = 'center';
-      ctx.font = 'bold 20px Inter, system-ui, sans-serif';
-      ctx.fillStyle = 'rgb(255, 255, 255)';
-      ctx.fillText(`${absLean}°`, arcCenterX, arcCenterY - arcRadius - 10);
+      ctx.textBaseline = 'top';
+      ctx.font = 'bold 18px Inter, system-ui, sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(absLean + String.fromCharCode(176), arcCenterX, arcCenterY + 6);
       ctx.restore();
     }
     
