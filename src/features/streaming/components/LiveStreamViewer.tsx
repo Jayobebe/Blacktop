@@ -14,6 +14,7 @@ interface LiveStreamViewerProps {
   isVisible: boolean;
   isRiding: boolean;
   isPaused: boolean;
+  rideEnded: boolean; // New prop to signal ride has fully ended
   onClose: () => void;
   onRecordingComplete?: (recording: {
     blobUrl: string;
@@ -33,6 +34,7 @@ export function LiveStreamViewer({
   isVisible,
   isRiding,
   isPaused,
+  rideEnded,
   onClose,
   onRecordingComplete,
 }: LiveStreamViewerProps) {
@@ -234,44 +236,50 @@ export function LiveStreamViewer({
 
   // Auto-control recording based on ride state
   useEffect(() => {
+    // Start recording when ride starts and camera is connected
     if (isRiding && !isPaused && broadcasterConnected && !isRecording) {
-      // Auto-start recording when ride starts and camera is connected
       setIsRecording(true);
-      setRecordingStartTime(Date.now());
-      toast.success('Recording started with ride');
-    } else if ((!isRiding || isPaused) && isRecording) {
-      // Pause/stop recording when ride is paused or ended
+      if (!recordingStartTime) {
+        setRecordingStartTime(Date.now());
+      }
+      toast.success('Recording started');
+    } 
+    // Pause recording when ride is paused (but keep chunks)
+    else if (isRiding && isPaused && isRecording) {
       setIsRecording(false);
-      
-      // If ride ended (not just paused), finalize recording
-      if (!isRiding && recordedChunks.length > 0) {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const blobUrl = URL.createObjectURL(blob);
-        const recordingDuration = recordingStartTime 
-          ? Math.floor((Date.now() - recordingStartTime) / 1000)
-          : 0;
-        const filename = `blacktop-ride-${new Date().toISOString().split('T')[0]}.webm`;
-        
-        // Call the callback with recording info
-        if (onRecordingComplete) {
-          onRecordingComplete({
-            blobUrl,
-            thumbnailUrl: lastThumbnailRef.current || '',
-            filename,
-            duration: recordingDuration,
-            size: blob.size,
-          });
-        }
-        
-        setRecordedChunks([]);
-        setRecordingStartTime(null);
-      }
-      
-      if (isPaused) {
-        toast.info('Recording paused');
-      }
+      toast.info('Recording paused');
     }
-  }, [isRiding, isPaused, broadcasterConnected, isRecording, recordedChunks, recordingStartTime, onRecordingComplete]);
+  }, [isRiding, isPaused, broadcasterConnected, isRecording, recordingStartTime]);
+
+  // Finalize recording only when ride has fully ended
+  useEffect(() => {
+    if (rideEnded && recordedChunks.length > 0) {
+      console.log('[LiveStream] Ride ended, finalizing recording with', recordedChunks.length, 'chunks');
+      
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const blobUrl = URL.createObjectURL(blob);
+      const recordingDuration = recordingStartTime 
+        ? Math.floor((Date.now() - recordingStartTime) / 1000)
+        : 0;
+      const filename = `blacktop-ride-${new Date().toISOString().split('T')[0]}.webm`;
+      
+      // Call the callback with recording info
+      if (onRecordingComplete) {
+        onRecordingComplete({
+          blobUrl,
+          thumbnailUrl: lastThumbnailRef.current || '',
+          filename,
+          duration: recordingDuration,
+          size: blob.size,
+        });
+      }
+      
+      // Clear state
+      setRecordedChunks([]);
+      setRecordingStartTime(null);
+      setIsRecording(false);
+    }
+  }, [rideEnded, recordedChunks, recordingStartTime, onRecordingComplete]);
 
   // Handle MediaRecorder lifecycle
   useEffect(() => {
