@@ -137,43 +137,50 @@ export function LiveStreamViewer({
       const arcCenterY = canvas.height - 70;
       const arcRadius = 80;
       
-      // Draw rainbow gradient arc background
+      ctx.save();
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+      ctx.filter = 'none';
+
+      // Draw rainbow gradient arc background (upper arc)
       const segments = 60;
       ctx.lineWidth = 4;
       ctx.lineCap = 'round';
-      
+
       for (let i = 0; i < segments; i++) {
         const startAngle = Math.PI - (i / segments) * Math.PI;
         const endAngle = Math.PI - ((i + 1) / segments) * Math.PI;
-        
+
         // Rainbow colors: red at edges, green in center
         const segmentPos = i / segments;
         const distFromCenter = Math.abs(segmentPos - 0.5) * 2;
         const hue = 120 - distFromCenter * 120; // 120 (green) at center, 0 (red) at edges
-        
+
         ctx.strokeStyle = `hsla(${hue}, 85%, 50%, 0.4)`;
         ctx.beginPath();
-        ctx.arc(arcCenterX, arcCenterY, arcRadius, startAngle, endAngle, true);
+        ctx.arc(arcCenterX, arcCenterY, arcRadius, startAngle, endAngle, false);
         ctx.stroke();
       }
-      
+
       // Calculate indicator position (0° = left, 180° = right on upper arc)
       const clampedLean = Math.max(-60, Math.min(60, currentLean));
       const indicatorAngle = Math.PI - ((clampedLean + 60) / 120) * Math.PI;
       const indicatorX = arcCenterX + Math.cos(indicatorAngle) * arcRadius;
       const indicatorY = arcCenterY - Math.abs(Math.sin(indicatorAngle)) * arcRadius;
-      
-      // Draw active indicator dot
+
+      // Draw active indicator dot (no glow)
       ctx.fillStyle = indicatorColor;
       ctx.beginPath();
       ctx.arc(indicatorX, indicatorY, 7, 0, Math.PI * 2);
       ctx.fill();
-      
+
       // Draw lean angle text above the arc
       ctx.textAlign = 'center';
       ctx.font = 'bold 20px Inter, system-ui, sans-serif';
       ctx.fillStyle = indicatorColor;
       ctx.fillText(`${absLean}°`, arcCenterX, arcCenterY - arcRadius - 10);
+
+      ctx.restore();
     }
     
     // Recording indicator
