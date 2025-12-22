@@ -4,10 +4,11 @@ interface LeanAngleBarProps {
   currentLean: number; // -90 to 90 degrees
   maxLean: number; // Maximum recorded lean
   threshold: number; // Warning threshold in degrees
+  onReset?: () => void; // Called when bar is tapped to zero
   className?: string;
 }
 
-export function LeanAngleBar({ currentLean, maxLean, threshold, className }: LeanAngleBarProps) {
+export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, className }: LeanAngleBarProps) {
   const absLean = Math.abs(currentLean);
   const isOverThreshold = absLean >= threshold;
   
@@ -38,8 +39,11 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, className }: Lea
   const indicatorColor = getIndicatorColor();
   
   return (
-    <div className={cn("flex flex-col items-center gap-1", className)}>
-      {/* Bar container */}
+    <button 
+      onClick={onReset}
+      className={cn("flex flex-col items-center gap-1 touch-target", className)}
+      title="Tap to zero"
+    >
       <div className="relative w-48 landscape:w-40 h-3 rounded-full overflow-hidden bg-muted/30">
         {/* Rainbow gradient background */}
         <div 
@@ -96,6 +100,6 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, className }: Lea
           max {maxLean}°
         </span>
       </div>
-    </div>
+    </button>
   );
 }

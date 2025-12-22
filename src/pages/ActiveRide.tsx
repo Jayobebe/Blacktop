@@ -540,9 +540,11 @@ export default function ActiveRide() {
                   currentLean={leanAngle.currentLean}
                   maxLean={leanAngle.maxLean}
                   threshold={settings.leanAngleThreshold}
+                  onReset={leanAngle.resetMax}
                 />
               </div>
             )}
+          </div>
 
           {/* Stats Row - larger and more visible */}
           <div className="flex gap-8 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
@@ -564,8 +566,6 @@ export default function ActiveRide() {
                 <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
               </p>
           </div>
-
-        </div>
         </div>
         </div>
 
