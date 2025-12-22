@@ -146,8 +146,9 @@ export function LiveStreamViewer({
       ctx.stroke();
       
       // Calculate indicator position (0° = left, 180° = right on upper arc)
-      const clampedLean = Math.max(-60, Math.min(60, currentLean));
-      const indicatorAngle = Math.PI - ((clampedLean + 60) / 120) * Math.PI;
+      const ARC_RANGE = 90;
+      const clampedLean = Math.max(-ARC_RANGE, Math.min(ARC_RANGE, currentLean));
+      const indicatorAngle = Math.PI - ((clampedLean + ARC_RANGE) / (ARC_RANGE * 2)) * Math.PI;
       const indicatorX = arcCenterX + Math.cos(indicatorAngle) * arcRadius;
       const indicatorY = arcCenterY - Math.abs(Math.sin(indicatorAngle)) * arcRadius;
       
