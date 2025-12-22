@@ -104,6 +104,13 @@ export default function ActiveRide() {
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const [showLiveStream, setShowLiveStream] = useState(false);
+  const [pendingRecording, setPendingRecording] = useState<{
+    blobUrl: string;
+    thumbnailUrl: string;
+    filename: string;
+    duration: number;
+    size: number;
+  } | null>(null);
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
   const rideStateRef = useRef(rideState); // Keep fresh ref for broadcast handler
@@ -119,6 +126,22 @@ export default function ActiveRide() {
       setPendingBadges([]); // Clear after saving
     }
   }, [savedRideId, pendingBadges, updateRideBadges]);
+
+  // Save pending recording once savedRideId becomes available
+  useEffect(() => {
+    if (savedRideId && pendingRecording) {
+      console.log('[ActiveRide] Saving pending recording to ride:', savedRideId);
+      addRideRecording(savedRideId, {
+        id: crypto.randomUUID(),
+        filename: pendingRecording.filename,
+        blobUrl: pendingRecording.blobUrl,
+        thumbnailUrl: pendingRecording.thumbnailUrl,
+        duration: pendingRecording.duration,
+        size: pendingRecording.size,
+      });
+      setPendingRecording(null); // Clear after saving
+    }
+  }, [savedRideId, pendingRecording, addRideRecording]);
 
   // Keep screen awake during active ride
   useEffect(() => {
@@ -777,18 +800,11 @@ export default function ActiveRide() {
         isVisible={showLiveStream}
         isRiding={rideState.isActive && !showSummary}
         isPaused={rideState.isPaused}
+        rideEnded={showSummary || (!rideState.isActive && endingFlow)}
         onClose={() => setShowLiveStream(false)}
         onRecordingComplete={(recording) => {
-          if (savedRideId) {
-            addRideRecording(savedRideId, {
-              id: crypto.randomUUID(),
-              filename: recording.filename,
-              blobUrl: recording.blobUrl,
-              thumbnailUrl: recording.thumbnailUrl,
-              duration: recording.duration,
-              size: recording.size,
-            });
-          }
+          // Store recording - it will be saved when savedRideId becomes available
+          setPendingRecording(recording);
         }}
       />
     </div>
