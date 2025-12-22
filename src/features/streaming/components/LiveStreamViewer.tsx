@@ -165,12 +165,9 @@ export function LiveStreamViewer({
       
       // Draw active indicator dot
       ctx.fillStyle = indicatorColor;
-      ctx.shadowColor = indicatorColor;
-      ctx.shadowBlur = isOverThreshold ? 16 : 8;
       ctx.beginPath();
       ctx.arc(indicatorX, indicatorY, 7, 0, Math.PI * 2);
       ctx.fill();
-      ctx.shadowBlur = 0;
       
       // Draw lean angle text above the arc
       ctx.textAlign = 'center';
