@@ -99,19 +99,21 @@ export function LiveStreamViewer({
     // Distance (left side)
     ctx.fillText(`${distance.toFixed(1)} ${distanceUnit}`, 20, canvas.height - 25);
     
-    // Max speed label (smaller, left side below distance)
-    ctx.font = '16px Inter, system-ui, sans-serif';
-    ctx.fillStyle = '#888888';
-    ctx.fillText(`MAX ${Math.round(maxSpeed)} ${speedUnit}`, 20, canvas.height - 55);
-    
     // Speed (center, large)
     ctx.textAlign = 'center';
     ctx.font = 'bold 24px Inter, system-ui, sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(`${Math.round(currentSpeed)} ${speedUnit}`, canvas.width / 2, canvas.height - 25);
     
+    // Max speed (smaller, above speed in center)
+    ctx.font = '16px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#888888';
+    ctx.fillText(`MAX ${Math.round(maxSpeed)} ${speedUnit}`, canvas.width / 2, canvas.height - 55);
+    
     // Duration (right side)
     ctx.textAlign = 'right';
+    ctx.font = 'bold 24px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#ffffff';
     ctx.fillText(formatDuration(Math.floor(duration)), canvas.width - 20, canvas.height - 25);
     
     // Lean angle (top left, only if enabled)
