@@ -158,6 +158,13 @@ export default function ActiveRide() {
     };
   }, [rideState.isActive]);
 
+  // Request lean angle permission when ride starts (iOS requires user gesture)
+  useEffect(() => {
+    if (rideState.isActive && settings.leanAngleEnabled && !leanAngle.permissionGranted) {
+      leanAngle.requestPermission();
+    }
+  }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.permissionGranted, leanAngle.requestPermission]);
+
   // Keep track of members for when ride ends
   useEffect(() => {
     if (convoy.members.length > 0) {
