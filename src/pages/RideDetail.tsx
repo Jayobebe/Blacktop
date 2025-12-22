@@ -2,14 +2,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rides, deleteRide, addRidePhoto, removeRidePhoto } = useRideHistory();
+  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved } = useRideHistory();
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -101,6 +102,56 @@ export default function RideDetail() {
             onRemovePhoto={(photoId) => removeRidePhoto(ride.id, photoId)}
           />
         </div>
+
+        {/* Recording Section - only show if recording exists */}
+        {ride.recording && (
+          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border mb-3 animate-slide-up">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Video className="w-4 h-4" />
+                <span className="text-xs uppercase tracking-wide">Ride Recording</span>
+              </div>
+              {ride.recording.savedAt ? (
+                <span className="flex items-center gap-1 text-xs text-accent">
+                  <Check className="w-3.5 h-3.5" />
+                  Saved
+                </span>
+              ) : null}
+            </div>
+            
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium truncate">{ride.recording.filename}</p>
+                {ride.recording.duration && (
+                  <p className="text-xs text-muted-foreground">
+                    {formatDuration(ride.recording.duration)}
+                  </p>
+                )}
+              </div>
+              
+              {ride.recording.blobUrl && !ride.recording.savedAt && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    if (ride.recording?.blobUrl) {
+                      const a = document.createElement('a');
+                      a.href = ride.recording.blobUrl;
+                      a.download = ride.recording.filename;
+                      a.click();
+                      markRecordingSaved(ride.id);
+                      toast.success('Recording saved to device');
+                    }
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                  Save
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* GPS Points Info */}
         <div className="bg-card rounded-lg p-2.5 border border-border mb-3 animate-slide-up">

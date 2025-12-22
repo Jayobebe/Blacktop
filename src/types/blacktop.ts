@@ -17,6 +17,14 @@ export interface RidePhoto {
   caption?: string;
 }
 
+export interface RideRecording {
+  id: string;
+  filename: string;
+  blobUrl?: string; // Temporary URL for pending download
+  savedAt?: string; // When it was saved to device
+  duration?: number; // Recording duration in seconds
+}
+
 export interface RideSession {
   id: string;
   name?: string; // Optional custom name for the ride
@@ -30,6 +38,7 @@ export interface RideSession {
   gpsPoints: GpsPoint[];
   earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
+  recording?: RideRecording; // Video recording from live stream
 }
 
 export interface GpsPoint {

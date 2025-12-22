@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { RideSession, RideStats, RidePhoto } from '@/types/blacktop';
+import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
 
 const RIDES_KEY = 'blacktop_rides';
 
@@ -39,6 +39,22 @@ export function useRideHistory() {
     setRides(prev => prev.map(r => 
       r.id === rideId 
         ? { ...r, photos: (r.photos || []).filter(p => p.id !== photoId) }
+        : r
+    ));
+  }, [setRides]);
+
+  const addRideRecording = useCallback((rideId: string, recording: RideRecording) => {
+    setRides(prev => prev.map(r => 
+      r.id === rideId 
+        ? { ...r, recording }
+        : r
+    ));
+  }, [setRides]);
+
+  const markRecordingSaved = useCallback((rideId: string) => {
+    setRides(prev => prev.map(r => 
+      r.id === rideId && r.recording
+        ? { ...r, recording: { ...r.recording, savedAt: new Date().toISOString(), blobUrl: undefined } }
         : r
     ));
   }, [setRides]);
@@ -89,6 +105,8 @@ export function useRideHistory() {
     deleteRide,
     addRidePhoto,
     removeRidePhoto,
+    addRideRecording,
+    markRecordingSaved,
     burnAllData,
   };
 }
