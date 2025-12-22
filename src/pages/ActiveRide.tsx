@@ -469,12 +469,7 @@ export default function ActiveRide() {
 
 
   return (
-    <div className={cn(
-      // Note: we don't use the global `safe-bottom` utility here because it overrides Tailwind `pb-*`
-      // which we need to reserve space for the mini stream player.
-      "h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top md:p-4 lg:p-6 transition-all duration-300 pb-[max(1.5rem,env(safe-area-inset-bottom))]",
-      showLiveStream && "pb-[calc(45vh+max(1.5rem,env(safe-area-inset-bottom)))] landscape:pb-[max(1.5rem,env(safe-area-inset-bottom))] landscape:pr-[calc(40vw+0.75rem+env(safe-area-inset-right))]"
-    )}>
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300">
       {/* Rescue Alerts (Leader only) */}
       {convoy.isLeader && (
         <RescueAlert
@@ -493,8 +488,6 @@ export default function ActiveRide() {
         {/* Speed and Stats */}
         <div className={cn(
           "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
-          // When the mini player is open, bias the content upward so bottom controls stay visible.
-          showLiveStream && "justify-start pt-6",
           // In landscape, don't let it grow beyond content when centered
           (!rideState.isConvoyMode || !showMembers) && "landscape:flex-none"
         )}>
