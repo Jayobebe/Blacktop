@@ -142,10 +142,10 @@ export function LiveStreamViewer({
 
       const indicatorColor = getIndicatorColor();
 
-      // Arc dimensions - lower and simpler (upper semi-circle)
+      // Arc dimensions - positioned higher to avoid clipping with triple-digit speed
       const arcCenterX = canvas.width / 2;
-      const arcCenterY = canvas.height - 40;
-      const arcRadius = 52;
+      const arcCenterY = canvas.height - 55;
+      const arcRadius = 70;
 
       ctx.save();
       // Reset all effects completely
