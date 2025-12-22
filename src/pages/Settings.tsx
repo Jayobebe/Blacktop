@@ -20,7 +20,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, setActionCam } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, setActionCam, toggleStatsOverlay } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -415,6 +415,18 @@ export default function Settings() {
           
           {settings.liveStreamingEnabled && (
             <div className="space-y-4 pt-3 border-t border-border/30">
+              {/* Stats Overlay Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Show Stats Overlay</p>
+                  <p className="text-[10px] text-muted-foreground">Display speed, distance & time on video</p>
+                </div>
+                <Switch 
+                  checked={settings.showStatsOverlay} 
+                  onCheckedChange={toggleStatsOverlay}
+                />
+              </div>
+
               {/* Camera Selection Dropdown */}
               <div>
                 <p className="text-xs font-medium mb-2">Action Camera</p>

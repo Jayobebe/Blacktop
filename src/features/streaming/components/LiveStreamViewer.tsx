@@ -70,6 +70,9 @@ export function LiveStreamViewer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
+    // Skip overlay if disabled in settings
+    if (!settings.showStatsOverlay) return;
+    
     // Clear and draw background gradient for overlay area
     const overlayHeight = 80;
     const gradient = ctx.createLinearGradient(0, canvas.height - overlayHeight, 0, canvas.height);
@@ -117,7 +120,7 @@ export function LiveStreamViewer({
       ctx.textAlign = 'right';
       ctx.fillText('REC', canvas.width - 35, 35);
     }
-  }, [currentSpeed, maxSpeed, distance, duration, settings.speedUnit, settings.distanceUnit, isRecording]);
+  }, [currentSpeed, maxSpeed, distance, duration, settings.speedUnit, settings.distanceUnit, settings.showStatsOverlay, isRecording]);
 
   // Connect to stream relay
   useEffect(() => {
