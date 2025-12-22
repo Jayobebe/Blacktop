@@ -6,6 +6,8 @@ export type DistanceUnit = 'miles' | 'km';
 
 export type AccentColor = 'orange' | 'blue' | 'green' | 'purple' | 'pink' | 'red' | 'cyan' | 'lime';
 
+export type ActionCamBrand = 'dji' | 'gopro' | 'insta360' | 'sony' | 'akaso';
+
 export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring: string }[] = [
   { id: 'orange', label: 'Sunset', hsl: '38 95% 55%', ring: '38 95% 55%' },
   { id: 'blue', label: 'Ocean', hsl: '217 91% 60%', ring: '217 91% 60%' },
@@ -17,15 +19,81 @@ export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring:
   { id: 'lime', label: 'Neon', hsl: '84 85% 50%', ring: '84 85% 50%' },
 ];
 
+export const ACTION_CAM_OPTIONS: { id: ActionCamBrand; label: string; instructions: string[] }[] = [
+  { 
+    id: 'dji', 
+    label: 'DJI Action', 
+    instructions: [
+      '1. Open DJI Mimo app and connect to your camera',
+      '2. Go to Settings → Transmission → Live Stream',
+      '3. Select "RTMP" as the platform',
+      '4. Enter the RTMP URL shown below',
+      '5. Paste your stream key after the URL',
+      '6. Start streaming from the app'
+    ]
+  },
+  { 
+    id: 'gopro', 
+    label: 'GoPro Hero', 
+    instructions: [
+      '1. Open GoPro Quik app and connect to your camera',
+      '2. Go to Live Stream settings',
+      '3. Choose "Other/RTMP" as platform',
+      '4. Enter the RTMP URL shown below',
+      '5. Add your stream key to the URL',
+      '6. Set resolution to 720p for best performance',
+      '7. Tap "Go Live" to start streaming'
+    ]
+  },
+  { 
+    id: 'insta360', 
+    label: 'Insta360', 
+    instructions: [
+      '1. Open Insta360 app and connect to your camera',
+      '2. Navigate to Settings → Live Streaming',
+      '3. Select "Custom RTMP"',
+      '4. Enter the RTMP server URL',
+      '5. Enter your stream key',
+      '6. Choose 720p or 1080p resolution',
+      '7. Start the live stream'
+    ]
+  },
+  { 
+    id: 'sony', 
+    label: 'Sony Action Cam', 
+    instructions: [
+      '1. Install Sony\'s Imaging Edge Mobile app',
+      '2. Connect camera via WiFi',
+      '3. Go to Menu → Network → Streaming',
+      '4. Select "RTMP Streaming"',
+      '5. Enter the RTMP URL and stream key',
+      '6. Start streaming from the camera menu'
+    ]
+  },
+  { 
+    id: 'akaso', 
+    label: 'AKASO', 
+    instructions: [
+      '1. Download the AKASO GO app',
+      '2. Connect to your camera\'s WiFi',
+      '3. Open Live Stream settings',
+      '4. Select "Custom RTMP"',
+      '5. Enter the RTMP URL and stream key',
+      '6. Start streaming'
+    ]
+  },
+];
+
 export interface AppSettings {
   showSpeedRankings: boolean;
   speedUnit: SpeedUnit;
   distanceUnit: DistanceUnit;
   accentColor: AccentColor;
-  amberSpeedThreshold: number; // Speed at which display turns amber/warning
-  redSpeedThreshold: number;   // Speed at which display turns red/danger
-  liveStreamingEnabled: boolean; // Enable live camera streaming feature
-  streamKey: string; // Unique stream key for RTMP ingest
+  amberSpeedThreshold: number;
+  redSpeedThreshold: number;
+  liveStreamingEnabled: boolean;
+  streamKey: string;
+  selectedActionCam: ActionCamBrand;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -33,10 +101,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   speedUnit: 'mph',
   distanceUnit: 'miles',
   accentColor: 'orange',
-  amberSpeedThreshold: 80,  // Default 80 mph
-  redSpeedThreshold: 100,   // Default 100 mph
+  amberSpeedThreshold: 80,
+  redSpeedThreshold: 100,
   liveStreamingEnabled: false,
   streamKey: '',
+  selectedActionCam: 'dji',
 };
 
 export function useSettings() {
@@ -103,6 +172,10 @@ export function useSettings() {
     return key;
   };
 
+  const setActionCam = (cam: ActionCamBrand) => {
+    updateSetting('selectedActionCam', cam);
+  };
+
   return {
     settings,
     updateSetting,
@@ -113,5 +186,6 @@ export function useSettings() {
     toggleLiveStreaming,
     setStreamKey,
     generateStreamKey,
+    setActionCam,
   };
 }

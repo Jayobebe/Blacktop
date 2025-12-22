@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
-import { useSettings, AccentColorPicker } from '@/features/settings';
+import { useSettings, AccentColorPicker, ACTION_CAM_OPTIONS } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Copy, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Copy, RefreshCw, ChevronDown } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +20,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, setActionCam } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -414,7 +414,27 @@ export default function Settings() {
           </div>
           
           {settings.liveStreamingEnabled && (
-            <div className="space-y-3 pt-3 border-t border-border/30">
+            <div className="space-y-4 pt-3 border-t border-border/30">
+              {/* Camera Selection Dropdown */}
+              <div>
+                <p className="text-xs font-medium mb-2">Action Camera</p>
+                <div className="relative">
+                  <select
+                    value={settings.selectedActionCam}
+                    onChange={(e) => setActionCam(e.target.value as any)}
+                    className="w-full appearance-none bg-secondary/50 border border-border/30 rounded-xl px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/50 cursor-pointer"
+                  >
+                    {ACTION_CAM_OPTIONS.map((cam) => (
+                      <option key={cam.id} value={cam.id} className="bg-card">
+                        {cam.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Stream Key */}
               <div>
                 <p className="text-xs font-medium mb-2">Stream Key</p>
                 <div className="flex gap-2">
@@ -446,22 +466,39 @@ export default function Settings() {
                   </button>
                 </div>
               </div>
+
+              {/* RTMP URL */}
+              <div>
+                <p className="text-xs font-medium mb-2">RTMP Server URL</p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('rtmp://stream.blacktop.app/live');
+                    toast.success('RTMP URL copied!');
+                  }}
+                  className="w-full bg-secondary/50 rounded-lg px-3 py-2 font-mono text-xs text-accent text-left hover:bg-secondary transition-colors"
+                >
+                  rtmp://stream.blacktop.app/live
+                </button>
+              </div>
               
-              <div className="bg-accent/10 rounded-lg p-3 border border-accent/20">
-                <p className="text-xs font-medium text-accent mb-2">DJI Action 4 Setup</p>
-                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>Open DJI Mimo app → Live</li>
-                  <li>Select "Custom RTMP"</li>
-                  <li>Server: <span className="font-mono text-accent">rtmp://stream.blacktop.app/live</span></li>
-                  <li>Stream Key: Use your key above</li>
+              {/* Camera-specific instructions */}
+              <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
+                <p className="text-xs font-medium text-accent mb-3">
+                  {ACTION_CAM_OPTIONS.find(c => c.id === settings.selectedActionCam)?.label} Setup
+                </p>
+                <ol className="text-[10px] text-muted-foreground space-y-1.5 list-decimal list-inside">
+                  {ACTION_CAM_OPTIONS.find(c => c.id === settings.selectedActionCam)?.instructions.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
                 </ol>
               </div>
               
               <p className="text-[10px] text-muted-foreground">
-                Your video streams through our relay with real-time stats overlay, then saves locally.
+                Your video streams through our relay with real-time stats overlay.
               </p>
             </div>
-          )}</section>
+          )}
+        </section>
 
         {/* Privacy Section */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200 landscape:hidden">
