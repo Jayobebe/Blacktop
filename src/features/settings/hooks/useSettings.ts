@@ -94,6 +94,7 @@ export interface AppSettings {
   liveStreamingEnabled: boolean;
   streamKey: string;
   selectedActionCam: ActionCamBrand;
+  showStatsOverlay: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -106,6 +107,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   liveStreamingEnabled: false,
   streamKey: '',
   selectedActionCam: 'dji',
+  showStatsOverlay: true,
 };
 
 export function useSettings() {
@@ -176,6 +178,10 @@ export function useSettings() {
     updateSetting('selectedActionCam', cam);
   };
 
+  const toggleStatsOverlay = () => {
+    updateSetting('showStatsOverlay', !settings.showStatsOverlay);
+  };
+
   return {
     settings,
     updateSetting,
@@ -187,5 +193,6 @@ export function useSettings() {
     setStreamKey,
     generateStreamKey,
     setActionCam,
+    toggleStatsOverlay,
   };
 }
