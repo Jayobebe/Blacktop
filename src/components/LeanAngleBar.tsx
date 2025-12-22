@@ -41,10 +41,27 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, classNa
   return (
     <button 
       onClick={onReset}
-      className={cn("flex flex-col items-center gap-1 touch-target", className)}
+      className={cn("flex flex-col landscape:flex-row items-center gap-1 landscape:gap-2 touch-target", className)}
       title="Tap to zero"
     >
-      <div className="relative w-48 landscape:w-40 h-3 rounded-full overflow-hidden bg-muted/30">
+      {/* Current lean display - left side in landscape */}
+      <div className="hidden landscape:flex items-center gap-1">
+        <span 
+          className={cn(
+            "font-mono font-bold text-sm transition-colors",
+            isOverThreshold && "text-destructive animate-pulse"
+          )}
+          style={{ color: isOverThreshold ? undefined : indicatorColor }}
+        >
+          {absLean}°
+          <span className="text-muted-foreground ml-0.5 text-[10px] font-normal">
+            {currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : ''}
+          </span>
+        </span>
+      </div>
+
+      {/* Bar */}
+      <div className="relative w-48 landscape:w-32 h-3 landscape:h-2 rounded-full overflow-hidden bg-muted/30">
         {/* Rainbow gradient background */}
         <div 
           className="absolute inset-0 opacity-30"
@@ -69,7 +86,7 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, classNa
         {/* Active indicator */}
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-background transition-all duration-100",
+            "absolute top-1/2 -translate-y-1/2 w-4 h-4 landscape:w-3 landscape:h-3 rounded-full border-2 landscape:border border-background transition-all duration-100",
             isOverThreshold && "animate-pulse"
           )}
           style={{
@@ -82,11 +99,11 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, classNa
         />
       </div>
       
-      {/* Current lean and max display */}
-      <div className="flex items-center gap-3 text-xs">
+      {/* Current lean and max display - portrait only, or just max in landscape */}
+      <div className="flex items-center gap-3 landscape:gap-1 text-xs">
         <span 
           className={cn(
-            "font-mono font-bold text-base transition-colors",
+            "font-mono font-bold text-base landscape:hidden transition-colors",
             isOverThreshold && "text-destructive animate-pulse"
           )}
           style={{ color: isOverThreshold ? undefined : indicatorColor }}
@@ -96,7 +113,7 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, classNa
             {currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : ''}
           </span>
         </span>
-        <span className="text-muted-foreground">
+        <span className="text-muted-foreground text-[10px] landscape:text-[9px]">
           max {maxLean}°
         </span>
       </div>
