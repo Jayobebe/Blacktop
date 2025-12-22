@@ -384,25 +384,23 @@ export default function Settings() {
             <Activity className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Lean Angle Sensor</p>
           </div>
-          <div className="space-y-5">
-            {/* Enable toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Enable Lean Angle</p>
-                <p className="text-[10px] text-muted-foreground">Track lean in real-time</p>
-              </div>
-              <Switch 
-                checked={settings.leanAngleEnabled} 
-                onCheckedChange={toggleLeanAngle}
-              />
-            </div>
-
-            {/* Warning threshold slider */}
+          <div className="flex items-center justify-between mb-4">
             <div>
+              <p className="text-sm font-medium">Enable Lean Angle</p>
+              <p className="text-[10px] text-muted-foreground">Track motorcycle lean angle in real-time</p>
+            </div>
+            <Switch 
+              checked={settings.leanAngleEnabled} 
+              onCheckedChange={toggleLeanAngle}
+            />
+          </div>
+          
+          {settings.leanAngleEnabled && (
+            <div className="pt-3 border-t border-border/30">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm font-medium text-destructive">Warning Threshold</p>
-                  <p className="text-[10px] text-muted-foreground">Arc glows red above this</p>
+                  <p className="text-[10px] text-muted-foreground">Arc glows red above this angle</p>
                 </div>
                 <span className="font-mono text-sm font-bold text-destructive">
                   {settings.leanAngleThreshold}°
@@ -417,8 +415,12 @@ export default function Settings() {
                 onChange={(e) => setLeanAngleThreshold(Number(e.target.value))}
                 className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
               />
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                <span>20°</span>
+                <span>60°</span>
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* Convoy Display Section */}
