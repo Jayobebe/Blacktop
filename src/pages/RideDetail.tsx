@@ -33,6 +33,14 @@ export default function RideDetail() {
     navigate('/history');
   };
 
+  // Generate filename from ride name
+  const getRideFilename = () => {
+    const baseName = ride.name || formatDate(ride.startedAt);
+    // Sanitize filename: remove invalid characters
+    const sanitized = baseName.replace(/[/\\?%*:|"<>]/g, '-').trim();
+    return `${sanitized}.webm`;
+  };
+
   const handleSaveRecording = async () => {
     if (!ride.recording?.blobUrl) return;
     
@@ -42,7 +50,6 @@ export default function RideDetail() {
       // Fetch the blob to get size info and simulate progress
       const response = await fetch(ride.recording.blobUrl);
       const blob = await response.blob();
-      const totalSize = blob.size;
       
       // Simulate progress for better UX (actual download is instant)
       const progressInterval = setInterval(() => {
@@ -55,11 +62,11 @@ export default function RideDetail() {
         });
       }, 100);
       
-      // Create download link
+      // Create download link with ride name as filename
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = ride.recording.filename;
+      a.download = getRideFilename();
       a.click();
       
       // Complete progress
@@ -250,7 +257,7 @@ export default function RideDetail() {
             
             {/* File info */}
             <div className="px-3 py-2 border-t border-border/50">
-              <p className="text-xs text-muted-foreground truncate">{ride.recording.filename}</p>
+              <p className="text-xs text-muted-foreground truncate">{getRideFilename()}</p>
             </div>
           </div>
         )}
