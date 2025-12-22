@@ -15,6 +15,13 @@ interface LiveStreamViewerProps {
   isRiding: boolean;
   isPaused: boolean;
   onClose: () => void;
+  onRecordingComplete?: (recording: {
+    blobUrl: string;
+    thumbnailUrl: string;
+    filename: string;
+    duration: number;
+    size: number;
+  }) => void;
 }
 
 export function LiveStreamViewer({
@@ -27,6 +34,7 @@ export function LiveStreamViewer({
   isRiding,
   isPaused,
   onClose,
+  onRecordingComplete,
 }: LiveStreamViewerProps) {
   const { settings } = useSettings();
   const [isConnected, setIsConnected] = useState(false);
@@ -34,10 +42,12 @@ export function LiveStreamViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const lastThumbnailRef = useRef<string | null>(null);
 
   // Format time
   const formatDuration = (seconds: number) => {
@@ -200,20 +210,68 @@ export function LiveStreamViewer({
     drawOverlay();
   }, [drawOverlay]);
 
+  // Capture thumbnail periodically while recording
+  useEffect(() => {
+    if (!isRecording || !canvasRef.current) return;
+    
+    const captureInterval = setInterval(() => {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        // Capture a smaller thumbnail
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width = 320;
+        thumbCanvas.height = 180;
+        const ctx = thumbCanvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(canvas, 0, 0, 320, 180);
+          lastThumbnailRef.current = thumbCanvas.toDataURL('image/jpeg', 0.7);
+        }
+      }
+    }, 5000); // Capture every 5 seconds
+    
+    return () => clearInterval(captureInterval);
+  }, [isRecording]);
+
   // Auto-control recording based on ride state
   useEffect(() => {
     if (isRiding && !isPaused && broadcasterConnected && !isRecording) {
       // Auto-start recording when ride starts and camera is connected
       setIsRecording(true);
+      setRecordingStartTime(Date.now());
       toast.success('Recording started with ride');
     } else if ((!isRiding || isPaused) && isRecording) {
       // Pause/stop recording when ride is paused or ended
       setIsRecording(false);
+      
+      // If ride ended (not just paused), finalize recording
+      if (!isRiding && recordedChunks.length > 0) {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const blobUrl = URL.createObjectURL(blob);
+        const recordingDuration = recordingStartTime 
+          ? Math.floor((Date.now() - recordingStartTime) / 1000)
+          : 0;
+        const filename = `blacktop-ride-${new Date().toISOString().split('T')[0]}.webm`;
+        
+        // Call the callback with recording info
+        if (onRecordingComplete) {
+          onRecordingComplete({
+            blobUrl,
+            thumbnailUrl: lastThumbnailRef.current || '',
+            filename,
+            duration: recordingDuration,
+            size: blob.size,
+          });
+        }
+        
+        setRecordedChunks([]);
+        setRecordingStartTime(null);
+      }
+      
       if (isPaused) {
         toast.info('Recording paused');
       }
     }
-  }, [isRiding, isPaused, broadcasterConnected]);
+  }, [isRiding, isPaused, broadcasterConnected, isRecording, recordedChunks, recordingStartTime, onRecordingComplete]);
 
   // Handle MediaRecorder lifecycle
   useEffect(() => {
@@ -234,6 +292,16 @@ export function LiveStreamViewer({
       
       recorder.start(1000); // Capture every second
       mediaRecorderRef.current = recorder;
+      
+      // Capture initial thumbnail
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 320;
+      thumbCanvas.height = 180;
+      const ctx = thumbCanvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(canvas, 0, 0, 320, 180);
+        lastThumbnailRef.current = thumbCanvas.toDataURL('image/jpeg', 0.7);
+      }
     } else if (!isRecording && mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;

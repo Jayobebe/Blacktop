@@ -80,7 +80,7 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
-  const { updateRideBadges } = useRideHistory();
+  const { updateRideBadges, addRideRecording } = useRideHistory();
   const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
@@ -778,6 +778,18 @@ export default function ActiveRide() {
         isRiding={rideState.isActive && !showSummary}
         isPaused={rideState.isPaused}
         onClose={() => setShowLiveStream(false)}
+        onRecordingComplete={(recording) => {
+          if (savedRideId) {
+            addRideRecording(savedRideId, {
+              id: crypto.randomUUID(),
+              filename: recording.filename,
+              blobUrl: recording.blobUrl,
+              thumbnailUrl: recording.thumbnailUrl,
+              duration: recording.duration,
+              size: recording.size,
+            });
+          }
+        }}
       />
     </div>
   );

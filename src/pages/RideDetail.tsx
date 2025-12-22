@@ -13,6 +13,7 @@ export default function RideDetail() {
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved } = useRideHistory();
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [saveProgress, setSaveProgress] = useState<number | null>(null);
 
   const ride = rides.find(r => r.id === id);
 
@@ -30,6 +31,61 @@ export default function RideDetail() {
   const handleDelete = () => {
     deleteRide(ride.id);
     navigate('/history');
+  };
+
+  const handleSaveRecording = async () => {
+    if (!ride.recording?.blobUrl) return;
+    
+    setSaveProgress(0);
+    
+    try {
+      // Fetch the blob to get size info and simulate progress
+      const response = await fetch(ride.recording.blobUrl);
+      const blob = await response.blob();
+      const totalSize = blob.size;
+      
+      // Simulate progress for better UX (actual download is instant)
+      const progressInterval = setInterval(() => {
+        setSaveProgress(prev => {
+          if (prev === null || prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 100);
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ride.recording.filename;
+      a.click();
+      
+      // Complete progress
+      clearInterval(progressInterval);
+      setSaveProgress(100);
+      
+      // Mark as saved after brief delay
+      setTimeout(() => {
+        markRecordingSaved(ride.id);
+        setSaveProgress(null);
+        toast.success('Recording saved to device');
+        URL.revokeObjectURL(url);
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error saving recording:', error);
+      setSaveProgress(null);
+      toast.error('Failed to save recording');
+    }
+  };
+
+  // Format file size
+  const formatSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
@@ -105,50 +161,96 @@ export default function RideDetail() {
 
         {/* Recording Section - only show if recording exists */}
         {ride.recording && (
-          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border mb-3 animate-slide-up">
-            <div className="flex items-center justify-between">
+          <div className="bg-card rounded-xl overflow-hidden border border-border mb-3 animate-slide-up">
+            {/* Header */}
+            <div className="flex items-center justify-between px-3 py-2 bg-card/80">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Video className="w-4 h-4" />
                 <span className="text-xs uppercase tracking-wide">Ride Recording</span>
               </div>
-              {ride.recording.savedAt ? (
+              {ride.recording.savedAt && (
                 <span className="flex items-center gap-1 text-xs text-accent">
                   <Check className="w-3.5 h-3.5" />
                   Saved
                 </span>
-              ) : null}
+              )}
             </div>
             
-            <div className="mt-3 flex items-center gap-3">
-              <div className="flex-1">
-                <p className="text-sm font-medium truncate">{ride.recording.filename}</p>
-                {ride.recording.duration && (
-                  <p className="text-xs text-muted-foreground">
-                    {formatDuration(ride.recording.duration)}
-                  </p>
+            {/* Thumbnail with Save Button Overlay */}
+            {!ride.recording.savedAt && ride.recording.blobUrl && (
+              <div className="relative aspect-video bg-muted">
+                {/* Blurred Thumbnail */}
+                {ride.recording.thumbnailUrl ? (
+                  <img
+                    src={ride.recording.thumbnailUrl}
+                    alt="Recording preview"
+                    className="w-full h-full object-cover blur-md scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-muted to-muted-foreground/20" />
                 )}
+                
+                {/* Dark Overlay */}
+                <div className="absolute inset-0 bg-black/50" />
+                
+                {/* Save Button / Progress */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  {saveProgress === null ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        className="gap-2 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 text-white"
+                        onClick={handleSaveRecording}
+                      >
+                        <Download className="w-5 h-5" />
+                        Save Recording
+                      </Button>
+                      <div className="text-center">
+                        <p className="text-white/80 text-sm font-medium">
+                          {formatDuration(ride.recording.duration || 0)}
+                        </p>
+                        {ride.recording.size && (
+                          <p className="text-white/60 text-xs">
+                            {formatSize(ride.recording.size)}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-3/4 space-y-2">
+                      <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-accent transition-all duration-200 rounded-full"
+                          style={{ width: `${saveProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-white/80 text-xs text-center">
+                        {saveProgress < 100 ? 'Saving...' : 'Complete!'}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              {ride.recording.blobUrl && !ride.recording.savedAt && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => {
-                    if (ride.recording?.blobUrl) {
-                      const a = document.createElement('a');
-                      a.href = ride.recording.blobUrl;
-                      a.download = ride.recording.filename;
-                      a.click();
-                      markRecordingSaved(ride.id);
-                      toast.success('Recording saved to device');
-                    }
-                  }}
-                >
-                  <Download className="w-4 h-4" />
-                  Save
-                </Button>
-              )}
+            )}
+            
+            {/* Saved state - show thumbnail without blur */}
+            {ride.recording.savedAt && ride.recording.thumbnailUrl && (
+              <div className="relative aspect-video bg-muted">
+                <img
+                  src={ride.recording.thumbnailUrl}
+                  alt="Recording preview"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded text-white text-xs">
+                  {formatDuration(ride.recording.duration || 0)}
+                </div>
+              </div>
+            )}
+            
+            {/* File info */}
+            <div className="px-3 py-2 border-t border-border/50">
+              <p className="text-xs text-muted-foreground truncate">{ride.recording.filename}</p>
             </div>
           </div>
         )}
