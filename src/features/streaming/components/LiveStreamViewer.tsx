@@ -56,6 +56,7 @@ export function LiveStreamViewer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastThumbnailRef = useRef<string | null>(null);
+  const lastFrameRef = useRef<string | null>(null);
 
   // Format time
   const formatDuration = (seconds: number) => {
@@ -89,7 +90,7 @@ export function LiveStreamViewer({
     (ctx as any).filter = 'none';
 
     // Clear and draw background gradient for overlay area
-    const overlayHeight = 80;
+    const overlayHeight = 140;
     const gradient = ctx.createLinearGradient(0, canvas.height - overlayHeight, 0, canvas.height);
     gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
     gradient.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
@@ -234,6 +235,10 @@ export function LiveStreamViewer({
             toast.info('Camera disconnected');
           } else if (message.type === 'frame') {
             // Handle video frame
+            if (typeof message.data === 'string') {
+              lastFrameRef.current = message.data;
+            }
+
             const img = new Image();
             img.onload = () => {
               const canvas = canvasRef.current;
@@ -293,8 +298,32 @@ export function LiveStreamViewer({
     };
   }, [streamKey, settings.liveStreamingEnabled, isVisible, drawOverlay]);
 
-  // Note: we intentionally draw the overlay only when a new video frame arrives
-  // (prevents “trails” from repeatedly drawing on top of the same frame).
+  // Redraw overlay when stats change.
+  // We redraw the last received frame first to prevent dot/text “trails”.
+  useEffect(() => {
+    if (!isVisible) return;
+    if (!settings.showStatsOverlay) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const lastFrame = lastFrameRef.current;
+    if (lastFrame) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        drawOverlay();
+      };
+      img.src = lastFrame;
+      return;
+    }
+
+    // Fallback: draw overlay on current canvas state
+    drawOverlay();
+  }, [drawOverlay, isVisible, settings.showStatsOverlay]);
 
   // Capture thumbnail periodically while recording
   useEffect(() => {
