@@ -12,6 +12,8 @@ import { useProfile } from '@/features/profile';
 import { useRescue, RescueAlert } from '@/features/rescue';
 import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer, StreamToggleButton } from '@/features/streaming';
+import { useLeanAngle } from '@/hooks/useLeanAngle';
+import { LeanAngleArc } from '@/components/LeanAngleArc';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
@@ -95,6 +97,9 @@ export default function ActiveRide() {
   
   // Keep audio session alive in background only when in convoy with other members
   useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
+  
+  // Lean angle sensor
+  const leanAngle = useLeanAngle(settings.leanAngleEnabled && rideState.isActive);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -541,8 +546,19 @@ export default function ActiveRide() {
                 {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
               </p>
-            </div>
           </div>
+
+          {/* Lean Angle Arc - only show when enabled */}
+          {settings.leanAngleEnabled && (
+            <div className="mt-4 landscape:mt-2">
+              <LeanAngleArc 
+                currentLean={leanAngle.currentLean}
+                maxLean={leanAngle.maxLean}
+                threshold={settings.leanAngleThreshold}
+              />
+            </div>
+          )}
+        </div>
         </div>
 
         {/* Controls - row in portrait, column in landscape */}
@@ -797,6 +813,9 @@ export default function ActiveRide() {
         maxSpeed={rideState.maxSpeed}
         distance={rideState.distance}
         duration={rideState.duration}
+        currentLean={settings.leanAngleEnabled ? leanAngle.currentLean : undefined}
+        maxLean={settings.leanAngleEnabled ? leanAngle.maxLean : undefined}
+        leanThreshold={settings.leanAngleThreshold}
         isVisible={showLiveStream}
         isRiding={rideState.isActive && !showSummary}
         isPaused={rideState.isPaused}

@@ -95,6 +95,8 @@ export interface AppSettings {
   streamKey: string;
   selectedActionCam: ActionCamBrand;
   showStatsOverlay: boolean;
+  leanAngleEnabled: boolean;
+  leanAngleThreshold: number; // Degrees - warning threshold
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -108,6 +110,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   streamKey: '',
   selectedActionCam: 'dji',
   showStatsOverlay: true,
+  leanAngleEnabled: false,
+  leanAngleThreshold: 45, // Default warning at 45 degrees
 };
 
 export function useSettings() {
@@ -182,6 +186,14 @@ export function useSettings() {
     updateSetting('showStatsOverlay', !settings.showStatsOverlay);
   };
 
+  const toggleLeanAngle = () => {
+    updateSetting('leanAngleEnabled', !settings.leanAngleEnabled);
+  };
+
+  const setLeanAngleThreshold = (threshold: number) => {
+    updateSetting('leanAngleThreshold', threshold);
+  };
+
   return {
     settings,
     updateSetting,
@@ -194,5 +206,7 @@ export function useSettings() {
     generateStreamKey,
     setActionCam,
     toggleStatsOverlay,
+    toggleLeanAngle,
+    setLeanAngleThreshold,
   };
 }

@@ -11,6 +11,9 @@ interface LiveStreamViewerProps {
   maxSpeed: number;
   distance: number;
   duration: number;
+  currentLean?: number;
+  maxLean?: number;
+  leanThreshold?: number;
   isVisible: boolean;
   isRiding: boolean;
   isPaused: boolean;
@@ -31,6 +34,9 @@ export function LiveStreamViewer({
   maxSpeed,
   distance,
   duration,
+  currentLean = 0,
+  maxLean = 0,
+  leanThreshold = 45,
   isVisible,
   isRiding,
   isPaused,
@@ -108,6 +114,39 @@ export function LiveStreamViewer({
     ctx.textAlign = 'right';
     ctx.fillText(formatDuration(Math.floor(duration)), canvas.width - 20, canvas.height - 25);
     
+    // Lean angle (top left, only if enabled)
+    if (settings.leanAngleEnabled && (currentLean !== 0 || maxLean > 0)) {
+      const absLean = Math.abs(currentLean);
+      const isOverThreshold = absLean >= leanThreshold;
+      
+      // Get color based on lean angle
+      let leanColor = '#22c55e'; // Green
+      const ratio = absLean / leanThreshold;
+      if (isOverThreshold) {
+        leanColor = '#ef4444'; // Red
+      } else if (ratio > 0.66) {
+        leanColor = '#f97316'; // Orange
+      } else if (ratio > 0.33) {
+        leanColor = '#eab308'; // Yellow
+      }
+      
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 28px Inter, system-ui, sans-serif';
+      ctx.fillStyle = leanColor;
+      ctx.fillText(`${absLean}°`, 20, 35);
+      
+      const leanDir = currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : '';
+      if (leanDir) {
+        ctx.font = '14px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#888888';
+        ctx.fillText(leanDir, 75, 35);
+      }
+      
+      ctx.font = '12px Inter, system-ui, sans-serif';
+      ctx.fillStyle = '#666666';
+      ctx.fillText(`MAX ${maxLean}°`, 20, 52);
+    }
+    
     // Recording indicator
     if (isRecording) {
       ctx.fillStyle = '#ff4444';
@@ -120,7 +159,7 @@ export function LiveStreamViewer({
       ctx.textAlign = 'right';
       ctx.fillText('REC', canvas.width - 35, 35);
     }
-  }, [currentSpeed, maxSpeed, distance, duration, settings.speedUnit, settings.distanceUnit, settings.showStatsOverlay, isRecording]);
+  }, [currentSpeed, maxSpeed, distance, duration, currentLean, maxLean, leanThreshold, settings.speedUnit, settings.distanceUnit, settings.showStatsOverlay, settings.leanAngleEnabled, isRecording]);
 
   // Connect to stream relay
   useEffect(() => {
