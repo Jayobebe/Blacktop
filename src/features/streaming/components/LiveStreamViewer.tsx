@@ -79,6 +79,15 @@ export function LiveStreamViewer({
     // Skip overlay if disabled in settings
     if (!settings.showStatsOverlay) return;
     
+    // Reset canvas drawing effects (prevents unwanted glow/trails between draws)
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(0,0,0,0)';
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    (ctx as any).filter = 'none';
+
     // Clear and draw background gradient for overlay area
     const overlayHeight = 80;
     const gradient = ctx.createLinearGradient(0, canvas.height - overlayHeight, 0, canvas.height);
@@ -284,10 +293,8 @@ export function LiveStreamViewer({
     };
   }, [streamKey, settings.liveStreamingEnabled, isVisible, drawOverlay]);
 
-  // Redraw overlay when stats change
-  useEffect(() => {
-    drawOverlay();
-  }, [drawOverlay]);
+  // Note: we intentionally draw the overlay only when a new video frame arrives
+  // (prevents “trails” from repeatedly drawing on top of the same frame).
 
   // Capture thumbnail periodically while recording
   useEffect(() => {
