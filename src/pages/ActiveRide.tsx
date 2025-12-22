@@ -775,6 +775,8 @@ export default function ActiveRide() {
         distance={rideState.distance}
         duration={rideState.duration}
         isVisible={showLiveStream}
+        isRiding={rideState.isActive && !showSummary}
+        isPaused={rideState.isPaused}
         onClose={() => setShowLiveStream(false)}
       />
     </div>

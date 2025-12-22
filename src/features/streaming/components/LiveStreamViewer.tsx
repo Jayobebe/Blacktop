@@ -12,6 +12,8 @@ interface LiveStreamViewerProps {
   distance: number;
   duration: number;
   isVisible: boolean;
+  isRiding: boolean;
+  isPaused: boolean;
   onClose: () => void;
 }
 
@@ -22,6 +24,8 @@ export function LiveStreamViewer({
   distance,
   duration,
   isVisible,
+  isRiding,
+  isPaused,
   onClose,
 }: LiveStreamViewerProps) {
   const { settings } = useSettings();
@@ -196,7 +200,22 @@ export function LiveStreamViewer({
     drawOverlay();
   }, [drawOverlay]);
 
-  // Handle recording
+  // Auto-control recording based on ride state
+  useEffect(() => {
+    if (isRiding && !isPaused && broadcasterConnected && !isRecording) {
+      // Auto-start recording when ride starts and camera is connected
+      setIsRecording(true);
+      toast.success('Recording started with ride');
+    } else if ((!isRiding || isPaused) && isRecording) {
+      // Pause/stop recording when ride is paused or ended
+      setIsRecording(false);
+      if (isPaused) {
+        toast.info('Recording paused');
+      }
+    }
+  }, [isRiding, isPaused, broadcasterConnected]);
+
+  // Handle MediaRecorder lifecycle
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -300,26 +319,33 @@ export function LiveStreamViewer({
         {isFullscreen ? 'Tap to minimize' : 'Tap to expand'}
       </div>
       
-      {/* Recording controls */}
-      <div className="absolute bottom-3 right-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
-        {recordedChunks.length > 0 && (
+      {/* Recording status & controls */}
+      <div className="absolute bottom-3 right-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {/* Recording status indicator */}
+        {isRecording && (
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-destructive/80 text-white text-xs">
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            REC
+          </div>
+        )}
+        {isPaused && recordedChunks.length > 0 && (
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-warning/80 text-black text-xs">
+            PAUSED
+          </div>
+        )}
+        
+        {/* Download button - show when we have recorded content */}
+        {recordedChunks.length > 0 && !isRiding && (
           <Button
-            variant="ghost"
-            size="icon"
+            variant="secondary"
+            size="sm"
             onClick={downloadRecording}
-            className="bg-black/50 hover:bg-black/70 text-white h-9 w-9"
+            className="h-9 text-xs gap-1.5"
           >
             <Download className="w-4 h-4" />
+            Save
           </Button>
         )}
-        <Button
-          variant={isRecording ? "destructive" : "secondary"}
-          size="sm"
-          onClick={() => setIsRecording(!isRecording)}
-          className="h-9 text-xs"
-        >
-          {isRecording ? 'Stop Rec' : 'Record'}
-        </Button>
       </div>
     </div>
   );
