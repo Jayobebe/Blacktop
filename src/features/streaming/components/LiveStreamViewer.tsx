@@ -116,68 +116,57 @@ export function LiveStreamViewer({
     ctx.fillStyle = '#ffffff';
     ctx.fillText(formatDuration(Math.floor(duration)), canvas.width - 20, canvas.height - 25);
     
-    // Lean angle arc (above speed in center, only if enabled) - bigger rainbow arc
+    // Lean angle arc (above speed in center, only if enabled)
     if (settings.leanAngleEnabled) {
       const absLean = Math.abs(currentLean);
       const isOverThreshold = absLean >= leanThreshold;
       const ratio = absLean / leanThreshold;
-      
-      // Get color based on lean angle
+
+      // Dot color based on lean angle (arc + text stay white)
       const getIndicatorColor = () => {
         if (isOverThreshold) return '#ef4444';
         if (ratio < 0.33) return `hsl(${120 - (ratio / 0.33) * 60}, 85%, 50%)`;
         if (ratio < 0.66) return `hsl(${60 - ((ratio - 0.33) / 0.33) * 30}, 90%, 55%)`;
         return `hsl(${30 - ((ratio - 0.66) / 0.34) * 30}, 85%, 55%)`;
       };
-      
+
       const indicatorColor = getIndicatorColor();
-      
-      // Arc dimensions - bigger, positioned above speed
+
+      // Arc dimensions - lower and simpler (upper semi-circle)
       const arcCenterX = canvas.width / 2;
-      const arcCenterY = canvas.height - 70;
-      const arcRadius = 80;
-      
+      const arcCenterY = canvas.height - 40;
+      const arcRadius = 52;
+
       ctx.save();
+      // Ensure no glow from previous draws
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
       ctx.filter = 'none';
 
-      // Draw rainbow gradient arc background (upper arc)
-      const segments = 60;
-      ctx.lineWidth = 4;
+      // White arc (upper semi-circle)
+      ctx.lineWidth = 3;
       ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.beginPath();
+      ctx.arc(arcCenterX, arcCenterY, arcRadius, Math.PI, 0, false);
+      ctx.stroke();
 
-      for (let i = 0; i < segments; i++) {
-        const startAngle = Math.PI - (i / segments) * Math.PI;
-        const endAngle = Math.PI - ((i + 1) / segments) * Math.PI;
-
-        // Rainbow colors: red at edges, green in center
-        const segmentPos = i / segments;
-        const distFromCenter = Math.abs(segmentPos - 0.5) * 2;
-        const hue = 120 - distFromCenter * 120; // 120 (green) at center, 0 (red) at edges
-
-        ctx.strokeStyle = `hsla(${hue}, 85%, 50%, 0.4)`;
-        ctx.beginPath();
-        ctx.arc(arcCenterX, arcCenterY, arcRadius, startAngle, endAngle, false);
-        ctx.stroke();
-      }
-
-      // Calculate indicator position (0° = left, 180° = right on upper arc)
+      // Indicator position along arc (-60°..+60° mapped left..right)
       const clampedLean = Math.max(-60, Math.min(60, currentLean));
       const indicatorAngle = Math.PI - ((clampedLean + 60) / 120) * Math.PI;
       const indicatorX = arcCenterX + Math.cos(indicatorAngle) * arcRadius;
       const indicatorY = arcCenterY - Math.abs(Math.sin(indicatorAngle)) * arcRadius;
 
-      // Draw active indicator dot (no glow)
+      // Moving dot (colored)
       ctx.fillStyle = indicatorColor;
       ctx.beginPath();
       ctx.arc(indicatorX, indicatorY, 7, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw lean angle text above the arc
+      // Live lean angle text above arc (white, no glow)
       ctx.textAlign = 'center';
       ctx.font = 'bold 20px Inter, system-ui, sans-serif';
-      ctx.fillStyle = indicatorColor;
+      ctx.fillStyle = '#ffffff';
       ctx.fillText(`${absLean}°`, arcCenterX, arcCenterY - arcRadius - 10);
 
       ctx.restore();
