@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Copy, RefreshCw } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +20,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -395,6 +395,73 @@ export default function Settings() {
             />
           </div>
         </section>
+
+        {/* Live Camera Streaming Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Video className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Live Camera Streaming</p>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-medium">Enable Live Streaming</p>
+              <p className="text-[10px] text-muted-foreground">Stream from action cam with stats overlay</p>
+            </div>
+            <Switch 
+              checked={settings.liveStreamingEnabled} 
+              onCheckedChange={toggleLiveStreaming}
+            />
+          </div>
+          
+          {settings.liveStreamingEnabled && (
+            <div className="space-y-3 pt-3 border-t border-border/30">
+              <div>
+                <p className="text-xs font-medium mb-2">Stream Key</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-secondary/50 rounded-lg px-3 py-2 font-mono text-xs truncate">
+                    {settings.streamKey || 'Not generated'}
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (settings.streamKey) {
+                        navigator.clipboard.writeText(settings.streamKey);
+                        toast.success('Stream key copied!');
+                      }
+                    }}
+                    disabled={!settings.streamKey}
+                    className="p-2 rounded-lg bg-secondary hover:bg-muted transition-colors disabled:opacity-50"
+                    title="Copy stream key"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      generateStreamKey();
+                      toast.success('New stream key generated!');
+                    }}
+                    className="p-2 rounded-lg bg-secondary hover:bg-muted transition-colors"
+                    title="Generate new key"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="bg-accent/10 rounded-lg p-3 border border-accent/20">
+                <p className="text-xs font-medium text-accent mb-2">DJI Action 4 Setup</p>
+                <ol className="text-[10px] text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Open DJI Mimo app → Live</li>
+                  <li>Select "Custom RTMP"</li>
+                  <li>Server: <span className="font-mono text-accent">rtmp://stream.blacktop.app/live</span></li>
+                  <li>Stream Key: Use your key above</li>
+                </ol>
+              </div>
+              
+              <p className="text-[10px] text-muted-foreground">
+                Your video streams through our relay with real-time stats overlay, then saves locally.
+              </p>
+            </div>
+          )}</section>
 
         {/* Privacy Section */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200 landscape:hidden">
