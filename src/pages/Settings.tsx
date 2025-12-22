@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Copy, RefreshCw, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Copy, RefreshCw, ChevronDown, Activity } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +20,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, setActionCam, toggleStatsOverlay } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, setActionCam, toggleStatsOverlay, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -376,6 +376,51 @@ export default function Settings() {
               />
             </div>
           </div>
+        </section>
+
+        {/* Lean Angle Sensor Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Lean Angle Sensor</p>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-medium">Enable Lean Angle</p>
+              <p className="text-[10px] text-muted-foreground">Track motorcycle lean angle in real-time</p>
+            </div>
+            <Switch 
+              checked={settings.leanAngleEnabled} 
+              onCheckedChange={toggleLeanAngle}
+            />
+          </div>
+          
+          {settings.leanAngleEnabled && (
+            <div className="pt-3 border-t border-border/30">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-sm font-medium text-destructive">Warning Threshold</p>
+                  <p className="text-[10px] text-muted-foreground">Arc glows red above this angle</p>
+                </div>
+                <span className="font-mono text-sm font-bold text-destructive">
+                  {settings.leanAngleThreshold}°
+                </span>
+              </div>
+              <input
+                type="range"
+                min={20}
+                max={60}
+                step={1}
+                value={settings.leanAngleThreshold}
+                onChange={(e) => setLeanAngleThreshold(Number(e.target.value))}
+                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                <span>20°</span>
+                <span>60°</span>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Convoy Display Section */}
