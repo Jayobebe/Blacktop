@@ -138,10 +138,13 @@ export function LiveStreamViewer({
       const arcRadius = 52;
 
       ctx.save();
-      // Ensure no glow from previous draws
+      // Reset all effects completely
       ctx.shadowBlur = 0;
-      ctx.shadowColor = 'transparent';
-      ctx.filter = 'none';
+      ctx.shadowColor = 'rgba(0,0,0,0)';
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
 
       // White arc (upper semi-circle)
       ctx.lineWidth = 3;
@@ -157,18 +160,25 @@ export function LiveStreamViewer({
       const indicatorX = arcCenterX + Math.cos(indicatorAngle) * arcRadius;
       const indicatorY = arcCenterY - Math.abs(Math.sin(indicatorAngle)) * arcRadius;
 
-      // Moving dot (colored)
+      // Moving dot (colored, no trail)
       ctx.fillStyle = indicatorColor;
       ctx.beginPath();
       ctx.arc(indicatorX, indicatorY, 7, 0, Math.PI * 2);
       ctx.fill();
 
-      // Live lean angle text above arc (white, no glow)
+      ctx.restore();
+
+      // Live lean angle text above arc (flat white, completely separate context)
+      ctx.save();
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'rgba(0,0,0,0)';
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.globalAlpha = 1;
       ctx.textAlign = 'center';
       ctx.font = 'bold 20px Inter, system-ui, sans-serif';
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = 'rgb(255, 255, 255)';
       ctx.fillText(`${absLean}°`, arcCenterX, arcCenterY - arcRadius - 10);
-
       ctx.restore();
     }
     
