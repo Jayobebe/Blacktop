@@ -116,37 +116,114 @@ export function LiveStreamViewer({
     ctx.fillStyle = '#ffffff';
     ctx.fillText(formatDuration(Math.floor(duration)), canvas.width - 20, canvas.height - 25);
     
-    // Lean angle (top left, only if enabled)
-    if (settings.leanAngleEnabled && (currentLean !== 0 || maxLean > 0)) {
+    // Lean angle arc (above speed in center, only if enabled)
+    if (settings.leanAngleEnabled) {
       const absLean = Math.abs(currentLean);
       const isOverThreshold = absLean >= leanThreshold;
+      const ratio = absLean / leanThreshold;
       
       // Get color based on lean angle
-      let leanColor = '#22c55e'; // Green
-      const ratio = absLean / leanThreshold;
-      if (isOverThreshold) {
-        leanColor = '#ef4444'; // Red
-      } else if (ratio > 0.66) {
-        leanColor = '#f97316'; // Orange
-      } else if (ratio > 0.33) {
-        leanColor = '#eab308'; // Yellow
+      const getIndicatorColor = () => {
+        if (isOverThreshold) {
+          return '#ef4444'; // Red
+        }
+        if (ratio < 0.33) {
+          const hue = 120 - (ratio / 0.33) * 60; // Green to yellow
+          return `hsl(${hue}, 85%, 50%)`;
+        } else if (ratio < 0.66) {
+          const hue = 60 - ((ratio - 0.33) / 0.33) * 30; // Yellow to orange
+          return `hsl(${hue}, 90%, 55%)`;
+        } else {
+          const hue = 30 - ((ratio - 0.66) / 0.34) * 30; // Orange to red
+          return `hsl(${hue}, 85%, 55%)`;
+        }
+      };
+      
+      const indicatorColor = getIndicatorColor();
+      
+      // Arc dimensions - positioned above speed in center
+      const arcCenterX = canvas.width / 2;
+      const arcCenterY = canvas.height - 95;
+      const arcRadius = 50;
+      const arcStartAngle = Math.PI; // 180 degrees (left)
+      const arcEndAngle = 0; // 0 degrees (right)
+      
+      // Draw arc background with rainbow gradient effect
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      
+      // Draw gradient arc segments
+      const segments = 20;
+      for (let i = 0; i < segments; i++) {
+        const startAngle = Math.PI - (i / segments) * Math.PI;
+        const endAngle = Math.PI - ((i + 1) / segments) * Math.PI;
+        
+        // Calculate color for this segment (rainbow: red-orange-green-orange-red)
+        const segmentPos = i / segments; // 0 to 1
+        let hue;
+        if (segmentPos < 0.25) {
+          hue = 0 + segmentPos * 4 * 30; // Red to orange
+        } else if (segmentPos < 0.5) {
+          hue = 30 + (segmentPos - 0.25) * 4 * 90; // Orange to green
+        } else if (segmentPos < 0.75) {
+          hue = 120 - (segmentPos - 0.5) * 4 * 90; // Green to orange
+        } else {
+          hue = 30 - (segmentPos - 0.75) * 4 * 30; // Orange to red
+        }
+        
+        ctx.strokeStyle = `hsla(${hue}, 85%, 50%, 0.3)`;
+        ctx.beginPath();
+        ctx.arc(arcCenterX, arcCenterY, arcRadius, startAngle, endAngle, true);
+        ctx.stroke();
       }
       
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 28px Inter, system-ui, sans-serif';
-      ctx.fillStyle = leanColor;
-      ctx.fillText(`${absLean}°`, 20, 35);
+      // Draw threshold markers
+      const leftThresholdAngle = Math.PI - ((60 - leanThreshold) / 120) * Math.PI;
+      const rightThresholdAngle = Math.PI - ((60 + leanThreshold) / 120) * Math.PI;
       
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.6)';
+      ctx.beginPath();
+      ctx.arc(
+        arcCenterX + Math.cos(leftThresholdAngle) * arcRadius,
+        arcCenterY + Math.sin(leftThresholdAngle) * arcRadius,
+        3, 0, Math.PI * 2
+      );
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.arc(
+        arcCenterX + Math.cos(rightThresholdAngle) * arcRadius,
+        arcCenterY + Math.sin(rightThresholdAngle) * arcRadius,
+        3, 0, Math.PI * 2
+      );
+      ctx.fill();
+      
+      // Calculate indicator position on arc
+      const clampedLean = Math.max(-60, Math.min(60, currentLean));
+      const indicatorAngle = Math.PI - ((clampedLean + 60) / 120) * Math.PI;
+      const indicatorX = arcCenterX + Math.cos(indicatorAngle) * arcRadius;
+      const indicatorY = arcCenterY + Math.sin(indicatorAngle) * arcRadius;
+      
+      // Draw active indicator
+      ctx.fillStyle = indicatorColor;
+      ctx.shadowColor = indicatorColor;
+      ctx.shadowBlur = isOverThreshold ? 15 : 8;
+      ctx.beginPath();
+      ctx.arc(indicatorX, indicatorY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      // Draw lean angle text below arc
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 20px Inter, system-ui, sans-serif';
+      ctx.fillStyle = indicatorColor;
       const leanDir = currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : '';
-      if (leanDir) {
-        ctx.font = '14px Inter, system-ui, sans-serif';
-        ctx.fillStyle = '#888888';
-        ctx.fillText(leanDir, 75, 35);
-      }
+      ctx.fillText(`${absLean}°${leanDir}`, arcCenterX, arcCenterY + 20);
       
-      ctx.font = '12px Inter, system-ui, sans-serif';
+      // Max lean text
+      ctx.font = '11px Inter, system-ui, sans-serif';
       ctx.fillStyle = '#666666';
-      ctx.fillText(`MAX ${maxLean}°`, 20, 52);
+      ctx.fillText(`MAX ${maxLean}°`, arcCenterX, arcCenterY + 35);
     }
     
     // Recording indicator
