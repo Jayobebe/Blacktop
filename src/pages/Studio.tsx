@@ -66,15 +66,13 @@ function OverlayLayer({
     currentSpeed = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)]?.speed || 0;
   }
   
-  const overallMaxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
+  // Max lean - we only have final values, not per-point data
+  // So we show the actual recorded max values from the ride
+  const maxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
   
-  // Simulate lean based on speed changes (visual effect only)
-  const leanProgress = rideProgress * 100;
-  const simulatedLean = Math.sin(leanProgress * 0.5) * overallMaxLean * 0.7; // Oscillates for visual effect
-  const leanRotation = (simulatedLean / 60) * 90; // Map to -90° to +90° for visual
-  
-  // Running max lean (simulated based on progress)
-  const runningMaxLean = Math.round(overallMaxLean * Math.min(1, rideProgress * 1.5));
+  // For the arc visual, we don't have live lean data per GPS point
+  // So we just keep the indicator centered (0 lean) as a placeholder
+  const leanRotation = 0;
   
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -92,7 +90,7 @@ function OverlayLayer({
         <div className="bg-black/60 rounded px-1.5 py-0.5 text-right">
           <p className="text-[6px] text-white/50 uppercase">Max Lean</p>
           <p className="font-mono text-[10px] font-bold text-white leading-none">
-            {runningMaxLean}°
+            {maxLean}°
           </p>
         </div>
       </div>
@@ -138,7 +136,7 @@ function OverlayLayer({
             </svg>
             
             {/* Live lean angle */}
-            <span className="text-[8px] text-white/70 font-mono">{Math.abs(Math.round(simulatedLean))}°</span>
+            <span className="text-[8px] text-white/70 font-mono">—</span>
             
             {/* Live speed */}
             <div className="flex items-baseline gap-0.5">
