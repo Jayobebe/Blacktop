@@ -53,20 +53,28 @@ function OverlayLayer({
   const currentDistance = ride.distance * rideProgress;
   const currentDuration = Math.floor(rideTimeMs / 1000);
   
-  // Find speed at current time from GPS points
+  // Find speed at current time and calculate running max from GPS points
   let currentSpeed = 0;
+  let runningMaxSpeed = 0;
   if (ride.gpsPoints.length > 0) {
     const targetIndex = Math.floor(rideProgress * (ride.gpsPoints.length - 1));
-    const point = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)];
-    currentSpeed = point?.speed || 0;
+    // Calculate running max up to current point
+    for (let i = 0; i <= targetIndex; i++) {
+      const speed = ride.gpsPoints[i]?.speed || 0;
+      if (speed > runningMaxSpeed) runningMaxSpeed = speed;
+    }
+    currentSpeed = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)]?.speed || 0;
   }
   
-  const maxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
+  const overallMaxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
   
   // Simulate lean based on speed changes (visual effect only)
   const leanProgress = rideProgress * 100;
-  const simulatedLean = Math.sin(leanProgress * 0.5) * maxLean * 0.7; // Oscillates for visual effect
+  const simulatedLean = Math.sin(leanProgress * 0.5) * overallMaxLean * 0.7; // Oscillates for visual effect
   const leanRotation = (simulatedLean / 60) * 90; // Map to -90° to +90° for visual
+  
+  // Running max lean (simulated based on progress)
+  const runningMaxLean = Math.round(overallMaxLean * Math.min(1, rideProgress * 1.5));
   
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -76,7 +84,7 @@ function OverlayLayer({
         <div className="bg-black/60 rounded px-2 py-1">
           <p className="text-[8px] text-white/50 uppercase">Max Speed</p>
           <p className="font-mono text-sm font-bold text-white leading-none">
-            {Math.round(ride.maxSpeed)} <span className="text-[10px] text-white/60">{speedLabel}</span>
+            {Math.round(runningMaxSpeed)} <span className="text-[10px] text-white/60">{speedLabel}</span>
           </p>
         </div>
         
@@ -84,7 +92,7 @@ function OverlayLayer({
         <div className="bg-black/60 rounded px-2 py-1 text-right">
           <p className="text-[8px] text-white/50 uppercase">Max Lean</p>
           <p className="font-mono text-sm font-bold text-white leading-none">
-            {maxLean}°
+            {runningMaxLean}°
           </p>
         </div>
       </div>
