@@ -163,6 +163,7 @@ export default function RideDetail() {
             photos={ride.photos || []}
             onAddPhoto={(photo) => addRidePhoto(ride.id, photo)}
             onRemovePhoto={(photoId) => removeRidePhoto(ride.id, photoId)}
+            recording={ride.recording}
           />
         </div>
 
