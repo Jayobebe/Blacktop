@@ -4,6 +4,7 @@ import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { ColorGradingPanel, ColorGradingValues } from '@/components/ColorGradingPanel';
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -350,6 +351,11 @@ export default function Studio() {
   const [progress, setProgress] = useState<number>(0);
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [colorGrading, setColorGrading] = useState<ColorGradingValues>({
+    lift: { r: 0, g: 0, b: 0 },
+    gamma: { r: 0, g: 0, b: 0 },
+    gain: { r: 0, g: 0, b: 0 },
+  });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -645,6 +651,9 @@ export default function Studio() {
                   muted={isMuted}
                   className="w-full h-full object-contain"
                   playsInline
+                  style={{
+                    filter: `brightness(${1 + (colorGrading.lift.r + colorGrading.lift.g + colorGrading.lift.b) / 6 + (colorGrading.gain.r + colorGrading.gain.g + colorGrading.gain.b) / 3}) saturate(${1 + (Math.abs(colorGrading.gamma.r) + Math.abs(colorGrading.gamma.g) + Math.abs(colorGrading.gamma.b)) / 6}) hue-rotate(${(colorGrading.gain.r - colorGrading.gain.b) * 30 + (colorGrading.gamma.r - colorGrading.gamma.b) * 20}deg)`,
+                  }}
                 />
                 {/* Overlay Layer */}
                 <OverlayLayer
@@ -796,6 +805,15 @@ export default function Studio() {
               Choose Different Video
             </Button>
           </div>
+        )}
+
+        {/* Color Grading Panel */}
+        {videoUrl && stage === 'idle' && (
+          <ColorGradingPanel
+            videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+            videoDuration={videoDuration}
+            onGradingChange={setColorGrading}
+          />
         )}
 
         {/* Success Panel */}
