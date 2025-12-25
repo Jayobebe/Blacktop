@@ -441,120 +441,47 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Live Camera Streaming Section */}
+        {/* Action Camera & Video Overlay Section */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
           <div className="flex items-center gap-2 mb-3">
             <Video className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Live Camera Streaming</p>
-          </div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-medium">Enable Live Streaming</p>
-              <p className="text-[10px] text-muted-foreground">Stream from action cam with stats overlay</p>
-            </div>
-            <Switch 
-              checked={settings.liveStreamingEnabled} 
-              onCheckedChange={toggleLiveStreaming}
-            />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Action Camera</p>
           </div>
           
-          {settings.liveStreamingEnabled && (
-            <div className="space-y-4 pt-3 border-t border-border/30">
-              {/* Stats Overlay Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Show Stats Overlay</p>
-                  <p className="text-[10px] text-muted-foreground">Display speed, distance & time on video</p>
-                </div>
-                <Switch 
-                  checked={settings.showStatsOverlay} 
-                  onCheckedChange={toggleStatsOverlay}
-                />
-              </div>
-
-              {/* Camera Selection Dropdown */}
-              <div>
-                <p className="text-xs font-medium mb-2">Action Camera</p>
-                <div className="relative">
-                  <select
-                    value={settings.selectedActionCam}
-                    onChange={(e) => setActionCam(e.target.value as any)}
-                    className="w-full appearance-none bg-secondary/50 border border-border/30 rounded-xl px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/50 cursor-pointer"
-                  >
-                    {ACTION_CAM_OPTIONS.map((cam) => (
-                      <option key={cam.id} value={cam.id} className="bg-card">
-                        {cam.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Stream Key */}
-              <div>
-                <p className="text-xs font-medium mb-2">Stream Key</p>
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-secondary/50 rounded-lg px-3 py-2 font-mono text-xs truncate">
-                    {settings.streamKey || 'Not generated'}
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (settings.streamKey) {
-                        navigator.clipboard.writeText(settings.streamKey);
-                        toast.success('Stream key copied!');
-                      }
-                    }}
-                    disabled={!settings.streamKey}
-                    className="p-2 rounded-lg bg-secondary hover:bg-muted transition-colors disabled:opacity-50"
-                    title="Copy stream key"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      generateStreamKey();
-                      toast.success('New stream key generated!');
-                    }}
-                    className="p-2 rounded-lg bg-secondary hover:bg-muted transition-colors"
-                    title="Generate new key"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* RTMP URL */}
-              <div>
-                <p className="text-xs font-medium mb-2">RTMP Server URL</p>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText('rtmp://stream.blacktop.app/live');
-                    toast.success('RTMP URL copied!');
-                  }}
-                  className="w-full bg-secondary/50 rounded-lg px-3 py-2 font-mono text-xs text-accent text-left hover:bg-secondary transition-colors"
-                >
-                  rtmp://stream.blacktop.app/live
-                </button>
-              </div>
-              
-              {/* Camera-specific instructions */}
-              <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
-                <p className="text-xs font-medium text-accent mb-3">
-                  {ACTION_CAM_OPTIONS.find(c => c.id === settings.selectedActionCam)?.label} Setup
-                </p>
-                <ol className="text-[10px] text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  {ACTION_CAM_OPTIONS.find(c => c.id === settings.selectedActionCam)?.instructions.map((step, i) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ol>
-              </div>
-              
-              <p className="text-[10px] text-muted-foreground">
-                Your video streams through our relay with real-time stats overlay.
-              </p>
+          {/* Camera Selection Dropdown */}
+          <div className="mb-4">
+            <p className="text-xs font-medium mb-2">Your Camera</p>
+            <div className="relative">
+              <select
+                value={settings.selectedActionCam}
+                onChange={(e) => setActionCam(e.target.value as any)}
+                className="w-full appearance-none bg-secondary/50 border border-border/30 rounded-xl px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/50 cursor-pointer"
+              >
+                {ACTION_CAM_OPTIONS.map((cam) => (
+                  <option key={cam.id} value={cam.id} className="bg-card">
+                    {cam.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             </div>
-          )}
+          </div>
+              
+          {/* Camera-specific instructions */}
+          <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
+            <p className="text-xs font-medium text-accent mb-3">
+              How to Add Stats Overlay
+            </p>
+            <ol className="text-[10px] text-muted-foreground space-y-1.5 list-decimal list-inside">
+              {ACTION_CAM_OPTIONS.find(c => c.id === settings.selectedActionCam)?.instructions.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          </div>
+          
+          <p className="text-[10px] text-muted-foreground mt-3">
+            Stats overlay is processed locally on your device - your video never leaves your phone.
+          </p>
         </section>
 
         {/* Privacy Section */}
