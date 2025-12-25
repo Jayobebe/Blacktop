@@ -6,7 +6,7 @@ import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera, 
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
-  Zap, Eye, Phone, Settings, BarChart3, History
+  Zap, Eye, Phone, Settings, BarChart3, History, Video, Lock, Unlock, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -51,6 +51,15 @@ export default function DemoShowcase() {
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />
     },
     {
+      id: 'solo',
+      title: 'Solo Ride',
+      subtitle: 'Track Your Own Adventures',
+      description: 'Don\'t need a group? Start a solo ride to track your speed, distance, and lean angle. All the same features, just you and the road.',
+      icon: Gauge,
+      color: 'accent',
+      mockup: <SoloMockup />
+    },
+    {
       id: 'voice',
       title: 'Voice Communication',
       subtitle: 'Talk Hands-Free While Riding',
@@ -78,6 +87,24 @@ export default function DemoShowcase() {
       mockup: <TrackingMockup speed={speed} distance={distance} />
     },
     {
+      id: 'lean',
+      title: 'Lean Angle Sensor',
+      subtitle: 'Track Your Cornering',
+      description: 'Uses your phone\'s gyroscope to measure lean angle in real-time. See your max lean and get warnings when approaching your threshold.',
+      icon: TrendingUp,
+      color: 'accent',
+      mockup: <LeanAngleMockup />
+    },
+    {
+      id: 'orientation',
+      title: 'Orientation Lock',
+      subtitle: 'Lock Your Display',
+      description: 'Lock the screen orientation while riding. Perfect for phone mounts that might shift. One tap to lock in portrait or landscape.',
+      icon: Phone,
+      color: 'accent',
+      mockup: <OrientationMockup />
+    },
+    {
       id: 'rescue',
       title: 'Rescue System',
       subtitle: 'Never Leave Anyone Behind',
@@ -103,6 +130,15 @@ export default function DemoShowcase() {
       icon: Camera,
       color: 'accent',
       mockup: <HistoryMockup />
+    },
+    {
+      id: 'studio',
+      title: 'BlackTop Studio',
+      subtitle: 'Overlay Stats on Your Footage',
+      description: 'Import action cam footage and overlay your ride stats. Sync the timing, add color grading, and export with your speed, lean angle, and distance.',
+      icon: Video,
+      color: 'accent',
+      mockup: <StudioMockup />
     },
     {
       id: 'stats',
@@ -414,6 +450,219 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function SoloMockup() {
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      {/* Solo Ride Card */}
+      <div className="bg-card/50 rounded-2xl border border-border/30 p-5 animate-slide-up">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
+            <User className="w-6 h-6 text-accent" />
+          </div>
+          <div>
+            <p className="font-semibold">Solo Ride</p>
+            <p className="text-xs text-muted-foreground">Just you and the road</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { icon: Gauge, label: 'Speed' },
+            { icon: Route, label: 'Distance' },
+            { icon: TrendingUp, label: 'Lean' },
+          ].map(({ icon: Icon, label }, i) => (
+            <div key={label} className="p-2 bg-secondary/50 rounded-lg animate-scale-in" style={{ animationDelay: `${200 + i * 100}ms` }}>
+              <Icon className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+              <span className="text-[10px] text-muted-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
+        <p className="text-xs text-center text-accent">🏍️ All features, no convoy needed</p>
+      </div>
+    </div>
+  );
+}
+
+function LeanAngleMockup() {
+  const [lean, setLean] = useState(0);
+  const [maxLean, setMaxLean] = useState(32);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLean(prev => {
+        const newLean = Math.sin(Date.now() / 600) * 38 + (Math.random() - 0.5) * 5;
+        const clamped = Math.max(-45, Math.min(45, newLean));
+        setMaxLean(m => Math.max(m, Math.abs(clamped)));
+        return Math.round(clamped);
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  const leanRotation = (lean / 90) * 90;
+
+  return (
+    <div className="w-full max-w-xs space-y-4 text-center">
+      {/* Lean Arc Visualization */}
+      <div className="relative animate-scale-in">
+        <svg className="w-48 h-24 mx-auto" viewBox="0 0 120 50">
+          {/* Background arc */}
+          <path
+            d="M 10 50 A 50 40 0 0 1 110 50"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+            className="text-secondary"
+          />
+          {/* Active indicator */}
+          <circle
+            cx={60 + Math.sin(leanRotation * Math.PI / 180) * 45}
+            cy={50 - Math.cos(leanRotation * Math.PI / 180) * 35}
+            r="8"
+            className={cn(
+              "transition-all duration-100",
+              Math.abs(lean) > 35 ? "fill-destructive" : Math.abs(lean) > 25 ? "fill-orange-500" : "fill-accent"
+            )}
+          />
+        </svg>
+        <p className="text-4xl font-mono font-bold mt-2">{Math.abs(lean)}°</p>
+        <p className="text-xs text-muted-foreground">{lean < 0 ? 'Left' : lean > 0 ? 'Right' : 'Upright'}</p>
+      </div>
+
+      {/* Stats */}
+      <div className="flex justify-center gap-4 animate-slide-up delay-200">
+        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+          <p className="text-xs text-muted-foreground">Max Lean</p>
+          <p className="font-mono text-lg font-semibold text-accent">{maxLean}°</p>
+        </div>
+        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+          <p className="text-xs text-muted-foreground">Threshold</p>
+          <p className="font-mono text-lg font-semibold text-destructive">40°</p>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground animate-fade-in delay-300">
+        ⚠️ Glows red when approaching threshold
+      </p>
+    </div>
+  );
+}
+
+function OrientationMockup() {
+  const [isLocked, setIsLocked] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLocked(true), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="w-full max-w-xs space-y-4 text-center">
+      {/* Phone mockup */}
+      <div className="relative animate-scale-in">
+        <div className={cn(
+          "w-24 h-40 mx-auto rounded-2xl border-4 transition-all duration-500",
+          isLocked ? "border-accent bg-accent/10" : "border-muted-foreground/30 bg-secondary/50"
+        )}>
+          <div className="absolute inset-2 rounded-lg bg-background/50 flex items-center justify-center">
+            {isLocked ? (
+              <Lock className="w-8 h-8 text-accent animate-scale-in" />
+            ) : (
+              <Unlock className="w-8 h-8 text-muted-foreground" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className={cn(
+        "py-3 px-4 rounded-xl transition-all duration-500 animate-slide-up delay-200",
+        isLocked ? "bg-accent/10 border border-accent/20" : "bg-secondary/50"
+      )}>
+        <p className={cn("font-medium", isLocked && "text-accent")}>
+          {isLocked ? '🔒 Orientation Locked' : 'Orientation Unlocked'}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {isLocked ? 'Screen won\'t rotate while riding' : 'Tap to lock in place'}
+        </p>
+      </div>
+
+      <p className="text-xs text-muted-foreground animate-fade-in delay-400">
+        Works even without native API support
+      </p>
+    </div>
+  );
+}
+
+function StudioMockup() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(prev => prev < 100 ? prev + 2 : 0);
+    }, 80);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      {/* Video Preview */}
+      <div className="relative aspect-video bg-zinc-800 rounded-xl overflow-hidden animate-scale-in">
+        {/* Fake video frame */}
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 to-zinc-900" />
+        
+        {/* Overlay preview */}
+        <div className="absolute inset-x-0 bottom-0">
+          <div 
+            className="h-6"
+            style={{
+              background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+            }}
+          />
+          <div className="absolute bottom-1 inset-x-2 flex justify-between text-[8px] text-white font-mono">
+            <span>12.4 mi</span>
+            <span className="text-sm font-bold">67 mph</span>
+            <span>0:23:45</span>
+          </div>
+        </div>
+        
+        {/* Studio badge */}
+        <div className="absolute top-2 left-2 px-2 py-0.5 bg-accent rounded text-[8px] font-semibold text-accent-foreground">
+          STUDIO
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="bg-card/50 rounded-xl p-3 border border-border/30 animate-slide-up delay-200">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-accent transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-[10px] text-muted-foreground font-mono">{Math.floor(progress)}%</span>
+        </div>
+        <div className="flex gap-2">
+          <div className="flex-1 h-3 bg-accent/40 rounded" />
+          <div className="flex-1 h-3 bg-blue-500/40 rounded" />
+        </div>
+        <div className="flex justify-between text-[8px] text-muted-foreground mt-1">
+          <span>Video</span>
+          <span>Ride Data</span>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground text-center animate-fade-in delay-300">
+        🎬 Processed locally on your device
+      </p>
     </div>
   );
 }
