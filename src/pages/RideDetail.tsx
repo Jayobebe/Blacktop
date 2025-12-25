@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRideHistory, RidePhotos } from '@/features/ride';
+import { useRideHistory, RidePhotos, VideoOverlayProcessor } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, Film } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ export default function RideDetail() {
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
+  const [showVideoOverlay, setShowVideoOverlay] = useState(false);
 
   const ride = rides.find(r => r.id === id);
 
@@ -261,6 +262,29 @@ export default function RideDetail() {
             </div>
           </div>
         )}
+
+        {/* Video Overlay Section */}
+        <div className="bg-card rounded-xl overflow-hidden border border-border mb-3 animate-slide-up">
+          {!showVideoOverlay ? (
+            <button
+              onClick={() => setShowVideoOverlay(true)}
+              className="w-full flex items-center justify-between px-3 py-3 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Film className="w-4 h-4" />
+                <span className="text-xs uppercase tracking-wide">Add Stats Overlay to Video</span>
+              </div>
+              <span className="text-xs text-accent">Upload →</span>
+            </button>
+          ) : (
+            <div className="p-3">
+              <VideoOverlayProcessor 
+                ride={ride} 
+                onClose={() => setShowVideoOverlay(false)} 
+              />
+            </div>
+          )}
+        </div>
 
         {/* GPS Points Info */}
         <div className="bg-card rounded-lg p-2.5 border border-border mb-3 animate-slide-up">

@@ -24,62 +24,60 @@ export const ACTION_CAM_OPTIONS: { id: ActionCamBrand; label: string; instructio
     id: 'dji', 
     label: 'DJI Action', 
     instructions: [
-      '1. Open DJI Mimo app and connect to your camera',
-      '2. Go to Settings → Transmission → Live Stream',
-      '3. Select "RTMP" as the platform',
-      '4. Enter the RTMP URL shown below',
-      '5. Paste your stream key after the URL',
-      '6. Start streaming from the app'
+      '1. Record your ride with your DJI Action camera',
+      '2. After the ride, transfer the video to your phone',
+      '3. Go to Ride History → select your ride',
+      '4. Tap "Add Stats Overlay to Video"',
+      '5. Upload the video and adjust sync if needed',
+      '6. Process and download the video with stats overlay'
     ]
   },
   { 
     id: 'gopro', 
     label: 'GoPro Hero', 
     instructions: [
-      '1. Open GoPro Quik app and connect to your camera',
-      '2. Go to Live Stream settings',
-      '3. Choose "Other/RTMP" as platform',
-      '4. Enter the RTMP URL shown below',
-      '5. Add your stream key to the URL',
-      '6. Set resolution to 720p for best performance',
-      '7. Tap "Go Live" to start streaming'
+      '1. Record your ride with your GoPro camera',
+      '2. After the ride, transfer the video to your phone',
+      '3. Go to Ride History → select your ride',
+      '4. Tap "Add Stats Overlay to Video"',
+      '5. Upload the video and adjust sync if needed',
+      '6. Process and download the video with stats overlay'
     ]
   },
   { 
     id: 'insta360', 
     label: 'Insta360', 
     instructions: [
-      '1. Open Insta360 app and connect to your camera',
-      '2. Navigate to Settings → Live Streaming',
-      '3. Select "Custom RTMP"',
-      '4. Enter the RTMP server URL',
-      '5. Enter your stream key',
-      '6. Choose 720p or 1080p resolution',
-      '7. Start the live stream'
+      '1. Record your ride with your Insta360 camera',
+      '2. After the ride, transfer the video to your phone',
+      '3. Go to Ride History → select your ride',
+      '4. Tap "Add Stats Overlay to Video"',
+      '5. Upload the video and adjust sync if needed',
+      '6. Process and download the video with stats overlay'
     ]
   },
   { 
     id: 'sony', 
     label: 'Sony Action Cam', 
     instructions: [
-      '1. Install Sony\'s Imaging Edge Mobile app',
-      '2. Connect camera via WiFi',
-      '3. Go to Menu → Network → Streaming',
-      '4. Select "RTMP Streaming"',
-      '5. Enter the RTMP URL and stream key',
-      '6. Start streaming from the camera menu'
+      '1. Record your ride with your Sony camera',
+      '2. After the ride, transfer the video to your phone',
+      '3. Go to Ride History → select your ride',
+      '4. Tap "Add Stats Overlay to Video"',
+      '5. Upload the video and adjust sync if needed',
+      '6. Process and download the video with stats overlay'
     ]
   },
   { 
     id: 'akaso', 
     label: 'AKASO', 
     instructions: [
-      '1. Download the AKASO GO app',
-      '2. Connect to your camera\'s WiFi',
-      '3. Open Live Stream settings',
-      '4. Select "Custom RTMP"',
-      '5. Enter the RTMP URL and stream key',
-      '6. Start streaming'
+      '1. Record your ride with your AKASO camera',
+      '2. After the ride, transfer the video to your phone',
+      '3. Go to Ride History → select your ride',
+      '4. Tap "Add Stats Overlay to Video"',
+      '5. Upload the video and adjust sync if needed',
+      '6. Process and download the video with stats overlay'
     ]
   },
 ];
