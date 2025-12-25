@@ -61,30 +61,49 @@ function OverlayLayer({
   let runningMaxLeanRight = 0;
   let hasLeanData = false;
   
+  // Use high-frequency lean samples if available
+  const leanSamples = ride.leanSamples || [];
+  if (leanSamples.length > 0) {
+    hasLeanData = true;
+    const rideStartMs = new Date(ride.startedAt).getTime();
+    const currentMs = rideStartMs + rideTimeMs;
+    
+    // Find lean sample closest to current time and calculate running maxes
+    for (const sample of leanSamples) {
+      if (sample.timestamp <= currentMs) {
+        currentLean = sample.angle;
+        if (sample.angle < 0) {
+          runningMaxLeanLeft = Math.max(runningMaxLeanLeft, Math.abs(sample.angle));
+        } else {
+          runningMaxLeanRight = Math.max(runningMaxLeanRight, sample.angle);
+        }
+      }
+    }
+  }
+  
   if (ride.gpsPoints.length > 0) {
     const targetIndex = Math.floor(rideProgress * (ride.gpsPoints.length - 1));
     
-    // Calculate running maxes up to current point
+    // Calculate running speed max up to current point
     for (let i = 0; i <= targetIndex; i++) {
       const point = ride.gpsPoints[i];
       const speed = point?.speed || 0;
       if (speed > runningMaxSpeed) runningMaxSpeed = speed;
       
-      // Check for lean data
-      if (point?.leanAngle !== undefined) {
+      // Fallback: check for lean data in GPS points if no leanSamples
+      if (!hasLeanData && point?.leanAngle !== undefined) {
         hasLeanData = true;
-        const lean = point.leanAngle;
-        if (lean < 0) {
-          runningMaxLeanLeft = Math.max(runningMaxLeanLeft, Math.abs(lean));
+        currentLean = point.leanAngle;
+        if (point.leanAngle < 0) {
+          runningMaxLeanLeft = Math.max(runningMaxLeanLeft, Math.abs(point.leanAngle));
         } else {
-          runningMaxLeanRight = Math.max(runningMaxLeanRight, lean);
+          runningMaxLeanRight = Math.max(runningMaxLeanRight, point.leanAngle);
         }
       }
     }
     
     const currentPoint = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)];
     currentSpeed = currentPoint?.speed || 0;
-    currentLean = currentPoint?.leanAngle ?? 0;
   }
   
   const runningMaxLean = Math.max(runningMaxLeanLeft, runningMaxLeanRight);

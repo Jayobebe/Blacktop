@@ -27,6 +27,11 @@ export interface RideRecording {
   size?: number; // File size in bytes
 }
 
+export interface LeanSample {
+  angle: number; // in degrees, positive = right, negative = left
+  timestamp: number;
+}
+
 export interface RideSession {
   id: string;
   name?: string; // Optional custom name for the ride
@@ -40,6 +45,7 @@ export interface RideSession {
   maxLeanLeft: number; // in degrees (absolute value)
   maxLeanRight: number; // in degrees (absolute value)
   gpsPoints: GpsPoint[];
+  leanSamples?: LeanSample[]; // High-frequency lean data (10Hz)
   earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
   recording?: RideRecording; // Video recording from live stream
@@ -82,6 +88,7 @@ export interface ActiveRideState {
   distance: number;
   duration: number;
   gpsPoints: GpsPoint[];
+  leanSamples: LeanSample[]; // High-frequency lean data (10Hz)
   gpsStatus: GpsStatus;
 }
 
