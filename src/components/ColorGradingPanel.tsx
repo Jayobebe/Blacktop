@@ -151,13 +151,14 @@ interface ColorGradingPanelProps {
 export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: ColorGradingPanelProps) {
   const [frames, setFrames] = useState<{ time: number; dataUrl: string }[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [hasExtracted, setHasExtracted] = useState(false);
   const [grading, setGrading] = useState<ColorGradingValues>({
     lift: { r: 0, g: 0, b: 0 },
     gamma: { r: 0, g: 0, b: 0 },
     gain: { r: 0, g: 0, b: 0 },
   });
   
-  // Extract 5 frames from video at evenly distributed times
+  // Extract 5 frames from video at evenly distributed times (lazy - only on demand)
   const extractFrames = useCallback(async () => {
     if (!videoRef.current || videoDuration <= 0) return;
     
@@ -171,27 +172,20 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
       return;
     }
     
-    // Set canvas size (thumbnail size)
+    // Set canvas size (optimized smaller thumbnail size for speed)
     const aspectRatio = video.videoWidth / video.videoHeight;
-    canvas.width = 160;
-    canvas.height = 160 / aspectRatio;
+    canvas.width = 100;
+    canvas.height = 100 / aspectRatio;
     
     const frameCount = 5;
     const newFrames: { time: number; dataUrl: string }[] = [];
     
-    // Generate timestamps with some randomness for variety
+    // Generate timestamps evenly distributed (no randomness for speed)
     const timestamps: number[] = [];
     for (let i = 0; i < frameCount; i++) {
-      // Base position evenly distributed
-      const baseTime = (videoDuration / (frameCount + 1)) * (i + 1);
-      // Add some randomness (±10% of segment)
-      const jitter = (Math.random() - 0.5) * (videoDuration / frameCount) * 0.2;
-      const time = Math.max(0.5, Math.min(videoDuration - 0.5, baseTime + jitter));
-      timestamps.push(time);
+      const time = (videoDuration / (frameCount + 1)) * (i + 1);
+      timestamps.push(Math.max(0.5, Math.min(videoDuration - 0.5, time)));
     }
-    
-    // Sort timestamps
-    timestamps.sort((a, b) => a - b);
     
     // Extract frames
     for (const time of timestamps) {
@@ -203,10 +197,13 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
             resolve();
           };
           video.addEventListener('seeked', onSeeked);
+          // Timeout fallback for slow seeks
+          setTimeout(() => resolve(), 2000);
         });
         
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        // Lower quality for faster encoding
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
         newFrames.push({ time, dataUrl });
       } catch (e) {
         console.error('Error extracting frame:', e);
@@ -215,17 +212,18 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
     
     setFrames(newFrames);
     setIsExtracting(false);
+    setHasExtracted(true);
     
     // Reset video to start
     video.currentTime = 0;
   }, [videoRef, videoDuration]);
   
-  // Auto-extract frames when video is loaded
-  useEffect(() => {
-    if (videoDuration > 0 && frames.length === 0 && !isExtracting) {
+  // Lazy extraction - only extract when user clicks, not automatically
+  const handleExtractFrames = useCallback(() => {
+    if (!hasExtracted && !isExtracting) {
       extractFrames();
     }
-  }, [videoDuration, frames.length, isExtracting, extractFrames]);
+  }, [hasExtracted, isExtracting, extractFrames]);
   
   // Notify parent of grading changes
   useEffect(() => {
@@ -299,7 +297,7 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
         />
       </div>
       
-      {/* Frame Thumbnails */}
+      {/* Frame Thumbnails - Lazy loaded */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-xs text-white/40">Preview Frames</span>
@@ -310,7 +308,7 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
             disabled={isExtracting}
             className="text-white/50 hover:text-white h-6 px-2 text-xs"
           >
-            {isExtracting ? 'Extracting...' : 'Refresh Frames'}
+            {isExtracting ? 'Extracting...' : hasExtracted ? 'Refresh Frames' : 'Load Previews'}
           </Button>
         </div>
         
@@ -328,7 +326,7 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
                 <img 
                   src={frame.dataUrl} 
                   alt={`Frame ${index + 1}`}
-                  className="w-24 h-auto"
+                  className="w-20 h-auto"
                   style={filterStyle}
                 />
                 <div className="bg-black/60 text-[9px] text-white/50 text-center py-0.5">
@@ -337,9 +335,12 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
               </div>
             ))
           ) : (
-            <div className="flex items-center justify-center w-full py-4 text-white/30 text-sm">
-              No frames extracted yet
-            </div>
+            <button 
+              onClick={handleExtractFrames}
+              className="flex items-center justify-center w-full py-4 text-white/30 text-sm hover:text-white/50 transition-colors"
+            >
+              Tap to load preview frames
+            </button>
           )}
         </div>
       </div>

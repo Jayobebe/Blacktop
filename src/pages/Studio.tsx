@@ -415,6 +415,7 @@ export default function Studio() {
     gamma: { r: 0, g: 0, b: 0 },
     gain: { r: 0, g: 0, b: 0 },
   });
+  const [exportQuality, setExportQuality] = useState<'original' | '720p' | '480p'>('720p');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -557,15 +558,20 @@ export default function Studio() {
         `drawtext=text='${formatDuration(ride.duration)}':fontsize=28:fontcolor=white:x=w-180:y=h-70`,
       ].join(',');
       
-      await ffmpeg.exec([
+      // Build FFmpeg command with quality settings
+      const ffmpegArgs = [
         '-i', 'input.mp4',
-        '-vf', overlayFilter,
+        '-vf', overlayFilter + (exportQuality !== 'original' 
+          ? `,scale=${exportQuality === '720p' ? '1280:720' : '854:480'}:force_original_aspect_ratio=decrease,pad=${exportQuality === '720p' ? '1280:720' : '854:480'}:(ow-iw)/2:(oh-ih)/2`
+          : ''),
         '-c:a', 'copy',
         '-c:v', 'libx264',
-        '-preset', 'fast',
-        '-crf', '23',
+        '-preset', exportQuality === '480p' ? 'veryfast' : 'fast',
+        '-crf', exportQuality === '480p' ? '28' : exportQuality === '720p' ? '25' : '23',
         'output.mp4',
-      ]);
+      ];
+      
+      await ffmpeg.exec(ffmpegArgs);
       
       const data = await ffmpeg.readFile('output.mp4');
       const blobData = typeof data === 'string' 
@@ -933,6 +939,32 @@ export default function Studio() {
               >
                 <RotateCcw className="w-3 h-3" />
               </button>
+            </div>
+
+            {/* Export Quality Selector */}
+            <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+              <div>
+                <span className="text-xs text-white/60">Export Quality</span>
+                <p className="text-[10px] text-white/40">
+                  {exportQuality === '480p' ? 'Fastest' : exportQuality === '720p' ? 'Balanced' : 'Best quality'}
+                </p>
+              </div>
+              <div className="flex gap-1">
+                {(['480p', '720p', 'original'] as const).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setExportQuality(q)}
+                    className={cn(
+                      "px-2 py-1 rounded text-xs transition-colors",
+                      exportQuality === q 
+                        ? "bg-accent text-white" 
+                        : "bg-white/10 text-white/60 hover:bg-white/20"
+                    )}
+                  >
+                    {q === 'original' ? 'Full' : q}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Reset Button */}
