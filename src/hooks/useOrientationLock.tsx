@@ -43,14 +43,18 @@ export function OrientationProvider({
   isLockedRef.current = isLocked;
 
   const lockOrientation = useCallback(() => {
+    // Capture the current orientation at lock time
+    lastConfirmedOrientation.current = getOrientationFromDimensions();
+    setOrientation(lastConfirmedOrientation.current);
     setIsLocked(true);
-    // Try to use the Screen Orientation API if available
+    
+    // Try to use the Screen Orientation API if available (requires fullscreen on most browsers)
     try {
-      const currentOrientation = getOrientationFromDimensions();
       const screenOrientation = screen.orientation as any;
       if (screenOrientation?.lock) {
-        screenOrientation.lock(currentOrientation === 'landscape' ? 'landscape' : 'portrait').catch(() => {
-          // Silently fail - not all browsers support this
+        screenOrientation.lock(lastConfirmedOrientation.current === 'landscape' ? 'landscape' : 'portrait').catch(() => {
+          // Silently fail - not all browsers support this without fullscreen
+          console.log('[OrientationLock] Native lock not available, using software lock');
         });
       }
     } catch {
