@@ -173,9 +173,9 @@ function OverlayLayer({
       <div className="absolute inset-x-0 bottom-0">
         {/* Black faded gradient bar */}
         <div 
-          className="w-full h-10"
+          className="w-full h-8"
           style={{
-            background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)'
+            background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)'
           }}
         />
         
