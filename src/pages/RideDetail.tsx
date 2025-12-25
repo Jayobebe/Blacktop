@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved } = useRideHistory();
+  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording } = useRideHistory();
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
@@ -164,6 +164,7 @@ export default function RideDetail() {
             onAddPhoto={(photo) => addRidePhoto(ride.id, photo)}
             onRemovePhoto={(photoId) => removeRidePhoto(ride.id, photoId)}
             recording={ride.recording}
+            onRemoveRecording={() => removeRideRecording(ride.id)}
           />
         </div>
 
