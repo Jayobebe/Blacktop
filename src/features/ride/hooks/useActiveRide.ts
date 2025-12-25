@@ -79,6 +79,7 @@ let rideState: ActiveRideState = restoredState || {
   distance: 0,
   duration: 0,
   gpsPoints: [],
+  leanSamples: [],
   gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
 };
 
@@ -94,6 +95,8 @@ let totalPausedTime = 0;
 let pausedAtMs: number | null = isPaused ? Date.now() : null;
 let hasRestoredGps = false; // Track if we've already restored GPS for this session
 let currentLeanAngle = 0; // Current lean angle for recording with GPS points
+let lastLeanSampleTime = 0; // Track last lean sample time for 10Hz recording
+const LEAN_SAMPLE_INTERVAL = 100; // 100ms = 10Hz
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -439,6 +442,7 @@ export function useActiveRide(convoyId?: string | null) {
       distance: 0,
       duration: 0,
       gpsPoints: [],
+      leanSamples: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
     }));
 
@@ -516,6 +520,7 @@ export function useActiveRide(convoyId?: string | null) {
         maxLeanLeft: currentState.maxLeanLeft,
         maxLeanRight: currentState.maxLeanRight,
         gpsPoints: currentState.gpsPoints,
+        leanSamples: currentState.leanSamples,
       };
       addRideRef.current(ride);
       savedRideId = rideId;
@@ -536,6 +541,7 @@ export function useActiveRide(convoyId?: string | null) {
       distance: 0,
       duration: 0,
       gpsPoints: [],
+      leanSamples: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
     }));
 
@@ -571,12 +577,26 @@ export function useActiveRide(convoyId?: string | null) {
     // Store current lean for GPS point recording
     currentLeanAngle = currentLean;
     
-    setRideState(prev => ({
-      ...prev,
-      currentLean,
-      maxLeanLeft: Math.max(prev.maxLeanLeft, maxLeanLeft),
-      maxLeanRight: Math.max(prev.maxLeanRight, maxLeanRight),
-    }));
+    // Record lean sample at 10Hz
+    const now = Date.now();
+    const shouldSample = now - lastLeanSampleTime >= LEAN_SAMPLE_INTERVAL;
+    
+    setRideState(prev => {
+      const newState = {
+        ...prev,
+        currentLean,
+        maxLeanLeft: Math.max(prev.maxLeanLeft, maxLeanLeft),
+        maxLeanRight: Math.max(prev.maxLeanRight, maxLeanRight),
+      };
+      
+      // Add lean sample at 10Hz rate
+      if (shouldSample) {
+        lastLeanSampleTime = now;
+        newState.leanSamples = [...prev.leanSamples, { angle: currentLean, timestamp: now }];
+      }
+      
+      return newState;
+    });
   }, []);
 
   return {
