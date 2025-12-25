@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
-import { useSettings, AccentColorPicker, ACTION_CAM_OPTIONS } from '@/features/settings';
+import { useSettings, AccentColorPicker } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Copy, RefreshCw, ChevronDown, Activity } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +20,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, setActionCam, toggleStatsOverlay, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
+  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, toggleStatsOverlay, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -445,37 +445,20 @@ export default function Settings() {
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
           <div className="flex items-center gap-2 mb-3">
             <Video className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Action Camera</p>
-          </div>
-          
-          {/* Camera Selection Dropdown */}
-          <div className="mb-4">
-            <p className="text-xs font-medium mb-2">Your Camera</p>
-            <div className="relative">
-              <select
-                value={settings.selectedActionCam}
-                onChange={(e) => setActionCam(e.target.value as any)}
-                className="w-full appearance-none bg-secondary/50 border border-border/30 rounded-xl px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/50 cursor-pointer"
-              >
-                {ACTION_CAM_OPTIONS.map((cam) => (
-                  <option key={cam.id} value={cam.id} className="bg-card">
-                    {cam.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            </div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">BlackTop Studio</p>
           </div>
               
-          {/* Camera-specific instructions */}
+          {/* Studio instructions */}
           <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
             <p className="text-xs font-medium text-accent mb-3">
               How to Add Stats Overlay
             </p>
             <ol className="text-[10px] text-muted-foreground space-y-1.5 list-decimal list-inside">
-              {ACTION_CAM_OPTIONS.find(c => c.id === settings.selectedActionCam)?.instructions.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
+              <li>Complete a ride and view it in History</li>
+              <li>Tap "Open in Studio" on the ride detail page</li>
+              <li>Upload your action cam footage</li>
+              <li>Sync the overlay to when your ride starts in the video</li>
+              <li>Export your video with the stats overlay</li>
             </ol>
           </div>
           
