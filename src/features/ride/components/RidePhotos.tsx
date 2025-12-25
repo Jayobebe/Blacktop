@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { Plus, X, Image as ImageIcon } from 'lucide-react';
-import { RidePhoto } from '@/types/blacktop';
+import { Plus, X, Image as ImageIcon, Play } from 'lucide-react';
+import { RidePhoto, RideRecording } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -8,14 +8,19 @@ interface RidePhotosProps {
   photos: RidePhoto[];
   onAddPhoto: (photo: RidePhoto) => void;
   onRemovePhoto: (photoId: string) => void;
+  recording?: RideRecording;
 }
 
 const MAX_PHOTO_SIZE = 1024 * 1024; // 1MB max after compression
 const MAX_PHOTOS = 10;
 
-export function RidePhotos({ photos, onAddPhoto, onRemovePhoto }: RidePhotosProps) {
+export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording }: RidePhotosProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<RidePhoto | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<RideRecording | null>(null);
+
+  // Only show video if it's been saved (exported to phone)
+  const showVideo = recording?.savedAt && recording?.thumbnailUrl;
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -114,6 +119,30 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto }: RidePhotosProp
 
       {/* Photo Grid */}
       <div className="grid grid-cols-3 gap-2">
+        {/* Video thumbnail - first in gallery if saved */}
+        {showVideo && (
+          <div
+            onClick={() => setSelectedVideo(recording)}
+            className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group"
+          >
+            <img
+              src={recording.thumbnailUrl}
+              alt="Ride video"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+            {/* Play icon overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">
+                <Play className="w-4 h-4 text-black fill-black ml-0.5" />
+              </div>
+            </div>
+            {/* Video badge */}
+            <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 rounded text-[10px] text-white font-medium">
+              VIDEO
+            </span>
+          </div>
+        )}
+        
         {photos.map((photo) => (
           <div
             key={photo.id}
@@ -172,6 +201,36 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto }: RidePhotosProp
             className="max-w-full max-h-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {/* Fullscreen Video View */}
+      {selectedVideo && (
+        <div
+          onClick={() => setSelectedVideo(null)}
+          className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-4 animate-fade-in"
+        >
+          <button
+            onClick={() => setSelectedVideo(null)}
+            className="absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={selectedVideo.thumbnailUrl}
+              alt="Video thumbnail"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Play className="w-8 h-8 text-white fill-white ml-1" />
+                </div>
+                <p className="text-white/80 text-sm">Video saved to device</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
