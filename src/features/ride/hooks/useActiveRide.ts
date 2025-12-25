@@ -93,6 +93,7 @@ let isPaused = restoredState?.isPaused ?? false;
 let totalPausedTime = 0;
 let pausedAtMs: number | null = isPaused ? Date.now() : null;
 let hasRestoredGps = false; // Track if we've already restored GPS for this session
+let currentLeanAngle = 0; // Current lean angle for recording with GPS points
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -250,6 +251,7 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
     lng: longitude,
     speed: displaySpeed,
     timestamp,
+    leanAngle: currentLeanAngle, // Include current lean angle
   };
 
   // Always update lastPosition so future deltas can recover quickly
@@ -565,6 +567,9 @@ export function useActiveRide(convoyId?: string | null) {
   // Update lean angle during ride (called from components using useLeanAngle)
   const updateLeanAngle = useCallback((currentLean: number, maxLeanLeft: number, maxLeanRight: number) => {
     if (!rideState.isActive || isPaused) return;
+    
+    // Store current lean for GPS point recording
+    currentLeanAngle = currentLean;
     
     setRideState(prev => ({
       ...prev,

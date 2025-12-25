@@ -53,26 +53,44 @@ function OverlayLayer({
   const currentDistance = ride.distance * rideProgress;
   const currentDuration = Math.floor(rideTimeMs / 1000);
   
-  // Find speed at current time and calculate running max from GPS points
+  // Find speed and lean at current time, calculate running maxes from GPS points
   let currentSpeed = 0;
+  let currentLean = 0;
   let runningMaxSpeed = 0;
+  let runningMaxLeanLeft = 0;
+  let runningMaxLeanRight = 0;
+  let hasLeanData = false;
+  
   if (ride.gpsPoints.length > 0) {
     const targetIndex = Math.floor(rideProgress * (ride.gpsPoints.length - 1));
-    // Calculate running max up to current point
+    
+    // Calculate running maxes up to current point
     for (let i = 0; i <= targetIndex; i++) {
-      const speed = ride.gpsPoints[i]?.speed || 0;
+      const point = ride.gpsPoints[i];
+      const speed = point?.speed || 0;
       if (speed > runningMaxSpeed) runningMaxSpeed = speed;
+      
+      // Check for lean data
+      if (point?.leanAngle !== undefined) {
+        hasLeanData = true;
+        const lean = point.leanAngle;
+        if (lean < 0) {
+          runningMaxLeanLeft = Math.max(runningMaxLeanLeft, Math.abs(lean));
+        } else {
+          runningMaxLeanRight = Math.max(runningMaxLeanRight, lean);
+        }
+      }
     }
-    currentSpeed = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)]?.speed || 0;
+    
+    const currentPoint = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)];
+    currentSpeed = currentPoint?.speed || 0;
+    currentLean = currentPoint?.leanAngle ?? 0;
   }
   
-  // Max lean - we only have final values, not per-point data
-  // So we show the actual recorded max values from the ride
-  const maxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
+  const runningMaxLean = Math.max(runningMaxLeanLeft, runningMaxLeanRight);
   
-  // For the arc visual, we don't have live lean data per GPS point
-  // So we just keep the indicator centered (0 lean) as a placeholder
-  const leanRotation = 0;
+  // For the arc visual - map lean angle to rotation
+  const leanRotation = hasLeanData ? (currentLean / 60) * 90 : 0;
   
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -86,13 +104,15 @@ function OverlayLayer({
           </p>
         </div>
         
-        {/* Top Right - Max Lean */}
-        <div className="bg-black/60 rounded px-1.5 py-0.5 text-right">
-          <p className="text-[6px] text-white/50 uppercase">Max Lean</p>
-          <p className="font-mono text-[10px] font-bold text-white leading-none">
-            {maxLean}°
-          </p>
-        </div>
+        {/* Top Right - Max Lean (only show if we have lean data) */}
+        {hasLeanData && (
+          <div className="bg-black/60 rounded px-1.5 py-0.5 text-right">
+            <p className="text-[6px] text-white/50 uppercase">Max Lean</p>
+            <p className="font-mono text-[10px] font-bold text-white leading-none">
+              {runningMaxLean}°
+            </p>
+          </div>
+        )}
       </div>
       
       {/* Bottom section */}
@@ -114,29 +134,33 @@ function OverlayLayer({
             </p>
           </div>
           
-          {/* Bottom Center - Lean arc with live speed underneath */}
+          {/* Bottom Center - Speed (with lean arc only if we have lean data) */}
           <div className="relative flex flex-col items-center">
-            {/* Lean Angle Arc - wider, shallower arc */}
-            <svg className="w-14 h-3.5" viewBox="0 0 80 20">
-              {/* Background arc - wide and shallow */}
-              <path
-                d="M 4 20 A 38 18 0 0 1 76 20"
-                fill="none"
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              {/* Active lean indicator dot */}
-              <circle
-                cx={40 + Math.sin(leanRotation * Math.PI / 180) * 36}
-                cy={20 - Math.cos(leanRotation * Math.PI / 180) * 16}
-                r="3.5"
-                fill="white"
-              />
-            </svg>
-            
-            {/* Live lean angle */}
-            <span className="text-[8px] text-white/70 font-mono">—</span>
+            {hasLeanData && (
+              <>
+                {/* Lean Angle Arc */}
+                <svg className="w-14 h-3.5" viewBox="0 0 80 20">
+                  {/* Background arc */}
+                  <path
+                    d="M 4 20 A 38 18 0 0 1 76 20"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                  {/* Active lean indicator dot */}
+                  <circle
+                    cx={40 + Math.sin(leanRotation * Math.PI / 180) * 36}
+                    cy={20 - Math.cos(leanRotation * Math.PI / 180) * 16}
+                    r="3.5"
+                    fill="white"
+                  />
+                </svg>
+                
+                {/* Live lean angle */}
+                <span className="text-[8px] text-white/70 font-mono">{Math.abs(Math.round(currentLean))}°</span>
+              </>
+            )}
             
             {/* Live speed */}
             <div className="flex items-baseline gap-0.5">

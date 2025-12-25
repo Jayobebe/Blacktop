@@ -50,6 +50,7 @@ export interface GpsPoint {
   lng: number;
   speed: number; // in mph
   timestamp: number;
+  leanAngle?: number; // in degrees, positive = right, negative = left
 }
 
 export interface RideStats {
