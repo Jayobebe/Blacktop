@@ -185,10 +185,10 @@ export function useLeanAngle(isActive: boolean = false) {
         
         if (screenAngle === 90) {
           // Landscape left (home button on right)
-          rawLean = -beta;
+          rawLean = beta;
         } else {
           // Landscape right (home button on left) - screenAngle === -90 or 270
-          rawLean = beta;
+          rawLean = -beta;
         }
         // No gamma correction needed - beta directly measures lean in landscape
       }
