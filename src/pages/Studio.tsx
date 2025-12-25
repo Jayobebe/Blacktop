@@ -148,12 +148,13 @@ function OverlayLayer({
                     strokeWidth="2.5"
                     strokeLinecap="round"
                   />
-                  {/* Active lean indicator dot */}
+                  {/* Active lean indicator dot - with smooth transition */}
                   <circle
                     cx={40 + Math.sin(leanRotation * Math.PI / 180) * 36}
                     cy={20 - Math.cos(leanRotation * Math.PI / 180) * 16}
                     r="3.5"
                     fill="white"
+                    style={{ transition: 'cx 0.15s ease-out, cy 0.15s ease-out' }}
                   />
                 </svg>
                 
