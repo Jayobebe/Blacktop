@@ -75,7 +75,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 
 export default function ActiveRide() {
   const navigate = useNavigate();
-  const { rideState, endRide, setRidePaused } = useActiveRide();
+  const { rideState, endRide, setRidePaused, updateLeanAngle } = useActiveRide();
   const { convoy, resetNavigationStatus, endConvoyRide } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
@@ -164,6 +164,13 @@ export default function ActiveRide() {
       leanAngle.requestPermission();
     }
   }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.permissionGranted, leanAngle.requestPermission]);
+
+  // Sync lean angle to ride state for recording
+  useEffect(() => {
+    if (rideState.isActive && settings.leanAngleEnabled && leanAngle.isSupported) {
+      updateLeanAngle(leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight);
+    }
+  }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
   // Keep track of members for when ride ends
   useEffect(() => {
