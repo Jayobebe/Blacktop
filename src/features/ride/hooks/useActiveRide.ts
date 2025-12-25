@@ -73,6 +73,9 @@ let rideState: ActiveRideState = restoredState || {
   isPaused: false,
   currentSpeed: 0,
   maxSpeed: 0,
+  currentLean: 0,
+  maxLeanLeft: 0,
+  maxLeanRight: 0,
   distance: 0,
   duration: 0,
   gpsPoints: [],
@@ -428,6 +431,9 @@ export function useActiveRide(convoyId?: string | null) {
       isPaused: false,
       currentSpeed: 0,
       maxSpeed: 0,
+      currentLean: 0,
+      maxLeanLeft: 0,
+      maxLeanRight: 0,
       distance: 0,
       duration: 0,
       gpsPoints: [],
@@ -505,6 +511,8 @@ export function useActiveRide(convoyId?: string | null) {
         duration: finalDuration,
         averageSpeed: finalDuration > 0 ? (currentState.distance / (finalDuration / 3600)) : 0,
         maxSpeed: currentState.maxSpeed,
+        maxLeanLeft: currentState.maxLeanLeft,
+        maxLeanRight: currentState.maxLeanRight,
         gpsPoints: currentState.gpsPoints,
       };
       addRideRef.current(ride);
@@ -520,6 +528,9 @@ export function useActiveRide(convoyId?: string | null) {
       isPaused: false,
       currentSpeed: 0,
       maxSpeed: 0,
+      currentLean: 0,
+      maxLeanLeft: 0,
+      maxLeanRight: 0,
       distance: 0,
       duration: 0,
       gpsPoints: [],
@@ -551,10 +562,23 @@ export function useActiveRide(convoyId?: string | null) {
     }
   }, []);
 
+  // Update lean angle during ride (called from components using useLeanAngle)
+  const updateLeanAngle = useCallback((currentLean: number, maxLeanLeft: number, maxLeanRight: number) => {
+    if (!rideState.isActive || isPaused) return;
+    
+    setRideState(prev => ({
+      ...prev,
+      currentLean,
+      maxLeanLeft: Math.max(prev.maxLeanLeft, maxLeanLeft),
+      maxLeanRight: Math.max(prev.maxLeanRight, maxLeanRight),
+    }));
+  }, []);
+
   return {
     rideState: state,
     startRide,
     endRide,
     setRidePaused,
+    updateLeanAngle,
   };
 }

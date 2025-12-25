@@ -37,6 +37,8 @@ export interface RideSession {
   duration: number; // in seconds
   averageSpeed: number; // in mph
   maxSpeed: number; // in mph
+  maxLeanLeft: number; // in degrees (absolute value)
+  maxLeanRight: number; // in degrees (absolute value)
   gpsPoints: GpsPoint[];
   earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
@@ -73,6 +75,9 @@ export interface ActiveRideState {
   isPaused: boolean;
   currentSpeed: number;
   maxSpeed: number;
+  currentLean: number; // in degrees, positive = right, negative = left
+  maxLeanLeft: number; // in degrees (absolute value)
+  maxLeanRight: number; // in degrees (absolute value)
   distance: number;
   duration: number;
   gpsPoints: GpsPoint[];

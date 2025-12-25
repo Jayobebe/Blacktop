@@ -138,10 +138,12 @@ export function VideoOverlayProcessor({ ride, onClose }: VideoOverlayProcessorPr
       await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
       
       // Generate overlay filter with ride stats
-      // HUD-style layout: bottom-left distance, center speed/max, bottom-right duration
+      // HUD-style layout: bottom-left distance, center speed/max/lean, bottom-right duration
       
       const speedUnit = settings.speedUnit.toUpperCase();
       const distanceUnit = settings.distanceUnit === 'miles' ? 'mi' : 'km';
+      const maxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
+      const leanDirection = (ride.maxLeanRight || 0) >= (ride.maxLeanLeft || 0) ? 'R' : 'L';
       
       // Create HUD-style overlay filter with glassmorphic panels
       const overlayFilter = [
@@ -150,9 +152,9 @@ export function VideoOverlayProcessor({ ride, onClose }: VideoOverlayProcessorPr
         `drawbox=x=20:y=ih-100:w=180:h=80:color=black@0.5:t=fill`,
         `drawbox=x=20:y=ih-100:w=180:h=80:color=white@0.1:t=2`,
         
-        // Bottom center panel (speed)
-        `drawbox=x=(iw-280)/2:y=ih-120:w=280:h=100:color=black@0.6:t=fill`,
-        `drawbox=x=(iw-280)/2:y=ih-120:w=280:h=100:color=white@0.15:t=2`,
+        // Bottom center panel (speed + lean)
+        `drawbox=x=(iw-320)/2:y=ih-120:w=320:h=100:color=black@0.6:t=fill`,
+        `drawbox=x=(iw-320)/2:y=ih-120:w=320:h=100:color=white@0.15:t=2`,
         
         // Bottom right panel (duration)
         `drawbox=x=iw-200:y=ih-100:w=180:h=80:color=black@0.5:t=fill`,
@@ -163,12 +165,16 @@ export function VideoOverlayProcessor({ ride, onClose }: VideoOverlayProcessorPr
         `drawtext=text='${formatDistance(ride.distance, settings.distanceUnit)}':fontsize=28:fontcolor=white:x=40:y=h-70`,
         `drawtext=text='${distanceUnit}':fontsize=14:fontcolor=white@0.7:x=40:y=h-40`,
         
-        // === BOTTOM CENTER: SPEED + MAX ===
+        // === BOTTOM CENTER: SPEED + MAX + LEAN ===
         // Live speed (large)
-        `drawtext=text='${Math.round(ride.averageSpeed)}':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=h-105`,
-        `drawtext=text='${speedUnit}':fontsize=14:fontcolor=white@0.7:x=(w-text_w)/2:y=h-55`,
-        // Max speed (below)
-        `drawtext=text='MAX ${Math.round(ride.maxSpeed)} ${speedUnit}':fontsize=14:fontcolor=cyan:x=(w-text_w)/2:y=h-35`,
+        `drawtext=text='${Math.round(ride.averageSpeed)}':fontsize=48:fontcolor=white:x=(w-text_w)/2-40:y=h-105`,
+        `drawtext=text='${speedUnit}':fontsize=14:fontcolor=white@0.7:x=(w-text_w)/2-40:y=h-55`,
+        // Max speed (below speed)
+        `drawtext=text='MAX ${Math.round(ride.maxSpeed)} ${speedUnit}':fontsize=14:fontcolor=cyan:x=(w-text_w)/2-40:y=h-35`,
+        // Lean angle (right side of center panel)
+        `drawtext=text='LEAN':fontsize=10:fontcolor=white@0.6:x=(w+120)/2:y=h-110`,
+        `drawtext=text='${maxLean.toFixed(0)}':fontsize=32:fontcolor=orange:x=(w+120)/2:y=h-95`,
+        `drawtext=text='${leanDirection}':fontsize=14:fontcolor=orange@0.8:x=(w+170)/2:y=h-85`,
         
         // === BOTTOM RIGHT: DURATION ===
         `drawtext=text='DURATION':fontsize=12:fontcolor=white@0.6:x=w-180:y=h-90`,
