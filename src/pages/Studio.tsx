@@ -110,27 +110,27 @@ function OverlayLayer({
           
           {/* Bottom Center - Lean arc with live speed underneath */}
           <div className="relative flex flex-col items-center">
-            {/* Lean Angle Arc - smaller */}
-            <svg className="w-14 h-8" viewBox="0 0 56 32">
-              {/* Background arc */}
+            {/* Lean Angle Arc - wider, shallower arc */}
+            <svg className="w-20 h-5" viewBox="0 0 80 20">
+              {/* Background arc - wide and shallow */}
               <path
-                d="M 4 32 A 24 24 0 0 1 52 32"
+                d="M 4 20 A 38 18 0 0 1 76 20"
                 fill="none"
                 stroke="rgba(255,255,255,0.2)"
-                strokeWidth="2.5"
+                strokeWidth="2"
                 strokeLinecap="round"
               />
               {/* Active lean indicator dot */}
               <circle
-                cx={28 + Math.sin(leanRotation * Math.PI / 180) * 24}
-                cy={32 - Math.cos(leanRotation * Math.PI / 180) * 24}
+                cx={40 + Math.sin(leanRotation * Math.PI / 180) * 36}
+                cy={20 - Math.cos(leanRotation * Math.PI / 180) * 16}
                 r="3"
                 fill="white"
               />
             </svg>
             
             {/* Live lean angle */}
-            <span className="text-[10px] text-white/70 font-mono -mt-1">{Math.abs(Math.round(simulatedLean))}°</span>
+            <span className="text-[10px] text-white/70 font-mono">{Math.abs(Math.round(simulatedLean))}°</span>
             
             {/* Live speed */}
             <div className="flex items-baseline gap-0.5">
