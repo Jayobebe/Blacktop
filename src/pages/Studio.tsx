@@ -36,12 +36,16 @@ function OverlayLayer({
   syncOffset,
   distanceUnit,
   speedUnit,
+  fadeInDuration = 1,
+  fadeOutDuration = 1,
 }: {
   ride: RideSession;
   currentTime: number;
   syncOffset: number;
   distanceUnit: 'miles' | 'km';
   speedUnit: 'mph' | 'kph';
+  fadeInDuration?: number; // seconds
+  fadeOutDuration?: number; // seconds
 }) {
   const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
   const speedLabel = speedUnit.toUpperCase();
@@ -52,6 +56,20 @@ function OverlayLayer({
   
   const currentDistance = ride.distance * rideProgress;
   const currentDuration = Math.floor(rideTimeMs / 1000);
+  
+  // Calculate fade opacity
+  const totalDuration = ride.duration;
+  const effectiveTime = currentTime + syncOffset;
+  let overlayOpacity = 1;
+  
+  // Fade in at the start
+  if (effectiveTime < fadeInDuration) {
+    overlayOpacity = Math.max(0, effectiveTime / fadeInDuration);
+  }
+  // Fade out at the end
+  else if (effectiveTime > totalDuration - fadeOutDuration) {
+    overlayOpacity = Math.max(0, (totalDuration - effectiveTime) / fadeOutDuration);
+  }
   
   // Find speed and lean at current time, calculate running maxes from GPS points
   let currentSpeed = 0;
@@ -112,7 +130,10 @@ function OverlayLayer({
   const leanRotation = hasLeanData ? (currentLean / 90) * 90 : 0;
   
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    <div 
+      className="absolute inset-0 pointer-events-none transition-opacity duration-150"
+      style={{ opacity: overlayOpacity }}
+    >
       {/* Top corners - max stats */}
       <div className="absolute top-0 inset-x-0 px-2 pt-1.5 flex justify-between">
         {/* Top Left - Max Speed */}
