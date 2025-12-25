@@ -157,7 +157,7 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
     gain: { r: 0, g: 0, b: 0 },
   });
   
-  // Extract 10 frames from video at evenly distributed times
+  // Extract 5 frames from video at evenly distributed times
   const extractFrames = useCallback(async () => {
     if (!videoRef.current || videoDuration <= 0) return;
     
@@ -176,7 +176,7 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
     canvas.width = 160;
     canvas.height = 160 / aspectRatio;
     
-    const frameCount = 10;
+    const frameCount = 5;
     const newFrames: { time: number; dataUrl: string }[] = [];
     
     // Generate timestamps with some randomness for variety
