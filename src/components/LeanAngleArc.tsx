@@ -12,8 +12,8 @@ export function LeanAngleArc({ currentLean, maxLean, threshold, className }: Lea
   const isOverThreshold = absLean >= threshold;
   
   // Calculate the arc position (0-100%)
-  // Map lean angle to arc position: -60° = 0%, 0° = 50%, +60° = 100%
-  const arcPosition = ((currentLean + 60) / 120) * 100;
+  // Map lean angle to arc position: -90° = 0%, 0° = 50%, +90° = 100%
+  const arcPosition = ((currentLean + 90) / 180) * 100;
   const clampedPosition = Math.max(0, Math.min(100, arcPosition));
   
   // Get color based on lean angle and threshold
@@ -76,16 +76,16 @@ export function LeanAngleArc({ currentLean, maxLean, threshold, className }: Lea
           {/* Threshold markers */}
           {/* Left threshold */}
           <circle
-            cx={5 + ((60 - threshold) / 120) * 90}
-            cy={45 - Math.sin(((60 - threshold) / 60) * Math.PI / 2) * 42}
+            cx={5 + ((90 - threshold) / 180) * 90}
+            cy={45 - Math.sin(((90 - threshold) / 90) * Math.PI / 2) * 42}
             r="2"
             fill="hsl(0, 84%, 60%)"
             opacity="0.6"
           />
           {/* Right threshold */}
           <circle
-            cx={5 + ((60 + threshold) / 120) * 90}
-            cy={45 - Math.sin(((60 + threshold) / 60) * Math.PI / 2) * 42}
+            cx={5 + ((90 + threshold) / 180) * 90}
+            cy={45 - Math.sin(((90 + threshold) / 90) * Math.PI / 2) * 42}
             r="2"
             fill="hsl(0, 84%, 60%)"
             opacity="0.6"
