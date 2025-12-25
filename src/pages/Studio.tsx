@@ -69,59 +69,79 @@ function OverlayLayer({
   const leanRotation = (simulatedLean / 60) * 90; // Map to -90° to +90° for visual
   
   return (
-    <div className="absolute inset-x-0 bottom-0 pointer-events-none">
-      {/* Black faded gradient bar - compact */}
-      <div 
-        className="w-full h-12"
-        style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 70%, transparent 100%)'
-        }}
-      />
+    <div className="absolute inset-0 pointer-events-none">
+      {/* Top corners - max stats */}
+      <div className="absolute top-0 inset-x-0 px-3 pt-2 flex justify-between">
+        {/* Top Left - Max Speed */}
+        <div className="bg-black/60 rounded px-2 py-1">
+          <p className="text-[8px] text-white/50 uppercase">Max Speed</p>
+          <p className="font-mono text-sm font-bold text-white leading-none">
+            {Math.round(ride.maxSpeed)} <span className="text-[10px] text-white/60">{speedLabel}</span>
+          </p>
+        </div>
+        
+        {/* Top Right - Max Lean */}
+        <div className="bg-black/60 rounded px-2 py-1 text-right">
+          <p className="text-[8px] text-white/50 uppercase">Max Lean</p>
+          <p className="font-mono text-sm font-bold text-white leading-none">
+            {maxLean}°
+          </p>
+        </div>
+      </div>
       
-      {/* Stats overlay - compact layout */}
-      <div className="absolute bottom-0 inset-x-0 px-3 pb-1.5 flex items-end justify-between">
-        {/* Bottom Left - Total Distance */}
-        <div className="text-left pb-0.5">
-          <p className="font-mono text-sm font-bold text-white leading-none">
-            {formatDistance(currentDistance, distanceUnit)} <span className="text-[10px] text-white/60 font-medium">{distLabel}</span>
-          </p>
-        </div>
+      {/* Bottom section */}
+      <div className="absolute inset-x-0 bottom-0">
+        {/* Black faded gradient bar */}
+        <div 
+          className="w-full h-16"
+          style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)'
+          }}
+        />
         
-        {/* Bottom Center - Speed with lean arc wrapping around */}
-        <div className="relative flex flex-col items-center">
-          {/* Lean Angle Arc - touches bottom, arcs around speed */}
-          <svg className="absolute -bottom-1.5 w-16 h-10" viewBox="0 0 64 40">
-            {/* Background arc */}
-            <path
-              d="M 4 40 A 28 28 0 0 1 60 40"
-              fill="none"
-              stroke="rgba(255,255,255,0.2)"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-            {/* Active lean indicator dot */}
-            <circle
-              cx={32 + Math.sin(leanRotation * Math.PI / 180) * 28}
-              cy={40 - Math.cos(leanRotation * Math.PI / 180) * 28}
-              r="3"
-              fill="white"
-            />
-          </svg>
+        {/* Stats overlay */}
+        <div className="absolute bottom-0 inset-x-0 px-3 pb-1.5 flex items-end justify-between">
+          {/* Bottom Left - Total Distance */}
+          <div className="text-left pb-0.5">
+            <p className="font-mono text-sm font-bold text-white leading-none">
+              {formatDistance(currentDistance, distanceUnit)} <span className="text-[10px] text-white/60">{distLabel}</span>
+            </p>
+          </div>
           
-          {/* Live speed (small, on top) */}
-          <p className="text-[9px] text-white/50 leading-none">
-            {Math.round(currentSpeed)} {speedLabel}
-          </p>
-          {/* Max speed (large) */}
-          <span className="font-mono text-lg font-bold text-white leading-none">{Math.round(ride.maxSpeed)}</span>
-          <span className="text-[8px] text-white/50">MAX {speedLabel}</span>
-        </div>
-        
-        {/* Bottom Right - Total Time */}
-        <div className="text-right pb-0.5">
-          <p className="font-mono text-sm font-bold text-white leading-none">
-            {formatDuration(Math.max(0, currentDuration))}
-          </p>
+          {/* Bottom Center - Lean arc with live speed underneath */}
+          <div className="relative flex flex-col items-center">
+            {/* Lean Angle Arc - bigger, touches bottom */}
+            <svg className="w-24 h-14 -mb-2" viewBox="0 0 96 56">
+              {/* Background arc */}
+              <path
+                d="M 6 56 A 42 42 0 0 1 90 56"
+                fill="none"
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              {/* Active lean indicator dot */}
+              <circle
+                cx={48 + Math.sin(leanRotation * Math.PI / 180) * 42}
+                cy={56 - Math.cos(leanRotation * Math.PI / 180) * 42}
+                r="4"
+                fill="white"
+              />
+            </svg>
+            
+            {/* Live speed - under the arc */}
+            <div className="flex items-baseline gap-0.5 -mt-1">
+              <span className="font-mono text-xl font-bold text-white leading-none">{Math.round(currentSpeed)}</span>
+              <span className="text-[10px] text-white/60">{speedLabel}</span>
+            </div>
+          </div>
+          
+          {/* Bottom Right - Total Time */}
+          <div className="text-right pb-0.5">
+            <p className="font-mono text-sm font-bold text-white leading-none">
+              {formatDuration(Math.max(0, currentDuration))}
+            </p>
+          </div>
         </div>
       </div>
     </div>
