@@ -11,14 +11,15 @@ import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { useRescue, RescueAlert } from '@/features/rescue';
 import { useWaypoints } from '@/features/waypoints';
-import { LiveStreamViewer, StreamToggleButton } from '@/features/streaming';
+import { LiveStreamViewer } from '@/features/streaming';
+import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play, Lock, Unlock } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -100,6 +101,9 @@ export default function ActiveRide() {
   
   // Lean angle sensor
   const leanAngle = useLeanAngle(settings.leanAngleEnabled && rideState.isActive);
+  
+  // Orientation lock
+  const { isLocked: isOrientationLocked, toggleLock: toggleOrientationLock } = useOrientationLock();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -821,11 +825,23 @@ export default function ActiveRide() {
         )}
       </div>
 
-      {/* Live Stream Toggle Button */}
-      <StreamToggleButton 
-        onClick={() => setShowLiveStream(true)} 
-        isStreamActive={showLiveStream}
-      />
+      {/* Orientation Lock Button */}
+      <button
+        onClick={toggleOrientationLock}
+        className={cn(
+          "fixed bottom-24 right-4 z-40 p-3 rounded-full shadow-lg transition-all duration-200",
+          isOrientationLocked 
+            ? "bg-accent text-accent-foreground" 
+            : "bg-card/80 backdrop-blur-sm border border-border/50 text-muted-foreground hover:text-foreground"
+        )}
+        title={isOrientationLocked ? "Unlock screen rotation" : "Lock screen rotation"}
+      >
+        {isOrientationLocked ? (
+          <Lock className="w-5 h-5" />
+        ) : (
+          <Unlock className="w-5 h-5" />
+        )}
+      </button>
 
       {/* Live Stream Viewer */}
       <LiveStreamViewer
