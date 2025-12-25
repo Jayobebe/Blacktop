@@ -13,13 +13,21 @@ interface LeanAngleState {
 const SMOOTHING_FACTOR = 0.3;
 
 function getScreenOrientationAngle(): number {
-  if (screen.orientation && typeof screen.orientation.angle === 'number') {
-    return screen.orientation.angle;
-  }
-  if (typeof window.orientation === 'number') {
-    return window.orientation;
-  }
-  return 0;
+  const angle =
+    screen.orientation && typeof screen.orientation.angle === 'number'
+      ? screen.orientation.angle
+      : typeof window.orientation === 'number'
+        ? window.orientation
+        : 0;
+
+  // Fallback: on some browsers (esp. iOS) orientation angle can be unreliable in PWAs.
+  // Use viewport orientation to infer landscape when needed.
+  const isLandscape =
+    (typeof window.matchMedia === 'function' && window.matchMedia('(orientation: landscape)').matches) ||
+    window.innerWidth > window.innerHeight;
+
+  if (isLandscape && (angle === 0 || angle === 180)) return 90;
+  return angle;
 }
 
 export function useLeanAngle(isActive: boolean = false) {
@@ -155,19 +163,18 @@ export function useLeanAngle(isActive: boolean = false) {
       
       if (screenAngle === 0 || screenAngle === 180) {
         // Portrait orientation
-        // Phone is roughly upright if beta is between 30° and 150° (or -150° to -30°)
+        // Phone is roughly upright if beta is between ~20° and ~160° (or -160°..-20°)
+        // If the phone gets too flat / flips, ignore the sample instead of zeroing out.
         isScreenFacingUser = Math.abs(beta) > 20 && Math.abs(beta) < 160;
-        
-        if (isScreenFacingUser) {
-          rawLean = gamma;
-          if (beta > 90) {
-            rawLean = -gamma;
-          }
-          if (screenAngle === 180) {
-            rawLean = -rawLean;
-          }
-        } else {
-          rawLean = 0;
+
+        if (!isScreenFacingUser) return;
+
+        rawLean = gamma;
+        if (beta > 90) {
+          rawLean = -gamma;
+        }
+        if (screenAngle === 180) {
+          rawLean = -rawLean;
         }
       } else {
         // Landscape orientation (90° or 270°/-90°)
