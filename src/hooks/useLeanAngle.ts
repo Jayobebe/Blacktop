@@ -155,7 +155,8 @@ export function useLeanAngle(isActive: boolean = false) {
       
       if (screenAngle === 0 || screenAngle === 180) {
         // Portrait orientation
-        isScreenFacingUser = Math.abs(beta) > 30 && Math.abs(beta) < 150;
+        // Phone is roughly upright if beta is between 30° and 150° (or -150° to -30°)
+        isScreenFacingUser = Math.abs(beta) > 20 && Math.abs(beta) < 160;
         
         if (isScreenFacingUser) {
           rawLean = gamma;
@@ -170,19 +171,19 @@ export function useLeanAngle(isActive: boolean = false) {
         }
       } else {
         // Landscape orientation (90° or 270°/-90°)
-        isScreenFacingUser = Math.abs(gamma) < 60;
+        // In landscape, lean angle comes from beta (phone rotation around its long axis)
+        // The phone is "facing user" as long as it's not completely flat or flipped
+        // We use a more permissive check since we want to track extreme lean angles
+        isScreenFacingUser = true; // Always track in landscape - beta gives us the lean directly
         
-        if (isScreenFacingUser) {
-          if (screenAngle === 90) {
-            rawLean = -beta;
-          } else {
-            rawLean = beta;
-          }
-          const gammaCorrection = Math.cos((gamma * Math.PI) / 180);
-          rawLean = rawLean * Math.abs(gammaCorrection);
+        if (screenAngle === 90) {
+          // Landscape left (home button on right)
+          rawLean = -beta;
         } else {
-          rawLean = 0;
+          // Landscape right (home button on left) - screenAngle === -90 or 270
+          rawLean = beta;
         }
+        // No gamma correction needed - beta directly measures lean in landscape
       }
       
       // Clamp raw lean
