@@ -10,6 +10,25 @@ interface LeanAngleState {
 
 const SMOOTHING_FACTOR = 0.3; // Lower = smoother, higher = more responsive
 
+// Get current screen orientation angle (0, 90, -90, 180)
+function getScreenOrientationAngle(): number {
+  // Modern API
+  if (screen.orientation && typeof screen.orientation.angle === 'number') {
+    return screen.orientation.angle;
+  }
+  // Legacy fallback
+  if (typeof window.orientation === 'number') {
+    return window.orientation;
+  }
+  return 0;
+}
+
+// Check if device is in landscape mode
+function isLandscape(): boolean {
+  const angle = getScreenOrientationAngle();
+  return Math.abs(angle) === 90 || angle === 270;
+}
+
 export function useLeanAngle(isActive: boolean = false) {
   const [state, setState] = useState<LeanAngleState>({
     currentLean: 0,
@@ -22,6 +41,7 @@ export function useLeanAngle(isActive: boolean = false) {
   const smoothedLean = useRef(0);
   const maxLeanLeftRef = useRef(0);
   const maxLeanRightRef = useRef(0);
+  const orientationAngleRef = useRef(getScreenOrientationAngle());
 
   // Request permission for iOS 13+
   const requestPermission = useCallback(async () => {
@@ -65,6 +85,28 @@ export function useLeanAngle(isActive: boolean = false) {
     }));
   }, []);
 
+  // Track screen orientation changes
+  useEffect(() => {
+    const updateOrientation = () => {
+      orientationAngleRef.current = getScreenOrientationAngle();
+      console.log('[LeanAngle] Orientation changed:', orientationAngleRef.current);
+    };
+
+    // Modern API
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', updateOrientation);
+    }
+    // Legacy fallback
+    window.addEventListener('orientationchange', updateOrientation);
+
+    return () => {
+      if (screen.orientation) {
+        screen.orientation.removeEventListener('change', updateOrientation);
+      }
+      window.removeEventListener('orientationchange', updateOrientation);
+    };
+  }, []);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -81,38 +123,66 @@ export function useLeanAngle(isActive: boolean = false) {
       
       if (beta === null || gamma === null) return;
 
-      // Convert to radians for accurate calculation
-      const betaRad = (beta * Math.PI) / 180;
-      const gammaRad = (gamma * Math.PI) / 180;
-      
-      // Calculate true lean angle using proper trigonometry
-      // When device is upright, we need to project gamma onto the horizontal plane
-      // This accounts for the non-linear relationship between gamma and actual lean
+      const screenAngle = orientationAngleRef.current;
       
       let leanAngle: number;
       
-      // Calculate the effective lean based on device orientation
-      // Using atan2 for proper angle calculation accounting for beta
-      const absBeta = Math.abs(beta);
+      // Adjust for screen orientation
+      // In portrait (0°): gamma is lean, beta is pitch
+      // In landscape-left (90°): beta becomes lean (inverted), gamma becomes pitch
+      // In landscape-right (-90° or 270°): beta becomes lean, gamma becomes pitch
       
-      if (absBeta > 45 && absBeta < 135) {
-        // Device is upright (facing rider)
-        // Calculate the true roll angle by accounting for pitch (beta)
-        // When beta = 90, cos(beta - 90) = cos(0) = 1, so lean = gamma
-        // When beta deviates, we scale accordingly
-        const pitchFromUpright = Math.abs(beta - 90) * (Math.PI / 180);
-        const correctionFactor = Math.cos(pitchFromUpright);
+      if (screenAngle === 90) {
+        // Landscape left (home button on right for iOS, or rotated left)
+        // In this orientation, beta represents the roll/lean
+        // Device upright facing user: beta ≈ 0 when flat in this orientation
+        const absBeta = Math.abs(beta);
         
-        // Apply correction - gamma is less reliable as device tilts away from 90°
-        leanAngle = gamma * correctionFactor;
+        if (absBeta < 45 || absBeta > 135) {
+          // Device is more horizontal in landscape - use beta directly
+          leanAngle = -beta; // Invert for correct left/right
+        } else {
+          // Device upright in landscape - beta is lean
+          leanAngle = -beta;
+        }
+      } else if (screenAngle === -90 || screenAngle === 270) {
+        // Landscape right (home button on left for iOS, or rotated right)
+        // Beta represents roll but opposite direction
+        const absBeta = Math.abs(beta);
         
-        // Also account for gamma singularity near ±90° beta
-        if (beta > 90) {
-          leanAngle = -leanAngle;
+        if (absBeta < 45 || absBeta > 135) {
+          leanAngle = beta;
+        } else {
+          leanAngle = beta;
         }
       } else {
-        // Device is more horizontal (flat)
-        leanAngle = gamma;
+        // Portrait mode (0° or 180°) - original logic
+        // Convert to radians for accurate calculation
+        const betaRad = (beta * Math.PI) / 180;
+        const gammaRad = (gamma * Math.PI) / 180;
+        
+        // Calculate the effective lean based on device orientation
+        const absBeta = Math.abs(beta);
+        
+        if (absBeta > 45 && absBeta < 135) {
+          // Device is upright (facing rider)
+          const pitchFromUpright = Math.abs(beta - 90) * (Math.PI / 180);
+          const correctionFactor = Math.cos(pitchFromUpright);
+          
+          leanAngle = gamma * correctionFactor;
+          
+          if (beta > 90) {
+            leanAngle = -leanAngle;
+          }
+        } else {
+          // Device is more horizontal (flat)
+          leanAngle = gamma;
+        }
+        
+        // Handle upside-down portrait
+        if (screenAngle === 180) {
+          leanAngle = -leanAngle;
+        }
       }
       
       // Clamp to reasonable range (-60 to 60 degrees)
