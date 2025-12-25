@@ -12,8 +12,8 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, classNa
   const absLean = Math.abs(currentLean);
   const isOverThreshold = absLean >= threshold;
   
-  // Map lean angle to bar position: -60° = 0%, 0° = 50%, +60° = 100%
-  const position = ((currentLean + 60) / 120) * 100;
+  // Map lean angle to bar position: -90° = 0%, 0° = 50%, +90° = 100%
+  const position = ((currentLean + 90) / 180) * 100;
   const clampedPosition = Math.max(0, Math.min(100, position));
   
   // Get color based on lean angle and threshold
@@ -73,11 +73,11 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, classNa
         {/* Threshold markers */}
         <div 
           className="absolute top-0 bottom-0 w-0.5 bg-destructive/60"
-          style={{ left: `${((60 - threshold) / 120) * 100}%` }}
+          style={{ left: `${((90 - threshold) / 180) * 100}%` }}
         />
         <div 
           className="absolute top-0 bottom-0 w-0.5 bg-destructive/60"
-          style={{ left: `${((60 + threshold) / 120) * 100}%` }}
+          style={{ left: `${((90 + threshold) / 180) * 100}%` }}
         />
         
         {/* Center marker */}

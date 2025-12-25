@@ -186,7 +186,7 @@ export function useLeanAngle(isActive: boolean = false) {
       }
       
       // Clamp raw lean
-      rawLean = Math.max(-60, Math.min(60, rawLean));
+      rawLean = Math.max(-90, Math.min(90, rawLean));
       
       // Store raw lean for calibration reference
       rawLeanRef.current = rawLean;
@@ -195,7 +195,7 @@ export function useLeanAngle(isActive: boolean = false) {
       let calibratedLean = rawLean - calibrationOffsetRef.current;
       
       // Clamp calibrated lean too
-      calibratedLean = Math.max(-60, Math.min(60, calibratedLean));
+      calibratedLean = Math.max(-90, Math.min(90, calibratedLean));
 
       // Apply smoothing to calibrated value
       smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (calibratedLean - smoothedLean.current);

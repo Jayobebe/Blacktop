@@ -108,8 +108,8 @@ function OverlayLayer({
   
   const runningMaxLean = Math.max(runningMaxLeanLeft, runningMaxLeanRight);
   
-  // For the arc visual - map lean angle to rotation
-  const leanRotation = hasLeanData ? (currentLean / 60) * 90 : 0;
+  // For the arc visual - map lean angle to rotation (max 90° range)
+  const leanRotation = hasLeanData ? (currentLean / 90) * 90 : 0;
   
   return (
     <div className="absolute inset-0 pointer-events-none">

@@ -409,7 +409,7 @@ export default function Settings() {
               <input
                 type="range"
                 min={20}
-                max={60}
+                max={90}
                 step={1}
                 value={settings.leanAngleThreshold}
                 onChange={(e) => setLeanAngleThreshold(Number(e.target.value))}
@@ -417,7 +417,7 @@ export default function Settings() {
               />
               <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
                 <span>20°</span>
-                <span>60°</span>
+                <span>90°</span>
               </div>
             </div>
           )}
