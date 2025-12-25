@@ -70,70 +70,59 @@ function OverlayLayer({
   
   return (
     <div className="absolute inset-x-0 bottom-0 pointer-events-none">
-      {/* Black faded gradient bar */}
+      {/* Black faded gradient bar - compact */}
       <div 
-        className="w-full h-24"
+        className="w-full h-14"
         style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)'
+          background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)'
         }}
       />
       
-      {/* Stats overlay */}
-      <div className="absolute bottom-0 inset-x-0 px-4 pb-3 flex items-end justify-between">
+      {/* Stats overlay - compact layout */}
+      <div className="absolute bottom-0 inset-x-0 px-3 pb-2 flex items-end justify-between">
         {/* Bottom Left - Total Distance */}
         <div className="text-left">
-          <p className="font-mono text-2xl font-bold text-white leading-none">
-            {formatDistance(currentDistance, distanceUnit)}
+          <p className="font-mono text-sm font-bold text-white leading-none">
+            {formatDistance(currentDistance, distanceUnit)} <span className="text-[10px] text-white/60 font-medium">{distLabel}</span>
           </p>
-          <p className="text-xs text-white/70 font-medium uppercase tracking-wide">{distLabel}</p>
         </div>
         
-        {/* Bottom Center - Speed with max and lean arc */}
-        <div className="flex flex-col items-center relative">
-          {/* Lean Angle Arc */}
-          <div className="relative w-24 h-12 mb-1">
-            {/* Arc background */}
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 50">
+        {/* Bottom Center - Speed with lean arc */}
+        <div className="flex flex-col items-center relative -mb-1">
+          {/* Lean Angle Arc - small, arcs slightly above */}
+          <div className="relative w-12 h-6 -mb-1">
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 50 25">
               {/* Background arc */}
               <path
-                d="M 10 50 A 40 40 0 0 1 90 50"
+                d="M 5 25 A 20 20 0 0 1 45 25"
                 fill="none"
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="4"
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth="2"
                 strokeLinecap="round"
               />
-              {/* Active lean indicator */}
+              {/* Active lean indicator dot */}
               <circle
-                cx={50 + Math.sin(leanRotation * Math.PI / 180) * 40}
-                cy={50 - Math.cos(leanRotation * Math.PI / 180) * 40}
-                r="5"
+                cx={25 + Math.sin(leanRotation * Math.PI / 180) * 20}
+                cy={25 - Math.cos(leanRotation * Math.PI / 180) * 20}
+                r="3"
                 fill="white"
               />
             </svg>
-            {/* Lean value */}
-            <div className="absolute inset-x-0 bottom-0 text-center">
-              <span className="text-xs text-white/70 font-bold">{Math.abs(Math.round(simulatedLean))}°</span>
-            </div>
           </div>
           
-          {/* Max speed (smaller, on top) */}
-          <p className="text-xs text-white/60 font-medium">
-            MAX {Math.round(ride.maxSpeed)} {speedLabel}
-          </p>
-          
-          {/* Current speed (large) */}
-          <p className="font-mono text-4xl font-bold text-white leading-none">
-            {Math.round(currentSpeed)}
-          </p>
-          <p className="text-sm text-white/70 font-bold uppercase">{speedLabel}</p>
+          {/* Speed display */}
+          <div className="flex items-baseline gap-1">
+            <span className="font-mono text-xl font-bold text-white leading-none">{Math.round(currentSpeed)}</span>
+            <span className="text-[10px] text-white/60 font-medium">{speedLabel}</span>
+          </div>
+          <p className="text-[8px] text-white/50">max {Math.round(ride.maxSpeed)}</p>
         </div>
         
         {/* Bottom Right - Total Time */}
         <div className="text-right">
-          <p className="font-mono text-2xl font-bold text-white leading-none">
+          <p className="font-mono text-sm font-bold text-white leading-none">
             {formatDuration(Math.max(0, currentDuration))}
           </p>
-          <p className="text-xs text-white/70 font-medium uppercase tracking-wide">Duration</p>
         </div>
       </div>
     </div>
