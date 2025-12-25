@@ -57,18 +57,31 @@ function OverlayLayer({
   const currentDistance = ride.distance * rideProgress;
   const currentDuration = Math.floor(rideTimeMs / 1000);
   
-  // Calculate fade opacity
-  const totalDuration = ride.duration;
-  const effectiveTime = currentTime + syncOffset;
-  let overlayOpacity = 1;
+  // Calculate fade opacity based on RIDE timing, not video timing
+  // effectiveTime represents where we are in the ride (can be negative before ride starts)
+  const rideDuration = ride.duration;
+  const effectiveTime = currentTime + syncOffset; // This is the ride time
+  let overlayOpacity = 0;
   
-  // Fade in at the start
-  if (effectiveTime < fadeInDuration) {
-    overlayOpacity = Math.max(0, effectiveTime / fadeInDuration);
+  // Before ride starts - hidden
+  if (effectiveTime < 0) {
+    overlayOpacity = 0;
   }
-  // Fade out at the end
-  else if (effectiveTime > totalDuration - fadeOutDuration) {
-    overlayOpacity = Math.max(0, (totalDuration - effectiveTime) / fadeOutDuration);
+  // Fade in at the start of the ride
+  else if (effectiveTime < fadeInDuration) {
+    overlayOpacity = effectiveTime / fadeInDuration;
+  }
+  // Fade out at the end of the ride
+  else if (effectiveTime > rideDuration - fadeOutDuration) {
+    overlayOpacity = Math.max(0, (rideDuration - effectiveTime) / fadeOutDuration);
+  }
+  // After ride ends - hidden
+  else if (effectiveTime > rideDuration) {
+    overlayOpacity = 0;
+  }
+  // During the ride - fully visible
+  else {
+    overlayOpacity = 1;
   }
   
   // Find speed and lean at current time, calculate running maxes from GPS points
