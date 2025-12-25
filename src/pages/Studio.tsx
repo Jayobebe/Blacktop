@@ -595,13 +595,25 @@ export default function Studio() {
       const response = await fetch(outputUrl);
       const blob = await response.blob();
       
-      // Create download link
-      const a = document.createElement('a');
-      a.href = outputUrl;
       const baseName = ride.name || `ride-${new Date(ride.startedAt).toISOString().split('T')[0]}`;
       const filename = `${baseName}-overlay.mp4`;
+      
+      // Use FileSaver approach for better mobile compatibility
+      const url = URL.createObjectURL(blob);
+      
+      // Create a visible link for mobile - some browsers need this
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
       a.download = filename;
+      document.body.appendChild(a);
       a.click();
+      
+      // Cleanup after a delay
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1000);
       
       // Generate thumbnail from the processed video
       let thumbnailUrl: string | undefined;
@@ -610,23 +622,26 @@ export default function Studio() {
         tempVideo.src = outputUrl;
         tempVideo.crossOrigin = 'anonymous';
         tempVideo.muted = true;
+        tempVideo.playsInline = true;
         
         await new Promise<void>((resolve, reject) => {
           tempVideo.onloadeddata = () => {
-            tempVideo.currentTime = 1; // Seek to 1 second for thumbnail
+            tempVideo.currentTime = Math.min(1, videoDuration * 0.1); // 10% in or 1s
           };
           tempVideo.onseeked = () => resolve();
-          tempVideo.onerror = reject;
-          setTimeout(reject, 5000); // Timeout after 5s
+          tempVideo.onerror = () => reject(new Error('Video load failed'));
+          setTimeout(() => resolve(), 3000); // Don't fail, just continue without thumbnail
         });
         
-        const canvas = document.createElement('canvas');
-        canvas.width = tempVideo.videoWidth;
-        canvas.height = tempVideo.videoHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(tempVideo, 0, 0);
-          thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+        if (tempVideo.videoWidth > 0) {
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.min(tempVideo.videoWidth, 640);
+          canvas.height = Math.min(tempVideo.videoHeight, 360);
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+            thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
+          }
         }
       } catch (thumbError) {
         console.warn('Could not generate thumbnail:', thumbError);
@@ -647,7 +662,7 @@ export default function Studio() {
       toast.success('Video saved to gallery!');
     } catch (error) {
       console.error('Error saving video:', error);
-      toast.error('Failed to save video');
+      toast.error('Failed to save video. Try using "Share" on your device instead.');
     }
   };
 

@@ -9,12 +9,13 @@ interface RidePhotosProps {
   onAddPhoto: (photo: RidePhoto) => void;
   onRemovePhoto: (photoId: string) => void;
   recording?: RideRecording;
+  onRemoveRecording?: () => void;
 }
 
 const MAX_PHOTO_SIZE = 1024 * 1024; // 1MB max after compression
 const MAX_PHOTOS = 10;
 
-export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording }: RidePhotosProps) {
+export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRemoveRecording }: RidePhotosProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<RidePhoto | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<RideRecording | null>(null);
@@ -108,6 +109,14 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording }: Rid
     toast.success('Photo removed');
   };
 
+  const handleRemoveVideo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onRemoveRecording) {
+      onRemoveRecording();
+      toast.success('Video removed from gallery');
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -140,6 +149,15 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording }: Rid
             <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 rounded text-[10px] text-white font-medium">
               VIDEO
             </span>
+            {/* Delete button */}
+            {onRemoveRecording && (
+              <button
+                onClick={handleRemoveVideo}
+                className="absolute top-1 right-1 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
         )}
         

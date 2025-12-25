@@ -59,6 +59,12 @@ export function useRideHistory() {
     ));
   }, [setRides]);
 
+  const removeRideRecording = useCallback((rideId: string) => {
+    setRides(prev => prev.map(r => 
+      r.id === rideId ? { ...r, recording: undefined } : r
+    ));
+  }, [setRides]);
+
   const stats: RideStats = useMemo(() => {
     const completedRides = rides.filter(r => r.endedAt !== null);
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
@@ -107,6 +113,7 @@ export function useRideHistory() {
     removeRidePhoto,
     addRideRecording,
     markRecordingSaved,
+    removeRideRecording,
     burnAllData,
   };
 }
