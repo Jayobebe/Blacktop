@@ -110,28 +110,31 @@ function OverlayLayer({
           
           {/* Bottom Center - Lean arc with live speed underneath */}
           <div className="relative flex flex-col items-center">
-            {/* Lean Angle Arc - bigger, touches bottom */}
-            <svg className="w-24 h-14 -mb-2" viewBox="0 0 96 56">
+            {/* Lean Angle Arc - smaller */}
+            <svg className="w-14 h-8" viewBox="0 0 56 32">
               {/* Background arc */}
               <path
-                d="M 6 56 A 42 42 0 0 1 90 56"
+                d="M 4 32 A 24 24 0 0 1 52 32"
                 fill="none"
                 stroke="rgba(255,255,255,0.2)"
-                strokeWidth="3"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
               {/* Active lean indicator dot */}
               <circle
-                cx={48 + Math.sin(leanRotation * Math.PI / 180) * 42}
-                cy={56 - Math.cos(leanRotation * Math.PI / 180) * 42}
-                r="4"
+                cx={28 + Math.sin(leanRotation * Math.PI / 180) * 24}
+                cy={32 - Math.cos(leanRotation * Math.PI / 180) * 24}
+                r="3"
                 fill="white"
               />
             </svg>
             
-            {/* Live speed - under the arc */}
-            <div className="flex items-baseline gap-0.5 -mt-1">
-              <span className="font-mono text-xl font-bold text-white leading-none">{Math.round(currentSpeed)}</span>
+            {/* Live lean angle */}
+            <span className="text-[10px] text-white/70 font-mono -mt-1">{Math.abs(Math.round(simulatedLean))}°</span>
+            
+            {/* Live speed */}
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-mono text-lg font-bold text-white leading-none">{Math.round(currentSpeed)}</span>
               <span className="text-[10px] text-white/60">{speedLabel}</span>
             </div>
           </div>
