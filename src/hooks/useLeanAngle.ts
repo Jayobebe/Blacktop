@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface LeanAngleState {
-  currentLean: number; // Degrees, positive = right, negative = left
+  currentLean: number; // Degrees, positive = right, negative = left (after calibration)
+  rawLean: number; // Raw lean before calibration offset
   maxLeanLeft: number; // Max lean to the left (positive value)
   maxLeanRight: number; // Max lean to the right (positive value)
   isSupported: boolean;
   permissionGranted: boolean;
+  isCalibrated: boolean; // Whether zero calibration has been applied
 }
 
-const SMOOTHING_FACTOR = 0.3; // Lower = smoother, higher = more responsive
+const SMOOTHING_FACTOR = 0.3;
 
-// Get current screen orientation angle (0, 90, -90, 180)
 function getScreenOrientationAngle(): number {
-  // Modern API
   if (screen.orientation && typeof screen.orientation.angle === 'number') {
     return screen.orientation.angle;
   }
-  // Legacy fallback (window.orientation is deprecated but still works on many devices)
   if (typeof window.orientation === 'number') {
     return window.orientation;
   }
@@ -26,18 +25,21 @@ function getScreenOrientationAngle(): number {
 export function useLeanAngle(isActive: boolean = false) {
   const [state, setState] = useState<LeanAngleState>({
     currentLean: 0,
+    rawLean: 0,
     maxLeanLeft: 0,
     maxLeanRight: 0,
     isSupported: false,
     permissionGranted: false,
+    isCalibrated: false,
   });
 
   const smoothedLean = useRef(0);
+  const rawLeanRef = useRef(0); // Store raw lean for calibration
   const maxLeanLeftRef = useRef(0);
   const maxLeanRightRef = useRef(0);
   const orientationAngleRef = useRef(getScreenOrientationAngle());
+  const calibrationOffsetRef = useRef(0); // Offset to subtract from raw readings
 
-  // Request permission for iOS 13+
   const requestPermission = useCallback(async () => {
     if (typeof DeviceOrientationEvent === 'undefined') {
       console.log('[LeanAngle] DeviceOrientationEvent not supported');
@@ -63,8 +65,10 @@ export function useLeanAngle(isActive: boolean = false) {
     return true;
   }, []);
 
-  // Reset max values
-  const resetMax = useCallback(() => {
+  // Zero/calibrate the sensor - sets current position as 0°
+  const calibrate = useCallback(() => {
+    calibrationOffsetRef.current = rawLeanRef.current;
+    // Reset max values when calibrating
     maxLeanLeftRef.current = 0;
     maxLeanRightRef.current = 0;
     smoothedLean.current = 0;
@@ -73,14 +77,45 @@ export function useLeanAngle(isActive: boolean = false) {
       currentLean: 0,
       maxLeanLeft: 0,
       maxLeanRight: 0,
+      isCalibrated: true,
     }));
+    console.log('[LeanAngle] Calibrated - offset set to:', calibrationOffsetRef.current);
+  }, []);
+
+  // Reset calibration and max values
+  const resetMax = useCallback(() => {
+    maxLeanLeftRef.current = 0;
+    maxLeanRightRef.current = 0;
+    smoothedLean.current = 0;
+    // Note: Don't reset calibration offset here - user might want to keep it
+    setState(prev => ({
+      ...prev,
+      currentLean: 0,
+      maxLeanLeft: 0,
+      maxLeanRight: 0,
+    }));
+  }, []);
+
+  // Clear calibration offset completely
+  const clearCalibration = useCallback(() => {
+    calibrationOffsetRef.current = 0;
+    maxLeanLeftRef.current = 0;
+    maxLeanRightRef.current = 0;
+    smoothedLean.current = 0;
+    setState(prev => ({
+      ...prev,
+      currentLean: 0,
+      maxLeanLeft: 0,
+      maxLeanRight: 0,
+      isCalibrated: false,
+    }));
+    console.log('[LeanAngle] Calibration cleared');
   }, []);
 
   // Track screen orientation changes
   useEffect(() => {
     const updateOrientation = () => {
       orientationAngleRef.current = getScreenOrientationAngle();
-      // Reset smoothing when orientation changes to avoid jumps
       smoothedLean.current = 0;
       console.log('[LeanAngle] Orientation changed:', orientationAngleRef.current);
     };
@@ -115,83 +150,55 @@ export function useLeanAngle(isActive: boolean = false) {
 
       const screenAngle = orientationAngleRef.current;
       
-      // The goal: calculate the "roll" of the device as if screen is facing the user
-      // This represents the motorcycle's lean angle
-      //
-      // Device orientation axes (when screen faces you in portrait):
-      // - beta: pitch (tilt forward/back), 0 = vertical, 90 = flat on back
-      // - gamma: roll (tilt left/right), -90 to 90
-      //
-      // When screen is rotated to landscape, the physical axes stay the same
-      // but what WE perceive as "lean" changes:
-      // - Portrait: lean = gamma (tilt left/right)
-      // - Landscape-left (90°): lean = beta (but inverted)
-      // - Landscape-right (270°/-90°): lean = -beta
-      
       let rawLean: number;
       let isScreenFacingUser: boolean;
       
-      // Determine if screen is approximately facing the user (not laying flat)
-      // In portrait: beta should be roughly 45-135° (screen upright or slightly tilted)
-      // In landscape: gamma should be roughly -45 to 45° (not tilted sideways too much)
-      
       if (screenAngle === 0 || screenAngle === 180) {
         // Portrait orientation
-        // Screen facing user when beta is roughly 45-135
         isScreenFacingUser = Math.abs(beta) > 30 && Math.abs(beta) < 150;
         
         if (isScreenFacingUser) {
-          // Gamma is the roll (lean left/right)
           rawLean = gamma;
-          
-          // If phone is upside-down portrait (beta > 90), gamma direction flips
           if (beta > 90) {
             rawLean = -gamma;
           }
-          
-          // If screen is rotated 180° (upside-down), flip again
           if (screenAngle === 180) {
             rawLean = -rawLean;
           }
         } else {
-          // Screen is too flat - can't reliably measure lean
           rawLean = 0;
         }
       } else {
         // Landscape orientation (90° or 270°/-90°)
-        // Screen facing user when the device isn't tilted too far forward/back
-        // In landscape, beta now represents what was gamma's role
         isScreenFacingUser = Math.abs(gamma) < 60;
         
         if (isScreenFacingUser) {
-          // In landscape, beta represents the lean
-          // But we need to account for gamma (how much the screen is tilted toward/away from user)
-          
           if (screenAngle === 90) {
-            // Landscape-left: home button on right (iOS) or rotated CCW
-            // When bike leans right, beta decreases (becomes more negative)
             rawLean = -beta;
           } else {
-            // Landscape-right (270° or -90°): home button on left or rotated CW  
-            // When bike leans right, beta increases
             rawLean = beta;
           }
-          
-          // Apply correction for gamma (screen tilt toward/away from user)
-          // When gamma is near ±90, we're losing accuracy
           const gammaCorrection = Math.cos((gamma * Math.PI) / 180);
           rawLean = rawLean * Math.abs(gammaCorrection);
         } else {
-          // Screen is tilted too much sideways - can't reliably measure
           rawLean = 0;
         }
       }
       
-      // Clamp to reasonable range (-60 to 60 degrees)
+      // Clamp raw lean
       rawLean = Math.max(-60, Math.min(60, rawLean));
+      
+      // Store raw lean for calibration reference
+      rawLeanRef.current = rawLean;
+      
+      // Apply calibration offset
+      let calibratedLean = rawLean - calibrationOffsetRef.current;
+      
+      // Clamp calibrated lean too
+      calibratedLean = Math.max(-60, Math.min(60, calibratedLean));
 
-      // Apply smoothing
-      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (rawLean - smoothedLean.current);
+      // Apply smoothing to calibrated value
+      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (calibratedLean - smoothedLean.current);
       
       const currentLean = Math.round(smoothedLean.current);
       
@@ -212,6 +219,7 @@ export function useLeanAngle(isActive: boolean = false) {
       setState(prev => ({
         ...prev,
         currentLean,
+        rawLean: Math.round(rawLean),
         maxLeanLeft: maxLeanLeftRef.current,
         maxLeanRight: maxLeanRightRef.current,
         permissionGranted: true,
@@ -232,5 +240,7 @@ export function useLeanAngle(isActive: boolean = false) {
     maxLean,
     requestPermission,
     resetMax,
+    calibrate, // Zero the sensor at current position
+    clearCalibration, // Remove calibration offset
   };
 }

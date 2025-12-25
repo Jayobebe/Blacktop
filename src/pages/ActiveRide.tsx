@@ -547,8 +547,14 @@ export default function ActiveRide() {
                   currentLean={leanAngle.currentLean}
                   maxLean={leanAngle.maxLean}
                   threshold={settings.leanAngleThreshold}
-                  onReset={leanAngle.resetMax}
+                  onReset={() => {
+                    leanAngle.calibrate();
+                    toast.success('Lean sensor zeroed', { duration: 1500 });
+                  }}
                 />
+                {leanAngle.isCalibrated && (
+                  <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+                )}
               </div>
             )}
           </div>
