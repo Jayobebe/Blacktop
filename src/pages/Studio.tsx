@@ -57,55 +57,83 @@ function OverlayLayer({
   let currentSpeed = 0;
   if (ride.gpsPoints.length > 0) {
     const targetIndex = Math.floor(rideProgress * (ride.gpsPoints.length - 1));
-    currentSpeed = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)]?.speed || 0;
+    const point = ride.gpsPoints[Math.min(targetIndex, ride.gpsPoints.length - 1)];
+    currentSpeed = point?.speed || 0;
   }
   
   const maxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
   
+  // Simulate lean based on speed changes (visual effect only)
+  const leanProgress = rideProgress * 100;
+  const simulatedLean = Math.sin(leanProgress * 0.5) * maxLean * 0.7; // Oscillates for visual effect
+  const leanRotation = (simulatedLean / 60) * 90; // Map to -90° to +90° for visual
+  
   return (
-    <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-none">
-      <div className="flex items-end justify-between gap-2">
-        {/* Bottom Left - Distance */}
-        <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10 min-w-[90px]">
-          <p className="text-[8px] text-white/60 uppercase tracking-wide">Distance</p>
-          <p className="font-mono text-lg font-bold text-white leading-tight">
+    <div className="absolute inset-x-0 bottom-0 pointer-events-none">
+      {/* Black faded gradient bar */}
+      <div 
+        className="w-full h-24"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)'
+        }}
+      />
+      
+      {/* Stats overlay */}
+      <div className="absolute bottom-0 inset-x-0 px-4 pb-3 flex items-end justify-between">
+        {/* Bottom Left - Total Distance */}
+        <div className="text-left">
+          <p className="font-mono text-2xl font-bold text-white leading-none">
             {formatDistance(currentDistance, distanceUnit)}
           </p>
-          <p className="text-[9px] text-white/70">{distLabel}</p>
+          <p className="text-xs text-white/70 font-medium uppercase tracking-wide">{distLabel}</p>
         </div>
         
-        {/* Bottom Center - Speed + Max + Lean */}
-        <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/15 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Speed */}
-            <div className="text-center">
-              <p className="font-mono text-2xl font-bold text-white leading-none">
-                {Math.round(currentSpeed)}
-              </p>
-              <p className="text-[9px] text-white/70 mt-0.5">{speedLabel}</p>
-              <p className="text-[8px] text-cyan-400 mt-1">
-                MAX {Math.round(ride.maxSpeed)}
-              </p>
+        {/* Bottom Center - Speed with max and lean arc */}
+        <div className="flex flex-col items-center relative">
+          {/* Lean Angle Arc */}
+          <div className="relative w-24 h-12 mb-1">
+            {/* Arc background */}
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 50">
+              {/* Background arc */}
+              <path
+                d="M 10 50 A 40 40 0 0 1 90 50"
+                fill="none"
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+              {/* Active lean indicator */}
+              <circle
+                cx={50 + Math.sin(leanRotation * Math.PI / 180) * 40}
+                cy={50 - Math.cos(leanRotation * Math.PI / 180) * 40}
+                r="5"
+                fill="white"
+              />
+            </svg>
+            {/* Lean value */}
+            <div className="absolute inset-x-0 bottom-0 text-center">
+              <span className="text-xs text-white/70 font-bold">{Math.abs(Math.round(simulatedLean))}°</span>
             </div>
-            
-            {/* Lean Angle */}
-            {maxLean > 0 && (
-              <div className="text-center border-l border-white/20 pl-3">
-                <p className="text-[8px] text-white/60 uppercase">Lean</p>
-                <p className="font-mono text-xl font-bold text-orange-400 leading-tight">
-                  {maxLean}°
-                </p>
-              </div>
-            )}
           </div>
+          
+          {/* Max speed (smaller, on top) */}
+          <p className="text-xs text-white/60 font-medium">
+            MAX {Math.round(ride.maxSpeed)} {speedLabel}
+          </p>
+          
+          {/* Current speed (large) */}
+          <p className="font-mono text-4xl font-bold text-white leading-none">
+            {Math.round(currentSpeed)}
+          </p>
+          <p className="text-sm text-white/70 font-bold uppercase">{speedLabel}</p>
         </div>
         
-        {/* Bottom Right - Duration */}
-        <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10 min-w-[90px] text-right">
-          <p className="text-[8px] text-white/60 uppercase tracking-wide">Duration</p>
-          <p className="font-mono text-lg font-bold text-white leading-tight">
+        {/* Bottom Right - Total Time */}
+        <div className="text-right">
+          <p className="font-mono text-2xl font-bold text-white leading-none">
             {formatDuration(Math.max(0, currentDuration))}
           </p>
+          <p className="text-xs text-white/70 font-medium uppercase tracking-wide">Duration</p>
         </div>
       </div>
     </div>
