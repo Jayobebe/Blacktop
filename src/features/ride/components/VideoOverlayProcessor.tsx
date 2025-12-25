@@ -138,28 +138,41 @@ export function VideoOverlayProcessor({ ride, onClose }: VideoOverlayProcessorPr
       await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
       
       // Generate overlay filter with ride stats
-      // For simplicity, we'll use drawtext filter with static text
-      // A more advanced version would create frame-by-frame overlays
+      // HUD-style layout: bottom-left distance, center speed/max, bottom-right duration
       
       const speedUnit = settings.speedUnit.toUpperCase();
       const distanceUnit = settings.distanceUnit === 'miles' ? 'mi' : 'km';
       
-      // Calculate stats at video midpoint for demonstration
-      // In a full implementation, we'd render frame-by-frame
-      const midStats = getStatsAtTime(videoDuration / 2);
-      
-      // Create overlay filter with semi-transparent background and stats
+      // Create HUD-style overlay filter with glassmorphic panels
       const overlayFilter = [
-        // Semi-transparent bar at bottom
-        `drawbox=x=0:y=ih-80:w=iw:h=80:color=black@0.6:t=fill`,
-        // Distance (left)
-        `drawtext=text='${formatDistance(ride.distance, settings.distanceUnit)} ${distanceUnit}':fontsize=24:fontcolor=white:x=20:y=h-55:fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf`,
-        // Speed (center)
-        `drawtext=text='${Math.round(ride.averageSpeed)} ${speedUnit}':fontsize=32:fontcolor=white:x=(w-text_w)/2:y=h-60`,
-        // Max speed label
-        `drawtext=text='MAX ${Math.round(ride.maxSpeed)} ${speedUnit}':fontsize=16:fontcolor=gray:x=(w-text_w)/2:y=h-30`,
-        // Duration (right)
-        `drawtext=text='${formatDuration(ride.duration)}':fontsize=24:fontcolor=white:x=w-text_w-20:y=h-55`,
+        // === GLASSMORPHIC BACKGROUND PANELS ===
+        // Bottom left panel (distance)
+        `drawbox=x=20:y=ih-100:w=180:h=80:color=black@0.5:t=fill`,
+        `drawbox=x=20:y=ih-100:w=180:h=80:color=white@0.1:t=2`,
+        
+        // Bottom center panel (speed)
+        `drawbox=x=(iw-280)/2:y=ih-120:w=280:h=100:color=black@0.6:t=fill`,
+        `drawbox=x=(iw-280)/2:y=ih-120:w=280:h=100:color=white@0.15:t=2`,
+        
+        // Bottom right panel (duration)
+        `drawbox=x=iw-200:y=ih-100:w=180:h=80:color=black@0.5:t=fill`,
+        `drawbox=x=iw-200:y=ih-100:w=180:h=80:color=white@0.1:t=2`,
+        
+        // === BOTTOM LEFT: DISTANCE ===
+        `drawtext=text='DISTANCE':fontsize=12:fontcolor=white@0.6:x=40:y=h-90`,
+        `drawtext=text='${formatDistance(ride.distance, settings.distanceUnit)}':fontsize=28:fontcolor=white:x=40:y=h-70`,
+        `drawtext=text='${distanceUnit}':fontsize=14:fontcolor=white@0.7:x=40:y=h-40`,
+        
+        // === BOTTOM CENTER: SPEED + MAX ===
+        // Live speed (large)
+        `drawtext=text='${Math.round(ride.averageSpeed)}':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=h-105`,
+        `drawtext=text='${speedUnit}':fontsize=14:fontcolor=white@0.7:x=(w-text_w)/2:y=h-55`,
+        // Max speed (below)
+        `drawtext=text='MAX ${Math.round(ride.maxSpeed)} ${speedUnit}':fontsize=14:fontcolor=cyan:x=(w-text_w)/2:y=h-35`,
+        
+        // === BOTTOM RIGHT: DURATION ===
+        `drawtext=text='DURATION':fontsize=12:fontcolor=white@0.6:x=w-180:y=h-90`,
+        `drawtext=text='${formatDuration(ride.duration)}':fontsize=28:fontcolor=white:x=w-180:y=h-70`,
       ].join(',');
       
       // Run ffmpeg
