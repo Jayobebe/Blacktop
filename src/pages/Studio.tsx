@@ -236,92 +236,152 @@ function OverlayLayer({
   );
 }
 
-// Timeline Track Component
-function TimelineTrack({
-  label,
-  color,
-  duration,
-  offset,
-  totalDuration,
-  onOffsetChange,
-  isDragging,
-  onDragStart,
-  onDragEnd,
+// Timeline with Playhead Component
+function SyncTimeline({
+  videoDuration,
+  rideDuration,
+  currentTime,
+  syncOffset,
+  onSyncOffsetChange,
+  onSeek,
 }: {
-  label: string;
-  color: string;
-  duration: number;
-  offset: number;
-  totalDuration: number;
-  onOffsetChange: (offset: number) => void;
-  isDragging: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  videoDuration: number;
+  rideDuration: number;
+  currentTime: number;
+  syncOffset: number;
+  onSyncOffsetChange: (offset: number) => void;
+  onSeek: (time: number) => void;
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [isDraggingRide, setIsDraggingRide] = useState(false);
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
   
-  const widthPercent = Math.min(100, (duration / totalDuration) * 100);
-  const leftPercent = Math.max(0, Math.min(100 - widthPercent, ((offset + 60) / 120) * 100));
+  // Total timeline shows full video plus some buffer
+  const timelineDuration = Math.max(videoDuration, rideDuration + Math.abs(syncOffset)) + 10;
   
-  const handleDrag = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!trackRef.current) return;
-    
-    const rect = trackRef.current.getBoundingClientRect();
+  // Convert time to percentage position
+  const timeToPercent = (time: number) => (time / timelineDuration) * 100;
+  
+  // Video always starts at 0
+  const videoStartPercent = 0;
+  const videoWidthPercent = timeToPercent(videoDuration);
+  
+  // Ride position depends on syncOffset
+  // syncOffset = how much EARLIER the ride starts relative to video start
+  // negative syncOffset = ride starts BEFORE video (ride appears to the left)
+  // positive syncOffset = ride starts AFTER video start (ride appears to the right)
+  const rideStartTime = -syncOffset; // If syncOffset is -5, ride starts at video time 5
+  const rideStartPercent = timeToPercent(Math.max(0, rideStartTime));
+  const rideWidthPercent = timeToPercent(rideDuration);
+  
+  // Playhead position
+  const playheadPercent = timeToPercent(currentTime);
+  
+  const handleTimelineClick = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!timelineRef.current) return;
+    const rect = timelineRef.current.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const x = clientX - rect.left;
-    const percent = x / rect.width;
-    const newOffset = (percent * 120) - 60;
-    
-    onOffsetChange(Math.max(-60, Math.min(60, newOffset)));
-  }, [onOffsetChange]);
+    const percent = (clientX - rect.left) / rect.width;
+    const time = percent * timelineDuration;
+    onSeek(Math.max(0, Math.min(videoDuration, time)));
+  };
   
+  const handleRideDrag = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if (!timelineRef.current || !isDraggingRide) return;
+    e.stopPropagation();
+    
+    const rect = timelineRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const percent = (clientX - rect.left) / rect.width;
+    const clickedTime = percent * timelineDuration;
+    
+    // The ride bar's left edge represents when the ride starts in video time
+    // syncOffset = -rideStartTime, so if user drags to time 5, syncOffset = -5
+    const newOffset = -clickedTime;
+    onSyncOffsetChange(Math.max(-60, Math.min(60, newOffset)));
+  }, [isDraggingRide, timelineDuration, onSyncOffsetChange]);
+
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-[10px]">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-mono text-muted-foreground">{formatDuration(Math.floor(duration))}</span>
-      </div>
+    <div className="space-y-2">
+      {/* Timeline */}
       <div 
-        ref={trackRef}
-        className="relative h-10 bg-secondary/50 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
-        onMouseDown={(e) => {
-          onDragStart();
-          handleDrag(e);
-        }}
-        onMouseMove={(e) => isDragging && handleDrag(e)}
-        onMouseUp={onDragEnd}
-        onMouseLeave={onDragEnd}
-        onTouchStart={(e) => {
-          onDragStart();
-          handleDrag(e);
-        }}
-        onTouchMove={(e) => isDragging && handleDrag(e)}
-        onTouchEnd={onDragEnd}
+        ref={timelineRef}
+        className="relative h-20 bg-zinc-800/50 rounded-lg overflow-hidden cursor-pointer"
+        onClick={handleTimelineClick}
+        onMouseMove={handleRideDrag}
+        onMouseUp={() => setIsDraggingRide(false)}
+        onMouseLeave={() => setIsDraggingRide(false)}
+        onTouchMove={handleRideDrag}
+        onTouchEnd={() => setIsDraggingRide(false)}
       >
-        {/* Track bar */}
-        <div 
-          className={cn(
-            "absolute top-1 bottom-1 rounded-md flex items-center gap-1 px-2 transition-colors",
-            isDragging ? "opacity-90" : "opacity-100"
-          )}
-          style={{ 
-            left: `${leftPercent}%`, 
-            width: `${widthPercent}%`,
-            backgroundColor: color,
-            minWidth: '60px'
-          }}
-        >
-          <GripVertical className="w-3 h-3 text-white/70 flex-shrink-0" />
-          <span className="text-[10px] text-white font-medium truncate">{label}</span>
-        </div>
-        
         {/* Time markers */}
-        <div className="absolute bottom-0 left-0 right-0 h-2 flex items-end justify-between px-1 pointer-events-none">
-          {[...Array(7)].map((_, i) => (
-            <div key={i} className="w-px h-1 bg-border" />
+        <div className="absolute inset-x-0 top-0 h-4 flex items-end px-2">
+          {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+            <div 
+              key={p} 
+              className="absolute flex flex-col items-center"
+              style={{ left: `${p * 100}%`, transform: 'translateX(-50%)' }}
+            >
+              <span className="text-[8px] text-white/30 font-mono">
+                {formatDuration(Math.floor(p * timelineDuration))}
+              </span>
+              <div className="w-px h-1 bg-white/20" />
+            </div>
           ))}
         </div>
+        
+        {/* Tracks area */}
+        <div className="absolute inset-x-0 top-5 bottom-1 px-2">
+          {/* Video Track (static) */}
+          <div 
+            className="absolute h-6 rounded bg-accent/80 flex items-center px-2 pointer-events-none"
+            style={{ 
+              left: `${videoStartPercent}%`, 
+              width: `${Math.max(videoWidthPercent, 5)}%`,
+              top: '0px'
+            }}
+          >
+            <span className="text-[9px] text-white font-medium truncate">📹 Video</span>
+          </div>
+          
+          {/* Ride Data Track (draggable) */}
+          <div 
+            className={cn(
+              "absolute h-6 rounded bg-blue-500/80 flex items-center px-2 cursor-grab active:cursor-grabbing transition-opacity",
+              isDraggingRide && "opacity-70"
+            )}
+            style={{ 
+              left: `${rideStartPercent}%`, 
+              width: `${Math.max(rideWidthPercent, 5)}%`,
+              top: '28px'
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              setIsDraggingRide(true);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              setIsDraggingRide(true);
+            }}
+          >
+            <GripVertical className="w-3 h-3 text-white/70 flex-shrink-0" />
+            <span className="text-[9px] text-white font-medium truncate ml-1">🏍️ Ride Data</span>
+          </div>
+        </div>
+        
+        {/* Playhead */}
+        <div 
+          className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg pointer-events-none z-10"
+          style={{ left: `${playheadPercent}%` }}
+        >
+          <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full" />
+        </div>
       </div>
+      
+      {/* Sync explanation */}
+      <p className="text-[10px] text-white/40 text-center">
+        Drag the ride data track to align with when your ride starts in the video
+      </p>
     </div>
   );
 }
@@ -344,7 +404,6 @@ export default function Studio() {
   
   // Sync state
   const [syncOffset, setSyncOffset] = useState<number>(0);
-  const [isDraggingTimeline, setIsDraggingTimeline] = useState(false);
   
   // Processing state
   const [stage, setStage] = useState<ProcessingStage>('idle');
@@ -560,9 +619,6 @@ export default function Studio() {
       </div>
     );
   }
-
-  const totalTimelineDuration = Math.max(videoDuration, ride.duration, 120);
-
   return (
     <div className="min-h-screen flex flex-col bg-black">
       {/* Header */}
@@ -728,71 +784,88 @@ export default function Studio() {
         {/* Timeline Panel */}
         {videoUrl && stage === 'idle' && (
           <div className="bg-zinc-900 border-t border-white/10 p-4 space-y-4">
-            {/* Sync Controls */}
+            {/* Sync Header with Set Sync Point button */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-white/50" />
-                <span className="text-xs text-white/70">Sync Offset</span>
+                <Clock className="w-4 h-4 text-accent" />
+                <span className="text-sm text-white font-medium">Sync Overlay</span>
               </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => nudgeOffset(-1)}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-sm font-mono text-white w-12 text-center">
-                  {syncOffset > 0 ? '+' : ''}{syncOffset.toFixed(1)}s
-                </span>
-                <button 
-                  onClick={() => nudgeOffset(1)}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => setSyncOffset(0)}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/50 ml-1"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                </button>
-              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Set the sync so that ride starts at current video time
+                  setSyncOffset(-currentTime);
+                  toast.success('Sync point set! Overlay will start here.');
+                }}
+                className="gap-1.5 text-xs h-7 border-accent/50 text-accent hover:bg-accent/10"
+              >
+                <Check className="w-3 h-3" />
+                Set Sync Point
+              </Button>
+            </div>
+            
+            {/* Instructions */}
+            <div className="bg-white/5 rounded-lg p-3 text-xs text-white/60 space-y-1">
+              <p className="font-medium text-white/80">How to sync:</p>
+              <ol className="list-decimal list-inside space-y-0.5">
+                <li>Play the video and pause when your ride actually starts</li>
+                <li>Tap "Set Sync Point" to align the overlay</li>
+                <li>Or drag the ride data track on the timeline below</li>
+              </ol>
             </div>
 
-            {/* Timeline Tracks */}
-            <div className="space-y-3">
-              {/* Video Track */}
-              <TimelineTrack
-                label="Video"
-                color="hsl(var(--accent))"
-                duration={videoDuration}
-                offset={0}
-                totalDuration={totalTimelineDuration}
-                onOffsetChange={() => {}}
-                isDragging={false}
-                onDragStart={() => {}}
-                onDragEnd={() => {}}
-              />
-              
-              {/* Ride Data Track - Draggable */}
-              <TimelineTrack
-                label="Ride Data"
-                color="hsl(220, 70%, 50%)"
-                duration={ride.duration}
-                offset={syncOffset}
-                totalDuration={totalTimelineDuration}
-                onOffsetChange={setSyncOffset}
-                isDragging={isDraggingTimeline}
-                onDragStart={() => setIsDraggingTimeline(true)}
-                onDragEnd={() => setIsDraggingTimeline(false)}
-              />
-            </div>
-
-            {/* Timeline Legend */}
-            <div className="flex items-center justify-between text-[10px] text-white/40">
-              <span>-60s</span>
-              <span>Drag the ride data track to sync with your video</span>
-              <span>+60s</span>
+            {/* Visual Timeline */}
+            <SyncTimeline
+              videoDuration={videoDuration}
+              rideDuration={ride.duration}
+              currentTime={currentTime}
+              syncOffset={syncOffset}
+              onSyncOffsetChange={setSyncOffset}
+              onSeek={(time) => {
+                if (videoRef.current) {
+                  videoRef.current.currentTime = time;
+                }
+              }}
+            />
+            
+            {/* Fine-tune controls */}
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-[10px] text-white/40">Fine-tune:</span>
+              <button 
+                onClick={() => nudgeOffset(-0.5)}
+                className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white/70"
+              >
+                -0.5s
+              </button>
+              <button 
+                onClick={() => nudgeOffset(-0.1)}
+                className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white/70"
+              >
+                -0.1s
+              </button>
+              <span className="text-xs font-mono text-white min-w-[50px] text-center">
+                {syncOffset > 0 ? '+' : ''}{syncOffset.toFixed(1)}s
+              </span>
+              <button 
+                onClick={() => nudgeOffset(0.1)}
+                className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white/70"
+              >
+                +0.1s
+              </button>
+              <button 
+                onClick={() => nudgeOffset(0.5)}
+                className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white/70"
+              >
+                +0.5s
+              </button>
+              <button 
+                onClick={() => setSyncOffset(0)}
+                className="p-1 rounded bg-white/10 hover:bg-white/20 text-white/40 ml-1"
+                title="Reset sync"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
             </div>
 
             {/* Reset Button */}
