@@ -16,17 +16,11 @@ function getScreenOrientationAngle(): number {
   if (screen.orientation && typeof screen.orientation.angle === 'number') {
     return screen.orientation.angle;
   }
-  // Legacy fallback
+  // Legacy fallback (window.orientation is deprecated but still works on many devices)
   if (typeof window.orientation === 'number') {
     return window.orientation;
   }
   return 0;
-}
-
-// Check if device is in landscape mode
-function isLandscape(): boolean {
-  const angle = getScreenOrientationAngle();
-  return Math.abs(angle) === 90 || angle === 270;
 }
 
 export function useLeanAngle(isActive: boolean = false) {
@@ -45,13 +39,11 @@ export function useLeanAngle(isActive: boolean = false) {
 
   // Request permission for iOS 13+
   const requestPermission = useCallback(async () => {
-    // Check if DeviceOrientationEvent is available
     if (typeof DeviceOrientationEvent === 'undefined') {
       console.log('[LeanAngle] DeviceOrientationEvent not supported');
       return false;
     }
 
-    // iOS 13+ requires permission
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
@@ -67,12 +59,11 @@ export function useLeanAngle(isActive: boolean = false) {
       }
     }
 
-    // Android and older iOS don't need permission
     setState(prev => ({ ...prev, permissionGranted: true, isSupported: true }));
     return true;
   }, []);
 
-  // Reset max values (call when starting a new ride)
+  // Reset max values
   const resetMax = useCallback(() => {
     maxLeanLeftRef.current = 0;
     maxLeanRightRef.current = 0;
@@ -89,14 +80,14 @@ export function useLeanAngle(isActive: boolean = false) {
   useEffect(() => {
     const updateOrientation = () => {
       orientationAngleRef.current = getScreenOrientationAngle();
+      // Reset smoothing when orientation changes to avoid jumps
+      smoothedLean.current = 0;
       console.log('[LeanAngle] Orientation changed:', orientationAngleRef.current);
     };
 
-    // Modern API
     if (screen.orientation) {
       screen.orientation.addEventListener('change', updateOrientation);
     }
-    // Legacy fallback
     window.addEventListener('orientationchange', updateOrientation);
 
     return () => {
@@ -110,7 +101,6 @@ export function useLeanAngle(isActive: boolean = false) {
   useEffect(() => {
     if (!isActive) return;
 
-    // Check support
     if (typeof DeviceOrientationEvent === 'undefined') {
       console.log('[LeanAngle] Not supported on this device');
       return;
@@ -119,91 +109,103 @@ export function useLeanAngle(isActive: boolean = false) {
     setState(prev => ({ ...prev, isSupported: true }));
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      const { beta, gamma } = event;
+      const { alpha, beta, gamma } = event;
       
       if (beta === null || gamma === null) return;
 
       const screenAngle = orientationAngleRef.current;
       
-      let leanAngle: number;
+      // The goal: calculate the "roll" of the device as if screen is facing the user
+      // This represents the motorcycle's lean angle
+      //
+      // Device orientation axes (when screen faces you in portrait):
+      // - beta: pitch (tilt forward/back), 0 = vertical, 90 = flat on back
+      // - gamma: roll (tilt left/right), -90 to 90
+      //
+      // When screen is rotated to landscape, the physical axes stay the same
+      // but what WE perceive as "lean" changes:
+      // - Portrait: lean = gamma (tilt left/right)
+      // - Landscape-left (90°): lean = beta (but inverted)
+      // - Landscape-right (270°/-90°): lean = -beta
       
-      // Adjust for screen orientation
-      // In portrait (0°): gamma is lean, beta is pitch
-      // In landscape-left (90°): beta becomes lean (inverted), gamma becomes pitch
-      // In landscape-right (-90° or 270°): beta becomes lean, gamma becomes pitch
+      let rawLean: number;
+      let isScreenFacingUser: boolean;
       
-      if (screenAngle === 90) {
-        // Landscape left (home button on right for iOS, or rotated left)
-        // In this orientation, beta represents the roll/lean
-        // Device upright facing user: beta ≈ 0 when flat in this orientation
-        const absBeta = Math.abs(beta);
+      // Determine if screen is approximately facing the user (not laying flat)
+      // In portrait: beta should be roughly 45-135° (screen upright or slightly tilted)
+      // In landscape: gamma should be roughly -45 to 45° (not tilted sideways too much)
+      
+      if (screenAngle === 0 || screenAngle === 180) {
+        // Portrait orientation
+        // Screen facing user when beta is roughly 45-135
+        isScreenFacingUser = Math.abs(beta) > 30 && Math.abs(beta) < 150;
         
-        if (absBeta < 45 || absBeta > 135) {
-          // Device is more horizontal in landscape - use beta directly
-          leanAngle = -beta; // Invert for correct left/right
-        } else {
-          // Device upright in landscape - beta is lean
-          leanAngle = -beta;
-        }
-      } else if (screenAngle === -90 || screenAngle === 270) {
-        // Landscape right (home button on left for iOS, or rotated right)
-        // Beta represents roll but opposite direction
-        const absBeta = Math.abs(beta);
-        
-        if (absBeta < 45 || absBeta > 135) {
-          leanAngle = beta;
-        } else {
-          leanAngle = beta;
-        }
-      } else {
-        // Portrait mode (0° or 180°) - original logic
-        // Convert to radians for accurate calculation
-        const betaRad = (beta * Math.PI) / 180;
-        const gammaRad = (gamma * Math.PI) / 180;
-        
-        // Calculate the effective lean based on device orientation
-        const absBeta = Math.abs(beta);
-        
-        if (absBeta > 45 && absBeta < 135) {
-          // Device is upright (facing rider)
-          const pitchFromUpright = Math.abs(beta - 90) * (Math.PI / 180);
-          const correctionFactor = Math.cos(pitchFromUpright);
+        if (isScreenFacingUser) {
+          // Gamma is the roll (lean left/right)
+          rawLean = gamma;
           
-          leanAngle = gamma * correctionFactor;
-          
+          // If phone is upside-down portrait (beta > 90), gamma direction flips
           if (beta > 90) {
-            leanAngle = -leanAngle;
+            rawLean = -gamma;
+          }
+          
+          // If screen is rotated 180° (upside-down), flip again
+          if (screenAngle === 180) {
+            rawLean = -rawLean;
           }
         } else {
-          // Device is more horizontal (flat)
-          leanAngle = gamma;
+          // Screen is too flat - can't reliably measure lean
+          rawLean = 0;
         }
+      } else {
+        // Landscape orientation (90° or 270°/-90°)
+        // Screen facing user when the device isn't tilted too far forward/back
+        // In landscape, beta now represents what was gamma's role
+        isScreenFacingUser = Math.abs(gamma) < 60;
         
-        // Handle upside-down portrait
-        if (screenAngle === 180) {
-          leanAngle = -leanAngle;
+        if (isScreenFacingUser) {
+          // In landscape, beta represents the lean
+          // But we need to account for gamma (how much the screen is tilted toward/away from user)
+          
+          if (screenAngle === 90) {
+            // Landscape-left: home button on right (iOS) or rotated CCW
+            // When bike leans right, beta decreases (becomes more negative)
+            rawLean = -beta;
+          } else {
+            // Landscape-right (270° or -90°): home button on left or rotated CW  
+            // When bike leans right, beta increases
+            rawLean = beta;
+          }
+          
+          // Apply correction for gamma (screen tilt toward/away from user)
+          // When gamma is near ±90, we're losing accuracy
+          const gammaCorrection = Math.cos((gamma * Math.PI) / 180);
+          rawLean = rawLean * Math.abs(gammaCorrection);
+        } else {
+          // Screen is tilted too much sideways - can't reliably measure
+          rawLean = 0;
         }
       }
       
       // Clamp to reasonable range (-60 to 60 degrees)
-      leanAngle = Math.max(-60, Math.min(60, leanAngle));
+      rawLean = Math.max(-60, Math.min(60, rawLean));
 
       // Apply smoothing
-      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (leanAngle - smoothedLean.current);
+      smoothedLean.current = smoothedLean.current + SMOOTHING_FACTOR * (rawLean - smoothedLean.current);
       
       const currentLean = Math.round(smoothedLean.current);
       
-      // Track max lean angles
-      if (currentLean < 0) {
-        // Leaning left
-        const leftAngle = Math.abs(currentLean);
-        if (leftAngle > maxLeanLeftRef.current) {
-          maxLeanLeftRef.current = leftAngle;
-        }
-      } else if (currentLean > 0) {
-        // Leaning right
-        if (currentLean > maxLeanRightRef.current) {
-          maxLeanRightRef.current = currentLean;
+      // Track max lean angles (only when screen is facing user)
+      if (isScreenFacingUser) {
+        if (currentLean < 0) {
+          const leftAngle = Math.abs(currentLean);
+          if (leftAngle > maxLeanLeftRef.current) {
+            maxLeanLeftRef.current = leftAngle;
+          }
+        } else if (currentLean > 0) {
+          if (currentLean > maxLeanRightRef.current) {
+            maxLeanRightRef.current = currentLean;
+          }
         }
       }
 
@@ -223,7 +225,6 @@ export function useLeanAngle(isActive: boolean = false) {
     };
   }, [isActive]);
 
-  // Get the absolute max lean (whichever side was higher)
   const maxLean = Math.max(state.maxLeanLeft, state.maxLeanRight);
 
   return {
