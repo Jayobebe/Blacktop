@@ -79,19 +79,19 @@ function OverlayLayer({
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Top corners - max stats */}
-      <div className="absolute top-0 inset-x-0 px-3 pt-2 flex justify-between">
+      <div className="absolute top-0 inset-x-0 px-2 pt-1.5 flex justify-between">
         {/* Top Left - Max Speed */}
-        <div className="bg-black/60 rounded px-2 py-1">
-          <p className="text-[8px] text-white/50 uppercase">Max Speed</p>
-          <p className="font-mono text-sm font-bold text-white leading-none">
-            {Math.round(runningMaxSpeed)} <span className="text-[10px] text-white/60">{speedLabel}</span>
+        <div className="bg-black/60 rounded px-1.5 py-0.5">
+          <p className="text-[6px] text-white/50 uppercase">Max Speed</p>
+          <p className="font-mono text-[10px] font-bold text-white leading-none">
+            {Math.round(runningMaxSpeed)} <span className="text-[8px] text-white/60">{speedLabel}</span>
           </p>
         </div>
         
         {/* Top Right - Max Lean */}
-        <div className="bg-black/60 rounded px-2 py-1 text-right">
-          <p className="text-[8px] text-white/50 uppercase">Max Lean</p>
-          <p className="font-mono text-sm font-bold text-white leading-none">
+        <div className="bg-black/60 rounded px-1.5 py-0.5 text-right">
+          <p className="text-[6px] text-white/50 uppercase">Max Lean</p>
+          <p className="font-mono text-[10px] font-bold text-white leading-none">
             {runningMaxLean}°
           </p>
         </div>
@@ -101,55 +101,55 @@ function OverlayLayer({
       <div className="absolute inset-x-0 bottom-0">
         {/* Black faded gradient bar */}
         <div 
-          className="w-full h-16"
+          className="w-full h-10"
           style={{
             background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)'
           }}
         />
         
         {/* Stats overlay */}
-        <div className="absolute bottom-0 inset-x-0 px-3 pb-1.5 flex items-end justify-between">
+        <div className="absolute bottom-0 inset-x-0 px-2 pb-1 flex items-end justify-between">
           {/* Bottom Left - Total Distance */}
-          <div className="text-left pb-0.5">
-            <p className="font-mono text-sm font-bold text-white leading-none">
-              {formatDistance(currentDistance, distanceUnit)} <span className="text-[10px] text-white/60">{distLabel}</span>
+          <div className="text-left">
+            <p className="font-mono text-[10px] font-bold text-white leading-none">
+              {formatDistance(currentDistance, distanceUnit)} <span className="text-[8px] text-white/60">{distLabel}</span>
             </p>
           </div>
           
           {/* Bottom Center - Lean arc with live speed underneath */}
           <div className="relative flex flex-col items-center">
             {/* Lean Angle Arc - wider, shallower arc */}
-            <svg className="w-20 h-5" viewBox="0 0 80 20">
+            <svg className="w-14 h-3.5" viewBox="0 0 80 20">
               {/* Background arc - wide and shallow */}
               <path
                 d="M 4 20 A 38 18 0 0 1 76 20"
                 fill="none"
                 stroke="rgba(255,255,255,0.2)"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
               {/* Active lean indicator dot */}
               <circle
                 cx={40 + Math.sin(leanRotation * Math.PI / 180) * 36}
                 cy={20 - Math.cos(leanRotation * Math.PI / 180) * 16}
-                r="3"
+                r="3.5"
                 fill="white"
               />
             </svg>
             
             {/* Live lean angle */}
-            <span className="text-[10px] text-white/70 font-mono">{Math.abs(Math.round(simulatedLean))}°</span>
+            <span className="text-[8px] text-white/70 font-mono">{Math.abs(Math.round(simulatedLean))}°</span>
             
             {/* Live speed */}
             <div className="flex items-baseline gap-0.5">
-              <span className="font-mono text-lg font-bold text-white leading-none">{Math.round(currentSpeed)}</span>
-              <span className="text-[10px] text-white/60">{speedLabel}</span>
+              <span className="font-mono text-sm font-bold text-white leading-none">{Math.round(currentSpeed)}</span>
+              <span className="text-[8px] text-white/60">{speedLabel}</span>
             </div>
           </div>
           
           {/* Bottom Right - Total Time */}
-          <div className="text-right pb-0.5">
-            <p className="font-mono text-sm font-bold text-white leading-none">
+          <div className="text-right">
+            <p className="font-mono text-[10px] font-bold text-white leading-none">
               {formatDuration(Math.max(0, currentDuration))}
             </p>
           </div>
