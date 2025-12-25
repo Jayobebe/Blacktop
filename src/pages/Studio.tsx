@@ -389,7 +389,7 @@ function SyncTimeline({
 export default function Studio() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rides } = useRideHistory();
+  const { rides, addRideRecording, markRecordingSaved } = useRideHistory();
   const { settings } = useSettings();
   
   const ride = rides.find(r => r.id === id);
@@ -587,16 +587,68 @@ export default function Studio() {
     }
   };
 
-  const downloadOutput = () => {
+  const downloadOutput = async () => {
     if (!outputUrl || !ride) return;
     
-    const a = document.createElement('a');
-    a.href = outputUrl;
-    const baseName = ride.name || `ride-${new Date(ride.startedAt).toISOString().split('T')[0]}`;
-    a.download = `${baseName}-overlay.mp4`;
-    a.click();
-    
-    toast.success('Video downloaded!');
+    try {
+      // Fetch the blob to get its size
+      const response = await fetch(outputUrl);
+      const blob = await response.blob();
+      
+      // Create download link
+      const a = document.createElement('a');
+      a.href = outputUrl;
+      const baseName = ride.name || `ride-${new Date(ride.startedAt).toISOString().split('T')[0]}`;
+      const filename = `${baseName}-overlay.mp4`;
+      a.download = filename;
+      a.click();
+      
+      // Generate thumbnail from the processed video
+      let thumbnailUrl: string | undefined;
+      try {
+        const tempVideo = document.createElement('video');
+        tempVideo.src = outputUrl;
+        tempVideo.crossOrigin = 'anonymous';
+        tempVideo.muted = true;
+        
+        await new Promise<void>((resolve, reject) => {
+          tempVideo.onloadeddata = () => {
+            tempVideo.currentTime = 1; // Seek to 1 second for thumbnail
+          };
+          tempVideo.onseeked = () => resolve();
+          tempVideo.onerror = reject;
+          setTimeout(reject, 5000); // Timeout after 5s
+        });
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = tempVideo.videoWidth;
+        canvas.height = tempVideo.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(tempVideo, 0, 0);
+          thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+        }
+      } catch (thumbError) {
+        console.warn('Could not generate thumbnail:', thumbError);
+      }
+      
+      // Save as ride recording so it appears in gallery
+      const recording = {
+        id: crypto.randomUUID(),
+        filename,
+        thumbnailUrl,
+        savedAt: new Date().toISOString(),
+        duration: videoDuration,
+        size: blob.size,
+      };
+      
+      addRideRecording(ride.id, recording);
+      
+      toast.success('Video saved to gallery!');
+    } catch (error) {
+      console.error('Error saving video:', error);
+      toast.error('Failed to save video');
+    }
   };
 
   const resetVideo = () => {
