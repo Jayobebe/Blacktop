@@ -16,6 +16,7 @@ import ActiveRide from "./pages/ActiveRide";
 import DemoShowcase from "./pages/DemoShowcase";
 import History from "./pages/History";
 import RideDetail from "./pages/RideDetail";
+import Studio from "./pages/Studio";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
 import Install from "./pages/Install";
@@ -56,6 +57,7 @@ function AppRoutes() {
       <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
+      <Route path="/studio/:id" element={<Studio />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/install" element={<Install />} />
