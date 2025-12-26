@@ -825,23 +825,6 @@ export default function ActiveRide() {
         )}
       </div>
 
-      {/* Orientation Lock Button */}
-      <button
-        onClick={toggleOrientationLock}
-        className={cn(
-          "fixed bottom-24 right-4 z-40 p-3 rounded-full shadow-lg transition-all duration-200",
-          isOrientationLocked 
-            ? "bg-accent text-accent-foreground" 
-            : "bg-card/80 backdrop-blur-sm border border-border/50 text-muted-foreground hover:text-foreground"
-        )}
-        title={isOrientationLocked ? "Unlock screen rotation" : "Lock screen rotation"}
-      >
-        {isOrientationLocked ? (
-          <Lock className="w-5 h-5" />
-        ) : (
-          <Unlock className="w-5 h-5" />
-        )}
-      </button>
 
       {/* Live Stream Viewer */}
       <LiveStreamViewer
