@@ -34,8 +34,8 @@ export function OrientationProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(() => getOrientationFromDimensions());
-  const [isLocked, setIsLocked] = useState(false);
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [isLocked, setIsLocked] = useState(true); // Lock to portrait by default
   const lastConfirmedOrientation = useRef(orientation);
   const isLockedRef = useRef(isLocked);
   
