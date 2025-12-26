@@ -157,6 +157,28 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fillText(speedLabel, width / 2, height - 25);
 
+    // Bottom Center-Right - Live Lean Angle (only if ride has lean data)
+    if (showLean) {
+      const leanX = width / 2 + 180;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '12px system-ui';
+      ctx.fillText('LEAN', leanX, height - 70);
+      
+      // Color based on lean direction
+      const leanValue = Math.round(stats.leanAngle);
+      const leanColor = leanValue < 0 ? '#3b82f6' : leanValue > 0 ? '#ef4444' : 'white';
+      ctx.fillStyle = leanColor;
+      ctx.font = 'bold 36px monospace';
+      ctx.fillText(`${Math.abs(leanValue)}°`, leanX, height - 55);
+      
+      // Direction indicator
+      ctx.font = '14px system-ui';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      const direction = leanValue < 0 ? 'LEFT' : leanValue > 0 ? 'RIGHT' : '';
+      ctx.fillText(direction, leanX, height - 25);
+    }
+
     // Bottom Right - Duration (elapsed)
     ctx.textAlign = 'right';
     ctx.fillStyle = 'white';
@@ -286,7 +308,7 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
           <ul className="list-disc list-inside pl-2 space-y-0.5">
             <li>Live speed & running max speed</li>
             <li>Elapsed distance & time</li>
-            {hasLeanData && <li>Running max lean angle</li>}
+            {hasLeanData && <li>Live lean angle & running max lean</li>}
           </ul>
         </div>
 
