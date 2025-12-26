@@ -82,8 +82,6 @@ export const ACTION_CAM_OPTIONS: { id: ActionCamBrand; label: string; instructio
   },
 ];
 
-export type OrientationLock = 'portrait' | 'landscape' | 'auto';
-
 export interface AppSettings {
   showSpeedRankings: boolean;
   speedUnit: SpeedUnit;
@@ -97,7 +95,6 @@ export interface AppSettings {
   showStatsOverlay: boolean;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
-  orientationLock: OrientationLock;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -113,7 +110,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   showStatsOverlay: true,
   leanAngleEnabled: false,
   leanAngleThreshold: 45, // Default warning at 45 degrees
-  orientationLock: 'portrait', // Lock to portrait by default
 };
 
 export function useSettings() {
