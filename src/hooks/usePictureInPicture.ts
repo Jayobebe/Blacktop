@@ -17,8 +17,8 @@ export function usePictureInPicture() {
   const [isPiPSupported, setIsPiPSupported] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const isActiveRef = useRef(false); // Use ref to avoid stale closure in animation loop
+  const intervalRef = useRef<number | null>(null); // Use setInterval for background support
+  const isActiveRef = useRef(false);
   const statsRef = useRef<PiPStats>({
     speed: 0,
     distance: 0,
@@ -69,28 +69,26 @@ export function usePictureInPicture() {
     ctx.fillRect(centerX - 1, y - 2, 2, barHeight + 4);
     
     const leanAngle = stats.leanAngle || 0;
-    const maxLean = 45; // Maximum lean angle for visualization
+    const maxLean = 45;
     
     // Current lean indicator
     const leanPercent = Math.min(Math.abs(leanAngle) / maxLean, 1);
     const leanWidth = (barWidth / 2) * leanPercent;
     
     // Gradient based on lean intensity
-    let leanColor = '#22c55e'; // Green for low lean
+    let leanColor = '#22c55e';
     if (Math.abs(leanAngle) > 30) {
-      leanColor = '#ef4444'; // Red for high lean
+      leanColor = '#ef4444';
     } else if (Math.abs(leanAngle) > 20) {
-      leanColor = '#f59e0b'; // Amber for medium lean
+      leanColor = '#f59e0b';
     }
     
     ctx.fillStyle = leanColor;
     if (leanAngle < 0) {
-      // Leaning left
       ctx.beginPath();
       ctx.roundRect(centerX - leanWidth, y, leanWidth, barHeight, 2);
       ctx.fill();
     } else if (leanAngle > 0) {
-      // Leaning right
       ctx.beginPath();
       ctx.roundRect(centerX, y, leanWidth, barHeight, 2);
       ctx.fill();
@@ -105,20 +103,10 @@ export function usePictureInPicture() {
 
   const drawStats = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) {
-      if (isActiveRef.current) {
-        animationFrameRef.current = requestAnimationFrame(drawStats);
-      }
-      return;
-    }
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      if (isActiveRef.current) {
-        animationFrameRef.current = requestAnimationFrame(drawStats);
-      }
-      return;
-    }
+    if (!ctx) return;
 
     const stats = statsRef.current;
     const width = canvas.width;
@@ -178,10 +166,27 @@ export function usePictureInPicture() {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
     ctx.fillText(formatDuration(stats.duration), width - 16, height - 20);
+  }, []);
 
-    // Schedule next frame using ref instead of state
-    if (isActiveRef.current) {
-      animationFrameRef.current = requestAnimationFrame(drawStats);
+  const startDrawLoop = useCallback(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    // Use setInterval instead of requestAnimationFrame
+    // setInterval continues running even when the page is in background
+    intervalRef.current = window.setInterval(() => {
+      if (isActiveRef.current) {
+        drawStats();
+      }
+    }, 33); // ~30fps
+  }, [drawStats]);
+
+  const stopDrawLoop = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
   }, []);
 
@@ -258,12 +263,12 @@ export function usePictureInPicture() {
         }
       }
 
-      // Mark as active BEFORE starting animation loop
+      // Mark as active BEFORE starting draw loop
       isActiveRef.current = true;
       setIsPiPActive(true);
 
-      // Start drawing stats animation
-      drawStats();
+      // Start drawing stats with setInterval (works in background)
+      startDrawLoop();
 
       console.log('[PiP] Requesting PiP...');
       
@@ -277,10 +282,7 @@ export function usePictureInPicture() {
         console.log('[PiP] Left PiP mode');
         isActiveRef.current = false;
         setIsPiPActive(false);
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = null;
-        }
+        stopDrawLoop();
       };
       
       videoRef.current.addEventListener('leavepictureinpicture', handleLeavePiP, { once: true });
@@ -290,27 +292,24 @@ export function usePictureInPicture() {
       console.error('[PiP] Failed to start Picture-in-Picture:', error);
       isActiveRef.current = false;
       setIsPiPActive(false);
+      stopDrawLoop();
       return false;
     }
-  }, [isPiPSupported, drawStats]);
+  }, [isPiPSupported, startDrawLoop, stopDrawLoop]);
 
   const stopPiP = useCallback(async () => {
     try {
       isActiveRef.current = false;
+      stopDrawLoop();
       
       if ((document as any).pictureInPictureElement) {
         await (document as any).exitPictureInPicture();
       }
       setIsPiPActive(false);
-      
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
     } catch (error) {
       console.error('[PiP] Failed to exit Picture-in-Picture:', error);
     }
-  }, []);
+  }, [stopDrawLoop]);
 
   const togglePiP = useCallback(async () => {
     console.log('[PiP] Toggle called, current state:', isPiPActive);
@@ -329,8 +328,8 @@ export function usePictureInPicture() {
   useEffect(() => {
     return () => {
       isActiveRef.current = false;
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
       if ((document as any).pictureInPictureElement) {
         (document as any).exitPictureInPicture().catch(() => {});
