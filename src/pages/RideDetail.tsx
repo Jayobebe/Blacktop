@@ -4,13 +4,14 @@ import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, Film } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
+import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlayBlob } = useRideHistory();
+  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
@@ -264,16 +265,47 @@ export default function RideDetail() {
           </div>
         )}
 
-        {/* Download Overlay Section - only show if overlay was recorded */}
-        {ride.overlayBlobUrl && (
+        {/* Download Overlay Section - show if overlay was recorded */}
+        {(ride.overlayAvailable || ride.overlayBlobUrl) && (
           <button
-            onClick={() => {
-              const a = document.createElement('a');
-              a.href = ride.overlayBlobUrl!;
-              a.download = `${ride.name || formatDate(ride.startedAt)}-overlay.webm`;
-              a.click();
-              toast.success('Overlay video downloaded!');
-              clearRideOverlayBlob(ride.id);
+            onClick={async () => {
+              // Generate filename from ride name (same sanitization as recording)
+              const baseName = ride.name || formatDate(ride.startedAt);
+              const sanitized = baseName.replace(/[/\\?%*:|"<>]/g, '-').trim();
+              const filename = `${sanitized}-overlay.webm`;
+
+              try {
+                // Prefer persisted overlay blob (survives refresh)
+                let blob = await getRideOverlayBlob(ride.id);
+
+                // Backward compat: try legacy blob URL if present
+                if (!blob && ride.overlayBlobUrl) {
+                  const resp = await fetch(ride.overlayBlobUrl);
+                  blob = await resp.blob();
+                }
+
+                if (!blob) {
+                  toast.error('Overlay not available on this device anymore');
+                  return;
+                }
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                await deleteRideOverlayBlob(ride.id);
+                clearRideOverlay(ride.id);
+                toast.success('Overlay video downloaded!');
+              } catch (error) {
+                console.error('Failed to download overlay video:', error);
+                toast.error('Failed to download overlay video');
+              }
             }}
             className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group"
           >
