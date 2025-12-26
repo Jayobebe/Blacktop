@@ -16,7 +16,6 @@ function ColorWheel({ label, value, onChange, size = 'md' }: ColorWheelProps) {
   
   const wheelSize = size === 'sm' ? 'w-16 h-16' : 'w-20 h-20';
   
-  // Convert RGB offset (-1 to 1) to position on wheel
   const offsetToPosition = (r: number, g: number, b: number) => {
     const x = (r - b) / 2;
     const y = -g;
@@ -132,10 +131,10 @@ function ColorWheel({ label, value, onChange, size = 'md' }: ColorWheelProps) {
   );
 }
 
-// Offset wheel for overall contrast (black/white slider style)
+// Offset wheel for overall contrast
 interface OffsetWheelProps {
   label: string;
-  value: number; // -1 to 1
+  value: number;
   onChange: (value: number) => void;
 }
 
@@ -147,11 +146,9 @@ function OffsetWheel({ label, value, onChange }: OffsetWheelProps) {
     if (!wheelRef.current) return;
     
     const rect = wheelRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const radius = rect.width / 2;
     
-    // Use distance from center for offset value
     const dy = (centerY - clientY) / radius;
     const newValue = Math.max(-1, Math.min(1, dy));
     
@@ -231,128 +228,59 @@ function OffsetWheel({ label, value, onChange }: OffsetWheelProps) {
   );
 }
 
-// Curves/Levels control point
-interface CurvePoint {
-  x: number; // 0-1 (input level)
-  y: number; // 0-1 (output level)
+// Level Slider component for tonal adjustments
+interface LevelSliderProps {
+  label: string;
+  value: number; // -1 to 1
+  onChange: (value: number) => void;
+  color?: string;
+  icon?: React.ReactNode;
 }
 
-interface LevelsCurveProps {
-  points: CurvePoint[];
-  onChange: (points: CurvePoint[]) => void;
-  channel: 'rgb' | 'r' | 'g' | 'b';
-}
-
-function LevelsCurve({ points, onChange, channel }: LevelsCurveProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+function LevelSlider({ label, value, onChange, color = 'white', icon }: LevelSliderProps) {
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
-  const channelColors = {
-    rgb: 'white',
-    r: '#ff6b6b',
-    g: '#69db7c',
-    b: '#74c0fc',
-  };
+  const handleInteraction = useCallback((clientX: number) => {
+    if (!sliderRef.current) return;
+    
+    const rect = sliderRef.current.getBoundingClientRect();
+    const percent = (clientX - rect.left) / rect.width;
+    const newValue = Math.max(-1, Math.min(1, (percent - 0.5) * 2));
+    
+    onChange(newValue);
+  }, [onChange]);
   
-  const color = channelColors[channel];
-  
-  // Generate smooth curve path through points
-  const generatePath = () => {
-    if (points.length < 2) return '';
-    
-    const sortedPoints = [...points].sort((a, b) => a.x - b.x);
-    const pathPoints = sortedPoints.map(p => ({
-      x: p.x * 100,
-      y: (1 - p.y) * 100,
-    }));
-    
-    let path = `M ${pathPoints[0].x} ${pathPoints[0].y}`;
-    
-    for (let i = 1; i < pathPoints.length; i++) {
-      const prev = pathPoints[i - 1];
-      const curr = pathPoints[i];
-      const cpx = (prev.x + curr.x) / 2;
-      path += ` Q ${cpx} ${prev.y} ${curr.x} ${curr.y}`;
-    }
-    
-    return path;
-  };
-  
-  const handleSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!svgRef.current || draggingIndex !== null) return;
-    
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = 1 - (e.clientY - rect.top) / rect.height;
-    
-    // Add new point
-    const newPoints = [...points, { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) }];
-    onChange(newPoints);
-  };
-  
-  const handlePointMouseDown = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDraggingIndex(index);
-  };
-  
-  const handlePointTouchStart = (index: number, e: React.TouchEvent) => {
-    e.stopPropagation();
-    setDraggingIndex(index);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    handleInteraction(e.clientX);
   };
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (draggingIndex === null || !svgRef.current) return;
-    
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const y = Math.max(0, Math.min(1, 1 - (e.clientY - rect.top) / rect.height));
-    
-    const newPoints = [...points];
-    // Don't allow moving first or last point horizontally
-    if (draggingIndex === 0) {
-      newPoints[draggingIndex] = { x: 0, y };
-    } else if (draggingIndex === points.length - 1) {
-      newPoints[draggingIndex] = { x: 1, y };
-    } else {
-      newPoints[draggingIndex] = { x, y };
+    if (isDragging) {
+      handleInteraction(e.clientX);
     }
-    onChange(newPoints);
-  }, [draggingIndex, points, onChange]);
-  
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (draggingIndex === null || !svgRef.current) return;
-    
-    const touch = e.touches[0];
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-    const y = Math.max(0, Math.min(1, 1 - (touch.clientY - rect.top) / rect.height));
-    
-    const newPoints = [...points];
-    if (draggingIndex === 0) {
-      newPoints[draggingIndex] = { x: 0, y };
-    } else if (draggingIndex === points.length - 1) {
-      newPoints[draggingIndex] = { x: 1, y };
-    } else {
-      newPoints[draggingIndex] = { x, y };
-    }
-    onChange(newPoints);
-  }, [draggingIndex, points, onChange]);
+  }, [isDragging, handleInteraction]);
   
   const handleMouseUp = useCallback(() => {
-    setDraggingIndex(null);
+    setIsDragging(false);
   }, []);
   
-  const handleDoubleClick = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Don't delete first or last point
-    if (index === 0 || index === points.length - 1) return;
-    
-    const newPoints = points.filter((_, i) => i !== index);
-    onChange(newPoints);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    const touch = e.touches[0];
+    handleInteraction(touch.clientX);
   };
   
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (isDragging) {
+      const touch = e.touches[0];
+      handleInteraction(touch.clientX);
+    }
+  }, [isDragging, handleInteraction]);
+  
   useEffect(() => {
-    if (draggingIndex !== null) {
+    if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       window.addEventListener('touchmove', handleTouchMove);
@@ -364,56 +292,56 @@ function LevelsCurve({ points, onChange, channel }: LevelsCurveProps) {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [draggingIndex, handleMouseMove, handleMouseUp, handleTouchMove]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
   
-  const sortedPoints = [...points].sort((a, b) => a.x - b.x);
+  const indicatorPercent = (value + 1) / 2 * 100;
   
   return (
-    <svg
-      ref={svgRef}
-      viewBox="0 0 100 100"
-      className="w-full h-24 bg-zinc-800 rounded border border-white/10 cursor-crosshair touch-none"
-      onClick={handleSvgClick}
-      preserveAspectRatio="none"
-    >
-      {/* Grid lines */}
-      <line x1="25" y1="0" x2="25" y2="100" stroke="white" strokeOpacity="0.1" strokeWidth="0.5" />
-      <line x1="50" y1="0" x2="50" y2="100" stroke="white" strokeOpacity="0.1" strokeWidth="0.5" />
-      <line x1="75" y1="0" x2="75" y2="100" stroke="white" strokeOpacity="0.1" strokeWidth="0.5" />
-      <line x1="0" y1="25" x2="100" y2="25" stroke="white" strokeOpacity="0.1" strokeWidth="0.5" />
-      <line x1="0" y1="50" x2="100" y2="50" stroke="white" strokeOpacity="0.1" strokeWidth="0.5" />
-      <line x1="0" y1="75" x2="100" y2="75" stroke="white" strokeOpacity="0.1" strokeWidth="0.5" />
-      
-      {/* Diagonal reference line */}
-      <line x1="0" y1="100" x2="100" y2="0" stroke="white" strokeOpacity="0.2" strokeWidth="0.5" strokeDasharray="2,2" />
-      
-      {/* Curve path */}
-      <path
-        d={generatePath()}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      
-      {/* Control points */}
-      {sortedPoints.map((point, index) => (
-        <circle
-          key={index}
-          cx={point.x * 100}
-          cy={(1 - point.y) * 100}
-          r="4"
-          fill={color}
-          stroke="white"
-          strokeWidth="1"
-          className="cursor-grab active:cursor-grabbing"
-          onMouseDown={(e) => handlePointMouseDown(index, e)}
-          onTouchStart={(e) => handlePointTouchStart(index, e)}
-          onDoubleClick={(e) => handleDoubleClick(index, e)}
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 w-20">
+        {icon}
+        <span className="text-[10px] text-white/60 uppercase tracking-wider">{label}</span>
+      </div>
+      <div
+        ref={sliderRef}
+        className="flex-1 h-6 rounded-full cursor-ew-resize touch-none relative overflow-hidden"
+        style={{
+          background: `linear-gradient(to right, 
+            rgba(0,0,0,0.8) 0%, 
+            rgba(60,60,60,0.8) 50%, 
+            ${color === 'white' ? 'rgba(255,255,255,0.8)' : color} 100%
+          )`,
+        }}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+      >
+        {/* Center marker */}
+        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-white/30" />
+        
+        {/* Indicator */}
+        <div 
+          className="absolute top-1 bottom-1 w-3 rounded-full shadow-lg transform -translate-x-1/2 transition-none"
+          style={{
+            left: `${indicatorPercent}%`,
+            backgroundColor: color,
+            border: '2px solid white',
+          }}
         />
-      ))}
-    </svg>
+      </div>
+      <span className="text-[9px] text-white/40 font-mono w-8 text-right">
+        {value > 0 ? '+' : ''}{(value * 100).toFixed(0)}
+      </span>
+    </div>
   );
+}
+
+// Levels adjustments interface
+interface LevelsValues {
+  shadows: number;
+  midtones: number;
+  highlights: number;
+  blacks: number;
+  whites: number;
 }
 
 interface ColorGradingValues {
@@ -421,9 +349,7 @@ interface ColorGradingValues {
   gamma: { r: number; g: number; b: number };
   gain: { r: number; g: number; b: number };
   offset: number;
-  curves: {
-    rgb: CurvePoint[];
-  };
+  levels: LevelsValues;
 }
 
 interface ColorGradingPanelProps {
@@ -432,10 +358,13 @@ interface ColorGradingPanelProps {
   onGradingChange: (values: ColorGradingValues) => void;
 }
 
-const defaultCurvePoints: CurvePoint[] = [
-  { x: 0, y: 0 },
-  { x: 1, y: 1 },
-];
+const defaultLevels: LevelsValues = {
+  shadows: 0,
+  midtones: 0,
+  highlights: 0,
+  blacks: 0,
+  whites: 0,
+};
 
 export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: ColorGradingPanelProps) {
   const [frames, setFrames] = useState<{ time: number; dataUrl: string }[]>([]);
@@ -446,12 +375,9 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
     gamma: { r: 0, g: 0, b: 0 },
     gain: { r: 0, g: 0, b: 0 },
     offset: 0,
-    curves: {
-      rgb: [...defaultCurvePoints],
-    },
+    levels: { ...defaultLevels },
   });
   
-  // Extract 5 frames from video at evenly distributed times (lazy - only on demand)
   const extractFrames = useCallback(async () => {
     if (!videoRef.current || videoDuration <= 0) return;
     
@@ -515,7 +441,7 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
     onGradingChange(grading);
   }, [grading, onGradingChange]);
   
-  const updateGrading = (key: keyof Omit<ColorGradingValues, 'offset' | 'curves'>, value: { r: number; g: number; b: number }) => {
+  const updateGrading = (key: keyof Omit<ColorGradingValues, 'offset' | 'levels'>, value: { r: number; g: number; b: number }) => {
     setGrading(prev => ({ ...prev, [key]: value }));
   };
   
@@ -523,10 +449,10 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
     setGrading(prev => ({ ...prev, offset: value }));
   };
   
-  const updateCurve = (channel: 'rgb', points: CurvePoint[]) => {
+  const updateLevel = (key: keyof LevelsValues, value: number) => {
     setGrading(prev => ({
       ...prev,
-      curves: { ...prev.curves, [channel]: points },
+      levels: { ...prev.levels, [key]: value },
     }));
   };
   
@@ -536,29 +462,31 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
       gamma: { r: 0, g: 0, b: 0 },
       gain: { r: 0, g: 0, b: 0 },
       offset: 0,
-      curves: {
-        rgb: [...defaultCurvePoints],
-      },
+      levels: { ...defaultLevels },
     });
   };
   
   // Generate CSS filter from grading values
   const getFilterStyle = () => {
-    const { lift, gamma, gain, offset, curves } = grading;
+    const { lift, gamma, gain, offset, levels } = grading;
     
     const liftBrightness = 1 + (lift.r + lift.g + lift.b) / 6;
     const gainBrightness = 1 + (gain.r + gain.g + gain.b) / 3;
     const gammaSaturation = 1 + (Math.abs(gamma.r) + Math.abs(gamma.g) + Math.abs(gamma.b)) / 6;
     const hueShift = (gain.r - gain.b) * 30 + (gamma.r - gamma.b) * 20;
     
-    // Calculate contrast from offset and curves
-    const contrast = 1 + offset * 0.5;
+    // Calculate from levels
+    const shadowBrightness = 1 + levels.shadows * 0.2;
+    const highlightBrightness = 1 + levels.highlights * 0.2;
+    const midtoneGamma = 1 - levels.midtones * 0.3;
+    const blackLevel = Math.max(0, levels.blacks * 0.15);
+    const whiteLevel = 1 + levels.whites * 0.15;
     
-    // Calculate curve effect (simple midpoint adjustment)
-    const curveEffect = curves.rgb.length > 2 ? 1.1 : 1;
+    const totalBrightness = liftBrightness * gainBrightness * shadowBrightness * highlightBrightness * whiteLevel;
+    const contrast = (1 + offset * 0.5) * (1 - blackLevel);
     
     return {
-      filter: `brightness(${liftBrightness * gainBrightness * curveEffect}) contrast(${contrast}) saturate(${gammaSaturation}) hue-rotate(${hueShift}deg)`,
+      filter: `brightness(${totalBrightness}) contrast(${contrast}) saturate(${gammaSaturation}) hue-rotate(${hueShift}deg)`,
     };
   };
   
@@ -606,16 +534,39 @@ export function ColorGradingPanel({ videoRef, videoDuration, onGradingChange }: 
         />
       </div>
       
-      {/* Levels Curve */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-white/40">Levels Curve</span>
-          <span className="text-[9px] text-white/30">Tap to add points, double-tap to remove</span>
-        </div>
-        <LevelsCurve
-          points={grading.curves.rgb}
-          onChange={(points) => updateCurve('rgb', points)}
-          channel="rgb"
+      {/* Tonal Range Sliders */}
+      <div className="space-y-2 bg-zinc-800/50 rounded-lg p-3">
+        <span className="text-xs text-white/40 block mb-2">Tonal Levels</span>
+        
+        <LevelSlider
+          label="Blacks"
+          value={grading.levels.blacks}
+          onChange={(v) => updateLevel('blacks', v)}
+          color="#333"
+        />
+        <LevelSlider
+          label="Shadows"
+          value={grading.levels.shadows}
+          onChange={(v) => updateLevel('shadows', v)}
+          color="#666"
+        />
+        <LevelSlider
+          label="Midtones"
+          value={grading.levels.midtones}
+          onChange={(v) => updateLevel('midtones', v)}
+          color="#999"
+        />
+        <LevelSlider
+          label="Highlights"
+          value={grading.levels.highlights}
+          onChange={(v) => updateLevel('highlights', v)}
+          color="#ccc"
+        />
+        <LevelSlider
+          label="Whites"
+          value={grading.levels.whites}
+          onChange={(v) => updateLevel('whites', v)}
+          color="#fff"
         />
       </div>
       
