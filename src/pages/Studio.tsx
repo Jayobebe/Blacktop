@@ -454,6 +454,9 @@ export default function Studio() {
     };
   }, [videoUrl]);
 
+  // Max file size in MB - FFmpeg WASM has memory limits
+  const MAX_FILE_SIZE_MB = 500;
+  
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -461,6 +464,18 @@ export default function Studio() {
     if (!file.type.startsWith('video/')) {
       toast.error('Please select a video file');
       return;
+    }
+    
+    // Check file size - FFmpeg WASM struggles with very large files
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > MAX_FILE_SIZE_MB) {
+      toast.error(`File too large (${fileSizeMB.toFixed(0)}MB). Max ${MAX_FILE_SIZE_MB}MB for browser processing.`);
+      return;
+    }
+    
+    // Warn about large files that may be slow
+    if (fileSizeMB > 100) {
+      toast.warning(`Large file (${fileSizeMB.toFixed(0)}MB) - processing may take several minutes`);
     }
     
     if (videoUrl) URL.revokeObjectURL(videoUrl);
@@ -514,15 +529,31 @@ export default function Studio() {
     setErrorMessage(null);
     
     try {
+      // Check available memory before starting
+      const fileSizeMB = videoFile.size / (1024 * 1024);
+      console.log(`Processing video: ${fileSizeMB.toFixed(1)}MB`);
+      
       const { FFmpeg } = await import('@ffmpeg/ffmpeg');
       const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
       
       const ffmpeg = new FFmpeg();
       ffmpegRef.current = ffmpeg;
       
+      let lastProgress = 0;
       ffmpeg.on('progress', ({ progress: p }) => {
-        setProgress(Math.round(p * 100));
+        // Only update if progress has meaningfully changed
+        const newProgress = Math.round(p * 100);
+        if (newProgress > lastProgress) {
+          lastProgress = newProgress;
+          setProgress(newProgress);
+        }
       });
+      
+      ffmpeg.on('log', ({ message }) => {
+        console.log('[FFmpeg]', message);
+      });
+      
+      toast.info('Loading video processor...');
       
       const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
       await ffmpeg.load({
@@ -533,7 +564,13 @@ export default function Studio() {
       setStage('processing');
       setProgress(0);
       
-      await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
+      toast.info('Loading video into processor...');
+      
+      // Read file as ArrayBuffer directly for better memory handling
+      const fileData = await videoFile.arrayBuffer();
+      await ffmpeg.writeFile('input.mp4', new Uint8Array(fileData));
+      
+      toast.info('Processing video - this may take a few minutes...');
       
       const speedUnit = settings.speedUnit.toUpperCase();
       const distanceUnit = settings.distanceUnit === 'miles' ? 'mi' : 'km';
@@ -560,22 +597,37 @@ export default function Studio() {
         `drawtext=text='${formatDuration(ride.duration)}':fontsize=28:fontcolor=white:x=w-180:y=h-70`,
       ].join(',');
       
+      // Use 480p for large files to prevent memory issues
+      const effectiveQuality = fileSizeMB > 200 ? '480p' : exportQuality;
+      if (effectiveQuality !== exportQuality && fileSizeMB > 200) {
+        toast.warning('Using 480p quality for large file to prevent memory issues');
+      }
+      
       // Build FFmpeg command with quality settings
       const ffmpegArgs = [
         '-i', 'input.mp4',
-        '-vf', overlayFilter + (exportQuality !== 'original' 
-          ? `,scale=${exportQuality === '720p' ? '1280:720' : '854:480'}:force_original_aspect_ratio=decrease,pad=${exportQuality === '720p' ? '1280:720' : '854:480'}:(ow-iw)/2:(oh-ih)/2`
+        '-vf', overlayFilter + (effectiveQuality !== 'original' 
+          ? `,scale=${effectiveQuality === '720p' ? '1280:720' : '854:480'}:force_original_aspect_ratio=decrease,pad=${effectiveQuality === '720p' ? '1280:720' : '854:480'}:(ow-iw)/2:(oh-ih)/2`
           : ''),
         '-c:a', 'copy',
         '-c:v', 'libx264',
-        '-preset', exportQuality === '480p' ? 'veryfast' : 'fast',
-        '-crf', exportQuality === '480p' ? '28' : exportQuality === '720p' ? '25' : '23',
+        '-preset', 'ultrafast', // Use ultrafast for all to reduce memory pressure
+        '-crf', effectiveQuality === '480p' ? '28' : effectiveQuality === '720p' ? '26' : '24',
+        '-movflags', '+faststart', // Optimize for streaming
         'output.mp4',
       ];
       
       await ffmpeg.exec(ffmpegArgs);
       
       const data = await ffmpeg.readFile('output.mp4');
+      
+      // Clean up input file to free memory
+      try {
+        await ffmpeg.deleteFile('input.mp4');
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+      
       const blobData = typeof data === 'string' 
         ? new TextEncoder().encode(data) 
         : new Uint8Array(data);
@@ -590,8 +642,21 @@ export default function Studio() {
     } catch (error) {
       console.error('FFmpeg error:', error);
       setStage('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to process video');
-      toast.error('Failed to process video');
+      
+      // Provide more helpful error messages
+      let errorMsg = 'Failed to process video';
+      if (error instanceof Error) {
+        if (error.message.includes('memory') || error.message.includes('OOM')) {
+          errorMsg = 'Out of memory - try a smaller video or use 480p quality';
+        } else if (error.message.includes('SharedArrayBuffer')) {
+          errorMsg = 'Browser security restriction - try Chrome or Edge';
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      
+      setErrorMessage(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -599,79 +664,116 @@ export default function Studio() {
     if (!outputUrl || !ride) return;
     
     try {
+      toast.info('Preparing download...');
+      
       // Fetch the blob to get its size
       const response = await fetch(outputUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch processed video');
+      }
       const blob = await response.blob();
+      
+      if (blob.size === 0) {
+        throw new Error('Processed video is empty');
+      }
       
       const baseName = ride.name || `ride-${new Date(ride.startedAt).toISOString().split('T')[0]}`;
       const filename = `${baseName}-overlay.mp4`;
       
-      // Use FileSaver approach for better mobile compatibility
-      const url = URL.createObjectURL(blob);
-      
-      // Create a visible link for mobile - some browsers need this
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Cleanup after a delay
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 1000);
-      
-      // Generate thumbnail from the processed video
-      let thumbnailUrl: string | undefined;
-      try {
-        const tempVideo = document.createElement('video');
-        tempVideo.src = outputUrl;
-        tempVideo.crossOrigin = 'anonymous';
-        tempVideo.muted = true;
-        tempVideo.playsInline = true;
+      // Try Web Share API first for mobile (more reliable)
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], filename, { type: 'video/mp4' });
+        const shareData = { files: [file] };
         
-        await new Promise<void>((resolve, reject) => {
-          tempVideo.onloadeddata = () => {
-            tempVideo.currentTime = Math.min(1, videoDuration * 0.1); // 10% in or 1s
-          };
-          tempVideo.onseeked = () => resolve();
-          tempVideo.onerror = () => reject(new Error('Video load failed'));
-          setTimeout(() => resolve(), 3000); // Don't fail, just continue without thumbnail
-        });
-        
-        if (tempVideo.videoWidth > 0) {
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.min(tempVideo.videoWidth, 640);
-          canvas.height = Math.min(tempVideo.videoHeight, 360);
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
-            thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
+        if (navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            toast.success('Video shared!');
+            
+            // Still save to gallery
+            saveToGallery(blob, filename);
+            return;
+          } catch (shareError) {
+            // User cancelled or share failed, fall through to download
+            if ((shareError as Error).name !== 'AbortError') {
+              console.warn('Share failed, falling back to download:', shareError);
+            }
           }
         }
-      } catch (thumbError) {
-        console.warn('Could not generate thumbnail:', thumbError);
       }
       
-      // Save as ride recording so it appears in gallery
-      const recording = {
-        id: crypto.randomUUID(),
-        filename,
-        thumbnailUrl,
-        savedAt: new Date().toISOString(),
-        duration: videoDuration,
-        size: blob.size,
-      };
+      // Fallback: Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       
-      addRideRecording(ride.id, recording);
+      // Use click with a small delay for Safari
+      setTimeout(() => {
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }, 0);
       
-      toast.success('Video saved to gallery!');
+      saveToGallery(blob, filename);
+      toast.success('Download started!');
+      
     } catch (error) {
       console.error('Error saving video:', error);
-      toast.error('Failed to save video. Try using "Share" on your device instead.');
+      toast.error('Failed to save video. Try using your browser\'s download option.');
     }
+  };
+  
+  const saveToGallery = async (blob: Blob, filename: string) => {
+    if (!ride) return;
+    
+    // Generate thumbnail from the processed video
+    let thumbnailUrl: string | undefined;
+    try {
+      const tempVideo = document.createElement('video');
+      tempVideo.src = outputUrl!;
+      tempVideo.crossOrigin = 'anonymous';
+      tempVideo.muted = true;
+      tempVideo.playsInline = true;
+      
+      await new Promise<void>((resolve) => {
+        tempVideo.onloadeddata = () => {
+          tempVideo.currentTime = Math.min(1, videoDuration * 0.1);
+        };
+        tempVideo.onseeked = () => resolve();
+        tempVideo.onerror = () => resolve(); // Don't fail on thumbnail error
+        setTimeout(() => resolve(), 3000);
+      });
+      
+      if (tempVideo.videoWidth > 0) {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.min(tempVideo.videoWidth, 640);
+        canvas.height = Math.min(tempVideo.videoHeight, 360);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+          thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
+        }
+      }
+    } catch (thumbError) {
+      console.warn('Could not generate thumbnail:', thumbError);
+    }
+    
+    // Save as ride recording so it appears in gallery
+    const recording = {
+      id: crypto.randomUUID(),
+      filename,
+      thumbnailUrl,
+      savedAt: new Date().toISOString(),
+      duration: videoDuration,
+      size: blob.size,
+    };
+    
+    addRideRecording(ride.id, recording);
   };
 
   const resetVideo = () => {
