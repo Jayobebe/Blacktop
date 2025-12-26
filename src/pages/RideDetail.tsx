@@ -2,8 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { OverlayExporter } from '@/components/OverlayExporter';
-import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, ChevronRight, Film } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, Film } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -11,11 +10,10 @@ import { toast } from 'sonner';
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording } = useRideHistory();
+  const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlayBlob } = useRideHistory();
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
-  const [showOverlayExporter, setShowOverlayExporter] = useState(false);
 
   const ride = rides.find(r => r.id === id);
 
@@ -266,33 +264,32 @@ export default function RideDetail() {
           </div>
         )}
 
-        {/* Download Overlay Section */}
-        <button
-          onClick={() => setShowOverlayExporter(true)}
-          className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group"
-        >
-          <div className="flex items-center justify-between px-4 py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                <Film className="w-5 h-5 text-accent" />
+        {/* Download Overlay Section - only show if overlay was recorded */}
+        {ride.overlayBlobUrl && (
+          <button
+            onClick={() => {
+              const a = document.createElement('a');
+              a.href = ride.overlayBlobUrl!;
+              a.download = `${ride.name || formatDate(ride.startedAt)}-overlay.webm`;
+              a.click();
+              toast.success('Overlay video downloaded!');
+              clearRideOverlayBlob(ride.id);
+            }}
+            className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group"
+          >
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                  <Film className="w-5 h-5 text-accent" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-sm">Download Overlay Video</h3>
+                  <p className="text-xs text-muted-foreground">Ready to use in your video editor</p>
+                </div>
               </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-sm">Export Overlay Video</h3>
-                <p className="text-xs text-muted-foreground">Animated transparent video for your editor</p>
-              </div>
+              <Download className="w-5 h-5 text-accent" />
             </div>
-            <ChevronRight className="w-5 h-5 text-accent group-hover:translate-x-0.5 transition-transform" />
-          </div>
-        </button>
-
-        {/* Overlay Exporter Modal */}
-        {showOverlayExporter && (
-          <OverlayExporter
-            ride={ride}
-            speedUnit={settings.speedUnit}
-            distanceUnit={settings.distanceUnit}
-            onClose={() => setShowOverlayExporter(false)}
-          />
+          </button>
         )}
 
         {/* GPS Points Info */}

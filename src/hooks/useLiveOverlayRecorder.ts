@@ -1,0 +1,278 @@
+import { useRef, useCallback, useEffect } from 'react';
+import { formatDuration, formatDistance } from '@/lib/format';
+
+interface OverlayStats {
+  speed: number;
+  maxSpeed: number;
+  distance: number;
+  duration: number;
+  leanAngle: number;
+  maxLean: number;
+}
+
+interface LiveOverlayRecorderOptions {
+  speedUnit: 'mph' | 'kph';
+  distanceUnit: 'miles' | 'km';
+  hasLeanData: boolean;
+}
+
+export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
+  const { speedUnit, distanceUnit, hasLeanData } = options;
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const isRecordingRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
+  const latestStatsRef = useRef<OverlayStats>({
+    speed: 0,
+    maxSpeed: 0,
+    distance: 0,
+    duration: 0,
+    leanAngle: 0,
+    maxLean: 0,
+  });
+
+  const speedLabel = speedUnit.toUpperCase();
+  const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
+
+  // Draw a single frame to the canvas
+  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean) => {
+    // Clear with transparency
+    ctx.clearRect(0, 0, width, height);
+
+    // Semi-transparent panels
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+
+    // Top left panel - Max Speed
+    ctx.beginPath();
+    ctx.roundRect(40, 30, 180, 70, 8);
+    ctx.fill();
+
+    // Top right panel - Max Lean (only if ride has lean data)
+    if (showLean) {
+      ctx.beginPath();
+      ctx.roundRect(width - 220, 30, 180, 70, 8);
+      ctx.fill();
+    }
+
+    // Bottom gradient bar
+    const gradient = ctx.createLinearGradient(0, height - 120, 0, height);
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, height - 120, width, 120);
+
+    // Text styles
+    ctx.textBaseline = 'top';
+
+    // Top Left - Max Speed
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '14px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText('MAX SPEED', 55, 45);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 32px monospace';
+    ctx.fillText(`${Math.round(stats.maxSpeed)}`, 55, 65);
+    ctx.font = '16px system-ui';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(speedLabel, 130, 72);
+
+    // Top Right - Max Lean (only if ride has lean data)
+    if (showLean) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '14px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText('MAX LEAN', width - 55, 45);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 32px monospace';
+      ctx.fillText(`${Math.round(stats.maxLean)}°`, width - 55, 65);
+      ctx.textAlign = 'left';
+    }
+
+    // Bottom Left - Distance
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 28px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(formatDistance(stats.distance, distanceUnit), 40, height - 50);
+    ctx.font = '16px system-ui';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(distLabel, 140, height - 45);
+
+    // Bottom Center - Live Speed with Lean Arc
+    const centerX = width / 2;
+
+    // Speed label
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '12px system-ui';
+    ctx.fillText('SPEED', centerX, height - 70);
+
+    // Speed value
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 36px monospace';
+    ctx.fillText(`${Math.round(stats.speed)}`, centerX, height - 55);
+    ctx.font = '14px system-ui';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(speedLabel, centerX, height - 25);
+
+    // Lean Arc (only if ride has lean data)
+    if (showLean) {
+      const arcRadius = 85;
+      const arcCenterY = height - 40;
+      const arcStartAngle = Math.PI * 1.15;
+      const arcEndAngle = Math.PI * 1.85;
+
+      // Draw the arc
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(centerX, arcCenterY, arcRadius, arcStartAngle, arcEndAngle);
+      ctx.stroke();
+
+      // Calculate dot position based on lean angle
+      const maxLeanAngle = 45;
+      const clampedLean = Math.max(-maxLeanAngle, Math.min(maxLeanAngle, stats.leanAngle));
+      const leanProgress = (clampedLean + maxLeanAngle) / (2 * maxLeanAngle);
+      const dotAngle = arcStartAngle + leanProgress * (arcEndAngle - arcStartAngle);
+
+      const dotX = centerX + Math.cos(dotAngle) * arcRadius;
+      const dotY = arcCenterY + Math.sin(dotAngle) * arcRadius;
+
+      // Draw the dot
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Live lean angle above the arc
+      const leanTextY = arcCenterY - arcRadius - 8;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(`${Math.abs(Math.round(stats.leanAngle))}°`, centerX, leanTextY);
+    }
+
+    // Bottom Right - Duration
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
+  }, [speedLabel, distLabel, distanceUnit]);
+
+  // Animation loop to continuously draw frames
+  const animate = useCallback(() => {
+    if (!isRecordingRef.current || !canvasRef.current) return;
+
+    const ctx = canvasRef.current.getContext('2d');
+    if (ctx) {
+      drawFrame(ctx, canvasRef.current.width, canvasRef.current.height, latestStatsRef.current, hasLeanData);
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [drawFrame, hasLeanData]);
+
+  // Start recording
+  const startRecording = useCallback(() => {
+    // Create an offscreen canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    canvasRef.current = canvas;
+
+    // Clear the chunks
+    chunksRef.current = [];
+
+    // Get stream from canvas
+    const stream = canvas.captureStream(30); // 30 fps
+
+    // Try VP9 for transparency, fall back to VP8
+    let mimeType = 'video/webm;codecs=vp9';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm;codecs=vp8';
+    }
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm';
+    }
+
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      videoBitsPerSecond: 8000000,
+    });
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunksRef.current.push(e.data);
+      }
+    };
+
+    recorderRef.current = recorder;
+    isRecordingRef.current = true;
+
+    // Start recording with timeslice for regular data collection
+    recorder.start(1000); // Collect data every second
+
+    // Start animation loop
+    animate();
+
+    console.log('[OverlayRecorder] Started recording');
+  }, [animate]);
+
+  // Update stats (call this frequently during the ride)
+  const updateStats = useCallback((stats: OverlayStats) => {
+    latestStatsRef.current = stats;
+  }, []);
+
+  // Stop recording and return the blob
+  const stopRecording = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      if (!recorderRef.current || !isRecordingRef.current) {
+        resolve(null);
+        return;
+      }
+
+      isRecordingRef.current = false;
+
+      // Stop animation loop
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+
+      const recorder = recorderRef.current;
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        chunksRef.current = [];
+        recorderRef.current = null;
+        canvasRef.current = null;
+        console.log('[OverlayRecorder] Stopped recording, size:', blob.size);
+        resolve(blob);
+      };
+
+      recorder.stop();
+    });
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (isRecordingRef.current) {
+        isRecordingRef.current = false;
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+          recorderRef.current.stop();
+        }
+      }
+    };
+  }, []);
+
+  return {
+    startRecording,
+    stopRecording,
+    updateStats,
+    isRecording: isRecordingRef.current,
+  };
+}
