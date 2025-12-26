@@ -414,6 +414,8 @@ export default function Studio() {
     lift: { r: 0, g: 0, b: 0 },
     gamma: { r: 0, g: 0, b: 0 },
     gain: { r: 0, g: 0, b: 0 },
+    offset: 0,
+    curves: { rgb: [{ x: 0, y: 0 }, { x: 1, y: 1 }] },
   });
   const [exportQuality, setExportQuality] = useState<'original' | '720p' | '480p'>('720p');
   
