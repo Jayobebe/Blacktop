@@ -31,6 +31,10 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     leanAngle: 0,
     maxLean: 0,
   });
+  
+  // Use ref for hasLeanData so animation loop always has latest value
+  const hasLeanDataRef = useRef(hasLeanData);
+  hasLeanDataRef.current = hasLeanData;
 
   const speedLabel = speedUnit.toUpperCase();
   const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
@@ -166,11 +170,11 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
 
     const ctx = canvasRef.current.getContext('2d');
     if (ctx) {
-      drawFrame(ctx, canvasRef.current.width, canvasRef.current.height, latestStatsRef.current, hasLeanData);
+      drawFrame(ctx, canvasRef.current.width, canvasRef.current.height, latestStatsRef.current, hasLeanDataRef.current);
     }
 
     animationFrameRef.current = requestAnimationFrame(animate);
-  }, [drawFrame, hasLeanData]);
+  }, [drawFrame]);
 
   // Start recording
   const startRecording = useCallback(() => {
