@@ -14,12 +14,13 @@ import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer } from '@/features/streaming';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
+import { usePictureInPicture } from '@/hooks/usePictureInPicture';
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play, Lock, Unlock } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play, PictureInPicture2 } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -104,6 +105,9 @@ export default function ActiveRide() {
   
   // Orientation tracking (respects system rotation lock)
   const { orientation } = useOrientationLock();
+  
+  // Picture-in-Picture for multitasking with nav apps
+  const { isPiPActive, isPiPSupported, togglePiP, updateStats: updatePiPStats } = usePictureInPicture();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -176,7 +180,18 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
-  // Keep track of members for when ride ends
+  // Update PiP stats when ride data changes
+  useEffect(() => {
+    if (isPiPActive) {
+      updatePiPStats({
+        speed: rideState.currentSpeed,
+        distance: rideState.distance,
+        duration: rideState.duration,
+        speedUnit: settings.speedUnit.toUpperCase(),
+        distanceUnit: settings.distanceUnit === 'miles' ? 'mi' : 'km',
+      });
+    }
+  }, [isPiPActive, rideState.currentSpeed, rideState.distance, rideState.duration, settings.speedUnit, settings.distanceUnit, updatePiPStats]);
   useEffect(() => {
     if (convoy.members.length > 0) {
       membersRef.current = convoy.members;
@@ -701,6 +716,21 @@ export default function ActiveRide() {
                 </button>
               )}
             </div>
+          )}
+
+          {/* Picture-in-Picture button */}
+          {isPiPSupported && (
+            <Button
+              variant="ghost"
+              onClick={togglePiP}
+              className={cn(
+                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full touch-target",
+                isPiPActive ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
+              )}
+              title={isPiPActive ? "Exit mini mode" : "Mini mode (use with nav app)"}
+            >
+              <PictureInPicture2 className="w-5 h-5 landscape:w-4 landscape:h-4" />
+            </Button>
           )}
 
           {/* Toggle members panel button */}
