@@ -49,7 +49,8 @@ export interface RideSession {
   earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
   recording?: RideRecording; // Video recording from live stream
-  overlayBlobUrl?: string; // Pre-recorded overlay video blob URL for instant download
+  overlayAvailable?: boolean; // Overlay video stored locally for download
+  overlayBlobUrl?: string; // Legacy: temporary blob URL (not persisted); kept for backward compatibility
 }
 
 export interface GpsPoint {

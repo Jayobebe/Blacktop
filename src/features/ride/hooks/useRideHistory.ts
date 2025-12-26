@@ -65,15 +65,15 @@ export function useRideHistory() {
     ));
   }, [setRides]);
 
-  const setRideOverlayBlob = useCallback((rideId: string, overlayBlobUrl: string) => {
-    setRides(prev => prev.map(r => 
-      r.id === rideId ? { ...r, overlayBlobUrl } : r
+  const setRideOverlayAvailable = useCallback((rideId: string, overlayAvailable: boolean) => {
+    setRides(prev => prev.map(r =>
+      r.id === rideId ? { ...r, overlayAvailable, overlayBlobUrl: overlayAvailable ? undefined : r.overlayBlobUrl } : r
     ));
   }, [setRides]);
 
-  const clearRideOverlayBlob = useCallback((rideId: string) => {
-    setRides(prev => prev.map(r => 
-      r.id === rideId ? { ...r, overlayBlobUrl: undefined } : r
+  const clearRideOverlay = useCallback((rideId: string) => {
+    setRides(prev => prev.map(r =>
+      r.id === rideId ? { ...r, overlayAvailable: false, overlayBlobUrl: undefined } : r
     ));
   }, [setRides]);
 
@@ -126,8 +126,8 @@ export function useRideHistory() {
     addRideRecording,
     markRecordingSaved,
     removeRideRecording,
-    setRideOverlayBlob,
-    clearRideOverlayBlob,
+    setRideOverlayAvailable,
+    clearRideOverlay,
     burnAllData,
   };
 }

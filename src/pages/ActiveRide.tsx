@@ -15,6 +15,7 @@ import { LiveStreamViewer } from '@/features/streaming';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
+import { saveRideOverlayBlob } from '@/lib/overlayStore';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
@@ -85,7 +86,7 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
-  const { updateRideBadges, addRideRecording, setRideOverlayBlob } = useRideHistory();
+  const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
   const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
@@ -173,12 +174,20 @@ export default function ActiveRide() {
   // Save pending overlay blob once savedRideId becomes available
   useEffect(() => {
     if (savedRideId && pendingOverlayBlob) {
-      console.log('[ActiveRide] Saving pending overlay to ride:', savedRideId);
-      const blobUrl = URL.createObjectURL(pendingOverlayBlob);
-      setRideOverlayBlob(savedRideId, blobUrl);
-      setPendingOverlayBlob(null);
+      (async () => {
+        try {
+          console.log('[ActiveRide] Saving pending overlay to ride:', savedRideId);
+          await saveRideOverlayBlob(savedRideId, pendingOverlayBlob);
+          setRideOverlayAvailable(savedRideId, true);
+        } catch (error) {
+          console.error('[ActiveRide] Failed to persist overlay blob:', error);
+          toast.error('Failed to save overlay');
+        } finally {
+          setPendingOverlayBlob(null);
+        }
+      })();
     }
-  }, [savedRideId, pendingOverlayBlob, setRideOverlayBlob]);
+  }, [savedRideId, pendingOverlayBlob, setRideOverlayAvailable]);
 
   // Keep screen awake during active ride
   useEffect(() => {
