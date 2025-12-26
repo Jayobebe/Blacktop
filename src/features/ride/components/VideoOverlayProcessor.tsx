@@ -214,16 +214,59 @@ export function VideoOverlayProcessor({ ride, onClose }: VideoOverlayProcessorPr
     }
   };
 
-  const downloadOutput = () => {
+  const downloadOutput = async () => {
     if (!outputUrl) return;
     
-    const a = document.createElement('a');
-    a.href = outputUrl;
-    const baseName = ride.name || `ride-${new Date(ride.startedAt).toISOString().split('T')[0]}`;
-    a.download = `${baseName}-overlay.mp4`;
-    a.click();
-    
-    toast.success('Video downloaded!');
+    try {
+      // Fetch the blob from the URL to ensure it's readable
+      const response = await fetch(outputUrl);
+      const blob = await response.blob();
+      
+      // Create a fresh blob URL from the fetched data
+      const freshBlobUrl = URL.createObjectURL(blob);
+      
+      const baseName = ride.name || `ride-${new Date(ride.startedAt).toISOString().split('T')[0]}`;
+      const filename = `${baseName}-overlay.mp4`;
+      
+      // Try using the Web Share API for mobile devices (better gallery integration)
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], filename, { type: 'video/mp4' });
+        const shareData = { files: [file] };
+        
+        if (navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            toast.success('Video shared successfully!');
+            URL.revokeObjectURL(freshBlobUrl);
+            return;
+          } catch (shareError) {
+            // User cancelled or share failed, fall through to download
+            if ((shareError as Error).name !== 'AbortError') {
+              console.log('Share failed, falling back to download:', shareError);
+            }
+          }
+        }
+      }
+      
+      // Fallback: Traditional download approach
+      const a = document.createElement('a');
+      a.href = freshBlobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup after a delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(freshBlobUrl);
+      }, 1000);
+      
+      toast.success('Video downloaded! Check your Downloads folder.');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download. Try using the share button on the video player.');
+    }
   };
 
   const rideDurationFormatted = formatDuration(ride.duration);
