@@ -107,7 +107,7 @@ export default function ActiveRide() {
   const { orientation } = useOrientationLock();
   
   // Picture-in-Picture for multitasking with nav apps
-  const { isPiPActive, isPiPSupported, togglePiP, updateStats: updatePiPStats } = usePictureInPicture();
+  const { isPiPActive, isPiPSupported, startPiP, togglePiP, updateStats: updatePiPStats } = usePictureInPicture();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -656,11 +656,22 @@ export default function ActiveRide() {
             </button>
           )}
 
-          {/* Navigation button */}
+          {/* Navigation + PiP button - opens nav app and starts mini mode */}
           <Button
             variant="ghost"
-            onClick={() => openNavigation()}
-            className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
+            onClick={async () => {
+              // Start PiP first if supported and not already active
+              if (isPiPSupported && !isPiPActive) {
+                await startPiP();
+              }
+              // Then open navigation
+              openNavigation();
+            }}
+            className={cn(
+              "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full touch-target",
+              isPiPActive ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
+            )}
+            title="Open navigation with mini stats overlay"
           >
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
@@ -731,21 +742,6 @@ export default function ActiveRide() {
                 </button>
               )}
             </div>
-          )}
-
-          {/* Picture-in-Picture button */}
-          {isPiPSupported && (
-            <Button
-              variant="ghost"
-              onClick={togglePiP}
-              className={cn(
-                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full touch-target",
-                isPiPActive ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
-              )}
-              title={isPiPActive ? "Exit mini mode" : "Mini mode (use with nav app)"}
-            >
-              <PictureInPicture2 className="w-5 h-5 landscape:w-4 landscape:h-4" />
-            </Button>
           )}
 
           {/* Toggle members panel button */}
