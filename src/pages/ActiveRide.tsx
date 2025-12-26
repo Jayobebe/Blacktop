@@ -14,7 +14,7 @@ import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer } from '@/features/streaming';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
-import { SplitScreenGuide } from '@/components/SplitScreenGuide';
+
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
@@ -106,8 +106,6 @@ export default function ActiveRide() {
   // Orientation tracking (respects system rotation lock)
   const { orientation } = useOrientationLock();
   
-  // Split-screen guide for using with nav apps
-  const [showSplitScreenGuide, setShowSplitScreenGuide] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -630,12 +628,12 @@ export default function ActiveRide() {
             </button>
           )}
 
-          {/* Navigation button - opens split-screen guide */}
+          {/* Navigation button - opens nav app directly */}
           <Button
             variant="ghost"
-            onClick={() => setShowSplitScreenGuide(true)}
+            onClick={() => openNavigation()}
             className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
-            title="Use with navigation app"
+            title="Open navigation app"
           >
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
@@ -829,14 +827,6 @@ export default function ActiveRide() {
           </div>
         )}
       </div>
-
-
-      {/* Split Screen Guide */}
-      <SplitScreenGuide
-        isOpen={showSplitScreenGuide}
-        onClose={() => setShowSplitScreenGuide(false)}
-        onOpenNav={() => openNavigation()}
-      />
 
       {/* Live Stream Viewer */}
       <LiveStreamViewer
