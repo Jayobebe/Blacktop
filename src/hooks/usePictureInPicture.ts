@@ -155,7 +155,7 @@ export function usePictureInPicture() {
     // Calculate vertical positions based on whether lean is enabled
     const hasLean = stats.leanEnabled;
     const speedY = hasLean ? height / 2 - 30 : height / 2 - 20;
-    const leanBarY = height / 2 + 15;
+    const leanBarY = height / 2 + 25;
 
     // Draw speed (large, centered)
     ctx.fillStyle = '#ffffff';
