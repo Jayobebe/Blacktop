@@ -180,18 +180,41 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
-  // Update PiP stats when ride data changes
+  // Update PiP stats when ride data changes - always update so PiP has fresh data
   useEffect(() => {
-    if (isPiPActive) {
-      updatePiPStats({
-        speed: rideState.currentSpeed,
-        distance: rideState.distance,
-        duration: rideState.duration,
-        speedUnit: settings.speedUnit.toUpperCase(),
-        distanceUnit: settings.distanceUnit === 'miles' ? 'mi' : 'km',
-      });
-    }
-  }, [isPiPActive, rideState.currentSpeed, rideState.distance, rideState.duration, settings.speedUnit, settings.distanceUnit, updatePiPStats]);
+    updatePiPStats({
+      speed: rideState.currentSpeed,
+      distance: rideState.distance,
+      duration: rideState.duration,
+      speedUnit: settings.speedUnit.toUpperCase(),
+      distanceUnit: settings.distanceUnit === 'miles' ? 'mi' : 'km',
+      // Lean angle data
+      leanAngle: leanAngle.currentLean,
+      maxLeanLeft: leanAngle.maxLeanLeft,
+      maxLeanRight: leanAngle.maxLeanRight,
+      leanEnabled: settings.leanAngleEnabled && leanAngle.isSupported,
+      // Convoy data
+      convoyName: rideState.isConvoyMode && convoy.code ? `Convoy ${convoy.code}` : undefined,
+      memberCount: rideState.isConvoyMode ? convoy.members.length : undefined,
+      isLeader: rideState.isConvoyMode ? convoy.isLeader : undefined,
+    });
+  }, [
+    rideState.currentSpeed, 
+    rideState.distance, 
+    rideState.duration, 
+    rideState.isConvoyMode,
+    settings.speedUnit, 
+    settings.distanceUnit, 
+    settings.leanAngleEnabled,
+    leanAngle.currentLean,
+    leanAngle.maxLeanLeft,
+    leanAngle.maxLeanRight,
+    leanAngle.isSupported,
+    convoy.code,
+    convoy.members.length,
+    convoy.isLeader,
+    updatePiPStats
+  ]);
   useEffect(() => {
     if (convoy.members.length > 0) {
       membersRef.current = convoy.members;
