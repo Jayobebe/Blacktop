@@ -24,15 +24,22 @@ export function usePictureInPicture() {
 
   // Check PiP support on mount
   useEffect(() => {
-    const supported = 'pictureInPictureEnabled' in document && 
-      (document as any).pictureInPictureEnabled;
+    // Check if PiP is supported - need to check both the API exists and it's enabled
+    const hasPiPAPI = 'pictureInPictureEnabled' in document;
+    const isPiPEnabled = hasPiPAPI && (document as any).pictureInPictureEnabled === true;
+    
+    // Also check if we can request PiP on video elements
+    const hasRequestPiP = 'requestPictureInPicture' in HTMLVideoElement.prototype;
+    
+    const supported = isPiPEnabled && hasRequestPiP;
+    console.log('[PiP] Support check:', { hasPiPAPI, isPiPEnabled, hasRequestPiP, supported });
     setIsPiPSupported(supported);
   }, []);
 
   const formatDuration = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     if (hrs > 0) {
       return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -94,13 +101,17 @@ export function usePictureInPicture() {
     ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
     ctx.fillText(formatDuration(stats.duration), width - 20, height - 25);
 
-    // Schedule next frame
-    animationFrameRef.current = requestAnimationFrame(drawStats);
-  }, []);
+    // Schedule next frame only if PiP is still active
+    if (isPiPActive) {
+      animationFrameRef.current = requestAnimationFrame(drawStats);
+    }
+  }, [isPiPActive]);
 
   const startPiP = useCallback(async () => {
+    console.log('[PiP] Starting PiP, supported:', isPiPSupported);
+    
     if (!isPiPSupported) {
-      console.warn('Picture-in-Picture is not supported');
+      console.warn('[PiP] Picture-in-Picture is not supported');
       return false;
     }
 
@@ -111,6 +122,18 @@ export function usePictureInPicture() {
         canvas.width = 320;
         canvas.height = 180;
         canvasRef.current = canvas;
+        console.log('[PiP] Canvas created');
+      }
+
+      // Draw initial frame before capturing
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, 320, 180);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 48px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Loading...', 160, 100);
       }
 
       // Create video element if it doesn't exist
@@ -120,39 +143,69 @@ export function usePictureInPicture() {
         video.autoplay = true;
         video.playsInline = true;
         
-        // Capture canvas stream
+        // Capture canvas stream - must have content drawn first
         const stream = canvasRef.current.captureStream(30);
         video.srcObject = stream;
         
+        console.log('[PiP] Video element created, waiting for metadata...');
+        
         // Wait for video to be ready
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Video load timeout'));
+          }, 5000);
+          
           video.onloadedmetadata = () => {
-            video.play().then(() => resolve());
+            console.log('[PiP] Video metadata loaded');
+            video.play()
+              .then(() => {
+                console.log('[PiP] Video playing');
+                clearTimeout(timeout);
+                resolve();
+              })
+              .catch(reject);
+          };
+          
+          video.onerror = (e) => {
+            clearTimeout(timeout);
+            reject(e);
           };
         });
         
         videoRef.current = video;
+      } else {
+        // Ensure video is playing
+        if (videoRef.current.paused) {
+          await videoRef.current.play();
+        }
       }
 
-      // Start drawing stats
+      // Start drawing stats animation
       drawStats();
 
-      // Request PiP
-      await (videoRef.current as any).requestPictureInPicture();
+      console.log('[PiP] Requesting PiP...');
+      
+      // Request PiP - this MUST happen in response to user gesture
+      await videoRef.current.requestPictureInPicture();
+      
+      console.log('[PiP] PiP active!');
       setIsPiPActive(true);
 
       // Listen for PiP exit
-      videoRef.current.addEventListener('leavepictureinpicture', () => {
+      const handleLeavePiP = () => {
+        console.log('[PiP] Left PiP mode');
         setIsPiPActive(false);
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
         }
-      });
+      };
+      
+      videoRef.current.addEventListener('leavepictureinpicture', handleLeavePiP, { once: true });
 
       return true;
     } catch (error) {
-      console.error('Failed to start Picture-in-Picture:', error);
+      console.error('[PiP] Failed to start Picture-in-Picture:', error);
       return false;
     }
   }, [isPiPSupported, drawStats]);
@@ -169,11 +222,12 @@ export function usePictureInPicture() {
         animationFrameRef.current = null;
       }
     } catch (error) {
-      console.error('Failed to exit Picture-in-Picture:', error);
+      console.error('[PiP] Failed to exit Picture-in-Picture:', error);
     }
   }, []);
 
   const togglePiP = useCallback(async () => {
+    console.log('[PiP] Toggle called, current state:', isPiPActive);
     if (isPiPActive) {
       await stopPiP();
     } else {
