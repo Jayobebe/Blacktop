@@ -102,8 +102,8 @@ export default function ActiveRide() {
   // Lean angle sensor
   const leanAngle = useLeanAngle(settings.leanAngleEnabled && rideState.isActive);
   
-  // Orientation lock
-  const { isLocked: isOrientationLocked, toggleLock: toggleOrientationLock } = useOrientationLock();
+  // Orientation tracking (respects system rotation lock)
+  const { orientation } = useOrientationLock();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
