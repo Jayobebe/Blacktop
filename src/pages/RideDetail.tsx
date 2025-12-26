@@ -2,7 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, ChevronRight } from 'lucide-react';
+import { OverlayExporter } from '@/components/OverlayExporter';
+import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, ChevronRight, Film } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +15,7 @@ export default function RideDetail() {
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
+  const [showOverlayExporter, setShowOverlayExporter] = useState(false);
 
   const ride = rides.find(r => r.id === id);
 
@@ -266,123 +268,32 @@ export default function RideDetail() {
 
         {/* Download Overlay Section */}
         <button
-          onClick={() => {
-            // Generate and download overlay PNG
-            const canvas = document.createElement('canvas');
-            canvas.width = 1920;
-            canvas.height = 1080;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-            
-            // Transparent background
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const speedLabel = settings.speedUnit.toUpperCase();
-            const distLabel = settings.distanceUnit === 'miles' ? 'mi' : 'km';
-            const maxLean = Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0);
-            
-            // Semi-transparent panels
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            
-            // Top left panel - Max Speed
-            ctx.beginPath();
-            ctx.roundRect(40, 30, 180, 70, 8);
-            ctx.fill();
-            
-            // Top right panel - Max Lean (if exists)
-            if (maxLean > 0) {
-              ctx.beginPath();
-              ctx.roundRect(canvas.width - 220, 30, 180, 70, 8);
-              ctx.fill();
-            }
-            
-            // Bottom gradient bar
-            const gradient = ctx.createLinearGradient(0, canvas.height - 120, 0, canvas.height);
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.4)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, canvas.height - 120, canvas.width, 120);
-            
-            // Text styles
-            ctx.textBaseline = 'top';
-            
-            // Top Left - Max Speed
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.font = '14px system-ui';
-            ctx.fillText('MAX SPEED', 55, 45);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 32px monospace';
-            ctx.fillText(`${Math.round(ride.maxSpeed)}`, 55, 65);
-            ctx.font = '16px system-ui';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.fillText(speedLabel, 130, 72);
-            
-            // Top Right - Max Lean
-            if (maxLean > 0) {
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-              ctx.font = '14px system-ui';
-              ctx.textAlign = 'right';
-              ctx.fillText('MAX LEAN', canvas.width - 55, 45);
-              ctx.fillStyle = 'white';
-              ctx.font = 'bold 32px monospace';
-              ctx.fillText(`${Math.round(maxLean)}°`, canvas.width - 55, 65);
-              ctx.textAlign = 'left';
-            }
-            
-            // Bottom Left - Distance
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 28px monospace';
-            ctx.fillText(`${formatDistance(ride.distance, settings.distanceUnit)}`, 40, canvas.height - 50);
-            ctx.font = '16px system-ui';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.fillText(distLabel, 140, canvas.height - 45);
-            
-            // Bottom Center - Speed display area label
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.font = '12px system-ui';
-            ctx.fillText('SPEED', canvas.width / 2, canvas.height - 70);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 36px monospace';
-            ctx.fillText(`${Math.round(ride.averageSpeed)}`, canvas.width / 2, canvas.height - 55);
-            ctx.font = '14px system-ui';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.fillText(speedLabel, canvas.width / 2, canvas.height - 25);
-            
-            // Bottom Right - Duration
-            ctx.textAlign = 'right';
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 28px monospace';
-            ctx.fillText(formatDuration(ride.duration), canvas.width - 40, canvas.height - 50);
-            
-            // Download
-            canvas.toBlob((blob) => {
-              if (!blob) return;
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${ride.name || formatDate(ride.startedAt)}-overlay.png`;
-              a.click();
-              URL.revokeObjectURL(url);
-              toast.success('Overlay downloaded! Import into your video editor as an overlay layer.');
-            }, 'image/png');
-          }}
+          onClick={() => setShowOverlayExporter(true)}
           className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group"
         >
           <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                <Download className="w-5 h-5 text-accent" />
+                <Film className="w-5 h-5 text-accent" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-sm">Download Overlay</h3>
-                <p className="text-xs text-muted-foreground">Get a transparent PNG to use in your video editor</p>
+                <h3 className="font-semibold text-sm">Export Overlay Video</h3>
+                <p className="text-xs text-muted-foreground">Animated transparent video for your editor</p>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-accent group-hover:translate-x-0.5 transition-transform" />
           </div>
         </button>
+
+        {/* Overlay Exporter Modal */}
+        {showOverlayExporter && (
+          <OverlayExporter
+            ride={ride}
+            speedUnit={settings.speedUnit}
+            distanceUnit={settings.distanceUnit}
+            onClose={() => setShowOverlayExporter(false)}
+          />
+        )}
 
         {/* GPS Points Info */}
         <div className="bg-card rounded-lg p-2.5 border border-border mb-3 animate-slide-up">
