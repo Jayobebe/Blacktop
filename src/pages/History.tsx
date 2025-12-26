@@ -99,13 +99,13 @@ export default function History() {
                         placeholder="Ride name"
                       />
                     ) : (
-                      <div className="flex items-center gap-2 group">
+                      <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm truncate">{displayName}</p>
                         <button
                           onClick={(e) => handleEditStart(ride.id, ride.name || '', e)}
-                          className="p-1 rounded-lg hover:bg-muted transition-all opacity-0 group-hover:opacity-100"
+                          className="p-1.5 rounded-lg bg-accent/20 hover:bg-accent/30 transition-all"
                         >
-                          <Pencil className="w-3 h-3 text-accent" />
+                          <Pencil className="w-3.5 h-3.5 text-accent" />
                         </button>
                       </div>
                     )}
