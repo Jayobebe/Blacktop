@@ -149,8 +149,8 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
       ctx.fill();
 
-      // Live lean angle above the arc
-      const leanTextY = arcCenterY - arcRadius + 5;
+      // Live lean angle above the speed but below the arc
+      const leanTextY = arcCenterY - 35;
       ctx.textAlign = 'center';
       ctx.fillStyle = 'white';
       ctx.font = 'bold 20px monospace';
