@@ -14,6 +14,7 @@ import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer } from '@/features/streaming';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
+import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,7 +85,7 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
-  const { updateRideBadges, addRideRecording } = useRideHistory();
+  const { updateRideBadges, addRideRecording, setRideOverlayBlob } = useRideHistory();
   const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
@@ -102,6 +103,21 @@ export default function ActiveRide() {
   
   // Lean angle sensor
   const leanAngle = useLeanAngle(settings.leanAngleEnabled && rideState.isActive);
+  
+  // Check if ride has lean data for overlay
+  const hasLeanData = settings.leanAngleEnabled && leanAngle.isSupported;
+  
+  // Live overlay recorder
+  const overlayRecorder = useLiveOverlayRecorder({
+    speedUnit: settings.speedUnit,
+    distanceUnit: settings.distanceUnit,
+    hasLeanData,
+  });
+  const overlayRecorderRef = useRef(overlayRecorder);
+  overlayRecorderRef.current = overlayRecorder;
+  
+  // Pending overlay blob to save after ride ID is available
+  const [pendingOverlayBlob, setPendingOverlayBlob] = useState<Blob | null>(null);
   
   // Orientation tracking (respects system rotation lock)
   const { orientation } = useOrientationLock();
@@ -154,6 +170,16 @@ export default function ActiveRide() {
     }
   }, [savedRideId, pendingRecording, addRideRecording]);
 
+  // Save pending overlay blob once savedRideId becomes available
+  useEffect(() => {
+    if (savedRideId && pendingOverlayBlob) {
+      console.log('[ActiveRide] Saving pending overlay to ride:', savedRideId);
+      const blobUrl = URL.createObjectURL(pendingOverlayBlob);
+      setRideOverlayBlob(savedRideId, blobUrl);
+      setPendingOverlayBlob(null);
+    }
+  }, [savedRideId, pendingOverlayBlob, setRideOverlayBlob]);
+
   // Keep screen awake during active ride
   useEffect(() => {
     if (rideState.isActive) {
@@ -177,6 +203,30 @@ export default function ActiveRide() {
       updateLeanAngle(leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight);
     }
   }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
+
+  // Start overlay recording when ride starts
+  const overlayStartedRef = useRef(false);
+  useEffect(() => {
+    if (rideState.isActive && !rideState.isPaused && !overlayStartedRef.current) {
+      console.log('[ActiveRide] Starting overlay recording');
+      overlayRecorderRef.current.startRecording();
+      overlayStartedRef.current = true;
+    }
+  }, [rideState.isActive, rideState.isPaused]);
+
+  // Update overlay stats during ride
+  useEffect(() => {
+    if (rideState.isActive && !rideState.isPaused && overlayStartedRef.current) {
+      overlayRecorderRef.current.updateStats({
+        speed: rideState.currentSpeed,
+        maxSpeed: rideState.maxSpeed,
+        distance: rideState.distance,
+        duration: rideState.duration,
+        leanAngle: rideState.currentLean,
+        maxLean: Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
+      });
+    }
+  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight]);
 
   // Track convoy members
   useEffect(() => {
@@ -210,10 +260,17 @@ export default function ActiveRide() {
   convoyMembersRef.current = convoy.members;
 
   // Helper function to handle ride end (reusable for both broadcast and realtime)
-  const handleRideEndedByLeader = useCallback(() => {
+  const handleRideEndedByLeader = useCallback(async () => {
     if (endingFlowRef.current) return; // Already ending
     console.log('[ActiveRide] Ride ended by leader');
     toast.info('Leader ended the ride');
+    
+    // Stop overlay recording and get the blob
+    const overlayBlob = await overlayRecorderRef.current.stopRecording();
+    overlayStartedRef.current = false;
+    if (overlayBlob) {
+      setPendingOverlayBlob(overlayBlob);
+    }
     
     // Use flushSync to ensure state updates are applied BEFORE endRide() triggers external store re-render
     flushSync(() => {
@@ -304,6 +361,13 @@ export default function ActiveRide() {
   }, [convoy.id, convoy.isLeader, rideState.isConvoyMode, handleRideEndedByLeader]);
 
   const handleEndRide = async () => {
+    // Stop overlay recording and get the blob first
+    const overlayBlob = await overlayRecorderRef.current.stopRecording();
+    overlayStartedRef.current = false;
+    if (overlayBlob) {
+      setPendingOverlayBlob(overlayBlob);
+    }
+
     // Use flushSync to ensure state updates are applied BEFORE endRide() triggers external store re-render
     flushSync(() => {
       setEndingFlow(true);
