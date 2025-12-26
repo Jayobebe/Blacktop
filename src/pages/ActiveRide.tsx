@@ -14,13 +14,13 @@ import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer } from '@/features/streaming';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
-import { usePictureInPicture } from '@/hooks/usePictureInPicture';
+import { SplitScreenGuide } from '@/components/SplitScreenGuide';
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play, PictureInPicture2 } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -106,8 +106,8 @@ export default function ActiveRide() {
   // Orientation tracking (respects system rotation lock)
   const { orientation } = useOrientationLock();
   
-  // Picture-in-Picture for multitasking with nav apps
-  const { isPiPActive, isPiPSupported, startPiP, togglePiP, updateStats: updatePiPStats } = usePictureInPicture();
+  // Split-screen guide for using with nav apps
+  const [showSplitScreenGuide, setShowSplitScreenGuide] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showMembers, setShowMembers] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
@@ -180,33 +180,7 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
-  // Update PiP stats when ride data changes - always update so PiP has fresh data
-  useEffect(() => {
-    updatePiPStats({
-      speed: rideState.currentSpeed,
-      distance: rideState.distance,
-      duration: rideState.duration,
-      speedUnit: settings.speedUnit.toUpperCase(),
-      distanceUnit: settings.distanceUnit === 'miles' ? 'mi' : 'km',
-      // Lean angle data
-      leanAngle: leanAngle.currentLean,
-      maxLeanLeft: leanAngle.maxLeanLeft,
-      maxLeanRight: leanAngle.maxLeanRight,
-      leanEnabled: settings.leanAngleEnabled && leanAngle.isSupported,
-    });
-  }, [
-    rideState.currentSpeed, 
-    rideState.distance, 
-    rideState.duration, 
-    settings.speedUnit, 
-    settings.distanceUnit, 
-    settings.leanAngleEnabled,
-    leanAngle.currentLean,
-    leanAngle.maxLeanLeft,
-    leanAngle.maxLeanRight,
-    leanAngle.isSupported,
-    updatePiPStats
-  ]);
+  // Track convoy members
   useEffect(() => {
     if (convoy.members.length > 0) {
       membersRef.current = convoy.members;
@@ -656,22 +630,12 @@ export default function ActiveRide() {
             </button>
           )}
 
-          {/* Navigation + PiP button - opens nav app and starts mini mode */}
+          {/* Navigation button - opens split-screen guide */}
           <Button
             variant="ghost"
-            onClick={async () => {
-              // Start PiP first if supported and not already active
-              if (isPiPSupported && !isPiPActive) {
-                await startPiP();
-              }
-              // Then open navigation
-              openNavigation();
-            }}
-            className={cn(
-              "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full touch-target",
-              isPiPActive ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
-            )}
-            title="Open navigation with mini stats overlay"
+            onClick={() => setShowSplitScreenGuide(true)}
+            className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
+            title="Use with navigation app"
           >
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
@@ -866,6 +830,13 @@ export default function ActiveRide() {
         )}
       </div>
 
+
+      {/* Split Screen Guide */}
+      <SplitScreenGuide
+        isOpen={showSplitScreenGuide}
+        onClose={() => setShowSplitScreenGuide(false)}
+        onOpenNav={() => openNavigation()}
+      />
 
       {/* Live Stream Viewer */}
       <LiveStreamViewer
