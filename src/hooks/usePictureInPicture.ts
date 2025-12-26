@@ -10,10 +10,6 @@ interface PiPStats {
   maxLeanLeft?: number;
   maxLeanRight?: number;
   leanEnabled?: boolean;
-  // Convoy stats
-  convoyName?: string;
-  memberCount?: number;
-  isLeader?: boolean;
 }
 
 export function usePictureInPicture() {
@@ -138,19 +134,6 @@ export function usePictureInPicture() {
     gradient.addColorStop(1, '#ea580c');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, 4);
-
-    // Convoy info at top if present
-    let topOffset = 12;
-    if (stats.convoyName) {
-      ctx.fillStyle = '#71717a';
-      ctx.font = '11px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      const convoyText = stats.isLeader 
-        ? `👑 ${stats.convoyName} (${stats.memberCount || 1})`
-        : `${stats.convoyName} (${stats.memberCount || 1})`;
-      ctx.fillText(convoyText, width / 2, topOffset + 10);
-      topOffset += 18;
-    }
 
     // Calculate vertical positions based on whether lean is enabled
     const hasLean = stats.leanEnabled;

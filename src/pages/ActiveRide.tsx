@@ -193,16 +193,11 @@ export default function ActiveRide() {
       maxLeanLeft: leanAngle.maxLeanLeft,
       maxLeanRight: leanAngle.maxLeanRight,
       leanEnabled: settings.leanAngleEnabled && leanAngle.isSupported,
-      // Convoy data
-      convoyName: rideState.isConvoyMode && convoy.code ? `Convoy ${convoy.code}` : undefined,
-      memberCount: rideState.isConvoyMode ? convoy.members.length : undefined,
-      isLeader: rideState.isConvoyMode ? convoy.isLeader : undefined,
     });
   }, [
     rideState.currentSpeed, 
     rideState.distance, 
     rideState.duration, 
-    rideState.isConvoyMode,
     settings.speedUnit, 
     settings.distanceUnit, 
     settings.leanAngleEnabled,
@@ -210,9 +205,6 @@ export default function ActiveRide() {
     leanAngle.maxLeanLeft,
     leanAngle.maxLeanRight,
     leanAngle.isSupported,
-    convoy.code,
-    convoy.members.length,
-    convoy.isLeader,
     updatePiPStats
   ]);
   useEffect(() => {
