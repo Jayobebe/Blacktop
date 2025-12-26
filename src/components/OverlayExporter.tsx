@@ -145,38 +145,60 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fillText(distLabel, 140, height - 45);
 
-    // Bottom Center - Live Speed
+    // Bottom Center - Live Speed with Lean Arc
+    const centerX = width / 2;
+    const speedY = height - 45;
+    
+    // Speed label
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.font = '12px system-ui';
-    ctx.fillText('SPEED', width / 2, height - 70);
+    ctx.fillText('SPEED', centerX, height - 70);
+    
+    // Speed value
     ctx.fillStyle = 'white';
     ctx.font = 'bold 36px monospace';
-    ctx.fillText(`${Math.round(stats.speed)}`, width / 2, height - 55);
+    ctx.fillText(`${Math.round(stats.speed)}`, centerX, height - 55);
     ctx.font = '14px system-ui';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillText(speedLabel, width / 2, height - 25);
+    ctx.fillText(speedLabel, centerX, height - 25);
 
-    // Bottom Center-Right - Live Lean Angle (only if ride has lean data)
+    // Lean Arc (only if ride has lean data)
     if (showLean) {
-      const leanX = width / 2 + 180;
+      const arcRadius = 85;
+      const arcCenterY = height - 40;
+      const arcStartAngle = Math.PI * 1.15; // ~208 degrees (left side)
+      const arcEndAngle = Math.PI * 1.85;   // ~332 degrees (right side)
+      
+      // Draw the arc
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(centerX, arcCenterY, arcRadius, arcStartAngle, arcEndAngle);
+      ctx.stroke();
+      
+      // Calculate dot position based on lean angle
+      // Lean angle ranges from about -45 to +45, map to arc position
+      const maxLeanAngle = 45;
+      const clampedLean = Math.max(-maxLeanAngle, Math.min(maxLeanAngle, stats.leanAngle));
+      const leanProgress = (clampedLean + maxLeanAngle) / (2 * maxLeanAngle); // 0 to 1
+      const dotAngle = arcStartAngle + leanProgress * (arcEndAngle - arcStartAngle);
+      
+      const dotX = centerX + Math.cos(dotAngle) * arcRadius;
+      const dotY = arcCenterY + Math.sin(dotAngle) * arcRadius;
+      
+      // Draw the dot
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Live lean angle above the arc
+      const leanTextY = arcCenterY - arcRadius - 8;
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.font = '12px system-ui';
-      ctx.fillText('LEAN', leanX, height - 70);
-      
-      // Color based on lean direction
-      const leanValue = Math.round(stats.leanAngle);
-      const leanColor = leanValue < 0 ? '#3b82f6' : leanValue > 0 ? '#ef4444' : 'white';
-      ctx.fillStyle = leanColor;
-      ctx.font = 'bold 36px monospace';
-      ctx.fillText(`${Math.abs(leanValue)}°`, leanX, height - 55);
-      
-      // Direction indicator
-      ctx.font = '14px system-ui';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      const direction = leanValue < 0 ? 'LEFT' : leanValue > 0 ? 'RIGHT' : '';
-      ctx.fillText(direction, leanX, height - 25);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(`${Math.abs(Math.round(stats.leanAngle))}°`, centerX, leanTextY);
     }
 
     // Bottom Right - Duration (elapsed)
