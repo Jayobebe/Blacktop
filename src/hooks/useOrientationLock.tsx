@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useSettings, OrientationLock } from '@/features/settings';
 
 interface OrientationContextType {
   orientation: 'portrait' | 'landscape';
   isLocked: boolean;
+  lockMode: OrientationLock;
   toggleLock: () => void;
   lockOrientation: () => void;
   unlockOrientation: () => void;
+  setLockMode: (mode: OrientationLock) => void;
 }
 
 const OrientationContext = createContext<OrientationContextType | null>(null);
@@ -23,9 +26,11 @@ export function useOrientationLock() {
   return {
     orientation: ctx?.orientation ?? ('portrait' as const),
     isLocked: ctx?.isLocked ?? false,
+    lockMode: ctx?.lockMode ?? ('portrait' as OrientationLock),
     toggleLock: ctx?.toggleLock ?? (() => {}),
     lockOrientation: ctx?.lockOrientation ?? (() => {}),
     unlockOrientation: ctx?.unlockOrientation ?? (() => {}),
+    setLockMode: ctx?.setLockMode ?? (() => {}),
   };
 }
 
@@ -34,46 +39,67 @@ export function OrientationProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
-  const [isLocked, setIsLocked] = useState(true); // Lock to portrait by default
+  const { settings, updateSetting } = useSettings();
+  const lockMode = settings.orientationLock;
+  
+  // Determine initial orientation based on lock mode
+  const getInitialOrientation = (): 'portrait' | 'landscape' => {
+    if (lockMode === 'auto') return getOrientationFromDimensions();
+    return lockMode;
+  };
+  
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(getInitialOrientation);
+  const isLocked = lockMode !== 'auto';
   const lastConfirmedOrientation = useRef(orientation);
   const isLockedRef = useRef(isLocked);
   
   // Keep ref in sync for use in event handlers
   isLockedRef.current = isLocked;
 
-  const lockOrientation = useCallback(() => {
-    // Capture the current orientation at lock time
-    lastConfirmedOrientation.current = getOrientationFromDimensions();
-    setOrientation(lastConfirmedOrientation.current);
-    setIsLocked(true);
-    
-    // Try to use the Screen Orientation API if available (requires fullscreen on most browsers)
-    try {
-      const screenOrientation = screen.orientation as any;
-      if (screenOrientation?.lock) {
-        screenOrientation.lock(lastConfirmedOrientation.current === 'landscape' ? 'landscape' : 'portrait').catch(() => {
-          // Silently fail - not all browsers support this without fullscreen
-          console.log('[OrientationLock] Native lock not available, using software lock');
-        });
+  // Update orientation when lock mode changes
+  useEffect(() => {
+    if (lockMode === 'portrait' || lockMode === 'landscape') {
+      setOrientation(lockMode);
+      lastConfirmedOrientation.current = lockMode;
+      
+      // Try to use the Screen Orientation API if available
+      try {
+        const screenOrientation = screen.orientation as any;
+        if (screenOrientation?.lock) {
+          screenOrientation.lock(lockMode).catch(() => {
+            console.log('[OrientationLock] Native lock not available, using software lock');
+          });
+        }
+      } catch {
+        // Screen orientation lock not supported
       }
-    } catch {
-      // Screen orientation lock not supported
+    } else {
+      // Auto mode - unlock and set current orientation
+      try {
+        const screenOrientation = screen.orientation as any;
+        if (screenOrientation?.unlock) {
+          screenOrientation.unlock();
+        }
+      } catch {
+        // Screen orientation unlock not supported
+      }
+      setOrientation(getOrientationFromDimensions());
     }
-  }, []);
+  }, [lockMode]);
+
+  const setLockMode = useCallback((mode: OrientationLock) => {
+    updateSetting('orientationLock', mode);
+  }, [updateSetting]);
+
+  const lockOrientation = useCallback(() => {
+    // Lock to current orientation
+    const current = getOrientationFromDimensions();
+    setLockMode(current);
+  }, [setLockMode]);
 
   const unlockOrientation = useCallback(() => {
-    setIsLocked(false);
-    // Try to unlock via Screen Orientation API
-    try {
-      const screenOrientation = screen.orientation as any;
-      if (screenOrientation?.unlock) {
-        screenOrientation.unlock();
-      }
-    } catch {
-      // Screen orientation unlock not supported
-    }
-  }, []);
+    setLockMode('auto');
+  }, [setLockMode]);
 
   const toggleLock = useCallback(() => {
     if (isLockedRef.current) {
@@ -186,8 +212,8 @@ export function OrientationProvider({
   }, [orientation]);
 
   const ctxValue = useMemo<OrientationContextType>(
-    () => ({ orientation, isLocked, toggleLock, lockOrientation, unlockOrientation }),
-    [orientation, isLocked, toggleLock, lockOrientation, unlockOrientation]
+    () => ({ orientation, isLocked, lockMode, toggleLock, lockOrientation, unlockOrientation, setLockMode }),
+    [orientation, isLocked, lockMode, toggleLock, lockOrientation, unlockOrientation, setLockMode]
   );
 
   return (

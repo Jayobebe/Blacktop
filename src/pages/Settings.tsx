@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
-import { useSettings, AccentColorPicker } from '@/features/settings';
+import { useSettings, AccentColorPicker, OrientationLock } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, Smartphone } from 'lucide-react';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -421,6 +421,48 @@ export default function Settings() {
               </div>
             </div>
           )}
+        </section>
+
+        {/* Screen Orientation Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Smartphone className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Screen Orientation</p>
+          </div>
+          <div className="space-y-2">
+            {([
+              { id: 'portrait' as OrientationLock, label: 'Portrait', desc: 'Lock to vertical' },
+              { id: 'landscape' as OrientationLock, label: 'Landscape', desc: 'Lock to horizontal' },
+              { id: 'auto' as OrientationLock, label: 'Auto', desc: 'Rotate with device' },
+            ]).map((option) => {
+              const isSelected = settings.orientationLock === option.id;
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => updateSetting('orientationLock', option.id)}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left",
+                    isSelected
+                      ? "border-accent/40 bg-accent/10"
+                      : "border-border/30 bg-card/30 hover:bg-secondary/50"
+                  )}
+                >
+                  <div>
+                    <p className={cn(
+                      "text-sm font-medium",
+                      isSelected ? "text-accent" : "text-foreground"
+                    )}>
+                      {option.label}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">{option.desc}</p>
+                  </div>
+                  {isSelected && (
+                    <div className="w-2 h-2 rounded-full bg-accent" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </section>
 
         {/* Convoy Display Section */}
