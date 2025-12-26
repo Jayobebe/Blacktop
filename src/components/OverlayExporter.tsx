@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Download, X, Film, Loader2 } from 'lucide-react';
@@ -20,6 +20,18 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
 
   const speedLabel = speedUnit.toUpperCase();
   const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
+
+  // Check if ride has any lean data at all
+  const hasLeanData = useMemo(() => {
+    // Check GPS points for lean angles
+    const hasGpsLean = ride.gpsPoints.some(pt => pt.leanAngle !== undefined && pt.leanAngle !== 0);
+    // Check lean samples
+    const hasLeanSamples = (ride.leanSamples && ride.leanSamples.length > 0) || false;
+    // Check ride-level max lean values
+    const hasMaxLean = (ride.maxLeanLeft && ride.maxLeanLeft > 0) || (ride.maxLeanRight && ride.maxLeanRight > 0);
+    
+    return hasGpsLean || hasLeanSamples || hasMaxLean;
+  }, [ride]);
 
   // Get stats at a specific point in the ride (0-1 progress)
   const getStatsAtProgress = useCallback((p: number) => {
@@ -70,7 +82,7 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
     };
   }, [ride]);
 
-  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: ReturnType<typeof getStatsAtProgress>) => {
+  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: ReturnType<typeof getStatsAtProgress>, showLean: boolean) => {
     // Clear with transparency
     ctx.clearRect(0, 0, width, height);
 
@@ -82,8 +94,8 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
     ctx.roundRect(40, 30, 180, 70, 8);
     ctx.fill();
 
-    // Top right panel - Max Lean (if exists)
-    if (stats.maxLean > 0) {
+    // Top right panel - Max Lean (only if ride has lean data)
+    if (showLean) {
       ctx.beginPath();
       ctx.roundRect(width - 220, 30, 180, 70, 8);
       ctx.fill();
@@ -112,8 +124,8 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fillText(speedLabel, 130, 72);
 
-    // Top Right - Max Lean (running max)
-    if (stats.maxLean > 0) {
+    // Top Right - Max Lean (only if ride has lean data)
+    if (showLean) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '14px system-ui';
       ctx.textAlign = 'right';
@@ -195,25 +207,37 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
         };
       });
 
-      recorder.start();
+      recorder.start(100); // Collect data every 100ms
 
-      // Render frames at 30fps for the ride duration
-      const fps = 30;
-      const totalFrames = Math.ceil(ride.duration * fps);
-      const frameInterval = 1000 / fps;
-
-      for (let frame = 0; frame <= totalFrames; frame++) {
-        const p = frame / totalFrames;
+      // Record in real-time - the MediaRecorder captures the canvas at its frame rate
+      // We update the canvas content based on elapsed time
+      const rideDurationMs = ride.duration * 1000;
+      const startTime = performance.now();
+      
+      const updateFrame = () => {
+        const elapsed = performance.now() - startTime;
+        const p = Math.min(1, elapsed / rideDurationMs);
         const stats = getStatsAtProgress(p);
-        drawFrame(ctx, canvas.width, canvas.height, stats);
+        drawFrame(ctx, canvas.width, canvas.height, stats, hasLeanData);
+        setProgress(Math.round(p * 100));
+        
+        if (p < 1) {
+          requestAnimationFrame(updateFrame);
+        } else {
+          // Ensure we draw the final frame
+          const finalStats = getStatsAtProgress(1);
+          drawFrame(ctx, canvas.width, canvas.height, finalStats, hasLeanData);
+          
+          // Stop recording after a brief delay to capture final frame
+          setTimeout(() => {
+            recorder.stop();
+          }, 100);
+        }
+      };
 
-        setProgress(Math.round((frame / totalFrames) * 100));
+      // Start the animation loop
+      requestAnimationFrame(updateFrame);
 
-        // Wait for next frame timing
-        await new Promise((r) => setTimeout(r, frameInterval / 10)); // Speed up export
-      }
-
-      recorder.stop();
       const blob = await recordingPromise;
 
       // Download the video
@@ -251,8 +275,19 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
         {/* Info */}
         <div className="bg-accent/10 rounded-lg p-3 border border-accent/20">
           <p className="text-sm text-muted-foreground">
-            This will generate a transparent WebM video ({formatDuration(ride.duration)} long) with animated stats that match your ride data. Import it as an overlay layer in your video editor.
+            This will generate a transparent WebM video ({formatDuration(ride.duration)} long) with animated stats. 
+            The export runs in real-time, so a {formatDuration(ride.duration)} ride takes ~{formatDuration(ride.duration)} to export.
           </p>
+        </div>
+
+        {/* What's included */}
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p>Overlay includes:</p>
+          <ul className="list-disc list-inside pl-2 space-y-0.5">
+            <li>Live speed & running max speed</li>
+            <li>Elapsed distance & time</li>
+            {hasLeanData && <li>Running max lean angle</li>}
+          </ul>
         </div>
 
         {/* Preview canvas (hidden but used for rendering) */}
@@ -262,10 +297,13 @@ export function OverlayExporter({ ride, speedUnit, distanceUnit, onClose }: Over
         {isExporting && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Rendering frames...</span>
+              <span className="text-muted-foreground">Recording overlay...</span>
               <span className="font-mono">{progress}%</span>
             </div>
             <Progress value={progress} className="h-2" />
+            <p className="text-xs text-muted-foreground text-center">
+              Recording in real-time. Please wait...
+            </p>
           </div>
         )}
 
