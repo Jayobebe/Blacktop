@@ -6,7 +6,7 @@ import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera, 
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
-  Zap, Eye, Phone, Settings, BarChart3, History, Video, Lock, Unlock, User
+  Zap, Eye, Phone, Settings, BarChart3, History, Video, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -96,15 +96,6 @@ export default function DemoShowcase() {
       mockup: <LeanAngleMockup />
     },
     {
-      id: 'orientation',
-      title: 'Orientation Lock',
-      subtitle: 'Lock Your Display',
-      description: 'Lock the screen orientation while riding. Perfect for phone mounts that might shift. One tap to lock in portrait or landscape.',
-      icon: Phone,
-      color: 'accent',
-      mockup: <OrientationMockup />
-    },
-    {
       id: 'rescue',
       title: 'Rescue System',
       subtitle: 'Never Leave Anyone Behind',
@@ -133,9 +124,9 @@ export default function DemoShowcase() {
     },
     {
       id: 'studio',
-      title: 'BlackTop Studio',
-      subtitle: 'Overlay Stats on Your Footage',
-      description: 'Import action cam footage and overlay your ride stats. Sync the timing, add color grading, and export with your speed, lean angle, and distance.',
+      title: 'Overlay Download',
+      subtitle: 'Sync Stats to Your Action Cam',
+      description: 'Download an MP4 overlay after your ride with live speed, lean angle, distance, and duration. Layer it over your GoPro, DJI, or Insta360 footage in any video editor.',
       icon: Video,
       color: 'accent',
       mockup: <StudioMockup />
@@ -555,113 +546,62 @@ function LeanAngleMockup() {
   );
 }
 
-function OrientationMockup() {
-  const [isLocked, setIsLocked] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLocked(true), 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <div className="w-full max-w-xs space-y-4 text-center">
-      {/* Phone mockup */}
-      <div className="relative animate-scale-in">
-        <div className={cn(
-          "w-24 h-40 mx-auto rounded-2xl border-4 transition-all duration-500",
-          isLocked ? "border-accent bg-accent/10" : "border-muted-foreground/30 bg-secondary/50"
-        )}>
-          <div className="absolute inset-2 rounded-lg bg-background/50 flex items-center justify-center">
-            {isLocked ? (
-              <Lock className="w-8 h-8 text-accent animate-scale-in" />
-            ) : (
-              <Unlock className="w-8 h-8 text-muted-foreground" />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Status */}
-      <div className={cn(
-        "py-3 px-4 rounded-xl transition-all duration-500 animate-slide-up delay-200",
-        isLocked ? "bg-accent/10 border border-accent/20" : "bg-secondary/50"
-      )}>
-        <p className={cn("font-medium", isLocked && "text-accent")}>
-          {isLocked ? '🔒 Orientation Locked' : 'Orientation Unlocked'}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {isLocked ? 'Screen won\'t rotate while riding' : 'Tap to lock in place'}
-        </p>
-      </div>
-
-      <p className="text-xs text-muted-foreground animate-fade-in delay-400">
-        Works even without native API support
-      </p>
-    </div>
-  );
-}
 
 function StudioMockup() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => prev < 100 ? prev + 2 : 0);
-    }, 80);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="w-full max-w-xs space-y-4">
-      {/* Video Preview */}
+      {/* Overlay Preview */}
       <div className="relative aspect-video bg-zinc-800 rounded-xl overflow-hidden animate-scale-in">
-        {/* Fake video frame */}
+        {/* Fake action cam background */}
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 to-zinc-900" />
         
-        {/* Overlay preview */}
+        {/* Overlay stats */}
         <div className="absolute inset-x-0 bottom-0">
           <div 
-            className="h-6"
+            className="h-8"
             style={{
-              background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+              background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)'
             }}
           />
-          <div className="absolute bottom-1 inset-x-2 flex justify-between text-[8px] text-white font-mono">
-            <span>12.4 mi</span>
-            <span className="text-sm font-bold">67 mph</span>
-            <span>0:23:45</span>
+          <div className="absolute bottom-1.5 inset-x-3 flex justify-between items-end text-white font-mono">
+            <span className="text-[10px]">12.4 mi</span>
+            <div className="text-center">
+              <span className="text-[8px] text-gray-400 block">SPEED</span>
+              <span className="text-lg font-bold">67</span>
+            </div>
+            <span className="text-[10px]">0:23:45</span>
           </div>
         </div>
         
-        {/* Studio badge */}
-        <div className="absolute top-2 left-2 px-2 py-0.5 bg-accent rounded text-[8px] font-semibold text-accent-foreground">
-          STUDIO
+        {/* Download indicator */}
+        <div className="absolute top-2 right-2 px-2 py-1 bg-accent rounded-lg text-[10px] font-semibold text-accent-foreground flex items-center gap-1">
+          <Video className="w-3 h-3" />
+          MP4
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="bg-card/50 rounded-xl p-3 border border-border/30 animate-slide-up delay-200">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-accent transition-all"
-              style={{ width: `${progress}%` }}
-            />
+      {/* Steps */}
+      <div className="space-y-2 animate-slide-up delay-200">
+        {[
+          { step: '1', label: 'Ride with your action cam recording' },
+          { step: '2', label: 'Download overlay from ride history' },
+          { step: '3', label: 'Layer in CapCut, Premiere, or DaVinci' },
+        ].map((item, i) => (
+          <div 
+            key={i} 
+            className="flex items-center gap-3 p-2 bg-card/30 rounded-lg animate-slide-up"
+            style={{ animationDelay: `${300 + i * 100}ms` }}
+          >
+            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-accent">
+              {item.step}
+            </div>
+            <span className="text-xs text-muted-foreground">{item.label}</span>
           </div>
-          <span className="text-[10px] text-muted-foreground font-mono">{Math.floor(progress)}%</span>
-        </div>
-        <div className="flex gap-2">
-          <div className="flex-1 h-3 bg-accent/40 rounded" />
-          <div className="flex-1 h-3 bg-blue-500/40 rounded" />
-        </div>
-        <div className="flex justify-between text-[8px] text-muted-foreground mt-1">
-          <span>Video</span>
-          <span>Ride Data</span>
-        </div>
+        ))}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center animate-fade-in delay-300">
-        🎬 Processed locally on your device
+      <p className="text-xs text-muted-foreground text-center animate-fade-in delay-500">
+        🔒 All processing happens on your device
       </p>
     </div>
   );
