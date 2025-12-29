@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, Film } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
+import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -15,6 +16,7 @@ export default function RideDetail() {
   const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
+  const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
 
   const ride = rides.find(r => r.id === id);
 
@@ -268,28 +270,37 @@ export default function RideDetail() {
         {/* Download Overlay Section - show if overlay was recorded */}
         {(ride.overlayAvailable || ride.overlayBlobUrl) && (
           <button
+            disabled={overlayProgress !== null}
             onClick={async () => {
               // Generate filename from ride name (same sanitization as recording)
               const baseName = ride.name || formatDate(ride.startedAt);
               const sanitized = baseName.replace(/[/\\?%*:|"<>]/g, '-').trim();
-              const filename = `${sanitized}-overlay.webm`;
+              const filename = `${sanitized}-overlay.mp4`;
 
               try {
                 // Prefer persisted overlay blob (survives refresh)
-                let blob = await getRideOverlayBlob(ride.id);
+                let webmBlob = await getRideOverlayBlob(ride.id);
 
                 // Backward compat: try legacy blob URL if present
-                if (!blob && ride.overlayBlobUrl) {
+                if (!webmBlob && ride.overlayBlobUrl) {
                   const resp = await fetch(ride.overlayBlobUrl);
-                  blob = await resp.blob();
+                  webmBlob = await resp.blob();
                 }
 
-                if (!blob) {
+                if (!webmBlob) {
                   toast.error('Overlay not available on this device anymore');
                   return;
                 }
 
-                const url = URL.createObjectURL(blob);
+                // Convert WebM to MP4
+                setOverlayProgress(0);
+                toast.info('Converting overlay to MP4...');
+                
+                const mp4Blob = await convertWebmToMp4(webmBlob, (progress) => {
+                  setOverlayProgress(progress);
+                });
+
+                const url = URL.createObjectURL(mp4Blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
@@ -301,13 +312,15 @@ export default function RideDetail() {
 
                 await deleteRideOverlayBlob(ride.id);
                 clearRideOverlay(ride.id);
+                setOverlayProgress(null);
                 toast.success('Overlay video downloaded!');
               } catch (error) {
                 console.error('Failed to download overlay video:', error);
+                setOverlayProgress(null);
                 toast.error('Failed to download overlay video');
               }
             }}
-            className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group"
+            className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group disabled:opacity-70"
           >
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
@@ -315,11 +328,19 @@ export default function RideDetail() {
                   <Film className="w-5 h-5 text-accent" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-sm">Download Overlay Video</h3>
-                  <p className="text-xs text-muted-foreground">Ready to use in your video editor</p>
+                  <h3 className="font-semibold text-sm">
+                    {overlayProgress !== null ? `Converting... ${overlayProgress}%` : 'Download Overlay Video'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {overlayProgress !== null ? 'Please wait' : 'MP4 format for video editors'}
+                  </p>
                 </div>
               </div>
-              <Download className="w-5 h-5 text-accent" />
+              {overlayProgress !== null ? (
+                <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Download className="w-5 h-5 text-accent" />
+              )}
             </div>
           </button>
         )}
