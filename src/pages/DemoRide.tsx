@@ -752,20 +752,21 @@ export default function DemoRide() {
 
             <div className="space-y-3">
               <div className="p-3 bg-card/50 border border-border/30 rounded-xl">
-                <p className="text-sm flex items-center gap-2">
-                  <Video className="w-4 h-4 text-accent" />
-                  <span>Record with any action cam (DJI, GoPro, etc.)</span>
+                <p className="text-sm font-medium mb-1">📹 Sync with Your Action Cam</p>
+                <p className="text-xs text-muted-foreground">
+                  Record your ride with any action cam (GoPro, DJI, Insta360) while Blacktop tracks your stats in the background.
                 </p>
               </div>
               <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
-                <p className="text-sm text-accent flex items-center gap-2">
-                  <Gauge className="w-4 h-4" />
-                  <span>Upload after ride to add stats overlay</span>
+                <p className="text-sm font-medium text-accent mb-1">⬇️ Download Overlay Video</p>
+                <p className="text-xs text-muted-foreground">
+                  After your ride, download an MP4 overlay with your live speed, lean angle, distance, and duration — perfectly synced to your ride time.
                 </p>
               </div>
               <div className="p-3 bg-secondary/50 border border-border/30 rounded-xl">
+                <p className="text-sm font-medium mb-1">🎬 Layer in Post</p>
                 <p className="text-xs text-muted-foreground">
-                  Processed locally on your device - video never leaves your phone
+                  Import the overlay into your favorite editor (CapCut, Premiere, DaVinci) and layer it over your action cam footage for pro-looking ride videos.
                 </p>
               </div>
             </div>
