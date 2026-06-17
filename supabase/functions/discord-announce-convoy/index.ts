@@ -56,14 +56,13 @@ Deno.serve(async (req) => {
 
     const name = (leaderName || 'A rider').slice(0, 64)
     const safeName = (convoyName || `${name}'s Convoy`).slice(0, 80)
-    const link = joinUrl || `https://convoy-comms.lovable.app/join?code=${encodeURIComponent(convoyCode)}`
 
     const payload = {
       content: `${rolePrefix}🏁 **${name}** started a convoy!`,
       embeds: [
         {
           title: safeName,
-          description: `Convoy code: **${convoyCode}**\n[Tap to join](${link})`,
+          description: `Convoy code: **${convoyCode}**`,
           color: 0xff6a00,
           footer: { text: 'BlackTop' },
           timestamp: new Date().toISOString(),
