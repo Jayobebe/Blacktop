@@ -12,6 +12,7 @@ import { useProfile } from '@/features/profile';
 import { useRescue, RescueAlert } from '@/features/rescue';
 import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer } from '@/features/streaming';
+import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
@@ -132,6 +133,8 @@ export default function ActiveRide() {
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
   const [showLiveStream, setShowLiveStream] = useState(false);
+  const [soloRescueSending, setSoloRescueSending] = useState(false);
+  const [soloRescueSent, setSoloRescueSent] = useState(false);
   const [pendingRecording, setPendingRecording] = useState<{
     blobUrl: string;
     thumbnailUrl: string;
