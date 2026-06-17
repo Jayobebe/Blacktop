@@ -220,21 +220,30 @@ serve(async (req) => {
 
     if (!upstream.ok) {
       const rateLimited = upstream.status === 429 || upstream.status >= 500;
-      // Return 200 with empty results + fallback flag so the client doesn't crash
+      if (rateLimited) {
+        // Return shape matching what the client expects so it doesn't crash
+        const fallback = body.kind === "search" ? [] : {};
+        return new Response(JSON.stringify(fallback), {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "X-Fallback": "rate_limited",
+          },
+          status: 200,
+        });
+      }
       return new Response(
-        JSON.stringify(
-          rateLimited
-            ? { results: [], fallback: true, reason: "rate_limited", status: upstream.status }
-            : { error: "Upstream search failed", status: upstream.status, body: text.slice(0, 500) },
-        ),
+        JSON.stringify({
+          error: "Upstream search failed",
+          status: upstream.status,
+          body: text.slice(0, 500),
+        }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: rateLimited ? 200 : 502,
+          status: 502,
         },
       );
     }
-
-    return new Response(text, {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
