@@ -326,7 +326,7 @@ export function DestinationSearch({
   const [internalCountryCode, setInternalCountryCode] = useState<string | null>(null);
   const [recentLocations, setRecentLocations] = useState<SearchResult[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
