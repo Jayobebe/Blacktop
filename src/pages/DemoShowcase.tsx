@@ -100,10 +100,19 @@ export default function DemoShowcase() {
       id: 'rescue',
       title: 'Rescue System',
       subtitle: 'Never Leave Anyone Behind',
-      description: 'Lost riders tap RESCUE to send their location to the leader. Leader adds it as a waypoint to bring the group back.',
+      description: 'In a convoy, tap RESCUE to send your location to the leader as a waypoint. On a solo ride, the same button pings your connected Discord so your crew knows where to find you.',
       icon: AlertTriangle,
       color: 'destructive',
       mockup: <RescueMockup />
+    },
+    {
+      id: 'discord',
+      title: 'Discord Integration',
+      subtitle: 'Loop In Your Crew',
+      description: 'Connect a Discord webhook in Settings to auto-announce when a convoy starts and to broadcast rescue pings — for both convoy and solo rides — straight to your channel.',
+      icon: MessageSquare,
+      color: 'accent',
+      mockup: <DiscordMockup />
     },
     {
       id: 'badges',
