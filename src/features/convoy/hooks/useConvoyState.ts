@@ -306,6 +306,13 @@ export function useConvoyState() {
 
     if (!user) return null;
 
+    // Deactivate any stale active convoys this user previously led
+    await supabase
+      .from('convoys')
+      .update({ is_active: false })
+      .eq('leader_id', user.id)
+      .eq('is_active', true);
+
     // Generate code using database function
     const { data: codeData } = await supabase.rpc('generate_convoy_code');
     const code = codeData || generateLocalCode();
