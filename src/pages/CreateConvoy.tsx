@@ -149,7 +149,23 @@ export default function CreateConvoy() {
               </p>
             </div>
             {/* Continue button - right side in landscape */}
-            <div className="landscape:flex-1 landscape:max-w-xs w-full max-w-xs">
+            <div className="landscape:flex-1 landscape:max-w-xs w-full max-w-xs space-y-2">
+              {integration && !integration.auto_announce && (
+                <Button
+                  onClick={() => pingDiscord(convoyCode)}
+                  disabled={pinging || pinged}
+                  variant="outline"
+                  className="w-full h-12 landscape:h-10 text-sm font-semibold touch-target"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  {pinged ? 'Pinged Discord' : pinging ? 'Pinging…' : 'Ping Discord server'}
+                </Button>
+              )}
+              {integration?.auto_announce && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  {pinging ? 'Pinging Discord…' : pinged ? '✓ Discord pinged' : 'Auto-pinging Discord…'}
+                </p>
+              )}
               <Button
                 onClick={handleContinue}
                 className="w-full h-12 landscape:h-10 text-base landscape:text-sm font-semibold touch-target"
