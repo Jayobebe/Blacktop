@@ -55,7 +55,7 @@ export default function DemoShowcase() {
       id: 'solo',
       title: 'Solo Ride',
       subtitle: 'Track Your Own Adventures',
-      description: 'Don\'t need a group? Start a solo ride to track your speed, distance, and lean angle. All the same features, just you and the road.',
+      description: 'Don\'t need a group? Start a solo ride to track your speed, distance, and lean angle. Tap RESCUE anytime to ping your Discord with your live location.',
       icon: Gauge,
       color: 'accent',
       mockup: <SoloMockup />
