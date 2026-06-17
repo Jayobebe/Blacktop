@@ -13,6 +13,7 @@ import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DiscordSettingsCard } from '@/features/integrations/discord';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -267,6 +268,10 @@ export default function Settings() {
             Blacktop opens your preferred app for directions
           </p>
         </section>
+
+        {/* Discord Integration */}
+        <DiscordSettingsCard />
+
 
         {/* Accent Color Section */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-100">
