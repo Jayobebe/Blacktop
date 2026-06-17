@@ -1,17 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/features/convoy';
+import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Copy, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Users, Copy, Check, Loader2, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
+import { useDiscordIntegration, announceConvoyToDiscord } from '@/features/integrations/discord';
 
 export default function CreateConvoy() {
   const navigate = useNavigate();
   const { createConvoy } = useConvoyState();
+  const { profile } = useProfile();
+  const { integration } = useDiscordIntegration();
   const [copied, setCopied] = useState(false);
   const [convoyCode, setConvoyCode] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [pinging, setPinging] = useState(false);
+  const [pinged, setPinged] = useState(false);
 
   const handleCreate = async () => {
     setIsCreating(true);
@@ -19,9 +25,29 @@ export default function CreateConvoy() {
       const result = await createConvoy();
       if (result) {
         setConvoyCode(result.code);
+        if (integration?.auto_announce) {
+          await pingDiscord(result.code);
+        }
       }
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const pingDiscord = async (code: string) => {
+    setPinging(true);
+    const ok = await announceConvoyToDiscord({
+      convoyCode: code,
+      convoyName: `${profile.name}'s Convoy`,
+      leaderName: profile.name,
+      joinUrl: `${window.location.origin}/join?code=${encodeURIComponent(code)}`,
+    });
+    setPinging(false);
+    if (ok) {
+      setPinged(true);
+      toast.success('Pinged your Discord server');
+    } else {
+      toast.error('Could not ping Discord');
     }
   };
 
@@ -40,6 +66,7 @@ export default function CreateConvoy() {
   const handleContinue = () => {
     navigate('/lobby');
   };
+
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
