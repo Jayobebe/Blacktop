@@ -57,11 +57,12 @@ export function useConvoyState() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check if user is a member of any active convoy
-      const { data: membership } = await supabase
+      // Check if user is a member of any active convoy (take most recent if multiple)
+      const { data: memberships } = await supabase
         .from('convoy_members')
         .select(`
           convoy_id,
+          joined_at,
           convoys!inner (
             id,
             code,
@@ -77,8 +78,10 @@ export function useConvoyState() {
         `)
         .eq('user_id', user.id)
         .eq('convoys.is_active', true)
-        .maybeSingle();
+        .order('joined_at', { ascending: false })
+        .limit(1);
 
+      const membership = memberships?.[0];
       if (!membership?.convoys) {
         console.log('[Convoy] No active convoy membership found');
         return;
