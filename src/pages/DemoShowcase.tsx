@@ -6,7 +6,8 @@ import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera, 
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
-  Zap, Eye, Phone, Settings, BarChart3, History, Video, User
+  Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
