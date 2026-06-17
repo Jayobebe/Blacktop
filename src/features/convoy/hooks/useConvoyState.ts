@@ -491,8 +491,31 @@ export function useConvoyState() {
   const leaveConvoy = useCallback(async (skipDeactivation = false) => {
     const convoyId = state.id;
     const wasLeader = state.isLeader;
-    
-    // Clear state immediately (optimistic update) for instant UI response
+
+    // Run DB cleanup FIRST so the restore effect doesn't re-add us after state clears
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && convoyId) {
+        const { error: delErr } = await supabase
+          .from('convoy_members')
+          .delete()
+          .eq('convoy_id', convoyId)
+          .eq('user_id', user.id);
+        if (delErr) console.warn('[Convoy] Failed to remove membership:', delErr);
+
+        if (wasLeader && !skipDeactivation) {
+          const { error: deactErr } = await supabase
+            .from('convoys')
+            .update({ is_active: false })
+            .eq('id', convoyId);
+          if (deactErr) console.warn('[Convoy] Failed to deactivate convoy:', deactErr);
+        }
+      }
+    } catch (e) {
+      console.warn('[Convoy] leaveConvoy cleanup error:', e);
+    }
+
+    // Now clear local state — restore effect will find no active membership
     setConvoyState(() => ({
       id: null,
       code: null,
@@ -503,34 +526,6 @@ export function useConvoyState() {
       waypoints: [],
       isPaused: false,
     }));
-
-    // Run database cleanup in background (non-blocking)
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !convoyId) return;
-
-      // Remove self from convoy_members
-      supabase
-        .from('convoy_members')
-        .delete()
-        .eq('convoy_id', convoyId)
-        .eq('user_id', user.id)
-        .then(({ error }) => {
-          if (error) console.warn('[Convoy] Failed to remove membership:', error);
-        });
-
-      // If leader and not skipping deactivation, deactivate convoy
-      // Skip when leadership was just transferred (caller passes skipDeactivation=true)
-      if (wasLeader && !skipDeactivation) {
-        supabase
-          .from('convoys')
-          .update({ is_active: false })
-          .eq('id', convoyId)
-          .then(({ error }) => {
-            if (error) console.warn('[Convoy] Failed to deactivate convoy:', error);
-          });
-      }
-    })();
   }, [state.id, state.isLeader]);
 
   const setDestination = useCallback(async (destination: ConvoyDestination) => {
