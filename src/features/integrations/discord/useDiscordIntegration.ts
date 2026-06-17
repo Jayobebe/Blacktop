@@ -119,3 +119,24 @@ export async function announceRescueToDiscord(args: {
     return false;
   }
 }
+
+export async function announceSoloRescueToDiscord(args: {
+  riderName: string;
+  lat: number;
+  lng: number;
+}) {
+  try {
+    const { data, error } = await supabase.functions.invoke('discord-announce-solo-rescue', { body: args });
+    if (error) {
+      console.warn('[Discord] solo rescue failed', error);
+      return { ok: false, skipped: false };
+    }
+    if ((data as any)?.skipped) {
+      return { ok: false, skipped: true };
+    }
+    return { ok: true, skipped: false };
+  } catch (e) {
+    console.warn('[Discord] solo rescue error', e);
+    return { ok: false, skipped: false };
+  }
+}
