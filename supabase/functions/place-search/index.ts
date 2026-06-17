@@ -219,15 +219,17 @@ serve(async (req) => {
     const text = await upstream.text();
 
     if (!upstream.ok) {
+      const rateLimited = upstream.status === 429 || upstream.status >= 500;
+      // Return 200 with empty results + fallback flag so the client doesn't crash
       return new Response(
-        JSON.stringify({
-          error: "Upstream search failed",
-          status: upstream.status,
-          body: text.slice(0, 500),
-        }),
+        JSON.stringify(
+          rateLimited
+            ? { results: [], fallback: true, reason: "rate_limited", status: upstream.status }
+            : { error: "Upstream search failed", status: upstream.status, body: text.slice(0, 500) },
+        ),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 502,
+          status: rateLimited ? 200 : 502,
         },
       );
     }
