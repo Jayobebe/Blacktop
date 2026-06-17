@@ -1,0 +1,1 @@
+UPDATE public.convoys SET is_active = false WHERE leader_id = '97cf358b-0706-4623-85a8-c0caf1b6bfac' AND is_active = true AND id <> 'b185a3bb-19f4-4718-af1d-36eeb9991e74';
