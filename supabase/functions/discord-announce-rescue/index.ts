@@ -75,16 +75,7 @@ Deno.serve(async (req) => {
     const safeName = riderName.slice(0, 64)
 
     const payload = {
-      content: `${rolePrefix}🚨 **${safeName}** needs rescue!`,
-      embeds: [
-        {
-          title: 'Rescue alert',
-          description: `Convoy **${convoy.code}** — rider lost.\n[Open location](${mapsUrl})`,
-          color: 0xff3b30,
-          footer: { text: 'BlackTop' },
-          timestamp: new Date().toISOString(),
-        },
-      ],
+      content: `${rolePrefix}🚨 ${safeName} needs rescue, ${mapsUrl}`,
       allowed_mentions: integration.role_to_ping
         ? { roles: [integration.role_to_ping] }
         : { parse: [] },
