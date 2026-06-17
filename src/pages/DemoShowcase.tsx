@@ -6,7 +6,8 @@ import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera, 
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
-  Zap, Eye, Phone, Settings, BarChart3, History, Video, User
+  Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +55,7 @@ export default function DemoShowcase() {
       id: 'solo',
       title: 'Solo Ride',
       subtitle: 'Track Your Own Adventures',
-      description: 'Don\'t need a group? Start a solo ride to track your speed, distance, and lean angle. All the same features, just you and the road.',
+      description: 'Don\'t need a group? Start a solo ride to track your speed, distance, and lean angle. Tap RESCUE anytime to ping your Discord with your live location.',
       icon: Gauge,
       color: 'accent',
       mockup: <SoloMockup />
@@ -99,10 +100,19 @@ export default function DemoShowcase() {
       id: 'rescue',
       title: 'Rescue System',
       subtitle: 'Never Leave Anyone Behind',
-      description: 'Lost riders tap RESCUE to send their location to the leader. Leader adds it as a waypoint to bring the group back.',
+      description: 'In a convoy, tap RESCUE to send your location to the leader as a waypoint. On a solo ride, the same button pings your connected Discord so your crew knows where to find you.',
       icon: AlertTriangle,
       color: 'destructive',
       mockup: <RescueMockup />
+    },
+    {
+      id: 'discord',
+      title: 'Discord Integration',
+      subtitle: 'Loop In Your Crew',
+      description: 'Connect a Discord webhook in Settings to auto-announce when a convoy starts and to broadcast rescue pings — for both convoy and solo rides — straight to your channel.',
+      icon: MessageSquare,
+      color: 'accent',
+      mockup: <DiscordMockup />
     },
     {
       id: 'badges',
@@ -473,8 +483,64 @@ function SoloMockup() {
         </div>
       </div>
       
+      <div className="p-3 bg-destructive/10 rounded-xl border border-destructive/30 animate-fade-in delay-300 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-destructive/20 border border-destructive flex items-center justify-center flex-shrink-0">
+          <AlertTriangle className="w-4 h-4 text-destructive" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-destructive">Rescue ping</p>
+          <p className="text-[10px] text-muted-foreground">Sends your location to Discord</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DiscordMockup() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setStep(s => (s + 1) % 3), 1400);
+    return () => clearInterval(t);
+  }, []);
+
+  const messages = [
+    { tag: 'CONVOY', text: '🏍️ Jake started a convoy — code A3F9', tone: 'text-accent' },
+    { tag: 'RESCUE', text: '🚨 Sam needs rescue — maps.google.com/...', tone: 'text-destructive' },
+    { tag: 'SOLO', text: '🚨 You need rescue — maps.google.com/...', tone: 'text-destructive' },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      <div className="bg-card/50 rounded-2xl border border-border/30 p-4 animate-slide-up">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-[#5865F2]/20 flex items-center justify-center">
+            <MessageSquare className="w-5 h-5 text-[#5865F2]" />
+          </div>
+          <div>
+            <p className="font-semibold text-sm">#riders</p>
+            <p className="text-[10px] text-muted-foreground">Discord webhook connected</p>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {messages.map((m, i) => (
+            <div
+              key={m.tag}
+              className={cn(
+                "flex items-start gap-2 p-2 rounded-lg border transition-all duration-300",
+                step === i ? "bg-secondary/60 border-border/40 opacity-100" : "bg-secondary/20 border-transparent opacity-50"
+              )}
+            >
+              <span className={cn("text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-background/60", m.tone)}>
+                {m.tag}
+              </span>
+              <p className="text-[11px] text-foreground/90 flex-1">{m.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
-        <p className="text-xs text-center text-accent">🏍️ All features, no convoy needed</p>
+        <p className="text-xs text-center text-accent">Set up once in Settings → Integrations</p>
       </div>
     </div>
   );
