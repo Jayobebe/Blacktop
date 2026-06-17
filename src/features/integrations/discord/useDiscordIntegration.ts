@@ -26,7 +26,7 @@ export function useDiscordIntegration() {
       .select('webhook_url, server_name, role_to_ping, auto_announce')
       .eq('user_id', user.id)
       .maybeSingle();
-    setIntegration((data as DiscordIntegration | null) ?? null);
+    setIntegration((data as unknown as DiscordIntegration | null) ?? null);
     setLoading(false);
   }, []);
 
