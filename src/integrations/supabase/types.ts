@@ -234,6 +234,36 @@ export type Database = {
           },
         ]
       }
+      discord_integrations: {
+        Row: {
+          auto_announce: boolean
+          created_at: string
+          role_to_ping: string | null
+          server_name: string | null
+          updated_at: string
+          user_id: string
+          webhook_url: string
+        }
+        Insert: {
+          auto_announce?: boolean
+          created_at?: string
+          role_to_ping?: string | null
+          server_name?: string | null
+          updated_at?: string
+          user_id: string
+          webhook_url: string
+        }
+        Update: {
+          auto_announce?: boolean
+          created_at?: string
+          role_to_ping?: string | null
+          server_name?: string | null
+          updated_at?: string
+          user_id?: string
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

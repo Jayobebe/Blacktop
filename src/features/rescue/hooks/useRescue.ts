@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { announceRescueToDiscord } from '@/features/integrations/discord';
 
 export interface RescueRequest {
   id: string;
@@ -96,6 +97,10 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
     setHasPendingRescue(true);
     toast.info('Rescue request sent to leader');
+
+    // Fire-and-forget Discord ping to leader's server if configured
+    announceRescueToDiscord({ convoyId, riderName: userName, lat, lng });
+
     return true;
   }, [convoyId, userId, userName]);
 
