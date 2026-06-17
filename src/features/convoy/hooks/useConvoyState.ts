@@ -495,20 +495,22 @@ export function useConvoyState() {
     // Run DB cleanup FIRST so the restore effect doesn't re-add us after state clears
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && convoyId) {
+      if (user) {
+        // Remove ALL of this user's memberships (clears stale convoys too)
         const { error: delErr } = await supabase
           .from('convoy_members')
           .delete()
-          .eq('convoy_id', convoyId)
           .eq('user_id', user.id);
-        if (delErr) console.warn('[Convoy] Failed to remove membership:', delErr);
+        if (delErr) console.warn('[Convoy] Failed to remove memberships:', delErr);
 
-        if (wasLeader && !skipDeactivation) {
+        // Deactivate any convoys this user leads (current + stale)
+        if (!skipDeactivation) {
           const { error: deactErr } = await supabase
             .from('convoys')
             .update({ is_active: false })
-            .eq('id', convoyId);
-          if (deactErr) console.warn('[Convoy] Failed to deactivate convoy:', deactErr);
+            .eq('leader_id', user.id)
+            .eq('is_active', true);
+          if (deactErr) console.warn('[Convoy] Failed to deactivate convoys:', deactErr);
         }
       }
     } catch (e) {
