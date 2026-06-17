@@ -219,6 +219,19 @@ serve(async (req) => {
     const text = await upstream.text();
 
     if (!upstream.ok) {
+      const rateLimited = upstream.status === 429 || upstream.status >= 500;
+      if (rateLimited) {
+        // Return shape matching what the client expects so it doesn't crash
+        const fallback = body.kind === "search" ? [] : {};
+        return new Response(JSON.stringify(fallback), {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "X-Fallback": "rate_limited",
+          },
+          status: 200,
+        });
+      }
       return new Response(
         JSON.stringify({
           error: "Upstream search failed",
