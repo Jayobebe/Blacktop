@@ -140,7 +140,7 @@ export function GarageDiorama({ bike, tip, editing = false, onPlacementChange }:
       ) : (
         <div className="absolute left-[38%] bottom-16 -translate-x-1/2 text-center text-foreground/80">
           <p className="text-sm uppercase tracking-widest opacity-80 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            No bike yet
+            No vehicle yet
           </p>
           <p className="text-xs opacity-70 mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             Add one to fill the garage

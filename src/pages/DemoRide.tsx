@@ -335,7 +335,7 @@ export default function DemoRide() {
             <header className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-1">Welcome back</p>
-                <h1 className="text-2xl font-semibold tracking-tight">{demoName || 'Rider'}</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">{demoName || 'Driver'}</h1>
               </div>
               <button className="p-2.5 rounded-xl bg-secondary/50 border border-border/30">
                 <Settings className="w-5 h-5 text-muted-foreground" />
@@ -862,7 +862,7 @@ export default function DemoRide() {
 
               <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
                 <p className="text-sm text-accent">
-                  Leader receives rescue alert and can add the lost rider's location as a waypoint
+                  Leader receives rescue alert and can add the lost member's location as a waypoint
                 </p>
               </div>
             </div>
@@ -1073,7 +1073,7 @@ export default function DemoRide() {
               {[
                 { label: 'Total Rides', value: '13' },
                 { label: 'Total Distance', value: `${fDist(352)} ${dLabel}` },
-                { label: 'Time Riding', value: '8:35' },
+                { label: 'Time on the Road', value: '8:35' },
                 { label: 'Top Speed', value: `${fSpd(maxSpeed)} ${sLabel}` },
               ].map((stat, i) => (
                 <div key={i} className="bg-card/50 rounded-xl p-3 border border-border/30 flex items-center justify-between">

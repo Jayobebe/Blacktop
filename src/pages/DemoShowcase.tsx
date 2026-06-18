@@ -147,7 +147,7 @@ export default function DemoShowcase() {
       id: 'stats',
       title: 'Lifetime Statistics',
       subtitle: 'Track Your Progress',
-      description: 'Total rides, distance traveled, top speed achieved, badges earned. See your riding journey at a glance.',
+      description: 'Total rides, distance traveled, top speed achieved, badges earned. See your journey at a glance.',
       icon: BarChart3,
       color: 'accent',
       mockup: <StatsMockup />
@@ -155,8 +155,8 @@ export default function DemoShowcase() {
     {
       id: 'garage',
       title: "Mecha-Nick's Garage",
-      subtitle: 'Your Bikes, Your Stats',
-      description: 'Add every bike in your stable. Snap a photo, set the odometer, and Mecha-Nick keeps lifetime stats and maintenance per bike — not just one big pile.',
+      subtitle: 'Your Vehicles, Your Stats',
+      description: 'Add every vehicle in your stable. Snap a photo, set the odometer, and Mecha-Nick keeps lifetime stats and maintenance per vehicle — not just one big pile.',
       icon: Bike,
       color: 'accent',
       mockup: <GarageMockup />
@@ -172,9 +172,9 @@ export default function DemoShowcase() {
     },
     {
       id: 'bike-assignment',
-      title: 'Assign Rides to Bikes',
-      subtitle: 'History Knows Which Bike',
-      description: 'Pick the bike used for any ride straight from History. Distance, top speed and ride time roll up into that bike\'s garage stats automatically.',
+      title: 'Assign Rides to Vehicles',
+      subtitle: 'History Knows Which Vehicle',
+      description: 'Pick the vehicle used for any ride straight from History. Distance, top speed and ride time roll up into that vehicle\'s garage stats automatically.',
       icon: History,
       color: 'accent',
       mockup: <BikeAssignmentMockup />
@@ -1149,7 +1149,7 @@ function GarageMockup() {
         </div>
       ))}
       <p className="text-center text-xs text-muted-foreground animate-fade-in delay-400">
-        Each bike keeps its own stats & maintenance
+        Each vehicle keeps its own stats & maintenance
       </p>
     </div>
   );
@@ -1295,7 +1295,7 @@ function BikeAssignmentMockup() {
           <p className="text-sm font-semibold">{selected}</p>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          +{distValue} {distLabel} added to this bike's lifetime stats
+          +{distValue} {distLabel} added to this vehicle's lifetime stats
         </p>
       </div>
     </div>

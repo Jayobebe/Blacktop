@@ -446,7 +446,7 @@ export default function Settings() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium">Enable Lean Angle</p>
-              <p className="text-[10px] text-muted-foreground">Track motorcycle lean angle in real-time</p>
+              <p className="text-[10px] text-muted-foreground">Track vehicle lean angle in real-time</p>
             </div>
             <Switch 
               checked={settings.leanAngleEnabled} 

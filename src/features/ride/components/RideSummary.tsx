@@ -147,9 +147,9 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             <div className="text-sm tracking-[0.3em] opacity-70 mt-1">— RIDE RECEIPT —</div>
           </div>
 
-          {/* Bike line (from garage) */}
+          {/* Vehicle line (from garage) */}
           <div className="mt-4" data-bike-slot>
-            <ReceiptRow label="Bike" value={bikeName || '—'} />
+            <ReceiptRow label="Vehicle" value={bikeName || '—'} />
           </div>
 
           {/* Divider */}
@@ -185,12 +185,12 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Divider */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
-          {/* Bike photo (B&W) — below stats, above thank you */}
+          {/* Vehicle photo (B&W) — below stats, above thank you */}
           {bikePhoto ? (
             <div className="flex items-center justify-center py-2">
               <img
                 src={bikePhoto}
-                alt={bikeName || 'Bike'}
+                alt={bikeName || 'Vehicle'}
                 crossOrigin="anonymous"
                 className="max-h-40 w-auto object-contain"
                 style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
@@ -201,7 +201,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               <div className="receipt-bracket text-center" data-bike-slot>
                 <span className="receipt-bracket-tr" />
                 <span className="receipt-bracket-bl" />
-                <div className="text-xl tracking-[0.2em]">BIKE MODEL</div>
+                <div className="text-xl tracking-[0.2em]">VEHICLE MODEL</div>
                 <div className="text-sm opacity-60 mt-1">add in garage</div>
               </div>
             )
@@ -242,7 +242,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Footer */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
           <div className="text-center space-y-2">
-            <div className="text-base tracking-[0.25em]">THANK YOU FOR RIDING</div>
+            <div className="text-base tracking-[0.25em]">THANK YOU FOR THE RIDE</div>
             <div className="text-xs opacity-60 tracking-widest">ORDER {orderId}</div>
             <div className="receipt-barcode mt-3" aria-hidden />
             <div className="text-[10px] tracking-[0.4em] opacity-70 mt-1">BLACKTOP · {dateStr}</div>

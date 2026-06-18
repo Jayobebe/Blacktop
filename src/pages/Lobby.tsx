@@ -697,7 +697,7 @@ export default function Lobby() {
             <LobbyChat
               convoyId={convoy.id}
               userId={user.id}
-              userName={profile.name || 'Rider'}
+              userName={profile.name || 'Driver'}
               members={convoy.members.map(m => ({ userId: m.userId, accentColor: m.accentColor }))}
             />
           </div>

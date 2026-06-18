@@ -893,7 +893,7 @@ export default function ActiveRide() {
                   });
                 });
                 const result = await announceSoloRescueToDiscord({
-                  riderName: profile.name || 'Rider',
+                  riderName: profile.name || 'Driver',
                   lat: pos.coords.latitude,
                   lng: pos.coords.longitude,
                 });

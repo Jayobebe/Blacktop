@@ -79,7 +79,7 @@ export default function SoloLobby() {
         </button>
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Solo Ride</h1>
-          <p className="text-xs text-muted-foreground">Set a destination and start riding</p>
+          <p className="text-xs text-muted-foreground">Set a destination and hit the road</p>
         </div>
       </header>
 

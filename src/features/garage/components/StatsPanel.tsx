@@ -12,7 +12,7 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
 
   const items = [
     {
-      label: 'On this bike',
+      label: 'On this vehicle',
       value: formatDistance(stats.totalDistanceMi, settings.distanceUnit),
       unit: getDistanceLabel(settings.distanceUnit),
     },
