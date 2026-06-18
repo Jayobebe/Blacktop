@@ -225,6 +225,15 @@ export default function Onboarding() {
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
 
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/demo')}
+            className="w-full h-11 text-sm font-medium rounded-2xl touch-target"
+          >
+            See what's inside — Preview Demo
+          </Button>
+
           {!allPermissionsGranted && canContinue && (
             <p className="text-xs text-muted-foreground text-center">
               Voice chat will be unavailable without microphone access
