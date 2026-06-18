@@ -216,12 +216,23 @@ function tick(): Promise<void> {
  * without ever materialising a giant base64 string in memory, which is what
  * was crashing the page on large phone-camera photos.
  */
-async function loadBitmap(file: File): Promise<
+function releaseCanvas(canvas: HTMLCanvasElement) {
+  canvas.width = 1;
+  canvas.height = 1;
+  canvas.getContext('2d')?.clearRect(0, 0, 1, 1);
+}
+
+async function loadBitmap(file: File, maxDecodeDim?: number): Promise<
   (HTMLImageElement | ImageBitmap) & { close?: () => void }
 > {
   if (typeof createImageBitmap === 'function') {
     try {
-      return await createImageBitmap(file);
+      return await createImageBitmap(
+        file,
+        maxDecodeDim
+          ? { resizeWidth: maxDecodeDim, resizeQuality: 'low', imageOrientation: 'from-image' }
+          : { imageOrientation: 'from-image' },
+      );
     } catch {
       // fall through to <img> path
     }
