@@ -1,11 +1,15 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConvoyMemberInfo, calculateBadges, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
-import { Crown, User } from 'lucide-react';
+import { Crown, User, Download, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { useSettings } from '@/features/settings';
 import { BTLogo } from '@/components/BTLogo';
+import { toPng } from 'html-to-image';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { toast } from 'sonner';
 
 interface RideStats {
   duration: number;
