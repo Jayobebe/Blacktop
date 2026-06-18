@@ -120,17 +120,24 @@ export default function Settings() {
     }
   };
 
-  const handleBurn = () => {
+  const [burnOrigin, setBurnOrigin] = useState<{ x: number; y: number } | null>(null);
+
+  const handleBurn = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (burnStep === 0) {
       setBurnStep(1);
     } else if (burnStep === 1) {
-      // Trigger the flame-up sequence; data + identity are wiped during it.
+      // Capture the button's center as the flame origin
+      const rect = e.currentTarget.getBoundingClientRect();
+      setBurnOrigin({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
       setBurning(true);
       try {
         burnAllData();
         burnGarage();
-      } catch (e) {
-        console.error('Burn failed:', e);
+      } catch (err) {
+        console.error('Burn failed:', err);
       }
     }
   };
@@ -607,7 +614,7 @@ export default function Settings() {
         </p>
       </div>
 
-      <BurnFlameOverlay active={burning} onComplete={handleBurnComplete} />
+      <BurnFlameOverlay active={burning} origin={burnOrigin} onComplete={handleBurnComplete} />
     </div>
   );
 }
