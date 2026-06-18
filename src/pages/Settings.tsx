@@ -329,62 +329,77 @@ export default function Settings() {
             <AlertTriangle className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Speed Alerts</p>
           </div>
-          <div className="space-y-5">
-            {/* Amber threshold */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
+          {(() => {
+            const u = settings.speedUnit;
+            const label = getSpeedLabel(u);
+            // Convert stored mph thresholds to displayed unit
+            const toDisplay = (mph: number) => formatSpeed(mph, u);
+            const fromDisplay = (display: number) =>
+              u === 'kph' ? Math.round(display / 1.60934) : display;
+            const sliderMin = u === 'kph' ? 40 : 25;
+            const sliderMax = u === 'kph' ? 400 : 250;
+            const sliderStep = u === 'kph' ? 5 : 5;
+            const amberDisplay = toDisplay(settings.amberSpeedThreshold);
+            const redDisplay = toDisplay(settings.redSpeedThreshold);
+            return (
+              <div className="space-y-5">
+                {/* Amber threshold */}
                 <div>
-                  <p className="text-sm font-medium text-warning">Amber Warning</p>
-                  <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-medium text-warning">Amber Warning</p>
+                      <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                    </div>
+                    <span className="font-mono text-sm font-bold text-warning">
+                      {amberDisplay} {label}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={sliderMin}
+                    max={sliderMax}
+                    step={sliderStep}
+                    value={amberDisplay}
+                    onChange={(e) => {
+                      const newAmberMph = fromDisplay(Number(e.target.value));
+                      updateSetting('amberSpeedThreshold', newAmberMph);
+                      if (settings.redSpeedThreshold <= newAmberMph) {
+                        updateSetting('redSpeedThreshold', Math.min(newAmberMph + 10, 250));
+                      }
+                    }}
+                    className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
+                  />
                 </div>
-                <span className="font-mono text-sm font-bold text-warning">
-                  {settings.amberSpeedThreshold} {settings.speedUnit}
-                </span>
-              </div>
-              <input
-                type="range"
-                min={25}
-                max={250}
-                step={5}
-                value={settings.amberSpeedThreshold}
-                onChange={(e) => {
-                  const newAmber = Number(e.target.value);
-                  updateSetting('amberSpeedThreshold', newAmber);
-                  if (settings.redSpeedThreshold <= newAmber) {
-                    updateSetting('redSpeedThreshold', Math.min(newAmber + 10, 250));
-                  }
-                }}
-                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
-              />
-            </div>
 
-            {/* Red threshold */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
+                {/* Red threshold */}
                 <div>
-                  <p className="text-sm font-medium text-destructive">Red Alert</p>
-                  <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-medium text-destructive">Red Alert</p>
+                      <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                    </div>
+                    <span className="font-mono text-sm font-bold text-destructive">
+                      {redDisplay} {label}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={sliderMin}
+                    max={sliderMax}
+                    step={sliderStep}
+                    value={redDisplay}
+                    onChange={(e) => {
+                      const newRedMph = fromDisplay(Number(e.target.value));
+                      if (newRedMph > settings.amberSpeedThreshold) {
+                        updateSetting('redSpeedThreshold', newRedMph);
+                      }
+                    }}
+                    className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
+                  />
                 </div>
-                <span className="font-mono text-sm font-bold text-destructive">
-                  {settings.redSpeedThreshold} {settings.speedUnit}
-                </span>
               </div>
-              <input
-                type="range"
-                min={25}
-                max={250}
-                step={5}
-                value={settings.redSpeedThreshold}
-                onChange={(e) => {
-                  const newRed = Number(e.target.value);
-                  if (newRed > settings.amberSpeedThreshold) {
-                    updateSetting('redSpeedThreshold', newRed);
-                  }
-                }}
-                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
-              />
-            </div>
-          </div>
+            );
+          })()}
         </section>
 
         {/* Lean Angle Sensor Section */}
