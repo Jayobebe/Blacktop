@@ -130,6 +130,44 @@ function resizeNearest(source: HTMLCanvasElement, scale: number) {
   return next;
 }
 
+function cropTransparentBounds(source: HTMLCanvasElement) {
+  const ctx = source.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('canvas');
+
+  const { width, height } = source;
+  const data = ctx.getImageData(0, 0, width, height).data;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 12) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return source;
+
+  const pad = 8;
+  const sx = Math.max(0, minX - pad);
+  const sy = Math.max(0, minY - pad);
+  const sw = Math.min(width - sx, maxX - minX + 1 + pad * 2);
+  const sh = Math.min(height - sy, maxY - minY + 1 + pad * 2);
+  const cropped = document.createElement('canvas');
+  cropped.width = sw;
+  cropped.height = sh;
+  const croppedCtx = cropped.getContext('2d');
+  if (!croppedCtx) throw new Error('canvas');
+  croppedCtx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+  return cropped;
+}
+
 /**
  * Bounded flood-fill from every edge pixel. Only pixels reachable from an
  * edge AND within `tol` of one of the 4 corner colours are cleared. Uses a
