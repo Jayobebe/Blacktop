@@ -405,6 +405,7 @@ export default function ActiveRide() {
         distance: rideState.distance,
         maxSpeed: rideState.maxSpeed,
         averageSpeed: avgSpeed,
+        maxLean: Math.max(rideState.maxLeanLeft || 0, rideState.maxLeanRight || 0),
       });
 
       // Capture final members before ending for badge summary
