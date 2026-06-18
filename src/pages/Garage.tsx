@@ -217,35 +217,15 @@ export default function Garage() {
       ) : (
         <div className="mt-4 flex-1 min-h-0">
           <Tabs defaultValue="stats" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full">
+            <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="stats">Stats</TabsTrigger>
               <TabsTrigger value="maint">Maintenance</TabsTrigger>
-              <TabsTrigger value="photos">Photos</TabsTrigger>
             </TabsList>
             <TabsContent value="stats" className="mt-3">
               <StatsPanel stats={stats} baseOdometerKm={activeBike.baseOdometerKm} />
             </TabsContent>
             <TabsContent value="maint" className="mt-3">
               <MaintenanceList bike={activeBike} odometerKm={stats.odometerKm} />
-            </TabsContent>
-            <TabsContent value="photos" className="mt-3">
-              <div className="grid grid-cols-2 gap-2">
-                {(['left', 'right', 'front', 'back'] as const).map((a) => (
-                  <div
-                    key={a}
-                    className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border/30"
-                  >
-                    <img
-                      src={activeBike.photos[a]}
-                      alt={a}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div className="absolute bottom-1 left-2 text-[10px] uppercase tracking-widest text-white/90 bg-black/50 px-1.5 py-0.5 rounded">
-                      {a}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </TabsContent>
           </Tabs>
 

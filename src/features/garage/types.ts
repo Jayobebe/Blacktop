@@ -1,8 +1,6 @@
 export interface BikePhotos {
-  left: string;  // data URL (hero)
-  right: string;
-  front: string;
-  back: string;
+  /** Pixelated front-right quarter view, used as the diorama hero. */
+  hero: string; // data URL
 }
 
 export type MaintPartKey =

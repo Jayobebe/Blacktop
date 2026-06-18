@@ -1,13 +1,23 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Bike, BikePhotos, GarageState, GARAGE_STORAGE_KEY, MaintItem } from '../types';
 
 const DEFAULT_STATE: GarageState = { bikes: [], activeBikeId: null };
 
+/** Migrate legacy 4-photo bikes to the single-hero schema. */
+function migrateBike(b: Bike): Bike {
+  const p = b.photos as unknown as Partial<BikePhotos> & {
+    left?: string; right?: string; front?: string; back?: string;
+  };
+  if (p?.hero) return b;
+  const hero = p?.right || p?.front || p?.left || p?.back || '';
+  return { ...b, photos: { hero } };
+}
+
 export function useGarage() {
   const [state, setState, clear] = useLocalStorage<GarageState>(GARAGE_STORAGE_KEY, DEFAULT_STATE);
 
-  const bikes = state.bikes;
+  const bikes = useMemo(() => state.bikes.map(migrateBike), [state.bikes]);
   const activeBike = bikes.find((b) => b.id === state.activeBikeId) || null;
 
   const addBike = useCallback(
