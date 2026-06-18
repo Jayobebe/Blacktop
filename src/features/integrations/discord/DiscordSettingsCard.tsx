@@ -74,7 +74,7 @@ export function DiscordSettingsCard() {
           <Input
             value={serverName}
             onChange={(e) => setServerName(e.target.value)}
-            placeholder="My Riders"
+            placeholder="My Convoy"
             className="mt-1 h-10 rounded-xl text-sm"
           />
         </div>
