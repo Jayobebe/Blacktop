@@ -606,6 +606,8 @@ export default function Settings() {
           Blacktop is a ride logging tool, not a racing or enforcement-avoidance app.
         </p>
       </div>
+
+      <BurnFlameOverlay active={burning} onComplete={handleBurnComplete} />
     </div>
   );
 }
