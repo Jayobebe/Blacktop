@@ -34,15 +34,34 @@ export interface VehicleCardData {
 }
 
 export function useVehicleCards() {
-  const { bikes } = useGarage();
+  const { bikes, activeBikeId } = useGarage();
   const { rides } = useRideHistory();
   const [snapshots, setSnapshots] = useLocalStorage<CardSnapshots>(CARDS_STORAGE_KEY, {});
 
   const cards: VehicleCardData[] = useMemo(() => {
     const completed = rides.filter((r) => r.endedAt);
-    return bikes
+    const fallbackBike: Bike = {
+      id: 'unassigned-vehicle-card',
+      name: 'Vehicle',
+      makeModel: 'Unassigned rides',
+      photos: { hero: '' },
+      baseOdometerKm: 0,
+      createdAt: 0,
+      maintenance: [],
+    };
+    const bikesForCards = bikes.length > 0 ? bikes : completed.length > 0 ? [fallbackBike] : [];
+    const unassignedTargetBikeId =
+      bikes.length === 0
+        ? fallbackBike.id
+        : bikes.length === 1
+          ? bikes[0].id
+          : activeBikeId ?? bikes[0].id;
+
+    return bikesForCards
       .map((bike) => {
-        const mine = completed.filter((r) => r.bikeId === bike.id);
+        const mine = completed.filter(
+          (r) => r.bikeId === bike.id || (!r.bikeId && bike.id === unassignedTargetBikeId),
+        );
         const totalDistanceMi = mine.reduce((s, r) => s + r.distance, 0);
         const stats: VehicleCardStats = {
           totalRides: mine.length,
@@ -91,7 +110,7 @@ export function useVehicleCards() {
         } as VehicleCardData;
       })
       .sort((a, b) => b.stats.totalRides - a.stats.totalRides);
-  }, [bikes, rides, snapshots]);
+  }, [activeBikeId, bikes, rides, snapshots]);
 
   /** Mark a vehicle's current tier + stats as "seen" so arrows/pulse don't repeat. */
   const markTierSeen = useCallback(
