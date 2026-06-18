@@ -13,6 +13,7 @@ import { useRescue, RescueAlert } from '@/features/rescue';
 import { useWaypoints } from '@/features/waypoints';
 import { LiveStreamViewer } from '@/features/streaming';
 import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
+import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
@@ -557,6 +558,7 @@ export default function ActiveRide() {
         members={finalMembers} 
         currentUserId={user?.id}
         rideStats={finalRideStats || undefined}
+        bikeName={activeBike?.name ?? null}
         onBadgesEarned={handleBadgesEarned}
         onClose={handleCloseSummary} 
       />
