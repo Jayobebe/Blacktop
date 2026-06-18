@@ -127,6 +127,7 @@ export function VehicleCard({ card }: Props) {
             {!isExporting && (
               <button
                 type="button"
+                data-export-hide
                 onClick={handleDownload}
                 aria-label="Download card as image"
                 className={cn(
