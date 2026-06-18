@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Blacktop',
   webDir: 'dist',
   server: {
-    url: 'https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com?forceHideBadge=true',
+    url: 'https://convoy-comms.lovable.app',
     cleartext: true
   },
   ios: {
