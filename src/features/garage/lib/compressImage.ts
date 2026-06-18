@@ -68,7 +68,11 @@ export async function pixelateImageFile(
   return out.toDataURL('image/png');
 }
 
-/** Flood-fill from all 4 edges, clearing any pixel within `tol` of the seed colors. */
+/**
+ * Single-pass background remover: any pixel whose colour is within `tol` of
+ * one of the 4 corner colours becomes transparent. Fast, predictable, no
+ * stack — won't freeze the main thread on phone-camera images.
+ */
 function removeEdgeBackground(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -77,74 +81,33 @@ function removeEdgeBackground(
 ) {
   const imgData = ctx.getImageData(0, 0, w, h);
   const data = imgData.data;
-  const visited = new Uint8Array(w * h);
-  const stack: number[] = [];
-
-  // Seed from every edge pixel
-  for (let x = 0; x < w; x++) {
-    stack.push(x, 0);
-    stack.push(x, h - 1);
-  }
-  for (let y = 0; y < h; y++) {
-    stack.push(0, y);
-    stack.push(w - 1, y);
-  }
-
-  // Use first corner pixel as reference color (will compare to neighbour as we go)
   const tolSq = tol * tol * 3;
-
-  while (stack.length) {
-    const y = stack.pop()!;
-    const x = stack.pop()!;
-    if (x < 0 || y < 0 || x >= w || y >= h) continue;
-    const idx = y * w + x;
-    if (visited[idx]) continue;
-    const p = idx * 4;
-
-    // Compare to neighbour-average or to corner — we treat any pixel reachable
-    // from an edge whose colour is "light/uniform enough" relative to its
-    // already-cleared neighbour as background. Simpler: compare to the closest
-    // already-visited edge seed colour stored implicitly via reference.
-    // For robustness we just compare to the four corner colours.
-    if (!isCloseToCorner(data, w, h, p, tolSq)) {
-      visited[idx] = 1;
-      continue;
-    }
-
-    visited[idx] = 1;
-    data[p + 3] = 0; // transparent
-
-    stack.push(x + 1, y);
-    stack.push(x - 1, y);
-    stack.push(x, y + 1);
-    stack.push(x, y - 1);
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-}
-
-function isCloseToCorner(
-  data: Uint8ClampedArray,
-  w: number,
-  h: number,
-  p: number,
-  tolSq: number,
-): boolean {
   const corners = [
     0,
     (w - 1) * 4,
     (h - 1) * w * 4,
     ((h - 1) * w + (w - 1)) * 4,
   ];
-  const r = data[p], g = data[p + 1], b = data[p + 2];
-  for (const c of corners) {
-    const dr = r - data[c];
-    const dg = g - data[c + 1];
-    const db = b - data[c + 2];
-    if (dr * dr + dg * dg + db * db <= tolSq) return true;
+  const cr = corners.map((c) => data[c]);
+  const cg = corners.map((c) => data[c + 1]);
+  const cb = corners.map((c) => data[c + 2]);
+
+  for (let p = 0; p < data.length; p += 4) {
+    const r = data[p], g = data[p + 1], b = data[p + 2];
+    for (let i = 0; i < 4; i++) {
+      const dr = r - cr[i];
+      const dg = g - cg[i];
+      const db = b - cb[i];
+      if (dr * dr + dg * dg + db * db <= tolSq) {
+        data[p + 3] = 0;
+        break;
+      }
+    }
   }
-  return false;
+
+  ctx.putImageData(imgData, 0, 0);
 }
+
 
 async function loadFile(file: File): Promise<HTMLImageElement> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
