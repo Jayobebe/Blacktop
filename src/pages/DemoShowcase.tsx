@@ -12,6 +12,8 @@ import {
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
+import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
+import { Receipt, Sparkles, Lock } from 'lucide-react';
 
 interface Feature {
   id: string;
