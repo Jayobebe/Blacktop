@@ -4,7 +4,7 @@ import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy } from 'lucide-react';
-import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel } from '@/lib/format';
+import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export default function History() {
@@ -142,8 +142,8 @@ export default function History() {
                   </div>
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
-                  <span>Avg: {formatSpeed(ride.averageSpeed, settings.speedUnit)} {settings.speedUnit}</span>
-                  <span>Max: {formatSpeed(ride.maxSpeed, settings.speedUnit)} {settings.speedUnit}</span>
+                  <span>Avg: {formatSpeed(ride.averageSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
+                  <span>Max: {formatSpeed(ride.maxSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
                 </div>
               </button>
             );

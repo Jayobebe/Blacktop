@@ -13,6 +13,8 @@ import {
   Gauge, Clock, TrendingUp, Route, Phone, X, Volume2, Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/features/settings';
+import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 
 type DemoStep = 
   | 'welcome'
@@ -70,6 +72,13 @@ const STEP_INTERACTIONS: Partial<Record<DemoStep, string>> = {
 export default function DemoRide() {
   const navigate = useNavigate();
   const wakeLock = useWakeLock();
+  const { settings, toggleSpeedUnit } = useSettings();
+  const sUnit = settings.speedUnit;
+  const dUnit = settings.distanceUnit;
+  const sLabel = getSpeedLabel(sUnit);
+  const dLabel = getDistanceLabel(dUnit);
+  const fSpd = (mph: number) => formatSpeed(mph, sUnit);
+  const fDist = (miles: number) => formatDistance(miles, dUnit);
   const [step, setStep] = useState<DemoStep>('welcome');
   const [demoName, setDemoName] = useState('');
   const [copied, setCopied] = useState(false);
@@ -84,7 +93,6 @@ export default function DemoRide() {
   // Interactive state tracking
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState<'mph' | 'kph'>('mph');
   const [selectedNavApp, setSelectedNavApp] = useState(0);
 
   // Lean angle state for action cam demo
@@ -337,8 +345,8 @@ export default function DemoRide() {
             <div className="grid grid-cols-4 gap-2 mb-5">
               {[
                 { label: 'Rides', value: '12' },
-                { label: 'Distance', value: '348', unit: 'mi' },
-                { label: 'Top', value: '92', unit: 'mph' },
+                { label: 'Distance', value: fDist(348), unit: dLabel },
+                { label: 'Top', value: fSpd(92), unit: sLabel },
                 { label: 'Time', value: '8:24' },
               ].map((stat, i) => (
                 <div key={i} className="bg-card/50 rounded-xl p-2.5 border border-border/30 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
@@ -626,16 +634,16 @@ export default function DemoRide() {
                 speed > 80 && "text-warning",
                 speed > 90 && "text-destructive"
               )}>
-                {speed}
+                {fSpd(speed)}
               </div>
-              <p className="text-muted-foreground text-sm">mph</p>
+              <p className="text-muted-foreground text-sm">{sLabel}</p>
             </div>
 
             <div className="flex justify-center gap-8 mb-8">
               {[
-                { icon: MapPin, label: 'Dist', value: distance.toFixed(1), unit: 'mi' },
-                { icon: Clock, label: 'Time', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` },
-                { icon: TrendingUp, label: 'Max', value: Math.round(maxSpeed).toString() },
+                { icon: MapPin, label: 'Dist', value: fDist(distance), unit: dLabel },
+                { icon: Clock, label: 'Time', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`, unit: '' },
+                { icon: TrendingUp, label: 'Max', value: fSpd(maxSpeed).toString(), unit: '' },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
                   <stat.icon className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
@@ -727,13 +735,13 @@ export default function DemoRide() {
                 <div className="flex items-end justify-between text-white">
                   {/* Distance */}
                   <div>
-                    <p className="font-bold text-xl">{distance.toFixed(1)} mi</p>
+                    <p className="font-bold text-xl">{fDist(distance)} {dLabel}</p>
                   </div>
 
                   {/* Center: Max + Speed */}
                   <div className="text-center">
-                    <p className="text-xs text-gray-400">MAX {Math.round(maxSpeed)} MPH</p>
-                    <p className="font-bold text-2xl">{speed} MPH</p>
+                    <p className="text-xs text-gray-400">MAX {fSpd(maxSpeed)} {sLabel}</p>
+                    <p className="font-bold text-2xl">{fSpd(speed)} {sLabel}</p>
                   </div>
 
                   {/* Duration */}
@@ -783,13 +791,13 @@ export default function DemoRide() {
             </div>
 
             <div className="text-center mb-6">
-              <p className="font-mono text-6xl font-semibold">{speed}</p>
-              <p className="text-muted-foreground text-sm">mph</p>
+              <p className="font-mono text-6xl font-semibold">{fSpd(speed)}</p>
+              <p className="text-muted-foreground text-sm">{sLabel}</p>
             </div>
 
             <div className="flex justify-center gap-8 mb-6">
               <div className="text-center">
-                <p className="font-mono text-lg font-semibold">{distance.toFixed(1)} mi</p>
+                <p className="font-mono text-lg font-semibold">{fDist(distance)} {dLabel}</p>
               </div>
               <div className="text-center">
                 <p className="font-mono text-lg font-semibold">{Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}</p>
@@ -873,10 +881,10 @@ export default function DemoRide() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Ride Summary</p>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { icon: MapPin, label: 'Distance', value: `${distance.toFixed(1)} mi` },
+                  { icon: MapPin, label: 'Distance', value: `${fDist(distance)} ${dLabel}` },
                   { icon: Clock, label: 'Duration', value: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}` },
-                  { icon: TrendingUp, label: 'Top Speed', value: `${Math.round(maxSpeed)} mph` },
-                  { icon: Gauge, label: 'Avg Speed', value: `${Math.round(maxSpeed * 0.6)} mph` },
+                  { icon: TrendingUp, label: 'Top Speed', value: `${fSpd(maxSpeed)} ${sLabel}` },
+                  { icon: Gauge, label: 'Avg Speed', value: `${fSpd(maxSpeed * 0.6)} ${sLabel}` },
                 ].map((stat, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <stat.icon className="w-4 h-4 text-muted-foreground" />
@@ -983,9 +991,9 @@ export default function DemoRide() {
                     </div>
                   </div>
                   <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>{ride.distance} mi</span>
+                    <span>{fDist(Number(ride.distance))} {dLabel}</span>
                     <span>{ride.duration}</span>
-                    <span>Max {ride.speed} mph</span>
+                    <span>Max {fSpd(Number(ride.speed))} {sLabel}</span>
                   </div>
                 </div>
               ))}
@@ -1064,9 +1072,9 @@ export default function DemoRide() {
             <div className="space-y-2">
               {[
                 { label: 'Total Rides', value: '13' },
-                { label: 'Total Distance', value: '352 mi' },
+                { label: 'Total Distance', value: `${fDist(352)} ${dLabel}` },
                 { label: 'Time Riding', value: '8:35' },
-                { label: 'Top Speed', value: `${Math.round(maxSpeed)} mph` },
+                { label: 'Top Speed', value: `${fSpd(maxSpeed)} ${sLabel}` },
               ].map((stat, i) => (
                 <div key={i} className="bg-card/50 rounded-xl p-3 border border-border/30 flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -1085,25 +1093,25 @@ export default function DemoRide() {
             <div className="space-y-3 mb-6">
               <div className="bg-card/50 border border-border/30 rounded-xl p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">Speed Unit</p>
-                <DemoTooltip hint="Try changing" position="right" pulse={!hasInteracted && selectedUnit === 'mph'}>
+                <DemoTooltip hint="Try changing" position="right" pulse={!hasInteracted && sUnit === 'mph'}>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => { setSelectedUnit('mph'); handleInteraction('setting'); }}
+                    <button
+                      onClick={() => { if (sUnit !== 'mph') toggleSpeedUnit(); handleInteraction('setting'); }}
                       className={cn(
                         "flex-1 h-9 rounded-lg text-sm font-medium transition-colors",
-                        selectedUnit === 'mph' ? "bg-accent text-accent-foreground" : "bg-secondary"
+                        sUnit === 'mph' ? "bg-accent text-accent-foreground" : "bg-secondary"
                       )}
                     >
-                      mph
+                      MPH
                     </button>
-                    <button 
-                      onClick={() => { setSelectedUnit('kph'); handleInteraction('setting'); }}
+                    <button
+                      onClick={() => { if (sUnit !== 'kph') toggleSpeedUnit(); handleInteraction('setting'); }}
                       className={cn(
                         "flex-1 h-9 rounded-lg text-sm font-medium transition-colors",
-                        selectedUnit === 'kph' ? "bg-accent text-accent-foreground" : "bg-secondary"
+                        sUnit === 'kph' ? "bg-accent text-accent-foreground" : "bg-secondary"
                       )}
                     >
-                      kph
+                      KPH
                     </button>
                   </div>
                 </DemoTooltip>
