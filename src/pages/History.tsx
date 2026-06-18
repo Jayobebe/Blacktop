@@ -2,15 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
+import { useGarage } from '@/features/garage';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Bike as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export default function History() {
   const navigate = useNavigate();
-  const { rides, updateRideName } = useRideHistory();
+  const { rides, updateRideName, updateRideBike } = useRideHistory();
   const { settings } = useSettings();
+  const { bikes } = useGarage();
   const [editingRideId, setEditingRideId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
