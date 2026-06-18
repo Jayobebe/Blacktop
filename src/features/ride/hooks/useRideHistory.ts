@@ -118,6 +118,7 @@ export function useRideHistory() {
 
   const burnAllData = useCallback(() => {
     clearRides();
+    try { localStorage.removeItem('bt.cards.v1'); } catch {}
   }, [clearRides]);
 
   return {

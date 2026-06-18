@@ -4,6 +4,7 @@ import { useSettings } from '@/features/settings';
 import { ArrowLeft, Route, Gauge, Clock, TrendingUp, Hash, Users, Trophy } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { VehicleCardCarousel } from '@/features/cards';
 
 export default function Stats() {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ export default function Stats() {
   const totalBadges = stats.badges.speedDemon + stats.badges.journeyman + stats.badges.fallback;
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
+    <div className="min-h-screen flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
       {/* Header */}
       <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
         <button
@@ -95,7 +96,8 @@ export default function Stats() {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0">
+
         {/* Badges Section */}
         <div className="landscape:flex-1 landscape:overflow-y-auto">
           <div className="flex items-center gap-2 mb-3 landscape:mb-2">
@@ -140,7 +142,8 @@ export default function Stats() {
         </div>
 
         {/* Stats Grid */}
-        <div className="flex-1 landscape:flex-1 overflow-y-auto min-h-0 pr-1">
+        <div className="flex-1 landscape:flex-1 min-h-0 pr-1">
+
           <div className="grid grid-cols-2 landscape:grid-cols-1 gap-2">
             {statCards.map((stat, index) => (
               <div
@@ -173,6 +176,11 @@ export default function Stats() {
             All statistics stored locally on your device
           </p>
         </div>
+      </div>
+
+      {/* Vehicle trading cards */}
+      <div className="mt-6 pb-2 animate-fade-in">
+        <VehicleCardCarousel />
       </div>
     </div>
   );
