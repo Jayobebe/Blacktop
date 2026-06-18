@@ -131,7 +131,7 @@ export default function ActiveRide() {
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
-  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
+  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
   const [showLiveStream, setShowLiveStream] = useState(false);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
