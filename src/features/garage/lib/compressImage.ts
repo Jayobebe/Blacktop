@@ -14,10 +14,10 @@ export async function compressImageFile(file: File, maxDim = 1024, quality = 0.8
 }
 
 /**
- * Pipeline: load → downscale to working resolution → remove background by
- * flood-fill from edges → downscale to pixel-art res → nearest-neighbour
- * upscale → transparent PNG data URL. Yields to the event loop between
- * heavy steps so the UI never locks up.
+ * Pipeline: load → downscale → remove edge-connected background → crop the
+ * transparent bounds → pixelate → encode a small, compatible PNG data URL.
+ * The final image is intentionally compact so local garage storage does not
+ * save a broken/oversized data URL.
  */
 export async function pixelateImageFile(
   file: File,
@@ -31,12 +31,12 @@ export async function pixelateImageFile(
   } = {},
 ): Promise<string> {
   const {
-    workWidth = 512,
-    pixelWidth = 150,
-    outputWidth = 360,
+    workWidth = 448,
+    pixelWidth = 128,
+    outputWidth = 280,
     saturate = 1.15,
     contrast = 1.1,
-    bgTolerance = 42,
+    bgTolerance = 58,
   } = opts;
 
   const img = await loadFile(file);
@@ -59,19 +59,23 @@ export async function pixelateImageFile(
   floodFillBackground(workCtx, workW, workH, bgTolerance);
   await tick();
 
+  // === Step 2b: remove empty transparent padding before pixelating ===
+  const cropped = cropTransparentBounds(work);
+  await tick();
+
   // === Step 3: downscale to chunky pixel-art size ===
-  const { w: pxW, h: pxH } = fitWithin(workW, workH, pixelWidth);
+  const { w: pxW, h: pxH } = fitWithin(cropped.width, cropped.height, pixelWidth);
   const px = document.createElement('canvas');
   px.width = pxW;
   px.height = pxH;
   const pxCtx = px.getContext('2d');
   if (!pxCtx) throw new Error('canvas');
   pxCtx.imageSmoothingEnabled = true;
-  pxCtx.drawImage(work, 0, 0, pxW, pxH);
+  pxCtx.drawImage(cropped, 0, 0, pxW, pxH);
   await tick();
 
   // === Step 4: nearest-neighbour upscale ===
-  const { w: outW, h: outH } = fitWithin(workW, workH, outputWidth);
+  const { w: outW, h: outH } = fitWithin(cropped.width, cropped.height, outputWidth);
   const out = document.createElement('canvas');
   out.width = outW;
   out.height = outH;
@@ -80,7 +84,7 @@ export async function pixelateImageFile(
   outCtx.imageSmoothingEnabled = false;
   outCtx.drawImage(px, 0, 0, outW, outH);
 
-  return canvasToDataUrl(out);
+  return canvasToPngDataUrl(out);
 }
 
 function fitWithin(width: number, height: number, maxDim: number) {
@@ -91,18 +95,77 @@ function fitWithin(width: number, height: number, maxDim: number) {
   };
 }
 
-async function canvasToDataUrl(canvas: HTMLCanvasElement): Promise<string> {
-  const blob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, 'image/webp', 0.82);
-  });
-  if (!blob) return canvas.toDataURL('image/png');
+async function canvasToPngDataUrl(canvas: HTMLCanvasElement): Promise<string> {
+  let current = canvas;
+  let blob: Blob | null = null;
 
-  return new Promise<string>((resolve, reject) => {
+  for (let i = 0; i < 5; i++) {
+    blob = await new Promise<Blob | null>((resolve) => current.toBlob(resolve, 'image/png'));
+    if (!blob || blob.size <= 260_000 || Math.max(current.width, current.height) <= 160) break;
+    current = resizeNearest(current, 0.82);
+    await tick();
+  }
+
+  if (!blob) return current.toDataURL('image/png');
+  return blobToDataUrl(blob);
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
   });
+}
+
+function resizeNearest(source: HTMLCanvasElement, scale: number) {
+  const next = document.createElement('canvas');
+  next.width = Math.max(1, Math.round(source.width * scale));
+  next.height = Math.max(1, Math.round(source.height * scale));
+  const ctx = next.getContext('2d');
+  if (!ctx) throw new Error('canvas');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(source, 0, 0, next.width, next.height);
+  return next;
+}
+
+function cropTransparentBounds(source: HTMLCanvasElement) {
+  const ctx = source.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('canvas');
+
+  const { width, height } = source;
+  const data = ctx.getImageData(0, 0, width, height).data;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 12) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return source;
+
+  const pad = 8;
+  const sx = Math.max(0, minX - pad);
+  const sy = Math.max(0, minY - pad);
+  const sw = Math.min(width - sx, maxX - minX + 1 + pad * 2);
+  const sh = Math.min(height - sy, maxY - minY + 1 + pad * 2);
+  const cropped = document.createElement('canvas');
+  cropped.width = sw;
+  cropped.height = sh;
+  const croppedCtx = cropped.getContext('2d');
+  if (!croppedCtx) throw new Error('canvas');
+  croppedCtx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+  return cropped;
 }
 
 /**

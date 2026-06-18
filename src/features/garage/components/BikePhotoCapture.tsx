@@ -25,6 +25,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
     setBusy(true);
     try {
       const dataUrl = await pixelateImageFile(file);
+      if (!dataUrl.startsWith('data:image/')) throw new Error('invalid processed image');
       setHero(dataUrl);
     } catch (err) {
       console.error('[BikePhotoCapture]', err);
@@ -54,6 +55,10 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
               alt="Bike hero"
               className="absolute inset-0 h-full w-full object-contain"
               style={{ imageRendering: 'pixelated' }}
+              onError={() => {
+                setHero(undefined);
+                toast.error('Photo render failed. Please retake it.');
+              }}
             />
             <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] uppercase tracking-widest px-2 py-1 rounded-full flex items-center gap-1">
               <RefreshCw className="w-3 h-3" /> Retake

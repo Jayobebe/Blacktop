@@ -180,7 +180,7 @@ export function GarageDiorama({ bike, tip }: Props) {
       {/* ============ CONTENT ============ */}
       <div className="relative px-4 pt-5 pb-3 h-[360px] sm:h-[400px] flex items-end gap-2">
         <div className="flex-1 relative h-full flex items-end justify-center">
-          {bike ? (
+          {bike?.photos?.hero?.startsWith('data:image/') ? (
             <div className="relative w-full h-full">
               <img
                 src={bike.photos.hero}
