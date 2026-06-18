@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
-import { Camera, X, RefreshCw } from 'lucide-react';
+import { ImagePlus, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { pixelateImageFile } from '../lib/compressImage';
 import { BikePhotos } from '../types';
 import { toast } from 'sonner';
 
@@ -9,6 +8,17 @@ interface Props {
   initial?: Partial<BikePhotos>;
   onComplete: (photos: BikePhotos) => void;
   onCancel?: () => void;
+}
+
+const MAX_BYTES = 8 * 1024 * 1024; // 8MB cap
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error || new Error('read failed'));
+    reader.readAsDataURL(file);
+  });
 }
 
 export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
@@ -22,14 +32,21 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (!/png|webp|gif/i.test(file.type)) {
+      toast.error('Please use a transparent PNG of your vehicle');
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error('Image too large — keep it under 8MB');
+      return;
+    }
     setBusy(true);
     try {
-      const dataUrl = await pixelateImageFile(file);
-      if (!dataUrl.startsWith('data:image/')) throw new Error('invalid processed image');
+      const dataUrl = await readFileAsDataUrl(file);
       setHero(dataUrl);
     } catch (err) {
       console.error('[BikePhotoCapture]', err);
-      toast.error('Could not process photo');
+      toast.error('Could not read image');
     } finally {
       setBusy(false);
     }
@@ -38,8 +55,8 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        One photo: <span className="text-foreground">front-right quarter view</span>. Plain background
-        works best. We'll pixelate it into a low-poly diorama render.
+        Upload a <span className="text-foreground">transparent PNG</span> of your vehicle —
+        already background-removed and pixelated. It'll drop straight onto the shop floor.
       </p>
 
       <button
@@ -52,29 +69,29 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
           <>
             <img
               src={hero}
-              alt="Bike hero"
+              alt="Vehicle"
               className="absolute inset-0 h-full w-full object-contain"
               style={{ imageRendering: 'pixelated' }}
               onError={() => {
                 setHero(undefined);
-                toast.error('Photo render failed. Please retake it.');
+                toast.error('Image failed to load. Try another file.');
               }}
             />
             <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] uppercase tracking-widest px-2 py-1 rounded-full flex items-center gap-1">
-              <RefreshCw className="w-3 h-3" /> Retake
+              <RefreshCw className="w-3 h-3" /> Replace
             </div>
           </>
         ) : (
           <>
-            <Camera className="w-7 h-7 text-muted-foreground" />
+            <ImagePlus className="w-7 h-7 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tap to capture
+              Tap to upload PNG
             </span>
           </>
         )}
         {busy && (
           <div className="absolute inset-0 bg-background/60 flex items-center justify-center text-xs">
-            Pixelating…
+            Loading…
           </div>
         )}
       </button>
@@ -82,8 +99,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
-        capture="environment"
+        accept="image/png,image/webp,image/gif"
         className="hidden"
         onChange={handleFile}
       />
@@ -99,7 +115,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
           disabled={!hero || busy}
           className="flex-1"
         >
-          Save bike
+          Save vehicle
         </Button>
       </div>
     </div>
