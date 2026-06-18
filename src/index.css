@@ -453,66 +453,76 @@
     animation: burn-pulse 2s ease-in-out infinite;
   }
 
-  /* DuckDuckGo-style flame sweep: wall of flame rises from below,
-     covers the screen, then continues out the top. */
-  @keyframes burn-sweep {
-    0%   { transform: translateY(110%); }
-    35%  { transform: translateY(20%); }
-    65%  { transform: translateY(-30%); }
-    100% { transform: translateY(-130%); }
+  /* Burn overlay: fire spreads radially OUT from a button origin,
+     leaving rolling smoke behind — no hard edges. */
+  @keyframes burn-core {
+    0%   { transform: scale(0.1); opacity: 0; }
+    15%  { transform: scale(0.8); opacity: 1; }
+    55%  { transform: scale(6);   opacity: 0.85; }
+    100% { transform: scale(14);  opacity: 0; }
   }
-  .animate-burn-sweep {
-    animation-name: burn-sweep;
-    animation-timing-function: cubic-bezier(0.55, 0.05, 0.35, 1);
+  .animate-burn-core {
+    animation: burn-core 1.8s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+    will-change: transform, opacity;
+  }
+
+  @keyframes burn-halo {
+    0%   { transform: scale(0.2); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: scale(24);  opacity: 0; }
+  }
+  .animate-burn-halo {
+    animation: burn-halo 2.0s ease-out forwards;
+    will-change: transform, opacity;
+  }
+
+  @keyframes burn-tongue-out {
+    0%   { transform: translate(0, 0) scale(0.15); opacity: 0; }
+    20%  { opacity: 1; }
+    70%  { opacity: 0.7; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(1.4); opacity: 0; }
+  }
+  .animate-burn-tongue-out {
+    animation-name: burn-tongue-out;
+    animation-timing-function: cubic-bezier(0.25, 0.7, 0.35, 1);
     animation-fill-mode: forwards;
-    will-change: transform;
+    will-change: transform, opacity;
   }
 
-  @keyframes burn-glow {
-    0%   { opacity: 0; }
-    25%  { opacity: 1; }
-    75%  { opacity: 0.7; }
-    100% { opacity: 0; }
+  @keyframes burn-ember-out {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0.3); opacity: 0; }
   }
-  .animate-burn-glow {
-    animation: burn-glow 1.6s ease-out forwards;
-  }
-
-  @keyframes burn-smoke {
-    0%, 35% { opacity: 0; transform: translateY(40%); }
-    65%     { opacity: 0.9; transform: translateY(0%); }
-    100%    { opacity: 0; transform: translateY(-20%); }
-  }
-  .animate-burn-smoke {
-    animation: burn-smoke 1.9s ease-out forwards;
-  }
-
-  @keyframes burn-clear {
-    0%, 75% { opacity: 0; }
-    88%     { opacity: 1; }
-    100%    { opacity: 0; }
-  }
-  .animate-burn-clear {
-    animation: burn-clear 1.9s ease-out forwards;
-  }
-
-  @keyframes burn-ember {
-    0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
-    10%  { opacity: 1; }
-    100% { transform: translateY(-110vh) translateX(20px) scale(0.4); opacity: 0; }
-  }
-  .animate-burn-ember {
-    animation-name: burn-ember;
+  .animate-burn-ember-out {
+    animation-name: burn-ember-out;
     animation-timing-function: ease-out;
     animation-fill-mode: forwards;
   }
 
-  @keyframes burn-darken {
-    0%   { opacity: 0; }
-    100% { opacity: 1; }
+  /* Smoke that builds behind the flames as they pass */
+  @keyframes burn-smoke-fill {
+    0%   { opacity: 0;
+           background: radial-gradient(circle at 50% 80%, hsl(0 0% 8% / 0) 0%, transparent 60%); }
+    35%  { opacity: 0.7;
+           background: radial-gradient(circle at 50% 70%, hsl(0 0% 10% / 0.7) 0%, hsl(0 0% 6% / 0.5) 40%, hsl(0 0% 4% / 0.2) 70%, transparent 100%); }
+    70%  { opacity: 0.95;
+           background: radial-gradient(circle at 50% 55%, hsl(20 25% 12% / 0.92) 0%, hsl(0 0% 8% / 0.85) 40%, hsl(0 0% 5% / 0.7) 80%, hsl(0 0% 3% / 0.55) 100%); }
+    100% { opacity: 0; }
   }
-  .animate-burn-darken {
-    animation: burn-darken 0.4s ease-out forwards;
+  .animate-burn-smoke-fill {
+    animation: burn-smoke-fill 2.2s ease-out forwards;
+  }
+
+  /* Final soft smoke wash — replaces the hard yellow flash */
+  @keyframes burn-smoke-clear {
+    0%, 60% { opacity: 0; }
+    80%     { opacity: 0.85;
+              background: radial-gradient(circle at 50% 60%, hsl(0 0% 12% / 0.9), hsl(0 0% 6% / 0.7) 60%, hsl(0 0% 3% / 0.5) 100%); }
+    100%    { opacity: 0; }
+  }
+  .animate-burn-smoke-clear {
+    animation: burn-smoke-clear 2.2s ease-out forwards;
   }
 
   .animate-speed-glow {
