@@ -419,7 +419,7 @@ export function useConvoyState() {
 
     if (memberCount !== null && memberCount >= MAX_CONVOY_MEMBERS) {
       toast.error(`Convoy full (${MAX_CONVOY_MEMBERS}/${MAX_CONVOY_MEMBERS})`, {
-        description: 'Ask the leader to create a second convoy for overflow riders.',
+        description: 'Ask the leader to create a second convoy for overflow members.',
       });
       return false;
     }

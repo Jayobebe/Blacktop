@@ -48,7 +48,7 @@ export default function DemoShowcase() {
       id: 'convoy',
       title: 'Convoy Mode',
       subtitle: 'Ride Together, Stay Connected',
-      description: 'Create or join a convoy with up to 8 riders. Share a simple code and everyone\'s in. Real-time sync keeps the group together.',
+      description: 'Create or join a convoy with up to 8 members. Share a simple code and everyone\'s in. Real-time sync keeps the group together.',
       icon: Users,
       color: 'accent',
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />
@@ -65,7 +65,7 @@ export default function DemoShowcase() {
     {
       id: 'voice',
       title: 'Voice Communication',
-      subtitle: 'Talk Hands-Free While Riding',
+      subtitle: 'Talk Hands-Free On the Road',
       description: 'Crystal clear voice chat with your convoy. Toggle mute anytime. Disconnect to save battery. Works alongside your music.',
       icon: Mic,
       color: 'voice-active',
@@ -546,7 +546,7 @@ function DiscordMockup() {
             <MessageSquare className="w-5 h-5 text-[#5865F2]" />
           </div>
           <div>
-            <p className="font-semibold text-sm">#riders</p>
+            <p className="font-semibold text-sm">#members</p>
             <p className="text-[10px] text-muted-foreground">Discord webhook connected</p>
           </div>
         </div>
@@ -915,7 +915,7 @@ function RescueMockup() {
 
       <div className="text-center animate-fade-in delay-500">
         <p className="text-xs text-muted-foreground">
-          Lost riders send location to leader
+          Lost members send location to leader
         </p>
       </div>
     </div>

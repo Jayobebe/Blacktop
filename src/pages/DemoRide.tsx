@@ -429,7 +429,7 @@ export default function DemoRide() {
             </header>
 
             <div className="mb-5">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Riders (1)</p>
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Members (1)</p>
               <div className="bg-accent/10 border border-accent/20 rounded-xl p-3 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
                   <Crown className="w-5 h-5 text-accent" />
@@ -443,7 +443,7 @@ export default function DemoRide() {
 
             <div className="text-center py-8 text-muted-foreground">
               <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Waiting for riders to join...</p>
+              <p className="text-sm">Waiting for members to join...</p>
               <p className="text-xs mt-1">Share your convoy code</p>
             </div>
           </div>
@@ -470,7 +470,7 @@ export default function DemoRide() {
             </header>
 
             <div className="mb-5">
-              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Riders (4)</p>
+              <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-3">Members (4)</p>
               <div className="space-y-2">
                 {demoMembers.map((member, i) => (
                   <div key={i} className={cn(
@@ -560,7 +560,7 @@ export default function DemoRide() {
             </div>
 
             <div className="p-3 bg-secondary/50 rounded-xl text-sm text-muted-foreground">
-              💡 Plan multiple stops — riders navigate one at a time
+              💡 Plan multiple stops — members navigate one at a time
             </div>
           </div>
         )}
