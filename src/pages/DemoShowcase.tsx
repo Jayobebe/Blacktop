@@ -137,6 +137,15 @@ export default function DemoShowcase() {
       mockup: <HistoryMockup />
     },
     {
+      id: 'receipts',
+      title: 'Ride Receipts',
+      subtitle: 'Shareable Stat Slips',
+      description: 'Every finished ride prints a receipt with your stats, vehicle, and badges. Download it as an image to share with the crew.',
+      icon: Receipt,
+      color: 'accent',
+      mockup: <ReceiptMockup />
+    },
+    {
       id: 'studio',
       title: 'Overlay Download',
       subtitle: 'Sync Stats to Your Action Cam',
@@ -153,6 +162,15 @@ export default function DemoShowcase() {
       icon: BarChart3,
       color: 'accent',
       mockup: <StatsMockup />
+    },
+    {
+      id: 'cards',
+      title: 'Trading Cards',
+      subtitle: 'Collect Every Tier',
+      description: 'Each vehicle earns a trading card that levels up with rides — Bronze at 10, all the way to Orion at 1000. Download them as images for the collection.',
+      icon: Sparkles,
+      color: 'accent',
+      mockup: <TradingCardsMockup />
     },
     {
       id: 'garage',
