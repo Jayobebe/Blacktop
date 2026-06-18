@@ -451,7 +451,7 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
       {/* Members Preview */}
       <div className="space-y-2 animate-slide-up delay-200">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-          Riders (4/8)
+          Members (4/8)
         </p>
         {[
           { name: 'You', isLeader: true, color: 'bg-orange-500' },

@@ -863,7 +863,7 @@ export default function Lobby() {
                 return;
               }
 
-              // Individual start - just this rider
+              // Individual start - just this member
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
               if (success) {
