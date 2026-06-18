@@ -1,94 +1,51 @@
-# Discord Integration Plan
+# Thermal Receipt Ride Summary
 
-Optional Discord integration that, when a server is connected, replaces BlackTop's WebRTC voice channel with a Discord voice channel, pings the server on convoy creation and rescue events, and streams Spotify playlists via a hosted music bot. When no server is connected, everything falls back to the current behavior.
+Replace the current card-style `RideSummary` with a stylised thermal-roll receipt that prints out after every ride (solo and convoy). Bike model and per-bike garage data are stubbed for later.
 
-## Architecture overview
+## Visual direction
 
-```text
-BlackTop App (React)
-   │
-   │  (REST / Realtime)
-   ▼
-Lovable Cloud (Supabase)
-   │  - discord_servers table (per-convoy or per-user link)
-   │  - convoy <-> discord_channel mapping
-   │  - edge functions (link server, ping convoy, ping rescue,
-   │                    start/stop music, queue track)
-   ▼
-BlackTop Bot Service (external, always-on host — NOT Lovable)
-   │  - discord.js gateway client (voice + messages)
-   │  - lavalink / discord-player for audio
-   │  - Spotify Web API (playlist resolution)
-   │  - HTTP API authenticated by shared secret from Supabase
-   ▼
-Discord  ◀── users join voice channel directly in Discord app
-```
+- Paper-white receipt strip on a dark blurred backdrop, centered, max-width ~360px, with torn/zig-zag top and bottom edges.
+- Subtle paper texture (noise overlay) + soft drop shadow + faint vertical print streaks.
+- Dot-matrix font (Google Font: `VT323` or `Share Tech Mono` — I'll use `VT323` for the strong dot-print feel, with `JetBrains Mono` fallback). All receipt text in near-black on off-white.
+- "Print-in" entrance animation: receipt slides down from the top as if being printed (translateY + clip-path reveal), ~600ms.
+- Slight paper curl at the bottom edge (CSS skew/rotate on last block).
 
-Lovable Cloud edge functions cannot hold a persistent Discord gateway/voice connection, so the bot must run on a separate always-on host (Fly.io, Railway, a VPS, etc.). Lovable handles the app, DB, auth, and request/response edge functions that talk to the bot.
+## Receipt layout (top → bottom)
 
-## Phased delivery
+1. **Header row**: Blacktop BT logo (left, mono-inverted) + right-aligned timestamp (`18 JUN 2026 · 14:32`).
+2. **Title**: `BLACKTOP STORE` centered, larger dot-matrix.
+3. **Bike line**: `BIKE .............. —` (placeholder dash for now; comment hook for future bike model).
+4. **Divider**: dashed line `- - - - - - - - -`.
+5. **Stat rows** (label left, dotted leader, value right):
+   - `MAX SPD ........ 142 KM/H`
+   - `MAX LEAN ....... 38°` (only if lean data present; otherwise `—`)
+   - `DISTANCE ....... 84.2 KM`
+   - `DURATION ....... 01:24:08`
+   - `AVG SPD ........ 62 KM/H`
+   Units respect `useSettings()` (km/h vs mph, km vs mi).
+6. **Bike model block**: bordered box with corner brackets `⌐ ¬ / L ⌡` containing `BIKE MODEL` placeholder text (greyed, italic-mono "—  add in garage").
+7. **Badges block** (convoy only, ≥1 badge): row of small bracketed cells, each containing the badge emoji + 2-line micro caption (badge label + member name truncated). Hidden entirely on solo rides.
+8. **Footer**: barcode-style stripe (CSS lines), then `THANK YOU FOR RIDING` + ride id short hash.
+9. **Continue button** lives OUTSIDE the receipt, below it, as a normal app button (keeps the receipt looking like a real artifact).
 
-### Phase 1 — Server link + chat pings (fully buildable in Lovable)
-1. Discord OAuth "Add to Server" flow for an admin.
-2. Settings → Integrations → **Connect Discord Server**: stores guild id, default text channel id, default voice channel id, and a webhook URL.
-3. New table `discord_integrations` (guild_id, owner_user_id, webhook_url, default_voice_channel_id, default_text_channel_id, role_to_ping nullable).
-4. On **Create Convoy**: modal asks "Ping your Discord server?" → edge function posts a rich embed via webhook with convoy name, code, and a `https://convoy-comms.lovable.app/join/<code>` deep link.
-5. On **Rescue Alert**: edge function posts an embed to the same channel with rider name, location link (Google Maps URL), and convoy code.
-6. UI: badge in Lobby showing "Connected to <ServerName>" + per-convoy toggle "Auto-announce to Discord".
+## Implementation
 
-### Phase 2 — Voice channel hosting via Discord
-1. When a convoy is created and a server is linked, BlackTop selects (or creates) a Discord voice channel via the bot and stores its id on the convoy row.
-2. Active ride UI replaces the in-app WebRTC voice panel with:
-   - "Open in Discord" deep link (`discord://channels/<guild>/<channel>`).
-   - Live member list pulled from the bot (who is in the voice channel, who is speaking, who is muted) via Realtime broadcasts the bot pushes into Supabase.
-   - Mute mic button → bot moves the user (server-mute) via Discord API.
-3. `useVoiceChannel` hook gains a `provider: 'webrtc' | 'discord'` branch. Discord branch never opens `getUserMedia`; it only renders state.
-4. Fallback: if a member has not linked their Discord account, they get the existing WebRTC channel and a banner "Link Discord to join the convoy voice channel."
+- Rewrite `src/features/ride/components/RideSummary.tsx` — same props, same call sites, no API changes.
+- Add `VT323` via Google Fonts link in `index.html` and a `.font-receipt` utility class in `src/index.css`. Add receipt-specific tokens (paper bg, ink color, torn edge mask, noise) scoped to a `.receipt` class so it stays consistent in light/dark mode (receipt is always light paper, even in dark theme — intentional artifact look).
+- Add a small `ReceiptRow` helper inside the file for the dotted-leader rows (uses flex + dashed border-bottom on a spacer span, or character-leader with `mask-image` for crispness).
+- Bike model: render placeholder block with a TODO comment + data-attribute `data-bike-slot` so the future garage feature can target it.
+- Reuse existing `formatDuration`, `formatDistance`, `formatSpeed`, `getSpeedLabel`, `getDistanceLabel`.
+- Keep `onBadgesEarned` effect unchanged.
+- Lean angle: read from settings/active ride if available; otherwise show `—`. I'll thread an optional `maxLean?: number` into `RideStats` (default omitted, so existing callers unaffected) and pass it through from `useActiveRide` if it exposes lean data — confirmed via `useLeanAngle` hook usage; if not currently tracked into the summary, the row simply shows `—` until wired.
 
-### Phase 3 — Spotify playlist playback
-1. New Settings → Music section: connect Spotify account (per-user OAuth, stored encrypted in Supabase) and pick a default playlist.
-2. Active ride UI gains a music card with Play / Pause / Skip, current track, mic mute, and music mute (music mute = bot lowers music bot volume only for the requesting user via Discord's per-user volume; mic mute behaves as Phase 2).
-3. Edge function `music-control` forwards commands to the bot HTTP API. Bot resolves Spotify playlist → track metadata, streams playable audio source (must comply with Spotify ToS — likely via Spotify's official preview or a licensed audio provider; see "Open questions").
-4. Only the convoy leader can start/stop/skip; others can adjust their own music volume.
+## Out of scope (per your note)
 
-## Database changes (Lovable Cloud)
-- `discord_integrations`: guild link per user.
-- `convoy_discord`: convoy_id, guild_id, voice_channel_id, text_channel_id, announce_enabled.
-- `user_discord_links`: user_id, discord_user_id, access_token (encrypted), refresh_token.
-- `user_spotify_links`: user_id, spotify_user_id, refresh_token (encrypted), default_playlist_id.
-- All tables: explicit `GRANT`s + RLS scoped to `auth.uid()`.
+- Garage page / per-bike stats — separate follow-up.
+- Bike picker UI — separate follow-up.
+- Demo page receipt mockup — can update after if you want.
 
-## Edge functions (Lovable)
-- `discord-oauth-callback`
-- `discord-link-server`
-- `discord-announce-convoy`
-- `discord-announce-rescue`
-- `discord-provision-voice-channel`
-- `spotify-oauth-callback`
-- `music-control` (proxy to bot)
+## Files touched
 
-All bot-bound calls go to the bot's HTTPS endpoint signed with a shared secret stored via `add_secret` (`BLACKTOP_BOT_URL`, `BLACKTOP_BOT_SHARED_SECRET`).
-
-## External bot service (NOT in Lovable repo)
-Built and deployed separately. Responsibilities:
-- Discord gateway + voice connection (discord.js + @discordjs/voice).
-- Music playback (discord-player or lavalink).
-- Spotify Web API for playlist/track resolution.
-- HTTP API: `/announce`, `/rescue`, `/voice/provision`, `/music/play`, `/music/pause`, `/music/skip`, `/voice/state/:guild/:channel`.
-- Pushes voice-state and now-playing updates back to Supabase Realtime so the app UI stays in sync.
-
-## Frontend changes (high level)
-- `src/features/integrations/discord/` — settings UI, OAuth callback page, hooks.
-- `src/features/integrations/spotify/` — settings UI, OAuth callback page.
-- `src/features/voice/hooks/useVoiceChannel.ts` — provider switch.
-- `src/pages/CreateConvoy.tsx` — "Ping Discord?" toggle.
-- `src/features/rescue/hooks/useRescue.ts` — also call `discord-announce-rescue`.
-- `src/pages/ActiveRide.tsx` — music card + Discord voice card when applicable.
-
-## Open questions / risks
-- **Spotify ToS**: Discord bots cannot legally stream Spotify's full catalog audio. We can pull playlist metadata from Spotify, but actual audio playback will likely need a licensed source (YouTube via official API, SoundCloud, Audius, or user-uploaded files). Confirm before Phase 3.
-- **Bot hosting cost**: requires an always-on server outside Lovable; user must own that infra or use a managed host.
-- **Discord developer app**: requires creating a Discord application + bot, and getting verified once the bot is in >100 servers.
-
-## Recommendation
-Ship Phase 1 first inside Lovable (entirely doable here) so convoy + rescue pings work end-to-end. Treat Phase 2 and Phase 3 as a separate build-out that depends on standing up the external bot service.
+- `src/features/ride/components/RideSummary.tsx` (rewrite)
+- `src/index.css` (add `.receipt`, `.font-receipt`, torn-edge + noise utilities)
+- `index.html` (preconnect + VT323 Google Font link)
