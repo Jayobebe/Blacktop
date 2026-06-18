@@ -12,6 +12,8 @@ import {
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
+import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
+import { Receipt, Sparkles, Lock } from 'lucide-react';
 
 interface Feature {
   id: string;
@@ -135,6 +137,15 @@ export default function DemoShowcase() {
       mockup: <HistoryMockup />
     },
     {
+      id: 'receipts',
+      title: 'Ride Receipts',
+      subtitle: 'Shareable Stat Slips',
+      description: 'Every finished ride prints a receipt with your stats, vehicle, and badges. Download it as an image to share with the crew.',
+      icon: Receipt,
+      color: 'accent',
+      mockup: <ReceiptMockup />
+    },
+    {
       id: 'studio',
       title: 'Overlay Download',
       subtitle: 'Sync Stats to Your Action Cam',
@@ -151,6 +162,15 @@ export default function DemoShowcase() {
       icon: BarChart3,
       color: 'accent',
       mockup: <StatsMockup />
+    },
+    {
+      id: 'cards',
+      title: 'Trading Cards',
+      subtitle: 'Collect Every Tier',
+      description: 'Each vehicle earns a trading card that levels up with rides — Bronze at 10, all the way to Orion at 1000. Download them as images for the collection.',
+      icon: Sparkles,
+      color: 'accent',
+      mockup: <TradingCardsMockup />
     },
     {
       id: 'garage',
@@ -1301,4 +1321,129 @@ function BikeAssignmentMockup() {
     </div>
   );
 }
+
+function ReceiptMockup() {
+  return (
+    <div className="w-full max-w-[260px] mx-auto animate-receipt-print">
+      <div className="receipt-edge-top" />
+      <div className="receipt relative px-5 py-4 font-receipt text-[--ink]">
+        <div className="text-center mb-2">
+          <div className="text-xl font-bold tracking-[0.18em]">BLACKTOP STORE</div>
+          <div className="text-[10px] tracking-[0.3em] opacity-70 mt-0.5">— RIDE RECEIPT —</div>
+        </div>
+        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
+        <div className="space-y-1 text-xs">
+          {[
+            ['Vehicle', 'Daily Twin'],
+            ['Max Spd', '92 mph'],
+            ['Max Lean', '38°'],
+            ['Distance', '24.6 mi'],
+            ['Duration', '0:47:12'],
+            ['Avg Spd', '31 mph'],
+          ].map(([k, v]) => (
+            <div key={k} className="flex justify-between">
+              <span className="tracking-wider opacity-80">{k}</span>
+              <span className="font-bold">{v}</span>
+            </div>
+          ))}
+        </div>
+        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { e: '⚡', l: 'SPEED' },
+            { e: '🛣️', l: 'JOURNEY' },
+            { e: '🏔️', l: 'LEAN' },
+          ].map(b => (
+            <div key={b.l} className="receipt-bracket text-center px-1 py-2">
+              <span className="receipt-bracket-tr" />
+              <span className="receipt-bracket-bl" />
+              <div className="text-base leading-none">{b.e}</div>
+              <div className="text-[8px] font-bold tracking-wider mt-1">{b.l}</div>
+            </div>
+          ))}
+        </div>
+        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
+        <div className="text-center">
+          <div className="text-[10px] tracking-[0.25em]">THANK YOU FOR THE RIDE</div>
+          <div className="receipt-barcode mt-2" aria-hidden />
+        </div>
+      </div>
+      <div className="receipt-edge-bottom" />
+    </div>
+  );
+}
+
+function TradingCardsMockup() {
+  const tiers = TIER_LADDER;
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="-mx-6 px-6 overflow-x-auto snap-x snap-mandatory scrollbar-none">
+        <div className="flex gap-3 pb-2">
+          {tiers.map((t, i) => {
+            const style = TIER_STYLES[t.id];
+            const locked = t.id === 'locked';
+            return (
+              <div
+                key={t.id}
+                className={cn(
+                  'relative shrink-0 snap-center w-[150px] aspect-[5/7] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
+                  style.bg,
+                  style.border,
+                )}
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                {style.shine && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute inset-0 animate-card-shine" />
+                  </div>
+                )}
+                {style.sparkle && (
+                  <div className="absolute inset-0 pointer-events-none opacity-60 [background-image:radial-gradient(circle_at_20%_30%,white_0.5px,transparent_1px),radial-gradient(circle_at_70%_60%,white_0.5px,transparent_1px),radial-gradient(circle_at_45%_80%,white_0.5px,transparent_1px),radial-gradient(circle_at_85%_20%,white_0.5px,transparent_1px)] [background-size:60px_60px,70px_70px,50px_50px,80px_80px]" />
+                )}
+                <div className="relative flex-1 flex flex-col p-2 gap-1.5">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[9px] font-bold tracking-wider text-white drop-shadow truncate">
+                      VEHICLE
+                    </span>
+                    <span className={cn(
+                      'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider',
+                      style.chip,
+                    )}>
+                      {locked ? <Lock className="w-2 h-2" /> : <Sparkles className="w-2 h-2" />}
+                      {t.label}
+                    </span>
+                  </div>
+                  <div className="relative rounded-md bg-black/30 border border-white/10 aspect-[4/3] flex items-center justify-center">
+                    {locked ? (
+                      <Lock className="w-5 h-5 text-white/60" />
+                    ) : (
+                      <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 mt-auto">
+                    {['SPD', 'DST', 'TIME', 'RIDES'].map(s => (
+                      <div key={s} className="rounded bg-black/40 border border-white/10 px-1 py-0.5">
+                        <div className="text-[7px] tracking-widest text-white/60">{s}</div>
+                        <div className="text-[9px] font-mono font-bold text-white">
+                          {locked ? '—' : '••'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-center text-[7px] tracking-widest text-white/60">
+                    {t.minRides === 0 ? '0 rides' : `${t.minRides}+ rides`}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <p className="text-[10px] text-muted-foreground text-center animate-fade-in delay-300">
+        ← swipe to see every tier from Bronze to Orion →
+      </p>
+    </div>
+  );
+}
+
 
