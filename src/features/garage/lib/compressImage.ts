@@ -56,7 +56,7 @@ export async function pixelateImageFile(
 
   // Tight crop the remaining transparent PNG so the bike/car fills the render.
   const cropped = cropTransparentBounds(work, 4);
-  releaseCanvas(work);
+  if (cropped !== work) releaseCanvas(work);
   await tick();
 
   // === 3. pixelate: downscale chunky then upscale nearest-neighbour ===
