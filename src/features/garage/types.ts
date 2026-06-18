@@ -3,6 +3,24 @@ export interface BikePhotos {
   hero: string; // data URL
 }
 
+/**
+ * Where & how big the bike PNG sits on the shop floor.
+ * - xPct: horizontal center, 0 = left edge, 100 = right edge
+ * - yPct: vertical position from bottom, 0 = floor, 100 = ceiling
+ * - scalePct: bike height as % of diorama height (20 – 100)
+ */
+export interface BikePlacement {
+  xPct: number;
+  yPct: number;
+  scalePct: number;
+}
+
+export const DEFAULT_BIKE_PLACEMENT: BikePlacement = {
+  xPct: 38,
+  yPct: 10,
+  scalePct: 70,
+};
+
 export type MaintPartKey =
   | 'chain-lube'
   | 'chain-replace'
@@ -26,6 +44,7 @@ export interface Bike {
   makeModel?: string;
   createdAt: number;
   photos: BikePhotos;
+  placement?: BikePlacement;
   baseOdometerKm: number; // odometer when bike was added
   maintenance: MaintItem[];
 }
