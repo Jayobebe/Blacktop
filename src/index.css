@@ -453,29 +453,53 @@
     animation: burn-pulse 2s ease-in-out infinite;
   }
 
-  @keyframes burn-rise {
-    0% { transform: translateY(100%) scaleY(0.4); opacity: 0; }
-    25% { opacity: 1; }
-    100% { transform: translateY(-10%) scaleY(1.15); opacity: 0.9; }
+  /* DuckDuckGo-style flame sweep: wall of flame rises from below,
+     covers the screen, then continues out the top. */
+  @keyframes burn-sweep {
+    0%   { transform: translateY(110%); }
+    35%  { transform: translateY(20%); }
+    65%  { transform: translateY(-30%); }
+    100% { transform: translateY(-130%); }
   }
-  .animate-burn-rise {
-    animation: burn-rise 1.4s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  .animate-burn-sweep {
+    animation-name: burn-sweep;
+    animation-timing-function: cubic-bezier(0.55, 0.05, 0.35, 1);
+    animation-fill-mode: forwards;
+    will-change: transform;
   }
 
-  @keyframes burn-tongue {
-    0% { transform: translateY(110%) scaleY(0.3) scaleX(0.8); opacity: 0; }
-    20% { opacity: 1; }
-    60% { transform: translateY(-5%) scaleY(1.1) scaleX(1.05); opacity: 1; }
-    100% { transform: translateY(-40%) scaleY(0.7) scaleX(0.6); opacity: 0; }
+  @keyframes burn-glow {
+    0%   { opacity: 0; }
+    25%  { opacity: 1; }
+    75%  { opacity: 0.7; }
+    100% { opacity: 0; }
   }
-  .animate-burn-tongue {
-    animation: burn-tongue 1.4s cubic-bezier(0.3, 0.6, 0.4, 1) forwards;
+  .animate-burn-glow {
+    animation: burn-glow 1.6s ease-out forwards;
+  }
+
+  @keyframes burn-smoke {
+    0%, 35% { opacity: 0; transform: translateY(40%); }
+    65%     { opacity: 0.9; transform: translateY(0%); }
+    100%    { opacity: 0; transform: translateY(-20%); }
+  }
+  .animate-burn-smoke {
+    animation: burn-smoke 1.9s ease-out forwards;
+  }
+
+  @keyframes burn-clear {
+    0%, 75% { opacity: 0; }
+    88%     { opacity: 1; }
+    100%    { opacity: 0; }
+  }
+  .animate-burn-clear {
+    animation: burn-clear 1.9s ease-out forwards;
   }
 
   @keyframes burn-ember {
-    0% { transform: translateY(0) translateX(0); opacity: 0; }
-    15% { opacity: 1; }
-    100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+    0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    100% { transform: translateY(-110vh) translateX(20px) scale(0.4); opacity: 0; }
   }
   .animate-burn-ember {
     animation-name: burn-ember;
@@ -484,28 +508,11 @@
   }
 
   @keyframes burn-darken {
-    0% { opacity: 0; }
+    0%   { opacity: 0; }
     100% { opacity: 1; }
   }
   .animate-burn-darken {
-    animation: burn-darken 0.6s ease-out forwards;
-  }
-
-  @keyframes burn-fade {
-    0%, 85% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-  .animate-burn-fade {
-    animation: burn-fade 1.6s ease-out forwards;
-  }
-
-  @keyframes burn-flash {
-    0%, 70% { opacity: 0; }
-    85% { opacity: 0.85; }
-    100% { opacity: 0; }
-  }
-  .animate-burn-flash {
-    animation: burn-flash 1.6s ease-out forwards;
+    animation: burn-darken 0.4s ease-out forwards;
   }
 
   .animate-speed-glow {
