@@ -53,11 +53,11 @@ export function GarageDiorama({ bike, tip }: Props) {
               <img
                 src={bike.photos.hero}
                 alt={bike.name}
-                className="absolute left-[42%] bottom-8 -translate-x-1/2 max-h-[62%] max-w-[78%] object-contain drop-shadow-[0_14px_10px_rgba(0,0,0,0.85)] animate-fade-in"
+                className="absolute left-[48%] bottom-16 -translate-x-1/2 max-h-[82%] max-w-[112%] object-contain drop-shadow-[0_16px_12px_rgba(0,0,0,0.88)] animate-fade-in"
                 style={{ imageRendering: 'pixelated' }}
               />
               <div
-                className="absolute left-[42%] bottom-6 -translate-x-1/2 w-[52%] h-6 rounded-[50%] blur-md opacity-90"
+                className="absolute left-[48%] bottom-12 -translate-x-1/2 w-[68%] h-7 rounded-[50%] blur-md opacity-90"
                 style={{ background: 'radial-gradient(ellipse, rgba(0,0,0,0.9) 0%, transparent 70%)' }}
               />
             </div>

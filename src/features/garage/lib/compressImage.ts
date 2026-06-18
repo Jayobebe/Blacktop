@@ -31,13 +31,13 @@ export async function pixelateImageFile(
   } = {},
 ): Promise<string> {
   const {
-    workWidth = 320,
-    pixelWidth = 110,
-    outputWidth = 260,
-    bgTolerance = 60,
+    workWidth = 220,
+    pixelWidth = 64,
+    outputWidth = 190,
+    bgTolerance = 66,
   } = opts;
 
-  const img = await loadBitmap(file);
+  const img = await loadBitmap(file, workWidth);
 
   // === 1. downscale to working res ===
   const { w: ww, h: wh } = fitWithin(img.width, img.height, workWidth);
@@ -54,18 +54,23 @@ export async function pixelateImageFile(
   removeBackgroundByCorners(wctx, ww, wh, bgTolerance);
   await tick();
 
+  // Tight crop the remaining transparent PNG so the bike/car fills the render.
+  const cropped = cropTransparentBounds(work, 4);
+  if (cropped !== work) releaseCanvas(work);
+  await tick();
+
   // === 3. pixelate: downscale chunky then upscale nearest-neighbour ===
-  const { w: pw, h: ph } = fitWithin(ww, wh, pixelWidth);
+  const { w: pw, h: ph } = fitWithin(cropped.width, cropped.height, pixelWidth);
   const px = document.createElement('canvas');
   px.width = pw;
   px.height = ph;
   const pxctx = px.getContext('2d');
   if (!pxctx) throw new Error('canvas');
   pxctx.imageSmoothingEnabled = true;
-  pxctx.drawImage(work, 0, 0, pw, ph);
+  pxctx.drawImage(cropped, 0, 0, pw, ph);
   await tick();
 
-  const { w: ow, h: oh } = fitWithin(ww, wh, outputWidth);
+  const { w: ow, h: oh } = fitWithin(cropped.width, cropped.height, outputWidth);
   const out = document.createElement('canvas');
   out.width = ow;
   out.height = oh;
@@ -73,8 +78,13 @@ export async function pixelateImageFile(
   if (!octx) throw new Error('canvas');
   octx.imageSmoothingEnabled = false;
   octx.drawImage(px, 0, 0, ow, oh);
+  posterizeOpaquePixels(octx, ow, oh);
 
-  return canvasToPngDataUrl(out);
+  const dataUrl = await canvasToPngDataUrl(out);
+  releaseCanvas(cropped);
+  releaseCanvas(px);
+  releaseCanvas(out);
+  return dataUrl;
 }
 
 function fitWithin(width: number, height: number, maxDim: number) {
@@ -129,6 +139,57 @@ function removeBackgroundByCorners(
   ctx.putImageData(img, 0, 0);
 }
 
+function cropTransparentBounds(source: HTMLCanvasElement, pad: number): HTMLCanvasElement {
+  const ctx = source.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return source;
+  const { width: w, height: h } = source;
+  const img = ctx.getImageData(0, 0, w, h);
+  const data = img.data;
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (data[(y * w + x) * 4 + 3] > 12) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return source;
+  minX = Math.max(0, minX - pad);
+  minY = Math.max(0, minY - pad);
+  maxX = Math.min(w - 1, maxX + pad);
+  maxY = Math.min(h - 1, maxY + pad);
+
+  const out = document.createElement('canvas');
+  out.width = maxX - minX + 1;
+  out.height = maxY - minY + 1;
+  out.getContext('2d')?.drawImage(source, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+  return out;
+}
+
+function posterizeOpaquePixels(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const data = img.data;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 24) {
+      data[i + 3] = 0;
+      continue;
+    }
+    data[i] = Math.round(data[i] / 32) * 32;
+    data[i + 1] = Math.round(data[i + 1] / 32) * 32;
+    data[i + 2] = Math.round(data[i + 2] / 32) * 32;
+    data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
 async function canvasToPngDataUrl(canvas: HTMLCanvasElement): Promise<string> {
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, 'image/png'),
@@ -155,12 +216,23 @@ function tick(): Promise<void> {
  * without ever materialising a giant base64 string in memory, which is what
  * was crashing the page on large phone-camera photos.
  */
-async function loadBitmap(file: File): Promise<
+function releaseCanvas(canvas: HTMLCanvasElement) {
+  canvas.width = 1;
+  canvas.height = 1;
+  canvas.getContext('2d')?.clearRect(0, 0, 1, 1);
+}
+
+async function loadBitmap(file: File, maxDecodeDim?: number): Promise<
   (HTMLImageElement | ImageBitmap) & { close?: () => void }
 > {
   if (typeof createImageBitmap === 'function') {
     try {
-      return await createImageBitmap(file);
+      return await createImageBitmap(
+        file,
+        maxDecodeDim
+          ? { resizeWidth: maxDecodeDim, resizeQuality: 'low', imageOrientation: 'from-image' }
+          : { imageOrientation: 'from-image' },
+      );
     } catch {
       // fall through to <img> path
     }
