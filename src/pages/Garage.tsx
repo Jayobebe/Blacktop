@@ -47,6 +47,8 @@ export default function Garage() {
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState('');
   const [photos, setPhotos] = useState<BikePhotos | null>(null);
+  const [placing, setPlacing] = useState(false);
+  const [draftPlacement, setDraftPlacement] = useState<BikePlacement | null>(null);
 
   const stats = useBikeStats(activeBike);
 
@@ -180,7 +182,53 @@ export default function Garage() {
         </div>
       )}
 
-      <GarageDiorama bike={activeBike} tip={tip} />
+      {placing && activeBike && (
+        <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2">
+          <p className="text-xs text-foreground/80">Drag the vehicle & use the slider to resize.</p>
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2 text-xs gap-1"
+              onClick={() => { setPlacing(false); setDraftPlacement(null); }}
+            >
+              <X className="w-3.5 h-3.5" /> Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 px-2 text-xs gap-1"
+              onClick={() => {
+                updateBike(activeBike.id, { placement: draftPlacement ?? activeBike.placement ?? DEFAULT_BIKE_PLACEMENT });
+                setPlacing(false);
+                setDraftPlacement(null);
+                toast.success('Placement saved');
+              }}
+            >
+              <Check className="w-3.5 h-3.5" /> Confirm
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <GarageDiorama
+        bike={activeBike}
+        tip={placing ? null : tip}
+        editing={placing}
+        onPlacementChange={setDraftPlacement}
+      />
+
+      {activeBike && !placing && (
+        <div className="mt-2 flex justify-center">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 px-3 text-xs gap-1"
+            onClick={() => { setDraftPlacement(activeBike.placement ?? DEFAULT_BIKE_PLACEMENT); setPlacing(true); }}
+          >
+            <Move className="w-3.5 h-3.5" /> Adjust placement
+          </Button>
+        </div>
+      )}
 
       {!activeBike ? (
         <div className="flex-1 flex items-center justify-center text-center p-6">
