@@ -129,9 +129,9 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="w-full max-w-[360px] animate-receipt-print">
+      <div ref={receiptRef} className="w-full max-w-[360px] animate-receipt-print">
         <div className="receipt-edge-top" />
-        <div ref={receiptRef} className="receipt relative px-6 py-5 font-receipt text-[--ink]">
+        <div className="receipt relative px-6 py-5 font-receipt text-[--ink]">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
@@ -150,17 +150,6 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Bike line (from garage) */}
           <div className="mt-4" data-bike-slot>
             <ReceiptRow label="Bike" value={bikeName || '—'} />
-            {bikePhoto && (
-              <div className="mt-3 flex items-center justify-center">
-                <img
-                  src={bikePhoto}
-                  alt={bikeName || 'Bike'}
-                  crossOrigin="anonymous"
-                  className="max-h-32 w-auto object-contain"
-                  style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
-                />
-              </div>
-            )}
           </div>
 
           {/* Divider */}
@@ -196,14 +185,26 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Divider */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
-          {/* Bike model block — only show placeholder if no bike */}
-          {!bikeName && (
-            <div className="receipt-bracket text-center" data-bike-slot>
-              <span className="receipt-bracket-tr" />
-              <span className="receipt-bracket-bl" />
-              <div className="text-xl tracking-[0.2em]">BIKE MODEL</div>
-              <div className="text-sm opacity-60 mt-1">add in garage</div>
+          {/* Bike photo (B&W) — below stats, above thank you */}
+          {bikePhoto ? (
+            <div className="flex items-center justify-center py-2">
+              <img
+                src={bikePhoto}
+                alt={bikeName || 'Bike'}
+                crossOrigin="anonymous"
+                className="max-h-40 w-auto object-contain"
+                style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
+              />
             </div>
+          ) : (
+            !bikeName && (
+              <div className="receipt-bracket text-center" data-bike-slot>
+                <span className="receipt-bracket-tr" />
+                <span className="receipt-bracket-bl" />
+                <div className="text-xl tracking-[0.2em]">BIKE MODEL</div>
+                <div className="text-sm opacity-60 mt-1">add in garage</div>
+              </div>
+            )
           )}
 
           {/* Badges */}
@@ -252,9 +253,10 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           )}
         </div>
         <div className="receipt-edge-bottom" />
+      </div>
 
-        {/* Action buttons (outside the receipt) */}
-        <div className="grid grid-cols-2 gap-3 mt-6">
+      {/* Action buttons (outside the receipt) */}
+      <div className="w-full max-w-[360px] grid grid-cols-2 gap-3 mt-6">
           <Button
             onClick={handleSave}
             disabled={saving}
