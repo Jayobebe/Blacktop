@@ -36,11 +36,6 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
       value: formatDistance(stats.longestRideMi, settings.distanceUnit),
       unit: getDistanceLabel(settings.distanceUnit),
     },
-    {
-      label: 'Bought at',
-      value: formatDistance(baseOdometerKm * KM_TO_MI, settings.distanceUnit),
-      unit: getDistanceLabel(settings.distanceUnit),
-    },
   ];
 
   return (
