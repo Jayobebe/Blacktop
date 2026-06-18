@@ -23,6 +23,12 @@ export function useRideHistory() {
     ));
   }, [setRides]);
 
+  const updateRideBike = useCallback((rideId: string, bikeId: string | null) => {
+    setRides(prev => prev.map(r =>
+      r.id === rideId ? { ...r, bikeId: bikeId || undefined } : r
+    ));
+  }, [setRides]);
+
   const deleteRide = useCallback((rideId: string) => {
     setRides(prev => prev.filter(r => r.id !== rideId));
   }, [setRides]);
@@ -120,6 +126,7 @@ export function useRideHistory() {
     addRide,
     updateRideBadges,
     updateRideName,
+    updateRideBike,
     deleteRide,
     addRidePhoto,
     removeRidePhoto,
