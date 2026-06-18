@@ -131,7 +131,7 @@ export default function ActiveRide() {
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
-  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number } | null>(null);
+  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
   const [showLiveStream, setShowLiveStream] = useState(false);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
@@ -296,6 +296,7 @@ export default function ActiveRide() {
         distance: currentRideState.distance,
         maxSpeed: currentRideState.maxSpeed,
         averageSpeed: avgSpeed,
+        maxLean: Math.max(currentRideState.maxLeanLeft || 0, currentRideState.maxLeanRight || 0),
       });
       
       // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
@@ -404,6 +405,7 @@ export default function ActiveRide() {
         distance: rideState.distance,
         maxSpeed: rideState.maxSpeed,
         averageSpeed: avgSpeed,
+        maxLean: Math.max(rideState.maxLeanLeft || 0, rideState.maxLeanRight || 0),
       });
 
       // Capture final members before ending for badge summary
