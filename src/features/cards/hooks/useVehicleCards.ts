@@ -40,28 +40,9 @@ export function useVehicleCards() {
 
   const cards: VehicleCardData[] = useMemo(() => {
     const completed = rides.filter((r) => r.endedAt !== null);
-    const fallbackBike: Bike = {
-      id: 'unassigned-vehicle-card',
-      name: 'Vehicle',
-      makeModel: 'Unassigned rides',
-      photos: { hero: '' },
-      baseOdometerKm: 0,
-      createdAt: 0,
-      maintenance: [],
-    };
-    const bikesForCards = bikes.length > 0 ? bikes : completed.length > 0 ? [fallbackBike] : [];
-    const unassignedTargetBikeId =
-      bikes.length === 0
-        ? fallbackBike.id
-        : bikes.length === 1
-          ? bikes[0].id
-          : activeBikeId ?? bikes[0].id;
-
-    return bikesForCards
+    return bikes
       .map((bike) => {
-        const mine = completed.filter(
-          (r) => r.bikeId === bike.id || (!r.bikeId && bike.id === unassignedTargetBikeId),
-        );
+        const mine = completed.filter((r) => r.bikeId === bike.id);
         const totalDistanceMi = mine.reduce((s, r) => s + r.distance, 0);
         const stats: VehicleCardStats = {
           totalRides: mine.length,

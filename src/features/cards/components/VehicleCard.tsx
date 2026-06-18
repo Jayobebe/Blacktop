@@ -56,6 +56,8 @@ export function VehicleCard({ card }: Props) {
     clone.style.width = `${width}px`;
     clone.style.height = `${height}px`;
     clone.style.maxWidth = 'none';
+    // Strip the download button from the captured image.
+    clone.querySelectorAll('[data-export-hide]').forEach((el) => el.remove());
     wrapper.appendChild(clone);
     document.body.appendChild(wrapper);
 
@@ -125,6 +127,7 @@ export function VehicleCard({ card }: Props) {
             {!isExporting && (
               <button
                 type="button"
+                data-export-hide
                 onClick={handleDownload}
                 aria-label="Download card as image"
                 className={cn(
