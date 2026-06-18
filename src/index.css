@@ -587,14 +587,20 @@
 .receipt-edge-top,
 .receipt-edge-bottom {
   display: block;
-  height: 12px;
-  background:
-    linear-gradient(-45deg, var(--paper) 33.33%, transparent 33.33%) 0 0 / 12px 12px,
-    linear-gradient(45deg, var(--paper) 33.33%, transparent 33.33%) 0 0 / 12px 12px;
-  background-color: transparent;
-  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.15));
+  height: 14px;
+  background-color: var(--paper, #f4f1e8);
+  -webkit-mask-image:
+    linear-gradient(-45deg, transparent 7px, #000 7.5px) 0 0 / 14px 14px repeat-x,
+    linear-gradient(45deg, transparent 7px, #000 7.5px) 0 0 / 14px 14px repeat-x;
+          mask-image:
+    linear-gradient(-45deg, transparent 7px, #000 7.5px) 0 0 / 14px 14px repeat-x,
+    linear-gradient(45deg, transparent 7px, #000 7.5px) 0 0 / 14px 14px repeat-x;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.18));
 }
-.receipt-edge-top { transform: rotate(180deg); margin-bottom: -1px; }
+.receipt-edge-top {
+  transform: scaleY(-1);
+  margin-bottom: -1px;
+}
 .receipt-edge-bottom { margin-top: -1px; }
 
 .receipt-row {
