@@ -39,7 +39,7 @@ export function useVehicleCards() {
   const [snapshots, setSnapshots] = useLocalStorage<CardSnapshots>(CARDS_STORAGE_KEY, {});
 
   const cards: VehicleCardData[] = useMemo(() => {
-    const completed = rides.filter((r) => r.endedAt);
+    const completed = rides.filter((r) => r.endedAt !== null);
     const fallbackBike: Bike = {
       id: 'unassigned-vehicle-card',
       name: 'Vehicle',
