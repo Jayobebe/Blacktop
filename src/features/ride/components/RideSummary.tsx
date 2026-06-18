@@ -273,7 +273,6 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             Continue
           </Button>
         </div>
-      </div>
     </div>
   );
 }
