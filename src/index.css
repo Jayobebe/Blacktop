@@ -376,6 +376,42 @@
     75% { transform: rotate(3deg); }
   }
 
+  /* Trading card sweep + reveal */
+  @keyframes card-shine {
+    0% { transform: translateX(-120%) skewX(-20deg); opacity: 0; }
+    20% { opacity: 0.4; }
+    100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
+  }
+  .animate-card-shine {
+    background: linear-gradient(100deg, transparent 30%, hsl(0 0% 100% / 0.18) 50%, transparent 70%);
+    animation: card-shine 4.5s ease-in-out infinite;
+  }
+
+  @keyframes card-tier-pulse {
+    0% { transform: scale(0.96); box-shadow: 0 0 0 0 hsl(var(--accent) / 0.55); }
+    60% { transform: scale(1.02); box-shadow: 0 0 0 16px hsl(var(--accent) / 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
+  }
+  .animate-card-tier-pulse {
+    animation: card-tier-pulse 1.4s cubic-bezier(0.16, 1, 0.3, 1) 1;
+  }
+
+  @keyframes card-stat-pulse {
+    0%, 100% { background-color: hsl(0 0% 0% / 0.35); }
+    50% { background-color: hsl(140 70% 45% / 0.35); }
+  }
+  .animate-card-stat-pulse {
+    animation: card-stat-pulse 1.6s ease-in-out 2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-card-shine,
+    .animate-card-tier-pulse,
+    .animate-card-stat-pulse {
+      animation: none !important;
+    }
+  }
+
   @keyframes nick-bob {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }

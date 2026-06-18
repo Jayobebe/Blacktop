@@ -4,6 +4,7 @@ import { useSettings } from '@/features/settings';
 import { ArrowLeft, Route, Gauge, Clock, TrendingUp, Hash, Users, Trophy } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { VehicleCardCarousel } from '@/features/cards';
 
 export default function Stats() {
   const navigate = useNavigate();
