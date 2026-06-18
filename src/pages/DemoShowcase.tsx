@@ -1105,3 +1105,200 @@ function CompleteMockup() {
     </div>
   );
 }
+
+function GarageMockup() {
+  const { settings } = useSettings();
+  const bikes = [
+    { name: 'Daily Twin', model: 'Yamaha MT-07', km: 12480, emoji: '🏍️', active: true },
+    { name: 'Track Toy', model: 'Aprilia RS660', km: 3210, emoji: '🏁', active: false },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      {bikes.map((bike, i) => (
+        <div
+          key={bike.name}
+          className={cn(
+            "rounded-2xl border p-4 animate-slide-up",
+            bike.active
+              ? "bg-accent/10 border-accent/40"
+              : "bg-card/50 border-border/30"
+          )}
+          style={{ animationDelay: `${i * 150}ms` }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl">
+              {bike.emoji}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold truncate">{bike.name}</p>
+                {bike.active && (
+                  <span className="text-[10px] uppercase tracking-wide text-accent font-medium">Active</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{bike.model}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Odometer</span>
+            <span className="font-mono font-semibold">
+              {formatDistance(bike.km, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
+            </span>
+          </div>
+        </div>
+      ))}
+      <p className="text-center text-xs text-muted-foreground animate-fade-in delay-400">
+        Each bike keeps its own stats & maintenance
+      </p>
+    </div>
+  );
+}
+
+function MaintenanceMockup() {
+  const { settings } = useSettings();
+  const [chainPct, setChainPct] = useState(15);
+  const [serviced, setServiced] = useState(false);
+
+  useEffect(() => {
+    setChainPct(15);
+    setServiced(false);
+    let p = 15;
+    const interval = setInterval(() => {
+      p += 6;
+      if (p >= 90) {
+        setChainPct(0);
+        setServiced(true);
+        p = 0;
+        setTimeout(() => setServiced(false), 800);
+      } else {
+        setChainPct(p);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const parts = [
+    { name: 'Chain lube', intervalKm: 500, pct: chainPct, highlight: true },
+    { name: 'Engine oil', intervalKm: 5000, pct: 62, highlight: false },
+    { name: 'Brake pads', intervalKm: 10000, pct: 38, highlight: false },
+  ];
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      {parts.map((part, i) => (
+        <div
+          key={part.name}
+          className={cn(
+            "bg-card/50 rounded-xl border p-3 animate-slide-up",
+            part.highlight ? "border-accent/40" : "border-border/30"
+          )}
+          style={{ animationDelay: `${i * 120}ms` }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Wrench className="w-3.5 h-3.5 text-muted-foreground" />
+              <p className="text-sm font-medium">{part.name}</p>
+            </div>
+            <span className="text-[11px] text-muted-foreground font-mono">
+              every {formatDistance(part.intervalKm, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-secondary overflow-hidden">
+            <div
+              className={cn(
+                "h-full transition-all duration-500 ease-out",
+                part.pct >= 80 ? "bg-destructive" : "bg-accent"
+              )}
+              style={{ width: `${part.pct}%` }}
+            />
+          </div>
+          {part.highlight && (
+            <div className="mt-2 flex justify-end">
+              <span className={cn(
+                "text-[10px] px-2 py-0.5 rounded-full border transition-colors",
+                serviced
+                  ? "bg-accent/20 border-accent/40 text-accent"
+                  : "bg-secondary border-border/30 text-muted-foreground"
+              )}>
+                {serviced ? '✓ Serviced — reset' : 'Tap Serviced to reset'}
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BikeAssignmentMockup() {
+  const { settings } = useSettings();
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState('Daily Twin');
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setOpen(true), 700);
+    const t2 = setTimeout(() => { setSelected('Track Toy'); setOpen(false); }, 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const distLabel = getDistanceLabel(settings.distanceUnit);
+  const distValue = formatDistance(45.2, settings.distanceUnit);
+
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      <div className="bg-card/50 rounded-xl border border-border/30 p-4 animate-slide-up">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-medium">Today's Ride</p>
+          <button
+            onClick={() => setOpen(o => !o)}
+            className="flex items-center gap-1 text-xs bg-secondary px-2 py-1 rounded-md border border-border/40"
+          >
+            <Bike className="w-3 h-3 text-accent" />
+            <span className="font-medium">{selected}</span>
+            <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+          </button>
+        </div>
+        <div className="flex gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Route className="w-3 h-3" /> {distValue} {distLabel}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" /> 1:23:45
+          </span>
+        </div>
+        {open && (
+          <div className="mt-3 rounded-lg border border-border/40 bg-background/80 overflow-hidden animate-fade-in">
+            {['Daily Twin', 'Track Toy'].map(b => (
+              <div
+                key={b}
+                className={cn(
+                  "px-3 py-2 text-xs flex items-center justify-between",
+                  b === selected && "bg-accent/10 text-accent"
+                )}
+              >
+                <span>{b}</span>
+                {b === selected && <Check className="w-3 h-3" />}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-center text-accent animate-pulse">
+        <ChevronDown className="w-5 h-5" />
+      </div>
+
+      <div className="bg-accent/10 rounded-xl border border-accent/30 p-4 animate-slide-up delay-200">
+        <div className="flex items-center gap-2 mb-2">
+          <Bike className="w-4 h-4 text-accent" />
+          <p className="text-sm font-semibold">{selected}</p>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          +{distValue} {distLabel} added to this bike's lifetime stats
+        </p>
+      </div>
+    </div>
+  );
+}
+
