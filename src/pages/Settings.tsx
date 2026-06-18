@@ -100,6 +100,7 @@ export default function Settings() {
       setBurnStep(1);
     } else if (burnStep === 1) {
       burnAllData();
+      burnGarage();
       setBurnStep(2);
       setTimeout(() => setBurnStep(0), 3000);
     }

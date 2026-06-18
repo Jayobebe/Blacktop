@@ -16,6 +16,7 @@ import ActiveRide from "./pages/ActiveRide";
 import DemoShowcase from "./pages/DemoShowcase";
 import History from "./pages/History";
 import RideDetail from "./pages/RideDetail";
+import Garage from "./pages/Garage";
 
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
@@ -59,6 +60,7 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       
       <Route path="/stats" element={<Stats />} />
+      <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/install" element={<Install />} />
       <Route path="*" element={<NotFound />} />
