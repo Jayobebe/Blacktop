@@ -1,12 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+type Origin = { x: number; y: number } | null;
 
 /**
- * Full-screen flame-up overlay, DuckDuckGo-style "Inferno":
- * a thick wall of layered cartoon flames sweeps up from the bottom,
- * covers the screen, then continues out the top trailing smoke,
- * before fading out. Then onComplete fires.
+ * Full-screen burn overlay. Flames spread radially OUT from the burn
+ * button's position, leaving rolling smoke behind — no hard yellow edge.
  */
-export function BurnFlameOverlay({ active, onComplete }: { active: boolean; onComplete?: () => void }) {
+export function BurnFlameOverlay({
+  active,
+  origin,
+  onComplete,
+}: {
+  active: boolean;
+  origin?: Origin;
+  onComplete?: () => void;
+}) {
   const [visible, setVisible] = useState(active);
 
   useEffect(() => {
@@ -14,106 +22,140 @@ export function BurnFlameOverlay({ active, onComplete }: { active: boolean; onCo
     setVisible(true);
     const t = setTimeout(() => {
       onComplete?.();
-    }, 1900);
+    }, 2200);
     return () => clearTimeout(t);
   }, [active, onComplete]);
 
+  // Origin in CSS pixels; fallback to viewport center
+  const ox = origin?.x ?? (typeof window !== 'undefined' ? window.innerWidth / 2 : 0);
+  const oy = origin?.y ?? (typeof window !== 'undefined' ? window.innerHeight * 0.85 : 0);
+
+  // Random tongues of fire shooting in many directions
+  const tongues = useMemo(
+    () =>
+      Array.from({ length: 28 }).map((_, i) => {
+        const angle = (i / 28) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+        const dist = 60 + Math.random() * 45; // vmax
+        return {
+          tx: Math.cos(angle) * dist,
+          ty: Math.sin(angle) * dist,
+          size: 18 + Math.random() * 22, // vmax
+          delay: Math.random() * 280,
+          duration: 1100 + Math.random() * 700,
+          hue: 8 + Math.random() * 35, // red→amber, no yellow front
+        };
+      }),
+    [visible]
+  );
+
+  const embers = useMemo(
+    () =>
+      Array.from({ length: 36 }).map((_, i) => {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 70 + Math.random() * 60;
+        return {
+          tx: Math.cos(angle) * dist,
+          ty: Math.sin(angle) * dist - 20, // bias slightly up
+          size: 2 + Math.random() * 3,
+          delay: Math.random() * 600,
+          duration: 1200 + Math.random() * 800,
+          hot: i % 3 === 0,
+        };
+      }),
+    [visible]
+  );
+
   if (!visible) return null;
-
-  // Wavy flame top edge. Repeated peaks across the width.
-  const flamePath =
-    'M0,80 ' +
-    // peaks
-    'C 40,30 60,30 100,75 ' +
-    'C 140,15 170,15 200,70 ' +
-    'C 230,25 260,25 300,72 ' +
-    'C 340,18 370,18 400,76 ' +
-    'C 430,28 460,28 500,68 ' +
-    'C 540,12 570,12 600,74 ' +
-    'C 630,30 660,30 700,70 ' +
-    'C 740,18 770,18 800,78 ' +
-    'C 830,28 860,28 900,72 ' +
-    'C 940,20 970,20 1000,76 ' +
-    'L1000,200 L0,200 Z';
-
-  const layers = [
-    { color: 'hsl(0 85% 35%)', delay: 0, duration: 1500, scale: 1.0, opacity: 0.95 },   // deep red back
-    { color: 'hsl(12 95% 48%)', delay: 80, duration: 1450, scale: 1.04, opacity: 0.95 }, // red-orange
-    { color: 'hsl(25 100% 55%)', delay: 160, duration: 1400, scale: 1.08, opacity: 0.95 },// orange
-    { color: 'hsl(40 100% 60%)', delay: 240, duration: 1350, scale: 1.12, opacity: 0.9 }, // amber
-    { color: 'hsl(52 100% 68%)', delay: 320, duration: 1300, scale: 1.18, opacity: 0.85 },// yellow front
-  ];
 
   return (
     <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden">
-      {/* Smoke / haze behind everything */}
-      <div className="absolute inset-0 bg-black/30 animate-burn-darken" />
+      {/* Smoke fills the screen behind everything, soft and rolling */}
+      <div className="absolute inset-0 animate-burn-smoke-fill" />
 
-      {/* Soft heat glow from below */}
+      {/* Expanding flame core from the origin */}
       <div
-        className="absolute inset-x-0 bottom-0 h-2/3 animate-burn-glow"
+        className="absolute animate-burn-core"
         style={{
+          left: ox,
+          top: oy,
+          width: '20vmax',
+          height: '20vmax',
+          marginLeft: '-10vmax',
+          marginTop: '-10vmax',
+          borderRadius: '50%',
           background:
-            'radial-gradient(ellipse 80% 70% at 50% 100%, hsl(30 100% 55% / 0.65), transparent 75%)',
+            'radial-gradient(circle, hsl(45 100% 65% / 0.95) 0%, hsl(25 100% 55% / 0.9) 30%, hsl(10 95% 45% / 0.75) 55%, hsl(0 80% 30% / 0.4) 75%, transparent 100%)',
+          filter: 'blur(4px)',
           mixBlendMode: 'screen',
         }}
       />
 
-      {/* Stacked flame layers sweeping up */}
-      {layers.map((l, i) => (
-        <svg
-          key={i}
-          viewBox="0 0 1000 200"
-          preserveAspectRatio="none"
-          className="absolute left-0 w-full animate-burn-sweep"
-          style={{
-            bottom: 0,
-            height: '140vh',
-            color: l.color,
-            opacity: l.opacity,
-            animationDelay: `${l.delay}ms`,
-            animationDuration: `${l.duration}ms`,
-            transform: `scaleX(${l.scale})`,
-            transformOrigin: 'center bottom',
-            filter: i < 2 ? 'blur(1px)' : 'blur(0.5px)',
-            mixBlendMode: 'normal',
-          }}
-        >
-          <path d={flamePath} fill="currentColor" />
-        </svg>
-      ))}
-
-      {/* Flickering top edge highlights (sparks/tips) */}
-      <div className="absolute inset-0">
-        {Array.from({ length: 24 }).map((_, i) => (
-          <span
-            key={i}
-            className="absolute block rounded-full animate-burn-ember"
-            style={{
-              left: `${(i * 41 + 7) % 100}%`,
-              bottom: '-12px',
-              width: `${3 + (i % 3)}px`,
-              height: `${3 + (i % 3)}px`,
-              background: i % 3 === 0 ? 'hsl(50 100% 75%)' : 'hsl(25 100% 60%)',
-              boxShadow: '0 0 10px hsl(30 100% 60% / 0.9)',
-              animationDelay: `${(i * 65) % 900}ms`,
-              animationDuration: `${1100 + (i * 53) % 700}ms`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Trailing dark smoke after flames pass */}
+      {/* Soft outer heat halo also radiating from origin */}
       <div
-        className="absolute inset-x-0 bottom-0 h-full animate-burn-smoke"
+        className="absolute animate-burn-halo"
         style={{
+          left: ox,
+          top: oy,
+          width: '10vmax',
+          height: '10vmax',
+          marginLeft: '-5vmax',
+          marginTop: '-5vmax',
+          borderRadius: '50%',
           background:
-            'radial-gradient(ellipse 90% 60% at 50% 100%, hsl(0 0% 10% / 0.85), hsl(0 0% 5% / 0.4) 60%, transparent 85%)',
+            'radial-gradient(circle, hsl(20 100% 55% / 0.55), hsl(15 90% 40% / 0.25) 50%, transparent 80%)',
+          filter: 'blur(20px)',
+          mixBlendMode: 'screen',
         }}
       />
 
-      {/* Final fade to clear */}
-      <div className="absolute inset-0 bg-black animate-burn-clear" />
+      {/* Tongues of fire shooting outward in all directions */}
+      {tongues.map((t, i) => (
+        <span
+          key={`t-${i}`}
+          className="absolute block animate-burn-tongue-out"
+          style={{
+            left: ox,
+            top: oy,
+            width: `${t.size}vmax`,
+            height: `${t.size}vmax`,
+            marginLeft: `-${t.size / 2}vmax`,
+            marginTop: `-${t.size / 2}vmax`,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, hsl(${t.hue + 20} 100% 60% / 0.8) 0%, hsl(${t.hue} 100% 50% / 0.7) 40%, hsl(${t.hue - 5} 90% 35% / 0.35) 70%, transparent 100%)`,
+            filter: 'blur(8px)',
+            mixBlendMode: 'screen',
+            ['--tx' as string]: `${t.tx}vmax`,
+            ['--ty' as string]: `${t.ty}vmax`,
+            animationDelay: `${t.delay}ms`,
+            animationDuration: `${t.duration}ms`,
+          }}
+        />
+      ))}
+
+      {/* Embers flying outward */}
+      {embers.map((e, i) => (
+        <span
+          key={`e-${i}`}
+          className="absolute block rounded-full animate-burn-ember-out"
+          style={{
+            left: ox,
+            top: oy,
+            width: `${e.size}px`,
+            height: `${e.size}px`,
+            marginLeft: `-${e.size / 2}px`,
+            marginTop: `-${e.size / 2}px`,
+            background: e.hot ? 'hsl(50 100% 75%)' : 'hsl(20 100% 60%)',
+            boxShadow: '0 0 10px hsl(30 100% 60% / 0.9)',
+            ['--tx' as string]: `${e.tx}vmax`,
+            ['--ty' as string]: `${e.ty}vmax`,
+            animationDelay: `${e.delay}ms`,
+            animationDuration: `${e.duration}ms`,
+          }}
+        />
+      ))}
+
+      {/* Final smoke wash — replaces the old hard yellow flash */}
+      <div className="absolute inset-0 animate-burn-smoke-clear" />
     </div>
   );
 }

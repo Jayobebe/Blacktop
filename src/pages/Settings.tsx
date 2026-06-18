@@ -614,7 +614,7 @@ export default function Settings() {
         </p>
       </div>
 
-      <BurnFlameOverlay active={burning} onComplete={handleBurnComplete} />
+      <BurnFlameOverlay active={burning} origin={burnOrigin} onComplete={handleBurnComplete} />
     </div>
   );
 }
