@@ -10,6 +10,8 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/features/settings';
+import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 
 interface Feature {
   id: string;
@@ -803,22 +805,25 @@ function WaypointsMockup() {
 }
 
 function TrackingMockup({ speed, distance }: { speed: number; distance: number }) {
+  const { settings } = useSettings();
+  const sLabel = getSpeedLabel(settings.speedUnit);
+  const dLabel = getDistanceLabel(settings.distanceUnit);
   return (
     <div className="w-full max-w-xs text-center space-y-6">
       {/* Speed Display */}
       <div className="animate-scale-in">
         <p className="text-[6rem] font-mono font-black leading-none text-accent animate-speed-glow">
-          {speed}
+          {formatSpeed(speed, settings.speedUnit)}
         </p>
-        <p className="text-muted-foreground text-sm -mt-2">mph</p>
+        <p className="text-muted-foreground text-sm -mt-2">{sLabel}</p>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-3 animate-slide-up delay-200">
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Distance</p>
-          <p className="font-mono text-lg font-semibold">{distance.toFixed(1)}</p>
-          <p className="text-[10px] text-muted-foreground">mi</p>
+          <p className="font-mono text-lg font-semibold">{formatDistance(distance, settings.distanceUnit)}</p>
+          <p className="text-[10px] text-muted-foreground">{dLabel}</p>
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Time</p>
@@ -826,8 +831,8 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Max</p>
-          <p className="font-mono text-lg font-semibold">92</p>
-          <p className="text-[10px] text-muted-foreground">mph</p>
+          <p className="font-mono text-lg font-semibold">{formatSpeed(92, settings.speedUnit)}</p>
+          <p className="text-[10px] text-muted-foreground">{sLabel}</p>
         </div>
       </div>
 
@@ -961,10 +966,11 @@ function HistoryMockup() {
 }
 
 function StatsMockup() {
+  const { settings } = useSettings();
   const stats = [
     { label: 'Total Rides', value: '47' },
-    { label: 'Distance', value: '1,248', unit: 'mi' },
-    { label: 'Top Speed', value: '112', unit: 'mph' },
+    { label: 'Distance', value: formatDistance(1248, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
+    { label: 'Top Speed', value: String(formatSpeed(112, settings.speedUnit)), unit: getSpeedLabel(settings.speedUnit) },
     { label: 'Ride Time', value: '32:15' },
   ];
 
