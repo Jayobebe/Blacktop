@@ -1,49 +1,38 @@
 ## Goal
-All distance and speed values everywhere in the app must respect the user's chosen `speedUnit` (mph/kph) and `distanceUnit` (miles/km) from Settings, and use a single consistent label style.
 
-## Single source of truth
-Continue to use the existing helpers in `src/lib/format.ts`:
-- `formatSpeed(mph, unit)` → number
-- `formatDistance(miles, unit)` → string
-- `getSpeedLabel(unit)` → `"MPH"` / `"KPH"`
-- `getDistanceLabel(unit)` → `"mi"` / `"km"`
+Bring `DemoShowcase.tsx` (the 16-slide animated walkthrough) up to date with features recently added since it was last touched.
 
-No screen may hardcode `mph`, `kph`, `mi`, `km`, or do its own conversion. All UI surfaces will route through these helpers with `useSettings().settings`.
+## New features missing from the demo
 
-## Issues to fix
+1. **Mecha-Nick's Garage** — multi-bike support, hero photos, diorama, per-bike stats.
+2. **Maintenance Tracker** — service intervals per part with progress bars and a "Serviced" reset action.
+3. **Per-Ride Bike Assignment** — drop-down in Ride History to assign a ride to a specific bike; stats roll up into that bike's garage panel.
 
-### Wrong / inconsistent labels
-- `src/pages/History.tsx` (lines 145–146) — prints lowercase `settings.speedUnit` ("mph") instead of `getSpeedLabel(...)` → swap to label helper.
-- `src/pages/ActiveRide.tsx` (line 857) — member row prints raw `settings.speedUnit` → swap to `getSpeedLabel(...)`.
+## Slides to add
 
-### Hardcoded "mph" / inline conversions
-- `src/features/waypoints/components/DestinationSearch.tsx` (lines 716–722) — uses inline `* 0.621371` and writes `"mi"` / `"km"` literals. Replace with `formatDistance(milesValue, distanceUnit) + getDistanceLabel(distanceUnit)`. `result.distance` is already in km; convert km → miles before passing to `formatDistance`.
-- `src/pages/Garage.tsx` (line 32) — unused `KM_TO_MI` constant; remove.
-- `src/features/garage/components/StatsPanel.tsx` (lines 10, 14) — `KM_TO_MI` + unused `odoMi`; remove.
+Insert three new slides between the existing `stats` slide and the `privacy` slide (so they appear with the other "personal data" features):
 
-### Demo screens still locked to mph
-- `src/pages/DemoShowcase.tsx` and `src/pages/DemoRide.tsx` — every "mph"/"MPH" string and hardcoded number gets routed through `getSpeedLabel(settings.speedUnit)` and `formatSpeed(...)` so demos match the user's chosen units. The DemoRide toggle that flips between mph/kph locally will be removed; the demo will follow Settings instead. Numeric demo values are already in mph, so `formatSpeed` handles conversion.
 
-### Speed-threshold consistency (ActiveRide colour zones)
-- `src/pages/ActiveRide.tsx` (lines 622–624) — colour zone comparison currently uses `formatSpeed(currentSpeed, speedUnit)` against the raw threshold, which is correct only because thresholds are stored in the user's chosen unit. To prevent confusion when the user toggles units later, store thresholds canonically in **mph** and convert for display + comparison.
-  - In `useSettings`, treat `amberSpeedThreshold` / `redSpeedThreshold` as mph internally.
-  - In `Settings.tsx`, when rendering the slider: show `formatSpeed(threshold, speedUnit) + getSpeedLabel(speedUnit)`, and on change convert input (in displayed unit) back to mph before storing. Slider min/max also presented in the chosen unit.
-  - In `ActiveRide.tsx`, compare `rideState.currentSpeed` (mph) directly to the stored mph thresholds — no unit math needed.
+| #   | id                | Title                 | Subtitle                 | Mockup                                                                                                                                                |
+| --- | ----------------- | --------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `garage`          | Mecha-Nick's Garage   | Your Bikes, Your Stats   | Diorama-style card with a pixel bike silhouette + bike name + odometer using the user's unit                                                          |
+| 2   | `maintenance`     | Maintenance Tracker   | Never Miss a Service     | List of parts (Chain lube, Engine oil, Brake pads) with animated progress bars; one bar fills to ~85% then resets to 0% to demo the "Serviced" action |
+| 3   | `bike-assignment` | Assign Rides to Bikes | History Knows Which Bike | History row mockup with an animated drop-down opening to pick a bike; arrow showing the ride's distance flowing into that bike's garage stats         |
+| 4   | &nbsp;            | &nbsp;                | &nbsp;                   | &nbsp;                                                                                                                                                |
 
-### Settings copy polish
-- `src/pages/Settings.tsx` line 301 — replace static "MPH or KPH" subtitle with dynamic `Currently {getSpeedLabel(settings.speedUnit)}` for clarity. Same treatment for distance subtitle.
 
-## Already correct (no change needed)
-- `src/pages/Home.tsx`, `src/pages/Stats.tsx`, `src/pages/RideDetail.tsx`, `src/features/ride/components/RideSummary.tsx`, `src/features/streaming/components/LiveStreamViewer.tsx`, `src/hooks/useLiveOverlayRecorder.ts`, `src/hooks/usePictureInPicture.ts` — already consume settings via the helpers.
-- `src/features/ride/hooks/useActiveRide.ts` — constants are internal computation thresholds in mph, never displayed; leave as-is.
-- `src/types/blacktop.ts` — storage canonical units stay mph / miles; only the display layer converts.
+All three reuse the existing slide scaffolding (icon, color, mockup component) and the `formatSpeed` / `formatDistance` helpers so the demo itself respects the user's unit setting.
 
-## Acceptance check
-After the fix, searching the codebase for hardcoded `mph`, `kph`, `' mi'`, `' km'`, `1.60934`, or `0.621` returns only:
-- `src/lib/format.ts` (the helpers themselves)
-- `src/features/settings/hooks/useSettings.ts` (type definitions)
-- `src/features/garage/hooks/useBikeStats.ts` (canonical-unit storage math, not display)
-- `src/features/ride/hooks/useActiveRide.ts` (internal mph thresholds)
-- `src/types/blacktop.ts` (storage unit comments)
+## Implementation notes (technical)
 
-Manually toggling Speed and Distance units in Settings updates every value and label across Home, Stats, History, Ride Detail, Active Ride (incl. member list and colour zones), Lobby (destination search), Ride Summary, Garage Stats, Demo Showcase, Demo Ride, and Live Stream overlay — without restarting the app.
+- File touched: `src/pages/DemoShowcase.tsx` only.
+- Add 3 entries to the `features` array in the correct position.
+- Add 3 small mockup components at the bottom of the file, matching the visual style of the existing ones (rounded card, accent borders, lucide icons, small CSS-only animations driven by `animationKey` / `setInterval` where useful).
+- New lucide icons needed: `Wrench`, `Bike` (or reuse `Settings` / `Gauge`).
+- No changes to routing, no new dependencies, no backend changes.
+- Keep total slide count at 19 (was 16 → 19). Progress dots already render dynamically from the array length, so no other UI changes required.
+
+## Out of scope
+
+- No edits to the live Garage, Maintenance, History, or Settings screens — those already work; this is purely demo/onboarding content.
+- No changes to the cinematic intro/outro slides.
