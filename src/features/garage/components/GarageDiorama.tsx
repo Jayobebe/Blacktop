@@ -30,11 +30,11 @@ export function GarageDiorama({ bike, tip }: Props) {
           <div key={left} className="absolute top-3" style={{ left: `${left}%` }}>
             {/* fixture */}
             <div className="w-2 h-2 -ml-1 rounded-sm bg-foreground/50" />
-            {/* bulb */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_hsl(var(--accent)/0.95)]" />
+            {/* bulb — tucked just under the fixture, nudged slightly left */}
+            <div className="absolute top-1 -left-0.5 w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_hsl(var(--accent)/0.95)]" />
             {/* light cone */}
             <div
-              className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-40 opacity-25"
+              className="absolute top-2 -left-[2.25rem] w-20 h-40 opacity-25"
               style={{
                 background:
                   'radial-gradient(ellipse at top, hsl(var(--accent)/0.6) 0%, hsl(var(--accent)/0.18) 35%, transparent 70%)',
@@ -136,18 +136,6 @@ export function GarageDiorama({ bike, tip }: Props) {
               'repeating-linear-gradient(0deg, transparent 0 5px, hsl(0 0% 0% / 0.5) 5px 6px)',
           }}
         />
-        {/* red oil drum */}
-        <div
-          className="absolute bottom-1 left-[34%] w-5 h-9 rounded-sm"
-          style={{
-            background: 'linear-gradient(180deg, hsl(0 55% 28%) 0%, hsl(0 60% 18%) 100%)',
-          }}
-        />
-
-        {/* Neon OPEN sign */}
-        <div className="absolute top-12 left-3 px-2 py-0.5 rounded-md border border-accent/70 text-[9px] uppercase tracking-[0.3em] text-accent shadow-[0_0_18px_hsl(var(--accent)/0.5)] bg-accent/5">
-          Open
-        </div>
       </div>
 
       {/* ============ SHOP FLOOR ============ */}
