@@ -235,13 +235,24 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
         </div>
         <div className="receipt-edge-bottom" />
 
-        {/* Continue button (outside the receipt) */}
-        <Button
-          onClick={onClose}
-          className="w-full mt-6 h-12 text-base font-semibold"
-        >
-          Continue
-        </Button>
+        {/* Action buttons (outside the receipt) */}
+        <div className="grid grid-cols-2 gap-3 mt-6">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            variant="outline"
+            className="h-12 text-base font-semibold gap-2"
+          >
+            {saved ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+            {saved ? 'Saved' : saving ? 'Saving…' : 'Save'}
+          </Button>
+          <Button
+            onClick={onClose}
+            className="h-12 text-base font-semibold"
+          >
+            Continue
+          </Button>
+        </div>
       </div>
     </div>
   );
