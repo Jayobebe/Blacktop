@@ -672,7 +672,7 @@ export default function ActiveRide() {
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
-          {/* Pause/Resume button (individual - all riders) - circular icon-only */}
+          {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
               const nextPaused = !rideState.isPaused;
@@ -893,7 +893,7 @@ export default function ActiveRide() {
                   });
                 });
                 const result = await announceSoloRescueToDiscord({
-                  riderName: profile.name || 'Rider',
+                  riderName: profile.name || 'Driver',
                   lat: pos.coords.latitude,
                   lng: pos.coords.longitude,
                 });

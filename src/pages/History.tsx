@@ -145,10 +145,10 @@ export default function History() {
                           >
                             <SelectTrigger className="h-6 px-2 py-0 text-[10px] rounded-lg bg-secondary/60 border-border/40 gap-1 w-auto min-w-0">
                               <BikeIcon className="w-2.5 h-2.5 text-muted-foreground" />
-                              <SelectValue placeholder="Bike" />
+                              <SelectValue placeholder="Vehicle" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">No bike</SelectItem>
+                              <SelectItem value="none">No vehicle</SelectItem>
                               {bikes.map((b) => (
                                 <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                               ))}

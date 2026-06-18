@@ -48,7 +48,7 @@ export default function DemoShowcase() {
       id: 'convoy',
       title: 'Convoy Mode',
       subtitle: 'Ride Together, Stay Connected',
-      description: 'Create or join a convoy with up to 8 riders. Share a simple code and everyone\'s in. Real-time sync keeps the group together.',
+      description: 'Create or join a convoy with up to 8 members. Share a simple code and everyone\'s in. Real-time sync keeps the group together.',
       icon: Users,
       color: 'accent',
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />
@@ -65,7 +65,7 @@ export default function DemoShowcase() {
     {
       id: 'voice',
       title: 'Voice Communication',
-      subtitle: 'Talk Hands-Free While Riding',
+      subtitle: 'Talk Hands-Free On the Road',
       description: 'Crystal clear voice chat with your convoy. Toggle mute anytime. Disconnect to save battery. Works alongside your music.',
       icon: Mic,
       color: 'voice-active',
@@ -147,7 +147,7 @@ export default function DemoShowcase() {
       id: 'stats',
       title: 'Lifetime Statistics',
       subtitle: 'Track Your Progress',
-      description: 'Total rides, distance traveled, top speed achieved, badges earned. See your riding journey at a glance.',
+      description: 'Total rides, distance traveled, top speed achieved, badges earned. See your journey at a glance.',
       icon: BarChart3,
       color: 'accent',
       mockup: <StatsMockup />
@@ -155,8 +155,8 @@ export default function DemoShowcase() {
     {
       id: 'garage',
       title: "Mecha-Nick's Garage",
-      subtitle: 'Your Bikes, Your Stats',
-      description: 'Add every bike in your stable. Snap a photo, set the odometer, and Mecha-Nick keeps lifetime stats and maintenance per bike — not just one big pile.',
+      subtitle: 'Your Vehicles, Your Stats',
+      description: 'Add every vehicle in your stable. Snap a photo, set the odometer, and Mecha-Nick keeps lifetime stats and maintenance per vehicle — not just one big pile.',
       icon: Bike,
       color: 'accent',
       mockup: <GarageMockup />
@@ -172,9 +172,9 @@ export default function DemoShowcase() {
     },
     {
       id: 'bike-assignment',
-      title: 'Assign Rides to Bikes',
-      subtitle: 'History Knows Which Bike',
-      description: 'Pick the bike used for any ride straight from History. Distance, top speed and ride time roll up into that bike\'s garage stats automatically.',
+      title: 'Assign Rides to Vehicles',
+      subtitle: 'History Knows Which Vehicle',
+      description: 'Pick the vehicle used for any ride straight from History. Distance, top speed and ride time roll up into that vehicle\'s garage stats automatically.',
       icon: History,
       color: 'accent',
       mockup: <BikeAssignmentMockup />
@@ -451,7 +451,7 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
       {/* Members Preview */}
       <div className="space-y-2 animate-slide-up delay-200">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-          Riders (4/8)
+          Members (4/8)
         </p>
         {[
           { name: 'You', isLeader: true, color: 'bg-orange-500' },
@@ -546,7 +546,7 @@ function DiscordMockup() {
             <MessageSquare className="w-5 h-5 text-[#5865F2]" />
           </div>
           <div>
-            <p className="font-semibold text-sm">#riders</p>
+            <p className="font-semibold text-sm">#members</p>
             <p className="text-[10px] text-muted-foreground">Discord webhook connected</p>
           </div>
         </div>
@@ -915,7 +915,7 @@ function RescueMockup() {
 
       <div className="text-center animate-fade-in delay-500">
         <p className="text-xs text-muted-foreground">
-          Lost riders send location to leader
+          Lost members send location to leader
         </p>
       </div>
     </div>
@@ -1149,7 +1149,7 @@ function GarageMockup() {
         </div>
       ))}
       <p className="text-center text-xs text-muted-foreground animate-fade-in delay-400">
-        Each bike keeps its own stats & maintenance
+        Each vehicle keeps its own stats & maintenance
       </p>
     </div>
   );
@@ -1295,7 +1295,7 @@ function BikeAssignmentMockup() {
           <p className="text-sm font-semibold">{selected}</p>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          +{distValue} {distLabel} added to this bike's lifetime stats
+          +{distValue} {distLabel} added to this vehicle's lifetime stats
         </p>
       </div>
     </div>

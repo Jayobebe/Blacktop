@@ -204,7 +204,7 @@ export default function Onboarding() {
           <PermissionItem
             icon={Mic}
             title="Microphone"
-            description="Voice chat with your convoy riders"
+            description="Voice chat with your convoy members"
             status={micPermission}
             isRequesting={isRequestingMic}
             onRequest={requestMicPermission}

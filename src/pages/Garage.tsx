@@ -295,7 +295,7 @@ export default function Garage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remove {activeBike.name}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Past rides keep their distance, but stop counting toward this bike. Cannot be undone.
+                    Past rides keep their distance, but stop counting toward this vehicle. Cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -303,7 +303,7 @@ export default function Garage() {
                   <AlertDialogAction
                     onClick={() => {
                       deleteBike(activeBike.id);
-                      toast.success('Bike removed');
+                      toast.success('Vehicle removed');
                     }}
                   >
                     Remove

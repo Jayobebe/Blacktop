@@ -25,7 +25,7 @@ export default function Stats() {
     },
     {
       icon: Clock,
-      label: 'Time Riding',
+      label: 'Time on the Road',
       value: formatDuration(stats.totalDuration),
       unit: '',
     },
@@ -90,7 +90,7 @@ export default function Stats() {
         </button>
         <div>
           <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Statistics</h1>
-          <p className="text-xs text-muted-foreground">Your riding journey</p>
+          <p className="text-xs text-muted-foreground">Your journey</p>
         </div>
       </header>
 

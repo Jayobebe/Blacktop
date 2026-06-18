@@ -91,7 +91,7 @@ export default function CreateConvoy() {
               </div>
               <h2 className="text-lg landscape:text-base font-display font-semibold mb-1">Create Your Convoy</h2>
               <p className="text-muted-foreground text-center landscape:text-left text-sm landscape:text-xs max-w-xs">
-                Start a new convoy and share the code with your riding crew
+                Start a new convoy and share the code with your crew
               </p>
             </div>
             {/* Button */}

@@ -260,8 +260,8 @@ export default function Lobby() {
     // Only start on the rising edge (prevents immediate re-trigger when returning to lobby)
     if (readyToStart && !prevReadyToStart.current && !hasStartedRide.current) {
       hasStartedRide.current = true;
-      console.log('[Lobby] All riders ready, starting ride!');
-      toast.success('All riders ready - starting ride!');
+      console.log('[Lobby] All members ready, starting ride!');
+      toast.success('All members ready - starting ride!');
       const success = startRide(true, convoy.id);
       if (success) {
         navigate('/ride');
@@ -683,7 +683,7 @@ export default function Lobby() {
             <div className="mt-2 animate-fade-in">
               <p className="text-xs text-muted-foreground">
                 {allMembersNavigated 
-                  ? 'All riders ready!'
+                  ? 'All members ready!'
                   : `Waiting (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
                 }
               </p>
@@ -697,7 +697,7 @@ export default function Lobby() {
             <LobbyChat
               convoyId={convoy.id}
               userId={user.id}
-              userName={profile.name || 'Rider'}
+              userName={profile.name || 'Driver'}
               members={convoy.members.map(m => ({ userId: m.userId, accentColor: m.accentColor }))}
             />
           </div>
@@ -707,7 +707,7 @@ export default function Lobby() {
         <div className="landscape:w-52 md:landscape:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0 max-h-[35vh] landscape:max-h-none">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Riders ({convoy.members.length}/{MAX_CONVOY_MEMBERS})
+              Members ({convoy.members.length}/{MAX_CONVOY_MEMBERS})
             </h2>
           </div>
           
@@ -863,7 +863,7 @@ export default function Lobby() {
                 return;
               }
 
-              // Individual start - just this rider
+              // Individual start - just this member
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
               if (success) {
@@ -878,11 +878,11 @@ export default function Lobby() {
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
               if (success) {
-                toast.success('Starting ride for all riders');
+                toast.success('Starting ride for all members');
 
                 const sent = await sendStartRideBroadcast();
                 if (!sent) {
-                  toast.error('Could not signal other riders', { description: 'They can still tap Start Ride.' });
+                  toast.error('Could not signal other members', { description: 'They can still tap Start Ride.' });
                 }
 
                 // Give followers a moment to receive before we leave the lobby
@@ -905,11 +905,11 @@ export default function Lobby() {
 
                 const success = startRide(true, convoy.id);
                 if (success) {
-                  toast.success('Starting ride for all riders');
+                  toast.success('Starting ride for all members');
 
                   const sent = await sendStartRideBroadcast();
                   if (!sent) {
-                    toast.error('Could not signal other riders', { description: 'They can still tap Start Ride.' });
+                    toast.error('Could not signal other members', { description: 'They can still tap Start Ride.' });
                   }
 
                   // Give followers a moment to receive before we leave the lobby
