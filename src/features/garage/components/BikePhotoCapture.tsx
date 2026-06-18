@@ -91,7 +91,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/webp,image/gif"
+        accept="image/png,image/webp"
         className="hidden"
         onChange={handleFile}
       />
