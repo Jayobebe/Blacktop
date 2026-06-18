@@ -2,15 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
+import { useGarage } from '@/features/garage';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Bike as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export default function History() {
   const navigate = useNavigate();
-  const { rides, updateRideName } = useRideHistory();
+  const { rides, updateRideName, updateRideBike } = useRideHistory();
   const { settings } = useSettings();
+  const { bikes } = useGarage();
   const [editingRideId, setEditingRideId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +112,7 @@ export default function History() {
                         </button>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {ride.isConvoyRide ? (
                         <span className="flex items-center gap-1 text-[10px] text-accent bg-accent/10 px-2 py-0.5 rounded-lg font-medium">
                           <Users className="w-2.5 h-2.5" />
@@ -133,6 +136,25 @@ export default function History() {
                       </span>
                       {isLatest && (
                         <span className="text-[10px] text-accent font-semibold">Latest</span>
+                      )}
+                      {bikes.length > 0 && (
+                        <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+                          <Select
+                            value={ride.bikeId ?? 'none'}
+                            onValueChange={(v) => updateRideBike(ride.id, v === 'none' ? null : v)}
+                          >
+                            <SelectTrigger className="h-6 px-2 py-0 text-[10px] rounded-lg bg-secondary/60 border-border/40 gap-1 w-auto min-w-0">
+                              <BikeIcon className="w-2.5 h-2.5 text-muted-foreground" />
+                              <SelectValue placeholder="Bike" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">No bike</SelectItem>
+                              {bikes.map((b) => (
+                                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       )}
                     </div>
                   </div>

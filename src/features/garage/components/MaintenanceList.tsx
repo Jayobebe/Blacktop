@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Bike, DEFAULT_MAINT_TEMPLATES, MaintItem } from '../types';
 import { useGarage } from '../hooks/useGarage';
+import { useSettings } from '@/features/settings';
+import { getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -12,36 +14,51 @@ interface Props {
   odometerKm: number;
 }
 
+const KM_TO_MI = 0.621371;
+const MI_TO_KM = 1.60934;
+
 function statusFor(item: MaintItem, odoKm: number) {
   const dueAt = item.lastServiceKm + item.intervalKm;
-  const dueIn = dueAt - odoKm;
-  const pct = Math.max(0, Math.min(100, ((item.intervalKm - dueIn) / item.intervalKm) * 100));
+  const dueInKm = dueAt - odoKm;
+  const pct = Math.max(0, Math.min(100, ((item.intervalKm - dueInKm) / item.intervalKm) * 100));
   let tone: 'ok' | 'warn' | 'over' = 'ok';
-  if (dueIn <= 0) tone = 'over';
-  else if (dueIn <= 200) tone = 'warn';
-  return { dueIn, dueAt, pct, tone };
+  if (dueInKm <= 0) tone = 'over';
+  else if (dueInKm <= 200) tone = 'warn';
+  return { dueInKm, dueAt, pct, tone };
 }
 
 export function MaintenanceList({ bike, odometerKm }: Props) {
   const { addMaintItem, updateMaintItem, deleteMaintItem } = useGarage();
+  const { settings } = useSettings();
+  const isMiles = settings.distanceUnit === 'miles';
+  const unitLabel = getDistanceLabel(settings.distanceUnit);
+
+  const toDisplay = (km: number) => (isMiles ? km * KM_TO_MI : km);
+  const toKm = (display: number) => (isMiles ? display * MI_TO_KM : display);
+  const fmt = (km: number) => {
+    const v = toDisplay(km);
+    return v < 10 ? v.toFixed(1) : Math.round(v).toString();
+  };
+
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
-  const [interval, setInterval] = useState<number>(5000);
+  // interval stored in the user's display unit while editing
+  const [interval, setInterval] = useState<number>(Math.round(toDisplay(5000)));
 
   const presetClick = (tplName: string, km: number) => {
     setName(tplName);
-    setInterval(km);
+    setInterval(Math.round(toDisplay(km)));
   };
 
   const submit = () => {
     if (!name.trim() || !interval) return;
     addMaintItem(bike.id, {
       name: name.trim(),
-      intervalKm: interval,
-      lastServiceKm: Math.round(odometerKm),
+      intervalKm: toKm(interval),
+      lastServiceKm: odometerKm,
     });
     setName('');
-    setInterval(5000);
+    setInterval(Math.round(toDisplay(5000)));
     setOpen(false);
   };
 
@@ -78,17 +95,17 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                 onChange={(e) => setName(e.target.value)}
               />
               <div>
-                <label className="text-xs text-muted-foreground">Service interval (km)</label>
+                <label className="text-xs text-muted-foreground">Service interval ({unitLabel})</label>
                 <Input
                   type="number"
-                  min={50}
-                  step={50}
+                  min={isMiles ? 30 : 50}
+                  step={isMiles ? 50 : 50}
                   value={interval}
                   onChange={(e) => setInterval(Number(e.target.value))}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Starts counting from your current odometer ({Math.round(odometerKm)} km).
+                Starts counting from your current odometer ({fmt(odometerKm)} {unitLabel}).
               </p>
               <Button onClick={submit} disabled={!name.trim() || !interval} className="w-full">
                 Add item
@@ -106,7 +123,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
       ) : (
         <ul className="space-y-2">
           {bike.maintenance.map((item) => {
-            const { dueIn, pct, tone } = statusFor(item, odometerKm);
+            const { dueInKm, pct, tone } = statusFor(item, odometerKm);
             return (
               <li key={item.id} className="bg-card/60 border border-border/30 rounded-2xl p-3">
                 <div className="flex items-center justify-between gap-2">
@@ -118,8 +135,10 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                       tone === 'warn' && 'text-warning',
                       tone === 'over' && 'text-destructive',
                     )}>
-                      {dueIn > 0 ? `Due in ${Math.round(dueIn)} km` : `Overdue by ${Math.round(-dueIn)} km`}
-                      <span className="text-muted-foreground"> · every {item.intervalKm} km</span>
+                      {dueInKm > 0
+                        ? `Due in ${fmt(dueInKm)} ${unitLabel}`
+                        : `Overdue by ${fmt(-dueInKm)} ${unitLabel}`}
+                      <span className="text-muted-foreground"> · every {fmt(item.intervalKm)} {unitLabel}</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -128,7 +147,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                       variant="ghost"
                       className="h-8 px-2 text-xs gap-1"
                       onClick={() =>
-                        updateMaintItem(bike.id, item.id, { lastServiceKm: Math.round(odometerKm) })
+                        updateMaintItem(bike.id, item.id, { lastServiceKm: odometerKm })
                       }
                     >
                       <Check className="w-3.5 h-3.5" /> Serviced
