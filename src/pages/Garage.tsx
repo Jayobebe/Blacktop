@@ -45,14 +45,12 @@ export default function Garage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState('');
-  const [makeModel, setMakeModel] = useState('');
-  const [odo, setOdo] = useState<number>(0);
   const [photos, setPhotos] = useState<BikePhotos | null>(null);
 
   const stats = useBikeStats(activeBike);
 
   const tip = useMemo(() => {
-    if (!activeBike) return 'Add your first bike, partner.';
+    if (!activeBike) return 'Add your first vehicle, partner.';
     const over = activeBike.maintenance.find(
       (m) => stats.odometerKm >= m.lastServiceKm + m.intervalKm,
     );
@@ -74,8 +72,6 @@ export default function Garage() {
 
   const resetAddForm = () => {
     setName('');
-    setMakeModel('');
-    setOdo(0);
     setPhotos(null);
   };
 
@@ -85,16 +81,15 @@ export default function Garage() {
 
   const completeAdd = (readyPhotos = photos) => {
     if (!name.trim() || !readyPhotos?.hero) {
-      toast.error('Name and photo required');
+      toast.error('Name and image required');
       return;
     }
     addBike({
       name: name.trim(),
-      makeModel: makeModel.trim() || undefined,
       photos: readyPhotos,
-      baseOdometerKm: odo,
+      baseOdometerKm: 0,
     });
-    toast.success('Bike added to the garage');
+    toast.success('Vehicle added to the garage');
     setAddOpen(false);
     resetAddForm();
   };
