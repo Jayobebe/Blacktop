@@ -36,14 +36,14 @@ export function MechaNick({ tip, className }: MechaNickProps) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative h-40 w-28 sm:h-48 sm:w-32 select-none focus:outline-none"
+        className="relative h-[330px] w-24 sm:h-[370px] sm:w-28 select-none focus:outline-none"
         aria-label="Talk to Mecha-Nick"
       >
         <img
           src={nickAsset.url}
           alt="Mecha-Nick the mechanic"
           draggable={false}
-          className="absolute inset-0 h-full w-full object-contain object-bottom animate-nick-bob drop-shadow-[0_8px_12px_rgba(0,0,0,0.55)]"
+          className="absolute inset-0 h-full w-full object-contain object-bottom animate-nick-bob drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)]"
         />
       </button>
     </div>
