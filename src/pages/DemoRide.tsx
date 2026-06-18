@@ -991,9 +991,9 @@ export default function DemoRide() {
                     </div>
                   </div>
                   <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>{fDist(ride.distance)} {dLabel}</span>
+                    <span>{fDist(Number(ride.distance))} {dLabel}</span>
                     <span>{ride.duration}</span>
-                    <span>Max {fSpd(ride.speed)} {sLabel}</span>
+                    <span>Max {fSpd(Number(ride.speed))} {sLabel}</span>
                   </div>
                 </div>
               ))}
