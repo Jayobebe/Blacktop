@@ -45,14 +45,12 @@ export default function Garage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState('');
-  const [makeModel, setMakeModel] = useState('');
-  const [odo, setOdo] = useState<number>(0);
   const [photos, setPhotos] = useState<BikePhotos | null>(null);
 
   const stats = useBikeStats(activeBike);
 
   const tip = useMemo(() => {
-    if (!activeBike) return 'Add your first bike, partner.';
+    if (!activeBike) return 'Add your first vehicle, partner.';
     const over = activeBike.maintenance.find(
       (m) => stats.odometerKm >= m.lastServiceKm + m.intervalKm,
     );
@@ -74,8 +72,6 @@ export default function Garage() {
 
   const resetAddForm = () => {
     setName('');
-    setMakeModel('');
-    setOdo(0);
     setPhotos(null);
   };
 
@@ -85,16 +81,15 @@ export default function Garage() {
 
   const completeAdd = (readyPhotos = photos) => {
     if (!name.trim() || !readyPhotos?.hero) {
-      toast.error('Name and photo required');
+      toast.error('Name and image required');
       return;
     }
     addBike({
       name: name.trim(),
-      makeModel: makeModel.trim() || undefined,
       photos: readyPhotos,
-      baseOdometerKm: odo,
+      baseOdometerKm: 0,
     });
-    toast.success('Bike added to the garage');
+    toast.success('Vehicle added to the garage');
     setAddOpen(false);
     resetAddForm();
   };
@@ -117,44 +112,27 @@ export default function Garage() {
           <DialogTrigger asChild>
             <button
               className="h-10 w-10 rounded-xl flex items-center justify-center bg-accent/10 text-accent hover:bg-accent/20 touch-target"
-              aria-label="Add bike"
+              aria-label="Add vehicle"
             >
               <Plus className="w-5 h-5" />
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add a bike</DialogTitle>
+              <DialogTitle>Add a vehicle</DialogTitle>
             </DialogHeader>
             {!photos ? (
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-muted-foreground">Name *</label>
+                  <label className="text-xs text-muted-foreground">Vehicle name *</label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My ride" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Make / Model</label>
-                  <Input
-                    value={makeModel}
-                    onChange={(e) => setMakeModel(e.target.value)}
-                    placeholder="Yamaha MT-07"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Odometer (km)</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={odo}
-                    onChange={(e) => setOdo(Number(e.target.value))}
-                  />
                 </div>
                 <Button
                   onClick={() => name.trim() && setPhotos({} as BikePhotos)}
                   disabled={!name.trim()}
                   className="w-full"
                 >
-                  Continue to photos
+                  Continue to image
                 </Button>
               </div>
             ) : (
@@ -171,21 +149,19 @@ export default function Garage() {
         </Dialog>
       </header>
 
+
       {bikes.length > 0 && activeBike && (
         <div className="flex items-center justify-between mb-3 px-1">
           <button
             onClick={() => cycle(-1)}
             disabled={bikes.length < 2}
             className="h-8 w-8 rounded-lg flex items-center justify-center disabled:opacity-30 hover:bg-secondary"
-            aria-label="Previous bike"
+            aria-label="Previous vehicle"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="text-center min-w-0">
             <p className="font-semibold tracking-tight truncate">{activeBike.name}</p>
-            {activeBike.makeModel && (
-              <p className="text-xs text-muted-foreground truncate">{activeBike.makeModel}</p>
-            )}
             {bikes.length > 1 && (
               <p className="text-[10px] text-muted-foreground/60 mt-0.5">
                 {idx + 1} / {bikes.length}
@@ -196,7 +172,7 @@ export default function Garage() {
             onClick={() => cycle(1)}
             disabled={bikes.length < 2}
             className="h-8 w-8 rounded-lg flex items-center justify-center disabled:opacity-30 hover:bg-secondary"
-            aria-label="Next bike"
+            aria-label="Next vehicle"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -210,7 +186,7 @@ export default function Garage() {
           <div>
             <p className="text-muted-foreground mb-4">Your garage is empty.</p>
             <Button onClick={() => setAddOpen(true)} className="gap-1">
-              <Plus className="w-4 h-4" /> Add a bike
+              <Plus className="w-4 h-4" /> Add a vehicle
             </Button>
           </div>
         </div>
@@ -233,33 +209,26 @@ export default function Garage() {
             <Dialog open={editOpen} onOpenChange={setEditOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-xs">
-                  Rename / re-shoot
+                  Rename / replace image
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Edit bike</DialogTitle>
+                  <DialogTitle>Edit vehicle</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-muted-foreground">Name</label>
+                    <label className="text-xs text-muted-foreground">Vehicle name</label>
                     <Input
                       defaultValue={activeBike.name}
                       onBlur={(e) => updateBike(activeBike.id, { name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Make / Model</label>
-                    <Input
-                      defaultValue={activeBike.makeModel || ''}
-                      onBlur={(e) => updateBike(activeBike.id, { makeModel: e.target.value })}
                     />
                   </div>
                   <BikePhotoCapture
                     initial={activeBike.photos}
                     onComplete={(p) => {
                       updateBike(activeBike.id, { photos: p });
-                      toast.success('Photos updated');
+                      toast.success('Image updated');
                       setEditOpen(false);
                     }}
                   />
@@ -270,7 +239,7 @@ export default function Garage() {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-xs text-destructive gap-1">
-                  <Trash2 className="w-3.5 h-3.5" /> Remove bike
+                  <Trash2 className="w-3.5 h-3.5" /> Remove vehicle
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
