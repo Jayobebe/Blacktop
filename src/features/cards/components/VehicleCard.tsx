@@ -91,15 +91,30 @@ export function VehicleCard({ card }: Props) {
               </p>
             )}
           </div>
-          <span
-            className={cn(
-              'shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider',
-              style.chip,
+          <div className="flex items-center gap-1.5 shrink-0">
+            {!isExporting && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                aria-label="Download card as image"
+                className={cn(
+                  'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
+                  style.chip,
+                )}
+              >
+                <Download className="w-3 h-3" />
+              </button>
             )}
-          >
-            {locked ? <Lock className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
-            {card.tierLabel}
-          </span>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider',
+                style.chip,
+              )}
+            >
+              {locked ? <Lock className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
+              {card.tierLabel}
+            </span>
+          </div>
         </div>
 
         {/* Hero photo */}
