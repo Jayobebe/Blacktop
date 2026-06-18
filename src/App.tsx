@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { OrientationProvider } from "@/hooks/useOrientationLock";
@@ -29,6 +29,7 @@ const queryClient = new QueryClient();
 function AppRoutes() {
   const { hasProfile, isLoading } = useProfile();
   useSettings(); // Initialize accent color on app load
+  const location = useLocation();
 
   // Show nothing while checking auth/profile status
   if (isLoading) {
@@ -42,6 +43,7 @@ function AppRoutes() {
   if (!hasProfile) {
     return (
       <Routes>
+        <Route path="/demo" element={<DemoShowcase />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
     );
