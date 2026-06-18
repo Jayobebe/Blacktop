@@ -542,6 +542,35 @@ export default function Settings() {
           </p>
         </section>
 
+        {/* App Updates Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
+          <div className="flex items-center gap-2 mb-3">
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">App Updates</p>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Pull the latest version without reinstalling. Your rides, garage and settings stay safe — only the app shell is refreshed.
+          </p>
+          <Button
+            onClick={handleCheckUpdate}
+            disabled={updateState === 'checking' || updateState === 'applying'}
+            variant={updateState === 'available' ? 'default' : 'outline'}
+            className={cn(
+              "w-full h-11 font-semibold touch-target rounded-xl",
+              updateState === 'available' && "bg-accent hover:bg-accent/90 text-accent-foreground"
+            )}
+          >
+            {updateState === 'checking' && (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Checking…</>)}
+            {updateState === 'applying' && (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Updating…</>)}
+            {updateState === 'available' && (<><RefreshCw className="w-4 h-4 mr-2" />Update available — tap to install</>)}
+            {updateState === 'up-to-date' && (<><CheckCircle2 className="w-4 h-4 mr-2" />You're up to date</>)}
+            {updateState === 'idle' && (<><RefreshCw className="w-4 h-4 mr-2" />Check for updates</>)}
+          </Button>
+          <p className="text-[10px] text-muted-foreground text-center mt-2">
+            Tip: keep the installed app — your stats live on your device.
+          </p>
+        </section>
+
         {/* Tip Jar Section */}
         <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
           <div className="flex items-center gap-2 mb-3">
