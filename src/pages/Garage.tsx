@@ -83,15 +83,15 @@ export default function Garage() {
     setPhotos(p);
   };
 
-  const completeAdd = () => {
-    if (!name.trim() || !photos) {
-      toast.error('Name and 4 photos required');
+  const completeAdd = (readyPhotos = photos) => {
+    if (!name.trim() || !readyPhotos?.hero) {
+      toast.error('Name and photo required');
       return;
     }
     addBike({
       name: name.trim(),
       makeModel: makeModel.trim() || undefined,
-      photos,
+      photos: readyPhotos,
       baseOdometerKm: odo,
     });
     toast.success('Bike added to the garage');
@@ -162,7 +162,7 @@ export default function Garage() {
                 initial={photos as Partial<BikePhotos>}
                 onComplete={(p) => {
                   handleAddSavePhotos(p);
-                  setTimeout(completeAdd, 0);
+                  completeAdd(p);
                 }}
                 onCancel={() => setPhotos(null)}
               />
