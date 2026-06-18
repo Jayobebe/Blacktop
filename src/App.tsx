@@ -42,6 +42,7 @@ function AppRoutes() {
   if (!hasProfile) {
     return (
       <Routes>
+        <Route path="/demo" element={<DemoShowcase />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
     );

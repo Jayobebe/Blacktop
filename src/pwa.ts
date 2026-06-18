@@ -1,10 +1,8 @@
-// Guarded PWA service worker registration.
-// Skips Lovable preview/dev so the editor never caches stale builds.
-import { registerSW } from "virtual:pwa-register";
+// One-release cleanup for the old app-shell service worker.
+// Keeps install metadata, but prevents stale published builds from being served.
 
 const SW_URL = "/sw.js";
 
-let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
 let hasUpdate = false;
 const updateListeners = new Set<(available: boolean) => void>();
 
@@ -45,27 +43,12 @@ async function unregisterMatching() {
 }
 
 export function setupPWA() {
-  if (shouldSkip()) {
-    void unregisterMatching();
-    return;
-  }
-  updateSW = registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      setHasUpdate(true);
-    },
-    onRegisteredSW(_swUrl, registration) {
-      if (!registration) return;
-      // Poll every 30 min in case the user keeps the app open
-      setInterval(() => {
-        registration.update().catch(() => {});
-      }, 30 * 60 * 1000);
-    },
-  });
+  void unregisterMatching();
 }
 
 /** Returns true if a new version is now waiting to install. */
 export async function checkForAppUpdate(): Promise<boolean> {
+  if (shouldSkip()) return false;
   if (!("serviceWorker" in navigator)) return false;
   try {
     const regs = await navigator.serviceWorker.getRegistrations();
@@ -77,10 +60,8 @@ export async function checkForAppUpdate(): Promise<boolean> {
     );
     if (!target) return hasUpdate;
     await target.update();
-    // Give the browser a moment to detect a waiting worker
-    await new Promise((r) => setTimeout(r, 800));
-    if (target.waiting) setHasUpdate(true);
-    return hasUpdate;
+    setHasUpdate(true);
+    return true;
   } catch {
     return hasUpdate;
   }
@@ -88,10 +69,7 @@ export async function checkForAppUpdate(): Promise<boolean> {
 
 /** Activates the waiting SW and reloads. Local data (rides, garage, settings) is preserved. */
 export async function applyAppUpdate(): Promise<void> {
-  if (updateSW) {
-    await updateSW(true);
-    return;
-  }
+  await unregisterMatching();
   window.location.reload();
 }
 
