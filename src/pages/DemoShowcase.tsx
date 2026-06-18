@@ -153,6 +153,33 @@ export default function DemoShowcase() {
       mockup: <StatsMockup />
     },
     {
+      id: 'garage',
+      title: "Mecha-Nick's Garage",
+      subtitle: 'Your Bikes, Your Stats',
+      description: 'Add every bike in your stable. Snap a photo, set the odometer, and Mecha-Nick keeps lifetime stats and maintenance per bike — not just one big pile.',
+      icon: Bike,
+      color: 'accent',
+      mockup: <GarageMockup />
+    },
+    {
+      id: 'maintenance',
+      title: 'Maintenance Tracker',
+      subtitle: 'Never Miss a Service',
+      description: 'Set service intervals for chain, oil, brakes, tyres and more. Progress bars fill as you rack up miles. Tap Serviced and the bar resets to zero.',
+      icon: Wrench,
+      color: 'accent',
+      mockup: <MaintenanceMockup />
+    },
+    {
+      id: 'bike-assignment',
+      title: 'Assign Rides to Bikes',
+      subtitle: 'History Knows Which Bike',
+      description: 'Pick the bike used for any ride straight from History. Distance, top speed and ride time roll up into that bike\'s garage stats automatically.',
+      icon: History,
+      color: 'accent',
+      mockup: <BikeAssignmentMockup />
+    },
+    {
       id: 'privacy',
       title: 'Burn Button',
       subtitle: 'Your Data, Your Control',
