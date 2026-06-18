@@ -23,6 +23,7 @@ interface RideSummaryProps {
   members: ConvoyMemberInfo[];
   currentUserId?: string;
   rideStats?: RideStats;
+  bikeName?: string | null;
   onBadgesEarned?: (badges: BadgeType[]) => void;
   onClose: () => void;
 }
@@ -37,7 +38,7 @@ function ReceiptRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned, onClose }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, onBadgesEarned, onClose }: RideSummaryProps) {
   const { settings } = useSettings();
 
   const shouldCalculateBadges = members.length >= 2;
@@ -145,9 +146,9 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
             <div className="text-sm tracking-[0.3em] opacity-70 mt-1">— RIDE RECEIPT —</div>
           </div>
 
-          {/* Bike line (placeholder for future garage feature) */}
+          {/* Bike line (from garage) */}
           <div className="mt-4" data-bike-slot>
-            <ReceiptRow label="Bike" value="—" />
+            <ReceiptRow label="Bike" value={bikeName || '—'} />
           </div>
 
           {/* Divider */}
@@ -183,13 +184,15 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
           {/* Divider */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
-          {/* Bike model block (placeholder) */}
-          <div className="receipt-bracket text-center" data-bike-slot>
-            <span className="receipt-bracket-tr" />
-            <span className="receipt-bracket-bl" />
-            <div className="text-xl tracking-[0.2em]">BIKE MODEL</div>
-            <div className="text-sm opacity-60 mt-1">add in garage</div>
-          </div>
+          {/* Bike model block — only show placeholder if no bike */}
+          {!bikeName && (
+            <div className="receipt-bracket text-center" data-bike-slot>
+              <span className="receipt-bracket-tr" />
+              <span className="receipt-bracket-bl" />
+              <div className="text-xl tracking-[0.2em]">BIKE MODEL</div>
+              <div className="text-sm opacity-60 mt-1">add in garage</div>
+            </div>
+          )}
 
           {/* Badges */}
           {badgeAwards.length > 0 && (
