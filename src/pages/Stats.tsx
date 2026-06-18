@@ -178,12 +178,12 @@ export default function Stats() {
           <p className="text-[10px] text-muted-foreground text-center mt-4 px-4 landscape:mt-3">
             All statistics stored locally on your device
           </p>
-        </div>
-      </div>
 
-      {/* Vehicle trading cards */}
-      <div className="mt-6 pb-2 animate-fade-in">
-        <VehicleCardCarousel />
+          {/* Vehicle trading cards */}
+          <div className="mt-6 pb-2 animate-fade-in">
+            <VehicleCardCarousel />
+          </div>
+        </div>
       </div>
     </div>
   );
