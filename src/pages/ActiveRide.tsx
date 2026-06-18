@@ -296,6 +296,7 @@ export default function ActiveRide() {
         distance: currentRideState.distance,
         maxSpeed: currentRideState.maxSpeed,
         averageSpeed: avgSpeed,
+        maxLean: Math.max(currentRideState.maxLeanLeft || 0, currentRideState.maxLeanRight || 0),
       });
       
       // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
