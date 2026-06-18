@@ -65,21 +65,68 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
     }
   }, [currentUserId, onBadgesEarned, badgesMap, shouldCalculateBadges]);
 
-  const now = new Date();
-  const dateStr = now
-    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    .toUpperCase();
-  const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  const orderId = `#${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  // Pin timestamp + order id so they don't reshuffle on re-render or saved image
+  const { dateStr, timeStr, orderId } = useMemo(() => {
+    const now = new Date();
+    return {
+      dateStr: now
+        .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        .toUpperCase(),
+      timeStr: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+      orderId: `#${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+    };
+  }, []);
 
   const speedUnit = getSpeedLabel(settings.speedUnit).toUpperCase();
   const distUnit = getDistanceLabel(settings.distanceUnit).toUpperCase();
+
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    if (!receiptRef.current || saving) return;
+    setSaving(true);
+    try {
+      const dataUrl = await toPng(receiptRef.current, {
+        pixelRatio: 3,
+        cacheBust: true,
+        backgroundColor: '#f4f1e8',
+      });
+      const filename = `blacktop-receipt-${Date.now()}.png`;
+
+      if (Capacitor.isNativePlatform()) {
+        const base64 = dataUrl.split(',')[1];
+        await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Documents,
+        });
+        toast.success('Receipt saved to Documents');
+      } else {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        toast.success('Receipt downloaded');
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error('[RideSummary] save failed', err);
+      toast.error('Could not save receipt');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in">
       <div className="w-full max-w-[360px] animate-receipt-print">
         <div className="receipt-edge-top" />
-        <div className="receipt relative px-6 py-5 font-receipt text-[--ink]">
+        <div ref={receiptRef} className="receipt relative px-6 py-5 font-receipt text-[--ink]">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
