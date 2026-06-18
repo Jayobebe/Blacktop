@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DiscordSettingsCard } from '@/features/integrations/discord';
+import { useGarage } from '@/features/garage';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
+  const { burnGarage } = useGarage();
   const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, toggleStatsOverlay, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [resetStep, setResetStep] = useState(0);
