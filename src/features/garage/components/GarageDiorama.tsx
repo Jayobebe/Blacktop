@@ -148,10 +148,6 @@ export function GarageDiorama({ bike, tip }: Props) {
         <div className="absolute top-12 left-3 px-2 py-0.5 rounded-md border border-accent/70 text-[9px] uppercase tracking-[0.3em] text-accent shadow-[0_0_18px_hsl(var(--accent)/0.5)] bg-accent/5">
           Open
         </div>
-        {/* Blacktop Dispatch sign */}
-        <div className="absolute top-[22%] left-3 px-1.5 py-0.5 rounded-sm bg-foreground/10 border border-foreground/20 text-[7px] uppercase tracking-[0.2em] text-foreground/60">
-          Dispatch
-        </div>
       </div>
 
       {/* ============ SHOP FLOOR ============ */}
