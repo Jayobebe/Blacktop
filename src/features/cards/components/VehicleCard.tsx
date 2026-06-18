@@ -1,4 +1,7 @@
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download } from 'lucide-react';
+import { toPng } from 'html-to-image';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import {
@@ -9,20 +12,52 @@ import {
   getSpeedLabel,
 } from '@/lib/format';
 import { TIER_STYLES } from '../types';
-import { ridesToNext } from '../lib/tier';
 import { VehicleCardData } from '../hooks/useVehicleCards';
 
 interface Props {
   card: VehicleCardData;
 }
 
+function slugify(s: string): string {
+  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'vehicle';
+}
+
 export function VehicleCard({ card }: Props) {
   const { settings } = useSettings();
   const style = TIER_STYLES[card.tier];
   const locked = card.tier === 'locked';
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownload = async () => {
+    if (!cardRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      // Wait a frame so the button hides before capture.
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,
+        backgroundColor: 'transparent',
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `${slugify(card.bike.name)}-${card.tier}-card.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success('Card downloaded');
+    } catch (err) {
+      console.error('Card export failed', err);
+      toast.error('Could not save card');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div
+      ref={cardRef}
       className={cn(
         'relative w-full max-w-[280px] mx-auto aspect-[5/7] rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col',
         style.bg,
@@ -56,15 +91,30 @@ export function VehicleCard({ card }: Props) {
               </p>
             )}
           </div>
-          <span
-            className={cn(
-              'shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider',
-              style.chip,
+          <div className="flex items-center gap-1.5 shrink-0">
+            {!isExporting && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                aria-label="Download card as image"
+                className={cn(
+                  'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
+                  style.chip,
+                )}
+              >
+                <Download className="w-3 h-3" />
+              </button>
             )}
-          >
-            {locked ? <Lock className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
-            {card.tierLabel}
-          </span>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider',
+                style.chip,
+              )}
+            >
+              {locked ? <Lock className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
+              {card.tierLabel}
+            </span>
+          </div>
         </div>
 
         {/* Hero photo */}
