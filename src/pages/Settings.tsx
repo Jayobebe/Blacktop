@@ -142,14 +142,18 @@ export default function Settings() {
     }
   };
 
-  const handleBurnComplete = async () => {
+  const handleBurnPeak = async () => {
+    // Screen is fully covered by flame/smoke — safe to swap routes underneath.
     try {
       await resetIdentity();
     } catch (e) {
       console.error('Identity reset failed:', e);
     }
-    // Profile cleared -> AppRoutes renders Onboarding (permissions screen)
     navigate('/', { replace: true });
+  };
+
+  const handleBurnComplete = () => {
+    setBurning(false);
   };
 
   const handleOpenNavApp = (appId: NavigationApp) => {
@@ -614,7 +618,12 @@ export default function Settings() {
         </p>
       </div>
 
-      <BurnFlameOverlay active={burning} origin={burnOrigin} onComplete={handleBurnComplete} />
+      <BurnFlameOverlay
+        active={burning}
+        origin={burnOrigin}
+        onPeak={handleBurnPeak}
+        onComplete={handleBurnComplete}
+      />
     </div>
   );
 }
