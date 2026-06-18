@@ -24,6 +24,7 @@ interface RideSummaryProps {
   currentUserId?: string;
   rideStats?: RideStats;
   bikeName?: string | null;
+  bikePhoto?: string | null;
   onBadgesEarned?: (badges: BadgeType[]) => void;
   onClose: () => void;
 }
@@ -38,7 +39,7 @@ function ReceiptRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, onBadgesEarned, onClose }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, onBadgesEarned, onClose }: RideSummaryProps) {
   const { settings } = useSettings();
 
   const shouldCalculateBadges = members.length >= 2;
@@ -149,6 +150,17 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, onBad
           {/* Bike line (from garage) */}
           <div className="mt-4" data-bike-slot>
             <ReceiptRow label="Bike" value={bikeName || '—'} />
+            {bikePhoto && (
+              <div className="mt-3 flex items-center justify-center">
+                <img
+                  src={bikePhoto}
+                  alt={bikeName || 'Bike'}
+                  crossOrigin="anonymous"
+                  className="max-h-32 w-auto object-contain"
+                  style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Divider */}
