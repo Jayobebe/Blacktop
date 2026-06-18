@@ -30,11 +30,11 @@ export function GarageDiorama({ bike, tip }: Props) {
           <div key={left} className="absolute top-3" style={{ left: `${left}%` }}>
             {/* fixture */}
             <div className="w-2 h-2 -ml-1 rounded-sm bg-foreground/50" />
-            {/* bulb */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_hsl(var(--accent)/0.95)]" />
+            {/* bulb — tucked just under the fixture, nudged slightly left */}
+            <div className="absolute top-1 -left-0.5 w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_2px_hsl(var(--accent)/0.95)]" />
             {/* light cone */}
             <div
-              className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-40 opacity-25"
+              className="absolute top-2 -left-[2.25rem] w-20 h-40 opacity-25"
               style={{
                 background:
                   'radial-gradient(ellipse at top, hsl(var(--accent)/0.6) 0%, hsl(var(--accent)/0.18) 35%, transparent 70%)',
