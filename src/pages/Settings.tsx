@@ -569,27 +569,22 @@ export default function Settings() {
           </div>
           
           <p className="text-xs text-muted-foreground mb-3">
-            Permanently delete all ride data ({stats.totalRides} rides, {stats.totalDistance.toFixed(1)} mi).
+            Permanently delete your name and all ride data ({stats.totalRides} rides, {stats.totalDistance.toFixed(1)} mi). Returns you to the welcome screen.
           </p>
 
-          {burnStep === 2 ? (
-            <div className="text-center py-3">
-              <p className="text-accent font-semibold">All data burned</p>
-            </div>
-          ) : (
-            <Button
-              onClick={handleBurn}
-              variant={burnStep === 1 ? "destructive" : "outline"}
-              className={cn(
-                "w-full h-11 font-semibold touch-target rounded-xl transition-all",
-                burnStep === 0 && "border-[hsl(var(--burn))] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background",
-                burnStep === 1 && "animate-burn-pulse"
-              )}
-            >
-              <Flame className="w-4 h-4 mr-2" />
-              {burnStep === 0 ? "BURN ALL DATA" : "CONFIRM BURN"}
-            </Button>
-          )}
+          <Button
+            onClick={handleBurn}
+            disabled={burning}
+            variant={burnStep === 1 ? "destructive" : "outline"}
+            className={cn(
+              "w-full h-11 font-semibold touch-target rounded-xl transition-all",
+              burnStep === 0 && "border-[hsl(var(--burn))] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background",
+              burnStep === 1 && "animate-burn-pulse"
+            )}
+          >
+            <Flame className="w-4 h-4 mr-2" />
+            {burnStep === 0 ? "BURN ALL DATA" : "CONFIRM BURN"}
+          </Button>
 
           {burnStep === 1 && (
             <Button
