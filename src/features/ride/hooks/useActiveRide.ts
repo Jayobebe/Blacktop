@@ -2,6 +2,7 @@ import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
+import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { useRideHistory } from './useRideHistory';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -508,6 +509,7 @@ export function useActiveRide(convoyId?: string | null) {
 
     if (currentState.startedAt && finalDuration > 0) {
       const rideId = crypto.randomUUID();
+      const bikeId = getActiveBikeIdSnapshot() ?? undefined;
       const ride: RideSession = {
         id: rideId,
         startedAt: currentState.startedAt,
@@ -521,6 +523,7 @@ export function useActiveRide(convoyId?: string | null) {
         maxLeanRight: currentState.maxLeanRight,
         gpsPoints: currentState.gpsPoints,
         leanSamples: currentState.leanSamples,
+        bikeId,
       };
       addRideRef.current(ride);
       savedRideId = rideId;
