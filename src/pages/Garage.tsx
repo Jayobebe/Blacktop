@@ -239,7 +239,7 @@ export default function Garage() {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-xs text-destructive gap-1">
-                  <Trash2 className="w-3.5 h-3.5" /> Remove bike
+                  <Trash2 className="w-3.5 h-3.5" /> Remove vehicle
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
