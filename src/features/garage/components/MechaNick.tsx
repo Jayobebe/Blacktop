@@ -36,7 +36,7 @@ export function MechaNick({ tip, className }: MechaNickProps) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative h-[330px] w-24 sm:h-[370px] sm:w-28 select-none focus:outline-none"
+        className="relative h-[260px] w-32 sm:h-[300px] sm:w-36 select-none focus:outline-none"
         aria-label="Talk to Mecha-Nick"
       >
         <img
