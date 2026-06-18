@@ -43,7 +43,7 @@ export function MechaNick({ tip, className }: MechaNickProps) {
           src={nickAsset.url}
           alt="Mecha-Nick the mechanic"
           draggable={false}
-          className="absolute inset-0 h-full w-full object-contain object-bottom animate-nick-bob drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)]"
+          className={`absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)] ${open ? 'animate-nick-bob' : ''}`}
         />
       </button>
     </div>
