@@ -88,6 +88,7 @@ export default function ActiveRide() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
   const { openNavigation } = useNavigation();
   const { settings } = useSettings();
+  const { activeBike } = useGarage();
   const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
   const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
