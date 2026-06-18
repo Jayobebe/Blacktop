@@ -87,6 +87,47 @@ export async function pixelateImageFile(
   return dataUrl;
 }
 
+/**
+ * Mobile-safe upload cleanup for already-pixelated vehicle art:
+ * decode small → remove flat corner-colour background → crop transparent bounds → PNG.
+ */
+export async function removeImageBackgroundFile(
+  file: File,
+  opts: { workWidth?: number; bgTolerance?: number; outputWidth?: number } = {},
+): Promise<string> {
+  const { workWidth = 520, bgTolerance = 58, outputWidth = 420 } = opts;
+  const img = await loadBitmap(file, workWidth);
+  const { w, h } = fitWithin(img.width, img.height, workWidth);
+  const work = document.createElement('canvas');
+  work.width = w;
+  work.height = h;
+  const ctx = work.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('canvas');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, w, h);
+  img.close?.();
+  await tick();
+
+  removeBackgroundByCorners(ctx, w, h, bgTolerance);
+  await tick();
+
+  const cropped = cropTransparentBounds(work, 4);
+  if (cropped !== work) releaseCanvas(work);
+  const { w: ow, h: oh } = fitWithin(cropped.width, cropped.height, outputWidth);
+  const out = document.createElement('canvas');
+  out.width = ow;
+  out.height = oh;
+  const outCtx = out.getContext('2d');
+  if (!outCtx) throw new Error('canvas');
+  outCtx.imageSmoothingEnabled = false;
+  outCtx.drawImage(cropped, 0, 0, ow, oh);
+
+  const dataUrl = await canvasToPngDataUrl(out);
+  releaseCanvas(cropped);
+  releaseCanvas(out);
+  return dataUrl;
+}
+
 function fitWithin(width: number, height: number, maxDim: number) {
   const scale = Math.min(1, maxDim / Math.max(1, width, height));
   return {
@@ -114,7 +155,10 @@ function removeBackgroundByCorners(
     (w - 1) * 4,
     (h - 1) * w * 4,
     ((h - 1) * w + (w - 1)) * 4,
-  ];
+  ].filter((c) => data[c + 3] > 32);
+
+  if (corners.length === 0) return;
+
   const cr = corners.map((c) => data[c]);
   const cg = corners.map((c) => data[c + 1]);
   const cb = corners.map((c) => data[c + 2]);

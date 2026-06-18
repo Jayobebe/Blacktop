@@ -3,6 +3,7 @@ import { ImagePlus, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BikePhotos } from '../types';
 import { toast } from 'sonner';
+import { removeImageBackgroundFile } from '../lib/compressImage';
 
 interface Props {
   initial?: Partial<BikePhotos>;
@@ -11,15 +12,6 @@ interface Props {
 }
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB cap
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error || new Error('read failed'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
   const [hero, setHero] = useState<string | undefined>(initial?.hero);
@@ -32,8 +24,8 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!/png|webp|gif/i.test(file.type)) {
-      toast.error('Please use a transparent PNG of your vehicle');
+    if (!/png|webp/i.test(file.type)) {
+      toast.error('Please use a PNG or WebP vehicle image');
       return;
     }
     if (file.size > MAX_BYTES) {
@@ -42,7 +34,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
     }
     setBusy(true);
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await removeImageBackgroundFile(file);
       setHero(dataUrl);
     } catch (err) {
       console.error('[BikePhotoCapture]', err);
@@ -55,8 +47,8 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Upload a <span className="text-foreground">transparent PNG</span> of your vehicle —
-        already background-removed and pixelated. It'll drop straight onto the shop floor.
+        Upload a <span className="text-foreground">pixelated PNG</span> of your vehicle —
+        the app will clear the flat background and drop it onto the shop floor.
       </p>
 
       <button
@@ -85,7 +77,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
           <>
             <ImagePlus className="w-7 h-7 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tap to upload PNG
+              Tap to upload image
             </span>
           </>
         )}
@@ -99,7 +91,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/webp,image/gif"
+        accept="image/png,image/webp"
         className="hidden"
         onChange={handleFile}
       />
