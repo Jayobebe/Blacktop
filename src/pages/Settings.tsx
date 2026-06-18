@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
 import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity } from 'lucide-react';
+import { formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -298,25 +299,25 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Speed</p>
-                <p className="text-[10px] text-muted-foreground">MPH or KPH</p>
+                <p className="text-[10px] text-muted-foreground">Currently {getSpeedLabel(settings.speedUnit)}</p>
               </div>
               <button
                 onClick={toggleSpeedUnit}
                 className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted transition-colors font-mono font-semibold text-sm"
               >
-                {settings.speedUnit.toUpperCase()}
+                {getSpeedLabel(settings.speedUnit)}
               </button>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Distance</p>
-                <p className="text-[10px] text-muted-foreground">Miles or kilometers</p>
+                <p className="text-[10px] text-muted-foreground">Currently {getDistanceLabel(settings.distanceUnit)}</p>
               </div>
               <button
                 onClick={toggleDistanceUnit}
                 className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted transition-colors font-mono font-semibold text-sm"
               >
-                {settings.distanceUnit === 'miles' ? 'MILES' : 'KM'}
+                {getDistanceLabel(settings.distanceUnit).toUpperCase()}
               </button>
             </div>
           </div>

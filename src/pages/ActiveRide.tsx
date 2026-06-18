@@ -619,9 +619,9 @@ export default function ActiveRide() {
             <div className={cn(
               "font-mono font-black transition-all leading-none",
               "text-[7rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem]",
-              formatSpeed(rideState.currentSpeed, settings.speedUnit) >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
-              formatSpeed(rideState.currentSpeed, settings.speedUnit) >= settings.amberSpeedThreshold && 
-              formatSpeed(rideState.currentSpeed, settings.speedUnit) < settings.redSpeedThreshold && "text-warning animate-speed-glow"
+              rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
+              rideState.currentSpeed >= settings.amberSpeedThreshold &&
+              rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
             )}>
               {formatSpeed(rideState.currentSpeed, settings.speedUnit)}
             </div>
@@ -854,7 +854,7 @@ export default function ActiveRide() {
                         </p>
                         {settings.showSpeedRankings && (
                           <p className="text-[10px] text-muted-foreground">
-                            {formatSpeed(member.currentSpeed || 0, settings.speedUnit)} {settings.speedUnit}
+                            {formatSpeed(member.currentSpeed || 0, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}
                           </p>
                         )}
                       </div>

@@ -713,13 +713,13 @@ export function DestinationSearch({
                 {result.distance !== undefined && (
                   <div className="flex-shrink-0 text-right">
                     <span className="text-sm font-medium text-accent">
-                      {distanceUnit === 'miles' 
+                      {distanceUnit === 'miles'
                         ? result.distance < 1.6
-                          ? `${Math.round(result.distance * 1000 * 3.281)}ft`
-                          : `${(result.distance * 0.621371).toFixed(1)}mi`
+                          ? `${Math.round(result.distance * 1000 * 3.281)} ft`
+                          : `${(result.distance * 0.621371).toFixed(1)} mi`
                         : result.distance < 1
-                          ? `${Math.round(result.distance * 1000)}m`
-                          : `${result.distance.toFixed(1)}km`
+                          ? `${Math.round(result.distance * 1000)} m`
+                          : `${result.distance.toFixed(1)} km`
                       }
                     </span>
                   </div>

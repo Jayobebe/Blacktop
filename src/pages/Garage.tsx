@@ -29,7 +29,7 @@ import {
 import { BikePhotos } from '@/features/garage';
 import { toast } from 'sonner';
 
-const KM_TO_MI = 1 / 1.60934;
+
 
 export default function Garage() {
   const navigate = useNavigate();

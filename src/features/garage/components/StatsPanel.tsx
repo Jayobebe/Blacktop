@@ -7,11 +7,8 @@ interface Props {
   baseOdometerKm: number;
 }
 
-const KM_TO_MI = 1 / 1.60934;
-
 export function StatsPanel({ stats, baseOdometerKm }: Props) {
   const { settings } = useSettings();
-  const odoMi = stats.odometerKm * KM_TO_MI;
 
   const items = [
     {
