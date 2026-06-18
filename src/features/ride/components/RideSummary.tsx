@@ -46,9 +46,12 @@ export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned,
     [members, shouldCalculateBadges]
   );
 
+  // Show only the current user's badges on their personal receipt.
+  // Fallback: if no currentUserId, show all (e.g. shared/demo view).
   const badgeAwards: { member: ConvoyMemberInfo; badge: MemberBadge }[] = [];
   if (shouldCalculateBadges) {
     members.forEach((member) => {
+      if (currentUserId && member.userId !== currentUserId) return;
       const memberBadges = badgesMap.get(member.userId) || [];
       memberBadges.forEach((badge) => badgeAwards.push({ member, badge }));
     });
