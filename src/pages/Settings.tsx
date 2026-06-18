@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DiscordSettingsCard } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
+import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -27,7 +28,7 @@ export default function Settings() {
   const { burnGarage } = useGarage();
   const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLiveStreaming, generateStreamKey, toggleStatsOverlay, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
-  const [resetStep, setResetStep] = useState(0);
+  const [burning, setBurning] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
   const [isTipping, setIsTipping] = useState(false);
@@ -119,29 +120,29 @@ export default function Settings() {
     }
   };
 
-  const handleResetIdentity = async () => {
-    if (resetStep === 0) {
-      setResetStep(1);
-      return;
-    }
-
-    if (resetStep === 1) {
-      await resetIdentity();
-      toast.success('Identity reset — welcome back.');
-      setResetStep(2);
-      setTimeout(() => setResetStep(0), 2500);
-    }
-  };
-
   const handleBurn = () => {
     if (burnStep === 0) {
       setBurnStep(1);
     } else if (burnStep === 1) {
-      burnAllData();
-      burnGarage();
-      setBurnStep(2);
-      setTimeout(() => setBurnStep(0), 3000);
+      // Trigger the flame-up sequence; data + identity are wiped during it.
+      setBurning(true);
+      try {
+        burnAllData();
+        burnGarage();
+      } catch (e) {
+        console.error('Burn failed:', e);
+      }
     }
+  };
+
+  const handleBurnComplete = async () => {
+    try {
+      await resetIdentity();
+    } catch (e) {
+      console.error('Identity reset failed:', e);
+    }
+    // Profile cleared -> AppRoutes renders Onboarding (permissions screen)
+    navigate('/', { replace: true });
   };
 
   const handleOpenNavApp = (appId: NavigationApp) => {
@@ -226,37 +227,7 @@ export default function Settings() {
               {profile.name}
               <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
             </button>
-           )}
-
-          <div className="mt-4 pt-4 border-t border-border/30">
-            {resetStep === 2 ? (
-              <p className="text-sm text-accent text-center py-2">Reset complete</p>
-            ) : (
-              <Button
-                onClick={handleResetIdentity}
-                variant={resetStep === 1 ? 'destructive' : 'outline'}
-                size="sm"
-                className="w-full h-10 rounded-xl touch-target"
-              >
-                {resetStep === 0 ? 'Reset identity' : 'Confirm reset'}
-              </Button>
-            )}
-
-            {resetStep === 1 && (
-              <Button
-                onClick={() => setResetStep(0)}
-                variant="ghost"
-                size="sm"
-                className="w-full mt-2 touch-target"
-              >
-                Cancel
-              </Button>
-            )}
-
-            <p className="text-[10px] text-muted-foreground text-center mt-2">
-              Use if an uninstall/reinstall kept your old name
-            </p>
-          </div>
+         )}
         </section>
 
         {/* Navigation App Section */}
