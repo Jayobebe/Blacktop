@@ -15,11 +15,6 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
 
   const items = [
     {
-      label: 'Odometer',
-      value: formatDistance(odoMi, settings.distanceUnit),
-      unit: getDistanceLabel(settings.distanceUnit),
-    },
-    {
       label: 'On this bike',
       value: formatDistance(stats.totalDistanceMi, settings.distanceUnit),
       unit: getDistanceLabel(settings.distanceUnit),
@@ -35,7 +30,7 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
       unit: '°',
     },
     { label: 'Rides', value: stats.totalRides, unit: null },
-    { label: 'Saddle time', value: formatDuration(stats.totalDurationSec), unit: null },
+    { label: 'Time', value: formatDuration(stats.totalDurationSec), unit: null },
     {
       label: 'Longest ride',
       value: formatDistance(stats.longestRideMi, settings.distanceUnit),
