@@ -1,16 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ConvoyMemberInfo, calculateBadges, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
-import { Trophy, Crown, User, X, Clock, Route, Gauge, Zap } from 'lucide-react';
+import { Crown, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { useSettings } from '@/features/settings';
+import { BTLogo } from '@/components/BTLogo';
 
 interface RideStats {
   duration: number;
   distance: number;
   maxSpeed: number;
   averageSpeed: number;
+  maxLean?: number;
 }
 
 interface RideSummaryProps {
@@ -21,150 +23,168 @@ interface RideSummaryProps {
   onClose: () => void;
 }
 
+function ReceiptRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="receipt-row font-receipt">
+      <span className="uppercase tracking-wider">{label}</span>
+      <span className="leader" aria-hidden />
+      <span className="uppercase font-bold">{value}</span>
+    </div>
+  );
+}
+
 export function RideSummary({ members, currentUserId, rideStats, onBadgesEarned, onClose }: RideSummaryProps) {
   const { settings } = useSettings();
-  
-  // Only calculate badges for convoy rides with 2+ members
+
   const shouldCalculateBadges = members.length >= 2;
-  const badgesMap = shouldCalculateBadges ? calculateBadges(members) : new Map();
-  
-  // Get all badge awards as flat list for display
+  const badgesMap = useMemo(
+    () => (shouldCalculateBadges ? calculateBadges(members) : new Map()),
+    [members, shouldCalculateBadges]
+  );
+
   const badgeAwards: { member: ConvoyMemberInfo; badge: MemberBadge }[] = [];
-  
   if (shouldCalculateBadges) {
-    members.forEach(member => {
+    members.forEach((member) => {
       const memberBadges = badgesMap.get(member.userId) || [];
-      memberBadges.forEach(badge => {
-        badgeAwards.push({ member, badge });
-      });
+      memberBadges.forEach((badge) => badgeAwards.push({ member, badge }));
     });
   }
-
-  // Sort by badge type priority: speed-demon, journeyman, fallback
-  const badgeOrder = { 'speed-demon': 0, 'journeyman': 1, 'fallback': 2 };
+  const badgeOrder = { 'speed-demon': 0, journeyman: 1, fallback: 2 } as const;
   badgeAwards.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
 
-  // Report all of the current user's earned badges (convoy rides only)
   useEffect(() => {
     if (currentUserId && onBadgesEarned && shouldCalculateBadges) {
       const userBadges = badgesMap.get(currentUserId);
       if (userBadges && userBadges.length > 0) {
-        onBadgesEarned(userBadges.map(b => b.type));
+        onBadgesEarned(userBadges.map((b: MemberBadge) => b.type));
       }
     }
   }, [currentUserId, onBadgesEarned, badgesMap, shouldCalculateBadges]);
 
+  const now = new Date();
+  const dateStr = now
+    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    .toUpperCase();
+  const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const orderId = `#${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+  const speedUnit = getSpeedLabel(settings.speedUnit).toUpperCase();
+  const distUnit = getDistanceLabel(settings.distanceUnit).toUpperCase();
+
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full animate-scale-in max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-accent" />
-            </div>
-            <div>
-              <h2 className="text-xl font-display font-bold">Ride Complete</h2>
-              <p className="text-sm text-muted-foreground">Summary</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Ride Stats */}
-        {rideStats && (
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <Clock className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
-              <p className="font-mono text-lg font-bold">{formatDuration(rideStats.duration)}</p>
-              <p className="text-xs text-muted-foreground">Duration</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <Route className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
-              <p className="font-mono text-lg font-bold">
-                {formatDistance(rideStats.distance, settings.distanceUnit)}
-                <span className="text-xs text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">Distance</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <Gauge className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
-              <p className="font-mono text-lg font-bold">
-                {formatSpeed(rideStats.averageSpeed, settings.speedUnit)}
-                <span className="text-xs text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">Avg Speed</p>
-            </div>
-            <div className="bg-secondary/50 rounded-xl p-3 text-center">
-              <Zap className="w-5 h-5 mx-auto mb-1 text-accent" />
-              <p className="font-mono text-lg font-bold text-accent">
-                {formatSpeed(rideStats.maxSpeed, settings.speedUnit)}
-                <span className="text-xs text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">Top Speed</p>
+    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in">
+      <div className="w-full max-w-[360px] animate-receipt-print">
+        <div className="receipt-edge-top" />
+        <div className="receipt relative px-6 py-5 font-receipt text-[--ink]">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
+            <div className="text-right text-base leading-tight">
+              <div>{dateStr}</div>
+              <div className="opacity-70">{timeStr}</div>
             </div>
           </div>
-        )}
 
-        {/* Badges Section */}
-        {badgeAwards.length > 0 && (
-          <>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Badge Awards</h3>
-            <div className="space-y-3">
-              {badgeAwards.map(({ member, badge }, index) => (
-                <div
-                  key={`${member.userId}-${badge.type}`}
-                  className={cn(
-                    "flex items-center gap-4 p-4 rounded-xl border transition-all",
-                    badge.type === 'speed-demon' && "bg-yellow-500/10 border-yellow-500/30",
-                    badge.type === 'journeyman' && "bg-blue-500/10 border-blue-500/30",
-                    badge.type === 'fallback' && "bg-stone-500/10 border-stone-500/30"
-                  )}
-                >
-                  {/* Badge icon */}
-                  <div className={cn(
-                    "w-14 h-14 rounded-full flex items-center justify-center text-3xl flex-shrink-0",
-                    badge.type === 'speed-demon' && "bg-yellow-500/20",
-                    badge.type === 'journeyman' && "bg-blue-500/20",
-                    badge.type === 'fallback' && "bg-stone-500/20"
-                  )}>
-                    {badge.emoji}
-                  </div>
+          {/* Title */}
+          <div className="text-center mb-1">
+            <div className="text-3xl font-bold tracking-[0.15em]">BLACKTOP STORE</div>
+            <div className="text-sm tracking-[0.3em] opacity-70 mt-1">— RIDE RECEIPT —</div>
+          </div>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "font-bold text-lg",
-                      badge.type === 'speed-demon' && "text-yellow-400",
-                      badge.type === 'journeyman' && "text-blue-400",
-                      badge.type === 'fallback' && "text-stone-400"
-                    )}>
+          {/* Bike line (placeholder for future garage feature) */}
+          <div className="mt-4" data-bike-slot>
+            <ReceiptRow label="Bike" value="—" />
+          </div>
+
+          {/* Divider */}
+          <div className="my-3 border-t-2 border-dashed border-[--ink] opacity-60" />
+
+          {/* Stats */}
+          {rideStats && (
+            <div className="space-y-2">
+              <ReceiptRow
+                label="Max Spd"
+                value={`${formatSpeed(rideStats.maxSpeed, settings.speedUnit)} ${speedUnit}`}
+              />
+              <ReceiptRow
+                label="Max Lean"
+                value={
+                  typeof rideStats.maxLean === 'number' && rideStats.maxLean > 0
+                    ? `${Math.round(rideStats.maxLean)}°`
+                    : '—'
+                }
+              />
+              <ReceiptRow
+                label="Distance"
+                value={`${formatDistance(rideStats.distance, settings.distanceUnit)} ${distUnit}`}
+              />
+              <ReceiptRow label="Duration" value={formatDuration(rideStats.duration)} />
+              <ReceiptRow
+                label="Avg Spd"
+                value={`${formatSpeed(rideStats.averageSpeed, settings.speedUnit)} ${speedUnit}`}
+              />
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
+
+          {/* Bike model block (placeholder) */}
+          <div className="receipt-bracket text-center" data-bike-slot>
+            <span className="receipt-bracket-tr" />
+            <span className="receipt-bracket-bl" />
+            <div className="text-xl tracking-[0.2em]">BIKE MODEL</div>
+            <div className="text-sm opacity-60 mt-1">add in garage</div>
+          </div>
+
+          {/* Badges */}
+          {badgeAwards.length > 0 && (
+            <>
+              <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
+              <div className="text-center text-sm tracking-[0.3em] mb-2 opacity-70">— BADGES —</div>
+              <div className={cn(
+                'grid gap-2',
+                badgeAwards.length === 1 && 'grid-cols-1',
+                badgeAwards.length === 2 && 'grid-cols-2',
+                badgeAwards.length >= 3 && 'grid-cols-3',
+              )}>
+                {badgeAwards.map(({ member, badge }) => (
+                  <div
+                    key={`${member.userId}-${badge.type}`}
+                    className="receipt-bracket text-center px-2 py-3"
+                  >
+                    <span className="receipt-bracket-tr" />
+                    <span className="receipt-bracket-bl" />
+                    <div className="text-2xl leading-none mb-1">{badge.emoji}</div>
+                    <div className="text-[11px] uppercase tracking-wider font-bold leading-tight">
                       {badge.label}
-                    </p>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      {member.isLeader ? (
-                        <Crown className="w-4 h-4 text-accent" />
-                      ) : (
-                        <User className="w-4 h-4" />
-                      )}
+                    </div>
+                    <div className="flex items-center justify-center gap-1 text-[10px] opacity-70 mt-1 truncate">
+                      {member.isLeader ? <Crown className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
                       <span className="truncate">{member.name}</span>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
 
-        {!rideStats && badgeAwards.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No data to display.</p>
+          {/* Footer */}
+          <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
+          <div className="text-center space-y-2">
+            <div className="text-base tracking-[0.25em]">THANK YOU FOR RIDING</div>
+            <div className="text-xs opacity-60 tracking-widest">ORDER {orderId}</div>
+            <div className="receipt-barcode mt-3" aria-hidden />
+            <div className="text-[10px] tracking-[0.4em] opacity-70 mt-1">BLACKTOP · {dateStr}</div>
           </div>
-        )}
 
-        {/* Close button */}
+          {!rideStats && badgeAwards.length === 0 && (
+            <div className="text-center py-4 text-sm opacity-60">No data to display.</div>
+          )}
+        </div>
+        <div className="receipt-edge-bottom" />
+
+        {/* Continue button (outside the receipt) */}
         <Button
           onClick={onClose}
           className="w-full mt-6 h-12 text-base font-semibold"
