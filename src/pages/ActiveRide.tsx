@@ -560,6 +560,7 @@ export default function ActiveRide() {
         currentUserId={user?.id}
         rideStats={finalRideStats || undefined}
         bikeName={activeBike?.name ?? null}
+        bikePhoto={activeBike?.photos?.hero ?? null}
         onBadgesEarned={handleBadgesEarned}
         onClose={handleCloseSummary} 
       />
