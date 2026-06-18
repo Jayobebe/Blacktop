@@ -22,9 +22,9 @@ export async function compressImageFile(file: File, maxDim = 1024, quality = 0.8
 export async function pixelateImageFile(
   file: File,
   opts: {
-    workWidth?: number;   // bg removal works at this resolution
-    pixelWidth?: number;  // chunkiness of pixel art
-    outputWidth?: number; // final render width
+    workWidth?: number;   // bg removal works within this max dimension
+    pixelWidth?: number;  // chunkiness of pixel art within this max dimension
+    outputWidth?: number; // final render max dimension
     saturate?: number;
     contrast?: number;
     bgTolerance?: number;
@@ -33,7 +33,7 @@ export async function pixelateImageFile(
   const {
     workWidth = 512,
     pixelWidth = 150,
-    outputWidth = 420,
+    outputWidth = 360,
     saturate = 1.15,
     contrast = 1.1,
     bgTolerance = 42,
@@ -42,11 +42,8 @@ export async function pixelateImageFile(
   const img = await loadFile(file);
   await tick();
 
-  const aspect = img.height / Math.max(1, img.width);
-
   // === Step 1: downscale to working resolution ===
-  const workW = Math.min(workWidth, img.width);
-  const workH = Math.max(1, Math.round(workW * aspect));
+  const { w: workW, h: workH } = fitWithin(img.width, img.height, workWidth);
   const work = document.createElement('canvas');
   work.width = workW;
   work.height = workH;
@@ -63,8 +60,7 @@ export async function pixelateImageFile(
   await tick();
 
   // === Step 3: downscale to chunky pixel-art size ===
-  const pxW = Math.min(pixelWidth, workW);
-  const pxH = Math.max(1, Math.round(pxW * aspect));
+  const { w: pxW, h: pxH } = fitWithin(workW, workH, pixelWidth);
   const px = document.createElement('canvas');
   px.width = pxW;
   px.height = pxH;
@@ -75,8 +71,7 @@ export async function pixelateImageFile(
   await tick();
 
   // === Step 4: nearest-neighbour upscale ===
-  const outW = outputWidth;
-  const outH = Math.max(1, Math.round(outW * aspect));
+  const { w: outW, h: outH } = fitWithin(workW, workH, outputWidth);
   const out = document.createElement('canvas');
   out.width = outW;
   out.height = outH;
@@ -85,7 +80,29 @@ export async function pixelateImageFile(
   outCtx.imageSmoothingEnabled = false;
   outCtx.drawImage(px, 0, 0, outW, outH);
 
-  return out.toDataURL('image/png');
+  return canvasToDataUrl(out);
+}
+
+function fitWithin(width: number, height: number, maxDim: number) {
+  const scale = Math.min(1, maxDim / Math.max(1, width, height));
+  return {
+    w: Math.max(1, Math.round(width * scale)),
+    h: Math.max(1, Math.round(height * scale)),
+  };
+}
+
+async function canvasToDataUrl(canvas: HTMLCanvasElement): Promise<string> {
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/webp', 0.82);
+  });
+  if (!blob) return canvas.toDataURL('image/png');
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 /**
