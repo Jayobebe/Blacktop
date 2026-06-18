@@ -32,6 +32,40 @@ export default function Settings() {
   const [editedName, setEditedName] = useState(profile.name);
   const [isTipping, setIsTipping] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'applying'>('idle');
+
+  useEffect(() => {
+    const off = onUpdateAvailable((available) => {
+      if (available) setUpdateState('available');
+    });
+    return () => { off(); };
+  }, []);
+
+  const handleCheckUpdate = async () => {
+    if (updateState === 'available') {
+      setUpdateState('applying');
+      try {
+        await applyAppUpdate();
+      } catch {
+        toast.error('Could not apply update. Try again.');
+        setUpdateState('available');
+      }
+      return;
+    }
+    setUpdateState('checking');
+    try {
+      const found = await checkForAppUpdate();
+      if (found) {
+        setUpdateState('available');
+      } else {
+        setUpdateState('up-to-date');
+        setTimeout(() => setUpdateState('idle'), 2500);
+      }
+    } catch {
+      toast.error('Could not check for updates.');
+      setUpdateState('idle');
+    }
+  };
 
   useEffect(() => {
     const tipStatus = searchParams.get('tip');
