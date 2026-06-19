@@ -482,31 +482,6 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Action Camera & Video Overlay Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Video className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">BlackTop Studio</p>
-          </div>
-              
-          {/* Studio instructions */}
-          <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
-            <p className="text-xs font-medium text-accent mb-3">
-              How to Add Stats Overlay
-            </p>
-            <ol className="text-[10px] text-muted-foreground space-y-1.5 list-decimal list-inside">
-              <li>Complete a ride and view it in History</li>
-              <li>Tap "Open in Studio" on the ride detail page</li>
-              <li>Upload your action cam footage</li>
-              <li>Sync the overlay to when your ride starts in the video</li>
-              <li>Export your video with the stats overlay</li>
-            </ol>
-          </div>
-          
-          <p className="text-[10px] text-muted-foreground mt-3">
-            Stats overlay is processed locally on your device - your video never leaves your phone.
-          </p>
-        </section>
 
         {/* Privacy Section */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200 landscape:hidden">
