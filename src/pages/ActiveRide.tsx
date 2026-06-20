@@ -139,6 +139,7 @@ export default function ActiveRide() {
   const [showLiveStream, setShowLiveStream] = useState(false);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
+  const [crashPromptOpen, setCrashPromptOpen] = useState(false);
   const [pendingRecording, setPendingRecording] = useState<{
     blobUrl: string;
     thumbnailUrl: string;
