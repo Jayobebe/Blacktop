@@ -110,6 +110,15 @@ export default function DemoShowcase() {
       mockup: <RescueMockup />
     },
     {
+      id: 'auto-rescue',
+      title: 'Auto-Rescue',
+      subtitle: 'Crash Detection That Calls For Help',
+      description: 'Optional. If a high-G impact is followed by a stop, the app asks "Are you okay?". No reply in 5 minutes and a rescue ping fires automatically — to your convoy leader and Discord, or Discord only on solo rides.',
+      icon: Shield,
+      color: 'destructive',
+      mockup: <AutoRescueMockup />
+    },
+    {
       id: 'discord',
       title: 'Discord Integration',
       subtitle: 'Loop In Your Crew',
