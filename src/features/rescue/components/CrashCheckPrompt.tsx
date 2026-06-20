@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, ShieldCheck, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { triggerHaptic } from '@/lib/haptics';
+import { haptics } from '@/lib/haptics';
 
 interface Props {
   /** Total seconds before auto-firing rescue. */
