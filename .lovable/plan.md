@@ -1,28 +1,51 @@
-# Download Vehicle Card as Image
+## Auto-Ping Rescue (Crash Detection)
 
-Add a download button to each vehicle card that exports it as a PNG, matching how the ride receipts are saved.
+Optional safety feature. When the phone detects a high-G impact followed by a stop, the active-ride screen asks "Are you okay?". If unanswered in 5 minutes, a rescue ping fires automatically — to the convoy leader (convoy rides) and/or the Discord webhook (convoy + solo rides).
 
-## Approach
+### Settings (Settings page → new "Safety" section)
+- `autoRescueEnabled` (toggle, default OFF) — master switch.
+- `autoRescueGThreshold` (slider, 3–8 G, default 5 G) — impact threshold.
+- `autoRescueStopWindowSec` (slider, 5–30 s, default 10 s) — how long speed must stay at ~0 after impact.
+- `autoRescueAckTimeoutSec` (fixed 300 s / 5 min, shown as text).
 
-Use the same `html-to-image` library already in the project (`toPng`) so behavior stays consistent with ride receipts. Each `VehicleCard` gets its own `ref` and a small download button overlaid in the top-left corner (mirroring the tier chip in the top-right). Tapping it serializes that card's DOM node to a PNG and triggers a browser download.
+Stored in `useSettings` (extend `AppSettings` + defaults).
 
-## Files to edit
+### Detection hook — `src/features/ride/hooks/useCrashDetection.ts`
+- Listens to `devicemotion` (`accelerationIncludingGravity`), computes magnitude in G (÷ 9.81), keeps a short rolling window.
+- Triggers a "possible crash" event when peak G ≥ threshold AND for the next `stopWindowSec` the live `speed` (passed in from active ride GPS) stays ≤ ~3 km/h.
+- Only active while a ride is in progress and `autoRescueEnabled` is true.
+- Emits via callback so the page can mount the prompt.
 
-- **`src/features/cards/components/VehicleCard.tsx`**
-  - Add `useRef<HTMLDivElement>` on the card root.
-  - Add a small circular icon button (`Download` from lucide-react) in the top-left of the card, styled the same as the tier chip but with the card's neutral chip background so it reads on every tier.
-  - On click: call `toPng(ref.current, { cacheBust: true, pixelRatio: 3, backgroundColor: 'transparent' })`, create an `<a>` with `download="{vehicle-name}-{tier}-card.png"`, click it, show a `toast.success('Card downloaded')`. Wrap in try/catch with `toast.error('Could not save card')`.
-  - Button is hidden during the export itself (set a `isExporting` state, hide button while true) so it doesn't appear in the saved image.
-  - Locked cards still get the button so users can save their "X / 10 rides" progress card if they want — same behavior.
+### Prompt UI — `src/features/rescue/components/CrashCheckPrompt.tsx`
+- Full-screen modal over active ride: big "Are you okay?" + two buttons: **I'm fine** (dismiss) and **Send rescue now** (immediate ping).
+- 5-minute countdown ring. Strong haptics + repeating audio chime while open.
+- Auto-fires rescue when countdown hits 0 and closes.
 
-No other files change. The carousel, hook, and tier logic stay as-is.
+### Wiring into rides
+- **ActiveRide.tsx (convoy)**: pass current `speed` to `useCrashDetection`; on trigger open `CrashCheckPrompt`. On auto-fire / manual send, call existing `useRescue.sendRescueRequest(lat,lng)` — leader already receives it and Discord webhook already fires via `announceRescueToDiscord`.
+- **Solo rides (SoloLobby/ActiveRide solo path)**: same detection + prompt. On auto-fire, call a new helper `triggerSoloRescue({ riderName, lat, lng })` that:
+  - Posts to existing Discord edge function (reuse `discord-announce-solo-rescue` if present, otherwise route through `discord-announce-rescue` with a `solo: true` flag).
+  - Shows local toast: "Rescue ping sent to Discord."
+- No leader broadcast in solo mode (no convoy channel).
 
-## Filename format
+### Edge cases
+- Suppress re-trigger for 2 minutes after a dismissal or send.
+- Only arm detection once speed has exceeded 15 km/h at least once in the ride (avoids false positives from setting the phone down).
+- Pause detection while ride is paused.
+- If permission for motion sensors is denied (iOS requires `DeviceMotionEvent.requestPermission`), show a one-time prompt when the user enables the setting; if denied, mark setting back off with a toast.
 
-`{slugified bike name}-{tier}-card.png`, e.g. `street-triple-gold-card.png`. Fall back to `vehicle-card.png` if the name is empty.
+### Files to add
+- `src/features/ride/hooks/useCrashDetection.ts`
+- `src/features/rescue/components/CrashCheckPrompt.tsx`
+- `src/features/rescue/lib/soloRescue.ts` (Discord-only helper)
 
-## Notes
+### Files to edit
+- `src/features/settings/hooks/useSettings.ts` — new settings + defaults.
+- `src/pages/Settings.tsx` — new Safety card with toggle + sliders.
+- `src/pages/ActiveRide.tsx` — mount detection + prompt (convoy path).
+- Solo active-ride entry point (likely `ActiveRide.tsx` solo branch or `SoloLobby` → active) — same mount, solo helper on fire.
+- `src/features/rescue/index.ts` — export new prompt + helper.
+- Memory: add a `mem://features/auto-rescue-crash-detection` entry and link it in `mem://index.md`.
 
-- The card uses conic gradients and CSS variables; `html-to-image` handles both. We already use it successfully on the receipt which also has gradients and custom backgrounds.
-- `pixelRatio: 3` matches the receipt export for crisp output on retina/share targets.
-- No native share sheet — keep parity with the receipt's simple "download to device" flow.
+### One open question
+Discord pings on solo rides require the user to have configured the Discord integration in their own settings (existing `useDiscordIntegration`). If not configured, the auto-fire will silently no-op (with a local toast saying "No Discord webhook configured"). Confirm that's acceptable, or you'd prefer we surface a hard warning when enabling the feature without Discord set up.
