@@ -951,6 +951,84 @@ function RescueMockup() {
   );
 }
 
+function AutoRescueMockup() {
+  const [seconds, setSeconds] = useState(300);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSeconds((s) => (s <= 1 ? 300 : s - 1));
+    }, 60); // sped-up demo countdown
+    return () => clearInterval(id);
+  }, []);
+
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const pct = (seconds / 300) * 100;
+
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      {/* Impact card */}
+      <div className="bg-card/50 rounded-2xl border border-border/30 p-4 animate-slide-up">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-destructive/20 flex items-center justify-center animate-pulse">
+            <Zap className="w-5 h-5 text-destructive" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Detected</p>
+            <p className="text-sm font-semibold">
+              <span className="font-mono text-destructive">5.2 G</span> impact · stopped 10s
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Prompt mock */}
+      <div className="bg-card border-2 border-destructive/60 rounded-2xl p-4 shadow-2xl animate-scale-in delay-200">
+        <div className="text-center">
+          <div className="mx-auto w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center mb-2 animate-pulse">
+            <AlertTriangle className="w-6 h-6 text-destructive" />
+          </div>
+          <p className="font-semibold text-sm mb-0.5">Are you okay?</p>
+          <p className="text-[10px] text-muted-foreground mb-3">
+            Rescue fires automatically if no reply
+          </p>
+
+          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden mb-1">
+            <div
+              className="h-full bg-destructive transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <p className="font-mono text-lg font-bold text-destructive tabular-nums mb-3">
+            {mins}:{secs.toString().padStart(2, '0')}
+          </p>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="h-9 rounded-lg bg-emerald-500/90 text-white text-xs font-semibold flex items-center justify-center">
+              I'm fine
+            </div>
+            <div className="h-9 rounded-lg border border-destructive/60 text-destructive text-xs font-semibold flex items-center justify-center">
+              Send now
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Targets */}
+      <div className="grid grid-cols-2 gap-2 animate-fade-in delay-300">
+        <div className="bg-card/50 rounded-xl border border-border/30 p-2.5 flex items-center gap-2">
+          <Crown className="w-4 h-4 text-accent" />
+          <span className="text-[11px]">Convoy leader</span>
+        </div>
+        <div className="bg-card/50 rounded-xl border border-border/30 p-2.5 flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-accent" />
+          <span className="text-[11px]">Discord webhook</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BadgesMockup() {
   const badges = [
     { name: 'Speed Demon', emoji: '⚡', desc: 'Top Speed', color: 'bg-yellow-500/20 border-yellow-500/30' },
