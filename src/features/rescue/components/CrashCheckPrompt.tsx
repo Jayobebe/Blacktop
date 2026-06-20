@@ -41,7 +41,7 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
 
   // Repeating haptic + chime while open
   useEffect(() => {
-    triggerHaptic('heavy');
+    haptics.heavy();
     const beep = () => {
       try {
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -54,7 +54,7 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
         o.start();
         setTimeout(() => { o.stop(); ctx.close(); }, 250);
       } catch { /* noop */ }
-      triggerHaptic('medium');
+      haptics.medium();
     };
     beep();
     chimeRef.current = window.setInterval(beep, 3000);
