@@ -95,6 +95,10 @@ export interface AppSettings {
   showStatsOverlay: boolean;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
+  // Auto-rescue (crash detection)
+  autoRescueEnabled: boolean;
+  autoRescueGThreshold: number; // G-force impact threshold (3–8)
+  autoRescueStopWindowSec: number; // Seconds of near-zero speed after impact (5–30)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -110,7 +114,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   showStatsOverlay: true,
   leanAngleEnabled: false,
   leanAngleThreshold: 45, // Default warning at 45 degrees
+  autoRescueEnabled: false,
+  autoRescueGThreshold: 5,
+  autoRescueStopWindowSec: 10,
 };
+
+export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
 
 export function useSettings() {
   const [storedSettings, setSettings] = useLocalStorage<Partial<AppSettings>>('blacktop-settings', DEFAULT_SETTINGS);
