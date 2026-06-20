@@ -537,6 +537,55 @@ export default function ActiveRide() {
     }
   };
 
+  // ---- Auto-rescue (crash detection) ----
+  const fireAutoRescue = useCallback(async () => {
+    const gpsPoints = rideState.gpsPoints;
+    const fire = async (lat: number, lng: number) => {
+      if (rideState.isConvoyMode) {
+        // Convoy: broadcast to leader (already pings Discord via useRescue)
+        await sendRescueRequest(lat, lng);
+      } else {
+        // Solo: Discord-only
+        const res = await announceSoloRescueToDiscord({
+          riderName: profile.name || 'Rider',
+          lat,
+          lng,
+        });
+        if (res.skipped) {
+          toast.warning('Auto-rescue: no Discord webhook configured');
+        } else if (res.ok) {
+          toast.success('Auto-rescue ping sent to Discord');
+        } else {
+          toast.error('Auto-rescue failed to send');
+        }
+      }
+    };
+
+    if (gpsPoints.length > 0) {
+      const last = gpsPoints[gpsPoints.length - 1];
+      await fire(last.lat, last.lng);
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => fire(pos.coords.latitude, pos.coords.longitude),
+        () => fire(0, 0),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, [rideState.gpsPoints, rideState.isConvoyMode, sendRescueRequest, profile.name]);
+
+  useCrashDetection({
+    enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen,
+    currentSpeed: rideState.currentSpeed,
+    gThreshold: settings.autoRescueGThreshold,
+    stopWindowSec: settings.autoRescueStopWindowSec,
+    onPossibleCrash: useCallback(() => {
+      console.log('[ActiveRide] Possible crash detected');
+      setCrashPromptOpen(true);
+    }, []),
+  });
+
+
+
   const handleAddRescueWaypoint = async (request: typeof rescueRequests[0]) => {
     console.log('[ActiveRide] Adding rescue waypoint for', request.userName);
     const success = await addWaypoint({
