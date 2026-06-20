@@ -638,6 +638,25 @@ export default function ActiveRide() {
         />
       )}
 
+      {/* Auto-rescue crash check */}
+      {crashPromptOpen && (
+        <CrashCheckPrompt
+          timeoutSec={AUTO_RESCUE_ACK_TIMEOUT_SEC}
+          onImFine={() => {
+            setCrashPromptOpen(false);
+            toast.success('Glad you’re okay. Ride on.');
+          }}
+          onSendNow={async () => {
+            setCrashPromptOpen(false);
+            await fireAutoRescue();
+          }}
+          onTimeout={async () => {
+            setCrashPromptOpen(false);
+            await fireAutoRescue();
+          }}
+        />
+      )}
+
       {/* Main content area - vertical in portrait, horizontal in landscape */}
       <div className={cn(
         "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden",
