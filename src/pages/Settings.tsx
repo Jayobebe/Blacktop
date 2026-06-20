@@ -464,6 +464,96 @@ export default function Settings() {
           )}
         </section>
 
+        {/* Safety / Auto-Rescue */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Safety — Auto-Rescue</p>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="pr-3">
+              <p className="text-sm font-medium">Crash detection</p>
+              <p className="text-[10px] text-muted-foreground">
+                If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader{rideState_isConvoyOnlyMicrocopy /* keep static */ ? '' : ''} and Discord (if connected).
+              </p>
+            </div>
+            <Switch
+              checked={settings.autoRescueEnabled}
+              onCheckedChange={async (v) => {
+                if (v) {
+                  // iOS 13+: motion permission must be requested from a user gesture
+                  const anyMotion = (window as any).DeviceMotionEvent;
+                  if (anyMotion && typeof anyMotion.requestPermission === 'function') {
+                    try {
+                      const res = await anyMotion.requestPermission();
+                      if (res !== 'granted') {
+                        toast.error('Motion sensor permission denied');
+                        return;
+                      }
+                    } catch {
+                      toast.error('Could not enable motion sensor');
+                      return;
+                    }
+                  }
+                }
+                updateSetting('autoRescueEnabled', v);
+              }}
+            />
+          </div>
+
+          {settings.autoRescueEnabled && (
+            <div className="pt-3 border-t border-border/30 space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium">Impact sensitivity</p>
+                  <span className="font-mono text-sm font-bold text-accent">
+                    {settings.autoRescueGThreshold} G
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={3}
+                  max={8}
+                  step={1}
+                  value={settings.autoRescueGThreshold}
+                  onChange={(e) => updateSetting('autoRescueGThreshold', Number(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                  <span>3 G (sensitive)</span>
+                  <span>8 G (only crashes)</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium">Stop window after impact</p>
+                  <span className="font-mono text-sm font-bold text-accent">
+                    {settings.autoRescueStopWindowSec}s
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={30}
+                  step={1}
+                  value={settings.autoRescueStopWindowSec}
+                  onChange={(e) => updateSetting('autoRescueStopWindowSec', Number(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                  <span>5s</span>
+                  <span>30s</span>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground">
+                Acknowledge timeout: <span className="font-mono">5:00</span>
+              </p>
+            </div>
+          )}
+        </section>
+
         {/* Convoy Display Section */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
           <div className="flex items-center gap-2 mb-3">
