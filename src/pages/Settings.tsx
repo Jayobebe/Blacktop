@@ -474,7 +474,7 @@ export default function Settings() {
             <div className="pr-3">
               <p className="text-sm font-medium">Crash detection</p>
               <p className="text-[10px] text-muted-foreground">
-                If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader{rideState_isConvoyOnlyMicrocopy /* keep static */ ? '' : ''} and Discord (if connected).
+                If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader and Discord (if connected). Works on solo rides too (Discord only).
               </p>
             </div>
             <Switch
