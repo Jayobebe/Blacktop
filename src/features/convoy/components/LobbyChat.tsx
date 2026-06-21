@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
+import { chatMessageSchema } from '@/lib/validation';
+import { toast } from 'sonner';
 
 interface ChatMessage {
   id: string;
@@ -87,10 +89,14 @@ export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProp
   }, [messages]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || isSending) return;
-
+    if (isSending) return;
+    const parsed = chatMessageSchema.safeParse(newMessage);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? 'Invalid message');
+      return;
+    }
+    const content = parsed.data;
     setIsSending(true);
-    const content = newMessage.trim();
     setNewMessage('');
 
     const { error } = await supabase.from('convoy_messages').insert({
