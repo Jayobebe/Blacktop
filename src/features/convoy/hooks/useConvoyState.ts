@@ -165,6 +165,9 @@ export function useConvoyState() {
 
       toast.success('Convoy session restored');
       } finally {
+        if (convoyState.isRestoring) {
+          setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        }
         restoreInFlight = false;
       }
     };
