@@ -1028,26 +1028,7 @@ export default function ActiveRide() {
         )}
       </div>
 
-      {/* Live Stream Viewer */}
-      <LiveStreamViewer
-        streamKey={settings.streamKey}
-        currentSpeed={rideState.currentSpeed}
-        maxSpeed={rideState.maxSpeed}
-        distance={rideState.distance}
-        duration={rideState.duration}
-        currentLean={settings.leanAngleEnabled ? leanAngle.currentLean : undefined}
-        maxLean={settings.leanAngleEnabled ? leanAngle.maxLean : undefined}
-        leanThreshold={settings.leanAngleThreshold}
-        isVisible={showLiveStream}
-        isRiding={rideState.isActive && !showSummary}
-        isPaused={rideState.isPaused}
-        rideEnded={showSummary || (!rideState.isActive && endingFlow)}
-        onClose={() => setShowLiveStream(false)}
-        onRecordingComplete={(recording) => {
-          // Store recording - it will be saved when savedRideId becomes available
-          setPendingRecording(recording);
-        }}
-      />
+
     </div>
   );
 }
