@@ -189,6 +189,22 @@ export function useConvoyState() {
         async (payload) => {
           const convoy = payload.new as any;
           const oldConvoy = payload.old as any;
+
+          if (convoy.is_active === false || convoy.ride_ended_at) {
+            console.log('[Convoy] Convoy ended, clearing local session');
+            setConvoyState(() => ({
+              id: null,
+              code: null,
+              isLeader: false,
+              members: [],
+              isActive: false,
+              isRestoring: false,
+              destination: null,
+              waypoints: [],
+              isPaused: false,
+            }));
+            return;
+          }
           
           // If leader_id changed, refresh members to update leadership status
           if (convoy.leader_id !== oldConvoy.leader_id) {
