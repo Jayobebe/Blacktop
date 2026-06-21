@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { DiscordSettingsCard } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
+import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -242,11 +243,7 @@ export default function Settings() {
         </section>
 
         {/* Units Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-75">
-          <div className="flex items-center gap-2 mb-3">
-            <Gauge className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Units</p>
-          </div>
+        <CollapsibleSection icon={Gauge} label="Units" delayClass="delay-75">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -273,14 +270,10 @@ export default function Settings() {
               </button>
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Speed Alert Thresholds */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-100">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Speed Alerts</p>
-          </div>
+        <CollapsibleSection icon={AlertTriangle} label="Speed Alerts" delayClass="delay-100">
           {(() => {
             const u = settings.speedUnit;
             const label = getSpeedLabel(u);
@@ -352,14 +345,10 @@ export default function Settings() {
               </div>
             );
           })()}
-        </section>
+        </CollapsibleSection>
 
         {/* Lean Angle Sensor Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-150">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Lean Angle Sensor</p>
-          </div>
+        <CollapsibleSection icon={Activity} label="Lean Angle Sensor" delayClass="delay-150">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium">Enable Lean Angle</p>
@@ -397,14 +386,10 @@ export default function Settings() {
               </div>
             </div>
           )}
-        </section>
+        </CollapsibleSection>
 
         {/* Safety / Auto-Rescue */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Safety — Auto-Rescue</p>
-          </div>
+        <CollapsibleSection icon={AlertTriangle} label="Safety — Auto-Rescue" delayClass="delay-200">
           <div className="flex items-center justify-between mb-2">
             <div className="pr-3">
               <p className="text-sm font-medium">Crash detection</p>
@@ -487,14 +472,10 @@ export default function Settings() {
               </p>
             </div>
           )}
-        </section>
+        </CollapsibleSection>
 
         {/* Convoy Display Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Convoy Display</p>
-          </div>
+        <CollapsibleSection icon={Users} label="Convoy Display" delayClass="delay-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Show Convoy Metrics</p>
@@ -505,14 +486,10 @@ export default function Settings() {
               onCheckedChange={toggleSpeedRankings}
             />
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* Navigation App Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Navigation className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Navigation App</p>
-          </div>
+        <CollapsibleSection icon={Navigation} label="Navigation App" delayClass="delay-200">
           <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
@@ -554,64 +531,56 @@ export default function Settings() {
           <p className="text-[10px] text-muted-foreground mt-3">
             Blacktop opens your preferred app for directions
           </p>
-        </section>
+        </CollapsibleSection>
 
         {/* Discord Integration */}
-        <DiscordSettingsCard />
+        <CollapsibleSection icon={MessageSquare} label="Discord Integration" delayClass="delay-200">
+          <DiscordSettingsCard />
+        </CollapsibleSection>
 
         {/* Accent Color Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
-          <div className="flex items-center gap-2 mb-3">
-            <Palette className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Accent Color</p>
-          </div>
+        <CollapsibleSection icon={Palette} label="Accent Color" delayClass="delay-200">
           <AccentColorPicker 
             selected={settings.accentColor} 
             onSelect={setAccentColor} 
           />
-        </section>
+        </CollapsibleSection>
 
         {/* Privacy Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-250 landscape:hidden">
-          <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Privacy & Battery</p>
-          </div>
-          <ul className="space-y-1.5 text-xs text-muted-foreground">
-            <li>• All ride data stored locally on device</li>
-            <li>• No background tracking unless ride is active</li>
-            <li>• Voice data is never recorded or stored</li>
-            <li>• Live convoy data is server-burned the moment a ride ends</li>
-          </ul>
-          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/privacy')}
-              className="h-9 text-xs rounded-lg touch-target"
-            >
-              Privacy Policy
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/terms')}
-              className="h-9 text-xs rounded-lg touch-target"
-            >
-              Terms & Safety
-            </Button>
-          </div>
-          <p className="text-[10px] text-muted-foreground/70 mt-3">
-            Battery use increases while a ride is active.
-          </p>
-        </section>
+        <div className="landscape:hidden">
+          <CollapsibleSection icon={Shield} label="Privacy & Battery" delayClass="delay-250">
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li>• All ride data stored locally on device</li>
+              <li>• No background tracking unless ride is active</li>
+              <li>• Voice data is never recorded or stored</li>
+              <li>• Live convoy data is server-burned the moment a ride ends</li>
+            </ul>
+            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/privacy')}
+                className="h-9 text-xs rounded-lg touch-target"
+              >
+                Privacy Policy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/terms')}
+                className="h-9 text-xs rounded-lg touch-target"
+              >
+                Terms & Safety
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground/70 mt-3">
+              Battery use increases while a ride is active.
+            </p>
+          </CollapsibleSection>
+        </div>
 
         {/* App Updates Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
-          <div className="flex items-center gap-2 mb-3">
-            <RefreshCw className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">App Updates</p>
-          </div>
+        <CollapsibleSection icon={RefreshCw} label="App Updates" delayClass="delay-300">
           <p className="text-xs text-muted-foreground mb-3">
             Pull the latest version without reinstalling. Your rides, garage and settings stay safe — only the app shell is refreshed.
           </p>
@@ -633,7 +602,7 @@ export default function Settings() {
           <p className="text-[10px] text-muted-foreground text-center mt-2">
             Tip: keep the installed app — your stats live on your device.
           </p>
-        </section>
+        </CollapsibleSection>
 
         {/* Tip Jar Section */}
         <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
