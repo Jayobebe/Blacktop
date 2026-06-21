@@ -659,35 +659,38 @@ export function useConvoyState() {
       .eq('user_id', user.id);
   }, [state.id]);
 
-  // Leader ends the convoy ride - clears destination and resets all members' navigation status
+  // Leader ends the convoy ride - burn the finished lobby so it cannot be restored later
   const endConvoyRide = useCallback(async () => {
     if (!state.id || !state.isLeader) return;
 
-    // Clear destination and ride flags in database (this triggers realtime for all members)
+    const endedAt = new Date().toISOString();
+
+    // Mark the convoy inactive and ended; server-side burn cleanup handles ephemeral ride data.
     await supabase
       .from('convoys')
       .update({
+        is_active: false,
         destination_name: null,
         destination_address: null,
         destination_lat: null,
         destination_lng: null,
         destination_set_at: null,
-        ride_ended_at: null, // Clear so next ride can be started
-        ride_started_at: null, // Clear so next ride can be started
+        ride_ended_at: endedAt,
+        ride_started_at: null,
       })
       .eq('id', state.id);
 
-    // Reset all members' navigation status
-    await supabase
-      .from('convoy_members')
-      .update({ has_navigated: false })
-      .eq('convoy_id', state.id);
-
-    // Update local state
-    setConvoyState((prev) => ({
-      ...prev,
+    // Clear local state so Home cannot redirect back into the burned lobby.
+    setConvoyState(() => ({
+      id: null,
+      code: null,
+      isLeader: false,
+      members: [],
+      isActive: false,
+      isRestoring: false,
       destination: null,
-      members: prev.members.map(m => ({ ...m, hasNavigated: false })),
+      waypoints: [],
+      isPaused: false,
     }));
   }, [state.id, state.isLeader]);
 
