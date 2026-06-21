@@ -44,17 +44,28 @@ function escapeRegexPart(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function fetchOverpass(query: string) {
   const endpoints = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.ru/api/interpreter",
   ];
 
   let lastError: unknown = null;
 
   for (const endpoint of endpoints) {
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetchWithTimeout(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -62,7 +73,7 @@ async function fetchOverpass(query: string) {
           "User-Agent": "Blacktop-App/1.0",
         },
         body: `data=${encodeURIComponent(query)}`,
-      });
+      }, 9000);
 
       const text = await res.text();
       if (!res.ok) {
@@ -113,7 +124,7 @@ serve(async (req) => {
       if (filter24h) {
         // Search for shops and petrol stations open 24 hours
         query = `
-          [out:json][timeout:15];
+          [out:json][timeout:8];
           (
             node["shop"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
             node["amenity"="fuel"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
@@ -124,15 +135,24 @@ serve(async (req) => {
       } else {
         const regex = amenities.map(escapeRegexPart).join("|");
         query = `
-          [out:json][timeout:10];
+          [out:json][timeout:8];
           (
-            node["amenity"~"^(${regex})$"](around:${radius},${body.lat},${body.lon});
+            node["amenity"~"^(${regex})$"]["name"](around:${radius},${body.lat},${body.lon});
           );
           out body ${limit};
         `;
       }
 
-      const data = await fetchOverpass(query);
+      let data: any;
+      try {
+        data = await fetchOverpass(query);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Overpass unavailable, returning empty:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify([]), {
+          headers: { ...corsHeaders, "Content-Type": "application/json", "X-Fallback": "overpass_unavailable" },
+          status: 200,
+        });
+      }
 
       const elements = Array.isArray(data?.elements) ? data.elements : [];
       // Return a slim payload for the client
