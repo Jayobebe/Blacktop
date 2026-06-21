@@ -219,6 +219,7 @@ export function useConvoyState() {
 
           if (convoy.is_active === false || convoy.ride_ended_at) {
             console.log('[Convoy] Convoy ended, clearing local session');
+            rememberActiveConvoy(null);
             setConvoyState(() => ({
               id: null,
               code: null,
@@ -437,6 +438,7 @@ export function useConvoyState() {
       waypoints: [],
       isPaused: false,
     }));
+    rememberActiveConvoy(convoy.id);
 
     return { id: convoy.id, code: convoy.code };
   }, [profile.name]);
@@ -554,6 +556,7 @@ export function useConvoyState() {
       waypoints: [],
       isPaused: convoy.is_paused || false,
     }));
+    rememberActiveConvoy(convoy.id);
 
     return true;
   }, []);
