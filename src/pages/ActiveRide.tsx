@@ -138,6 +138,8 @@ export default function ActiveRide() {
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
+  const { integration: discordIntegration } = useDiscordIntegration();
+  const discordEnabled = !!discordIntegration?.webhook_url && discordIntegration.auto_announce !== false;
   const [crashPromptOpen, setCrashPromptOpen] = useState(false);
 
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
