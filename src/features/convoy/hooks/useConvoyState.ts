@@ -116,6 +116,7 @@ export function useConvoyState() {
         : memberships?.[0];
       if (!membership?.convoys) {
         console.log('[Convoy] No active convoy membership found');
+        rememberActiveConvoy(null);
         setConvoyState((prev) => ({ ...prev, isRestoring: false }));
         return;
       }
@@ -128,6 +129,7 @@ export function useConvoyState() {
           .delete()
           .eq('convoy_id', convoy.id)
           .eq('user_id', user.id);
+        rememberActiveConvoy(null);
         setConvoyState((prev) => ({ ...prev, isRestoring: false }));
         return;
       }
