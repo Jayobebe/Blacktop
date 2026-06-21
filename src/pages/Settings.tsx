@@ -215,29 +215,33 @@ export default function Settings() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
         {/* Profile Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Profile</p>
+        <section className="bg-card/50 rounded-2xl border border-border/30 animate-slide-up h-14 landscape:h-12 flex items-center px-4 landscape:px-3">
           {isEditingName ? (
-            <Input
-              ref={nameInputRef}
-              value={editedName}
-              onChange={(e) => setEditedName(e.target.value)}
-              onBlur={handleNameSave}
-              onKeyDown={handleNameKeyDown}
-              maxLength={20}
-              className="text-lg font-medium h-12 rounded-xl"
-              placeholder="Enter your name"
-            />
+            <div className="flex-1 flex items-center h-full">
+              <Input
+                ref={nameInputRef}
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onBlur={handleNameSave}
+                onKeyDown={handleNameKeyDown}
+                maxLength={20}
+                className="text-sm font-medium h-9 rounded-lg bg-background/50 border-border/30 flex-1"
+                placeholder="Enter your name"
+              />
+            </div>
           ) : (
             <button
               onClick={() => {
                 setEditedName(profile.name);
                 setIsEditingName(true);
               }}
-              className="flex items-center gap-3 text-lg font-semibold hover:text-accent transition-colors group w-full text-left"
+              className="flex items-center justify-between w-full h-full text-left group"
             >
-              {profile.name}
-              <Pencil className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+              <div className="flex flex-col min-w-0 justify-center">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mb-0.5">Profile Name</span>
+                <span className="text-sm font-semibold truncate">{profile.name}</span>
+              </div>
+              <Pencil className="w-4 h-4 text-accent transition-colors shrink-0 ml-2" />
             </button>
          )}
         </section>
