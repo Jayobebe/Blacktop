@@ -757,7 +757,8 @@ export function DestinationSearch({
               </button>
             ))
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
