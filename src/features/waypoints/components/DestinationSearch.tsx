@@ -675,9 +675,18 @@ export function DestinationSearch({
         </button>
       </div>
       
-      {/* Results dropdown */}
-      {showResults && hasDisplayContent && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto">
+      {/* Results dropdown rendered in a portal so it overlays everything (chat, members, etc.) */}
+      {showResults && hasDisplayContent && dropdownRect && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            left: dropdownRect.left,
+            top: dropdownRect.top,
+            width: dropdownRect.width,
+            zIndex: 9999,
+          }}
+          className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto"
+        >
           {showRecent && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               <Clock className="w-3.5 h-3.5" />
