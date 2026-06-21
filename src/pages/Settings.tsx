@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, RefreshCw, CheckCircle2, MessageSquare } from 'lucide-react';
 import { checkForAppUpdate, applyAppUpdate, onUpdateAvailable } from '@/pwa';
 import { formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { NavigationApp } from '@/types/blacktop';
