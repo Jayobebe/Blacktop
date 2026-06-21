@@ -89,9 +89,8 @@ export interface AppSettings {
   accentColor: AccentColor;
   amberSpeedThreshold: number;
   redSpeedThreshold: number;
-  liveStreamingEnabled: boolean;
-  streamKey: string;
   selectedActionCam: ActionCamBrand;
+
   showStatsOverlay: boolean;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
