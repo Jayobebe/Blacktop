@@ -101,6 +101,7 @@ export default function PrivacyPolicy() {
             <li><span className="text-foreground">Microphone</span> — optional, used only for live voice chat in convoys</li>
             <li><span className="text-foreground">Motion sensors</span> — optional, for lean angle visualization and crash detection</li>
             <li><span className="text-foreground">Photos / Files</span> — optional, only when you choose to attach a photo to a ride in your history. Photos stay on your device.</li>
+            <li><span className="text-foreground">Camera</span> — optional, used only to scan QR codes for sharing and joining convoys. Images are processed locally on-device and never stored or uploaded.</li>
           </ul>
           <p className="text-muted-foreground">
             We never collect location in the background outside of an active ride.
