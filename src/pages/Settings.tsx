@@ -242,6 +242,9 @@ export default function Settings() {
          )}
         </section>
 
+        {/* Two-column collapsible grid — zipper expand when individually opened */}
+        <div className="grid grid-cols-2 gap-3 landscape:gap-2 items-start">
+
         {/* Units Section */}
         <CollapsibleSection icon={Gauge} label="Units" delayClass="delay-75">
           <div className="space-y-3">
@@ -603,6 +606,8 @@ export default function Settings() {
             Tip: keep the installed app — your stats live on your device.
           </p>
         </CollapsibleSection>
+        </div>
+
 
         {/* Tip Jar Section */}
         <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
