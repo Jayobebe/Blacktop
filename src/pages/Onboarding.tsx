@@ -181,6 +181,96 @@ export default function Onboarding() {
     </div>
   );
 
+  if (step === 'consent') {
+    const allAgreed = agreedTerms && agreedAge && agreedSafety;
+    return (
+      <div className="h-screen max-h-screen overflow-auto flex flex-col items-center justify-center p-4 safe-top safe-bottom gap-5">
+        <div className="text-center">
+          <h1 className="text-4xl font-semibold tracking-tight mb-2">BLACKTOP</h1>
+          <p className="text-muted-foreground text-sm">Before we set you up</p>
+        </div>
+
+        <div className="w-full max-w-sm space-y-4">
+          {/* Privacy summary */}
+          <div className="bg-card/50 rounded-2xl p-4 border border-border/50 space-y-2">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-accent" />
+              <p className="text-xs font-semibold uppercase tracking-widest text-accent">Privacy-first</p>
+            </div>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              <li>• Your rides, stats and garage stay on your device</li>
+              <li>• No accounts, no ads, no analytics, no tracking</li>
+              <li>• Live convoy data is server-burned the moment a ride ends</li>
+              <li>• Voice is peer-to-peer and never recorded</li>
+            </ul>
+          </div>
+
+          {/* Safety summary */}
+          <div className="bg-destructive/5 rounded-2xl p-4 border border-destructive/30 space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <p className="text-xs font-semibold uppercase tracking-widest text-destructive">Ride safe</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Set up before you ride. Don't interact with the app in motion. Speed
+              and lean data are informational only — obey local laws.
+            </p>
+          </div>
+
+          {/* Checkboxes */}
+          <div className="space-y-3 pt-1">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={agreedAge}
+                onCheckedChange={(v) => setAgreedAge(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-foreground leading-relaxed">
+                I'm at least 16 years old and licensed to operate a motor vehicle
+                in my jurisdiction.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={agreedSafety}
+                onCheckedChange={(v) => setAgreedSafety(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-foreground leading-relaxed">
+                I understand Blacktop is not a safety device or racing tool. I ride
+                at my own risk and won't interact with the app while in motion.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={agreedTerms}
+                onCheckedChange={(v) => setAgreedTerms(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-foreground leading-relaxed">
+                I have read and agree to the{' '}
+                <Link to="/privacy" className="text-accent underline">Privacy Policy</Link>
+                {' '}and{' '}
+                <Link to="/terms" className="text-accent underline">Terms & Safety</Link>.
+              </span>
+            </label>
+          </div>
+
+          <Button
+            onClick={() => setStep('permissions')}
+            disabled={!allAgreed}
+            className="w-full h-12 text-base font-semibold rounded-2xl touch-target"
+          >
+            Continue
+            <ChevronRight className="w-5 h-5 ml-1" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'permissions') {
     return (
       <div className="h-screen max-h-screen overflow-auto flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
