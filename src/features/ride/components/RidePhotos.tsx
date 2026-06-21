@@ -13,7 +13,7 @@ interface RidePhotosProps {
 }
 
 const MAX_PHOTO_SIZE = 1024 * 1024; // 1MB max after compression
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 9;
 
 export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRemoveRecording }: RidePhotosProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -140,7 +140,7 @@ export default function DemoShowcase() {
       id: 'history',
       title: 'Ride History & Photos',
       subtitle: 'Relive Your Adventures',
-      description: 'Every ride saved with stats. Attach up to 10 photos per ride. All stored locally on your device.',
+      description: 'Every ride saved with stats. Attach up to 9 photos per ride. All stored locally on your device.',
       icon: Camera,
       color: 'accent',
       mockup: <HistoryMockup />

@@ -1029,7 +1029,7 @@ export default function DemoRide() {
             <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
               <p className="text-sm text-accent flex items-center gap-2">
                 <Camera className="w-4 h-4" />
-                <span>Attach up to 10 photos per ride — stored locally</span>
+                <span>Attach up to 9 photos per ride — stored locally</span>
               </p>
             </div>
           </div>
