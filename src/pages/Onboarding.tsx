@@ -259,7 +259,7 @@ export default function Onboarding() {
           </div>
 
           <Button
-            onClick={() => setStep('permissions')}
+            onClick={() => setStep('profile')}
             disabled={!allAgreed}
             className="w-full h-12 text-base font-semibold rounded-2xl touch-target"
           >
