@@ -226,10 +226,10 @@ export default function Lobby() {
 
   // Redirect if not in a convoy
   useEffect(() => {
-    if (!convoy.isActive) {
+    if (!convoy.isRestoring && !convoy.isActive) {
       navigate('/');
     }
-  }, [convoy.isActive, navigate]);
+  }, [convoy.isActive, convoy.isRestoring, navigate]);
 
   // Auto-hide QR overlay after 15 seconds
   useEffect(() => {
@@ -425,7 +425,7 @@ export default function Lobby() {
     return getMemberColorStyles(member.accentColor);
   };
 
-  if (!convoy.isActive) return null;
+  if (convoy.isRestoring || !convoy.isActive) return null;
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
