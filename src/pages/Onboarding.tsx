@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type PermissionStatus = 'pending' | 'granted' | 'denied' | 'prompt';
+type Step = 'consent' | 'permissions' | 'profile';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true);
-  const [step, setStep] = useState<'permissions' | 'profile'>('permissions');
+  const [step, setStep] = useState<Step>('consent');
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedAge, setAgreedAge] = useState(false);
+  const [agreedSafety, setAgreedSafety] = useState(false);
   const [locationPermission, setLocationPermission] = useState<PermissionStatus>('pending');
   const [micPermission, setMicPermission] = useState<PermissionStatus>('pending');
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
