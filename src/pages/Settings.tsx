@@ -583,8 +583,27 @@ export default function Settings() {
             <li>• All ride data stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
             <li>• Voice data is never recorded or stored</li>
+            <li>• Live convoy data is server-burned the moment a ride ends</li>
           </ul>
-          <p className="text-[10px] text-muted-foreground/70 mt-3 pt-3 border-t border-border/30">
+          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/privacy')}
+              className="h-9 text-xs rounded-lg touch-target"
+            >
+              Privacy Policy
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/terms')}
+              className="h-9 text-xs rounded-lg touch-target"
+            >
+              Terms & Safety
+            </Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground/70 mt-3">
             Battery use increases while a ride is active.
           </p>
         </section>
