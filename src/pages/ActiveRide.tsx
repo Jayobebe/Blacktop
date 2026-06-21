@@ -136,17 +136,10 @@ export default function ActiveRide() {
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
-  const [showLiveStream, setShowLiveStream] = useState(false);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
   const [crashPromptOpen, setCrashPromptOpen] = useState(false);
-  const [pendingRecording, setPendingRecording] = useState<{
-    blobUrl: string;
-    thumbnailUrl: string;
-    filename: string;
-    duration: number;
-    size: number;
-  } | null>(null);
+
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
   const rideStateRef = useRef(rideState); // Keep fresh ref for broadcast handler
