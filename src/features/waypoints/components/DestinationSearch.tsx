@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -330,6 +331,8 @@ export function DestinationSearch({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
+  const inputWrapRef = useRef<HTMLDivElement>(null);
+  const [dropdownRect, setDropdownRect] = useState<{ left: number; top: number; width: number } | null>(null);
 
   // Use external location if provided, otherwise use internal
   const userLocation = externalUserLocation ?? internalUserLocation;
@@ -544,6 +547,24 @@ export function DestinationSearch({
     };
   }, []);
 
+  // Track input position so the portal dropdown can anchor itself
+  useEffect(() => {
+    if (!showResults) return;
+    const updateRect = () => {
+      const el = inputWrapRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setDropdownRect({ left: r.left, top: r.bottom + 8, width: r.width });
+    };
+    updateRect();
+    window.addEventListener('scroll', updateRect, true);
+    window.addEventListener('resize', updateRect);
+    return () => {
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [showResults, results, recentLocations, isSearching, activeCategory]);
+
   const showRecent = query.length < 2 && !activeCategory && recentLocations.length > 0;
   const isPostalSearch = query.length >= 2 && containsPostalCode(query, countryCode);
   const rawDisplayResults = showRecent ? recentLocations : results;
@@ -618,7 +639,7 @@ export function DestinationSearch({
       </div>
 
       {/* Search input */}
-      <div className="flex gap-2">
+      <div ref={inputWrapRef} className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -654,9 +675,18 @@ export function DestinationSearch({
         </button>
       </div>
       
-      {/* Results dropdown */}
-      {showResults && hasDisplayContent && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto">
+      {/* Results dropdown rendered in a portal so it overlays everything (chat, members, etc.) */}
+      {showResults && hasDisplayContent && dropdownRect && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            left: dropdownRect.left,
+            top: dropdownRect.top,
+            width: dropdownRect.width,
+            zIndex: 9999,
+          }}
+          className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto"
+        >
           {showRecent && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               <Clock className="w-3.5 h-3.5" />
@@ -727,7 +757,8 @@ export function DestinationSearch({
               </button>
             ))
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
