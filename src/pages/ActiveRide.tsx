@@ -13,7 +13,7 @@ import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
-import { LiveStreamViewer } from '@/features/streaming';
+
 import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
