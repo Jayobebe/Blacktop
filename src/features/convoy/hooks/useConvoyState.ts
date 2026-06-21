@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const MAX_CONVOY_MEMBERS = 8;
+const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -16,10 +17,25 @@ let convoyState: ConvoyState = {
   isLeader: false,
   members: [],
   isActive: false,
+  isRestoring: true,
   destination: null,
   waypoints: [],
   isPaused: false,
 };
+
+let restoreInFlight = false;
+
+function rememberActiveConvoy(convoyId: string | null) {
+  try {
+    if (convoyId) {
+      localStorage.setItem(ACTIVE_CONVOY_KEY, convoyId);
+    } else {
+      localStorage.removeItem(ACTIVE_CONVOY_KEY);
+    }
+  } catch {
+    // Ignore storage failures in private browsing / restricted webviews.
+  }
+}
 
 function getSnapshot(): ConvoyState {
   return convoyState;
@@ -51,13 +67,32 @@ export function useConvoyState() {
   // Restore convoy state from database on mount (handles page reload)
   useEffect(() => {
     // Skip if we already have an active convoy loaded
-    if (state.isActive) return;
+    if (state.isActive || restoreInFlight) return;
 
     const restoreConvoySession = async () => {
+      restoreInFlight = true;
+      try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        return;
+      }
 
-      // Check if user is a member of any active convoy (take most recent if multiple)
+      const rememberedConvoyId = (() => {
+        try {
+          return localStorage.getItem(ACTIVE_CONVOY_KEY);
+        } catch {
+          return null;
+        }
+      })();
+
+      if (!rememberedConvoyId) {
+        console.log('[Convoy] No locally active convoy to restore');
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        return;
+      }
+
+      // Only restore the convoy this device explicitly remembers as active.
       const { data: memberships } = await supabase
         .from('convoy_members')
         .select(`
@@ -73,21 +108,36 @@ export function useConvoyState() {
             destination_lat,
             destination_lng,
             is_active,
-            is_paused
+            is_paused,
+            ride_ended_at
           )
         `)
         .eq('user_id', user.id)
+        .eq('convoy_id', rememberedConvoyId)
         .eq('convoys.is_active', true)
-        .order('joined_at', { ascending: false })
         .limit(1);
 
       const membership = memberships?.[0];
       if (!membership?.convoys) {
         console.log('[Convoy] No active convoy membership found');
+        rememberActiveConvoy(null);
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
         return;
       }
 
       const convoy = membership.convoys as any;
+      if (convoy.ride_ended_at) {
+        console.log('[Convoy] Ignoring ended convoy membership:', convoy.code);
+        await supabase
+          .from('convoy_members')
+          .delete()
+          .eq('convoy_id', convoy.id)
+          .eq('user_id', user.id);
+        rememberActiveConvoy(null);
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        return;
+      }
+
       console.log('[Convoy] Restoring convoy session:', convoy.code);
 
       // Fetch all members
@@ -136,12 +186,20 @@ export function useConvoyState() {
         isLeader: convoy.leader_id === user.id,
         members,
         isActive: true,
+        isRestoring: false,
         destination,
         waypoints: [],
         isPaused: convoy.is_paused || false,
       }));
+      rememberActiveConvoy(convoy.id);
 
       toast.success('Convoy session restored');
+      } finally {
+        if (convoyState.isRestoring) {
+          setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        }
+        restoreInFlight = false;
+      }
     };
 
     restoreConvoySession();
@@ -164,6 +222,23 @@ export function useConvoyState() {
         async (payload) => {
           const convoy = payload.new as any;
           const oldConvoy = payload.old as any;
+
+          if (convoy.is_active === false || convoy.ride_ended_at) {
+            console.log('[Convoy] Convoy ended, clearing local session');
+            rememberActiveConvoy(null);
+            setConvoyState(() => ({
+              id: null,
+              code: null,
+              isLeader: false,
+              members: [],
+              isActive: false,
+              isRestoring: false,
+              destination: null,
+              waypoints: [],
+              isPaused: false,
+            }));
+            return;
+          }
           
           // If leader_id changed, refresh members to update leadership status
           if (convoy.leader_id !== oldConvoy.leader_id) {
@@ -364,10 +439,12 @@ export function useConvoyState() {
       isLeader: true,
       members: [member],
       isActive: true,
+      isRestoring: false,
       destination: null,
       waypoints: [],
       isPaused: false,
     }));
+    rememberActiveConvoy(convoy.id);
 
     return { id: convoy.id, code: convoy.code };
   }, [profile.name]);
@@ -480,10 +557,12 @@ export function useConvoyState() {
       isLeader: convoy.leader_id === user.id,
       members,
       isActive: true,
+      isRestoring: false,
       destination,
       waypoints: [],
       isPaused: convoy.is_paused || false,
     }));
+    rememberActiveConvoy(convoy.id);
 
     return true;
   }, []);
@@ -524,10 +603,12 @@ export function useConvoyState() {
       isLeader: false,
       members: [],
       isActive: false,
+      isRestoring: false,
       destination: null,
       waypoints: [],
       isPaused: false,
     }));
+    rememberActiveConvoy(null);
   }, [state.id, state.isLeader]);
 
   const setDestination = useCallback(async (destination: ConvoyDestination) => {
@@ -631,36 +712,40 @@ export function useConvoyState() {
       .eq('user_id', user.id);
   }, [state.id]);
 
-  // Leader ends the convoy ride - clears destination and resets all members' navigation status
+  // Leader ends the convoy ride - burn the finished lobby so it cannot be restored later
   const endConvoyRide = useCallback(async () => {
     if (!state.id || !state.isLeader) return;
 
-    // Clear destination and ride flags in database (this triggers realtime for all members)
+    const endedAt = new Date().toISOString();
+
+    // Mark the convoy inactive and ended; server-side burn cleanup handles ephemeral ride data.
     await supabase
       .from('convoys')
       .update({
+        is_active: false,
         destination_name: null,
         destination_address: null,
         destination_lat: null,
         destination_lng: null,
         destination_set_at: null,
-        ride_ended_at: null, // Clear so next ride can be started
-        ride_started_at: null, // Clear so next ride can be started
+        ride_ended_at: endedAt,
+        ride_started_at: null,
       })
       .eq('id', state.id);
 
-    // Reset all members' navigation status
-    await supabase
-      .from('convoy_members')
-      .update({ has_navigated: false })
-      .eq('convoy_id', state.id);
-
-    // Update local state
-    setConvoyState((prev) => ({
-      ...prev,
+    // Clear local state so Home cannot redirect back into the burned lobby.
+    setConvoyState(() => ({
+      id: null,
+      code: null,
+      isLeader: false,
+      members: [],
+      isActive: false,
+      isRestoring: false,
       destination: null,
-      members: prev.members.map(m => ({ ...m, hasNavigated: false })),
+      waypoints: [],
+      isPaused: false,
     }));
+    rememberActiveConvoy(null);
   }, [state.id, state.isLeader]);
 
   // Transfer leadership to another member

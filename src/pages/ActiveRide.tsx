@@ -492,12 +492,8 @@ export default function ActiveRide() {
 
   const handleCloseSummary = () => {
     setShowSummary(false);
-    // Navigate to lobby for convoy rides, home for solo rides
-    if (finalMembers.length > 0) {
-      navigate('/lobby');
-    } else {
-      navigate('/');
-    }
+    // Finished convoy lobbies are burned, so never route back into the lobby.
+    navigate('/');
   };
 
   const handleRescue = async () => {

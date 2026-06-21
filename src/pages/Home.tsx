@@ -37,10 +37,10 @@ export default function Home() {
 
   // Redirect to lobby if in a convoy
   useEffect(() => {
-    if (convoy.isActive) {
+    if (!convoy.isRestoring && convoy.isActive) {
       navigate('/lobby');
     }
-  }, [convoy.isActive, navigate]);
+  }, [convoy.isActive, convoy.isRestoring, navigate]);
 
   const dismissInstallBanner = () => {
     setShowInstallBanner(false);
