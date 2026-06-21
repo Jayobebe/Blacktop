@@ -547,6 +547,24 @@ export function DestinationSearch({
     };
   }, []);
 
+  // Track input position so the portal dropdown can anchor itself
+  useEffect(() => {
+    if (!showResults) return;
+    const updateRect = () => {
+      const el = inputWrapRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setDropdownRect({ left: r.left, top: r.bottom + 8, width: r.width });
+    };
+    updateRect();
+    window.addEventListener('scroll', updateRect, true);
+    window.addEventListener('resize', updateRect);
+    return () => {
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [showResults, results, recentLocations, isSearching, activeCategory]);
+
   const showRecent = query.length < 2 && !activeCategory && recentLocations.length > 0;
   const isPostalSearch = query.length >= 2 && containsPostalCode(query, countryCode);
   const rawDisplayResults = showRecent ? recentLocations : results;
