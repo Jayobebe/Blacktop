@@ -1,9 +1,12 @@
 import { useNavigate } from 'react-router-dom';
+import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Shield } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
+  const { hasProfile } = useProfile();
+  const handleBack = () => navigate(hasProfile ? '/settings' : '/');
 
   return (
     <div className="min-h-screen bg-background safe-top safe-bottom">
@@ -12,7 +15,7 @@ export default function PrivacyPolicy() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="touch-target"
           >
             <ArrowLeft className="w-5 h-5" />
