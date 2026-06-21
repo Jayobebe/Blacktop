@@ -124,7 +124,7 @@ serve(async (req) => {
       if (filter24h) {
         // Search for shops and petrol stations open 24 hours
         query = `
-          [out:json][timeout:15];
+          [out:json][timeout:8];
           (
             node["shop"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
             node["amenity"="fuel"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
@@ -135,15 +135,24 @@ serve(async (req) => {
       } else {
         const regex = amenities.map(escapeRegexPart).join("|");
         query = `
-          [out:json][timeout:10];
+          [out:json][timeout:8];
           (
-            node["amenity"~"^(${regex})$"](around:${radius},${body.lat},${body.lon});
+            node["amenity"~"^(${regex})$"]["name"](around:${radius},${body.lat},${body.lon});
           );
           out body ${limit};
         `;
       }
 
-      const data = await fetchOverpass(query);
+      let data: any;
+      try {
+        data = await fetchOverpass(query);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Overpass unavailable, returning empty:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify([]), {
+          headers: { ...corsHeaders, "Content-Type": "application/json", "X-Fallback": "overpass_unavailable" },
+          status: 200,
+        });
+      }
 
       const elements = Array.isArray(data?.elements) ? data.elements : [];
       // Return a slim payload for the client
