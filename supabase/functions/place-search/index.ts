@@ -44,17 +44,28 @@ function escapeRegexPart(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function fetchOverpass(query: string) {
   const endpoints = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.ru/api/interpreter",
   ];
 
   let lastError: unknown = null;
 
   for (const endpoint of endpoints) {
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetchWithTimeout(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -62,7 +73,7 @@ async function fetchOverpass(query: string) {
           "User-Agent": "Blacktop-App/1.0",
         },
         body: `data=${encodeURIComponent(query)}`,
-      });
+      }, 9000);
 
       const text = await res.text();
       if (!res.ok) {
