@@ -50,6 +50,10 @@ Deno.serve(async (req) => {
       return json({ skipped: true, reason: 'no_integration' }, 200)
     }
 
+    if (integration.auto_announce === false) {
+      return json({ skipped: true, reason: 'auto_announce_off' }, 200)
+    }
+
     const rolePrefix = integration.role_to_ping
       ? `<@&${integration.role_to_ping}> `
       : ''
