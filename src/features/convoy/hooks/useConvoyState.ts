@@ -185,6 +185,7 @@ export function useConvoyState() {
         waypoints: [],
         isPaused: convoy.is_paused || false,
       }));
+      rememberActiveConvoy(convoy.id);
 
       toast.success('Convoy session restored');
       } finally {
