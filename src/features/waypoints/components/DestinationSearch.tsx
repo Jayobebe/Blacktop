@@ -142,23 +142,25 @@ async function searchNearbyPOIs(
       limit: 80,
     });
 
-    let results: SearchResult[] = (overpass || []).map((el) => {
-      const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
-      const name = el.tags?.name || el.tags?.brand || el.tags?.operator || 'Nearby';
-      const address = [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']]
-        .filter(Boolean)
-        .join(', ') || String(el.tags?.['addr:full'] || '');
+    let results: SearchResult[] = (overpass || [])
+      .filter((el) => !!(el.tags?.name || el.tags?.brand || el.tags?.operator))
+      .map((el) => {
+        const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
+        const name = el.tags?.name || el.tags?.brand || el.tags?.operator;
+        const address = [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']]
+          .filter(Boolean)
+          .join(', ') || String(el.tags?.['addr:full'] || '');
 
-      return {
-        id: `op:${el.id}`,
-        name,
-        address: address || name,
-        lat: el.lat,
-        lng: el.lon,
-        type: el.tags?.amenity,
-        distance,
-      };
-    });
+        return {
+          id: `op:${el.id}`,
+          name,
+          address: address || name,
+          lat: el.lat,
+          lng: el.lon,
+          type: el.tags?.amenity,
+          distance,
+        };
+      });
 
     results = results
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
