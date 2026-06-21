@@ -42,12 +42,16 @@ Deno.serve(async (req) => {
     // Solo rider pings their own Discord integration
     const { data: integration } = await admin
       .from('discord_integrations')
-      .select('webhook_url, role_to_ping')
+      .select('webhook_url, role_to_ping, auto_announce')
       .eq('user_id', userId)
       .maybeSingle()
 
     if (!integration?.webhook_url) {
       return json({ skipped: true, reason: 'no_integration' }, 200)
+    }
+
+    if (integration.auto_announce === false) {
+      return json({ skipped: true, reason: 'auto_announce_off' }, 200)
     }
 
     const rolePrefix = integration.role_to_ping
