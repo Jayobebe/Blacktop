@@ -107,8 +107,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   accentColor: 'orange',
   amberSpeedThreshold: 80,
   redSpeedThreshold: 100,
-  liveStreamingEnabled: false,
-  streamKey: '',
   selectedActionCam: 'dji',
   showStatsOverlay: true,
   leanAngleEnabled: false,
