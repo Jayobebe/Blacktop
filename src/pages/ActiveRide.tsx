@@ -14,7 +14,7 @@ import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
 
-import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
+import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
@@ -138,6 +138,8 @@ export default function ActiveRide() {
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
+  const { integration: discordIntegration } = useDiscordIntegration();
+  const discordEnabled = !!discordIntegration?.webhook_url && discordIntegration.auto_announce !== false;
   const [crashPromptOpen, setCrashPromptOpen] = useState(false);
 
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
@@ -929,7 +931,7 @@ export default function ActiveRide() {
       </div>
 
       {/* Solo Rescue Button - pings user's Discord directly */}
-      {!rideState.isConvoyMode && (
+      {!rideState.isConvoyMode && discordEnabled && (
         <div className="mt-2 flex justify-center animate-slide-up">
           <Button
             onClick={async () => {
