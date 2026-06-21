@@ -241,73 +241,8 @@ export default function Settings() {
          )}
         </section>
 
-        {/* Navigation App Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-75">
-          <div className="flex items-center gap-2 mb-3">
-            <Navigation className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Navigation App</p>
-          </div>
-          <div className="space-y-2">
-            {navApps.map((app) => {
-              const isSelected = preferredNavApp === app.id;
-              return (
-                <div
-                  key={app.id}
-                  className={cn(
-                    "w-full flex items-center justify-between p-3 rounded-xl border transition-colors",
-                    isSelected
-                      ? "border-accent/40 bg-accent/10"
-                      : "border-border/30 bg-card/30"
-                  )}
-                >
-                  <button
-                    onClick={() => updateNavApp(app.id)}
-                    className={cn(
-                      "flex-1 text-left text-sm touch-target font-medium",
-                      isSelected ? "text-accent" : "text-foreground hover:text-accent"
-                    )}
-                  >
-                    {app.label}
-                  </button>
-                  <button
-                    onClick={() => handleOpenNavApp(app.id)}
-                    className={cn(
-                      "p-2 rounded-lg transition-colors",
-                      isSelected 
-                        ? "text-accent hover:bg-accent/20" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                    title={`Open ${app.label}`}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-3">
-            Blacktop opens your preferred app for directions
-          </p>
-        </section>
-
-        {/* Discord Integration */}
-        <DiscordSettingsCard />
-
-
-        {/* Accent Color Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-100">
-          <div className="flex items-center gap-2 mb-3">
-            <Palette className="w-4 h-4 text-muted-foreground" />
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Accent Color</p>
-          </div>
-          <AccentColorPicker 
-            selected={settings.accentColor} 
-            onSelect={setAccentColor} 
-          />
-        </section>
-
         {/* Units Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-150">
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-75">
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Units</p>
@@ -341,7 +276,7 @@ export default function Settings() {
         </section>
 
         {/* Speed Alert Thresholds */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-100">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Speed Alerts</p>
@@ -420,7 +355,7 @@ export default function Settings() {
         </section>
 
         {/* Lean Angle Sensor Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-150">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Lean Angle Sensor</p>
@@ -572,9 +507,72 @@ export default function Settings() {
           </div>
         </section>
 
+        {/* Navigation App Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Navigation className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Navigation App</p>
+          </div>
+          <div className="space-y-2">
+            {navApps.map((app) => {
+              const isSelected = preferredNavApp === app.id;
+              return (
+                <div
+                  key={app.id}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-xl border transition-colors",
+                    isSelected
+                      ? "border-accent/40 bg-accent/10"
+                      : "border-border/30 bg-card/30"
+                  )}
+                >
+                  <button
+                    onClick={() => updateNavApp(app.id)}
+                    className={cn(
+                      "flex-1 text-left text-sm touch-target font-medium",
+                      isSelected ? "text-accent" : "text-foreground hover:text-accent"
+                    )}
+                  >
+                    {app.label}
+                  </button>
+                  <button
+                    onClick={() => handleOpenNavApp(app.id)}
+                    className={cn(
+                      "p-2 rounded-lg transition-colors",
+                      isSelected 
+                        ? "text-accent hover:bg-accent/20" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}
+                    title={`Open ${app.label}`}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-3">
+            Blacktop opens your preferred app for directions
+          </p>
+        </section>
+
+        {/* Discord Integration */}
+        <DiscordSettingsCard />
+
+        {/* Accent Color Section */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200">
+          <div className="flex items-center gap-2 mb-3">
+            <Palette className="w-4 h-4 text-muted-foreground" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Accent Color</p>
+          </div>
+          <AccentColorPicker 
+            selected={settings.accentColor} 
+            onSelect={setAccentColor} 
+          />
+        </section>
 
         {/* Privacy Section */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-200 landscape:hidden">
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-250 landscape:hidden">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-4 h-4 text-muted-foreground" />
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Privacy & Battery</p>
