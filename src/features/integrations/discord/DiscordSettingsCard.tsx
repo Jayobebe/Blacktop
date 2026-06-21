@@ -93,8 +93,8 @@ export function DiscordSettingsCard() {
         </div>
         <div className="flex items-center justify-between pt-2">
           <div>
-            <p className="text-sm font-medium">Auto-announce convoys</p>
-            <p className="text-[10px] text-muted-foreground">Ping the server every time you start a convoy</p>
+            <p className="text-sm font-medium">Discord pings</p>
+            <p className="text-[10px] text-muted-foreground">Master switch — off blocks all convoy and rescue pings</p>
           </div>
           <Switch
             checked={autoAnnounce}
