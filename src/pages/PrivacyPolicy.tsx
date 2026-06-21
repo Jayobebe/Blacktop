@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="touch-target"
           >
             <ArrowLeft className="w-5 h-5" />
