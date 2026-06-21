@@ -51,6 +51,8 @@ export default function Home() {
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+      {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
+
       {/* Install Banner */}
       {showInstallBanner && (
         <div className="mb-3 bg-accent/10 border border-accent/20 rounded-2xl p-3 flex items-center gap-3 animate-slide-down landscape:hidden">
