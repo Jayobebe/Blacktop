@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const MAX_CONVOY_MEMBERS = 8;
+const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -23,6 +24,18 @@ let convoyState: ConvoyState = {
 };
 
 let restoreInFlight = false;
+
+function rememberActiveConvoy(convoyId: string | null) {
+  try {
+    if (convoyId) {
+      localStorage.setItem(ACTIVE_CONVOY_KEY, convoyId);
+    } else {
+      localStorage.removeItem(ACTIVE_CONVOY_KEY);
+    }
+  } catch {
+    // Ignore storage failures in private browsing / restricted webviews.
+  }
+}
 
 function getSnapshot(): ConvoyState {
   return convoyState;
