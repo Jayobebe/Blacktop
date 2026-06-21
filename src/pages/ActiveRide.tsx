@@ -156,21 +156,8 @@ export default function ActiveRide() {
     }
   }, [savedRideId, pendingBadges, updateRideBadges]);
 
-  // Save pending recording once savedRideId becomes available
-  useEffect(() => {
-    if (savedRideId && pendingRecording) {
-      console.log('[ActiveRide] Saving pending recording to ride:', savedRideId);
-      addRideRecording(savedRideId, {
-        id: crypto.randomUUID(),
-        filename: pendingRecording.filename,
-        blobUrl: pendingRecording.blobUrl,
-        thumbnailUrl: pendingRecording.thumbnailUrl,
-        duration: pendingRecording.duration,
-        size: pendingRecording.size,
-      });
-      setPendingRecording(null); // Clear after saving
-    }
-  }, [savedRideId, pendingRecording, addRideRecording]);
+
+
 
   // Save pending overlay blob once savedRideId becomes available
   useEffect(() => {
