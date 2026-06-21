@@ -294,6 +294,10 @@ export type Database = {
     }
     Functions: {
       generate_convoy_code: { Args: never; Returns: string }
+      is_convoy_member: {
+        Args: { _convoy_id: string; _user_id: string }
+        Returns: boolean
+      }
       profile_count: { Args: never; Returns: number }
     }
     Enums: {
