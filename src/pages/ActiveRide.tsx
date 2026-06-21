@@ -14,7 +14,7 @@ import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
 
-import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
+import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
