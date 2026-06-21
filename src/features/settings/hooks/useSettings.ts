@@ -164,25 +164,8 @@ export function useSettings() {
     updateSetting('accentColor', color);
   };
 
-  const toggleLiveStreaming = () => {
-    updateSetting('liveStreamingEnabled', !settings.liveStreamingEnabled);
-  };
-
-  const setStreamKey = (key: string) => {
-    updateSetting('streamKey', key);
-  };
-
-  const generateStreamKey = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let key = 'bt_';
-    for (let i = 0; i < 16; i++) {
-      key += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setStreamKey(key);
-    return key;
-  };
-
   const setActionCam = (cam: ActionCamBrand) => {
+
     updateSetting('selectedActionCam', cam);
   };
 
