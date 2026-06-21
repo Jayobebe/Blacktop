@@ -16,10 +16,13 @@ let convoyState: ConvoyState = {
   isLeader: false,
   members: [],
   isActive: false,
+  isRestoring: true,
   destination: null,
   waypoints: [],
   isPaused: false,
 };
+
+let restoreInFlight = false;
 
 function getSnapshot(): ConvoyState {
   return convoyState;
