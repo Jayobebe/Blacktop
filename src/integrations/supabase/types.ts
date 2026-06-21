@@ -270,8 +270,6 @@ export type Database = {
           created_at: string | null
           display_name: string
           id: string
-          lifetime_top_speed: number | null
-          total_distance: number | null
           updated_at: string | null
         }
         Insert: {
@@ -279,8 +277,6 @@ export type Database = {
           created_at?: string | null
           display_name: string
           id: string
-          lifetime_top_speed?: number | null
-          total_distance?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -288,8 +284,6 @@ export type Database = {
           created_at?: string | null
           display_name?: string
           id?: string
-          lifetime_top_speed?: number | null
-          total_distance?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -300,6 +294,7 @@ export type Database = {
     }
     Functions: {
       generate_convoy_code: { Args: never; Returns: string }
+      profile_count: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
