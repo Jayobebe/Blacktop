@@ -481,19 +481,19 @@ export default function Settings() {
           )}
         </CollapsibleSection>
 
-        {/* Convoy Display Section */}
-        <CollapsibleSection icon={Users} label="Convoy Metrics" delayClass="delay-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Show Convoy Metrics</p>
-              <p className="text-[10px] text-muted-foreground">Speed stats during rides</p>
-            </div>
-            <Switch 
-              checked={settings.showSpeedRankings} 
-              onCheckedChange={toggleSpeedRankings}
-            />
-          </div>
-        </CollapsibleSection>
+         {/* Convoy Display Section */}
+         <CollapsibleSection icon={Users} label="Convoy Data" delayClass="delay-200">
+           <div className="flex items-center justify-between">
+             <div>
+               <p className="text-sm font-medium">Show Convoy Metrics</p>
+               <p className="text-[10px] text-muted-foreground">Speed stats during rides</p>
+             </div>
+             <Switch 
+               checked={settings.showSpeedRankings} 
+               onCheckedChange={toggleSpeedRankings}
+             />
+           </div>
+         </CollapsibleSection>
 
         {/* Navigation App Section */}
         <CollapsibleSection icon={Navigation} label="Navigation" delayClass="delay-200">
