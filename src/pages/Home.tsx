@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
+import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
 
   // Check if app can be installed
   useEffect(() => {
