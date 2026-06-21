@@ -21,6 +21,8 @@ import Garage from "./pages/Garage";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
 import Install from "./pages/Install";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
     );
@@ -64,6 +68,8 @@ function AppRoutes() {
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/install" element={<Install />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
