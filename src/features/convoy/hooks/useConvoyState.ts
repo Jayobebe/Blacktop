@@ -78,6 +78,14 @@ export function useConvoyState() {
         return;
       }
 
+      const rememberedConvoyId = (() => {
+        try {
+          return localStorage.getItem(ACTIVE_CONVOY_KEY);
+        } catch {
+          return null;
+        }
+      })();
+
       // Check if user is a member of any active convoy (take most recent if multiple)
       const { data: memberships } = await supabase
         .from('convoy_members')
@@ -101,9 +109,11 @@ export function useConvoyState() {
         .eq('user_id', user.id)
         .eq('convoys.is_active', true)
         .order('joined_at', { ascending: false })
-        .limit(1);
+        .limit(5);
 
-      const membership = memberships?.[0];
+      const membership = rememberedConvoyId
+        ? memberships?.find((m: any) => m.convoy_id === rememberedConvoyId)
+        : memberships?.[0];
       if (!membership?.convoys) {
         console.log('[Convoy] No active convoy membership found');
         setConvoyState((prev) => ({ ...prev, isRestoring: false }));
