@@ -931,7 +931,7 @@ export default function ActiveRide() {
       </div>
 
       {/* Solo Rescue Button - pings user's Discord directly */}
-      {!rideState.isConvoyMode && (
+      {!rideState.isConvoyMode && discordEnabled && (
         <div className="mt-2 flex justify-center animate-slide-up">
           <Button
             onClick={async () => {
