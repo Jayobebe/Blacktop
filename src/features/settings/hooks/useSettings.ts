@@ -6,8 +6,6 @@ export type DistanceUnit = 'miles' | 'km';
 
 export type AccentColor = 'orange' | 'blue' | 'green' | 'purple' | 'pink' | 'red' | 'cyan' | 'lime';
 
-export type ActionCamBrand = 'dji' | 'gopro' | 'insta360' | 'sony' | 'akaso';
-
 export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring: string }[] = [
   { id: 'orange', label: 'Sunset', hsl: '38 95% 55%', ring: '38 95% 55%' },
   { id: 'blue', label: 'Ocean', hsl: '217 91% 60%', ring: '217 91% 60%' },
@@ -19,69 +17,6 @@ export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring:
   { id: 'lime', label: 'Neon', hsl: '84 85% 50%', ring: '84 85% 50%' },
 ];
 
-export const ACTION_CAM_OPTIONS: { id: ActionCamBrand; label: string; instructions: string[] }[] = [
-  { 
-    id: 'dji', 
-    label: 'DJI Action', 
-    instructions: [
-      '1. Record your ride with your DJI Action camera',
-      '2. After the ride, transfer the video to your phone',
-      '3. Go to Ride History → select your ride',
-      '4. Tap "Add Stats Overlay to Video"',
-      '5. Upload the video and adjust sync if needed',
-      '6. Process and download the video with stats overlay'
-    ]
-  },
-  { 
-    id: 'gopro', 
-    label: 'GoPro Hero', 
-    instructions: [
-      '1. Record your ride with your GoPro camera',
-      '2. After the ride, transfer the video to your phone',
-      '3. Go to Ride History → select your ride',
-      '4. Tap "Add Stats Overlay to Video"',
-      '5. Upload the video and adjust sync if needed',
-      '6. Process and download the video with stats overlay'
-    ]
-  },
-  { 
-    id: 'insta360', 
-    label: 'Insta360', 
-    instructions: [
-      '1. Record your ride with your Insta360 camera',
-      '2. After the ride, transfer the video to your phone',
-      '3. Go to Ride History → select your ride',
-      '4. Tap "Add Stats Overlay to Video"',
-      '5. Upload the video and adjust sync if needed',
-      '6. Process and download the video with stats overlay'
-    ]
-  },
-  { 
-    id: 'sony', 
-    label: 'Sony Action Cam', 
-    instructions: [
-      '1. Record your ride with your Sony camera',
-      '2. After the ride, transfer the video to your phone',
-      '3. Go to Ride History → select your ride',
-      '4. Tap "Add Stats Overlay to Video"',
-      '5. Upload the video and adjust sync if needed',
-      '6. Process and download the video with stats overlay'
-    ]
-  },
-  { 
-    id: 'akaso', 
-    label: 'AKASO', 
-    instructions: [
-      '1. Record your ride with your AKASO camera',
-      '2. After the ride, transfer the video to your phone',
-      '3. Go to Ride History → select your ride',
-      '4. Tap "Add Stats Overlay to Video"',
-      '5. Upload the video and adjust sync if needed',
-      '6. Process and download the video with stats overlay'
-    ]
-  },
-];
-
 export interface AppSettings {
   showSpeedRankings: boolean;
   speedUnit: SpeedUnit;
@@ -89,9 +24,6 @@ export interface AppSettings {
   accentColor: AccentColor;
   amberSpeedThreshold: number;
   redSpeedThreshold: number;
-  selectedActionCam: ActionCamBrand;
-
-  showStatsOverlay: boolean;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
   // Auto-rescue (crash detection)
@@ -107,8 +39,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   accentColor: 'orange',
   amberSpeedThreshold: 80,
   redSpeedThreshold: 100,
-  selectedActionCam: 'dji',
-  showStatsOverlay: true,
   leanAngleEnabled: false,
   leanAngleThreshold: 45, // Default warning at 45 degrees
   autoRescueEnabled: false,
@@ -120,7 +50,7 @@ export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
 
 export function useSettings() {
   const [storedSettings, setSettings] = useLocalStorage<Partial<AppSettings>>('blacktop-settings', DEFAULT_SETTINGS);
-  
+
   // Merge stored settings with defaults to handle missing fields from older versions
   const settings: AppSettings = {
     ...DEFAULT_SETTINGS,
@@ -164,15 +94,6 @@ export function useSettings() {
     updateSetting('accentColor', color);
   };
 
-  const setActionCam = (cam: ActionCamBrand) => {
-
-    updateSetting('selectedActionCam', cam);
-  };
-
-  const toggleStatsOverlay = () => {
-    updateSetting('showStatsOverlay', !settings.showStatsOverlay);
-  };
-
   const toggleLeanAngle = () => {
     updateSetting('leanAngleEnabled', !settings.leanAngleEnabled);
   };
@@ -188,8 +109,6 @@ export function useSettings() {
     toggleSpeedUnit,
     toggleDistanceUnit,
     setAccentColor,
-    setActionCam,
-    toggleStatsOverlay,
     toggleLeanAngle,
     setLeanAngleThreshold,
   };
