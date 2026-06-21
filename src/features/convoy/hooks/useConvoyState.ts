@@ -602,6 +602,7 @@ export function useConvoyState() {
       waypoints: [],
       isPaused: false,
     }));
+    rememberActiveConvoy(null);
   }, [state.id, state.isLeader]);
 
   const setDestination = useCallback(async (destination: ConvoyDestination) => {
@@ -738,6 +739,7 @@ export function useConvoyState() {
       waypoints: [],
       isPaused: false,
     }));
+    rememberActiveConvoy(null);
   }, [state.id, state.isLeader]);
 
   // Transfer leadership to another member
