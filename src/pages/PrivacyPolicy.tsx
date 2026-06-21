@@ -80,6 +80,18 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Stats overlay video</h2>
+          <p className="text-muted-foreground">
+            During each ride, the app draws your live stats (speed, distance,
+            lean angle) onto a transparent video file generated locally on your
+            device. It does not use your camera, microphone, or any cloud
+            service — it's a file you can later layer over your own action-cam
+            footage in a video editor. It lives in local storage and is erased
+            by the Burn Button along with everything else.
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Permissions we ask for</h2>
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li><span className="text-foreground">Location</span> — required, used only during active rides for tracking and convoy sync</li>
