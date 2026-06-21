@@ -86,7 +86,13 @@ export function useConvoyState() {
         }
       })();
 
-      // Check if user is a member of any active convoy (take most recent if multiple)
+      if (!rememberedConvoyId) {
+        console.log('[Convoy] No locally active convoy to restore');
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        return;
+      }
+
+      // Only restore the convoy this device explicitly remembers as active.
       const { data: memberships } = await supabase
         .from('convoy_members')
         .select(`
@@ -107,13 +113,11 @@ export function useConvoyState() {
           )
         `)
         .eq('user_id', user.id)
+        .eq('convoy_id', rememberedConvoyId)
         .eq('convoys.is_active', true)
-        .order('joined_at', { ascending: false })
-        .limit(5);
+        .limit(1);
 
-      const membership = rememberedConvoyId
-        ? memberships?.find((m: any) => m.convoy_id === rememberedConvoyId)
-        : memberships?.[0];
+      const membership = memberships?.[0];
       if (!membership?.convoys) {
         console.log('[Convoy] No active convoy membership found');
         rememberActiveConvoy(null);
