@@ -4,11 +4,10 @@ import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Download, MapPin, Mic, CheckCircle2, XCircle, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type PermissionStatus = 'pending' | 'granted' | 'denied' | 'prompt';
-type Step = 'consent' | 'permissions' | 'profile';
+type Step = 'consent' | 'profile';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
