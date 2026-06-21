@@ -37,12 +37,12 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 p-4 landscape:p-3 touch-target text-left"
+        className="w-full flex items-center gap-2 px-4 landscape:px-3 h-14 landscape:h-12 text-left"
       >
-        {Icon && <Icon className={cn('w-4 h-4 text-muted-foreground', iconClassName)} />}
+        {Icon && <Icon className={cn('w-4 h-4 text-muted-foreground shrink-0', iconClassName)} />}
         <p
           className={cn(
-            'text-[10px] text-muted-foreground uppercase tracking-widest flex-1',
+            'text-[10px] text-muted-foreground uppercase tracking-widest flex-1 truncate',
             labelClassName,
           )}
         >
@@ -50,7 +50,7 @@ export function CollapsibleSection({
         </p>
         <ChevronDown
           className={cn(
-            'w-4 h-4 text-muted-foreground transition-transform',
+            'w-4 h-4 text-accent transition-transform shrink-0',
             open && 'rotate-180',
           )}
         />

@@ -351,7 +351,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Lean Angle Sensor Section */}
-        <CollapsibleSection icon={Activity} label="Lean Angle Sensor" delayClass="delay-150">
+        <CollapsibleSection icon={Activity} label="Lean Angle" delayClass="delay-150">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium">Enable Lean Angle</p>
@@ -392,7 +392,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Safety / Auto-Rescue */}
-        <CollapsibleSection icon={AlertTriangle} label="Safety — Auto-Rescue" delayClass="delay-200">
+        <CollapsibleSection icon={AlertTriangle} label="Auto Rescue" delayClass="delay-200">
           <div className="flex items-center justify-between mb-2">
             <div className="pr-3">
               <p className="text-sm font-medium">Crash detection</p>
@@ -478,7 +478,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Convoy Display Section */}
-        <CollapsibleSection icon={Users} label="Convoy Display" delayClass="delay-200">
+        <CollapsibleSection icon={Users} label="Convoy Metrics" delayClass="delay-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Show Convoy Metrics</p>
@@ -492,7 +492,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Navigation App Section */}
-        <CollapsibleSection icon={Navigation} label="Navigation App" delayClass="delay-200">
+        <CollapsibleSection icon={Navigation} label="Navigation" delayClass="delay-200">
           <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
@@ -537,7 +537,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Discord Integration */}
-        <CollapsibleSection icon={MessageSquare} label="Discord Integration" delayClass="delay-200">
+        <CollapsibleSection icon={MessageSquare} label="Discord" delayClass="delay-200">
           <DiscordSettingsCard />
         </CollapsibleSection>
 
@@ -550,7 +550,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Privacy Section */}
-        <CollapsibleSection icon={Shield} label="Privacy & Battery" delayClass="delay-250" className="landscape:hidden">
+        <CollapsibleSection icon={Shield} label="Privacy" delayClass="delay-250" className="landscape:hidden">
           <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li>• All ride data stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
