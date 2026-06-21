@@ -54,11 +54,16 @@ export function useConvoyState() {
   // Restore convoy state from database on mount (handles page reload)
   useEffect(() => {
     // Skip if we already have an active convoy loaded
-    if (state.isActive) return;
+    if (state.isActive || restoreInFlight) return;
 
     const restoreConvoySession = async () => {
+      restoreInFlight = true;
+      try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        return;
+      }
 
       // Check if user is a member of any active convoy (take most recent if multiple)
       const { data: memberships } = await supabase
@@ -76,7 +81,8 @@ export function useConvoyState() {
             destination_lat,
             destination_lng,
             is_active,
-            is_paused
+            is_paused,
+            ride_ended_at
           )
         `)
         .eq('user_id', user.id)
@@ -87,10 +93,22 @@ export function useConvoyState() {
       const membership = memberships?.[0];
       if (!membership?.convoys) {
         console.log('[Convoy] No active convoy membership found');
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
         return;
       }
 
       const convoy = membership.convoys as any;
+      if (convoy.ride_ended_at) {
+        console.log('[Convoy] Ignoring ended convoy membership:', convoy.code);
+        await supabase
+          .from('convoy_members')
+          .delete()
+          .eq('convoy_id', convoy.id)
+          .eq('user_id', user.id);
+        setConvoyState((prev) => ({ ...prev, isRestoring: false }));
+        return;
+      }
+
       console.log('[Convoy] Restoring convoy session:', convoy.code);
 
       // Fetch all members
@@ -146,6 +164,9 @@ export function useConvoyState() {
       }));
 
       toast.success('Convoy session restored');
+      } finally {
+        restoreInFlight = false;
+      }
     };
 
     restoreConvoySession();
