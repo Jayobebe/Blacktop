@@ -96,7 +96,20 @@ export function DiscordSettingsCard() {
             <p className="text-sm font-medium">Auto-announce convoys</p>
             <p className="text-[10px] text-muted-foreground">Ping the server every time you start a convoy</p>
           </div>
-          <Switch checked={autoAnnounce} onCheckedChange={setAutoAnnounce} />
+          <Switch
+            checked={autoAnnounce}
+            onCheckedChange={async (val) => {
+              setAutoAnnounce(val);
+              if (integration?.webhook_url) {
+                await save({
+                  webhook_url: integration.webhook_url,
+                  server_name: integration.server_name,
+                  role_to_ping: integration.role_to_ping,
+                  auto_announce: val,
+                });
+              }
+            }}
+          />
         </div>
 
         <div className="flex gap-2 pt-2">
