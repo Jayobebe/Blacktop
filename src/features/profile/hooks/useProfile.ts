@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { NavigationApp, UserProfile } from '@/types/blacktop';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { displayNameSchema } from '@/lib/validation';
+import { toast } from 'sonner';
 
 const PROFILE_KEY = 'blacktop_profile';
 
@@ -132,8 +134,12 @@ export function useProfile() {
   }, []);
 
   const createProfile = useCallback(async (name: string) => {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
+    const parsed = displayNameSchema.safeParse(name);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? 'Invalid name');
+      return;
+    }
+    const trimmedName = parsed.data;
 
     // Sign in anonymously if not already authenticated
     let currentUser = user;
@@ -179,8 +185,13 @@ export function useProfile() {
   }, [profile]);
 
   const updateName = useCallback(async (name: string) => {
-    const trimmedName = name.trim();
-    if (!trimmedName || trimmedName === profile.name) return;
+    const parsed = displayNameSchema.safeParse(name);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? 'Invalid name');
+      return;
+    }
+    const trimmedName = parsed.data;
+    if (trimmedName === profile.name) return;
 
     // Update in database if authenticated
     if (user) {

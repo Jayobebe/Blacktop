@@ -232,15 +232,15 @@ serve(async (req) => {
           status: 200,
         });
       }
+      console.error("[PLACE-SEARCH] Upstream failed:", {
+        status: upstream.status,
+        body: text.slice(0, 500),
+      });
       return new Response(
-        JSON.stringify({
-          error: "Upstream search failed",
-          status: upstream.status,
-          body: text.slice(0, 500),
-        }),
+        JSON.stringify({ error: "Search service temporarily unavailable" }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 502,
+          status: 503,
         },
       );
     }
@@ -254,8 +254,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: message }), {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("[PLACE-SEARCH] ERROR:", detail);
+    return new Response(JSON.stringify({ error: "Search failed. Please try again." }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
