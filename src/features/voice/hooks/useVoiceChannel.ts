@@ -745,31 +745,54 @@ export function useVoiceChannel(convoyId?: string) {
           audio: getAudioConstraints(),
         });
       } catch (mediaError: any) {
-        console.error('[Voice] Failed to get microphone access:', mediaError);
-        isConnectingRef.current = false;
-        
-        const isIOS = isIOSDevice();
-        
-        if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
-          if (isIOS) {
-            return { 
-              success: false, 
-              error: 'Microphone access denied. On iOS, go to Settings → Safari → Microphone, then enable access for this site.' 
+        // OverconstrainedError → saved deviceId is no longer available.
+        // Clear the stale preference and retry with default device.
+        if (mediaError?.name === 'OverconstrainedError' || mediaError?.name === 'ConstraintNotSatisfiedError') {
+          console.warn('[Voice] Saved audio device unavailable, retrying with default');
+          localStorage.removeItem(AUDIO_INPUT_KEY);
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: getAudioConstraints(),
+            });
+          } catch (retryError: any) {
+            console.error('[Voice] Retry without saved device failed:', retryError);
+            // Last-ditch: bare audio:true
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (bareError: any) {
+              console.error('[Voice] Bare audio:true also failed:', bareError);
+              isConnectingRef.current = false;
+              return { success: false, error: 'Failed to access microphone. Please try again.' };
+            }
+          }
+        } else {
+          console.error('[Voice] Failed to get microphone access:', mediaError);
+          isConnectingRef.current = false;
+
+          const isIOS = isIOSDevice();
+
+          if (mediaError.name === 'NotAllowedError' || mediaError.name === 'PermissionDeniedError') {
+            if (isIOS) {
+              return {
+                success: false,
+                error: 'Microphone access denied. On iOS, go to Settings → Safari → Microphone, then enable access for this site.'
+              };
+            }
+            return {
+              success: false,
+              error: 'Microphone access denied. Please enable it in your browser or device settings.'
             };
           }
-          return { 
-            success: false, 
-            error: 'Microphone access denied. Please enable it in your browser or device settings.' 
-          };
+          if (mediaError.name === 'NotFoundError') {
+            return { success: false, error: 'No microphone found. Please connect a microphone and try again.' };
+          }
+          if (mediaError.name === 'NotReadableError' || mediaError.name === 'AbortError') {
+            return { success: false, error: 'Microphone is in use by another app. Please close other apps using the microphone.' };
+          }
+          return { success: false, error: 'Failed to access microphone. Please try again.' };
         }
-        if (mediaError.name === 'NotFoundError') {
-          return { success: false, error: 'No microphone found. Please connect a microphone and try again.' };
-        }
-        if (mediaError.name === 'NotReadableError' || mediaError.name === 'AbortError') {
-          return { success: false, error: 'Microphone is in use by another app. Please close other apps using the microphone.' };
-        }
-        return { success: false, error: 'Failed to access microphone. Please try again.' };
       }
+
       
       localStreamRef.current = stream;
 
