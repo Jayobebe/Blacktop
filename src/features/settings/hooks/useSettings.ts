@@ -89,9 +89,8 @@ export interface AppSettings {
   accentColor: AccentColor;
   amberSpeedThreshold: number;
   redSpeedThreshold: number;
-  liveStreamingEnabled: boolean;
-  streamKey: string;
   selectedActionCam: ActionCamBrand;
+
   showStatsOverlay: boolean;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
@@ -108,8 +107,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   accentColor: 'orange',
   amberSpeedThreshold: 80,
   redSpeedThreshold: 100,
-  liveStreamingEnabled: false,
-  streamKey: '',
   selectedActionCam: 'dji',
   showStatsOverlay: true,
   leanAngleEnabled: false,
@@ -167,25 +164,8 @@ export function useSettings() {
     updateSetting('accentColor', color);
   };
 
-  const toggleLiveStreaming = () => {
-    updateSetting('liveStreamingEnabled', !settings.liveStreamingEnabled);
-  };
-
-  const setStreamKey = (key: string) => {
-    updateSetting('streamKey', key);
-  };
-
-  const generateStreamKey = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let key = 'bt_';
-    for (let i = 0; i < 16; i++) {
-      key += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setStreamKey(key);
-    return key;
-  };
-
   const setActionCam = (cam: ActionCamBrand) => {
+
     updateSetting('selectedActionCam', cam);
   };
 
@@ -208,9 +188,6 @@ export function useSettings() {
     toggleSpeedUnit,
     toggleDistanceUnit,
     setAccentColor,
-    toggleLiveStreaming,
-    setStreamKey,
-    generateStreamKey,
     setActionCam,
     toggleStatsOverlay,
     toggleLeanAngle,

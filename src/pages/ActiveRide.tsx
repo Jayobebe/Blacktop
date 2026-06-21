@@ -13,7 +13,7 @@ import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
-import { LiveStreamViewer } from '@/features/streaming';
+
 import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
@@ -136,17 +136,10 @@ export default function ActiveRide() {
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
-  const [showLiveStream, setShowLiveStream] = useState(false);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
   const [crashPromptOpen, setCrashPromptOpen] = useState(false);
-  const [pendingRecording, setPendingRecording] = useState<{
-    blobUrl: string;
-    thumbnailUrl: string;
-    filename: string;
-    duration: number;
-    size: number;
-  } | null>(null);
+
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
   const rideStateRef = useRef(rideState); // Keep fresh ref for broadcast handler
@@ -163,21 +156,8 @@ export default function ActiveRide() {
     }
   }, [savedRideId, pendingBadges, updateRideBadges]);
 
-  // Save pending recording once savedRideId becomes available
-  useEffect(() => {
-    if (savedRideId && pendingRecording) {
-      console.log('[ActiveRide] Saving pending recording to ride:', savedRideId);
-      addRideRecording(savedRideId, {
-        id: crypto.randomUUID(),
-        filename: pendingRecording.filename,
-        blobUrl: pendingRecording.blobUrl,
-        thumbnailUrl: pendingRecording.thumbnailUrl,
-        duration: pendingRecording.duration,
-        size: pendingRecording.size,
-      });
-      setPendingRecording(null); // Clear after saving
-    }
-  }, [savedRideId, pendingRecording, addRideRecording]);
+
+
 
   // Save pending overlay blob once savedRideId becomes available
   useEffect(() => {
@@ -1028,26 +1008,7 @@ export default function ActiveRide() {
         )}
       </div>
 
-      {/* Live Stream Viewer */}
-      <LiveStreamViewer
-        streamKey={settings.streamKey}
-        currentSpeed={rideState.currentSpeed}
-        maxSpeed={rideState.maxSpeed}
-        distance={rideState.distance}
-        duration={rideState.duration}
-        currentLean={settings.leanAngleEnabled ? leanAngle.currentLean : undefined}
-        maxLean={settings.leanAngleEnabled ? leanAngle.maxLean : undefined}
-        leanThreshold={settings.leanAngleThreshold}
-        isVisible={showLiveStream}
-        isRiding={rideState.isActive && !showSummary}
-        isPaused={rideState.isPaused}
-        rideEnded={showSummary || (!rideState.isActive && endingFlow)}
-        onClose={() => setShowLiveStream(false)}
-        onRecordingComplete={(recording) => {
-          // Store recording - it will be saved when savedRideId becomes available
-          setPendingRecording(recording);
-        }}
-      />
+
     </div>
   );
 }
