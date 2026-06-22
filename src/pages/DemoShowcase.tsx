@@ -212,7 +212,7 @@ export default function DemoShowcase() {
       id: 'privacy',
       title: 'Burn Button',
       subtitle: 'Your Data, Your Control',
-      description: 'One tap to permanently delete all ride history, stats, and convoy data. Your profile name stays. Total privacy.',
+      description: 'One tap to permanently delete all ride history, stats, and convoy data. Total privacy.',
       icon: Flame,
       color: 'burn',
       mockup: <BurnMockup />
@@ -1178,7 +1178,7 @@ function BurnMockup() {
       </div>
 
       <p className="text-xs text-muted-foreground animate-fade-in delay-500">
-        Profile name is kept • Irreversible
+        Irreversible
       </p>
     </div>
   );
