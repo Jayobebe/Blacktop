@@ -86,7 +86,7 @@ export default function DemoShowcase() {
       id: 'tracking',
       title: 'Live Ride Tracking',
       subtitle: 'Speed, Distance, Duration',
-      description: 'Real-time GPS tracking with large, glove-friendly display. Works in background while you use navigation apps.',
+      description: 'Real-time GPS tracking with large, glove-friendly display.',
       icon: Gauge,
       color: 'speed-active',
       mockup: <TrackingMockup speed={speed} distance={distance} />
@@ -892,10 +892,6 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
         </div>
       </div>
 
-      {/* Background tracking hint */}
-      <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
-        <p className="text-xs text-accent">📱 Continues tracking in background</p>
-      </div>
     </div>
   );
 }

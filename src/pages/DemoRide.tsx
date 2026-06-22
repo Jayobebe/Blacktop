@@ -762,7 +762,7 @@ export default function DemoRide() {
               <div className="p-3 bg-card/50 border border-border/30 rounded-xl">
                 <p className="text-sm font-medium mb-1">📹 Sync with Your Action Cam</p>
                 <p className="text-xs text-muted-foreground">
-                  Record your ride with any action cam (GoPro, DJI, Insta360) while Blacktop tracks your stats in the background.
+                  Record your ride with any action cam (GoPro, DJI, Insta360) while Blacktop tracks your stats.
                 </p>
               </div>
               <div className="p-3 bg-accent/10 border border-accent/20 rounded-xl">
