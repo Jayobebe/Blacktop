@@ -334,6 +334,7 @@ export function DestinationSearch({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
   const inputWrapRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownRect, setDropdownRect] = useState<{ left: number; top: number; width: number } | null>(null);
 
   // Use external location if provided, otherwise use internal
