@@ -334,6 +334,7 @@ export function DestinationSearch({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
   const inputWrapRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownRect, setDropdownRect] = useState<{ left: number; top: number; width: number } | null>(null);
 
   // Use external location if provided, otherwise use internal
@@ -370,7 +371,10 @@ export function DestinationSearch({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inContainer = containerRef.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (!inContainer && !inDropdown) {
         setShowResults(false);
         setActiveCategory(null);
       }
@@ -680,6 +684,7 @@ export function DestinationSearch({
       {/* Results dropdown rendered in a portal so it overlays everything (chat, members, etc.) */}
       {showResults && hasDisplayContent && dropdownRect && createPortal(
         <div
+          ref={dropdownRef}
           style={{
             position: 'fixed',
             left: dropdownRect.left,
