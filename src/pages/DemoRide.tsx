@@ -1161,7 +1161,7 @@ export default function DemoRide() {
                 <div>
                   <p className="font-semibold text-destructive text-sm">Burn Button</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Permanently delete all ride data, stats, and convoy history. Your profile name is preserved.
+                    Permanently delete all ride data, stats, and convoy history.
                   </p>
                   <Button size="sm" variant="destructive" className="mt-3 h-8">
                     Burn All Data
