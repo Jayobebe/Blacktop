@@ -93,12 +93,14 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       const text = await res.text()
-      return json({ error: 'webhook_failed', status: res.status, detail: text }, 502)
+      console.error('[DISCORD] Webhook failed', res.status, text.slice(0, 200))
+      return json({ error: 'Announcement failed' }, 502)
     }
 
     return json({ ok: true })
   } catch (e) {
-    return json({ error: String(e) }, 500)
+    console.error('[DISCORD] Unexpected error', e)
+    return json({ error: 'Internal error' }, 500)
   }
 })
 
