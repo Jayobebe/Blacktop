@@ -684,6 +684,7 @@ export function DestinationSearch({
       {/* Results dropdown rendered in a portal so it overlays everything (chat, members, etc.) */}
       {showResults && hasDisplayContent && dropdownRect && createPortal(
         <div
+          ref={dropdownRef}
           style={{
             position: 'fixed',
             left: dropdownRect.left,
