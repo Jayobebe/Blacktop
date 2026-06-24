@@ -52,8 +52,8 @@ const ROUTE_SOURCE_ID = 'blacktop-route';
 const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
 const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
 
-// How long to hold off resuming GeolocateControl's auto-recenter after the
-// rider manually pans/zooms the map, so a deliberate look-around isn't
+// How long to hold off the heading-up auto-follow camera after the rider
+// manually pans/zooms/rotates the map, so a deliberate look-around isn't
 // immediately snapped back to their position.
 const LOCATE_RESUME_DELAY_MS = 10000;
 
@@ -116,7 +116,9 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   // the browser's CSS engine, so `hsl(var(--accent))` never resolves there —
   // look up the literal HSL components for the selected accent instead.
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
-  const accentColor = `hsl(${accentHsl})`;
+  // MapLibre's color parser requires comma-separated hsl(), not the modern
+  // space-separated CSS syntax that Tailwind tokens use.
+  const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
 
   // Mirror the ride screen's speed-warning thresholds (raw mph).
   const speed = rideState.currentSpeed;
@@ -128,6 +130,11 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         : 'text-foreground';
 
   useRadarOverlay(map);
+
+  const userMarkerRef = useRef<Marker | null>(null);
+  const headingRef = useRef<number | null>(null);
+  const hasFollowedUserRef = useRef(false);
+  const lastInteractionAtRef = useRef(0);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -145,74 +152,31 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     });
 
     instance.addControl(new maplibregl.AttributionControl({ compact: true }));
-    instance.addControl(new maplibregl.NavigationControl(), 'top-right');
+    instance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    instance.addControl(
+      new maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showAccuracyCircle: false,
+      }),
+      'top-right',
+    );
 
-    const geolocateControl = new maplibregl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true,
-      showAccuracyCircle: false,
-    });
-    instance.addControl(geolocateControl, 'top-right');
-
-    // GeolocateControl re-centers (and re-zooms) on the rider on every GPS
-    // fix once tracking is active, which fights any manual pan/zoom — a
-    // zoom gesture in particular doesn't drop it out of tracking mode the
-    // way a drag does. Pause tracking on any rider-initiated map gesture and
-    // only resume it after LOCATE_RESUME_DELAY_MS of no further interaction.
-    let isTrackingUser = false;
-    let isPausedByInteraction = false;
-    let suppressNextTrackingEvent = false;
-    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
-
-    geolocateControl.on('trackuserlocationstart', () => {
-      if (suppressNextTrackingEvent) {
-        suppressNextTrackingEvent = false;
-        return;
-      }
-      isTrackingUser = true;
-    });
-    geolocateControl.on('trackuserlocationend', () => {
-      if (suppressNextTrackingEvent) {
-        suppressNextTrackingEvent = false;
-        return;
-      }
-      isTrackingUser = false;
-      isPausedByInteraction = false;
-      if (resumeTimer) {
-        clearTimeout(resumeTimer);
-        resumeTimer = null;
-      }
-    });
-
-    const handleUserGesture = (e: { originalEvent?: unknown }) => {
-      if (!e.originalEvent || !isTrackingUser) return;
-
-      if (resumeTimer) clearTimeout(resumeTimer);
-
-      if (!isPausedByInteraction) {
-        isPausedByInteraction = true;
-        suppressNextTrackingEvent = true;
-        geolocateControl.trigger(); // ACTIVE_LOCK -> OFF: stop auto-recentering.
-      }
-
-      resumeTimer = setTimeout(() => {
-        isPausedByInteraction = false;
-        suppressNextTrackingEvent = true;
-        geolocateControl.trigger(); // OFF -> WAITING_ACTIVE: resumes on the next GPS fix.
-        resumeTimer = null;
-      }, LOCATE_RESUME_DELAY_MS);
+    // The heading-up auto-follow camera (below) fights any manual pan/zoom/
+    // rotate the rider makes. Track the last manual gesture and have the
+    // follow logic back off for LOCATE_RESUME_DELAY_MS after it.
+    const markInteraction = (e: { originalEvent?: unknown }) => {
+      if (e.originalEvent) lastInteractionAtRef.current = Date.now();
     };
-
-    instance.on('dragstart', handleUserGesture);
-    instance.on('zoomstart', handleUserGesture);
-    instance.on('rotatestart', handleUserGesture);
-    instance.on('pitchstart', handleUserGesture);
+    instance.on('dragstart', markInteraction);
+    instance.on('zoomstart', markInteraction);
+    instance.on('rotatestart', markInteraction);
+    instance.on('pitchstart', markInteraction);
 
     mapRef.current = instance;
     setMap(instance);
 
     return () => {
-      if (resumeTimer) clearTimeout(resumeTimer);
       instance.remove();
       mapRef.current = null;
       setMap(null);
@@ -221,26 +185,98 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Continuously watch the user's location + heading. The first fix auto-
+  // centers the map on the user so they never have to tap the locate button,
+  // and subsequent fixes rotate the map heading-up while moving.
   useEffect(() => {
     if (!('geolocation' in navigator)) return;
-    navigator.geolocation.getCurrentPosition(
+
+    let countryResolved = false;
+    const watchId = navigator.geolocation.watchPosition(
       async (position) => {
         const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
         setUserLocation(loc);
-        const code = await getCountryCode(loc.lat, loc.lng);
-        if (code) setCountryCode(code);
-        if (!initialDestination && mapRef.current) {
-          mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15 });
+
+        // GPS heading is null when stationary or unsupported. Only update the
+        // rotation when we have a real heading and the user is actually moving
+        // — otherwise the map spins unpredictably while parked.
+        const heading = position.coords.heading;
+        const speed = position.coords.speed ?? 0;
+        if (heading != null && !Number.isNaN(heading) && speed > 0.5) {
+          headingRef.current = heading;
+        }
+
+        if (!countryResolved) {
+          countryResolved = true;
+          const code = await getCountryCode(loc.lat, loc.lng);
+          if (code) setCountryCode(code);
+        }
+
+        const map = mapRef.current;
+        if (!map) return;
+
+        // First fix: auto-center on the user (unless we opened on a specific
+        // destination). Subsequent fixes keep them in view + heading-up.
+        if (!hasFollowedUserRef.current && !initialDestination) {
+          hasFollowedUserRef.current = true;
+          map.flyTo({
+            center: [loc.lng, loc.lat],
+            zoom: 16,
+            bearing: headingRef.current ?? 0,
+            essential: true,
+          });
+        } else if (hasFollowedUserRef.current) {
+          // Rider is mid-interaction (or just finished one) — let them look
+          // around instead of yanking the camera back on this fix.
+          if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
+          map.easeTo({
+            center: [loc.lng, loc.lat],
+            bearing: headingRef.current ?? map.getBearing(),
+            duration: 800,
+            essential: true,
+          });
         }
       },
       () => {
         // Location denied/unavailable — map still works, just stays at default center.
       },
-      { enableHighAccuracy: false, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 },
     );
-    // Only fetch once on mount.
+
+    return () => navigator.geolocation.clearWatch(watchId);
+    // Only register the watcher once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Render / move a marker for the user's current position so they're always
+  // visible on the map, independent of the GeolocateControl.
+  useEffect(() => {
+    if (!map || !userLocation) return;
+
+    if (!userMarkerRef.current) {
+      const el = document.createElement('div');
+      el.className = 'blacktop-user-marker';
+      el.style.width = '18px';
+      el.style.height = '18px';
+      el.style.borderRadius = '9999px';
+      el.style.background = accentColor;
+      el.style.border = '3px solid #ffffff';
+      el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.4)';
+      userMarkerRef.current = new maplibregl.Marker({ element: el })
+        .setLngLat([userLocation.lng, userLocation.lat])
+        .addTo(map);
+    } else {
+      userMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
+    }
+  }, [map, userLocation, accentColor]);
+
+  useEffect(() => {
+    return () => {
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
+    };
+  }, []);
+
 
   useEffect(() => {
     if (!map) return;
@@ -255,7 +291,8 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         .setLngLat([destination.lng, destination.lat])
         .addTo(map);
       markerRef.current = marker;
-      map.flyTo({ center: [destination.lng, destination.lat], zoom: 15 });
+      // Don't recenter on the destination — once the route is drawn we'll
+      // zoom into the user's position (heading-up) instead.
     }
   }, [map, destination, accentColor]);
 
@@ -372,9 +409,19 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         });
       }
 
-      const bounds = new maplibregl.LngLatBounds();
-      route.geometry.coordinates.forEach((c) => bounds.extend(c as [number, number]));
-      map.fitBounds(bounds, { padding: { top: 120, bottom: 120, left: 60, right: 60 }, maxZoom: 15 });
+      // Zoom into the user (heading-up) once the route is drawn instead of
+      // fitting the whole route — keeps focus on what's immediately ahead.
+      // Skip it if the rider is mid-interaction so this doesn't yank the
+      // camera away from wherever they're currently looking.
+      const recentlyInteracted = Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS;
+      if (userLocation && !recentlyInteracted) {
+        map.flyTo({
+          center: [userLocation.lng, userLocation.lat],
+          zoom: 17,
+          bearing: headingRef.current ?? map.getBearing(),
+          essential: true,
+        });
+      }
     };
 
     if (map.isStyleLoaded()) {
