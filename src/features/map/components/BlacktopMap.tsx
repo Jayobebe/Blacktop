@@ -316,7 +316,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
       markerRef.current = null;
     }
 
-    if (destination) {
+    if (destination && Number.isFinite(destination.lat) && Number.isFinite(destination.lng)) {
       const marker = new maplibregl.Marker({ color: accentColor })
         .setLngLat([destination.lng, destination.lat])
         .addTo(map);
@@ -332,9 +332,18 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   useEffect(() => {
     if (!map) return;
 
+    // currentLat/currentLng come from another rider's device via the
+    // database/realtime, not our own validated watchPosition — a glitchy
+    // fix from their GPS (the same non-finite-value issue fixed above) would
+    // poison the shared map's camera matrix for everyone viewing it, so it
+    // needs the same finite check here.
     const visibleMembers = convoy.members.filter(
       (m): m is typeof m & { currentLat: number; currentLng: number } =>
-        mapPresentUserIds.has(m.userId) && typeof m.currentLat === 'number' && typeof m.currentLng === 'number',
+        mapPresentUserIds.has(m.userId) &&
+        typeof m.currentLat === 'number' &&
+        Number.isFinite(m.currentLat) &&
+        typeof m.currentLng === 'number' &&
+        Number.isFinite(m.currentLng),
     );
     const visibleIds = new Set(visibleMembers.map((m) => m.userId));
 
@@ -379,7 +388,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   // are known. A stale-guard id discards out-of-order responses.
   const routeRequestRef = useRef(0);
   useEffect(() => {
-    if (!destination || !userLocation) {
+    if (!destination || !userLocation || !Number.isFinite(destination.lat) || !Number.isFinite(destination.lng)) {
       setRoute(null);
       setIsRouting(false);
       return;
