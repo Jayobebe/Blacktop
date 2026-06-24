@@ -88,6 +88,10 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
 
   useRadarOverlay(map);
 
+  const userMarkerRef = useRef<Marker | null>(null);
+  const headingRef = useRef<number | null>(null);
+  const hasFollowedUserRef = useRef(false);
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -104,7 +108,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     });
 
     instance.addControl(new maplibregl.AttributionControl({ compact: true }));
-    instance.addControl(new maplibregl.NavigationControl(), 'top-right');
+    instance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
     instance.addControl(
       new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
@@ -126,26 +130,95 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Continuously watch the user's location + heading. The first fix auto-
+  // centers the map on the user so they never have to tap the locate button,
+  // and subsequent fixes rotate the map heading-up while moving.
   useEffect(() => {
     if (!('geolocation' in navigator)) return;
-    navigator.geolocation.getCurrentPosition(
+
+    let countryResolved = false;
+    const watchId = navigator.geolocation.watchPosition(
       async (position) => {
         const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
         setUserLocation(loc);
-        const code = await getCountryCode(loc.lat, loc.lng);
-        if (code) setCountryCode(code);
-        if (!initialDestination && mapRef.current) {
-          mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15 });
+
+        // GPS heading is null when stationary or unsupported. Only update the
+        // rotation when we have a real heading and the user is actually moving
+        // — otherwise the map spins unpredictably while parked.
+        const heading = position.coords.heading;
+        const speed = position.coords.speed ?? 0;
+        if (heading != null && !Number.isNaN(heading) && speed > 0.5) {
+          headingRef.current = heading;
+        }
+
+        if (!countryResolved) {
+          countryResolved = true;
+          const code = await getCountryCode(loc.lat, loc.lng);
+          if (code) setCountryCode(code);
+        }
+
+        const map = mapRef.current;
+        if (!map) return;
+
+        // First fix: auto-center on the user (unless we opened on a specific
+        // destination). Subsequent fixes keep them in view + heading-up.
+        if (!hasFollowedUserRef.current && !initialDestination) {
+          hasFollowedUserRef.current = true;
+          map.flyTo({
+            center: [loc.lng, loc.lat],
+            zoom: 16,
+            bearing: headingRef.current ?? 0,
+            essential: true,
+          });
+        } else if (hasFollowedUserRef.current) {
+          map.easeTo({
+            center: [loc.lng, loc.lat],
+            bearing: headingRef.current ?? map.getBearing(),
+            duration: 800,
+            essential: true,
+          });
         }
       },
       () => {
         // Location denied/unavailable — map still works, just stays at default center.
       },
-      { enableHighAccuracy: false, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 },
     );
-    // Only fetch once on mount.
+
+    return () => navigator.geolocation.clearWatch(watchId);
+    // Only register the watcher once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Render / move a marker for the user's current position so they're always
+  // visible on the map, independent of the GeolocateControl.
+  useEffect(() => {
+    if (!map || !userLocation) return;
+
+    if (!userMarkerRef.current) {
+      const el = document.createElement('div');
+      el.className = 'blacktop-user-marker';
+      el.style.width = '18px';
+      el.style.height = '18px';
+      el.style.borderRadius = '9999px';
+      el.style.background = accentColor;
+      el.style.border = '3px solid #ffffff';
+      el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.4)';
+      userMarkerRef.current = new maplibregl.Marker({ element: el })
+        .setLngLat([userLocation.lng, userLocation.lat])
+        .addTo(map);
+    } else {
+      userMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
+    }
+  }, [map, userLocation, accentColor]);
+
+  useEffect(() => {
+    return () => {
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
+    };
+  }, []);
+
 
   useEffect(() => {
     if (!map) return;
