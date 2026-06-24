@@ -67,6 +67,18 @@ export function useConvoyId(): string | null {
   return state.id;
 }
 
+// Lightweight selector for callers that only need the member list (e.g. the
+// map overlay's convoy member markers). Critically, this does NOT run
+// useConvoyState's realtime-subscription effect: that effect subscribes to a
+// Supabase channel named `convoy-${id}`, and a second mounted instance of it
+// (e.g. the map rendered on top of the page that's already using
+// useConvoyState) throws "cannot add postgres_changes callbacks ... after
+// subscribe()" since both instances race to subscribe the same channel name.
+export function useConvoyMembers() {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return state.members;
+}
+
 export function useConvoyState() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { profile } = useProfile();

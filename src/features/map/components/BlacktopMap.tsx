@@ -12,7 +12,7 @@ import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { closeBlacktopMap } from '../hooks/useMapOverlay';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useActiveRide } from '@/features/ride';
-import { useConvoyState } from '@/features/convoy';
+import { useConvoyMembers } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
@@ -116,7 +116,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   const [contextLost, setContextLost] = useState(false);
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
-  const { convoy } = useConvoyState();
+  const convoyMembers = useConvoyMembers();
   const mapPresentUserIds = useMapPresentUserIds();
   const speakingUsers = useSpeakingUsers();
   const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
@@ -337,7 +337,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     // fix from their GPS (the same non-finite-value issue fixed above) would
     // poison the shared map's camera matrix for everyone viewing it, so it
     // needs the same finite check here.
-    const visibleMembers = convoy.members.filter(
+    const visibleMembers = convoyMembers.filter(
       (m): m is typeof m & { currentLat: number; currentLng: number } =>
         mapPresentUserIds.has(m.userId) &&
         typeof m.currentLat === 'number' &&
@@ -372,7 +372,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
 
       applyMemberMarkerStyle(entry.el, member.name, colorStyles, isSpeaking);
     });
-  }, [map, convoy.members, mapPresentUserIds, speakingUsers]);
+  }, [map, convoyMembers, mapPresentUserIds, speakingUsers]);
 
   // Remove any remaining member markers when the map unmounts. The ref itself
   // is never reassigned, so reading .current in the cleanup is safe.
