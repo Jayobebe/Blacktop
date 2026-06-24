@@ -1,7 +1,7 @@
 export interface UserProfile {
   name: string;
   createdAt: string;
-  preferredNavApp: 'google' | 'waze' | 'apple';
+  preferredNavApp: NavigationApp;
 }
 
 export interface BadgeCounts {

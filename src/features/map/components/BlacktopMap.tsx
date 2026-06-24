@@ -73,7 +73,9 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   // the browser's CSS engine, so `hsl(var(--accent))` never resolves there —
   // look up the literal HSL components for the selected accent instead.
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
-  const accentColor = `hsl(${accentHsl})`;
+  // MapLibre's color parser requires comma-separated hsl(), not the modern
+  // space-separated CSS syntax that Tailwind tokens use.
+  const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
 
   // Mirror the ride screen's speed-warning thresholds (raw mph).
   const speed = rideState.currentSpeed;
