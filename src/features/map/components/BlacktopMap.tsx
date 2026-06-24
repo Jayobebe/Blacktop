@@ -9,6 +9,7 @@ import { fetchRoute, metersToMiles, RouteResult } from '../lib/routing';
 import { MapSearchBar } from './MapSearchBar';
 import { MapDestination } from '../types';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
+import { closeBlacktopMap } from '../hooks/useMapOverlay';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
@@ -32,6 +33,13 @@ function createMemberMarkerElement(): HTMLDivElement {
   el.style.border = '2px solid transparent';
   el.style.transition = 'box-shadow 150ms ease, transform 150ms ease';
   return el;
+}
+
+// `headingRef.current` is sourced from device sensors and can occasionally
+// be a non-finite glitch value; falling back to `map.getBearing()` (always
+// finite) keeps a bad reading from poisoning MapLibre's camera matrix.
+function safeBearing(heading: number | null, map: MapLibreMap): number {
+  return heading != null && Number.isFinite(heading) ? heading : map.getBearing();
 }
 
 function applyMemberMarkerStyle(
@@ -105,6 +113,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
   const [isRouting, setIsRouting] = useState(false);
+  const [contextLost, setContextLost] = useState(false);
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
   const { convoy } = useConvoyState();
@@ -173,6 +182,12 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     instance.on('rotatestart', markInteraction);
     instance.on('pitchstart', markInteraction);
 
+    // On some mobile GPUs the WebGL context can be reclaimed under memory
+    // pressure, which otherwise leaves a permanently black canvas with no
+    // way out. Surface a recoverable error instead of failing silently.
+    instance.on('webglcontextlost', () => setContextLost(true));
+    instance.on('webglcontextrestored', () => setContextLost(false));
+
     mapRef.current = instance;
     setMap(instance);
 
@@ -195,14 +210,20 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     const watchId = navigator.geolocation.watchPosition(
       async (position) => {
         const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
+        // Some Android devices report non-finite (NaN/Infinity) coordinates
+        // on a bad fix. Feeding that into MapLibre's camera poisons its
+        // internal matrix and renders a permanently black canvas, so bail
+        // out before touching any state or the map.
+        if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
         setUserLocation(loc);
 
         // GPS heading is null when stationary or unsupported. Only update the
-        // rotation when we have a real heading and the user is actually moving
-        // — otherwise the map spins unpredictably while parked.
+        // rotation when we have a real, finite heading and the user is
+        // actually moving — otherwise the map spins unpredictably while
+        // parked, or (worse) a non-finite value poisons the camera bearing.
         const heading = position.coords.heading;
         const speed = position.coords.speed ?? 0;
-        if (heading != null && !Number.isNaN(heading) && speed > 0.5) {
+        if (heading != null && Number.isFinite(heading) && speed > 0.5) {
           headingRef.current = heading;
         }
 
@@ -222,7 +243,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
           map.flyTo({
             center: [loc.lng, loc.lat],
             zoom: 16,
-            bearing: headingRef.current ?? 0,
+            bearing: safeBearing(headingRef.current, map),
             essential: true,
           });
         } else if (hasFollowedUserRef.current) {
@@ -231,7 +252,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
           if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
           map.easeTo({
             center: [loc.lng, loc.lat],
-            bearing: headingRef.current ?? map.getBearing(),
+            bearing: safeBearing(headingRef.current, map),
             duration: 800,
             essential: true,
           });
@@ -418,7 +439,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         map.flyTo({
           center: [userLocation.lng, userLocation.lat],
           zoom: 17,
-          bearing: headingRef.current ?? map.getBearing(),
+          bearing: safeBearing(headingRef.current, map),
           essential: true,
         });
       }
@@ -432,6 +453,20 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
 
     return removeRouteLayers;
   }, [map, route, accentColor]);
+
+  if (contextLost) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-background">
+        <button
+          onClick={closeBlacktopMap}
+          className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-card border border-border text-sm text-muted-foreground"
+        >
+          <span className="font-medium text-foreground">Map display lost</span>
+          Tap to close and reopen the map
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute inset-0">
