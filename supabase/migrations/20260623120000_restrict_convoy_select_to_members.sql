@@ -21,4 +21,4 @@ GRANT EXECUTE ON FUNCTION public.lookup_convoy_by_code(text) TO authenticated;
 DROP POLICY IF EXISTS "Authenticated users can view active convoys" ON public.convoys;
 CREATE POLICY "Members can view their convoy"
 ON public.convoys FOR SELECT TO authenticated
-USING (public.is_convoy_member(id, auth.uid()));
+USING (public.is_convoy_member(id, auth.uid()) OR leader_id = auth.uid());
