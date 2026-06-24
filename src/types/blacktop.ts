@@ -95,7 +95,7 @@ export interface ActiveRideState {
   gpsStatus: GpsStatus;
 }
 
-export type NavigationApp = 'google' | 'waze' | 'apple';
+export type NavigationApp = 'google' | 'waze' | 'apple' | 'blacktop';
 
 export interface AppSettings {
   preferredNavApp: NavigationApp;

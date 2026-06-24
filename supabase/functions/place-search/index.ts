@@ -32,6 +32,23 @@ type OverpassBody = {
   limit?: number;
 };
 
+type RouteBody = {
+  kind: "route";
+  // [lng, lat] pairs, in order from start to destination.
+  coordinates: [number, number][];
+};
+
+function isLngLat(c: unknown): c is [number, number] {
+  return (
+    Array.isArray(c) &&
+    c.length === 2 &&
+    typeof c[0] === "number" &&
+    typeof c[1] === "number" &&
+    c[0] >= -180 && c[0] <= 180 &&
+    c[1] >= -90 && c[1] <= 90
+  );
+}
+
 function asBounded(v: SearchBody["bounded"]): "0" | "1" | undefined {
   if (v === undefined || v === null) return undefined;
   if (v === true) return "1";
@@ -142,7 +159,60 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody;
+
+    if (body.kind === "route") {
+      const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
+      if (coords.length < 2 || !coords.every(isLngLat)) {
+        return new Response(JSON.stringify({ error: "Need at least two valid [lng,lat] coordinates" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      const path = coords.map(([lng, lat]) => `${lng},${lat}`).join(";");
+      const routeUrl = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
+      routeUrl.searchParams.set("overview", "full");
+      routeUrl.searchParams.set("geometries", "geojson");
+      routeUrl.searchParams.set("alternatives", "false");
+      routeUrl.searchParams.set("steps", "false");
+
+      let osrm: any;
+      try {
+        const res = await fetchWithTimeout(routeUrl.toString(), {
+          headers: { "User-Agent": "Blacktop-App/1.0", "Accept": "application/json" },
+        }, 9000);
+        const text = await res.text();
+        if (!res.ok) throw new Error(`OSRM ${res.status}: ${text.slice(0, 200)}`);
+        osrm = JSON.parse(text);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Routing unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify({ error: "Routing unavailable" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
+          status: 200,
+        });
+      }
+
+      const route = osrm?.code === "Ok" ? osrm?.routes?.[0] : null;
+      if (!route?.geometry) {
+        return new Response(JSON.stringify({ error: "No route found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          geometry: route.geometry,
+          distance: route.distance,
+          duration: route.duration,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
+          status: 200,
+        },
+      );
+    }
 
     if (body.kind === "overpass") {
       if (typeof body.lat !== "number" || typeof body.lon !== "number") {

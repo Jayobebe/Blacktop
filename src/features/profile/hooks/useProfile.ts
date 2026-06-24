@@ -23,7 +23,10 @@ function readLocalProfile(): UserProfile {
       name: typeof parsed.name === 'string' ? parsed.name : '',
       createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : '',
       preferredNavApp:
-        parsed.preferredNavApp === 'google' || parsed.preferredNavApp === 'waze' || parsed.preferredNavApp === 'apple'
+        parsed.preferredNavApp === 'google' ||
+        parsed.preferredNavApp === 'waze' ||
+        parsed.preferredNavApp === 'apple' ||
+        parsed.preferredNavApp === 'blacktop'
           ? parsed.preferredNavApp
           : 'google',
     };

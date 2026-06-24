@@ -5,10 +5,11 @@ import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench, Map as MapIcon } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
+import { openBlacktopMap } from '@/features/map';
 
 
 export default function Home() {
@@ -163,15 +164,16 @@ export default function Home() {
       {/* Bottom Navigation */}
       <nav className="flex justify-around mt-4 pt-3 border-t border-border/30 animate-slide-up delay-300">
         {[
-          { icon: Play, label: 'Demo', path: '/demo' },
-          { icon: Wrench, label: 'Garage', path: '/garage' },
-          { icon: History, label: 'History', path: '/history' },
-          { icon: BarChart3, label: 'Stats', path: '/stats' },
-          { icon: Settings, label: 'Settings', path: '/settings' },
-        ].map(({ icon: Icon, label, path }) => (
+          { icon: Play, label: 'Demo', onClick: () => navigate('/demo') },
+          { icon: Wrench, label: 'Garage', onClick: () => navigate('/garage') },
+          { icon: MapIcon, label: 'Maps', onClick: () => openBlacktopMap() },
+          { icon: History, label: 'History', onClick: () => navigate('/history') },
+          { icon: BarChart3, label: 'Stats', onClick: () => navigate('/stats') },
+          { icon: Settings, label: 'Settings', onClick: () => navigate('/settings') },
+        ].map(({ icon: Icon, label, onClick }) => (
           <button
             key={label}
-            onClick={() => navigate(path)}
+            onClick={onClick}
             className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 touch-target text-accent hover:bg-accent/10"
           >
             <Icon className="w-5 h-5" />

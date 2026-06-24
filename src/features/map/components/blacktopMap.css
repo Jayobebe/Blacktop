@@ -1,0 +1,29 @@
+/* Recolor MapLibre's default controls to the app's dark theme + accent token. */
+.blacktop-maplibre .maplibregl-ctrl-group {
+  background: hsl(var(--card) / 0.95);
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-md);
+}
+
+.blacktop-maplibre .maplibregl-ctrl-group button + button {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.blacktop-maplibre .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(1.6);
+}
+
+.blacktop-maplibre .maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon {
+  filter: none;
+  background-color: hsl(var(--accent));
+}
+
+.blacktop-maplibre .maplibregl-ctrl-attrib {
+  background: hsl(var(--card) / 0.8);
+  color: hsl(var(--muted-foreground));
+  border-radius: 0.5rem;
+}
+
+.blacktop-maplibre .maplibregl-ctrl-attrib a {
+  color: hsl(var(--muted-foreground));
+}

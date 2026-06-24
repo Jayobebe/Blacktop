@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, RefreshCw, CheckCircle2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, RefreshCw, CheckCircle2, MessageSquare } from 'lucide-react';
 import { checkForAppUpdate, applyAppUpdate, onUpdateAvailable } from '@/pwa';
 import { formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { NavigationApp } from '@/types/blacktop';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DiscordSettingsCard } from '@/features/integrations/discord';
+import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
@@ -103,6 +104,7 @@ export default function Settings() {
     { id: 'google', label: 'Google Maps' },
     { id: 'waze', label: 'Waze' },
     { id: 'apple', label: 'Apple Maps' },
+    { id: 'blacktop', label: 'Blacktop Maps' },
   ];
 
   const handleTip = async () => {
@@ -520,16 +522,16 @@ export default function Settings() {
                     {app.label}
                   </button>
                   <button
-                    onClick={() => handleOpenNavApp(app.id)}
+                    onClick={() => (app.id === 'blacktop' ? openBlacktopMap() : handleOpenNavApp(app.id))}
                     className={cn(
                       "p-2 rounded-lg transition-colors",
-                      isSelected 
-                        ? "text-accent hover:bg-accent/20" 
+                      isSelected
+                        ? "text-accent hover:bg-accent/20"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
-                    title={`Open ${app.label}`}
+                    title={app.id === 'blacktop' ? 'Preview Blacktop Maps' : `Open ${app.label}`}
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    {app.id === 'blacktop' ? <Eye className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
                   </button>
                 </div>
               );
