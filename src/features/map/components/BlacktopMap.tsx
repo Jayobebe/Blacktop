@@ -192,7 +192,16 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     setMap(instance);
 
     return () => {
-      instance.remove();
+      // A corrupted GL/camera state can make teardown itself throw; if that
+      // happens uncaught during an effect cleanup, React can leave this
+      // component (and the full-screen overlay it's in) stuck on screen
+      // instead of unmounting it, which presents as a black screen that
+      // doesn't go away. Always clear our own refs/state regardless.
+      try {
+        instance.remove();
+      } catch (err) {
+        console.error('[BlacktopMap] Error removing map instance:', err);
+      }
       mapRef.current = null;
       setMap(null);
     };

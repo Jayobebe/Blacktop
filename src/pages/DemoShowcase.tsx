@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
-import { 
-  Users, Mic, Navigation, AlertTriangle, Trophy, Camera, 
+import {
+  Users, Mic, Navigation, AlertTriangle, Trophy, Camera,
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
-  MessageSquare, Wrench, Disc3 as Bike, ChevronDown
+  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -81,6 +81,15 @@ export default function DemoShowcase() {
       icon: Route,
       color: 'accent',
       mockup: <WaypointsMockup />
+    },
+    {
+      id: 'maps',
+      title: 'Blacktop Maps',
+      subtitle: 'Built-In Navigation',
+      description: 'Search for a destination and get a driving route, right in the app. See your convoy live on the map, colored by their accent — glowing when they\'re talking. Only riders who choose Blacktop Maps show up.',
+      icon: MapIcon,
+      color: 'accent',
+      mockup: <MapsMockup />
     },
     {
       id: 'tracking',
@@ -855,6 +864,71 @@ function WaypointsMockup() {
       ))}
       <div className="text-center pt-2 animate-fade-in delay-400">
         <p className="text-xs text-muted-foreground">Drag handles to reorder</p>
+      </div>
+    </div>
+  );
+}
+
+function MapsMockup() {
+  const riders = [
+    { name: 'You', color: 'bg-orange-500', top: '40%', left: '44%' },
+    { name: 'Marcus', color: 'bg-blue-500', top: '60%', left: '64%' },
+    { name: 'Sarah', color: 'bg-pink-500', top: '22%', left: '68%' },
+  ];
+  const [speakingIdx, setSpeakingIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpeakingIdx((prev) => (prev + 1) % riders.length);
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [riders.length]);
+
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      <div className="relative aspect-[4/5] rounded-2xl border border-border/30 bg-[#0d0d10] overflow-hidden animate-scale-in">
+        {/* Faint road lines */}
+        <svg className="absolute inset-0 w-full h-full opacity-25 text-muted-foreground" viewBox="0 0 100 125" preserveAspectRatio="none">
+          <path d="M8 122 L38 70 L28 8" stroke="currentColor" strokeWidth="2" fill="none" />
+          <path d="M92 112 L56 58 L74 4" stroke="currentColor" strokeWidth="2" fill="none" />
+          <path d="M4 48 L96 64" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        </svg>
+
+        {/* Route line to destination */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 125" preserveAspectRatio="none">
+          <path d="M44 78 Q 54 54 64 60" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        </svg>
+
+        {/* Search bar */}
+        <div className="absolute top-2 left-2 right-2 h-7 rounded-full bg-card/90 border border-border/40 flex items-center px-3 animate-fade-in">
+          <MapPin className="w-3 h-3 text-muted-foreground mr-1.5" />
+          <span className="text-[9px] text-muted-foreground">Search destination...</span>
+        </div>
+
+        {/* Convoy member markers — glow cycles to show who's speaking */}
+        {riders.map((rider, i) => (
+          <div
+            key={rider.name}
+            className={cn(
+              'absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 flex items-center justify-center text-[8px] font-bold text-white transition-all duration-300 animate-scale-in',
+              rider.color,
+              speakingIdx === i && 'scale-125 shadow-[0_0_10px_3px_rgba(255,255,255,0.5)]',
+            )}
+            style={{ top: rider.top, left: rider.left, animationDelay: `${i * 100}ms` }}
+          >
+            {rider.name[0]}
+          </div>
+        ))}
+
+        {/* Speed badge */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-card/95 border border-border/40 flex items-baseline gap-1 animate-slide-up delay-200">
+          <span className="font-mono font-bold text-sm">58</span>
+          <span className="text-[8px] text-muted-foreground">MPH</span>
+        </div>
+      </div>
+
+      <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
+        <p className="text-xs text-center text-accent">Glows in their color when a rider talks</p>
       </div>
     </div>
   );
