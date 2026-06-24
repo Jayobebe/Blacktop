@@ -42,6 +42,8 @@ export interface ConvoyMemberInfo {
   topSpeed?: number;
   distanceDriven?: number;
   stationaryTime?: number; // seconds at 0 speed
+  currentLat?: number | null;
+  currentLng?: number | null;
 }
 
 export type BadgeType = 'speed-demon' | 'journeyman' | 'fallback';

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { setSpeakingUsers } from './voiceActivityStore';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -1067,10 +1068,17 @@ export function useVoiceChannel(convoyId?: string) {
     }
   }, [convoyId, state.isConnected, connect, toggleMute]);
 
+  // Mirror speakingUsers into the shared store so other features (e.g. the
+  // map's member markers) can read who's talking without their own connection.
+  useEffect(() => {
+    setSpeakingUsers(state.speakingUsers);
+  }, [state.speakingUsers]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanup();
+      setSpeakingUsers(new Set());
     };
   }, [cleanup]);
 

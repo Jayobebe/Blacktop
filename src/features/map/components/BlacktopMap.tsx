@@ -8,15 +8,54 @@ import { getCountryCode } from '../lib/placeSearch';
 import { fetchRoute, metersToMiles, RouteResult } from '../lib/routing';
 import { MapSearchBar } from './MapSearchBar';
 import { MapDestination } from '../types';
+import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useActiveRide } from '@/features/ride';
+import { useConvoyState } from '@/features/convoy';
+import { useSpeakingUsers } from '@/features/voice';
+import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Navigation, Loader2 } from 'lucide-react';
 
+function createMemberMarkerElement(): HTMLDivElement {
+  const el = document.createElement('div');
+  el.style.width = '32px';
+  el.style.height = '32px';
+  el.style.borderRadius = '50%';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'center';
+  el.style.fontSize = '13px';
+  el.style.fontWeight = '700';
+  el.style.fontFamily = 'inherit';
+  el.style.border = '2px solid transparent';
+  el.style.transition = 'box-shadow 150ms ease, transform 150ms ease';
+  return el;
+}
+
+function applyMemberMarkerStyle(
+  el: HTMLDivElement,
+  name: string,
+  colorStyles: ReturnType<typeof getMemberColorStyles>,
+  isSpeaking: boolean,
+) {
+  el.textContent = (name.trim()[0] || '?').toUpperCase();
+  el.style.backgroundColor = colorStyles.bg;
+  el.style.borderColor = colorStyles.border;
+  el.style.color = colorStyles.text;
+  el.style.boxShadow = isSpeaking ? colorStyles.glow : 'none';
+  el.style.transform = isSpeaking ? 'scale(1.15)' : 'scale(1)';
+}
+
 const ROUTE_SOURCE_ID = 'blacktop-route';
 const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
 const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
+
+// How long to hold off resuming GeolocateControl's auto-recenter after the
+// rider manually pans/zooms the map, so a deliberate look-around isn't
+// immediately snapped back to their position.
+const LOCATE_RESUME_DELAY_MS = 10000;
 
 interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
@@ -68,6 +107,10 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   const [isRouting, setIsRouting] = useState(false);
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
+  const { convoy } = useConvoyState();
+  const mapPresentUserIds = useMapPresentUserIds();
+  const speakingUsers = useSpeakingUsers();
+  const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
 
   // MapLibre's paint/marker colors are parsed by its own JS color parser, not
   // the browser's CSS engine, so `hsl(var(--accent))` never resolves there —
@@ -103,19 +146,73 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
 
     instance.addControl(new maplibregl.AttributionControl({ compact: true }));
     instance.addControl(new maplibregl.NavigationControl(), 'top-right');
-    instance.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showAccuracyCircle: false,
-      }),
-      'top-right',
-    );
+
+    const geolocateControl = new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showAccuracyCircle: false,
+    });
+    instance.addControl(geolocateControl, 'top-right');
+
+    // GeolocateControl re-centers (and re-zooms) on the rider on every GPS
+    // fix once tracking is active, which fights any manual pan/zoom — a
+    // zoom gesture in particular doesn't drop it out of tracking mode the
+    // way a drag does. Pause tracking on any rider-initiated map gesture and
+    // only resume it after LOCATE_RESUME_DELAY_MS of no further interaction.
+    let isTrackingUser = false;
+    let isPausedByInteraction = false;
+    let suppressNextTrackingEvent = false;
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    geolocateControl.on('trackuserlocationstart', () => {
+      if (suppressNextTrackingEvent) {
+        suppressNextTrackingEvent = false;
+        return;
+      }
+      isTrackingUser = true;
+    });
+    geolocateControl.on('trackuserlocationend', () => {
+      if (suppressNextTrackingEvent) {
+        suppressNextTrackingEvent = false;
+        return;
+      }
+      isTrackingUser = false;
+      isPausedByInteraction = false;
+      if (resumeTimer) {
+        clearTimeout(resumeTimer);
+        resumeTimer = null;
+      }
+    });
+
+    const handleUserGesture = (e: { originalEvent?: unknown }) => {
+      if (!e.originalEvent || !isTrackingUser) return;
+
+      if (resumeTimer) clearTimeout(resumeTimer);
+
+      if (!isPausedByInteraction) {
+        isPausedByInteraction = true;
+        suppressNextTrackingEvent = true;
+        geolocateControl.trigger(); // ACTIVE_LOCK -> OFF: stop auto-recentering.
+      }
+
+      resumeTimer = setTimeout(() => {
+        isPausedByInteraction = false;
+        suppressNextTrackingEvent = true;
+        geolocateControl.trigger(); // OFF -> WAITING_ACTIVE: resumes on the next GPS fix.
+        resumeTimer = null;
+      }, LOCATE_RESUME_DELAY_MS);
+    };
+
+    instance.on('dragstart', handleUserGesture);
+    instance.on('zoomstart', handleUserGesture);
+    instance.on('rotatestart', handleUserGesture);
+    instance.on('pitchstart', handleUserGesture);
 
     mapRef.current = instance;
     setMap(instance);
 
     return () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
       instance.remove();
       mapRef.current = null;
       setMap(null);
@@ -161,6 +258,55 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
       map.flyTo({ center: [destination.lng, destination.lat], zoom: 15 });
     }
   }, [map, destination, accentColor]);
+
+  // Show a marker for every convoy member (including self) who has chosen
+  // Blacktop Maps and has a live GPS fix — colored by their accent color,
+  // glowing while they're speaking in the voice channel.
+  useEffect(() => {
+    if (!map) return;
+
+    const visibleMembers = convoy.members.filter(
+      (m): m is typeof m & { currentLat: number; currentLng: number } =>
+        mapPresentUserIds.has(m.userId) && typeof m.currentLat === 'number' && typeof m.currentLng === 'number',
+    );
+    const visibleIds = new Set(visibleMembers.map((m) => m.userId));
+
+    memberMarkersRef.current.forEach((entry, userId) => {
+      if (!visibleIds.has(userId)) {
+        entry.marker.remove();
+        memberMarkersRef.current.delete(userId);
+      }
+    });
+
+    visibleMembers.forEach((member) => {
+      const colorStyles = getMemberColorStyles(member.accentColor);
+      const isSpeaking = speakingUsers.has(member.userId);
+      let entry = memberMarkersRef.current.get(member.userId);
+
+      if (!entry) {
+        const el = createMemberMarkerElement();
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([member.currentLng, member.currentLat])
+          .addTo(map);
+        entry = { marker, el };
+        memberMarkersRef.current.set(member.userId, entry);
+      } else {
+        entry.marker.setLngLat([member.currentLng, member.currentLat]);
+      }
+
+      applyMemberMarkerStyle(entry.el, member.name, colorStyles, isSpeaking);
+    });
+  }, [map, convoy.members, mapPresentUserIds, speakingUsers]);
+
+  // Remove any remaining member markers when the map unmounts. The ref itself
+  // is never reassigned, so reading .current in the cleanup is safe.
+  useEffect(() => {
+    const markers = memberMarkersRef.current;
+    return () => {
+      markers.forEach((entry) => entry.marker.remove());
+      markers.clear();
+    };
+  }, []);
 
   // Fetch a driving route whenever both a destination and the user's location
   // are known. A stale-guard id discards out-of-order responses.

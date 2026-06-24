@@ -1,1 +1,1 @@
-export { useConvoyState, MAX_CONVOY_MEMBERS } from './hooks/useConvoyState';
+export { useConvoyState, useConvoyId, MAX_CONVOY_MEMBERS } from './hooks/useConvoyState';

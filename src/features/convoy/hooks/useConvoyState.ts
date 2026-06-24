@@ -59,6 +59,14 @@ function setConvoyState(updater: (prev: ConvoyState) => ConvoyState) {
   emitChange();
 }
 
+// Lightweight selector for callers that only need the active convoy id (e.g.
+// to gate a presence channel) without paying for useConvoyState's restore
+// and realtime-subscription side effects on every mount.
+export function useConvoyId(): string | null {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return state.id;
+}
+
 export function useConvoyState() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { profile } = useProfile();
@@ -152,6 +160,8 @@ export function useConvoyState() {
           top_speed,
           distance_driven,
           stationary_time,
+          current_lat,
+          current_lng,
           accent_color,
           profiles!convoy_members_user_id_fkey(display_name)
         `)
@@ -170,6 +180,8 @@ export function useConvoyState() {
         topSpeed: m.top_speed || 0,
         distanceDriven: m.distance_driven || 0,
         stationaryTime: m.stationary_time || 0,
+        currentLat: m.current_lat,
+        currentLng: m.current_lng,
       }));
 
       // Parse destination if set
@@ -301,6 +313,8 @@ export function useConvoyState() {
         top_speed,
         distance_driven,
         stationary_time,
+        current_lat,
+        current_lng,
         accent_color,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
@@ -326,6 +340,8 @@ export function useConvoyState() {
         topSpeed: m.top_speed || 0,
         distanceDriven: m.distance_driven || 0,
         stationaryTime: m.stationary_time || 0,
+        currentLat: m.current_lat,
+        currentLng: m.current_lng,
       }));
 
       console.log('[Convoy] Refreshed members:', members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated })));
@@ -522,6 +538,8 @@ export function useConvoyState() {
         joined_at,
         has_navigated,
         accent_color,
+        current_lat,
+        current_lng,
         profiles!convoy_members_user_id_fkey(display_name)
       `)
       .eq('convoy_id', convoy.id);
@@ -535,6 +553,8 @@ export function useConvoyState() {
       hasNavigated: m.has_navigated || false,
       joinedAt: m.joined_at,
       accentColor: m.accent_color || 'orange',
+      currentLat: m.current_lat,
+      currentLng: m.current_lng,
     }));
 
     // Parse destination if set
