@@ -301,9 +301,16 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         });
       }
 
-      const bounds = new maplibregl.LngLatBounds();
-      route.geometry.coordinates.forEach((c) => bounds.extend(c as [number, number]));
-      map.fitBounds(bounds, { padding: { top: 120, bottom: 120, left: 60, right: 60 }, maxZoom: 15 });
+      // Zoom into the user (heading-up) once the route is drawn instead of
+      // fitting the whole route — keeps focus on what's immediately ahead.
+      if (userLocation) {
+        map.flyTo({
+          center: [userLocation.lng, userLocation.lat],
+          zoom: 17,
+          bearing: headingRef.current ?? map.getBearing(),
+          essential: true,
+        });
+      }
     };
 
     if (map.isStyleLoaded()) {
