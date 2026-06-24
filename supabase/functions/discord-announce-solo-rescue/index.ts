@@ -23,6 +23,13 @@ Deno.serve(async (req) => {
     if (authErr || !claims?.claims) return json({ error: 'Unauthorized' }, 401)
     const userId = claims.claims.sub as string
 
+    const { data: allowed, error: rateLimitErr } = await supabase.rpc('check_rate_limit', {
+      _bucket: 'discord-announce-solo-rescue',
+      _max_requests: 10,
+      _window_seconds: 300,
+    })
+    if (rateLimitErr || allowed === false) return json({ error: 'Too many requests' }, 429)
+
     const body = await req.json().catch(() => ({}))
     const { riderName, lat, lng } = body as {
       riderName?: string

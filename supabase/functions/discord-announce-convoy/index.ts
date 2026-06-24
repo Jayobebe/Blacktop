@@ -23,6 +23,13 @@ Deno.serve(async (req) => {
     if (authErr || !claims?.claims) return json({ error: 'Unauthorized' }, 401)
     const userId = claims.claims.sub as string
 
+    const { data: allowed, error: rateLimitErr } = await supabase.rpc('check_rate_limit', {
+      _bucket: 'discord-announce-convoy',
+      _max_requests: 10,
+      _window_seconds: 300,
+    })
+    if (rateLimitErr || allowed === false) return json({ error: 'Too many requests' }, 429)
+
     const body = await req.json().catch(() => ({}))
     const { convoyCode, convoyName, joinUrl, leaderName } = body as {
       convoyCode?: string
@@ -39,6 +46,18 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
+
+    // Verify the caller actually leads a convoy with this code
+    const { data: convoy } = await admin
+      .from('convoys')
+      .select('leader_id')
+      .eq('code', convoyCode)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (convoy?.leader_id !== userId) {
+      return json({ error: 'Not the leader of this convoy' }, 403)
+    }
 
     const { data: integration } = await admin
       .from('discord_integrations')

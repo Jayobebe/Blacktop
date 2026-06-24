@@ -334,10 +334,8 @@ export function useConvoyState() {
       if (members.length === 1 && user && members[0].userId === user.id && !members[0].isLeader) {
         console.log('[Convoy] Auto-promoting last remaining member to leader');
         const { error } = await supabase
-          .from('convoys')
-          .update({ leader_id: user.id })
-          .eq('id', convoyId);
-        
+          .rpc('claim_convoy_leadership' as any, { _convoy_id: convoyId });
+
         if (!error) {
           toast.success('You are now the convoy leader');
           setConvoyState((prev) => ({
@@ -475,13 +473,9 @@ export function useConvoyState() {
       return false;
     }
 
-    // Find convoy by code
+    // Find convoy by code via RPC (avoids exposing every active convoy through a direct SELECT)
     const { data: convoy, error } = await supabase
-      .from('convoys')
-      .select('*')
-      .eq('code', code.toUpperCase())
-      .eq('is_active', true)
-      .maybeSingle();
+      .rpc('lookup_convoy_by_code' as any, { _code: code.toUpperCase() });
 
     if (error || !convoy) {
       toast.error('Convoy not found');
@@ -753,9 +747,7 @@ export function useConvoyState() {
     if (!state.id || !state.isLeader) return false;
 
     const { error } = await supabase
-      .from('convoys')
-      .update({ leader_id: newLeaderUserId })
-      .eq('id', state.id);
+      .rpc('transfer_convoy_leadership' as any, { _convoy_id: state.id, _new_leader_id: newLeaderUserId });
 
     if (error) {
       toast.error('Failed to transfer leadership');

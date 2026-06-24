@@ -110,6 +110,16 @@ export function useProfile() {
   const resetIdentity = useCallback(async () => {
     setIsLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { error } = await supabase.functions.invoke('burn-account');
+        if (error) console.error('Server-side account deletion failed:', error);
+      }
+    } catch (e) {
+      console.error('Server-side account deletion failed:', e);
+    }
+
+    try {
       await supabase.auth.signOut();
     } catch {
       // ignore

@@ -2,3 +2,6 @@ project_id = "xwagsaqsomzrubfpjaad"
 
 [functions.create-tip]
 verify_jwt = true
+
+[functions.burn-account]
+verify_jwt = true

@@ -117,6 +117,22 @@ serve(async (req) => {
         status: 401,
       });
     }
+
+    // Rate limit: auth here is free (anonymous sign-in), so without this
+    // every caller has an unthrottled proxy to Nominatim/Overpass. Limit
+    // sized for the busiest legitimate pattern (150ms-debounced search-as-you-type
+    // plus reverse-geocode/POI lookups), not a tight bound.
+    const { data: allowed, error: rateLimitErr } = await supabase.rpc("check_rate_limit", {
+      _bucket: "place-search",
+      _max_requests: 60,
+      _window_seconds: 60,
+    });
+    if (rateLimitErr || allowed === false) {
+      return new Response(JSON.stringify({ error: "Too many requests, please slow down" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
   } catch {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -238,7 +254,8 @@ serve(async (req) => {
       }
 
       if (body.limit !== undefined && body.limit !== null) {
-        url.searchParams.set("limit", String(body.limit));
+        const limit = Math.max(1, Math.min(50, Number(body.limit) || 1));
+        url.searchParams.set("limit", String(limit));
       }
     } else if (body.kind === "reverse") {
       if (typeof body.lat !== "number" || typeof body.lon !== "number") {
