@@ -233,7 +233,8 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         .setLngLat([destination.lng, destination.lat])
         .addTo(map);
       markerRef.current = marker;
-      map.flyTo({ center: [destination.lng, destination.lat], zoom: 15 });
+      // Don't recenter on the destination — once the route is drawn we'll
+      // zoom into the user's position (heading-up) instead.
     }
   }, [map, destination, accentColor]);
 
