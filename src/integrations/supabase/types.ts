@@ -264,6 +264,27 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_rate_limits: {
+        Row: {
+          bucket: string
+          request_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          request_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          bucket?: string
+          request_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -293,12 +314,56 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _bucket: string
+          _max_requests: number
+          _window_seconds: number
+        }
+        Returns: boolean
+      }
+      claim_convoy_leadership: {
+        Args: { _convoy_id: string }
+        Returns: boolean
+      }
       generate_convoy_code: { Args: never; Returns: string }
       is_convoy_member: {
         Args: { _convoy_id: string; _user_id: string }
         Returns: boolean
       }
+      lookup_convoy_by_code: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          created_at: string | null
+          destination_address: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          destination_name: string | null
+          destination_set_at: string | null
+          id: string
+          is_active: boolean | null
+          is_paused: boolean
+          leader_id: string | null
+          name: string
+          paused_at: string | null
+          ride_ended_at: string | null
+          ride_started_at: string | null
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "convoys"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       profile_count: { Args: never; Returns: number }
+      shares_convoy_with: { Args: { _other_user_id: string }; Returns: boolean }
+      transfer_convoy_leadership: {
+        Args: { _convoy_id: string; _new_leader_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
