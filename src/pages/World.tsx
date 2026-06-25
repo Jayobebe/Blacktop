@@ -98,7 +98,7 @@ export default function World() {
     });
 
   return (
-    <div className="h-screen bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
       {/* Header */}
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
@@ -134,8 +134,8 @@ export default function World() {
         </div>
       </header>
 
-      {/* Globe — fills remaining space */}
-      <div className="flex-1 relative min-h-0">
+      {/* Globe — fixed-height section, page scrolls past it */}
+      <div className="relative w-full h-[70vh] flex-shrink-0">
         <WorldGlobe
           accentColor={accentColor}
           events={markers}
@@ -162,12 +162,22 @@ export default function World() {
             </span>
           </div>
         </div>
+        {/* Scroll hint */}
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
+          <span className="text-[9px] tracking-[0.25em] uppercase text-white/40">scroll for collection</span>
+        </div>
+      </div>
+
+      {/* Card collection folder */}
+      <div className="px-4 py-6 flex-shrink-0">
+        <CollectedCardsFolder />
       </div>
 
       {eonetLoading && (
         <p className="flex-shrink-0 text-center text-[9px] text-muted-foreground/30 tracking-widest uppercase pb-3 animate-pulse">
           loading events…
         </p>
+
       )}
     </div>
   );
