@@ -315,7 +315,7 @@ export default function Home() {
             onPointerMove={cancelLongPress}
             onContextMenu={(e) => e.preventDefault()}
             className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200"
-            aria-label="Open map — hold for Blacktop World"
+            aria-label={settings.blacktopWorldEnabled ? 'Open map — hold for Blacktop World' : 'Open map'}
             role="button"
           >
             <HomeGlobe accentColor={accentColor} className="w-full h-full" />
