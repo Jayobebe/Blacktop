@@ -21,7 +21,29 @@ export default function Home() {
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isExploding, setIsExploding] = useState(false);
   const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+
+  const handleGlobePointerDown = () => {
+    longPressFired.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      setIsExploding(true);
+      setTimeout(() => navigate('/world'), 320);
+    }, 600);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  const handleGlobeClick = () => {
+    if (longPressFired.current) return;
+    openBlacktopMap();
+  };
 
   // Canvas can't resolve `hsl(var(--accent))`, so look up the literal HSL for
   // the active accent (same approach as BlacktopMap) for the globe's strokes.
@@ -171,7 +193,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+    <div className={`h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}>
       {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
 
       {/* Install Banner */}
@@ -286,9 +308,13 @@ export default function Home() {
               so pointer events land here first; the canvas fills the div exactly. */}
           <div
             ref={globeRef}
-            onClick={() => openBlacktopMap()}
+            onClick={handleGlobeClick}
+            onPointerDown={handleGlobePointerDown}
+            onPointerUp={cancelLongPress}
+            onPointerMove={cancelLongPress}
+            onContextMenu={(e) => e.preventDefault()}
             className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200"
-            aria-label="Open map"
+            aria-label="Open map — hold for Blacktop World"
             role="button"
           >
             <HomeGlobe accentColor={accentColor} className="w-full h-full" />

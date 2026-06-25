@@ -34,6 +34,8 @@ const BlacktopMapOverlay = lazy(() =>
   import("@/features/map/components/BlacktopMapOverlay").then((m) => ({ default: m.BlacktopMapOverlay }))
 );
 
+import World from "./pages/World";
+
 
 function AppRoutes() {
   const { hasProfile, isLoading } = useProfile();
@@ -71,6 +73,7 @@ function AppRoutes() {
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
       
+      <Route path="/world" element={<World />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
