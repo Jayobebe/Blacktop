@@ -7,7 +7,7 @@ import {
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
-  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon
+  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon, Globe2, Folder
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
