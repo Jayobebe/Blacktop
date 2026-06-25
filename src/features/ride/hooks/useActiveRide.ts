@@ -683,12 +683,24 @@ export function useActiveRide(convoyId?: string | null) {
 
     let savedRideId: string | null = null;
 
-    if (currentState.startedAt && finalDuration > 0) {
+    // Guard against accidental/rapid-fire start-stop sessions corrupting
+    // garage stats, odometer rollups, and trading-card XP. Anything shorter
+    // than MIN_RIDE_DURATION_SEC or MIN_RIDE_DISTANCE_MI is dropped before it
+    // ever touches local storage so no receipt, no stats write, no card
+    // recalculation happens.
+    const MIN_RIDE_DURATION_SEC = 60;
+    const MIN_RIDE_DISTANCE_MI = 0.09;
+    const isValidRide =
+      !!currentState.startedAt &&
+      finalDuration >= MIN_RIDE_DURATION_SEC &&
+      currentState.distance >= MIN_RIDE_DISTANCE_MI;
+
+    if (isValidRide) {
       const rideId = crypto.randomUUID();
       const bikeId = getActiveBikeIdSnapshot() ?? undefined;
       const ride: RideSession = {
         id: rideId,
-        startedAt: currentState.startedAt,
+        startedAt: currentState.startedAt!,
         endedAt: nowIso,
         isConvoyRide: currentState.isConvoyMode,
         distance: currentState.distance,
@@ -705,6 +717,11 @@ export function useActiveRide(convoyId?: string | null) {
       };
       addRideRef.current(ride);
       savedRideId = rideId;
+    } else if (currentState.startedAt) {
+      console.log('[Ride] Discarded invalid session', {
+        duration: finalDuration,
+        distance: currentState.distance,
+      });
     }
 
     rideStartedAtMs = null;

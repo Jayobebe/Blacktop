@@ -361,10 +361,16 @@ export default function ActiveRide() {
     // Run cleanup in background (non-blocking)
     (async () => {
       const rideId = await endRide();
-      setSavedRideId(rideId);
+      if (rideId) {
+        setSavedRideId(rideId);
+      } else {
+        // Invalid/too-short ride — don't show a receipt
+        setShowSummary(false);
+        navigate('/');
+      }
       resetNavigationStatus().catch(err => console.warn('[ActiveRide] Cleanup error:', err));
     })();
-  }, [endRide, resetNavigationStatus]);
+  }, [endRide, resetNavigationStatus, navigate]);
 
   // Subscribe to convoy control channel for broadcasts AND realtime convoy changes
   useEffect(() => {
@@ -513,14 +519,20 @@ export default function ActiveRide() {
       }
     }
 
-    // ALWAYS show summary for every ride (solo or convoy) - flush before endRide
-    flushSync(() => {
-      setShowSummary(true);
-    });
-
-    // Now safe to end the ride (control channel broadcast already sent)
+    // End the ride first so we know whether it was valid before flipping any
+    // UI state. Invalid (too-short) rides return null and must not show a
+    // receipt — that also keeps us from churning local storage on rapid
+    // start/stop loops.
     const rideId = await endRide();
-    setSavedRideId(rideId);
+    if (rideId) {
+      flushSync(() => {
+        setShowSummary(true);
+      });
+      setSavedRideId(rideId);
+    } else {
+      toast.info('Ride too short — not saved');
+      navigate('/');
+    }
 
     // Cleanup convoy state in background
     const cleanupPromises: Promise<any>[] = [];
