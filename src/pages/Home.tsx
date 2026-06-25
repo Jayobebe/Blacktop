@@ -7,6 +7,7 @@ import { useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench, Map as MapIcon } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
+import { EarthGlobe } from '@/components/EarthGlobe';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap } from '@/features/map';
