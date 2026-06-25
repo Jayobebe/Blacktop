@@ -4,6 +4,7 @@ import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './blacktopMap.css';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
+import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
 import { useWaypointRouteStops } from '@/features/waypoints';
@@ -70,6 +71,11 @@ interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
 }
 
+// Register the cache-backed `blacktop-tile://` protocol before any Map is
+// constructed so the basemap tiles below resolve through IndexedDB on repeat
+// rides instead of re-hitting CARTO over cellular. Idempotent — safe at import.
+registerTileCacheProtocol();
+
 const CARTO_DARK_STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -79,11 +85,18 @@ const CARTO_DARK_STYLE: StyleSpecification = {
       // convention MapLibre does not substitute — it would be sent literally
       // and break the tiles. Request the @2x tiles directly instead (crisp on
       // mobile retina displays).
+      //
+      // Each URL is wrapped in the cache-backed protocol (toCachedTileUrl):
+      // MapLibre substitutes {z}/{x}/{y} into the full string, then the
+      // protocol handler serves the tile from IndexedDB if present or fetches
+      // + persists it (75MB LRU) on a miss. This is also the single seam where
+      // a future keyed provider's auth token/header could be injected per
+      // request without touching the rest of the map init.
       tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        toCachedTileUrl('https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
+        toCachedTileUrl('https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
+        toCachedTileUrl('https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
+        toCachedTileUrl('https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
       ],
       tileSize: 256,
       attribution:
@@ -140,7 +153,9 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
         ? 'text-warning'
         : 'text-foreground';
 
-  useRadarOverlay(map);
+  // Reuses the ride's existing speed signal to pause radar animation when
+  // the vehicle has been stationary - no separate motion detection needed.
+  useRadarOverlay(map, speed);
 
   const userMarkerRef = useRef<Marker | null>(null);
   const headingRef = useRef<number | null>(null);
