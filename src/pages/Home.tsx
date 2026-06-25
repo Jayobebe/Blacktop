@@ -122,7 +122,13 @@ export default function Home() {
           <div className="flex gap-3 flex-1">
             <button
               onClick={() => navigate('/create-convoy')}
-              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl rounded-br-[3.5rem] flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+              style={{
+                WebkitMaskImage:
+                  'radial-gradient(circle 40px at calc(100% + 6px) calc(100% + 6px), transparent 38px, black 40px)',
+                maskImage:
+                  'radial-gradient(circle 40px at calc(100% + 6px) calc(100% + 6px), transparent 38px, black 40px)',
+              }}
+              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
             >
               <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Users className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
@@ -135,7 +141,13 @@ export default function Home() {
 
             <button
               onClick={() => navigate('/solo-lobby')}
-              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl rounded-bl-[3.5rem] flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+              style={{
+                WebkitMaskImage:
+                  'radial-gradient(circle 40px at calc(0% - 6px) calc(100% + 6px), transparent 38px, black 40px)',
+                maskImage:
+                  'radial-gradient(circle 40px at calc(0% - 6px) calc(100% + 6px), transparent 38px, black 40px)',
+              }}
+              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
             >
               <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <User className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
@@ -149,7 +161,13 @@ export default function Home() {
 
           <button
             onClick={() => navigate('/join-convoy')}
-            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-2xl rounded-tl-[3.5rem] rounded-tr-[3.5rem] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            style={{
+              WebkitMaskImage:
+                'radial-gradient(circle 40px at 50% -6px, transparent 38px, black 40px)',
+              maskImage:
+                'radial-gradient(circle 40px at 50% -6px, transparent 38px, black 40px)',
+            }}
+            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
           >
             <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
               <UserPlus className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
