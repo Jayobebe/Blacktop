@@ -404,6 +404,8 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
     canvas.addEventListener('wheel', onWheel, { passive: false });
     canvas.addEventListener('touchstart', onTouchStart, { passive: true });
     canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd, { passive: true });
+    canvas.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
       cancelAnimationFrame(rafRef.current);
@@ -416,6 +418,8 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('touchstart', onTouchStart);
       canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
+      canvas.removeEventListener('touchcancel', onTouchEnd);
     };
   }, [draw]);
 
