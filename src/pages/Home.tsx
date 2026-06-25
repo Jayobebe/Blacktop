@@ -25,10 +25,12 @@ export default function Home() {
   const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
 
-  const handleGlobePointerDown = () => {
+  const handleGlobePointerDown = (e: React.PointerEvent) => {
     if (!settings.blacktopWorldEnabled) return;
     longPressFired.current = false;
+    pressStart.current = { x: e.clientX, y: e.clientY };
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true;
       setIsExploding(true);
@@ -40,11 +42,20 @@ export default function Home() {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+    pressStart.current = null;
+  };
+  const handleGlobePointerMove = (e: React.PointerEvent) => {
+    if (!pressStart.current || !longPressTimer.current) return;
+    const dx = e.clientX - pressStart.current.x;
+    const dy = e.clientY - pressStart.current.y;
+    // Only cancel if the finger actually slid (10px tolerance for natural jitter).
+    if (dx * dx + dy * dy > 100) cancelLongPress();
   };
   const handleGlobeClick = () => {
     if (longPressFired.current) return;
     openBlacktopMap();
   };
+
 
   // Canvas can't resolve `hsl(var(--accent))`, so look up the literal HSL for
   // the active accent (same approach as BlacktopMap) for the globe's strokes.
