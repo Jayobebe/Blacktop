@@ -45,6 +45,7 @@ export function VehicleCardCarousel() {
           totalDurationSec: stats.totalDuration,
           topSpeedMph: stats.personalTopSpeed,
           maxLean: 0,
+          maxGForce: 0,
         },
         tier: tier.id,
         tierLabel: tier.label,
@@ -52,6 +53,7 @@ export function VehicleCardCarousel() {
         improved: {
           topSpeed: false,
           maxLean: false,
+          maxGForce: false,
           distance: false,
           duration: false,
           rides: false,
