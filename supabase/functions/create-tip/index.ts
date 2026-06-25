@@ -45,9 +45,16 @@ serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const origin =
-      req.headers.get("origin") ||
-      "https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com";
+    const ALLOWED_ORIGINS = new Set([
+      "https://convoy-comms.lovable.app",
+      "https://blacktoplive.com",
+      "https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com",
+      "https://id-preview--8006f12b-bc88-412a-bd3c-677561cc727f.lovable.app",
+    ]);
+    const rawOrigin = req.headers.get("origin") ?? "";
+    const origin = ALLOWED_ORIGINS.has(rawOrigin)
+      ? rawOrigin
+      : "https://convoy-comms.lovable.app";
 
     // Only these tiers are offered in the UI - reject anything else server-side.
     const ALLOWED_AMOUNTS = [5, 10, 20];
