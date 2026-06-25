@@ -59,7 +59,7 @@ const fragmentShader = /* glsl */ `
   }
 
   void main() {
-    vec3 p = normalize(vPos) * 2.2;
+    vec3 p = normalize(vPos) * 3.4;
     float n = fbm(p);
     float threshold = 0.52;
     float d = n - threshold;
