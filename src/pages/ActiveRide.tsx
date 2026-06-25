@@ -513,14 +513,20 @@ export default function ActiveRide() {
       }
     }
 
-    // ALWAYS show summary for every ride (solo or convoy) - flush before endRide
-    flushSync(() => {
-      setShowSummary(true);
-    });
-
-    // Now safe to end the ride (control channel broadcast already sent)
+    // End the ride first so we know whether it was valid before flipping any
+    // UI state. Invalid (too-short) rides return null and must not show a
+    // receipt — that also keeps us from churning local storage on rapid
+    // start/stop loops.
     const rideId = await endRide();
-    setSavedRideId(rideId);
+    if (rideId) {
+      flushSync(() => {
+        setShowSummary(true);
+      });
+      setSavedRideId(rideId);
+    } else {
+      toast.info('Ride too short — not saved');
+      navigate('/');
+    }
 
     // Cleanup convoy state in background
     const cleanupPromises: Promise<any>[] = [];
