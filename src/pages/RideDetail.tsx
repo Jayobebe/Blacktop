@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRideHistory, RidePhotos } from '@/features/ride';
-import { useSettings } from '@/features/settings';
+import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
+import { useGarage } from '@/features/garage';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Clock, MapPin, Gauge, TrendingUp, Video, Download, Check, Film } from 'lucide-react';
-import { formatDuration, formatDistance, formatDate, formatTime, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
+import { ArrowLeft, Users, Trash2, Video, Download, Check, Film } from 'lucide-react';
+import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import { useState } from 'react';
@@ -13,12 +13,13 @@ export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
-  const { settings } = useSettings();
+  const { bikes } = useGarage();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
   const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
 
   const ride = rides.find(r => r.id === id);
+  const rideBike = ride ? bikes.find(b => b.id === ride.bikeId) ?? null : null;
 
   if (!ride) {
     return (
@@ -124,40 +125,29 @@ export default function RideDetail() {
 
       {/* Main content - scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
-        {/* Stats Grid - horizontal layout in landscape */}
-        <div className="grid grid-cols-2 landscape:grid-cols-4 gap-2 mb-4 animate-fade-in">
-          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <MapPin className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase tracking-wide">Distance</span>
-            </div>
-            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatDistance(ride.distance, settings.distanceUnit)}</p>
-            <p className="text-xs text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</p>
-          </div>
-          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase tracking-wide">Duration</span>
-            </div>
-            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatDuration(ride.duration)}</p>
-            <p className="text-xs text-muted-foreground">h:mm:ss</p>
-          </div>
-          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <Gauge className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase tracking-wide">Avg Speed</span>
-            </div>
-            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatSpeed(ride.averageSpeed, settings.speedUnit)}</p>
-            <p className="text-xs text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
-          </div>
-          <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase tracking-wide">Max Speed</span>
-            </div>
-            <p className="font-mono text-2xl landscape:text-xl font-bold">{formatSpeed(ride.maxSpeed, settings.speedUnit)}</p>
-            <p className="text-xs text-muted-foreground">{getSpeedLabel(settings.speedUnit)}</p>
-          </div>
+        {/* Ride Receipt - regenerated on demand from this ride's stored data
+            (no separate rendered copy is cached - see burnAllData/burnGarage,
+            which already cover everything this receipt reads). Downloadable
+            here any time via its own Save button. */}
+        <div className="mb-4 animate-fade-in">
+          <RideSummary
+            variant="embedded"
+            members={[]}
+            rideStats={{
+              duration: ride.duration,
+              distance: ride.distance,
+              maxSpeed: ride.maxSpeed,
+              averageSpeed: ride.averageSpeed,
+              maxLean: Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0),
+              maxGForce: ride.maxGForce,
+            }}
+            bikeName={rideBike?.name ?? null}
+            bikePhoto={rideBike?.photos?.hero ?? null}
+            gForceSamples={ride.gForceSamples}
+            earnedBadges={ride.earnedBadges}
+            printedAt={ride.endedAt ?? ride.startedAt}
+            orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
+          />
         </div>
 
         {/* Photos Section */}

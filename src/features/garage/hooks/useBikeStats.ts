@@ -13,6 +13,7 @@ export interface BikeStats {
   topSpeedMph: number;
   maxLeanLeft: number;
   maxLeanRight: number;
+  maxGForce: number;
   longestRideMi: number;
 }
 
@@ -29,6 +30,7 @@ export function useBikeStats(bike: Bike | null): BikeStats {
       topSpeedMph: 0,
       maxLeanLeft: 0,
       maxLeanRight: 0,
+      maxGForce: 0,
       longestRideMi: 0,
     };
     if (!bike) return empty;
@@ -45,6 +47,7 @@ export function useBikeStats(bike: Bike | null): BikeStats {
       topSpeedMph: Math.max(0, ...mine.map((r) => r.maxSpeed)),
       maxLeanLeft: Math.max(0, ...mine.map((r) => r.maxLeanLeft || 0)),
       maxLeanRight: Math.max(0, ...mine.map((r) => r.maxLeanRight || 0)),
+      maxGForce: Math.max(0, ...mine.map((r) => r.maxGForce || 0)),
       longestRideMi: Math.max(0, ...mine.map((r) => r.distance)),
     };
   }, [bike, rides]);

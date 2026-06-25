@@ -158,6 +158,9 @@ export default function Settings() {
       });
       setBurning(true);
       try {
+        // Together these two cover every input a Ride History receipt is
+        // built from (ride stats/badges/G-data + bike name/photo) - receipts
+        // aren't stored separately, so this also wipes the receipt bank.
         burnAllData();
         burnGarage();
       } catch (err) {
@@ -377,21 +380,21 @@ export default function Settings() {
           })()}
         </CollapsibleSection>
 
-        {/* Lean Angle Sensor Section */}
-        <CollapsibleSection icon={Activity} label="Lean Angle" delayClass="delay-150">
+        {/* Lean Angle + G-Force Sensor Section */}
+        <CollapsibleSection icon={Activity} label="Lean + G's" delayClass="delay-150">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium">Enable Lean Angle</p>
               <p className="text-[10px] text-muted-foreground">Track vehicle lean angle in real-time</p>
             </div>
-            <Switch 
-              checked={settings.leanAngleEnabled} 
+            <Switch
+              checked={settings.leanAngleEnabled}
               onCheckedChange={toggleLeanAngle}
             />
           </div>
-          
+
           {settings.leanAngleEnabled && (
-            <div className="pt-3 border-t border-border/30">
+            <div className="pt-3 pb-4 border-t border-border/30">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm font-medium text-destructive">Warning Threshold</p>
@@ -416,6 +419,35 @@ export default function Settings() {
               </div>
             </div>
           )}
+
+          <div className={cn("flex items-center justify-between", settings.leanAngleEnabled && "pt-3 border-t border-border/30")}>
+            <div>
+              <p className="text-sm font-medium">Enable G-Force Gauge</p>
+              <p className="text-[10px] text-muted-foreground">Live G-force gauge and max-G tracking during rides</p>
+            </div>
+            <Switch
+              checked={settings.gForceEnabled}
+              onCheckedChange={async (v) => {
+                if (v) {
+                  // iOS 13+: motion permission must be requested from a user gesture
+                  const anyMotion = (window as any).DeviceMotionEvent;
+                  if (anyMotion && typeof anyMotion.requestPermission === 'function') {
+                    try {
+                      const res = await anyMotion.requestPermission();
+                      if (res !== 'granted') {
+                        toast.error('Motion sensor permission denied');
+                        return;
+                      }
+                    } catch {
+                      toast.error('Could not enable motion sensor');
+                      return;
+                    }
+                  }
+                }
+                updateSetting('gForceEnabled', v);
+              }}
+            />
+          </div>
         </CollapsibleSection>
 
         {/* Safety / Auto-Rescue */}

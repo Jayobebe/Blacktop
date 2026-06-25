@@ -63,48 +63,45 @@ export interface MemberBadge {
   emoji: string;
 }
 
+// Single source of truth for badge label/emoji, shared by calculateBadges (live
+// convoy stats) and any place rendering a ride's already-earned BadgeType[]
+// without a member roster (e.g. a historical receipt in Ride History).
+export const BADGE_INFO: Record<BadgeType, { label: string; emoji: string }> = {
+  'speed-demon': { label: 'Speed Demon', emoji: '⚡' },
+  journeyman: { label: 'Journeyman', emoji: '🛣️' },
+  fallback: { label: 'Fallback', emoji: '🪨' },
+};
+
 export function calculateBadges(members: ConvoyMemberInfo[]): Map<string, MemberBadge[]> {
   const badges = new Map<string, MemberBadge[]>();
-  
+
   if (members.length === 0) return badges;
 
   // Initialize empty arrays for all members
   members.forEach(m => badges.set(m.userId, []));
 
   // Speed Demon - highest top speed
-  const speedDemon = members.reduce((prev, curr) => 
+  const speedDemon = members.reduce((prev, curr) =>
     (curr.topSpeed || 0) > (prev.topSpeed || 0) ? curr : prev
   );
   if ((speedDemon.topSpeed || 0) > 0) {
-    badges.get(speedDemon.userId)?.push({ 
-      type: 'speed-demon', 
-      label: 'Speed Demon', 
-      emoji: '⚡' 
-    });
+    badges.get(speedDemon.userId)?.push({ type: 'speed-demon', ...BADGE_INFO['speed-demon'] });
   }
 
   // Journeyman - most distance covered
-  const journeyman = members.reduce((prev, curr) => 
+  const journeyman = members.reduce((prev, curr) =>
     (curr.distanceDriven || 0) > (prev.distanceDriven || 0) ? curr : prev
   );
   if ((journeyman.distanceDriven || 0) > 0) {
-    badges.get(journeyman.userId)?.push({ 
-      type: 'journeyman', 
-      label: 'Journeyman', 
-      emoji: '🛣️' 
-    });
+    badges.get(journeyman.userId)?.push({ type: 'journeyman', ...BADGE_INFO.journeyman });
   }
 
   // Fallback - longest time at 0 speed
-  const fallback = members.reduce((prev, curr) => 
+  const fallback = members.reduce((prev, curr) =>
     (curr.stationaryTime || 0) > (prev.stationaryTime || 0) ? curr : prev
   );
   if ((fallback.stationaryTime || 0) > 0) {
-    badges.get(fallback.userId)?.push({ 
-      type: 'fallback', 
-      label: 'Fallback', 
-      emoji: '🪨' 
-    });
+    badges.get(fallback.userId)?.push({ type: 'fallback', ...BADGE_INFO.fallback });
   }
 
   return badges;

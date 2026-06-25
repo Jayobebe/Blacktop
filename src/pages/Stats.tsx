@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
-import { ArrowLeft, Route, Gauge, Clock, TrendingUp, Hash, Users, Trophy } from 'lucide-react';
+import { ArrowLeft, Route, Clock, TrendingUp, Hash, Users, Trophy, Zap } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { VehicleCardCarousel } from '@/features/cards';
@@ -37,16 +37,16 @@ export default function Stats() {
       unit: getSpeedLabel(settings.speedUnit),
     },
     {
-      icon: Gauge,
-      label: 'Avg Ride Length',
-      value: formatDistance(stats.averageRideLength, settings.distanceUnit),
-      unit: getDistanceLabel(settings.distanceUnit),
-    },
-    {
       icon: Users,
       label: 'Convoy Rides',
       value: stats.convoyRides.toString(),
       unit: 'convoys',
+    },
+    {
+      icon: Zap,
+      label: 'Max G-Force',
+      value: stats.personalMaxGForce > 0 ? stats.personalMaxGForce.toFixed(1) : '—',
+      unit: stats.personalMaxGForce > 0 ? 'G' : '',
     },
   ];
 

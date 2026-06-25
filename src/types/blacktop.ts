@@ -32,6 +32,11 @@ export interface LeanSample {
   timestamp: number;
 }
 
+export interface GForceSample {
+  g: number; // total acceleration magnitude in g (includes gravity, ~1.0 at rest)
+  timestamp: number;
+}
+
 export interface RideSession {
   id: string;
   name?: string; // Optional custom name for the ride
@@ -44,8 +49,10 @@ export interface RideSession {
   maxSpeed: number; // in mph
   maxLeanLeft: number; // in degrees (absolute value)
   maxLeanRight: number; // in degrees (absolute value)
+  maxGForce?: number; // peak total G magnitude during the ride; absent on rides recorded before this feature existed
   gpsPoints: GpsPoint[];
   leanSamples?: LeanSample[]; // High-frequency lean data (10Hz)
+  gForceSamples?: GForceSample[]; // High-frequency G-force data (10Hz)
   earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
   recording?: RideRecording; // Video recording from live stream
@@ -67,6 +74,7 @@ export interface RideStats {
   totalDistance: number; // in miles
   totalDuration: number; // in seconds
   personalTopSpeed: number; // in mph
+  personalMaxGForce: number; // peak total G magnitude across all rides; 0 if none recorded
   averageRideLength: number; // in miles
   convoyRides: number;
   badges: BadgeCounts;
@@ -88,10 +96,12 @@ export interface ActiveRideState {
   currentLean: number; // in degrees, positive = right, negative = left
   maxLeanLeft: number; // in degrees (absolute value)
   maxLeanRight: number; // in degrees (absolute value)
+  maxGForce: number; // peak total G magnitude so far this ride
   distance: number;
   duration: number;
   gpsPoints: GpsPoint[];
   leanSamples: LeanSample[]; // High-frequency lean data (10Hz)
+  gForceSamples: GForceSample[]; // High-frequency G-force data (10Hz)
   gpsStatus: GpsStatus;
   inactivityTimedOut: boolean; // true once the inactivity guard has paused tracking
 }

@@ -126,6 +126,7 @@ export interface VehicleCardSnapshot {
   lastSeenTier: CardTier;
   topSpeedMph: number;
   maxLean: number;
+  maxGForce: number;
   totalDistanceKm: number;
   totalRides: number;
   totalDurationSec: number;

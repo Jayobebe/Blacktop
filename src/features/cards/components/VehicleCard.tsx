@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download } from 'lucide-react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download, Zap } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -174,7 +174,10 @@ export function VehicleCard({ card }: Props) {
           )}
         </div>
 
-        {/* Stats grid */}
+        {/* Stats grid - always shows speed/time/distance/rides; lean and G
+            cells only appear when their feature is enabled in Settings. Column
+            count adapts so the extra cells add columns, not rows, keeping the
+            card's fixed aspect ratio from overflowing. */}
         {locked ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
             <p className="text-sm font-semibold text-white/90">
@@ -184,52 +187,67 @@ export function VehicleCard({ card }: Props) {
               First card unlocks at 10 rides
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-1.5 mt-auto">
-            <StatCell
-              icon={Gauge}
-              label="Top speed"
-              value={`${formatSpeed(card.stats.topSpeedMph, settings.speedUnit)}`}
-              unit={getSpeedLabel(settings.speedUnit)}
-              improved={card.improved.topSpeed}
-            />
-            {settings.leanAngleEnabled ? (
-              <StatCell
-                label="Max lean"
-                value={`${Math.round(card.stats.maxLean)}`}
-                unit="°"
-                improved={card.improved.maxLean}
-              />
-            ) : (
-              <StatCell
-                icon={Clock}
-                label="Time"
-                value={formatDuration(card.stats.totalDurationSec)}
-                unit=""
-                improved={card.improved.duration}
-              />
-            )}
-            <StatCell
-              icon={Route}
-              label="Distance"
-              value={formatDistance(card.stats.totalDistanceMi, settings.distanceUnit)}
-              unit={getDistanceLabel(settings.distanceUnit)}
-              improved={card.improved.distance}
-            />
-            <StatCell
-              icon={Hash}
-              label="Rides"
-              value={`${card.stats.totalRides}`}
-              unit={
-                settings.leanAngleEnabled
-                  ? formatDuration(card.stats.totalDurationSec)
-                  : ''
-              }
-              improved={card.improved.rides}
-              unitMuted
-            />
-          </div>
-        )}
+        ) : (() => {
+          const cells: (StatCellProps & { key: string })[] = [
+            {
+              key: 'speed',
+              icon: Gauge,
+              label: 'Top speed',
+              value: `${formatSpeed(card.stats.topSpeedMph, settings.speedUnit)}`,
+              unit: getSpeedLabel(settings.speedUnit),
+              improved: card.improved.topSpeed,
+            },
+            {
+              key: 'time',
+              icon: Clock,
+              label: 'Time',
+              value: formatDuration(card.stats.totalDurationSec),
+              unit: '',
+              improved: card.improved.duration,
+            },
+            {
+              key: 'distance',
+              icon: Route,
+              label: 'Distance',
+              value: formatDistance(card.stats.totalDistanceMi, settings.distanceUnit),
+              unit: getDistanceLabel(settings.distanceUnit),
+              improved: card.improved.distance,
+            },
+            {
+              key: 'rides',
+              icon: Hash,
+              label: 'Rides',
+              value: `${card.stats.totalRides}`,
+              unit: '',
+              improved: card.improved.rides,
+              unitMuted: true,
+            },
+          ];
+          if (settings.leanAngleEnabled) {
+            cells.push({
+              key: 'lean',
+              label: 'Max lean',
+              value: `${Math.round(card.stats.maxLean)}`,
+              unit: '°',
+              improved: card.improved.maxLean,
+            });
+          }
+          if (settings.gForceEnabled) {
+            cells.push({
+              key: 'gforce',
+              icon: Zap,
+              label: 'Max G',
+              value: card.stats.maxGForce > 0 ? card.stats.maxGForce.toFixed(1) : '—',
+              unit: card.stats.maxGForce > 0 ? 'G' : '',
+              improved: card.improved.maxGForce,
+            });
+          }
+          return (
+            <div className={cn('grid gap-1.5 mt-auto', cells.length > 4 ? 'grid-cols-3' : 'grid-cols-2')}>
+              {cells.map(({ key, ...cell }) => <StatCell key={key} {...cell} />)}
+            </div>
+          );
+        })()}
 
         {/* Footer: progress to next */}
         {!locked && card.nextTierRides > 0 && (

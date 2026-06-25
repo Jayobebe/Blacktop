@@ -93,10 +93,12 @@ let rideState: ActiveRideState = restoredState || {
   currentLean: 0,
   maxLeanLeft: 0,
   maxLeanRight: 0,
+  maxGForce: 0,
   distance: 0,
   duration: 0,
   gpsPoints: [],
   leanSamples: [],
+  gForceSamples: [],
   gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
   inactivityTimedOut: false,
 };
@@ -131,6 +133,8 @@ let hasRestoredGps = false; // Track if we've already restored GPS for this sess
 let currentLeanAngle = 0; // Current lean angle for recording with GPS points
 let lastLeanSampleTime = 0; // Track last lean sample time for 10Hz recording
 const LEAN_SAMPLE_INTERVAL = 100; // 100ms = 10Hz
+let lastGForceSampleTime = 0; // Track last G-force sample time for 10Hz recording
+const GFORCE_SAMPLE_INTERVAL = 100; // 100ms = 10Hz
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -612,10 +616,12 @@ export function useActiveRide(convoyId?: string | null) {
       currentLean: 0,
       maxLeanLeft: 0,
       maxLeanRight: 0,
+      maxGForce: 0,
       distance: 0,
       duration: 0,
       gpsPoints: [],
       leanSamples: [],
+      gForceSamples: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
       inactivityTimedOut: false,
     }));
@@ -691,8 +697,10 @@ export function useActiveRide(convoyId?: string | null) {
         maxSpeed: currentState.maxSpeed,
         maxLeanLeft: currentState.maxLeanLeft,
         maxLeanRight: currentState.maxLeanRight,
+        maxGForce: currentState.maxGForce > 0 ? currentState.maxGForce : undefined,
         gpsPoints: currentState.gpsPoints,
         leanSamples: currentState.leanSamples,
+        gForceSamples: currentState.gForceSamples,
         bikeId,
       };
       addRideRef.current(ride);
@@ -712,10 +720,12 @@ export function useActiveRide(convoyId?: string | null) {
       currentLean: 0,
       maxLeanLeft: 0,
       maxLeanRight: 0,
+      maxGForce: 0,
       distance: 0,
       duration: 0,
       gpsPoints: [],
       leanSamples: [],
+      gForceSamples: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
       inactivityTimedOut: false,
     }));
@@ -774,11 +784,36 @@ export function useActiveRide(convoyId?: string | null) {
     });
   }, []);
 
+  // Update G-force during ride (called from components using useGForce)
+  const updateGForce = useCallback((currentG: number, maxG: number) => {
+    if (!rideState.isActive || isPaused) return;
+
+    // Record G-force sample at 10Hz
+    const now = Date.now();
+    const shouldSample = now - lastGForceSampleTime >= GFORCE_SAMPLE_INTERVAL;
+
+    setRideState(prev => {
+      const newState = {
+        ...prev,
+        maxGForce: Math.max(prev.maxGForce, maxG),
+      };
+
+      // Add G-force sample at 10Hz rate
+      if (shouldSample) {
+        lastGForceSampleTime = now;
+        newState.gForceSamples = [...prev.gForceSamples, { g: currentG, timestamp: now }];
+      }
+
+      return newState;
+    });
+  }, []);
+
   return {
     rideState: state,
     startRide,
     endRide,
     setRidePaused,
     updateLeanAngle,
+    updateGForce,
   };
 }

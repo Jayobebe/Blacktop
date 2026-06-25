@@ -5,7 +5,7 @@ import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/features/convoy';
-import { useSettings } from '@/features/settings';
+import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
@@ -18,13 +18,15 @@ import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/i
 import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
+import { useGForce } from '@/hooks/useGForce';
 import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
 import { saveRideOverlayBlob } from '@/lib/overlayStore';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
+import { GForceGauge } from '@/components/GForceGauge';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
-import { GpsStatus } from '@/types/blacktop';
+import { GpsStatus, GForceSample } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
 import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
@@ -83,7 +85,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 
 export default function ActiveRide() {
   const navigate = useNavigate();
-  const { rideState, endRide, setRidePaused, updateLeanAngle } = useActiveRide();
+  const { rideState, endRide, setRidePaused, updateLeanAngle, updateGForce } = useActiveRide();
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
@@ -109,15 +111,27 @@ export default function ActiveRide() {
   
   // Lean angle sensor
   const leanAngle = useLeanAngle(settings.leanAngleEnabled && rideState.isActive);
-  
-  // Check if ride has lean data for overlay
+
+  // G-force sensor - shared by the live gauge AND auto-rescue crash detection,
+  // so there's a single devicemotion listener regardless of which feature(s) need it.
+  const gForce = useGForce(rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled));
+
+  // Check if ride has lean / G-force data for overlay
   const hasLeanData = settings.leanAngleEnabled && leanAngle.isSupported;
-  
+  const hasGForceData = settings.gForceEnabled && gForce.isSupported;
+
+  // MapLibre-style problem: canvas color parsing can't resolve `hsl(var(--accent))`,
+  // so resolve the literal HSL for the selected accent up front (see BlacktopMap.tsx).
+  const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
+  const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
+
   // Live overlay recorder
   const overlayRecorder = useLiveOverlayRecorder({
     speedUnit: settings.speedUnit,
     distanceUnit: settings.distanceUnit,
     hasLeanData,
+    hasGForceData,
+    accentColor,
   });
   const overlayRecorderRef = useRef(overlayRecorder);
   overlayRecorderRef.current = overlayRecorder;
@@ -135,7 +149,7 @@ export default function ActiveRide() {
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
-  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number } | null>(null);
+  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number; maxGForce?: number; gForceSamples?: GForceSample[] } | null>(null);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
   const { integration: discordIntegration } = useDiscordIntegration();
@@ -227,6 +241,21 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
+  // Request G-force sensor permission when needed (iOS requires user gesture; falls
+  // back to a request here if the Settings-time prompt was skipped/denied/reloaded)
+  useEffect(() => {
+    if (rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled) && !gForce.permissionGranted) {
+      gForce.requestPermission();
+    }
+  }, [rideState.isActive, settings.gForceEnabled, settings.autoRescueEnabled, gForce.permissionGranted, gForce.requestPermission]);
+
+  // Persist max G-force to ride state for recording (only when the gauge feature is enabled)
+  useEffect(() => {
+    if (rideState.isActive && settings.gForceEnabled && gForce.isSupported) {
+      updateGForce(gForce.currentG, gForce.maxG);
+    }
+  }, [rideState.isActive, settings.gForceEnabled, gForce.isSupported, gForce.currentG, gForce.maxG, updateGForce]);
+
   // Start overlay recording when ride starts
   const overlayStartedRef = useRef(false);
   useEffect(() => {
@@ -247,9 +276,11 @@ export default function ActiveRide() {
         duration: rideState.duration,
         leanAngle: rideState.currentLean,
         maxLean: Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
+        gForce: gForce.currentG,
+        maxGForce: rideState.maxGForce,
       });
     }
-  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight]);
+  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, rideState.maxGForce]);
 
   // Track convoy members
   useEffect(() => {
@@ -308,6 +339,8 @@ export default function ActiveRide() {
         maxSpeed: currentRideState.maxSpeed,
         averageSpeed: avgSpeed,
         maxLean: Math.max(currentRideState.maxLeanLeft || 0, currentRideState.maxLeanRight || 0),
+        maxGForce: currentRideState.maxGForce || undefined,
+        gForceSamples: currentRideState.gForceSamples,
       });
       
       // Capture final members for badge summary - use membersRef first, fallback to current convoy.members
@@ -417,6 +450,8 @@ export default function ActiveRide() {
         maxSpeed: rideState.maxSpeed,
         averageSpeed: avgSpeed,
         maxLean: Math.max(rideState.maxLeanLeft || 0, rideState.maxLeanRight || 0),
+        maxGForce: rideState.maxGForce || undefined,
+        gForceSamples: rideState.gForceSamples,
       });
 
       // Capture final members before ending for badge summary
@@ -578,6 +613,7 @@ export default function ActiveRide() {
   useCrashDetection({
     enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen && !autoRescueFiredRef.current,
     currentSpeed: rideState.currentSpeed,
+    currentG: gForce.currentG,
     gThreshold: settings.autoRescueGThreshold,
     stopWindowSec: settings.autoRescueStopWindowSec,
     onPossibleCrash: useCallback(() => {
@@ -615,6 +651,7 @@ export default function ActiveRide() {
         rideStats={finalRideStats || undefined}
         bikeName={activeBike?.name ?? null}
         bikePhoto={activeBike?.photos?.hero ?? null}
+        gForceSamples={finalRideStats?.gForceSamples}
         onBadgesEarned={handleBadgesEarned}
         onClose={handleCloseSummary} 
       />
@@ -726,6 +763,13 @@ export default function ActiveRide() {
                 {leanAngle.isCalibrated && (
                   <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
                 )}
+              </div>
+            )}
+
+            {/* G-Force Gauge - alongside lean angle when enabled */}
+            {settings.gForceEnabled && gForce.isSupported && (
+              <div className="mt-2 landscape:mt-1 flex justify-center">
+                <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
               </div>
             )}
           </div>

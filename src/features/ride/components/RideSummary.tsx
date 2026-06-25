@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ConvoyMemberInfo, calculateBadges, MemberBadge, BadgeType } from '@/types/convoy';
+import { ConvoyMemberInfo, calculateBadges, BADGE_INFO, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
 import { Crown, User, Download, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { useSettings } from '@/features/settings';
 import { BTLogo } from '@/components/BTLogo';
+import { GForceGraph } from '@/components/GForceGraph';
+import { GForceSample } from '@/types/blacktop';
 import { toPng } from 'html-to-image';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -17,6 +19,7 @@ interface RideStats {
   maxSpeed: number;
   averageSpeed: number;
   maxLean?: number;
+  maxGForce?: number;
 }
 
 interface RideSummaryProps {
@@ -25,8 +28,17 @@ interface RideSummaryProps {
   rideStats?: RideStats;
   bikeName?: string | null;
   bikePhoto?: string | null;
+  gForceSamples?: GForceSample[];
+  /** Precomputed badge types - used when there's no live member roster to calculate from (e.g. a historical receipt in Ride History). Ignored if `members` has 2+ entries. */
+  earnedBadges?: BadgeType[];
+  /** ISO date for the receipt's printed date/time. Defaults to now - pass the ride's actual end time when redisplaying a past ride so the receipt doesn't show today's date. */
+  printedAt?: string;
+  /** Stable order id so re-downloading the same ride's receipt later shows the same number. Defaults to a random one (fine for the one-time post-ride screen). */
+  orderId?: string;
   onBadgesEarned?: (badges: BadgeType[]) => void;
-  onClose: () => void;
+  onClose?: () => void;
+  /** 'overlay' (default): full-screen takeover shown right after a ride ends. 'embedded': a plain card for reuse elsewhere, e.g. Ride History. */
+  variant?: 'overlay' | 'embedded';
 }
 
 function ReceiptRow({ label, value }: { label: string; value: string }) {
@@ -39,7 +51,7 @@ function ReceiptRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, onBadgesEarned, onClose }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay' }: RideSummaryProps) {
   const { settings } = useSettings();
 
   const shouldCalculateBadges = members.length >= 2;
@@ -50,12 +62,18 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
 
   // Show only the current user's badges on their personal receipt.
   // Fallback: if no currentUserId, show all (e.g. shared/demo view).
-  const badgeAwards: { member: ConvoyMemberInfo; badge: MemberBadge }[] = [];
+  const badgeAwards: { member?: ConvoyMemberInfo; badge: MemberBadge }[] = [];
   if (shouldCalculateBadges) {
     members.forEach((member) => {
       if (currentUserId && member.userId !== currentUserId) return;
       const memberBadges = badgesMap.get(member.userId) || [];
       memberBadges.forEach((badge) => badgeAwards.push({ member, badge }));
+    });
+  } else if (earnedBadges && earnedBadges.length > 0) {
+    // No live member roster (e.g. redisplaying a past ride) - render the
+    // badge types already recorded on the ride itself.
+    earnedBadges.forEach((type) => {
+      badgeAwards.push({ badge: { type, ...BADGE_INFO[type] } });
     });
   }
   const badgeOrder = { 'speed-demon': 0, journeyman: 1, fallback: 2 } as const;
@@ -70,17 +88,19 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
     }
   }, [currentUserId, onBadgesEarned, badgesMap, shouldCalculateBadges]);
 
-  // Pin timestamp + order id so they don't reshuffle on re-render or saved image
+  // Pin timestamp + order id so they don't reshuffle on re-render or saved image.
+  // `printedAt`/`orderId` let a caller redisplay a past ride's receipt with its
+  // actual end time and a stable order number, instead of "now" + a random id.
   const { dateStr, timeStr, orderId } = useMemo(() => {
-    const now = new Date();
+    const printed = printedAt ? new Date(printedAt) : new Date();
     return {
-      dateStr: now
+      dateStr: printed
         .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
         .toUpperCase(),
-      timeStr: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-      orderId: `#${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      timeStr: printed.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+      orderId: orderIdProp ?? `#${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
     };
-  }, []);
+  }, [printedAt, orderIdProp]);
 
   const speedUnit = getSpeedLabel(settings.speedUnit).toUpperCase();
   const distUnit = getDistanceLabel(settings.distanceUnit).toUpperCase();
@@ -128,7 +148,11 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in">
+    <div className={cn(
+      variant === 'overlay'
+        ? 'fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in'
+        : 'flex flex-col items-center',
+    )}>
       <div ref={receiptRef} className="w-full max-w-[360px] animate-receipt-print">
         <div className="receipt-edge-top" />
         <div className="receipt relative px-6 py-5 font-receipt text-[--ink]">
@@ -171,6 +195,14 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 }
               />
               <ReceiptRow
+                label="Max G"
+                value={
+                  typeof rideStats.maxGForce === 'number' && rideStats.maxGForce > 0
+                    ? `${rideStats.maxGForce.toFixed(1)}G`
+                    : '—'
+                }
+              />
+              <ReceiptRow
                 label="Distance"
                 value={`${formatDistance(rideStats.distance, settings.distanceUnit)} ${distUnit}`}
               />
@@ -185,27 +217,42 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Divider */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
-          {/* Vehicle photo (B&W) — below stats, above thank you */}
-          {bikePhoto ? (
-            <div className="flex items-center justify-center py-2">
-              <img
-                src={bikePhoto}
-                alt={bikeName || 'Vehicle'}
-                crossOrigin="anonymous"
-                className="max-h-40 w-auto object-contain"
-                style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
+          {/* Vehicle photo (B&W) — below stats, above thank you. The G-force
+              trace sits behind it as a subtle backdrop layer, not a readable
+              chart, so it uses the receipt's own ink tone rather than the
+              app's accent color (which would clash with the printed-paper look). */}
+          <div className="relative">
+            {gForceSamples && gForceSamples.length > 1 && (
+              <GForceGraph
+                samples={gForceSamples}
+                color="var(--ink)"
+                height={96}
+                className="absolute inset-x-0 top-1/2 -translate-y-1/2"
               />
+            )}
+            <div className="relative">
+              {bikePhoto ? (
+                <div className="flex items-center justify-center py-2">
+                  <img
+                    src={bikePhoto}
+                    alt={bikeName || 'Vehicle'}
+                    crossOrigin="anonymous"
+                    className="max-h-40 w-auto object-contain"
+                    style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
+                  />
+                </div>
+              ) : (
+                !bikeName && (
+                  <div className="receipt-bracket text-center" data-bike-slot>
+                    <span className="receipt-bracket-tr" />
+                    <span className="receipt-bracket-bl" />
+                    <div className="text-xl tracking-[0.2em]">VEHICLE MODEL</div>
+                    <div className="text-sm opacity-60 mt-1">add in garage</div>
+                  </div>
+                )
+              )}
             </div>
-          ) : (
-            !bikeName && (
-              <div className="receipt-bracket text-center" data-bike-slot>
-                <span className="receipt-bracket-tr" />
-                <span className="receipt-bracket-bl" />
-                <div className="text-xl tracking-[0.2em]">VEHICLE MODEL</div>
-                <div className="text-sm opacity-60 mt-1">add in garage</div>
-              </div>
-            )
-          )}
+          </div>
 
           {/* Badges */}
           {badgeAwards.length > 0 && (
@@ -220,7 +267,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               )}>
                 {badgeAwards.map(({ member, badge }) => (
                   <div
-                    key={`${member.userId}-${badge.type}`}
+                    key={`${member?.userId ?? 'self'}-${badge.type}`}
                     className="receipt-bracket text-center px-2 py-3"
                   >
                     <span className="receipt-bracket-tr" />
@@ -229,10 +276,12 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                     <div className="text-[11px] uppercase tracking-wider font-bold leading-tight">
                       {badge.label}
                     </div>
-                    <div className="flex items-center justify-center gap-1 text-[10px] opacity-70 mt-1 truncate">
-                      {member.isLeader ? <Crown className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
-                      <span className="truncate">{member.name}</span>
-                    </div>
+                    {member && (
+                      <div className="flex items-center justify-center gap-1 text-[10px] opacity-70 mt-1 truncate">
+                        {member.isLeader ? <Crown className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
+                        <span className="truncate">{member.name}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -256,7 +305,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
       </div>
 
       {/* Action buttons (outside the receipt) */}
-      <div className="w-full max-w-[360px] grid grid-cols-2 gap-3 mt-6">
+      <div className={cn('w-full max-w-[360px] gap-3 mt-6', variant === 'overlay' && onClose ? 'grid grid-cols-2' : 'grid grid-cols-1')}>
           <Button
             onClick={handleSave}
             disabled={saving}
@@ -266,12 +315,14 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             {saved ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
             {saved ? 'Saved' : saving ? 'Saving…' : 'Save'}
           </Button>
-          <Button
-            onClick={onClose}
-            className="h-12 text-base font-semibold"
-          >
-            Continue
-          </Button>
+          {variant === 'overlay' && onClose && (
+            <Button
+              onClick={onClose}
+              className="h-12 text-base font-semibold"
+            >
+              Continue
+            </Button>
+          )}
         </div>
     </div>
   );

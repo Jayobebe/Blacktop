@@ -15,6 +15,7 @@ export interface VehicleCardStats {
   totalDurationSec: number;
   topSpeedMph: number;
   maxLean: number;
+  maxGForce: number;
 }
 
 export interface VehicleCardData {
@@ -26,6 +27,7 @@ export interface VehicleCardData {
   improved: {
     topSpeed: boolean;
     maxLean: boolean;
+    maxGForce: boolean;
     distance: boolean;
     duration: boolean;
     rides: boolean;
@@ -54,6 +56,7 @@ export function useVehicleCards() {
             0,
             ...mine.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)),
           ),
+          maxGForce: Math.max(0, ...mine.map((r) => r.maxGForce || 0)),
         };
         const tierDef = getTierForRides(stats.totalRides);
         const snap = snapshots[bike.id];
@@ -62,6 +65,7 @@ export function useVehicleCards() {
           ? {
               topSpeed: stats.topSpeedMph > snap.topSpeedMph,
               maxLean: stats.maxLean > snap.maxLean,
+              maxGForce: stats.maxGForce > (snap.maxGForce ?? 0),
               distance: stats.totalDistanceKm > snap.totalDistanceKm,
               duration: stats.totalDurationSec > snap.totalDurationSec,
               rides: stats.totalRides > snap.totalRides,
@@ -69,6 +73,7 @@ export function useVehicleCards() {
           : {
               topSpeed: false,
               maxLean: false,
+              maxGForce: false,
               distance: false,
               duration: false,
               rides: false,
@@ -104,6 +109,7 @@ export function useVehicleCards() {
           lastSeenTier: card.tier,
           topSpeedMph: card.stats.topSpeedMph,
           maxLean: card.stats.maxLean,
+          maxGForce: card.stats.maxGForce,
           totalDistanceKm: card.stats.totalDistanceKm,
           totalRides: card.stats.totalRides,
           totalDurationSec: card.stats.totalDurationSec,

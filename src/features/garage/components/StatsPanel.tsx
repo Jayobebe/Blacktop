@@ -29,9 +29,9 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
     { label: 'Rides', value: stats.totalRides, unit: null },
     { label: 'Time', value: formatDuration(stats.totalDurationSec), unit: null },
     {
-      label: 'Longest ride',
-      value: formatDistance(stats.longestRideMi, settings.distanceUnit),
-      unit: getDistanceLabel(settings.distanceUnit),
+      label: 'Max G',
+      value: stats.maxGForce > 0 ? stats.maxGForce.toFixed(1) : '—',
+      unit: stats.maxGForce > 0 ? 'G' : null,
     },
   ];
 

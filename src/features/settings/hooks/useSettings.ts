@@ -26,6 +26,7 @@ export interface AppSettings {
   redSpeedThreshold: number;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
+  gForceEnabled: boolean; // Live G-force gauge + max-G tracking
   // Auto-rescue (crash detection)
   autoRescueEnabled: boolean;
   autoRescueGThreshold: number; // G-force impact threshold (3.5–8)
@@ -55,6 +56,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   redSpeedThreshold: 100,
   leanAngleEnabled: false,
   leanAngleThreshold: 45, // Default warning at 45 degrees
+  gForceEnabled: false,
   autoRescueEnabled: false,
   autoRescueGThreshold: 5,
   autoRescueStopWindowSec: 10,

@@ -88,6 +88,7 @@ export function useRideHistory() {
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
     const personalTopSpeed = Math.max(0, ...completedRides.map(r => r.maxSpeed));
+    const personalMaxGForce = Math.max(0, ...completedRides.map(r => r.maxGForce || 0));
     const convoyRides = completedRides.filter(r => r.isConvoyRide).length;
     
     // Count badges (only from convoy rides)
@@ -110,12 +111,19 @@ export function useRideHistory() {
       totalDistance,
       totalDuration,
       personalTopSpeed,
+      personalMaxGForce,
       averageRideLength: completedRides.length > 0 ? totalDistance / completedRides.length : 0,
       convoyRides,
       badges,
     };
   }, [rides]);
 
+  // Ride receipts (Ride History) are rendered on demand from `rides` and the
+  // garage's bike data - there is no separate receipt image/cache stored
+  // anywhere. Clearing `rides` here (plus burnGarage() at the call site, for
+  // bike name/photo) already removes every input a receipt is built from, so
+  // burning leaves no banked receipt behind. If a rendered-receipt cache is
+  // ever added, it MUST be wiped here too.
   const burnAllData = useCallback(() => {
     clearRides();
     try { localStorage.removeItem('bt.cards.v1'); } catch {}
