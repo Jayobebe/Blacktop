@@ -102,7 +102,7 @@ export default function World() {
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
+          className="absolute left-4 top-3.5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
           aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
