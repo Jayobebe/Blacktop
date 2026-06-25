@@ -107,7 +107,7 @@ function Globe({ accentHsl }: { accentHsl: string }) {
   }, [accentHsl]);
 
   useFrame((_, dt) => {
-    if (meshRef.current) meshRef.current.rotation.y += dt * 0.35;
+    if (meshRef.current) meshRef.current.rotation.y += dt * 0.12;
     uniforms.uTime.value += dt;
   });
 
