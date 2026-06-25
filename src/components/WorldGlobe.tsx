@@ -336,16 +336,21 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
       }, 5000);
     };
 
+    let activeTouches = 0;
+
     const onDown = (e: PointerEvent) => {
+      if (e.pointerType === 'touch' && activeTouches >= 2) return;
       isDragRef.current = true;
       lastPtrRef.current = { x: e.clientX, y: e.clientY };
       autoRef.current = false;
       recentreRef.current = false;
       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
-      canvas.setPointerCapture(e.pointerId);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
     };
     const onMove = (e: PointerEvent) => {
       if (!isDragRef.current) return;
+      // Suppress single-finger rotation while a pinch is in progress
+      if (e.pointerType === 'touch' && activeTouches >= 2) return;
       const dx = e.clientX - lastPtrRef.current.x;
       const dy = e.clientY - lastPtrRef.current.y;
       lastPtrRef.current = { x: e.clientX, y: e.clientY };
@@ -359,24 +364,38 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
       scaleRef.current = Math.max(0.5, Math.min(3.0, scaleRef.current * (e.deltaY > 0 ? 0.93 : 1.07)));
     };
     const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
+      activeTouches = e.touches.length;
+      if (e.touches.length >= 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         pinchRef.current = Math.hypot(dx, dy);
         autoRef.current = false;
+        isDragRef.current = false;
       }
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
+      if (e.touches.length >= 2) {
         e.preventDefault();
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const dist = Math.hypot(dx, dy);
-        scaleRef.current = Math.max(0.5, Math.min(3.0, scaleRef.current * (dist / pinchRef.current)));
+        if (pinchRef.current > 0) {
+          scaleRef.current = Math.max(0.5, Math.min(3.0, scaleRef.current * (dist / pinchRef.current)));
+        }
         pinchRef.current = dist;
         scheduleResume();
       }
     };
+    const onTouchEnd = (e: TouchEvent) => {
+      activeTouches = e.touches.length;
+      // Reset pinch baseline; if one finger remains, re-seat drag origin to avoid a jump
+      pinchRef.current = 0;
+      if (e.touches.length === 1) {
+        lastPtrRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        isDragRef.current = false; // wait for a fresh pointerdown to resume drag
+      }
+    };
+
 
     canvas.addEventListener('pointerdown', onDown);
     canvas.addEventListener('pointermove', onMove);
