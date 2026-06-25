@@ -27,6 +27,7 @@ export default function Home() {
   const longPressFired = useRef(false);
 
   const handleGlobePointerDown = () => {
+    if (!settings.blacktopWorldEnabled) return;
     longPressFired.current = false;
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true;
