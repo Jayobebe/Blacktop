@@ -83,6 +83,32 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Blacktop World (opt-in)</h2>
+          <p className="text-muted-foreground">
+            Blacktop World is an optional global view showing anonymous rider
+            activity alongside public weather, wildfire, volcano, and flood
+            events from open data feeds. It is <span className="text-foreground">off by default</span> and
+            can be enabled or disabled at any time from Settings. Once opted
+            in, a long-press on the home-screen globe opens it; opting out
+            disables that shortcut immediately.
+          </p>
+          <p className="text-muted-foreground">
+            While enabled and the app is open, only your <span className="text-foreground">country</span> (derived
+            from coarse location) is shared with the backend so it can be
+            rendered as a country-level glow on the globe. No exact
+            coordinates, names, ride data, speed, routes, or device
+            identifiers are sent. Country-level counts are aggregated and
+            cleared the moment your session ends — nothing per-user is
+            retained.
+          </p>
+          <p className="text-muted-foreground">
+            Public event markers (storms, wildfires, etc.) come from
+            third-party open data sources and contain no personal information.
+          </p>
+        </section>
+
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Stats overlay video</h2>
           <p className="text-muted-foreground">
             During each ride, the app draws your live stats (speed, distance,

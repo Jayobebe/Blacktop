@@ -18,12 +18,12 @@ const SPHERE: GeoPermissibleObjects = { type: 'Sphere' };
 const graticule = geoGraticule()();
 
 // City lights intensity stages (users → visual params)
-const LIGHT_STAGES = [
+const LIGHT_STAGES: { min: number; color: string; shadow: string; blur: number }[] = [
   { min: 1,   color: 'rgba(253,230,138,0.13)', shadow: 'rgba(253,220,100,0.25)', blur: 8  },
   { min: 5,   color: 'rgba(251,191,36,0.24)',  shadow: 'rgba(251,180,30,0.40)',  blur: 14 },
   { min: 20,  color: 'rgba(245,158,11,0.40)',  shadow: 'rgba(240,140,10,0.55)',  blur: 22 },
   { min: 100, color: 'rgba(251,146,60,0.58)',  shadow: 'rgba(250,120,20,0.70)',  blur: 32 },
-] as const;
+];
 
 export interface WorldEventMarker {
   lat: number;
