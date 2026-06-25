@@ -33,7 +33,7 @@ export function VehicleCard({ card }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [flipped, setFlipped] = useState(false);
-  const qrPayload = locked ? null : encodeCard(card, profile.name);
+  const qrPayload = locked || !settings.blacktopWorldEnabled ? null : encodeCard(card, profile.name);
 
 
   const handleDownload = async () => {

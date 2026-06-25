@@ -7,7 +7,7 @@ import {
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
-  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon
+  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon, Globe2, Folder
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -227,6 +227,15 @@ export default function DemoShowcase() {
       mockup: <BurnMockup />
     },
     {
+      id: 'blacktop-world',
+      title: 'Blacktop World',
+      subtitle: 'Live Rider Globe & Card Collection',
+      description: 'Opt-in only. A live, anonymous globe showing where riders are active right now plus open weather, wildfire, volcano and flood events. Unlocks the card collection folder and a flip-to-QR button on your vehicle cards so you can swap collector cards with other riders.',
+      icon: Globe2,
+      color: 'accent',
+      mockup: <BlacktopWorldMockup />
+    },
+    {
       id: 'complete',
       title: 'Ready to Ride?',
       subtitle: 'Start Your First Convoy',
@@ -236,6 +245,7 @@ export default function DemoShowcase() {
       mockup: <CompleteMockup />
     }
   ];
+
 
   const currentFeature = features[currentIndex];
   const progress = ((currentIndex + 1) / features.length) * 100;
@@ -1218,7 +1228,78 @@ function StatsMockup() {
   );
 }
 
+function BlacktopWorldMockup() {
+  const [flipped, setFlipped] = useState(false);
+  useEffect(() => {
+    const t = setInterval(() => setFlipped((v) => !v), 2400);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="w-full max-w-xs space-y-4">
+      {/* Globe */}
+      <div className="relative h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(220_40%_8%)] via-[hsl(230_50%_12%)] to-black border border-border/30">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative w-24 h-24 rounded-full bg-[radial-gradient(circle_at_30%_30%,hsl(220_30%_25%),hsl(220_50%_8%))] shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.6),0_0_40px_hsl(var(--accent)/0.25)] animate-spin-slow">
+            <span className="absolute top-3 left-5 w-1 h-1 rounded-full bg-accent animate-pulse" />
+            <span className="absolute bottom-4 right-4 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="absolute top-1/2 right-2 w-1 h-1 rounded-full bg-orange-400 animate-pulse" />
+          </div>
+        </div>
+        <div className="absolute top-2 left-2 right-2 flex justify-center pointer-events-none">
+          <div className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/[0.06]">
+            <span className="text-[8px] tracking-[0.2em] uppercase text-white/60">live rider globe</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Folder + flipping card */}
+      <div className="grid grid-cols-2 gap-3 items-center">
+        <div className="rounded-xl border border-border/30 bg-card/40 p-2.5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Folder className="w-3 h-3 text-accent" />
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Collection</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="aspect-[5/7] rounded bg-gradient-to-br from-[hsl(45_85%_60%)] to-[hsl(35_70%_25%)]" />
+            <div className="aspect-[5/7] rounded bg-gradient-to-br from-[hsl(190_85%_82%)] to-[hsl(210_55%_28%)]" />
+            <div className="aspect-[5/7] rounded bg-gradient-to-br from-[hsl(220_8%_72%)] to-[hsl(220_10%_30%)]" />
+            <div className="aspect-[5/7] rounded border border-dashed border-border/60 flex items-center justify-center text-muted-foreground text-[10px]">+</div>
+          </div>
+        </div>
+
+        <div className="[perspective:900px] aspect-[5/7]">
+          <div
+            className={cn(
+              'relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]',
+              flipped && '[transform:rotateY(180deg)]',
+            )}
+          >
+            <div className="absolute inset-0 rounded-xl border-2 border-[hsl(45_85%_65%)]/70 bg-gradient-to-br from-[hsl(45_85%_60%)] via-[hsl(40_80%_45%)] to-[hsl(35_70%_25%)] p-2 [backface-visibility:hidden]">
+              <p className="text-[8px] uppercase tracking-widest text-white/70">Your card</p>
+              <p className="text-[10px] font-bold text-white truncate">Gold tier</p>
+            </div>
+            <div className="absolute inset-0 rounded-xl border-2 border-[hsl(45_85%_65%)]/70 bg-gradient-to-br from-[hsl(45_85%_60%)] via-[hsl(40_80%_45%)] to-[hsl(35_70%_25%)] p-2 flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <div className="bg-white p-1.5 rounded">
+                <div className="grid grid-cols-5 grid-rows-5 gap-px w-12 h-12">
+                  {Array.from({ length: 25 }).map((_, i) => (
+                    <div key={i} className={cn('w-full h-full', (i * 7) % 3 === 0 ? 'bg-black' : 'bg-white')} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[10px] text-center text-muted-foreground">
+        Long-press the home globe to launch · flip a card to share its QR
+      </p>
+    </div>
+  );
+}
+
 function BurnMockup() {
+
   const [burned, setBurned] = useState(false);
 
   useEffect(() => {
