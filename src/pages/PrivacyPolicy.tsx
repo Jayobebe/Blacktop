@@ -85,12 +85,11 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Blacktop World (opt-in)</h2>
           <p className="text-muted-foreground">
-            Blacktop World is an optional global view showing anonymous rider
+            Blacktop World is an optional global view and collection experience showing anonymous rider
             activity alongside public weather, wildfire, volcano, and flood
             events from open data feeds. It is <span className="text-foreground">off by default</span> and
             can be enabled or disabled at any time from Settings. Once opted
-            in, a long-press on the home-screen globe opens it; opting out
-            disables that shortcut immediately.
+            in, you gain access to the Blacktop World view, the <span className="text-foreground">Card Collection Folder</span>, and the <span className="text-foreground">Flip Card QR code</span> sharing features.
           </p>
           <p className="text-muted-foreground">
             While enabled and the app is open, only your <span className="text-foreground">country</span> (derived
@@ -100,6 +99,9 @@ export default function PrivacyPolicy() {
             identifiers are sent. Country-level counts are aggregated and
             cleared the moment your session ends — nothing per-user is
             retained.
+          </p>
+          <p className="text-muted-foreground">
+            Opting in also allows you to flip your custom vehicle stats card to reveal a QR code containing your profile display name, vehicle info, and stats. Other users can scan this QR code to add your card to their local <span className="text-foreground">Collected Cards Folder</span>. These collected cards are stored strictly locally on your device, and you can erase your entire collection at any time using the Burn Button.
           </p>
           <p className="text-muted-foreground">
             Public event markers (storms, wildfires, etc.) come from
