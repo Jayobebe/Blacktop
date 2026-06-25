@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download, Zap } from 'lucide-react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download, Zap, RotateCw } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
+import { useProfile } from '@/features/profile';
 import {
   formatDistance,
   formatDuration,
@@ -13,6 +15,7 @@ import {
 } from '@/lib/format';
 import { TIER_STYLES } from '../types';
 import { VehicleCardData } from '../hooks/useVehicleCards';
+import { encodeCard } from '../lib/cardCodec';
 
 interface Props {
   card: VehicleCardData;
