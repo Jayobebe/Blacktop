@@ -820,27 +820,26 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
             position, name, or ride data. Opt out any time; long-press, the
             card folder, and the flip button all stop working immediately.
           </p>
+          {enabled ? (
+            <Button
+              onClick={() => onToggle(false)}
+              variant="outline"
+              className="w-full h-11 font-semibold rounded-xl touch-target border-border/50 mt-3"
+            >
+              <Globe2 className="w-4 h-4 mr-2" />
+              Opt out of Blacktop World
+            </Button>
+          ) : (
+            <Button
+              onClick={() => onToggle(true)}
+              className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target mt-3"
+            >
+              <Globe2 className="w-4 h-4 mr-2" />
+              Opt in to Blacktop World
+            </Button>
+          )}
         </div>
       </div>
-
-      {enabled ? (
-        <Button
-          onClick={() => onToggle(false)}
-          variant="outline"
-          className={cn('w-full h-11 font-semibold rounded-xl touch-target border-border/50', open ? 'mt-3' : 'mt-0')}
-        >
-          <Globe2 className="w-4 h-4 mr-2" />
-          Opt out of Blacktop World
-        </Button>
-      ) : (
-        <Button
-          onClick={() => onToggle(true)}
-          className={cn('w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target', open ? 'mt-3' : 'mt-0')}
-        >
-          <Globe2 className="w-4 h-4 mr-2" />
-          Opt in to Blacktop World
-        </Button>
-      )}
     </section>
   );
 }
