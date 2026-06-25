@@ -102,17 +102,17 @@ export default function World() {
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
+          className="absolute left-4 top-5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
           aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex flex-col items-center gap-1">
-          <h1 className="text-2xl font-bold tracking-[0.22em] text-white uppercase">
+          <h1 className="text-lg font-bold tracking-[0.22em] text-white uppercase">
             Blacktop World
           </h1>
           {/* Event key — inline below heading */}
-          <div className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]">
+          <div className="flex flex-col items-center gap-1 mt-2.5 px-2.5 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]">
             <div className="flex items-center gap-3">
               {EVENT_KEY_ROW1.map(({ id, label, color }) => (
                 <div key={id} className="flex items-center gap-1.5">
