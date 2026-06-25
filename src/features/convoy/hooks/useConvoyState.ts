@@ -215,6 +215,7 @@ export function useConvoyState() {
         destination,
         waypoints: [],
         isPaused: convoy.is_paused || false,
+        realtimeSuspended: false,
       }));
       rememberActiveConvoy(convoy.id);
 
