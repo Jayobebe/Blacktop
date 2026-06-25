@@ -227,6 +227,15 @@ export default function DemoShowcase() {
       mockup: <BurnMockup />
     },
     {
+      id: 'blacktop-world',
+      title: 'Blacktop World',
+      subtitle: 'Live Rider Globe & Card Collection',
+      description: 'Opt-in only. A live, anonymous globe showing where riders are active right now plus open weather, wildfire, volcano and flood events. Unlocks the card collection folder and a flip-to-QR button on your vehicle cards so you can swap collector cards with other riders.',
+      icon: Globe2,
+      color: 'accent',
+      mockup: <BlacktopWorldMockup />
+    },
+    {
       id: 'complete',
       title: 'Ready to Ride?',
       subtitle: 'Start Your First Convoy',
@@ -236,6 +245,7 @@ export default function DemoShowcase() {
       mockup: <CompleteMockup />
     }
   ];
+
 
   const currentFeature = features[currentIndex];
   const progress = ((currentIndex + 1) / features.length) * 100;
