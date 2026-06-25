@@ -361,10 +361,16 @@ export default function ActiveRide() {
     // Run cleanup in background (non-blocking)
     (async () => {
       const rideId = await endRide();
-      setSavedRideId(rideId);
+      if (rideId) {
+        setSavedRideId(rideId);
+      } else {
+        // Invalid/too-short ride — don't show a receipt
+        setShowSummary(false);
+        navigate('/');
+      }
       resetNavigationStatus().catch(err => console.warn('[ActiveRide] Cleanup error:', err));
     })();
-  }, [endRide, resetNavigationStatus]);
+  }, [endRide, resetNavigationStatus, navigate]);
 
   // Subscribe to convoy control channel for broadcasts AND realtime convoy changes
   useEffect(() => {
