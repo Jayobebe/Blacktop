@@ -667,44 +667,11 @@ export default function Settings() {
 
 
         {/* Blacktop World Opt-In */}
-        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
-          <div className="flex items-center gap-2 mb-3">
-            <Globe2 className="w-4 h-4 text-accent" />
-            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktop World</p>
-          </div>
-          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-            A live, anonymous globe showing where riders are active around the
-            planet, plus public weather, wildfire, volcano, and flood events
-            pulled from open data feeds. Nothing personal is shown — just
-            country-level rider activity as a soft glow. When opted in, you can
-            also <span className="text-foreground font-medium">long-press the
-            spinning globe</span> on the home screen to launch it.
-          </p>
-          <p className="text-[10px] text-muted-foreground mb-3">
-            Opting in shares only your <span className="text-foreground">country</span> (derived
-            from your coarse location) while the app is open — never your exact
-            position, name, or ride data. Opt out any time; long-press will
-            stop working immediately.
-          </p>
-          {settings.blacktopWorldEnabled ? (
-            <Button
-              onClick={() => updateSetting('blacktopWorldEnabled', false)}
-              variant="outline"
-              className="w-full h-11 font-semibold rounded-xl touch-target border-border/50"
-            >
-              <Globe2 className="w-4 h-4 mr-2" />
-              Opt out of Blacktop World
-            </Button>
-          ) : (
-            <Button
-              onClick={() => updateSetting('blacktopWorldEnabled', true)}
-              className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
-            >
-              <Globe2 className="w-4 h-4 mr-2" />
-              Opt in to Blacktop World
-            </Button>
-          )}
-        </section>
+        <BlacktopWorldOptIn
+          enabled={settings.blacktopWorldEnabled}
+          onToggle={(v) => updateSetting('blacktopWorldEnabled', v)}
+        />
+
 
         {/* Tip Jar Section */}
         <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
