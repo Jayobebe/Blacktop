@@ -180,9 +180,7 @@ export default function Home() {
 
           {/* Rotating earth globe — sits at the junction of the 3 tiles */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-            <div className="rounded-full bg-background/60 backdrop-blur-sm p-1 shadow-[0_0_24px_hsl(var(--accent)/0.35)]">
-              <EarthGlobe size={64} />
-            </div>
+            <EarthGlobe size={64} />
           </div>
         </div>
       </div>
