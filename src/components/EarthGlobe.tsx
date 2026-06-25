@@ -59,7 +59,15 @@ const fragmentShader = /* glsl */ `
   }
 
   void main() {
-    vec3 p = normalize(vPos) * 3.4;
+    vec3 sp = normalize(vPos);
+    // Domain warp so noise wraps the sphere organically instead of along cube axes.
+    vec3 q = sp * 2.6;
+    vec3 warp = vec3(
+      fbm(q + vec3(1.7, 9.2, 0.0)),
+      fbm(q + vec3(8.3, 2.8, 4.1)),
+      fbm(q + vec3(0.5, 5.1, 7.7))
+    );
+    vec3 p = sp * 3.2 + (warp - 0.5) * 2.2;
     float n = fbm(p);
     float threshold = 0.52;
     float d = n - threshold;
