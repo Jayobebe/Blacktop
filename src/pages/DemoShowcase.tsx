@@ -102,9 +102,9 @@ export default function DemoShowcase() {
     },
     {
       id: 'lean',
-      title: 'Lean Angle Sensor',
+      title: 'Lean Angle & G-Force',
       subtitle: 'Track Your Cornering',
-      description: 'Uses your phone\'s gyroscope to measure lean angle in real-time. See your max lean and get warnings when approaching your threshold.',
+      description: 'Uses your phone\'s gyroscope and accelerometer to measure lean angle and cornering G-force in real-time. See your max lean, peak G, and get warnings when approaching your threshold.',
       icon: TrendingUp,
       color: 'accent',
       mockup: <LeanAngleMockup />
