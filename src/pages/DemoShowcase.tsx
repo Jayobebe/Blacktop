@@ -616,6 +616,8 @@ function DiscordMockup() {
 function LeanAngleMockup() {
   const [lean, setLean] = useState(0);
   const [maxLean, setMaxLean] = useState(32);
+  const [gForce, setGForce] = useState(1.0);
+  const [maxG, setMaxG] = useState(1.4);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -623,6 +625,11 @@ function LeanAngleMockup() {
         const newLean = Math.sin(Date.now() / 600) * 38 + (Math.random() - 0.5) * 5;
         const clamped = Math.max(-45, Math.min(45, newLean));
         setMaxLean(m => Math.max(m, Math.abs(clamped)));
+        // Cornering G correlates with lean angle: ~1G upright, up to ~1.7G hard lean.
+        const g = 1 + Math.abs(clamped) / 60 + (Math.random() - 0.5) * 0.08;
+        const gClamped = Math.max(0.8, Math.min(1.8, g));
+        setGForce(Number(gClamped.toFixed(2)));
+        setMaxG(m => Math.max(m, gClamped));
         return Math.round(clamped);
       });
     }, 100);
@@ -661,10 +668,15 @@ function LeanAngleMockup() {
       </div>
 
       {/* Stats */}
-      <div className="flex justify-center gap-4 animate-slide-up delay-200">
+      <div className="flex justify-center gap-3 animate-slide-up delay-200">
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground">Max Lean</p>
           <p className="font-mono text-lg font-semibold text-accent">{maxLean}°</p>
+        </div>
+        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+          <p className="text-xs text-muted-foreground">G-Force</p>
+          <p className="font-mono text-lg font-semibold text-accent">{gForce.toFixed(2)}G</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">max {maxG.toFixed(2)}</p>
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground">Threshold</p>
@@ -673,7 +685,7 @@ function LeanAngleMockup() {
       </div>
 
       <p className="text-xs text-muted-foreground animate-fade-in delay-300">
-        ⚠️ Glows red when approaching threshold
+        ⚠️ Glows red when approaching threshold · G-force tracked from accelerometer
       </p>
     </div>
   );
