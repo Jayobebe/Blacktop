@@ -323,7 +323,9 @@ export default function Home() {
             onClick={handleGlobeClick}
             onPointerDown={handleGlobePointerDown}
             onPointerUp={cancelLongPress}
-            onPointerMove={cancelLongPress}
+            onPointerCancel={cancelLongPress}
+            onPointerLeave={cancelLongPress}
+            onPointerMove={handleGlobePointerMove}
             onContextMenu={(e) => e.preventDefault()}
             className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200"
             aria-label={settings.blacktopWorldEnabled ? 'Open map — hold for Blacktop World' : 'Open map'}
