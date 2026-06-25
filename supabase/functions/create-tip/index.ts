@@ -49,8 +49,31 @@ serve(async (req) => {
       req.headers.get("origin") ||
       "https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com";
 
+    // Only these tiers are offered in the UI - reject anything else server-side.
+    const ALLOWED_AMOUNTS = [5, 10, 20];
+    let amount = 5;
+    try {
+      const body = await req.json();
+      if (ALLOWED_AMOUNTS.includes(body?.amount)) {
+        amount = body.amount;
+      }
+    } catch {
+      // no/invalid body - fall back to the default $5 tier
+    }
+
+    const lineItem = amount === 5
+      ? { price: "price_1SfBc3FninFfsPFL6lkv6w4l", quantity: 1 }
+      : {
+          price_data: {
+            currency: "usd",
+            product_data: { name: "Blacktop Tip" },
+            unit_amount: amount * 100,
+          },
+          quantity: 1,
+        };
+
     const session = await stripe.checkout.sessions.create({
-      line_items: [{ price: "price_1SfBc3FninFfsPFL6lkv6w4l", quantity: 1 }],
+      line_items: [lineItem],
       mode: "payment",
       success_url: `${origin}/settings?tip=success`,
       cancel_url: `${origin}/settings?tip=canceled`,

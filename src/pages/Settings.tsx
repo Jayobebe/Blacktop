@@ -15,7 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, RefreshCw, CheckCircle2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Users, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, Activity, RefreshCw, CheckCircle2, MessageSquare, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { checkForAppUpdate, applyAppUpdate, onUpdateAvailable } from '@/pwa';
 import { formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { NavigationApp } from '@/types/blacktop';
@@ -114,10 +120,10 @@ export default function Settings() {
     { id: 'blacktop', label: 'Blacktop Maps' },
   ];
 
-  const handleTip = async () => {
+  const handleTip = async (amount: 5 | 10 | 20 = 5) => {
     setIsTipping(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-tip');
+      const { data, error } = await supabase.functions.invoke('create-tip', { body: { amount } });
       if (error) throw error;
       if (data?.url) {
         window.open(data.url, '_blank');
@@ -637,14 +643,35 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground mb-3">
             Help keep us ad-free!
           </p>
-          <Button
-            onClick={handleTip}
-            disabled={isTipping}
-            className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            {isTipping ? 'Opening...' : 'Donate $5'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleTip(5)}
+              disabled={isTipping}
+              className="flex-1 h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              {isTipping ? 'Opening...' : 'Donate $5'}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={isTipping}
+                  aria-label="Choose a different tip amount"
+                  className="h-11 w-11 px-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl touch-target"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border/30">
+                <DropdownMenuItem onClick={() => handleTip(10)} disabled={isTipping}>
+                  Donate $10
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTip(20)} disabled={isTipping}>
+                  Donate $20
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </section>
 
         {/* Burn Button Section */}
