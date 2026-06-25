@@ -357,6 +357,26 @@ export default function DemoShowcase() {
         </button>
       </header>
 
+      {/* Scrubber - jump to any slide */}
+      <div className="fixed top-12 left-0 right-0 z-40 px-4">
+        <input
+          type="range"
+          min={0}
+          max={features.length - 1}
+          step={1}
+          value={currentIndex}
+          onChange={(e) => {
+            const next = Number(e.target.value);
+            if (next === currentIndex) return;
+            haptics.light();
+            setCurrentIndex(next);
+          }}
+          aria-label="Jump to slide"
+          className="demo-scrubber w-full"
+        />
+      </div>
+
+
       {/* Main Content */}
       <main className="flex-1 flex flex-col pt-16 pb-32">
         <div 
