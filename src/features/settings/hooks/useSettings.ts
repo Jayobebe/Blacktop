@@ -31,6 +31,9 @@ export interface AppSettings {
   autoRescueEnabled: boolean;
   autoRescueGThreshold: number; // G-force impact threshold (3.5–8)
   autoRescueStopWindowSec: number; // Seconds of near-zero speed after impact (5–30)
+  // Blacktop World — opt-in global live event/rider map. When false, the
+  // home-screen globe's long-press shortcut is disabled.
+  blacktopWorldEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
