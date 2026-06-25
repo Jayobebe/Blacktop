@@ -122,7 +122,7 @@ export default function Home() {
           <div className="flex gap-3 flex-1">
             <button
               onClick={() => navigate('/create-convoy')}
-              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl rounded-br-[2.5rem] flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl rounded-br-[3.5rem] flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
             >
               <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Users className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
@@ -135,7 +135,7 @@ export default function Home() {
 
             <button
               onClick={() => navigate('/solo-lobby')}
-              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl rounded-bl-[2.5rem] flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
+              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-2xl rounded-bl-[3.5rem] flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
             >
               <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <User className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
@@ -149,7 +149,7 @@ export default function Home() {
 
           <button
             onClick={() => navigate('/join-convoy')}
-            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-2xl rounded-tl-[2.5rem] rounded-tr-[2.5rem] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-2xl rounded-tl-[3.5rem] rounded-tr-[3.5rem] flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
           >
             <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
               <UserPlus className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
@@ -163,7 +163,7 @@ export default function Home() {
           {/* Rotating earth globe — sits at the junction of the 3 tiles */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
             <div className="rounded-full bg-background/60 backdrop-blur-sm p-1 shadow-[0_0_24px_hsl(var(--accent)/0.35)]">
-              <EarthGlobe size={72} />
+              <EarthGlobe size={64} />
             </div>
           </div>
         </div>
