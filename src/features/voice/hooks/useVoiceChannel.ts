@@ -59,6 +59,11 @@ const AUDIO_CHECK_INTERVAL_MS = 100; // Check audio levels every 100ms (was 50ms
 const VOICE_REFRESH_INTERVAL_MS = 10000; // Re-announce presence every 10 seconds
 const VOICE_STATE_KEY = 'blacktop_voice_state'; // Persist voice connection intent
 
+// Exponential backoff for per-peer signaling retries after a connection
+// failure/drop (e.g. poor cellular), instead of hammering the Realtime
+// channel with immediate, high-frequency reconnect attempts.
+const RECONNECT_BACKOFF_MS = [2000, 5000, 10000, 30000];
+
 // iOS/Safari detection
 const isIOSDevice = (): boolean => {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -143,6 +148,8 @@ export function useVoiceChannel(convoyId?: string) {
   const isConnectingRef = useRef<boolean>(false); // Guard against multiple connection attempts
   const refreshIntervalRef = useRef<number | null>(null); // Periodic refresh for connection maintenance
   const pendingCandidatesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map()); // Store ICE candidates received before remote description
+  const reconnectAttemptsRef = useRef<Map<string, number>>(new Map()); // Backoff step per peer
+  const reconnectTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()); // Pending per-peer reconnect retry
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -192,11 +199,53 @@ export function useVoiceChannel(convoyId?: string) {
     // Clear pending ICE candidates
     pendingCandidatesRef.current.clear();
 
+    // Cancel any pending per-peer reconnect backoff timers
+    reconnectTimersRef.current.forEach((timer) => clearTimeout(timer));
+    reconnectTimersRef.current.clear();
+    reconnectAttemptsRef.current.clear();
+
     // Unsubscribe from channel
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+  }, []);
+
+  // Cancel a pending reconnect retry for a peer (call on success or deliberate leave).
+  const clearReconnectSchedule = useCallback((remoteUserId: string) => {
+    const timer = reconnectTimersRef.current.get(remoteUserId);
+    if (timer) {
+      clearTimeout(timer);
+      reconnectTimersRef.current.delete(remoteUserId);
+    }
+    reconnectAttemptsRef.current.delete(remoteUserId);
+  }, []);
+
+  // Schedule a backed-off retry of the signaling handshake with a peer that
+  // just failed/dropped. Each consecutive failure for that peer steps further
+  // into RECONNECT_BACKOFF_MS; a successful connection (clearReconnectSchedule)
+  // resets it back to the start.
+  const scheduleReconnect = useCallback((remoteUserId: string) => {
+    if (reconnectTimersRef.current.has(remoteUserId)) return; // already scheduled
+
+    const attempt = reconnectAttemptsRef.current.get(remoteUserId) ?? 0;
+    const delay = RECONNECT_BACKOFF_MS[Math.min(attempt, RECONNECT_BACKOFF_MS.length - 1)];
+    console.warn(`[Voice] Connection to ${remoteUserId} lost - retrying in ${delay}ms (attempt ${attempt + 1})`);
+
+    const timer = window.setTimeout(() => {
+      reconnectTimersRef.current.delete(remoteUserId);
+      reconnectAttemptsRef.current.set(remoteUserId, attempt + 1);
+
+      if (!channelRef.current || !userIdRef.current) return;
+      // Re-announce presence to re-trigger the offer/answer handshake with this peer.
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'user-joined',
+        payload: { from: userIdRef.current },
+      });
+    }, delay);
+
+    reconnectTimersRef.current.set(remoteUserId, timer);
   }, []);
 
   // Start audio level monitoring for speaking detection
@@ -341,13 +390,16 @@ export function useVoiceChannel(convoyId?: string) {
       console.log(`[Voice] Connection state with ${remoteUserId}: ${pc.connectionState}`);
       if (pc.connectionState === 'connected') {
         console.log(`[Voice] Successfully connected to ${remoteUserId}`);
+        clearReconnectSchedule(remoteUserId);
       }
       if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         console.warn(`[Voice] Connection ${pc.connectionState} with ${remoteUserId}`);
-        // Attempt to reconnect
         peersRef.current.delete(remoteUserId);
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
+        // Back off instead of relying on the flat 10s presence heartbeat to
+        // eventually retry - important under sustained poor cellular signal.
+        scheduleReconnect(remoteUserId);
       }
     };
     
@@ -477,7 +529,7 @@ export function useVoiceChannel(convoyId?: string) {
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
     return pc;
-  }, []);
+  }, [clearReconnectSchedule, scheduleReconnect]);
 
   // Handle signaling messages
   const handleSignaling = useCallback(async (payload: any) => {
@@ -654,6 +706,8 @@ export function useVoiceChannel(convoyId?: string) {
 
       case 'user-left': {
         console.log(`[Voice] User left: ${from}`);
+        // Deliberate departure, not a drop - don't keep retrying them.
+        clearReconnectSchedule(from);
         const peer = peersRef.current.get(from);
         if (peer) {
           peer.pc.close();
@@ -670,7 +724,7 @@ export function useVoiceChannel(convoyId?: string) {
         break;
       }
     }
-  }, [createPeerConnection]);
+  }, [createPeerConnection, clearReconnectSchedule]);
 
   // Check and request microphone permission
   // Note: iOS Safari doesn't reliably support permissions.query for microphone

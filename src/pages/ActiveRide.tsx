@@ -84,7 +84,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused, updateLeanAngle } = useActiveRide();
-  const { convoy, resetNavigationStatus, endConvoyRide } = useConvoyState();
+  const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
@@ -141,6 +141,13 @@ export default function ActiveRide() {
   const { integration: discordIntegration } = useDiscordIntegration();
   const discordEnabled = !!discordIntegration?.webhook_url && discordIntegration.auto_announce !== false;
   const [crashPromptOpen, setCrashPromptOpen] = useState(false);
+  // Locks the auto-rescue execution loop once a countdown has fully expired
+  // and fired - a fresh mount (new/restarted ride) is the only way to clear
+  // it, so a parked device or low-threshold false alarm can't keep firing
+  // duplicate rescue webhooks every countdown cycle. Read directly in the
+  // useCrashDetection `enabled` check below (a ref, not state, since it only
+  // ever needs to be read at render time alongside other state changes).
+  const autoRescueFiredRef = useRef(false);
 
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
@@ -188,6 +195,23 @@ export default function ActiveRide() {
       wakeLock.release();
     };
   }, [rideState.isActive]);
+
+  // Inactivity checkout guard: once useActiveRide flags 15 stationary minutes,
+  // drop the convoy Realtime channel and release the wake lock so an
+  // unattended phone doesn't keep broadcasting (and burning Realtime usage)
+  // overnight. Resuming the ride (rideState.inactivityTimedOut -> false)
+  // reconnects the channel and re-requests the wake lock.
+  useEffect(() => {
+    if (rideState.inactivityTimedOut) {
+      setConvoyRealtimeSuspended(true);
+      wakeLock.release();
+    } else {
+      setConvoyRealtimeSuspended(false);
+      if (rideState.isActive) {
+        wakeLock.request();
+      }
+    }
+  }, [rideState.inactivityTimedOut, rideState.isActive]);
 
   // Request lean angle permission when ride starts (iOS requires user gesture)
   useEffect(() => {
@@ -552,7 +576,7 @@ export default function ActiveRide() {
   }, [rideState.gpsPoints, rideState.isConvoyMode, sendRescueRequest, profile.name]);
 
   useCrashDetection({
-    enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen,
+    enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen && !autoRescueFiredRef.current,
     currentSpeed: rideState.currentSpeed,
     gThreshold: settings.autoRescueGThreshold,
     stopWindowSec: settings.autoRescueStopWindowSec,
@@ -629,8 +653,18 @@ export default function ActiveRide() {
             await fireAutoRescue();
           }}
           onTimeout={async () => {
+            // Lock first - the rider didn't respond, so this is the one
+            // notification this incident gets. Closing the ride below stops
+            // crash detection naturally, but this ref closes the gap before
+            // that takes effect.
+            if (autoRescueFiredRef.current) return;
+            autoRescueFiredRef.current = true;
             setCrashPromptOpen(false);
             await fireAutoRescue();
+            toast.error('Auto-rescue sent - ending ride', {
+              description: 'No response detected, so a rescue alert was sent and your ride was ended.',
+            });
+            await handleEndRide();
           }}
         />
       )}

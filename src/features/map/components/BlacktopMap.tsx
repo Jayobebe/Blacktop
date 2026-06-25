@@ -5,7 +5,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './blacktopMap.css';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { getCountryCode } from '../lib/placeSearch';
-import { fetchRoute, metersToMiles, RouteResult } from '../lib/routing';
+import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
+import { useWaypointRouteStops } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
 import { MapDestination } from '../types';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
@@ -117,6 +118,7 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
+  const waypointStops = useWaypointRouteStops();
   const mapPresentUserIds = useMapPresentUserIds();
   const speakingUsers = useSpeakingUsers();
   const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
@@ -385,7 +387,11 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   }, []);
 
   // Fetch a driving route whenever both a destination and the user's location
-  // are known. A stale-guard id discards out-of-order responses.
+  // are known, threading through any convoy waypoints in between. The
+  // waypoint stops only ever arrive as bare {lat,lng} (from the DB fetch or
+  // the lightweight Realtime broadcast) - this client fetches its own
+  // routing geometry locally rather than trusting precomputed geometry off
+  // the wire. A stale-guard id discards out-of-order responses.
   const routeRequestRef = useRef(0);
   useEffect(() => {
     if (!destination || !userLocation || !Number.isFinite(destination.lat) || !Number.isFinite(destination.lng)) {
@@ -394,16 +400,18 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
       return;
     }
 
+    const stops = [userLocation, ...waypointStops, { lat: destination.lat, lng: destination.lng }];
+
     const requestId = ++routeRequestRef.current;
     setIsRouting(true);
-    fetchRoute(userLocation, { lat: destination.lat, lng: destination.lng })
+    fetchRouteThroughStops(stops)
       .then((result) => {
         if (routeRequestRef.current === requestId) setRoute(result);
       })
       .finally(() => {
         if (routeRequestRef.current === requestId) setIsRouting(false);
       });
-  }, [destination, userLocation]);
+  }, [destination, userLocation, waypointStops]);
 
   // Draw / update the route line and fit the camera to it.
   useEffect(() => {
@@ -491,9 +499,30 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
 
       <MapSearchBar
+        map={map}
         userLocation={userLocation}
         countryCode={countryCode}
-        onSelect={(result) => setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address })}
+        onSelect={(result) => {
+          setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
+
+          // Transport the camera to the new destination immediately, rather
+          // than waiting on the route fetch - critical for far-off picks
+          // (different city/region) where the rider needs to see where the
+          // map just jumped to. Fit both points when we know the rider's
+          // location so the new route's full span is visible at once.
+          if (map) {
+            if (userLocation) {
+              const bounds = new maplibregl.LngLatBounds(
+                [userLocation.lng, userLocation.lat],
+                [userLocation.lng, userLocation.lat],
+              );
+              bounds.extend([result.lng, result.lat]);
+              map.fitBounds(bounds, { padding: 80, maxZoom: 16, duration: 1500 });
+            } else {
+              map.flyTo({ center: [result.lng, result.lat], zoom: 13, essential: true });
+            }
+          }
+        }}
       />
 
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">

@@ -16,6 +16,14 @@ export interface ConvoyWaypoint {
   completedAt?: string;
 }
 
+// Bare coordinates for a route stop - the only shape sent over the
+// waypoints-updated Realtime broadcast, so members can redraw the route line
+// without waiting on a DB round trip or ever shipping route geometry on the wire.
+export interface RouteStop {
+  lat: number;
+  lng: number;
+}
+
 export interface ConvoyState {
   id: string | null;
   code: string | null;
@@ -26,6 +34,7 @@ export interface ConvoyState {
   destination: ConvoyDestination | null;
   waypoints: ConvoyWaypoint[];
   isPaused: boolean;
+  realtimeSuspended: boolean; // true while the Realtime channel is intentionally disconnected (e.g. inactivity guard)
 }
 
 export interface ConvoyMemberInfo {

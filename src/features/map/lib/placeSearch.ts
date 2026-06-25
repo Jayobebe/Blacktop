@@ -15,6 +15,16 @@ export interface QuickCategory {
   query: string;
 }
 
+// Visible map viewport, used as a *soft* proximity bias for free-text search
+// (never a hard bounding-box lock - out-of-region results still come back,
+// just ranked behind whatever's in view).
+export interface MapViewBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
 interface NominatimPlace {
   place_id: number;
   name?: string;
@@ -101,32 +111,36 @@ export async function getCountryCode(lat: number, lng: number): Promise<string |
 
 export async function searchPlaces(
   query: string,
+  bias: MapViewBounds | null,
   userLocation: { lat: number; lng: number } | null,
   countryCode: string | null,
 ): Promise<MapSearchResult[]> {
   if (!query.trim()) return [];
 
-  const preferNearby = !!userLocation;
-  const nearViewbox = userLocation
-    ? `${userLocation.lng - 0.18},${userLocation.lat + 0.18},${userLocation.lng + 0.18},${userLocation.lat - 0.18}`
-    : null;
+  const hasBias = !!bias;
+  const biasViewbox = bias ? `${bias.west},${bias.north},${bias.east},${bias.south}` : null;
 
   try {
     const primary = await callPlaceSearch<NominatimPlace[]>({
       kind: 'search',
       q: query,
       countryCode,
-      viewbox: preferNearby ? nearViewbox : null,
-      bounded: preferNearby ? '1' : '0',
-      limit: preferNearby ? 25 : 30,
+      viewbox: biasViewbox,
+      // Soft bias only - never `bounded: '1'`, which would hard-exclude any
+      // result outside the current viewport and break long-distance search.
+      bounded: '0',
+      limit: hasBias ? 25 : 30,
     });
 
-    const usedExpanded = preferNearby && (!primary || primary.length === 0);
-    const secondary = usedExpanded
+    // Nominatim found nothing even with the bias hint (e.g. the destination
+    // is far outside the current map view) - retry once with no viewbox at
+    // all so a legitimate out-of-region search still resolves.
+    const usedFallback = hasBias && (!primary || primary.length === 0);
+    const results0 = usedFallback
       ? await callPlaceSearch<NominatimPlace[]>({ kind: 'search', q: query, countryCode, viewbox: null, bounded: '0', limit: 30 })
       : primary;
 
-    let results: MapSearchResult[] = (secondary || []).map((place) => {
+    let results: MapSearchResult[] = (results0 || []).map((place) => {
       const lat = parseFloat(place.lat);
       const lng = parseFloat(place.lon);
       const result: MapSearchResult = {
@@ -142,11 +156,11 @@ export async function searchPlaces(
       return result;
     });
 
+    // Rank closer-to-rider results first, but (unlike searchNearbyPOIs) never
+    // drop far-away matches - the bias above is soft precisely so genuine
+    // long-distance destinations still surface.
     if (userLocation) {
       results = results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-      if (!usedExpanded) {
-        results = results.filter((r) => !preferNearby || (r.distance || 0) <= 30);
-      }
     }
 
     return results.slice(0, 8);

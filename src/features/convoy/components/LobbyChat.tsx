@@ -23,11 +23,29 @@ interface LobbyChatProps {
   members: Array<{ userId: string; accentColor: string }>;
 }
 
+// Client-side rate limit: more than RATE_LIMIT_MAX_MESSAGES sends within a
+// rolling RATE_LIMIT_WINDOW_MS window blocks the message locally (no DB
+// insert, so no Realtime fan-out to the rest of the convoy) and disables the
+// input for RATE_LIMIT_COOLDOWN_MS - keeps a scripted send-loop from blasting
+// the shared chat channel.
+const RATE_LIMIT_WINDOW_MS = 2000;
+const RATE_LIMIT_MAX_MESSAGES = 3;
+const RATE_LIMIT_COOLDOWN_MS = 5000;
+
 export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sendTimestampsRef = useRef<number[]>([]);
+  const rateLimitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rateLimitTimerRef.current) clearTimeout(rateLimitTimerRef.current);
+    };
+  }, []);
 
   // Get member color by userId
   const getMemberColor = (msgUserId: string) => {
@@ -89,12 +107,29 @@ export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProp
   }, [messages]);
 
   const handleSend = async () => {
-    if (isSending) return;
+    if (isSending || isRateLimited) return;
     const parsed = chatMessageSchema.safeParse(newMessage);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Invalid message');
       return;
     }
+
+    // Prune to the rolling window, then check before recording this attempt.
+    const now = Date.now();
+    sendTimestampsRef.current = sendTimestampsRef.current.filter(
+      (t) => now - t < RATE_LIMIT_WINDOW_MS
+    );
+    if (sendTimestampsRef.current.length >= RATE_LIMIT_MAX_MESSAGES) {
+      setIsRateLimited(true);
+      if (rateLimitTimerRef.current) clearTimeout(rateLimitTimerRef.current);
+      rateLimitTimerRef.current = setTimeout(() => {
+        setIsRateLimited(false);
+        rateLimitTimerRef.current = null;
+      }, RATE_LIMIT_COOLDOWN_MS);
+      return;
+    }
+    sendTimestampsRef.current.push(now);
+
     const content = parsed.data;
     setIsSending(true);
     setNewMessage('');
@@ -175,13 +210,14 @@ export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProp
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Message..."
+          placeholder={isRateLimited ? 'Sending too fast... please wait.' : 'Message...'}
+          disabled={isRateLimited}
           className="h-8 text-xs bg-background/50 border-border/50"
           maxLength={200}
         />
         <Button
           onClick={handleSend}
-          disabled={!newMessage.trim() || isSending}
+          disabled={!newMessage.trim() || isSending || isRateLimited}
           size="sm"
           className="h-8 w-8 p-0 flex-shrink-0"
         >

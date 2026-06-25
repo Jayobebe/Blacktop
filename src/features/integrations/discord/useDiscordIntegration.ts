@@ -9,6 +9,23 @@ export interface DiscordIntegration {
   auto_announce: boolean;
 }
 
+// Client-side cooldown so repeatedly cycling the same trigger (e.g. spamming
+// "create convoy", mashing the rescue button) can't flood a user's Discord
+// webhook or burn through Discord's own rate limit. Keyed per action so a
+// rescue ping isn't held hostage by an unrelated convoy announce, and rescue
+// keys include the convoy id so a genuine new rescue elsewhere isn't blocked
+// by someone else's cooldown.
+const WEBHOOK_COOLDOWN_MS = 30000;
+const lastWebhookFiredAt = new Map<string, number>();
+
+function shouldThrottleWebhook(key: string): boolean {
+  const now = Date.now();
+  const last = lastWebhookFiredAt.get(key) ?? 0;
+  if (now - last < WEBHOOK_COOLDOWN_MS) return true;
+  lastWebhookFiredAt.set(key, now);
+  return false;
+}
+
 export function useDiscordIntegration() {
   const [integration, setIntegration] = useState<DiscordIntegration | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,6 +105,10 @@ export async function announceConvoyToDiscord(args: {
   joinUrl?: string;
   leaderName?: string;
 }) {
+  if (shouldThrottleWebhook('convoy')) {
+    console.warn('[Discord] announce convoy throttled (cooldown active)');
+    return false;
+  }
   try {
     const { error } = await supabase.functions.invoke('discord-announce-convoy', { body: args });
     if (error) {
@@ -107,6 +128,10 @@ export async function announceRescueToDiscord(args: {
   lat: number;
   lng: number;
 }) {
+  if (shouldThrottleWebhook(`rescue:${args.convoyId}`)) {
+    console.warn('[Discord] announce rescue throttled (cooldown active)');
+    return false;
+  }
   try {
     const { error } = await supabase.functions.invoke('discord-announce-rescue', { body: args });
     if (error) {
@@ -125,6 +150,10 @@ export async function announceSoloRescueToDiscord(args: {
   lat: number;
   lng: number;
 }) {
+  if (shouldThrottleWebhook('solo-rescue')) {
+    console.warn('[Discord] solo rescue throttled (cooldown active)');
+    return { ok: false, skipped: true };
+  }
   try {
     const { data, error } = await supabase.functions.invoke('discord-announce-solo-rescue', { body: args });
     if (error) {

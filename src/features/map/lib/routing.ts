@@ -17,21 +17,21 @@ export function metersToMiles(meters: number): number {
   return meters / METERS_PER_MILE;
 }
 
-// Driving route from `from` to `to` via the place-search edge function
-// (which proxies OSRM with auth + rate limiting). Returns null on any failure
-// so the map can drop a marker without a line rather than erroring.
-export async function fetchRoute(
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number },
+// Driving route through an ordered list of stops, via the place-search edge
+// function (which proxies OSRM with auth + rate limiting). Each stop is just
+// {lat,lng} - the only thing we ever send over the wire for routing, whether
+// that's this request or the Realtime broadcast that triggers it. Returns
+// null on any failure so the map can drop a marker without a line rather
+// than erroring.
+export async function fetchRouteThroughStops(
+  stops: { lat: number; lng: number }[],
 ): Promise<RouteResult | null> {
+  if (stops.length < 2) return null;
   try {
     const { data, error } = await supabase.functions.invoke('place-search', {
       body: {
         kind: 'route',
-        coordinates: [
-          [from.lng, from.lat],
-          [to.lng, to.lat],
-        ],
+        coordinates: stops.map(s => [s.lng, s.lat]),
       },
     });
     if (error) throw error;

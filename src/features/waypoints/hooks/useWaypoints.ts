@@ -1,22 +1,72 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ConvoyWaypoint } from '@/types/convoy';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { ConvoyWaypoint, RouteStop } from '@/types/convoy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export function useWaypoints(convoyId: string | null, isLeader: boolean) {
-  const [waypoints, setWaypoints] = useState<ConvoyWaypoint[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+// Module-level singleton store (mirrors useConvoyState/useActiveRide) so the
+// map overlay can read live route stops via useWaypointRouteStops() without
+// mounting a second postgres_changes subscription alongside whatever page
+// (Lobby/ActiveRide) is already running the full useWaypoints() hook.
+type Listener = () => void;
+const listeners = new Set<Listener>();
 
-  // Broadcast waypoint update to all members
-  const broadcastWaypointUpdate = useCallback(async () => {
+interface WaypointsStoreState {
+  waypoints: ConvoyWaypoint[];
+  isLoading: boolean;
+  // Incomplete-stop coordinates for the active route line. Updated instantly
+  // from the broadcast payload (no DB round trip) and reconciled by the next
+  // fetchWaypoints() DB read.
+  routeStops: RouteStop[];
+}
+
+let storeState: WaypointsStoreState = { waypoints: [], isLoading: false, routeStops: [] };
+
+function getSnapshot(): WaypointsStoreState {
+  return storeState;
+}
+
+function subscribe(listener: Listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function emitChange() {
+  listeners.forEach(l => l());
+}
+
+function setStoreState(updater: (prev: WaypointsStoreState) => WaypointsStoreState) {
+  storeState = updater(storeState);
+  emitChange();
+}
+
+function routeStopsFrom(waypoints: ConvoyWaypoint[]): RouteStop[] {
+  return waypoints.filter(w => !w.isCompleted).map(w => ({ lat: w.lat, lng: w.lng }));
+}
+
+// Lightweight, read-only selector for the active route's stop coordinates -
+// safe to call from any number of components (e.g. the map overlay) since it
+// has no side effects of its own.
+export function useWaypointRouteStops(): RouteStop[] {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return state.routeStops;
+}
+
+export function useWaypoints(convoyId: string | null, isLeader: boolean) {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const { waypoints, isLoading } = state;
+
+  // Broadcast a lightweight waypoint-coordinate update to all members. Only
+  // ever carries bare {lat,lng} stops - never route geometry - so receivers
+  // fetch/render the line themselves instead of trusting a wire payload.
+  const broadcastWaypointUpdate = useCallback(async (stops: RouteStop[]) => {
     if (!convoyId) return;
-    
+
     const channel = supabase.channel(`convoy-control:${convoyId}`);
     await channel.subscribe();
     await channel.send({
       type: 'broadcast',
       event: 'waypoints-updated',
-      payload: {},
+      payload: { stops },
     });
     // Give time for broadcast to propagate
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -26,7 +76,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
   // Fetch waypoints
   const fetchWaypoints = useCallback(async () => {
     if (!convoyId) {
-      setWaypoints([]);
+      setStoreState(() => ({ waypoints: [], isLoading: false, routeStops: [] }));
       return;
     }
 
@@ -52,7 +102,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       completedAt: w.completed_at,
     }));
 
-    setWaypoints(mapped);
+    setStoreState(prev => ({ ...prev, waypoints: mapped, routeStops: routeStopsFrom(mapped) }));
   }, [convoyId]);
 
   // Subscribe to realtime updates and broadcast events
@@ -83,8 +133,15 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       config: { broadcast: { self: false } },
     });
 
-    controlChannel.on('broadcast', { event: 'waypoints-updated' }, () => {
+    controlChannel.on('broadcast', { event: 'waypoints-updated' }, ({ payload }) => {
       console.log('[Waypoints] Received waypoints-updated broadcast');
+      // Fast path: redraw the route from the bare coords in the payload
+      // immediately, without waiting on a DB round trip.
+      const stops = Array.isArray(payload?.stops) ? (payload.stops as RouteStop[]) : null;
+      if (stops) {
+        setStoreState(prev => ({ ...prev, routeStops: stops }));
+      }
+      // Source-of-truth reconciliation (names, order, completion state).
       fetchWaypoints();
     });
 
@@ -102,14 +159,14 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       console.error('[Waypoints] No convoy ID');
       return false;
     }
-    
+
     if (!isLeader) {
       console.error('[Waypoints] Only leader can add waypoints');
       toast.error('Only the leader can add waypoints');
       return false;
     }
 
-    setIsLoading(true);
+    setStoreState(prev => ({ ...prev, isLoading: true }));
 
     // Get next order index
     const nextIndex = waypoints.length;
@@ -125,7 +182,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
         order_index: nextIndex,
       });
 
-    setIsLoading(false);
+    setStoreState(prev => ({ ...prev, isLoading: false }));
 
     if (error) {
       toast.error('Failed to add waypoint');
@@ -134,25 +191,28 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     }
 
     console.log('[Waypoints] Added waypoint:', waypoint.name);
-    
-    // Broadcast to all members
-    await broadcastWaypointUpdate();
-    
+
+    // Broadcast the new ordered stop list (lightweight coords only)
+    await broadcastWaypointUpdate([
+      ...routeStopsFrom(waypoints),
+      { lat: waypoint.lat, lng: waypoint.lng },
+    ]);
+
     return true;
-  }, [convoyId, isLeader, waypoints.length, broadcastWaypointUpdate]);
+  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
 
   // Remove a waypoint
   const removeWaypoint = useCallback(async (waypointId: string) => {
     if (!convoyId || !isLeader) return;
 
-    setIsLoading(true);
+    setStoreState(prev => ({ ...prev, isLoading: true }));
 
     const { error } = await supabase
       .from('convoy_waypoints')
       .delete()
       .eq('id', waypointId);
 
-    setIsLoading(false);
+    setStoreState(prev => ({ ...prev, isLoading: false }));
 
     if (error) {
       toast.error('Failed to remove waypoint');
@@ -170,8 +230,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       }
     }
 
-    // Broadcast to all members
-    await broadcastWaypointUpdate();
+    await broadcastWaypointUpdate(routeStopsFrom(remaining));
 
     return true;
   }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
@@ -193,32 +252,31 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       return false;
     }
 
-    // Broadcast to all members
-    await broadcastWaypointUpdate();
+    const remainingStops = routeStopsFrom(waypoints.filter(w => w.id !== waypointId));
+    await broadcastWaypointUpdate(remainingStops);
 
     return true;
-  }, [convoyId, isLeader, broadcastWaypointUpdate]);
+  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
 
   // Clear all waypoints
   const clearAllWaypoints = useCallback(async () => {
     if (!convoyId || !isLeader) return;
 
-    setIsLoading(true);
+    setStoreState(prev => ({ ...prev, isLoading: true }));
 
     const { error } = await supabase
       .from('convoy_waypoints')
       .delete()
       .eq('convoy_id', convoyId);
 
-    setIsLoading(false);
+    setStoreState(prev => ({ ...prev, isLoading: false }));
 
     if (error) {
       toast.error('Failed to clear waypoints');
       return false;
     }
 
-    // Broadcast to all members
-    await broadcastWaypointUpdate();
+    await broadcastWaypointUpdate([]);
 
     return true;
   }, [convoyId, isLeader, broadcastWaypointUpdate]);
@@ -231,19 +289,20 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     const [moved] = newOrder.splice(fromIndex, 1);
     newOrder.splice(toIndex, 0, moved);
 
+    const reindexed = newOrder.map((w, i) => ({ ...w, orderIndex: i }));
+
     // Optimistic update
-    setWaypoints(newOrder.map((w, i) => ({ ...w, orderIndex: i })));
+    setStoreState(prev => ({ ...prev, waypoints: reindexed, routeStops: routeStopsFrom(reindexed) }));
 
     // Update in database
-    for (let i = 0; i < newOrder.length; i++) {
+    for (let i = 0; i < reindexed.length; i++) {
       await supabase
         .from('convoy_waypoints')
         .update({ order_index: i })
-        .eq('id', newOrder[i].id);
+        .eq('id', reindexed[i].id);
     }
 
-    // Broadcast to all members
-    await broadcastWaypointUpdate();
+    await broadcastWaypointUpdate(routeStopsFrom(reindexed));
   }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
 
   // Get next incomplete waypoint

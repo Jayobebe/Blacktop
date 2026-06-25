@@ -93,6 +93,7 @@ export interface ActiveRideState {
   gpsPoints: GpsPoint[];
   leanSamples: LeanSample[]; // High-frequency lean data (10Hz)
   gpsStatus: GpsStatus;
+  inactivityTimedOut: boolean; // true once the inactivity guard has paused tracking
 }
 
 export type NavigationApp = 'google' | 'waze' | 'apple' | 'blacktop';

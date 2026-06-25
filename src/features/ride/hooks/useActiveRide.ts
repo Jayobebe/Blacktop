@@ -1,18 +1,26 @@
 import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { useRideHistory } from './useRideHistory';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const SPEED_SMOOTHING_FACTOR = 0.75; // Higher = more responsive to current reading
 const MIN_SPEED_THRESHOLD = 0.3; // mph - very low threshold to catch movement early
 const MAX_ACCURACY_THRESHOLD = 200; // meters - accept moderately poor GPS
 const MAX_SPEED_SANITY = 200; // mph - reject speeds above this
 const MAX_DISTANCE_JUMP = 0.5; // miles - tighter check for GPS jumps
-const CONVOY_SYNC_INTERVAL = 2000; // ms - sync to database every 2 seconds
+const CONVOY_SYNC_FAST_INTERVAL = 4000; // ms - broadcast cadence while moving
+const CONVOY_SYNC_SLOW_INTERVAL = 30000; // ms - broadcast cadence while idle
+const CONVOY_SYNC_BACKGROUND_INTERVAL = 45000; // ms - fallback cadence while app is backgrounded
+const CONVOY_IDLE_SPEED_MPH = 15 / 1.60934; // 15 km/h, converted to mph (currentSpeed's unit)
+const CONVOY_IDLE_GRACE_MS = 30000; // how long below threshold before dropping to slow cadence
 const SPEED_CHANGE_THRESHOLD = 5; // mph - if speed changes more than this, reduce smoothing
+const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes fully stationary triggers the inactivity guard
+const INACTIVITY_RADIUS_MILES = 5 / 1609.34; // "a few meters" of GPS drift still counts as stationary
 
 const RIDE_STATE_KEY = 'blacktop_active_ride';
 
@@ -24,6 +32,14 @@ const THROTTLE_SKIP_COUNT = 2; // Skip this many updates when stationary (proces
 // Track stationary time for Fallback badge
 let stationaryTimeSeconds = 0;
 let lastStationaryCheck: number | null = null;
+
+// Inactivity checkout guard - tracks continuous time spent at speed 0 within
+// a tight GPS radius while in a convoy, so an unattended phone doesn't keep
+// broadcasting (and racking up Realtime usage) all night.
+let inactivityAnchor: { lat: number; lng: number } | null = null;
+let inactivityLastCheck: number | null = null;
+let inactivityStationarySeconds = 0;
+let inactivityTriggered = false;
 
 // Check if running as native app
 const isNative = Capacitor.isNativePlatform();
@@ -82,11 +98,28 @@ let rideState: ActiveRideState = restoredState || {
   gpsPoints: [],
   leanSamples: [],
   gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
+  inactivityTimedOut: false,
 };
 
 let watchId: number | string | null = null;
 let durationInterval: ReturnType<typeof setInterval> | null = null;
-let convoySyncInterval: ReturnType<typeof setInterval> | null = null;
+let convoySyncTimeout: ReturnType<typeof setTimeout> | null = null;
+let convoySyncDelay: number = CONVOY_SYNC_FAST_INTERVAL;
+let belowIdleThresholdSince: number | null = null;
+let isAppBackgrounded = false;
+
+// App-state changes (background/minimize/deep-link out) override the speed-based
+// cadence with a conservative fallback ticker. The realtime channels themselves
+// (voice, convoy mesh) are untouched here - only this polling cadence changes.
+App.addListener('appStateChange', ({ isActive }) => {
+  const backgrounded = !isActive;
+  if (backgrounded === isAppBackgrounded) return;
+  isAppBackgrounded = backgrounded;
+  console.log(backgrounded
+    ? '[Convoy] App backgrounded - downscaling sync to 45s fallback'
+    : '[Convoy] App foregrounded - restoring active sync cadence');
+  forceRescheduleConvoySync();
+});
 let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
 let rideStartedAtMs: number | null = restoredState?.startedAt ? new Date(restoredState.startedAt).getTime() : null;
 let smoothedSpeed = 0;
@@ -250,6 +283,14 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
   // Apply minimum threshold to filter GPS drift when stationary
   const displaySpeed = smoothedSpeed < MIN_SPEED_THRESHOLD ? 0 : Math.round(smoothedSpeed);
 
+  notifyConvoySyncOfSpeed(displaySpeed);
+
+  if (currentConvoyId && rideState.isConvoyMode) {
+    checkInactivityGuard(latitude, longitude, displaySpeed, timestamp);
+  } else {
+    resetInactivityTracking();
+  }
+
   const gpsPoint: GpsPoint = {
     lat: latitude,
     lng: longitude,
@@ -368,6 +409,136 @@ async function syncConvoyStats() {
   }
 }
 
+// Picks the next sync delay. Backgrounded app overrides everything with the
+// conservative fallback ticker; otherwise fast while moving, slow only after
+// sitting below the idle threshold for the grace period.
+function computeConvoySyncDelay(): number {
+  if (isAppBackgrounded) {
+    belowIdleThresholdSince = null;
+    return CONVOY_SYNC_BACKGROUND_INTERVAL;
+  }
+  if (rideState.currentSpeed > CONVOY_IDLE_SPEED_MPH) {
+    belowIdleThresholdSince = null;
+    return CONVOY_SYNC_FAST_INTERVAL;
+  }
+  if (belowIdleThresholdSince === null) {
+    belowIdleThresholdSince = Date.now();
+  }
+  const idleFor = Date.now() - belowIdleThresholdSince;
+  return idleFor >= CONVOY_IDLE_GRACE_MS ? CONVOY_SYNC_SLOW_INTERVAL : CONVOY_SYNC_FAST_INTERVAL;
+}
+
+function scheduleConvoySync() {
+  convoySyncDelay = computeConvoySyncDelay();
+  convoySyncTimeout = setTimeout(() => {
+    syncConvoyStats().catch(err => console.warn('[Convoy] Sync error:', err));
+    scheduleConvoySync();
+  }, convoySyncDelay);
+}
+
+// Cancels whatever wait is in flight and re-evaluates the cadence right away -
+// used when an event (app foregrounded, speed crossing the idle threshold)
+// shouldn't have to wait out the currently scheduled delay.
+function forceRescheduleConvoySync() {
+  if (!convoySyncTimeout) return;
+  clearTimeout(convoySyncTimeout);
+  scheduleConvoySync();
+}
+
+function startConvoySync() {
+  if (convoySyncTimeout) clearTimeout(convoySyncTimeout);
+  belowIdleThresholdSince = null;
+  scheduleConvoySync();
+}
+
+function stopConvoySync() {
+  if (convoySyncTimeout) {
+    clearTimeout(convoySyncTimeout);
+    convoySyncTimeout = null;
+  }
+  belowIdleThresholdSince = null;
+}
+
+// Called on every speed update so crossing back above the idle threshold
+// snaps the cadence back to fast immediately, instead of waiting out
+// whatever slow-cadence wait is already in flight. A no-op while backgrounded -
+// the background fallback ticker takes priority over speed.
+function notifyConvoySyncOfSpeed(speedMph: number) {
+  if (!convoySyncTimeout || !currentConvoyId || isAppBackgrounded) return;
+  if (speedMph > CONVOY_IDLE_SPEED_MPH && belowIdleThresholdSince !== null) {
+    belowIdleThresholdSince = null;
+    if (convoySyncDelay !== CONVOY_SYNC_FAST_INTERVAL) {
+      forceRescheduleConvoySync();
+    }
+  }
+}
+
+function resetInactivityTracking() {
+  inactivityAnchor = null;
+  inactivityLastCheck = null;
+  inactivityStationarySeconds = 0;
+  inactivityTriggered = false;
+}
+
+// Pauses GPS + convoy sync. `dueToInactivity` distinguishes the 15-minute
+// auto-shutdown (which also halts the convoy stats polling loop and surfaces
+// a toast) from a manual pause-button tap (which leaves convoy sync running
+// at its normal idle cadence, as before).
+function pauseRideTracking(dueToInactivity: boolean) {
+  if (isPaused) return;
+  isPaused = true;
+  pausedAtMs = Date.now();
+  stopGpsWatch();
+  if (dueToInactivity) {
+    stopConvoySync();
+    console.log('[Ride] Inactivity guard - tracking paused after 15 stationary minutes');
+    toast('Tracking paused due to inactivity.', {
+      description: 'No movement detected for 15 minutes. Resume the ride to continue broadcasting your location.',
+    });
+  } else {
+    console.log('[Ride] Paused - GPS stopped to save battery');
+  }
+  setRideState(prev => ({ ...prev, isPaused: true, currentSpeed: 0, inactivityTimedOut: dueToInactivity }));
+}
+
+// Checks continuous stationary time (speed 0 and GPS within a few meters of
+// the last stationary fix) and triggers the soft-shutdown pause once it
+// crosses the inactivity timeout. Only meaningful while in an active convoy.
+function checkInactivityGuard(lat: number, lng: number, speedMph: number, timestamp: number) {
+  if (speedMph > 0) {
+    resetInactivityTracking();
+    return;
+  }
+
+  if (!inactivityAnchor) {
+    inactivityAnchor = { lat, lng };
+    inactivityLastCheck = timestamp;
+    inactivityStationarySeconds = 0;
+    return;
+  }
+
+  const distanceMiles = calculateDistance(inactivityAnchor.lat, inactivityAnchor.lng, lat, lng);
+  if (distanceMiles > INACTIVITY_RADIUS_MILES) {
+    inactivityAnchor = { lat, lng };
+    inactivityLastCheck = timestamp;
+    inactivityStationarySeconds = 0;
+    return;
+  }
+
+  if (inactivityLastCheck !== null) {
+    const elapsed = (timestamp - inactivityLastCheck) / 1000;
+    if (elapsed > 0 && elapsed < 60) { // sanity guard against stale/huge gaps
+      inactivityStationarySeconds += elapsed;
+    }
+  }
+  inactivityLastCheck = timestamp;
+
+  if (!inactivityTriggered && inactivityStationarySeconds * 1000 >= INACTIVITY_TIMEOUT_MS) {
+    inactivityTriggered = true;
+    pauseRideTracking(true);
+  }
+}
+
 export function useActiveRide(convoyId?: string | null) {
   const { addRide } = useRideHistory();
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -403,10 +574,10 @@ export function useActiveRide(convoyId?: string | null) {
       }
       
       // Start convoy sync if in convoy mode
-      if (state.isConvoyMode && convoyId && !convoySyncInterval) {
+      if (state.isConvoyMode && convoyId && !convoySyncTimeout) {
         currentConvoyId = convoyId;
         console.log('[Convoy] Resuming stats sync for convoy:', convoyId);
-        convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
+        startConvoySync();
       }
     }
   }, [state.isActive, state.isPaused, state.isConvoyMode, state.startedAt, convoyId]);
@@ -429,6 +600,7 @@ export function useActiveRide(convoyId?: string | null) {
     pausedAtMs = null;
     stationaryCount = 0; // Reset battery optimization counter
     hasRestoredGps = true; // Mark as handled so restoration effect doesn't double-start
+    resetInactivityTracking();
 
     setRideState(() => ({
       isActive: true,
@@ -445,12 +617,13 @@ export function useActiveRide(convoyId?: string | null) {
       gpsPoints: [],
       leanSamples: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
+      inactivityTimedOut: false,
     }));
 
     // Start convoy sync if in convoy mode
     if (isConvoyMode && currentConvoyId) {
       console.log('[Convoy] Starting stats sync for convoy:', currentConvoyId);
-      convoySyncInterval = setInterval(syncConvoyStats, CONVOY_SYNC_INTERVAL);
+      startConvoySync();
     }
 
     // Start GPS tracking using helper
@@ -482,12 +655,9 @@ export function useActiveRide(convoyId?: string | null) {
       durationInterval = null;
     }
 
-    // Stop convoy sync interval
-    if (convoySyncInterval) {
-      clearInterval(convoySyncInterval);
-      convoySyncInterval = null;
-    }
-    
+    // Stop convoy sync schedule
+    stopConvoySync();
+
     // Final sync in background (non-blocking)
     if (currentConvoyId) {
       syncConvoyStats().catch(err => console.warn('[Convoy] Final sync error:', err));
@@ -530,6 +700,7 @@ export function useActiveRide(convoyId?: string | null) {
     }
 
     rideStartedAtMs = null;
+    resetInactivityTracking();
 
     setRideState(() => ({
       isActive: false,
@@ -546,6 +717,7 @@ export function useActiveRide(convoyId?: string | null) {
       gpsPoints: [],
       leanSamples: [],
       gpsStatus: { accuracy: null, lastUpdate: null, source: 'none' },
+      inactivityTimedOut: false,
     }));
 
     return savedRideId;
@@ -553,22 +725,22 @@ export function useActiveRide(convoyId?: string | null) {
 
   const setRidePaused = useCallback((paused: boolean) => {
     if (paused && !isPaused) {
-      // Starting pause - stop GPS to save battery
-      isPaused = true;
-      pausedAtMs = Date.now();
-      stopGpsWatch();
-      setRideState(prev => ({ ...prev, isPaused: true, currentSpeed: 0 }));
-      console.log('[Ride] Paused - GPS stopped to save battery');
+      pauseRideTracking(false);
     } else if (!paused && isPaused) {
-      // Resuming from pause - restart GPS
+      // Resuming from pause - restart GPS (and convoy sync, if the
+      // inactivity guard had stopped it)
       if (pausedAtMs) {
         totalPausedTime += Date.now() - pausedAtMs;
       }
       isPaused = false;
       pausedAtMs = null;
       stationaryCount = 0; // Reset throttle counter
+      resetInactivityTracking();
       startGpsWatch();
-      setRideState(prev => ({ ...prev, isPaused: false }));
+      if (!convoySyncTimeout && currentConvoyId && rideState.isConvoyMode) {
+        startConvoySync();
+      }
+      setRideState(prev => ({ ...prev, isPaused: false, inactivityTimedOut: false }));
       console.log('[Ride] Resumed - GPS restarted, total paused time:', totalPausedTime);
     }
   }, []);

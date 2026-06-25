@@ -21,6 +21,7 @@ let convoyState: ConvoyState = {
   destination: null,
   waypoints: [],
   isPaused: false,
+  realtimeSuspended: false,
 };
 
 let restoreInFlight = false;
@@ -229,9 +230,15 @@ export function useConvoyState() {
     restoreConvoySession();
   }, [state.isActive]);
 
-  // Subscribe to realtime convoy updates
+  // Subscribe to realtime convoy updates. Skipped while realtimeSuspended
+  // (e.g. the inactivity guard dropped the connection to stop running up
+  // Realtime usage overnight) - local convoy state is untouched, only the
+  // live channel goes away.
   useEffect(() => {
-    if (!state.id) return;
+    if (!state.id || state.realtimeSuspended) return;
+
+    // Catch up on anything missed while the channel was suspended.
+    refreshMembers(state.id);
 
     const channel = supabase
       .channel(`convoy-${state.id}`)
@@ -260,6 +267,7 @@ export function useConvoyState() {
               destination: null,
               waypoints: [],
               isPaused: false,
+              realtimeSuspended: false,
             }));
             return;
           }
@@ -309,7 +317,7 @@ export function useConvoyState() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [state.id]);
+  }, [state.id, state.realtimeSuspended]);
 
   const refreshMembers = async (convoyId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -385,8 +393,19 @@ export function useConvoyState() {
   };
 
   const createConvoy = useCallback(async () => {
+    // Block before ever touching Supabase if local state already shows this
+    // user leading an open convoy - prevents a create-spam loop from ever
+    // reaching the DB (the unconditional "deactivate stale convoys" cleanup
+    // below would otherwise silently churn through real rows every call).
+    if (convoyState.isLeader && convoyState.isActive && convoyState.id) {
+      toast.error('You already have an active convoy', {
+        description: 'End your current session before starting a new one.',
+      });
+      return null;
+    }
+
     let { data: { user } } = await supabase.auth.getUser();
-    
+
     // Auto sign in anonymously if not authenticated
     if (!user) {
       const { data, error } = await supabase.auth.signInAnonymously();
@@ -469,6 +488,7 @@ export function useConvoyState() {
       destination: null,
       waypoints: [],
       isPaused: false,
+      realtimeSuspended: false,
     }));
     rememberActiveConvoy(convoy.id);
 
@@ -633,6 +653,7 @@ export function useConvoyState() {
       destination: null,
       waypoints: [],
       isPaused: false,
+      realtimeSuspended: false,
     }));
     rememberActiveConvoy(null);
   }, [state.id, state.isLeader]);
@@ -770,6 +791,7 @@ export function useConvoyState() {
       destination: null,
       waypoints: [],
       isPaused: false,
+      realtimeSuspended: false,
     }));
     rememberActiveConvoy(null);
   }, [state.id, state.isLeader]);
@@ -864,6 +886,13 @@ export function useConvoyState() {
   // Check if all members have navigated
   const allMembersNavigated = state.members.length > 0 && state.members.every(m => m.hasNavigated);
 
+  // Toggle the Realtime channel on/off without touching convoy membership -
+  // used by the ride feature's inactivity guard to stop spending Realtime
+  // usage when the rider has been stationary for a while.
+  const setConvoyRealtimeSuspended = useCallback((suspended: boolean) => {
+    setConvoyState((prev) => prev.realtimeSuspended === suspended ? prev : { ...prev, realtimeSuspended: suspended });
+  }, []);
+
   // Expose refresh function for external callers (e.g., leadership change broadcast)
   const refreshConvoyState = useCallback(async () => {
     if (state.id) {
@@ -885,6 +914,7 @@ export function useConvoyState() {
     togglePause,
     allMembersNavigated,
     refreshConvoyState,
+    setConvoyRealtimeSuspended,
   };
 }
 

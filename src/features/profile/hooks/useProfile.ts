@@ -7,6 +7,13 @@ import { toast } from 'sonner';
 
 const PROFILE_KEY = 'blacktop_profile';
 
+// Module-level (not component state) so the cooldown survives the Burn
+// button's own page navigation/remount - the only way to defeat a
+// component-state guard would be to script around it, which is exactly what
+// this is meant to prevent for the destructive burn-account routine.
+const IDENTITY_RESET_COOLDOWN_MS = 3000;
+let lastIdentityResetAt = 0;
+
 const defaultProfile: UserProfile = {
   name: '',
   createdAt: '',
@@ -111,6 +118,13 @@ export function useProfile() {
   };
 
   const resetIdentity = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastIdentityResetAt < IDENTITY_RESET_COOLDOWN_MS) {
+      console.warn('[Profile] resetIdentity throttled (cooldown active)');
+      return;
+    }
+    lastIdentityResetAt = now;
+
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();

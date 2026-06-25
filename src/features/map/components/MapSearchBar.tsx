@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   MapSearchResult,
+  MapViewBounds,
   QUICK_CATEGORIES,
   QuickCategory,
   getRecentLocations,
@@ -20,12 +22,24 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 interface MapSearchBarProps {
+  map: MapLibreMap | null;
   userLocation: { lat: number; lng: number } | null;
   countryCode: string | null;
   onSelect: (result: MapSearchResult) => void;
 }
 
-export function MapSearchBar({ userLocation, countryCode, onSelect }: MapSearchBarProps) {
+function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
+  if (!map) return null;
+  const bounds = map.getBounds();
+  return {
+    west: bounds.getWest(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    north: bounds.getNorth(),
+  };
+}
+
+export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MapSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -59,13 +73,16 @@ export function MapSearchBar({ userLocation, countryCode, onSelect }: MapSearchB
       }
       setIsSearching(true);
       try {
-        const searchResults = await searchPlaces(searchQuery, userLocation, countryCode);
+        // Read bounds fresh at search time rather than tracking them in
+        // state, so panning the map doesn't re-render this component.
+        const bias = currentViewBounds(map);
+        const searchResults = await searchPlaces(searchQuery, bias, userLocation, countryCode);
         if (searchIdRef.current === currentSearchId) setResults(searchResults);
       } finally {
         if (searchIdRef.current === currentSearchId) setIsSearching(false);
       }
     },
-    [userLocation, countryCode],
+    [map, userLocation, countryCode],
   );
 
   const handleSearch = (value: string) => {

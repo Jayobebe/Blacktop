@@ -28,8 +28,22 @@ export interface AppSettings {
   leanAngleThreshold: number; // Degrees - warning threshold
   // Auto-rescue (crash detection)
   autoRescueEnabled: boolean;
-  autoRescueGThreshold: number; // G-force impact threshold (3–8)
+  autoRescueGThreshold: number; // G-force impact threshold (3.5–8)
   autoRescueStopWindowSec: number; // Seconds of near-zero speed after impact (5–30)
+}
+
+// Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
+// sliders and here on every read - below these, ordinary vibration/road
+// noise (not an actual crash) can trip the detector and fire emergency
+// webhooks. Clamped on read so a stale/tampered localStorage value below the
+// floor (e.g. persisted before this floor existed) can't bypass it either.
+export const AUTO_RESCUE_MIN_G_THRESHOLD = 3.5;
+export const AUTO_RESCUE_MAX_G_THRESHOLD = 8;
+export const AUTO_RESCUE_MIN_STOP_WINDOW_SEC = 5;
+export const AUTO_RESCUE_MAX_STOP_WINDOW_SEC = 30;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -56,6 +70,18 @@ export function useSettings() {
     ...DEFAULT_SETTINGS,
     ...storedSettings,
   };
+
+  // Re-clamp on every read regardless of how the value got persisted.
+  settings.autoRescueGThreshold = clamp(
+    settings.autoRescueGThreshold,
+    AUTO_RESCUE_MIN_G_THRESHOLD,
+    AUTO_RESCUE_MAX_G_THRESHOLD,
+  );
+  settings.autoRescueStopWindowSec = clamp(
+    settings.autoRescueStopWindowSec,
+    AUTO_RESCUE_MIN_STOP_WINDOW_SEC,
+    AUTO_RESCUE_MAX_STOP_WINDOW_SEC,
+  );
 
   // Apply accent color to CSS variables
   useEffect(() => {

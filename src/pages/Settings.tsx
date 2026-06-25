@@ -3,7 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
-import { useSettings, AccentColorPicker } from '@/features/settings';
+import {
+  useSettings,
+  AccentColorPicker,
+  AUTO_RESCUE_MIN_G_THRESHOLD,
+  AUTO_RESCUE_MAX_G_THRESHOLD,
+  AUTO_RESCUE_MIN_STOP_WINDOW_SEC,
+  AUTO_RESCUE_MAX_STOP_WINDOW_SEC,
+} from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -124,11 +131,19 @@ export default function Settings() {
   };
 
   const [burnOrigin, setBurnOrigin] = useState<{ x: number; y: number } | null>(null);
+  // Belt-and-suspenders against a same-tick double-fire (e.g. a script
+  // dispatching multiple click events before React re-renders the `disabled`
+  // prop) - `burning` state alone can't catch that since it only takes
+  // effect after the next render.
+  const burnLockRef = useRef(false);
 
   const handleBurn = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (burnStep === 0) {
       setBurnStep(1);
     } else if (burnStep === 1) {
+      if (burnLockRef.current) return;
+      burnLockRef.current = true;
+
       // Capture the button's center as the flame origin
       const rect = e.currentTarget.getBoundingClientRect();
       setBurnOrigin({
@@ -441,16 +456,16 @@ export default function Settings() {
                 </div>
                 <input
                   type="range"
-                  min={3}
-                  max={8}
-                  step={1}
+                  min={AUTO_RESCUE_MIN_G_THRESHOLD}
+                  max={AUTO_RESCUE_MAX_G_THRESHOLD}
+                  step={0.5}
                   value={settings.autoRescueGThreshold}
                   onChange={(e) => updateSetting('autoRescueGThreshold', Number(e.target.value))}
                   className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
                 />
                 <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>3 G (sensitive)</span>
-                  <span>8 G (only crashes)</span>
+                  <span>{AUTO_RESCUE_MIN_G_THRESHOLD} G (sensitive)</span>
+                  <span>{AUTO_RESCUE_MAX_G_THRESHOLD} G (only crashes)</span>
                 </div>
               </div>
 
@@ -463,16 +478,16 @@ export default function Settings() {
                 </div>
                 <input
                   type="range"
-                  min={5}
-                  max={30}
+                  min={AUTO_RESCUE_MIN_STOP_WINDOW_SEC}
+                  max={AUTO_RESCUE_MAX_STOP_WINDOW_SEC}
                   step={1}
                   value={settings.autoRescueStopWindowSec}
                   onChange={(e) => updateSetting('autoRescueStopWindowSec', Number(e.target.value))}
                   className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
                 />
                 <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>5s</span>
-                  <span>30s</span>
+                  <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}s</span>
+                  <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}s</span>
                 </div>
               </div>
 

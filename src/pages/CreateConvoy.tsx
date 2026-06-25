@@ -3,10 +3,16 @@ import { useConvoyState } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Copy, Check, Loader2, MessageSquare } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDiscordIntegration, announceConvoyToDiscord } from '@/features/integrations/discord';
+
+// Client-side floor on re-clicking "Generate Convoy Code", on top of the
+// persistent already-a-leader guard in createConvoy() itself: a quick retry
+// after a network failure shouldn't have to wait out the full success cooldown.
+const CREATE_COOLDOWN_AFTER_SUCCESS_MS = 10000;
+const CREATE_COOLDOWN_AFTER_FAILURE_MS = 5000;
 
 export default function CreateConvoy() {
   const navigate = useNavigate();
@@ -16,8 +22,25 @@ export default function CreateConvoy() {
   const [copied, setCopied] = useState(false);
   const [convoyCode, setConvoyCode] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
   const [pinging, setPinging] = useState(false);
   const [pinged, setPinged] = useState(false);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+    };
+  }, []);
+
+  const startCooldown = (ms: number) => {
+    if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+    setIsCoolingDown(true);
+    cooldownTimerRef.current = setTimeout(() => {
+      setIsCoolingDown(false);
+      cooldownTimerRef.current = null;
+    }, ms);
+  };
 
   const handleCreate = async () => {
     setIsCreating(true);
@@ -25,10 +48,17 @@ export default function CreateConvoy() {
       const result = await createConvoy();
       if (result) {
         setConvoyCode(result.code);
+        startCooldown(CREATE_COOLDOWN_AFTER_SUCCESS_MS);
         if (integration?.auto_announce) {
           await pingDiscord(result.code);
         }
+      } else {
+        startCooldown(CREATE_COOLDOWN_AFTER_FAILURE_MS);
       }
+    } catch (err) {
+      console.error('[CreateConvoy] Unexpected error creating convoy:', err);
+      toast.error('Failed to create convoy. Please check your connection and try again.');
+      startCooldown(CREATE_COOLDOWN_AFTER_FAILURE_MS);
     } finally {
       setIsCreating(false);
     }
@@ -98,7 +128,7 @@ export default function CreateConvoy() {
             <div className="landscape:flex-1 landscape:max-w-xs w-full max-w-xs">
               <Button
                 onClick={handleCreate}
-                disabled={isCreating}
+                disabled={isCreating || isCoolingDown}
                 className="w-full h-12 landscape:h-10 text-base landscape:text-sm font-semibold bg-accent hover:bg-accent/90 text-accent-foreground touch-target"
               >
                 {isCreating ? (
