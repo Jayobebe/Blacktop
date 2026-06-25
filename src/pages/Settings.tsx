@@ -666,46 +666,6 @@ export default function Settings() {
         </div>
 
 
-        {/* Tip Jar Section */}
-        <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
-          <div className="flex items-center gap-2 mb-3">
-            <Heart className="w-4 h-4 text-accent" />
-            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
-          </div>
-          <p className="text-xs text-muted-foreground mb-3">
-            Help keep us ad-free!
-          </p>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => handleTip(5)}
-              disabled={isTipping}
-              className="flex-1 h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              {isTipping ? 'Opening...' : 'Donate $5'}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  disabled={isTipping}
-                  aria-label="Choose a different tip amount"
-                  className="h-11 w-11 px-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl touch-target"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border/30">
-                <DropdownMenuItem onClick={() => handleTip(10)} disabled={isTipping}>
-                  Donate $10
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleTip(20)} disabled={isTipping}>
-                  Donate $20
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </section>
-
         {/* Blacktop World Opt-In */}
         <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
           <div className="flex items-center gap-2 mb-3">
@@ -744,6 +704,46 @@ export default function Settings() {
               Opt in to Blacktop World
             </Button>
           )}
+        </section>
+
+        {/* Tip Jar Section */}
+        <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-accent" />
+            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Help keep us ad-free!
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleTip(5)}
+              disabled={isTipping}
+              className="flex-1 h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              {isTipping ? 'Opening...' : 'Donate $5'}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={isTipping}
+                  aria-label="Choose a different tip amount"
+                  className="h-11 w-11 px-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl touch-target"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border/30">
+                <DropdownMenuItem onClick={() => handleTip(10)} disabled={isTipping}>
+                  Donate $10
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTip(20)} disabled={isTipping}>
+                  Donate $20
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </section>
 
 
