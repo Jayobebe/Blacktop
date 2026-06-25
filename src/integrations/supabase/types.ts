@@ -326,6 +326,7 @@ export type Database = {
         Args: { _convoy_id: string }
         Returns: boolean
       }
+      convoy_id_from_topic: { Args: { _topic: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       is_convoy_member: {
         Args: { _convoy_id: string; _user_id: string }
