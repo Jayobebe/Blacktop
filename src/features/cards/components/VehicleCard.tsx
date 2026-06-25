@@ -27,10 +27,14 @@ function slugify(s: string): string {
 
 export function VehicleCard({ card }: Props) {
   const { settings } = useSettings();
+  const { profile } = useProfile();
   const style = TIER_STYLES[card.tier];
   const locked = card.tier === 'locked';
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [flipped, setFlipped] = useState(false);
+  const qrPayload = locked ? null : encodeCard(card, profile.name);
+
 
   const handleDownload = async () => {
     if (!cardRef.current || isExporting) return;
