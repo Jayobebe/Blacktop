@@ -57,6 +57,10 @@ Deno.serve(async (req) => {
       return json({ skipped: true, reason: 'no_integration' }, 200)
     }
 
+    if (!/^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\//.test(integration.webhook_url)) {
+      return json({ error: 'Invalid webhook URL' }, 400)
+    }
+
     if (integration.auto_announce === false) {
       return json({ skipped: true, reason: 'auto_announce_off' }, 200)
     }
