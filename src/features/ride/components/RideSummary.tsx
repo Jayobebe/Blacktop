@@ -218,32 +218,33 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
           {/* Vehicle photo (B&W) — below stats, above thank you. The G-force
-              trace sits behind it as a subtle backdrop layer, not a readable
-              chart, so it uses the receipt's own ink tone rather than the
-              app's accent color (which would clash with the printed-paper look). */}
-          <div className="relative">
+              trace sits behind it as a subtle backdrop layer spanning the full
+              receipt width, with the hero vehicle photo opaquely overlaid on
+              top so the bike clearly reads as the foreground. Ink-toned trace
+              keeps the printed-paper feel. */}
+          <div className="relative min-h-[10rem] flex items-center justify-center">
             {gForceSamples && gForceSamples.length > 1 && (
               <GForceGraph
                 samples={gForceSamples}
                 color="var(--ink)"
-                height={96}
-                className="absolute inset-x-0 top-1/2 -translate-y-1/2"
+                height={120}
+                className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0 pointer-events-none"
               />
             )}
-            <div className="relative">
+            <div className="relative z-10 w-full">
               {bikePhoto ? (
                 <div className="flex items-center justify-center py-2">
                   <img
                     src={bikePhoto}
                     alt={bikeName || 'Vehicle'}
                     crossOrigin="anonymous"
-                    className="max-h-40 w-auto object-contain"
-                    style={{ filter: 'grayscale(100%) contrast(1.15)', mixBlendMode: 'multiply' }}
+                    className="max-h-40 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+                    style={{ filter: 'grayscale(100%) contrast(1.15)' }}
                   />
                 </div>
               ) : (
                 !bikeName && (
-                  <div className="receipt-bracket text-center" data-bike-slot>
+                  <div className="receipt-bracket text-center bg-[--paper]" data-bike-slot>
                     <span className="receipt-bracket-tr" />
                     <span className="receipt-bracket-bl" />
                     <div className="text-xl tracking-[0.2em]">VEHICLE MODEL</div>
