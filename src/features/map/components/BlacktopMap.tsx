@@ -3,6 +3,7 @@ import maplibregl, { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './blacktopMap.css';
+import { closeBlacktopMap } from '../hooks/useMapOverlay';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
@@ -160,7 +161,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // of no user interaction. This prevents an unattended device from keeping
   // MapLibre running indefinitely and burning through battery / tile quota.
   useEffect(() => {
-    if (rideState.isActive) return; // only for home map
+    if (rideState.isActive) return;
+    if (!isVisible) return; // don't run timer while overlay is hidden
+
+    // Reset the idle clock each time the map is revealed so the 5-min window
+    // starts fresh on every open, not from the previous session.
+    lastInteractionAtRef.current = Date.now();
 
     const check = setInterval(() => {
       if (Date.now() - lastInteractionAtRef.current >= HOME_MAP_INACTIVITY_MS) {
@@ -170,7 +176,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }, 30_000); // check every 30 s
 
     return () => clearInterval(check);
-  }, [rideState.isActive]);
+  }, [rideState.isActive, isVisible]);
 
   // ── Effective destination in convoy active ride ────────────────────────────
   // Override local destination state with the convoy's current next stop so the
