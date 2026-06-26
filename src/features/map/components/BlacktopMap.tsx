@@ -196,6 +196,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [nextWaypoint, convoy.destination, rideState.isActive, rideState.isConvoyMode]);
 
+  // ── Sync local destination when overlay's destination changes ──────────────
+  // BlacktopMapOverlay keeps this component mounted (hidden via CSS) across
+  // open/close cycles, so local `destination` state otherwise survives a
+  // ride ending. When the parent clears its destination (e.g. ride end calls
+  // clearMapDestination), drop the local route too — unless we're currently
+  // in an active ride, in which case the convoy/waypoint effect above owns it.
+  useEffect(() => {
+    if (rideState.isActive) return;
+    setDestination(initialDestination ?? null);
+    if (!initialDestination) setRoute(null);
+  }, [initialDestination, rideState.isActive]);
+
+
+
   // ── Map init ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
