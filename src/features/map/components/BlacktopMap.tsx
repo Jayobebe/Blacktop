@@ -561,6 +561,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
   const canSkipWaypoint =
     rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
+  // "Finish" replaces "Skip" once we're heading to the very last stop (the
+  // final destination, with no intermediate waypoints left). Tapping it
+  // clears the route so the map is blank and ready for a new plan.
+  const canFinishRoute =
+    rideState.isActive &&
+    destination != null &&
+    nextWaypoint == null &&
+    (isSolo || convoy.isLeader);
+
+  const handleFinishRoute = async () => {
+    if (isSolo) {
+      clearSoloRoute();
+    } else if (convoy.isLeader) {
+      await clearDestination();
+    }
+    setDestination(null);
+    setRoute(null);
+    toast.success('Route finished');
+  };
 
   const incompleteWaypoints = waypoints.filter(w => !w.isCompleted);
   // Show waypoints panel in any convoy context, or in a solo ride when we
