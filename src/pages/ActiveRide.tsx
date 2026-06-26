@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
+import { useActiveRide, useRideHistory, RideSummary, useSoloRoute, clearSoloRoute } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState } from '@/features/convoy';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
@@ -98,6 +98,8 @@ export default function ActiveRide() {
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const nextWaypoint = useNextWaypoint();
+  const soloRoute = useSoloRoute();
+
   const { 
     rescueRequests, 
     hasPendingRescue, 
@@ -363,7 +365,9 @@ export default function ActiveRide() {
     (async () => {
       const rideId = await endRide();
       clearMapDestination();
+      clearSoloRoute();
       closeBlacktopMap();
+
       if (rideId) {
         setSavedRideId(rideId);
       } else {
@@ -527,7 +531,9 @@ export default function ActiveRide() {
     // start/stop loops.
     const rideId = await endRide();
     clearMapDestination();
+    clearSoloRoute();
     closeBlacktopMap();
+
     if (rideId) {
       flushSync(() => {
         setShowSummary(true);
@@ -864,10 +870,18 @@ export default function ActiveRide() {
                     ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name }
                     : undefined;
                 openBlacktopMap(dest);
+              } else if (soloRoute.destination) {
+                openBlacktopMap({
+                  lat: soloRoute.destination.lat,
+                  lng: soloRoute.destination.lng,
+                  name: soloRoute.destination.name,
+                  address: soloRoute.destination.address,
+                });
               } else {
                 openBlacktopMap();
               }
             }}
+
             className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
             title="Open map with route"
           >

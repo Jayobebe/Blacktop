@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useActiveRide } from '@/features/ride';
+import { useActiveRide, setSoloRoute, clearSoloRoute } from '@/features/ride';
 import { openBlacktopMap } from '@/features/map';
 import { DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
@@ -60,10 +60,25 @@ export default function SoloLobby() {
     setDestination(null);
     setSoloStops([]);
     setShowAddStop(false);
+    clearSoloRoute();
+  };
+
+  // Persist the planned destination + stops so they survive into the active
+  // ride: the map button in ActiveRide will replay them onto BlacktopMap.
+  const persistSoloRoute = (dest: ConvoyDestination | null) => {
+    if (!dest) {
+      clearSoloRoute();
+      return;
+    }
+    setSoloRoute({
+      destination: { lat: dest.lat, lng: dest.lng, name: dest.name, address: dest.address },
+      stops: soloStops.map((s) => ({ lat: s.lat, lng: s.lng, name: s.name, address: s.address })),
+    });
   };
 
   // Start the ride without opening the map (free-ride, no destination required).
   const handleStartRide = () => {
+    persistSoloRoute(destination);
     const success = startRide(false);
     if (success) {
       navigate('/ride');
@@ -74,9 +89,8 @@ export default function SoloLobby() {
   // screen — the map stays open on top of the ride UI so the rider has the
   // route + live speed immediately visible.
   const handleNavigate = () => {
-    if (destination) {
-      openBlacktopMap({ lat: destination.lat, lng: destination.lng, name: destination.name });
-    }
+    if (!destination) return;
+    persistSoloRoute(destination);
     const success = startRide(false);
     if (!success) return;
 
@@ -86,18 +100,15 @@ export default function SoloLobby() {
     // can fall back to /solo-lobby instead of /ride.
     navigate('/ride');
     queueMicrotask(() => {
-      if (destination) {
-        openBlacktopMap({
-          lat: destination.lat,
-          lng: destination.lng,
-          name: destination.name,
-          address: destination.address,
-        });
-      } else {
-        openBlacktopMap();
-      }
+      openBlacktopMap({
+        lat: destination.lat,
+        lng: destination.lng,
+        name: destination.name,
+        address: destination.address,
+      });
     });
   };
+
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
