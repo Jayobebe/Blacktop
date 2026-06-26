@@ -11,10 +11,9 @@ import { useWaypointRouteStops } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
 import { MapDestination } from '../types';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
-import { closeBlacktopMap } from '../hooks/useMapOverlay';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useActiveRide } from '@/features/ride';
-import { useConvoyMembers } from '@/features/convoy';
+import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
@@ -69,6 +68,7 @@ const LOCATE_RESUME_DELAY_MS = 10000;
 
 interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
+  onContextLost?: () => void;
 }
 
 // Register the cache-backed `blacktop-tile://` protocol before any Map is
@@ -117,12 +117,21 @@ const CARTO_DARK_STYLE: StyleSpecification = {
   ],
 };
 
-export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
+export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
-  const [destination, setDestination] = useState<MapDestination | null>(initialDestination ?? null);
+  const { convoy } = useConvoyState();
+  // If the overlay was opened without an explicit destination but the
+  // rider's convoy has one set, auto-populate it so the map immediately
+  // draws the route + any waypoints — instead of opening blank and making
+  // them re-search what they already chose in the lobby.
+  const fallbackDestination: MapDestination | null = convoy.destination
+    ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
+    : null;
+  const seededDestination = initialDestination ?? fallbackDestination;
+  const [destination, setDestination] = useState<MapDestination | null>(seededDestination);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
@@ -200,9 +209,14 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
     instance.on('pitchstart', markInteraction);
 
     // On some mobile GPUs the WebGL context can be reclaimed under memory
-    // pressure, which otherwise leaves a permanently black canvas with no
-    // way out. Surface a recoverable error instead of failing silently.
-    instance.on('webglcontextlost', () => setContextLost(true));
+    // pressure (or when the app is backgrounded while the map is open),
+    // which otherwise leaves a permanently black canvas with no way out.
+    // Notify the parent so it can remount us with a fresh GL context; if no
+    // parent handler is provided, fall back to surfacing the recovery UI.
+    instance.on('webglcontextlost', () => {
+      if (onContextLost) onContextLost();
+      else setContextLost(true);
+    });
     instance.on('webglcontextrestored', () => setContextLost(false));
 
     mapRef.current = instance;
@@ -496,18 +510,18 @@ export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
   }, [map, route, accentColor]);
 
   if (contextLost) {
+    // Fallback when no parent remount handler is wired up — show a passive
+    // loader; the GL `webglcontextrestored` event will clear this.
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-background">
-        <button
-          onClick={closeBlacktopMap}
-          className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-card border border-border text-sm text-muted-foreground"
-        >
-          <span className="font-medium text-foreground">Map display lost</span>
-          Tap to close and reopen the map
-        </button>
+        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Refreshing map…
+        </div>
       </div>
     );
   }
+
 
   return (
     <div className="absolute inset-0">
