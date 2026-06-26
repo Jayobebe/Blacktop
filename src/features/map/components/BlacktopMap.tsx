@@ -209,9 +209,14 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     instance.on('pitchstart', markInteraction);
 
     // On some mobile GPUs the WebGL context can be reclaimed under memory
-    // pressure, which otherwise leaves a permanently black canvas with no
-    // way out. Surface a recoverable error instead of failing silently.
-    instance.on('webglcontextlost', () => setContextLost(true));
+    // pressure (or when the app is backgrounded while the map is open),
+    // which otherwise leaves a permanently black canvas with no way out.
+    // Notify the parent so it can remount us with a fresh GL context; if no
+    // parent handler is provided, fall back to surfacing the recovery UI.
+    instance.on('webglcontextlost', () => {
+      if (onContextLost) onContextLost();
+      else setContextLost(true);
+    });
     instance.on('webglcontextrestored', () => setContextLost(false));
 
     mapRef.current = instance;
