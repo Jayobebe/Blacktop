@@ -8,6 +8,7 @@ import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { useMapOverlay, useMapPresenceTracker } from "@/features/map";
 import { OrientationProvider } from "@/hooks/useOrientationLock";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
