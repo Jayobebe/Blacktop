@@ -24,11 +24,21 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     channelRef.current = channel;
 
     channel
-      .on('broadcast', { event: 'rescue_request' }, (payload) => {
+      .on('broadcast', { event: 'rescue_request' }, async (payload) => {
         const request = payload.payload as RescueRequest;
-        
+
         if (isLeader) {
-          // Leader receives rescue requests
+          // Verify sender is actually in this convoy before surfacing the alert.
+          // Realtime broadcast channels are open to any authenticated user who knows
+          // the channel name, so we must check membership server-side.
+          const { data: member } = await supabase
+            .from('convoy_members')
+            .select('user_id')
+            .eq('convoy_id', convoyId)
+            .eq('user_id', request.userId)
+            .maybeSingle();
+          if (!member) return;
+
           setRescueRequests(prev => {
             // Avoid duplicates
             if (prev.some(r => r.userId === request.userId)) {

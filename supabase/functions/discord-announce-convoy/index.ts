@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
       ? `<@&${integration.role_to_ping}> `
       : ''
 
-    const name = (leaderName || 'A rider').slice(0, 64)
-    const safeName = (convoyName || `${name}'s Convoy`).slice(0, 80)
+    const name = sanitizeText(leaderName || 'A rider', 64)
+    const safeName = sanitizeText(convoyName || `${name}'s Convoy`, 80)
 
     const payload = {
       content: `${rolePrefix}🏁 **${name}** started a convoy!`,
@@ -118,6 +118,15 @@ Deno.serve(async (req) => {
     return json({ error: 'Internal error' }, 500)
   }
 })
+
+function sanitizeText(s: string, maxLen: number): string {
+  // eslint-disable-next-line no-control-regex
+  return (s ?? '')
+    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    .replace(/`{3,}/g, '``')
+    .trim()
+    .slice(0, maxLen);
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

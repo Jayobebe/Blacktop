@@ -69,7 +69,7 @@ serve(async (req) => {
     }
 
     const lineItem = amount === 5
-      ? { price: "price_1SfBc3FninFfsPFL6lkv6w4l", quantity: 1 }
+      ? { price: Deno.env.get('STRIPE_PRICE_5') ?? "price_1SfBc3FninFfsPFL6lkv6w4l", quantity: 1 }
       : {
           price_data: {
             currency: "usd",

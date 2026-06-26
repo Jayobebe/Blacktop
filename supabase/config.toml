@@ -5,3 +5,15 @@ verify_jwt = true
 
 [functions.burn-account]
 verify_jwt = true
+
+[functions.place-search]
+verify_jwt = true
+
+[functions.discord-announce-convoy]
+verify_jwt = true
+
+[functions.discord-announce-rescue]
+verify_jwt = true
+
+[functions.discord-announce-solo-rescue]
+verify_jwt = true

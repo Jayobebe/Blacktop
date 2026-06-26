@@ -146,13 +146,33 @@ export default function Home() {
       const slw = soloRect.width;
       const slh = soloRect.height;
 
-      arcSvg.innerHTML =
-        `<defs>` +
-        `<clipPath id='bt-convoy-clip'><rect x='${cvx}' y='${cvy}' width='${cvw}' height='${cvh}' rx='24' ry='24'/></clipPath>` +
-        `<clipPath id='bt-solo-clip'><rect x='${slx}' y='${sly}' width='${slw}' height='${slh}' rx='24' ry='24'/></clipPath>` +
-        `</defs>` +
-        `<circle cx='${cx_col}' cy='${cy_col}' r='${pr}' fill='none' stroke='${accentColor}' stroke-width='3' clip-path='url(#bt-convoy-clip)'/>` +
-        `<circle cx='${cx_col}' cy='${cy_col}' r='${pr}' fill='none' stroke='${accentColor}' stroke-width='3' clip-path='url(#bt-solo-clip)'/>`;
+      const svgNS = 'http://www.w3.org/2000/svg';
+
+      const mkClipRect = (id: string, x: number, y: number, w: number, h: number) => {
+        const cp = document.createElementNS(svgNS, 'clipPath');
+        cp.setAttribute('id', id);
+        const r = document.createElementNS(svgNS, 'rect');
+        r.setAttribute('x', String(x)); r.setAttribute('y', String(y));
+        r.setAttribute('width', String(w)); r.setAttribute('height', String(h));
+        r.setAttribute('rx', '24'); r.setAttribute('ry', '24');
+        cp.appendChild(r);
+        return cp;
+      };
+
+      const mkCircle = (clipId: string) => {
+        const c = document.createElementNS(svgNS, 'circle');
+        c.setAttribute('cx', String(cx_col)); c.setAttribute('cy', String(cy_col));
+        c.setAttribute('r', String(pr)); c.setAttribute('fill', 'none');
+        c.setAttribute('stroke', accentColor); c.setAttribute('stroke-width', '3');
+        c.setAttribute('clip-path', `url(#${clipId})`);
+        return c;
+      };
+
+      const defs = document.createElementNS(svgNS, 'defs');
+      defs.appendChild(mkClipRect('bt-convoy-clip', cvx, cvy, cvw, cvh));
+      defs.appendChild(mkClipRect('bt-solo-clip', slx, sly, slw, slh));
+
+      arcSvg.replaceChildren(defs, mkCircle('bt-convoy-clip'), mkCircle('bt-solo-clip'));
     };
 
     apply();

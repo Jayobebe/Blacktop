@@ -133,8 +133,18 @@ export default function Lobby() {
       config: { broadcast: { self: false } },
     });
 
-    channel.on('broadcast', { event: 'start-ride' }, () => {
+    channel.on('broadcast', { event: 'start-ride' }, async () => {
       if (hasStartedRide.current) return;
+      // Verify against DB that the ride actually started — prevents a rogue member
+      // from forcing followers into ride mode via a spoofed broadcast.
+      const { data } = await supabase
+        .from('convoys')
+        .select('ride_started_at')
+        .eq('id', convoy.id)
+        .single();
+      if (!data?.ride_started_at) return;
+      const age = Date.now() - new Date(data.ride_started_at).getTime();
+      if (age > 30000) return;
       hasStartedRide.current = true;
       console.log('[Lobby] Received start-ride broadcast');
       toast.success('Leader started the ride');

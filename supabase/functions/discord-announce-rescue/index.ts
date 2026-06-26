@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       ? `<@&${integration.role_to_ping}> `
       : ''
     const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`
-    const safeName = riderName.slice(0, 64)
+    const safeName = sanitizeText(riderName, 64)
 
     const payload = {
       content: `${rolePrefix}🚨 ${safeName} needs rescue, ${mapsUrl}`,
@@ -114,6 +114,15 @@ Deno.serve(async (req) => {
     return json({ error: 'Internal error' }, 500)
   }
 })
+
+function sanitizeText(s: string, maxLen: number): string {
+  // eslint-disable-next-line no-control-regex
+  return (s ?? '')
+    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    .replace(/`{3,}/g, '``')
+    .trim()
+    .slice(0, maxLen);
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

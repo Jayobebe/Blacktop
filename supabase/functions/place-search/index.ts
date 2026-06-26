@@ -1,10 +1,21 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = new Set([
+  "https://blacktoplive.com",
+  "https://convoy-comms.lovable.app",
+  "https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com",
+  "https://id-preview--8006f12b-bc88-412a-bd3c-677561cc727f.lovable.app",
+]);
+
+function getCorsHeaders(origin: string) {
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.has(origin)
+      ? origin
+      : "https://convoy-comms.lovable.app",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 type SearchBody = {
   kind: "search";
@@ -108,15 +119,16 @@ async function fetchOverpass(query: string) {
 }
 
 serve(async (req) => {
+  const cors = getCorsHeaders(req.headers.get("origin") ?? "");
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   // Authenticate caller — prevents anonymous proxy abuse of Nominatim/Overpass.
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
       status: 401,
     });
   }
@@ -130,7 +142,7 @@ serve(async (req) => {
     const { data: claims, error: authErr } = await supabase.auth.getClaims(token);
     if (authErr || !claims?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
         status: 401,
       });
     }
@@ -146,13 +158,13 @@ serve(async (req) => {
     });
     if (rateLimitErr || allowed === false) {
       return new Response(JSON.stringify({ error: "Too many requests, please slow down" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
         status: 429,
       });
     }
   } catch {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
       status: 401,
     });
   }
@@ -165,7 +177,7 @@ serve(async (req) => {
       const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
       if (coords.length < 2 || !coords.every(isLngLat)) {
         return new Response(JSON.stringify({ error: "Need at least two valid [lng,lat] coordinates" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 400,
         });
       }
@@ -188,7 +200,7 @@ serve(async (req) => {
       } catch (e) {
         console.warn("[PLACE-SEARCH] Routing unavailable:", e instanceof Error ? e.message : e);
         return new Response(JSON.stringify({ error: "Routing unavailable" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
           status: 200,
         });
       }
@@ -196,7 +208,7 @@ serve(async (req) => {
       const route = osrm?.code === "Ok" ? osrm?.routes?.[0] : null;
       if (!route?.geometry) {
         return new Response(JSON.stringify({ error: "No route found" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -208,7 +220,7 @@ serve(async (req) => {
           duration: route.duration,
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
+          headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
           status: 200,
         },
       );
@@ -217,7 +229,13 @@ serve(async (req) => {
     if (body.kind === "overpass") {
       if (typeof body.lat !== "number" || typeof body.lon !== "number") {
         return new Response(JSON.stringify({ error: "Missing lat/lon" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      if (body.lat < -90 || body.lat > 90 || body.lon < -180 || body.lon > 180) {
+        return new Response(JSON.stringify({ error: "lat/lon out of range" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 400,
         });
       }
@@ -228,7 +246,7 @@ serve(async (req) => {
       // For 24h search, we don't require amenities
       if (amenities.length === 0 && !filter24h) {
         return new Response(JSON.stringify([]), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -266,7 +284,7 @@ serve(async (req) => {
       } catch (e) {
         console.warn("[PLACE-SEARCH] Overpass unavailable, returning empty:", e instanceof Error ? e.message : e);
         return new Response(JSON.stringify([]), {
-          headers: { ...corsHeaders, "Content-Type": "application/json", "X-Fallback": "overpass_unavailable" },
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "overpass_unavailable" },
           status: 200,
         });
       }
@@ -284,7 +302,7 @@ serve(async (req) => {
 
       return new Response(JSON.stringify(slim), {
         headers: {
-          ...corsHeaders,
+          ...cors,
           "Content-Type": "application/json",
           "Cache-Control": "public, max-age=30",
         },
@@ -298,7 +316,7 @@ serve(async (req) => {
       const q = body.q?.toString().trim();
       if (!q) {
         return new Response(JSON.stringify([]), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 200,
         });
       }
@@ -330,7 +348,13 @@ serve(async (req) => {
     } else if (body.kind === "reverse") {
       if (typeof body.lat !== "number" || typeof body.lon !== "number") {
         return new Response(JSON.stringify({ error: "Missing lat/lon" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      if (body.lat < -90 || body.lat > 90 || body.lon < -180 || body.lon > 180) {
+        return new Response(JSON.stringify({ error: "lat/lon out of range" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 400,
         });
       }
@@ -342,7 +366,7 @@ serve(async (req) => {
       url.searchParams.set("zoom", String(body.zoom ?? 3));
     } else {
       return new Response(JSON.stringify({ error: "Invalid kind" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
         status: 400,
       });
     }
@@ -363,7 +387,7 @@ serve(async (req) => {
         const fallback = body.kind === "search" ? [] : {};
         return new Response(JSON.stringify(fallback), {
           headers: {
-            ...corsHeaders,
+            ...cors,
             "Content-Type": "application/json",
             "X-Fallback": "rate_limited",
           },
@@ -377,7 +401,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Search service temporarily unavailable" }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
           status: 503,
         },
       );
@@ -385,7 +409,7 @@ serve(async (req) => {
 
     return new Response(text, {
       headers: {
-        ...corsHeaders,
+        ...cors,
         "Content-Type": "application/json",
         "Cache-Control": "public, max-age=30",
       },
@@ -395,7 +419,7 @@ serve(async (req) => {
     const detail = error instanceof Error ? error.message : String(error);
     console.error("[PLACE-SEARCH] ERROR:", detail);
     return new Response(JSON.stringify({ error: "Search failed. Please try again." }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
       status: 500,
     });
   }
