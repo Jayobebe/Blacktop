@@ -3,4 +3,13 @@ export { useRideHistory } from './hooks/useRideHistory';
 export { useCrashDetection } from './hooks/useCrashDetection';
 export { RideSummary } from './components/RideSummary';
 export { RidePhotos } from './components/RidePhotos';
+export {
+  useSoloRoute,
+  setSoloRoute,
+  clearSoloRoute,
+  addSoloStop,
+  removeSoloStopAt,
+} from './lib/soloRoute';
+export type { SoloStop, SoloRouteState } from './lib/soloRoute';
+
 
