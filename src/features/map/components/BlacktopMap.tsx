@@ -510,18 +510,18 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
   }, [map, route, accentColor]);
 
   if (contextLost) {
+    // Fallback when no parent remount handler is wired up — show a passive
+    // loader; the GL `webglcontextrestored` event will clear this.
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-background">
-        <button
-          onClick={closeBlacktopMap}
-          className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-card border border-border text-sm text-muted-foreground"
-        >
-          <span className="font-medium text-foreground">Map display lost</span>
-          Tap to close and reopen the map
-        </button>
+        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Refreshing map…
+        </div>
       </div>
     );
   }
+
 
   return (
     <div className="absolute inset-0">
