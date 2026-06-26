@@ -13,6 +13,7 @@ import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
+import { openBlacktopMap } from '@/features/map';
 
 import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
@@ -849,12 +850,27 @@ export default function ActiveRide() {
             </button>
           )}
 
-          {/* Navigation button - opens nav app directly */}
+          {/* Navigation button - opens the in-app map overlay so the rider
+              sees their full route (destination + any convoy waypoints)
+              regardless of which external nav app they've picked in
+              Settings. External nav stays available via the Map app in
+              Settings or the Navigate button in the Lobby. */}
           <Button
             variant="ghost"
-            onClick={() => openNavigation()}
+            onClick={() => {
+              if (convoy.destination) {
+                openBlacktopMap({
+                  lat: convoy.destination.lat,
+                  lng: convoy.destination.lng,
+                  name: convoy.destination.name,
+                  address: convoy.destination.address,
+                });
+              } else {
+                openBlacktopMap();
+              }
+            }}
             className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
-            title="Open navigation app"
+            title="Open map with route"
           >
             <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
           </Button>
