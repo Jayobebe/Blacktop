@@ -676,7 +676,7 @@ export default function Lobby() {
                   destination={convoy.destination}
                   onSetDestination={setDestination}
                   onClearDestination={clearDestination}
-                  onNavigate={handleNavigate}
+                  onAddStop={convoy.isLeader && waypoints.filter(w => !w.isCompleted).length < 5 ? () => setShowAddWaypoint(true) : undefined}
                   isLeader={convoy.isLeader}
                   userLocation={userLocation}
                   countryCode={countryCode}

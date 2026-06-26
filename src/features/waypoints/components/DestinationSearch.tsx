@@ -1,11 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark } from 'lucide-react';
+import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ConvoyDestination } from '@/types/convoy';
-import { useNavigation } from '@/hooks/useNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getSavedPOIs, type SavedPOI } from '@/features/map';
@@ -24,7 +23,7 @@ interface DestinationSearchProps {
   destination: ConvoyDestination | null;
   onSetDestination: (destination: ConvoyDestination) => void;
   onClearDestination: () => void;
-  onNavigate?: () => void;
+  onAddStop?: () => void;
   isLeader: boolean;
   userLocation?: UserLocation | null;
   countryCode?: string | null;
@@ -314,7 +313,7 @@ export function DestinationSearch({
   destination,
   onSetDestination,
   onClearDestination,
-  onNavigate,
+  onAddStop,
   isLeader,
   userLocation: externalUserLocation,
   countryCode: externalCountryCode,
@@ -555,11 +554,6 @@ export function DestinationSearch({
     setActiveCategory(null);
   };
 
-  const handleNavigate = () => {
-    if (!destination) return;
-    openNavigation(destination.lat, destination.lng, destination.name);
-    onNavigate?.();
-  };
 
   useEffect(() => {
     return () => {
@@ -620,13 +614,16 @@ export function DestinationSearch({
           )}
         </div>
         
-        <Button
-          onClick={handleNavigate}
-          className="w-full mt-3 bg-accent hover:bg-accent/90 text-accent-foreground h-12 text-base font-semibold"
-        >
-          <Navigation className="w-5 h-5 mr-2" />
-          Navigate
-        </Button>
+        {onAddStop && isLeader && (
+          <Button
+            onClick={onAddStop}
+            variant="outline"
+            className="w-full mt-3 h-10 text-sm font-medium"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Stop
+          </Button>
+        )}
       </div>
     );
   }
