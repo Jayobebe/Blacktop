@@ -751,6 +751,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 Skip
               </button>
             )}
+            {!canSkipWaypoint && canFinishRoute && (
+              <button
+                onClick={handleFinishRoute}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-accent/15 hover:bg-accent/25 text-xs font-semibold text-accent transition-colors flex-shrink-0"
+                title="Finish the route and clear the map"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                Finish
+              </button>
+            )}
           </div>
         )}
 
