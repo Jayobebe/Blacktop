@@ -627,7 +627,6 @@ export default function Lobby() {
                   setShowAddWaypoint(false);
                 }}
                 onClearDestination={() => {}}
-                onNavigate={() => {}}
                 isLeader={convoy.isLeader}
                 userLocation={userLocation}
                 countryCode={countryCode}
