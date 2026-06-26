@@ -25,6 +25,10 @@ let convoyState: ConvoyState = {
 };
 
 let restoreInFlight = false;
+let convoyRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+let convoyRealtimeChannelId: string | null = null;
+let convoyRealtimeRefCount = 0;
+let convoyRealtimeTopicSeq = 0;
 
 function rememberActiveConvoy(convoyId: string | null) {
   try {
@@ -58,6 +62,119 @@ function emitChange() {
 function setConvoyState(updater: (prev: ConvoyState) => ConvoyState) {
   convoyState = updater(convoyState);
   emitChange();
+}
+
+function clearActiveConvoySession() {
+  rememberActiveConvoy(null);
+  setConvoyState(() => ({
+    id: null,
+    code: null,
+    isLeader: false,
+    members: [],
+    isActive: false,
+    isRestoring: false,
+    destination: null,
+    waypoints: [],
+    isPaused: false,
+    realtimeSuspended: false,
+  }));
+}
+
+function acquireConvoyRealtimeSubscription(
+  convoyId: string,
+  refreshMembers: (convoyId: string) => Promise<void>,
+) {
+  if (!convoyRealtimeChannel || convoyRealtimeChannelId !== convoyId) {
+    if (convoyRealtimeChannel) {
+      supabase.removeChannel(convoyRealtimeChannel);
+    }
+
+    // Supabase reuses channels by topic. If a second mounted component calls
+    // useConvoyState while the original channel is already subscribed, adding
+    // another postgres_changes callback throws. Keep one local channel alive and
+    // give each channel lifetime a unique topic so stale channels are never reused.
+    const topic = `convoy-${convoyId}:${++convoyRealtimeTopicSeq}`;
+    convoyRealtimeChannel = supabase
+      .channel(topic)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'convoys',
+          filter: `id=eq.${convoyId}`,
+        },
+        async (payload) => {
+          const convoy = payload.new as any;
+          const oldConvoy = payload.old as any;
+
+          if (convoy.is_active === false || convoy.ride_ended_at) {
+            console.log('[Convoy] Convoy ended, clearing local session');
+            clearActiveConvoySession();
+            return;
+          }
+
+          if (oldConvoy && convoy.leader_id !== oldConvoy.leader_id) {
+            console.log('[Convoy] Leadership changed via realtime, refreshing members');
+            await refreshMembers(convoyId);
+          }
+
+          if (convoy.destination_name || convoy.destination_lat) {
+            setConvoyState((prev) => ({
+              ...prev,
+              destination: convoy.destination_name ? {
+                name: convoy.destination_name,
+                address: convoy.destination_address || '',
+                lat: convoy.destination_lat,
+                lng: convoy.destination_lng,
+              } : null,
+              isPaused: convoy.is_paused || false,
+            }));
+          } else {
+            setConvoyState((prev) => ({
+              ...prev,
+              destination: null,
+              isPaused: convoy.is_paused || false,
+            }));
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'convoy_members',
+          filter: `convoy_id=eq.${convoyId}`,
+        },
+        async () => {
+          await refreshMembers(convoyId);
+        }
+      )
+      .subscribe((status, error) => {
+        if (error) console.warn('[Convoy] Realtime subscription error:', error.message);
+        if (status === 'SUBSCRIBED') console.log('[Convoy] Realtime subscribed');
+      });
+
+    convoyRealtimeChannelId = convoyId;
+    convoyRealtimeRefCount = 0;
+  }
+
+  convoyRealtimeRefCount += 1;
+  let released = false;
+
+  return () => {
+    if (released) return;
+    released = true;
+    convoyRealtimeRefCount = Math.max(0, convoyRealtimeRefCount - 1);
+
+    if (convoyRealtimeRefCount === 0 && convoyRealtimeChannelId === convoyId && convoyRealtimeChannel) {
+      const channel = convoyRealtimeChannel;
+      convoyRealtimeChannel = null;
+      convoyRealtimeChannelId = null;
+      supabase.removeChannel(channel);
+    }
+  };
 }
 
 // Lightweight selector for callers that only need the active convoy id (e.g.
@@ -241,83 +358,7 @@ export function useConvoyState() {
     // Catch up on anything missed while the channel was suspended.
     refreshMembers(state.id);
 
-    const channel = supabase
-      .channel(`convoy-${state.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'convoys',
-          filter: `id=eq.${state.id}`,
-        },
-        async (payload) => {
-          const convoy = payload.new as any;
-          const oldConvoy = payload.old as any;
-
-          if (convoy.is_active === false || convoy.ride_ended_at) {
-            console.log('[Convoy] Convoy ended, clearing local session');
-            rememberActiveConvoy(null);
-            setConvoyState(() => ({
-              id: null,
-              code: null,
-              isLeader: false,
-              members: [],
-              isActive: false,
-              isRestoring: false,
-              destination: null,
-              waypoints: [],
-              isPaused: false,
-              realtimeSuspended: false,
-            }));
-            return;
-          }
-          
-          // If leader_id changed, refresh members to update leadership status
-          if (convoy.leader_id !== oldConvoy.leader_id) {
-            console.log('[Convoy] Leadership changed via realtime, refreshing members');
-            await refreshMembers(state.id!);
-          }
-          
-          // Update destination from realtime
-          if (convoy.destination_name || convoy.destination_lat) {
-            setConvoyState((prev) => ({
-              ...prev,
-              destination: convoy.destination_name ? {
-                name: convoy.destination_name,
-                address: convoy.destination_address || '',
-                lat: convoy.destination_lat,
-                lng: convoy.destination_lng,
-              } : null,
-              isPaused: convoy.is_paused || false,
-            }));
-          } else {
-            setConvoyState((prev) => ({
-              ...prev,
-              destination: null,
-              isPaused: convoy.is_paused || false,
-            }));
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'convoy_members',
-          filter: `convoy_id=eq.${state.id}`,
-        },
-        async () => {
-          // Refresh members list on any member change
-          await refreshMembers(state.id!);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return acquireConvoyRealtimeSubscription(state.id, refreshMembers);
   }, [state.id, state.realtimeSuspended]);
 
   const refreshMembers = async (convoyId: string) => {
