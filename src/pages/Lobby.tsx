@@ -649,14 +649,20 @@ export default function Lobby() {
                     onClick={() => {
                       openNavigation(nextWaypoint.lat, nextWaypoint.lng, nextWaypoint.name);
                       markAsNavigated();
-                      // Start ride and go to active ride page
+                      // Start the ride and surface the in-app map overlay
+                      // first (instead of jumping straight to /ride). When
+                      // the rider closes the overlay, BlacktopMapOverlay
+                      // routes them to /ride since the ride is active.
                       if (!hasStartedRide.current) {
                         hasStartedRide.current = true;
-                        const success = startRide(true, convoy.id);
-                        if (success) {
-                          navigate('/ride');
-                        }
+                        startRide(true, convoy.id);
                       }
+                      openBlacktopMap({
+                        lat: nextWaypoint.lat,
+                        lng: nextWaypoint.lng,
+                        name: nextWaypoint.name,
+                        address: nextWaypoint.address,
+                      });
                     }}
                     className="w-full mt-3 h-11 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-semibold"
                   >
@@ -671,13 +677,19 @@ export default function Lobby() {
                   onClearDestination={clearDestination}
                   onNavigate={() => {
                     markAsNavigated();
-                    // Start ride and go to active ride page
                     if (!hasStartedRide.current) {
                       hasStartedRide.current = true;
-                      const success = startRide(true, convoy.id);
-                      if (success) {
-                        navigate('/ride');
-                      }
+                      startRide(true, convoy.id);
+                    }
+                    if (convoy.destination) {
+                      openBlacktopMap({
+                        lat: convoy.destination.lat,
+                        lng: convoy.destination.lng,
+                        name: convoy.destination.name,
+                        address: convoy.destination.address,
+                      });
+                    } else {
+                      openBlacktopMap();
                     }
                   }}
                   isLeader={convoy.isLeader}
