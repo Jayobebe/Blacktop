@@ -68,16 +68,20 @@ serve(async (req) => {
       // no/invalid body - fall back to the default $5 tier
     }
 
-    const lineItem = amount === 5
-      ? { price: Deno.env.get('STRIPE_PRICE_5') ?? "price_1SfBc3FninFfsPFL6lkv6w4l", quantity: 1 }
-      : {
-          price_data: {
-            currency: "usd",
-            product_data: { name: "Blacktop Tip" },
-            unit_amount: amount * 100,
-          },
-          quantity: 1,
-        };
+    const priceIdEnvByAmount: Record<number, string> = {
+      5: "STRIPE_PRICE_5",
+      10: "STRIPE_PRICE_10",
+      20: "STRIPE_PRICE_20",
+    };
+    const priceId = Deno.env.get(priceIdEnvByAmount[amount]);
+    if (!priceId) {
+      console.error(`[CREATE-TIP] Missing price ID env var for amount $${amount}`);
+      return new Response(JSON.stringify({ error: "Tip tier not configured" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 503,
+      });
+    }
+    const lineItem = { price: priceId, quantity: 1 };
 
     const session = await stripe.checkout.sessions.create({
       line_items: [lineItem],
