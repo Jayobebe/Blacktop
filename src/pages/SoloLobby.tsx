@@ -64,6 +64,19 @@ export default function SoloLobby() {
     const success = startRide(false);
     if (success) {
       navigate('/ride');
+      // Surface the map overlay on top of /ride so the rider immediately
+      // sees their route + live speed. Closing the overlay drops them back
+      // onto the active-ride screen underneath.
+      if (destination) {
+        openBlacktopMap({
+          lat: destination.lat,
+          lng: destination.lng,
+          name: destination.name,
+          address: destination.address,
+        });
+      } else {
+        openBlacktopMap();
+      }
     }
   };
 
