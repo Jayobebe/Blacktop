@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
@@ -8,6 +9,10 @@ export function BlacktopMapOverlay() {
   const { isOpen, destination } = useMapOverlay();
   const { rideState } = useActiveRide();
   const navigate = useNavigate();
+  // Bumping this key force-remounts BlacktopMap when the WebGL context is
+  // lost (mobile GPU memory pressure, app backgrounding), instead of
+  // leaving the rider stuck on a black canvas.
+  const [mountKey, setMountKey] = useState(0);
 
   if (!isOpen) return null;
 
@@ -22,7 +27,11 @@ export function BlacktopMapOverlay() {
 
   return (
     <div className="fixed inset-0 z-[1000] bg-background animate-fade-in">
-      <BlacktopMap initialDestination={destination} />
+      <BlacktopMap
+        key={mountKey}
+        initialDestination={destination}
+        onContextLost={() => setMountKey((k) => k + 1)}
+      />
 
       {rideState.isActive ? (
         <button
