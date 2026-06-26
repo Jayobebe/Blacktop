@@ -229,11 +229,29 @@ export default function DemoShowcase() {
     {
       id: 'blacktop-world',
       title: 'Blacktop World',
-      subtitle: 'Live Rider Globe & Card Collection',
-      description: 'Opt-in only. A live, anonymous globe showing where riders are active right now plus open weather, wildfire, volcano and flood events. Unlocks the card collection folder and a flip-to-QR button on your vehicle cards so you can swap collector cards with other riders.',
+      subtitle: 'Live Rider Globe',
+      description: 'Opt-in only. A live, anonymous globe showing where riders are active right now, alongside open weather, wildfire, volcano and flood events from NASA EONET.',
       icon: Globe2,
       color: 'accent',
       mockup: <BlacktopWorldMockup />
+    },
+    {
+      id: 'card-trading',
+      title: 'Card Trading',
+      subtitle: 'Swap Collector Cards',
+      description: 'Blacktop World unlocks your collection folder and a flip-to-QR button on every vehicle card. Scan another rider\'s card to add it to your folder.',
+      icon: Folder,
+      color: 'accent',
+      mockup: <CardTradingMockup />
+    },
+    {
+      id: 'blacktop-arcade',
+      title: 'Blacktop Arcade',
+      subtitle: 'Hit Heavy & Petrol Head',
+      description: 'Two pocket games tucked inside Blacktop World. Hit Heavy chases the biggest G-spike; Petrol Head times how long you can hold a perfect throttle. Personal bests saved locally.',
+      icon: Gamepad2,
+      color: 'accent',
+      mockup: <BlacktopArcadeMockup />
     },
     {
       id: 'complete',
