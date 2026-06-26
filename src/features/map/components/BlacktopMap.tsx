@@ -421,15 +421,49 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
   // the lightweight Realtime broadcast) - this client fetches its own
   // routing geometry locally rather than trusting precomputed geometry off
   // the wire. A stale-guard id discards out-of-order responses.
+  //
+  // GPS fixes arrive ~1 Hz, but re-routing through OSRM that often is
+  // wasteful (network + CPU) and visibly jitters the drawn line. Sample the
+  // rider's position into `routingLocation` at most once every 5s so route
+  // recalculation happens on that cadence instead of every fix. Destination
+  // and waypoint changes still refresh immediately because they bypass this
+  // throttle.
+  const ROUTE_RECALC_INTERVAL_MS = 5000;
+  const [routingLocation, setRoutingLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const lastRoutingSampleAtRef = useRef(0);
+  const pendingRoutingSampleRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!userLocation) return;
+    const now = Date.now();
+    const elapsed = now - lastRoutingSampleAtRef.current;
+    if (elapsed >= ROUTE_RECALC_INTERVAL_MS) {
+      lastRoutingSampleAtRef.current = now;
+      setRoutingLocation(userLocation);
+      return;
+    }
+    if (pendingRoutingSampleRef.current != null) return;
+    pendingRoutingSampleRef.current = window.setTimeout(() => {
+      pendingRoutingSampleRef.current = null;
+      lastRoutingSampleAtRef.current = Date.now();
+      setRoutingLocation(userLocation);
+    }, ROUTE_RECALC_INTERVAL_MS - elapsed);
+    return () => {
+      if (pendingRoutingSampleRef.current != null) {
+        clearTimeout(pendingRoutingSampleRef.current);
+        pendingRoutingSampleRef.current = null;
+      }
+    };
+  }, [userLocation]);
+
   const routeRequestRef = useRef(0);
   useEffect(() => {
-    if (!destination || !userLocation || !Number.isFinite(destination.lat) || !Number.isFinite(destination.lng)) {
+    if (!destination || !routingLocation || !Number.isFinite(destination.lat) || !Number.isFinite(destination.lng)) {
       setRoute(null);
       setIsRouting(false);
       return;
     }
 
-    const stops = [userLocation, ...waypointStops, { lat: destination.lat, lng: destination.lng }];
+    const stops = [routingLocation, ...waypointStops, { lat: destination.lat, lng: destination.lng }];
 
     const requestId = ++routeRequestRef.current;
     setIsRouting(true);
@@ -440,7 +474,8 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
       .finally(() => {
         if (routeRequestRef.current === requestId) setIsRouting(false);
       });
-  }, [destination, userLocation, waypointStops]);
+  }, [destination, routingLocation, waypointStops]);
+
 
   // Draw / update the route line and fit the camera to it.
   useEffect(() => {
