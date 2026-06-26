@@ -102,20 +102,22 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <OrientationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-            {hasEverOpened && (
-              <Suspense fallback={null}>
-                <BlacktopMapOverlay />
-              </Suspense>
-            )}
-          </BrowserRouter>
-        </TooltipProvider>
-      </OrientationProvider>
+      <AppErrorBoundary>
+        <OrientationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+              {hasEverOpened && (
+                <Suspense fallback={null}>
+                  <BlacktopMapOverlay />
+                </Suspense>
+              )}
+            </BrowserRouter>
+          </TooltipProvider>
+        </OrientationProvider>
+      </AppErrorBoundary>
     </QueryClientProvider>
   );
 };
