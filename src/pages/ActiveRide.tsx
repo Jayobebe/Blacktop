@@ -365,7 +365,9 @@ export default function ActiveRide() {
     (async () => {
       const rideId = await endRide();
       clearMapDestination();
+      clearSoloRoute();
       closeBlacktopMap();
+
       if (rideId) {
         setSavedRideId(rideId);
       } else {
