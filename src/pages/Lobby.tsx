@@ -7,6 +7,7 @@ import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSele
 import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
 import { useNavigation } from '@/hooks/useNavigation';
+import { openBlacktopMap } from '@/features/map';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
