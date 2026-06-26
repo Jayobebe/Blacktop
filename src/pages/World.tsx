@@ -168,8 +168,8 @@ export default function World() {
         </div>
       </div>
 
-      {/* Card collection folder */}
-      <div className="px-4 py-6 flex-shrink-0">
+      {/* Card collection — full-height vertical snap carousel */}
+      <div className="flex-shrink-0">
         <CollectedCardsFolder />
       </div>
 

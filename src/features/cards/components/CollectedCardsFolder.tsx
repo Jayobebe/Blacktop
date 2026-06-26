@@ -21,8 +21,17 @@ const SCANNER_ID = 'collected-cards-qr-scanner';
 export function CollectedCardsFolder() {
   const { collected, addCard, removeCard } = useCollectedCards();
   const [showScanner, setShowScanner] = useState(false);
-  const [active, setActive] = useState<CollectedCard | null>(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const totalSlides = collected.length + 1; // +1 for the scan slide
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCurrentIdx(Math.round(el.scrollTop / el.clientHeight));
+  };
 
   const startScanner = async () => {
     haptics.light();
@@ -74,43 +83,78 @@ export function CollectedCardsFolder() {
 
   return (
     <section className="w-full">
-      <div className="flex items-center gap-2 mb-3">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <Folder className="w-4 h-4 text-accent" />
         <h2 className="text-sm font-semibold tracking-tight">Card Collection</h2>
-        <span className="ml-auto text-xs text-muted-foreground">
-          {collected.length} {collected.length === 1 ? 'card' : 'cards'}
-        </span>
+        {collected.length > 0 && (
+          <span className="ml-auto text-xs text-muted-foreground">
+            {Math.min(currentIdx + 1, collected.length)} / {collected.length}
+          </span>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      {/* Vertical snap carousel */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="h-[85vh] overflow-y-scroll snap-y snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {collected.map((card) => (
-          <button
+          <div
             key={card.key}
-            type="button"
-            onClick={() => setActive(card)}
-            className="text-left animate-fade-in"
+            className="h-full snap-start flex flex-col items-center justify-center gap-3 px-4 py-6"
           >
-            <MiniCard card={card} />
-          </button>
+            <div className="w-full max-w-[300px]">
+              <FullCard card={card} />
+              <button
+                type="button"
+                onClick={() => {
+                  removeCard(card.key);
+                  toast.success('Removed from collection');
+                }}
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-sm font-medium"
+              >
+                <Trash2 className="w-4 h-4" /> Remove from collection
+              </button>
+            </div>
+          </div>
         ))}
 
-        <button
-          type="button"
-          onClick={startScanner}
-          className="aspect-[5/7] rounded-2xl border-2 border-dashed border-border/50 bg-card/30 hover:bg-card/50 hover:border-accent/60 transition-colors flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground touch-target"
-          aria-label="Add card by scanning QR"
-        >
-          <div className="w-10 h-10 rounded-full bg-secondary/60 flex items-center justify-center">
-            <Plus className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] uppercase tracking-widest">Scan card</span>
-        </button>
+        {/* Scan slide — always last */}
+        <div className="h-full snap-start flex flex-col items-center justify-center gap-4 px-4">
+          {collected.length === 0 && (
+            <p className="text-xs text-muted-foreground/60 text-center">
+              Scan another rider's card QR to start your collection
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={startScanner}
+            className="aspect-[5/7] w-full max-w-[220px] rounded-2xl border-2 border-dashed border-border/50 bg-card/30 hover:bg-card/50 hover:border-accent/60 transition-colors flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-foreground touch-target"
+            aria-label="Add card by scanning QR"
+          >
+            <div className="w-12 h-12 rounded-full bg-secondary/60 flex items-center justify-center">
+              <Plus className="w-6 h-6" />
+            </div>
+            <span className="text-xs uppercase tracking-widest">Scan card</span>
+          </button>
+        </div>
       </div>
 
-      {collected.length === 0 && (
-        <p className="text-[10px] text-muted-foreground/70 text-center mt-3">
-          Scan another rider's card QR to start your collection
-        </p>
+      {/* Dot indicators */}
+      {totalSlides > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3 pb-2">
+          {Array.from({ length: totalSlides }, (_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'h-1.5 rounded-full transition-all duration-200',
+                i === currentIdx ? 'w-6 bg-accent' : 'w-1.5 bg-muted-foreground/30',
+              )}
+            />
+          ))}
+        </div>
       )}
 
       {/* Scanner overlay */}
@@ -134,78 +178,10 @@ export function CollectedCardsFolder() {
           </p>
         </div>
       )}
-
-      {/* Detail view */}
-      {active && (
-        <div
-          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 safe-top safe-bottom"
-          onClick={() => setActive(null)}
-        >
-          <button
-            onClick={() => setActive(null)}
-            className="absolute top-4 right-4 p-2 rounded-lg bg-secondary hover:bg-muted transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[300px]">
-            <FullCard card={active} />
-            <button
-              onClick={() => {
-                removeCard(active.key);
-                setActive(null);
-                toast.success('Removed from collection');
-              }}
-              className="mt-4 w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-sm font-medium"
-            >
-              <Trash2 className="w-4 h-4" /> Remove from collection
-            </button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
 
-function MiniCard({ card }: { card: CollectedCard }) {
-  const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
-  return (
-    <div
-      className={cn(
-        'relative w-full aspect-[5/7] rounded-2xl border-2 overflow-hidden shadow-md flex flex-col p-2.5',
-        style.bg,
-        style.border,
-      )}
-    >
-      {style.shine && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 animate-card-shine" />
-        </div>
-      )}
-      {style.sparkle && (
-        <div className="absolute inset-0 pointer-events-none opacity-60 [background-image:radial-gradient(circle_at_25%_30%,white_0.5px,transparent_1px),radial-gradient(circle_at_70%_60%,white_0.5px,transparent_1px),radial-gradient(circle_at_45%_80%,white_0.5px,transparent_1px)] [background-size:120px_120px,140px_140px,100px_100px]" />
-      )}
-      <div className="relative flex-1 flex flex-col">
-        <p className="text-[8px] uppercase tracking-widest text-white/60 truncate">
-          {card.o ?? 'Anonymous'}
-        </p>
-        <h3 className="text-xs font-bold leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">
-          {card.n}
-        </h3>
-        {card.m && (
-          <p className="text-[9px] uppercase tracking-wider text-white/60 truncate">{card.m}</p>
-        )}
-        <div className="mt-auto flex items-center justify-between gap-1">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider bg-black/40 text-white">
-            <Sparkles className="w-2 h-2" />
-            {card.tl}
-          </span>
-          <span className="font-mono text-[10px] text-white/80">{card.s.totalRides}r</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function FullCard({ card }: { card: CollectedCard }) {
   const { settings } = useSettings();
