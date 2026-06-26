@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2 } from 'lucide-react';
+import { Search, MapPin, Navigation, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { ConvoyDestination } from '@/types/convoy';
 import { useNavigation } from '@/hooks/useNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getSavedPOIs, type SavedPOI } from '@/features/map';
 
 interface SearchResult {
   id: string;
@@ -328,6 +329,7 @@ export function DestinationSearch({
   const [isLocating, setIsLocating] = useState(false);
   const [internalCountryCode, setInternalCountryCode] = useState<string | null>(null);
   const [recentLocations, setRecentLocations] = useState<SearchResult[]>([]);
+  const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>(() => getSavedPOIs());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -343,6 +345,12 @@ export function DestinationSearch({
 
   useEffect(() => {
     setRecentLocations(getRecentLocations());
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => setSavedPOIs(getSavedPOIs());
+    window.addEventListener('blacktop-poi-saved', refresh);
+    return () => window.removeEventListener('blacktop-poi-saved', refresh);
   }, []);
 
   // Only fetch location internally if not provided externally
@@ -428,9 +436,17 @@ export function DestinationSearch({
 
     try {
       const searchResults = await searchPlaces(searchQuery, userLocation, countryCode);
-      // Only update if this is still the latest search
+
+      // Prepend matching saved POIs so personal spots surface before remote results.
+      const q = searchQuery.toLowerCase();
+      const matchingPOIs: SearchResult[] = savedPOIs
+        .filter(p => p.name.toLowerCase().includes(q))
+        .map(p => ({ id: `poi:${p.id}`, name: p.name, address: 'Saved location', lat: p.lat, lng: p.lng }));
+      const poiIds = new Set(matchingPOIs.map(r => r.id));
+      const merged = [...matchingPOIs, ...searchResults.filter(r => !poiIds.has(r.id))];
+
       if (searchIdRef.current === currentSearchId) {
-        setResults(searchResults);
+        setResults(merged);
       }
     } catch (error) {
       console.error('Search failed:', error);
@@ -442,7 +458,7 @@ export function DestinationSearch({
         setIsSearching(false);
       }
     }
-  }, [userLocation, countryCode]);
+  }, [userLocation, countryCode, savedPOIs]);
 
   // If location becomes available after the user already typed, rerun the nearby search.
   useEffect(() => {
@@ -571,15 +587,17 @@ export function DestinationSearch({
     };
   }, [showResults, results, recentLocations, isSearching, activeCategory]);
 
-  const showRecent = query.length < 2 && !activeCategory && recentLocations.length > 0;
+  const showIdle = query.length < 2 && !activeCategory;
+  const showRecent = showIdle && recentLocations.length > 0;
+  const hasSavedPOIs = showIdle && savedPOIs.length > 0;
   const isPostalSearch = query.length >= 2 && containsPostalCode(query, countryCode);
-  const rawDisplayResults = showRecent ? recentLocations : results;
+  const rawDisplayResults = showIdle ? recentLocations : results;
   const displayResults = rawDisplayResults.map((r) => {
     if (!userLocation) return r;
     if (r.distance !== undefined) return r;
     return { ...r, distance: calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng) };
   });
-  const hasDisplayContent = displayResults.length > 0 || isSearching;
+  const hasDisplayContent = hasSavedPOIs || displayResults.length > 0 || isSearching;
 
   if (destination) {
     return (
@@ -694,6 +712,36 @@ export function DestinationSearch({
           }}
           className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto"
         >
+          {/* Saved POIs — idle state only */}
+          {hasSavedPOIs && (
+            <>
+              <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+                <Bookmark className="w-3.5 h-3.5" />
+                Saved places
+              </div>
+              {savedPOIs.map((poi, index) => (
+                <button
+                  key={poi.id}
+                  onClick={() => handleSelectResult({ id: `poi:${poi.id}`, name: poi.name, address: 'Saved location', lat: poi.lat, lng: poi.lng })}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-4 text-left",
+                    "hover:bg-accent/10 active:bg-accent/20 transition-colors",
+                    (index !== savedPOIs.length - 1 || showRecent) && "border-b border-border"
+                  )}
+                >
+                  <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+                    <Bookmark className="w-5 h-5 text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{poi.name}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">Saved location</p>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* Recent destinations — idle state only */}
           {showRecent && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               <Clock className="w-3.5 h-3.5" />
@@ -711,7 +759,7 @@ export function DestinationSearch({
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
               <span className="text-sm">Finding places...</span>
             </div>
-          ) : displayResults.length === 0 ? (
+          ) : displayResults.length === 0 && !hasSavedPOIs ? (
             <div className="p-6 text-center text-muted-foreground">
               <MapPin className="w-6 h-6 mx-auto mb-2 opacity-50" />
               <span className="text-sm">
@@ -723,46 +771,51 @@ export function DestinationSearch({
               </span>
             </div>
           ) : (
-            displayResults.map((result, index) => (
-              <button
-                key={result.id}
-                onClick={() => handleSelectResult(result)}
-                className={cn(
-                  "w-full flex items-center gap-3 p-4 text-left",
-                  "hover:bg-accent/10 active:bg-accent/20 transition-colors",
-                  index !== displayResults.length - 1 && "border-b border-border"
-                )}
-              >
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
-                  showRecent ? "bg-muted" : "bg-accent/10"
-                )}>
-                  {showRecent ? (
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <MapPin className="w-5 h-5 text-accent" />
+            displayResults.map((result, index) => {
+              const isSavedPOI = result.id.startsWith('poi:');
+              return (
+                <button
+                  key={result.id}
+                  onClick={() => handleSelectResult(result)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-4 text-left",
+                    "hover:bg-accent/10 active:bg-accent/20 transition-colors",
+                    index !== displayResults.length - 1 && "border-b border-border"
                   )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{result.name}</p>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">{result.address}</p>
-                </div>
-                {result.distance !== undefined && (
-                  <div className="flex-shrink-0 text-right">
-                    <span className="text-sm font-medium text-accent">
-                      {distanceUnit === 'miles'
-                        ? result.distance < 1.6
-                          ? `${Math.round(result.distance * 1000 * 3.281)} ft`
-                          : `${(result.distance * 0.621371).toFixed(1)} mi`
-                        : result.distance < 1
-                          ? `${Math.round(result.distance * 1000)} m`
-                          : `${result.distance.toFixed(1)} km`
-                      }
-                    </span>
+                >
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
+                    isSavedPOI ? "bg-accent/15" : showRecent ? "bg-muted" : "bg-accent/10"
+                  )}>
+                    {isSavedPOI ? (
+                      <Bookmark className="w-5 h-5 text-accent" />
+                    ) : showRecent ? (
+                      <Clock className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <MapPin className="w-5 h-5 text-accent" />
+                    )}
                   </div>
-                )}
-              </button>
-            ))
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{result.name}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{result.address}</p>
+                  </div>
+                  {result.distance !== undefined && (
+                    <div className="flex-shrink-0 text-right">
+                      <span className="text-sm font-medium text-accent">
+                        {distanceUnit === 'miles'
+                          ? result.distance < 1.6
+                            ? `${Math.round(result.distance * 1000 * 3.281)} ft`
+                            : `${(result.distance * 0.621371).toFixed(1)} mi`
+                          : result.distance < 1
+                            ? `${Math.round(result.distance * 1000)} m`
+                            : `${result.distance.toFixed(1)} km`
+                        }
+                      </span>
+                    </div>
+                  )}
+                </button>
+              );
+            })
           )}
         </div>,
         document.body

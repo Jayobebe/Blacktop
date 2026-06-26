@@ -4,3 +4,5 @@
 export { openBlacktopMap, closeBlacktopMap, clearMapDestination, useMapOverlay } from './hooks/useMapOverlay';
 export { useMapPresenceTracker, useMapPresentUserIds } from './hooks/useMapPresence';
 export type { MapDestination } from './types';
+export { getSavedPOIs, savePOI, deletePOI } from './lib/poiStore';
+export type { SavedPOI } from './lib/poiStore';

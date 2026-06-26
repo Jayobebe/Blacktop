@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
 import { useMapOverlay, closeBlacktopMap } from '../hooks/useMapOverlay';
 import { BlacktopMap } from './BlacktopMap';
+import { cn } from '@/lib/utils';
 
 export function BlacktopMapOverlay() {
   const { isOpen, destination } = useMapOverlay();
@@ -12,25 +13,25 @@ export function BlacktopMapOverlay() {
   const location = useLocation();
   const [mountKey, setMountKey] = useState(0);
 
-  if (!isOpen) return null;
-
+  // Don't unmount — use CSS to hide so BlacktopMap retains its MapLibre
+  // instance, route geometry, and cached tiles across open/close cycles.
   const handleExit = () => {
     closeBlacktopMap();
-    // Return to the ride screen if a ride is in progress, regardless of where
-    // the user opened the map from (lobby, home, etc.).
     if (rideState.isActive) navigate('/ride');
   };
 
-  // Show a "Back to lobby" button when the map is opened from the lobby page
-  // before the ride has actually started.
   const inLobby = !rideState.isActive && location.pathname === '/lobby';
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-background animate-fade-in">
+    <div className={cn(
+      'fixed inset-0 z-[1000] bg-background',
+      isOpen ? 'animate-fade-in' : 'hidden',
+    )}>
       <BlacktopMap
         key={mountKey}
         initialDestination={destination}
         onContextLost={() => setMountKey((k) => k + 1)}
+        isVisible={isOpen}
       />
 
       {rideState.isActive ? (

@@ -72,6 +72,7 @@ const LOCATE_RESUME_DELAY_MS = 10000;
 interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
   onContextLost?: () => void;
+  isVisible?: boolean;
 }
 
 registerTileCacheProtocol();
@@ -102,7 +103,7 @@ const CARTO_DARK_STYLE: StyleSpecification = {
   ],
 };
 
-export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapProps) {
+export function BlacktopMap({ initialDestination, onContextLost, isVisible }: BlacktopMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -243,6 +244,15 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When the overlay transitions from hidden (display:none) to visible, the
+  // map canvas has no layout dimensions. Calling resize() after a short delay
+  // lets the browser apply the display change before MapLibre recalculates.
+  useEffect(() => {
+    if (!isVisible || !mapRef.current) return;
+    const t = window.setTimeout(() => { mapRef.current?.resize(); }, 50);
+    return () => clearTimeout(t);
+  }, [isVisible]);
 
   // ── Geolocation watch ──────────────────────────────────────────────────────
   useEffect(() => {

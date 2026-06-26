@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -91,7 +91,13 @@ function AppRoutes() {
 
 const App = () => {
   const { isOpen } = useMapOverlay();
-  useMapPresenceTracker(); // Announce/track convoy members' Blacktop Maps presence app-wide.
+  useMapPresenceTracker();
+
+  // Keep the overlay mounted once it's been opened so BlacktopMap retains
+  // its MapLibre instance, cached tiles, and calculated route. Visibility
+  // is toggled via CSS inside BlacktopMapOverlay instead of unmounting.
+  const [hasEverOpened, setHasEverOpened] = useState(false);
+  useEffect(() => { if (isOpen) setHasEverOpened(true); }, [isOpen]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -101,7 +107,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <AppRoutes />
-            {isOpen && (
+            {hasEverOpened && (
               <Suspense fallback={null}>
                 <BlacktopMapOverlay />
               </Suspense>
