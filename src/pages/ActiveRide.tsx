@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState } from '@/features/convoy';
-import { openBlacktopMap } from '@/features/map';
+import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
 import { useNextWaypoint } from '@/features/waypoints';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -14,7 +14,6 @@ import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
-import { openBlacktopMap } from '@/features/map';
 
 import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
@@ -363,10 +362,11 @@ export default function ActiveRide() {
     // Run cleanup in background (non-blocking)
     (async () => {
       const rideId = await endRide();
+      clearMapDestination();
+      closeBlacktopMap();
       if (rideId) {
         setSavedRideId(rideId);
       } else {
-        // Invalid/too-short ride — don't show a receipt
         setShowSummary(false);
         navigate('/');
       }
@@ -526,6 +526,8 @@ export default function ActiveRide() {
     // receipt — that also keeps us from churning local storage on rapid
     // start/stop loops.
     const rideId = await endRide();
+    clearMapDestination();
+    closeBlacktopMap();
     if (rideId) {
       flushSync(() => {
         setShowSummary(true);

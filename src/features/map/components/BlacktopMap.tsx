@@ -22,7 +22,7 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -130,7 +130,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
   const nextWaypoint = useNextWaypoint();
-  const { completeWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
+  const { waypoints, addWaypoint, removeWaypoint, completeWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
+  const [addingWaypoint, setAddingWaypoint] = useState(false);
   const mapPresentUserIds = useMapPresentUserIds();
   const speakingUsers = useSpeakingUsers();
   const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
@@ -529,12 +530,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   }, [map, route, accentColor]);
 
   // ── Derived display flags ──────────────────────────────────────────────────
-  // Non-leader convoy members must not see the search bar or quick categories.
   const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
-
-  // Show skip-waypoint button only when leader has an active waypoint in convoy ride.
   const canSkipWaypoint =
     rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
+
+  const incompleteWaypoints = waypoints.filter(w => !w.isCompleted);
+  // Show waypoints panel whenever we're in a convoy context (leaders always see it; members see it when stops exist).
+  const showWaypointsPanel = !!convoy.id && (incompleteWaypoints.length > 0 || convoy.isLeader);
 
   if (contextLost) {
     // Fallback when no parent remount handler is wired up — show a passive
@@ -560,6 +562,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           userLocation={userLocation}
           countryCode={countryCode}
           onSelect={(result) => {
+            if (addingWaypoint) {
+              addWaypoint({ name: result.name, address: result.address || '', lat: result.lat, lng: result.lng });
+              setAddingWaypoint(false);
+              return;
+            }
             setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
             lastInteractionAtRef.current = Date.now();
 
@@ -580,6 +587,61 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
+        {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
+        {showWaypointsPanel && (
+          <div className="bg-card/95 border border-border rounded-xl shadow-xl backdrop-blur overflow-hidden animate-slide-up">
+            {addingWaypoint ? (
+              <div className="flex items-center gap-2 px-3 py-2.5">
+                <Plus className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                <p className="flex-1 text-xs text-accent">Search for a stop above…</p>
+                <button
+                  onClick={() => setAddingWaypoint(false)}
+                  className="p-1 hover:bg-muted rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            ) : (
+              <>
+                {incompleteWaypoints.map((wp, i) => (
+                  <div
+                    key={wp.id}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 text-sm',
+                      i !== incompleteWaypoints.length - 1 && 'border-b border-border',
+                    )}
+                  >
+                    <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
+                      {i + 1}
+                    </span>
+                    <p className="flex-1 truncate">{wp.name}</p>
+                    {convoy.isLeader && (
+                      <button
+                        onClick={() => removeWaypoint(wp.id)}
+                        className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
+                      >
+                        <X className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {convoy.isLeader && incompleteWaypoints.length < 5 && (
+                  <button
+                    onClick={() => setAddingWaypoint(true)}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2 text-xs text-accent hover:bg-muted/50 transition-colors',
+                      incompleteWaypoints.length > 0 && 'border-t border-border',
+                    )}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Stop
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {destination && (isRouting || route) && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/95 border border-border shadow-2xl backdrop-blur animate-slide-up">
             <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">

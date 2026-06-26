@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
-import { useMapOverlay, closeBlacktopMap } from '../hooks/useMapOverlay';
+import { useMapOverlay, closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
 import { BlacktopMap } from './BlacktopMap';
 import { cn } from '@/lib/utils';
 
@@ -13,14 +13,19 @@ export function BlacktopMapOverlay() {
   const location = useLocation();
   const [mountKey, setMountKey] = useState(0);
 
+  const inLobby = !rideState.isActive && location.pathname === '/lobby';
+
   // Don't unmount — use CSS to hide so BlacktopMap retains its MapLibre
   // instance, route geometry, and cached tiles across open/close cycles.
   const handleExit = () => {
     closeBlacktopMap();
-    if (rideState.isActive) navigate('/ride');
+    if (rideState.isActive) {
+      navigate('/ride');
+    } else if (!inLobby) {
+      // Generic/home map close — burn the cached route so the next open starts fresh.
+      clearMapDestination();
+    }
   };
-
-  const inLobby = !rideState.isActive && location.pathname === '/lobby';
 
   return (
     <div className={cn(
