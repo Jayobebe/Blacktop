@@ -17,13 +17,13 @@ import { Button } from '@/components/ui/button';
 import { BookmarkPlus } from 'lucide-react';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt } from '@/features/ride';
+import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute } from '@/features/ride';
 import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -109,7 +109,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
-  const { convoy } = useConvoyState();
+  const { convoy, clearDestination } = useConvoyState();
   // If the overlay was opened without an explicit destination but the
   // rider's convoy has one set, auto-populate it so the map immediately
   // draws the route + any waypoints — instead of opening blank and making
@@ -561,6 +561,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
   const canSkipWaypoint =
     rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
+  // "Finish" replaces "Skip" once we're heading to the very last stop (the
+  // final destination, with no intermediate waypoints left). Tapping it
+  // clears the route so the map is blank and ready for a new plan.
+  const canFinishRoute =
+    rideState.isActive &&
+    destination != null &&
+    nextWaypoint == null &&
+    (isSolo || convoy.isLeader);
+
+  const handleFinishRoute = async () => {
+    if (isSolo) {
+      clearSoloRoute();
+    } else if (convoy.isLeader) {
+      await clearDestination();
+    }
+    setDestination(null);
+    setRoute(null);
+    toast.success('Route finished');
+  };
 
   const incompleteWaypoints = waypoints.filter(w => !w.isCompleted);
   // Show waypoints panel in any convoy context, or in a solo ride when we
@@ -730,6 +749,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               >
                 <SkipForward className="w-3.5 h-3.5" />
                 Skip
+              </button>
+            )}
+            {!canSkipWaypoint && canFinishRoute && (
+              <button
+                onClick={handleFinishRoute}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-accent/15 hover:bg-accent/25 text-xs font-semibold text-accent transition-colors flex-shrink-0"
+                title="Finish the route and clear the map"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                Finish
               </button>
             )}
           </div>
