@@ -17,13 +17,13 @@ import { Button } from '@/components/ui/button';
 import { BookmarkPlus } from 'lucide-react';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt } from '@/features/ride';
+import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute } from '@/features/ride';
 import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 
