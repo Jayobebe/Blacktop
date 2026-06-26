@@ -4,16 +4,16 @@ import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle, MapPin, Mic, BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Step = 'consent' | 'profile';
+type Step = 'landing' | 'consent' | 'profile';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true);
-  const [step, setStep] = useState<Step>('consent');
+  const [step, setStep] = useState<Step>('landing');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
   const [agreedSafety, setAgreedSafety] = useState(false);
@@ -38,6 +38,65 @@ export default function Onboarding() {
     }
   };
 
+
+  if (step === 'landing') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 safe-top safe-bottom gap-8">
+        {/* Hero */}
+        <div className="text-center max-w-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Blacktop</p>
+          <h1 className="text-3xl font-semibold tracking-tight leading-tight mb-3">
+            GPS convoy riding,<br />finally connected.
+          </h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Live tracking, voice chat, crash rescue.<br />No account, no subscription.
+          </p>
+        </div>
+
+        {/* Feature list */}
+        <div className="w-full max-w-sm space-y-3">
+          {[
+            { icon: MapPin, label: 'Live convoy tracking', desc: "See every rider's position in real-time" },
+            { icon: Mic, label: 'In-ride voice chat', desc: 'Peer-to-peer, never recorded' },
+            { icon: AlertTriangle, label: 'Crash rescue', desc: 'Auto-detects a fall, pings your group' },
+            { icon: BarChart2, label: 'Ride stats & lean angle', desc: 'Every run logged on-device, privately' },
+          ].map(({ icon: Icon, label, desc }) => (
+            <div key={label} className="flex items-start gap-4 bg-card/50 rounded-2xl p-4 border border-border/50">
+              <div className="mt-0.5 rounded-lg bg-accent/10 p-2">
+                <Icon className="w-4 h-4 text-accent" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Privacy badge */}
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
+          <Shield className="w-4 h-4 text-accent" />
+          <span className="text-xs text-accent font-medium">Privacy-first · No ads · No tracking</span>
+        </div>
+
+        {/* CTAs */}
+        <div className="w-full max-w-sm space-y-3">
+          <Button
+            onClick={() => setStep('consent')}
+            className="w-full h-14 text-base font-semibold rounded-2xl touch-target"
+          >
+            Ride Free — No Account Needed
+            <ChevronRight className="w-5 h-5 ml-1" />
+          </Button>
+          <div className="text-center">
+            <Link to="/demo" className="text-sm text-accent underline-offset-4 hover:underline">
+              See it in action →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === 'consent') {
     const allAgreed = agreedTerms && agreedAge && agreedSafety;
