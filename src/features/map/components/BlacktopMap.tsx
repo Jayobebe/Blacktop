@@ -109,7 +109,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
-  const { convoy } = useConvoyState();
+  const { convoy, clearDestination } = useConvoyState();
   // If the overlay was opened without an explicit destination but the
   // rider's convoy has one set, auto-populate it so the map immediately
   // draws the route + any waypoints — instead of opening blank and making
