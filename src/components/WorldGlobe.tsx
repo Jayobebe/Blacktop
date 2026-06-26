@@ -1,5 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { geoOrthographic, geoPath, geoGraticule, type GeoPermissibleObjects } from 'd3-geo';
+
+const RADAR_REFRESH_MS = 5 * 60 * 1000;
+const RADAR_OPACITY = 0.5;
+const REPROJ_SIZE = 128; // offscreen canvas resolution for radar reprojection
 import { feature } from 'topojson-client';
 import landTopo from 'world-atlas/land-110m.json';
 import countriesTopo from 'world-atlas/countries-110m.json';
@@ -167,6 +171,13 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
   onScaleChangeRef.current = onScaleChange;
   const lastReportedScaleRef = useRef(1.0);
 
+  // Radar overlay state (all mutable refs — no re-renders needed)
+  const radarSrcRef = useRef<Uint8ClampedArray | null>(null);     // 256×256 RGBA from RainViewer zoom-0 tile
+  const radarBufRef = useRef(new Uint8ClampedArray(REPROJ_SIZE * REPROJ_SIZE * 4)); // reused output buffer
+  const radarImgRef = useRef<ImageData | null>(null);             // wraps radarBufRef, created once
+  const radarOffRef = useRef<HTMLCanvasElement | null>(null);     // REPROJ_SIZE×REPROJ_SIZE offscreen canvas
+  const radarProjRef = useRef<ReturnType<typeof geoOrthographic> | null>(null); // reused reprojection
+
   const draw = useCallback((canvas: HTMLCanvasElement, t: number) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -239,6 +250,46 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
       ctx.restore();
     }
 
+    // Radar overlay — reprojects RainViewer zoom-0 tile (Mercator) onto the
+    // orthographic sphere at REPROJ_SIZE×REPROJ_SIZE, then stretches it over
+    // the globe circle. Transparent pixels outside the hemisphere are left at
+    // alpha=0 so nothing bleeds outside the sphere.
+    const radarSrc = radarSrcRef.current;
+    const radarOff = radarOffRef.current;
+    const radarImg = radarImgRef.current;
+    const radarProj = radarProjRef.current;
+    if (radarSrc && radarOff && radarImg && radarProj) {
+      radarProj.scale(REPROJ_SIZE / 2).translate([REPROJ_SIZE / 2, REPROJ_SIZE / 2])
+        .rotate([rotRef.current[0], rotRef.current[1]]);
+      const buf = radarBufRef.current;
+      const S = REPROJ_SIZE;
+      for (let py = 0; py < S; py++) {
+        for (let px = 0; px < S; px++) {
+          const di = (py * S + px) * 4;
+          const ll = radarProj.invert!([px, py]);
+          if (!ll) { buf[di + 3] = 0; continue; }
+          const [lng, lat] = ll;
+          if (lat < -85 || lat > 85) { buf[di + 3] = 0; continue; }
+          const tx = Math.min(255, Math.max(0, Math.floor((lng + 180) / 360 * 256)));
+          const latR = lat * Math.PI / 180;
+          const mercY = Math.log(Math.tan(Math.PI / 4 + latR / 2));
+          const ty = Math.min(255, Math.max(0, Math.floor((1 - mercY / Math.PI) / 2 * 256)));
+          const si = (ty * 256 + tx) * 4;
+          buf[di] = radarSrc[si]; buf[di + 1] = radarSrc[si + 1];
+          buf[di + 2] = radarSrc[si + 2]; buf[di + 3] = radarSrc[si + 3];
+        }
+      }
+      const offCtx = radarOff.getContext('2d');
+      if (offCtx) {
+        offCtx.putImageData(radarImg, 0, 0);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+        ctx.globalAlpha = RADAR_OPACITY;
+        ctx.drawImage(radarOff, cx - r, cy - r, r * 2, r * 2);
+        ctx.restore();
+      }
+    }
+
     // Coastlines — accent
     ctx.beginPath();
     path(land);
@@ -280,6 +331,51 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
       else drawDot(ctx, px, py, t, CATEGORY_COLOR[categoryId] ?? '#9ca3af');
     });
   }, [accentColor]);
+
+  // One-time setup: offscreen canvas + reusable ImageData + reprojection projection
+  useEffect(() => {
+    const off = document.createElement('canvas');
+    off.width = REPROJ_SIZE; off.height = REPROJ_SIZE;
+    radarOffRef.current = off;
+    radarImgRef.current = new ImageData(radarBufRef.current, REPROJ_SIZE, REPROJ_SIZE);
+    radarProjRef.current = geoOrthographic().clipAngle(90);
+  }, []);
+
+  // Fetch latest RainViewer zoom-0 global tile and extract raw pixels.
+  // Refreshes every 5 minutes. Silent no-op on network failure.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        if (!res.ok || cancelled) return;
+        const data = await res.json() as { host: string; radar: { past: { time: number; path: string }[]; nowcast: { time: number; path: string }[] } };
+        const frames = [...(data.radar?.past ?? []), ...(data.radar?.nowcast ?? [])];
+        if (frames.length === 0 || cancelled) return;
+        const latest = frames[frames.length - 1];
+        const url = `${data.host}${latest.path}/256/0/0/0/2/1_1.png`;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          if (cancelled) return;
+          const tmp = document.createElement('canvas');
+          tmp.width = 256; tmp.height = 256;
+          const tmpCtx = tmp.getContext('2d');
+          if (!tmpCtx) return;
+          tmpCtx.drawImage(img, 0, 0);
+          const id = tmpCtx.getImageData(0, 0, 256, 256);
+          radarSrcRef.current = new Uint8ClampedArray(id.data.buffer.slice(0));
+        };
+        img.onerror = () => {};
+        img.src = url;
+      } catch {}
+    }
+
+    load();
+    const timer = setInterval(load, RADAR_REFRESH_MS);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
