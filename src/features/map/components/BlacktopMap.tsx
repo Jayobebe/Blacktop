@@ -132,7 +132,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const convoyMembers = useConvoyMembers();
   const nextWaypoint = useNextWaypoint();
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
+  const soloRoute = useSoloRoute();
+  const isSolo = !convoy.id;
   const [addingWaypoint, setAddingWaypoint] = useState(false);
+
   const mapPresentUserIds = useMapPresentUserIds();
   const speakingUsers = useSpeakingUsers();
   const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
