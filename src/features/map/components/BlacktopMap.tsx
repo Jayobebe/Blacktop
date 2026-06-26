@@ -563,8 +563,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
 
   const incompleteWaypoints = waypoints.filter(w => !w.isCompleted);
-  // Show waypoints panel whenever we're in a convoy context (leaders always see it; members see it when stops exist).
-  const showWaypointsPanel = !!convoy.id && (incompleteWaypoints.length > 0 || convoy.isLeader);
+  // Show waypoints panel in any convoy context, or in a solo ride when we
+  // have a destination (so the rider can add/remove mid-ride stops).
+  const showWaypointsPanel = !!convoy.id
+    ? (incompleteWaypoints.length > 0 || convoy.isLeader)
+    : (rideState.isActive && !!destination);
+
 
   if (contextLost) {
     // Fallback when no parent remount handler is wired up — show a passive
