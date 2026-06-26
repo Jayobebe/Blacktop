@@ -35,6 +35,8 @@ const BlacktopMapOverlay = lazy(() =>
 );
 
 import World from "./pages/World";
+import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
+import ArcadePetrolHead from "./pages/ArcadePetrolHead";
 
 
 function AppRoutes() {
@@ -74,6 +76,8 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       
       <Route path="/world" element={<World />} />
+      <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
+      <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />

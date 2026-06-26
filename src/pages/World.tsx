@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldEventMarker } from '@/components/WorldGlobe';
 import { CollectedCardsFolder } from '@/features/cards';
+import { ArcadeLobby } from '@/features/arcade';
 
 const EVENT_KEY_ROW1 = [
   { id: 'WF', label: 'Wildfire', color: '#fb923c' },
@@ -171,6 +172,11 @@ export default function World() {
       {/* Card collection — full-height vertical snap carousel */}
       <div className="flex-shrink-0">
         <CollectedCardsFolder />
+      </div>
+
+      {/* Arcade */}
+      <div className="flex-shrink-0">
+        <ArcadeLobby />
       </div>
 
       {eonetLoading && (
