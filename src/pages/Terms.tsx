@@ -29,7 +29,7 @@ export default function Terms() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: June 21, 2026
+          Last updated: June 26, 2026
         </p>
 
         <section className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-2">
@@ -98,6 +98,55 @@ export default function Terms() {
             notifications to your convoy leader (and optionally a Discord
             channel). They are <span className="text-foreground font-medium">not</span> emergency
             services. In a real emergency, call your local emergency number.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Blacktop Arcade — Hit Heavy</h2>
+          <p className="text-muted-foreground">
+            Hit Heavy is a novelty "punch machine" mini-game that measures the
+            peak G-force registered by your phone's accelerometer. It is
+            entertainment only — <span className="text-foreground font-medium">not</span> a
+            calibrated impact meter, fitness device, or strength test.
+          </p>
+          <p className="text-muted-foreground">
+            By playing Hit Heavy you acknowledge and agree that:
+          </p>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>
+              You are solely responsible for any damage to your device, case,
+              screen, mounts, accessories, or anything your device strikes or is
+              struck by during play. The app owner and contributors accept
+              <span className="text-foreground font-medium"> no liability </span>
+              for cracked screens, broken phones, dropped devices, damaged
+              furniture, walls, vehicles, or any other property.
+            </li>
+            <li>
+              You are solely responsible for any injury to yourself or others
+              caused by punching, swinging, throwing, or otherwise striking with
+              a device in hand. Do not play near people, pets, glass, hard
+              surfaces, or while operating a vehicle.
+            </li>
+            <li>
+              Do not strike your device against hard objects. The game is
+              designed to be played by swinging your arm through the air with
+              the phone held securely — not by hitting a target.
+            </li>
+            <li>
+              Manufacturer warranties (Apple, Samsung, Google, etc.) typically
+              do <span className="text-foreground font-medium">not</span> cover
+              impact damage. Playing Hit Heavy may void your warranty or
+              insurance coverage. Check before you play.
+            </li>
+            <li>
+              You waive any claim against the app owner, contributors, and
+              infrastructure providers for device damage, personal injury, or
+              property damage arising from Hit Heavy or any other Blacktop
+              Arcade game.
+            </li>
+          </ul>
+          <p className="text-muted-foreground">
+            If you are not willing to accept these risks, do not play Hit Heavy.
           </p>
         </section>
 
