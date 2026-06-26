@@ -6,12 +6,11 @@ import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
 import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
-import { openBlacktopMap } from '@/features/map';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones, Map } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
@@ -280,6 +279,25 @@ export default function Lobby() {
 
     prevReadyToStart.current = readyToStart;
   }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate, convoy.id]);
+
+  // Unified navigate handler — resolves the right destination (first incomplete
+  // waypoint, then convoy destination), opens the Blacktop map, marks this
+  // member as ready, and starts the ride.
+  const handleNavigate = () => {
+    const dest = nextWaypoint
+      ? { lat: nextWaypoint.lat, lng: nextWaypoint.lng, name: nextWaypoint.name, address: nextWaypoint.address }
+      : convoy.destination
+        ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
+        : undefined;
+    if (dest) openBlacktopMap(dest);
+    else openBlacktopMap();
+    markAsNavigated();
+    if (!hasStartedRide.current) {
+      hasStartedRide.current = true;
+      const success = startRide(true, convoy.id);
+      if (success) navigate('/ride');
+    }
+  };
 
   const waitForControlChannel = async (timeoutMs = 1500) => {
     if (controlChannelSubscribed.current) return true;
@@ -652,66 +670,13 @@ export default function Lobby() {
                       )}
                     </div>
                   </div>
-                  <Button
-                    onClick={() => {
-                      // Always open the Blacktop map with the destination so
-                      // the rider gets the live route overlay + speed.
-                      openBlacktopMap({ lat: nextWaypoint.lat, lng: nextWaypoint.lng, name: nextWaypoint.name });
-                      markAsNavigated();
-                      if (!hasStartedRide.current) {
-                        hasStartedRide.current = true;
-                        const success = startRide(true, convoy.id);
-                        if (success) navigate('/ride');
-                      }
-                      queueMicrotask(() => {
-                        openBlacktopMap({
-                          lat: nextWaypoint.lat,
-                          lng: nextWaypoint.lng,
-                          name: nextWaypoint.name,
-                          address: nextWaypoint.address,
-                        });
-                      });
-                    }}
-                    className="w-full mt-3 h-11 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-semibold"
-                  >
-                    <Map className="w-4 h-4 mr-2" />
-                    Navigate
-                  </Button>
                 </div>
               ) : (
                 <DestinationSearch
                   destination={convoy.destination}
                   onSetDestination={setDestination}
                   onClearDestination={clearDestination}
-                  onNavigate={() => {
-                    // Open the Blacktop map with the convoy destination so the
-                    // rider sees the live route overlay immediately.
-                    if (convoy.destination) {
-                      openBlacktopMap({
-                        lat: convoy.destination.lat,
-                        lng: convoy.destination.lng,
-                        name: convoy.destination.name,
-                      });
-                    }
-                    markAsNavigated();
-                    if (!hasStartedRide.current) {
-                      hasStartedRide.current = true;
-                      const success = startRide(true, convoy.id);
-                      if (success) navigate('/ride');
-                    }
-                    queueMicrotask(() => {
-                      if (convoy.destination) {
-                        openBlacktopMap({
-                          lat: convoy.destination.lat,
-                          lng: convoy.destination.lng,
-                          name: convoy.destination.name,
-                          address: convoy.destination.address,
-                        });
-                      } else {
-                        openBlacktopMap();
-                      }
-                    });
-                  }}
+                  onNavigate={handleNavigate}
                   isLeader={convoy.isLeader}
                   userLocation={userLocation}
                   countryCode={countryCode}
@@ -894,6 +859,18 @@ export default function Lobby() {
               Cancel
             </Button>
           </div>
+        )}
+
+        {/* Navigate button — opens map with first waypoint or destination, then starts ride */}
+        {!showLeaveConfirm && (nextWaypoint || convoy.destination) && (
+          <Button
+            onClick={handleNavigate}
+            size="sm"
+            className="h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
+          >
+            <Navigation className="w-3.5 h-3.5 mr-1.5" />
+            Navigate
+          </Button>
         )}
 
         {/* Start Ride button - tap for individual start, long-press (leader only) for all */}
