@@ -319,7 +319,6 @@ export function DestinationSearch({
   countryCode: externalCountryCode,
   distanceUnit = 'km',
 }: DestinationSearchProps) {
-  const { openNavigation } = useNavigation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
