@@ -63,11 +63,14 @@ export default function SoloLobby() {
   const handleStartRide = () => {
     // Start a solo ride (not convoy mode)
     const success = startRide(false);
-    if (success) {
-      navigate('/ride');
-      // Surface the map overlay on top of /ride so the rider immediately
-      // sees their route + live speed. Closing the overlay drops them back
-      // onto the active-ride screen underneath.
+    if (!success) return;
+
+    // Route to /ride *before* opening the overlay so the active-ride screen
+    // is fully mounted underneath. Defer openBlacktopMap to a microtask so
+    // React commits the navigate first — otherwise on some closes the rider
+    // can fall back to /solo-lobby instead of /ride.
+    navigate('/ride');
+    queueMicrotask(() => {
       if (destination) {
         openBlacktopMap({
           lat: destination.lat,
@@ -78,7 +81,7 @@ export default function SoloLobby() {
       } else {
         openBlacktopMap();
       }
-    }
+    });
   };
 
   return (
