@@ -467,7 +467,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       return;
     }
 
-    const stops = [routingLocation, { lat: destination.lat, lng: destination.lng }];
+    // Solo: route through any user-added stops on the way to destination.
+    const intermediate = isSolo
+      ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng }))
+      : [];
+    const stops = [routingLocation, ...intermediate, { lat: destination.lat, lng: destination.lng }];
 
     const requestId = ++routeRequestRef.current;
     setIsRouting(true);
@@ -478,7 +482,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       .finally(() => {
         if (routeRequestRef.current === requestId) setIsRouting(false);
       });
-  }, [destination, routingLocation]);
+  }, [destination, routingLocation, isSolo, soloRoute.stops]);
+
 
   // ── Route line drawing ─────────────────────────────────────────────────────
   useEffect(() => {
