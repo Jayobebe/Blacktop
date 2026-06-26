@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { BookmarkPlus } from 'lucide-react';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { useActiveRide } from '@/features/ride';
+import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt } from '@/features/ride';
 import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
