@@ -117,12 +117,21 @@ const CARTO_DARK_STYLE: StyleSpecification = {
   ],
 };
 
-export function BlacktopMap({ initialDestination }: BlacktopMapProps) {
+export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
-  const [destination, setDestination] = useState<MapDestination | null>(initialDestination ?? null);
+  const { convoy } = useConvoyState();
+  // If the overlay was opened without an explicit destination but the
+  // rider's convoy has one set, auto-populate it so the map immediately
+  // draws the route + any waypoints — instead of opening blank and making
+  // them re-search what they already chose in the lobby.
+  const fallbackDestination: MapDestination | null = convoy.destination
+    ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
+    : null;
+  const seededDestination = initialDestination ?? fallbackDestination;
+  const [destination, setDestination] = useState<MapDestination | null>(seededDestination);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
