@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
+import { openBlacktopMap } from '@/features/map';
 import { DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +65,19 @@ export default function SoloLobby() {
     const success = startRide(false);
     if (success) {
       navigate('/ride');
+      // Surface the map overlay on top of /ride so the rider immediately
+      // sees their route + live speed. Closing the overlay drops them back
+      // onto the active-ride screen underneath.
+      if (destination) {
+        openBlacktopMap({
+          lat: destination.lat,
+          lng: destination.lng,
+          name: destination.name,
+          address: destination.address,
+        });
+      } else {
+        openBlacktopMap();
+      }
     }
   };
 

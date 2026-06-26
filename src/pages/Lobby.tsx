@@ -649,13 +649,14 @@ export default function Lobby() {
                     onClick={() => {
                       openNavigation(nextWaypoint.lat, nextWaypoint.lng, nextWaypoint.name);
                       markAsNavigated();
-                      // Start the ride and surface the in-app map overlay
-                      // first (instead of jumping straight to /ride). When
-                      // the rider closes the overlay, BlacktopMapOverlay
-                      // routes them to /ride since the ride is active.
+                      // Start the ride, route to /ride so the active-ride
+                      // screen is mounted underneath, then surface the map
+                      // overlay on top. Closing the overlay drops the rider
+                      // straight onto /ride (live speed + convoy members).
                       if (!hasStartedRide.current) {
                         hasStartedRide.current = true;
-                        startRide(true, convoy.id);
+                        const success = startRide(true, convoy.id);
+                        if (success) navigate('/ride');
                       }
                       openBlacktopMap({
                         lat: nextWaypoint.lat,
@@ -679,7 +680,8 @@ export default function Lobby() {
                     markAsNavigated();
                     if (!hasStartedRide.current) {
                       hasStartedRide.current = true;
-                      startRide(true, convoy.id);
+                      const success = startRide(true, convoy.id);
+                      if (success) navigate('/ride');
                     }
                     if (convoy.destination) {
                       openBlacktopMap({
