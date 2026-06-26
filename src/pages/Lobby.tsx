@@ -650,19 +650,21 @@ export default function Lobby() {
                       openNavigation(nextWaypoint.lat, nextWaypoint.lng, nextWaypoint.name);
                       markAsNavigated();
                       // Start the ride, route to /ride so the active-ride
-                      // screen is mounted underneath, then surface the map
-                      // overlay on top. Closing the overlay drops the rider
-                      // straight onto /ride (live speed + convoy members).
+                      // screen is mounted underneath, then (next microtask)
+                      // surface the map overlay on top. Closing the overlay
+                      // drops the rider straight onto /ride.
                       if (!hasStartedRide.current) {
                         hasStartedRide.current = true;
                         const success = startRide(true, convoy.id);
                         if (success) navigate('/ride');
                       }
-                      openBlacktopMap({
-                        lat: nextWaypoint.lat,
-                        lng: nextWaypoint.lng,
-                        name: nextWaypoint.name,
-                        address: nextWaypoint.address,
+                      queueMicrotask(() => {
+                        openBlacktopMap({
+                          lat: nextWaypoint.lat,
+                          lng: nextWaypoint.lng,
+                          name: nextWaypoint.name,
+                          address: nextWaypoint.address,
+                        });
                       });
                     }}
                     className="w-full mt-3 h-11 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-semibold"
@@ -683,16 +685,18 @@ export default function Lobby() {
                       const success = startRide(true, convoy.id);
                       if (success) navigate('/ride');
                     }
-                    if (convoy.destination) {
-                      openBlacktopMap({
-                        lat: convoy.destination.lat,
-                        lng: convoy.destination.lng,
-                        name: convoy.destination.name,
-                        address: convoy.destination.address,
-                      });
-                    } else {
-                      openBlacktopMap();
-                    }
+                    queueMicrotask(() => {
+                      if (convoy.destination) {
+                        openBlacktopMap({
+                          lat: convoy.destination.lat,
+                          lng: convoy.destination.lng,
+                          name: convoy.destination.name,
+                          address: convoy.destination.address,
+                        });
+                      } else {
+                        openBlacktopMap();
+                      }
+                    });
                   }}
                   isLeader={convoy.isLeader}
                   userLocation={userLocation}
