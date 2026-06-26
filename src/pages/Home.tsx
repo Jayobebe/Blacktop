@@ -10,7 +10,7 @@ import { BTLogo } from '@/components/BTLogo';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
-import { openBlacktopMap } from '@/features/map';
+import { openBlacktopMap, clearMapDestination } from '@/features/map';
 
 
 export default function Home() {
@@ -203,6 +203,12 @@ export default function Home() {
     if (!isStandalone && !dismissed) {
       setShowInstallBanner(true);
     }
+  }, []);
+
+  // Clear any stale map destination when returning to the home screen so it
+  // doesn't bleed into the next session.
+  useEffect(() => {
+    clearMapDestination();
   }, []);
 
   // Redirect to active ride if one exists

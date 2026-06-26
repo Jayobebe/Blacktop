@@ -26,6 +26,7 @@ export function ArcadeLobby() {
           </div>
           <div className="text-center">
             <div className="text-sm font-semibold tracking-tight text-white leading-none">Hit Heavy</div>
+            <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">Punch machine</div>
             <div className="text-[10px] text-muted-foreground mt-1">
               {scores['hit-heavy'] > 0 ? `Best: ${scores['hit-heavy'].toFixed(2)}G` : 'No score yet'}
             </div>

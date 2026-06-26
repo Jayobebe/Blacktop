@@ -6,18 +6,18 @@ import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
 import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
-import { useNavigation } from '@/hooks/useNavigation';
 import { openBlacktopMap } from '@/features/map';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones, Map } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 import { QRCodeSVG } from 'qrcode.react';
+import { openBlacktopMap } from '@/features/map';
 
 interface UserLocation {
   lat: number;
@@ -30,7 +30,6 @@ export default function Lobby() {
   const { startRide } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
-  const { openNavigation } = useNavigation();
   const { settings } = useSettings();
   const { profile, user } = useProfile();
   const [copied, setCopied] = useState(false);
@@ -623,15 +622,23 @@ export default function Lobby() {
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                   {nextWaypoint ? 'Next Stop' : 'Destination'}
                 </p>
-                {convoy.isLeader && (
-                  <button
-                    onClick={() => setShowAddWaypoint(true)}
-                    className="flex items-center gap-1 text-[10px] text-accent hover:text-accent/80"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add Stop
-                  </button>
-                )}
+                {convoy.isLeader && (() => {
+                  const incompleteCount = waypoints.filter(w => !w.isCompleted).length;
+                  const atCap = incompleteCount >= 5;
+                  return (
+                    <button
+                      onClick={() => !atCap && setShowAddWaypoint(true)}
+                      disabled={atCap}
+                      className={atCap
+                        ? 'flex items-center gap-1 text-[10px] text-muted-foreground cursor-not-allowed'
+                        : 'flex items-center gap-1 text-[10px] text-accent hover:text-accent/80'}
+                      title={atCap ? 'Maximum 5 stops reached' : 'Add a stop'}
+                    >
+                      <Plus className="w-3 h-3" />
+                      {atCap ? 'Max stops' : 'Add Stop'}
+                    </button>
+                  );
+                })()}
               </div>
               
               {nextWaypoint ? (
@@ -647,12 +654,10 @@ export default function Lobby() {
                   </div>
                   <Button
                     onClick={() => {
-                      openNavigation(nextWaypoint.lat, nextWaypoint.lng, nextWaypoint.name);
+                      // Always open the Blacktop map with the destination so
+                      // the rider gets the live route overlay + speed.
+                      openBlacktopMap({ lat: nextWaypoint.lat, lng: nextWaypoint.lng, name: nextWaypoint.name });
                       markAsNavigated();
-                      // Start the ride, route to /ride so the active-ride
-                      // screen is mounted underneath, then (next microtask)
-                      // surface the map overlay on top. Closing the overlay
-                      // drops the rider straight onto /ride.
                       if (!hasStartedRide.current) {
                         hasStartedRide.current = true;
                         const success = startRide(true, convoy.id);
@@ -669,7 +674,7 @@ export default function Lobby() {
                     }}
                     className="w-full mt-3 h-11 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl font-semibold"
                   >
-                    <Navigation className="w-4 h-4 mr-2" />
+                    <Map className="w-4 h-4 mr-2" />
                     Navigate
                   </Button>
                 </div>
@@ -679,6 +684,15 @@ export default function Lobby() {
                   onSetDestination={setDestination}
                   onClearDestination={clearDestination}
                   onNavigate={() => {
+                    // Open the Blacktop map with the convoy destination so the
+                    // rider sees the live route overlay immediately.
+                    if (convoy.destination) {
+                      openBlacktopMap({
+                        lat: convoy.destination.lat,
+                        lng: convoy.destination.lng,
+                        name: convoy.destination.name,
+                      });
+                    }
                     markAsNavigated();
                     if (!hasStartedRide.current) {
                       hasStartedRide.current = true;

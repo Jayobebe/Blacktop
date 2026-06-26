@@ -255,7 +255,7 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
           </button>
 
           <p className="font-mono text-[9px] tracking-widest uppercase text-muted-foreground/50 text-center">
-            GIVE IT YOUR BEST SHOT
+            PUNCH THE AIR · GIVE IT YOUR BEST SHOT
           </p>
         </div>
       )}

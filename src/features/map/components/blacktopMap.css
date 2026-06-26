@@ -27,3 +27,18 @@
 .blacktop-maplibre .maplibregl-ctrl-attrib a {
   color: hsl(var(--muted-foreground));
 }
+
+/* Ensure zoom (+/-) and compass controls are always tappable above overlay UI. */
+.blacktop-maplibre .maplibregl-ctrl-top-right {
+  z-index: 20;
+}
+
+.blacktop-maplibre .maplibregl-ctrl-bottom-right {
+  z-index: 20;
+}
+
+/* Make control buttons large enough to tap comfortably on mobile. */
+.blacktop-maplibre .maplibregl-ctrl-group button {
+  width: 42px;
+  height: 42px;
+}

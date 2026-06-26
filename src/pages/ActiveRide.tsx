@@ -3,8 +3,9 @@ import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { useNavigation } from '@/hooks/useNavigation';
 import { useConvoyState } from '@/features/convoy';
+import { openBlacktopMap } from '@/features/map';
+import { useNextWaypoint } from '@/features/waypoints';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
@@ -91,13 +92,13 @@ export default function ActiveRide() {
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
-  const { openNavigation } = useNavigation();
   const { settings } = useSettings();
   const { activeBike } = useGarage();
   const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
   const { user, profile } = useProfile();
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
+  const nextWaypoint = useNextWaypoint();
   const { 
     rescueRequests, 
     hasPendingRescue, 
@@ -850,21 +851,17 @@ export default function ActiveRide() {
             </button>
           )}
 
-          {/* Navigation button - opens the in-app map overlay so the rider
-              sees their full route (destination + any convoy waypoints)
-              regardless of which external nav app they've picked in
-              Settings. External nav stays available via the Map app in
-              Settings or the Navigate button in the Lobby. */}
+          {/* Map button — opens Blacktop map overlay with destination + route */}
           <Button
             variant="ghost"
             onClick={() => {
-              if (convoy.destination) {
-                openBlacktopMap({
-                  lat: convoy.destination.lat,
-                  lng: convoy.destination.lng,
-                  name: convoy.destination.name,
-                  address: convoy.destination.address,
-                });
+              if (rideState.isConvoyMode) {
+                const dest = nextWaypoint
+                  ? { lat: nextWaypoint.lat, lng: nextWaypoint.lng, name: nextWaypoint.name }
+                  : convoy.destination
+                    ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name }
+                    : undefined;
+                openBlacktopMap(dest);
               } else {
                 openBlacktopMap();
               }

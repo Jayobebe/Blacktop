@@ -6,8 +6,9 @@ import { DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, MapPin } from 'lucide-react';
+import { ArrowLeft, Play, MapPin, Map } from 'lucide-react';
 import { ConvoyDestination } from '@/types/convoy';
+import { openBlacktopMap } from '@/features/map';
 
 interface UserLocation {
   lat: number;
@@ -22,7 +23,6 @@ export default function SoloLobby() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
 
-  // Fetch user location on mount
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -32,7 +32,6 @@ export default function SoloLobby() {
             lng: position.coords.longitude,
           };
           setUserLocation(loc);
-          // Get country code for better search results
           try {
             const { data } = await supabase.functions.invoke('place-search', {
               body: { kind: 'reverse', lat: loc.lat, lon: loc.lng, zoom: 3 },
@@ -60,8 +59,21 @@ export default function SoloLobby() {
     setDestination(null);
   };
 
+  // Start the ride without opening the map (free-ride, no destination required).
   const handleStartRide = () => {
-    // Start a solo ride (not convoy mode)
+    const success = startRide(false);
+    if (success) {
+      navigate('/ride');
+    }
+  };
+
+  // Open the Blacktop map overlay, start the ride, then navigate to the ride
+  // screen — the map stays open on top of the ride UI so the rider has the
+  // route + live speed immediately visible.
+  const handleNavigate = () => {
+    if (destination) {
+      openBlacktopMap({ lat: destination.lat, lng: destination.lng, name: destination.name });
+    }
     const success = startRide(false);
     if (!success) return;
 
@@ -122,18 +134,34 @@ export default function SoloLobby() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Start Ride Button */}
-        <div className="animate-slide-up delay-200 pb-4">
+        {/* Action Buttons */}
+        <div className="animate-slide-up delay-200 pb-4 space-y-3">
+          {destination && (
+            <Button
+              onClick={handleNavigate}
+              size="xl"
+              className="w-full h-16 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl shadow-glow"
+            >
+              <Map className="w-6 h-6 mr-3" />
+              Navigate
+            </Button>
+          )}
           <Button
             onClick={handleStartRide}
             size="xl"
-            className="w-full h-16 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl shadow-glow"
+            variant={destination ? 'outline' : 'default'}
+            className={destination
+              ? 'w-full h-14 text-base font-semibold rounded-2xl border-border'
+              : 'w-full h-16 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl shadow-glow'
+            }
           >
-            <Play className="w-6 h-6 mr-3" />
-            Start Ride
+            <Play className="w-5 h-5 mr-3" />
+            {destination ? 'Start without map' : 'Start Ride'}
           </Button>
-          <p className="text-xs text-muted-foreground text-center mt-3">
-            Destination is optional — you can ride freely
+          <p className="text-xs text-muted-foreground text-center">
+            {destination
+              ? 'Navigate opens the map with your route · Start without map tracks only'
+              : 'Destination is optional — you can ride freely'}
           </p>
         </div>
       </div>

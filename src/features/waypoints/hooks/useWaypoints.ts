@@ -51,6 +51,12 @@ export function useWaypointRouteStops(): RouteStop[] {
   return state.routeStops;
 }
 
+// Returns the first incomplete waypoint, or null if all complete / none exist.
+export function useNextWaypoint(): ConvoyWaypoint | null {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return state.waypoints.find(w => !w.isCompleted) ?? null;
+}
+
 export function useWaypoints(convoyId: string | null, isLeader: boolean) {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const { waypoints, isLoading } = state;
@@ -153,6 +159,8 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     };
   }, [convoyId, fetchWaypoints]);
 
+  const MAX_WAYPOINTS = 5;
+
   // Add a waypoint (leader only, but works during active ride)
   const addWaypoint = useCallback(async (waypoint: Omit<ConvoyWaypoint, 'id' | 'orderIndex' | 'isCompleted' | 'completedAt'>) => {
     if (!convoyId) {
@@ -163,6 +171,12 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     if (!isLeader) {
       console.error('[Waypoints] Only leader can add waypoints');
       toast.error('Only the leader can add waypoints');
+      return false;
+    }
+
+    const incompleteCount = waypoints.filter(w => !w.isCompleted).length;
+    if (incompleteCount >= MAX_WAYPOINTS) {
+      toast.error(`Maximum ${MAX_WAYPOINTS} stops allowed. Complete or remove a stop first.`);
       return false;
     }
 

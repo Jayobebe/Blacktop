@@ -12,10 +12,16 @@ export interface RescueRequest {
   timestamp: number;
 }
 
+// Minimum gap between rescue requests from the same device. Prevents a member
+// from hammering the leader's alert panel and Discord webhook by repeatedly
+// tapping the rescue button or via a script.
+const RESCUE_COOLDOWN_MS = 30_000; // 30 seconds
+
 export function useRescue(convoyId: string | null, isLeader: boolean, userId: string | null, userName: string | null) {
   const [rescueRequests, setRescueRequests] = useState<RescueRequest[]>([]);
   const [hasPendingRescue, setHasPendingRescue] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const lastRescueSentAtRef = useRef<number>(0);
 
   useEffect(() => {
     if (!convoyId) return;
@@ -89,6 +95,14 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
   const sendRescueRequest = useCallback(async (lat: number, lng: number) => {
     if (!convoyId || !userId || !userName || !channelRef.current) return false;
+
+    const now = Date.now();
+    if (now - lastRescueSentAtRef.current < RESCUE_COOLDOWN_MS) {
+      const remaining = Math.ceil((RESCUE_COOLDOWN_MS - (now - lastRescueSentAtRef.current)) / 1000);
+      toast.error(`Please wait ${remaining}s before sending another rescue request`);
+      return false;
+    }
+    lastRescueSentAtRef.current = now;
 
     const request: RescueRequest = {
       id: crypto.randomUUID(),

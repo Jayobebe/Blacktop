@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart } from 'lucide-react';
+import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
@@ -13,6 +13,7 @@ import {
   searchPlaces,
   searchNearbyPOIs,
 } from '../lib/placeSearch';
+import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   gas: <Fuel className="w-4 h-4" />,
@@ -46,13 +47,25 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
   const [showResults, setShowResults] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [recentLocations, setRecentLocations] = useState<MapSearchResult[]>([]);
+  const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchIdRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const refreshSavedPOIs = useCallback(() => {
+    setSavedPOIs(getSavedPOIs());
+  }, []);
+
   useEffect(() => {
     setRecentLocations(getRecentLocations());
-  }, []);
+    refreshSavedPOIs();
+  }, [refreshSavedPOIs]);
+
+  // Refresh saved POIs whenever the map saves or deletes one (cross-component).
+  useEffect(() => {
+    window.addEventListener('blacktop-poi-saved', refreshSavedPOIs);
+    return () => window.removeEventListener('blacktop-poi-saved', refreshSavedPOIs);
+  }, [refreshSavedPOIs]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -73,16 +86,32 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
       }
       setIsSearching(true);
       try {
-        // Read bounds fresh at search time rather than tracking them in
-        // state, so panning the map doesn't re-render this component.
         const bias = currentViewBounds(map);
-        const searchResults = await searchPlaces(searchQuery, bias, userLocation, countryCode);
-        if (searchIdRef.current === currentSearchId) setResults(searchResults);
+        const [remoteResults] = await Promise.all([
+          searchPlaces(searchQuery, bias, userLocation, countryCode),
+        ]);
+
+        // Prepend any saved POIs whose names contain the query string so
+        // personal spots always surface first, before Nominatim results.
+        const q = searchQuery.toLowerCase();
+        const matchingPOIs = savedPOIs
+          .filter(p => p.name.toLowerCase().includes(q))
+          .map(poiToSearchResult);
+
+        // Deduplicate (a saved POI coordinate that also shows in Nominatim
+        // would appear twice otherwise).
+        const poiIds = new Set(matchingPOIs.map(r => r.id));
+        const merged = [
+          ...matchingPOIs,
+          ...remoteResults.filter(r => !poiIds.has(r.id)),
+        ];
+
+        if (searchIdRef.current === currentSearchId) setResults(merged);
       } finally {
         if (searchIdRef.current === currentSearchId) setIsSearching(false);
       }
     },
-    [map, userLocation, countryCode],
+    [map, userLocation, countryCode, savedPOIs],
   );
 
   const handleSearch = (value: string) => {
@@ -133,9 +162,23 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
     onSelect(result);
   };
 
-  const showRecent = query.length < 2 && !activeCategory && recentLocations.length > 0;
-  const displayResults = showRecent ? recentLocations : results;
-  const hasDisplayContent = displayResults.length > 0 || isSearching;
+  const handleDeletePOI = (e: React.MouseEvent, poiId: string) => {
+    e.stopPropagation();
+    // poiId is in the form `poi:{uuid}` — strip the prefix to get the raw id.
+    const rawId = poiId.replace(/^poi:/, '');
+    deletePOI(rawId);
+  };
+
+  // Idle state (no query, no active category): show saved POIs + recent locations.
+  const showIdle = query.length < 2 && !activeCategory;
+  const hasSavedPOIs = savedPOIs.length > 0;
+  const hasRecent = recentLocations.length > 0;
+  const hasIdleContent = showIdle && (hasSavedPOIs || hasRecent);
+
+  // Live-search state.
+  const hasSearchContent = !showIdle && (results.length > 0 || isSearching);
+
+  const hasDisplayContent = hasIdleContent || hasSearchContent;
 
   return (
     <div ref={containerRef} className="absolute top-3 left-3 right-3 z-10 space-y-2">
@@ -152,7 +195,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
         </div>
       </div>
 
-      <div className="flex gap-1.5">
+      <div className="flex gap-1.5 pr-12">
         {QUICK_CATEGORIES.map((cat) => (
           <button
             key={cat.id}
@@ -172,38 +215,111 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
 
       {showResults && hasDisplayContent && (
         <div className="bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[50vh] overflow-y-auto animate-fade-in">
-          {showRecent && (
-            <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
-              <Clock className="w-3.5 h-3.5" />
-              Recent destinations
-            </div>
+
+          {/* ── Saved POIs (idle state only) ── */}
+          {showIdle && hasSavedPOIs && (
+            <>
+              <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+                <Bookmark className="w-3.5 h-3.5" />
+                Saved places
+              </div>
+              {savedPOIs.map((poi, index) => {
+                const result = poiToSearchResult(poi);
+                return (
+                  <button
+                    key={poi.id}
+                    onClick={() => handleSelect(result)}
+                    className={cn(
+                      'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors group',
+                      (index !== savedPOIs.length - 1 || hasRecent) && 'border-b border-border',
+                    )}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+                      <Bookmark className="w-3.5 h-3.5 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{poi.name}</p>
+                      <p className="text-xs text-muted-foreground">Saved location</p>
+                    </div>
+                    {/* Delete button — only visible on hover so it doesn't clutter the list */}
+                    <button
+                      onClick={(e) => handleDeletePOI(e, result.id)}
+                      className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all flex-shrink-0"
+                      aria-label={`Remove ${poi.name}`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </button>
+                );
+              })}
+            </>
           )}
-          {isSearching ? (
-            <div className="p-5 text-center text-muted-foreground">
-              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1.5" />
-              <span className="text-sm">Finding places...</span>
-            </div>
-          ) : displayResults.length === 0 ? (
-            <div className="p-5 text-center text-muted-foreground text-sm">No results found</div>
-          ) : (
-            displayResults.map((result, index) => (
-              <button
-                key={result.id}
-                onClick={() => handleSelect(result)}
-                className={cn(
-                  'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors',
-                  index !== displayResults.length - 1 && 'border-b border-border',
-                )}
-              >
-                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-4 h-4 text-accent" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{result.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{result.address}</p>
-                </div>
-              </button>
-            ))
+
+          {/* ── Recent destinations (idle state only) ── */}
+          {showIdle && hasRecent && (
+            <>
+              <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+                <Clock className="w-3.5 h-3.5" />
+                Recent destinations
+              </div>
+              {recentLocations.map((result, index) => (
+                <button
+                  key={result.id}
+                  onClick={() => handleSelect(result)}
+                  className={cn(
+                    'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors',
+                    index !== recentLocations.length - 1 && 'border-b border-border',
+                  )}
+                >
+                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">{result.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* ── Live search results ── */}
+          {!showIdle && (
+            isSearching ? (
+              <div className="p-5 text-center text-muted-foreground">
+                <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1.5" />
+                <span className="text-sm">Finding places...</span>
+              </div>
+            ) : results.length === 0 ? (
+              <div className="p-5 text-center text-muted-foreground text-sm">No results found</div>
+            ) : (
+              results.map((result, index) => {
+                const isSavedPOI = result.id.startsWith('poi:');
+                return (
+                  <button
+                    key={result.id}
+                    onClick={() => handleSelect(result)}
+                    className={cn(
+                      'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors',
+                      index !== results.length - 1 && 'border-b border-border',
+                    )}
+                  >
+                    <div className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                      isSavedPOI ? 'bg-accent/15' : 'bg-accent/10',
+                    )}>
+                      {isSavedPOI
+                        ? <Bookmark className="w-3.5 h-3.5 text-accent" />
+                        : <MapPin className="w-4 h-4 text-accent" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{result.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                    </div>
+                  </button>
+                );
+              })
+            )
           )}
         </div>
       )}

@@ -7,9 +7,13 @@ import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
-import { useWaypointRouteStops } from '@/features/waypoints';
+import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
 import { MapDestination } from '../types';
+import { savePOI } from '../lib/poiStore';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { BookmarkPlus } from 'lucide-react';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useActiveRide } from '@/features/ride';
@@ -18,7 +22,12 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2 } from 'lucide-react';
+import { Navigation, Loader2, SkipForward } from 'lucide-react';
+import { toast } from 'sonner';
+import { useWaypoints } from '@/features/waypoints';
+
+// How long the home map (no active ride) can stay idle before auto-closing.
+const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
 
 function createMemberMarkerElement(): HTMLDivElement {
   const el = document.createElement('div');
@@ -36,9 +45,6 @@ function createMemberMarkerElement(): HTMLDivElement {
   return el;
 }
 
-// `headingRef.current` is sourced from device sensors and can occasionally
-// be a non-finite glitch value; falling back to `map.getBearing()` (always
-// finite) keeps a bad reading from poisoning MapLibre's camera matrix.
 function safeBearing(heading: number | null, map: MapLibreMap): number {
   return heading != null && Number.isFinite(heading) ? heading : map.getBearing();
 }
@@ -61,9 +67,6 @@ const ROUTE_SOURCE_ID = 'blacktop-route';
 const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
 const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
 
-// How long to hold off the heading-up auto-follow camera after the rider
-// manually pans/zooms/rotates the map, so a deliberate look-around isn't
-// immediately snapped back to their position.
 const LOCATE_RESUME_DELAY_MS = 10000;
 
 interface BlacktopMapProps {
@@ -71,9 +74,6 @@ interface BlacktopMapProps {
   onContextLost?: () => void;
 }
 
-// Register the cache-backed `blacktop-tile://` protocol before any Map is
-// constructed so the basemap tiles below resolve through IndexedDB on repeat
-// rides instead of re-hitting CARTO over cellular. Idempotent — safe at import.
 registerTileCacheProtocol();
 
 const CARTO_DARK_STYLE: StyleSpecification = {
@@ -81,17 +81,6 @@ const CARTO_DARK_STYLE: StyleSpecification = {
   sources: {
     'carto-dark': {
       type: 'raster',
-      // Note: CARTO documents a `{r}` retina token, but that's a Leaflet
-      // convention MapLibre does not substitute — it would be sent literally
-      // and break the tiles. Request the @2x tiles directly instead (crisp on
-      // mobile retina displays).
-      //
-      // Each URL is wrapped in the cache-backed protocol (toCachedTileUrl):
-      // MapLibre substitutes {z}/{x}/{y} into the full string, then the
-      // protocol handler serves the tile from IndexedDB if present or fetches
-      // + persists it (75MB LRU) on a miss. This is also the single seam where
-      // a future keyed provider's auth token/header could be injected per
-      // request without touching the rest of the map init.
       tiles: [
         toCachedTileUrl('https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
         toCachedTileUrl('https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
@@ -108,10 +97,6 @@ const CARTO_DARK_STYLE: StyleSpecification = {
       id: 'carto-dark-layer',
       type: 'raster',
       source: 'carto-dark',
-      // CARTO's dark_all tiles are quite muted by default — the road lines
-      // sit below the midtone, so positive raster-contrast crushes them
-      // toward black instead of lifting them. Raising the brightness floor
-      // lifts the dark road lines without blowing out the labels/water.
       paint: { 'raster-brightness-min': 0.1 },
     },
   ],
@@ -133,44 +118,77 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
   const seededDestination = initialDestination ?? fallbackDestination;
   const [destination, setDestination] = useState<MapDestination | null>(seededDestination);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoSpeed, setGeoSpeed] = useState<number>(0); // speed from geolocation (home map)
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
   const [isRouting, setIsRouting] = useState(false);
   const [contextLost, setContextLost] = useState(false);
+  const [showSaveUI, setShowSaveUI] = useState(false);
+  const [saveName, setSaveName] = useState('');
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
-  const waypointStops = useWaypointRouteStops();
+  const nextWaypoint = useNextWaypoint();
+  const { completeWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const mapPresentUserIds = useMapPresentUserIds();
   const speakingUsers = useSpeakingUsers();
   const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
 
-  // MapLibre's paint/marker colors are parsed by its own JS color parser, not
-  // the browser's CSS engine, so `hsl(var(--accent))` never resolves there —
-  // look up the literal HSL components for the selected accent instead.
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
-  // MapLibre's color parser requires comma-separated hsl(), not the modern
-  // space-separated CSS syntax that Tailwind tokens use.
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
 
-  // Mirror the ride screen's speed-warning thresholds (raw mph).
-  const speed = rideState.currentSpeed;
+  // During an active ride use rideState speed; on the home map use raw geolocation speed.
+  const displaySpeed = rideState.isActive ? rideState.currentSpeed : geoSpeed;
   const speedColorClass =
-    speed >= settings.redSpeedThreshold
+    displaySpeed >= settings.redSpeedThreshold
       ? 'text-destructive'
-      : speed >= settings.amberSpeedThreshold
+      : displaySpeed >= settings.amberSpeedThreshold
         ? 'text-warning'
         : 'text-foreground';
 
-  // Reuses the ride's existing speed signal to pause radar animation when
-  // the vehicle has been stationary - no separate motion detection needed.
-  useRadarOverlay(map, speed);
+  useRadarOverlay(map, displaySpeed);
 
   const userMarkerRef = useRef<Marker | null>(null);
   const headingRef = useRef<number | null>(null);
   const hasFollowedUserRef = useRef(false);
-  const lastInteractionAtRef = useRef(0);
+  const lastInteractionAtRef = useRef(Date.now());
 
+  // ── Inactivity guardrail for the home map ──────────────────────────────────
+  // When there is no active ride, auto-close the map after HOME_MAP_INACTIVITY_MS
+  // of no user interaction. This prevents an unattended device from keeping
+  // MapLibre running indefinitely and burning through battery / tile quota.
+  useEffect(() => {
+    if (rideState.isActive) return; // only for home map
+
+    const check = setInterval(() => {
+      if (Date.now() - lastInteractionAtRef.current >= HOME_MAP_INACTIVITY_MS) {
+        toast.info('Map closed due to inactivity');
+        closeBlacktopMap();
+      }
+    }, 30_000); // check every 30 s
+
+    return () => clearInterval(check);
+  }, [rideState.isActive]);
+
+  // ── Effective destination in convoy active ride ────────────────────────────
+  // Override local destination state with the convoy's current next stop so the
+  // map always reflects the live convoy state, even as waypoints are added or
+  // completed mid-ride.
+  useEffect(() => {
+    if (!rideState.isActive || !rideState.isConvoyMode) return;
+
+    if (nextWaypoint) {
+      setDestination({ lat: nextWaypoint.lat, lng: nextWaypoint.lng, name: nextWaypoint.name });
+    } else if (convoy.destination) {
+      setDestination({
+        lat: convoy.destination.lat,
+        lng: convoy.destination.lng,
+        name: convoy.destination.name,
+      });
+    }
+  }, [nextWaypoint, convoy.destination, rideState.isActive, rideState.isConvoyMode]);
+
+  // ── Map init ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -197,9 +215,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
       'top-right',
     );
 
-    // The heading-up auto-follow camera (below) fights any manual pan/zoom/
-    // rotate the rider makes. Track the last manual gesture and have the
-    // follow logic back off for LOCATE_RESUME_DELAY_MS after it.
     const markInteraction = (e: { originalEvent?: unknown }) => {
       if (e.originalEvent) lastInteractionAtRef.current = Date.now();
     };
@@ -208,11 +223,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     instance.on('rotatestart', markInteraction);
     instance.on('pitchstart', markInteraction);
 
-    // On some mobile GPUs the WebGL context can be reclaimed under memory
-    // pressure (or when the app is backgrounded while the map is open),
-    // which otherwise leaves a permanently black canvas with no way out.
-    // Notify the parent so it can remount us with a fresh GL context; if no
-    // parent handler is provided, fall back to surfacing the recovery UI.
     instance.on('webglcontextlost', () => {
       if (onContextLost) onContextLost();
       else setContextLost(true);
@@ -223,11 +233,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     setMap(instance);
 
     return () => {
-      // A corrupted GL/camera state can make teardown itself throw; if that
-      // happens uncaught during an effect cleanup, React can leave this
-      // component (and the full-screen overlay it's in) stuck on screen
-      // instead of unmounting it, which presents as a black screen that
-      // doesn't go away. Always clear our own refs/state regardless.
       try {
         instance.remove();
       } catch (err) {
@@ -236,13 +241,10 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
       mapRef.current = null;
       setMap(null);
     };
-    // Mount once; the map instance is imperative after that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Continuously watch the user's location + heading. The first fix auto-
-  // centers the map on the user so they never have to tap the locate button,
-  // and subsequent fixes rotate the map heading-up while moving.
+  // ── Geolocation watch ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!('geolocation' in navigator)) return;
 
@@ -250,17 +252,15 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     const watchId = navigator.geolocation.watchPosition(
       async (position) => {
         const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
-        // Some Android devices report non-finite (NaN/Infinity) coordinates
-        // on a bad fix. Feeding that into MapLibre's camera poisons its
-        // internal matrix and renders a permanently black canvas, so bail
-        // out before touching any state or the map.
         if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
         setUserLocation(loc);
 
-        // GPS heading is null when stationary or unsupported. Only update the
-        // rotation when we have a real, finite heading and the user is
-        // actually moving — otherwise the map spins unpredictably while
-        // parked, or (worse) a non-finite value poisons the camera bearing.
+        // Track raw speed for the home-map display (m/s → mph).
+        const rawSpeed = position.coords.speed;
+        if (rawSpeed != null && Number.isFinite(rawSpeed) && !rideState.isActive) {
+          setGeoSpeed(rawSpeed * 2.23694); // m/s to mph
+        }
+
         const heading = position.coords.heading;
         const speed = position.coords.speed ?? 0;
         if (heading != null && Number.isFinite(heading) && speed > 0.5) {
@@ -276,8 +276,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
         const map = mapRef.current;
         if (!map) return;
 
-        // First fix: auto-center on the user (unless we opened on a specific
-        // destination). Subsequent fixes keep them in view + heading-up.
         if (!hasFollowedUserRef.current && !initialDestination) {
           hasFollowedUserRef.current = true;
           map.flyTo({
@@ -287,8 +285,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
             essential: true,
           });
         } else if (hasFollowedUserRef.current) {
-          // Rider is mid-interaction (or just finished one) — let them look
-          // around instead of yanking the camera back on this fix.
           if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
           map.easeTo({
             center: [loc.lng, loc.lat],
@@ -298,19 +294,15 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
           });
         }
       },
-      () => {
-        // Location denied/unavailable — map still works, just stays at default center.
-      },
+      () => {},
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 },
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-    // Only register the watcher once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Render / move a marker for the user's current position so they're always
-  // visible on the map, independent of the GeolocateControl.
+  // ── User position marker ───────────────────────────────────────────────────
   useEffect(() => {
     if (!map || !userLocation) return;
 
@@ -338,7 +330,7 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     };
   }, []);
 
-
+  // ── Destination marker ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!map) return;
 
@@ -352,22 +344,13 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
         .setLngLat([destination.lng, destination.lat])
         .addTo(map);
       markerRef.current = marker;
-      // Don't recenter on the destination — once the route is drawn we'll
-      // zoom into the user's position (heading-up) instead.
     }
   }, [map, destination, accentColor]);
 
-  // Show a marker for every convoy member (including self) who has chosen
-  // Blacktop Maps and has a live GPS fix — colored by their accent color,
-  // glowing while they're speaking in the voice channel.
+  // ── Convoy member markers ──────────────────────────────────────────────────
   useEffect(() => {
     if (!map) return;
 
-    // currentLat/currentLng come from another rider's device via the
-    // database/realtime, not our own validated watchPosition — a glitchy
-    // fix from their GPS (the same non-finite-value issue fixed above) would
-    // poison the shared map's camera matrix for everyone viewing it, so it
-    // needs the same finite check here.
     const visibleMembers = convoyMembers.filter(
       (m): m is typeof m & { currentLat: number; currentLng: number } =>
         mapPresentUserIds.has(m.userId) &&
@@ -405,8 +388,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     });
   }, [map, convoyMembers, mapPresentUserIds, speakingUsers]);
 
-  // Remove any remaining member markers when the map unmounts. The ref itself
-  // is never reassigned, so reading .current in the cleanup is safe.
   useEffect(() => {
     const markers = memberMarkersRef.current;
     return () => {
@@ -415,19 +396,8 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     };
   }, []);
 
-  // Fetch a driving route whenever both a destination and the user's location
-  // are known, threading through any convoy waypoints in between. The
-  // waypoint stops only ever arrive as bare {lat,lng} (from the DB fetch or
-  // the lightweight Realtime broadcast) - this client fetches its own
-  // routing geometry locally rather than trusting precomputed geometry off
-  // the wire. A stale-guard id discards out-of-order responses.
-  //
-  // GPS fixes arrive ~1 Hz, but re-routing through OSRM that often is
-  // wasteful (network + CPU) and visibly jitters the drawn line. Sample the
-  // rider's position into `routingLocation` at most once every 5s so route
-  // recalculation happens on that cadence instead of every fix. Destination
-  // and waypoint changes still refresh immediately because they bypass this
-  // throttle.
+  // GPS fixes arrive ~1 Hz; throttle to at most once every 5s to avoid
+  // hammering OSRM on every fix while still keeping the route reasonably fresh.
   const ROUTE_RECALC_INTERVAL_MS = 5000;
   const [routingLocation, setRoutingLocation] = useState<{ lat: number; lng: number } | null>(null);
   const lastRoutingSampleAtRef = useRef(0);
@@ -463,7 +433,7 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
       return;
     }
 
-    const stops = [routingLocation, ...waypointStops, { lat: destination.lat, lng: destination.lng }];
+    const stops = [routingLocation, { lat: destination.lat, lng: destination.lng }];
 
     const requestId = ++routeRequestRef.current;
     setIsRouting(true);
@@ -474,10 +444,9 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
       .finally(() => {
         if (routeRequestRef.current === requestId) setIsRouting(false);
       });
-  }, [destination, routingLocation, waypointStops]);
+  }, [destination, routingLocation]);
 
-
-  // Draw / update the route line and fit the camera to it.
+  // ── Route line drawing ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!map) return;
 
@@ -529,10 +498,6 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
         });
       }
 
-      // Zoom into the user (heading-up) once the route is drawn instead of
-      // fitting the whole route — keeps focus on what's immediately ahead.
-      // Skip it if the rider is mid-interaction so this doesn't yank the
-      // camera away from wherever they're currently looking.
       const recentlyInteracted = Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS;
       if (userLocation && !recentlyInteracted) {
         map.flyTo({
@@ -553,6 +518,14 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     return removeRouteLayers;
   }, [map, route, accentColor]);
 
+  // ── Derived display flags ──────────────────────────────────────────────────
+  // Non-leader convoy members must not see the search bar or quick categories.
+  const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
+
+  // Show skip-waypoint button only when leader has an active waypoint in convoy ride.
+  const canSkipWaypoint =
+    rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
+
   if (contextLost) {
     // Fallback when no parent remount handler is wired up — show a passive
     // loader; the GL `webglcontextrestored` event will clear this.
@@ -571,32 +544,30 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
 
-      <MapSearchBar
-        map={map}
-        userLocation={userLocation}
-        countryCode={countryCode}
-        onSelect={(result) => {
-          setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
+      {showSearchBar && (
+        <MapSearchBar
+          map={map}
+          userLocation={userLocation}
+          countryCode={countryCode}
+          onSelect={(result) => {
+            setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
+            lastInteractionAtRef.current = Date.now();
 
-          // Transport the camera to the new destination immediately, rather
-          // than waiting on the route fetch - critical for far-off picks
-          // (different city/region) where the rider needs to see where the
-          // map just jumped to. Fit both points when we know the rider's
-          // location so the new route's full span is visible at once.
-          if (map) {
-            if (userLocation) {
-              const bounds = new maplibregl.LngLatBounds(
-                [userLocation.lng, userLocation.lat],
-                [userLocation.lng, userLocation.lat],
-              );
-              bounds.extend([result.lng, result.lat]);
-              map.fitBounds(bounds, { padding: 80, maxZoom: 16, duration: 1500 });
-            } else {
-              map.flyTo({ center: [result.lng, result.lat], zoom: 13, essential: true });
+            if (map) {
+              if (userLocation) {
+                const bounds = new maplibregl.LngLatBounds(
+                  [userLocation.lng, userLocation.lat],
+                  [userLocation.lng, userLocation.lat],
+                );
+                bounds.extend([result.lng, result.lat]);
+                map.fitBounds(bounds, { padding: 80, maxZoom: 16, duration: 1500 });
+              } else {
+                map.flyTo({ center: [result.lng, result.lat], zoom: 13, essential: true });
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
+      )}
 
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
         {destination && (isRouting || route) && (
@@ -618,6 +589,21 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
                 </p>
               ) : null}
             </div>
+
+            {/* Leader-only: skip current waypoint and advance to the next stop */}
+            {canSkipWaypoint && (
+              <button
+                onClick={async () => {
+                  await completeWaypoint(nextWaypoint!.id);
+                  toast.success('Stop skipped');
+                }}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted hover:bg-secondary text-xs font-medium text-muted-foreground transition-colors flex-shrink-0"
+                title="Skip this stop and advance to the next"
+              >
+                <SkipForward className="w-3.5 h-3.5" />
+                Skip
+              </button>
+            )}
           </div>
         )}
 
@@ -627,14 +613,17 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
           </div>
 
           <div className="justify-self-center">
-            {rideState.isActive && (
+            {/* Show speed for active ride OR home-map preview (never saved) */}
+            {(rideState.isActive || geoSpeed > 0) && (
               <div
                 className={cn(
                   'flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors',
                   speedColorClass,
                 )}
               >
-                <span className="text-5xl leading-none">{formatSpeed(rideState.currentSpeed, settings.speedUnit)}</span>
+                <span className="text-5xl leading-none">
+                  {formatSpeed(displaySpeed, settings.speedUnit)}
+                </span>
                 <span className="text-sm opacity-70">{getSpeedLabel(settings.speedUnit)}</span>
               </div>
             )}
@@ -642,6 +631,76 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
 
           <span />
         </div>
+      </div>
+
+      {/* ── Save Location (Add POI) ──────────────────────────────────────────
+          Sits at bottom-left, mirroring the overlay's exit button at bottom-right.
+          Tapping prompts for a name, then saves the current GPS fix as a POI. */}
+      <div className="absolute bottom-3 left-3 z-20">
+        {showSaveUI ? (
+          <div className="bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
+            <p className="text-xs font-semibold text-foreground">Name this spot</p>
+            <Input
+              autoFocus
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              placeholder="e.g. Home, Camp spot…"
+              className="h-9 text-sm bg-background/60"
+              maxLength={50}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && saveName.trim() && userLocation) {
+                  savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
+                  toast.success(`"${saveName.trim()}" saved`);
+                  setSaveName('');
+                  setShowSaveUI(false);
+                }
+                if (e.key === 'Escape') {
+                  setSaveName('');
+                  setShowSaveUI(false);
+                }
+              }}
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                disabled={!saveName.trim() || !userLocation}
+                onClick={() => {
+                  if (!saveName.trim() || !userLocation) return;
+                  savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
+                  toast.success(`"${saveName.trim()}" saved`);
+                  setSaveName('');
+                  setShowSaveUI(false);
+                }}
+                className="flex-1 h-8 text-xs"
+              >
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => { setSaveName(''); setShowSaveUI(false); }}
+                className="h-8 text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              if (!userLocation) {
+                toast.info('Waiting for GPS fix…');
+                return;
+              }
+              setSaveName('');
+              setShowSaveUI(true);
+            }}
+            className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
+            aria-label="Save current location as a POI"
+          >
+            <BookmarkPlus className="w-5 h-5" />
+          </button>
+        )}
       </div>
     </div>
   );

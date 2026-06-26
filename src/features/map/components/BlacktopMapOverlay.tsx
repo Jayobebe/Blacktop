@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
 import { useMapOverlay, closeBlacktopMap } from '../hooks/useMapOverlay';
 import { BlacktopMap } from './BlacktopMap';
@@ -9,21 +9,21 @@ export function BlacktopMapOverlay() {
   const { isOpen, destination } = useMapOverlay();
   const { rideState } = useActiveRide();
   const navigate = useNavigate();
-  // Bumping this key force-remounts BlacktopMap when the WebGL context is
-  // lost (mobile GPU memory pressure, app backgrounding), instead of
-  // leaving the rider stuck on a black canvas.
+  const location = useLocation();
   const [mountKey, setMountKey] = useState(0);
 
   if (!isOpen) return null;
 
-  // The ride lives in a module-level store with GPS running independently of
-  // this overlay, so closing the map never interrupts it. When a ride is
-  // active we also route back to the ride screen in case the map was opened
-  // from elsewhere (Home, Settings).
   const handleExit = () => {
     closeBlacktopMap();
+    // Return to the ride screen if a ride is in progress, regardless of where
+    // the user opened the map from (lobby, home, etc.).
     if (rideState.isActive) navigate('/ride');
   };
+
+  // Show a "Back to lobby" button when the map is opened from the lobby page
+  // before the ride has actually started.
+  const inLobby = !rideState.isActive && location.pathname === '/lobby';
 
   return (
     <div className="fixed inset-0 z-[1000] bg-background animate-fade-in">
@@ -41,6 +41,15 @@ export function BlacktopMapOverlay() {
         >
           <ChevronLeft className="w-4 h-4" />
           Ride
+        </button>
+      ) : inLobby ? (
+        <button
+          onClick={() => closeBlacktopMap()}
+          className="absolute bottom-3 right-3 z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
+          aria-label="Back to lobby"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Lobby
         </button>
       ) : (
         <button
