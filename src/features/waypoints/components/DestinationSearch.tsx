@@ -422,14 +422,6 @@ export function DestinationSearch({
       return;
     }
 
-    const isPostal = containsPostalCode(searchQuery, countryCode);
-
-    // Nearby-first behavior requires a location. If the user wants far-away, they can type a postcode.
-    if (!userLocation && !isPostal) {
-      setResults([]);
-      return;
-    }
-
     setIsSearching(true);
 
     try {
@@ -458,10 +450,28 @@ export function DestinationSearch({
     }
   }, [userLocation, countryCode, savedPOIs]);
 
-  // If location becomes available after the user already typed, rerun the nearby search.
+  // If location becomes available after the user typed or picked a category,
+  // rerun the search so results appear without requiring another tap.
   useEffect(() => {
     if (!userLocation) return;
-    if (activeCategory) return;
+
+    if (activeCategory) {
+      const cat = quickCategories.find(c => c.id === activeCategory);
+      if (cat) {
+        const currentSearchId = ++searchIdRef.current;
+        setIsSearching(true);
+        searchNearbyPOIs(cat.query, userLocation, countryCode).then(results => {
+          if (searchIdRef.current === currentSearchId) {
+            setResults(results);
+            setIsSearching(false);
+          }
+        }).catch(() => {
+          if (searchIdRef.current === currentSearchId) setIsSearching(false);
+        });
+      }
+      return;
+    }
+
     if (query.length < 2) return;
     if (containsPostalCode(query, countryCode)) return;
 
@@ -507,18 +517,11 @@ export function DestinationSearch({
     const currentSearchId = ++searchIdRef.current;
     
     try {
-      // Require location for category searches
-      if (!userLocation) {
-        // No location - show empty with message
-        if (searchIdRef.current === currentSearchId) {
-          setResults([]);
-          toast.error('Location required for nearby search');
-        }
-        return;
-      }
-      
+      // No location yet — leave the spinner active so the retry effect fires
+      // automatically once geolocation resolves (no toast, no empty flash).
+      if (!userLocation) return;
+
       const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode);
-      // Only update if this is still the latest search
       if (searchIdRef.current === currentSearchId) {
         setResults(searchResults);
       }
