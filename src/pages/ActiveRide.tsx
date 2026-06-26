@@ -98,6 +98,8 @@ export default function ActiveRide() {
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const nextWaypoint = useNextWaypoint();
+  const soloRoute = useSoloRoute();
+
   const { 
     rescueRequests, 
     hasPendingRescue, 
