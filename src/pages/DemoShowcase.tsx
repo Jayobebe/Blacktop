@@ -1267,20 +1267,16 @@ function StatsMockup() {
 }
 
 function BlacktopWorldMockup() {
-  const [flipped, setFlipped] = useState(false);
-  useEffect(() => {
-    const t = setInterval(() => setFlipped((v) => !v), 2400);
-    return () => clearInterval(t);
-  }, []);
   return (
-    <div className="w-full max-w-xs space-y-4">
-      {/* Globe */}
-      <div className="relative h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(220_40%_8%)] via-[hsl(230_50%_12%)] to-black border border-border/30">
+    <div className="w-full max-w-xs space-y-3">
+      <div className="relative h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(220_40%_8%)] via-[hsl(230_50%_12%)] to-black border border-border/30">
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-24 h-24 rounded-full bg-[radial-gradient(circle_at_30%_30%,hsl(220_30%_25%),hsl(220_50%_8%))] shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.6),0_0_40px_hsl(var(--accent)/0.25)] animate-spin-slow">
-            <span className="absolute top-3 left-5 w-1 h-1 rounded-full bg-accent animate-pulse" />
-            <span className="absolute bottom-4 right-4 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="absolute top-1/2 right-2 w-1 h-1 rounded-full bg-orange-400 animate-pulse" />
+          <div className="relative w-40 h-40 rounded-full bg-[radial-gradient(circle_at_30%_30%,hsl(220_30%_25%),hsl(220_50%_8%))] shadow-[inset_-14px_-14px_36px_rgba(0,0,0,0.6),0_0_50px_hsl(var(--accent)/0.3)] animate-spin-slow">
+            <span className="absolute top-5 left-9 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="absolute bottom-6 right-7 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="absolute top-1/2 right-3 w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+            <span className="absolute top-8 right-10 w-1 h-1 rounded-full bg-rose-400 animate-pulse" />
+            <span className="absolute bottom-10 left-8 w-1 h-1 rounded-full bg-sky-300 animate-pulse" />
           </div>
         </div>
         <div className="absolute top-2 left-2 right-2 flex justify-center pointer-events-none">
@@ -1288,9 +1284,35 @@ function BlacktopWorldMockup() {
             <span className="text-[8px] tracking-[0.2em] uppercase text-white/60">live rider globe</span>
           </div>
         </div>
+        <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2 pointer-events-none">
+          {[
+            { c: '#fb923c', l: 'Fire' },
+            { c: '#f87171', l: 'Volcano' },
+            { c: '#60a5fa', l: 'Flood' },
+            { c: '#c4b5fd', l: 'Quake' },
+          ].map(({ c, l }) => (
+            <div key={l} className="flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full" style={{ backgroundColor: c, boxShadow: `0 0 4px ${c}` }} />
+              <span className="text-[8px] uppercase tracking-wider text-white/55">{l}</span>
+            </div>
+          ))}
+        </div>
       </div>
+      <p className="text-[10px] text-center text-muted-foreground">
+        Long-press the home globe to launch
+      </p>
+    </div>
+  );
+}
 
-      {/* Folder + flipping card */}
+function CardTradingMockup() {
+  const [flipped, setFlipped] = useState(false);
+  useEffect(() => {
+    const t = setInterval(() => setFlipped((v) => !v), 2400);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="w-full max-w-xs space-y-4">
       <div className="grid grid-cols-2 gap-3 items-center">
         <div className="rounded-xl border border-border/30 bg-card/40 p-2.5">
           <div className="flex items-center gap-1.5 mb-2">
@@ -1330,11 +1352,51 @@ function BlacktopWorldMockup() {
       </div>
 
       <p className="text-[10px] text-center text-muted-foreground">
-        Long-press the home globe to launch · flip a card to share its QR
+        Flip a card to share its QR · scan to collect
       </p>
     </div>
   );
 }
+
+function BlacktopArcadeMockup() {
+  const [pulse, setPulse] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPulse((p) => (p + 1) % 2), 1200);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="flex items-center justify-center gap-2">
+        <Gamepad2 className="w-4 h-4 text-accent" />
+        <span className="text-[10px] tracking-[0.2em] uppercase text-white/60">Blacktop Arcade</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col items-center gap-3 py-5 px-3 bg-card/50 border border-border/30 rounded-2xl">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Zap className={cn('w-5 h-5 text-accent transition-transform', pulse === 0 && 'scale-125')} />
+          </div>
+          <div className="text-center">
+            <div className="text-xs font-semibold text-white leading-none">Hit Heavy</div>
+            <div className="text-[9px] text-muted-foreground mt-1">Best: 3.42G</div>
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-3 py-5 px-3 bg-card/50 border border-border/30 rounded-2xl">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Gauge className={cn('w-5 h-5 text-accent transition-transform', pulse === 1 && 'scale-125')} />
+          </div>
+          <div className="text-center">
+            <div className="text-xs font-semibold text-white leading-none">Petrol Head</div>
+            <div className="text-[9px] text-muted-foreground mt-1">Best: 28s</div>
+          </div>
+        </div>
+      </div>
+      <p className="text-[10px] text-center text-muted-foreground">
+        Pocket games tucked inside Blacktop World
+      </p>
+    </div>
+  );
+}
+
 
 function BurnMockup() {
 
