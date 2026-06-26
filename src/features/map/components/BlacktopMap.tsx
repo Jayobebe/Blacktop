@@ -196,6 +196,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [nextWaypoint, convoy.destination, rideState.isActive, rideState.isConvoyMode]);
 
+  // ── Sync local destination when overlay's destination changes ──────────────
+  // BlacktopMapOverlay keeps this component mounted (hidden via CSS) across
+  // open/close cycles, so local `destination` state otherwise survives a
+  // ride ending. When the parent clears its destination (e.g. ride end calls
+  // clearMapDestination), drop the local route too — unless we're currently
+  // in an active ride, in which case the convoy/waypoint effect above owns it.
+  useEffect(() => {
+    if (rideState.isActive) return;
+    setDestination(initialDestination ?? null);
+    if (!initialDestination) setRoute(null);
+  }, [initialDestination, rideState.isActive]);
+
+
+
   // ── Map init ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -595,36 +609,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
         {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
         {showWaypointsPanel && (
-          <div className="bg-card/95 border border-border rounded-xl shadow-xl backdrop-blur overflow-hidden animate-slide-up">
+          <div className="animate-slide-up">
             {addingWaypoint ? (
-              <div className="flex items-center gap-2 px-3 py-2.5">
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-card/95 border border-border rounded-xl shadow-xl backdrop-blur">
                 <Plus className="w-3.5 h-3.5 text-accent flex-shrink-0" />
                 <p className="flex-1 text-xs text-accent">Search for a stop above…</p>
                 <button
                   onClick={() => setAddingWaypoint(false)}
                   className="p-1 hover:bg-muted rounded transition-colors"
+                  aria-label="Cancel adding stop"
                 >
                   <X className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
               </div>
             ) : (
-              <>
+              <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-3 px-3 pb-1">
                 {incompleteWaypoints.map((wp, i) => (
                   <div
                     key={wp.id}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-2 text-sm',
-                      i !== incompleteWaypoints.length - 1 && 'border-b border-border',
-                    )}
+                    className="snap-start flex-shrink-0 w-44 flex items-center gap-2 px-3 py-2 bg-card/95 border border-border rounded-xl shadow-lg backdrop-blur text-sm"
                   >
                     <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
                       {i + 1}
                     </span>
-                    <p className="flex-1 truncate">{wp.name}</p>
+                    <p className="flex-1 truncate text-xs">{wp.name}</p>
                     {convoy.isLeader && (
                       <button
                         onClick={() => removeWaypoint(wp.id)}
-                        className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
+                        className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                        aria-label={`Remove stop ${wp.name}`}
                       >
                         <X className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
@@ -634,19 +647,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 {convoy.isLeader && incompleteWaypoints.length < 5 && (
                   <button
                     onClick={() => setAddingWaypoint(true)}
-                    className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2 text-xs text-accent hover:bg-muted/50 transition-colors',
-                      incompleteWaypoints.length > 0 && 'border-t border-border',
-                    )}
+                    className="snap-start flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-card/95 border border-dashed border-accent/60 rounded-xl shadow-lg backdrop-blur text-xs text-accent hover:bg-accent/10 transition-colors"
+                    aria-label="Add stop"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Stop
                   </button>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}
+
 
         {destination && (isRouting || route) && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/95 border border-border shadow-2xl backdrop-blur animate-slide-up">

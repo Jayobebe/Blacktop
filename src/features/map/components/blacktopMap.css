@@ -42,3 +42,7 @@
   width: 42px;
   height: 42px;
 }
+
+/* Hide horizontal scrollbar on the waypoints carousel while keeping native scroll/snap. */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
