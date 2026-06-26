@@ -13,6 +13,7 @@ import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
+import { openBlacktopMap } from '@/features/map';
 
 import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
