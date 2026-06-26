@@ -20,6 +20,10 @@ interface WaypointsStoreState {
 }
 
 let storeState: WaypointsStoreState = { waypoints: [], isLoading: false, routeStops: [] };
+let waypointRealtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+let waypointRealtimeChannelId: string | null = null;
+let waypointRealtimeRefCount = 0;
+let waypointRealtimeTopicSeq = 0;
 
 function getSnapshot(): WaypointsStoreState {
   return storeState;
@@ -43,6 +47,86 @@ function routeStopsFrom(waypoints: ConvoyWaypoint[]): RouteStop[] {
   return waypoints.filter(w => !w.isCompleted).map(w => ({ lat: w.lat, lng: w.lng }));
 }
 
+async function fetchWaypointsForConvoy(convoyId: string | null) {
+  if (!convoyId) {
+    setStoreState(() => ({ waypoints: [], isLoading: false, routeStops: [] }));
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('convoy_waypoints')
+    .select('*')
+    .eq('convoy_id', convoyId)
+    .order('order_index', { ascending: true });
+
+  if (error) {
+    console.error('Failed to fetch waypoints:', error);
+    return;
+  }
+
+  const mapped: ConvoyWaypoint[] = (data || []).map((w: any) => ({
+    id: w.id,
+    name: w.name,
+    address: w.address,
+    lat: Number(w.lat),
+    lng: Number(w.lng),
+    orderIndex: w.order_index,
+    isCompleted: w.is_completed,
+    completedAt: w.completed_at,
+  }));
+
+  setStoreState(prev => ({ ...prev, waypoints: mapped, routeStops: routeStopsFrom(mapped) }));
+}
+
+function acquireWaypointRealtimeSubscription(convoyId: string) {
+  if (!waypointRealtimeChannel || waypointRealtimeChannelId !== convoyId) {
+    if (waypointRealtimeChannel) {
+      supabase.removeChannel(waypointRealtimeChannel);
+    }
+
+    // Supabase reuses channels by topic. Multiple mounted useWaypoints callers
+    // (Lobby + map overlay + active ride) must share one local subscription, and
+    // each channel lifetime gets a unique topic so stale subscribed channels are
+    // never reused for new postgres_changes callbacks.
+    waypointRealtimeChannel = supabase
+      .channel(`waypoints-${convoyId}:${++waypointRealtimeTopicSeq}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'convoy_waypoints',
+          filter: `convoy_id=eq.${convoyId}`,
+        },
+        () => {
+          fetchWaypointsForConvoy(convoyId);
+        }
+      )
+      .subscribe((status, error) => {
+        if (error) console.warn('[Waypoints] Realtime subscription error:', error.message);
+      });
+
+    waypointRealtimeChannelId = convoyId;
+    waypointRealtimeRefCount = 0;
+  }
+
+  waypointRealtimeRefCount += 1;
+  let released = false;
+
+  return () => {
+    if (released) return;
+    released = true;
+    waypointRealtimeRefCount = Math.max(0, waypointRealtimeRefCount - 1);
+
+    if (waypointRealtimeRefCount === 0 && waypointRealtimeChannelId === convoyId && waypointRealtimeChannel) {
+      const channel = waypointRealtimeChannel;
+      waypointRealtimeChannel = null;
+      waypointRealtimeChannelId = null;
+      supabase.removeChannel(channel);
+    }
+  };
+}
+
 // Lightweight, read-only selector for the active route's stop coordinates -
 // safe to call from any number of components (e.g. the map overlay) since it
 // has no side effects of its own.
@@ -61,103 +145,21 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const { waypoints, isLoading } = state;
 
-  // Broadcast a lightweight waypoint-coordinate update to all members. Only
-  // ever carries bare {lat,lng} stops - never route geometry - so receivers
-  // fetch/render the line themselves instead of trusting a wire payload.
-  const broadcastWaypointUpdate = useCallback(async (stops: RouteStop[]) => {
-    if (!convoyId) return;
-
-    const channel = supabase.channel(`convoy-control:${convoyId}`);
-    await channel.subscribe();
-    await channel.send({
-      type: 'broadcast',
-      event: 'waypoints-updated',
-      payload: { stops },
-    });
-    // Give time for broadcast to propagate
-    await new Promise(resolve => setTimeout(resolve, 100));
-    supabase.removeChannel(channel);
-  }, [convoyId]);
-
   // Fetch waypoints
   const fetchWaypoints = useCallback(async () => {
-    if (!convoyId) {
-      setStoreState(() => ({ waypoints: [], isLoading: false, routeStops: [] }));
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('convoy_waypoints')
-      .select('*')
-      .eq('convoy_id', convoyId)
-      .order('order_index', { ascending: true });
-
-    if (error) {
-      console.error('Failed to fetch waypoints:', error);
-      return;
-    }
-
-    const mapped: ConvoyWaypoint[] = (data || []).map((w: any) => ({
-      id: w.id,
-      name: w.name,
-      address: w.address,
-      lat: Number(w.lat),
-      lng: Number(w.lng),
-      orderIndex: w.order_index,
-      isCompleted: w.is_completed,
-      completedAt: w.completed_at,
-    }));
-
-    setStoreState(prev => ({ ...prev, waypoints: mapped, routeStops: routeStopsFrom(mapped) }));
+    await fetchWaypointsForConvoy(convoyId);
   }, [convoyId]);
 
-  // Subscribe to realtime updates and broadcast events
+  // Subscribe to realtime updates
   useEffect(() => {
-    if (!convoyId) return;
+    if (!convoyId) {
+      fetchWaypointsForConvoy(null);
+      return;
+    }
 
-    fetchWaypoints();
-
-    // Database realtime subscription
-    const dbChannel = supabase
-      .channel(`waypoints-${convoyId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'convoy_waypoints',
-          filter: `convoy_id=eq.${convoyId}`,
-        },
-        () => {
-          fetchWaypoints();
-        }
-      )
-      .subscribe();
-
-    // Broadcast channel for immediate updates
-    const controlChannel = supabase.channel(`convoy-control:${convoyId}`, {
-      config: { broadcast: { self: false } },
-    });
-
-    controlChannel.on('broadcast', { event: 'waypoints-updated' }, ({ payload }) => {
-      console.log('[Waypoints] Received waypoints-updated broadcast');
-      // Fast path: redraw the route from the bare coords in the payload
-      // immediately, without waiting on a DB round trip.
-      const stops = Array.isArray(payload?.stops) ? (payload.stops as RouteStop[]) : null;
-      if (stops) {
-        setStoreState(prev => ({ ...prev, routeStops: stops }));
-      }
-      // Source-of-truth reconciliation (names, order, completion state).
-      fetchWaypoints();
-    });
-
-    controlChannel.subscribe();
-
-    return () => {
-      supabase.removeChannel(dbChannel);
-      supabase.removeChannel(controlChannel);
-    };
-  }, [convoyId, fetchWaypoints]);
+    fetchWaypointsForConvoy(convoyId);
+    return acquireWaypointRealtimeSubscription(convoyId);
+  }, [convoyId]);
 
   const MAX_WAYPOINTS = 5;
 
@@ -206,14 +208,15 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
 
     console.log('[Waypoints] Added waypoint:', waypoint.name);
 
-    // Broadcast the new ordered stop list (lightweight coords only)
-    await broadcastWaypointUpdate([
+    // Optimistically redraw the local route; other riders update from DB realtime.
+    setStoreState(prev => ({ ...prev, routeStops: [
       ...routeStopsFrom(waypoints),
       { lat: waypoint.lat, lng: waypoint.lng },
-    ]);
+    ] }));
+    await fetchWaypointsForConvoy(convoyId);
 
     return true;
-  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
+  }, [convoyId, isLeader, waypoints]);
 
   // Remove a waypoint
   const removeWaypoint = useCallback(async (waypointId: string) => {
@@ -244,10 +247,10 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       }
     }
 
-    await broadcastWaypointUpdate(routeStopsFrom(remaining));
+    setStoreState(prev => ({ ...prev, waypoints: remaining, routeStops: routeStopsFrom(remaining) }));
 
     return true;
-  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
+  }, [convoyId, isLeader, waypoints]);
 
   // Mark waypoint as completed
   const completeWaypoint = useCallback(async (waypointId: string) => {
@@ -267,10 +270,14 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     }
 
     const remainingStops = routeStopsFrom(waypoints.filter(w => w.id !== waypointId));
-    await broadcastWaypointUpdate(remainingStops);
+    setStoreState(prev => ({
+      ...prev,
+      waypoints: prev.waypoints.map(w => w.id === waypointId ? { ...w, isCompleted: true, completedAt: new Date().toISOString() } : w),
+      routeStops: remainingStops,
+    }));
 
     return true;
-  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
+  }, [convoyId, isLeader, waypoints]);
 
   // Clear all waypoints
   const clearAllWaypoints = useCallback(async () => {
@@ -290,10 +297,10 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       return false;
     }
 
-    await broadcastWaypointUpdate([]);
+    setStoreState(prev => ({ ...prev, waypoints: [], routeStops: [] }));
 
     return true;
-  }, [convoyId, isLeader, broadcastWaypointUpdate]);
+  }, [convoyId, isLeader]);
 
   // Reorder waypoints
   const reorderWaypoints = useCallback(async (fromIndex: number, toIndex: number) => {
@@ -316,8 +323,8 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
         .eq('id', reindexed[i].id);
     }
 
-    await broadcastWaypointUpdate(routeStopsFrom(reindexed));
-  }, [convoyId, isLeader, waypoints, broadcastWaypointUpdate]);
+    setStoreState(prev => ({ ...prev, routeStops: routeStopsFrom(reindexed) }));
+  }, [convoyId, isLeader, waypoints]);
 
   // Get next incomplete waypoint
   const nextWaypoint = waypoints.find(w => !w.isCompleted);
