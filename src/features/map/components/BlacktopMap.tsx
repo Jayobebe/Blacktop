@@ -641,27 +641,47 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               </div>
             ) : (
               <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-3 px-3 pb-1">
-                {incompleteWaypoints.map((wp, i) => (
-                  <div
-                    key={wp.id}
-                    className="snap-start flex-shrink-0 w-44 flex items-center gap-2 px-3 py-2 bg-card/95 border border-border rounded-xl shadow-lg backdrop-blur text-sm"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
-                      {i + 1}
-                    </span>
-                    <p className="flex-1 truncate text-xs">{wp.name}</p>
-                    {convoy.isLeader && (
-                      <button
-                        onClick={() => removeWaypoint(wp.id)}
-                        className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-                        aria-label={`Remove stop ${wp.name}`}
+                {isSolo
+                  ? soloRoute.stops.map((wp, i) => (
+                      <div
+                        key={`solo-${i}`}
+                        className="snap-start flex-shrink-0 w-44 flex items-center gap-2 px-3 py-2 bg-card/95 border border-border rounded-xl shadow-lg backdrop-blur text-sm"
                       >
-                        <X className="w-3.5 h-3.5 text-muted-foreground" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {convoy.isLeader && incompleteWaypoints.length < 5 && (
+                        <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <p className="flex-1 truncate text-xs">{wp.name || 'Stop'}</p>
+                        <button
+                          onClick={() => removeSoloStopAt(i)}
+                          className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                          aria-label={`Remove stop ${wp.name || i + 1}`}
+                        >
+                          <X className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                      </div>
+                    ))
+                  : incompleteWaypoints.map((wp, i) => (
+                      <div
+                        key={wp.id}
+                        className="snap-start flex-shrink-0 w-44 flex items-center gap-2 px-3 py-2 bg-card/95 border border-border rounded-xl shadow-lg backdrop-blur text-sm"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <p className="flex-1 truncate text-xs">{wp.name}</p>
+                        {convoy.isLeader && (
+                          <button
+                            onClick={() => removeWaypoint(wp.id)}
+                            className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                            aria-label={`Remove stop ${wp.name}`}
+                          >
+                            <X className="w-3.5 h-3.5 text-muted-foreground" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                {((isSolo && soloRoute.stops.length < 5) ||
+                  (!isSolo && convoy.isLeader && incompleteWaypoints.length < 5)) && (
                   <button
                     onClick={() => setAddingWaypoint(true)}
                     className="snap-start flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-card/95 border border-dashed border-accent/60 rounded-xl shadow-lg backdrop-blur text-xs text-accent hover:bg-accent/10 transition-colors"
@@ -675,6 +695,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             )}
           </div>
         )}
+
 
 
         {destination && (isRouting || route) && (
