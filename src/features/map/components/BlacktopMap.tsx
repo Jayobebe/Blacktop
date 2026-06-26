@@ -68,6 +68,7 @@ const LOCATE_RESUME_DELAY_MS = 10000;
 
 interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
+  onContextLost?: () => void;
 }
 
 // Register the cache-backed `blacktop-tile://` protocol before any Map is
