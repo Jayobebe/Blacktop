@@ -482,9 +482,18 @@ export function BlacktopMap({ initialDestination, onContextLost }: BlacktopMapPr
     if (!map) return;
 
     const removeRouteLayers = () => {
-      if (map.getLayer(ROUTE_LINE_LAYER_ID)) map.removeLayer(ROUTE_LINE_LAYER_ID);
-      if (map.getLayer(ROUTE_CASING_LAYER_ID)) map.removeLayer(ROUTE_CASING_LAYER_ID);
-      if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
+      // On unmount/remount (e.g. WebGL context-loss auto-refresh) the map
+      // instance may already have been torn down — its internal style is
+      // gone and getLayer/getSource throw. Guard with a style check and
+      // swallow any teardown error so the cleanup never crashes React.
+      try {
+        if (!map.getStyle()) return;
+        if (map.getLayer(ROUTE_LINE_LAYER_ID)) map.removeLayer(ROUTE_LINE_LAYER_ID);
+        if (map.getLayer(ROUTE_CASING_LAYER_ID)) map.removeLayer(ROUTE_CASING_LAYER_ID);
+        if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
+      } catch {
+        // Map already removed — nothing to clean up.
+      }
     };
 
     if (!route) {
