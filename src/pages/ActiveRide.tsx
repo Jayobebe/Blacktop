@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useActiveRide, useRideHistory, RideSummary } from '@/features/ride';
+import { useActiveRide, useRideHistory, RideSummary, useSoloRoute, clearSoloRoute } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState } from '@/features/convoy';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
