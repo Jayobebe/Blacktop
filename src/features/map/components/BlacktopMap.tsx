@@ -595,7 +595,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           countryCode={countryCode}
           onSelect={(result) => {
             if (addingWaypoint) {
-              addWaypoint({ name: result.name, address: result.address || '', lat: result.lat, lng: result.lng });
+              if (isSolo) {
+                addSoloStop({ name: result.name, address: result.address, lat: result.lat, lng: result.lng });
+              } else {
+                addWaypoint({ name: result.name, address: result.address || '', lat: result.lat, lng: result.lng });
+              }
               setAddingWaypoint(false);
               return;
             }
@@ -615,6 +619,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               }
             }
           }}
+
         />
       )}
 
