@@ -29,7 +29,7 @@ export default function Terms() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: June 21, 2026
+          Last updated: June 26, 2026
         </p>
 
         <section className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-2">
