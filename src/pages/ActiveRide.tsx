@@ -531,7 +531,9 @@ export default function ActiveRide() {
     // start/stop loops.
     const rideId = await endRide();
     clearMapDestination();
+    clearSoloRoute();
     closeBlacktopMap();
+
     if (rideId) {
       flushSync(() => {
         setShowSummary(true);
