@@ -186,7 +186,7 @@ export function VehicleCard({ card }: Props) {
                   src={card.bike.photos.hero}
                   alt={card.bike.name}
                   className={cn(
-                    'w-full h-full object-contain',
+                    'w-full h-full object-contain scale-125',
                     locked && 'opacity-40 grayscale',
                   )}
                   style={{ imageRendering: 'pixelated' }}
