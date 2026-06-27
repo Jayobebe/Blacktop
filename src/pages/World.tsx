@@ -143,7 +143,7 @@ export default function World() {
         <WorldGlobe
           accentColor={accentColor}
           events={markers}
-          countryLights={countryLights}
+          countryLights={demoEnabled ? DEMO_COUNTRY_LIGHTS : countryLights}
           onScaleChange={setGlobeScale}
           className="w-full h-full"
         />
