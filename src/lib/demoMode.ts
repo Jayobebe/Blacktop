@@ -118,7 +118,6 @@ export const DEMO_RIDES: RideSession[] = buildDemoRides();
 
 
 // Demo bike — pixel-art Streetfighter image (background removed).
-import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 const DEMO_BIKE_HERO = demoBikeAsset.url;
 
 export const DEMO_BIKE_ID = 'demo-bike-01';
