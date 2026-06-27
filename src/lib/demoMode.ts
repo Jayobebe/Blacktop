@@ -3,6 +3,7 @@ import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 import type { Bike } from '@/features/garage/types';
 import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
+import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
 /** Local mirror of CollectedCard so demoMode stays leaf-level (no cycle). */
 type CollectedCard = SharedCardPayload & { collectedAt: number; key: string };
@@ -116,19 +117,8 @@ export const DEMO_RIDES: RideSession[] = buildDemoRides();
 
 
 
-// Demo bike — a simple silhouette so the Garage diorama has something to show.
-const DEMO_BIKE_HERO =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'>
-       <g fill='none' stroke='hsl(38 95% 55%)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'>
-         <circle cx='45' cy='90' r='22'/><circle cx='155' cy='90' r='22'/>
-         <path d='M45 90 L90 55 L130 55 L155 90'/>
-         <path d='M90 55 L75 35 L105 35'/>
-         <path d='M130 55 L145 35'/>
-       </g>
-     </svg>`,
-  );
+// Demo bike — pixel-art Streetfighter image (background removed).
+const DEMO_BIKE_HERO = demoBikeAsset.url;
 
 export const DEMO_BIKE_ID = 'demo-bike-01';
 
