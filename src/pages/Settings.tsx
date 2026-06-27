@@ -50,6 +50,46 @@ export default function Settings() {
   const [isTipping, setIsTipping] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'applying'>('idle');
+  const { enabled: demoEnabled } = useDemoMode();
+  const [demoActionRevealed, setDemoActionRevealed] = useState(false);
+  const [demoHoldProgress, setDemoHoldProgress] = useState(0);
+  const demoHoldStartRef = useRef<number | null>(null);
+  const demoHoldRafRef = useRef<number | null>(null);
+
+  const cancelDemoHold = () => {
+    demoHoldStartRef.current = null;
+    if (demoHoldRafRef.current != null) {
+      cancelAnimationFrame(demoHoldRafRef.current);
+      demoHoldRafRef.current = null;
+    }
+    setDemoHoldProgress(0);
+  };
+
+  const startDemoHold = () => {
+    demoHoldStartRef.current = performance.now();
+    const tick = () => {
+      if (demoHoldStartRef.current == null) return;
+      const elapsed = performance.now() - demoHoldStartRef.current;
+      const pct = Math.min(1, elapsed / 3000);
+      setDemoHoldProgress(pct);
+      if (pct >= 1) {
+        setDemoActionRevealed(true);
+        cancelDemoHold();
+        return;
+      }
+      demoHoldRafRef.current = requestAnimationFrame(tick);
+    };
+    demoHoldRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const handleToggleDemoMode = () => {
+    const next = !demoEnabled;
+    setDemoMode(next);
+    toast.success(next ? 'Demo data injected.' : 'Personal stats restored.');
+    setDemoActionRevealed(false);
+  };
+
+  useEffect(() => () => cancelDemoHold(), []);
 
   useEffect(() => {
     const off = onUpdateAvailable((available) => {
