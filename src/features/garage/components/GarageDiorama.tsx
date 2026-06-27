@@ -101,7 +101,7 @@ export function GarageDiorama({ bike, tip, editing = false, onPlacementChange }:
       />
 
       {/* Bike (absolutely positioned over the floor) */}
-      {bike?.photos?.hero?.startsWith('data:image/') ? (
+      {bike?.photos?.hero ? (
         <>
           {/* Shadow puck */}
           <div
