@@ -1,13 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
-import { useDemoMode, DEMO_STATS } from '@/lib/demoMode';
+import { useDemoMode, DEMO_STATS, DEMO_RIDES } from '@/lib/demoMode';
 
 const RIDES_KEY = 'blacktop_rides';
 
 export function useRideHistory() {
-  const [rides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
+  const [realRides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
   const { enabled: demoEnabled } = useDemoMode();
+  // In demo mode, swap rides at the read boundary so History/RideDetail show
+  // matching entries. Mutating callbacks below still target the REAL list so
+  // local user data is never overwritten.
+  const rides = demoEnabled ? DEMO_RIDES : realRides;
 
   const addRide = useCallback((ride: RideSession) => {
     setRides(prev => [ride, ...prev]);
