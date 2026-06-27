@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { RideStats } from '@/types/blacktop';
+import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 
 /**
