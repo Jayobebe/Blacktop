@@ -54,16 +54,18 @@ export default function World() {
   });
 
   const { data: memberRows } = useQuery({
-    queryKey: ['user-locations'],
+    queryKey: ['world-locations'],
     queryFn: async () => {
+      // Only count riders who opted into Blacktop World and were seen in the last 10 minutes.
+      const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { data } = await supabase
-        .from('convoy_members')
-        .select('user_id, current_lat, current_lng')
-        .not('current_lat', 'is', null)
-        .not('current_lng', 'is', null);
+        .from('world_locations')
+        .select('user_id, lat, lng')
+        .gt('last_seen', cutoff);
       return data ?? [];
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 
   // Deduplicate by user_id (keep one point per rider), then detect country
@@ -73,7 +75,7 @@ export default function World() {
     const seen = new Map<string, { lat: number; lng: number }>();
     for (const row of memberRows) {
       if (!seen.has(row.user_id)) {
-        seen.set(row.user_id, { lat: row.current_lat!, lng: row.current_lng! });
+        seen.set(row.user_id, { lat: row.lat, lng: row.lng });
       }
     }
 

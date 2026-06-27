@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: June 21, 2026 · Maintained by the Blacktop team.
+          Last updated: June 27, 2026 · Maintained by the Blacktop team.
         </p>
 
         <section className="space-y-2">
@@ -85,27 +85,43 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Blacktop World (opt-in)</h2>
           <p className="text-muted-foreground">
-            Blacktop World is an optional global view and collection experience showing anonymous rider
-            activity alongside public weather, wildfire, volcano, and flood
-            events from open data feeds. It is <span className="text-foreground">off by default</span> and
-            can be enabled or disabled at any time from Settings. Once opted
-            in, you gain access to the Blacktop World view, the <span className="text-foreground">Card Collection Folder</span>, and the <span className="text-foreground">Flip Card QR code</span> sharing features.
+            Blacktop World is the social hub of the app — a global live map where you can see the
+            riding community in motion, collect and trade custom vehicle cards with other riders,
+            and track real-world events that may affect your routes. It is{' '}
+            <span className="text-foreground">off by default</span>, fully voluntary, and can be
+            toggled on or off at any time in Settings. No features outside of Blacktop World
+            require it.
           </p>
           <p className="text-muted-foreground">
-            While enabled and the app is open, only your <span className="text-foreground">country</span> (derived
-            from coarse location) is shared with the backend so it can be
-            rendered as a country-level glow on the globe. No exact
-            coordinates, names, ride data, speed, routes, or device
-            identifiers are sent. Country-level counts are aggregated and
-            cleared the moment your session ends — nothing per-user is
-            retained.
+            <span className="text-foreground">What gets shared when you enable it and start a ride:</span> your
+            precise GPS coordinates and a timestamp are written to our server every 30 seconds
+            while you are actively riding. This data powers the live rider count and the
+            country-level glow on the globe — other riders see how many people are riding globally
+            and which countries are active, not your individual pin or identity.
+            No display name, speed, route history, or device identifier is included.
           </p>
           <p className="text-muted-foreground">
-            Opting in also allows you to flip your custom vehicle stats card to reveal a QR code containing your profile display name, vehicle info, and stats. Other users can scan this QR code to add your card to their local <span className="text-foreground">Collected Cards Folder</span>. These collected cards are stored strictly locally on your device, and you can erase your entire collection at any time using the Burn Button.
+            <span className="text-foreground">When it is removed:</span> your location record is
+            deleted from our servers the moment you end your ride. If your ride is interrupted
+            (app crash, phone dies, signal lost) the record expires automatically within 10 minutes
+            based on a freshness check — it is never retained beyond your active session.
+            Disabling Blacktop World in Settings stops any further writes immediately.
           </p>
           <p className="text-muted-foreground">
-            Public event markers (storms, wildfires, etc.) come from
-            third-party open data sources and contain no personal information.
+            <span className="text-foreground">Collector cards:</span> opting in also unlocks the
+            ability to flip your custom vehicle stats card to reveal a shareable QR code. The QR
+            contains your display name, vehicle info, tier, and ride stats — nothing else. Other
+            riders can scan it to add your card to their local{' '}
+            <span className="text-foreground">Card Collection</span>. Collected cards are stored
+            entirely on the scanning rider's device and are never uploaded anywhere. Stats on a
+            collected card are frozen at the moment of scan and only update if the owner
+            explicitly shares an updated QR and the collector chooses to rescan it. You can
+            delete any card from your collection at any time, and the Burn Button wipes the
+            entire collection instantly.
+          </p>
+          <p className="text-muted-foreground">
+            Public event markers on the globe (storms, wildfires, volcanoes, floods) come from
+            NASA EONET open data feeds and contain no personal information.
           </p>
         </section>
 

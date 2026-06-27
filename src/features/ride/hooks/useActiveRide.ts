@@ -108,6 +108,8 @@ let durationInterval: ReturnType<typeof setInterval> | null = null;
 let convoySyncTimeout: ReturnType<typeof setTimeout> | null = null;
 let convoySyncDelay: number = CONVOY_SYNC_FAST_INTERVAL;
 let belowIdleThresholdSince: number | null = null;
+let worldSyncTimeout: ReturnType<typeof setTimeout> | null = null;
+const WORLD_SYNC_INTERVAL = 30_000; // ms
 let isAppBackgrounded = false;
 
 // App-state changes (background/minimize/deep-link out) override the speed-based
@@ -463,6 +465,47 @@ function stopConvoySync() {
   belowIdleThresholdSince = null;
 }
 
+// World location sync — writes to world_locations for any active rider (solo or
+// convoy) who has opted into Blacktop World. Reads the flag directly from
+// localStorage so it doesn't need to be threaded through the hook's props.
+function isWorldSharingEnabled(): boolean {
+  try {
+    const s = JSON.parse(localStorage.getItem('blacktop-settings') ?? '{}');
+    return s?.blacktopWorldEnabled === true;
+  } catch { return false; }
+}
+
+async function syncWorldLocation() {
+  if (!rideState.isActive || !lastPosition || !isWorldSharingEnabled()) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('world_locations').upsert(
+    { user_id: user.id, lat: lastPosition.lat, lng: lastPosition.lng, last_seen: new Date().toISOString() },
+    { onConflict: 'user_id' },
+  );
+}
+
+async function clearWorldLocation() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('world_locations').delete().eq('user_id', user.id);
+}
+
+function startWorldSync() {
+  if (worldSyncTimeout) clearTimeout(worldSyncTimeout);
+  worldSyncTimeout = setTimeout(() => {
+    syncWorldLocation().catch(() => {});
+    startWorldSync();
+  }, WORLD_SYNC_INTERVAL);
+}
+
+function stopWorldSync() {
+  if (worldSyncTimeout) {
+    clearTimeout(worldSyncTimeout);
+    worldSyncTimeout = null;
+  }
+}
+
 // Called on every speed update so crossing back above the idle threshold
 // snaps the cadence back to fast immediately, instead of waiting out
 // whatever slow-cadence wait is already in flight. A no-op while backgrounded -
@@ -495,6 +538,8 @@ function pauseRideTracking(dueToInactivity: boolean) {
   stopGpsWatch();
   if (dueToInactivity) {
     stopConvoySync();
+    stopWorldSync();
+    clearWorldLocation().catch(() => {});
     console.log('[Ride] Inactivity guard - tracking paused after 15 stationary minutes');
     toast('Tracking paused due to inactivity.', {
       description: 'No movement detected for 15 minutes. Resume the ride to continue broadcasting your location.',
@@ -583,6 +628,9 @@ export function useActiveRide(convoyId?: string | null) {
         console.log('[Convoy] Resuming stats sync for convoy:', convoyId);
         startConvoySync();
       }
+
+      // Resume world sync
+      if (!worldSyncTimeout) startWorldSync();
     }
   }, [state.isActive, state.isPaused, state.isConvoyMode, state.startedAt, convoyId]);
 
@@ -632,6 +680,10 @@ export function useActiveRide(convoyId?: string | null) {
       startConvoySync();
     }
 
+    // World location sync (convoy + solo, gated by blacktopWorldEnabled setting)
+    startWorldSync();
+    syncWorldLocation().catch(() => {});
+
     // Start GPS tracking using helper
     startGpsWatch();
 
@@ -669,6 +721,10 @@ export function useActiveRide(convoyId?: string | null) {
       syncConvoyStats().catch(err => console.warn('[Convoy] Final sync error:', err));
     }
     currentConvoyId = null;
+
+    // Stop world sync and remove this rider from the live count
+    stopWorldSync();
+    clearWorldLocation().catch(() => {});
 
     // Save the ride
     const currentState = rideState;
@@ -767,6 +823,7 @@ export function useActiveRide(convoyId?: string | null) {
       if (!convoySyncTimeout && currentConvoyId && rideState.isConvoyMode) {
         startConvoySync();
       }
+      if (!worldSyncTimeout) startWorldSync();
       setRideState(prev => ({ ...prev, isPaused: false, inactivityTimedOut: false }));
       console.log('[Ride] Resumed - GPS restarted, total paused time:', totalPausedTime);
     }
