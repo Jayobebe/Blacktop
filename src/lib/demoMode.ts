@@ -109,6 +109,10 @@ function buildDemoRides(): RideSession[] {
   return rides;
 }
 
+export const DEMO_RIDES: RideSession[] = buildDemoRides();
+
+
+
 // Demo bike — a simple silhouette so the Garage diorama has something to show.
 const DEMO_BIKE_HERO =
   "data:image/svg+xml;utf8," +
