@@ -80,9 +80,12 @@ function emit() {
 function startTicker() {
   if (tickHandle) return;
   tickHandle = setInterval(() => {
+    // ~40% chance to actually move each tick — keeps the count drifting
+    // very slowly (a step every ~30-50s on average).
+    if (Math.random() > 0.4) return;
     state = { ...state, activeRiders: randomActive(state.activeRiders) };
     emit();
-  }, 2500);
+  }, 18000);
 }
 
 function stopTicker() {
