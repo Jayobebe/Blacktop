@@ -3,6 +3,7 @@ import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 import type { Bike } from '@/features/garage/types';
 import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
+import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
 /** Local mirror of CollectedCard so demoMode stays leaf-level (no cycle). */
 type CollectedCard = SharedCardPayload & { collectedAt: number; key: string };
