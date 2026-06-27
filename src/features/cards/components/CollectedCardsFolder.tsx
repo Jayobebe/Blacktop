@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { toast } from 'sonner';
 import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw } from 'lucide-react';
@@ -175,10 +176,12 @@ export function CollectedCardsFolder() {
         </>
       )}
 
-      {/* Scanner overlay — full screen, no scroll, centred */}
-      {showScanner && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col safe-top safe-bottom overflow-hidden">
-          <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-4 pb-3">
+      {/* Scanner portal — rendered at document.body to escape the World page's
+          transform stacking context, which would otherwise make fixed positioning
+          scroll with the page instead of anchoring to the viewport. */}
+      {showScanner && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-background flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3">
             <button
               onClick={stopScanner}
               className="p-2.5 rounded-xl bg-secondary hover:bg-muted transition-colors"
@@ -186,22 +189,22 @@ export function CollectedCardsFolder() {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-base font-semibold">
               {rescanKey ? 'Rescan Card' : 'Scan Card QR'}
             </h2>
           </div>
 
-          {/* Camera fill — no padding, no overflow clipping on the scanner div */}
-          <div className="flex-1 flex items-center justify-center overflow-hidden">
-            <div id={SCANNER_ID} className="w-full max-w-lg" />
+          <div className="flex-1 overflow-hidden">
+            <div id={SCANNER_ID} className="w-full h-full" />
           </div>
 
-          <p className="flex-shrink-0 text-center text-muted-foreground text-sm px-6 pt-3 pb-8">
+          <p className="flex-shrink-0 text-center text-muted-foreground text-xs px-6 py-3">
             {rescanKey
-              ? "Point your camera at the rider's updated QR to refresh their card"
+              ? "Point at the rider's updated QR to refresh their card"
               : "Point your camera at a rider's card QR"}
           </p>
-        </div>
+        </div>,
+        document.body,
       )}
     </section>
   );
