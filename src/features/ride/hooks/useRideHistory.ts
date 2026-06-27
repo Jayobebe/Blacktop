@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
-import { useDemoMode, DEMO_STATS, DEMO_RIDES } from '@/lib/demoMode';
+import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
 
 const RIDES_KEY = 'blacktop_rides';
 
@@ -90,9 +90,8 @@ export function useRideHistory() {
   }, [setRides]);
 
   const stats: RideStats = useMemo(() => {
-    // Demo rides are intentionally designed to roll up to DEMO_STATS — but
-    // recomputing here keeps Stats and History byte-for-byte consistent.
-    const _ = demoEnabled; // keep dep tracking
+    // Demo rides roll up to DEMO_STATS — recomputing here keeps Stats and
+    // History byte-for-byte consistent regardless of demo toggle.
     const completedRides = rides.filter(r => r.endedAt !== null);
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
