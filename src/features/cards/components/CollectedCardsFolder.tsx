@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { toast } from 'sonner';
-import { Folder, Plus, X, Lock, Gauge, Route, Clock, Hash, Sparkles, Trash2 } from 'lucide-react';
+import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/features/settings';
@@ -19,13 +19,12 @@ import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCard
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
 export function CollectedCardsFolder() {
-  const { collected, addCard, removeCard } = useCollectedCards();
+  const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const [showScanner, setShowScanner] = useState(false);
+  const [rescanKey, setRescanKey] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const totalSlides = collected.length + 1; // +1 for the scan slide
 
   const handleScroll = () => {
     const el = scrollRef.current;
@@ -33,8 +32,9 @@ export function CollectedCardsFolder() {
     setCurrentIdx(Math.round(el.scrollTop / el.clientHeight));
   };
 
-  const startScanner = async () => {
+  const startScanner = async (keyToRescan: string | null = null) => {
     haptics.light();
+    setRescanKey(keyToRescan);
     setShowScanner(true);
     await new Promise((r) => setTimeout(r, 100));
     try {
@@ -42,13 +42,22 @@ export function CollectedCardsFolder() {
       scannerRef.current = qr;
       await qr.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        { fps: 10, qrbox: { width: 300, height: 300 } },
         (decoded) => {
           const payload = decodeCard(decoded);
           if (!payload) return;
-          const { added } = addCard(payload);
           haptics.light();
-          toast.success(added ? `Added ${payload.n} to your collection` : `Updated ${payload.n}`);
+          if (keyToRescan !== null) {
+            rescanCard(keyToRescan, payload);
+            toast.success(`${payload.n} updated`);
+          } else {
+            const { added } = addCard(payload);
+            if (added) {
+              toast.success(`Added ${payload.n} to your collection`);
+            } else {
+              toast.info(`${payload.n} is already in your collection`);
+            }
+          }
           stopScanner();
         },
         () => {},
@@ -71,6 +80,7 @@ export function CollectedCardsFolder() {
       scannerRef.current = null;
     }
     setShowScanner(false);
+    setRescanKey(null);
   };
 
   useEffect(() => {
@@ -83,98 +93,113 @@ export function CollectedCardsFolder() {
 
   return (
     <section className="w-full">
-      {/* Header */}
+      {/* Header — scan button always visible here, no scrolling required */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <Folder className="w-4 h-4 text-accent" />
         <h2 className="text-sm font-semibold tracking-tight">Card Collection</h2>
         {collected.length > 0 && (
-          <span className="ml-auto text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground ml-1">
             {Math.min(currentIdx + 1, collected.length)} / {collected.length}
           </span>
         )}
+        <button
+          type="button"
+          onClick={() => startScanner(null)}
+          className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
+          aria-label="Scan a card"
+        >
+          <ScanLine className="w-3.5 h-3.5" />
+          Scan card
+        </button>
       </div>
 
-      {/* Vertical snap carousel */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="h-[85vh] overflow-y-scroll snap-y snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {collected.map((card) => (
+      {collected.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-2 px-4 py-12">
+          <p className="text-xs text-muted-foreground/60 text-center">
+            Scan another rider's card QR to start your collection
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Vertical snap carousel — cards only, no scroll-to-scan */}
           <div
-            key={card.key}
-            className="h-full snap-start flex flex-col items-center justify-center gap-3 px-4 py-6"
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="h-[85vh] overflow-y-scroll snap-y snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <div className="w-full max-w-[300px]">
-              <FullCard card={card} />
-              <button
-                type="button"
-                onClick={() => {
-                  removeCard(card.key);
-                  toast.success('Removed from collection');
-                }}
-                className="mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-sm font-medium"
+            {collected.map((card) => (
+              <div
+                key={card.key}
+                className="h-full snap-start flex flex-col items-center justify-center gap-3 px-4 py-6"
               >
-                <Trash2 className="w-4 h-4" /> Remove from collection
-              </button>
-            </div>
+                <div className="w-full max-w-[300px]">
+                  <FullCard card={card} />
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startScanner(card.key)}
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-sm font-medium"
+                    >
+                      <RefreshCw className="w-4 h-4" /> Rescan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeCard(card.key);
+                        toast.success('Removed from collection');
+                      }}
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-sm font-medium"
+                    >
+                      <Trash2 className="w-4 h-4" /> Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
 
-        {/* Scan slide — always last */}
-        <div className="h-full snap-start flex flex-col items-center justify-center gap-4 px-4">
-          {collected.length === 0 && (
-            <p className="text-xs text-muted-foreground/60 text-center">
-              Scan another rider's card QR to start your collection
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={startScanner}
-            className="aspect-[5/7] w-full max-w-[220px] rounded-2xl border-2 border-dashed border-border/50 bg-card/30 hover:bg-card/50 hover:border-accent/60 transition-colors flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-foreground touch-target"
-            aria-label="Add card by scanning QR"
-          >
-            <div className="w-12 h-12 rounded-full bg-secondary/60 flex items-center justify-center">
-              <Plus className="w-6 h-6" />
+          {/* Dot indicators */}
+          {collected.length > 1 && (
+            <div className="flex justify-center gap-1.5 mt-3 pb-2">
+              {Array.from({ length: collected.length }, (_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-1.5 rounded-full transition-all duration-200',
+                    i === currentIdx ? 'w-6 bg-accent' : 'w-1.5 bg-muted-foreground/30',
+                  )}
+                />
+              ))}
             </div>
-            <span className="text-xs uppercase tracking-widest">Scan card</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Dot indicators */}
-      {totalSlides > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3 pb-2">
-          {Array.from({ length: totalSlides }, (_, i) => (
-            <div
-              key={i}
-              className={cn(
-                'h-1.5 rounded-full transition-all duration-200',
-                i === currentIdx ? 'w-6 bg-accent' : 'w-1.5 bg-muted-foreground/30',
-              )}
-            />
-          ))}
-        </div>
+          )}
+        </>
       )}
 
-      {/* Scanner overlay */}
+      {/* Scanner overlay — full screen, no scroll, centred */}
       {showScanner && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col safe-top safe-bottom">
-          <div className="p-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Scan Card QR</h2>
+        <div className="fixed inset-0 z-50 bg-background flex flex-col safe-top safe-bottom overflow-hidden">
+          <div className="flex-shrink-0 flex items-center gap-3 px-4 pt-4 pb-3">
             <button
               onClick={stopScanner}
-              className="p-2 rounded-lg bg-secondary hover:bg-muted transition-colors"
-              aria-label="Close scanner"
+              className="p-2.5 rounded-xl bg-secondary hover:bg-muted transition-colors"
+              aria-label="Back"
             >
-              <X className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
+            <h2 className="text-lg font-semibold">
+              {rescanKey ? 'Rescan Card' : 'Scan Card QR'}
+            </h2>
           </div>
-          <div className="flex-1 flex items-center justify-center p-4">
-            <div id={SCANNER_ID} className="w-full max-w-sm aspect-square rounded-2xl overflow-hidden" />
+
+          {/* Camera fill — no padding, no overflow clipping on the scanner div */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            <div id={SCANNER_ID} className="w-full max-w-lg" />
           </div>
-          <p className="text-center text-muted-foreground text-sm pb-8">
-            Point your camera at a rider's card QR
+
+          <p className="flex-shrink-0 text-center text-muted-foreground text-sm px-6 pt-3 pb-8">
+            {rescanKey
+              ? "Point your camera at the rider's updated QR to refresh their card"
+              : "Point your camera at a rider's card QR"}
           </p>
         </div>
       )}

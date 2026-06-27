@@ -126,9 +126,9 @@ export async function searchPlaces(
       q: query,
       countryCode,
       viewbox: biasViewbox,
-      // Soft bias only - never `bounded: '1'`, which would hard-exclude any
-      // result outside the current viewport and break long-distance search.
-      bounded: '0',
+      // Hard-bound to the visible viewport so local results surface first.
+      // The fallback below retries without bounds if nothing is found here.
+      bounded: hasBias ? '1' : '0',
       limit: hasBias ? 25 : 30,
     });
 

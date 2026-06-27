@@ -246,7 +246,7 @@ async function searchPlaces(
   const preferNearby = !!userLocation && !isPostal;
 
   const nearViewbox = userLocation
-    ? `${userLocation.lng - 0.18},${userLocation.lat + 0.18},${userLocation.lng + 0.18},${userLocation.lat - 0.18}`
+    ? `${userLocation.lng - 0.27},${userLocation.lat + 0.27},${userLocation.lng + 0.27},${userLocation.lat - 0.27}`
     : null;
 
   try {

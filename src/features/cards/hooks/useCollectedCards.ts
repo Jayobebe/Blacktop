@@ -19,18 +19,28 @@ export function useCollectedCards() {
       const key = collectedCardKey(payload);
       let added = false;
       setCollected((prev) => {
-        const existingIdx = prev.findIndex((c) => c.key === key);
-        const entry: CollectedCard = { ...payload, key, collectedAt: Date.now() };
-        if (existingIdx >= 0) {
-          // Update existing entry with latest stats / tier.
-          const next = prev.slice();
-          next[existingIdx] = { ...entry, collectedAt: prev[existingIdx].collectedAt };
-          return next;
+        if (prev.some((c) => c.key === key)) {
+          // Card already in collection — stats frozen until user explicitly rescans.
+          return prev;
         }
         added = true;
-        return [entry, ...prev];
+        return [{ ...payload, key, collectedAt: Date.now() }, ...prev];
       });
       return { added, key };
+    },
+    [setCollected],
+  );
+
+  // Explicit rescan: replaces a card's data at its existing slot, preserving collectedAt.
+  const rescanCard = useCallback(
+    (key: string, payload: SharedCardPayload) => {
+      setCollected((prev) => {
+        const idx = prev.findIndex((c) => c.key === key);
+        if (idx < 0) return prev;
+        const next = prev.slice();
+        next[idx] = { ...payload, key, collectedAt: prev[idx].collectedAt };
+        return next;
+      });
     },
     [setCollected],
   );
@@ -44,5 +54,5 @@ export function useCollectedCards() {
 
   const clear = useCallback(() => setCollected([]), [setCollected]);
 
-  return { collected, addCard, removeCard, clear };
+  return { collected, addCard, rescanCard, removeCard, clear };
 }
