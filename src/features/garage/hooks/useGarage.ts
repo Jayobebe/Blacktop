@@ -128,7 +128,7 @@ export function useGarage() {
   return {
     bikes,
     activeBike,
-    activeBikeId: state.activeBikeId,
+    activeBikeId,
     addBike,
     updateBike,
     deleteBike,
