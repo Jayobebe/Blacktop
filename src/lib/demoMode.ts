@@ -112,8 +112,8 @@ export const DEMO_RIDES: RideSession[] = buildDemoRides();
 
 
 export const DEMO_SCORES: ArcadeScores = {
-  'hit-heavy': 8540,
-  'petrol-head': 12300,
+  'hit-heavy': 14,    // peak Gs
+  'petrol-head': 83,  // seconds survived
 };
 
 const ACTIVE_MIN = 12;
