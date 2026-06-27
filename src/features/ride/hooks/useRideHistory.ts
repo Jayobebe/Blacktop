@@ -124,7 +124,7 @@ export function useRideHistory() {
       convoyRides,
       badges,
     };
-  }, [rides, demoEnabled]);
+  }, [rides]);
 
   // Ride receipts (Ride History) are rendered on demand from `rides` and the
   // garage's bike data - there is no separate receipt image/cache stored
