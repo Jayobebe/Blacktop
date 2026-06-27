@@ -1,6 +1,11 @@
 import { useSyncExternalStore } from 'react';
 import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
+import type { Bike } from '@/features/garage/types';
+import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
+
+/** Local mirror of CollectedCard so demoMode stays leaf-level (no cycle). */
+type CollectedCard = SharedCardPayload & { collectedAt: number; key: string };
 
 /**
  * Demo-mode store. When enabled, read-only overrides are surfaced for:
@@ -110,6 +115,94 @@ function buildDemoRides(): RideSession[] {
 export const DEMO_RIDES: RideSession[] = buildDemoRides();
 
 
+
+// Demo bike — a simple silhouette so the Garage diorama has something to show.
+const DEMO_BIKE_HERO =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'>
+       <g fill='none' stroke='hsl(38 95% 55%)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'>
+         <circle cx='45' cy='90' r='22'/><circle cx='155' cy='90' r='22'/>
+         <path d='M45 90 L90 55 L130 55 L155 90'/>
+         <path d='M90 55 L75 35 L105 35'/>
+         <path d='M130 55 L145 35'/>
+       </g>
+     </svg>`,
+  );
+
+export const DEMO_BIKE_ID = 'demo-bike-01';
+
+export const DEMO_BIKE: Bike = {
+  id: DEMO_BIKE_ID,
+  name: 'Demo Streetfighter',
+  makeModel: 'Ducati Streetfighter V4',
+  createdAt: Date.now() - 365 * 86_400_000,
+  photos: { hero: DEMO_BIKE_HERO },
+  baseOdometerKm: 4200,
+  maintenance: [
+    { id: 'demo-m-1', name: 'Chain lube', intervalKm: 500, lastServiceKm: 4800 },
+    { id: 'demo-m-2', name: 'Engine oil', intervalKm: 5000, lastServiceKm: 4200 },
+    { id: 'demo-m-3', name: 'Tyres', intervalKm: 8000, lastServiceKm: 4200 },
+  ],
+};
+
+// Tag every demo ride against the demo bike so Garage / VehicleCards roll up.
+DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });
+
+export const DEMO_COLLECTED_CARDS: CollectedCard[] = [
+  {
+    v: 1,
+    i: 'demo-card-01',
+    n: 'Rico\u2019s Panigale',
+    m: 'Ducati Panigale V4',
+    o: 'Rico',
+    t: 'gold',
+    tl: 'Gold',
+    s: { totalRides: 84, totalDistanceMi: 2410, totalDurationSec: 612000, topSpeedMph: 168, maxLean: 52, maxGForce: 1.4 },
+    ts: Date.now() - 9 * 86_400_000,
+    key: 'demo-card-01::Rico::Rico\u2019s Panigale',
+    collectedAt: Date.now() - 9 * 86_400_000,
+  },
+  {
+    v: 1,
+    i: 'demo-card-02',
+    n: 'Marlowe\u2019s R1',
+    m: 'Yamaha YZF-R1',
+    o: 'Marlowe',
+    t: 'silver',
+    tl: 'Silver',
+    s: { totalRides: 31, totalDistanceMi: 980, totalDurationSec: 248000, topSpeedMph: 154, maxLean: 47, maxGForce: 1.2 },
+    ts: Date.now() - 21 * 86_400_000,
+    key: 'demo-card-02::Marlowe::Marlowe\u2019s R1',
+    collectedAt: Date.now() - 21 * 86_400_000,
+  },
+  {
+    v: 1,
+    i: 'demo-card-03',
+    n: 'Jules\u2019 Speed Triple',
+    m: 'Triumph Speed Triple 1200 RS',
+    o: 'Jules',
+    t: 'diamond',
+    tl: 'Diamond',
+    s: { totalRides: 212, totalDistanceMi: 6840, totalDurationSec: 1620000, topSpeedMph: 178, maxLean: 55, maxGForce: 1.7 },
+    ts: Date.now() - 3 * 86_400_000,
+    key: 'demo-card-03::Jules::Jules\u2019 Speed Triple',
+    collectedAt: Date.now() - 3 * 86_400_000,
+  },
+  {
+    v: 1,
+    i: 'demo-card-04',
+    n: 'Nora\u2019s SV650',
+    m: 'Suzuki SV650',
+    o: 'Nora',
+    t: 'bronze',
+    tl: 'Bronze',
+    s: { totalRides: 14, totalDistanceMi: 320, totalDurationSec: 96000, topSpeedMph: 121, maxLean: 38, maxGForce: 1.0 },
+    ts: Date.now() - 40 * 86_400_000,
+    key: 'demo-card-04::Nora::Nora\u2019s SV650',
+    collectedAt: Date.now() - 40 * 86_400_000,
+  },
+];
 
 export const DEMO_SCORES: ArcadeScores = {
   'hit-heavy': 14,    // peak Gs

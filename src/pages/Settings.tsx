@@ -198,6 +198,12 @@ export default function Settings() {
         y: rect.top + rect.height / 2,
       });
       setBurning(true);
+
+      if (demoEnabled) {
+        // In demo mode the burn is a "revert to personal stats" gesture —
+        // do NOT touch real ride/garage data or the auth identity.
+        return;
+      }
       try {
         // Together these two cover every input a Ride History receipt is
         // built from (ride stats/badges/G-data + bike name/photo) - receipts
@@ -212,6 +218,14 @@ export default function Settings() {
 
   const handleBurnPeak = async () => {
     // Screen is fully covered by flame/smoke — safe to swap routes underneath.
+    if (demoEnabled) {
+      // Drop demo overrides; user lands back on Settings with real data.
+      setDemoMode(false);
+      setBurnStep(0);
+      burnLockRef.current = false;
+      toast.success('Personal stats restored.');
+      return;
+    }
     try {
       await resetIdentity();
     } catch (e) {

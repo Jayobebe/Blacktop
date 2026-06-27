@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Bike, BikePhotos, GarageState, GARAGE_STORAGE_KEY, MaintItem } from '../types';
+import { useDemoMode, DEMO_BIKE, DEMO_BIKE_ID } from '@/lib/demoMode';
 
 const DEFAULT_STATE: GarageState = { bikes: [], activeBikeId: null };
 
@@ -16,9 +17,14 @@ function migrateBike(b: Bike): Bike {
 
 export function useGarage() {
   const [state, setState, clear] = useLocalStorage<GarageState>(GARAGE_STORAGE_KEY, DEFAULT_STATE);
+  const { enabled: demoEnabled } = useDemoMode();
 
-  const bikes = useMemo(() => state.bikes.map(migrateBike), [state.bikes]);
-  const activeBike = bikes.find((b) => b.id === state.activeBikeId) || null;
+  const bikes = useMemo(
+    () => (demoEnabled ? [DEMO_BIKE] : state.bikes.map(migrateBike)),
+    [state.bikes, demoEnabled],
+  );
+  const activeBikeId = demoEnabled ? DEMO_BIKE_ID : state.activeBikeId;
+  const activeBike = bikes.find((b) => b.id === activeBikeId) || null;
 
   const addBike = useCallback(
     (input: { name: string; makeModel?: string; photos: BikePhotos; baseOdometerKm: number }) => {
@@ -122,7 +128,7 @@ export function useGarage() {
   return {
     bikes,
     activeBike,
-    activeBikeId: state.activeBikeId,
+    activeBikeId,
     addBike,
     updateBike,
     deleteBike,
