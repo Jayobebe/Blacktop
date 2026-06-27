@@ -2,7 +2,10 @@ import { useSyncExternalStore } from 'react';
 import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 import type { Bike } from '@/features/garage/types';
-import type { CollectedCard } from '@/features/cards/hooks/useCollectedCards';
+import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
+
+/** Local mirror of CollectedCard so demoMode stays leaf-level (no cycle). */
+type CollectedCard = SharedCardPayload & { collectedAt: number; key: string };
 
 /**
  * Demo-mode store. When enabled, read-only overrides are surfaced for:
