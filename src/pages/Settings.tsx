@@ -33,6 +33,7 @@ import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
+import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
