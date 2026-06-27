@@ -90,7 +90,9 @@ export function useRideHistory() {
   }, [setRides]);
 
   const stats: RideStats = useMemo(() => {
-    if (demoEnabled) return DEMO_STATS;
+    // Demo rides are intentionally designed to roll up to DEMO_STATS — but
+    // recomputing here keeps Stats and History byte-for-byte consistent.
+    const _ = demoEnabled; // keep dep tracking
     const completedRides = rides.filter(r => r.endedAt !== null);
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
