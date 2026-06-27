@@ -1,11 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
+import { useDemoMode, DEMO_STATS } from '@/lib/demoMode';
 
 const RIDES_KEY = 'blacktop_rides';
 
 export function useRideHistory() {
   const [rides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
+  const { enabled: demoEnabled } = useDemoMode();
 
   const addRide = useCallback((ride: RideSession) => {
     setRides(prev => [ride, ...prev]);
@@ -84,6 +86,7 @@ export function useRideHistory() {
   }, [setRides]);
 
   const stats: RideStats = useMemo(() => {
+    if (demoEnabled) return DEMO_STATS;
     const completedRides = rides.filter(r => r.endedAt !== null);
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
@@ -116,7 +119,7 @@ export function useRideHistory() {
       convoyRides,
       badges,
     };
-  }, [rides]);
+  }, [rides, demoEnabled]);
 
   // Ride receipts (Ride History) are rendered on demand from `rides` and the
   // garage's bike data - there is no separate receipt image/cache stored

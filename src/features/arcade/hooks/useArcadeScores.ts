@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { ArcadeGame, ArcadeScores } from '../types';
+import { useDemoMode, DEMO_SCORES } from '@/lib/demoMode';
 
 const LS_KEYS: Record<ArcadeGame, string> = {
   'hit-heavy': 'blacktop_arcade_hit_heavy_hs',
