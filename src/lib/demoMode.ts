@@ -37,13 +37,26 @@ const ACTIVE_MIN = 12;
 const ACTIVE_MAX = 47; // strictly < 50
 
 function randomActive(prev: number): number {
-  // Random walk that stays inside [ACTIVE_MIN, ACTIVE_MAX]
-  const delta = Math.floor(Math.random() * 7) - 3; // -3..+3
+  // Very slow random walk — at most ±1 per tick, clamped inside bounds.
+  const delta = Math.random() < 0.5 ? -1 : 1;
   let next = prev + delta;
-  if (next < ACTIVE_MIN) next = ACTIVE_MIN + Math.floor(Math.random() * 3);
-  if (next > ACTIVE_MAX) next = ACTIVE_MAX - Math.floor(Math.random() * 3);
+  if (next < ACTIVE_MIN) next = ACTIVE_MIN + 1;
+  if (next > ACTIVE_MAX) next = ACTIVE_MAX - 1;
   return next;
 }
+
+/**
+ * ISO 3166-1 numeric country codes used by world-atlas/countries-110m.
+ * Demo-mode glow weights (higher = brighter). Slightly varied so the
+ * map feels alive without strobing.
+ */
+export const DEMO_COUNTRY_LIGHTS: Record<number, number> = {
+  840: 14, // United States
+  826: 9,  // United Kingdom
+  380: 7,  // Italy
+  764: 5,  // Thailand
+  156: 11, // China
+};
 
 interface DemoState {
   enabled: boolean;
@@ -67,9 +80,12 @@ function emit() {
 function startTicker() {
   if (tickHandle) return;
   tickHandle = setInterval(() => {
+    // ~40% chance to actually move each tick — keeps the count drifting
+    // very slowly (a step every ~30-50s on average).
+    if (Math.random() > 0.4) return;
     state = { ...state, activeRiders: randomActive(state.activeRiders) };
     emit();
-  }, 2500);
+  }, 18000);
 }
 
 function stopTicker() {

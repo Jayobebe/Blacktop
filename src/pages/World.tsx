@@ -10,7 +10,7 @@ import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldEventMarker } from '@/components/WorldGlobe';
 import { CollectedCardsFolder } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
-import { useDemoMode } from '@/lib/demoMode';
+import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 
 const EVENT_KEY_ROW1 = [
   { id: 'WF', label: 'Wildfire', color: '#fb923c' },
@@ -143,7 +143,7 @@ export default function World() {
         <WorldGlobe
           accentColor={accentColor}
           events={markers}
-          countryLights={countryLights}
+          countryLights={demoEnabled ? DEMO_COUNTRY_LIGHTS : countryLights}
           onScaleChange={setGlobeScale}
           className="w-full h-full"
         />
