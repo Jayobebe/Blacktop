@@ -155,13 +155,13 @@ export default function World() {
           <div className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]">
             <span
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={activeCount > 0
+              style={displayedActiveCount > 0
                 ? { backgroundColor: '#4ade80', boxShadow: '0 0 6px #4ade80cc' }
                 : { backgroundColor: '#f87171', boxShadow: '0 0 6px #f87171cc' }}
             />
             <span className="text-[9px] tracking-[0.15em] uppercase text-white/60">
-              {activeCount > 0
-                ? `${activeCount.toLocaleString()} active rider${activeCount === 1 ? '' : 's'}`
+              {displayedActiveCount > 0
+                ? `${displayedActiveCount.toLocaleString()} active rider${displayedActiveCount === 1 ? '' : 's'}`
                 : '0 active riders'}
             </span>
           </div>
