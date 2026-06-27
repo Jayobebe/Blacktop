@@ -1,13 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
-import { useDemoMode, DEMO_STATS } from '@/lib/demoMode';
+import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
 
 const RIDES_KEY = 'blacktop_rides';
 
 export function useRideHistory() {
-  const [rides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
+  const [realRides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
   const { enabled: demoEnabled } = useDemoMode();
+  // In demo mode, swap rides at the read boundary so History/RideDetail show
+  // matching entries. Mutating callbacks below still target the REAL list so
+  // local user data is never overwritten.
+  const rides = demoEnabled ? DEMO_RIDES : realRides;
 
   const addRide = useCallback((ride: RideSession) => {
     setRides(prev => [ride, ...prev]);
@@ -86,7 +90,8 @@ export function useRideHistory() {
   }, [setRides]);
 
   const stats: RideStats = useMemo(() => {
-    if (demoEnabled) return DEMO_STATS;
+    // Demo rides roll up to DEMO_STATS — recomputing here keeps Stats and
+    // History byte-for-byte consistent regardless of demo toggle.
     const completedRides = rides.filter(r => r.endedAt !== null);
     const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
@@ -119,7 +124,7 @@ export function useRideHistory() {
       convoyRides,
       badges,
     };
-  }, [rides, demoEnabled]);
+  }, [rides]);
 
   // Ride receipts (Ride History) are rendered on demand from `rides` and the
   // garage's bike data - there is no separate receipt image/cache stored

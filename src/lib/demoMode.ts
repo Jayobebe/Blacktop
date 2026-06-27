@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { RideStats } from '@/types/blacktop';
+import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 
 /**
@@ -27,6 +27,89 @@ export const DEMO_STATS: RideStats = {
   convoyRides: 18,
   badges: { speedDemon: 12, journeyman: 9, fallback: 4 },
 };
+
+/**
+ * Deterministically build 47 demo rides whose aggregate stats match DEMO_STATS:
+ *   47 rides | 1234 mi | 89h12m | 18 convoy | top 142 mph | max 1.6 G
+ *   badges: 12 speed-demon, 9 journeyman, 4 fallback
+ *
+ * No GPS / lean / G samples — RideDetail tolerates empty arrays.
+ */
+function buildDemoRides(): RideSession[] {
+  const COUNT = 47;
+  const TARGET_DISTANCE = 1234;
+  const TARGET_DURATION = 89 * 3600 + 12 * 60;
+  const TOP_SPEED = 142;
+  const TOP_G = 1.6;
+
+  // 18 convoy rides spaced evenly across the 47.
+  const convoySet = new Set<number>();
+  for (let i = 0; i < 18; i++) convoySet.add(Math.floor((i * COUNT) / 18));
+  const convoyIndices = [...convoySet].sort((a, b) => a - b);
+
+  // Distribute 25 badge instances across the 18 convoy rides.
+  const badgePool: ('speed-demon' | 'journeyman' | 'fallback')[] = [
+    ...Array(12).fill('speed-demon'),
+    ...Array(9).fill('journeyman'),
+    ...Array(4).fill('fallback'),
+  ];
+  const ridesBadges: Record<number, ('speed-demon' | 'journeyman' | 'fallback')[]> = {};
+  badgePool.forEach((badge, i) => {
+    const rideIdx = convoyIndices[i % convoyIndices.length];
+    (ridesBadges[rideIdx] ||= []).push(badge);
+  });
+
+  // Sinusoidal raw distances → scale to exact total.
+  const raw: number[] = [];
+  for (let i = 0; i < COUNT; i++) {
+    raw.push(26 + 18 * Math.sin(i * 0.7) + 6 * Math.cos(i * 1.3));
+  }
+  const lifted = raw.map(v => v - Math.min(...raw) + 6);
+  const liftedSum = lifted.reduce((s, v) => s + v, 0);
+  const distances = lifted.map(v => (v / liftedSum) * TARGET_DISTANCE);
+
+  // Durations via varying avg speed; scale to exact total.
+  const rawDur = distances.map((d, i) => {
+    const avg = 18 + 14 * ((Math.sin(i * 0.9) + 1) / 2);
+    return (d / avg) * 3600;
+  });
+  const durSum = rawDur.reduce((s, v) => s + v, 0);
+  const durations = rawDur.map(v => (v / durSum) * TARGET_DURATION);
+
+  const now = Date.now();
+  const DAY = 86_400_000;
+  const rides: RideSession[] = [];
+  for (let i = 0; i < COUNT; i++) {
+    const distance = Math.round(distances[i] * 10) / 10;
+    const duration = Math.round(durations[i]);
+    const averageSpeed = Math.round((distance / (duration / 3600)) * 10) / 10;
+    const maxSpeed = i === 0 ? TOP_SPEED : Math.min(135, Math.round(averageSpeed * 1.9 + 10));
+    const maxGForce = i === 0 ? TOP_G : Math.round((0.8 + 0.4 * Math.abs(Math.sin(i))) * 100) / 100;
+    const startedAt = new Date(now - (i + 1) * (DAY * 0.95)).toISOString();
+    const endedAt = new Date(new Date(startedAt).getTime() + duration * 1000).toISOString();
+    const isConvoyRide = convoySet.has(i);
+    rides.push({
+      id: `demo-ride-${i.toString().padStart(2, '0')}`,
+      startedAt,
+      endedAt,
+      isConvoyRide,
+      distance,
+      duration,
+      averageSpeed,
+      maxSpeed,
+      maxLeanLeft: Math.round(20 + 25 * Math.abs(Math.sin(i * 1.1))),
+      maxLeanRight: Math.round(20 + 25 * Math.abs(Math.cos(i * 1.1))),
+      maxGForce,
+      gpsPoints: [],
+      earnedBadges: isConvoyRide ? ridesBadges[i] : undefined,
+    });
+  }
+  return rides;
+}
+
+export const DEMO_RIDES: RideSession[] = buildDemoRides();
+
+
 
 export const DEMO_SCORES: ArcadeScores = {
   'hit-heavy': 8540,
