@@ -38,6 +38,7 @@ export function saveScore(game: ArcadeGame, score: number): boolean {
 }
 
 export function useArcadeScores() {
-  const scores = useSyncExternalStore(subscribe, getSnapshot);
-  return { scores };
+  const realScores = useSyncExternalStore(subscribe, getSnapshot);
+  const { enabled: demoEnabled } = useDemoMode();
+  return { scores: demoEnabled ? DEMO_SCORES : realScores };
 }
