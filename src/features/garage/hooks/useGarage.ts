@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Bike, BikePhotos, GarageState, GARAGE_STORAGE_KEY, MaintItem } from '../types';
+import { useDemoMode, DEMO_BIKE, DEMO_BIKE_ID } from '@/lib/demoMode';
 
 const DEFAULT_STATE: GarageState = { bikes: [], activeBikeId: null };
 
