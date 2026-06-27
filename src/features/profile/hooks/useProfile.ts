@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { displayNameSchema } from '@/lib/validation';
 import { toast } from 'sonner';
+import { useDemoMode, DEMO_NAME } from '@/lib/demoMode';
 
 const PROFILE_KEY = 'blacktop_profile';
 
@@ -241,8 +242,13 @@ export function useProfile() {
   // hasProfile requires both local profile AND valid database session
   const hasProfile = profile.name.trim().length > 0 && isValidSession;
 
+  const { enabled: demoEnabled } = useDemoMode();
+  const effectiveProfile: UserProfile = demoEnabled
+    ? { ...profile, name: DEMO_NAME }
+    : profile;
+
   return {
-    profile,
+    profile: effectiveProfile,
     hasProfile,
     isLoading,
     user,

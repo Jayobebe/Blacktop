@@ -33,6 +33,7 @@ import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
+import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -49,6 +50,46 @@ export default function Settings() {
   const [isTipping, setIsTipping] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'applying'>('idle');
+  const { enabled: demoEnabled } = useDemoMode();
+  const [demoActionRevealed, setDemoActionRevealed] = useState(false);
+  const [demoHoldProgress, setDemoHoldProgress] = useState(0);
+  const demoHoldStartRef = useRef<number | null>(null);
+  const demoHoldRafRef = useRef<number | null>(null);
+
+  const cancelDemoHold = () => {
+    demoHoldStartRef.current = null;
+    if (demoHoldRafRef.current != null) {
+      cancelAnimationFrame(demoHoldRafRef.current);
+      demoHoldRafRef.current = null;
+    }
+    setDemoHoldProgress(0);
+  };
+
+  const startDemoHold = () => {
+    demoHoldStartRef.current = performance.now();
+    const tick = () => {
+      if (demoHoldStartRef.current == null) return;
+      const elapsed = performance.now() - demoHoldStartRef.current;
+      const pct = Math.min(1, elapsed / 3000);
+      setDemoHoldProgress(pct);
+      if (pct >= 1) {
+        setDemoActionRevealed(true);
+        cancelDemoHold();
+        return;
+      }
+      demoHoldRafRef.current = requestAnimationFrame(tick);
+    };
+    demoHoldRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const handleToggleDemoMode = () => {
+    const next = !demoEnabled;
+    setDemoMode(next);
+    toast.success(next ? 'Demo data injected.' : 'Personal stats restored.');
+    setDemoActionRevealed(false);
+  };
+
+  useEffect(() => () => cancelDemoHold(), []);
 
   useEffect(() => {
     const off = onUpdateAvailable((available) => {
@@ -235,8 +276,39 @@ export default function Settings() {
         <div className="flex-1">
           <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Settings</h1>
         </div>
-        <BTLogo size="md" />
+        <button
+          type="button"
+          onPointerDown={(e) => { e.preventDefault(); startDemoHold(); }}
+          onPointerUp={cancelDemoHold}
+          onPointerLeave={cancelDemoHold}
+          onPointerCancel={cancelDemoHold}
+          onContextMenu={(e) => e.preventDefault()}
+          className="relative rounded-lg touch-target select-none"
+          aria-label="Hold to reveal demo data toggle"
+          style={{ WebkitTouchCallout: 'none' }}
+        >
+          <BTLogo size="md" />
+          {demoHoldProgress > 0 && demoHoldProgress < 1 && (
+            <span
+              className="pointer-events-none absolute inset-0 rounded-lg border-2 border-accent"
+              style={{ opacity: 0.3 + demoHoldProgress * 0.7 }}
+            />
+          )}
+        </button>
       </header>
+
+      {/* Demo data toggle — only visible after a 3s long-press on the BT logo */}
+      {demoActionRevealed && (
+        <div className="mb-3 landscape:mb-2 flex-shrink-0 animate-slide-up">
+          <button
+            onClick={handleToggleDemoMode}
+            className="w-full px-4 py-3 rounded-2xl bg-accent/10 border border-accent/40 text-accent text-sm font-semibold tracking-wide hover:bg-accent/20 transition-colors"
+          >
+            {demoEnabled ? 'Revert to personal stats' : 'Inject demo data'}
+          </button>
+        </div>
+      )}
+
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
