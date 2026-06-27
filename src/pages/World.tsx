@@ -43,6 +43,7 @@ export default function World() {
   const { settings } = useSettings();
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
+  const { enabled: demoEnabled, activeRiders: demoActiveRiders } = useDemoMode();
 
   const { data: eonetData, isLoading: eonetLoading } = useQuery<{ events: EONETEvent[] }>({
     queryKey: ['eonet-events'],
@@ -89,6 +90,7 @@ export default function World() {
 
     return { countryLights: lights, activeCount: seen.size };
   }, [memberRows]);
+  const displayedActiveCount = demoEnabled ? demoActiveRiders : activeCount;
 
   const markers: WorldEventMarker[] = (eonetData?.events ?? [])
     .slice(0, 25)
