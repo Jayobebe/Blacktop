@@ -12,8 +12,17 @@ import {
   saveRecentLocation,
   searchPlaces,
   searchNearbyPOIs,
+  calculateDistance,
 } from '../lib/placeSearch';
 import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
+import { useSettings } from '@/features/settings';
+import { formatDistance, getDistanceLabel } from '@/lib/format';
+
+// km → miles for formatDistance (which expects miles input).
+const KM_TO_MILES = 0.621371;
+
+// Address line: clip with a gradient fade on the right edge instead of truncate.
+const FADE_RIGHT = '[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] whitespace-nowrap overflow-hidden';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   gas: <Fuel className="w-4 h-4" />,
@@ -41,6 +50,14 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
 }
 
 export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSearchBarProps) {
+  const { settings } = useSettings();
+  const distanceText = (lat: number, lng: number): string | null => {
+    if (!userLocation) return null;
+    const km = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
+    const miles = km * KM_TO_MILES;
+    return `${formatDistance(miles, settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`;
+  };
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MapSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -245,8 +262,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{poi.name}</p>
-                      <p className="text-xs text-muted-foreground">Saved location</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>Saved location</p>
                     </div>
+                    {distanceText(poi.lat, poi.lng) && (
+                      <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                        {distanceText(poi.lat, poi.lng)}
+                      </span>
+                    )}
                     {/* Delete button — only visible on hover so it doesn't clutter the list */}
                     <button
                       onClick={(e) => handleDeletePOI(e, result.id)}
@@ -282,8 +304,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{result.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                    <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
                   </div>
+                  {distanceText(result.lat, result.lng) && (
+                    <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                      {distanceText(result.lat, result.lng)}
+                    </span>
+                  )}
                 </button>
               ))}
             </>
@@ -323,8 +350,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{result.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
                     </div>
+                    {distanceText(result.lat, result.lng) && (
+                      <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                        {distanceText(result.lat, result.lng)}
+                      </span>
+                    )}
                   </button>
                 );
               })
