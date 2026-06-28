@@ -50,6 +50,14 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
 }
 
 export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSearchBarProps) {
+  const { settings } = useSettings();
+  const distanceText = (lat: number, lng: number): string | null => {
+    if (!userLocation) return null;
+    const km = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
+    const miles = km * KM_TO_MILES;
+    return `${formatDistance(miles, settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`;
+  };
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MapSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
