@@ -12,8 +12,17 @@ import {
   saveRecentLocation,
   searchPlaces,
   searchNearbyPOIs,
+  calculateDistance,
 } from '../lib/placeSearch';
 import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
+import { useSettings } from '@/features/settings';
+import { formatDistance, getDistanceLabel } from '@/lib/format';
+
+// km → miles for formatDistance (which expects miles input).
+const KM_TO_MILES = 0.621371;
+
+// Address line: clip with a gradient fade on the right edge instead of truncate.
+const FADE_RIGHT = '[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] whitespace-nowrap overflow-hidden';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   gas: <Fuel className="w-4 h-4" />,
