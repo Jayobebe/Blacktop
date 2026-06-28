@@ -349,6 +349,13 @@ export type Database = {
       }
       convoy_id_from_topic: { Args: { _topic: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
+      get_world_presence: {
+        Args: never
+        Returns: {
+          lat: number
+          lng: number
+        }[]
+      }
       is_convoy_member: {
         Args: { _convoy_id: string; _user_id: string }
         Returns: boolean
