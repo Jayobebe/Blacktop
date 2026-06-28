@@ -117,7 +117,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
         if (searchIdRef.current === currentSearchId) setIsSearching(false);
       }
     },
-    [map, userLocation, countryCode, savedPOIs],
+    [map, userLocation, countryCode, savedPOIs, recentLocations],
   );
 
   const handleSearch = (value: string) => {
