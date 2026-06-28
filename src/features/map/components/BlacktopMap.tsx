@@ -3,7 +3,7 @@ import maplibregl, { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './blacktopMap.css';
-import { closeBlacktopMap } from '../hooks/useMapOverlay';
+import { closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
@@ -759,6 +759,21 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               >
                 <Flag className="w-3.5 h-3.5" />
                 Finish
+              </button>
+            )}
+            {!rideState.isActive && (
+              <button
+                onClick={() => {
+                  setDestination(null);
+                  setRoute(null);
+                  clearSoloRoute();
+                  clearMapDestination();
+                }}
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted hover:bg-destructive/15 hover:text-destructive text-muted-foreground transition-colors flex-shrink-0"
+                aria-label="Remove destination"
+                title="Remove destination"
+              >
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
