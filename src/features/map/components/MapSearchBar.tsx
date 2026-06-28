@@ -237,7 +237,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
       </div>
 
       {showResults && hasDisplayContent && (
-        <div className="bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[50vh] overflow-y-auto animate-fade-in">
+        <div className="mr-12 bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[50vh] overflow-y-auto animate-fade-in">
+
 
           {/* ── Saved POIs (idle state only) ── */}
           {showIdle && hasSavedPOIs && (
