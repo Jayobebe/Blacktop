@@ -98,13 +98,19 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
           .filter(p => p.name.toLowerCase().includes(q))
           .map(poiToSearchResult);
 
-        // Deduplicate (a saved POI coordinate that also shows in Nominatim
-        // would appear twice otherwise).
-        const poiIds = new Set(matchingPOIs.map(r => r.id));
-        const merged = [
-          ...matchingPOIs,
-          ...remoteResults.filter(r => !poiIds.has(r.id)),
-        ];
+        // Also surface recent destinations matching the query as "local results".
+        const matchingRecents = recentLocations.filter(
+          r => r.name.toLowerCase().includes(q) || (r.address?.toLowerCase().includes(q) ?? false),
+        );
+
+        // Deduplicate across saved POIs, recents, and remote results by id.
+        const seen = new Set<string>();
+        const merged: MapSearchResult[] = [];
+        for (const r of [...matchingPOIs, ...matchingRecents, ...remoteResults]) {
+          if (seen.has(r.id)) continue;
+          seen.add(r.id);
+          merged.push(r);
+        }
 
         if (searchIdRef.current === currentSearchId) setResults(merged);
       } finally {
