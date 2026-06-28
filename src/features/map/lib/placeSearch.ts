@@ -117,28 +117,41 @@ export async function searchPlaces(
 ): Promise<MapSearchResult[]> {
   if (!query.trim()) return [];
 
-  const hasBias = !!bias;
-  const biasViewbox = bias ? `${bias.west},${bias.north},${bias.east},${bias.south}` : null;
+  // Build a soft proximity bias centered on the rider (~50km box). This
+  // tells Nominatim to rank nearby matches higher without hard-excluding
+  // legitimate long-distance destinations.
+  const NEAR_DEG = 0.45; // ~50km lat; ~50km lng at mid-latitudes
+  const nearbyViewbox = userLocation
+    ? `${userLocation.lng - NEAR_DEG},${userLocation.lat + NEAR_DEG},${userLocation.lng + NEAR_DEG},${userLocation.lat - NEAR_DEG}`
+    : null;
+  const mapViewbox = bias ? `${bias.west},${bias.north},${bias.east},${bias.south}` : null;
 
   try {
-    const primary = await callPlaceSearch<NominatimPlace[]>({
-      kind: 'search',
-      q: query,
-      countryCode,
-      viewbox: biasViewbox,
-      // Hard-bound to the visible viewport so local results surface first.
-      // The fallback below retries without bounds if nothing is found here.
-      bounded: hasBias ? '1' : '0',
-      limit: hasBias ? 25 : 30,
-    });
+    // 1) Hard-bounded to a tight nearby box first so local hits dominate.
+    let results0: NominatimPlace[] = [];
+    if (nearbyViewbox) {
+      results0 = await callPlaceSearch<NominatimPlace[]>({
+        kind: 'search',
+        q: query,
+        countryCode,
+        viewbox: nearbyViewbox,
+        bounded: '1',
+        limit: 25,
+      });
+    }
 
-    // Nominatim found nothing even with the bias hint (e.g. the destination
-    // is far outside the current map view) - retry once with no viewbox at
-    // all so a legitimate out-of-region search still resolves.
-    const usedFallback = hasBias && (!primary || primary.length === 0);
-    const results0 = usedFallback
-      ? await callPlaceSearch<NominatimPlace[]>({ kind: 'search', q: query, countryCode, viewbox: null, bounded: '0', limit: 30 })
-      : primary;
+    // 2) If nothing nearby, retry softly biased (not bounded) so wider
+    //    results surface but still ranked toward the rider's area.
+    if (!results0 || results0.length === 0) {
+      results0 = await callPlaceSearch<NominatimPlace[]>({
+        kind: 'search',
+        q: query,
+        countryCode,
+        viewbox: nearbyViewbox ?? mapViewbox,
+        bounded: '0',
+        limit: 30,
+      });
+    }
 
     let results: MapSearchResult[] = (results0 || []).map((place) => {
       const lat = parseFloat(place.lat);
@@ -156,9 +169,8 @@ export async function searchPlaces(
       return result;
     });
 
-    // Rank closer-to-rider results first, but (unlike searchNearbyPOIs) never
-    // drop far-away matches - the bias above is soft precisely so genuine
-    // long-distance destinations still surface.
+    // Rank closer-to-rider results first, but never drop far-away matches —
+    // genuine long-distance destinations still need to surface.
     if (userLocation) {
       results = results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
     }
