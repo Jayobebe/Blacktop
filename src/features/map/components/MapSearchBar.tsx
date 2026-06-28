@@ -301,6 +301,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
             ) : (
               results.map((result, index) => {
                 const isSavedPOI = result.id.startsWith('poi:');
+                const isRecent = !isSavedPOI && recentLocations.some(r => r.id === result.id);
                 return (
                   <button
                     key={result.id}
@@ -312,11 +313,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                   >
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      isSavedPOI ? 'bg-accent/15' : 'bg-accent/10',
+                      isSavedPOI ? 'bg-accent/15' : isRecent ? 'bg-muted' : 'bg-accent/10',
                     )}>
                       {isSavedPOI
                         ? <Bookmark className="w-3.5 h-3.5 text-accent" />
-                        : <MapPin className="w-4 h-4 text-accent" />}
+                        : isRecent
+                          ? <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                          : <MapPin className="w-4 h-4 text-accent" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{result.name}</p>
