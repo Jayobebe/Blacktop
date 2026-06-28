@@ -309,6 +309,27 @@ export type Database = {
         }
         Relationships: []
       }
+      world_locations: {
+        Row: {
+          last_seen: string
+          lat: number
+          lng: number
+          user_id: string
+        }
+        Insert: {
+          last_seen?: string
+          lat: number
+          lng: number
+          user_id: string
+        }
+        Update: {
+          last_seen?: string
+          lat?: number
+          lng?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

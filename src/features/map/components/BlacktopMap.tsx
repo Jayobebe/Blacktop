@@ -779,29 +779,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         )}
 
-        <div className="grid grid-cols-3 items-end">
-          <div className="justify-self-start px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none">
             Weather: RainViewer
           </div>
 
-          <div className="justify-self-center">
-            {/* Show speed for active ride OR home-map preview (never saved) */}
-            {(rideState.isActive || geoSpeed > 0) && (
-              <div
-                className={cn(
-                  'flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors',
-                  speedColorClass,
-                )}
-              >
-                <span className="text-5xl leading-none">
-                  {formatSpeed(displaySpeed, settings.speedUnit)}
-                </span>
-                <span className="text-sm opacity-70">{getSpeedLabel(settings.speedUnit)}</span>
-              </div>
-            )}
-          </div>
+          {/* Show speed for active ride OR home-map preview (never saved) */}
+          {(rideState.isActive || geoSpeed > 0) && (
+            <div
+              className={cn(
+                'flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors',
+                speedColorClass,
+              )}
+            >
+              <span className="text-5xl leading-none">
+                {formatSpeed(displaySpeed, settings.speedUnit)}
+              </span>
+              <span className="text-sm opacity-70">{getSpeedLabel(settings.speedUnit)}</span>
+            </div>
+          )}
 
-          <span />
+          <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none text-center">
+            © <a href="https://carto.com/attributions" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">CARTO</a>
+            {' '}© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">OpenStreetMap</a> contributors
+          </div>
         </div>
       </div>
 
