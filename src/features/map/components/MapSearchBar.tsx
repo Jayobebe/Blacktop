@@ -262,8 +262,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{poi.name}</p>
-                      <p className="text-xs text-muted-foreground">Saved location</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>Saved location</p>
                     </div>
+                    {distanceText(poi.lat, poi.lng) && (
+                      <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                        {distanceText(poi.lat, poi.lng)}
+                      </span>
+                    )}
                     {/* Delete button — only visible on hover so it doesn't clutter the list */}
                     <button
                       onClick={(e) => handleDeletePOI(e, result.id)}
