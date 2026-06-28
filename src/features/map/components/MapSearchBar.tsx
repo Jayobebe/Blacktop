@@ -350,8 +350,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{result.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
                     </div>
+                    {distanceText(result.lat, result.lng) && (
+                      <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                        {distanceText(result.lat, result.lng)}
+                      </span>
+                    )}
                   </button>
                 );
               })
