@@ -56,31 +56,20 @@ export default function World() {
   const { data: memberRows } = useQuery({
     queryKey: ['world-locations'],
     queryFn: async () => {
-      // Only count riders who opted into Blacktop World and were seen in the last 10 minutes.
-      const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { data } = await supabase
-        .from('world_locations')
-        .select('user_id, lat, lng')
-        .gt('last_seen', cutoff);
-      return data ?? [];
+      // Coarse, anonymous presence (rounded coords, no user_id) for the globe.
+      const { data } = await supabase.rpc('get_world_presence');
+      return (data ?? []) as Array<{ lat: number; lng: number }>;
     },
     staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
   });
 
-  // Deduplicate by user_id (keep one point per rider), then detect country
+  // Aggregate rounded coordinates into country glow + active count.
   const { countryLights, activeCount } = useMemo(() => {
     if (!memberRows?.length) return { countryLights: {}, activeCount: 0 };
 
-    const seen = new Map<string, { lat: number; lng: number }>();
-    for (const row of memberRows) {
-      if (!seen.has(row.user_id)) {
-        seen.set(row.user_id, { lat: row.lat, lng: row.lng });
-      }
-    }
-
     const lights: Record<number, number> = {};
-    for (const { lat, lng } of seen.values()) {
+    for (const { lat, lng } of memberRows) {
       for (const feat of countriesGeo.features) {
         if (geoContains(feat as any, [lng, lat])) {
           const id = Number(feat.id);
@@ -90,7 +79,7 @@ export default function World() {
       }
     }
 
-    return { countryLights: lights, activeCount: seen.size };
+    return { countryLights: lights, activeCount: memberRows.length };
   }, [memberRows]);
   const displayedActiveCount = demoEnabled ? demoActiveRiders : activeCount;
 
