@@ -12,8 +12,17 @@ import {
   saveRecentLocation,
   searchPlaces,
   searchNearbyPOIs,
+  calculateDistance,
 } from '../lib/placeSearch';
 import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
+import { useSettings } from '@/features/settings';
+import { formatDistance, getDistanceLabel } from '@/lib/format';
+
+// km → miles for formatDistance (which expects miles input).
+const KM_TO_MILES = 0.621371;
+
+// Address line: clip with a gradient fade on the right edge instead of truncate.
+const FADE_RIGHT = '[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] whitespace-nowrap overflow-hidden';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   gas: <Fuel className="w-4 h-4" />,
@@ -41,6 +50,14 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
 }
 
 export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSearchBarProps) {
+  const { settings } = useSettings();
+  const distanceText = (lat: number, lng: number): string | null => {
+    if (!userLocation) return null;
+    const km = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
+    const miles = km * KM_TO_MILES;
+    return `${formatDistance(miles, settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`;
+  };
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<MapSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -98,20 +115,26 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
           .filter(p => p.name.toLowerCase().includes(q))
           .map(poiToSearchResult);
 
-        // Deduplicate (a saved POI coordinate that also shows in Nominatim
-        // would appear twice otherwise).
-        const poiIds = new Set(matchingPOIs.map(r => r.id));
-        const merged = [
-          ...matchingPOIs,
-          ...remoteResults.filter(r => !poiIds.has(r.id)),
-        ];
+        // Also surface recent destinations matching the query as "local results".
+        const matchingRecents = recentLocations.filter(
+          r => r.name.toLowerCase().includes(q) || (r.address?.toLowerCase().includes(q) ?? false),
+        );
+
+        // Deduplicate across saved POIs, recents, and remote results by id.
+        const seen = new Set<string>();
+        const merged: MapSearchResult[] = [];
+        for (const r of [...matchingPOIs, ...matchingRecents, ...remoteResults]) {
+          if (seen.has(r.id)) continue;
+          seen.add(r.id);
+          merged.push(r);
+        }
 
         if (searchIdRef.current === currentSearchId) setResults(merged);
       } finally {
         if (searchIdRef.current === currentSearchId) setIsSearching(false);
       }
     },
-    [map, userLocation, countryCode, savedPOIs],
+    [map, userLocation, countryCode, savedPOIs, recentLocations],
   );
 
   const handleSearch = (value: string) => {
@@ -214,7 +237,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
       </div>
 
       {showResults && hasDisplayContent && (
-        <div className="bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[50vh] overflow-y-auto animate-fade-in">
+        <div className="mr-12 bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[50vh] overflow-y-auto animate-fade-in">
+
 
           {/* ── Saved POIs (idle state only) ── */}
           {showIdle && hasSavedPOIs && (
@@ -239,8 +263,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{poi.name}</p>
-                      <p className="text-xs text-muted-foreground">Saved location</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>Saved location</p>
                     </div>
+                    {distanceText(poi.lat, poi.lng) && (
+                      <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                        {distanceText(poi.lat, poi.lng)}
+                      </span>
+                    )}
                     {/* Delete button — only visible on hover so it doesn't clutter the list */}
                     <button
                       onClick={(e) => handleDeletePOI(e, result.id)}
@@ -276,8 +305,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{result.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                    <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
                   </div>
+                  {distanceText(result.lat, result.lng) && (
+                    <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                      {distanceText(result.lat, result.lng)}
+                    </span>
+                  )}
                 </button>
               ))}
             </>
@@ -295,6 +329,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
             ) : (
               results.map((result, index) => {
                 const isSavedPOI = result.id.startsWith('poi:');
+                const isRecent = !isSavedPOI && recentLocations.some(r => r.id === result.id);
                 return (
                   <button
                     key={result.id}
@@ -306,16 +341,23 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                   >
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      isSavedPOI ? 'bg-accent/15' : 'bg-accent/10',
+                      isSavedPOI ? 'bg-accent/15' : isRecent ? 'bg-muted' : 'bg-accent/10',
                     )}>
                       {isSavedPOI
                         ? <Bookmark className="w-3.5 h-3.5 text-accent" />
-                        : <MapPin className="w-4 h-4 text-accent" />}
+                        : isRecent
+                          ? <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                          : <MapPin className="w-4 h-4 text-accent" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{result.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
                     </div>
+                    {distanceText(result.lat, result.lng) && (
+                      <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                        {distanceText(result.lat, result.lng)}
+                      </span>
+                    )}
                   </button>
                 );
               })

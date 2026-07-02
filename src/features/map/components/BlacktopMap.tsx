@@ -3,7 +3,7 @@ import maplibregl, { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './blacktopMap.css';
-import { closeBlacktopMap } from '../hooks/useMapOverlay';
+import { closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
@@ -761,32 +761,48 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 Finish
               </button>
             )}
+            {!rideState.isActive && (
+              <button
+                onClick={() => {
+                  setDestination(null);
+                  setRoute(null);
+                  clearSoloRoute();
+                  clearMapDestination();
+                }}
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted hover:bg-destructive/15 hover:text-destructive text-muted-foreground transition-colors flex-shrink-0"
+                aria-label="Remove destination"
+                title="Remove destination"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
 
-        <div className="grid grid-cols-3 items-end">
-          <div className="justify-self-start px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none">
             Weather: RainViewer
           </div>
 
-          <div className="justify-self-center">
-            {/* Show speed for active ride OR home-map preview (never saved) */}
-            {(rideState.isActive || geoSpeed > 0) && (
-              <div
-                className={cn(
-                  'flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors',
-                  speedColorClass,
-                )}
-              >
-                <span className="text-5xl leading-none">
-                  {formatSpeed(displaySpeed, settings.speedUnit)}
-                </span>
-                <span className="text-sm opacity-70">{getSpeedLabel(settings.speedUnit)}</span>
-              </div>
-            )}
-          </div>
+          {/* Show speed for active ride OR home-map preview (never saved) */}
+          {(rideState.isActive || geoSpeed > 0) && (
+            <div
+              className={cn(
+                'flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors',
+                speedColorClass,
+              )}
+            >
+              <span className="text-5xl leading-none">
+                {formatSpeed(displaySpeed, settings.speedUnit)}
+              </span>
+              <span className="text-sm opacity-70">{getSpeedLabel(settings.speedUnit)}</span>
+            </div>
+          )}
 
-          <span />
+          <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none text-center">
+            © <a href="https://carto.com/attributions" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">CARTO</a>
+            {' '}© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">OpenStreetMap</a> contributors
+          </div>
         </div>
       </div>
 

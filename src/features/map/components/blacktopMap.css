@@ -18,14 +18,9 @@
   background-color: hsl(var(--accent));
 }
 
+/* We render attribution ourselves (centered below the speed cluster). */
 .blacktop-maplibre .maplibregl-ctrl-attrib {
-  background: hsl(var(--card) / 0.8);
-  color: hsl(var(--muted-foreground));
-  border-radius: 0.5rem;
-}
-
-.blacktop-maplibre .maplibregl-ctrl-attrib a {
-  color: hsl(var(--muted-foreground));
+  display: none !important;
 }
 
 /* Ensure zoom (+/-) and compass controls are always tappable above overlay UI. */
