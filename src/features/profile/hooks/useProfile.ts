@@ -161,11 +161,11 @@ export function useProfile() {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const createProfile = useCallback(async (name: string) => {
+  const createProfile = useCallback(async (name: string): Promise<boolean> => {
     const parsed = displayNameSchema.safeParse(name);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Invalid name');
-      return;
+      return false;
     }
     const trimmedName = parsed.data;
 
@@ -175,13 +175,17 @@ export function useProfile() {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
         console.error('Failed to sign in anonymously:', error);
-        return;
+        toast.error("Couldn't set you up — check your connection and try again.");
+        return false;
       }
       currentUser = data.user;
       setUser(currentUser);
     }
 
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast.error("Couldn't set you up — try again.");
+      return false;
+    }
 
     // Create/update profile in database
     const { error: profileError } = await supabase
@@ -193,6 +197,8 @@ export function useProfile() {
 
     if (profileError) {
       console.error('Failed to create profile:', profileError);
+      toast.error("Couldn't save your profile — try again.");
+      return false;
     }
 
     // Save locally
@@ -204,6 +210,7 @@ export function useProfile() {
     writeLocalProfile(next);
     setProfile(next);
     setIsValidSession(true);
+    return true;
   }, [user, profile.preferredNavApp]);
 
   const updateNavApp = useCallback((app: NavigationApp) => {

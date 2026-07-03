@@ -31,8 +31,8 @@ export default function Onboarding() {
 
     setIsCreating(true);
     try {
-      await createProfile(name.trim());
-      navigate('/');
+      const ok = await createProfile(name.trim());
+      if (ok) navigate('/');
     } finally {
       setIsCreating(false);
     }
