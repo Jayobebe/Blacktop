@@ -128,106 +128,26 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.textAlign = 'left';
     }
 
-    // Bottom Left - Distance
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 28px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(formatDistance(stats.distance, distanceUnit), 40, height - 50);
-    ctx.font = '16px system-ui';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillText(distLabel, 140, height - 45);
-
-    // Bottom Center - Live Speed with Lean Arc
-    const centerX = width / 2;
-
-    // Speed label
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '12px system-ui';
-    ctx.fillText('SPEED', centerX, height - 70);
-
-    // Speed value
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 36px monospace';
-    ctx.fillText(`${Math.round(stats.speed)}`, centerX, height - 55);
-    ctx.font = '14px system-ui';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillText(speedLabel, centerX, height - 25);
-
-    // Lean Arc (only if ride has lean data)
-    if (showLean) {
-      const arcRadius = 85;
-      const arcCenterY = height - 40;
-      const arcStartAngle = Math.PI * 1.15;
-      const arcEndAngle = Math.PI * 1.85;
-
-      // Draw the arc
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(centerX, arcCenterY, arcRadius, arcStartAngle, arcEndAngle);
-      ctx.stroke();
-
-      // Calculate dot position based on lean angle
-      const maxLeanAngle = 45;
-      const clampedLean = Math.max(-maxLeanAngle, Math.min(maxLeanAngle, stats.leanAngle));
-      const leanProgress = (clampedLean + maxLeanAngle) / (2 * maxLeanAngle);
-      const dotAngle = arcStartAngle + leanProgress * (arcEndAngle - arcStartAngle);
-
-      const dotX = centerX + Math.cos(dotAngle) * arcRadius;
-      const dotY = arcCenterY + Math.sin(dotAngle) * arcRadius;
-
-      // Draw the dot
-      ctx.fillStyle = 'white';
-      ctx.beginPath();
-      ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Live lean angle above the speed but below the arc
-      const leanTextY = arcCenterY - arcRadius + 20;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 20px monospace';
-      ctx.fillText(`${Math.abs(Math.round(stats.leanAngle))}°`, centerX, leanTextY);
-    }
-
-    // Bottom area, between the speed/lean arc (center) and the Duration
-    // readout (bottom right) - its own slot, not behind/overlapping either.
-    if (showGForce && gForceHistory.length > 1) {
-      const graphWidth = 220;
-      const graphHeight = 60;
-      const graphCenterX = width * 0.72;
-      const graphX = graphCenterX - graphWidth / 2;
-      const graphY = height - 110;
-      const points = buildGForcePoints(gForceHistory, graphWidth, graphHeight);
-
-      ctx.save();
-      ctx.translate(graphX, graphY);
-
-      const areaPath = new Path2D(pointsToAreaPath(points, graphHeight));
-      ctx.fillStyle = accent;
-      ctx.globalAlpha = 0.18;
-      ctx.fill(areaPath);
-
-      const linePath = new Path2D(pointsToLinePath(points));
-      ctx.globalAlpha = 0.6;
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = 2;
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.stroke(linePath);
-
-      ctx.restore();
-    }
-
-    // Bottom Right — either the standalone Duration readout OR (when the
-    // rider uses Blacktop Maps as their nav app) a live mini-map with the
-    // duration inside it, next to the user dot.
-    if (showMiniMap && stats.lat != null && stats.lng != null) {
+    // Bottom Left — Mini-map (when Blacktop Maps is enabled) with the
+    // Distance readout sitting just above it. Otherwise just the Distance.
+    const showLeftMiniMap = showMiniMap && stats.lat != null && stats.lng != null;
+    if (showLeftMiniMap) {
       const mmWidth = 360;
       const mmHeight = 300;
-      const mmX = width - mmWidth - 40;
+      const mmX = 40;
       const mmY = height - mmHeight - 40;
+
+      // Distance label above the mini-map
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 24px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(formatDistance(stats.distance, distanceUnit), mmX, mmY - 34);
+      ctx.font = '14px system-ui';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      const distText = formatDistance(stats.distance, distanceUnit);
+      const distWidth = ctx.measureText(distText).width;
+      ctx.fillText(distLabel, mmX + distWidth + 90, mmY - 28);
+
       drawMiniMap({
         ctx,
         region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
@@ -235,14 +155,26 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         route,
         opacity: 0.6,
         accent,
-        durationLabel: formatDuration(stats.duration),
       });
     } else {
-      ctx.textAlign = 'right';
       ctx.fillStyle = 'white';
       ctx.font = 'bold 28px monospace';
-      ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
+      ctx.textAlign = 'left';
+      ctx.fillText(formatDistance(stats.distance, distanceUnit), 40, height - 50);
+      ctx.font = '16px system-ui';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.fillText(distLabel, 140, height - 45);
     }
+
+    // Bottom Center - Live Speed with Lean Arc
+...
+    }
+
+    // Bottom Right — Duration readout (always visible on the right now).
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
   }, [speedLabel, distLabel, distanceUnit]);
 
   // Animation loop to continuously draw frames
