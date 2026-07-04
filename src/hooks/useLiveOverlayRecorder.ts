@@ -258,7 +258,9 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         latestStatsRef.current,
         hasLeanDataRef.current,
         hasGForceDataRef.current,
+        blacktopMapEnabledRef.current,
         gForceHistoryRef.current,
+        routeRef.current,
         accentColorRef.current,
       );
     }
