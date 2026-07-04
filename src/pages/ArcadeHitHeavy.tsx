@@ -10,7 +10,7 @@ export default function ArcadeHitHeavy() {
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col safe-top safe-bottom">
+    <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom">
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
           onClick={() => navigate(-1)}

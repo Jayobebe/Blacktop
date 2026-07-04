@@ -231,7 +231,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}>
+    <div className={`h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}>
       {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
 
       {/* Install Banner */}
@@ -353,7 +353,14 @@ export default function Home() {
             onPointerLeave={cancelLongPress}
             onPointerMove={handleGlobePointerMove}
             onContextMenu={(e) => e.preventDefault()}
-            className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleGlobeClick();
+              }
+            }}
+            tabIndex={0}
+            className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label={settings.blacktopWorldEnabled ? 'Open map — hold for Blacktop World' : 'Open map'}
             role="button"
           >

@@ -98,7 +98,7 @@ export default function Garage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col p-4 safe-top safe-bottom">
+    <div className="min-h-dvh bg-background flex flex-col p-4 safe-top safe-bottom">
       <header className="flex items-center justify-between mb-3">
         <button
           onClick={() => navigate('/')}

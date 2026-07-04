@@ -93,7 +93,7 @@ export default function World() {
     });
 
   return (
-    <div className="min-h-screen bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
+    <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
       {/* Header */}
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
