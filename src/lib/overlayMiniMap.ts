@@ -71,8 +71,8 @@ export interface MiniMapDrawOptions {
   /** Overall opacity of the mini map so background video shows through. */
   opacity: number;
   accent: string;
-  /** Text drawn below the user dot (already-formatted duration). */
-  durationLabel: string;
+  /** Optional text drawn just below the user dot (e.g. formatted duration). */
+  durationLabel?: string;
 }
 
 export function drawMiniMap({ ctx, region, center, route, opacity, accent, durationLabel }: MiniMapDrawOptions): void {
