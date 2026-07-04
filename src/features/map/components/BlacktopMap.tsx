@@ -68,7 +68,11 @@ const ROUTE_SOURCE_ID = 'blacktop-route';
 const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
 const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
 
-const LOCATE_RESUME_DELAY_MS = 10000;
+const LOCATE_RESUME_DELAY_MS = 5000;
+// Zoom level used to auto-follow the rider. We push in tighter when there's an
+// active destination so the route + rider fill the screen without pinch-zoom.
+const FOLLOW_ZOOM_WITH_DESTINATION = 17;
+const FOLLOW_ZOOM_NO_DESTINATION = 16;
 
 interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
