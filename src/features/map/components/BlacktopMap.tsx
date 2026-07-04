@@ -162,6 +162,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const headingRef = useRef<number | null>(null);
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
+  const destinationRef = useRef<MapDestination | null>(seededDestination);
+  useEffect(() => { destinationRef.current = destination; }, [destination]);
 
   // ── Inactivity guardrail for the home map ──────────────────────────────────
   // When there is no active ride, auto-close the map after HOME_MAP_INACTIVITY_MS
