@@ -167,7 +167,80 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     }
 
     // Bottom Center - Live Speed with Lean Arc
-...
+    const centerX = width / 2;
+
+    // Speed label
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '12px system-ui';
+    ctx.fillText('SPEED', centerX, height - 70);
+
+    // Speed value
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 36px monospace';
+    ctx.fillText(`${Math.round(stats.speed)}`, centerX, height - 55);
+    ctx.font = '14px system-ui';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(speedLabel, centerX, height - 25);
+
+    // Lean Arc (only if ride has lean data)
+    if (showLean) {
+      const arcRadius = 85;
+      const arcCenterY = height - 40;
+      const arcStartAngle = Math.PI * 1.15;
+      const arcEndAngle = Math.PI * 1.85;
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(centerX, arcCenterY, arcRadius, arcStartAngle, arcEndAngle);
+      ctx.stroke();
+
+      const maxLeanAngle = 45;
+      const clampedLean = Math.max(-maxLeanAngle, Math.min(maxLeanAngle, stats.leanAngle));
+      const leanProgress = (clampedLean + maxLeanAngle) / (2 * maxLeanAngle);
+      const dotAngle = arcStartAngle + leanProgress * (arcEndAngle - arcStartAngle);
+
+      const dotX = centerX + Math.cos(dotAngle) * arcRadius;
+      const dotY = arcCenterY + Math.sin(dotAngle) * arcRadius;
+
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      const leanTextY = arcCenterY - arcRadius + 20;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(`${Math.abs(Math.round(stats.leanAngle))}°`, centerX, leanTextY);
+    }
+
+    // Bottom Right — G-force sparkline sits above the Duration readout.
+    if (showGForce && gForceHistory.length > 1) {
+      const graphWidth = 220;
+      const graphHeight = 60;
+      const graphX = width - graphWidth - 40;
+      const graphY = height - 130;
+      const points = buildGForcePoints(gForceHistory, graphWidth, graphHeight);
+
+      ctx.save();
+      ctx.translate(graphX, graphY);
+
+      const areaPath = new Path2D(pointsToAreaPath(points, graphHeight));
+      ctx.fillStyle = accent;
+      ctx.globalAlpha = 0.18;
+      ctx.fill(areaPath);
+
+      const linePath = new Path2D(pointsToLinePath(points));
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke(linePath);
+
+      ctx.restore();
     }
 
     // Bottom Right — Duration readout (always visible on the right now).
