@@ -279,6 +279,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     // Clear the chunks
     chunksRef.current = [];
     gForceHistoryRef.current = [];
+    routeRef.current = [];
 
     // Get stream from canvas
     const stream = canvas.captureStream(30); // 30 fps
