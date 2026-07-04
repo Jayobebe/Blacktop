@@ -657,6 +657,38 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
 
+      {/* Vertical basemap toggle — sits on the right, under the maplibre
+          Navigation + Geolocate controls. Kept narrow (single column of
+          icon buttons) so it stays out of the way of the map. */}
+      <div className="absolute right-2.5 top-[140px] z-10 flex flex-col rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+        <button
+          type="button"
+          onClick={() => setBasemap('dark')}
+          aria-pressed={basemap === 'dark'}
+          aria-label="Dark map"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            basemap === 'dark' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <MapIcon className="w-4 h-4" />
+        </button>
+        <div className="h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => setBasemap('satellite')}
+          aria-pressed={basemap === 'satellite'}
+          aria-label="Satellite view"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            basemap === 'satellite' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <Satellite className="w-4 h-4" />
+        </button>
+      </div>
+
+
       {showSearchBar && (
         <MapSearchBar
           map={map}
