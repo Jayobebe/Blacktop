@@ -843,7 +843,11 @@ export default function ActiveRide() {
             )}
           </button>
 
-          {/* Rescue button (non-leaders only) - circular icon-only */}
+          {/* Rescue button - circular icon-only.
+              Convoy: non-leaders ping the leader.
+              Solo: pings user's Discord webhook when enabled.
+              Kept in the controls row (not next to End Ride) to avoid
+              accidental presses. */}
           {rideState.isConvoyMode && !convoy.isLeader && (
             <button
               onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
@@ -854,6 +858,52 @@ export default function ActiveRide() {
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
               title={hasPendingRescue ? "Cancel rescue request" : "Request rescue"}
+            >
+              <AlertTriangle className="w-6 h-6 landscape:w-5 landscape:h-5" />
+            </button>
+          )}
+          {!rideState.isConvoyMode && discordEnabled && (
+            <button
+              onClick={async () => {
+                if (soloRescueSending || soloRescueSent) return;
+                setSoloRescueSending(true);
+                try {
+                  const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                      enableHighAccuracy: true,
+                      timeout: 8000,
+                      maximumAge: 5000,
+                    });
+                  });
+                  const result = await announceSoloRescueToDiscord({
+                    riderName: profile.name || 'Driver',
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                  });
+                  if (result.skipped) {
+                    toast.error('Connect Discord in Settings to use rescue ping');
+                  } else if (result.ok) {
+                    toast.success('Rescue ping sent to Discord');
+                    setSoloRescueSent(true);
+                    setTimeout(() => setSoloRescueSent(false), 30000);
+                  } else {
+                    toast.error('Failed to send rescue ping');
+                  }
+                } catch (err) {
+                  console.error('[SoloRescue]', err);
+                  toast.error('Could not get your location');
+                } finally {
+                  setSoloRescueSending(false);
+                }
+              }}
+              disabled={soloRescueSending || soloRescueSent}
+              className={cn(
+                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full flex items-center justify-center transition-all touch-target disabled:opacity-60",
+                soloRescueSent
+                  ? "bg-warning/20 text-warning animate-pulse"
+                  : "bg-secondary hover:bg-warning/20 text-warning"
+              )}
+              title={soloRescueSent ? 'Rescue ping sent' : soloRescueSending ? 'Sending…' : 'Send rescue ping to Discord'}
             >
               <AlertTriangle className="w-6 h-6 landscape:w-5 landscape:h-5" />
             </button>
