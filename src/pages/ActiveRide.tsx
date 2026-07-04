@@ -277,6 +277,22 @@ export default function ActiveRide() {
   // Update overlay stats during ride
   useEffect(() => {
     if (rideState.isActive && !rideState.isPaused && overlayStartedRef.current) {
+      // Latest GPS fix + bearing from the last two points so the mini-map
+      // can rotate to the direction of travel. Falls back to null when
+      // stationary or before the second point arrives.
+      const pts = rideState.gpsPoints;
+      const last = pts.length > 0 ? pts[pts.length - 1] : null;
+      let heading: number | null = null;
+      if (pts.length >= 2) {
+        const a = pts[pts.length - 2];
+        const b = pts[pts.length - 1];
+        const dLng = (b.lng - a.lng) * Math.PI / 180;
+        const lat1 = a.lat * Math.PI / 180;
+        const lat2 = b.lat * Math.PI / 180;
+        const yh = Math.sin(dLng) * Math.cos(lat2);
+        const xh = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        heading = ((Math.atan2(yh, xh) * 180) / Math.PI + 360) % 360;
+      }
       overlayRecorderRef.current.updateStats({
         speed: rideState.currentSpeed,
         maxSpeed: rideState.maxSpeed,
@@ -286,9 +302,12 @@ export default function ActiveRide() {
         maxLean: Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
         gForce: gForce.currentG,
         maxGForce: rideState.maxGForce,
+        lat: last?.lat ?? null,
+        lng: last?.lng ?? null,
+        heading,
       });
     }
-  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, rideState.maxGForce]);
+  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, rideState.maxGForce, rideState.gpsPoints]);
 
   // Track convoy members
   useEffect(() => {
