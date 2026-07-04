@@ -297,6 +297,21 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Toggle basemap layer visibility when the user flips the Dark/Satellite
+  // switch. Kept as a layer toggle (rather than setStyle) so dynamically
+  // added sources/layers like the route line survive the swap.
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m) return;
+    const apply = () => {
+      if (!m.getLayer(DARK_LAYER_ID) || !m.getLayer(SATELLITE_LAYER_ID)) return;
+      m.setLayoutProperty(DARK_LAYER_ID, 'visibility', basemap === 'dark' ? 'visible' : 'none');
+      m.setLayoutProperty(SATELLITE_LAYER_ID, 'visibility', basemap === 'satellite' ? 'visible' : 'none');
+    };
+    if (m.isStyleLoaded()) apply();
+    else m.once('styledata', apply);
+  }, [basemap, map]);
+
   // When the overlay transitions from hidden (display:none) to visible, the
   // map canvas has no layout dimensions. Calling resize() after a short delay
   // lets the browser apply the display change before MapLibre recalculates.
