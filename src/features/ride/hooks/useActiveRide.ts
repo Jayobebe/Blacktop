@@ -778,6 +778,15 @@ export function useActiveRide(convoyId?: string | null) {
         duration: finalDuration,
         distance: currentState.distance,
       });
+      const tooShort = finalDuration < MIN_RIDE_DURATION_SEC;
+      const tooFar = currentState.distance < MIN_RIDE_DISTANCE_MI;
+      toast.info('Ride not saved', {
+        description: tooShort && tooFar
+          ? 'Rides under 1 min and 0.1 mi are discarded.'
+          : tooShort
+            ? `Ride was under 1 minute (${finalDuration}s) — not saved.`
+            : `Ride was under 0.1 mi (${currentState.distance.toFixed(2)} mi) — not saved.`,
+      });
     }
 
     rideStartedAtMs = null;
