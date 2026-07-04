@@ -21,6 +21,8 @@ const CONVOY_IDLE_GRACE_MS = 30000; // how long below threshold before dropping 
 const SPEED_CHANGE_THRESHOLD = 5; // mph - if speed changes more than this, reduce smoothing
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes fully stationary triggers the inactivity guard
 const INACTIVITY_RADIUS_MILES = 5 / 1609.34; // "a few meters" of GPS drift still counts as stationary
+const SPEED_DISTANCE_MAX_GAP_SEC = 120; // cap speed-based distance fallback across stale GPS gaps
+const MIN_MOVING_SPEED_FOR_SAVE_MPH = 5;
 
 const RIDE_STATE_KEY = 'blacktop_active_ride';
 
@@ -171,6 +173,26 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
+}
+
+function estimateDistanceFromSpeedSamples(points: GpsPoint[]): number {
+  if (points.length < 2) return 0;
+
+  let estimatedMiles = 0;
+  for (let i = 1; i < points.length; i++) {
+    const previous = points[i - 1];
+    const current = points[i];
+    const elapsedSeconds = (current.timestamp - previous.timestamp) / 1000;
+
+    if (elapsedSeconds <= 0 || elapsedSeconds > SPEED_DISTANCE_MAX_GAP_SEC) continue;
+
+    const previousSpeed = Math.max(0, Math.min(previous.speed || 0, MAX_SPEED_SANITY));
+    const currentSpeed = Math.max(0, Math.min(current.speed || 0, MAX_SPEED_SANITY));
+    const averageSpeed = (previousSpeed + currentSpeed) / 2;
+    estimatedMiles += averageSpeed * (elapsedSeconds / 3600);
+  }
+
+  return estimatedMiles;
 }
 
 // Unified position handler for both web and native
@@ -331,8 +353,14 @@ function handleNativePosition(position: Position | null) {
   handlePositionUpdate(latitude, longitude, speed, accuracy, position.timestamp);
 }
 
-function handlePositionError(error: GeolocationPositionError | any) {
-  console.warn('[GPS] Error:', error.code || error, error.message || '');
+function handlePositionError(error: GeolocationPositionError | unknown) {
+  if (error && typeof error === 'object') {
+    const maybeError = error as Partial<GeolocationPositionError>;
+    console.warn('[GPS] Error:', maybeError.code || error, maybeError.message || '');
+    return;
+  }
+
+  console.warn('[GPS] Error:', error);
 }
 
 // Helper: Start GPS watch
@@ -739,6 +767,15 @@ export function useActiveRide(convoyId?: string | null) {
 
     let savedRideId: string | null = null;
 
+    // Free the persisted active-ride snapshot before writing history. Long
+    // rides can be bulky; keeping both copies during save can exceed mobile
+    // storage limits even when the final history receipt would fit.
+    try {
+      localStorage.removeItem(RIDE_STATE_KEY);
+    } catch {
+      console.warn('[Ride] Failed to clear active ride snapshot before save');
+    }
+
     // Guard against accidental/rapid-fire start-stop sessions corrupting
     // garage stats, odometer rollups, and trading-card XP. Anything shorter
     // than MIN_RIDE_DURATION_SEC or MIN_RIDE_DISTANCE_MI is dropped before it
@@ -746,10 +783,13 @@ export function useActiveRide(convoyId?: string | null) {
     // recalculation happens.
     const MIN_RIDE_DURATION_SEC = 60;
     const MIN_RIDE_DISTANCE_MI = 0.09;
+    const speedEstimatedDistance = estimateDistanceFromSpeedSamples(currentState.gpsPoints);
+    const finalDistance = Math.max(currentState.distance, speedEstimatedDistance);
+    const hasMovementEvidence = currentState.maxSpeed >= MIN_MOVING_SPEED_FOR_SAVE_MPH && currentState.gpsPoints.length >= 2;
     const isValidRide =
       !!currentState.startedAt &&
       finalDuration >= MIN_RIDE_DURATION_SEC &&
-      currentState.distance >= MIN_RIDE_DISTANCE_MI;
+      (finalDistance >= MIN_RIDE_DISTANCE_MI || hasMovementEvidence);
 
     if (isValidRide) {
       const rideId = crypto.randomUUID();
@@ -759,9 +799,9 @@ export function useActiveRide(convoyId?: string | null) {
         startedAt: currentState.startedAt!,
         endedAt: nowIso,
         isConvoyRide: currentState.isConvoyMode,
-        distance: currentState.distance,
+        distance: finalDistance,
         duration: finalDuration,
-        averageSpeed: finalDuration > 0 ? (currentState.distance / (finalDuration / 3600)) : 0,
+        averageSpeed: finalDuration > 0 ? (finalDistance / (finalDuration / 3600)) : 0,
         maxSpeed: currentState.maxSpeed,
         maxLeanLeft: currentState.maxLeanLeft,
         maxLeanRight: currentState.maxLeanRight,
@@ -771,21 +811,28 @@ export function useActiveRide(convoyId?: string | null) {
         gForceSamples: currentState.gForceSamples,
         bikeId,
       };
-      addRideRef.current(ride);
-      savedRideId = rideId;
+      const didSaveRide = addRideRef.current(ride);
+      if (didSaveRide) {
+        savedRideId = rideId;
+      } else {
+        toast.error('Ride could not be saved', {
+          description: 'Device storage is full. Burn old data or remove large ride photos, then try again.',
+        });
+      }
     } else if (currentState.startedAt) {
       console.log('[Ride] Discarded invalid session', {
         duration: finalDuration,
         distance: currentState.distance,
+        speedEstimatedDistance,
       });
       const tooShort = finalDuration < MIN_RIDE_DURATION_SEC;
-      const tooFar = currentState.distance < MIN_RIDE_DISTANCE_MI;
+      const tooFar = finalDistance < MIN_RIDE_DISTANCE_MI && !hasMovementEvidence;
       toast.info('Ride not saved', {
         description: tooShort && tooFar
           ? 'Rides under 1 min and 0.1 mi are discarded.'
           : tooShort
             ? `Ride was under 1 minute (${finalDuration}s) — not saved.`
-            : `Ride was under 0.1 mi (${currentState.distance.toFixed(2)} mi) — not saved.`,
+            : `Ride was under 0.1 mi (${finalDistance.toFixed(2)} mi) — not saved.`,
       });
     }
 
