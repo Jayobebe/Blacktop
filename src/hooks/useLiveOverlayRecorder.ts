@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { formatDuration, formatDistance } from '@/lib/format';
 import { buildGForcePoints, pointsToAreaPath, pointsToLinePath } from '@/lib/gForceGraph';
+import { drawMiniMap } from '@/lib/overlayMiniMap';
 
 interface OverlayStats {
   speed: number;
@@ -11,6 +12,11 @@ interface OverlayStats {
   maxLean: number;
   gForce: number;
   maxGForce: number;
+  // Live rider position + heading so the mini-map (when enabled) can centre
+  // the map on the rider and rotate to their direction of travel.
+  lat: number | null;
+  lng: number | null;
+  heading: number | null;
 }
 
 interface LiveOverlayRecorderOptions {
@@ -20,6 +26,8 @@ interface LiveOverlayRecorderOptions {
   hasGForceData: boolean;
   /** Literal CSS color (e.g. 'hsl(38, 95%, 55%)') - canvas can't resolve `hsl(var(--accent))`. */
   accentColor: string;
+  /** When true, draw a live mini-map (bottom-right) with rider + route. */
+  blacktopMapEnabled: boolean;
 }
 
 // Rolling window for the G-force trace: enough to show recent shape on a
@@ -27,7 +35,7 @@ interface LiveOverlayRecorderOptions {
 const GFORCE_HISTORY_MAX_POINTS = 150;
 
 export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
-  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor } = options;
+  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled } = options;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -42,8 +50,14 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     maxLean: 0,
     gForce: 0,
     maxGForce: 0,
+    lat: null,
+    lng: null,
+    heading: null,
   });
   const gForceHistoryRef = useRef<number[]>([]);
+  // Rider trail for the mini-map polyline. Down-sampled from live GPS points
+  // to a bounded ring so a multi-hour ride doesn't grow unbounded memory.
+  const routeRef = useRef<Array<{ lat: number; lng: number }>>([]);
 
   // Use refs for these so the animation loop always has the latest value
   const hasLeanDataRef = useRef(hasLeanData);
@@ -52,9 +66,12 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   hasGForceDataRef.current = hasGForceData;
   const accentColorRef = useRef(accentColor);
   accentColorRef.current = accentColor;
+  const blacktopMapEnabledRef = useRef(blacktopMapEnabled);
+  blacktopMapEnabledRef.current = blacktopMapEnabled;
 
   const speedLabel = speedUnit.toUpperCase();
   const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
+
 
   // Draw a single frame to the canvas
   const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean, showGForce: boolean, gForceHistory: number[], accent: string) => {
