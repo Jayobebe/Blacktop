@@ -23,7 +23,7 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -82,6 +82,12 @@ interface BlacktopMapProps {
 
 registerTileCacheProtocol();
 
+const DARK_LAYER_ID = 'carto-dark-layer';
+const SATELLITE_LAYER_ID = 'esri-satellite-layer';
+
+// Both basemap sources live in the initial style so we can toggle their
+// visibility without calling setStyle() (which would blow away dynamically
+// added sources/layers like the route line).
 const CARTO_DARK_STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -97,13 +103,28 @@ const CARTO_DARK_STYLE: StyleSpecification = {
       attribution:
         '© <a href="https://carto.com/attributions" target="_blank">CARTO</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
     },
+    'esri-satellite': {
+      type: 'raster',
+      tiles: [
+        toCachedTileUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+      ],
+      tileSize: 256,
+      attribution:
+        'Tiles © <a href="https://www.esri.com" target="_blank">Esri</a> — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+    },
   },
   layers: [
     {
-      id: 'carto-dark-layer',
+      id: DARK_LAYER_ID,
       type: 'raster',
       source: 'carto-dark',
       paint: { 'raster-brightness-min': 0.1 },
+    },
+    {
+      id: SATELLITE_LAYER_ID,
+      type: 'raster',
+      source: 'esri-satellite',
+      layout: { visibility: 'none' },
     },
   ],
 };
@@ -131,6 +152,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [contextLost, setContextLost] = useState(false);
   const [showSaveUI, setShowSaveUI] = useState(false);
   const [saveName, setSaveName] = useState('');
+  const [basemap, setBasemap] = useState<'dark' | 'satellite'>('dark');
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
@@ -274,6 +296,21 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Toggle basemap layer visibility when the user flips the Dark/Satellite
+  // switch. Kept as a layer toggle (rather than setStyle) so dynamically
+  // added sources/layers like the route line survive the swap.
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m) return;
+    const apply = () => {
+      if (!m.getLayer(DARK_LAYER_ID) || !m.getLayer(SATELLITE_LAYER_ID)) return;
+      m.setLayoutProperty(DARK_LAYER_ID, 'visibility', basemap === 'dark' ? 'visible' : 'none');
+      m.setLayoutProperty(SATELLITE_LAYER_ID, 'visibility', basemap === 'satellite' ? 'visible' : 'none');
+    };
+    if (m.isStyleLoaded()) apply();
+    else m.once('styledata', apply);
+  }, [basemap, map]);
 
   // When the overlay transitions from hidden (display:none) to visible, the
   // map canvas has no layout dimensions. Calling resize() after a short delay
@@ -619,6 +656,38 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
+
+      {/* Vertical basemap toggle — sits on the right, under the maplibre
+          Navigation + Geolocate controls. Kept narrow (single column of
+          icon buttons) so it stays out of the way of the map. */}
+      <div className="absolute right-2.5 top-[140px] z-10 flex flex-col rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+        <button
+          type="button"
+          onClick={() => setBasemap('dark')}
+          aria-pressed={basemap === 'dark'}
+          aria-label="Dark map"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            basemap === 'dark' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <MapIcon className="w-4 h-4" />
+        </button>
+        <div className="h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => setBasemap('satellite')}
+          aria-pressed={basemap === 'satellite'}
+          aria-label="Satellite view"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            basemap === 'satellite' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <Satellite className="w-4 h-4" />
+        </button>
+      </div>
+
 
       {showSearchBar && (
         <MapSearchBar
