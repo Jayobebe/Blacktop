@@ -220,11 +220,29 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.restore();
     }
 
-    // Bottom Right - Duration
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 28px monospace';
-    ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
+    // Bottom Right — either the standalone Duration readout OR (when the
+    // rider uses Blacktop Maps as their nav app) a live mini-map with the
+    // duration inside it, next to the user dot.
+    if (showMiniMap && stats.lat != null && stats.lng != null) {
+      const mmWidth = 360;
+      const mmHeight = 300;
+      const mmX = width - mmWidth - 40;
+      const mmY = height - mmHeight - 40;
+      drawMiniMap({
+        ctx,
+        region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
+        center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
+        route,
+        opacity: 0.6,
+        accent,
+        durationLabel: formatDuration(stats.duration),
+      });
+    } else {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
+    }
   }, [speedLabel, distLabel, distanceUnit]);
 
   // Animation loop to continuously draw frames
