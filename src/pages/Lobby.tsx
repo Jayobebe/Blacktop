@@ -456,7 +456,7 @@ export default function Lobby() {
   if (convoy.isRestoring || !convoy.isActive) return null;
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
       {/* Header with Code */}
       <header className="mb-3 landscape:mb-2 md:mb-4 animate-fade-in flex items-center justify-between">
         <div className="flex items-center gap-2">

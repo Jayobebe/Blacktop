@@ -41,7 +41,7 @@ export default function Onboarding() {
 
   if (step === 'landing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 safe-top safe-bottom gap-8">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6 safe-top safe-bottom gap-8">
         {/* Hero */}
         <div className="text-center max-w-sm">
           <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Blacktop</p>
@@ -101,7 +101,7 @@ export default function Onboarding() {
   if (step === 'consent') {
     const allAgreed = agreedTerms && agreedAge && agreedSafety;
     return (
-      <div className="h-screen max-h-screen overflow-auto flex flex-col items-center justify-center p-4 safe-top safe-bottom gap-5">
+      <div className="h-dvh max-h-dvh overflow-auto flex flex-col items-center justify-center p-4 safe-top safe-bottom gap-5">
         <div className="text-center">
           <h1 className="text-4xl font-semibold tracking-tight mb-2">BLACKTOP</h1>
           <p className="text-muted-foreground text-sm">Before we set you up</p>
@@ -193,7 +193,7 @@ export default function Onboarding() {
 
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
       {/* Branding - left side in landscape */}
       <div className="text-center landscape:text-left landscape:flex-1 landscape:max-w-xs">
         <h1 className="text-5xl landscape:text-4xl font-semibold tracking-tight mb-3">

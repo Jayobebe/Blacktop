@@ -331,7 +331,7 @@ export default function DemoShowcase() {
   const isFirstSlide = currentIndex === 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-dvh bg-background flex flex-col overflow-hidden">
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-secondary">
         <div 

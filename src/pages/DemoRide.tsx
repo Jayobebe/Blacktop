@@ -231,7 +231,7 @@ export default function DemoRide() {
     (step === 'onboarding' && demoName.length >= 2);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-dvh flex flex-col bg-background">
       <DemoSuccess show={showSuccess} />
       
       {/* Demo Header */}

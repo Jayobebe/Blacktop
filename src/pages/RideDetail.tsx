@@ -23,7 +23,7 @@ export default function RideDetail() {
 
   if (!ride) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground">Ride not found</p>
         <Button onClick={() => navigate('/history')} className="mt-4">
           Back to History
@@ -100,7 +100,7 @@ export default function RideDetail() {
   };
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
       <header className="flex items-center justify-between mb-4 landscape:mb-2 flex-shrink-0">
         <div className="flex items-center gap-3">

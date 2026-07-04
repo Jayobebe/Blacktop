@@ -58,7 +58,7 @@ export default function Install() {
 
   if (isStandalone) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6 bg-background">
         <div className="text-center animate-fade-in">
           <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Check className="w-10 h-10 text-accent" />
@@ -76,7 +76,7 @@ export default function Install() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col p-6 bg-background safe-top safe-bottom">
+    <div className="min-h-dvh flex flex-col p-6 bg-background safe-top safe-bottom">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <Button 

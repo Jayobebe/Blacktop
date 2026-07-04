@@ -9,7 +9,7 @@ export default function Terms() {
   const handleBack = () => navigate(hasProfile ? '/settings' : '/');
 
   return (
-    <div className="min-h-screen bg-background safe-top safe-bottom">
+    <div className="min-h-dvh bg-background safe-top safe-bottom">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/30">
         <div className="flex items-center gap-3 p-4 max-w-2xl mx-auto">
           <Button

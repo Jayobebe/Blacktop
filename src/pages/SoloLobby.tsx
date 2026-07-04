@@ -111,7 +111,7 @@ export default function SoloLobby() {
 
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
       {/* Header */}
       <header className="flex items-center gap-3 mb-6 animate-fade-in">
         <button

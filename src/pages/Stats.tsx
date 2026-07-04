@@ -80,7 +80,7 @@ export default function Stats() {
   const totalBadges = stats.badges.speedDemon + stats.badges.journeyman + stats.badges.fallback;
 
   return (
-    <div className="min-h-screen flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
+    <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
       {/* Header */}
       <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
         <button
