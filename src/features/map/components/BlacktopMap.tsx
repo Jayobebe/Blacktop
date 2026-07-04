@@ -316,7 +316,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         const map = mapRef.current;
         if (!map) return;
 
-        const hasDestination = !!(destination ?? initialDestination);
+        const hasDestination = !!destinationRef.current;
         const followZoom = hasDestination ? FOLLOW_ZOOM_WITH_DESTINATION : FOLLOW_ZOOM_NO_DESTINATION;
 
         if (!hasFollowedUserRef.current) {
