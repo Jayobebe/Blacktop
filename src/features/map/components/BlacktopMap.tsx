@@ -152,6 +152,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [contextLost, setContextLost] = useState(false);
   const [showSaveUI, setShowSaveUI] = useState(false);
   const [saveName, setSaveName] = useState('');
+  const [basemap, setBasemap] = useState<'dark' | 'satellite'>('dark');
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
