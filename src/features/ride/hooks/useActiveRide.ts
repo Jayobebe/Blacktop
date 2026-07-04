@@ -761,6 +761,15 @@ export function useActiveRide(convoyId?: string | null) {
 
     let savedRideId: string | null = null;
 
+    // Free the persisted active-ride snapshot before writing history. Long
+    // rides can be bulky; keeping both copies during save can exceed mobile
+    // storage limits even when the final history receipt would fit.
+    try {
+      localStorage.removeItem(RIDE_STATE_KEY);
+    } catch {
+      console.warn('[Ride] Failed to clear active ride snapshot before save');
+    }
+
     // Guard against accidental/rapid-fire start-stop sessions corrupting
     // garage stats, odometer rollups, and trading-card XP. Anything shorter
     // than MIN_RIDE_DURATION_SEC or MIN_RIDE_DISTANCE_MI is dropped before it
