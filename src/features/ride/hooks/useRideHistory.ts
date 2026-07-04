@@ -30,8 +30,16 @@ function compactRideForStorage(ride: RideSession): RideSession {
 }
 
 function receiptOnlyRide(ride: RideSession): RideSession {
+  const {
+    photos: _photos,
+    recording: _recording,
+    overlayAvailable: _overlayAvailable,
+    overlayBlobUrl: _overlayBlobUrl,
+    ...receipt
+  } = ride;
+
   return {
-    ...ride,
+    ...receipt,
     gpsPoints: [],
     leanSamples: [],
     gForceSamples: [],
