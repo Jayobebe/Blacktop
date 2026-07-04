@@ -17,6 +17,7 @@ export default function PrivacyPolicy() {
             size="icon"
             onClick={handleBack}
             className="touch-target"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>

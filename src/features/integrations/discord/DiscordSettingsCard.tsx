@@ -127,6 +127,7 @@ export function DiscordSettingsCard() {
               size="icon"
               className="h-10 w-10 rounded-xl"
               title="Disconnect"
+              aria-label="Disconnect Discord integration"
             >
               <Trash2 className="w-4 h-4" />
             </Button>

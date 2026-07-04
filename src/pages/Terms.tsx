@@ -17,6 +17,7 @@ export default function Terms() {
             size="icon"
             onClick={handleBack}
             className="touch-target"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -147,6 +148,27 @@ export default function Terms() {
           </ul>
           <p className="text-muted-foreground">
             If you are not willing to accept these risks, do not play Hit Heavy.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Accessibility</h2>
+          <p className="text-muted-foreground">
+            Blacktop aims to follow WCAG 2.1 AA guidance where practical: a
+            high-contrast dark theme, semantic markup, keyboard-operable
+            controls, screen-reader labels on interactive elements, and
+            respect for the OS text-size and reduce-motion settings.
+          </p>
+          <p className="text-muted-foreground">
+            Some features are intentionally motion- or orientation-based
+            (lean-angle sensor, G-force gauge, globe long-press) and cannot
+            be made fully equivalent for every user. In-ride controls are
+            deliberately large and sparse and are not designed to be operated
+            while the vehicle is moving.
+          </p>
+          <p className="text-muted-foreground">
+            If you hit an accessibility barrier, please report it via the
+            Discord invite in Settings so it can be prioritised.
           </p>
         </section>
 

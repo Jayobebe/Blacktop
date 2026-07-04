@@ -84,6 +84,7 @@ export default function Install() {
           size="icon" 
           onClick={() => navigate(-1)}
           className="rounded-full"
+          aria-label="Go back"
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
