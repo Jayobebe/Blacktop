@@ -314,18 +314,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         const map = mapRef.current;
         if (!map) return;
 
-        if (!hasFollowedUserRef.current && !initialDestination) {
+        const hasDestination = !!(destination ?? initialDestination);
+        const followZoom = hasDestination ? FOLLOW_ZOOM_WITH_DESTINATION : FOLLOW_ZOOM_NO_DESTINATION;
+
+        if (!hasFollowedUserRef.current) {
           hasFollowedUserRef.current = true;
           map.flyTo({
             center: [loc.lng, loc.lat],
-            zoom: 16,
+            zoom: followZoom,
             bearing: safeBearing(headingRef.current, map),
             essential: true,
           });
-        } else if (hasFollowedUserRef.current) {
+        } else {
           if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
+          // Re-snap to a tight follow zoom whenever we resume after the rider
+          // stopped panning; only nudge zoom up (never yank them out).
+          const currentZoom = map.getZoom();
           map.easeTo({
             center: [loc.lng, loc.lat],
+            zoom: currentZoom < followZoom ? followZoom : currentZoom,
             bearing: safeBearing(headingRef.current, map),
             duration: 800,
             essential: true,
