@@ -68,7 +68,11 @@ const ROUTE_SOURCE_ID = 'blacktop-route';
 const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
 const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
 
-const LOCATE_RESUME_DELAY_MS = 10000;
+const LOCATE_RESUME_DELAY_MS = 5000;
+// Zoom level used to auto-follow the rider. We push in tighter when there's an
+// active destination so the route + rider fill the screen without pinch-zoom.
+const FOLLOW_ZOOM_WITH_DESTINATION = 17;
+const FOLLOW_ZOOM_NO_DESTINATION = 16;
 
 interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
@@ -158,6 +162,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const headingRef = useRef<number | null>(null);
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
+  const destinationRef = useRef<MapDestination | null>(seededDestination);
+  useEffect(() => { destinationRef.current = destination; }, [destination]);
 
   // ── Inactivity guardrail for the home map ──────────────────────────────────
   // When there is no active ride, auto-close the map after HOME_MAP_INACTIVITY_MS
@@ -310,18 +316,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         const map = mapRef.current;
         if (!map) return;
 
-        if (!hasFollowedUserRef.current && !initialDestination) {
+        const hasDestination = !!destinationRef.current;
+        const followZoom = hasDestination ? FOLLOW_ZOOM_WITH_DESTINATION : FOLLOW_ZOOM_NO_DESTINATION;
+
+        if (!hasFollowedUserRef.current) {
           hasFollowedUserRef.current = true;
           map.flyTo({
             center: [loc.lng, loc.lat],
-            zoom: 16,
+            zoom: followZoom,
             bearing: safeBearing(headingRef.current, map),
             essential: true,
           });
-        } else if (hasFollowedUserRef.current) {
+        } else {
           if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
+          // Re-snap to a tight follow zoom whenever we resume after the rider
+          // stopped panning; only nudge zoom up (never yank them out).
+          const currentZoom = map.getZoom();
           map.easeTo({
             center: [loc.lng, loc.lat],
+            zoom: currentZoom < followZoom ? followZoom : currentZoom,
             bearing: safeBearing(headingRef.current, map),
             duration: 800,
             essential: true,
