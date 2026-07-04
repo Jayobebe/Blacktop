@@ -71,8 +71,8 @@ export interface MiniMapDrawOptions {
   /** Overall opacity of the mini map so background video shows through. */
   opacity: number;
   accent: string;
-  /** Text drawn below the user dot (already-formatted duration). */
-  durationLabel: string;
+  /** Optional text drawn just below the user dot (e.g. formatted duration). */
+  durationLabel?: string;
 }
 
 export function drawMiniMap({ ctx, region, center, route, opacity, accent, durationLabel }: MiniMapDrawOptions): void {
@@ -155,15 +155,17 @@ export function drawMiniMap({ ctx, region, center, route, opacity, accent, durat
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
   ctx.stroke();
 
-  // Duration label sits just under the user dot, still legible against the map.
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = 'white';
-  ctx.font = 'bold 22px monospace';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-  ctx.shadowBlur = 6;
-  ctx.fillText(durationLabel, cx, cy + 18);
-  ctx.shadowBlur = 0;
+  // Optional duration label sits just under the user dot when provided.
+  if (durationLabel) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 22px monospace';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(durationLabel, cx, cy + 18);
+    ctx.shadowBlur = 0;
+  }
 
   // Subtle border around the whole card.
   ctx.beginPath();
