@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { formatDuration, formatDistance } from '@/lib/format';
 import { buildGForcePoints, pointsToAreaPath, pointsToLinePath } from '@/lib/gForceGraph';
+import { drawMiniMap } from '@/lib/overlayMiniMap';
 
 interface OverlayStats {
   speed: number;
@@ -11,6 +12,11 @@ interface OverlayStats {
   maxLean: number;
   gForce: number;
   maxGForce: number;
+  // Live rider position + heading so the mini-map (when enabled) can centre
+  // the map on the rider and rotate to their direction of travel.
+  lat: number | null;
+  lng: number | null;
+  heading: number | null;
 }
 
 interface LiveOverlayRecorderOptions {
@@ -20,6 +26,8 @@ interface LiveOverlayRecorderOptions {
   hasGForceData: boolean;
   /** Literal CSS color (e.g. 'hsl(38, 95%, 55%)') - canvas can't resolve `hsl(var(--accent))`. */
   accentColor: string;
+  /** When true, draw a live mini-map (bottom-right) with rider + route. */
+  blacktopMapEnabled: boolean;
 }
 
 // Rolling window for the G-force trace: enough to show recent shape on a
@@ -27,7 +35,7 @@ interface LiveOverlayRecorderOptions {
 const GFORCE_HISTORY_MAX_POINTS = 150;
 
 export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
-  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor } = options;
+  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled } = options;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -42,8 +50,14 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     maxLean: 0,
     gForce: 0,
     maxGForce: 0,
+    lat: null,
+    lng: null,
+    heading: null,
   });
   const gForceHistoryRef = useRef<number[]>([]);
+  // Rider trail for the mini-map polyline. Down-sampled from live GPS points
+  // to a bounded ring so a multi-hour ride doesn't grow unbounded memory.
+  const routeRef = useRef<Array<{ lat: number; lng: number }>>([]);
 
   // Use refs for these so the animation loop always has the latest value
   const hasLeanDataRef = useRef(hasLeanData);
@@ -52,12 +66,15 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   hasGForceDataRef.current = hasGForceData;
   const accentColorRef = useRef(accentColor);
   accentColorRef.current = accentColor;
+  const blacktopMapEnabledRef = useRef(blacktopMapEnabled);
+  blacktopMapEnabledRef.current = blacktopMapEnabled;
 
   const speedLabel = speedUnit.toUpperCase();
   const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
 
+
   // Draw a single frame to the canvas
-  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean, showGForce: boolean, gForceHistory: number[], accent: string) => {
+  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean, showGForce: boolean, showMiniMap: boolean, gForceHistory: number[], route: Array<{ lat: number; lng: number }>, accent: string) => {
     // Clear with transparency
     ctx.clearRect(0, 0, width, height);
 
@@ -203,11 +220,29 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.restore();
     }
 
-    // Bottom Right - Duration
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 28px monospace';
-    ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
+    // Bottom Right — either the standalone Duration readout OR (when the
+    // rider uses Blacktop Maps as their nav app) a live mini-map with the
+    // duration inside it, next to the user dot.
+    if (showMiniMap && stats.lat != null && stats.lng != null) {
+      const mmWidth = 360;
+      const mmHeight = 300;
+      const mmX = width - mmWidth - 40;
+      const mmY = height - mmHeight - 40;
+      drawMiniMap({
+        ctx,
+        region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
+        center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
+        route,
+        opacity: 0.6,
+        accent,
+        durationLabel: formatDuration(stats.duration),
+      });
+    } else {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
+    }
   }, [speedLabel, distLabel, distanceUnit]);
 
   // Animation loop to continuously draw frames
@@ -223,7 +258,9 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         latestStatsRef.current,
         hasLeanDataRef.current,
         hasGForceDataRef.current,
+        blacktopMapEnabledRef.current,
         gForceHistoryRef.current,
+        routeRef.current,
         accentColorRef.current,
       );
     }
@@ -242,6 +279,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     // Clear the chunks
     chunksRef.current = [];
     gForceHistoryRef.current = [];
+    routeRef.current = [];
 
     // Get stream from canvas
     const stream = canvas.captureStream(30); // 30 fps
@@ -289,7 +327,19 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         history.splice(0, history.length - GFORCE_HISTORY_MAX_POINTS);
       }
     }
+
+    // Append to the mini-map trail if we're rendering it. Skip near-duplicate
+    // fixes so a stationary rider doesn't inflate the buffer.
+    if (blacktopMapEnabledRef.current && stats.lat != null && stats.lng != null) {
+      const trail = routeRef.current;
+      const last = trail[trail.length - 1];
+      if (!last || Math.abs(last.lat - stats.lat) > 1e-5 || Math.abs(last.lng - stats.lng) > 1e-5) {
+        trail.push({ lat: stats.lat, lng: stats.lng });
+        if (trail.length > 2000) trail.splice(0, trail.length - 2000);
+      }
+    }
   }, []);
+
 
   // Stop recording and return the blob
   const stopRecording = useCallback((): Promise<Blob | null> => {
