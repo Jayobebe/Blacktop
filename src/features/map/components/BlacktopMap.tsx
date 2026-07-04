@@ -300,13 +300,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // Toggle basemap layer visibility when the user flips the Dark/Satellite
   // switch. Kept as a layer toggle (rather than setStyle) so dynamically
   // added sources/layers like the route line survive the swap.
+  //
+  // Satellite imagery (Esri World Imagery) only has reliable global coverage
+  // up to ~z18 — past that we get grey "Map data not yet available" tiles.
+  // Cap max zoom while satellite is active and restore it when swapping back.
   useEffect(() => {
     const m = mapRef.current;
     if (!m) return;
+    const SAT_MAX_ZOOM = 18;
+    const DEFAULT_MAX_ZOOM = 22; // maplibre default
     const apply = () => {
       if (!m.getLayer(DARK_LAYER_ID) || !m.getLayer(SATELLITE_LAYER_ID)) return;
       m.setLayoutProperty(DARK_LAYER_ID, 'visibility', basemap === 'dark' ? 'visible' : 'none');
       m.setLayoutProperty(SATELLITE_LAYER_ID, 'visibility', basemap === 'satellite' ? 'visible' : 'none');
+      if (basemap === 'satellite') {
+        m.setMaxZoom(SAT_MAX_ZOOM);
+        if (m.getZoom() > SAT_MAX_ZOOM) m.zoomTo(SAT_MAX_ZOOM, { duration: 250 });
+      } else {
+        m.setMaxZoom(DEFAULT_MAX_ZOOM);
+      }
     };
     if (m.isStyleLoaded()) apply();
     else m.once('styledata', apply);
