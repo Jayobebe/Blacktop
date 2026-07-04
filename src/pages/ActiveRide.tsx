@@ -1095,52 +1095,10 @@ export default function ActiveRide() {
         )}
       </div>
 
-      {/* Solo Rescue Button - pings user's Discord directly */}
-      {!rideState.isConvoyMode && discordEnabled && (
-        <div className="mt-2 flex justify-center animate-slide-up">
-          <Button
-            onClick={async () => {
-              if (soloRescueSending || soloRescueSent) return;
-              setSoloRescueSending(true);
-              try {
-                const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-                  navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: true,
-                    timeout: 8000,
-                    maximumAge: 5000,
-                  });
-                });
-                const result = await announceSoloRescueToDiscord({
-                  riderName: profile.name || 'Driver',
-                  lat: pos.coords.latitude,
-                  lng: pos.coords.longitude,
-                });
-                if (result.skipped) {
-                  toast.error('Connect Discord in Settings to use rescue ping');
-                } else if (result.ok) {
-                  toast.success('Rescue ping sent to Discord');
-                  setSoloRescueSent(true);
-                  setTimeout(() => setSoloRescueSent(false), 30000);
-                } else {
-                  toast.error('Failed to send rescue ping');
-                }
-              } catch (err) {
-                console.error('[SoloRescue]', err);
-                toast.error('Could not get your location');
-              } finally {
-                setSoloRescueSending(false);
-              }
-            }}
-            disabled={soloRescueSending || soloRescueSent}
-            variant="outline"
-            size="sm"
-            className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
-            {soloRescueSent ? 'RESCUE PING SENT' : soloRescueSending ? 'SENDING...' : 'RESCUE PING'}
-          </Button>
-        </div>
-      )}
+      {/* Solo rescue moved into the controls row (next to Map/Pause) so it's
+          not adjacent to End Ride — riders were tapping it accidentally. */}
+
+
 
       {/* End Ride Button - always at bottom, compact */}
       <div className="mt-2 md:mt-3 flex justify-center animate-slide-up">
