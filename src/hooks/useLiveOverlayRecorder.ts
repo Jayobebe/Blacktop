@@ -327,7 +327,19 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         history.splice(0, history.length - GFORCE_HISTORY_MAX_POINTS);
       }
     }
+
+    // Append to the mini-map trail if we're rendering it. Skip near-duplicate
+    // fixes so a stationary rider doesn't inflate the buffer.
+    if (blacktopMapEnabledRef.current && stats.lat != null && stats.lng != null) {
+      const trail = routeRef.current;
+      const last = trail[trail.length - 1];
+      if (!last || Math.abs(last.lat - stats.lat) > 1e-5 || Math.abs(last.lng - stats.lng) > 1e-5) {
+        trail.push({ lat: stats.lat, lng: stats.lng });
+        if (trail.length > 2000) trail.splice(0, trail.length - 2000);
+      }
+    }
   }, []);
+
 
   // Stop recording and return the blob
   const stopRecording = useCallback((): Promise<Blob | null> => {
