@@ -5,6 +5,39 @@ import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
 
 const RIDES_KEY = 'blacktop_rides';
 
+const MAX_GPS_POINTS_PER_STORED_RIDE = 900;
+const MAX_SENSOR_SAMPLES_PER_STORED_RIDE = 360;
+
+function downsample<T>(items: T[] | undefined, maxItems: number): T[] | undefined {
+  if (!items || items.length <= maxItems) return items;
+  if (maxItems <= 0) return [];
+
+  const sampled: T[] = [];
+  const lastIndex = items.length - 1;
+  for (let i = 0; i < maxItems; i++) {
+    sampled.push(items[Math.round((i / (maxItems - 1)) * lastIndex)]);
+  }
+  return sampled;
+}
+
+function compactRideForStorage(ride: RideSession): RideSession {
+  return {
+    ...ride,
+    gpsPoints: downsample(ride.gpsPoints, MAX_GPS_POINTS_PER_STORED_RIDE) || [],
+    leanSamples: downsample(ride.leanSamples, MAX_SENSOR_SAMPLES_PER_STORED_RIDE),
+    gForceSamples: downsample(ride.gForceSamples, MAX_SENSOR_SAMPLES_PER_STORED_RIDE),
+  };
+}
+
+function receiptOnlyRide(ride: RideSession): RideSession {
+  return {
+    ...ride,
+    gpsPoints: [],
+    leanSamples: [],
+    gForceSamples: [],
+  };
+}
+
 export function useRideHistory() {
   const [realRides, setRides, clearRides] = useLocalStorage<RideSession[]>(RIDES_KEY, []);
   const { enabled: demoEnabled } = useDemoMode();
@@ -14,7 +47,18 @@ export function useRideHistory() {
   const rides = demoEnabled ? DEMO_RIDES : realRides;
 
   const addRide = useCallback((ride: RideSession) => {
-    setRides(prev => [ride, ...prev]);
+    const savedFullRide = setRides(prev => [ride, ...prev]);
+    if (savedFullRide) return true;
+
+    // Some mobile webviews have tight localStorage limits. If the raw route +
+    // high-frequency sensor samples push history over quota, keep the receipt
+    // by compacting tracks before giving up.
+    const compactRide = compactRideForStorage(ride);
+    const savedCompactRide = setRides(prev => [compactRide, ...prev.map(compactRideForStorage)]);
+    if (savedCompactRide) return true;
+
+    const savedReceiptOnlyRide = setRides(prev => [receiptOnlyRide(ride), ...prev.map(receiptOnlyRide)]);
+    return savedReceiptOnlyRide;
   }, [setRides]);
 
   const updateRideBadges = useCallback((rideId: string, badges: ('speed-demon' | 'journeyman' | 'fallback')[]) => {

@@ -771,8 +771,14 @@ export function useActiveRide(convoyId?: string | null) {
         gForceSamples: currentState.gForceSamples,
         bikeId,
       };
-      addRideRef.current(ride);
-      savedRideId = rideId;
+      const didSaveRide = addRideRef.current(ride);
+      if (didSaveRide) {
+        savedRideId = rideId;
+      } else {
+        toast.error('Ride could not be saved', {
+          description: 'Device storage is full. Burn old data or remove large ride photos, then try again.',
+        });
+      }
     } else if (currentState.startedAt) {
       console.log('[Ride] Discarded invalid session', {
         duration: finalDuration,

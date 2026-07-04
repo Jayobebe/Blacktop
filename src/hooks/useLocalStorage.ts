@@ -57,8 +57,10 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
         setStoredValue(valueToStore);
         window.dispatchEvent(new CustomEvent(localStorageChangeEvent, { detail: { key } }));
+        return true;
       } catch (error) {
         console.error(`Error setting localStorage key "${key}":`, error);
+        return false;
       }
     },
     [key, storedValue]
