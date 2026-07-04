@@ -82,6 +82,12 @@ interface BlacktopMapProps {
 
 registerTileCacheProtocol();
 
+const DARK_LAYER_ID = 'carto-dark-layer';
+const SATELLITE_LAYER_ID = 'esri-satellite-layer';
+
+// Both basemap sources live in the initial style so we can toggle their
+// visibility without calling setStyle() (which would blow away dynamically
+// added sources/layers like the route line).
 const CARTO_DARK_STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -97,13 +103,28 @@ const CARTO_DARK_STYLE: StyleSpecification = {
       attribution:
         '© <a href="https://carto.com/attributions" target="_blank">CARTO</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
     },
+    'esri-satellite': {
+      type: 'raster',
+      tiles: [
+        toCachedTileUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+      ],
+      tileSize: 256,
+      attribution:
+        'Tiles © <a href="https://www.esri.com" target="_blank">Esri</a> — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+    },
   },
   layers: [
     {
-      id: 'carto-dark-layer',
+      id: DARK_LAYER_ID,
       type: 'raster',
       source: 'carto-dark',
       paint: { 'raster-brightness-min': 0.1 },
+    },
+    {
+      id: SATELLITE_LAYER_ID,
+      type: 'raster',
+      source: 'esri-satellite',
+      layout: { visibility: 'none' },
     },
   ],
 };
