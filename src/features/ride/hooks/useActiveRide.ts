@@ -353,8 +353,14 @@ function handleNativePosition(position: Position | null) {
   handlePositionUpdate(latitude, longitude, speed, accuracy, position.timestamp);
 }
 
-function handlePositionError(error: GeolocationPositionError | any) {
-  console.warn('[GPS] Error:', error.code || error, error.message || '');
+function handlePositionError(error: GeolocationPositionError | unknown) {
+  if (error && typeof error === 'object') {
+    const maybeError = error as Partial<GeolocationPositionError>;
+    console.warn('[GPS] Error:', maybeError.code || error, maybeError.message || '');
+    return;
+  }
+
+  console.warn('[GPS] Error:', error);
 }
 
 // Helper: Start GPS watch
