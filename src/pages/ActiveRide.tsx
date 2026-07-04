@@ -128,6 +128,10 @@ export default function ActiveRide() {
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
 
+  // "Blacktop Maps enabled" = the rider's preferred nav app is our in-app map.
+  // Drives whether the downloadable overlay includes the live mini-map card.
+  const blacktopMapEnabled = profile.preferredNavApp === 'blacktop';
+
   // Live overlay recorder
   const overlayRecorder = useLiveOverlayRecorder({
     speedUnit: settings.speedUnit,
@@ -135,6 +139,7 @@ export default function ActiveRide() {
     hasLeanData,
     hasGForceData,
     accentColor,
+    blacktopMapEnabled,
   });
   const overlayRecorderRef = useRef(overlayRecorder);
   overlayRecorderRef.current = overlayRecorder;
