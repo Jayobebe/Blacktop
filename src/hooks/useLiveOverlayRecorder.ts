@@ -74,7 +74,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
 
 
   // Draw a single frame to the canvas
-  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean, showGForce: boolean, gForceHistory: number[], accent: string) => {
+  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean, showGForce: boolean, showMiniMap: boolean, gForceHistory: number[], route: Array<{ lat: number; lng: number }>, accent: string) => {
     // Clear with transparency
     ctx.clearRect(0, 0, width, height);
 
