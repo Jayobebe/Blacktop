@@ -788,10 +788,16 @@ export default function ActiveRide() {
               </div>
             )}
 
+            {/* G-Force Gauge - alongside lean angle when enabled */}
+            {settings.gForceEnabled && gForce.isSupported && (
+              <div className="mt-2 landscape:mt-1 flex justify-center">
+                <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+              </div>
+            )}
           </div>
 
           {/* Stats Row - larger and more visible */}
-          <div className="flex items-end gap-8 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
+          <div className="flex gap-8 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
               <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">
@@ -803,14 +809,6 @@ export default function ActiveRide() {
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
               <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
-            {/* G-Force Gauge - between Time and Max so it sits right of the
-                speed/lean cluster and left of the bottom-right Max metric. */}
-            {settings.gForceEnabled && gForce.isSupported && (
-              <div className="flex flex-col items-center min-w-0">
-                <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">G-Force</p>
-                <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
-              </div>
-            )}
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
               <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">
