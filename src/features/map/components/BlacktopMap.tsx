@@ -23,7 +23,7 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 
