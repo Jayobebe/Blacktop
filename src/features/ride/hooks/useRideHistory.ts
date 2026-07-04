@@ -186,8 +186,8 @@ export function useRideHistory() {
   // ever added, it MUST be wiped here too.
   const burnAllData = useCallback(() => {
     clearRides();
-    try { localStorage.removeItem('bt.cards.v1'); } catch {}
-    try { localStorage.removeItem('bt.collected_cards.v1'); } catch {}
+    try { localStorage.removeItem('bt.cards.v1'); } catch { console.warn('[RideHistory] Failed to clear card cache'); }
+    try { localStorage.removeItem('bt.collected_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear collected cards'); }
   }, [clearRides]);
 
 
