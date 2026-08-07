@@ -710,15 +710,18 @@ export function useVoiceChannel(convoyId?: string) {
         // presence heartbeat used to blow away half-completed handshakes,
         // which meant peers could never finish connecting on slow links.
         const existingPeer = peersRef.current.get(from);
-        if (
+        const handshakeAge = existingPeer ? Date.now() - existingPeer.createdAt : Infinity;
+        const inFlight =
           existingPeer &&
-          (existingPeer.pc.connectionState === 'connected' ||
-            existingPeer.pc.connectionState === 'connecting' ||
-            existingPeer.pc.connectionState === 'new')
-        ) {
+          (existingPeer.pc.connectionState === 'connecting' ||
+            existingPeer.pc.connectionState === 'new') &&
+          handshakeAge < HANDSHAKE_STALL_MS;
+
+        if (existingPeer && (existingPeer.pc.connectionState === 'connected' || inFlight)) {
           console.log(`[Voice] Connection to ${from} is ${existingPeer.pc.connectionState}, skipping offer`);
           return;
         }
+
 
         
         // Clean up any existing failed connection
