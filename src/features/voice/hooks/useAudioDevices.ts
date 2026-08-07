@@ -98,13 +98,21 @@ export function useAudioDevices() {
     setSelectedInput(deviceId);
     localStorage.setItem(AUDIO_INPUT_KEY, deviceId);
     console.log('[AudioDevices] Selected input:', deviceId);
+    // Let an in-progress voice call hot-swap the mic without reconnecting.
+    window.dispatchEvent(
+      new CustomEvent('blacktop:audio-device-change', { detail: { kind: 'audioinput', deviceId } })
+    );
   }, []);
 
   const selectOutput = useCallback((deviceId: string) => {
     setSelectedOutput(deviceId);
     localStorage.setItem(AUDIO_OUTPUT_KEY, deviceId);
     console.log('[AudioDevices] Selected output:', deviceId);
+    window.dispatchEvent(
+      new CustomEvent('blacktop:audio-device-change', { detail: { kind: 'audiooutput', deviceId } })
+    );
   }, []);
+
 
   return {
     audioInputs,
