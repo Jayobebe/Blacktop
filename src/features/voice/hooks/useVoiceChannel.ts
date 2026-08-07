@@ -6,6 +6,7 @@ import { setSpeakingUsers } from './voiceActivityStore';
 interface PeerConnection {
   pc: RTCPeerConnection;
   oderId: string;
+  createdAt: number;
 }
 
 interface VoiceChannelState {
