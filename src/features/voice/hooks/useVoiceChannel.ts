@@ -14,10 +14,30 @@ interface VoiceChannelState {
   speakingUsers: Set<string>; // User IDs currently speaking
 }
 
+// STUN alone only works when at least one peer is behind a cone NAT. Mobile
+// carriers (CGNAT / symmetric NAT) almost always block direct P2P, which is
+// why rider-to-rider voice failed on cellular. TURN relays fix that.
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
+  // Open Relay (Metered) free public TURN - UDP, TCP and TLS/443 fallbacks so
+  // voice still works on restrictive mobile / tethered networks.
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ];
 
 const AUDIO_INPUT_KEY = 'blacktop_audio_input';
