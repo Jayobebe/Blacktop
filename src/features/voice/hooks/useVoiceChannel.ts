@@ -380,7 +380,15 @@ export function useVoiceChannel(convoyId?: string) {
   const createPeerConnection = useCallback((remoteUserId: string): RTCPeerConnection => {
     console.log(`[Voice] Creating peer connection for ${remoteUserId}`);
     
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      // Pre-gather a few candidates (incl. TURN) so the handshake completes
+      // faster on flaky mobile links.
+      iceCandidatePoolSize: 4,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+    });
+
 
     // Add local tracks to the connection
     if (localStreamRef.current) {
