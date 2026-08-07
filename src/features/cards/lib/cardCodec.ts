@@ -1,4 +1,4 @@
-import { CARD_TIERS, type CardTier } from '../types';
+import { TIER_LADDER, type CardTier } from '../types';
 import type { VehicleCardData } from '../hooks/useVehicleCards';
 
 /** Compact, serializable shape that fits comfortably in a QR code. */
@@ -47,7 +47,7 @@ function esc(s: string | undefined): string {
 }
 
 function tierLabel(t: string): string {
-  return CARD_TIERS.find((d) => d.id === t)?.label ?? 'Locked';
+  return TIER_LADDER.find((d) => d.id === t)?.label ?? 'Locked';
 }
 
 function num(n: number | undefined, dp = 1): string {
