@@ -36,12 +36,26 @@ let stationaryTimeSeconds = 0;
 let lastStationaryCheck: number | null = null;
 
 // Inactivity checkout guard - tracks continuous time spent at speed 0 within
-// a tight GPS radius while in a convoy, so an unattended phone doesn't keep
-// broadcasting (and racking up Realtime usage) all night.
+// a tight GPS radius, so an unattended phone doesn't keep broadcasting (and
+// racking up Realtime usage) all night.
 let inactivityAnchor: { lat: number; lng: number } | null = null;
 let inactivityLastCheck: number | null = null;
 let inactivityStationarySeconds = 0;
 let inactivityTriggered = false;
+
+// ── Abandoned-ride watchdog ────────────────────────────────────────────────
+// GPS callbacks stop firing once tracking pauses (and can dry up entirely if
+// the OS suspends the app), so the stationary guard above can't be the only
+// safety net. This wall-clock ticker pauses an idle ride and then auto-ends it
+// so a phone left on with an active ride can't log a 75-hour session.
+const AUTO_END_AFTER_PAUSE_MS = 15 * 60 * 1000; // idle-paused this long -> end + save
+const MAX_RIDE_DURATION_MS = 12 * 60 * 60 * 1000; // absolute hard stop
+const WATCHDOG_INTERVAL_MS = 30_000;
+let lastMovementAtMs: number | null = null;
+let watchdogInterval: ReturnType<typeof setInterval> | null = null;
+let autoEndRide: (() => Promise<unknown>) | null = null;
+let autoEndInFlight = false;
+
 
 // Check if running as native app
 const isNative = Capacitor.isNativePlatform();
