@@ -758,17 +758,26 @@ export function useVoiceChannel(convoyId?: string) {
         console.log(`[Voice] Received offer from ${from}`);
         
         try {
-          // Clean up any existing connection first
+          // Reuse a healthy peer so renegotiation (ICE restart / mic swap)
+          // doesn't tear down a working call. Only rebuild broken ones.
           const existingPeer = peersRef.current.get(from);
-          if (existingPeer) {
+          const canReuse =
+            existingPeer &&
+            existingPeer.pc.signalingState === 'stable' &&
+            existingPeer.pc.connectionState !== 'failed' &&
+            existingPeer.pc.connectionState !== 'closed' &&
+            !!existingPeer.pc.remoteDescription;
+
+          if (existingPeer && !canReuse) {
             existingPeer.pc.close();
             peersRef.current.delete(from);
             audioElementsRef.current.get(from)?.remove();
             audioElementsRef.current.delete(from);
           }
-          
-          const pc = createPeerConnection(from);
+
+          const pc = canReuse ? existingPeer!.pc : createPeerConnection(from);
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
           
           // Process any pending ICE candidates after setting remote description
           const pendingCandidates = pendingCandidatesRef.current.get(from);
