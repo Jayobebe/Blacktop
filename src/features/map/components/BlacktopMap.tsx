@@ -184,6 +184,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const headingRef = useRef<number | null>(null);
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
+  const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+  useEffect(() => { userLocationRef.current = userLocation; }, [userLocation]);
   const destinationRef = useRef<MapDestination | null>(seededDestination);
   useEffect(() => { destinationRef.current = destination; }, [destination]);
 
