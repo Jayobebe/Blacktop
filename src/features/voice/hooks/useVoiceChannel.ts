@@ -684,7 +684,7 @@ export function useVoiceChannel(convoyId?: string) {
       setTimeout(() => void tryPlay(1), 50);
     };
 
-    peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
+    peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId, createdAt: Date.now() });
     return pc;
   }, [clearReconnectSchedule, scheduleReconnect]);
 
