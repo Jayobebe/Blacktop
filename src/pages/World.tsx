@@ -161,9 +161,7 @@ export default function World() {
                 : { backgroundColor: '#f87171', boxShadow: '0 0 6px #f87171cc' }}
             />
             <span className="text-[9px] tracking-[0.15em] uppercase text-white/60">
-              {displayedActiveCount > 0
-                ? `${displayedActiveCount.toLocaleString()} active rider${displayedActiveCount === 1 ? '' : 's'}`
-                : '0 active riders'}
+              {`${displayedActiveCount.toLocaleString()} total burners`}
             </span>
           </div>
         </div>
