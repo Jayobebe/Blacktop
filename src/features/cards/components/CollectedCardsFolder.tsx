@@ -48,7 +48,7 @@ export function CollectedCardsFolder() {
           facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          advanced: [{ focusMode: 'continuous' }],
+          advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
         } as MediaTrackConstraints,
         { fps: 15, qrbox: { width: box, height: box } },
         (decoded) => {
