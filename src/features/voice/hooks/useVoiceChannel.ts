@@ -533,14 +533,11 @@ export function useVoiceChannel(convoyId?: string) {
         audioElementsRef.current.set(remoteUserId, audio);
         console.log(`[Voice] Created audio element for ${remoteUserId}, iOS: ${isIOS}, Safari: ${isSafari}`);
         
-        // Set output device if supported (Chrome/Edge) and selected - NOT available on iOS/Safari
-        const savedOutput = localStorage.getItem(AUDIO_OUTPUT_KEY);
-        if (savedOutput && savedOutput !== 'default' && 'setSinkId' in audio && !isIOS && !isSafari) {
-          (audio as any).setSinkId(savedOutput)
-            .then(() => console.log(`[Voice] Set audio output to ${savedOutput}`))
-            .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
-        }
+        // Route to the selected output (e.g. a Bluetooth intercom) where the
+        // browser supports it - NOT available on iOS/Safari.
+        applyOutputDeviceRef.current?.();
       }
+
 
       // Set srcObject before playing
       audio.srcObject = remoteStream;
