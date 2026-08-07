@@ -36,12 +36,26 @@ let stationaryTimeSeconds = 0;
 let lastStationaryCheck: number | null = null;
 
 // Inactivity checkout guard - tracks continuous time spent at speed 0 within
-// a tight GPS radius while in a convoy, so an unattended phone doesn't keep
-// broadcasting (and racking up Realtime usage) all night.
+// a tight GPS radius, so an unattended phone doesn't keep broadcasting (and
+// racking up Realtime usage) all night.
 let inactivityAnchor: { lat: number; lng: number } | null = null;
 let inactivityLastCheck: number | null = null;
 let inactivityStationarySeconds = 0;
 let inactivityTriggered = false;
+
+// ── Abandoned-ride watchdog ────────────────────────────────────────────────
+// GPS callbacks stop firing once tracking pauses (and can dry up entirely if
+// the OS suspends the app), so the stationary guard above can't be the only
+// safety net. This wall-clock ticker pauses an idle ride and then auto-ends it
+// so a phone left on with an active ride can't log a 75-hour session.
+const AUTO_END_AFTER_PAUSE_MS = 15 * 60 * 1000; // idle-paused this long -> end + save
+const MAX_RIDE_DURATION_MS = 12 * 60 * 60 * 1000; // absolute hard stop
+const WATCHDOG_INTERVAL_MS = 30_000;
+let lastMovementAtMs: number | null = null;
+let watchdogInterval: ReturnType<typeof setInterval> | null = null;
+let autoEndRide: (() => Promise<unknown>) | null = null;
+let autoEndInFlight = false;
+
 
 // Check if running as native app
 const isNative = Capacitor.isNativePlatform();
@@ -313,11 +327,12 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
 
   notifyConvoySyncOfSpeed(displaySpeed);
 
-  if (currentConvoyId && rideState.isConvoyMode) {
-    checkInactivityGuard(latitude, longitude, displaySpeed, timestamp);
-  } else {
-    resetInactivityTracking();
-  }
+  if (displaySpeed > 0) lastMovementAtMs = Date.now();
+
+  // Applies to solo rides too - an abandoned solo ride is exactly the case
+  // that produced multi-day sessions sitting at 0 mph.
+  checkInactivityGuard(latitude, longitude, displaySpeed, timestamp);
+
 
   const gpsPoint: GpsPoint = {
     lat: latitude,
@@ -555,6 +570,58 @@ function resetInactivityTracking() {
   inactivityTriggered = false;
 }
 
+// ── Abandoned-ride watchdog ────────────────────────────────────────────────
+function startRideWatchdog() {
+  if (watchdogInterval) return;
+  lastMovementAtMs = Date.now();
+  autoEndInFlight = false;
+  watchdogInterval = setInterval(() => {
+    if (!rideState.isActive) return;
+    const now = Date.now();
+
+    // Hard ceiling - nothing legitimate runs past this.
+    if (rideStartedAtMs && now - rideStartedAtMs >= MAX_RIDE_DURATION_MS) {
+      finishAbandonedRide('Ride ended automatically', 'Reached the 12-hour maximum ride length.');
+      return;
+    }
+
+    if (!isPaused) {
+      // No movement (or no GPS fixes at all) for the timeout -> soft pause.
+      const since = lastMovementAtMs ?? rideStartedAtMs ?? now;
+      if (now - since >= INACTIVITY_TIMEOUT_MS) {
+        inactivityTriggered = true;
+        pauseRideTracking(true);
+      }
+      return;
+    }
+
+    // Already paused by the inactivity guard - end and save after the grace
+    // window so the session doesn't sit open indefinitely.
+    if (rideState.inactivityTimedOut && pausedAtMs && now - pausedAtMs >= AUTO_END_AFTER_PAUSE_MS) {
+      finishAbandonedRide('Ride ended automatically', 'No movement for 30 minutes — your ride was saved.');
+    }
+  }, WATCHDOG_INTERVAL_MS);
+}
+
+function stopRideWatchdog() {
+  if (watchdogInterval) {
+    clearInterval(watchdogInterval);
+    watchdogInterval = null;
+  }
+  lastMovementAtMs = null;
+}
+
+function finishAbandonedRide(title: string, description: string) {
+  if (autoEndInFlight || !autoEndRide) return;
+  autoEndInFlight = true;
+  stopRideWatchdog();
+  toast(title, { description });
+  Promise.resolve(autoEndRide())
+    .catch(err => console.warn('[Ride] Auto-end failed:', err))
+    .finally(() => { autoEndInFlight = false; });
+}
+
+
 // Pauses GPS + convoy sync. `dueToInactivity` distinguishes the 15-minute
 // auto-shutdown (which also halts the convoy stats polling loop and surfaces
 // a toast) from a manual pause-button tap (which leaves convoy sync running
@@ -659,6 +726,9 @@ export function useActiveRide(convoyId?: string | null) {
 
       // Resume world sync
       if (!worldSyncTimeout) startWorldSync();
+
+      // Abandoned-ride safety net
+      startRideWatchdog();
     }
   }, [state.isActive, state.isPaused, state.isConvoyMode, state.startedAt, convoyId]);
 
@@ -715,6 +785,10 @@ export function useActiveRide(convoyId?: string | null) {
     // Start GPS tracking using helper
     startGpsWatch();
 
+    // Abandoned-ride safety net (idle pause -> auto-end + save)
+    startRideWatchdog();
+
+
     // Duration counter based on wall-clock time (so short rides still count)
     // Subtracts paused time from the total
     durationInterval = setInterval(() => {
@@ -734,6 +808,7 @@ export function useActiveRide(convoyId?: string | null) {
   const endRide = useCallback(async (): Promise<string | null> => {
     // Stop GPS tracking using helper
     stopGpsWatch(); // Don't await - non-blocking
+    stopRideWatchdog();
 
     // Stop duration counter
     if (durationInterval) {
@@ -862,6 +937,11 @@ export function useActiveRide(convoyId?: string | null) {
     return savedRideId;
   }, []);
 
+  // Let the module-level watchdog end + save an abandoned ride.
+  autoEndRide = endRide;
+
+
+
   const setRidePaused = useCallback((paused: boolean) => {
     if (paused && !isPaused) {
       pauseRideTracking(false);
@@ -875,6 +955,8 @@ export function useActiveRide(convoyId?: string | null) {
       pausedAtMs = null;
       stationaryCount = 0; // Reset throttle counter
       resetInactivityTracking();
+      lastMovementAtMs = Date.now();
+      startRideWatchdog();
       startGpsWatch();
       if (!convoySyncTimeout && currentConvoyId && rideState.isConvoyMode) {
         startConvoySync();
