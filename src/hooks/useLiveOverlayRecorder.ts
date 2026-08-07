@@ -17,6 +17,8 @@ interface OverlayStats {
   lat: number | null;
   lng: number | null;
   heading: number | null;
+  /** Live convoy member positions (empty/omitted for solo rides). */
+  members?: Array<{ lat: number; lng: number; name?: string; color?: string }>;
 }
 
 interface LiveOverlayRecorderOptions {
@@ -153,6 +155,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
         center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
         route,
+        members: stats.members,
         opacity: 1,
         accent,
       });
