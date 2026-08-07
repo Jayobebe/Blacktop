@@ -955,6 +955,8 @@ export function useActiveRide(convoyId?: string | null) {
       pausedAtMs = null;
       stationaryCount = 0; // Reset throttle counter
       resetInactivityTracking();
+      lastMovementAtMs = Date.now();
+      startRideWatchdog();
       startGpsWatch();
       if (!convoySyncTimeout && currentConvoyId && rideState.isConvoyMode) {
         startConvoySync();
