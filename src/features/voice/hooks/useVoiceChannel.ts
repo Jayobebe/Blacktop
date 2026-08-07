@@ -428,8 +428,15 @@ export function useVoiceChannel(convoyId?: string) {
         console.log(`[Voice] Successfully connected to ${remoteUserId}`);
         clearReconnectSchedule(remoteUserId);
       }
-      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        console.warn(`[Voice] Connection ${pc.connectionState} with ${remoteUserId}`);
+      if (pc.connectionState === 'disconnected') {
+        // Usually a transient mobile-network blip. Give ICE a chance to
+        // recover on its own before tearing the peer down.
+        console.warn(`[Voice] Connection disconnected with ${remoteUserId} - waiting for ICE recovery`);
+        return;
+      }
+      if (pc.connectionState === 'failed') {
+        console.warn(`[Voice] Connection failed with ${remoteUserId}`);
+        pc.close();
         peersRef.current.delete(remoteUserId);
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
@@ -438,6 +445,7 @@ export function useVoiceChannel(convoyId?: string) {
         scheduleReconnect(remoteUserId);
       }
     };
+
     
     // Handle ICE connection state changes (more granular)
     pc.oniceconnectionstatechange = () => {
