@@ -236,7 +236,8 @@ export function useVoiceChannel(convoyId?: string) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
-  }, []);
+  }, [stopAudioLevelMonitoring]);
+
 
   // Cancel a pending reconnect retry for a peer (call on success or deliberate leave).
   const clearReconnectSchedule = useCallback((remoteUserId: string) => {
