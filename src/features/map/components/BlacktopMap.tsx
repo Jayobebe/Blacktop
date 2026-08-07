@@ -398,7 +398,51 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Inactivity auto-follow resume ─────────────────────────────────────────
+  // Re-centres/re-orients on the rider LOCATE_RESUME_DELAY_MS after the last
+  // touch interaction. GPS ticks alone aren't reliable (stationary rider, or a
+  // stale watch during an active ride), so this timer drives the resume too.
+  useEffect(() => {
+    if (!map || !isVisible) return;
+
+    const container = map.getCanvasContainer();
+    const mark = () => { lastInteractionAtRef.current = Date.now(); };
+    container.addEventListener('touchstart', mark, { passive: true });
+    container.addEventListener('mousedown', mark);
+    container.addEventListener('wheel', mark, { passive: true });
+
+    let resumed = true;
+    const tick = setInterval(() => {
+      const idleFor = Date.now() - lastInteractionAtRef.current;
+      if (idleFor < LOCATE_RESUME_DELAY_MS) { resumed = false; return; }
+      if (resumed) return;
+      resumed = true;
+
+      const loc = userLocationRef.current;
+      if (!loc) return;
+      const followZoom = destinationRef.current
+        ? FOLLOW_ZOOM_WITH_DESTINATION
+        : FOLLOW_ZOOM_NO_DESTINATION;
+      const currentZoom = map.getZoom();
+      map.easeTo({
+        center: [loc.lng, loc.lat],
+        zoom: currentZoom < followZoom ? followZoom : currentZoom,
+        bearing: safeBearing(headingRef.current, map),
+        duration: 800,
+        essential: true,
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(tick);
+      container.removeEventListener('touchstart', mark);
+      container.removeEventListener('mousedown', mark);
+      container.removeEventListener('wheel', mark);
+    };
+  }, [map, isVisible]);
+
   // ── User position marker ───────────────────────────────────────────────────
+
   useEffect(() => {
     if (!map || !userLocation) return;
 
