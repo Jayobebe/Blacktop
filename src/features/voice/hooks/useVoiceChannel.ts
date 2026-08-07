@@ -170,6 +170,8 @@ export function useVoiceChannel(convoyId?: string) {
   const pendingCandidatesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map()); // Store ICE candidates received before remote description
   const reconnectAttemptsRef = useRef<Map<string, number>>(new Map()); // Backoff step per peer
   const reconnectTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()); // Pending per-peer reconnect retry
+  const applyOutputDeviceRef = useRef<(() => void) | null>(null); // Late-bound speaker routing helper
+  const swapInputDeviceRef = useRef<(() => void) | null>(null); // Late-bound mic hot-swap helper
 
   // Tear down the local mic analyser (used both by cleanup and when hot-swapping
   // to a different input device, e.g. a Bluetooth intercom connecting mid-ride).
