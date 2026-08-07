@@ -808,6 +808,7 @@ export function useActiveRide(convoyId?: string | null) {
   const endRide = useCallback(async (): Promise<string | null> => {
     // Stop GPS tracking using helper
     stopGpsWatch(); // Don't await - non-blocking
+    stopRideWatchdog();
 
     // Stop duration counter
     if (durationInterval) {
