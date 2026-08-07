@@ -726,6 +726,9 @@ export function useActiveRide(convoyId?: string | null) {
 
       // Resume world sync
       if (!worldSyncTimeout) startWorldSync();
+
+      // Abandoned-ride safety net
+      startRideWatchdog();
     }
   }, [state.isActive, state.isPaused, state.isConvoyMode, state.startedAt, convoyId]);
 
