@@ -785,6 +785,10 @@ export function useActiveRide(convoyId?: string | null) {
     // Start GPS tracking using helper
     startGpsWatch();
 
+    // Abandoned-ride safety net (idle pause -> auto-end + save)
+    startRideWatchdog();
+
+
     // Duration counter based on wall-clock time (so short rides still count)
     // Subtracts paused time from the total
     durationInterval = setInterval(() => {
