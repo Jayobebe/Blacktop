@@ -378,6 +378,80 @@ export function useVoiceChannel(convoyId?: string) {
     }, AUDIO_CHECK_INTERVAL_MS); // Battery-optimized interval
   }, []); // No deps - uses refs to avoid stale closures
 
+  // ---- Bluetooth / audio-device handling -------------------------------
+  // Route every remote audio element to the currently selected output device.
+  // Called when an element is created AND whenever the user picks a different
+  // speaker or a Bluetooth headset connects mid-ride.
+  const applyOutputDevice = useCallback(() => {
+    const isIOS = isIOSDevice();
+    const isSafari = isSafariBrowser();
+    if (isIOS || isSafari) return; // setSinkId unsupported - OS routing wins
+
+    const saved = localStorage.getItem(AUDIO_OUTPUT_KEY) || 'default';
+    audioElementsRef.current.forEach((audio) => {
+      if (!('setSinkId' in audio)) return;
+      // '' selects the system default sink.
+      (audio as any)
+        .setSinkId(saved === 'default' ? '' : saved)
+        .then(() => console.log('[Voice] Audio output routed to', saved))
+        .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
+    });
+  }, []);
+
+  // Hot-swap the microphone without dropping the call. Grabs a fresh stream
+  // using the currently preferred input and replaces the outgoing track on
+  // every peer, so a Bluetooth intercom connecting (or dropping) mid-ride
+  // doesn't leave the rider silent.
+  const swapInputDevice = useCallback(async () => {
+    if (!localStreamRef.current) return;
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: getAudioConstraints() });
+    } catch (e) {
+      console.warn('[Voice] Preferred mic unavailable, falling back to default:', e);
+      localStorage.removeItem(AUDIO_INPUT_KEY);
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e2) {
+        console.error('[Voice] Could not re-acquire microphone:', e2);
+        return;
+      }
+    }
+
+    const newTrack = stream.getAudioTracks()[0];
+    if (!newTrack) return;
+    newTrack.enabled = !isMutedRef.current;
+    console.log('[Voice] Swapped microphone to:', newTrack.label);
+
+    peersRef.current.forEach(({ pc }, remoteUserId) => {
+      pc.getSenders()
+        .filter((s) => s.track?.kind === 'audio' || !s.track)
+        .forEach((sender) => {
+          sender.replaceTrack(newTrack).catch((e) =>
+            console.warn(`[Voice] replaceTrack failed for ${remoteUserId}:`, e)
+          );
+        });
+    });
+
+    const oldStream = localStreamRef.current;
+    localStreamRef.current = stream;
+    oldStream.getTracks().forEach((t) => t.stop());
+
+    // Re-point the speaking-detection analyser at the new stream.
+    stopAudioLevelMonitoring();
+    startAudioLevelMonitoring();
+  }, [startAudioLevelMonitoring, stopAudioLevelMonitoring]);
+
+  // Keep the late-bound refs (used inside pc callbacks) pointing at the
+  // latest implementations.
+  useEffect(() => {
+    applyOutputDeviceRef.current = applyOutputDevice;
+    swapInputDeviceRef.current = () => void swapInputDevice();
+  }, [applyOutputDevice, swapInputDevice]);
+
+
+
   // Create peer connection for a remote user
   const createPeerConnection = useCallback((remoteUserId: string): RTCPeerConnection => {
     console.log(`[Voice] Creating peer connection for ${remoteUserId}`);
