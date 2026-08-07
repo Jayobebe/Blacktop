@@ -41,9 +41,16 @@ export function CollectedCardsFolder() {
     try {
       const qr = new Html5Qrcode(SCANNER_ID);
       scannerRef.current = qr;
+      const edge = Math.min(window.innerWidth, window.innerHeight);
+      const box = Math.max(180, Math.round(Math.min(edge * 0.7, 320)));
       await qr.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 300, height: 300 } },
+        {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          advanced: [{ focusMode: 'continuous' }],
+        } as MediaTrackConstraints,
+        { fps: 15, qrbox: { width: box, height: box } },
         (decoded) => {
           const payload = decodeCard(decoded);
           if (!payload) return;
