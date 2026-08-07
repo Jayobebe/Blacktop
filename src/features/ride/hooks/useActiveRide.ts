@@ -570,6 +570,58 @@ function resetInactivityTracking() {
   inactivityTriggered = false;
 }
 
+// ── Abandoned-ride watchdog ────────────────────────────────────────────────
+function startRideWatchdog() {
+  if (watchdogInterval) return;
+  lastMovementAtMs = Date.now();
+  autoEndInFlight = false;
+  watchdogInterval = setInterval(() => {
+    if (!rideState.isActive) return;
+    const now = Date.now();
+
+    // Hard ceiling - nothing legitimate runs past this.
+    if (rideStartedAtMs && now - rideStartedAtMs >= MAX_RIDE_DURATION_MS) {
+      finishAbandonedRide('Ride ended automatically', 'Reached the 12-hour maximum ride length.');
+      return;
+    }
+
+    if (!isPaused) {
+      // No movement (or no GPS fixes at all) for the timeout -> soft pause.
+      const since = lastMovementAtMs ?? rideStartedAtMs ?? now;
+      if (now - since >= INACTIVITY_TIMEOUT_MS) {
+        inactivityTriggered = true;
+        pauseRideTracking(true);
+      }
+      return;
+    }
+
+    // Already paused by the inactivity guard - end and save after the grace
+    // window so the session doesn't sit open indefinitely.
+    if (rideState.inactivityTimedOut && pausedAtMs && now - pausedAtMs >= AUTO_END_AFTER_PAUSE_MS) {
+      finishAbandonedRide('Ride ended automatically', 'No movement for 30 minutes — your ride was saved.');
+    }
+  }, WATCHDOG_INTERVAL_MS);
+}
+
+function stopRideWatchdog() {
+  if (watchdogInterval) {
+    clearInterval(watchdogInterval);
+    watchdogInterval = null;
+  }
+  lastMovementAtMs = null;
+}
+
+function finishAbandonedRide(title: string, description: string) {
+  if (autoEndInFlight || !autoEndRide) return;
+  autoEndInFlight = true;
+  stopRideWatchdog();
+  toast(title, { description });
+  Promise.resolve(autoEndRide())
+    .catch(err => console.warn('[Ride] Auto-end failed:', err))
+    .finally(() => { autoEndInFlight = false; });
+}
+
+
 // Pauses GPS + convoy sync. `dueToInactivity` distinguishes the 15-minute
 // auto-shutdown (which also halts the convoy stats polling loop and surfaces
 // a toast) from a manual pause-button tap (which leaves convoy sync running
