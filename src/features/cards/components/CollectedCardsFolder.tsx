@@ -34,78 +34,71 @@ export function CollectedCardsFolder() {
   };
 
   const startScanner = async (keyToRescan: string | null = null) => {
+    if (scannerRef.current || showScanner) return;
     haptics.light();
     setRescanKey(keyToRescan);
     setShowScanner(true);
     await new Promise((r) => setTimeout(r, 100));
-    const qr = new Html5Qrcode(SCANNER_ID);
-    scannerRef.current = qr;
-    const edge = Math.min(window.innerWidth, window.innerHeight);
-    const box = Math.max(180, Math.round(Math.min(edge * 0.7, 320)));
+    try {
+      const qr = new Html5Qrcode(SCANNER_ID);
+      scannerRef.current = qr;
+      const edge = Math.min(window.innerWidth, window.innerHeight);
+      const box = Math.max(180, Math.round(Math.min(edge * 0.7, 280)));
 
-    const onDecoded = (decoded: string) => {
-      const payload = decodeCard(decoded);
-      if (!payload) return;
-      haptics.light();
-      if (keyToRescan !== null) {
-        rescanCard(keyToRescan, payload);
-        toast.success(`${payload.n} updated`);
-      } else {
-        const { added } = addCard(payload);
-        if (added) {
-          toast.success(`Added ${payload.n} to your collection`);
-        } else {
-          toast.info(`${payload.n} is already in your collection`);
-        }
-      }
-      stopScanner();
-    };
-
-    // Try richest constraints first, then progressively fall back so devices
-    // that reject focusMode/resolution hints still get a working camera.
-    const attempts: MediaTrackConstraints[] = [
-      {
-        facingMode: 'environment',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
-      } as MediaTrackConstraints,
-      { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } as MediaTrackConstraints,
-      { facingMode: 'environment' } as MediaTrackConstraints,
-      { facingMode: 'user' } as MediaTrackConstraints,
-    ];
-
-    let lastErr: unknown = null;
-    for (const constraints of attempts) {
-      try {
-        await qr.start(constraints, { fps: 15, qrbox: { width: box, height: box } }, onDecoded, () => {});
-        return;
-      } catch (err) {
-        lastErr = err;
+      await qr.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: box, height: box } },
+        (decoded) => {
+          const payload = decodeCard(decoded);
+          if (!payload) return;
+          haptics.light();
+          if (keyToRescan !== null) {
+            rescanCard(keyToRescan, payload);
+            toast.success(`${payload.n} updated`);
+          } else {
+            const { added } = addCard(payload);
+            if (added) {
+              toast.success(`Added ${payload.n} to your collection`);
+            } else {
+              toast.info(`${payload.n} is already in your collection`);
+            }
+          }
+          void stopScanner();
+        },
+        () => {},
+      );
+    } catch (err) {
+      console.error('[CollectedCardsFolder] Scanner error:', err);
+      const failedScanner = scannerRef.current;
+      scannerRef.current = null;
+      if (failedScanner && !failedScanner.isScanning) {
         try {
-          await qr.stop();
+          failedScanner.clear();
         } catch {
-          // not started, ignore
+          // The scanner never reached a clearable state.
         }
       }
+      toast.error('Could not access camera', {
+        description: err instanceof DOMException && err.name === 'NotAllowedError'
+          ? 'Camera permission was denied'
+          : 'Close other camera views and try again',
+      });
+      setShowScanner(false);
+      setRescanKey(null);
     }
-
-    console.error('[CollectedCardsFolder] Scanner error:', lastErr);
-    scannerRef.current = null;
-    toast.error('Could not access camera', { description: 'Please check camera permissions' });
-    setShowScanner(false);
   };
 
 
   const stopScanner = async () => {
-    if (scannerRef.current) {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    if (scanner) {
       try {
-        await scannerRef.current.stop();
-        scannerRef.current.clear();
+        if (scanner.isScanning) await scanner.stop();
+        scanner.clear();
       } catch {
         // ignore
       }
-      scannerRef.current = null;
     }
     setShowScanner(false);
     setRescanKey(null);
