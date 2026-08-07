@@ -467,11 +467,34 @@ export function useVoiceChannel(convoyId?: string) {
       }
     };
 
-    
+    // Renegotiation - fires after an ICE restart or when the local mic track is
+    // swapped (e.g. plugging in a Bluetooth intercom). Only the designated
+    // offerer renegotiates, and only once the peer is already established.
+    pc.onnegotiationneeded = async () => {
+      if (!channelRef.current || !userIdRef.current) return;
+      if (userIdRef.current < remoteUserId) return;
+      if (!pc.remoteDescription || pc.signalingState !== 'stable') return;
+
+      try {
+        const offerDesc = await pc.createOffer();
+        if (pc.signalingState !== 'stable') return;
+        await pc.setLocalDescription(offerDesc);
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'offer',
+          payload: { offer: offerDesc, from: userIdRef.current, to: remoteUserId },
+        });
+        console.log(`[Voice] Renegotiation offer sent to ${remoteUserId}`);
+      } catch (e) {
+        console.warn('[Voice] Renegotiation failed:', e);
+      }
+    };
+
     // Handle ICE gathering state
     pc.onicegatheringstatechange = () => {
       console.log(`[Voice] ICE gathering state with ${remoteUserId}: ${pc.iceGatheringState}`);
     };
+
 
     // Handle incoming remote tracks
     pc.ontrack = (event) => {
