@@ -450,7 +450,23 @@ export function useVoiceChannel(convoyId?: string) {
     // Handle ICE connection state changes (more granular)
     pc.oniceconnectionstatechange = () => {
       console.log(`[Voice] ICE state with ${remoteUserId}: ${pc.iceConnectionState}`);
+      // An ICE restart re-gathers candidates (including TURN relays) without
+      // rebuilding the whole peer - the cheapest recovery from a signal drop.
+      if (
+        pc.iceConnectionState === 'failed' &&
+        typeof pc.restartIce === 'function' &&
+        userIdRef.current &&
+        userIdRef.current > remoteUserId
+      ) {
+        console.warn(`[Voice] ICE failed with ${remoteUserId} - restarting ICE`);
+        try {
+          pc.restartIce();
+        } catch (e) {
+          console.warn('[Voice] restartIce failed:', e);
+        }
+      }
     };
+
     
     // Handle ICE gathering state
     pc.onicegatheringstatechange = () => {
