@@ -107,7 +107,10 @@ export default function World() {
       {/* Header */}
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            if (window.history.state?.idx > 0) navigate(-1);
+            else navigate('/', { replace: true });
+          }}
           className="absolute left-4 top-3.5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
           aria-label="Back"
         >
