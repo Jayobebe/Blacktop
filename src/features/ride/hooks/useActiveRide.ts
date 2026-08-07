@@ -937,6 +937,11 @@ export function useActiveRide(convoyId?: string | null) {
     return savedRideId;
   }, []);
 
+  // Let the module-level watchdog end + save an abandoned ride.
+  autoEndRide = endRide;
+
+
+
   const setRidePaused = useCallback((paused: boolean) => {
     if (paused && !isPaused) {
       pauseRideTracking(false);
