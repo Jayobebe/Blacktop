@@ -705,13 +705,20 @@ export function useVoiceChannel(convoyId?: string) {
           return;
         }
         
-        // Always create an offer when a new user joins and we don't have a connection to them
-        // The receiver will handle duplicate connections gracefully
+        // Skip if we already have a live OR in-flight connection. The 10s
+        // presence heartbeat used to blow away half-completed handshakes,
+        // which meant peers could never finish connecting on slow links.
         const existingPeer = peersRef.current.get(from);
-        if (existingPeer && existingPeer.pc.connectionState === 'connected') {
-          console.log(`[Voice] Already connected to ${from}, skipping offer`);
+        if (
+          existingPeer &&
+          (existingPeer.pc.connectionState === 'connected' ||
+            existingPeer.pc.connectionState === 'connecting' ||
+            existingPeer.pc.connectionState === 'new')
+        ) {
+          console.log(`[Voice] Connection to ${from} is ${existingPeer.pc.connectionState}, skipping offer`);
           return;
         }
+
         
         // Clean up any existing failed connection
         if (existingPeer) {
