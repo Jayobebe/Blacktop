@@ -153,6 +153,45 @@ export function drawMiniMap({ ctx, region, center, route, opacity, accent, durat
     ctx.shadowBlur = 0;
   }
 
+  // Convoy member dots — positioned in map space, counter-rotated so the dot
+  // and its label stay upright regardless of the rider's heading.
+  if (members && members.length > 0) {
+    for (const m of members) {
+      if (typeof m.lat !== 'number' || typeof m.lng !== 'number') continue;
+      const p = lonLatToPixel(m.lat, m.lng, TILE_ZOOM);
+      const dx = p.px - centerPx.px;
+      const dy = p.py - centerPx.py;
+      // Skip members far outside the visible card to avoid edge clutter.
+      const maxDist = Math.max(width, height);
+      if (Math.abs(dx) > maxDist || Math.abs(dy) > maxDist) continue;
+
+      ctx.save();
+      ctx.translate(dx, dy);
+      ctx.rotate(bearingRad);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fillStyle = m.color || 'rgba(120, 190, 255, 0.95)';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.stroke();
+
+      if (m.name) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+        ctx.font = 'bold 13px system-ui';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(m.name.slice(0, 10), 0, -9);
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.restore();
+    }
+  }
+
   ctx.restore(); // pop the clip so we can draw the border + user dot on top
 
   // Rider dot — kept in screen space so it doesn't rotate with the map.
