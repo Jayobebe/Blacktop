@@ -1278,7 +1278,58 @@ export function useVoiceChannel(convoyId?: string) {
     }
   }, [convoyId, state.isConnected, connect, toggleMute]);
 
+  // React to audio hardware changes while connected: a Bluetooth intercom
+  // pairing/dropping fires `devicechange`, and picking a device in settings
+  // fires our own event. Both need the live call re-routed, not a reconnect.
+  useEffect(() => {
+    if (!state.isConnected) return;
+
+    let swapTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedSwap = () => {
+      if (swapTimer) clearTimeout(swapTimer);
+      // Bluetooth stacks emit several devicechange events in a row.
+      swapTimer = setTimeout(() => {
+        swapInputDeviceRef.current?.();
+        applyOutputDeviceRef.current?.();
+      }, 500);
+    };
+
+    const onSelection = (e: Event) => {
+      const kind = (e as CustomEvent<{ kind?: string }>).detail?.kind;
+      if (kind === 'audiooutput') {
+        applyOutputDeviceRef.current?.();
+      } else {
+        swapInputDeviceRef.current?.();
+      }
+    };
+
+    navigator.mediaDevices?.addEventListener?.('devicechange', debouncedSwap);
+    window.addEventListener('blacktop:audio-device-change', onSelection);
+
+    return () => {
+      if (swapTimer) clearTimeout(swapTimer);
+      navigator.mediaDevices?.removeEventListener?.('devicechange', debouncedSwap);
+      window.removeEventListener('blacktop:audio-device-change', onSelection);
+    };
+  }, [state.isConnected]);
+
+  // If the active mic track dies (intercom powered off, OS reclaimed it),
+  // transparently grab a replacement rather than going silent.
+  useEffect(() => {
+    if (!state.isConnected) return;
+    const track = localStreamRef.current?.getAudioTracks()[0];
+    if (!track) return;
+
+    const onEnded = () => {
+      console.warn('[Voice] Local mic track ended - re-acquiring');
+      swapInputDeviceRef.current?.();
+    };
+    track.addEventListener('ended', onEnded);
+    return () => track.removeEventListener('ended', onEnded);
+  }, [state.isConnected]);
+
   // Mirror speakingUsers into the shared store so other features (e.g. the
+
   // map's member markers) can read who's talking without their own connection.
   useEffect(() => {
     setSpeakingUsers(state.speakingUsers);
