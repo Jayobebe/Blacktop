@@ -92,7 +92,7 @@ export function drawMiniMap({ ctx, region, center, route, opacity, accent, durat
   ctx.clip();
 
   // Dark backing so the region reads as a card even before tiles resolve.
-  ctx.fillStyle = 'rgba(10, 10, 12, 0.85)';
+  ctx.fillStyle = 'rgba(10, 10, 12, 1)';
   ctx.fillRect(x, y, width, height);
 
   // Draw tiles + route in a rotated frame where the user is always at (cx, cy)
