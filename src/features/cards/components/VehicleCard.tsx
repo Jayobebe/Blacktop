@@ -321,12 +321,12 @@ export function VehicleCard({ card }: Props) {
               </div>
 
               <div className="flex-1 flex items-center justify-center w-full">
-                <div className="bg-white p-3 rounded-xl shadow-inner">
+                <div className="bg-white p-2.5 rounded-xl shadow-inner">
                   <QRCodeSVG
                     value={qrPayload}
-                    size={180}
-                    level="M"
-                    marginSize={0}
+                    size={216}
+                    level="L"
+                    marginSize={1}
                   />
                 </div>
               </div>
