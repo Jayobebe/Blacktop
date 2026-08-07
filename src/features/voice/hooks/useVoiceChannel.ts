@@ -85,6 +85,10 @@ const VOICE_STATE_KEY = 'blacktop_voice_state'; // Persist voice connection inte
 // channel with immediate, high-frequency reconnect attempts.
 const RECONNECT_BACKOFF_MS = [2000, 5000, 10000, 30000];
 
+// A handshake that hasn't reached "connected" within this window is treated as
+// stalled and gets rebuilt on the next presence heartbeat.
+const HANDSHAKE_STALL_MS = 20000;
+
 // iOS/Safari detection
 const isIOSDevice = (): boolean => {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
