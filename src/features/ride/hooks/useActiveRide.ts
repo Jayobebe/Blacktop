@@ -327,11 +327,12 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
 
   notifyConvoySyncOfSpeed(displaySpeed);
 
-  if (currentConvoyId && rideState.isConvoyMode) {
-    checkInactivityGuard(latitude, longitude, displaySpeed, timestamp);
-  } else {
-    resetInactivityTracking();
-  }
+  if (displaySpeed > 0) lastMovementAtMs = Date.now();
+
+  // Applies to solo rides too - an abandoned solo ride is exactly the case
+  // that produced multi-day sessions sitting at 0 mph.
+  checkInactivityGuard(latitude, longitude, displaySpeed, timestamp);
+
 
   const gpsPoint: GpsPoint = {
     lat: latitude,
