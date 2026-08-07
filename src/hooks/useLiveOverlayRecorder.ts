@@ -153,7 +153,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
         center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
         route,
-        opacity: 0.6,
+        opacity: 1,
         accent,
       });
     } else {
