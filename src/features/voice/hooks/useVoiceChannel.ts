@@ -171,6 +171,24 @@ export function useVoiceChannel(convoyId?: string) {
   const reconnectAttemptsRef = useRef<Map<string, number>>(new Map()); // Backoff step per peer
   const reconnectTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()); // Pending per-peer reconnect retry
 
+  // Tear down the local mic analyser (used both by cleanup and when hot-swapping
+  // to a different input device, e.g. a Bluetooth intercom connecting mid-ride).
+  const stopAudioLevelMonitoring = useCallback(() => {
+    if (levelCheckIntervalRef.current) {
+      clearInterval(levelCheckIntervalRef.current);
+      levelCheckIntervalRef.current = null;
+    }
+    if (speakingTimeoutRef.current) {
+      clearTimeout(speakingTimeoutRef.current);
+      speakingTimeoutRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+  }, []);
+
   // Cleanup function
   const cleanup = useCallback(() => {
     console.log('[Voice] Cleaning up voice channel');
@@ -182,19 +200,8 @@ export function useVoiceChannel(convoyId?: string) {
     }
     
     // Stop audio level monitoring
-    if (levelCheckIntervalRef.current) {
-      clearInterval(levelCheckIntervalRef.current);
-      levelCheckIntervalRef.current = null;
-    }
-    if (speakingTimeoutRef.current) {
-      clearTimeout(speakingTimeoutRef.current);
-      speakingTimeoutRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    analyserRef.current = null;
+    stopAudioLevelMonitoring();
+    
     
     // Stop local stream
     if (localStreamRef.current) {
