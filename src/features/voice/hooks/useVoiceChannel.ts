@@ -6,6 +6,7 @@ import { setSpeakingUsers } from './voiceActivityStore';
 interface PeerConnection {
   pc: RTCPeerConnection;
   oderId: string;
+  createdAt: number;
 }
 
 interface VoiceChannelState {
@@ -14,10 +15,30 @@ interface VoiceChannelState {
   speakingUsers: Set<string>; // User IDs currently speaking
 }
 
+// STUN alone only works when at least one peer is behind a cone NAT. Mobile
+// carriers (CGNAT / symmetric NAT) almost always block direct P2P, which is
+// why rider-to-rider voice failed on cellular. TURN relays fix that.
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
+  // Open Relay (Metered) free public TURN - UDP, TCP and TLS/443 fallbacks so
+  // voice still works on restrictive mobile / tethered networks.
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ];
 
 const AUDIO_INPUT_KEY = 'blacktop_audio_input';
@@ -63,6 +84,10 @@ const VOICE_STATE_KEY = 'blacktop_voice_state'; // Persist voice connection inte
 // failure/drop (e.g. poor cellular), instead of hammering the Realtime
 // channel with immediate, high-frequency reconnect attempts.
 const RECONNECT_BACKOFF_MS = [2000, 5000, 10000, 30000];
+
+// A handshake that hasn't reached "connected" within this window is treated as
+// stalled and gets rebuilt on the next presence heartbeat.
+const HANDSHAKE_STALL_MS = 20000;
 
 // iOS/Safari detection
 const isIOSDevice = (): boolean => {
@@ -150,6 +175,26 @@ export function useVoiceChannel(convoyId?: string) {
   const pendingCandidatesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map()); // Store ICE candidates received before remote description
   const reconnectAttemptsRef = useRef<Map<string, number>>(new Map()); // Backoff step per peer
   const reconnectTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()); // Pending per-peer reconnect retry
+  const applyOutputDeviceRef = useRef<(() => void) | null>(null); // Late-bound speaker routing helper
+  const swapInputDeviceRef = useRef<(() => void) | null>(null); // Late-bound mic hot-swap helper
+
+  // Tear down the local mic analyser (used both by cleanup and when hot-swapping
+  // to a different input device, e.g. a Bluetooth intercom connecting mid-ride).
+  const stopAudioLevelMonitoring = useCallback(() => {
+    if (levelCheckIntervalRef.current) {
+      clearInterval(levelCheckIntervalRef.current);
+      levelCheckIntervalRef.current = null;
+    }
+    if (speakingTimeoutRef.current) {
+      clearTimeout(speakingTimeoutRef.current);
+      speakingTimeoutRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+  }, []);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -162,19 +207,8 @@ export function useVoiceChannel(convoyId?: string) {
     }
     
     // Stop audio level monitoring
-    if (levelCheckIntervalRef.current) {
-      clearInterval(levelCheckIntervalRef.current);
-      levelCheckIntervalRef.current = null;
-    }
-    if (speakingTimeoutRef.current) {
-      clearTimeout(speakingTimeoutRef.current);
-      speakingTimeoutRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    analyserRef.current = null;
+    stopAudioLevelMonitoring();
+    
     
     // Stop local stream
     if (localStreamRef.current) {
@@ -209,7 +243,8 @@ export function useVoiceChannel(convoyId?: string) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
-  }, []);
+  }, [stopAudioLevelMonitoring]);
+
 
   // Cancel a pending reconnect retry for a peer (call on success or deliberate leave).
   const clearReconnectSchedule = useCallback((remoteUserId: string) => {
@@ -348,11 +383,93 @@ export function useVoiceChannel(convoyId?: string) {
     }, AUDIO_CHECK_INTERVAL_MS); // Battery-optimized interval
   }, []); // No deps - uses refs to avoid stale closures
 
+  // ---- Bluetooth / audio-device handling -------------------------------
+  // Route every remote audio element to the currently selected output device.
+  // Called when an element is created AND whenever the user picks a different
+  // speaker or a Bluetooth headset connects mid-ride.
+  const applyOutputDevice = useCallback(() => {
+    const isIOS = isIOSDevice();
+    const isSafari = isSafariBrowser();
+    if (isIOS || isSafari) return; // setSinkId unsupported - OS routing wins
+
+    const saved = localStorage.getItem(AUDIO_OUTPUT_KEY) || 'default';
+    audioElementsRef.current.forEach((audio) => {
+      if (!('setSinkId' in audio)) return;
+      // '' selects the system default sink.
+      (audio as any)
+        .setSinkId(saved === 'default' ? '' : saved)
+        .then(() => console.log('[Voice] Audio output routed to', saved))
+        .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
+    });
+  }, []);
+
+  // Hot-swap the microphone without dropping the call. Grabs a fresh stream
+  // using the currently preferred input and replaces the outgoing track on
+  // every peer, so a Bluetooth intercom connecting (or dropping) mid-ride
+  // doesn't leave the rider silent.
+  const swapInputDevice = useCallback(async () => {
+    if (!localStreamRef.current) return;
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: getAudioConstraints() });
+    } catch (e) {
+      console.warn('[Voice] Preferred mic unavailable, falling back to default:', e);
+      localStorage.removeItem(AUDIO_INPUT_KEY);
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e2) {
+        console.error('[Voice] Could not re-acquire microphone:', e2);
+        return;
+      }
+    }
+
+    const newTrack = stream.getAudioTracks()[0];
+    if (!newTrack) return;
+    newTrack.enabled = !isMutedRef.current;
+    console.log('[Voice] Swapped microphone to:', newTrack.label);
+
+    peersRef.current.forEach(({ pc }, remoteUserId) => {
+      pc.getSenders()
+        .filter((s) => s.track?.kind === 'audio' || !s.track)
+        .forEach((sender) => {
+          sender.replaceTrack(newTrack).catch((e) =>
+            console.warn(`[Voice] replaceTrack failed for ${remoteUserId}:`, e)
+          );
+        });
+    });
+
+    const oldStream = localStreamRef.current;
+    localStreamRef.current = stream;
+    oldStream.getTracks().forEach((t) => t.stop());
+
+    // Re-point the speaking-detection analyser at the new stream.
+    stopAudioLevelMonitoring();
+    startAudioLevelMonitoring();
+  }, [startAudioLevelMonitoring, stopAudioLevelMonitoring]);
+
+  // Keep the late-bound refs (used inside pc callbacks) pointing at the
+  // latest implementations.
+  useEffect(() => {
+    applyOutputDeviceRef.current = applyOutputDevice;
+    swapInputDeviceRef.current = () => void swapInputDevice();
+  }, [applyOutputDevice, swapInputDevice]);
+
+
+
   // Create peer connection for a remote user
   const createPeerConnection = useCallback((remoteUserId: string): RTCPeerConnection => {
     console.log(`[Voice] Creating peer connection for ${remoteUserId}`);
     
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      // Pre-gather a few candidates (incl. TURN) so the handshake completes
+      // faster on flaky mobile links.
+      iceCandidatePoolSize: 4,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+    });
+
 
     // Add local tracks to the connection
     if (localStreamRef.current) {
@@ -392,8 +509,15 @@ export function useVoiceChannel(convoyId?: string) {
         console.log(`[Voice] Successfully connected to ${remoteUserId}`);
         clearReconnectSchedule(remoteUserId);
       }
-      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        console.warn(`[Voice] Connection ${pc.connectionState} with ${remoteUserId}`);
+      if (pc.connectionState === 'disconnected') {
+        // Usually a transient mobile-network blip. Give ICE a chance to
+        // recover on its own before tearing the peer down.
+        console.warn(`[Voice] Connection disconnected with ${remoteUserId} - waiting for ICE recovery`);
+        return;
+      }
+      if (pc.connectionState === 'failed') {
+        console.warn(`[Voice] Connection failed with ${remoteUserId}`);
+        pc.close();
         peersRef.current.delete(remoteUserId);
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
@@ -402,16 +526,56 @@ export function useVoiceChannel(convoyId?: string) {
         scheduleReconnect(remoteUserId);
       }
     };
+
     
     // Handle ICE connection state changes (more granular)
     pc.oniceconnectionstatechange = () => {
       console.log(`[Voice] ICE state with ${remoteUserId}: ${pc.iceConnectionState}`);
+      // An ICE restart re-gathers candidates (including TURN relays) without
+      // rebuilding the whole peer - the cheapest recovery from a signal drop.
+      if (
+        pc.iceConnectionState === 'failed' &&
+        typeof pc.restartIce === 'function' &&
+        userIdRef.current &&
+        userIdRef.current > remoteUserId
+      ) {
+        console.warn(`[Voice] ICE failed with ${remoteUserId} - restarting ICE`);
+        try {
+          pc.restartIce();
+        } catch (e) {
+          console.warn('[Voice] restartIce failed:', e);
+        }
+      }
     };
-    
+
+    // Renegotiation - fires after an ICE restart or when the local mic track is
+    // swapped (e.g. plugging in a Bluetooth intercom). Only the designated
+    // offerer renegotiates, and only once the peer is already established.
+    pc.onnegotiationneeded = async () => {
+      if (!channelRef.current || !userIdRef.current) return;
+      if (userIdRef.current < remoteUserId) return;
+      if (!pc.remoteDescription || pc.signalingState !== 'stable') return;
+
+      try {
+        const offerDesc = await pc.createOffer();
+        if (pc.signalingState !== 'stable') return;
+        await pc.setLocalDescription(offerDesc);
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'offer',
+          payload: { offer: offerDesc, from: userIdRef.current, to: remoteUserId },
+        });
+        console.log(`[Voice] Renegotiation offer sent to ${remoteUserId}`);
+      } catch (e) {
+        console.warn('[Voice] Renegotiation failed:', e);
+      }
+    };
+
     // Handle ICE gathering state
     pc.onicegatheringstatechange = () => {
       console.log(`[Voice] ICE gathering state with ${remoteUserId}: ${pc.iceGatheringState}`);
     };
+
 
     // Handle incoming remote tracks
     pc.ontrack = (event) => {
@@ -450,14 +614,11 @@ export function useVoiceChannel(convoyId?: string) {
         audioElementsRef.current.set(remoteUserId, audio);
         console.log(`[Voice] Created audio element for ${remoteUserId}, iOS: ${isIOS}, Safari: ${isSafari}`);
         
-        // Set output device if supported (Chrome/Edge) and selected - NOT available on iOS/Safari
-        const savedOutput = localStorage.getItem(AUDIO_OUTPUT_KEY);
-        if (savedOutput && savedOutput !== 'default' && 'setSinkId' in audio && !isIOS && !isSafari) {
-          (audio as any).setSinkId(savedOutput)
-            .then(() => console.log(`[Voice] Set audio output to ${savedOutput}`))
-            .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
-        }
+        // Route to the selected output (e.g. a Bluetooth intercom) where the
+        // browser supports it - NOT available on iOS/Safari.
+        applyOutputDeviceRef.current?.();
       }
+
 
       // Set srcObject before playing
       audio.srcObject = remoteStream;
@@ -527,7 +688,7 @@ export function useVoiceChannel(convoyId?: string) {
       setTimeout(() => void tryPlay(1), 50);
     };
 
-    peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId });
+    peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId, createdAt: Date.now() });
     return pc;
   }, [clearReconnectSchedule, scheduleReconnect]);
 
@@ -549,13 +710,23 @@ export function useVoiceChannel(convoyId?: string) {
           return;
         }
         
-        // Always create an offer when a new user joins and we don't have a connection to them
-        // The receiver will handle duplicate connections gracefully
+        // Skip if we already have a live OR in-flight connection. The 10s
+        // presence heartbeat used to blow away half-completed handshakes,
+        // which meant peers could never finish connecting on slow links.
         const existingPeer = peersRef.current.get(from);
-        if (existingPeer && existingPeer.pc.connectionState === 'connected') {
-          console.log(`[Voice] Already connected to ${from}, skipping offer`);
+        const handshakeAge = existingPeer ? Date.now() - existingPeer.createdAt : Infinity;
+        const inFlight =
+          existingPeer &&
+          (existingPeer.pc.connectionState === 'connecting' ||
+            existingPeer.pc.connectionState === 'new') &&
+          handshakeAge < HANDSHAKE_STALL_MS;
+
+        if (existingPeer && (existingPeer.pc.connectionState === 'connected' || inFlight)) {
+          console.log(`[Voice] Connection to ${from} is ${existingPeer.pc.connectionState}, skipping offer`);
           return;
         }
+
+
         
         // Clean up any existing failed connection
         if (existingPeer) {
@@ -602,17 +773,26 @@ export function useVoiceChannel(convoyId?: string) {
         console.log(`[Voice] Received offer from ${from}`);
         
         try {
-          // Clean up any existing connection first
+          // Reuse a healthy peer so renegotiation (ICE restart / mic swap)
+          // doesn't tear down a working call. Only rebuild broken ones.
           const existingPeer = peersRef.current.get(from);
-          if (existingPeer) {
+          const canReuse =
+            existingPeer &&
+            existingPeer.pc.signalingState === 'stable' &&
+            existingPeer.pc.connectionState !== 'failed' &&
+            existingPeer.pc.connectionState !== 'closed' &&
+            !!existingPeer.pc.remoteDescription;
+
+          if (existingPeer && !canReuse) {
             existingPeer.pc.close();
             peersRef.current.delete(from);
             audioElementsRef.current.get(from)?.remove();
             audioElementsRef.current.delete(from);
           }
-          
-          const pc = createPeerConnection(from);
+
+          const pc = canReuse ? existingPeer!.pc : createPeerConnection(from);
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
           
           // Process any pending ICE candidates after setting remote description
           const pendingCandidates = pendingCandidatesRef.current.get(from);
@@ -1122,7 +1302,58 @@ export function useVoiceChannel(convoyId?: string) {
     }
   }, [convoyId, state.isConnected, connect, toggleMute]);
 
+  // React to audio hardware changes while connected: a Bluetooth intercom
+  // pairing/dropping fires `devicechange`, and picking a device in settings
+  // fires our own event. Both need the live call re-routed, not a reconnect.
+  useEffect(() => {
+    if (!state.isConnected) return;
+
+    let swapTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedSwap = () => {
+      if (swapTimer) clearTimeout(swapTimer);
+      // Bluetooth stacks emit several devicechange events in a row.
+      swapTimer = setTimeout(() => {
+        swapInputDeviceRef.current?.();
+        applyOutputDeviceRef.current?.();
+      }, 500);
+    };
+
+    const onSelection = (e: Event) => {
+      const kind = (e as CustomEvent<{ kind?: string }>).detail?.kind;
+      if (kind === 'audiooutput') {
+        applyOutputDeviceRef.current?.();
+      } else {
+        swapInputDeviceRef.current?.();
+      }
+    };
+
+    navigator.mediaDevices?.addEventListener?.('devicechange', debouncedSwap);
+    window.addEventListener('blacktop:audio-device-change', onSelection);
+
+    return () => {
+      if (swapTimer) clearTimeout(swapTimer);
+      navigator.mediaDevices?.removeEventListener?.('devicechange', debouncedSwap);
+      window.removeEventListener('blacktop:audio-device-change', onSelection);
+    };
+  }, [state.isConnected]);
+
+  // If the active mic track dies (intercom powered off, OS reclaimed it),
+  // transparently grab a replacement rather than going silent.
+  useEffect(() => {
+    if (!state.isConnected) return;
+    const track = localStreamRef.current?.getAudioTracks()[0];
+    if (!track) return;
+
+    const onEnded = () => {
+      console.warn('[Voice] Local mic track ended - re-acquiring');
+      swapInputDeviceRef.current?.();
+    };
+    track.addEventListener('ended', onEnded);
+    return () => track.removeEventListener('ended', onEnded);
+  }, [state.isConnected]);
+
   // Mirror speakingUsers into the shared store so other features (e.g. the
+
   // map's member markers) can read who's talking without their own connection.
   useEffect(() => {
     setSpeakingUsers(state.speakingUsers);
