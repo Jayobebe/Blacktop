@@ -306,7 +306,7 @@ export default function ActiveRide() {
         lng: last?.lng ?? null,
         heading,
         members: convoy.members
-          .filter((m) => m.userId !== profile.userId && m.currentLat != null && m.currentLng != null)
+          .filter((m) => m.userId !== user?.id && m.currentLat != null && m.currentLng != null)
           .map((m) => ({
             lat: m.currentLat as number,
             lng: m.currentLng as number,
@@ -315,7 +315,7 @@ export default function ActiveRide() {
           })),
       });
     }
-  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, rideState.maxGForce, rideState.gpsPoints, convoy.members, profile.userId]);
+  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, rideState.maxGForce, rideState.gpsPoints, convoy.members, user?.id]);
 
   // Track convoy members
   useEffect(() => {
