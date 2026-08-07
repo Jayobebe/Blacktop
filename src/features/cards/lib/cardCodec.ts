@@ -1,4 +1,4 @@
-import type { CardTier } from '../types';
+import { TIER_LADDER, type CardTier } from '../types';
 import type { VehicleCardData } from '../hooks/useVehicleCards';
 
 /** Compact, serializable shape that fits comfortably in a QR code. */
@@ -29,6 +29,9 @@ export interface SharedCardPayload {
 }
 
 const PREFIX = 'BTCARD:';
+/** v2: compact pipe-delimited, no base64 — roughly a third of the v1 payload size. */
+const PREFIX_V2 = 'BTC2:';
+const SEP = '|';
 
 function utf8ToBase64(s: string): string {
   // Handle unicode safely
@@ -39,34 +42,73 @@ function base64ToUtf8(b: string): string {
   return decodeURIComponent(escape(atob(b)));
 }
 
+function esc(s: string | undefined): string {
+  return (s ?? '').replace(/[|\\]/g, '/');
+}
+
+function tierLabel(t: string): string {
+  return TIER_LADDER.find((d) => d.id === t)?.label ?? 'Locked';
+}
+
+function num(n: number | undefined, dp = 1): string {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '0';
+  return String(Math.round(v * 10 ** dp) / 10 ** dp);
+}
+
 export function encodeCard(card: VehicleCardData, owner?: string): string {
-  const payload: SharedCardPayload = {
-    v: 1,
-    i: card.bike.id,
-    n: card.bike.name,
-    m: card.bike.makeModel || undefined,
-    o: owner?.trim() || undefined,
-    t: card.tier,
-    tl: card.tierLabel,
-    s: {
-      totalRides: card.stats.totalRides,
-      totalDistanceMi: card.stats.totalDistanceMi,
-      totalDurationSec: card.stats.totalDurationSec,
-      topSpeedMph: card.stats.topSpeedMph,
-      maxLean: card.stats.maxLean,
-      maxGForce: card.stats.maxGForce,
-    },
-    ts: Date.now(),
-  };
-  return PREFIX + utf8ToBase64(JSON.stringify(payload));
+  const s = card.stats;
+  const fields = [
+    esc(card.bike.id).replace(/-/g, ''),
+    esc(card.bike.name),
+    esc(card.bike.makeModel || ''),
+    esc(owner?.trim() || ''),
+    esc(card.tier),
+    num(s.totalRides, 0),
+    num(s.totalDistanceMi),
+    num(s.totalDurationSec, 0),
+    num(s.topSpeedMph),
+    num(s.maxLean),
+    num(s.maxGForce, 2),
+    String(Math.round(Date.now() / 1000)),
+  ];
+  return PREFIX_V2 + fields.join(SEP);
 }
 
 export function decodeCard(raw: string): SharedCardPayload | null {
   try {
-    if (!raw.startsWith(PREFIX)) return null;
-    const json = base64ToUtf8(raw.slice(PREFIX.length));
+    const trimmed = raw.trim();
+
+    if (trimmed.startsWith(PREFIX_V2)) {
+      const f = trimmed.slice(PREFIX_V2.length).split(SEP);
+      if (f.length < 12) return null;
+      const [i, n, m, o, t, rides, dist, dur, top, lean, g, ts] = f;
+      if (!n || !t) return null;
+      return {
+        v: 1,
+        i,
+        n,
+        m: m || undefined,
+        o: o || undefined,
+        t: t as CardTier,
+        tl: tierLabel(t),
+        s: {
+          totalRides: Number(rides) || 0,
+          totalDistanceMi: Number(dist) || 0,
+          totalDurationSec: Number(dur) || 0,
+          topSpeedMph: Number(top) || 0,
+          maxLean: Number(lean) || 0,
+          maxGForce: Number(g) || 0,
+        },
+        ts: (Number(ts) || 0) * 1000,
+      };
+    }
+
+    if (!trimmed.startsWith(PREFIX)) return null;
+    const json = base64ToUtf8(trimmed.slice(PREFIX.length));
     const parsed = JSON.parse(json) as SharedCardPayload;
     if (parsed?.v !== 1 || !parsed.n || !parsed.t || !parsed.s) return null;
+    if (!parsed.tl) parsed.tl = tierLabel(parsed.t);
     return parsed;
   } catch {
     return null;
