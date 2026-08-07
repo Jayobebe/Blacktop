@@ -63,6 +63,13 @@ export interface MiniMapRegion {
   radius: number;
 }
 
+export interface MiniMapMember {
+  lat: number;
+  lng: number;
+  name?: string;
+  color?: string;
+}
+
 export interface MiniMapDrawOptions {
   ctx: CanvasRenderingContext2D;
   region: MiniMapRegion;
@@ -73,9 +80,11 @@ export interface MiniMapDrawOptions {
   accent: string;
   /** Optional text drawn just below the user dot (e.g. formatted duration). */
   durationLabel?: string;
+  /** Live convoy member positions drawn as secondary dots. */
+  members?: MiniMapMember[];
 }
 
-export function drawMiniMap({ ctx, region, center, route, opacity, accent, durationLabel }: MiniMapDrawOptions): void {
+export function drawMiniMap({ ctx, region, center, route, opacity, accent, durationLabel, members }: MiniMapDrawOptions): void {
   const { x, y, width, height, radius } = region;
   const cx = x + width / 2;
   const cy = y + height / 2;
