@@ -81,7 +81,17 @@ export default function World() {
 
     return { countryLights: lights, activeCount: memberRows.length };
   }, [memberRows]);
-  const displayedActiveCount = demoEnabled ? demoActiveRiders : activeCount;
+  const { data: totalBurners = 0 } = useQuery({
+    queryKey: ['profile-count'],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('profile_count');
+      return Number(data ?? 0);
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
 
   const markers: WorldEventMarker[] = (eonetData?.events ?? [])
     .slice(0, 25)
