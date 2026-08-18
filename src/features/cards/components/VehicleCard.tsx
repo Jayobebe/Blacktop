@@ -41,17 +41,25 @@ export function VehicleCard({ card }: Props) {
   const uid = card.bike.id.replace(/-/g, '');
 
   // Publish the bike photo so anyone scanning this card can see it on their copy.
+  // Not gated on share settings: the upload must be ready before a QR is shown.
   useEffect(() => {
-    if (!shareable || !hero) return;
+    if (!hero) return;
     let cancelled = false;
     setPhotoPath(null);
-    uploadCardPhoto(uid, hero).then((path) => {
+    const run = async () => {
+      let path = await uploadCardPhoto(uid, hero);
+      if (!path && !cancelled) {
+        await new Promise((r) => setTimeout(r, 1500));
+        path = await uploadCardPhoto(uid, hero);
+      }
       if (!cancelled && path) setPhotoPath(path);
-    });
+    };
+    void run();
     return () => {
       cancelled = true;
     };
-  }, [shareable, hero, uid]);
+  }, [hero, uid]);
+
 
 
   const handleDownload = async () => {
