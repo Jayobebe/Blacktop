@@ -1,0 +1,4 @@
+CREATE POLICY "card_photos_read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'card-photos');
+CREATE POLICY "card_photos_insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'card-photos' AND owner = auth.uid());
+CREATE POLICY "card_photos_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'card-photos' AND owner = auth.uid()) WITH CHECK (bucket_id = 'card-photos' AND owner = auth.uid());
+CREATE POLICY "card_photos_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'card-photos' AND owner = auth.uid());

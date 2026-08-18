@@ -26,6 +26,8 @@ export interface SharedCardPayload {
   };
   /** Capture timestamp (when QR was generated). */
   ts: number;
+  /** Storage path of the shared vehicle photo (card-photos bucket). */
+  p?: string;
 }
 
 const PREFIX = 'BTCARD:';
@@ -56,7 +58,7 @@ function num(n: number | undefined, dp = 1): string {
   return String(Math.round(v * 10 ** dp) / 10 ** dp);
 }
 
-export function encodeCard(card: VehicleCardData, owner?: string): string {
+export function encodeCard(card: VehicleCardData, owner?: string, photoPath?: string): string {
   const s = card.stats;
   const fields = [
     esc(card.bike.id).replace(/-/g, ''),
@@ -71,6 +73,7 @@ export function encodeCard(card: VehicleCardData, owner?: string): string {
     num(s.maxLean),
     num(s.maxGForce, 2),
     String(Math.round(Date.now() / 1000)),
+    esc(photoPath || ''),
   ];
   return PREFIX_V2 + fields.join(SEP);
 }
@@ -82,7 +85,7 @@ export function decodeCard(raw: string): SharedCardPayload | null {
     if (trimmed.startsWith(PREFIX_V2)) {
       const f = trimmed.slice(PREFIX_V2.length).split(SEP);
       if (f.length < 12) return null;
-      const [i, n, m, o, t, rides, dist, dur, top, lean, g, ts] = f;
+      const [i, n, m, o, t, rides, dist, dur, top, lean, g, ts, photo] = f;
       if (!n || !t) return null;
       return {
         v: 1,
@@ -101,6 +104,7 @@ export function decodeCard(raw: string): SharedCardPayload | null {
           maxGForce: Number(g) || 0,
         },
         ts: (Number(ts) || 0) * 1000,
+        p: photo || undefined,
       };
     }
 

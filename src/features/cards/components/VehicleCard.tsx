@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download, Zap, RotateCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
@@ -16,6 +16,7 @@ import {
 import { TIER_STYLES } from '../types';
 import { VehicleCardData } from '../hooks/useVehicleCards';
 import { encodeCard } from '../lib/cardCodec';
+import { uploadCardPhoto } from '../lib/cardPhoto';
 
 interface Props {
   card: VehicleCardData;
@@ -33,7 +34,24 @@ export function VehicleCard({ card }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [flipped, setFlipped] = useState(false);
-  const qrPayload = locked || !settings.blacktopWorldEnabled ? null : encodeCard(card, profile.name);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const shareable = !locked && settings.blacktopWorldEnabled;
+  const qrPayload = shareable ? encodeCard(card, profile.name, photoPath ?? undefined) : null;
+  const hero = card.bike.photos.hero;
+  const uid = card.bike.id.replace(/-/g, '');
+
+  // Publish the bike photo so anyone scanning this card can see it on their copy.
+  useEffect(() => {
+    if (!shareable || !hero) return;
+    let cancelled = false;
+    setPhotoPath(null);
+    uploadCardPhoto(uid, hero).then((path) => {
+      if (!cancelled && path) setPhotoPath(path);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [shareable, hero, uid]);
 
 
   const handleDownload = async () => {

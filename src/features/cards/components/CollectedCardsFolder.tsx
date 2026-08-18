@@ -15,6 +15,7 @@ import {
 } from '@/lib/format';
 import { TIER_STYLES } from '../types';
 import { decodeCard } from '../lib/cardCodec';
+import { fetchCardPhoto } from '../lib/cardPhoto';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
@@ -52,18 +53,21 @@ export function CollectedCardsFolder() {
           const payload = decodeCard(decoded);
           if (!payload) return;
           haptics.light();
-          if (keyToRescan !== null) {
-            rescanCard(keyToRescan, payload);
-            toast.success(`${payload.n} updated`);
-          } else {
-            const { added } = addCard(payload);
-            if (added) {
-              toast.success(`Added ${payload.n} to your collection`);
-            } else {
-              toast.info(`${payload.n} is already in your collection`);
-            }
-          }
           void stopScanner();
+          void (async () => {
+            const img = payload.p ? await fetchCardPhoto(payload.p) : null;
+            if (keyToRescan !== null) {
+              rescanCard(keyToRescan, payload, img ?? undefined);
+              toast.success(`${payload.n} updated`);
+            } else {
+              const { added } = addCard(payload, img ?? undefined);
+              if (added) {
+                toast.success(`Added ${payload.n} to your collection`);
+              } else {
+                toast.info(`${payload.n} is already in your collection`);
+              }
+            }
+          })();
         },
         () => {},
       );
@@ -266,6 +270,21 @@ function FullCard({ card }: { card: CollectedCard }) {
           <Sparkles className="w-2.5 h-2.5" />
           {card.tl}
         </span>
+      </div>
+
+      <div className="relative rounded-xl overflow-hidden bg-black/30 aspect-[4/3] border border-white/10 mt-1">
+        {card.img ? (
+          <img
+            src={card.img}
+            alt={card.n}
+            className="w-full h-full object-contain scale-125"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
+            No photo
+          </div>
+        )}
       </div>
 
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
