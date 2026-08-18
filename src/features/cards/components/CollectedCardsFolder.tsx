@@ -56,6 +56,12 @@ export function CollectedCardsFolder() {
           void stopScanner();
           void (async () => {
             const img = payload.p ? await fetchCardPhoto(payload.p) : null;
+            if (payload.p && !img) {
+              toast.info('Bike photo unavailable — ask them to reopen their card, then rescan');
+            } else if (!payload.p) {
+              toast.info('This card was shared without a bike photo');
+            }
+
             if (keyToRescan !== null) {
               rescanCard(keyToRescan, payload, img ?? undefined);
               toast.success(`${payload.n} updated`);
