@@ -7,6 +7,8 @@ export interface CollectedCard extends SharedCardPayload {
   collectedAt: number;
   /** Stable key derived from payload identity. */
   key: string;
+  /** Locally cached vehicle photo (data URL) fetched at scan time. */
+  img?: string;
 }
 
 const STORAGE_KEY = 'bt.collected_cards.v1';
@@ -15,7 +17,7 @@ export function useCollectedCards() {
   const [collected, setCollected] = useLocalStorage<CollectedCard[]>(STORAGE_KEY, []);
 
   const addCard = useCallback(
-    (payload: SharedCardPayload): { added: boolean; key: string } => {
+    (payload: SharedCardPayload, img?: string): { added: boolean; key: string } => {
       const key = collectedCardKey(payload);
       let added = false;
       setCollected((prev) => {
@@ -24,7 +26,7 @@ export function useCollectedCards() {
           return prev;
         }
         added = true;
-        return [{ ...payload, key, collectedAt: Date.now() }, ...prev];
+        return [{ ...payload, key, img, collectedAt: Date.now() }, ...prev];
       });
       return { added, key };
     },
@@ -33,12 +35,12 @@ export function useCollectedCards() {
 
   // Explicit rescan: replaces a card's data at its existing slot, preserving collectedAt.
   const rescanCard = useCallback(
-    (key: string, payload: SharedCardPayload) => {
+    (key: string, payload: SharedCardPayload, img?: string) => {
       setCollected((prev) => {
         const idx = prev.findIndex((c) => c.key === key);
         if (idx < 0) return prev;
         const next = prev.slice();
-        next[idx] = { ...payload, key, collectedAt: prev[idx].collectedAt };
+        next[idx] = { ...payload, key, img: img ?? prev[idx].img, collectedAt: prev[idx].collectedAt };
         return next;
       });
     },
