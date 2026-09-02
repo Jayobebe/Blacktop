@@ -109,6 +109,43 @@ export default function SoloLobby() {
     });
   };
 
+  // Unlocking a solo lobby publishes it to the crew list. The moment another
+  // rider joins, it becomes a group lobby and we hand over to /lobby.
+  const toggleUnlocked = async () => {
+    if (busyLock) return;
+    setBusyLock(true);
+    try {
+      if (convoy.isActive && convoy.isLeader) {
+        await supabase.from('convoys').update({ is_listed: false } as any).eq('id', convoy.id!);
+        await leaveConvoy();
+        toast.success('Solo lobby locked');
+      } else {
+        const created = await createConvoy();
+        if (!created) return;
+        const id = (created as any)?.id ?? null;
+        await supabase
+          .from('convoys')
+          .update({ is_listed: true, crew_code: crew.code } as any)
+          .eq('leader_id', (await supabase.auth.getUser()).data.user?.id ?? '')
+          .eq('is_active', true);
+        toast.success(`Listed in crew ${crew.code}`, {
+          description: 'Riders who join turn this into a group lobby.',
+        });
+      }
+    } finally {
+      setBusyLock(false);
+    }
+  };
+
+  const isUnlocked = convoy.isActive && convoy.isLeader;
+
+  // Somebody joined the open solo lobby → it's a group ride now.
+  useEffect(() => {
+    if (isUnlocked && convoy.members.length > 1) {
+      toast.success('Rider joined — group lobby');
+      navigate('/lobby');
+    }
+  }, [isUnlocked, convoy.members.length, navigate]);
 
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
@@ -120,11 +157,27 @@ export default function SoloLobby() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-semibold tracking-tight">Solo Ride</h1>
-          <p className="text-xs text-muted-foreground">Set a destination and hit the road</p>
+          <p className="text-xs text-muted-foreground">
+            {isUnlocked ? `Open to crew ${crew.code}` : 'Set a destination and hit the road'}
+          </p>
         </div>
+        <button
+          onClick={toggleUnlocked}
+          disabled={busyLock}
+          className={`p-2.5 rounded-xl border transition-colors ${
+            isUnlocked
+              ? 'bg-accent/10 border-accent/60 text-accent'
+              : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary'
+          }`}
+          title={isUnlocked ? 'Locked to crew list — tap to lock' : 'Tap to list in Crew Convoys'}
+          aria-label={isUnlocked ? 'Lock lobby' : 'Unlock lobby to crew'}
+        >
+          {isUnlocked ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+        </button>
       </header>
+
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
