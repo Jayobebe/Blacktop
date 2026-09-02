@@ -308,7 +308,7 @@ export default function DemoShowcase() {
 
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col pt-16 pb-32 overflow-y-auto">
+      <main className="flex-1 flex flex-col pt-16 pb-44 overflow-y-auto">
         <div 
           key={animationKey}
           className={cn(
