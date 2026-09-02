@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { HomeGlobe } from '@/components/HomeGlobe';
-import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
+import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap, clearMapDestination } from '@/features/map';
 
