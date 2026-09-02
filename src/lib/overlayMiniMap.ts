@@ -1,6 +1,6 @@
 // Live mini-map renderer for the downloadable ride overlay.
 //
-// Draws CARTO dark tiles into a small rounded region of the recording canvas,
+// Draws dark-styled tiles into a small rounded region of the recording canvas,
 // centred on the rider, with the route polyline projected on top and a
 // heading-oriented user dot in the middle. Tiles are fetched on demand and
 // kept in an in-memory Image cache keyed by z/x/y so a normal ride only
@@ -10,9 +10,9 @@ const TILE_ZOOM = 16;
 const TILE_SIZE = 256;
 const TILE_RADIUS = 2; // 2 → 5x5 grid around the centre tile, plenty of headroom for the mini map
 
-// Public CARTO dark subdomains (matches BlacktopMap so tiles come from HTTP
-// cache when the rider has already opened the in-app map).
-const TILE_SUBDOMAINS = ['a', 'b', 'c', 'd'] as const;
+// OpenStreetMap standard raster tiles (free, no API key). They're light
+// themed, so we invert + dim them at draw time to keep the mini map dark.
+const TILE_SUBDOMAINS = ['a', 'b', 'c'] as const;
 
 interface TileCoord { z: number; x: number; y: number; }
 
@@ -24,7 +24,28 @@ function tileKey(z: number, x: number, y: number): string {
 
 function tileUrl(z: number, x: number, y: number): string {
   const sd = TILE_SUBDOMAINS[(x + y) % TILE_SUBDOMAINS.length];
-  return `https://${sd}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}@2x.png`;
+  return `https://${sd}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+}
+
+// Canvas filter that turns light OSM tiles into a dark basemap. Tiles are
+// pre-filtered once into an offscreen canvas so per-frame draws stay cheap.
+const DARK_TILE_FILTER = 'invert(0.92) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.6)';
+
+const darkTileCache = new Map<string, HTMLCanvasElement>();
+
+function toDarkTile(img: HTMLImageElement): HTMLCanvasElement | null {
+  const key = img.src;
+  const cached = darkTileCache.get(key);
+  if (cached) return cached;
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const cctx = c.getContext('2d');
+  if (!cctx) return null;
+  cctx.filter = DARK_TILE_FILTER;
+  cctx.drawImage(img, 0, 0);
+  darkTileCache.set(key, c);
+  return c;
 }
 
 function loadTile(z: number, x: number, y: number): HTMLImageElement | null {
@@ -125,7 +146,8 @@ export function drawMiniMap({ ctx, region, center, route, opacity, accent, durat
       const drawX = originOffsetX + dx * TILE_SIZE;
       const drawY = originOffsetY + dy * TILE_SIZE;
       if (img) {
-        ctx.drawImage(img, drawX, drawY, TILE_SIZE, TILE_SIZE);
+        const dark = toDarkTile(img);
+        if (dark) ctx.drawImage(dark, drawX, drawY, TILE_SIZE, TILE_SIZE);
       } else {
         pending.push({ z: TILE_ZOOM, x: tx, y: ty });
       }
