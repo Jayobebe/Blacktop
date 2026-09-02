@@ -945,7 +945,7 @@ export default function ActiveRide() {
         )}
 
         {/* Controls - row in portrait, column in landscape */}
-        <div className="flex landscape:flex-col items-center justify-center gap-4 landscape:gap-4 px-2 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
+        <div className="flex landscape:flex-col items-center justify-center gap-6 landscape:gap-4 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
           {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
