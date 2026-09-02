@@ -929,15 +929,18 @@ export default function ActiveRide() {
           </div>
         </div>
 
+        {/* Right flank in landscape: G-Force + buttons, pushed to the right edge.
+            `contents` in portrait so children join the vertical flow unchanged. */}
+        <div className="contents landscape:flex landscape:flex-row landscape:items-center landscape:justify-end landscape:gap-8 landscape:flex-1 landscape:min-w-0 landscape:max-h-full landscape:pr-2">
         {/* Landscape: G-Force between speed and buttons */}
         {settings.gForceEnabled && gForce.isSupported && (
-          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[110px]">
+          <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">
             <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
           </div>
         )}
 
         {/* Controls - row in portrait, column in landscape */}
-        <div className="flex landscape:flex-col items-center justify-center gap-6 landscape:gap-4 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
+        <div className="flex landscape:flex-col items-center justify-center gap-6 landscape:gap-4 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
           {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
