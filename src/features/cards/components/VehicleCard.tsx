@@ -36,8 +36,13 @@ export function VehicleCard({ card }: Props) {
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const shareable = !locked && settings.blacktopWorldEnabled;
-  const qrPayload = shareable ? encodeCard(card, profile.name, photoPath ?? undefined) : null;
   const hero = card.bike.photos.hero;
+  // Never expose a QR for a pictured card until its photo has been published.
+  // Otherwise a fast scan permanently saves the payload without a photo path.
+  const photoReady = !hero || photoPath !== null;
+  const qrPayload = shareable && photoReady
+    ? encodeCard(card, profile.name, photoPath ?? undefined)
+    : null;
   const uid = card.bike.id.replace(/-/g, '');
 
   // Publish the bike photo so anyone scanning this card can see it on their copy.
