@@ -30,6 +30,34 @@ export function formatSpeed(mph: number, unit: SpeedUnit = 'mph'): number {
   return unit === 'kph' ? Math.round(mph * MPH_TO_KPH) : Math.round(mph);
 }
 
+/** Compact generalised count: 950 -> "950", 3700 -> "3.7k", 2_200_000 -> "2.2M" */
+export function formatCompactCount(n: number): string {
+  if (n < 1000) return Math.round(n).toString();
+  if (n < 1_000_000) {
+    const v = n / 1000;
+    return `${v >= 100 ? Math.round(v) : v.toFixed(1)}k`;
+  }
+  const v = n / 1_000_000;
+  return `${v >= 100 ? Math.round(v) : v.toFixed(1)}M`;
+}
+
+/** Compact distance number (unit rendered separately via getDistanceLabel) */
+export function formatCompactDistance(miles: number, unit: DistanceUnit = 'miles'): string {
+  const value = unit === 'km' ? miles * MILES_TO_KM : miles;
+  return formatCompactCount(value);
+}
+
+/** Compact duration: "4d", "12h", "45m", "30s" — largest meaningful unit only */
+export function formatCompactDuration(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds / 60);
+  if (days > 0) return `${days}d`;
+  if (hours > 0) return `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${Math.floor(seconds)}s`;
+}
+
 export function getSpeedLabel(unit: SpeedUnit = 'mph'): string {
   return unit === 'kph' ? 'KPH' : 'MPH';
 }
