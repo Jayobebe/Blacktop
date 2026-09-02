@@ -951,7 +951,7 @@ export default function ActiveRide() {
               toast.info(nextPaused ? 'Ride paused' : 'Ride resumed');
             }}
             className={cn(
-              "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full flex items-center justify-center transition-all touch-target",
+              "h-14 w-14 landscape:h-16 landscape:w-16 rounded-full flex items-center justify-center transition-all touch-target",
               rideState.isPaused
                 ? "bg-accent/20 text-accent"
                 : "bg-secondary hover:bg-muted text-muted-foreground"
@@ -959,9 +959,9 @@ export default function ActiveRide() {
             title={rideState.isPaused ? "Resume ride" : "Pause ride"}
           >
             {rideState.isPaused ? (
-              <Play className="w-6 h-6 landscape:w-7 landscape:h-7" />
+              <Play className="w-7 h-7 landscape:w-8 landscape:h-8" />
             ) : (
-              <Pause className="w-6 h-6 landscape:w-7 landscape:h-7" />
+              <Pause className="w-7 h-7 landscape:w-8 landscape:h-8" />
             )}
           </button>
 
@@ -974,14 +974,14 @@ export default function ActiveRide() {
             <button
               onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
               className={cn(
-                "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full flex items-center justify-center transition-all touch-target",
+                "h-14 w-14 landscape:h-16 landscape:w-16 rounded-full flex items-center justify-center transition-all touch-target",
                 hasPendingRescue 
                   ? "bg-warning/20 text-warning animate-pulse" 
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
               title={hasPendingRescue ? "Cancel rescue request" : "Request rescue"}
             >
-              <AlertTriangle className="w-6 h-6 landscape:w-7 landscape:h-7" />
+              <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </button>
           )}
           {!rideState.isConvoyMode && discordEnabled && (
@@ -1020,14 +1020,14 @@ export default function ActiveRide() {
               }}
               disabled={soloRescueSending || soloRescueSent}
               className={cn(
-                "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full flex items-center justify-center transition-all touch-target disabled:opacity-60",
+                "h-14 w-14 landscape:h-16 landscape:w-16 rounded-full flex items-center justify-center transition-all touch-target disabled:opacity-60",
                 soloRescueSent
                   ? "bg-warning/20 text-warning animate-pulse"
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
               title={soloRescueSent ? 'Rescue ping sent' : soloRescueSending ? 'Sending…' : 'Send rescue ping to Discord'}
             >
-              <AlertTriangle className="w-6 h-6 landscape:w-7 landscape:h-7" />
+              <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </button>
           )}
 
@@ -1054,10 +1054,10 @@ export default function ActiveRide() {
               }
             }}
 
-            className="h-12 w-12 landscape:h-14 landscape:w-14 rounded-full bg-secondary hover:bg-muted touch-target"
+            className="h-14 w-14 landscape:h-16 landscape:w-16 rounded-full bg-secondary hover:bg-muted touch-target"
             title="Open map with route"
           >
-            <Navigation className="w-6 h-6 landscape:w-7 landscape:h-7" />
+            <Navigation className="w-7 h-7 landscape:w-8 landscape:h-8" />
           </Button>
 
           {/* Voice Controls (Convoy Mode) */}
@@ -1087,7 +1087,7 @@ export default function ActiveRide() {
                   }
                 }}
                 className={cn(
-                  "w-10 h-10 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
+                  "w-12 h-12 landscape:w-16 landscape:h-16 rounded-full flex items-center justify-center transition-all touch-target",
                   isConnected
                     ? "bg-destructive/20 hover:bg-destructive/30 text-destructive"
                     : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
@@ -1095,9 +1095,9 @@ export default function ActiveRide() {
                 title={isConnected ? "Leave voice channel (saves battery)" : "Join voice channel"}
               >
                 {isConnected ? (
-                  <PhoneOff className="w-4 h-4 landscape:w-6 landscape:h-6" />
+                  <PhoneOff className="w-5 h-5 landscape:w-7 landscape:h-7" />
                 ) : (
-                  <Phone className="w-4 h-4 landscape:w-6 landscape:h-6" />
+                  <Phone className="w-5 h-5 landscape:w-7 landscape:h-7" />
                 )}
               </button>
 
@@ -1112,7 +1112,7 @@ export default function ActiveRide() {
                     toggleMute();
                   }}
                   className={cn(
-                    "w-16 h-16 landscape:w-16 landscape:h-16 rounded-full flex items-center justify-center transition-all touch-target",
+                    "w-16 h-16 landscape:w-20 landscape:h-20 rounded-full flex items-center justify-center transition-all touch-target",
                     !isMuted
                       ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
                       : "bg-ptt-inactive hover:bg-muted"
@@ -1134,11 +1134,11 @@ export default function ActiveRide() {
               variant="ghost"
               onClick={() => setShowMembers(!showMembers)}
               className={cn(
-                "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full touch-target",
+                "h-14 w-14 landscape:h-16 landscape:w-16 rounded-full touch-target",
                 showMembers ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
               )}
             >
-              <Users className="w-6 h-6 landscape:w-7 landscape:h-7" />
+              <Users className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </Button>
           )}
         </div>
