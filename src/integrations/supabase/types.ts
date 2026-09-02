@@ -173,6 +173,7 @@ export type Database = {
         Row: {
           code: string
           created_at: string | null
+          crew_code: string | null
           destination_address: string | null
           destination_lat: number | null
           destination_lng: number | null
@@ -180,6 +181,7 @@ export type Database = {
           destination_set_at: string | null
           id: string
           is_active: boolean | null
+          is_listed: boolean
           is_paused: boolean
           leader_id: string | null
           name: string
@@ -191,6 +193,7 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string | null
+          crew_code?: string | null
           destination_address?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
@@ -198,6 +201,7 @@ export type Database = {
           destination_set_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_listed?: boolean
           is_paused?: boolean
           leader_id?: string | null
           name: string
@@ -209,6 +213,7 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string | null
+          crew_code?: string | null
           destination_address?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
@@ -216,6 +221,7 @@ export type Database = {
           destination_set_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_listed?: boolean
           is_paused?: boolean
           leader_id?: string | null
           name?: string
@@ -233,6 +239,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crew_scores: {
+        Row: {
+          crew_code: string
+          display_name: string
+          hit_heavy: number
+          max_lean: number
+          petrol_head: number
+          ride_count: number
+          top_speed: number
+          total_distance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          crew_code: string
+          display_name?: string
+          hit_heavy?: number
+          max_lean?: number
+          petrol_head?: number
+          ride_count?: number
+          top_speed?: number
+          total_distance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          crew_code?: string
+          display_name?: string
+          hit_heavy?: number
+          max_lean?: number
+          petrol_head?: number
+          ride_count?: number
+          top_speed?: number
+          total_distance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       discord_integrations: {
         Row: {
@@ -348,6 +393,17 @@ export type Database = {
         Returns: boolean
       }
       convoy_id_from_topic: { Args: { _topic: string }; Returns: string }
+      crew_convoy_detail: {
+        Args: { _convoy_id: string }
+        Returns: {
+          distance_driven: number
+          is_leader: boolean
+          lat: number
+          lng: number
+          member_name: string
+          top_speed: number
+        }[]
+      }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
         Args: never
@@ -360,11 +416,38 @@ export type Database = {
         Args: { _convoy_id: string; _user_id: string }
         Returns: boolean
       }
+      list_crew_convoys: {
+        Args: { _crew_code: string }
+        Returns: {
+          code: string
+          created_at: string
+          destination_address: string
+          destination_name: string
+          id: string
+          is_riding: boolean
+          leader_name: string
+          member_count: number
+          name: string
+        }[]
+      }
+      list_crew_leaderboard: {
+        Args: { _crew_code: string }
+        Returns: {
+          display_name: string
+          hit_heavy: number
+          max_lean: number
+          petrol_head: number
+          ride_count: number
+          top_speed: number
+          total_distance: number
+        }[]
+      }
       lookup_convoy_by_code: {
         Args: { _code: string }
         Returns: {
           code: string
           created_at: string | null
+          crew_code: string | null
           destination_address: string | null
           destination_lat: number | null
           destination_lng: number | null
@@ -372,6 +455,7 @@ export type Database = {
           destination_set_at: string | null
           id: string
           is_active: boolean | null
+          is_listed: boolean
           is_paused: boolean
           leader_id: string | null
           name: string
