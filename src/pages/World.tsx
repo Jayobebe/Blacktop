@@ -7,30 +7,18 @@ import { feature } from 'topojson-client';
 import countriesTopo from 'world-atlas/countries-110m.json';
 import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { WorldGlobe, type WorldEventMarker } from '@/components/WorldGlobe';
+import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
 import { CollectedCardsFolder } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 
-const EVENT_KEY_ROW1 = [
-  { id: 'WF', label: 'Wildfire', color: '#fb923c' },
-  { id: 'VO', label: 'Volcano',  color: '#f87171' },
-  { id: 'FL', label: 'Flood',    color: '#60a5fa' },
-  { id: 'EQ', label: 'Quake',    color: '#c4b5fd' },
-  { id: 'DR', label: 'Drought',  color: '#fcd34d' },
-] as const;
-
-const EVENT_KEY_ROW2 = [
-  { id: 'SE', label: 'Storm',    color: '#93c5fd' },
-  { id: 'SW', label: 'Snow',     color: '#dbeafe' },
-] as const;
-
-interface EONETEvent {
-  id: string;
-  title: string;
-  categories: { id: string; title: string }[];
-  geometry: { date: string; type: string; coordinates: number[] }[];
-}
+// Crew hub landmarks dotted around the globe. Rotating the globe brings each
+// one into view; tapping the chip opens its page.
+const CREW_LANDMARKS: (WorldLandmark & { route: string })[] = [
+  { id: 'convoys', lat: 51.5, lng: -0.12, label: 'Crew Convoys', kind: 'convoys', route: '/crew/convoys' },
+  { id: 'leaderboard', lat: 35.68, lng: 139.69, label: 'Crew Leaderboards', kind: 'leaderboard', route: '/crew/leaderboard' },
+  { id: 'join', lat: 34.05, lng: -118.24, label: 'Join Crew', kind: 'join', route: '/crew/join' },
+];
 
 const countriesGeo = feature(
   countriesTopo as unknown as Parameters<typeof feature>[0],
@@ -45,13 +33,7 @@ export default function World() {
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
   const { enabled: demoEnabled, activeRiders: demoActiveRiders } = useDemoMode();
 
-  const { data: eonetData, isLoading: eonetLoading } = useQuery<{ events: EONETEvent[] }>({
-    queryKey: ['eonet-events'],
-    queryFn: () =>
-      fetch('https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=40&days=30').then((r) => r.json()),
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  });
+
 
   const { data: memberRows } = useQuery({
     queryKey: ['world-locations'],
