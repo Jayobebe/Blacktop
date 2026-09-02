@@ -7,7 +7,7 @@ import { closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
-import { fetchTrafficCameras, fetchCamerasOnRoute, camerasOnRoute, metersBetween, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
+import { fetchTrafficCameras, fetchCamerasOnRoute, metersBetween, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
