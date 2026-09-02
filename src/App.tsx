@@ -36,6 +36,9 @@ const BlacktopMapOverlay = lazy(() =>
 );
 
 import World from "./pages/World";
+import CrewConvoys from "./pages/CrewConvoys";
+import CrewLeaderboard from "./pages/CrewLeaderboard";
+import CrewJoin from "./pages/CrewJoin";
 import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
 import ArcadePetrolHead from "./pages/ArcadePetrolHead";
 
