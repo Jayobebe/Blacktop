@@ -34,6 +34,39 @@ export default function Lobby() {
   const { profile, user } = useProfile();
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const crew = useCrew();
+  const [isListed, setIsListed] = useState(false);
+
+  // Load current crew-listing state for this convoy
+  useEffect(() => {
+    if (!convoy.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('convoys')
+        .select('is_listed')
+        .eq('id', convoy.id)
+        .maybeSingle();
+      if (!cancelled && data) setIsListed(Boolean((data as any).is_listed));
+    })();
+    return () => { cancelled = true; };
+  }, [convoy.id]);
+
+  const toggleListed = async () => {
+    if (!convoy.id || !convoy.isLeader) return;
+    const next = !isListed;
+    setIsListed(next);
+    const { error } = await supabase
+      .from('convoys')
+      .update({ is_listed: next, crew_code: next ? crew.code : null } as any)
+      .eq('id', convoy.id);
+    if (error) {
+      setIsListed(!next);
+      toast.error('Could not update crew listing');
+      return;
+    }
+    toast.success(next ? `Listed in crew ${crew.code}` : 'Convoy locked');
+  };
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
