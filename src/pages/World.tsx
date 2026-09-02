@@ -7,30 +7,18 @@ import { feature } from 'topojson-client';
 import countriesTopo from 'world-atlas/countries-110m.json';
 import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { WorldGlobe, type WorldEventMarker } from '@/components/WorldGlobe';
+import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
 import { CollectedCardsFolder } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 
-const EVENT_KEY_ROW1 = [
-  { id: 'WF', label: 'Wildfire', color: '#fb923c' },
-  { id: 'VO', label: 'Volcano',  color: '#f87171' },
-  { id: 'FL', label: 'Flood',    color: '#60a5fa' },
-  { id: 'EQ', label: 'Quake',    color: '#c4b5fd' },
-  { id: 'DR', label: 'Drought',  color: '#fcd34d' },
-] as const;
-
-const EVENT_KEY_ROW2 = [
-  { id: 'SE', label: 'Storm',    color: '#93c5fd' },
-  { id: 'SW', label: 'Snow',     color: '#dbeafe' },
-] as const;
-
-interface EONETEvent {
-  id: string;
-  title: string;
-  categories: { id: string; title: string }[];
-  geometry: { date: string; type: string; coordinates: number[] }[];
-}
+// Crew hub landmarks dotted around the globe. Rotating the globe brings each
+// one into view; tapping the chip opens its page.
+const CREW_LANDMARKS: (WorldLandmark & { route: string })[] = [
+  { id: 'convoys', lat: 51.5, lng: -0.12, label: 'Crew Convoys', kind: 'convoys', route: '/crew/convoys' },
+  { id: 'leaderboard', lat: 35.68, lng: 139.69, label: 'Crew Leaderboards', kind: 'leaderboard', route: '/crew/leaderboard' },
+  { id: 'join', lat: 34.05, lng: -118.24, label: 'Join Crew', kind: 'join', route: '/crew/join' },
+];
 
 const countriesGeo = feature(
   countriesTopo as unknown as Parameters<typeof feature>[0],
@@ -45,13 +33,7 @@ export default function World() {
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
   const { enabled: demoEnabled, activeRiders: demoActiveRiders } = useDemoMode();
 
-  const { data: eonetData, isLoading: eonetLoading } = useQuery<{ events: EONETEvent[] }>({
-    queryKey: ['eonet-events'],
-    queryFn: () =>
-      fetch('https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=40&days=30').then((r) => r.json()),
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  });
+
 
   const { data: memberRows } = useQuery({
     queryKey: ['world-locations'],
@@ -93,14 +75,10 @@ export default function World() {
 
   const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
 
-  const markers: WorldEventMarker[] = (eonetData?.events ?? [])
-    .slice(0, 25)
-    .flatMap((event) => {
-      const geo = event.geometry[event.geometry.length - 1];
-      if (!geo?.coordinates || geo.type !== 'Point') return [];
-      const [lng, lat] = geo.coordinates;
-      return [{ lat, lng, categoryId: event.categories[0]?.id ?? 'MN' }];
-    });
+  const openLandmark = (id: string) => {
+    const target = CREW_LANDMARKS.find((l) => l.id === id);
+    if (target) navigate(target.route);
+  };
 
   return (
     <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
@@ -119,25 +97,9 @@ export default function World() {
           <h1 className="text-lg font-bold tracking-[0.22em] text-white uppercase">
             Blacktop World
           </h1>
-          {/* Event key — inline below heading */}
-          <div className="flex flex-col items-center gap-1 mt-2.5 px-2.5 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]">
-            <div className="flex items-center gap-3">
-              {EVENT_KEY_ROW1.map(({ id, label, color }) => (
-                <div key={id} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}99` }} />
-                  <span className="text-[9px] tracking-[0.12em] uppercase text-white/55">{label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-3">
-              {EVENT_KEY_ROW2.map(({ id, label, color }) => (
-                <div key={id} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}99` }} />
-                  <span className="text-[9px] tracking-[0.12em] uppercase text-white/55">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="text-[9px] tracking-[0.2em] uppercase text-white/40 mt-1">
+            spin the globe · tap a landmark
+          </p>
         </div>
       </header>
 
@@ -145,11 +107,13 @@ export default function World() {
       <div className="relative w-full h-[70vh] flex-shrink-0">
         <WorldGlobe
           accentColor={accentColor}
-          events={markers}
+          landmarks={CREW_LANDMARKS}
+          onLandmarkSelect={openLandmark}
           countryLights={demoEnabled ? DEMO_COUNTRY_LIGHTS : countryLights}
           onScaleChange={setGlobeScale}
           className="w-full h-full"
         />
+
         {/* Rider count — fades when globe is zoomed in */}
         <div
           className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none transition-opacity duration-500"
@@ -182,13 +146,6 @@ export default function World() {
       <div className="flex-shrink-0">
         <ArcadeLobby />
       </div>
-
-      {eonetLoading && (
-        <p className="flex-shrink-0 text-center text-[9px] text-muted-foreground/30 tracking-widest uppercase pb-3 animate-pulse">
-          loading events…
-        </p>
-
-      )}
     </div>
   );
 }
