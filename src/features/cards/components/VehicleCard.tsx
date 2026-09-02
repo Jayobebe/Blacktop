@@ -106,20 +106,6 @@ export function VehicleCard({ card }: Props) {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                {!isExporting && (
-                  <button
-                    type="button"
-                    data-export-hide
-                    onClick={handleDownload}
-                    aria-label="Download card as image"
-                    className={cn(
-                      'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
-                      style.chip,
-                    )}
-                  >
-                    <Download className="w-3 h-3" />
-                  </button>
-                )}
                 {!locked && qrPayload && (
                   <button
                     type="button"
@@ -146,14 +132,18 @@ export function VehicleCard({ card }: Props) {
               </div>
             </div>
 
-            {/* Hero photo */}
-            <div className="relative rounded-xl overflow-hidden bg-black/30 aspect-[4/3] border border-white/10">
+            {/* Hero photo — sits inside Mecha-Nick's garage */}
+            <div
+              className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 bg-cover bg-center"
+              style={{ backgroundImage: `url(${garageShopAsset.url})` }}
+            >
+              <div className="absolute inset-0 bg-black/20" />
               {card.bike.photos.hero ? (
                 <img
                   src={card.bike.photos.hero}
                   alt={card.bike.name}
                   className={cn(
-                    'w-full h-full object-contain scale-125',
+                    'relative w-full h-full object-contain p-1.5 drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
                     locked && 'opacity-40 grayscale',
                   )}
                   style={{ imageRendering: 'pixelated' }}
