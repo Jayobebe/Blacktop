@@ -481,6 +481,22 @@ export default function Lobby() {
           >
             <QrCode className="w-6 h-6 text-muted-foreground" />
           </button>
+          {/* Crew listing lock — unlocked lobbies appear in Crew Convoys */}
+          {convoy.isLeader && (
+            <button
+              onClick={toggleListed}
+              className={cn(
+                'p-2 rounded-xl border transition-colors',
+                isListed
+                  ? 'bg-accent/10 border-accent/60 text-accent'
+                  : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary',
+              )}
+              title={isListed ? 'Listed in Crew Convoys — tap to lock' : 'Locked — tap to list in Crew Convoys'}
+              aria-label={isListed ? 'Lock convoy from crew list' : 'Unlock convoy to crew list'}
+            >
+              {isListed ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+            </button>
+          )}
         </div>
         
         {/* Voice Toggle + Audio Device Picker */}
