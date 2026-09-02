@@ -819,14 +819,8 @@ export default function ActiveRide() {
           </div>
         </div>
 
-        {/* Speed and Stats */}
-        <div className={cn(
-          "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
-          // Raise the speed/lean cluster slightly in landscape so it clears the End Ride button
-          "landscape:-translate-y-2",
-          // In landscape, don't let it grow beyond content when centered
-          (!rideState.isConvoyMode || !showMembers) && "landscape:flex-none"
-        )}>
+        {/* Speed and Stats - centre column in landscape (auto width, centred by equal flanks) */}
+        <div className="flex-1 landscape:flex-none flex flex-col items-center justify-center animate-fade-in min-w-0 landscape:-translate-y-2">
           {/* Header - compact */}
           <div className="flex items-center gap-2 mb-2 landscape:mb-1 md:mb-4">
             {rideState.isConvoyMode && (
