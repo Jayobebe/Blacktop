@@ -16,6 +16,7 @@ import { VehicleCardData } from '../hooks/useVehicleCards';
 import { encodeCard } from '../lib/cardCodec';
 import { uploadCardPhoto } from '../lib/cardPhoto';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
 interface Props {
   card: VehicleCardData;
@@ -138,17 +139,27 @@ export function VehicleCard({ card }: Props) {
               style={{ backgroundImage: `url(${garageShopAsset.url})` }}
             >
               <div className="absolute inset-0 bg-black/20" />
-              {card.bike.photos.hero ? (
-                <img
-                  src={card.bike.photos.hero}
-                  alt={card.bike.name}
-                  className={cn(
-                    'relative w-full h-full object-contain p-1.5 drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
-                    locked && 'opacity-40 grayscale',
-                  )}
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              ) : (
+              {card.bike.photos.hero ? (() => {
+                const placement = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
+                return (
+                  <img
+                    src={card.bike.photos.hero}
+                    alt={card.bike.name}
+                    className={cn(
+                      'absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
+                      locked && 'opacity-40 grayscale',
+                    )}
+                    style={{
+                      left: `${placement.xPct}%`,
+                      bottom: `${placement.yPct}%`,
+                      height: `${placement.scalePct}%`,
+                      maxWidth: '90%',
+                      transform: 'translateX(-50%)',
+                      imageRendering: 'pixelated',
+                    }}
+                  />
+                );
+              })() : (
                 <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
                   No photo
                 </div>
