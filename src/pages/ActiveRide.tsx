@@ -719,6 +719,39 @@ export default function ActiveRide() {
     ? [...convoy.members].sort((a, b) => (b.topSpeed || 0) - (a.topSpeed || 0))
     : convoy.members;
 
+  const endRideButton = (
+    <div className="flex justify-center">
+      {!showEndConfirm ? (
+        <Button
+          onClick={() => setShowEndConfirm(true)}
+          variant="outline"
+          size="sm"
+          className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <Square className="w-3.5 h-3.5 mr-1.5" />
+          {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY' : 'END RIDE'}
+        </Button>
+      ) : (
+        <div className="flex gap-2">
+          <Button
+            onClick={handleEndRide}
+            size="sm"
+            className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+          >
+            END RIDE
+          </Button>
+          <Button
+            onClick={() => setShowEndConfirm(false)}
+            variant="ghost"
+            size="sm"
+            className="h-9 md:h-10"
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="h-dvh max-h-dvh overflow-y-auto flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300">
@@ -762,10 +795,50 @@ export default function ActiveRide() {
 
       {/* Main content area - vertical in portrait, horizontal in landscape */}
       <div className={cn(
-        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-y-auto",
+        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center landscape:justify-center",
         // Center content in landscape when solo or when convoy members panel is collapsed
         (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
       )}>
+        {/* Landscape Left: Big Stats List */}
+        <div className="hidden landscape:flex flex-col justify-center items-start gap-5 w-[18%] min-w-[110px]">
+          <div className="text-left">
+            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
+            <p className="font-mono text-3xl lg:text-4xl font-bold truncate">
+              {formatDistance(rideState.distance, settings.distanceUnit)}
+              <span className="text-base text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
+            </p>
+          </div>
+          <div className="text-left">
+            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
+            <p className="font-mono text-3xl lg:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
+          </div>
+          <div className="text-left">
+            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
+            <p className="font-mono text-3xl lg:text-4xl font-bold truncate">
+              {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
+              <span className="text-base text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Landscape: Lean Angle between stats and speed */}
+        {settings.leanAngleEnabled && (
+          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[90px]">
+            <LeanAngleBar 
+              currentLean={leanAngle.currentLean}
+              maxLean={leanAngle.maxLean}
+              threshold={settings.leanAngleThreshold}
+              onReset={() => {
+                leanAngle.calibrate();
+                toast.success('Lean sensor zeroed', { duration: 1500 });
+              }}
+            />
+            {leanAngle.isCalibrated && (
+              <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+            )}
+          </div>
+        )}
+
         {/* Speed and Stats */}
         <div className={cn(
           "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
@@ -802,60 +875,74 @@ export default function ActiveRide() {
             </div>
             <p className="text-muted-foreground text-base landscape:text-sm -mt-3">{getSpeedLabel(settings.speedUnit)}</p>
             
-            {/* Lean Angle Bar + G-Force Gauge - stacked in portrait, side-by-side in landscape to save vertical space */}
-            {(settings.leanAngleEnabled || (settings.gForceEnabled && gForce.isSupported)) && (
-              <div className="mt-2 landscape:mt-1 flex flex-col landscape:flex-row landscape:items-center landscape:justify-center landscape:gap-6">
-                {settings.leanAngleEnabled && (
-                  <div>
-                    <LeanAngleBar 
-                      currentLean={leanAngle.currentLean}
-                      maxLean={leanAngle.maxLean}
-                      threshold={settings.leanAngleThreshold}
-                      onReset={() => {
-                        leanAngle.calibrate();
-                        toast.success('Lean sensor zeroed', { duration: 1500 });
-                      }}
-                    />
-                    {leanAngle.isCalibrated && (
-                      <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
-                    )}
-                  </div>
-                )}
+            {/* Lean Angle Bar + G-Force Gauge - portrait only */}
+            <div className="landscape:hidden">
+              {(settings.leanAngleEnabled || (settings.gForceEnabled && gForce.isSupported)) && (
+                <div className="mt-2 flex flex-col">
+                  {settings.leanAngleEnabled && (
+                    <div>
+                      <LeanAngleBar 
+                        currentLean={leanAngle.currentLean}
+                        maxLean={leanAngle.maxLean}
+                        threshold={settings.leanAngleThreshold}
+                        onReset={() => {
+                          leanAngle.calibrate();
+                          toast.success('Lean sensor zeroed', { duration: 1500 });
+                        }}
+                      />
+                      {leanAngle.isCalibrated && (
+                        <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+                      )}
+                    </div>
+                  )}
 
-                {settings.gForceEnabled && gForce.isSupported && (
-                  <div className="mt-2 landscape:mt-0 flex justify-center">
-                    <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
-                  </div>
-                )}
-              </div>
-            )}
+                  {settings.gForceEnabled && gForce.isSupported && (
+                    <div className="mt-2 flex justify-center">
+                      <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Stats Row - larger and more visible */}
-          <div className="flex gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
+          {/* Stats Row - portrait only */}
+          <div className="flex landscape:hidden gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 md:mt-5">
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
-              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg landscape:text-xl md:text-4xl font-bold truncate">
+              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
-              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg landscape:text-xl md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
+              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
-              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg landscape:text-xl md:text-4xl font-bold truncate">
+              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
                 {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
               </p>
+            </div>
+          </div>
+
+          {/* End Ride Button - landscape only, below live speed */}
+          <div className="hidden landscape:flex mt-3 justify-center animate-slide-up">
+            {endRideButton}
           </div>
         </div>
-        </div>
+
+        {/* Landscape: G-Force between speed and buttons */}
+        {settings.gForceEnabled && gForce.isSupported && (
+          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[90px]">
+            <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+          </div>
+        )}
 
         {/* Controls - row in portrait, column in landscape */}
-        <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-2 px-2">
+        <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-3 px-2 landscape:w-[18%] landscape:min-w-[110px]">
           {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
@@ -864,7 +951,7 @@ export default function ActiveRide() {
               toast.info(nextPaused ? 'Ride paused' : 'Ride resumed');
             }}
             className={cn(
-              "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full flex items-center justify-center transition-all touch-target",
+              "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full flex items-center justify-center transition-all touch-target",
               rideState.isPaused
                 ? "bg-accent/20 text-accent"
                 : "bg-secondary hover:bg-muted text-muted-foreground"
@@ -872,9 +959,9 @@ export default function ActiveRide() {
             title={rideState.isPaused ? "Resume ride" : "Pause ride"}
           >
             {rideState.isPaused ? (
-              <Play className="w-6 h-6 landscape:w-5 landscape:h-5" />
+              <Play className="w-6 h-6 landscape:w-7 landscape:h-7" />
             ) : (
-              <Pause className="w-6 h-6 landscape:w-5 landscape:h-5" />
+              <Pause className="w-6 h-6 landscape:w-7 landscape:h-7" />
             )}
           </button>
 
@@ -887,14 +974,14 @@ export default function ActiveRide() {
             <button
               onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
               className={cn(
-                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full flex items-center justify-center transition-all touch-target",
+                "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full flex items-center justify-center transition-all touch-target",
                 hasPendingRescue 
                   ? "bg-warning/20 text-warning animate-pulse" 
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
               title={hasPendingRescue ? "Cancel rescue request" : "Request rescue"}
             >
-              <AlertTriangle className="w-6 h-6 landscape:w-5 landscape:h-5" />
+              <AlertTriangle className="w-6 h-6 landscape:w-7 landscape:h-7" />
             </button>
           )}
           {!rideState.isConvoyMode && discordEnabled && (
@@ -933,14 +1020,14 @@ export default function ActiveRide() {
               }}
               disabled={soloRescueSending || soloRescueSent}
               className={cn(
-                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full flex items-center justify-center transition-all touch-target disabled:opacity-60",
+                "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full flex items-center justify-center transition-all touch-target disabled:opacity-60",
                 soloRescueSent
                   ? "bg-warning/20 text-warning animate-pulse"
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
               title={soloRescueSent ? 'Rescue ping sent' : soloRescueSending ? 'Sending…' : 'Send rescue ping to Discord'}
             >
-              <AlertTriangle className="w-6 h-6 landscape:w-5 landscape:h-5" />
+              <AlertTriangle className="w-6 h-6 landscape:w-7 landscape:h-7" />
             </button>
           )}
 
@@ -967,10 +1054,10 @@ export default function ActiveRide() {
               }
             }}
 
-            className="h-12 w-12 landscape:h-10 landscape:w-10 rounded-full bg-secondary hover:bg-muted touch-target"
+            className="h-12 w-12 landscape:h-14 landscape:w-14 rounded-full bg-secondary hover:bg-muted touch-target"
             title="Open map with route"
           >
-            <Navigation className="w-6 h-6 landscape:w-5 landscape:h-5" />
+            <Navigation className="w-6 h-6 landscape:w-7 landscape:h-7" />
           </Button>
 
           {/* Voice Controls (Convoy Mode) */}
@@ -1000,7 +1087,7 @@ export default function ActiveRide() {
                   }
                 }}
                 className={cn(
-                  "w-10 h-10 landscape:w-9 landscape:h-9 rounded-full flex items-center justify-center transition-all touch-target",
+                  "w-10 h-10 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
                   isConnected
                     ? "bg-destructive/20 hover:bg-destructive/30 text-destructive"
                     : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
@@ -1008,9 +1095,9 @@ export default function ActiveRide() {
                 title={isConnected ? "Leave voice channel (saves battery)" : "Join voice channel"}
               >
                 {isConnected ? (
-                  <PhoneOff className="w-4 h-4" />
+                  <PhoneOff className="w-4 h-4 landscape:w-6 landscape:h-6" />
                 ) : (
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-4 h-4 landscape:w-6 landscape:h-6" />
                 )}
               </button>
 
@@ -1025,16 +1112,16 @@ export default function ActiveRide() {
                     toggleMute();
                   }}
                   className={cn(
-                    "w-16 h-16 landscape:w-14 landscape:h-14 rounded-full flex items-center justify-center transition-all touch-target",
+                    "w-16 h-16 landscape:w-16 landscape:h-16 rounded-full flex items-center justify-center transition-all touch-target",
                     !isMuted
                       ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
                       : "bg-ptt-inactive hover:bg-muted"
                   )}
                 >
                   {isMuted ? (
-                    <MicOff className="w-7 h-7 landscape:w-6 landscape:h-6 text-foreground" />
+                    <MicOff className="w-7 h-7 landscape:w-8 landscape:h-8 text-foreground" />
                   ) : (
-                    <Mic className="w-7 h-7 landscape:w-6 landscape:h-6 text-background" />
+                    <Mic className="w-7 h-7 landscape:w-8 landscape:h-8 text-background" />
                   )}
                 </button>
               )}
@@ -1047,11 +1134,11 @@ export default function ActiveRide() {
               variant="ghost"
               onClick={() => setShowMembers(!showMembers)}
               className={cn(
-                "h-12 w-12 landscape:h-10 landscape:w-10 rounded-full touch-target",
+                "h-12 w-12 landscape:h-14 landscape:w-14 rounded-full touch-target",
                 showMembers ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
               )}
             >
-              <Users className="w-6 h-6 landscape:w-5 landscape:h-5" />
+              <Users className="w-6 h-6 landscape:w-7 landscape:h-7" />
             </Button>
           )}
         </div>
@@ -1135,37 +1222,9 @@ export default function ActiveRide() {
 
 
 
-      {/* End Ride Button - always at bottom, compact */}
-      <div className="mt-2 md:mt-3 flex justify-center animate-slide-up">
-        {!showEndConfirm ? (
-          <Button
-            onClick={() => setShowEndConfirm(true)}
-            variant="outline"
-            size="sm"
-            className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            <Square className="w-3.5 h-3.5 mr-1.5" />
-            {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY' : 'END RIDE'}
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button
-              onClick={handleEndRide}
-              size="sm"
-              className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            >
-              END RIDE
-            </Button>
-            <Button
-              onClick={() => setShowEndConfirm(false)}
-              variant="ghost"
-              size="sm"
-              className="h-9 md:h-10"
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
+      {/* End Ride Button - portrait only, landscape version sits below live speed */}
+      <div className="mt-2 md:mt-3 flex justify-center animate-slide-up landscape:hidden">
+        {endRideButton}
       </div>
 
 
