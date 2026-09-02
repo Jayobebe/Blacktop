@@ -7,6 +7,7 @@ import { closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
 import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
+import { fetchTrafficCameras, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
@@ -537,6 +538,99 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       markers.clear();
     };
   }, []);
+
+  // ── Traffic cameras (OSM: speed cameras + ANPR/surveillance poles) ───────
+  const cameraMarkersRef = useRef<Marker[]>([]);
+  const [cameras, setCameras] = useState<TrafficCamera[]>([]);
+
+  // Refetch the camera layer when the viewport settles; hidden below z13 and
+  // when the setting is off (no queries fire in either case).
+  useEffect(() => {
+    if (!map) return;
+    if (!settings.trafficCamerasEnabled) {
+      setCameras([]);
+      return;
+    }
+
+    let cancelled = false;
+    let debounce: number | null = null;
+
+    const refresh = () => {
+      const bounds = map.getBounds();
+      const zoom = map.getZoom();
+      if (zoom < CAMERA_MIN_ZOOM) {
+        setCameras((prev) => (prev.length === 0 ? prev : []));
+        return;
+      }
+      void fetchTrafficCameras(
+        {
+          west: bounds.getWest(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          north: bounds.getNorth(),
+        },
+        zoom,
+      ).then((data) => {
+        if (!cancelled) setCameras(data);
+      });
+    };
+
+    const scheduleRefresh = () => {
+      if (debounce != null) window.clearTimeout(debounce);
+      debounce = window.setTimeout(refresh, 800);
+    };
+
+    refresh();
+    map.on('moveend', scheduleRefresh);
+    return () => {
+      cancelled = true;
+      if (debounce != null) window.clearTimeout(debounce);
+      map.off('moveend', scheduleRefresh);
+    };
+  }, [map, settings.trafficCamerasEnabled]);
+
+  // Render camera markers. Cheap div dots, rebuilt when the set changes.
+  useEffect(() => {
+    if (!map) return;
+
+    cameraMarkersRef.current.forEach((m) => m.remove());
+    cameraMarkersRef.current = [];
+
+    cameras.forEach((cam) => {
+      const el = document.createElement('div');
+      el.style.width = '14px';
+      el.style.height = '14px';
+      el.style.borderRadius = '50%';
+      el.style.border = '2px solid rgba(0,0,0,0.6)';
+      el.style.boxShadow = '0 0 6px rgba(0,0,0,0.5)';
+      el.style.backgroundColor =
+        cam.type === 'speed'
+          ? 'hsl(var(--warning))'
+          : cam.type === 'alpr'
+            ? 'hsl(var(--destructive))'
+            : 'hsl(var(--muted-foreground))';
+      el.title =
+        cam.type === 'speed'
+          ? `Speed camera${cam.maxspeed ? ` (${cam.maxspeed})` : ''}`
+          : cam.type === 'alpr'
+            ? 'ANPR camera'
+            : 'Traffic surveillance';
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([cam.lng, cam.lat])
+        .addTo(map);
+      cameraMarkersRef.current.push(marker);
+    });
+  }, [map, cameras]);
+
+  useEffect(() => {
+    const markers = cameraMarkersRef.current;
+    return () => {
+      markers.forEach((m) => m.remove());
+      markers.length = 0;
+    };
+  }, []);
+
 
   // GPS fixes arrive ~1 Hz; throttle to at most once every 5s to avoid
   // hammering OSRM on every fix while still keeping the route reasonably fresh.
