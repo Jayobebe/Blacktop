@@ -800,31 +800,32 @@ export default function ActiveRide() {
         (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
       )}>
         {/* Landscape Left: Big Stats List */}
-        <div className="hidden landscape:flex flex-col justify-center items-start gap-5 w-[18%] min-w-[110px]">
+        <div className="hidden landscape:flex flex-col justify-center items-start gap-7 w-[18%] min-w-[130px]">
           <div className="text-left">
-            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
-            <p className="font-mono text-3xl lg:text-4xl font-bold truncate">
+            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Distance</p>
+            <p className="font-mono text-4xl lg:text-5xl font-bold truncate">
               {formatDistance(rideState.distance, settings.distanceUnit)}
-              <span className="text-base text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
+              <span className="text-lg text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
             </p>
           </div>
           <div className="text-left">
-            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
-            <p className="font-mono text-3xl lg:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
+            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Time</p>
+            <p className="font-mono text-4xl lg:text-5xl font-bold truncate">{formatDuration(rideState.duration)}</p>
           </div>
           <div className="text-left">
-            <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
-            <p className="font-mono text-3xl lg:text-4xl font-bold truncate">
+            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Max</p>
+            <p className="font-mono text-4xl lg:text-5xl font-bold truncate">
               {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
-              <span className="text-base text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
+              <span className="text-lg text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
             </p>
           </div>
         </div>
 
         {/* Landscape: Lean Angle between stats and speed */}
         {settings.leanAngleEnabled && (
-          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[90px]">
-            <LeanAngleBar 
+          <div className="hidden landscape:flex flex-col items-center justify-center w-[16%] min-w-[160px]">
+            <LeanAngleBar
+              vertical
               currentLean={leanAngle.currentLean}
               maxLean={leanAngle.maxLean}
               threshold={settings.leanAngleThreshold}
@@ -936,13 +937,13 @@ export default function ActiveRide() {
 
         {/* Landscape: G-Force between speed and buttons */}
         {settings.gForceEnabled && gForce.isSupported && (
-          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[90px]">
+          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[110px]">
             <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
           </div>
         )}
 
         {/* Controls - row in portrait, column in landscape */}
-        <div className="flex landscape:flex-col items-center justify-center gap-3 landscape:gap-3 px-2 landscape:w-[18%] landscape:min-w-[110px]">
+        <div className="flex landscape:flex-col items-center justify-center gap-4 landscape:gap-4 px-2 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
           {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
