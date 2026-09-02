@@ -283,5 +283,5 @@ export function useRadarOverlay(
       map.off('moveend', handleMoveEnd);
       clearFrames();
     };
-  }, [map]);
+  }, [map, enabled]);
 }
