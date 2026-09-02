@@ -795,7 +795,7 @@ export default function ActiveRide() {
 
       {/* Main content area - vertical in portrait, horizontal in landscape */}
       <div className={cn(
-        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center landscape:justify-center",
+        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center landscape:justify-center",
         // Center content in landscape when solo or when convoy members panel is collapsed
         (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
       )}>
