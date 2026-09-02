@@ -920,13 +920,15 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
       >
         <div className="overflow-hidden">
           <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-            A live, anonymous globe showing where riders are active around the
-            planet, plus public weather, wildfire, volcano, and flood events
-            pulled from open data feeds. Nothing personal is shown — just
-            country-level rider activity as a soft glow. When opted in, you can
-            also <span className="text-foreground font-medium">long-press the
-            spinning globe</span> on the home screen to launch it.
+            The crew hub — a spinning globe with landmarks for{' '}
+            <span className="text-foreground font-medium">crew convoys</span>,{' '}
+            <span className="text-foreground font-medium">crew leaderboards</span>,{' '}
+            <span className="text-foreground font-medium">crew QR joining</span>, your card
+            collection and the arcade, with an anonymous country-level glow showing where riders
+            are active. When opted in, you can also <span className="text-foreground font-medium">long-press
+            the spinning globe</span> on the home screen to launch it.
           </p>
+
           <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
             Opting in also unlocks the <span className="text-foreground font-medium">card
             collection folder</span> inside Blacktop World and the{' '}
