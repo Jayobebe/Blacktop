@@ -86,13 +86,14 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Blacktop World (opt-in)</h2>
           <p className="text-muted-foreground">
-            Blacktop World is the social hub of the app — a global live map where you can see the
-            riding community in motion, collect and trade custom vehicle cards with other riders,
-            and track real-world events that may affect your routes. It is{' '}
+            Blacktop World is the crew hub of the app — a spinning globe with landmarks for crew
+            convoys, crew leaderboards, crew QR joining, your card collection and the arcade,
+            plus an anonymous glow showing where riders are active. It is{' '}
             <span className="text-foreground">off by default</span>, fully voluntary, and can be
             toggled on or off at any time in Settings. No features outside of Blacktop World
             require it.
           </p>
+
           <p className="text-muted-foreground">
             <span className="text-foreground">What gets shared when you enable it and start a ride:</span> your
             precise GPS coordinates and a timestamp are written to our server every 30 seconds
