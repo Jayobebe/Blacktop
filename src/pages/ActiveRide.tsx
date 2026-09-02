@@ -931,8 +931,8 @@ export default function ActiveRide() {
             </div>
           </div>
 
-          {/* End Ride Button - landscape only, below live speed */}
-          <div className="hidden landscape:flex mt-3 justify-center animate-slide-up">
+          {/* End Ride Button - landscape only, pushed lower below the speed/lean cluster */}
+          <div className="hidden landscape:flex mt-8 justify-center animate-slide-up">
             {endRideButton}
           </div>
         </div>
