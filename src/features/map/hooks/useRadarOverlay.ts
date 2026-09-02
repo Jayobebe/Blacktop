@@ -86,7 +86,7 @@ export function useRadarOverlay(
   currentSpeedRef.current = currentSpeedMph;
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !enabled) return;
 
     let cancelled = false;
     let refreshTimer: ReturnType<typeof setInterval> | null = null;
