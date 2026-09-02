@@ -49,6 +49,15 @@ type RouteBody = {
   coordinates: [number, number][];
 };
 
+type CamerasBody = {
+  kind: "cameras";
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+  zoom?: number;
+};
+
 function isLngLat(c: unknown): c is [number, number] {
   return (
     Array.isArray(c) &&
@@ -171,7 +180,79 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody;
+
+    if (body.kind === "cameras") {
+      const { west, south, east, north } = body;
+      const zoom = typeof body.zoom === "number" ? body.zoom : 0;
+      const valid =
+        [west, south, east, north].every((n) => typeof n === "number" && Number.isFinite(n)) &&
+        south >= -90 && north <= 90 && south < north &&
+        west >= -180 && east <= 180 && west < east;
+
+      if (!valid) {
+        return new Response(JSON.stringify({ error: "Invalid bbox" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      // Guard against continent-sized queries: below z13 (or a bbox bigger than
+      // ~0.5 degrees a side) Overpass would return tens of thousands of nodes.
+      if (zoom < 13 || north - south > 0.5 || east - west > 0.5) {
+        return new Response(JSON.stringify([]), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      const bbox = `${south},${west},${north},${east}`;
+      const query = `
+        [out:json][timeout:8];
+        (
+          node["highway"="speed_camera"](${bbox});
+          node["man_made"="surveillance"]["surveillance:type"~"ALPR|alpr|anpr|ANPR",i](${bbox});
+          node["man_made"="surveillance"]["surveillance:zone"="traffic"](${bbox});
+        );
+        out body 500;
+      `;
+
+      let data: any;
+      try {
+        data = await fetchOverpass(query);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Camera lookup unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify([]), {
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "overpass_unavailable" },
+          status: 200,
+        });
+      }
+
+      const elements = Array.isArray(data?.elements) ? data.elements : [];
+      const cameras = elements
+        .filter((el: any) => typeof el?.lat === "number" && typeof el?.lon === "number")
+        .map((el: any) => {
+          const tags = el.tags ?? {};
+          const surveillanceType = String(tags["surveillance:type"] ?? "").toLowerCase();
+          const isAlpr = surveillanceType.includes("alpr") || surveillanceType.includes("anpr");
+          const type = tags.highway === "speed_camera" ? "speed" : isAlpr ? "alpr" : "surveillance";
+          return {
+            id: String(el.id),
+            lat: el.lat,
+            lng: el.lon,
+            type,
+            direction: tags.direction ?? null,
+            maxspeed: tags.maxspeed ?? null,
+          };
+        })
+        .slice(0, 500);
+
+      return new Response(JSON.stringify(cameras), {
+        headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+        status: 200,
+      });
+    }
+
 
     if (body.kind === "route") {
       const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
