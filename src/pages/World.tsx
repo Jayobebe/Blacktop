@@ -14,10 +14,11 @@ import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 
 // Crew hub landmarks dotted around the globe. Rotating the globe brings each
 // one into view; tapping the chip opens its page.
-const CREW_LANDMARKS: (WorldLandmark & { route: string })[] = [
+const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'convoys', lat: 51.5, lng: -0.12, label: 'Crew Convoys', kind: 'convoys', route: '/crew/convoys' },
   { id: 'leaderboard', lat: 35.68, lng: 139.69, label: 'Crew Leaderboards', kind: 'leaderboard', route: '/crew/leaderboard' },
   { id: 'join', lat: 34.05, lng: -118.24, label: 'Join Crew', kind: 'join', route: '/crew/join' },
+  { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
 ];
 
 const countriesGeo = feature(
