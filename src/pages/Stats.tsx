@@ -158,11 +158,11 @@ export default function Stats() {
                   <div className="p-2.5 bg-secondary/50 rounded-xl flex-shrink-0">
                     <stat.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
                   </div>
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                       {stat.label}
                     </p>
-                    <p className="font-mono text-xl landscape:text-lg font-bold truncate">
+                    <p className="font-mono text-xl landscape:text-lg font-bold break-words">
                       {stat.value}
                       {stat.unit && (
                         <span className="text-xs text-muted-foreground ml-1 font-normal">{stat.unit}</span>
