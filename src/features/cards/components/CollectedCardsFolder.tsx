@@ -28,6 +28,24 @@ export function CollectedCardsFolder() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Repair cards saved by older builds where the payload had a photo path but
+  // the first download was interrupted. The cached local image is filled in
+  // automatically when the vault is opened again.
+  useEffect(() => {
+    let cancelled = false;
+    const hydrateMissingPhotos = async () => {
+      for (const card of collected) {
+        if (cancelled || card.img || !card.p) continue;
+        const img = await fetchCardPhoto(card.p);
+        if (!cancelled && img) rescanCard(card.key, card, img);
+      }
+    };
+    void hydrateMissingPhotos();
+    return () => {
+      cancelled = true;
+    };
+  }, [collected, rescanCard]);
+
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;

@@ -22,9 +22,12 @@ function blobToDataUrl(blob: Blob): Promise<string> {
  */
 export async function uploadCardPhoto(uid: string, heroDataUrl: string): Promise<string | null> {
   try {
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) return null;
-    const path = `${auth.user.id}/${uid}.png`;
+    // getUser can briefly return null while the persisted anonymous session is
+    // hydrating on app launch. getSession reads that local session directly.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user ?? (await supabase.auth.getUser()).data.user;
+    if (!user) return null;
+    const path = `${user.id}/${uid}.png`;
     const blob = await dataUrlToBlob(heroDataUrl);
     const { error } = await supabase.storage
       .from(BUCKET)
@@ -44,9 +47,13 @@ export async function uploadCardPhoto(uid: string, heroDataUrl: string): Promise
 export async function fetchCardPhoto(path: string): Promise<string | null> {
   try {
     const { data, error } = await supabase.storage.from(BUCKET).download(path);
-    if (error || !data) return null;
+    if (error || !data) {
+      if (error) console.error('[cardPhoto] download failed', error);
+      return null;
+    }
     return await blobToDataUrl(data);
-  } catch {
+  } catch (err) {
+    console.error('[cardPhoto] download error', err);
     return null;
   }
 }
