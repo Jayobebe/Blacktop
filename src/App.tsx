@@ -80,6 +80,9 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       
       <Route path="/world" element={<World />} />
+      <Route path="/crew/convoys" element={<CrewConvoys />} />
+      <Route path="/crew/leaderboard" element={<CrewLeaderboard />} />
+      <Route path="/crew/join" element={<CrewJoin />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
       <Route path="/stats" element={<Stats />} />
