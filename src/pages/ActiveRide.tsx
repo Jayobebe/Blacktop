@@ -721,7 +721,7 @@ export default function ActiveRide() {
 
 
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300">
+    <div className="h-dvh max-h-dvh overflow-y-auto flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300">
       {/* Rescue Alerts (Leader only) */}
       {convoy.isLeader && (
         <RescueAlert
@@ -793,7 +793,7 @@ export default function ActiveRide() {
           <div className="text-center">
             <div className={cn(
               "font-mono font-black transition-all leading-none",
-              "text-[7rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem]",
+              "text-[7rem] [@media(max-height:820px)]:text-[5rem] [@media(max-height:700px)]:text-[4rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem] landscape:[@media(max-height:500px)]:text-[4rem]",
               rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
               rideState.currentSpeed >= settings.amberSpeedThreshold &&
               rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
@@ -829,21 +829,21 @@ export default function ActiveRide() {
           </div>
 
           {/* Stats Row - larger and more visible */}
-          <div className="flex gap-8 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
+          <div className="flex gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 landscape:mt-2 md:mt-5">
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
-              <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">
+              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg landscape:text-xl md:text-4xl font-bold truncate">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
-              <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
+              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg landscape:text-xl md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
-              <p className="font-mono text-2xl landscape:text-xl md:text-4xl font-bold truncate">
+              <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg landscape:text-xl md:text-4xl font-bold truncate">
                 {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
               </p>
