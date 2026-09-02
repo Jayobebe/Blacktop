@@ -890,6 +890,25 @@ export default function ActiveRide() {
             </div>
           </div>
 
+          {/* Lean Angle Bar - landscape only, centred below live speed */}
+          {settings.leanAngleEnabled && (
+            <div className="hidden landscape:flex flex-col items-center mt-1 scale-125 origin-top">
+              <LeanAngleBar
+                vertical
+                currentLean={leanAngle.currentLean}
+                maxLean={leanAngle.maxLean}
+                threshold={settings.leanAngleThreshold}
+                onReset={() => {
+                  leanAngle.calibrate();
+                  toast.success('Lean sensor zeroed', { duration: 1500 });
+                }}
+              />
+              {leanAngle.isCalibrated && (
+                <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+              )}
+            </div>
+          )}
+
           {/* Stats Row - portrait only */}
           <div className="flex landscape:hidden gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 md:mt-5">
             <div className="text-center min-w-0">
