@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { HomeGlobe } from '@/components/HomeGlobe';
-import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
+import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap, clearMapDestination } from '@/features/map';
 
@@ -276,10 +276,10 @@ export default function Home() {
         {/* Quick Stats */}
         <div className="grid grid-cols-4 landscape:grid-cols-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start">
           {[
-            { label: 'Rides', value: stats.totalRides, unit: null },
-            { label: 'Distance', value: formatDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
+            { label: 'Rides', value: formatCompactCount(stats.totalRides), unit: null },
+            { label: 'Distance', value: formatCompactDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
             { label: 'Top Speed', value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) },
-            { label: 'Time', value: formatDuration(stats.totalDuration), unit: null },
+            { label: 'Time', value: formatCompactDuration(stats.totalDuration), unit: null },
           ].map((stat, i) => (
             <div 
               key={stat.label}
