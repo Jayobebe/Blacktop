@@ -26,8 +26,6 @@ export function VehicleCard({ card }: Props) {
   const { profile } = useProfile();
   const style = TIER_STYLES[card.tier];
   const locked = card.tier === 'locked';
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const shareable = !locked && settings.blacktopWorldEnabled;
@@ -59,6 +57,8 @@ export function VehicleCard({ card }: Props) {
       cancelled = true;
     };
   }, [hero, uid]);
+
+
 
 
 
