@@ -821,28 +821,11 @@ export default function ActiveRide() {
           </div>
         </div>
 
-        {/* Landscape: Lean Angle between stats and speed */}
-        {settings.leanAngleEnabled && (
-          <div className="hidden landscape:flex flex-col items-center justify-center w-[16%] min-w-[160px]">
-            <LeanAngleBar
-              vertical
-              currentLean={leanAngle.currentLean}
-              maxLean={leanAngle.maxLean}
-              threshold={settings.leanAngleThreshold}
-              onReset={() => {
-                leanAngle.calibrate();
-                toast.success('Lean sensor zeroed', { duration: 1500 });
-              }}
-            />
-            {leanAngle.isCalibrated && (
-              <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
-            )}
-          </div>
-        )}
-
         {/* Speed and Stats */}
         <div className={cn(
           "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
+          // Raise the speed/lean cluster slightly in landscape so it clears the End Ride button
+          "landscape:-translate-y-2",
           // In landscape, don't let it grow beyond content when centered
           (!rideState.isConvoyMode || !showMembers) && "landscape:flex-none"
         )}>
