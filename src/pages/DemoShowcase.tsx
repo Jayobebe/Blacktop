@@ -55,211 +55,114 @@ export default function DemoShowcase() {
       mockup: <IntroMockup />
     },
     {
-      id: 'convoy',
-      title: 'Convoy Mode',
-      subtitle: 'Ride Together, Stay Connected',
-      description: 'Create or join a convoy with up to 8 members. Share a simple code and everyone\'s in. Real-time sync keeps the group together.',
+      id: 'ride-together',
+      title: 'Ride Together',
+      subtitle: 'Convoys, Voice & Solo Runs',
+      description: 'Create or join a convoy of up to 8 with a simple code, talk hands-free over live voice, or head out solo — every mode shares the same tracking.',
       icon: Users,
       color: 'accent',
-      mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />
+      mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />,
+      cards: [
+        { icon: Users, label: 'Convoy Mode', text: 'Up to 8 riders synced in real time via a shared code.' },
+        { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute and disconnect. Works with your music.' },
+        { icon: Gauge, label: 'Solo Ride', text: 'Same tracking, no group needed — with Discord rescue on tap.' },
+      ],
     },
     {
-      id: 'solo',
-      title: 'Solo Ride',
-      subtitle: 'Track Your Own Adventures',
-      description: 'Don\'t need a group? Start a solo ride to track your speed, distance, and lean angle. Tap RESCUE anytime to ping your Discord with your live location.',
-      icon: Gauge,
-      color: 'accent',
-      mockup: <SoloMockup />
-    },
-    {
-      id: 'voice',
-      title: 'Voice Communication',
-      subtitle: 'Talk Hands-Free On the Road',
-      description: 'Crystal clear voice chat with your convoy. Toggle mute anytime. Disconnect to save battery. Works alongside your music.',
-      icon: Mic,
-      color: 'voice-active',
-      mockup: <VoiceMockup />
-    },
-    {
-      id: 'waypoints',
-      title: 'Multi-Waypoint Routes',
-      subtitle: 'Plan Stops Along the Way',
-      description: 'Leaders set multiple destinations. Drag to reorder. Navigate to each stop in sequence. Everyone sees the same route.',
-      icon: Route,
-      color: 'accent',
-      mockup: <WaypointsMockup />
-    },
-    {
-      id: 'maps',
-      title: 'Blacktop Maps',
-      subtitle: 'Built-In Navigation',
-      description: 'Search for a destination and get a driving route, right in the app. See your convoy live on the map, colored by their accent — glowing when they\'re talking. Only riders who choose Blacktop Maps show up.',
+      id: 'navigation',
+      title: 'Navigation',
+      subtitle: 'Maps, Waypoints & Camera Alerts',
+      description: 'Search a destination and get a route in-app. Leaders drop multiple stops, everyone sees the same line — and you get warned about cameras ahead.',
       icon: MapIcon,
       color: 'accent',
-      mockup: <MapsMockup />
+      mockup: <MapsMockup />,
+      cards: [
+        { icon: MapIcon, label: 'Blacktop Maps', text: 'Built-in routing with live convoy dots coloured by accent.' },
+        { icon: Route, label: 'Multi-Stop Routes', text: 'Add, reorder and skip waypoints mid-ride, up to five at a time.' },
+        { icon: Eye, label: 'Camera Alerts', text: 'Speed and ANPR cameras on your route, flagged as you approach.' },
+      ],
     },
     {
-      id: 'tracking',
-      title: 'Live Ride Tracking',
-      subtitle: 'Speed, Distance, Duration',
-      description: 'Real-time GPS tracking with large, glove-friendly display.',
+      id: 'live-data',
+      title: 'Live Ride Data',
+      subtitle: 'Speed, Lean & G-Force',
+      description: 'Big, glove-friendly GPS readouts backed by your phone\'s gyroscope and accelerometer for real-time lean angle and cornering G.',
       icon: Gauge,
       color: 'speed-active',
-      mockup: <TrackingMockup speed={speed} distance={distance} />
+      mockup: <TrackingMockup speed={speed} distance={distance} />,
+      cards: [
+        { icon: Gauge, label: 'Speed & Distance', text: 'Real-time GPS speed, distance and duration at a glance.' },
+        { icon: TrendingUp, label: 'Lean & G-Force', text: 'Max lean each way, peak G, and warnings near your threshold.' },
+        { icon: Clock, label: 'Smart Timer', text: 'Idle rides auto-stop, so a forgotten session never logs 70 hours.' },
+      ],
     },
     {
-      id: 'lean',
-      title: 'Lean Angle & G-Force',
-      subtitle: 'Track Your Cornering',
-      description: 'Uses your phone\'s gyroscope and accelerometer to measure lean angle and cornering G-force in real-time. See your max lean, peak G, and get warnings when approaching your threshold.',
-      icon: TrendingUp,
-      color: 'accent',
-      mockup: <LeanAngleMockup />
-    },
-    {
-      id: 'rescue',
-      title: 'Rescue System',
-      subtitle: 'Never Leave Anyone Behind',
-      description: 'In a convoy, tap RESCUE to send your location to the leader as a waypoint. On a solo ride, the same button pings your connected Discord so your crew knows where to find you.',
+      id: 'safety',
+      title: 'Safety Net',
+      subtitle: 'Rescue, Crash Detection & Discord',
+      description: 'One button pings your location to the convoy leader or your Discord. If a hard impact is followed by a stop, the app asks if you\'re okay — and calls for help if you don\'t answer.',
       icon: AlertTriangle,
       color: 'destructive',
-      mockup: <RescueMockup />
+      mockup: <RescueMockup />,
+      cards: [
+        { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the leader as a waypoint.' },
+        { icon: Shield, label: 'Auto-Rescue', text: 'High-G impact plus a stop triggers a 5-minute check-in.' },
+        { icon: MessageSquare, label: 'Discord', text: 'Webhook announces convoy starts and broadcasts rescue pings.' },
+      ],
     },
     {
-      id: 'auto-rescue',
-      title: 'Auto-Rescue',
-      subtitle: 'Crash Detection That Calls For Help',
-      description: 'Optional. If a high-G impact is followed by a stop, the app asks "Are you okay?". No reply in 5 minutes and a rescue ping fires automatically — to your convoy leader and Discord, or Discord only on solo rides.',
-      icon: Shield,
-      color: 'destructive',
-      mockup: <AutoRescueMockup />
-    },
-    {
-      id: 'discord',
-      title: 'Discord Integration',
-      subtitle: 'Loop In Your Crew',
-      description: 'Connect a Discord webhook in Settings to auto-announce when a convoy starts and to broadcast rescue pings — for both convoy and solo rides — straight to your channel.',
-      icon: MessageSquare,
+      id: 'after-ride',
+      title: 'After The Ride',
+      subtitle: 'History, Receipts, Badges & Overlays',
+      description: 'Every ride is saved locally with photos, a shareable receipt, earned badges, and an MP4 stats overlay for your action-cam footage.',
+      icon: History,
       color: 'accent',
-      mockup: <DiscordMockup />
-    },
-    {
-      id: 'badges',
-      title: 'Badge Awards',
-      subtitle: 'Celebrate Every Ride',
-      description: 'Earn badges in convoy rides: Speed Demon for top speed, Journeyman for most distance, Fallback for longest stationary.',
-      icon: Trophy,
-      color: 'accent',
-      mockup: <BadgesMockup />
-    },
-    {
-      id: 'history',
-      title: 'Ride History & Photos',
-      subtitle: 'Relive Your Adventures',
-      description: 'Every ride saved with stats. Attach up to 9 photos per ride. All stored locally on your device.',
-      icon: Camera,
-      color: 'accent',
-      mockup: <HistoryMockup />
-    },
-    {
-      id: 'receipts',
-      title: 'Ride Receipts',
-      subtitle: 'Shareable Stat Slips',
-      description: 'Every finished ride prints a receipt with your stats, vehicle, and badges. Download it as an image to share with the crew.',
-      icon: Receipt,
-      color: 'accent',
-      mockup: <ReceiptMockup />
-    },
-    {
-      id: 'studio',
-      title: 'Overlay Download',
-      subtitle: 'Sync Stats to Your Action Cam',
-      description: 'Download an MP4 overlay after your ride with live speed, lean angle, distance, and duration. Layer it over your GoPro, DJI, or Insta360 footage in any video editor.',
-      icon: Video,
-      color: 'accent',
-      mockup: <StudioMockup />
-    },
-    {
-      id: 'stats',
-      title: 'Lifetime Statistics',
-      subtitle: 'Track Your Progress',
-      description: 'Total rides, distance traveled, top speed achieved, badges earned. See your journey at a glance.',
-      icon: BarChart3,
-      color: 'accent',
-      mockup: <StatsMockup />
-    },
-    {
-      id: 'cards',
-      title: 'Trading Cards',
-      subtitle: 'Collect Every Tier',
-      description: 'Each vehicle earns a trading card that levels up with rides — Bronze at 10, all the way to Orion at 1000. Download them as images for the collection.',
-      icon: Sparkles,
-      color: 'accent',
-      mockup: <TradingCardsMockup />
+      mockup: <HistoryMockup />,
+      cards: [
+        { icon: Camera, label: 'History & Photos', text: 'Full stats per ride, plus up to 9 photos, stored on device.' },
+        { icon: Receipt, label: 'Ride Receipts', text: 'A printable stat slip with vehicle and badges, saved as an image.' },
+        { icon: Video, label: 'Overlay Download', text: 'MP4 with live speed, lean, distance and a mini-map for editing in.' },
+        { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman and Fallback roll into lifetime totals.' },
+      ],
     },
     {
       id: 'garage',
       title: "Mecha-Nick's Garage",
-      subtitle: 'Your Vehicles, Your Stats',
-      description: 'Add every vehicle in your stable. Snap a photo, set the odometer, and Mecha-Nick keeps lifetime stats and maintenance per vehicle — not just one big pile.',
+      subtitle: 'Vehicles, Maintenance & Cards',
+      description: 'Every vehicle in your stable gets its own photo, odometer, service intervals and a trading card that levels up as you ride it.',
       icon: Bike,
       color: 'accent',
-      mockup: <GarageMockup />
+      mockup: <GarageMockup />,
+      cards: [
+        { icon: Bike, label: 'Your Vehicles', text: 'Photo, odometer and lifetime stats per machine.' },
+        { icon: Wrench, label: 'Maintenance', text: 'Chain, oil, brakes and tyres with bars that reset when serviced.' },
+        { icon: History, label: 'Ride Assignment', text: 'Tag any ride to a vehicle and its stats roll up automatically.' },
+        { icon: Sparkles, label: 'Trading Cards', text: 'Bronze at 10 rides all the way to Orion at 1000.' },
+      ],
     },
     {
-      id: 'maintenance',
-      title: 'Maintenance Tracker',
-      subtitle: 'Never Miss a Service',
-      description: 'Set service intervals for chain, oil, brakes, tyres and more. Progress bars fill as you rack up miles. Tap Serviced and the bar resets to zero.',
-      icon: Wrench,
+      id: 'blacktop-world',
+      title: 'Blacktop World',
+      subtitle: 'Your Crew Hub On A Globe',
+      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, crew QR joining, your card collection and the arcade — with an anonymous glow showing where riders are active.',
+      icon: Globe2,
       color: 'accent',
-      mockup: <MaintenanceMockup />
-    },
-    {
-      id: 'bike-assignment',
-      title: 'Assign Rides to Vehicles',
-      subtitle: 'History Knows Which Vehicle',
-      description: 'Pick the vehicle used for any ride straight from History. Distance, top speed and ride time roll up into that vehicle\'s garage stats automatically.',
-      icon: History,
-      color: 'accent',
-      mockup: <BikeAssignmentMockup />
+      mockup: <BlacktopWorldMockup />,
+      cards: [
+        { icon: Users, label: 'Crew Convoys', text: 'A live list of your crew\'s open rides — tap for leader and riders.' },
+        { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade.' },
+        { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
+        { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy and Petrol Head, with personal bests saved locally.' },
+      ],
     },
     {
       id: 'privacy',
       title: 'Burn Button',
       subtitle: 'Your Data, Your Control',
-      description: 'One tap to permanently delete all ride history, stats, and convoy data. Total privacy.',
+      description: 'Everything lives on your device by default. One tap permanently deletes all ride history, stats and convoy data.',
       icon: Flame,
       color: 'burn',
       mockup: <BurnMockup />
-    },
-    {
-      id: 'blacktop-world',
-      title: 'Blacktop World',
-      subtitle: 'Live Rider Globe',
-      description: 'Opt-in only. A live, anonymous globe showing where riders are active right now, alongside open weather, wildfire, volcano and flood events from NASA EONET.',
-      icon: Globe2,
-      color: 'accent',
-      mockup: <BlacktopWorldMockup />
-    },
-    {
-      id: 'card-trading',
-      title: 'Card Trading',
-      subtitle: 'Swap Collector Cards',
-      description: 'Blacktop World unlocks your collection folder and a flip-to-QR button on every vehicle card. Scan another rider\'s card to add it to your folder.',
-      icon: Folder,
-      color: 'accent',
-      mockup: <CardTradingMockup />
-    },
-    {
-      id: 'blacktop-arcade',
-      title: 'Blacktop Arcade',
-      subtitle: 'Hit Heavy & Petrol Head',
-      description: 'Two pocket games tucked inside Blacktop World. Hit Heavy chases the biggest G-spike; Petrol Head times how long you can hold a perfect throttle. Personal bests saved locally.',
-      icon: Gamepad2,
-      color: 'accent',
-      mockup: <BlacktopArcadeMockup />
     },
     {
       id: 'complete',
@@ -271,6 +174,7 @@ export default function DemoShowcase() {
       mockup: <CompleteMockup />
     }
   ];
+
 
 
   const currentFeature = features[currentIndex];
