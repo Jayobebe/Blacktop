@@ -1,6 +1,6 @@
 // Live mini-map renderer for the downloadable ride overlay.
 //
-// Draws CARTO dark tiles into a small rounded region of the recording canvas,
+// Draws dark-styled tiles into a small rounded region of the recording canvas,
 // centred on the rider, with the route polyline projected on top and a
 // heading-oriented user dot in the middle. Tiles are fetched on demand and
 // kept in an in-memory Image cache keyed by z/x/y so a normal ride only

@@ -1069,7 +1069,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           )}
 
           <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none text-center">
-            © <a href="https://carto.com/attributions" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">CARTO</a>
+            © <a href="https://openfreemap.org" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">OpenFreeMap</a>
             {' '}© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">OpenStreetMap</a> contributors
           </div>
         </div>
