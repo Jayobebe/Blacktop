@@ -83,52 +83,70 @@ interface BlacktopMapProps {
 
 registerTileCacheProtocol();
 
-const DARK_LAYER_ID = 'carto-dark-layer';
 const SATELLITE_LAYER_ID = 'esri-satellite-layer';
+const SATELLITE_SOURCE_ID = 'esri-satellite';
 
-// Both basemap sources live in the initial style so we can toggle their
-// visibility without calling setStyle() (which would blow away dynamically
-// added sources/layers like the route line).
-const CARTO_DARK_STYLE: StyleSpecification = {
+// Dark basemap: OpenFreeMap's free dark vector style (no API key required,
+// built on OpenMapTiles/OpenStreetMap). The satellite raster layer is merged
+// in so we can toggle visibility without calling setStyle() (which would
+// blow away dynamically added sources/layers like the route line).
+const OPENFREEMAP_DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+
+const SATELLITE_SOURCE: StyleSpecification['sources'][string] = {
+  type: 'raster',
+  tiles: [
+    toCachedTileUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+  ],
+  tileSize: 256,
+  attribution:
+    'Tiles © <a href="https://www.esri.com" target="_blank">Esri</a> — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+};
+
+// Last-resort style if the OpenFreeMap fetch fails: plain dark background so
+// the map still renders (route line, markers, satellite toggle all work).
+const FALLBACK_DARK_STYLE: StyleSpecification = {
   version: 8,
-  sources: {
-    'carto-dark': {
-      type: 'raster',
-      tiles: [
-        toCachedTileUrl('https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
-        toCachedTileUrl('https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
-        toCachedTileUrl('https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
-        toCachedTileUrl('https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'),
-      ],
-      tileSize: 256,
-      attribution:
-        '© <a href="https://carto.com/attributions" target="_blank">CARTO</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-    },
-    'esri-satellite': {
-      type: 'raster',
-      tiles: [
-        toCachedTileUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
-      ],
-      tileSize: 256,
-      attribution:
-        'Tiles © <a href="https://www.esri.com" target="_blank">Esri</a> — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-    },
-  },
+  sources: { [SATELLITE_SOURCE_ID]: SATELLITE_SOURCE },
   layers: [
-    {
-      id: DARK_LAYER_ID,
-      type: 'raster',
-      source: 'carto-dark',
-      paint: { 'raster-brightness-min': 0.1 },
-    },
+    { id: 'dark-background', type: 'background', paint: { 'background-color': '#0a0a0a' } },
     {
       id: SATELLITE_LAYER_ID,
       type: 'raster',
-      source: 'esri-satellite',
+      source: SATELLITE_SOURCE_ID,
       layout: { visibility: 'none' },
     },
   ],
 };
+
+let basemapStylePromise: Promise<StyleSpecification> | null = null;
+
+function getBasemapStyle(): Promise<StyleSpecification> {
+  if (!basemapStylePromise) {
+    basemapStylePromise = fetch(OPENFREEMAP_DARK_STYLE_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Dark style fetch failed: ${res.status}`);
+        return res.json() as Promise<StyleSpecification>;
+      })
+      .then((style) => ({
+        ...style,
+        sources: { ...style.sources, [SATELLITE_SOURCE_ID]: SATELLITE_SOURCE },
+        layers: [
+          ...style.layers,
+          {
+            id: SATELLITE_LAYER_ID,
+            type: 'raster',
+            source: SATELLITE_SOURCE_ID,
+            layout: { visibility: 'none' },
+          } as StyleSpecification['layers'][number],
+        ],
+      }))
+      .catch((err) => {
+        console.error('[BlacktopMap] Falling back to plain dark basemap:', err);
+        return FALLBACK_DARK_STYLE;
+      });
+  }
+  return basemapStylePromise;
+}
 
 export function BlacktopMap({ initialDestination, onContextLost, isVisible }: BlacktopMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
