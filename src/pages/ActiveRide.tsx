@@ -793,14 +793,12 @@ export default function ActiveRide() {
         />
       )}
 
-      {/* Main content area - vertical in portrait, horizontal in landscape */}
-      <div className={cn(
-        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center landscape:justify-center",
-        // Center content in landscape when solo or when convoy members panel is collapsed
-        (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
-      )}>
+      {/* Main content area - vertical in portrait, horizontal in landscape.
+          Landscape: equal flex-1 flanks (stats left / g-force+buttons right) so the
+          speed cluster sits dead-centre. */}
+      <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center">
         {/* Landscape Left: Big Stats List */}
-        <div className="hidden landscape:flex flex-col justify-center items-start gap-7 w-[18%] min-w-[130px]">
+        <div className="hidden landscape:flex flex-col justify-center items-start gap-7 flex-1 min-w-0 pl-2">
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Distance</p>
             <p className="font-mono text-4xl lg:text-5xl font-bold truncate">
@@ -821,14 +819,8 @@ export default function ActiveRide() {
           </div>
         </div>
 
-        {/* Speed and Stats */}
-        <div className={cn(
-          "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
-          // Raise the speed/lean cluster slightly in landscape so it clears the End Ride button
-          "landscape:-translate-y-2",
-          // In landscape, don't let it grow beyond content when centered
-          (!rideState.isConvoyMode || !showMembers) && "landscape:flex-none"
-        )}>
+        {/* Speed and Stats - centre column in landscape (auto width, centred by equal flanks) */}
+        <div className="flex-1 landscape:flex-none flex flex-col items-center justify-center animate-fade-in min-w-0 landscape:-translate-y-2">
           {/* Header - compact */}
           <div className="flex items-center gap-2 mb-2 landscape:mb-1 md:mb-4">
             {rideState.isConvoyMode && (
@@ -937,15 +929,18 @@ export default function ActiveRide() {
           </div>
         </div>
 
+        {/* Right flank in landscape: G-Force + buttons, pushed to the right edge.
+            `contents` in portrait so children join the vertical flow unchanged. */}
+        <div className="contents landscape:flex landscape:flex-row landscape:items-center landscape:justify-end landscape:gap-8 landscape:flex-1 landscape:min-w-0 landscape:max-h-full landscape:pr-2">
         {/* Landscape: G-Force between speed and buttons */}
         {settings.gForceEnabled && gForce.isSupported && (
-          <div className="hidden landscape:flex flex-col items-center justify-center w-[14%] min-w-[110px]">
+          <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">
             <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
           </div>
         )}
 
         {/* Controls - row in portrait, column in landscape */}
-        <div className="flex landscape:flex-col items-center justify-center gap-6 landscape:gap-4 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
+        <div className="flex landscape:flex-col items-center justify-center gap-6 landscape:gap-4 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
           {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
@@ -1145,6 +1140,7 @@ export default function ActiveRide() {
             </Button>
           )}
         </div>
+        </div>{/* end landscape right flank (G-Force + controls) */}
 
         {/* Convoy Members Panel - bottom in portrait, right side in landscape */}
         {rideState.isConvoyMode && showMembers && (
