@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download, Zap, RotateCw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { toPng } from 'html-to-image';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
@@ -17,13 +15,10 @@ import { TIER_STYLES } from '../types';
 import { VehicleCardData } from '../hooks/useVehicleCards';
 import { encodeCard } from '../lib/cardCodec';
 import { uploadCardPhoto } from '../lib/cardPhoto';
+import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 
 interface Props {
   card: VehicleCardData;
-}
-
-function slugify(s: string): string {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'vehicle';
 }
 
 export function VehicleCard({ card }: Props) {
@@ -31,8 +26,6 @@ export function VehicleCard({ card }: Props) {
   const { profile } = useProfile();
   const style = TIER_STYLES[card.tier];
   const locked = card.tier === 'locked';
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const shareable = !locked && settings.blacktopWorldEnabled;
@@ -67,63 +60,7 @@ export function VehicleCard({ card }: Props) {
 
 
 
-  const handleDownload = async () => {
-    if (!cardRef.current || isExporting) return;
-    setIsExporting(true);
-    // Clone the card into an offscreen, transform-free wrapper so embla/carousel
-    // transforms don't skew or crop the captured image.
-    const source = cardRef.current;
-    const rect = source.getBoundingClientRect();
-    const width = Math.max(280, Math.round(rect.width));
-    const height = Math.round(width * (7 / 5));
 
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '0';
-    wrapper.style.left = '0';
-    wrapper.style.zIndex = '-1';
-    wrapper.style.pointerEvents = 'none';
-    wrapper.style.opacity = '0';
-    wrapper.style.transform = 'none';
-    wrapper.style.padding = '24px';
-    wrapper.style.background = 'transparent';
-
-    const clone = source.cloneNode(true) as HTMLElement;
-    clone.style.transform = 'none';
-    clone.style.margin = '0';
-    clone.style.width = `${width}px`;
-    clone.style.height = `${height}px`;
-    clone.style.maxWidth = 'none';
-    // Strip the download button from the captured image.
-    clone.querySelectorAll('[data-export-hide]').forEach((el) => el.remove());
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    try {
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      const dataUrl = await toPng(clone, {
-        cacheBust: true,
-        pixelRatio: 3,
-        backgroundColor: 'transparent',
-        width,
-        height,
-        style: { transform: 'none', margin: '0' },
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `${slugify(card.bike.name)}-${card.tier}-card.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      toast.success('Card downloaded');
-    } catch (err) {
-      console.error('Card export failed', err);
-      toast.error('Could not save card');
-    } finally {
-      wrapper.remove();
-      setIsExporting(false);
-    }
-  };
 
   return (
     <div className="relative w-full max-w-[280px] mx-auto aspect-[5/7] [perspective:1200px]">
@@ -135,7 +72,6 @@ export function VehicleCard({ card }: Props) {
       >
         {/* FRONT FACE */}
         <div
-          ref={cardRef}
           className={cn(
             'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col [backface-visibility:hidden]',
             style.bg,
@@ -170,20 +106,6 @@ export function VehicleCard({ card }: Props) {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                {!isExporting && (
-                  <button
-                    type="button"
-                    data-export-hide
-                    onClick={handleDownload}
-                    aria-label="Download card as image"
-                    className={cn(
-                      'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
-                      style.chip,
-                    )}
-                  >
-                    <Download className="w-3 h-3" />
-                  </button>
-                )}
                 {!locked && qrPayload && (
                   <button
                     type="button"
@@ -210,14 +132,18 @@ export function VehicleCard({ card }: Props) {
               </div>
             </div>
 
-            {/* Hero photo */}
-            <div className="relative rounded-xl overflow-hidden bg-black/30 aspect-[4/3] border border-white/10">
+            {/* Hero photo — sits inside Mecha-Nick's garage */}
+            <div
+              className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 bg-cover bg-center"
+              style={{ backgroundImage: `url(${garageShopAsset.url})` }}
+            >
+              <div className="absolute inset-0 bg-black/20" />
               {card.bike.photos.hero ? (
                 <img
                   src={card.bike.photos.hero}
                   alt={card.bike.name}
                   className={cn(
-                    'w-full h-full object-contain scale-125',
+                    'relative w-full h-full object-contain p-1.5 drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
                     locked && 'opacity-40 grayscale',
                   )}
                   style={{ imageRendering: 'pixelated' }}
