@@ -75,14 +75,10 @@ export default function World() {
 
   const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
 
-  const markers: WorldEventMarker[] = (eonetData?.events ?? [])
-    .slice(0, 25)
-    .flatMap((event) => {
-      const geo = event.geometry[event.geometry.length - 1];
-      if (!geo?.coordinates || geo.type !== 'Point') return [];
-      const [lng, lat] = geo.coordinates;
-      return [{ lat, lng, categoryId: event.categories[0]?.id ?? 'MN' }];
-    });
+  const openLandmark = (id: string) => {
+    const target = CREW_LANDMARKS.find((l) => l.id === id);
+    if (target) navigate(target.route);
+  };
 
   return (
     <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
@@ -101,25 +97,9 @@ export default function World() {
           <h1 className="text-lg font-bold tracking-[0.22em] text-white uppercase">
             Blacktop World
           </h1>
-          {/* Event key — inline below heading */}
-          <div className="flex flex-col items-center gap-1 mt-2.5 px-2.5 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]">
-            <div className="flex items-center gap-3">
-              {EVENT_KEY_ROW1.map(({ id, label, color }) => (
-                <div key={id} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}99` }} />
-                  <span className="text-[9px] tracking-[0.12em] uppercase text-white/55">{label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-3">
-              {EVENT_KEY_ROW2.map(({ id, label, color }) => (
-                <div key={id} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}99` }} />
-                  <span className="text-[9px] tracking-[0.12em] uppercase text-white/55">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="text-[9px] tracking-[0.2em] uppercase text-white/40 mt-1">
+            spin the globe · tap a landmark
+          </p>
         </div>
       </header>
 
@@ -127,11 +107,13 @@ export default function World() {
       <div className="relative w-full h-[70vh] flex-shrink-0">
         <WorldGlobe
           accentColor={accentColor}
-          events={markers}
+          landmarks={CREW_LANDMARKS}
+          onLandmarkSelect={openLandmark}
           countryLights={demoEnabled ? DEMO_COUNTRY_LIGHTS : countryLights}
           onScaleChange={setGlobeScale}
           className="w-full h-full"
         />
+
         {/* Rider count — fades when globe is zoomed in */}
         <div
           className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none transition-opacity duration-500"
