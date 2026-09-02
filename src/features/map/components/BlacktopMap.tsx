@@ -311,10 +311,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     mapRef.current = instance;
     setMap(instance);
+    });
 
     return () => {
+      cancelled = true;
+      const m = mapRef.current;
+      if (!m) return;
       try {
-        instance.remove();
+        m.remove();
       } catch (err) {
         console.error('[BlacktopMap] Error removing map instance:', err);
       }
