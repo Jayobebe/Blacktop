@@ -197,7 +197,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         ? 'text-warning'
         : 'text-foreground';
 
-  useRadarOverlay(map, displaySpeed);
+  useRadarOverlay(map, displaySpeed, settings.weatherOverlayEnabled);
 
   const userMarkerRef = useRef<Marker | null>(null);
   const headingRef = useRef<number | null>(null);
