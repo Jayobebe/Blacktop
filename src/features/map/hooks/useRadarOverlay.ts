@@ -74,7 +74,11 @@ async function fetchTimelineThrottled(): Promise<RadarTimeline | null> {
 //   stationary for 2+ minutes, or the map is actively being panned/zoomed -
 //   each of those otherwise causes layers to fade in/out and MapLibre to
 //   request tiles for frames or viewports nobody is looking at.
-export function useRadarOverlay(map: MapLibreMap | null, currentSpeedMph: number) {
+export function useRadarOverlay(
+  map: MapLibreMap | null,
+  currentSpeedMph: number,
+  enabled = true,
+) {
   const frameCountRef = useRef(0);
   const currentIndexRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,7 +86,7 @@ export function useRadarOverlay(map: MapLibreMap | null, currentSpeedMph: number
   currentSpeedRef.current = currentSpeedMph;
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !enabled) return;
 
     let cancelled = false;
     let refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -279,5 +283,5 @@ export function useRadarOverlay(map: MapLibreMap | null, currentSpeedMph: number
       map.off('moveend', handleMoveEnd);
       clearFrames();
     };
-  }, [map]);
+  }, [map, enabled]);
 }

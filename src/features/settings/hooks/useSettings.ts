@@ -37,6 +37,8 @@ export interface AppSettings {
   // Traffic cameras — overlays speed cameras / ANPR poles from OpenStreetMap
   // on the Blacktop map when zoomed in past z13.
   trafficCamerasEnabled: boolean;
+  // Weather radar overlay (RainViewer) on the Blacktop map.
+  weatherOverlayEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -68,6 +70,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoRescueStopWindowSec: 10,
   blacktopWorldEnabled: false,
   trafficCamerasEnabled: false,
+  weatherOverlayEnabled: true,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
