@@ -11,6 +11,9 @@ import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
 import { CollectedCardsFolder } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
+import { QRCodeSVG } from 'qrcode.react';
+import { X } from 'lucide-react';
+import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
 
 // Crew hub landmarks dotted around the globe. Rotating the globe brings each
 // one into view; tapping the chip opens its page.
@@ -29,6 +32,8 @@ const countriesGeo = feature(
 export default function World() {
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);
+  const [showCrewQr, setShowCrewQr] = useState(false);
+  const crew = useCrew();
   const { settings } = useSettings();
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
@@ -77,8 +82,12 @@ export default function World() {
   const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
 
   const openLandmark = (id: string) => {
+    if (id === 'crewqr') {
+      setShowCrewQr(true);
+      return;
+    }
     const target = CREW_LANDMARKS.find((l) => l.id === id);
-    if (target) navigate(target.route);
+    if (target?.route) navigate(target.route);
   };
 
   return (
