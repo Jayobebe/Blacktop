@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Download, Zap, RotateCw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { toPng } from 'html-to-image';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
@@ -17,13 +15,10 @@ import { TIER_STYLES } from '../types';
 import { VehicleCardData } from '../hooks/useVehicleCards';
 import { encodeCard } from '../lib/cardCodec';
 import { uploadCardPhoto } from '../lib/cardPhoto';
+import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 
 interface Props {
   card: VehicleCardData;
-}
-
-function slugify(s: string): string {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'vehicle';
 }
 
 export function VehicleCard({ card }: Props) {
