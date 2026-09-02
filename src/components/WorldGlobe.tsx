@@ -35,7 +35,7 @@ export interface WorldLandmark {
   lng: number;
   label: string;
   /** Visual glyph drawn on the pin. */
-  kind: 'convoys' | 'leaderboard' | 'join';
+  kind: 'convoys' | 'leaderboard' | 'join' | 'qr';
 }
 
 interface Props {
@@ -66,6 +66,12 @@ function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], c
     ctx.fillRect(-4.5, -1, 2.6, 5);
     ctx.fillRect(-1.3, -4, 2.6, 8);
     ctx.fillRect(1.9, 0.5, 2.6, 3.5);
+  } else if (kind === 'qr') {
+    // QR-style corner squares
+    ctx.fillRect(-4.5, -4.5, 3, 3);
+    ctx.fillRect(1.5, -4.5, 3, 3);
+    ctx.fillRect(-4.5, 1.5, 3, 3);
+    ctx.fillRect(1.8, 1.8, 2.2, 2.2);
   } else {
     // plus sign
     ctx.beginPath();
