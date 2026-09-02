@@ -270,9 +270,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       ? [initialDestination.lng, initialDestination.lat]
       : [-0.1276, 51.5072];
 
-    const instance = new maplibregl.Map({
+    let cancelled = false;
+    let instance: MapLibreMap | null = null;
+
+    getBasemapStyle().then((style) => {
+      if (cancelled || !containerRef.current || mapRef.current) return;
+
+    instance = new maplibregl.Map({
       container: containerRef.current,
-      style: CARTO_DARK_STYLE,
+      style,
       center: center as [number, number],
       zoom: initialDestination ? 15 : 14,
       attributionControl: false,
