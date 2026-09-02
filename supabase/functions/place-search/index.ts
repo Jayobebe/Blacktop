@@ -49,6 +49,15 @@ type RouteBody = {
   coordinates: [number, number][];
 };
 
+type CamerasBody = {
+  kind: "cameras";
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+  zoom?: number;
+};
+
 function isLngLat(c: unknown): c is [number, number] {
   return (
     Array.isArray(c) &&
