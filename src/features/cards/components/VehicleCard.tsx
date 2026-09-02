@@ -62,64 +62,6 @@ export function VehicleCard({ card }: Props) {
 
 
 
-  const handleDownload = async () => {
-    if (!cardRef.current || isExporting) return;
-    setIsExporting(true);
-    // Clone the card into an offscreen, transform-free wrapper so embla/carousel
-    // transforms don't skew or crop the captured image.
-    const source = cardRef.current;
-    const rect = source.getBoundingClientRect();
-    const width = Math.max(280, Math.round(rect.width));
-    const height = Math.round(width * (7 / 5));
-
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '0';
-    wrapper.style.left = '0';
-    wrapper.style.zIndex = '-1';
-    wrapper.style.pointerEvents = 'none';
-    wrapper.style.opacity = '0';
-    wrapper.style.transform = 'none';
-    wrapper.style.padding = '24px';
-    wrapper.style.background = 'transparent';
-
-    const clone = source.cloneNode(true) as HTMLElement;
-    clone.style.transform = 'none';
-    clone.style.margin = '0';
-    clone.style.width = `${width}px`;
-    clone.style.height = `${height}px`;
-    clone.style.maxWidth = 'none';
-    // Strip the download button from the captured image.
-    clone.querySelectorAll('[data-export-hide]').forEach((el) => el.remove());
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    try {
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      const dataUrl = await toPng(clone, {
-        cacheBust: true,
-        pixelRatio: 3,
-        backgroundColor: 'transparent',
-        width,
-        height,
-        style: { transform: 'none', margin: '0' },
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `${slugify(card.bike.name)}-${card.tier}-card.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      toast.success('Card downloaded');
-    } catch (err) {
-      console.error('Card export failed', err);
-      toast.error('Could not save card');
-    } finally {
-      wrapper.remove();
-      setIsExporting(false);
-    }
-  };
-
   return (
     <div className="relative w-full max-w-[280px] mx-auto aspect-[5/7] [perspective:1200px]">
       <div
@@ -130,7 +72,6 @@ export function VehicleCard({ card }: Props) {
       >
         {/* FRONT FACE */}
         <div
-          ref={cardRef}
           className={cn(
             'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col [backface-visibility:hidden]',
             style.bg,
