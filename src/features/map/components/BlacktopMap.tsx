@@ -624,7 +624,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
   }, [map, settings.trafficCamerasEnabled]);
 
-  // Render camera markers. Cheap div dots, rebuilt when the set changes.
+  // Render camera markers as eye glyphs (red = speed, orange = ANPR/Flock).
   useEffect(() => {
     if (!map) return;
 
@@ -632,18 +632,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     cameraMarkersRef.current = [];
 
     cameras.forEach((cam) => {
-      const el = document.createElement('div');
-      el.style.width = '14px';
-      el.style.height = '14px';
-      el.style.borderRadius = '50%';
-      el.style.border = '2px solid rgba(0,0,0,0.6)';
-      el.style.boxShadow = '0 0 6px rgba(0,0,0,0.5)';
-      el.style.backgroundColor =
+      const color =
         cam.type === 'speed'
-          ? 'hsl(var(--warning))'
+          ? 'hsl(var(--destructive))'
           : cam.type === 'alpr'
-            ? 'hsl(var(--destructive))'
+            ? 'hsl(var(--warning))'
             : 'hsl(var(--muted-foreground))';
+      const el = document.createElement('div');
+      el.style.width = '22px';
+      el.style.height = '22px';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.filter = 'drop-shadow(0 0 3px rgba(0,0,0,0.8))';
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
       el.title =
         cam.type === 'speed'
           ? `Speed camera${cam.maxspeed ? ` (${cam.maxspeed})` : ''}`
@@ -665,6 +667,71 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       markers.length = 0;
     };
   }, []);
+
+  // ── Camera alerts ────────────────────────────────────────────────────────
+  // 1) One summary toast when a route is set (how many cams are on the route)
+  // 2) A proximity toast the first time you come within 300m of each camera.
+  const [routeCameras, setRouteCameras] = useState<TrafficCamera[]>([]);
+  const alertedCamerasRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!settings.trafficCamerasEnabled || !route?.geometry?.coordinates?.length) {
+      setRouteCameras([]);
+      return;
+    }
+    let cancelled = false;
+    void fetchCamerasOnRoute(route.geometry.coordinates).then((found) => {
+      if (cancelled) return;
+      setRouteCameras(found);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [settings.trafficCamerasEnabled, route]);
+
+  // Summary toast only when the destination changes (not on every reroute).
+  const summarisedDestRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!destination) {
+      summarisedDestRef.current = null;
+      alertedCamerasRef.current.clear();
+      return;
+    }
+    const key = `${destination.lat.toFixed(4)},${destination.lng.toFixed(4)}`;
+    if (summarisedDestRef.current === key) return;
+    if (!settings.trafficCamerasEnabled || routeCameras.length === 0) return;
+    summarisedDestRef.current = key;
+    alertedCamerasRef.current.clear();
+    const speed = routeCameras.filter((c) => c.type === 'speed').length;
+    const anpr = routeCameras.length - speed;
+    const parts = [
+      speed > 0 ? `${speed} speed` : null,
+      anpr > 0 ? `${anpr} ANPR` : null,
+    ].filter(Boolean);
+    toast.warning(
+      `${routeCameras.length} camera${routeCameras.length === 1 ? '' : 's'} on this route`,
+      { description: parts.join(' · ') },
+    );
+  }, [destination, routeCameras, settings.trafficCamerasEnabled]);
+
+  // Approach alerts.
+  useEffect(() => {
+    if (!settings.trafficCamerasEnabled || !userLocation) return;
+    const pool = routeCameras.length > 0 ? routeCameras : cameras;
+    for (const cam of pool) {
+      if (alertedCamerasRef.current.has(cam.id)) continue;
+      if (metersBetween(userLocation, cam) > 300) continue;
+      alertedCamerasRef.current.add(cam.id);
+      toast.warning(
+        cam.type === 'speed'
+          ? `Speed camera ahead${cam.maxspeed ? ` · ${cam.maxspeed}` : ''}`
+          : cam.type === 'alpr'
+            ? 'ANPR camera ahead'
+            : 'Surveillance camera ahead',
+      );
+    }
+  }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
+
 
 
   // GPS fixes arrive ~1 Hz; throttle to at most once every 5s to avoid
