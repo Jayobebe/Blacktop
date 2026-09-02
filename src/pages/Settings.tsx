@@ -752,6 +752,25 @@ export default function Settings() {
         </div>
 
 
+        {/* Traffic Cameras */}
+        <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
+          <div className="flex items-center justify-between gap-3">
+            <div className="pr-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Video className="w-4 h-4 text-accent" />
+                <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Traffic Cameras</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Show speed cameras &amp; ANPR poles on the map when zoomed in. Crowd-sourced from OpenStreetMap — informational only, coverage varies by area.
+              </p>
+            </div>
+            <Switch
+              checked={settings.trafficCamerasEnabled}
+              onCheckedChange={(v) => updateSetting('trafficCamerasEnabled', v)}
+            />
+          </div>
+        </section>
+
         {/* Blacktop World Opt-In */}
         <BlacktopWorldOptIn
           enabled={settings.blacktopWorldEnabled}

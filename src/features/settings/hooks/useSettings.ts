@@ -34,6 +34,9 @@ export interface AppSettings {
   // Blacktop World — opt-in global live event/rider map. When false, the
   // home-screen globe's long-press shortcut is disabled.
   blacktopWorldEnabled: boolean;
+  // Traffic cameras — overlays speed cameras / ANPR poles from OpenStreetMap
+  // on the Blacktop map when zoomed in past z13.
+  trafficCamerasEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -64,6 +67,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoRescueGThreshold: 5,
   autoRescueStopWindowSec: 10,
   blacktopWorldEnabled: false,
+  trafficCamerasEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
