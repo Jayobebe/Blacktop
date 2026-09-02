@@ -721,7 +721,7 @@ export default function ActiveRide() {
 
 
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300">
+    <div className="h-dvh max-h-dvh overflow-y-auto flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300">
       {/* Rescue Alerts (Leader only) */}
       {convoy.isLeader && (
         <RescueAlert
@@ -793,7 +793,7 @@ export default function ActiveRide() {
           <div className="text-center">
             <div className={cn(
               "font-mono font-black transition-all leading-none",
-              "text-[7rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem]",
+              "text-[7rem] [@media(max-height:820px)]:text-[5rem] [@media(max-height:700px)]:text-[4rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem] landscape:[@media(max-height:500px)]:text-[4rem]",
               rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
               rideState.currentSpeed >= settings.amberSpeedThreshold &&
               rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
