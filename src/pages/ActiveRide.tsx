@@ -793,14 +793,12 @@ export default function ActiveRide() {
         />
       )}
 
-      {/* Main content area - vertical in portrait, horizontal in landscape */}
-      <div className={cn(
-        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center landscape:justify-center",
-        // Center content in landscape when solo or when convoy members panel is collapsed
-        (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
-      )}>
+      {/* Main content area - vertical in portrait, horizontal in landscape.
+          Landscape: equal flex-1 flanks (stats left / g-force+buttons right) so the
+          speed cluster sits dead-centre. */}
+      <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center">
         {/* Landscape Left: Big Stats List */}
-        <div className="hidden landscape:flex flex-col justify-center items-start gap-7 w-[18%] min-w-[130px]">
+        <div className="hidden landscape:flex flex-col justify-center items-start gap-7 flex-1 min-w-0 pl-2">
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Distance</p>
             <p className="font-mono text-4xl lg:text-5xl font-bold truncate">
