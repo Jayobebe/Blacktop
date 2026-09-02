@@ -326,29 +326,30 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // Event markers
+    // Crew landmarks — beacons with tappable label chips
     const lambda0 = -rotRef.current[0] * Math.PI / 180;
     const phi0 = -rotRef.current[1] * Math.PI / 180;
-    eventsRef.current.forEach(({ lat, lng, categoryId }) => {
+    const hits: { id: string; x: number; y: number; w: number; h: number }[] = [];
+    landmarksRef.current.forEach((lm) => {
       // Cull points on the back hemisphere via dot-product test
-      const pLambda = lng * Math.PI / 180;
-      const pPhi = lat * Math.PI / 180;
+      const pLambda = lm.lng * Math.PI / 180;
+      const pPhi = lm.lat * Math.PI / 180;
       const dot = Math.sin(pPhi) * Math.sin(phi0) + Math.cos(pPhi) * Math.cos(phi0) * Math.cos(pLambda - lambda0);
-      if (dot < 0) return;
+      if (dot < 0.12) return;
 
-      const proj = projection([lng, lat]);
+      const proj = projection([lm.lng, lm.lat]);
       if (!proj) return;
       const [px, py] = proj;
       const dx = px - cx, dy = py - cy;
       if (dx * dx + dy * dy > r * r * 1.01) return;
 
-      if (categoryId === 'SE') drawCloud(ctx, px, py, t);
-      else if (categoryId === 'WF') drawFire(ctx, px, py, t);
-      else if (categoryId === 'VO') drawVolcano(ctx, px, py, t);
-      else if (categoryId === 'FL') drawFlood(ctx, px, py, t);
-      else drawDot(ctx, px, py, t, CATEGORY_COLOR[categoryId] ?? '#9ca3af');
+      const alpha = Math.min(1, (dot - 0.12) / 0.25);
+      const rect = drawLandmark(ctx, px, py, t, lm, accentColor, alpha);
+      if (alpha > 0.5) hits.push({ id: lm.id, ...rect });
     });
+    hitsRef.current = hits;
   }, [accentColor]);
+
 
   // One-time setup: offscreen canvas + reusable ImageData + reprojection projection
   useEffect(() => {
