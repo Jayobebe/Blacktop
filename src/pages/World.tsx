@@ -146,13 +146,6 @@ export default function World() {
       <div className="flex-shrink-0">
         <ArcadeLobby />
       </div>
-
-      {eonetLoading && (
-        <p className="flex-shrink-0 text-center text-[9px] text-muted-foreground/30 tracking-widest uppercase pb-3 animate-pulse">
-          loading events…
-        </p>
-
-      )}
     </div>
   );
 }
