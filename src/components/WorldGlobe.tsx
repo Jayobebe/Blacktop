@@ -29,126 +29,144 @@ const LIGHT_STAGES: { min: number; color: string; shadow: string; blur: number }
   { min: 100, color: 'rgba(251,146,60,0.58)',  shadow: 'rgba(250,120,20,0.70)',  blur: 32 },
 ];
 
-export interface WorldEventMarker {
+export interface WorldLandmark {
+  id: string;
   lat: number;
   lng: number;
-  categoryId: string;
+  label: string;
+  /** Visual glyph drawn on the pin. */
+  kind: 'convoys' | 'leaderboard' | 'join';
 }
 
 interface Props {
   accentColor: string;
-  events: WorldEventMarker[];
+  landmarks: WorldLandmark[];
+  onLandmarkSelect?: (id: string) => void;
   countryLights?: Record<number, number>;
   onScaleChange?: (scale: number) => void;
   className?: string;
 }
 
-const CATEGORY_COLOR: Record<string, string> = {
-  SE: '#93c5fd', WF: '#fb923c', VO: '#f87171', FL: '#60a5fa',
-  EQ: '#c4b5fd', SW: '#dbeafe', DR: '#fcd34d', MN: '#9ca3af',
-};
+// ── Canvas landmark drawing ─────────────────────────────────────────
 
-// ── Canvas marker draw functions ────────────────────────────────────
-
-function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  const bob = Math.sin(t * 1.9) * 2.5;
-  ctx.save();
-  ctx.translate(x, y + bob);
-  ctx.fillStyle = 'rgba(185,215,255,0.90)';
-  ctx.beginPath();
-  ctx.arc(0, 0, 9, 0, Math.PI * 2);
-  ctx.arc(-7, 3, 6.5, 0, Math.PI * 2);
-  ctx.arc(7, 3, 6.5, 0, Math.PI * 2);
-  ctx.arc(-3, -5, 6, 0, Math.PI * 2);
-  ctx.arc(3, -5, 6, 0, Math.PI * 2);
-  ctx.fill();
-  // Rain
-  const phase = (t * 1.5) % 1;
-  ctx.strokeStyle = 'rgba(130,190,255,0.85)';
-  ctx.lineWidth = 1.5;
+function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], color: string) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.4;
   ctx.lineCap = 'round';
-  for (let i = -1; i <= 1; i++) {
-    const ry = 9 + phase * 9;
-    ctx.globalAlpha = 1 - phase;
+  if (kind === 'convoys') {
+    // three chevrons in convoy formation
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.arc(i * 3.2, i === 0 ? -1.5 : 1.5, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (kind === 'leaderboard') {
+    // podium bars
+    ctx.fillRect(-4.5, -1, 2.6, 5);
+    ctx.fillRect(-1.3, -4, 2.6, 8);
+    ctx.fillRect(1.9, 0.5, 2.6, 3.5);
+  } else {
+    // plus sign
     ctx.beginPath();
-    ctx.moveTo(i * 5, ry);
-    ctx.lineTo(i * 5 - 1, ry + 5);
+    ctx.moveTo(-4, 0); ctx.lineTo(4, 0);
+    ctx.moveTo(0, -4); ctx.lineTo(0, 4);
     ctx.stroke();
   }
-  ctx.globalAlpha = 1;
-  ctx.restore();
 }
 
-function drawFire(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  const flicker = 1 + Math.sin(t * 10 + x * 0.3) * 0.09;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(flicker, flicker);
-  ctx.fillStyle = '#fb923c';
-  ctx.beginPath();
-  ctx.moveTo(0, 2);
-  ctx.bezierCurveTo(-6, -5, -4, -13, 0, -15);
-  ctx.bezierCurveTo(4, -13, 6, -5, 0, 2);
-  ctx.fill();
-  ctx.fillStyle = '#fde68a';
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(-3, -5, -1.5, -10, 0, -11);
-  ctx.bezierCurveTo(1.5, -10, 3, -5, 0, 0);
-  ctx.fill();
-  ctx.restore();
-}
+/**
+ * Draws a landmark: a glowing beacon anchored on the globe surface with a
+ * floating label chip above it. Returns the chip's hit rectangle (CSS px).
+ */
+function drawLandmark(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t: number,
+  lm: WorldLandmark,
+  accentColor: string,
+  alpha: number,
+): { x: number; y: number; w: number; h: number } {
+  const bob = Math.sin(t * 1.6 + x * 0.05) * 1.6;
+  const stalk = 22;
+  const label = lm.label.toUpperCase();
 
-function drawVolcano(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
   ctx.save();
-  ctx.translate(x, y);
-  const pulse = 0.85 + Math.sin(t * 2.8) * 0.12;
-  ctx.shadowBlur = 10 * pulse;
-  ctx.shadowColor = 'rgba(248,113,113,0.8)';
-  ctx.fillStyle = '#f87171';
+  ctx.globalAlpha = alpha;
+
+  // Anchor dot pulsing on the surface
+  const pulse = 0.6 + Math.sin(t * 2.4 + y * 0.05) * 0.4;
+  ctx.fillStyle = accentColor;
+  ctx.globalAlpha = alpha * 0.35 * pulse;
   ctx.beginPath();
-  ctx.moveTo(0, -13);
-  ctx.lineTo(-9, 1);
-  ctx.lineTo(9, 1);
+  ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.arc(x, y, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Stalk
+  const topY = y - stalk + bob;
+  ctx.strokeStyle = accentColor;
+  ctx.globalAlpha = alpha * 0.55;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, topY + 8);
+  ctx.stroke();
+  ctx.globalAlpha = alpha;
+
+  // Chip
+  ctx.font = '600 9px ui-sans-serif, system-ui, sans-serif';
+  const textW = ctx.measureText(label).width;
+  const padX = 7;
+  const glyphW = 14;
+  const w = padX * 2 + glyphW + 5 + textW;
+  const h = 20;
+  const bx = x - w / 2;
+  const by = topY - h + 8;
+
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.fillStyle = 'rgba(8,10,14,0.92)';
+  ctx.beginPath();
+  // rounded rect
+  const rr = h / 2;
+  ctx.moveTo(bx + rr, by);
+  ctx.lineTo(bx + w - rr, by);
+  ctx.quadraticCurveTo(bx + w, by, bx + w, by + rr);
+  ctx.lineTo(bx + w, by + h - rr);
+  ctx.quadraticCurveTo(bx + w, by + h, bx + w - rr, by + h);
+  ctx.lineTo(bx + rr, by + h);
+  ctx.quadraticCurveTo(bx, by + h, bx, by + h - rr);
+  ctx.lineTo(bx, by + rr);
+  ctx.quadraticCurveTo(bx, by, bx + rr, by);
   ctx.closePath();
   ctx.fill();
   ctx.shadowBlur = 0;
-  // Smoke
-  const alpha = 0.25 + Math.sin(t * 2) * 0.12;
-  ctx.fillStyle = `rgba(200,200,200,${alpha})`;
-  ctx.beginPath();
-  ctx.arc(Math.sin(t) * 1.5, -16, 3, 0, Math.PI * 2);
-  ctx.arc(Math.sin(t * 0.7) * 2, -21, 2.5, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.strokeStyle = accentColor;
+  ctx.globalAlpha = alpha * 0.75;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.globalAlpha = alpha;
+
+  ctx.save();
+  ctx.translate(bx + padX + glyphW / 2, by + h / 2);
+  drawGlyph(ctx, lm.kind, accentColor);
   ctx.restore();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillText(label, bx + padX + glyphW + 5, by + h / 2 + 0.5);
+
+  ctx.restore();
+
+  return { x: bx, y: by, w, h };
 }
 
-function drawFlood(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  const bob = Math.sin(t * 2.5) * 2;
-  ctx.save();
-  ctx.translate(x, y + bob);
-  ctx.fillStyle = 'rgba(96,165,250,0.85)';
-  // Water drop shape
-  ctx.beginPath();
-  ctx.moveTo(0, 7);
-  ctx.bezierCurveTo(-6, 0, -6, -8, 0, -10);
-  ctx.bezierCurveTo(6, -8, 6, 0, 0, 7);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawDot(ctx: CanvasRenderingContext2D, x: number, y: number, t: number, color: string) {
-  const pulse = 0.8 + Math.sin(t * 2.5) * 0.2;
-  ctx.save();
-  ctx.shadowBlur = 8 * pulse;
-  ctx.shadowColor = color;
-  ctx.fillStyle = color;
-  ctx.globalAlpha = 0.85 * pulse;
-  ctx.beginPath();
-  ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
 
 // ── Component ───────────────────────────────────────────────────────
 
