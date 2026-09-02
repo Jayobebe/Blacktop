@@ -821,28 +821,11 @@ export default function ActiveRide() {
           </div>
         </div>
 
-        {/* Landscape: Lean Angle between stats and speed */}
-        {settings.leanAngleEnabled && (
-          <div className="hidden landscape:flex flex-col items-center justify-center w-[16%] min-w-[160px]">
-            <LeanAngleBar
-              vertical
-              currentLean={leanAngle.currentLean}
-              maxLean={leanAngle.maxLean}
-              threshold={settings.leanAngleThreshold}
-              onReset={() => {
-                leanAngle.calibrate();
-                toast.success('Lean sensor zeroed', { duration: 1500 });
-              }}
-            />
-            {leanAngle.isCalibrated && (
-              <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
-            )}
-          </div>
-        )}
-
         {/* Speed and Stats */}
         <div className={cn(
           "flex-1 flex flex-col items-center justify-center animate-fade-in min-w-0",
+          // Raise the speed/lean cluster slightly in landscape so it clears the End Ride button
+          "landscape:-translate-y-2",
           // In landscape, don't let it grow beyond content when centered
           (!rideState.isConvoyMode || !showMembers) && "landscape:flex-none"
         )}>
@@ -867,7 +850,7 @@ export default function ActiveRide() {
           <div className="text-center">
             <div className={cn(
               "font-mono font-black transition-all leading-none",
-              "text-[7rem] [@media(max-height:820px)]:text-[5rem] [@media(max-height:700px)]:text-[4rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem] landscape:[@media(max-height:500px)]:text-[4rem]",
+              "text-[8rem] [@media(max-height:820px)]:text-[6rem] [@media(max-height:700px)]:text-[5rem] md:text-[11rem] lg:text-[14rem] landscape:text-[7.5rem] landscape:[@media(max-height:500px)]:text-[5.5rem] landscape:[@media(max-height:420px)]:text-[4.5rem]",
               rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
               rideState.currentSpeed >= settings.amberSpeedThreshold &&
               rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
@@ -907,6 +890,25 @@ export default function ActiveRide() {
             </div>
           </div>
 
+          {/* Lean Angle Bar - landscape only, centred below live speed */}
+          {settings.leanAngleEnabled && (
+            <div className="hidden landscape:flex flex-col items-center mt-1 scale-125 origin-top">
+              <LeanAngleBar
+                vertical
+                currentLean={leanAngle.currentLean}
+                maxLean={leanAngle.maxLean}
+                threshold={settings.leanAngleThreshold}
+                onReset={() => {
+                  leanAngle.calibrate();
+                  toast.success('Lean sensor zeroed', { duration: 1500 });
+                }}
+              />
+              {leanAngle.isCalibrated && (
+                <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+              )}
+            </div>
+          )}
+
           {/* Stats Row - portrait only */}
           <div className="flex landscape:hidden gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 md:mt-5">
             <div className="text-center min-w-0">
@@ -929,8 +931,8 @@ export default function ActiveRide() {
             </div>
           </div>
 
-          {/* End Ride Button - landscape only, below live speed */}
-          <div className="hidden landscape:flex mt-3 justify-center animate-slide-up">
+          {/* End Ride Button - landscape only, pushed lower below the speed/lean cluster */}
+          <div className="hidden landscape:flex mt-8 justify-center animate-slide-up">
             {endRideButton}
           </div>
         </div>
@@ -943,7 +945,7 @@ export default function ActiveRide() {
         )}
 
         {/* Controls - row in portrait, column in landscape */}
-        <div className="flex landscape:flex-col items-center justify-center gap-4 landscape:gap-4 px-2 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
+        <div className="flex landscape:flex-col items-center justify-center gap-6 landscape:gap-4 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:w-[18%] landscape:min-w-[120px] landscape:max-h-full landscape:overflow-y-auto landscape:py-1">
           {/* Pause/Resume button (individual - all members) - circular icon-only */}
           <button
             onClick={() => {
