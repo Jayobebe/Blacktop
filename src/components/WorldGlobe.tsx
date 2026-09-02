@@ -460,6 +460,7 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
 
     const onDown = (e: PointerEvent) => {
       if (e.pointerType === 'touch' && activeTouches >= 2) return;
+      downPtRef.current = { x: e.clientX, y: e.clientY };
       isDragRef.current = true;
       lastPtrRef.current = { x: e.clientX, y: e.clientY };
       autoRef.current = false;
@@ -477,7 +478,22 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
       rotRef.current[0] = (rotRef.current[0] + dx * 0.35) % 360;
       rotRef.current[1] = Math.max(-85, Math.min(85, rotRef.current[1] - dy * 0.35));
     };
-    const onUp = () => { isDragRef.current = false; scheduleResume(); };
+    const onUp = (e?: PointerEvent) => {
+      isDragRef.current = false;
+      scheduleResume();
+      if (!e) return;
+      // Treat a near-stationary press as a tap and hit-test landmark chips.
+      const moved = Math.hypot(e.clientX - downPtRef.current.x, e.clientY - downPtRef.current.y);
+      if (moved > 8) return;
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const hit = hitsRef.current.find(
+        (hr) => px >= hr.x - 4 && px <= hr.x + hr.w + 4 && py >= hr.y - 4 && py <= hr.y + hr.h + 4,
+      );
+      if (hit) onSelectRef.current?.(hit.id);
+    };
+
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
