@@ -156,6 +156,32 @@ export default function World() {
       <div className="flex-shrink-0">
         <ArcadeLobby />
       </div>
+
+      {/* Crew QR — mates scan this to join your crew */}
+      {showCrewQr && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Crew QR</h2>
+              <button
+                type="button"
+                onClick={() => setShowCrewQr(false)}
+                className="p-2 rounded-lg bg-secondary/60"
+                aria-label="Close crew QR"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="bg-white p-4 rounded-xl inline-block">
+              <QRCodeSVG value={`${CREW_QR_PREFIX}${crew.code}`} size={190} />
+            </div>
+            <p className="text-2xl font-bold tracking-[0.2em]">{crew.code}</p>
+            <p className="text-[11px] text-muted-foreground">
+              Mates scan this from Join Crew to ride in your crew.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
