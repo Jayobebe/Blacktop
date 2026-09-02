@@ -1,51 +1,44 @@
-## Auto-Ping Rescue (Crash Detection)
+# Camera markers on the Blacktop map (open data)
 
-Optional safety feature. When the phone detects a high-G impact followed by a stop, the active-ride screen asks "Are you okay?". If unanswered in 5 minutes, a rescue ping fires automatically — to the convoy leader (convoy rides) and/or the Discord webhook (convoy + solo rides).
+## What
 
-### Settings (Settings page → new "Safety" section)
-- `autoRescueEnabled` (toggle, default OFF) — master switch.
-- `autoRescueGThreshold` (slider, 3–8 G, default 5 G) — impact threshold.
-- `autoRescueStopWindowSec` (slider, 5–30 s, default 10 s) — how long speed must stay at ~0 after impact.
-- `autoRescueAckTimeoutSec` (fixed 300 s / 5 min, shown as text).
+Add an optional map layer showing speed cameras and ANPR/surveillance cameras sourced from OpenStreetMap (Overpass API) — free, no key, already proxied through our `place-search` backend function.
 
-Stored in `useSettings` (extend `AppSettings` + defaults).
+## Data source
 
-### Detection hook — `src/features/ride/hooks/useCrashDetection.ts`
-- Listens to `devicemotion` (`accelerationIncludingGravity`), computes magnitude in G (÷ 9.81), keeps a short rolling window.
-- Triggers a "possible crash" event when peak G ≥ threshold AND for the next `stopWindowSec` the live `speed` (passed in from active ride GPS) stays ≤ ~3 km/h.
-- Only active while a ride is in progress and `autoRescueEnabled` is true.
-- Emits via callback so the page can mount the prompt.
+- `highway=speed_camera` — fixed speed/red-light cameras (good coverage in UK/EU, decent US)
+- `man_made=surveillance` with `surveillance:type=ALPR` / `camera:mount` / `surveillance` on poles — ANPR / Flock-style cameras (sparser, US coverage growing)
+- All queried through the existing `place-search` edge function Overpass pipeline, viewport-bounded, so it works on web + native with no new secrets.
 
-### Prompt UI — `src/features/rescue/components/CrashCheckPrompt.tsx`
-- Full-screen modal over active ride: big "Are you okay?" + two buttons: **I'm fine** (dismiss) and **Send rescue now** (immediate ping).
-- 5-minute countdown ring. Strong haptics + repeating audio chime while open.
-- Auto-fires rescue when countdown hits 0 and closes.
+## Changes
 
-### Wiring into rides
-- **ActiveRide.tsx (convoy)**: pass current `speed` to `useCrashDetection`; on trigger open `CrashCheckPrompt`. On auto-fire / manual send, call existing `useRescue.sendRescueRequest(lat,lng)` — leader already receives it and Discord webhook already fires via `announceRescueToDiscord`.
-- **Solo rides (SoloLobby/ActiveRide solo path)**: same detection + prompt. On auto-fire, call a new helper `triggerSoloRescue({ riderName, lat, lng })` that:
-  - Posts to existing Discord edge function (reuse `discord-announce-solo-rescue` if present, otherwise route through `discord-announce-rescue` with a `solo: true` flag).
-  - Shows local toast: "Rescue ping sent to Discord."
-- No leader broadcast in solo mode (no convoy channel).
+1. **Backend (`supabase/functions/place-search/index.ts`)**
+   - New request `kind: 'cameras'` with bbox + zoom params.
+   - Overpass query: `node["highway"="speed_camera"]` and `node["man_made"="surveillance"]["surveillance:type"~"ALPR|anpr"]` (plus `camera:type=fixed`) within the bbox.
+   - Guard: only run when zoom >= 13 (below that, return empty — avoids huge queries).
+   - Returns `[{id, lat, lng, type: 'speed'|'alpr'}]`, capped (~500).
+   - Rate-limit bucketed like existing `place-search` calls.
 
-### Edge cases
-- Suppress re-trigger for 2 minutes after a dismissal or send.
-- Only arm detection once speed has exceeded 15 km/h at least once in the ride (avoids false positives from setting the phone down).
-- Pause detection while ride is paused.
-- If permission for motion sensors is denied (iOS requires `DeviceMotionEvent.requestPermission`), show a one-time prompt when the user enables the setting; if denied, mark setting back off with a toast.
+2. **Map data (`src/features/map/lib/cameraStore.ts`, new)**
+   - Fetches cameras for the current viewport on `moveend`/`zoomend`, debounced (~800ms).
+   - Small in-memory cache keyed by tile-ish bbox buckets so panning around doesn't refetch.
+   - Graceful failure: on error just show no cameras.
 
-### Files to add
-- `src/features/ride/hooks/useCrashDetection.ts`
-- `src/features/rescue/components/CrashCheckPrompt.tsx`
-- `src/features/rescue/lib/soloRescue.ts` (Discord-only helper)
+3. **Map rendering (`src/features/map/components/BlacktopMap.tsx`)**
+   - MapLibre circle markers / custom styled dot markers (existing Marker pattern): orange-tinted icon for speed cameras, distinct muted color for ANPR.
+   - Render only when zoom >= 13.
+   - Not included in the action-cam recorded overlay mini-map (keep that clean).
 
-### Files to edit
-- `src/features/settings/hooks/useSettings.ts` — new settings + defaults.
-- `src/pages/Settings.tsx` — new Safety card with toggle + sliders.
-- `src/pages/ActiveRide.tsx` — mount detection + prompt (convoy path).
-- Solo active-ride entry point (likely `ActiveRide.tsx` solo branch or `SoloLobby` → active) — same mount, solo helper on fire.
-- `src/features/rescue/index.ts` — export new prompt + helper.
-- Memory: add a `mem://features/auto-rescue-crash-detection` entry and link it in `mem://index.md`.
+4. **Settings toggle (`src/features/settings` + Settings page)**
+   - "Show traffic cameras" toggle (default off), persisted with existing settings store.
+   - When off, no markers and no queries.
 
-### One open question
-Discord pings on solo rides require the user to have configured the Discord integration in their own settings (existing `useDiscordIntegration`). If not configured, the auto-fire will silently no-op (with a local toast saying "No Discord webhook configured"). Confirm that's acceptable, or you'd prefer we surface a hard warning when enabling the feature without Discord set up.
+## Notes / limits
+
+- OSM camera data is crowd-sourced — incomplete and not guaranteed accurate; label the toggle description accordingly (informational only).
+- Speed camera alerts are restricted in a few jurisdictions (e.g. some EU countries); this plan only *displays* static map markers, no proximity alerts. Proximity/alert logic is out of scope unless you want it.
+
+## Verification
+
+- Unit-level: query builder output; store cache behavior.
+- Browser: load map, enable toggle, zoom to a camera-dense area (e.g. London), confirm markers appear, confirm none below zoom 13, confirm toggle-off hides them and stops network calls.
