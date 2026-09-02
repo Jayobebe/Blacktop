@@ -10,7 +10,8 @@ import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones, Lock, Unlock } from 'lucide-react';
+import { useCrew } from '@/features/crew/useCrew';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
@@ -33,6 +34,39 @@ export default function Lobby() {
   const { profile, user } = useProfile();
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const crew = useCrew();
+  const [isListed, setIsListed] = useState(false);
+
+  // Load current crew-listing state for this convoy
+  useEffect(() => {
+    if (!convoy.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('convoys')
+        .select('is_listed')
+        .eq('id', convoy.id)
+        .maybeSingle();
+      if (!cancelled && data) setIsListed(Boolean((data as any).is_listed));
+    })();
+    return () => { cancelled = true; };
+  }, [convoy.id]);
+
+  const toggleListed = async () => {
+    if (!convoy.id || !convoy.isLeader) return;
+    const next = !isListed;
+    setIsListed(next);
+    const { error } = await supabase
+      .from('convoys')
+      .update({ is_listed: next, crew_code: next ? crew.code : null } as any)
+      .eq('id', convoy.id);
+    if (error) {
+      setIsListed(!next);
+      toast.error('Could not update crew listing');
+      return;
+    }
+    toast.success(next ? `Listed in crew ${crew.code}` : 'Convoy locked');
+  };
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
@@ -481,6 +515,22 @@ export default function Lobby() {
           >
             <QrCode className="w-6 h-6 text-muted-foreground" />
           </button>
+          {/* Crew listing lock — unlocked lobbies appear in Crew Convoys */}
+          {convoy.isLeader && (
+            <button
+              onClick={toggleListed}
+              className={cn(
+                'p-2 rounded-xl border transition-colors',
+                isListed
+                  ? 'bg-accent/10 border-accent/60 text-accent'
+                  : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary',
+              )}
+              title={isListed ? 'Listed in Crew Convoys — tap to lock' : 'Locked — tap to list in Crew Convoys'}
+              aria-label={isListed ? 'Lock convoy from crew list' : 'Unlock convoy to crew list'}
+            >
+              {isListed ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+            </button>
+          )}
         </div>
         
         {/* Voice Toggle + Audio Device Picker */}

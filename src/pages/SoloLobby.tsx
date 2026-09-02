@@ -6,8 +6,11 @@ import { DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, MapPin, Map, Plus, X } from 'lucide-react';
+import { ArrowLeft, Play, MapPin, Map, Plus, X, Lock, Unlock } from 'lucide-react';
 import { ConvoyDestination } from '@/types/convoy';
+import { toast } from 'sonner';
+import { useConvoyState } from '@/features/convoy';
+import { useCrew } from '@/features/crew/useCrew';
 
 interface UserLocation {
   lat: number;
@@ -18,6 +21,9 @@ export default function SoloLobby() {
   const navigate = useNavigate();
   const { startRide } = useActiveRide();
   const { settings } = useSettings();
+  const { convoy, createConvoy, leaveConvoy } = useConvoyState();
+  const crew = useCrew();
+  const [busyLock, setBusyLock] = useState(false);
   const [destination, setDestination] = useState<ConvoyDestination | null>(null);
   const [soloStops, setSoloStops] = useState<ConvoyDestination[]>([]);
   const [showAddStop, setShowAddStop] = useState(false);
@@ -109,6 +115,41 @@ export default function SoloLobby() {
     });
   };
 
+  // Unlocking a solo lobby publishes it to the crew list. The moment another
+  // rider joins, it becomes a group lobby and we hand over to /lobby.
+  const toggleUnlocked = async () => {
+    if (busyLock) return;
+    setBusyLock(true);
+    try {
+      if (convoy.isActive && convoy.isLeader) {
+        await supabase.from('convoys').update({ is_listed: false } as any).eq('id', convoy.id!);
+        await leaveConvoy();
+        toast.success('Solo lobby locked');
+      } else {
+        const created = await createConvoy();
+        if (!created?.id) return;
+        await supabase
+          .from('convoys')
+          .update({ is_listed: true, crew_code: crew.code } as any)
+          .eq('id', created.id);
+        toast.success(`Listed in crew ${crew.code}`, {
+          description: 'Riders who join turn this into a group lobby.',
+        });
+      }
+    } finally {
+      setBusyLock(false);
+    }
+  };
+
+  const isUnlocked = convoy.isActive && convoy.isLeader;
+
+  // Somebody joined the open solo lobby → it's a group ride now.
+  useEffect(() => {
+    if (isUnlocked && convoy.members.length > 1) {
+      toast.success('Rider joined — group lobby');
+      navigate('/lobby');
+    }
+  }, [isUnlocked, convoy.members.length, navigate]);
 
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
@@ -120,11 +161,27 @@ export default function SoloLobby() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-semibold tracking-tight">Solo Ride</h1>
-          <p className="text-xs text-muted-foreground">Set a destination and hit the road</p>
+          <p className="text-xs text-muted-foreground">
+            {isUnlocked ? `Open to crew ${crew.code}` : 'Set a destination and hit the road'}
+          </p>
         </div>
+        <button
+          onClick={toggleUnlocked}
+          disabled={busyLock}
+          className={`p-2.5 rounded-xl border transition-colors ${
+            isUnlocked
+              ? 'bg-accent/10 border-accent/60 text-accent'
+              : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary'
+          }`}
+          title={isUnlocked ? 'Locked to crew list — tap to lock' : 'Tap to list in Crew Convoys'}
+          aria-label={isUnlocked ? 'Lock lobby' : 'Unlock lobby to crew'}
+        >
+          {isUnlocked ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+        </button>
       </header>
+
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">

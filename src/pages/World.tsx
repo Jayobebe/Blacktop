@@ -11,13 +11,17 @@ import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
 import { CollectedCardsFolder } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
+import { QRCodeSVG } from 'qrcode.react';
+import { X } from 'lucide-react';
+import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
 
 // Crew hub landmarks dotted around the globe. Rotating the globe brings each
 // one into view; tapping the chip opens its page.
-const CREW_LANDMARKS: (WorldLandmark & { route: string })[] = [
+const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'convoys', lat: 51.5, lng: -0.12, label: 'Crew Convoys', kind: 'convoys', route: '/crew/convoys' },
   { id: 'leaderboard', lat: 35.68, lng: 139.69, label: 'Crew Leaderboards', kind: 'leaderboard', route: '/crew/leaderboard' },
   { id: 'join', lat: 34.05, lng: -118.24, label: 'Join Crew', kind: 'join', route: '/crew/join' },
+  { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
 ];
 
 const countriesGeo = feature(
@@ -28,6 +32,8 @@ const countriesGeo = feature(
 export default function World() {
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);
+  const [showCrewQr, setShowCrewQr] = useState(false);
+  const crew = useCrew();
   const { settings } = useSettings();
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
@@ -76,8 +82,12 @@ export default function World() {
   const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
 
   const openLandmark = (id: string) => {
+    if (id === 'crewqr') {
+      setShowCrewQr(true);
+      return;
+    }
     const target = CREW_LANDMARKS.find((l) => l.id === id);
-    if (target) navigate(target.route);
+    if (target?.route) navigate(target.route);
   };
 
   return (
@@ -146,6 +156,32 @@ export default function World() {
       <div className="flex-shrink-0">
         <ArcadeLobby />
       </div>
+
+      {/* Crew QR — mates scan this to join your crew */}
+      {showCrewQr && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Crew QR</h2>
+              <button
+                type="button"
+                onClick={() => setShowCrewQr(false)}
+                className="p-2 rounded-lg bg-secondary/60"
+                aria-label="Close crew QR"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="bg-white p-4 rounded-xl inline-block">
+              <QRCodeSVG value={`${CREW_QR_PREFIX}${crew.code}`} size={190} />
+            </div>
+            <p className="text-2xl font-bold tracking-[0.2em]">{crew.code}</p>
+            <p className="text-[11px] text-muted-foreground">
+              Mates scan this from Join Crew to ride in your crew.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
