@@ -127,13 +127,11 @@ export default function SoloLobby() {
         toast.success('Solo lobby locked');
       } else {
         const created = await createConvoy();
-        if (!created) return;
-        const id = (created as any)?.id ?? null;
+        if (!created?.id) return;
         await supabase
           .from('convoys')
           .update({ is_listed: true, crew_code: crew.code } as any)
-          .eq('leader_id', (await supabase.auth.getUser()).data.user?.id ?? '')
-          .eq('is_active', true);
+          .eq('id', created.id);
         toast.success(`Listed in crew ${crew.code}`, {
           description: 'Riders who join turn this into a group lobby.',
         });
