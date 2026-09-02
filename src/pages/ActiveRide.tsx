@@ -850,7 +850,7 @@ export default function ActiveRide() {
           <div className="text-center">
             <div className={cn(
               "font-mono font-black transition-all leading-none",
-              "text-[7rem] [@media(max-height:820px)]:text-[5rem] [@media(max-height:700px)]:text-[4rem] md:text-[11rem] lg:text-[14rem] landscape:text-[5.5rem] landscape:[@media(max-height:500px)]:text-[4rem]",
+              "text-[8rem] [@media(max-height:820px)]:text-[6rem] [@media(max-height:700px)]:text-[5rem] md:text-[11rem] lg:text-[14rem] landscape:text-[7.5rem] landscape:[@media(max-height:500px)]:text-[5.5rem] landscape:[@media(max-height:420px)]:text-[4.5rem]",
               rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
               rideState.currentSpeed >= settings.amberSpeedThreshold &&
               rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
