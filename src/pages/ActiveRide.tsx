@@ -1140,6 +1140,7 @@ export default function ActiveRide() {
             </Button>
           )}
         </div>
+        </div>{/* end landscape right flank (G-Force + controls) */}
 
         {/* Convoy Members Panel - bottom in portrait, right side in landscape */}
         {rideState.isConvoyMode && showMembers && (
