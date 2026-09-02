@@ -146,7 +146,8 @@ export function drawMiniMap({ ctx, region, center, route, opacity, accent, durat
       const drawX = originOffsetX + dx * TILE_SIZE;
       const drawY = originOffsetY + dy * TILE_SIZE;
       if (img) {
-        ctx.drawImage(img, drawX, drawY, TILE_SIZE, TILE_SIZE);
+        const dark = toDarkTile(img);
+        if (dark) ctx.drawImage(dark, drawX, drawY, TILE_SIZE, TILE_SIZE);
       } else {
         pending.push({ z: TILE_ZOOM, x: tx, y: ty });
       }
