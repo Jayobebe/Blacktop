@@ -6,8 +6,11 @@ import { DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, MapPin, Map, Plus, X } from 'lucide-react';
+import { ArrowLeft, Play, MapPin, Map, Plus, X, Lock, Unlock } from 'lucide-react';
 import { ConvoyDestination } from '@/types/convoy';
+import { toast } from 'sonner';
+import { useConvoyState } from '@/features/convoy';
+import { useCrew } from '@/features/crew/useCrew';
 
 interface UserLocation {
   lat: number;
@@ -18,6 +21,9 @@ export default function SoloLobby() {
   const navigate = useNavigate();
   const { startRide } = useActiveRide();
   const { settings } = useSettings();
+  const { convoy, createConvoy, leaveConvoy } = useConvoyState();
+  const crew = useCrew();
+  const [busyLock, setBusyLock] = useState(false);
   const [destination, setDestination] = useState<ConvoyDestination | null>(null);
   const [soloStops, setSoloStops] = useState<ConvoyDestination[]>([]);
   const [showAddStop, setShowAddStop] = useState(false);
