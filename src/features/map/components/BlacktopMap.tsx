@@ -341,8 +341,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     const SAT_MAX_ZOOM = 18;
     const DEFAULT_MAX_ZOOM = 22; // maplibre default
     const apply = () => {
-      if (!m.getLayer(DARK_LAYER_ID) || !m.getLayer(SATELLITE_LAYER_ID)) return;
-      m.setLayoutProperty(DARK_LAYER_ID, 'visibility', basemap === 'dark' ? 'visible' : 'none');
+      if (!m.getLayer(SATELLITE_LAYER_ID)) return;
+      // Dark basemap layers = everything except the satellite raster and our
+      // dynamically added overlays (route line etc. keep their visibility).
+      const darkLayerIds = m.getStyle().layers
+        .map((l) => l.id)
+        .filter((id) => id !== SATELLITE_LAYER_ID && !id.startsWith('blacktop-'));
+      for (const id of darkLayerIds) {
+        m.setLayoutProperty(id, 'visibility', basemap === 'dark' ? 'visible' : 'none');
+      }
       m.setLayoutProperty(SATELLITE_LAYER_ID, 'visibility', basemap === 'satellite' ? 'visible' : 'none');
       if (basemap === 'satellite') {
         m.setMaxZoom(SAT_MAX_ZOOM);
