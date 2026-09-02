@@ -170,7 +170,7 @@ function drawLandmark(
 
 // ── Component ───────────────────────────────────────────────────────
 
-export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleChange, className }: Props) {
+export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLights = {}, onScaleChange, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotRef = useRef<[number, number]>([0, -15]);
   const scaleRef = useRef(1.0);
@@ -181,13 +181,18 @@ export function WorldGlobe({ accentColor, events, countryLights = {}, onScaleCha
   const isDragRef = useRef(false);
   const pinchRef = useRef(0);
   const rafRef = useRef(0);
-  const eventsRef = useRef(events);
-  eventsRef.current = events;
+  const landmarksRef = useRef(landmarks);
+  landmarksRef.current = landmarks;
+  const hitsRef = useRef<{ id: string; x: number; y: number; w: number; h: number }[]>([]);
+  const onSelectRef = useRef(onLandmarkSelect);
+  onSelectRef.current = onLandmarkSelect;
+  const downPtRef = useRef({ x: 0, y: 0 });
   const countryLightsRef = useRef(countryLights);
   countryLightsRef.current = countryLights;
   const onScaleChangeRef = useRef(onScaleChange);
   onScaleChangeRef.current = onScaleChange;
   const lastReportedScaleRef = useRef(1.0);
+
 
   // Radar overlay state (all mutable refs — no re-renders needed)
   const radarSrcRef = useRef<Uint8ClampedArray | null>(null);     // 256×256 RGBA from RainViewer zoom-0 tile
