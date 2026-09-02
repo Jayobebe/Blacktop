@@ -147,7 +147,7 @@ export default function Stats() {
 
 
 
-          <div className="grid grid-cols-2 landscape:grid-cols-1 gap-2">
+          <div className="flex flex-col gap-2">
             {statCards.map((stat, index) => (
               <div
                 key={stat.label}
