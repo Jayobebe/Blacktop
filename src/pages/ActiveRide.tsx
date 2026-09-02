@@ -762,7 +762,7 @@ export default function ActiveRide() {
 
       {/* Main content area - vertical in portrait, horizontal in landscape */}
       <div className={cn(
-        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-hidden",
+        "flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 min-h-0 overflow-y-auto",
         // Center content in landscape when solo or when convoy members panel is collapsed
         (!rideState.isConvoyMode || !showMembers) && "landscape:justify-center"
       )}>
@@ -802,28 +802,31 @@ export default function ActiveRide() {
             </div>
             <p className="text-muted-foreground text-base landscape:text-sm -mt-3">{getSpeedLabel(settings.speedUnit)}</p>
             
-            {/* Lean Angle Bar - below speed when enabled */}
-            {settings.leanAngleEnabled && (
-              <div className="mt-2 landscape:mt-1">
-                <LeanAngleBar 
-                  currentLean={leanAngle.currentLean}
-                  maxLean={leanAngle.maxLean}
-                  threshold={settings.leanAngleThreshold}
-                  onReset={() => {
-                    leanAngle.calibrate();
-                    toast.success('Lean sensor zeroed', { duration: 1500 });
-                  }}
-                />
-                {leanAngle.isCalibrated && (
-                  <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+            {/* Lean Angle Bar + G-Force Gauge - stacked in portrait, side-by-side in landscape to save vertical space */}
+            {(settings.leanAngleEnabled || (settings.gForceEnabled && gForce.isSupported)) && (
+              <div className="mt-2 landscape:mt-1 flex flex-col landscape:flex-row landscape:items-center landscape:justify-center landscape:gap-6">
+                {settings.leanAngleEnabled && (
+                  <div>
+                    <LeanAngleBar 
+                      currentLean={leanAngle.currentLean}
+                      maxLean={leanAngle.maxLean}
+                      threshold={settings.leanAngleThreshold}
+                      onReset={() => {
+                        leanAngle.calibrate();
+                        toast.success('Lean sensor zeroed', { duration: 1500 });
+                      }}
+                    />
+                    {leanAngle.isCalibrated && (
+                      <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
 
-            {/* G-Force Gauge - alongside lean angle when enabled */}
-            {settings.gForceEnabled && gForce.isSupported && (
-              <div className="mt-2 landscape:mt-1 flex justify-center">
-                <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+                {settings.gForceEnabled && gForce.isSupported && (
+                  <div className="mt-2 landscape:mt-0 flex justify-center">
+                    <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+                  </div>
+                )}
               </div>
             )}
           </div>
