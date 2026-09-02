@@ -15,6 +15,12 @@ import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
 import { Receipt, Sparkles, Lock } from 'lucide-react';
 
+interface FeatureCard {
+  icon: React.ElementType;
+  label: string;
+  text: string;
+}
+
 interface Feature {
   id: string;
   title: string;
@@ -23,7 +29,9 @@ interface Feature {
   icon: React.ElementType;
   color: string;
   mockup: React.ReactNode;
+  cards?: FeatureCard[];
 }
+
 
 export default function DemoShowcase() {
   const navigate = useNavigate();
