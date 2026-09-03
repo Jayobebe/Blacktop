@@ -180,6 +180,23 @@ export default function DemoShowcase() {
       ],
     },
     {
+      id: 'make-it-yours',
+      title: 'Make It Yours',
+      subtitle: 'Settings, Display & Support',
+      description: 'Eight accent colours, your units, your speed alert thresholds — plus a car-display layout for wired mirroring and an install-to-home-screen build.',
+      icon: Settings,
+      color: 'accent',
+      mockup: <PersonaliseMockup />,
+      cards: [
+        { icon: Palette, label: 'Accent Colours', text: 'Eight themes that recolour speed, dots and gauges app-wide.' },
+        { icon: Ruler, label: 'Units & Alerts', text: 'MPH or KPH, miles or km, plus amber and red speed thresholds.' },
+        { icon: MonitorSmartphone, label: 'Car Display', text: 'Oversized landscape layout for wired Android head-unit mirroring.' },
+        { icon: Download, label: 'Install App', text: 'Add Blacktop to your home screen for a full-screen, offline-ready ride.' },
+        { icon: Play, label: 'Demo Data', text: 'Hold the logo in settings to preview the app with sample stats.' },
+        { icon: Heart, label: 'Tip Jar', text: 'No ads, no subscription — support the app only if you want to.' },
+      ],
+    },
+    {
       id: 'privacy',
       title: 'Burn Button',
       subtitle: 'Your Data, Your Control',
