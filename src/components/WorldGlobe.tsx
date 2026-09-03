@@ -35,7 +35,7 @@ export interface WorldLandmark {
   lng: number;
   label: string;
   /** Visual glyph drawn on the pin. */
-  kind: 'convoys' | 'leaderboard' | 'join' | 'qr';
+  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade';
 }
 
 interface Props {
@@ -72,6 +72,20 @@ function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], c
     ctx.fillRect(1.5, -4.5, 3, 3);
     ctx.fillRect(-4.5, 1.5, 3, 3);
     ctx.fillRect(1.8, 1.8, 2.2, 2.2);
+  } else if (kind === 'arcade') {
+    // gamepad: body + d-pad + button
+    ctx.beginPath();
+    (ctx as CanvasRenderingContext2D & { roundRect?: (...a: number[]) => void }).roundRect
+      ? ctx.roundRect(-5, -3, 10, 6, 3)
+      : ctx.rect(-5, -3, 10, 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-3, -0.8); ctx.lineTo(-1, -0.8);
+    ctx.moveTo(-2, -1.8); ctx.lineTo(-2, 0.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(2.4, -0.8, 0.9, 0, Math.PI * 2);
+    ctx.fill();
   } else {
     // plus sign
     ctx.beginPath();

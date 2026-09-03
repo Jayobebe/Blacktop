@@ -22,6 +22,7 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'leaderboard', lat: 35.68, lng: 139.69, label: 'Crew Leaderboards', kind: 'leaderboard', route: '/crew/leaderboard' },
   { id: 'join', lat: 34.05, lng: -118.24, label: 'Join Crew', kind: 'join', route: '/crew/join' },
   { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
+  { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
 ];
 
 const countriesGeo = feature(
@@ -33,6 +34,7 @@ export default function World() {
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);
   const [showCrewQr, setShowCrewQr] = useState(false);
+  const [showArcade, setShowArcade] = useState(false);
   const crew = useCrew();
   const { settings } = useSettings();
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
@@ -84,6 +86,10 @@ export default function World() {
   const openLandmark = (id: string) => {
     if (id === 'crewqr') {
       setShowCrewQr(true);
+      return;
+    }
+    if (id === 'arcade') {
+      setShowArcade(true);
       return;
     }
     const target = CREW_LANDMARKS.find((l) => l.id === id);
@@ -152,10 +158,22 @@ export default function World() {
         <CollectedCardsFolder />
       </div>
 
-      {/* Arcade */}
-      <div className="flex-shrink-0">
-        <ArcadeLobby />
-      </div>
+      {/* Arcade — opened from the globe landmark */}
+      {showArcade && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border/40 bg-card p-2 relative">
+            <button
+              type="button"
+              onClick={() => setShowArcade(false)}
+              className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-secondary/60"
+              aria-label="Close arcade"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <ArcadeLobby />
+          </div>
+        </div>
+      )}
 
       {/* Crew QR — mates scan this to join your crew */}
       {showCrewQr && (
