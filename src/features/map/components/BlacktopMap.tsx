@@ -207,7 +207,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [isRouting, setIsRouting] = useState(false);
   // Weather-avoidance detour via point, applied on top of the rider's own stops.
   const [weatherVia, setWeatherVia] = useState<{ lat: number; lng: number } | null>(null);
-  const [weatherBusy, setWeatherBusy] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const [showSaveUI, setShowSaveUI] = useState(false);
   const [saveName, setSaveName] = useState('');
@@ -977,14 +976,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           label: 'Dry route',
           onClick: async () => {
             if (!userLocation) return;
-            setWeatherBusy(true);
+            toast.loading('Finding a drier line…', { id: 'dry-route' });
             const dry = await findDryRoute(
               userLocation,
               { lat: destination.lat, lng: destination.lng },
               isSolo ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng })) : [],
               worst,
             );
-            setWeatherBusy(false);
+            toast.dismiss('dry-route');
             if (!dry) {
               toast.error('No clearer route found from here');
               return;
