@@ -86,6 +86,17 @@ function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], c
     ctx.beginPath();
     ctx.arc(2.4, -0.8, 0.9, 0, Math.PI * 2);
     ctx.fill();
+  } else if (kind === 'challenge') {
+    // chequered flag on a pole
+    ctx.beginPath();
+    ctx.moveTo(-3.6, -4.5); ctx.lineTo(-3.6, 4.5);
+    ctx.stroke();
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 3; c++) {
+        if ((r + c) % 2 === 0) ctx.fillRect(-3.2 + c * 2.2, -4.2 + r * 2.2, 2.2, 2.2);
+      }
+    }
+    ctx.strokeRect(-3.2, -4.2, 6.6, 4.4);
   } else {
     // plus sign
     ctx.beginPath();
