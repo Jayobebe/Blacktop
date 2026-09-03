@@ -734,9 +734,9 @@ export default function Lobby() {
                     // Loop via points become convoy stops; the ride finishes
                     // back at the leader's current position.
                     for (const [i, stop] of loop.stops.slice(0, 5).entries()) {
-                      await addWaypoint({ name: `Loop point ${i + 1}`, lat: stop.lat, lng: stop.lng });
+                      await addWaypoint({ name: `Loop point ${i + 1}`, address: '', lat: stop.lat, lng: stop.lng });
                     }
-                    setDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish' });
+                    setDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish', address: '' });
                     toast.success('Twisty loop set for the convoy');
                   } : undefined}
                 />

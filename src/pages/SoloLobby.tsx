@@ -208,9 +208,10 @@ export default function SoloLobby() {
                   lat: s.lat,
                   lng: s.lng,
                   name: `Loop point ${i + 1}`,
+                  address: '',
                 })),
               );
-              handleSetDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish' });
+              handleSetDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish', address: '' });
               toast.success('Twisty loop ready');
             }}
           />
