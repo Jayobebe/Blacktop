@@ -45,6 +45,9 @@ export interface AppSettings {
   rideOverlayEnabled: boolean;
   // Mix convoy voice-channel audio into the recorded ride overlay MP4.
   voiceRecordingEnabled: boolean;
+  // Car Display — oversized, low-chrome Active Ride layout for wired
+  // phone-mirroring head units (Android USB/HDMI mirroring).
+  carDisplayEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -80,6 +83,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   flyoverEnabled: false,
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,
+  carDisplayEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
