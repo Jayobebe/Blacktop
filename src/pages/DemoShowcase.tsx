@@ -177,7 +177,7 @@ export default function DemoShowcase() {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
-      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, crew QR joining, your card collection and the arcade — with an anonymous glow showing where riders are active.',
+      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection and the arcade — with an anonymous glow showing where riders are active.',
       icon: Globe2,
       color: 'accent',
       mockup: <BlacktopWorldMockup />,
