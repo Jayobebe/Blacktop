@@ -328,7 +328,9 @@ export function DestinationSearch({
   userLocation: externalUserLocation,
   countryCode: externalCountryCode,
   distanceUnit = 'km',
+  onApplyLoop,
 }: DestinationSearchProps) {
+  const [showLoopPlanner, setShowLoopPlanner] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -669,7 +671,36 @@ export function DestinationSearch({
             <span className="text-xs font-medium">{cat.label}</span>
           </button>
         ))}
+        {onApplyLoop && (
+          <button
+            onClick={() => setShowLoopPlanner(true)}
+            aria-label="Plan a twisty loop"
+            className={cn(
+              "flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border transition-all",
+              "active:scale-95",
+              showLoopPlanner
+                ? "bg-accent text-accent-foreground border-accent"
+                : "bg-card border-border hover:bg-muted"
+            )}
+          >
+            <Repeat className="w-4 h-4" />
+            <span className="text-xs font-medium">Twisty</span>
+          </button>
+        )}
       </div>
+
+      {onApplyLoop && showLoopPlanner && (
+        <div className="fixed inset-0 z-[80] bg-background/80 backdrop-blur-sm">
+          <LoopPlannerPanel
+            userLocation={userLocation ?? null}
+            onClose={() => setShowLoopPlanner(false)}
+            onApply={(loop) => {
+              setShowLoopPlanner(false);
+              onApplyLoop(loop);
+            }}
+          />
+        </div>
+      )}
 
       {/* Search input */}
       <div ref={inputWrapRef} className="flex gap-2">
