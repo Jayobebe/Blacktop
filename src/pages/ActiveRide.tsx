@@ -180,6 +180,19 @@ export default function ActiveRide() {
   // Update ref on each render to avoid stale closures
   rideStateRef.current = rideState;
 
+  // Backing out of Active Ride during a convoy returns the rider to the lobby
+  // (not Home), so they can rejoin the running ride from there.
+  useEffect(() => {
+    if (!rideState.isConvoyMode || !convoy.isActive) return;
+    window.history.pushState({ btRideGuard: true }, '');
+    const onPop = () => {
+      navigate('/lobby', { replace: true });
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [rideState.isConvoyMode, convoy.isActive, navigate]);
+
+
   // Save pending badges once savedRideId becomes available
   useEffect(() => {
     if (savedRideId && pendingBadges.length > 0) {
