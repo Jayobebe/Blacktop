@@ -27,7 +27,7 @@ interface UserLocation {
 export default function Lobby() {
   const navigate = useNavigate();
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
-  const { startRide } = useActiveRide(convoy.id);
+  const { startRide, rideState } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { settings } = useSettings();
@@ -932,6 +932,12 @@ export default function Lobby() {
                 return;
               }
 
+              // A ride is already running for this rider — just rejoin it.
+              if (rideState.isActive) {
+                navigate('/ride');
+                return;
+              }
+
               // Individual start - just this member
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
@@ -1002,10 +1008,10 @@ export default function Lobby() {
             }}
             size="sm"
             className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-            title={convoy.isLeader ? 'Tap to start your ride, hold to start for all' : 'Start your ride'}
+            title={rideState.isActive ? 'Return to your active ride' : convoy.isLeader ? 'Tap to start your ride, hold to start for all' : 'Start your ride'}
           >
             <Play className="w-3.5 h-3.5 mr-1.5" />
-            Start Ride
+            {rideState.isActive ? 'Return to Ride' : 'Start Ride'}
           </Button>
         )}
       </div>
