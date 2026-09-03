@@ -49,3 +49,42 @@ export async function fetchRouteThroughStops(
     return null;
   }
 }
+
+export type LoopVibe = 'curvy' | 'scenic' | 'relaxed';
+
+export interface LoopRouteResult extends RouteResult {
+  /** Generated via points, in ride order (start/end is the rider's location). */
+  stops: { lat: number; lng: number }[];
+  /** Degrees of heading change per km — higher means twistier. */
+  curviness: number;
+  vibe: LoopVibe;
+}
+
+// Generates a round-trip "give me a 90-minute loop" ride from the rider's
+// position: the backend builds a few candidate loops through OSRM and returns
+// the one that best matches the requested vibe and distance.
+export async function generateLoopRoute(
+  start: { lat: number; lng: number },
+  distanceKm: number,
+  vibe: LoopVibe,
+): Promise<LoopRouteResult | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('place-search', {
+      body: { kind: 'loop', lat: start.lat, lng: start.lng, distanceKm, vibe },
+    });
+    if (error) throw error;
+    const geometry = data?.geometry as RouteLineString | undefined;
+    if (!geometry?.coordinates?.length || typeof data.distance !== 'number') return null;
+    return {
+      geometry,
+      distanceMeters: data.distance,
+      durationSeconds: data.duration,
+      stops: Array.isArray(data.stops) ? data.stops : [],
+      curviness: typeof data.curviness === 'number' ? data.curviness : 0,
+      vibe: data.vibe ?? vibe,
+    };
+  } catch (err) {
+    console.error('Loop generation failed:', err);
+    return null;
+  }
+}
