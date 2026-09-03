@@ -84,6 +84,9 @@ export default function DemoShowcase() {
         { icon: MapIcon, label: 'Blacktop Maps', text: 'Built-in routing with live convoy dots coloured by accent.' },
         { icon: Route, label: 'Multi-Stop Routes', text: 'Add, reorder and skip waypoints mid-ride, up to five at a time.' },
         { icon: Eye, label: 'Camera Alerts', text: 'Speed and ANPR cameras on your route, flagged as you approach.' },
+        { icon: Mountain, label: 'Satellite & 3D', text: 'Toggle satellite imagery or a 3D terrain and building view.' },
+        { icon: CloudRain, label: 'Weather Radar', text: 'Optional live rain overlay so you can dodge the downpour.' },
+        { icon: Navigation, label: 'Hand-Off', text: 'Send the route to Google, Apple or Waze and keep tracking.' },
       ],
     },
     {
