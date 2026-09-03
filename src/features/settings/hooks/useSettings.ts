@@ -75,6 +75,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   blacktopWorldEnabled: false,
   trafficCamerasEnabled: false,
   weatherOverlayEnabled: true,
+  flyoverEnabled: true,
+  rideOverlayEnabled: true,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

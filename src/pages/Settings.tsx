@@ -622,8 +622,8 @@ export default function Settings() {
           )}
         </CollapsibleSection>
 
-         {/* Convoy Display Section */}
-         <CollapsibleSection icon={Users} label="Convoy Data" delayClass="delay-200">
+         {/* Ride Metrics Section */}
+         <CollapsibleSection icon={Users} label="Ride Metrics" delayClass="delay-200">
            <div className="flex items-center justify-between">
              <div>
                <p className="text-sm font-medium">Show Convoy Metrics</p>
@@ -632,6 +632,26 @@ export default function Settings() {
              <Switch 
                checked={settings.showSpeedRankings} 
                onCheckedChange={toggleSpeedRankings}
+             />
+           </div>
+           <div className="flex items-center justify-between mt-4">
+             <div>
+               <p className="text-sm font-medium">3D Ride Flyover</p>
+               <p className="text-[10px] text-muted-foreground">3D route overview button in ride history</p>
+             </div>
+             <Switch
+               checked={settings.flyoverEnabled}
+               onCheckedChange={() => updateSetting('flyoverEnabled', !settings.flyoverEnabled)}
+             />
+           </div>
+           <div className="flex items-center justify-between mt-4">
+             <div>
+               <p className="text-sm font-medium">Ride Overlay</p>
+               <p className="text-[10px] text-muted-foreground">Recorded overlay download in ride history</p>
+             </div>
+             <Switch
+               checked={settings.rideOverlayEnabled}
+               onCheckedChange={() => updateSetting('rideOverlayEnabled', !settings.rideOverlayEnabled)}
              />
            </div>
          </CollapsibleSection>
