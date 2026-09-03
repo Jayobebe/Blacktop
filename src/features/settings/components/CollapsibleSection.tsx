@@ -34,7 +34,7 @@ export function CollapsibleSection({
   return (
     <section
       className={cn(
-        'glass-tile rounded-2xl animate-slide-up overflow-hidden',
+        'bg-card/50 rounded-2xl border border-border/30 animate-slide-up overflow-hidden',
         open && !isActionHeader && 'col-span-2',
         delayClass,
         className,
@@ -51,10 +51,10 @@ export function CollapsibleSection({
         }}
         className="w-full flex items-center gap-2 px-4 landscape:px-3 h-14 landscape:h-12 text-left"
       >
-        {Icon && <Icon className={cn('w-4 h-4 shrink-0 transition-colors', open ? 'text-accent' : 'text-[hsl(var(--chrome-text))]', iconClassName)} />}
+        {Icon && <Icon className={cn('w-4 h-4 text-muted-foreground shrink-0', iconClassName)} />}
         <p
           className={cn(
-            'chrome-label flex-1 truncate',
+            'text-[10px] text-muted-foreground uppercase tracking-widest flex-1 truncate',
             labelClassName,
           )}
         >
@@ -65,8 +65,8 @@ export function CollapsibleSection({
         ) : (
           <ChevronDown
             className={cn(
-              'w-4 h-4 shrink-0 transition-transform',
-              open ? 'rotate-180 text-accent' : 'text-[hsl(var(--chrome-text))]',
+              'w-4 h-4 text-accent transition-transform shrink-0',
+              open && 'rotate-180',
             )}
           />
         )}

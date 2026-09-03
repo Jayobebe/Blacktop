@@ -263,7 +263,7 @@ export default function Home() {
       {/* Header */}
       <header className="flex items-center justify-between mb-4 landscape:mb-2 animate-fade-in">
         <div>
-          <p className="chrome-label mb-1 landscape:hidden">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
             Welcome back
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{profile.name}</h1>
@@ -283,13 +283,13 @@ export default function Home() {
           ].map((stat, i) => (
             <div 
               key={stat.label}
-              className="glass-tile rounded-2xl p-2 md:p-3 animate-scale-in"
+              className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <p className="chrome-label text-[9px] md:text-[10px] mb-1 opacity-80">{stat.label}</p>
-              <p className="stat-numeric text-lg md:text-xl leading-none">
+              <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
+              <p className="text-base md:text-lg font-mono font-bold tracking-tighter leading-tight">
                 {stat.value}
-                {stat.unit && <span className="text-[10px] md:text-xs text-[hsl(var(--chrome-text))] ml-0.5 font-medium">{stat.unit}</span>}
+                {stat.unit && <span className="text-[10px] md:text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
               </p>
             </div>
           ))}
@@ -331,7 +331,7 @@ export default function Home() {
           <button
             ref={joinTileRef}
             onClick={() => navigate('/join-convoy')}
-            className="flex-1 glass-tile hover:bg-[hsl(var(--liquid-surface-strong))] rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
           >
             <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
               <UserPlus className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />

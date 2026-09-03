@@ -4,46 +4,46 @@
 
 @layer base {
   :root {
-    /* Noir + Chrome palette */
-    --background: 240 8% 4%;
-    --foreground: 220 10% 97%;
+    /* Sonoma-inspired dark palette */
+    --background: 220 15% 6%;
+    --foreground: 220 10% 98%;
 
-    --card: 240 6% 8%;
-    --card-foreground: 220 10% 97%;
+    --card: 220 15% 10%;
+    --card-foreground: 220 10% 98%;
 
-    --popover: 240 7% 6%;
-    --popover-foreground: 220 10% 97%;
+    --popover: 220 15% 8%;
+    --popover-foreground: 220 10% 98%;
 
-    --primary: 220 10% 97%;
-    --primary-foreground: 240 8% 4%;
+    --primary: 220 10% 98%;
+    --primary-foreground: 220 15% 6%;
 
-    --secondary: 240 5% 11%;
-    --secondary-foreground: 220 8% 88%;
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 220 10% 90%;
 
-    --muted: 240 5% 14%;
-    --muted-foreground: 220 7% 58%;
+    --muted: 220 12% 18%;
+    --muted-foreground: 220 10% 55%;
 
-    /* Warm orange-yellow accent - reserved for live / active / primary signal */
+    /* Warm orange-yellow accent - Apple-like vibrant but sophisticated */
     --accent: 38 95% 55%;
-    --accent-foreground: 240 8% 4%;
+    --accent-foreground: 220 15% 6%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     /* True amber/yellow - clearly distinct from orange accent */
     --warning: 48 100% 50%;
-    --warning-foreground: 240 8% 4%;
+    --warning-foreground: 220 15% 6%;
 
-    --border: 240 5% 15%;
-    --input: 240 6% 10%;
+    --border: 220 12% 18%;
+    --input: 220 15% 12%;
     --ring: 38 95% 55%;
 
     --radius: 1rem;
 
     /* Glass effect colors */
-    --glass-bg: 240 6% 8% / 0.72;
-    --glass-border: 220 12% 70% / 0.14;
-    --glass-shine: 0 0% 100% / 0.06;
+    --glass-bg: 220 15% 10% / 0.7;
+    --glass-border: 220 15% 25% / 0.3;
+    --glass-shine: 220 15% 100% / 0.05;
 
     /* Blacktop specific */
     --burn: 15 85% 52%;
@@ -51,53 +51,22 @@
     --speed-active: 38 95% 55%;
     --voice-active: 200 100% 60%;
     --ptt-active: 38 95% 55%;
-    --ptt-inactive: 240 5% 18%;
+    --ptt-inactive: 220 15% 22%;
 
     /* High contrast for sunlight */
-    --contrast-high: 0 0% 100%;
-    --contrast-low: 220 8% 68%;
+    --contrast-high: 220 10% 100%;
+    --contrast-low: 220 10% 65%;
 
-    /* Shadows - deeper, blacker, tighter */
-    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.4);
-    --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.45);
-    --shadow-md: 0 4px 16px hsl(0 0% 0% / 0.5);
-    --shadow-lg: 0 8px 32px hsl(0 0% 0% / 0.55);
-    --shadow-xl: 0 16px 48px hsl(0 0% 0% / 0.6);
-    --shadow-glow: 0 0 40px hsl(38 95% 55% / 0.22);
+    /* Shadows - softer, more sophisticated */
+    --shadow-xs: 0 1px 2px hsl(220 15% 0% / 0.15);
+    --shadow-sm: 0 2px 8px hsl(220 15% 0% / 0.2);
+    --shadow-md: 0 4px 16px hsl(220 15% 0% / 0.25);
+    --shadow-lg: 0 8px 32px hsl(220 15% 0% / 0.3);
+    --shadow-xl: 0 16px 48px hsl(220 15% 0% / 0.35);
+    --shadow-glow: 0 0 40px hsl(38 95% 55% / 0.25);
     --shadow-burn: 0 0 50px hsl(15 90% 50% / 0.35);
-    --shadow-inset: inset 0 1px 0 hsl(0 0% 100% / 0.06);
-
-    /* ---- Noir base + chrome edge system ---- */
-    --frost-deep: 240 9% 3%;
-    --frost-mid: 240 6% 8%;
-    --frost-silver: 220 7% 60%;
-    --frost-tyre-opacity: 0.028;
-
-    /* Chrome: edge light. Top edge catches light, bottom edge falls to black. */
-    --chrome-bright: 220 10% 90% / 0.40;
-    --chrome-edge: 220 10% 82% / 0.20;
-    --chrome-dim: 220 10% 70% / 0.09;
-    --chrome-text: 220 8% 66%;
-
-    /* Three elevations — page < tile < control */
-    --surface-1: 240 7% 6% / 0.55;
-    --surface-2: 240 6% 9% / 0.66;
-    --surface-3: 240 6% 12% / 0.82;
-
-    /* Restrained depth: clarity over frost */
-    --liquid-tint: 240 6% 12%;
-    --liquid-surface: var(--surface-2);
-    --liquid-surface-strong: var(--surface-3);
-    --liquid-stroke: var(--chrome-edge);
-    --liquid-highlight: 0 0% 100% / 0.07;
-    --liquid-blur: 12px;
-    --liquid-blur-sm: 8px;
-    --shadow-liquid: 0 12px 28px -14px hsl(0 0% 0% / 0.85);
-    --shadow-liquid-inset:
-      inset 0 1px 0 hsl(var(--chrome-bright)),
-      inset 0 -1px 0 hsl(0 0% 0% / 0.45);
+    --shadow-inset: inset 0 1px 0 hsl(220 15% 100% / 0.05);
   }
-
 }
 
 @layer base {
@@ -107,65 +76,18 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
-    font-feature-settings: 'ss01';
+    font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Noir backdrop: near-black wash with a single cool chrome sheen. */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    pointer-events: none;
-    background:
-      radial-gradient(130% 80% at 50% -20%, hsl(var(--frost-silver) / 0.07), transparent 60%),
-      radial-gradient(90% 60% at 108% 108%, hsl(var(--frost-silver) / 0.045), transparent 64%),
-      linear-gradient(180deg, hsl(var(--frost-mid)), hsl(var(--frost-deep)) 62%);
-  }
-
-  /* Whisper-level stylised tyre marks — background only, never under text. */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: var(--frost-tyre-opacity);
-    background-image: repeating-linear-gradient(
-      101deg,
-      hsl(var(--frost-silver) / 1) 0 5px,
-      transparent 5px 17px
-    );
-    -webkit-mask-image:
-      radial-gradient(ellipse 38% 6% at 12% 14%, #000 0%, transparent 74%),
-      radial-gradient(ellipse 30% 5% at 88% 58%, #000 0%, transparent 74%),
-      radial-gradient(ellipse 40% 6% at 46% 94%, #000 0%, transparent 74%);
-    mask-image:
-      radial-gradient(ellipse 38% 6% at 12% 14%, #000 0%, transparent 74%),
-      radial-gradient(ellipse 30% 5% at 88% 58%, #000 0%, transparent 74%),
-      radial-gradient(ellipse 40% 6% at 46% 94%, #000 0%, transparent 74%);
-  }
-
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
   }
-
-  /* Chrome-language focus ring */
-  :focus-visible {
-    outline: none;
-    box-shadow:
-      0 0 0 1px hsl(var(--background)),
-      0 0 0 2.5px hsl(var(--accent) / 0.7);
-    border-radius: inherit;
-  }
-
-
 
   /* Smooth page transitions */
   #root {
@@ -181,130 +103,43 @@
 }
 
 @layer components {
-  /* ---- Noir + chrome surface primitives ----
-     Three elevations. Definition comes from the edge light, not from blur. */
-  .glass-panel {
-    position: relative;
-    background:
-      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 38%),
-      hsl(var(--surface-1));
-    backdrop-filter: blur(var(--liquid-blur)) saturate(120%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(120%);
-    border: 1px solid hsl(var(--chrome-dim));
-    border-top-color: hsl(var(--chrome-edge));
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-liquid), var(--shadow-liquid-inset);
-  }
-
-  .glass-tile {
-    position: relative;
-    background:
-      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 46%),
-      hsl(var(--surface-2));
-    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(115%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(115%);
-    border: 1px solid hsl(var(--chrome-dim));
-    border-top-color: hsl(var(--chrome-edge));
-    border-radius: 1.125rem;
-    box-shadow: var(--shadow-liquid-inset), 0 6px 18px -12px hsl(0 0% 0% / 0.8);
-    transition: background-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .glass-tile:hover {
-    border-top-color: hsl(var(--chrome-bright));
-  }
-
-  /* Physical press: the surface sinks and the edge light moves to the bottom. */
-  .glass-tile:active,
-  .glass-control:active {
-    transform: translateY(0.5px);
-    box-shadow:
-      inset 0 1px 2px hsl(0 0% 0% / 0.5),
-      inset 0 -1px 0 hsl(var(--chrome-edge));
-  }
-
-  .glass-control {
-    background: hsl(var(--surface-3));
-    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(120%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(120%);
-    border: 1px solid hsl(var(--chrome-edge));
-    border-top-color: hsl(var(--chrome-bright));
-    border-radius: 0.875rem;
-    box-shadow: var(--shadow-liquid-inset);
-    transition: background-color 160ms ease, border-color 160ms ease,
-      box-shadow 160ms ease, transform 160ms ease;
-  }
-
-  .glass-control:hover {
-    background: hsl(var(--liquid-tint) / 0.9);
-  }
-
-  /* Hairline: 1px rule that fades out at both ends. */
-  .hairline {
-    height: 1px;
-    border: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      hsl(var(--chrome-edge)) 18%,
-      hsl(var(--chrome-edge)) 82%,
-      transparent
-    );
-  }
-
-  /* Section label: quiet, wide, chrome-grey. */
-  .chrome-label {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: hsl(var(--chrome-text));
-  }
-
-  /* Numerics: the loudest thing on screen. */
-  .stat-numeric {
-    font-family: 'Space Grotesk', sans-serif;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    color: hsl(var(--contrast-high));
-  }
-
-
-  /* Legacy aliases — kept so existing screens inherit the new look. */
+  /* Glass card effect - Sonoma style */
   .glass {
-    @apply glass-panel;
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--shadow-inset), var(--shadow-md);
   }
 
   .glass-subtle {
-    @apply glass-tile;
+    background: hsl(220 15% 10% / 0.5);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid hsl(var(--glass-border));
   }
 
   /* Refined card styles */
   .card-elevated {
-    @apply glass-panel;
+    @apply bg-card rounded-2xl border border-border/50;
+    box-shadow: var(--shadow-md), var(--shadow-inset);
   }
 
   .card-interactive {
-    @apply glass-tile rounded-2xl;
+    @apply bg-card rounded-2xl border border-border/50 transition-all duration-300;
+    box-shadow: var(--shadow-sm);
   }
 
   .card-interactive:hover {
-    border-color: hsl(var(--liquid-stroke));
-    background:
-      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 50%),
-      hsl(var(--liquid-surface-strong));
+    @apply border-border bg-secondary/50;
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
   }
 
   .card-interactive:active {
-    transform: translateY(0) scale(0.995);
+    transform: translateY(0);
+    box-shadow: var(--shadow-xs);
   }
-
 
   /* Button refinements */
   .btn-glass {
@@ -397,14 +232,8 @@
 }
 @layer utilities {
   .font-display {
-    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing: -0.02em;
-  }
-
-  /* Live stats must not jitter as digits change. */
-  .tabular-stat {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum';
   }
 
   .font-mono {
@@ -1075,24 +904,4 @@
 /* Dim non-critical text so the driver's eye lands on speed first */
 .car-display .text-muted-foreground {
   opacity: 0.75;
-}
-
-/* ---- Depth budget ----
-   backdrop-filter is the main GPU cost on mid-range Android during a ride.
-   Drop to opaque surfaces when the device or user asks for less. */
-@media (prefers-reduced-transparency: reduce), (update: slow) {
-  .glass-panel,
-  .glass-tile,
-  .glass-control {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: hsl(var(--card));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .glass-tile,
-  .glass-control {
-    transition: none;
-  }
 }

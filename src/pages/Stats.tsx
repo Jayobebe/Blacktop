@@ -151,21 +151,21 @@ export default function Stats() {
             {statCards.map((stat, index) => (
               <div
                 key={stat.label}
-                className="glass-tile p-4 landscape:p-3 animate-slide-up"
+                className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up"
                 style={{ animationDelay: `${(index + 3) * 60}ms` }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="glass-control p-2.5 flex-shrink-0">
-                    <stat.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-[hsl(var(--chrome-text))]" />
+                  <div className="p-2.5 bg-secondary/50 rounded-xl flex-shrink-0">
+                    <stat.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="chrome-label">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                       {stat.label}
                     </p>
-                    <p className="stat-numeric text-2xl landscape:text-xl break-words mt-0.5">
+                    <p className="font-mono text-xl landscape:text-lg font-bold break-words">
                       {stat.value}
                       {stat.unit && (
-                        <span className="text-xs text-[hsl(var(--chrome-text))] ml-1 font-medium">{stat.unit}</span>
+                        <span className="text-xs text-muted-foreground ml-1 font-normal">{stat.unit}</span>
                       )}
                     </p>
                   </div>
