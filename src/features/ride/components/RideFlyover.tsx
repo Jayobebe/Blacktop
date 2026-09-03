@@ -295,7 +295,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.fillStyle = accentColor;
       ctx.fillRect(0, CANVAS_H - 6, CANVAS_W * progress, 6);
     },
-    [accentColor, drawStatCard, frames.length, memberTracks, ride, rideEndTs, rideStartTs, settings],
+    [accentColor, drawStatCard, frames.length, memberTracks, profile.name, ride, rideEndTs, rideStartTs, settings],
   );
 
   const lastRouteIndexRef = useRef(-1);
