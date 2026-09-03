@@ -5,16 +5,18 @@ import { haptics } from '@/lib/haptics';
 import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera,
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
-  Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
-  Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
-  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon, Globe2, Folder, Gamepad2,
-  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, ArrowLeftRight
+  MapPin, Clock, TrendingUp, Crown, Copy, Check,
+  Eye, Phone, Settings, History, Video,
+  MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
+  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
-import { Receipt, Sparkles, Lock } from 'lucide-react';
+import { Receipt, Sparkles } from 'lucide-react';
+import shopAsset from '@/assets/garage-shop.png.asset.json';
+import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
 interface FeatureCard {
   icon: React.ElementType;
@@ -506,6 +508,20 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
         </button>
       </div>
 
+      {/* Lobby tools */}
+      <div className="grid grid-cols-3 gap-2 animate-slide-up delay-100">
+        {[
+          { icon: QrCode, label: 'QR Join' },
+          { icon: MessageSquare, label: 'Lobby Chat' },
+          { icon: Lock, label: 'Crew Listed' },
+        ].map(({ icon: Icon, label }) => (
+          <div key={label} className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-card/30 border border-border/30">
+            <Icon className="w-4 h-4 text-accent" />
+            <span className="text-[9px] text-muted-foreground">{label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Members Preview */}
       <div className="space-y-2 animate-slide-up delay-200">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
@@ -542,364 +558,11 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
   );
 }
 
-function SoloMockup() {
-  return (
-    <div className="w-full max-w-xs space-y-4">
-      {/* Solo Ride Card */}
-      <div className="bg-card/50 rounded-2xl border border-border/30 p-5 animate-slide-up">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
-            <User className="w-6 h-6 text-accent" />
-          </div>
-          <div>
-            <p className="font-semibold">Solo Ride</p>
-            <p className="text-xs text-muted-foreground">Just you and the road</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          {[
-            { icon: Gauge, label: 'Speed' },
-            { icon: Route, label: 'Distance' },
-            { icon: TrendingUp, label: 'Lean' },
-          ].map(({ icon: Icon, label }, i) => (
-            <div key={label} className="p-2 bg-secondary/50 rounded-lg animate-scale-in" style={{ animationDelay: `${200 + i * 100}ms` }}>
-              <Icon className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-              <span className="text-[10px] text-muted-foreground">{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div className="p-3 bg-destructive/10 rounded-xl border border-destructive/30 animate-fade-in delay-300 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-destructive/20 border border-destructive flex items-center justify-center flex-shrink-0">
-          <AlertTriangle className="w-4 h-4 text-destructive" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-destructive">Rescue ping</p>
-          <p className="text-[10px] text-muted-foreground">Sends your location to Discord</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DiscordMockup() {
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setStep(s => (s + 1) % 3), 1400);
-    return () => clearInterval(t);
-  }, []);
-
-  const messages = [
-    { tag: 'CONVOY', text: '🏍️ Jake started a convoy — code A3F9', tone: 'text-accent' },
-    { tag: 'RESCUE', text: '🚨 Sam needs rescue — maps.google.com/...', tone: 'text-destructive' },
-    { tag: 'SOLO', text: '🚨 You need rescue — maps.google.com/...', tone: 'text-destructive' },
-  ];
-
-  return (
-    <div className="w-full max-w-xs space-y-4">
-      <div className="bg-card/50 rounded-2xl border border-border/30 p-4 animate-slide-up">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-[#5865F2]/20 flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-[#5865F2]" />
-          </div>
-          <div>
-            <p className="font-semibold text-sm">#members</p>
-            <p className="text-[10px] text-muted-foreground">Discord webhook connected</p>
-          </div>
-        </div>
-        <div className="space-y-2">
-          {messages.map((m, i) => (
-            <div
-              key={m.tag}
-              className={cn(
-                "flex items-start gap-2 p-2 rounded-lg border transition-all duration-300",
-                step === i ? "bg-secondary/60 border-border/40 opacity-100" : "bg-secondary/20 border-transparent opacity-50"
-              )}
-            >
-              <span className={cn("text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-background/60", m.tone)}>
-                {m.tag}
-              </span>
-              <p className="text-[11px] text-foreground/90 flex-1">{m.text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
-        <p className="text-xs text-center text-accent">Set up once in Settings → Integrations</p>
-      </div>
-    </div>
-  );
-}
-
-function LeanAngleMockup() {
-  const [lean, setLean] = useState(0);
-  const [maxLean, setMaxLean] = useState(32);
-  const [gForce, setGForce] = useState(1.0);
-  const [maxG, setMaxG] = useState(1.4);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLean(prev => {
-        const newLean = Math.sin(Date.now() / 600) * 38 + (Math.random() - 0.5) * 5;
-        const clamped = Math.max(-45, Math.min(45, newLean));
-        setMaxLean(m => Math.max(m, Math.abs(clamped)));
-        // Cornering G correlates with lean angle: ~1G upright, up to ~1.7G hard lean.
-        const g = 1 + Math.abs(clamped) / 60 + (Math.random() - 0.5) * 0.08;
-        const gClamped = Math.max(0.8, Math.min(1.8, g));
-        setGForce(Number(gClamped.toFixed(2)));
-        setMaxG(m => Math.max(m, gClamped));
-        return Math.round(clamped);
-      });
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
-
-  const leanRotation = (lean / 90) * 90;
-
-  return (
-    <div className="w-full max-w-xs space-y-4 text-center">
-      {/* Lean Arc Visualization */}
-      <div className="relative animate-scale-in">
-        <svg className="w-48 h-24 mx-auto" viewBox="0 0 120 50">
-          {/* Background arc */}
-          <path
-            d="M 10 50 A 50 40 0 0 1 110 50"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinecap="round"
-            className="text-secondary"
-          />
-          {/* Active indicator */}
-          <circle
-            cx={60 + Math.sin(leanRotation * Math.PI / 180) * 45}
-            cy={50 - Math.cos(leanRotation * Math.PI / 180) * 35}
-            r="8"
-            className={cn(
-              "transition-all duration-100",
-              Math.abs(lean) > 35 ? "fill-destructive" : Math.abs(lean) > 25 ? "fill-orange-500" : "fill-accent"
-            )}
-          />
-        </svg>
-        <p className="text-4xl font-mono font-bold mt-2">{Math.abs(lean)}°</p>
-        <p className="text-xs text-muted-foreground">{lean < 0 ? 'Left' : lean > 0 ? 'Right' : 'Upright'}</p>
-      </div>
-
-      {/* Stats */}
-      <div className="flex justify-center gap-3 animate-slide-up delay-200">
-        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
-          <p className="text-xs text-muted-foreground">Max Lean</p>
-          <p className="font-mono text-lg font-semibold text-accent">{maxLean}°</p>
-        </div>
-        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
-          <p className="text-xs text-muted-foreground">G-Force</p>
-          <p className="font-mono text-lg font-semibold text-accent">{gForce.toFixed(2)}G</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">max {maxG.toFixed(2)}</p>
-        </div>
-        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
-          <p className="text-xs text-muted-foreground">Threshold</p>
-          <p className="font-mono text-lg font-semibold text-destructive">40°</p>
-        </div>
-      </div>
-
-      <p className="text-xs text-muted-foreground animate-fade-in delay-300">
-        ⚠️ Glows red when approaching threshold · G-force tracked from accelerometer
-      </p>
-    </div>
-  );
-}
 
 
-function StudioMockup() {
-  return (
-    <div className="w-full max-w-xs space-y-4">
-      {/* Overlay Preview */}
-      <div className="relative aspect-video bg-zinc-800 rounded-xl overflow-hidden animate-scale-in">
-        {/* Fake action cam background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-700 to-zinc-900" />
-        
-        {/* Overlay stats */}
-        <div className="absolute inset-x-0 bottom-0">
-          <div 
-            className="h-8"
-            style={{
-              background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)'
-            }}
-          />
-          <div className="absolute bottom-1.5 inset-x-3 flex justify-between items-end text-white font-mono">
-            <span className="text-[10px]">12.4 mi</span>
-            <div className="text-center">
-              <span className="text-[8px] text-gray-400 block">SPEED</span>
-              <span className="text-lg font-bold">67</span>
-            </div>
-            <span className="text-[10px]">0:23:45</span>
-          </div>
-        </div>
-        
-        {/* Download indicator */}
-        <div className="absolute top-2 right-2 px-2 py-1 bg-accent rounded-lg text-[10px] font-semibold text-accent-foreground flex items-center gap-1">
-          <Video className="w-3 h-3" />
-          MP4
-        </div>
-      </div>
 
-      {/* Steps */}
-      <div className="space-y-2 animate-slide-up delay-200">
-        {[
-          { step: '1', label: 'Ride with your action cam recording' },
-          { step: '2', label: 'Download overlay from ride history' },
-          { step: '3', label: 'Layer in CapCut, Premiere, or DaVinci' },
-        ].map((item, i) => (
-          <div 
-            key={i} 
-            className="flex items-center gap-3 p-2 bg-card/30 rounded-lg animate-slide-up"
-            style={{ animationDelay: `${300 + i * 100}ms` }}
-          >
-            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-accent">
-              {item.step}
-            </div>
-            <span className="text-xs text-muted-foreground">{item.label}</span>
-          </div>
-        ))}
-      </div>
 
-      <p className="text-xs text-muted-foreground text-center animate-fade-in delay-500">
-        🔒 All processing happens on your device
-      </p>
-    </div>
-  );
-}
 
-function VoiceMockup() {
-  const [speaking, setSpeaking] = useState<number | null>(null);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSpeaking(prev => {
-        const options = [null, 0, 1, 2];
-        return options[Math.floor(Math.random() * options.length)];
-      });
-    }, 1200);
-    return () => clearInterval(interval);
-  }, []);
-
-  const members = [
-    { name: 'You', color: 'bg-orange-500' },
-    { name: 'Marcus', color: 'bg-blue-500' },
-    { name: 'Sarah', color: 'bg-pink-500' },
-  ];
-
-  return (
-    <div className="w-full max-w-xs space-y-6">
-      {/* Voice Visualizer */}
-      <div className="flex items-center justify-center gap-1 h-16">
-        {[...Array(12)].map((_, i) => (
-          <div 
-            key={i}
-            className="w-1.5 bg-[hsl(var(--voice-active))] rounded-full transition-all duration-150"
-            style={{ 
-              height: speaking !== null ? `${20 + Math.random() * 40}px` : '8px',
-              opacity: speaking !== null ? 0.8 : 0.3
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Members */}
-      <div className="space-y-2">
-        {members.map((member, i) => (
-          <div 
-            key={member.name}
-            className={cn(
-              "flex items-center gap-3 p-3 rounded-xl transition-all duration-300 animate-slide-up",
-              speaking === i 
-                ? "bg-[hsl(var(--voice-active))]/15 border border-[hsl(var(--voice-active))]/30 shadow-[0_0_20px_hsl(var(--voice-active)/0.2)]" 
-                : "bg-card/30"
-            )}
-            style={{ animationDelay: `${i * 100}ms` }}
-          >
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-              member.color,
-              speaking === i && "ring-2 ring-[hsl(var(--voice-active))]"
-            )}>
-              <span className="text-sm font-semibold text-white">{member.name[0]}</span>
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm">{member.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {speaking === i ? 'Speaking...' : 'Connected'}
-              </p>
-            </div>
-            {speaking === i && (
-              <Volume2 className="w-5 h-5 text-[hsl(var(--voice-active))] animate-pulse-soft" />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Controls hint */}
-      <div className="flex justify-center gap-3 animate-fade-in delay-300">
-        <div className="px-4 py-2 bg-secondary/50 rounded-xl text-xs text-muted-foreground">
-          🎤 Toggle Mute
-        </div>
-        <div className="px-4 py-2 bg-secondary/50 rounded-xl text-xs text-muted-foreground">
-          🔌 Disconnect
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WaypointsMockup() {
-  const waypoints = [
-    { name: 'Gas Station', icon: '⛽', completed: true },
-    { name: 'Mountain Diner', icon: '🍔', completed: false },
-    { name: 'Sunset Point', icon: '🌅', completed: false },
-  ];
-
-  return (
-    <div className="w-full max-w-xs space-y-3">
-      {waypoints.map((wp, i) => (
-        <div 
-          key={wp.name}
-          className={cn(
-            "flex items-center gap-3 p-4 rounded-xl border animate-slide-up",
-            wp.completed 
-              ? "bg-accent/10 border-accent/20" 
-              : "bg-card/50 border-border/30"
-          )}
-          style={{ animationDelay: `${i * 120}ms` }}
-        >
-          <div className="flex items-center justify-center w-10 h-10 text-xl">
-            {wp.icon}
-          </div>
-          <div className="flex-1">
-            <p className={cn(
-              "font-medium text-sm",
-              wp.completed && "text-accent"
-            )}>
-              {wp.name}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {wp.completed ? '✓ Completed' : `Stop ${i + 1}`}
-            </p>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <div className="w-1 h-1 bg-muted-foreground/40 rounded-full" />
-            <div className="w-1 h-1 bg-muted-foreground/40 rounded-full" />
-            <div className="w-1 h-1 bg-muted-foreground/40 rounded-full" />
-          </div>
-        </div>
-      ))}
-      <div className="text-center pt-2 animate-fade-in delay-400">
-        <p className="text-xs text-muted-foreground">Drag handles to reorder</p>
-      </div>
-    </div>
-  );
-}
 
 function MapsMockup() {
   const riders = [
@@ -931,10 +594,31 @@ function MapsMockup() {
           <path d="M44 78 Q 54 54 64 60" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         </svg>
 
+        {/* Weather radar wash */}
+        <div className="absolute top-0 right-0 w-2/3 h-1/2 pointer-events-none opacity-30 bg-[radial-gradient(ellipse_at_top_right,hsl(200_90%_55%/0.5),transparent_65%)]" />
+
         {/* Search bar */}
         <div className="absolute top-2 left-2 right-2 h-7 rounded-full bg-card/90 border border-border/40 flex items-center px-3 animate-fade-in">
           <MapPin className="w-3 h-3 text-muted-foreground mr-1.5" />
           <span className="text-[9px] text-muted-foreground">Search destination...</span>
+        </div>
+
+        {/* Satellite + 3D toggles */}
+        <div className="absolute right-2 top-11 flex flex-col gap-1.5 animate-fade-in delay-100">
+          <div className="w-7 h-7 rounded-lg bg-accent border border-accent flex items-center justify-center shadow">
+            <Mountain className="w-3.5 h-3.5 text-accent-foreground" />
+          </div>
+          <div className="w-7 h-7 rounded-lg bg-card/90 border border-border/40 flex items-center justify-center">
+            <Globe2 className="w-3.5 h-3.5 text-muted-foreground" />
+          </div>
+        </div>
+
+        {/* Camera eyes — red speed, orange ANPR */}
+        <div className="absolute top-[30%] left-[24%] w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/20 border border-red-500/70 flex items-center justify-center animate-scale-in delay-150">
+          <Eye className="w-2.5 h-2.5 text-red-500" />
+        </div>
+        <div className="absolute top-[58%] left-[76%] w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500/20 border border-orange-500/70 flex items-center justify-center animate-scale-in delay-200">
+          <Eye className="w-2.5 h-2.5 text-orange-400" />
         </div>
 
         {/* Convoy member markers — glow cycles to show who's speaking */}
@@ -952,6 +636,20 @@ function MapsMockup() {
           </div>
         ))}
 
+        {/* Waypoint carousel (max 5, horizontal) */}
+        <div className="absolute bottom-10 left-2 right-2 flex gap-1.5 overflow-hidden animate-slide-up delay-200">
+          {['⛽ Fuel', '🍔 Diner', '🌅 Sunset'].map((wp, i) => (
+            <div key={wp} className={cn(
+              'flex items-center gap-1 px-2 py-1 rounded-full border text-[8px] whitespace-nowrap',
+              i === 0 ? 'bg-accent/20 border-accent/40 text-accent' : 'bg-card/90 border-border/40 text-muted-foreground'
+            )}>
+              <span>{wp}</span>
+              <X className="w-2 h-2 opacity-60" />
+            </div>
+          ))}
+          <div className="flex items-center px-1.5 py-1 rounded-full bg-card/90 border border-dashed border-border/50 text-muted-foreground text-[8px]">+</div>
+        </div>
+
         {/* Speed badge */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-card/95 border border-border/40 flex items-baseline gap-1 animate-slide-up delay-200">
           <span className="font-mono font-bold text-sm">58</span>
@@ -960,7 +658,7 @@ function MapsMockup() {
       </div>
 
       <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
-        <p className="text-xs text-center text-accent">Glows in their color when a rider talks</p>
+        <p className="text-xs text-center text-accent">Glows in their color when a rider talks · camera eyes warn you ahead</p>
       </div>
     </div>
   );
@@ -1053,116 +751,7 @@ function RescueMockup() {
   );
 }
 
-function AutoRescueMockup() {
-  const [seconds, setSeconds] = useState(300);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setSeconds((s) => (s <= 1 ? 300 : s - 1));
-    }, 60); // sped-up demo countdown
-    return () => clearInterval(id);
-  }, []);
-
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  const pct = (seconds / 300) * 100;
-
-  return (
-    <div className="w-full max-w-xs space-y-4">
-      {/* Impact card */}
-      <div className="bg-card/50 rounded-2xl border border-border/30 p-4 animate-slide-up">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-destructive/20 flex items-center justify-center animate-pulse">
-            <Zap className="w-5 h-5 text-destructive" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Detected</p>
-            <p className="text-sm font-semibold">
-              <span className="font-mono text-destructive">5.2 G</span> impact · stopped 10s
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Prompt mock */}
-      <div className="bg-card border-2 border-destructive/60 rounded-2xl p-4 shadow-2xl animate-scale-in delay-200">
-        <div className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center mb-2 animate-pulse">
-            <AlertTriangle className="w-6 h-6 text-destructive" />
-          </div>
-          <p className="font-semibold text-sm mb-0.5">Are you okay?</p>
-          <p className="text-[10px] text-muted-foreground mb-3">
-            Rescue fires automatically if no reply
-          </p>
-
-          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden mb-1">
-            <div
-              className="h-full bg-destructive transition-all"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <p className="font-mono text-lg font-bold text-destructive tabular-nums mb-3">
-            {mins}:{secs.toString().padStart(2, '0')}
-          </p>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="h-9 rounded-lg bg-emerald-500/90 text-white text-xs font-semibold flex items-center justify-center">
-              I'm fine
-            </div>
-            <div className="h-9 rounded-lg border border-destructive/60 text-destructive text-xs font-semibold flex items-center justify-center">
-              Send now
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Targets */}
-      <div className="grid grid-cols-2 gap-2 animate-fade-in delay-300">
-        <div className="bg-card/50 rounded-xl border border-border/30 p-2.5 flex items-center gap-2">
-          <Crown className="w-4 h-4 text-accent" />
-          <span className="text-[11px]">Convoy leader</span>
-        </div>
-        <div className="bg-card/50 rounded-xl border border-border/30 p-2.5 flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-accent" />
-          <span className="text-[11px]">Discord webhook</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BadgesMockup() {
-  const badges = [
-    { name: 'Speed Demon', emoji: '⚡', desc: 'Top Speed', color: 'bg-yellow-500/20 border-yellow-500/30' },
-    { name: 'Journeyman', emoji: '🛣️', desc: 'Most Distance', color: 'bg-blue-500/20 border-blue-500/30' },
-    { name: 'Fallback', emoji: '🪨', desc: 'Longest Stationary', color: 'bg-stone-500/20 border-stone-500/30' },
-  ];
-
-  return (
-    <div className="w-full max-w-xs space-y-3">
-      {badges.map((badge, i) => (
-        <div 
-          key={badge.name}
-          className={cn(
-            "flex items-center gap-4 p-4 rounded-2xl border animate-slide-up",
-            badge.color
-          )}
-          style={{ animationDelay: `${i * 150}ms` }}
-        >
-          <div className="text-3xl">{badge.emoji}</div>
-          <div className="flex-1">
-            <p className="font-semibold">{badge.name}</p>
-            <p className="text-xs text-muted-foreground">{badge.desc}</p>
-          </div>
-          <Trophy className="w-5 h-5 text-accent" />
-        </div>
-      ))}
-      <div className="text-center pt-2 animate-fade-in delay-500">
-        <p className="text-xs text-muted-foreground">Earned in convoy rides with 2+ members</p>
-      </div>
-    </div>
-  );
-}
 
 function HistoryMockup() {
   const rides = [
@@ -1201,42 +790,6 @@ function HistoryMockup() {
   );
 }
 
-function StatsMockup() {
-  const { settings } = useSettings();
-  const stats = [
-    { label: 'Total Rides', value: '47' },
-    { label: 'Distance', value: formatDistance(1248, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
-    { label: 'Top Speed', value: String(formatSpeed(112, settings.speedUnit)), unit: getSpeedLabel(settings.speedUnit) },
-    { label: 'Ride Time', value: '32:15' },
-  ];
-
-  return (
-    <div className="w-full max-w-xs">
-      <div className="grid grid-cols-2 gap-3">
-        {stats.map((stat, i) => (
-          <div 
-            key={stat.label}
-            className="bg-card/50 rounded-2xl border border-border/30 p-4 text-center animate-scale-in"
-            style={{ animationDelay: `${i * 100}ms` }}
-          >
-            <p className="text-2xl font-mono font-bold">
-              {stat.value}
-              {stat.unit && <span className="text-sm text-muted-foreground ml-1">{stat.unit}</span>}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 animate-slide-up delay-400">
-        {['⚡ 12', '🛣️ 8', '🪨 5'].map((badge, i) => (
-          <div key={i} className="bg-accent/10 rounded-xl p-2 text-center">
-            <span className="text-sm">{badge}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function BlacktopWorldMockup() {
   return (
@@ -1277,97 +830,7 @@ function BlacktopWorldMockup() {
   );
 }
 
-function CardTradingMockup() {
-  const [flipped, setFlipped] = useState(false);
-  useEffect(() => {
-    const t = setInterval(() => setFlipped((v) => !v), 2400);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div className="w-full max-w-xs space-y-4">
-      <div className="grid grid-cols-2 gap-3 items-center">
-        <div className="rounded-xl border border-border/30 bg-card/40 p-2.5">
-          <div className="flex items-center gap-1.5 mb-2">
-            <Folder className="w-3 h-3 text-accent" />
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground">Collection</span>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="aspect-[5/7] rounded bg-gradient-to-br from-[hsl(45_85%_60%)] to-[hsl(35_70%_25%)]" />
-            <div className="aspect-[5/7] rounded bg-gradient-to-br from-[hsl(190_85%_82%)] to-[hsl(210_55%_28%)]" />
-            <div className="aspect-[5/7] rounded bg-gradient-to-br from-[hsl(220_8%_72%)] to-[hsl(220_10%_30%)]" />
-            <div className="aspect-[5/7] rounded border border-dashed border-border/60 flex items-center justify-center text-muted-foreground text-[10px]">+</div>
-          </div>
-        </div>
 
-        <div className="[perspective:900px] aspect-[5/7]">
-          <div
-            className={cn(
-              'relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]',
-              flipped && '[transform:rotateY(180deg)]',
-            )}
-          >
-            <div className="absolute inset-0 rounded-xl border-2 border-[hsl(45_85%_65%)]/70 bg-gradient-to-br from-[hsl(45_85%_60%)] via-[hsl(40_80%_45%)] to-[hsl(35_70%_25%)] p-2 [backface-visibility:hidden]">
-              <p className="text-[8px] uppercase tracking-widest text-white/70">Your card</p>
-              <p className="text-[10px] font-bold text-white truncate">Gold tier</p>
-            </div>
-            <div className="absolute inset-0 rounded-xl border-2 border-[hsl(45_85%_65%)]/70 bg-gradient-to-br from-[hsl(45_85%_60%)] via-[hsl(40_80%_45%)] to-[hsl(35_70%_25%)] p-2 flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
-              <div className="bg-white p-1.5 rounded">
-                <div className="grid grid-cols-5 grid-rows-5 gap-px w-12 h-12">
-                  {Array.from({ length: 25 }).map((_, i) => (
-                    <div key={i} className={cn('w-full h-full', (i * 7) % 3 === 0 ? 'bg-black' : 'bg-white')} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <p className="text-[10px] text-center text-muted-foreground">
-        Flip a card to share its QR · scan to collect
-      </p>
-    </div>
-  );
-}
-
-function BlacktopArcadeMockup() {
-  const [pulse, setPulse] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setPulse((p) => (p + 1) % 2), 1200);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div className="w-full max-w-xs space-y-3">
-      <div className="flex items-center justify-center gap-2">
-        <Gamepad2 className="w-4 h-4 text-accent" />
-        <span className="text-[10px] tracking-[0.2em] uppercase text-white/60">Blacktop Arcade</span>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col items-center gap-3 py-5 px-3 bg-card/50 border border-border/30 rounded-2xl">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-            <Zap className={cn('w-5 h-5 text-accent transition-transform', pulse === 0 && 'scale-125')} />
-          </div>
-          <div className="text-center">
-            <div className="text-xs font-semibold text-white leading-none">Hit Heavy</div>
-            <div className="text-[9px] text-muted-foreground mt-1">Best: 3.42G</div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-3 py-5 px-3 bg-card/50 border border-border/30 rounded-2xl">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-            <Gauge className={cn('w-5 h-5 text-accent transition-transform', pulse === 1 && 'scale-125')} />
-          </div>
-          <div className="text-center">
-            <div className="text-xs font-semibold text-white leading-none">Petrol Head</div>
-            <div className="text-[9px] text-muted-foreground mt-1">Best: 28s</div>
-          </div>
-        </div>
-      </div>
-      <p className="text-[10px] text-center text-muted-foreground">
-        Pocket games tucked inside Blacktop World
-      </p>
-    </div>
-  );
-}
 
 
 function BurnMockup() {
@@ -1497,203 +960,8 @@ function GarageMockup() {
   );
 }
 
-function MaintenanceMockup() {
-  const { settings } = useSettings();
-  const [chainPct, setChainPct] = useState(15);
-  const [serviced, setServiced] = useState(false);
 
-  useEffect(() => {
-    setChainPct(15);
-    setServiced(false);
-    let p = 15;
-    const interval = setInterval(() => {
-      p += 6;
-      if (p >= 90) {
-        setChainPct(0);
-        setServiced(true);
-        p = 0;
-        setTimeout(() => setServiced(false), 800);
-      } else {
-        setChainPct(p);
-      }
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
 
-  const parts = [
-    { name: 'Chain lube', intervalKm: 500, pct: chainPct, highlight: true },
-    { name: 'Engine oil', intervalKm: 5000, pct: 62, highlight: false },
-    { name: 'Brake pads', intervalKm: 10000, pct: 38, highlight: false },
-  ];
-
-  return (
-    <div className="w-full max-w-xs space-y-3">
-      {parts.map((part, i) => (
-        <div
-          key={part.name}
-          className={cn(
-            "bg-card/50 rounded-xl border p-3 animate-slide-up",
-            part.highlight ? "border-accent/40" : "border-border/30"
-          )}
-          style={{ animationDelay: `${i * 120}ms` }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Wrench className="w-3.5 h-3.5 text-muted-foreground" />
-              <p className="text-sm font-medium">{part.name}</p>
-            </div>
-            <span className="text-[11px] text-muted-foreground font-mono">
-              every {formatDistance(part.intervalKm, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-secondary overflow-hidden">
-            <div
-              className={cn(
-                "h-full transition-all duration-500 ease-out",
-                part.pct >= 80 ? "bg-destructive" : "bg-accent"
-              )}
-              style={{ width: `${part.pct}%` }}
-            />
-          </div>
-          {part.highlight && (
-            <div className="mt-2 flex justify-end">
-              <span className={cn(
-                "text-[10px] px-2 py-0.5 rounded-full border transition-colors",
-                serviced
-                  ? "bg-accent/20 border-accent/40 text-accent"
-                  : "bg-secondary border-border/30 text-muted-foreground"
-              )}>
-                {serviced ? '✓ Serviced — reset' : 'Tap Serviced to reset'}
-              </span>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function BikeAssignmentMockup() {
-  const { settings } = useSettings();
-  const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState('Daily Twin');
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setOpen(true), 700);
-    const t2 = setTimeout(() => { setSelected('Track Toy'); setOpen(false); }, 1900);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
-  const distLabel = getDistanceLabel(settings.distanceUnit);
-  const distValue = formatDistance(45.2, settings.distanceUnit);
-
-  return (
-    <div className="w-full max-w-xs space-y-4">
-      <div className="bg-card/50 rounded-xl border border-border/30 p-4 animate-slide-up">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-medium">Today's Ride</p>
-          <button
-            onClick={() => setOpen(o => !o)}
-            className="flex items-center gap-1 text-xs bg-secondary px-2 py-1 rounded-md border border-border/40"
-          >
-            <Bike className="w-3 h-3 text-accent" />
-            <span className="font-medium">{selected}</span>
-            <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
-          </button>
-        </div>
-        <div className="flex gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Route className="w-3 h-3" /> {distValue} {distLabel}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" /> 1:23:45
-          </span>
-        </div>
-        {open && (
-          <div className="mt-3 rounded-lg border border-border/40 bg-background/80 overflow-hidden animate-fade-in">
-            {['Daily Twin', 'Track Toy'].map(b => (
-              <div
-                key={b}
-                className={cn(
-                  "px-3 py-2 text-xs flex items-center justify-between",
-                  b === selected && "bg-accent/10 text-accent"
-                )}
-              >
-                <span>{b}</span>
-                {b === selected && <Check className="w-3 h-3" />}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-center text-accent animate-pulse">
-        <ChevronDown className="w-5 h-5" />
-      </div>
-
-      <div className="bg-accent/10 rounded-xl border border-accent/30 p-4 animate-slide-up delay-200">
-        <div className="flex items-center gap-2 mb-2">
-          <Bike className="w-4 h-4 text-accent" />
-          <p className="text-sm font-semibold">{selected}</p>
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          +{distValue} {distLabel} added to this vehicle's lifetime stats
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ReceiptMockup() {
-  return (
-    <div className="w-full max-w-[260px] mx-auto animate-receipt-print">
-      <div className="receipt-edge-top" />
-      <div className="receipt relative px-5 py-4 font-receipt text-[--ink]">
-        <div className="text-center mb-2">
-          <div className="text-xl font-bold tracking-[0.18em]">BLACKTOP STORE</div>
-          <div className="text-[10px] tracking-[0.3em] opacity-70 mt-0.5">— RIDE RECEIPT —</div>
-        </div>
-        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
-        <div className="space-y-1 text-xs">
-          {[
-            ['Vehicle', 'Daily Twin'],
-            ['Max Spd', '92 mph'],
-            ['Max Lean', '38°'],
-            ['Distance', '24.6 mi'],
-            ['Duration', '0:47:12'],
-            ['Avg Spd', '31 mph'],
-          ].map(([k, v]) => (
-            <div key={k} className="flex justify-between">
-              <span className="tracking-wider opacity-80">{k}</span>
-              <span className="font-bold">{v}</span>
-            </div>
-          ))}
-        </div>
-        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
-        <div className="grid grid-cols-3 gap-1.5">
-          {[
-            { e: '⚡', l: 'SPEED' },
-            { e: '🛣️', l: 'JOURNEY' },
-            { e: '🏔️', l: 'LEAN' },
-          ].map(b => (
-            <div key={b.l} className="receipt-bracket text-center px-1 py-2">
-              <span className="receipt-bracket-tr" />
-              <span className="receipt-bracket-bl" />
-              <div className="text-base leading-none">{b.e}</div>
-              <div className="text-[8px] font-bold tracking-wider mt-1">{b.l}</div>
-            </div>
-          ))}
-        </div>
-        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
-        <div className="text-center">
-          <div className="text-[10px] tracking-[0.25em]">THANK YOU FOR THE RIDE</div>
-          <div className="receipt-barcode mt-2" aria-hidden />
-        </div>
-      </div>
-      <div className="receipt-edge-bottom" />
-    </div>
-  );
-}
 
 function TradingCardsMockup() {
   const tiers = TIER_LADDER;
