@@ -2,11 +2,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
 import { useGarage } from '@/features/garage';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Video, Download, Check, Film } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box } from 'lucide-react';
 import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import { useState } from 'react';
+import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
 
 export default function RideDetail() {
@@ -17,6 +18,7 @@ export default function RideDetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
   const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
+  const [showFlyover, setShowFlyover] = useState(false);
 
   const ride = rides.find(r => r.id === id);
   const rideBike = ride ? bikes.find(b => b.id === ride.bikeId) ?? null : null;
@@ -257,6 +259,27 @@ export default function RideDetail() {
           </div>
         )}
 
+        {/* 3D Ride Overview */}
+        {(ride.gpsPoints?.length ?? 0) > 1 && (
+          <button
+            onClick={() => setShowFlyover(true)}
+            className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors"
+          >
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                  <Box className="w-5 h-5 text-accent" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-sm">3D Ride Overview</h3>
+                  <p className="text-xs text-muted-foreground">Flyover of your route, downloadable as MP4</p>
+                </div>
+              </div>
+              <Download className="w-5 h-5 text-accent" />
+            </div>
+          </button>
+        )}
+
         {/* Download Overlay Section - show if overlay was recorded */}
         {(ride.overlayAvailable || ride.overlayBlobUrl) && (
           <button
@@ -376,5 +399,6 @@ export default function RideDetail() {
         )}
       </div>
     </div>
+      {showFlyover && <RideFlyover ride={ride} onClose={() => setShowFlyover(false)} />}
   );
 }
