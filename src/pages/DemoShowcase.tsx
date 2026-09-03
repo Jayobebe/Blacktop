@@ -43,9 +43,8 @@ export default function DemoShowcase() {
   const [animationKey, setAnimationKey] = useState(0);
 
   // Animated values for mockups
-  const [speed, setSpeed] = useState(0);
-  const [distance, setDistance] = useState(0);
   const [copied, setCopied] = useState(false);
+
 
   const features: Feature[] = [
     {
@@ -98,7 +97,7 @@ export default function DemoShowcase() {
       description: 'Big, glove-friendly GPS readouts backed by your phone\'s gyroscope and accelerometer for real-time lean angle and cornering G.',
       icon: Gauge,
       color: 'speed-active',
-      mockup: <TrackingMockup speed={speed} distance={distance} />,
+      mockup: <TrackingMockup />,
       cards: [
         { icon: Gauge, label: 'Speed & Distance', text: 'Real-time GPS speed, distance and duration at a glance.' },
         { icon: TrendingUp, label: 'Lean & G-Force', text: 'Max lean each way, peak G, and warnings near your threshold.' },
@@ -223,30 +222,12 @@ export default function DemoShowcase() {
   const currentFeature = features[currentIndex];
   const progress = ((currentIndex + 1) / features.length) * 100;
 
-  // Animate speed/distance for tracking mockup
-  useEffect(() => {
-    if (currentFeature.id !== 'tracking') return;
-    
-    const interval = setInterval(() => {
-      setSpeed(prev => {
-        const newSpeed = Math.max(45, Math.min(88, prev + (Math.random() - 0.4) * 8));
-        return Math.round(newSpeed);
-      });
-      setDistance(prev => prev + 0.03);
-    }, 400);
-
-    return () => clearInterval(interval);
-  }, [currentFeature.id]);
-
   // Reset states when changing features
   useEffect(() => {
     setCopied(false);
     setAnimationKey(prev => prev + 1);
-    if (currentFeature.id === 'tracking') {
-      setSpeed(62);
-      setDistance(4.2);
-    }
   }, [currentIndex]);
+
 
   const goNext = useCallback(() => {
     if (currentIndex >= features.length - 1 || isTransitioning) return;
@@ -483,8 +464,14 @@ function IntroMockup() {
 }
 
 function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+  const [speaking, setSpeaking] = useState(1);
+  useEffect(() => {
+    const interval = setInterval(() => setSpeaking(p => (p + 1) % 4), 1400);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <div className="w-full max-w-xs space-y-4">
+
       {/* Code Card */}
       <div className="bg-card/50 rounded-2xl border border-border/30 p-5 animate-slide-up">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center mb-3">
@@ -536,12 +523,17 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
           <div 
             key={member.name}
             className={cn(
-              "flex items-center gap-3 p-2.5 rounded-xl animate-slide-up",
-              member.isLeader ? "bg-accent/10 border border-accent/20" : "bg-card/30"
+              "flex items-center gap-3 p-2.5 rounded-xl animate-slide-up transition-all duration-300",
+              member.isLeader ? "bg-accent/10 border border-accent/20" : "bg-card/30",
+              speaking === i && "ring-1 ring-accent/60 shadow-[0_0_14px_hsl(var(--accent)/0.35)]"
             )}
             style={{ animationDelay: `${300 + i * 80}ms` }}
           >
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", member.color)}>
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300",
+              member.color,
+              speaking === i && "scale-110 shadow-[0_0_12px_3px_rgba(255,255,255,0.45)]"
+            )}>
               {member.isLeader ? (
                 <Crown className="w-4 h-4 text-white" />
               ) : (
@@ -551,7 +543,19 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
             <span className={cn("text-sm font-medium", member.isLeader && "text-accent")}>
               {member.name}
             </span>
+            {speaking === i && (
+              <span className="ml-auto flex items-end gap-0.5 h-3.5" aria-label="speaking">
+                {[0, 1, 2].map(b => (
+                  <span
+                    key={b}
+                    className="w-0.5 rounded-full bg-accent animate-pulse"
+                    style={{ height: `${6 + b * 4}px`, animationDelay: `${b * 120}ms` }}
+                  />
+                ))}
+              </span>
+            )}
           </div>
+
         ))}
       </div>
     </div>
@@ -564,13 +568,48 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
 
 
 
+// Street network for the maps mockup (viewBox 100 x 125)
+const DEMO_ROADS: [number, number][][] = [
+  [[8, 122], [24, 96], [38, 70], [33, 40], [28, 8]],
+  [[92, 112], [74, 86], [56, 58], [64, 30], [74, 4]],
+  [[4, 48], [33, 52], [56, 58], [80, 62], [96, 64]],
+  [[24, 96], [50, 90], [74, 86]],
+];
+// The active route follows real street segments, not a free-hand curve
+const DEMO_ROUTE: [number, number][] = [
+  [24, 96], [38, 70], [33, 52], [56, 58], [64, 30],
+];
+
+function pointsToPath(pts: [number, number][]) {
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]} ${p[1]}`).join(' ');
+}
+
+function pointAlong(pts: [number, number][], t: number): [number, number] {
+  const segs = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
+  const total = segs.reduce((a, b) => a + b, 0);
+  let target = Math.max(0, Math.min(1, t)) * total;
+  for (let i = 0; i < segs.length; i++) {
+    if (target <= segs[i]) {
+      const r = segs[i] === 0 ? 0 : target / segs[i];
+      return [
+        pts[i][0] + (pts[i + 1][0] - pts[i][0]) * r,
+        pts[i][1] + (pts[i + 1][1] - pts[i][1]) * r,
+      ];
+    }
+    target -= segs[i];
+  }
+  return pts[pts.length - 1];
+}
+
 function MapsMockup() {
   const riders = [
-    { name: 'You', color: 'bg-orange-500', top: '40%', left: '44%' },
-    { name: 'Marcus', color: 'bg-blue-500', top: '60%', left: '64%' },
-    { name: 'Sarah', color: 'bg-pink-500', top: '22%', left: '68%' },
+    { name: 'You', color: 'bg-orange-500', road: DEMO_ROUTE, speed: 0.055, offset: 0.1 },
+    { name: 'Marcus', color: 'bg-blue-500', road: DEMO_ROADS[1], speed: 0.04, offset: 0.45 },
+    { name: 'Sarah', color: 'bg-pink-500', road: DEMO_ROADS[2], speed: 0.035, offset: 0.7 },
   ];
   const [speakingIdx, setSpeakingIdx] = useState(0);
+  const [tick, setTick] = useState(0);
+  const [speed, setSpeed] = useState(58);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -579,20 +618,30 @@ function MapsMockup() {
     return () => clearInterval(interval);
   }, [riders.length]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+      setSpeed((s) => Math.round(Math.max(34, Math.min(78, s + (Math.random() - 0.45) * 9))));
+    }, 250);
+    return () => clearInterval(interval);
+  }, []);
+
+
   return (
     <div className="w-full max-w-xs space-y-4">
       <div className="relative aspect-[4/5] rounded-2xl border border-border/30 bg-[#0d0d10] overflow-hidden animate-scale-in">
-        {/* Faint road lines */}
+        {/* Street network */}
         <svg className="absolute inset-0 w-full h-full opacity-25 text-muted-foreground" viewBox="0 0 100 125" preserveAspectRatio="none">
-          <path d="M8 122 L38 70 L28 8" stroke="currentColor" strokeWidth="2" fill="none" />
-          <path d="M92 112 L56 58 L74 4" stroke="currentColor" strokeWidth="2" fill="none" />
-          <path d="M4 48 L96 64" stroke="currentColor" strokeWidth="1.5" fill="none" />
+          {DEMO_ROADS.map((road, i) => (
+            <path key={i} d={pointsToPath(road)} stroke="currentColor" strokeWidth={i === 3 ? 1.5 : 2} fill="none" strokeLinejoin="round" />
+          ))}
         </svg>
 
-        {/* Route line to destination */}
+        {/* Route line — follows the streets */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 125" preserveAspectRatio="none">
-          <path d="M44 78 Q 54 54 64 60" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d={pointsToPath(DEMO_ROUTE)} stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
+
 
         {/* Weather radar wash */}
         <div className="absolute top-0 right-0 w-2/3 h-1/2 pointer-events-none opacity-30 bg-[radial-gradient(ellipse_at_top_right,hsl(200_90%_55%/0.5),transparent_65%)]" />
@@ -621,20 +670,26 @@ function MapsMockup() {
           <Eye className="w-2.5 h-2.5 text-orange-400" />
         </div>
 
-        {/* Convoy member markers — glow cycles to show who's speaking */}
-        {riders.map((rider, i) => (
-          <div
-            key={rider.name}
-            className={cn(
-              'absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 flex items-center justify-center text-[8px] font-bold text-white transition-all duration-300 animate-scale-in',
-              rider.color,
-              speakingIdx === i && 'scale-125 shadow-[0_0_10px_3px_rgba(255,255,255,0.5)]',
-            )}
-            style={{ top: rider.top, left: rider.left, animationDelay: `${i * 100}ms` }}
-          >
-            {rider.name[0]}
-          </div>
-        ))}
+        {/* Convoy member markers — move along the streets, glow when speaking */}
+        {riders.map((rider, i) => {
+          const t = (rider.offset + tick * rider.speed * 0.06) % 2;
+          const prog = t > 1 ? 2 - t : t; // ping-pong along the road
+          const [x, y] = pointAlong(rider.road, prog);
+          return (
+            <div
+              key={rider.name}
+              className={cn(
+                'absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 flex items-center justify-center text-[8px] font-bold text-white transition-all duration-300 ease-linear',
+                rider.color,
+                speakingIdx === i && 'scale-125 shadow-[0_0_10px_3px_rgba(255,255,255,0.5)]',
+              )}
+              style={{ top: `${(y / 125) * 100}%`, left: `${x}%` }}
+            >
+              {rider.name[0]}
+            </div>
+          );
+        })}
+
 
         {/* Waypoint carousel (max 5, horizontal) */}
         <div className="absolute bottom-10 left-2 right-2 flex gap-1.5 overflow-hidden animate-slide-up delay-200">
@@ -652,9 +707,10 @@ function MapsMockup() {
 
         {/* Speed badge */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-card/95 border border-border/40 flex items-baseline gap-1 animate-slide-up delay-200">
-          <span className="font-mono font-bold text-sm">58</span>
+          <span className="font-mono font-bold text-sm transition-all duration-300">{speed}</span>
           <span className="text-[8px] text-muted-foreground">MPH</span>
         </div>
+
       </div>
 
       <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
@@ -664,15 +720,49 @@ function MapsMockup() {
   );
 }
 
-function TrackingMockup({ speed, distance }: { speed: number; distance: number }) {
+function TrackingMockup() {
   const { settings } = useSettings();
   const sLabel = getSpeedLabel(settings.speedUnit);
   const dLabel = getDistanceLabel(settings.distanceUnit);
+  const [speed, setSpeed] = useState(62);
+  const [distance, setDistance] = useState(4.2);
+  const [maxSpeed, setMaxSpeed] = useState(74);
+  const [lean, setLean] = useState(18);
+  const [maxLean, setMaxLean] = useState(24);
+  const [gForce, setGForce] = useState(0.8);
+  const [maxG, setMaxG] = useState(1.1);
+  const [seconds, setSeconds] = useState(754);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpeed(prev => {
+        const next = Math.round(Math.max(38, Math.min(94, prev + (Math.random() - 0.45) * 10)));
+        setMaxSpeed(m => Math.max(m, next));
+        return next;
+      });
+      setDistance(prev => prev + 0.03);
+      setSeconds(prev => prev + 1);
+      setLean(() => {
+        const next = Math.round((Math.random() * 2 - 1) * 42);
+        setMaxLean(m => Math.max(m, Math.abs(next)));
+        return next;
+      });
+      setGForce(() => {
+        const next = Math.round((0.4 + Math.random() * 1.1) * 100) / 100;
+        setMaxG(m => Math.max(m, next));
+        return next;
+      });
+    }, 700);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mmss = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
   return (
     <div className="w-full max-w-xs text-center space-y-6">
       {/* Speed Display */}
       <div className="animate-scale-in">
-        <p className="text-[6rem] font-mono font-black leading-none text-accent animate-speed-glow">
+        <p className="text-[6rem] font-mono font-black leading-none text-accent animate-speed-glow transition-all duration-500">
           {formatSpeed(speed, settings.speedUnit)}
         </p>
         <p className="text-muted-foreground text-sm -mt-2">{sLabel}</p>
@@ -682,11 +772,27 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
       <div className="flex justify-center gap-3 animate-slide-up delay-100">
         <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Lean</p>
-          <p className="font-mono text-base font-semibold text-accent">32° <span className="text-[9px] text-muted-foreground">max 38°</span></p>
+          <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
+            {Math.abs(lean)}°{lean < 0 ? ' L' : ' R'} <span className="text-[9px] text-muted-foreground">max {maxLean}°</span>
+          </p>
+          <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden relative">
+            <div
+              className="absolute top-0 h-full w-1.5 rounded-full bg-accent transition-all duration-500"
+              style={{ left: `calc(${((lean + 45) / 90) * 100}% - 3px)` }}
+            />
+          </div>
         </div>
         <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">G-Force</p>
-          <p className="font-mono text-base font-semibold text-accent">1.21G <span className="text-[9px] text-muted-foreground">max 1.4G</span></p>
+          <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
+            {gForce.toFixed(2)}G <span className="text-[9px] text-muted-foreground">max {maxG.toFixed(1)}G</span>
+          </p>
+          <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-500"
+              style={{ width: `${Math.min(100, (gForce / 1.6) * 100)}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -699,11 +805,11 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Time</p>
-          <p className="font-mono text-lg font-semibold">12:34</p>
+          <p className="font-mono text-lg font-semibold">{mmss}</p>
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Max</p>
-          <p className="font-mono text-lg font-semibold">{formatSpeed(92, settings.speedUnit)}</p>
+          <p className="font-mono text-lg font-semibold">{formatSpeed(maxSpeed, settings.speedUnit)}</p>
           <p className="text-[10px] text-muted-foreground">{sLabel}</p>
         </div>
       </div>
@@ -711,6 +817,7 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
     </div>
   );
 }
+
 
 function RescueMockup() {
   const [showAlert, setShowAlert] = useState(false);
@@ -1013,7 +1120,7 @@ function TradingCardsMockup() {
               <div
                 key={t.id}
                 className={cn(
-                  'relative shrink-0 snap-center w-[150px] h-[200px] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
+                  'relative shrink-0 snap-center w-[150px] h-[224px] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
                   style.bg,
                   style.border,
                 )}
@@ -1042,15 +1149,15 @@ function TradingCardsMockup() {
                   </div>
                   {/* Card body is intentionally blurred — the tier finish and
                       title stay crisp so the progression reads clearly. */}
-                  <div className="flex-1 flex flex-col gap-1.5 blur-[2px] select-none">
-                    <div className="relative rounded-md bg-black/30 border border-white/10 aspect-[4/3] flex items-center justify-center">
+                  <div className="flex-1 min-h-0 flex flex-col gap-1.5 blur-[2px] select-none">
+                    <div className="relative flex-1 min-h-0 rounded-md bg-black/30 border border-white/10 flex items-center justify-center">
                       {locked ? (
                         <Lock className="w-5 h-5 text-white/60" />
                       ) : (
                         <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-1 mt-auto">
+                    <div className="grid grid-cols-2 gap-1 shrink-0">
                       {['SPD', 'DST', 'TIME', 'RIDES'].map(s => (
                         <div key={s} className="rounded bg-black/40 border border-white/10 px-1 py-0.5">
                           <div className="text-[7px] tracking-widest text-white/60">{s}</div>
@@ -1061,9 +1168,10 @@ function TradingCardsMockup() {
                       ))}
                     </div>
                   </div>
-                  <div className="text-center text-[8px] font-semibold tracking-widest text-white/85 drop-shadow">
+                  <div className="shrink-0 text-center text-[8px] font-semibold tracking-widest text-white/85 drop-shadow">
                     {t.label.toUpperCase()} · {t.minRides === 0 ? '0 RIDES' : `${t.minRides}+ RIDES`}
                   </div>
+
                 </div>
               </div>
             );
