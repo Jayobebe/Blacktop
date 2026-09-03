@@ -205,6 +205,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [basemap, setBasemap] = useState<'dark' | 'satellite'>('dark');
   const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
+  const { user, profile } = useProfile();
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
   const nextWaypoint = useNextWaypoint();
@@ -640,6 +641,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     const visibleMembers = convoyMembers.filter(
       (m): m is typeof m & { currentLat: number; currentLng: number } =>
+        // Never draw a second pin for ourselves — our own live-GPS marker
+        // already carries the letter badge.
+        m.userId !== user?.id &&
         mapPresentUserIds.has(m.userId) &&
         typeof m.currentLat === 'number' &&
         Number.isFinite(m.currentLat) &&
@@ -673,7 +677,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
       applyMemberMarkerStyle(entry.el, member.name, colorStyles, isSpeaking);
     });
-  }, [map, convoyMembers, mapPresentUserIds, speakingUsers]);
+  }, [map, convoyMembers, mapPresentUserIds, speakingUsers, user?.id]);
 
   useEffect(() => {
     const markers = memberMarkersRef.current;
