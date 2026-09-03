@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
+import { useProfile } from '@/features/profile';
 import { formatDistance, formatDuration, formatSpeed, getSpeedLabel } from '@/lib/format';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import type { RideSession } from '@/types/blacktop';
@@ -28,6 +29,7 @@ interface RideFlyoverProps {
 
 export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const { settings } = useSettings();
+  const { profile } = useProfile();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -284,7 +286,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       }
 
       const self = map.project([frame.lng, frame.lat]);
-      drawStatCard(ctx, self.x, self.y, 'You', lines, accentColor);
+      drawStatCard(ctx, self.x, self.y, profile.name.trim() || 'You', lines, accentColor);
 
       // Progress bar
       const progress = frames.length ? frameIndexRef.current / (frames.length - 1) : 0;
@@ -293,7 +295,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.fillStyle = accentColor;
       ctx.fillRect(0, CANVAS_H - 6, CANVAS_W * progress, 6);
     },
-    [accentColor, drawStatCard, frames.length, memberTracks, ride, rideEndTs, rideStartTs, settings],
+    [accentColor, drawStatCard, frames.length, memberTracks, profile.name, ride, rideEndTs, rideStartTs, settings],
   );
 
   const lastRouteIndexRef = useRef(-1);
