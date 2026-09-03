@@ -10,6 +10,7 @@ import { getCountryCode } from '../lib/placeSearch';
 import { fetchTrafficCameras, fetchCamerasOnRoute, metersBetween, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
 import { pingSpeedCamera, pingAnprCamera } from '../lib/cameraPing';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
+import { checkRouteWeather, findDryRoute, HEAVY_MM } from '../lib/weatherRoute';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
 import { LoopPlannerPanel } from './LoopPlannerPanel';
@@ -204,6 +205,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
   const [isRouting, setIsRouting] = useState(false);
+  // Weather-avoidance detour via point, applied on top of the rider's own stops.
+  const [weatherVia, setWeatherVia] = useState<{ lat: number; lng: number } | null>(null);
   const [contextLost, setContextLost] = useState(false);
   const [showSaveUI, setShowSaveUI] = useState(false);
   const [saveName, setSaveName] = useState('');
@@ -931,9 +934,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
 
     // Solo: route through any user-added stops on the way to destination.
-    const intermediate = isSolo
-      ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng }))
-      : [];
+    // A weather detour via point (if the rider accepted one) always goes first.
+    const intermediate = [
+      ...(weatherVia ? [weatherVia] : []),
+      ...(isSolo ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng })) : []),
+    ];
     const stops = [routingLocation, ...intermediate, { lat: destination.lat, lng: destination.lng }];
 
     const requestId = ++routeRequestRef.current;
@@ -945,7 +950,64 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       .finally(() => {
         if (routeRequestRef.current === requestId) setIsRouting(false);
       });
-  }, [destination, routingLocation, isSolo, soloRoute.stops]);
+  }, [destination, routingLocation, isSolo, soloRoute.stops, weatherVia]);
+
+  // ── Weather routing ────────────────────────────────────────────────────────
+  // When a route is set, forecast the precipitation the rider will actually hit
+  // (per point, at their ETA for that point). If it's heavy, offer a detour.
+  const weatherCheckedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!route || !destination || !userLocation) return;
+    const key = `${destination.lat.toFixed(3)},${destination.lng.toFixed(3)}`;
+    if (weatherCheckedForRef.current === key || weatherVia) return;
+    weatherCheckedForRef.current = key;
+
+    let cancelled = false;
+    (async () => {
+      const weather = await checkRouteWeather(route.geometry, route.durationSeconds);
+      if (cancelled || !weather?.worst || weather.worstMm < HEAVY_MM) return;
+
+      const worst = weather.worst;
+      const minsIn = Math.round(((worst.etaMs - Date.now()) / 60000));
+      toast.warning(`Heavy rain on your route${minsIn > 0 ? ` in ~${minsIn} min` : ''}`, {
+        description: `${worst.mm.toFixed(1)} mm/h forecast where you'll be. Want a route around it?`,
+        duration: 12000,
+        action: {
+          label: 'Dry route',
+          onClick: async () => {
+            if (!userLocation) return;
+            toast.loading('Finding a drier line…', { id: 'dry-route' });
+            const dry = await findDryRoute(
+              userLocation,
+              { lat: destination.lat, lng: destination.lng },
+              isSolo ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng })) : [],
+              worst,
+            );
+            toast.dismiss('dry-route');
+            if (!dry) {
+              toast.error('No clearer route found from here');
+              return;
+            }
+            setWeatherVia(dry.via);
+            toast.success(
+              dry.worstMm < HEAVY_MM ? 'Rerouted around the weather' : 'Best available route applied',
+              { description: `Worst rain on the new line: ${dry.worstMm.toFixed(1)} mm/h` },
+            );
+          },
+        },
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route, destination, userLocation, weatherVia, isSolo, soloRoute.stops]);
+
+  // A new destination invalidates any weather detour.
+  useEffect(() => {
+    setWeatherVia(null);
+  }, [destination?.lat, destination?.lng]);
+
 
 
   // ── Route line drawing ─────────────────────────────────────────────────────

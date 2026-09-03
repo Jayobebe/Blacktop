@@ -13,6 +13,7 @@ const VIBES: { id: LoopVibe; label: string; hint: string }[] = [
 interface Props {
   userLocation: { lat: number; lng: number } | null;
   onApply: (loop: {
+    start: { lat: number; lng: number };
     stops: { lat: number; lng: number }[];
     distanceMeters: number;
     durationSeconds: number;
@@ -45,6 +46,7 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
       return;
     }
     onApply({
+      start: userLocation,
       stops: loop.stops,
       distanceMeters: loop.distanceMeters,
       durationSeconds: loop.durationSeconds,

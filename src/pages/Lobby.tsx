@@ -323,14 +323,19 @@ export default function Lobby() {
       : convoy.destination
         ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
         : undefined;
-    if (dest) openBlacktopMap(dest);
-    else openBlacktopMap();
     markAsNavigated();
     if (!hasStartedRide.current) {
       hasStartedRide.current = true;
       const success = startRide(true, convoy.id);
-      if (success) navigate('/ride');
+      if (!success) return;
+      // Mount the active-ride screen first, then lay the map overlay on top of
+      // it so the rider can flip between map and ride UI.
+      navigate('/ride');
+      queueMicrotask(() => (dest ? openBlacktopMap(dest) : openBlacktopMap()));
+      return;
     }
+    if (dest) openBlacktopMap(dest);
+    else openBlacktopMap();
   };
 
   const waitForControlChannel = async (timeoutMs = 1500) => {
@@ -730,6 +735,15 @@ export default function Lobby() {
                   userLocation={userLocation}
                   countryCode={countryCode}
                   distanceUnit={settings.distanceUnit}
+                  onApplyLoop={convoy.isLeader ? async (loop) => {
+                    // Loop via points become convoy stops; the ride finishes
+                    // back at the leader's current position.
+                    for (const [i, stop] of loop.stops.slice(0, 5).entries()) {
+                      await addWaypoint({ name: `Loop point ${i + 1}`, address: '', lat: stop.lat, lng: stop.lng });
+                    }
+                    setDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish', address: '' });
+                    toast.success('Twisty loop set for the convoy');
+                  } : undefined}
                 />
               )}
             </div>
