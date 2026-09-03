@@ -398,7 +398,7 @@ export default function RideDetail() {
           </div>
         )}
       </div>
-    </div>
       {showFlyover && <RideFlyover ride={ride} onClose={() => setShowFlyover(false)} />}
+    </div>
   );
 }
