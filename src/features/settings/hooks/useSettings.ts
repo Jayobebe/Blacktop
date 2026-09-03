@@ -43,6 +43,8 @@ export interface AppSettings {
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
   rideOverlayEnabled: boolean;
+  // Mix convoy voice-channel audio into the recorded ride overlay MP4.
+  voiceRecordingEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -77,6 +79,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   weatherOverlayEnabled: false,
   flyoverEnabled: false,
   rideOverlayEnabled: false,
+  voiceRecordingEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

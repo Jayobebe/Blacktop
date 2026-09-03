@@ -90,7 +90,7 @@ export default function ActiveRide() {
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
-  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = voiceChannel;
+  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
   const { settings } = useSettings();
   const { activeBike } = useGarage();
   const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
@@ -140,6 +140,8 @@ export default function ActiveRide() {
     hasGForceData,
     accentColor,
     blacktopMapEnabled,
+    // Convoy-only: mix the live voice channel into the recorded overlay audio.
+    getVoiceStreams: rideState.isConvoyMode && settings.voiceRecordingEnabled ? getAudioStreams : undefined,
   });
   const overlayRecorderRef = useRef(overlayRecorder);
   overlayRecorderRef.current = overlayRecorder;

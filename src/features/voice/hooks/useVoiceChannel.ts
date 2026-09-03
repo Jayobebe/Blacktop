@@ -162,6 +162,9 @@ export function useVoiceChannel(convoyId?: string) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const userIdRef = useRef<string | null>(null);
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  // Remote peer streams kept so features like the overlay recorder can mix
+  // the voice channel into recorded audio without touching the audio elements.
+  const remoteStreamsRef = useRef<Map<string, MediaStream>>(new Map());
   
   // Audio level detection refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -229,6 +232,7 @@ export function useVoiceChannel(convoyId?: string) {
       audio.remove();
     });
     audioElementsRef.current.clear();
+    remoteStreamsRef.current.clear();
     
     // Clear pending ICE candidates
     pendingCandidatesRef.current.clear();
@@ -521,6 +525,7 @@ export function useVoiceChannel(convoyId?: string) {
         peersRef.current.delete(remoteUserId);
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
+        remoteStreamsRef.current.delete(remoteUserId);
         // Back off instead of relying on the flat 10s presence heartbeat to
         // eventually retry - important under sustained poor cellular signal.
         scheduleReconnect(remoteUserId);
@@ -587,6 +592,7 @@ export function useVoiceChannel(convoyId?: string) {
       }
       
       const remoteStream = event.streams[0];
+      remoteStreamsRef.current.set(remoteUserId, remoteStream);
       console.log(`[Voice] Remote stream tracks:`, remoteStream.getTracks().map(t => ({
         kind: t.kind,
         enabled: t.enabled,
@@ -735,6 +741,7 @@ export function useVoiceChannel(convoyId?: string) {
           peersRef.current.delete(from);
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
+          remoteStreamsRef.current.delete(from);
         }
         
         // Use deterministic ordering: higher ID creates offer
@@ -894,6 +901,7 @@ export function useVoiceChannel(convoyId?: string) {
           peersRef.current.delete(from);
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
+          remoteStreamsRef.current.delete(from);
         }
         // Clear from speaking users
         setState(prev => {
@@ -1367,10 +1375,20 @@ export function useVoiceChannel(convoyId?: string) {
     };
   }, [cleanup]);
 
+  // Live snapshot of every voice audio stream (own mic + remote peers) so the
+  // overlay recorder can mix the convoy channel into its MP4 when enabled.
+  const getAudioStreams = useCallback((): MediaStream[] => {
+    const streams: MediaStream[] = [];
+    if (localStreamRef.current) streams.push(localStreamRef.current);
+    remoteStreamsRef.current.forEach((stream) => streams.push(stream));
+    return streams;
+  }, []);
+
   return {
     ...state,
     connect,
     disconnect,
     toggleMute,
+    getAudioStreams,
   };
 }
