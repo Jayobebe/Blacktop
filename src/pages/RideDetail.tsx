@@ -9,12 +9,14 @@ import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import { useState } from 'react';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
+import { useSettings } from '@/features/settings';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
   const { bikes } = useGarage();
+  const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
   const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
