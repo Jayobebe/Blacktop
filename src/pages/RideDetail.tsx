@@ -262,7 +262,7 @@ export default function RideDetail() {
         )}
 
         {/* 3D Ride Overview */}
-        {(ride.gpsPoints?.length ?? 0) > 1 && (
+        {settings.flyoverEnabled && (ride.gpsPoints?.length ?? 0) > 1 && (
           <button
             onClick={() => setShowFlyover(true)}
             className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors"
