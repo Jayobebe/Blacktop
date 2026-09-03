@@ -7,7 +7,8 @@ import {
   Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   Volume2, MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Zap, Eye, Phone, Settings, BarChart3, History, Video, User,
-  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon, Globe2, Folder, Gamepad2
+  MessageSquare, Wrench, Disc3 as Bike, ChevronDown, Map as MapIcon, Globe2, Folder, Gamepad2,
+  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, ArrowLeftRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -64,8 +65,11 @@ export default function DemoShowcase() {
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />,
       cards: [
         { icon: Users, label: 'Convoy Mode', text: 'Up to 8 riders synced in real time via a shared code.' },
-        { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute and disconnect. Works with your music.' },
+        { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute, disconnect and Bluetooth intercoms.' },
         { icon: Gauge, label: 'Solo Ride', text: 'Same tracking, no group needed — with Discord rescue on tap.' },
+        { icon: QrCode, label: 'QR Join', text: 'Scan the lobby QR to jump straight into a convoy.' },
+        { icon: MessageSquare, label: 'Lobby Chat', text: 'Sort the plan before you set off, live in the lobby.' },
+        { icon: Crown, label: 'Leadership', text: 'Hand over the lead, or auto-promote when the leader drops.' },
       ],
     },
     {
@@ -80,6 +84,9 @@ export default function DemoShowcase() {
         { icon: MapIcon, label: 'Blacktop Maps', text: 'Built-in routing with live convoy dots coloured by accent.' },
         { icon: Route, label: 'Multi-Stop Routes', text: 'Add, reorder and skip waypoints mid-ride, up to five at a time.' },
         { icon: Eye, label: 'Camera Alerts', text: 'Speed and ANPR cameras on your route, flagged as you approach.' },
+        { icon: Mountain, label: 'Satellite & 3D', text: 'Toggle satellite imagery or a 3D terrain and building view.' },
+        { icon: CloudRain, label: 'Weather Radar', text: 'Optional live rain overlay so you can dodge the downpour.' },
+        { icon: Navigation, label: 'Hand-Off', text: 'Send the route to Google, Apple or Waze and keep tracking.' },
       ],
     },
     {
@@ -122,6 +129,8 @@ export default function DemoShowcase() {
         { icon: Camera, label: 'History & Photos', text: 'Full stats per ride, plus up to 9 photos, stored on device.' },
         { icon: Receipt, label: 'Ride Receipts', text: 'A printable stat slip with vehicle and badges, saved as an image.' },
         { icon: Video, label: 'Overlay Download', text: 'MP4 with live speed, lean, distance and a mini-map for editing in.' },
+        { icon: Mic, label: 'Voice Recording', text: 'Optionally mix convoy voice chat into the overlay MP4.' },
+        { icon: Mountain, label: '3D Flyover', text: 'A cinematic 3D pass over your route with stats, ready to save.' },
         { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman and Fallback roll into lifetime totals.' },
       ],
     },
@@ -141,6 +150,21 @@ export default function DemoShowcase() {
       ],
     },
     {
+      id: 'trading-cards',
+      title: 'Trading Cards',
+      subtitle: 'Bronze To Orion',
+      description: 'Every vehicle earns a collectable card that levels up with your ride count — ten tiers, each with its own finish. Swipe to see the whole ladder.',
+      icon: Sparkles,
+      color: 'accent',
+      mockup: <TradingCardsMockup />,
+      cards: [
+        { icon: Sparkles, label: 'Tier Ladder', text: 'Locked, Bronze, Silver, Gold, Platinum, Diamond, Ruby, Obsidian, Polyatomic, Orion.' },
+        { icon: Camera, label: 'Garage Shot', text: 'The card uses your garage placement and zoom, so it looks how you set it.' },
+        { icon: QrCode, label: 'Share & Scan', text: 'Show your card QR — mates scan it straight into their vault.' },
+        { icon: Folder, label: 'Card Vault', text: 'Collected cards are kept in your folder, exactly as the owner styled them.' },
+      ],
+    },
+    {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
@@ -153,6 +177,23 @@ export default function DemoShowcase() {
         { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade.' },
         { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
         { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy and Petrol Head, with personal bests saved locally.' },
+      ],
+    },
+    {
+      id: 'make-it-yours',
+      title: 'Make It Yours',
+      subtitle: 'Settings, Display & Support',
+      description: 'Eight accent colours, your units, your speed alert thresholds — plus a car-display layout for wired mirroring and an install-to-home-screen build.',
+      icon: Settings,
+      color: 'accent',
+      mockup: <PersonaliseMockup />,
+      cards: [
+        { icon: Palette, label: 'Accent Colours', text: 'Eight themes that recolour speed, dots and gauges app-wide.' },
+        { icon: Ruler, label: 'Units & Alerts', text: 'MPH or KPH, miles or km, plus amber and red speed thresholds.' },
+        { icon: MonitorSmartphone, label: 'Car Display', text: 'Oversized landscape layout for wired Android head-unit mirroring.' },
+        { icon: Download, label: 'Install App', text: 'Add Blacktop to your home screen for a full-screen, offline-ready ride.' },
+        { icon: Play, label: 'Demo Data', text: 'Hold the logo in settings to preview the app with sample stats.' },
+        { icon: Heart, label: 'Tip Jar', text: 'No ads, no subscription — support the app only if you want to.' },
       ],
     },
     {
@@ -1694,25 +1735,29 @@ function TradingCardsMockup() {
                       {t.label}
                     </span>
                   </div>
-                  <div className="relative rounded-md bg-black/30 border border-white/10 aspect-[4/3] flex items-center justify-center">
-                    {locked ? (
-                      <Lock className="w-5 h-5 text-white/60" />
-                    ) : (
-                      <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 mt-auto">
-                    {['SPD', 'DST', 'TIME', 'RIDES'].map(s => (
-                      <div key={s} className="rounded bg-black/40 border border-white/10 px-1 py-0.5">
-                        <div className="text-[7px] tracking-widest text-white/60">{s}</div>
-                        <div className="text-[9px] font-mono font-bold text-white">
-                          {locked ? '—' : '••'}
+                  {/* Card body is intentionally blurred — the tier finish and
+                      title stay crisp so the progression reads clearly. */}
+                  <div className="flex-1 flex flex-col gap-1.5 blur-[2px] select-none">
+                    <div className="relative rounded-md bg-black/30 border border-white/10 aspect-[4/3] flex items-center justify-center">
+                      {locked ? (
+                        <Lock className="w-5 h-5 text-white/60" />
+                      ) : (
+                        <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 mt-auto">
+                      {['SPD', 'DST', 'TIME', 'RIDES'].map(s => (
+                        <div key={s} className="rounded bg-black/40 border border-white/10 px-1 py-0.5">
+                          <div className="text-[7px] tracking-widest text-white/60">{s}</div>
+                          <div className="text-[9px] font-mono font-bold text-white">
+                            {locked ? '—' : '••'}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-center text-[7px] tracking-widest text-white/60">
-                    {t.minRides === 0 ? '0 rides' : `${t.minRides}+ rides`}
+                  <div className="text-center text-[8px] font-semibold tracking-widest text-white/85 drop-shadow">
+                    {t.label.toUpperCase()} · {t.minRides === 0 ? '0 RIDES' : `${t.minRides}+ RIDES`}
                   </div>
                 </div>
               </div>
@@ -1728,3 +1773,42 @@ function TradingCardsMockup() {
 }
 
 
+
+function PersonaliseMockup() {
+  const swatches = [
+    'hsl(38 95% 55%)', 'hsl(217 91% 60%)', 'hsl(142 71% 45%)', 'hsl(262 83% 58%)',
+    'hsl(330 81% 60%)', 'hsl(0 84% 60%)', 'hsl(186 94% 50%)', 'hsl(84 85% 50%)',
+  ];
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 animate-slide-up">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Accent Colour</p>
+        <div className="grid grid-cols-8 gap-2">
+          {swatches.map((c, i) => (
+            <div
+              key={c}
+              className={cn(
+                'aspect-square rounded-full animate-scale-in',
+                i === 0 && 'ring-2 ring-offset-2 ring-offset-background ring-accent',
+              )}
+              style={{ background: c, animationDelay: `${i * 50}ms` }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-3 animate-slide-up delay-200">
+        {[
+          { icon: Ruler, label: 'Units', value: 'MPH · Miles' },
+          { icon: AlertTriangle, label: 'Speed alerts', value: '80 / 100' },
+          { icon: MonitorSmartphone, label: 'Car display', value: 'Landscape' },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex items-center gap-3">
+            <Icon className="w-4 h-4 text-accent flex-shrink-0" />
+            <span className="text-xs text-muted-foreground flex-1">{label}</span>
+            <span className="text-xs font-mono font-semibold">{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
