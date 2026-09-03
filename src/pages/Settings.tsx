@@ -361,13 +361,13 @@ export default function Settings() {
         {/* Settings grid */}
         <div className="grid grid-cols-2 gap-3">
           {/* Demo */}
-          <button
-            onClick={() => navigate('/demo')}
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-card/50 border border-border/30 p-4 hover:bg-secondary/50 transition-colors text-left delay-75"
-          >
-            <Play className="w-6 h-6 text-accent" />
-            <span className="text-sm font-semibold">Demo</span>
-          </button>
+          <CollapsibleSection
+            icon={Play}
+            label="Demo"
+            delayClass="delay-75"
+            rightElement={<Play className="w-4 h-4 text-accent" />}
+            onHeaderClick={() => navigate('/demo')}
+          />
 
           {/* Safety */}
         <CollapsibleSection icon={AlertTriangle} label="Safety" delayClass="delay-100">
