@@ -98,7 +98,7 @@ export default function DemoShowcase() {
       description: 'Big, glove-friendly GPS readouts backed by your phone\'s gyroscope and accelerometer for real-time lean angle and cornering G.',
       icon: Gauge,
       color: 'speed-active',
-      mockup: <TrackingMockup speed={speed} distance={distance} />,
+      mockup: <TrackingMockup />,
       cards: [
         { icon: Gauge, label: 'Speed & Distance', text: 'Real-time GPS speed, distance and duration at a glance.' },
         { icon: TrendingUp, label: 'Lean & G-Force', text: 'Max lean each way, peak G, and warnings near your threshold.' },
