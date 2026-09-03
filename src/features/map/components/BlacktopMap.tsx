@@ -570,26 +570,45 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   }, [map, isVisible]);
 
   // ── User position marker ───────────────────────────────────────────────────
+  // The rider's own pin and its letter badge are ONE element driven solely by
+  // `userLocation`, so they can never drift apart (previously the letter came
+  // from the 2s convoy broadcast while the dot came from live GPS).
 
   useEffect(() => {
     if (!map || !userLocation) return;
 
+    const letter = (profile.name?.trim()[0] || '?').toUpperCase();
+
     if (!userMarkerRef.current) {
       const el = document.createElement('div');
       el.className = 'blacktop-user-marker';
-      el.style.width = '18px';
-      el.style.height = '18px';
+      el.style.width = '32px';
+      el.style.height = '32px';
       el.style.borderRadius = '9999px';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.fontSize = '13px';
+      el.style.fontWeight = '700';
+      el.style.fontFamily = 'inherit';
+      el.style.color = '#ffffff';
       el.style.background = accentColor;
       el.style.border = '3px solid #ffffff';
       el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.4)';
+      el.textContent = letter;
       userMarkerRef.current = new maplibregl.Marker({ element: el })
         .setLngLat([userLocation.lng, userLocation.lat])
         .addTo(map);
+      // Own pin always sits above convoy member pins.
+      userMarkerRef.current.getElement().parentElement?.style.setProperty('z-index', '5');
     } else {
+      const el = userMarkerRef.current.getElement();
+      el.textContent = letter;
+      el.style.background = accentColor;
       userMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
     }
-  }, [map, userLocation, accentColor]);
+  }, [map, userLocation, accentColor, profile.name]);
+
 
   useEffect(() => {
     return () => {
