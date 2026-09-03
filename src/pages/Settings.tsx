@@ -361,19 +361,13 @@ export default function Settings() {
         {/* Settings grid */}
         <div className="grid grid-cols-2 gap-3">
           {/* Demo */}
-          <CollapsibleSection icon={Play} label="Demo Showcase" delayClass="delay-75">
-            <div className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Walk through Blacktop features with a guided demo.
-              </p>
-              <Button
-                onClick={() => navigate('/demo')}
-                className="w-full h-10 rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-semibold"
-              >
-                Open Demo
-              </Button>
-            </div>
-          </CollapsibleSection>
+          <button
+            onClick={() => navigate('/demo')}
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-card/50 border border-border/30 p-4 hover:bg-secondary/50 transition-colors text-left delay-75"
+          >
+            <Play className="w-6 h-6 text-accent" />
+            <span className="text-sm font-semibold">Demo</span>
+          </button>
 
           {/* Safety */}
         <CollapsibleSection icon={AlertTriangle} label="Safety" delayClass="delay-100">
