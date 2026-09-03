@@ -843,14 +843,38 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     );
   }, [destination, routeCameras, settings.trafficCamerasEnabled]);
 
-  // Approach alerts.
+  // Approach alerts + audible ping.
+  // With a route: any camera on the route corridor within 400m.
+  // Without a route: only cameras we're actually heading into — within 500m and
+  // inside a ±50° cone of the current heading, so cameras behind or off to the
+  // side stay silent.
   useEffect(() => {
     if (!settings.trafficCamerasEnabled || !userLocation) return;
-    const pool = routeCameras.length > 0 ? routeCameras : cameras;
+    const onRoute = routeCameras.length > 0;
+    const pool = onRoute ? routeCameras : cameras;
+    const heading = headingRef.current;
+
     for (const cam of pool) {
       if (alertedCamerasRef.current.has(cam.id)) continue;
-      if (metersBetween(userLocation, cam) > 300) continue;
+      const dist = metersBetween(userLocation, cam);
+      if (dist > (onRoute ? 400 : 500)) continue;
+
+      if (!onRoute) {
+        if (heading == null) continue;
+        const dLng = ((cam.lng - userLocation.lng) * Math.PI) / 180;
+        const lat1 = (userLocation.lat * Math.PI) / 180;
+        const lat2 = (cam.lat * Math.PI) / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+        let delta = Math.abs(bearing - heading) % 360;
+        if (delta > 180) delta = 360 - delta;
+        if (delta > 50) continue;
+      }
+
       alertedCamerasRef.current.add(cam.id);
+      if (cam.type === 'speed') pingSpeedCamera();
+      else pingAnprCamera();
       toast.warning(
         cam.type === 'speed'
           ? `Speed camera ahead${cam.maxspeed ? ` · ${cam.maxspeed}` : ''}`
@@ -860,6 +884,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       );
     }
   }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
+
 
 
 
