@@ -626,17 +626,18 @@ function MapsMockup() {
   return (
     <div className="w-full max-w-xs space-y-4">
       <div className="relative aspect-[4/5] rounded-2xl border border-border/30 bg-[#0d0d10] overflow-hidden animate-scale-in">
-        {/* Faint road lines */}
+        {/* Street network */}
         <svg className="absolute inset-0 w-full h-full opacity-25 text-muted-foreground" viewBox="0 0 100 125" preserveAspectRatio="none">
-          <path d="M8 122 L38 70 L28 8" stroke="currentColor" strokeWidth="2" fill="none" />
-          <path d="M92 112 L56 58 L74 4" stroke="currentColor" strokeWidth="2" fill="none" />
-          <path d="M4 48 L96 64" stroke="currentColor" strokeWidth="1.5" fill="none" />
+          {DEMO_ROADS.map((road, i) => (
+            <path key={i} d={pointsToPath(road)} stroke="currentColor" strokeWidth={i === 3 ? 1.5 : 2} fill="none" strokeLinejoin="round" />
+          ))}
         </svg>
 
-        {/* Route line to destination */}
+        {/* Route line — follows the streets */}
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 125" preserveAspectRatio="none">
-          <path d="M44 78 Q 54 54 64 60" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d={pointsToPath(DEMO_ROUTE)} stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
+
 
         {/* Weather radar wash */}
         <div className="absolute top-0 right-0 w-2/3 h-1/2 pointer-events-none opacity-30 bg-[radial-gradient(ellipse_at_top_right,hsl(200_90%_55%/0.5),transparent_65%)]" />
