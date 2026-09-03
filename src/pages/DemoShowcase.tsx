@@ -678,6 +678,18 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
         <p className="text-muted-foreground text-sm -mt-2">{sLabel}</p>
       </div>
 
+      {/* Lean & G gauges */}
+      <div className="flex justify-center gap-3 animate-slide-up delay-100">
+        <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
+          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Lean</p>
+          <p className="font-mono text-base font-semibold text-accent">32° <span className="text-[9px] text-muted-foreground">max 38°</span></p>
+        </div>
+        <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
+          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">G-Force</p>
+          <p className="font-mono text-base font-semibold text-accent">1.21G <span className="text-[9px] text-muted-foreground">max 1.4G</span></p>
+        </div>
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-3 animate-slide-up delay-200">
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
@@ -742,9 +754,12 @@ function RescueMockup() {
         </div>
       )}
 
-      <div className="text-center animate-fade-in delay-500">
+      <div className="text-center animate-fade-in delay-500 space-y-1">
         <p className="text-xs text-muted-foreground">
           Lost members send location to leader
+        </p>
+        <p className="text-[10px] text-muted-foreground/70">
+          Lives in the map control row — never next to End Ride
         </p>
       </div>
     </div>
@@ -783,8 +798,8 @@ function HistoryMockup() {
         </div>
       ))}
       <div className="flex items-center justify-center gap-2 pt-2 animate-fade-in delay-400">
-        <Camera className="w-4 h-4 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground">Tap ride to add photos</p>
+        <Video className="w-4 h-4 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">Receipt, photos, overlay MP4 & 3D flyover per ride</p>
       </div>
     </div>
   );
@@ -792,9 +807,15 @@ function HistoryMockup() {
 
 
 function BlacktopWorldMockup() {
+  const landmarks = [
+    { label: 'Crew Convoys', top: '18%', left: '12%' },
+    { label: 'Crew Leaderboards', top: '12%', right: '8%' },
+    { label: 'Join Crew', bottom: '26%', left: '8%' },
+    { label: 'Crew QR', bottom: '20%', right: '10%' },
+  ];
   return (
     <div className="w-full max-w-xs space-y-3">
-      <div className="relative h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(220_40%_8%)] via-[hsl(230_50%_12%)] to-black border border-border/30">
+      <div className="relative h-64 rounded-2xl overflow-hidden bg-gradient-to-br from-[hsl(220_40%_8%)] via-[hsl(230_50%_12%)] to-black border border-border/30">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-40 h-40 rounded-full bg-[radial-gradient(circle_at_30%_30%,hsl(220_30%_25%),hsl(220_50%_8%))] shadow-[inset_-14px_-14px_36px_rgba(0,0,0,0.6),0_0_50px_hsl(var(--accent)/0.3)] animate-spin-slow">
             <span className="absolute top-5 left-9 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -806,25 +827,25 @@ function BlacktopWorldMockup() {
         </div>
         <div className="absolute top-2 left-2 right-2 flex justify-center pointer-events-none">
           <div className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/[0.06]">
-            <span className="text-[8px] tracking-[0.2em] uppercase text-white/60">live rider globe</span>
+            <span className="text-[8px] tracking-[0.2em] uppercase text-white/60">crew hub</span>
           </div>
         </div>
-        <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2 pointer-events-none">
-          {[
-            { c: '#fb923c', l: 'Fire' },
-            { c: '#f87171', l: 'Volcano' },
-            { c: '#60a5fa', l: 'Flood' },
-            { c: '#c4b5fd', l: 'Quake' },
-          ].map(({ c, l }) => (
-            <div key={l} className="flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full" style={{ backgroundColor: c, boxShadow: `0 0 4px ${c}` }} />
-              <span className="text-[8px] uppercase tracking-wider text-white/55">{l}</span>
-            </div>
-          ))}
-        </div>
+        {/* Crew landmarks — beacon dot + label chip, like the real globe */}
+        {landmarks.map((lm, i) => (
+          <div
+            key={lm.label}
+            className="absolute flex flex-col items-center gap-1 animate-scale-in"
+            style={{ top: lm.top, bottom: lm.bottom, left: lm.left, right: lm.right, animationDelay: `${200 + i * 120}ms` }}
+          >
+            <span className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_2px_hsl(var(--accent)/0.6)] animate-pulse" />
+            <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[8px] font-semibold uppercase tracking-wider text-accent whitespace-nowrap">
+              {lm.label}
+            </span>
+          </div>
+        ))}
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        Long-press the home globe to launch
+        Tap a landmark to jump in — long-press the home globe to launch
       </p>
     </div>
   );
@@ -976,7 +997,7 @@ function TradingCardsMockup() {
               <div
                 key={t.id}
                 className={cn(
-                  'relative shrink-0 snap-center w-[150px] aspect-[5/7] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
+                  'relative shrink-0 snap-center w-[150px] h-[200px] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
                   style.bg,
                   style.border,
                 )}
