@@ -452,7 +452,7 @@ export default function Settings() {
               onCheckedChange={async (v) => {
                 if (v) {
                   // iOS 13+: motion permission must be requested from a user gesture
-                  const anyMotion = (window as any).DeviceMotionEvent;
+                  const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
                   if (anyMotion && typeof anyMotion.requestPermission === 'function') {
                     try {
                       const res = await anyMotion.requestPermission();
@@ -601,7 +601,7 @@ export default function Settings() {
                onCheckedChange={async (v) => {
                  if (v) {
                    // iOS 13+: motion permission must be requested from a user gesture
-                   const anyMotion = (window as any).DeviceMotionEvent;
+                   const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
                    if (anyMotion && typeof anyMotion.requestPermission === 'function') {
                      try {
                        const res = await anyMotion.requestPermission();
