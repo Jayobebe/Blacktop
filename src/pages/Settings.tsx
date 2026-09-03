@@ -283,7 +283,7 @@ export default function Settings() {
       <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
         <button
           onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
+          className="p-2.5 landscape:p-2 rounded-xl glass-tile hover:bg-secondary transition-colors touch-target"
         >
           <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
         </button>
@@ -327,7 +327,7 @@ export default function Settings() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
         {/* Profile Section */}
-        <section className="bg-card/50 rounded-2xl border border-border/30 animate-slide-up h-14 landscape:h-12 flex items-center px-4 landscape:px-3">
+        <section className="glass-tile rounded-2xl animate-slide-up h-14 landscape:h-12 flex items-center px-4 landscape:px-3">
           {isEditingName ? (
             <div className="flex-1 flex items-center h-full">
               <Input
@@ -945,7 +945,7 @@ export default function Settings() {
 function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle: (v: boolean) => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
+    <section className="glass-tile rounded-2xl p-4 landscape:p-3 animate-slide-up delay-300">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
