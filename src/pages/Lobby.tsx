@@ -323,14 +323,19 @@ export default function Lobby() {
       : convoy.destination
         ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
         : undefined;
-    if (dest) openBlacktopMap(dest);
-    else openBlacktopMap();
     markAsNavigated();
     if (!hasStartedRide.current) {
       hasStartedRide.current = true;
       const success = startRide(true, convoy.id);
-      if (success) navigate('/ride');
+      if (!success) return;
+      // Mount the active-ride screen first, then lay the map overlay on top of
+      // it so the rider can flip between map and ride UI.
+      navigate('/ride');
+      queueMicrotask(() => (dest ? openBlacktopMap(dest) : openBlacktopMap()));
+      return;
     }
+    if (dest) openBlacktopMap(dest);
+    else openBlacktopMap();
   };
 
   const waitForControlChannel = async (timeoutMs = 1500) => {
