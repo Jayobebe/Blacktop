@@ -200,6 +200,19 @@ export default function SoloLobby() {
             userLocation={userLocation}
             countryCode={countryCode}
             distanceUnit={settings.distanceUnit}
+            onApplyLoop={(loop) => {
+              // A loop finishes where it starts: via points become stops and
+              // the rider's own position becomes the destination.
+              setSoloStops(
+                loop.stops.slice(0, 5).map((s, i) => ({
+                  lat: s.lat,
+                  lng: s.lng,
+                  name: `Loop point ${i + 1}`,
+                })),
+              );
+              handleSetDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish' });
+              toast.success('Twisty loop ready');
+            }}
           />
         </div>
 
