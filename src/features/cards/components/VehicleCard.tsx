@@ -42,7 +42,7 @@ export function VehicleCard({ card }: Props) {
   // Otherwise a fast scan permanently saves the payload without a photo path.
   const photoReady = !hero || photoPath !== null;
   const qrPayload = shareable && photoReady
-    ? encodeCard(card, profile.name, photoPath ?? undefined)
+    ? encodeCard(card, profile.name, photoPath ?? undefined, zoom)
     : null;
   const uid = card.bike.id.replace(/-/g, '');
 

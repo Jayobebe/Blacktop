@@ -1,5 +1,6 @@
 import { TIER_LADDER, type CardTier } from '../types';
 import type { VehicleCardData } from '../hooks/useVehicleCards';
+import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
 /** Compact, serializable shape that fits comfortably in a QR code. */
 export interface SharedCardPayload {
@@ -28,6 +29,10 @@ export interface SharedCardPayload {
   ts: number;
   /** Storage path of the shared vehicle photo (card-photos bucket). */
   p?: string;
+  /** Bike placement inside the garage box (as set in Mecha-Nick's garage). */
+  pl?: { xPct: number; yPct: number; scalePct: number };
+  /** Card image zoom chosen by the owner. */
+  z?: number;
 }
 
 const PREFIX = 'BTCARD:';
@@ -58,8 +63,14 @@ function num(n: number | undefined, dp = 1): string {
   return String(Math.round(v * 10 ** dp) / 10 ** dp);
 }
 
-export function encodeCard(card: VehicleCardData, owner?: string, photoPath?: string): string {
+export function encodeCard(
+  card: VehicleCardData,
+  owner?: string,
+  photoPath?: string,
+  zoom?: number,
+): string {
   const s = card.stats;
+  const pl = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
   const fields = [
     esc(card.bike.id).replace(/-/g, ''),
     esc(card.bike.name),
@@ -74,6 +85,10 @@ export function encodeCard(card: VehicleCardData, owner?: string, photoPath?: st
     num(s.maxGForce, 2),
     String(Math.round(Date.now() / 1000)),
     esc(photoPath || ''),
+    num(pl.xPct),
+    num(pl.yPct),
+    num(pl.scalePct),
+    num(zoom ?? 1, 2),
   ];
   return PREFIX_V2 + fields.join(SEP);
 }
@@ -85,7 +100,7 @@ export function decodeCard(raw: string): SharedCardPayload | null {
     if (trimmed.startsWith(PREFIX_V2)) {
       const f = trimmed.slice(PREFIX_V2.length).split(SEP);
       if (f.length < 12) return null;
-      const [i, n, m, o, t, rides, dist, dur, top, lean, g, ts, photo] = f;
+      const [i, n, m, o, t, rides, dist, dur, top, lean, g, ts, photo, plx, ply, pls, z] = f;
       if (!n || !t) return null;
       return {
         v: 1,
@@ -105,6 +120,15 @@ export function decodeCard(raw: string): SharedCardPayload | null {
         },
         ts: (Number(ts) || 0) * 1000,
         p: photo || undefined,
+        pl:
+          plx !== undefined && ply !== undefined && pls !== undefined
+            ? {
+                xPct: Number(plx) || DEFAULT_BIKE_PLACEMENT.xPct,
+                yPct: Number(ply) || DEFAULT_BIKE_PLACEMENT.yPct,
+                scalePct: Number(pls) || DEFAULT_BIKE_PLACEMENT.scalePct,
+              }
+            : undefined,
+        z: Number(z) > 0 ? Number(z) : undefined,
       };
     }
 
