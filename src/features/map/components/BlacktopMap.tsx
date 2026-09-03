@@ -958,6 +958,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const weatherCheckedForRef = useRef<string | null>(null);
   useEffect(() => {
     if (!route || !destination || !userLocation) return;
+    if (!settings.weatherRoutingEnabled) return;
     const key = `${destination.lat.toFixed(3)},${destination.lng.toFixed(3)}`;
     if (weatherCheckedForRef.current === key || weatherVia) return;
     weatherCheckedForRef.current = key;
@@ -1001,7 +1002,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     return () => {
       cancelled = true;
     };
-  }, [route, destination, userLocation, weatherVia, isSolo, soloRoute.stops]);
+  }, [route, destination, userLocation, weatherVia, isSolo, soloRoute.stops, settings.weatherRoutingEnabled]);
 
   // A new destination invalidates any weather detour.
   useEffect(() => {
