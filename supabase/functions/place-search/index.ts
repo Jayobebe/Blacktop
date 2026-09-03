@@ -49,6 +49,15 @@ type RouteBody = {
   coordinates: [number, number][];
 };
 
+type LoopBody = {
+  kind: "loop";
+  lat: number;
+  lng: number;
+  // Target loop length in kilometres.
+  distanceKm: number;
+  vibe?: "curvy" | "scenic" | "relaxed";
+};
+
 type CamerasBody = {
   kind: "cameras";
   west: number;
@@ -180,7 +189,130 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody;
+
+    if (body.kind === "loop") {
+      const { lat, lng } = body;
+      const distanceKm = Number(body.distanceKm);
+      const vibe = body.vibe === "relaxed" || body.vibe === "scenic" ? body.vibe : "curvy";
+      const valid =
+        typeof lat === "number" && typeof lng === "number" &&
+        lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 &&
+        Number.isFinite(distanceKm) && distanceKm >= 10 && distanceKm <= 400;
+      if (!valid) {
+        return new Response(JSON.stringify({ error: "Invalid loop request" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      // A road loop is roughly 1.25x longer than the polygon through its via
+      // points, so shrink the ring radius to land near the requested length.
+      const ringKm = distanceKm / 1.25;
+      const radiusKm = ringKm / (2 * Math.PI) * 1.6;
+
+      const destPoint = (bearingDeg: number, distKm: number) => {
+        const R = 6371;
+        const br = (bearingDeg * Math.PI) / 180;
+        const lat1 = (lat * Math.PI) / 180;
+        const lng1 = (lng * Math.PI) / 180;
+        const dr = distKm / R;
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dr) + Math.cos(lat1) * Math.sin(dr) * Math.cos(br));
+        const lng2 = lng1 + Math.atan2(
+          Math.sin(br) * Math.sin(dr) * Math.cos(lat1),
+          Math.cos(dr) - Math.sin(lat1) * Math.sin(lat2),
+        );
+        return [((lng2 * 180) / Math.PI + 540) % 360 - 180, (lat2 * 180) / Math.PI] as [number, number];
+      };
+
+      // Total absolute heading change per km — the curviness proxy used to
+      // rank candidate loops (higher = twistier backroads, lower = motorway).
+      const curviness = (coords: [number, number][], distMeters: number) => {
+        if (coords.length < 3 || distMeters <= 0) return 0;
+        let turned = 0;
+        let prevBearing: number | null = null;
+        for (let i = 1; i < coords.length; i++) {
+          const [x1, y1] = coords[i - 1];
+          const [x2, y2] = coords[i];
+          const dx = (x2 - x1) * Math.cos((y1 * Math.PI) / 180);
+          const dy = y2 - y1;
+          if (dx === 0 && dy === 0) continue;
+          const bearing = (Math.atan2(dx, dy) * 180) / Math.PI;
+          if (prevBearing !== null) {
+            let d = Math.abs(bearing - prevBearing) % 360;
+            if (d > 180) d = 360 - d;
+            turned += d;
+          }
+          prevBearing = bearing;
+        }
+        return turned / (distMeters / 1000);
+      };
+
+      const routeThrough = async (stops: [number, number][]) => {
+        const path = stops.map(([lo, la]) => `${lo},${la}`).join(";");
+        const url = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
+        url.searchParams.set("overview", "full");
+        url.searchParams.set("geometries", "geojson");
+        url.searchParams.set("alternatives", "false");
+        url.searchParams.set("steps", "false");
+        const res = await fetchWithTimeout(url.toString(), {
+          headers: { "User-Agent": "Blacktop-App/1.0", "Accept": "application/json" },
+        }, 9000);
+        const text = await res.text();
+        if (!res.ok) throw new Error(`OSRM ${res.status}: ${text.slice(0, 200)}`);
+        const json = JSON.parse(text);
+        return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+      };
+
+      // Three candidate triangles rotated around the rider, each scored
+      // against the requested vibe and target distance.
+      const startBearings = [Math.random() * 360, Math.random() * 360, Math.random() * 360];
+      const candidates: any[] = [];
+
+      for (const b0 of startBearings) {
+        const vias: [number, number][] = [0, 120, 240].map((off) =>
+          destPoint((b0 + off) % 360, radiusKm * (0.85 + Math.random() * 0.3)),
+        );
+        try {
+          const route = await routeThrough([[lng, lat], ...vias, [lng, lat]]);
+          if (!route?.geometry?.coordinates?.length) continue;
+          const coords = route.geometry.coordinates as [number, number][];
+          const twist = curviness(coords, route.distance);
+          const distErr = Math.abs(route.distance / 1000 - distanceKm) / distanceKm;
+          const twistScore = vibe === "relaxed" ? -twist : vibe === "scenic" ? twist * 0.6 : twist;
+          candidates.push({
+            score: twistScore / 40 - distErr * 2,
+            twist,
+            route,
+            stops: vias.map(([lo, la]) => ({ lat: la, lng: lo })),
+          });
+        } catch (e) {
+          console.warn("[PLACE-SEARCH] Loop candidate failed:", e instanceof Error ? e.message : e);
+        }
+      }
+
+      if (candidates.length === 0) {
+        return new Response(JSON.stringify({ error: "Could not build a loop from here" }), {
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
+          status: 200,
+        });
+      }
+
+      candidates.sort((a, b) => b.score - a.score);
+      const best = candidates[0];
+
+      return new Response(
+        JSON.stringify({
+          geometry: best.route.geometry,
+          distance: best.route.distance,
+          duration: best.route.duration,
+          stops: best.stops,
+          curviness: Math.round(best.twist),
+          vibe,
+        }),
+        { headers: { ...cors, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
 
     if (body.kind === "cameras") {
       const { west, south, east, north } = body;

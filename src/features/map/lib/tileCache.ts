@@ -16,6 +16,9 @@ interface CachedTile {
   data: ArrayBuffer;
   size: number;
   cachedAt: number;
+  // Tiles belonging to a downloaded offline pack. Pinned tiles are exempt from
+  // the LRU eviction pass — the rider explicitly asked to keep them.
+  pinned?: boolean;
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -75,7 +78,8 @@ async function evictOverBudget(db: IDBDatabase) {
       cursorReq.onsuccess = () => {
         const cursor = cursorReq.result;
         if (cursor) {
-          total += (cursor.value as CachedTile).size;
+          const rec = cursor.value as CachedTile;
+          if (!rec.pinned) total += rec.size;
           cursor.continue();
         } else {
           resolve();
@@ -95,8 +99,11 @@ async function evictOverBudget(db: IDBDatabase) {
           resolve();
           return;
         }
-        overBy -= (cursor.value as CachedTile).size;
-        cursor.delete();
+        const rec = cursor.value as CachedTile;
+        if (!rec.pinned) {
+          overBy -= rec.size;
+          cursor.delete();
+        }
         cursor.continue();
       };
       cursorReq.onerror = () => reject(cursorReq.error);
@@ -148,4 +155,61 @@ export function registerTileCacheProtocol() {
 /** Wraps a real tile URL so MapLibre routes it through the cache-backed protocol above. */
 export function toCachedTileUrl(url: string): string {
   return `${TILE_PROTOCOL}://${url}`;
+}
+
+
+// ── Offline pack support ──────────────────────────────────────────────────
+// Pinned tiles are written by the offline pack downloader and survive eviction
+// until the rider deletes the pack.
+
+/** True if this tile URL is already stored (pack downloads skip re-fetching). */
+export async function isTileCached(url: string): Promise<boolean> {
+  return (await getCachedTile(url)) !== null;
+}
+
+/** Fetches a tile and stores it pinned. Returns bytes written (0 on failure). */
+export async function cacheTilePinned(url: string, signal?: AbortSignal): Promise<number> {
+  try {
+    const db = await openDb();
+    const existing = await requestToPromise<CachedTile | undefined>(
+      db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(url),
+    );
+    if (existing?.pinned) return 0;
+
+    const data = existing?.data ?? (await (await fetch(url, { signal })).arrayBuffer());
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put({
+      url,
+      data,
+      size: data.byteLength,
+      cachedAt: Date.now(),
+      pinned: true,
+    } satisfies CachedTile);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    return data.byteLength;
+  } catch {
+    return 0;
+  }
+}
+
+/** Removes the given tile URLs from the cache (used when deleting a pack). */
+export async function deleteCachedTiles(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  try {
+    const db = await openDb();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    urls.forEach((u) => store.delete(u));
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } catch {
+    // Best-effort: a failed delete just leaves tiles that eviction can reclaim.
+  }
 }
