@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2 } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -326,6 +326,27 @@ export default function Settings() {
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
+        {/* Demo Section */}
+        <section className="bg-accent/10 rounded-2xl border border-accent/30 animate-slide-up p-4 landscape:p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Play className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-accent">Demo Showcase</p>
+                <p className="text-[10px] text-muted-foreground">Walk through Blacktop features</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate('/demo')}
+              className="h-9 px-4 rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-semibold"
+            >
+              Open
+            </Button>
+          </div>
+        </section>
+
         {/* Profile Section */}
         <section className="bg-card/50 rounded-2xl border border-border/30 animate-slide-up h-14 landscape:h-12 flex items-center px-4 landscape:px-3">
           {isEditingName ? (
@@ -358,170 +379,172 @@ export default function Settings() {
          )}
         </section>
 
-        {/* Two-column collapsible grid — zipper expand when individually opened */}
-        <div className="grid grid-cols-2 gap-3 landscape:gap-2 items-start">
-
-
-        {/* Speed Alert Thresholds */}
-        <CollapsibleSection icon={AlertTriangle} label="Speed Alerts" delayClass="delay-100">
-          {(() => {
-            const u = settings.speedUnit;
-            const label = getSpeedLabel(u);
-            // Convert stored mph thresholds to displayed unit
-            const toDisplay = (mph: number) => formatSpeed(mph, u);
-            const fromDisplay = (display: number) =>
-              u === 'kph' ? Math.round(display / 1.60934) : display;
-            const sliderMin = u === 'kph' ? 40 : 25;
-            const sliderMax = u === 'kph' ? 400 : 250;
-            const sliderStep = u === 'kph' ? 5 : 5;
-            const amberDisplay = toDisplay(settings.amberSpeedThreshold);
-            const redDisplay = toDisplay(settings.redSpeedThreshold);
-            return (
-              <div className="space-y-5">
-                {/* Amber threshold */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
+        {/* Safety */}
+        <CollapsibleSection icon={AlertTriangle} label="Safety" delayClass="delay-100">
+          <div className="space-y-5">
+            {/* Speed Alerts */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-3">Speed Alerts</p>
+              {(() => {
+                const u = settings.speedUnit;
+                const label = getSpeedLabel(u);
+                // Convert stored mph thresholds to displayed unit
+                const toDisplay = (mph: number) => formatSpeed(mph, u);
+                const fromDisplay = (display: number) =>
+                  u === 'kph' ? Math.round(display / 1.60934) : display;
+                const sliderMin = u === 'kph' ? 40 : 25;
+                const sliderMax = u === 'kph' ? 400 : 250;
+                const sliderStep = u === 'kph' ? 5 : 5;
+                const amberDisplay = toDisplay(settings.amberSpeedThreshold);
+                const redDisplay = toDisplay(settings.redSpeedThreshold);
+                return (
+                  <div className="space-y-5">
+                    {/* Amber threshold */}
                     <div>
-                      <p className="text-sm font-medium text-warning">Amber Warning</p>
-                      <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-sm font-medium text-warning">Amber Warning</p>
+                          <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                        </div>
+                        <span className="font-mono text-sm font-bold text-warning">
+                          {amberDisplay} {label}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={sliderMin}
+                        max={sliderMax}
+                        step={sliderStep}
+                        value={amberDisplay}
+                        onChange={(e) => {
+                          const newAmberMph = fromDisplay(Number(e.target.value));
+                          updateSetting('amberSpeedThreshold', newAmberMph);
+                          if (settings.redSpeedThreshold <= newAmberMph) {
+                            updateSetting('redSpeedThreshold', Math.min(newAmberMph + 10, 250));
+                          }
+                        }}
+                        className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
+                      />
                     </div>
-                    <span className="font-mono text-sm font-bold text-warning">
-                      {amberDisplay} {label}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={sliderMin}
-                    max={sliderMax}
-                    step={sliderStep}
-                    value={amberDisplay}
-                    onChange={(e) => {
-                      const newAmberMph = fromDisplay(Number(e.target.value));
-                      updateSetting('amberSpeedThreshold', newAmberMph);
-                      if (settings.redSpeedThreshold <= newAmberMph) {
-                        updateSetting('redSpeedThreshold', Math.min(newAmberMph + 10, 250));
-                      }
-                    }}
-                    className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
-                  />
-                </div>
 
-                {/* Red threshold */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
+                    {/* Red threshold */}
                     <div>
-                      <p className="text-sm font-medium text-destructive">Red Alert</p>
-                      <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-sm font-medium text-destructive">Red Alert</p>
+                          <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                        </div>
+                        <span className="font-mono text-sm font-bold text-destructive">
+                          {redDisplay} {label}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={sliderMin}
+                        max={sliderMax}
+                        step={sliderStep}
+                        value={redDisplay}
+                        onChange={(e) => {
+                          const newRedMph = fromDisplay(Number(e.target.value));
+                          if (newRedMph > settings.amberSpeedThreshold) {
+                            updateSetting('redSpeedThreshold', newRedMph);
+                          }
+                        }}
+                        className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
+                      />
                     </div>
-                    <span className="font-mono text-sm font-bold text-destructive">
-                      {redDisplay} {label}
-                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min={sliderMin}
-                    max={sliderMax}
-                    step={sliderStep}
-                    value={redDisplay}
-                    onChange={(e) => {
-                      const newRedMph = fromDisplay(Number(e.target.value));
-                      if (newRedMph > settings.amberSpeedThreshold) {
-                        updateSetting('redSpeedThreshold', newRedMph);
-                      }
-                    }}
-                    className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
-                  />
-                </div>
-              </div>
-            );
-          })()}
-        </CollapsibleSection>
-
-
-        {/* Safety / Auto-Rescue */}
-        <CollapsibleSection icon={AlertTriangle} label="Auto Rescue" delayClass="delay-200">
-          <div className="flex items-center justify-between mb-2">
-            <div className="pr-3">
-              <p className="text-sm font-medium">Crash detection</p>
-              <p className="text-[10px] text-muted-foreground">
-                If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader and Discord (if connected). Works on solo rides too (Discord only).
-              </p>
+                );
+              })()}
             </div>
-            <Switch
-              checked={settings.autoRescueEnabled}
-              onCheckedChange={async (v) => {
-                if (v) {
-                  // iOS 13+: motion permission must be requested from a user gesture
-                  const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
-                  if (anyMotion && typeof anyMotion.requestPermission === 'function') {
-                    try {
-                      const res = await anyMotion.requestPermission();
-                      if (res !== 'granted') {
-                        toast.error('Motion sensor permission denied');
-                        return;
+
+            {/* Auto Rescue */}
+            <div className="border-t border-border/30 pt-4">
+              <p className="text-xs text-muted-foreground mb-3">Auto Rescue</p>
+              <div className="flex items-center justify-between mb-2">
+                <div className="pr-3">
+                  <p className="text-sm font-medium">Crash detection</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader and Discord (if connected). Works on solo rides too (Discord only).
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.autoRescueEnabled}
+                  onCheckedChange={async (v) => {
+                    if (v) {
+                      // iOS 13+: motion permission must be requested from a user gesture
+                      const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
+                      if (anyMotion && typeof anyMotion.requestPermission === 'function') {
+                        try {
+                          const res = await anyMotion.requestPermission();
+                          if (res !== 'granted') {
+                            toast.error('Motion sensor permission denied');
+                            return;
+                          }
+                        } catch {
+                          toast.error('Could not enable motion sensor');
+                          return;
+                        }
                       }
-                    } catch {
-                      toast.error('Could not enable motion sensor');
-                      return;
                     }
-                  }
-                }
-                updateSetting('autoRescueEnabled', v);
-              }}
-            />
-          </div>
-
-          {settings.autoRescueEnabled && (
-            <div className="pt-3 border-t border-border/30 space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium">Impact sensitivity</p>
-                  <span className="font-mono text-sm font-bold text-accent">
-                    {settings.autoRescueGThreshold} G
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={AUTO_RESCUE_MIN_G_THRESHOLD}
-                  max={AUTO_RESCUE_MAX_G_THRESHOLD}
-                  step={0.5}
-                  value={settings.autoRescueGThreshold}
-                  onChange={(e) => updateSetting('autoRescueGThreshold', Number(e.target.value))}
-                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                    updateSetting('autoRescueEnabled', v);
+                  }}
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{AUTO_RESCUE_MIN_G_THRESHOLD} G (sensitive)</span>
-                  <span>{AUTO_RESCUE_MAX_G_THRESHOLD} G (only crashes)</span>
-                </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium">Stop window after impact</p>
-                  <span className="font-mono text-sm font-bold text-accent">
-                    {settings.autoRescueStopWindowSec}s
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={AUTO_RESCUE_MIN_STOP_WINDOW_SEC}
-                  max={AUTO_RESCUE_MAX_STOP_WINDOW_SEC}
-                  step={1}
-                  value={settings.autoRescueStopWindowSec}
-                  onChange={(e) => updateSetting('autoRescueStopWindowSec', Number(e.target.value))}
-                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}s</span>
-                  <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}s</span>
-                </div>
-              </div>
+              {settings.autoRescueEnabled && (
+                <div className="pt-3 border-t border-border/30 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium">Impact sensitivity</p>
+                      <span className="font-mono text-sm font-bold text-accent">
+                        {settings.autoRescueGThreshold} G
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={AUTO_RESCUE_MIN_G_THRESHOLD}
+                      max={AUTO_RESCUE_MAX_G_THRESHOLD}
+                      step={0.5}
+                      value={settings.autoRescueGThreshold}
+                      onChange={(e) => updateSetting('autoRescueGThreshold', Number(e.target.value))}
+                      className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>{AUTO_RESCUE_MIN_G_THRESHOLD} G (sensitive)</span>
+                      <span>{AUTO_RESCUE_MAX_G_THRESHOLD} G (only crashes)</span>
+                    </div>
+                  </div>
 
-              <p className="text-[10px] text-muted-foreground">
-                Acknowledge timeout: <span className="font-mono">5:00</span>
-              </p>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium">Stop window after impact</p>
+                      <span className="font-mono text-sm font-bold text-accent">
+                        {settings.autoRescueStopWindowSec}s
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={AUTO_RESCUE_MIN_STOP_WINDOW_SEC}
+                      max={AUTO_RESCUE_MAX_STOP_WINDOW_SEC}
+                      step={1}
+                      value={settings.autoRescueStopWindowSec}
+                      onChange={(e) => updateSetting('autoRescueStopWindowSec', Number(e.target.value))}
+                      className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}s</span>
+                      <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}s</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-muted-foreground">
+                    Acknowledge timeout: <span className="font-mono">5:00</span>
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </CollapsibleSection>
 
          {/* Ride Metrics Section */}
@@ -553,72 +576,72 @@ export default function Settings() {
              </div>
            </div>
 
-           <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
-             <div>
-               <p className="text-sm font-medium">Enable Lean Angle</p>
-               <p className="text-[10px] text-muted-foreground">Track vehicle lean angle in real-time</p>
-             </div>
-             <Switch
-               checked={settings.leanAngleEnabled}
-               onCheckedChange={toggleLeanAngle}
-             />
-           </div>
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+              <div>
+                <p className="text-sm font-medium">Enable G-Force Gauge</p>
+                <p className="text-[10px] text-muted-foreground">Live G-force gauge and max-G tracking during rides</p>
+              </div>
+              <Switch
+                checked={settings.gForceEnabled}
+                onCheckedChange={async (v) => {
+                  if (v) {
+                    // iOS 13+: motion permission must be requested from a user gesture
+                    const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
+                    if (anyMotion && typeof anyMotion.requestPermission === 'function') {
+                      try {
+                        const res = await anyMotion.requestPermission();
+                        if (res !== 'granted') {
+                          toast.error('Motion sensor permission denied');
+                          return;
+                        }
+                      } catch {
+                        toast.error('Could not enable motion sensor');
+                        return;
+                      }
+                    }
+                  }
+                  updateSetting('gForceEnabled', v);
+                }}
+              />
+            </div>
 
-           {settings.leanAngleEnabled && (
-             <div className="pt-3 pb-4 border-t border-border/30 mt-3">
-               <div className="flex items-center justify-between mb-2">
-                 <div>
-                   <p className="text-sm font-medium text-destructive">Warning Threshold</p>
-                   <p className="text-[10px] text-muted-foreground">Arc glows red above this angle</p>
-                 </div>
-                 <span className="font-mono text-sm font-bold text-destructive">
-                   {settings.leanAngleThreshold}°
-                 </span>
-               </div>
-               <input
-                 type="range"
-                 min={20}
-                 max={90}
-                 step={1}
-                 value={settings.leanAngleThreshold}
-                 onChange={(e) => setLeanAngleThreshold(Number(e.target.value))}
-                 className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
-               />
-               <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                 <span>20°</span>
-                 <span>90°</span>
-               </div>
-             </div>
-           )}
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+              <div>
+                <p className="text-sm font-medium">Enable Lean Angle</p>
+                <p className="text-[10px] text-muted-foreground">Track vehicle lean angle in real-time</p>
+              </div>
+              <Switch
+                checked={settings.leanAngleEnabled}
+                onCheckedChange={toggleLeanAngle}
+              />
+            </div>
 
-           <div className={cn("flex items-center justify-between mt-4", settings.leanAngleEnabled && "pt-3 border-t border-border/30")}>
-             <div>
-               <p className="text-sm font-medium">Enable G-Force Gauge</p>
-               <p className="text-[10px] text-muted-foreground">Live G-force gauge and max-G tracking during rides</p>
-             </div>
-             <Switch
-               checked={settings.gForceEnabled}
-               onCheckedChange={async (v) => {
-                 if (v) {
-                   // iOS 13+: motion permission must be requested from a user gesture
-                   const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
-                   if (anyMotion && typeof anyMotion.requestPermission === 'function') {
-                     try {
-                       const res = await anyMotion.requestPermission();
-                       if (res !== 'granted') {
-                         toast.error('Motion sensor permission denied');
-                         return;
-                       }
-                     } catch {
-                       toast.error('Could not enable motion sensor');
-                       return;
-                     }
-                   }
-                 }
-                 updateSetting('gForceEnabled', v);
-               }}
-             />
-           </div>
+            {settings.leanAngleEnabled && (
+              <div className="pt-3 pb-4 border-t border-border/30 mt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-destructive">Warning Threshold</p>
+                    <p className="text-[10px] text-muted-foreground">Arc glows red above this angle</p>
+                  </div>
+                  <span className="font-mono text-sm font-bold text-destructive">
+                    {settings.leanAngleThreshold}°
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={20}
+                  max={90}
+                  step={1}
+                  value={settings.leanAngleThreshold}
+                  onChange={(e) => setLeanAngleThreshold(Number(e.target.value))}
+                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                  <span>20°</span>
+                  <span>90°</span>
+                </div>
+              </div>
+            )}
 
            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
              <div>
@@ -792,7 +815,6 @@ export default function Settings() {
             Tip: keep the installed app — your stats live on your device.
           </p>
         </CollapsibleSection>
-        </div>
 
 
         {/* Blacktop World Opt-In */}
@@ -800,47 +822,6 @@ export default function Settings() {
           enabled={settings.blacktopWorldEnabled}
           onToggle={(v) => updateSetting('blacktopWorldEnabled', v)}
         />
-
-
-        {/* Tip Jar Section */}
-        <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
-          <div className="flex items-center gap-2 mb-3">
-            <Heart className="w-4 h-4 text-accent" />
-            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
-          </div>
-          <p className="text-xs text-muted-foreground mb-3">
-            Help keep us ad-free!
-          </p>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => handleTip(5)}
-              disabled={isTipping}
-              className="flex-1 h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              {isTipping ? 'Opening...' : 'Donate $5'}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  disabled={isTipping}
-                  aria-label="Choose a different tip amount"
-                  className="h-11 w-11 px-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl touch-target"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border/30">
-                <DropdownMenuItem onClick={() => handleTip(10)} disabled={isTipping}>
-                  Donate $10
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleTip(20)} disabled={isTipping}>
-                  Donate $20
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </section>
 
 
         {/* Burn Button Section */}
@@ -881,6 +862,47 @@ export default function Settings() {
           <p className="text-[10px] text-destructive text-center mt-3">
             This action cannot be undone
           </p>
+        </section>
+
+
+        {/* Tip Jar Section */}
+        <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-accent" />
+            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Help keep us ad-free!
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleTip(5)}
+              disabled={isTipping}
+              className="flex-1 h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              {isTipping ? 'Opening...' : 'Donate $5'}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={isTipping}
+                  aria-label="Choose a different tip amount"
+                  className="h-11 w-11 px-0 bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl touch-target"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border/30">
+                <DropdownMenuItem onClick={() => handleTip(10)} disabled={isTipping}>
+                  Donate $10
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTip(20)} disabled={isTipping}>
+                  Donate $20
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </section>
 
         {/* Legal Disclaimer */}
