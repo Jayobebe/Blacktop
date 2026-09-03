@@ -65,8 +65,11 @@ export default function DemoShowcase() {
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />,
       cards: [
         { icon: Users, label: 'Convoy Mode', text: 'Up to 8 riders synced in real time via a shared code.' },
-        { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute and disconnect. Works with your music.' },
+        { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute, disconnect and Bluetooth intercoms.' },
         { icon: Gauge, label: 'Solo Ride', text: 'Same tracking, no group needed — with Discord rescue on tap.' },
+        { icon: QrCode, label: 'QR Join', text: 'Scan the lobby QR to jump straight into a convoy.' },
+        { icon: MessageSquare, label: 'Lobby Chat', text: 'Sort the plan before you set off, live in the lobby.' },
+        { icon: Crown, label: 'Leadership', text: 'Hand over the lead, or auto-promote when the leader drops.' },
       ],
     },
     {
