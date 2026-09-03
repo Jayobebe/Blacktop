@@ -709,7 +709,7 @@ export default function Lobby() {
               </div>
               
               {nextWaypoint ? (
-                <div className="bg-card/50 border border-accent/30 rounded-2xl p-4">
+                <div className="glass-tile border-accent/30 rounded-2xl p-4">
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
