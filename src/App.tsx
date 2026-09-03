@@ -39,6 +39,7 @@ import World from "./pages/World";
 import CrewConvoys from "./pages/CrewConvoys";
 import CrewLeaderboard from "./pages/CrewLeaderboard";
 import CrewJoin from "./pages/CrewJoin";
+import CrewChallenges from "./pages/CrewChallenges";
 import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
 import ArcadePetrolHead from "./pages/ArcadePetrolHead";
 
@@ -83,6 +84,7 @@ function AppRoutes() {
       <Route path="/crew/convoys" element={<CrewConvoys />} />
       <Route path="/crew/leaderboard" element={<CrewLeaderboard />} />
       <Route path="/crew/join" element={<CrewJoin />} />
+      <Route path="/crew/challenges" element={<CrewChallenges />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
       <Route path="/stats" element={<Stats />} />

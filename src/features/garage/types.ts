@@ -35,6 +35,10 @@ export interface MaintItem {
   name: string;
   intervalKm: number; // service interval in km
   lastServiceKm: number; // odometer reading at last service (km)
+  /** Optional time-based reminder: service every N months regardless of miles. */
+  intervalMonths?: number;
+  /** Epoch ms of the last service; set whenever "Serviced" is tapped. */
+  lastServiceAt?: number;
   notes?: string;
 }
 
