@@ -160,43 +160,82 @@
 }
 
 @layer components {
-  /* Glass card effect - Sonoma style */
+  /* ---- Liquid glass primitives ----
+     Clean translucent foreground surfaces: soft blur, one hairline highlight,
+     no texture, no stacked shadows. */
+  .glass-panel {
+    position: relative;
+    background:
+      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 42%),
+      hsl(var(--liquid-surface));
+    backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
+    border: 1px solid hsl(var(--liquid-stroke));
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-liquid), var(--shadow-liquid-inset);
+  }
+
+  .glass-tile {
+    position: relative;
+    background:
+      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 50%),
+      hsl(var(--liquid-surface));
+    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(140%);
+    border: 1px solid hsl(var(--liquid-stroke));
+    border-radius: 1rem;
+    box-shadow: var(--shadow-liquid-inset);
+    transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-tile:active {
+    transform: scale(0.99);
+  }
+
+  .glass-control {
+    background: hsl(var(--liquid-surface-strong));
+    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(160%);
+    border: 1px solid hsl(var(--liquid-stroke));
+    box-shadow: var(--shadow-liquid-inset);
+  }
+
+  .glass-control:hover {
+    background: hsl(var(--liquid-tint) / 0.72);
+  }
+
+  /* Legacy aliases — kept so existing screens inherit the new look. */
   .glass {
-    background: hsl(var(--glass-bg));
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid hsl(var(--glass-border));
-    box-shadow: var(--shadow-inset), var(--shadow-md);
+    @apply glass-panel;
   }
 
   .glass-subtle {
-    background: hsl(220 15% 10% / 0.5);
-    backdrop-filter: blur(12px) saturate(150%);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
-    border: 1px solid hsl(var(--glass-border));
+    @apply glass-tile;
   }
 
   /* Refined card styles */
   .card-elevated {
-    @apply bg-card rounded-2xl border border-border/50;
-    box-shadow: var(--shadow-md), var(--shadow-inset);
+    @apply glass-panel;
   }
 
   .card-interactive {
-    @apply bg-card rounded-2xl border border-border/50 transition-all duration-300;
-    box-shadow: var(--shadow-sm);
+    @apply glass-tile rounded-2xl;
   }
 
   .card-interactive:hover {
-    @apply border-border bg-secondary/50;
-    box-shadow: var(--shadow-md);
+    border-color: hsl(var(--liquid-stroke));
+    background:
+      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 50%),
+      hsl(var(--liquid-surface-strong));
     transform: translateY(-1px);
   }
 
   .card-interactive:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-xs);
+    transform: translateY(0) scale(0.995);
   }
+
 
   /* Button refinements */
   .btn-glass {
