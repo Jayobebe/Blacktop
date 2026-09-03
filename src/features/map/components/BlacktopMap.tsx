@@ -24,7 +24,7 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -84,6 +84,12 @@ interface BlacktopMapProps {
 registerTileCacheProtocol();
 
 const SATELLITE_LAYER_ID = 'esri-satellite-layer';
+// Free, key-less global elevation tiles (Terrarium encoding, AWS Open Data) —
+// same source the 3D ride flyover uses.
+const TERRAIN_SOURCE_ID = 'blacktop-dem';
+const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+const BUILDINGS_LAYER_ID = 'blacktop-buildings-3d';
+const THREE_D_PITCH = 60;
 const SATELLITE_SOURCE_ID = 'esri-satellite';
 
 // Dark basemap: OpenFreeMap's free dark vector style (no API key required,
@@ -172,6 +178,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [showSaveUI, setShowSaveUI] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [basemap, setBasemap] = useState<'dark' | 'satellite'>('dark');
+  const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
   const { rideState } = useActiveRide();
   const convoyMembers = useConvoyMembers();
@@ -361,6 +368,61 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (m.isStyleLoaded()) apply();
     else m.once('styledata', apply);
   }, [basemap, map]);
+
+  // ── 3D terrain + building extrusions ──────────────────────────────────────
+  // Adds the same elevation DEM and extruded OSM buildings used by the ride
+  // flyover, and tilts the camera into a third-person chase view. Layers are
+  // prefixed "blacktop-" so the dark/satellite visibility swap leaves them be.
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m) return;
+
+    const apply = () => {
+      try {
+        if (threeD) {
+          if (!m.getSource(TERRAIN_SOURCE_ID)) {
+            m.addSource(TERRAIN_SOURCE_ID, {
+              type: 'raster-dem',
+              tiles: [TERRAIN_TILES],
+              tileSize: 256,
+              encoding: 'terrarium',
+              maxzoom: 14,
+              attribution: 'Terrain © <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">AWS Terrain Tiles</a>',
+            });
+          }
+          m.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: 1.4 });
+
+          if (!m.getLayer(BUILDINGS_LAYER_ID) && m.getSource('openmaptiles')) {
+            m.addLayer({
+              id: BUILDINGS_LAYER_ID,
+              type: 'fill-extrusion',
+              source: 'openmaptiles',
+              'source-layer': 'building',
+              minzoom: 13,
+              paint: {
+                'fill-extrusion-color': '#2b2b31',
+                'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8],
+                'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+                'fill-extrusion-opacity': 0.85,
+              },
+            });
+          }
+          if (m.getPitch() < THREE_D_PITCH - 1) {
+            m.easeTo({ pitch: THREE_D_PITCH, duration: 600, essential: true });
+          }
+        } else {
+          m.setTerrain(null);
+          if (m.getLayer(BUILDINGS_LAYER_ID)) m.removeLayer(BUILDINGS_LAYER_ID);
+          if (m.getPitch() > 1) m.easeTo({ pitch: 0, duration: 600, essential: true });
+        }
+      } catch (err) {
+        console.warn('[BlacktopMap] 3D toggle failed:', err);
+      }
+    };
+
+    if (m.isStyleLoaded()) apply();
+    else m.once('styledata', apply);
+  }, [threeD, map]);
 
   // When the overlay transitions from hidden (display:none) to visible, the
   // map canvas has no layout dimensions. Calling resize() after a short delay
@@ -939,6 +1001,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           )}
         >
           <Satellite className="w-4 h-4" />
+        </button>
+        <div className="h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => setThreeD((v) => !v)}
+          aria-pressed={threeD}
+          aria-label="3D terrain and buildings"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            threeD ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <Box className="w-4 h-4" />
         </button>
       </div>
 
