@@ -31,6 +31,11 @@ export function VehicleCard({ card }: Props) {
   const locked = card.tier === 'locked';
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [resizing, setResizing] = useState(false);
+  const zoom = zooms[card.bike.id] ?? 1;
+  const setZoom = (v: number) => setZooms((prev) => ({ ...prev, [card.bike.id]: v }));
+
   const shareable = !locked && settings.blacktopWorldEnabled;
   const hero = card.bike.photos.hero;
   // Never expose a QR for a pictured card until its photo has been published.
