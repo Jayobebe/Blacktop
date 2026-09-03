@@ -1233,7 +1233,9 @@ export default function ActiveRide() {
               </div>
             </div>
           </div>
+          </>
         )}
+
       </div>
 
       {/* Solo rescue moved into the controls row (next to Map/Pause) so it's
