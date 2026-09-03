@@ -60,7 +60,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-  showSpeedRankings: true,
+  showSpeedRankings: false,
   speedUnit: 'mph',
   distanceUnit: 'miles',
   accentColor: 'orange',
@@ -74,9 +74,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoRescueStopWindowSec: 10,
   blacktopWorldEnabled: false,
   trafficCamerasEnabled: false,
-  weatherOverlayEnabled: true,
-  flyoverEnabled: true,
-  rideOverlayEnabled: true,
+  weatherOverlayEnabled: false,
+  flyoverEnabled: false,
+  rideOverlayEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
