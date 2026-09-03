@@ -30,6 +30,12 @@ interface LiveOverlayRecorderOptions {
   accentColor: string;
   /** When true, draw a live mini-map (bottom-right) with rider + route. */
   blacktopMapEnabled: boolean;
+  /**
+   * Convoy voice-channel audio source. When provided, every stream returned is
+   * mixed into the recording's audio track (own mic + remote riders). Omitted
+   * for solo rides or when voice recording is disabled in settings.
+   */
+  getVoiceStreams?: () => MediaStream[];
 }
 
 // Rolling window for the G-force trace: enough to show recent shape on a
@@ -37,8 +43,16 @@ interface LiveOverlayRecorderOptions {
 const GFORCE_HISTORY_MAX_POINTS = 150;
 
 export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
-  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled } = options;
+  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled, getVoiceStreams } = options;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Voice mixing: one AudioContext + destination feeding the recorder, with a
+  // poller that attaches peers that join mid-ride.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const mixedStreamIdsRef = useRef<Set<string>>(new Set());
+  const voicePollRef = useRef<number | null>(null);
+  const getVoiceStreamsRef = useRef(getVoiceStreams);
+  getVoiceStreamsRef.current = getVoiceStreams;
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const isRecordingRef = useRef(false);
@@ -326,10 +340,44 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     // Get stream from canvas
     const stream = canvas.captureStream(30); // 30 fps
 
+    // Mix the convoy voice channel in (when enabled) so the exported clip has
+    // the crew's conversation as its audio track.
+    if (getVoiceStreamsRef.current) {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioCtx();
+        const dest = ctx.createMediaStreamDestination();
+        audioCtxRef.current = ctx;
+        audioDestRef.current = dest;
+        mixedStreamIdsRef.current = new Set();
+
+        const attachStreams = () => {
+          const sources = getVoiceStreamsRef.current?.() ?? [];
+          sources.forEach((src) => {
+            if (!src || src.getAudioTracks().length === 0) return;
+            if (mixedStreamIdsRef.current.has(src.id)) return;
+            try {
+              ctx.createMediaStreamSource(src).connect(dest);
+              mixedStreamIdsRef.current.add(src.id);
+            } catch (e) {
+              console.warn('[OverlayRecorder] Failed to mix voice stream', e);
+            }
+          });
+        };
+
+        attachStreams();
+        voicePollRef.current = window.setInterval(attachStreams, 3000);
+        dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
+      } catch (e) {
+        console.warn('[OverlayRecorder] Voice recording unavailable', e);
+      }
+    }
+
     // Try VP9 for transparency, fall back to VP8
-    let mimeType = 'video/webm;codecs=vp9';
+    const hasAudio = stream.getAudioTracks().length > 0;
+    let mimeType = hasAudio ? 'video/webm;codecs=vp9,opus' : 'video/webm;codecs=vp9';
     if (!MediaRecorder.isTypeSupported(mimeType)) {
-      mimeType = 'video/webm;codecs=vp8';
+      mimeType = hasAudio ? 'video/webm;codecs=vp8,opus' : 'video/webm;codecs=vp8';
     }
     if (!MediaRecorder.isTypeSupported(mimeType)) {
       mimeType = 'video/webm';
@@ -401,6 +449,17 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
 
       const recorder = recorderRef.current;
 
+      if (voicePollRef.current) {
+        clearInterval(voicePollRef.current);
+        voicePollRef.current = null;
+      }
+      mixedStreamIdsRef.current.clear();
+      audioDestRef.current = null;
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         chunksRef.current = [];
@@ -425,6 +484,14 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         if (recorderRef.current && recorderRef.current.state !== 'inactive') {
           recorderRef.current.stop();
         }
+      }
+      if (voicePollRef.current) {
+        clearInterval(voicePollRef.current);
+        voicePollRef.current = null;
+      }
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
       }
     };
   }, []);
