@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw } from 'lucide-react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw, Scan, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   formatDistance,
   formatDuration,
@@ -17,6 +18,7 @@ import { encodeCard } from '../lib/cardCodec';
 import { uploadCardPhoto } from '../lib/cardPhoto';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
+
 
 interface Props {
   card: VehicleCardData;
