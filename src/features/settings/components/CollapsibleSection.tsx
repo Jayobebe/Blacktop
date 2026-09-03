@@ -51,10 +51,10 @@ export function CollapsibleSection({
         }}
         className="w-full flex items-center gap-2 px-4 landscape:px-3 h-14 landscape:h-12 text-left"
       >
-        {Icon && <Icon className={cn('w-4 h-4 text-muted-foreground shrink-0', iconClassName)} />}
+        {Icon && <Icon className={cn('w-4 h-4 shrink-0 transition-colors', open ? 'text-accent' : 'text-[hsl(var(--chrome-text))]', iconClassName)} />}
         <p
           className={cn(
-            'text-[10px] text-muted-foreground uppercase tracking-widest flex-1 truncate',
+            'chrome-label flex-1 truncate',
             labelClassName,
           )}
         >
@@ -65,8 +65,8 @@ export function CollapsibleSection({
         ) : (
           <ChevronDown
             className={cn(
-              'w-4 h-4 text-accent transition-transform shrink-0',
-              open && 'rotate-180',
+              'w-4 h-4 shrink-0 transition-transform',
+              open ? 'rotate-180 text-accent' : 'text-[hsl(var(--chrome-text))]',
             )}
           />
         )}
