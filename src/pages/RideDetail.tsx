@@ -9,12 +9,14 @@ import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import { useState } from 'react';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
+import { useSettings } from '@/features/settings';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
   const { bikes } = useGarage();
+  const { settings } = useSettings();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
   const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
@@ -260,7 +262,7 @@ export default function RideDetail() {
         )}
 
         {/* 3D Ride Overview */}
-        {(ride.gpsPoints?.length ?? 0) > 1 && (
+        {settings.flyoverEnabled && (ride.gpsPoints?.length ?? 0) > 1 && (
           <button
             onClick={() => setShowFlyover(true)}
             className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors"
@@ -281,7 +283,7 @@ export default function RideDetail() {
         )}
 
         {/* Download Overlay Section - show if overlay was recorded */}
-        {(ride.overlayAvailable || ride.overlayBlobUrl) && (
+        {settings.rideOverlayEnabled && (ride.overlayAvailable || ride.overlayBlobUrl) && (
           <button
             disabled={overlayProgress !== null}
             onClick={async () => {

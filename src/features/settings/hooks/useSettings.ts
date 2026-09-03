@@ -39,6 +39,10 @@ export interface AppSettings {
   trafficCamerasEnabled: boolean;
   // Weather radar overlay (RainViewer) on the Blacktop map.
   weatherOverlayEnabled: boolean;
+  // 3D flyover overview button on ride history details.
+  flyoverEnabled: boolean;
+  // Downloadable recorded ride overlay on ride history details.
+  rideOverlayEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -71,6 +75,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   blacktopWorldEnabled: false,
   trafficCamerasEnabled: false,
   weatherOverlayEnabled: true,
+  flyoverEnabled: true,
+  rideOverlayEnabled: true,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes
