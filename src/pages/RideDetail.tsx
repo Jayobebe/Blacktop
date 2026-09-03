@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
 import { useGarage } from '@/features/garage';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2 } from 'lucide-react';
 import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
@@ -10,6 +10,9 @@ import { useState } from 'react';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
+import { useProfile } from '@/features/profile';
+import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
+import { shareRecapCard } from '@/features/ride/lib/recapCard';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,10 +20,12 @@ export default function RideDetail() {
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
   const { bikes } = useGarage();
   const { settings } = useSettings();
+  const { profile } = useProfile();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
   const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
   const [showFlyover, setShowFlyover] = useState(false);
+  const [recapBusy, setRecapBusy] = useState(false);
 
   const ride = rides.find(r => r.id === id);
   const rideBike = ride ? bikes.find(b => b.id === ride.bikeId) ?? null : null;
@@ -260,6 +265,44 @@ export default function RideDetail() {
             </div>
           </div>
         )}
+
+        {/* Corner Report — scored from this ride's own GPS/lean trace */}
+        <CornerReportCard ride={ride} />
+
+        {/* Shareable recap card */}
+        <button
+          disabled={recapBusy}
+          onClick={async () => {
+            setRecapBusy(true);
+            try {
+              const result = await shareRecapCard(ride, {
+                riderName: profile.name,
+                bikeName: rideBike?.name ?? null,
+                unit: settings.distanceUnit === 'km' ? 'km' : 'miles',
+              });
+              toast.success(result === 'shared' ? 'Recap card shared' : 'Recap card saved');
+            } catch (err) {
+              console.error('Recap card failed:', err);
+              toast.error('Could not create recap card');
+            } finally {
+              setRecapBusy(false);
+            }
+          }}
+          className="w-full bg-card rounded-xl overflow-hidden border border-border mb-3 animate-slide-up hover:bg-secondary/40 transition-colors disabled:opacity-70"
+        >
+          <div className="flex items-center justify-between px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-accent" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-sm">{recapBusy ? 'Building recap…' : 'Share Recap Card'}</h3>
+                <p className="text-xs text-muted-foreground">Route, stats & corner grade as one image</p>
+              </div>
+            </div>
+            <Download className="w-5 h-5 text-muted-foreground" />
+          </div>
+        </button>
 
         {/* 3D Ride Overview */}
         {settings.flyoverEnabled && (ride.gpsPoints?.length ?? 0) > 1 && (
