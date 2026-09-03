@@ -296,22 +296,53 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     [accentColor, drawStatCard, frames.length, memberTracks, ride, rideEndTs, rideStartTs, settings],
   );
 
+  const lastRouteIndexRef = useRef(-1);
+
   const applyFrame = useCallback(
     (frame: FlyoverFrame) => {
       const map = mapRef.current;
       if (!map) return;
       map.jumpTo({ center: [frame.lng, frame.lat], bearing: frame.bearing, pitch: 62, zoom: 15.6 });
-      const src = map.getSource('flyover-route') as maplibregl.GeoJSONSource | undefined;
-      if (src) {
-        src.setData({
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates: routeCoords.slice(0, Math.max(2, frame.index + 2)) },
-        });
+      // Route geometry only needs updating when we pass a new GPS vertex —
+      // re-uploading it every animation frame is what made playback stutter.
+      if (frame.index !== lastRouteIndexRef.current) {
+        lastRouteIndexRef.current = frame.index;
+        const src = map.getSource('flyover-route') as maplibregl.GeoJSONSource | undefined;
+        if (src) {
+          src.setData({
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'LineString', coordinates: routeCoords.slice(0, Math.max(2, frame.index + 2)) },
+          });
+        }
       }
       composite(frame);
     },
     [composite, routeCoords],
+  );
+
+  /** Continuous sample between keyframes so playback isn't locked to 30 steps/s. */
+  const frameAt = useCallback(
+    (t: number): FlyoverFrame => {
+      const i = Math.min(frames.length - 1, Math.floor(t));
+      const j = Math.min(frames.length - 1, i + 1);
+      const f = t - i;
+      const a = frames[i];
+      const b = frames[j];
+      const mix = (x: number, y: number) => x + (y - x) * f;
+      return {
+        lat: mix(a.lat, b.lat),
+        lng: mix(a.lng, b.lng),
+        bearing: mix(a.bearing, b.bearing),
+        index: a.index,
+        elapsed: mix(a.elapsed, b.elapsed),
+        speed: mix(a.speed, b.speed),
+        distance: mix(a.distance, b.distance),
+        lean: mix(a.lean, b.lean),
+        gForce: mix(a.gForce, b.gForce),
+      };
+    },
+    [frames],
   );
 
   const stopLoop = useCallback(() => {
@@ -323,11 +354,13 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     (onDone?: () => void) => {
       if (!frames.length) return;
       startedAtRef.current = performance.now();
+      lastRouteIndexRef.current = -1;
       const tick = () => {
         const elapsed = (performance.now() - startedAtRef.current) / 1000;
-        const idx = Math.min(frames.length - 1, Math.floor(elapsed * FPS));
+        const pos = Math.min(frames.length - 1, elapsed * FPS);
+        const idx = Math.floor(pos);
         frameIndexRef.current = idx;
-        applyFrame(frames[idx]);
+        applyFrame(frameAt(pos));
         if (idx >= frames.length - 1) {
           rafRef.current = null;
           setPlaying(false);
@@ -338,7 +371,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       };
       rafRef.current = requestAnimationFrame(tick);
     },
-    [applyFrame, frames],
+    [applyFrame, frameAt, frames],
   );
 
   // Draw the first frame as soon as the map is ready.
