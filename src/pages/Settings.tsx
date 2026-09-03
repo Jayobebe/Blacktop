@@ -361,35 +361,6 @@ export default function Settings() {
         {/* Two-column collapsible grid — zipper expand when individually opened */}
         <div className="grid grid-cols-2 gap-3 landscape:gap-2 items-start">
 
-        {/* Units Section */}
-        <CollapsibleSection icon={Gauge} label="Units" delayClass="delay-75">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Speed</p>
-                <p className="text-[10px] text-muted-foreground">Currently {getSpeedLabel(settings.speedUnit)}</p>
-              </div>
-              <button
-                onClick={toggleSpeedUnit}
-                className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted transition-colors font-mono font-semibold text-sm"
-              >
-                {getSpeedLabel(settings.speedUnit)}
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Distance</p>
-                <p className="text-[10px] text-muted-foreground">Currently {getDistanceLabel(settings.distanceUnit)}</p>
-              </div>
-              <button
-                onClick={toggleDistanceUnit}
-                className="px-4 py-2 rounded-xl bg-secondary hover:bg-muted transition-colors font-mono font-semibold text-sm"
-              >
-                {getDistanceLabel(settings.distanceUnit).toUpperCase()}
-              </button>
-            </div>
-          </div>
-        </CollapsibleSection>
 
         {/* Speed Alert Thresholds */}
         <CollapsibleSection icon={AlertTriangle} label="Speed Alerts" delayClass="delay-100">
@@ -466,75 +437,6 @@ export default function Settings() {
           })()}
         </CollapsibleSection>
 
-        {/* Lean Angle + G-Force Sensor Section */}
-        <CollapsibleSection icon={Activity} label="Lean + G's" delayClass="delay-150">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-medium">Enable Lean Angle</p>
-              <p className="text-[10px] text-muted-foreground">Track vehicle lean angle in real-time</p>
-            </div>
-            <Switch
-              checked={settings.leanAngleEnabled}
-              onCheckedChange={toggleLeanAngle}
-            />
-          </div>
-
-          {settings.leanAngleEnabled && (
-            <div className="pt-3 pb-4 border-t border-border/30">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-sm font-medium text-destructive">Warning Threshold</p>
-                  <p className="text-[10px] text-muted-foreground">Arc glows red above this angle</p>
-                </div>
-                <span className="font-mono text-sm font-bold text-destructive">
-                  {settings.leanAngleThreshold}°
-                </span>
-              </div>
-              <input
-                type="range"
-                min={20}
-                max={90}
-                step={1}
-                value={settings.leanAngleThreshold}
-                onChange={(e) => setLeanAngleThreshold(Number(e.target.value))}
-                className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                <span>20°</span>
-                <span>90°</span>
-              </div>
-            </div>
-          )}
-
-          <div className={cn("flex items-center justify-between", settings.leanAngleEnabled && "pt-3 border-t border-border/30")}>
-            <div>
-              <p className="text-sm font-medium">Enable G-Force Gauge</p>
-              <p className="text-[10px] text-muted-foreground">Live G-force gauge and max-G tracking during rides</p>
-            </div>
-            <Switch
-              checked={settings.gForceEnabled}
-              onCheckedChange={async (v) => {
-                if (v) {
-                  // iOS 13+: motion permission must be requested from a user gesture
-                  const anyMotion = (window as any).DeviceMotionEvent;
-                  if (anyMotion && typeof anyMotion.requestPermission === 'function') {
-                    try {
-                      const res = await anyMotion.requestPermission();
-                      if (res !== 'granted') {
-                        toast.error('Motion sensor permission denied');
-                        return;
-                      }
-                    } catch {
-                      toast.error('Could not enable motion sensor');
-                      return;
-                    }
-                  }
-                }
-                updateSetting('gForceEnabled', v);
-              }}
-            />
-          </div>
-        </CollapsibleSection>
 
         {/* Safety / Auto-Rescue */}
         <CollapsibleSection icon={AlertTriangle} label="Auto Rescue" delayClass="delay-200">
