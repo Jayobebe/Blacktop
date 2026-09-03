@@ -43,9 +43,8 @@ export default function DemoShowcase() {
   const [animationKey, setAnimationKey] = useState(0);
 
   // Animated values for mockups
-  const [speed, setSpeed] = useState(0);
-  const [distance, setDistance] = useState(0);
   const [copied, setCopied] = useState(false);
+
 
   const features: Feature[] = [
     {
