@@ -283,7 +283,7 @@ export default function Home() {
           ].map((stat, i) => (
             <div 
               key={stat.label}
-              className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
+              className="glass-tile rounded-2xl p-2 md:p-3 animate-scale-in"
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
@@ -331,7 +331,7 @@ export default function Home() {
           <button
             ref={joinTileRef}
             onClick={() => navigate('/join-convoy')}
-            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            className="flex-1 glass-tile hover:bg-[hsl(var(--liquid-surface-strong))] rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
           >
             <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
               <UserPlus className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />

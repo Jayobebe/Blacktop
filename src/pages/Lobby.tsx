@@ -498,7 +498,7 @@ export default function Lobby() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">Convoy Code</p>
             <button
               onClick={handleCopyCode}
-              className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2 hover:bg-secondary transition-colors"
+              className="flex items-center gap-3 glass-tile rounded-2xl px-4 py-2 hover:bg-secondary transition-colors"
             >
               <span className="font-mono text-2xl landscape:text-xl md:text-3xl font-bold tracking-[0.15em]">{convoy.code}</span>
               {copied ? (
@@ -511,7 +511,7 @@ export default function Lobby() {
           {/* QR Code Button - tap to show for 15s */}
           <button
             onClick={() => setShowQR(true)}
-            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors select-none"
+            className="p-2 glass-tile rounded-xl hover:bg-secondary transition-colors select-none"
           >
             <QrCode className="w-6 h-6 text-muted-foreground" />
           </button>
@@ -523,7 +523,7 @@ export default function Lobby() {
                 'p-2 rounded-xl border transition-colors',
                 isListed
                   ? 'bg-accent/10 border-accent/60 text-accent'
-                  : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary',
+                  : 'glass-tile text-muted-foreground hover:bg-secondary',
               )}
               title={isListed ? 'Listed in Crew Convoys — tap to lock' : 'Locked — tap to list in Crew Convoys'}
               aria-label={isListed ? 'Lock convoy from crew list' : 'Unlock convoy to crew list'}
@@ -538,7 +538,7 @@ export default function Lobby() {
           {/* Audio Device Picker Button */}
           <button
             onClick={() => setShowAudioDevices(true)}
-            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors"
+            className="p-2 glass-tile rounded-xl hover:bg-secondary transition-colors"
             title="Select audio device"
           >
             <Headphones className="w-5 h-5 text-muted-foreground" />
@@ -572,7 +572,7 @@ export default function Lobby() {
                 ? "bg-ptt-active shadow-glow"
                 : isConnected
                   ? "bg-accent/20 border border-accent/50 hover:bg-accent/30"
-                  : "bg-card/50 border border-border/30 hover:bg-secondary"
+                  : "glass-tile hover:bg-secondary"
             )}
           >
             {!isConnected ? (
@@ -709,7 +709,7 @@ export default function Lobby() {
               </div>
               
               {nextWaypoint ? (
-                <div className="bg-card/50 border border-accent/30 rounded-2xl p-4">
+                <div className="glass-tile border-accent/30 rounded-2xl p-4">
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">

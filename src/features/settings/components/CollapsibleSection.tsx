@@ -34,7 +34,7 @@ export function CollapsibleSection({
   return (
     <section
       className={cn(
-        'bg-card/50 rounded-2xl border border-border/30 animate-slide-up overflow-hidden',
+        'glass-tile rounded-2xl animate-slide-up overflow-hidden',
         open && !isActionHeader && 'col-span-2',
         delayClass,
         className,
