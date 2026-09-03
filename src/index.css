@@ -328,8 +328,14 @@
 }
 @layer utilities {
   .font-display {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing: -0.02em;
+  }
+
+  /* Live stats must not jitter as digits change. */
+  .tabular-stat {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 
   .font-mono {
