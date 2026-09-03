@@ -811,6 +811,7 @@ export default function Settings() {
             Tip: keep the installed app — your stats live on your device.
           </p>
         </CollapsibleSection>
+        </div>
 
 
         {/* Blacktop World Opt-In */}
