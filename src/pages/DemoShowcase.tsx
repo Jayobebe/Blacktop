@@ -223,30 +223,12 @@ export default function DemoShowcase() {
   const currentFeature = features[currentIndex];
   const progress = ((currentIndex + 1) / features.length) * 100;
 
-  // Animate speed/distance for tracking mockup
-  useEffect(() => {
-    if (currentFeature.id !== 'tracking') return;
-    
-    const interval = setInterval(() => {
-      setSpeed(prev => {
-        const newSpeed = Math.max(45, Math.min(88, prev + (Math.random() - 0.4) * 8));
-        return Math.round(newSpeed);
-      });
-      setDistance(prev => prev + 0.03);
-    }, 400);
-
-    return () => clearInterval(interval);
-  }, [currentFeature.id]);
-
   // Reset states when changing features
   useEffect(() => {
     setCopied(false);
     setAnimationKey(prev => prev + 1);
-    if (currentFeature.id === 'tracking') {
-      setSpeed(62);
-      setDistance(4.2);
-    }
   }, [currentIndex]);
+
 
   const goNext = useCallback(() => {
     if (currentIndex >= features.length - 1 || isTransitioning) return;
