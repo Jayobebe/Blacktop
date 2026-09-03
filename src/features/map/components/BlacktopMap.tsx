@@ -8,6 +8,7 @@ import { useRadarOverlay } from '../hooks/useRadarOverlay';
 import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
 import { getCountryCode } from '../lib/placeSearch';
 import { fetchTrafficCameras, fetchCamerasOnRoute, metersBetween, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
+import { pingSpeedCamera, pingAnprCamera } from '../lib/cameraPing';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
@@ -239,6 +240,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   const userMarkerRef = useRef<Marker | null>(null);
   const headingRef = useRef<number | null>(null);
+  // Mirrors the 3D toggle so the follow-camera calls (which live in effects with
+  // stable deps) can keep the chase pitch instead of flattening the map.
+  const threeDRef = useRef(false);
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -405,6 +409,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // flyover, and tilts the camera into a third-person chase view. Layers are
   // prefixed "blacktop-" so the dark/satellite visibility swap leaves them be.
   useEffect(() => {
+    threeDRef.current = threeD;
     const m = mapRef.current;
     if (!m) return;
 
@@ -439,7 +444,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             });
           }
           if (m.getPitch() < THREE_D_PITCH - 1) {
-            m.easeTo({ pitch: THREE_D_PITCH, duration: 600, essential: true });
+            const loc = userLocationRef.current;
+            m.easeTo({
+              pitch: THREE_D_PITCH,
+              ...(loc ? { center: [loc.lng, loc.lat] as [number, number] } : {}),
+              bearing: safeBearing(headingRef.current, m),
+              duration: 600,
+              essential: true,
+            });
           }
         } else {
           m.setTerrain(null);
@@ -505,6 +517,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             center: [loc.lng, loc.lat],
             zoom: followZoom,
             bearing: safeBearing(headingRef.current, map),
+            pitch: threeDRef.current ? THREE_D_PITCH : 0,
             essential: true,
           });
         } else {
@@ -516,6 +529,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             center: [loc.lng, loc.lat],
             zoom: currentZoom < followZoom ? followZoom : currentZoom,
             bearing: safeBearing(headingRef.current, map),
+            pitch: threeDRef.current ? THREE_D_PITCH : 0,
             duration: 800,
             essential: true,
           });
@@ -559,6 +573,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         center: [loc.lng, loc.lat],
         zoom: currentZoom < followZoom ? followZoom : currentZoom,
         bearing: safeBearing(headingRef.current, map),
+        pitch: threeDRef.current ? THREE_D_PITCH : 0,
         duration: 800,
         essential: true,
       });
@@ -829,14 +844,38 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     );
   }, [destination, routeCameras, settings.trafficCamerasEnabled]);
 
-  // Approach alerts.
+  // Approach alerts + audible ping.
+  // With a route: any camera on the route corridor within 400m.
+  // Without a route: only cameras we're actually heading into — within 500m and
+  // inside a ±50° cone of the current heading, so cameras behind or off to the
+  // side stay silent.
   useEffect(() => {
     if (!settings.trafficCamerasEnabled || !userLocation) return;
-    const pool = routeCameras.length > 0 ? routeCameras : cameras;
+    const onRoute = routeCameras.length > 0;
+    const pool = onRoute ? routeCameras : cameras;
+    const heading = headingRef.current;
+
     for (const cam of pool) {
       if (alertedCamerasRef.current.has(cam.id)) continue;
-      if (metersBetween(userLocation, cam) > 300) continue;
+      const dist = metersBetween(userLocation, cam);
+      if (dist > (onRoute ? 400 : 500)) continue;
+
+      if (!onRoute) {
+        if (heading == null) continue;
+        const dLng = ((cam.lng - userLocation.lng) * Math.PI) / 180;
+        const lat1 = (userLocation.lat * Math.PI) / 180;
+        const lat2 = (cam.lat * Math.PI) / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+        let delta = Math.abs(bearing - heading) % 360;
+        if (delta > 180) delta = 360 - delta;
+        if (delta > 50) continue;
+      }
+
       alertedCamerasRef.current.add(cam.id);
+      if (cam.type === 'speed') pingSpeedCamera();
+      else pingAnprCamera();
       toast.warning(
         cam.type === 'speed'
           ? `Speed camera ahead${cam.maxspeed ? ` · ${cam.maxspeed}` : ''}`
@@ -846,6 +885,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       );
     }
   }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
+
 
 
 
@@ -962,6 +1002,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           center: [userLocation.lng, userLocation.lat],
           zoom: 17,
           bearing: safeBearing(headingRef.current, map),
+          pitch: threeDRef.current ? THREE_D_PITCH : 0,
           essential: true,
         });
       }

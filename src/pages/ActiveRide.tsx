@@ -153,7 +153,7 @@ export default function ActiveRide() {
   const { orientation } = useOrientationLock();
   
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [showMembers, setShowMembers] = useState(true);
+  const [showMembers, setShowMembers] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [endingFlow, setEndingFlow] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
