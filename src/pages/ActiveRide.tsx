@@ -722,7 +722,7 @@ export default function ActiveRide() {
     : convoy.members;
 
   const endRideButton = (
-    <div className="flex justify-center">
+    <div className="flex justify-center items-center min-h-[2.25rem] md:min-h-[2.5rem] min-w-[230px]">
       {!showEndConfirm ? (
         <Button
           onClick={() => setShowEndConfirm(true)}
@@ -1147,14 +1147,29 @@ export default function ActiveRide() {
         </div>
         </div>{/* end landscape right flank (G-Force + controls) */}
 
-        {/* Convoy Members Panel - bottom in portrait, right side in landscape */}
+        {/* Convoy Members Panel — floating overlay so toggling it never
+            shifts the control buttons (portrait: bottom sheet, landscape: right panel) */}
         {rideState.isConvoyMode && showMembers && (
-          <div className="landscape:w-56 md:landscape:w-64 animate-slide-up flex-shrink-0 max-h-[30vh] landscape:max-h-none overflow-hidden">
-            <div className="bg-card border border-border rounded-xl p-2 md:p-3 h-full flex flex-col">
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-background/40 backdrop-blur-[2px]"
+              onClick={() => setShowMembers(false)}
+              aria-hidden
+            />
+            <div className="fixed z-50 animate-slide-up left-3 right-3 bottom-3 max-h-[45dvh] safe-bottom landscape:left-auto landscape:right-3 landscape:top-3 landscape:bottom-3 landscape:w-56 md:landscape:w-64 landscape:max-h-none">
+            <div className="bg-card border border-border rounded-xl p-2 md:p-3 h-full max-h-full flex flex-col shadow-lg">
               <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 Convoy ({convoy.members.length})
+                <button
+                  onClick={() => setShowMembers(false)}
+                  className="ml-auto text-muted-foreground hover:text-foreground px-1"
+                  aria-label="Close convoy members"
+                >
+                  ✕
+                </button>
               </h3>
+
               
               <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
                 {sortedMembers.map((member, index) => {
@@ -1218,7 +1233,9 @@ export default function ActiveRide() {
               </div>
             </div>
           </div>
+          </>
         )}
+
       </div>
 
       {/* Solo rescue moved into the controls row (next to Map/Pause) so it's
