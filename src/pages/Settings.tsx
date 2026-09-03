@@ -326,6 +326,27 @@ export default function Settings() {
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
+        {/* Demo Section */}
+        <section className="bg-accent/10 rounded-2xl border border-accent/30 animate-slide-up p-4 landscape:p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Play className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-accent">Demo Showcase</p>
+                <p className="text-[10px] text-muted-foreground">Walk through Blacktop features</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate('/demo')}
+              className="h-9 px-4 rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-semibold"
+            >
+              Open
+            </Button>
+          </div>
+        </section>
+
         {/* Profile Section */}
         <section className="bg-card/50 rounded-2xl border border-border/30 animate-slide-up h-14 landscape:h-12 flex items-center px-4 landscape:px-3">
           {isEditingName ? (
