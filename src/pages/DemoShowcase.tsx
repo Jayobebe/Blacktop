@@ -664,15 +664,49 @@ function MapsMockup() {
   );
 }
 
-function TrackingMockup({ speed, distance }: { speed: number; distance: number }) {
+function TrackingMockup() {
   const { settings } = useSettings();
   const sLabel = getSpeedLabel(settings.speedUnit);
   const dLabel = getDistanceLabel(settings.distanceUnit);
+  const [speed, setSpeed] = useState(62);
+  const [distance, setDistance] = useState(4.2);
+  const [maxSpeed, setMaxSpeed] = useState(74);
+  const [lean, setLean] = useState(18);
+  const [maxLean, setMaxLean] = useState(24);
+  const [gForce, setGForce] = useState(0.8);
+  const [maxG, setMaxG] = useState(1.1);
+  const [seconds, setSeconds] = useState(754);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpeed(prev => {
+        const next = Math.round(Math.max(38, Math.min(94, prev + (Math.random() - 0.45) * 10)));
+        setMaxSpeed(m => Math.max(m, next));
+        return next;
+      });
+      setDistance(prev => prev + 0.03);
+      setSeconds(prev => prev + 1);
+      setLean(() => {
+        const next = Math.round((Math.random() * 2 - 1) * 42);
+        setMaxLean(m => Math.max(m, Math.abs(next)));
+        return next;
+      });
+      setGForce(() => {
+        const next = Math.round((0.4 + Math.random() * 1.1) * 100) / 100;
+        setMaxG(m => Math.max(m, next));
+        return next;
+      });
+    }, 700);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mmss = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
   return (
     <div className="w-full max-w-xs text-center space-y-6">
       {/* Speed Display */}
       <div className="animate-scale-in">
-        <p className="text-[6rem] font-mono font-black leading-none text-accent animate-speed-glow">
+        <p className="text-[6rem] font-mono font-black leading-none text-accent animate-speed-glow transition-all duration-500">
           {formatSpeed(speed, settings.speedUnit)}
         </p>
         <p className="text-muted-foreground text-sm -mt-2">{sLabel}</p>
@@ -682,11 +716,27 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
       <div className="flex justify-center gap-3 animate-slide-up delay-100">
         <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Lean</p>
-          <p className="font-mono text-base font-semibold text-accent">32° <span className="text-[9px] text-muted-foreground">max 38°</span></p>
+          <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
+            {Math.abs(lean)}°{lean < 0 ? ' L' : ' R'} <span className="text-[9px] text-muted-foreground">max {maxLean}°</span>
+          </p>
+          <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden relative">
+            <div
+              className="absolute top-0 h-full w-1.5 rounded-full bg-accent transition-all duration-500"
+              style={{ left: `calc(${((lean + 45) / 90) * 100}% - 3px)` }}
+            />
+          </div>
         </div>
         <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">G-Force</p>
-          <p className="font-mono text-base font-semibold text-accent">1.21G <span className="text-[9px] text-muted-foreground">max 1.4G</span></p>
+          <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
+            {gForce.toFixed(2)}G <span className="text-[9px] text-muted-foreground">max {maxG.toFixed(1)}G</span>
+          </p>
+          <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-500"
+              style={{ width: `${Math.min(100, (gForce / 1.6) * 100)}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -699,11 +749,11 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Time</p>
-          <p className="font-mono text-lg font-semibold">12:34</p>
+          <p className="font-mono text-lg font-semibold">{mmss}</p>
         </div>
         <div className="bg-card/50 rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Max</p>
-          <p className="font-mono text-lg font-semibold">{formatSpeed(92, settings.speedUnit)}</p>
+          <p className="font-mono text-lg font-semibold">{formatSpeed(maxSpeed, settings.speedUnit)}</p>
           <p className="text-[10px] text-muted-foreground">{sLabel}</p>
         </div>
       </div>
@@ -711,6 +761,7 @@ function TrackingMockup({ speed, distance }: { speed: number; distance: number }
     </div>
   );
 }
+
 
 function RescueMockup() {
   const [showAlert, setShowAlert] = useState(false);
