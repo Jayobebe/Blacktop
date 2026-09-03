@@ -34,6 +34,7 @@ interface DestinationSearchProps {
    * loop from the rider's location instead of searching for a place.
    */
   onApplyLoop?: (loop: {
+    start: { lat: number; lng: number };
     stops: { lat: number; lng: number }[];
     distanceMeters: number;
     durationSeconds: number;
