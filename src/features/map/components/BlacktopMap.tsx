@@ -12,6 +12,8 @@ import { pingSpeedCamera, pingAnprCamera } from '../lib/cameraPing';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
+import { LoopPlannerPanel } from './LoopPlannerPanel';
+import { OfflinePacksPanel } from './OfflinePacksPanel';
 import { MapDestination } from '../types';
 import { savePOI } from '../lib/poiStore';
 import { Input } from '@/components/ui/input';
@@ -21,13 +23,13 @@ import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 
-import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute } from '@/features/ride';
+import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute, setSoloRoute } from '@/features/ride';
 import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box, AlertTriangle } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box, AlertTriangle, Repeat, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 import { useRescueBridge } from '@/features/rescue';
@@ -215,6 +217,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const soloRoute = useSoloRoute();
   const isSolo = !convoy.id;
+  const [showLoopPlanner, setShowLoopPlanner] = useState(false);
+  const [showOfflinePacks, setShowOfflinePacks] = useState(false);
   const [addingWaypoint, setAddingWaypoint] = useState(false);
   const rescue = useRescueBridge();
   const [rescueRoute, setRescueRoute] = useState<RouteResult | null>(null);
@@ -1236,7 +1240,63 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Box className="w-4 h-4" />
         </button>
+        <div className="h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => { setShowOfflinePacks(false); setShowLoopPlanner((v) => !v); }}
+          aria-pressed={showLoopPlanner}
+          aria-label="Plan a loop ride"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            showLoopPlanner ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <Repeat className="w-4 h-4" />
+        </button>
+        <div className="h-px bg-border" />
+        <button
+          type="button"
+          onClick={() => { setShowLoopPlanner(false); setShowOfflinePacks((v) => !v); }}
+          aria-pressed={showOfflinePacks}
+          aria-label="Offline maps"
+          className={cn(
+            'w-9 h-9 flex items-center justify-center transition-colors',
+            showOfflinePacks ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+          )}
+        >
+          <Download className="w-4 h-4" />
+        </button>
       </div>
+
+      {showLoopPlanner && (
+        <LoopPlannerPanel
+          userLocation={userLocation}
+          onClose={() => setShowLoopPlanner(false)}
+          onApply={(loop) => {
+            if (!userLocation) return;
+            // A loop finishes where it starts: the via points become stops and
+            // the rider's current position becomes the destination.
+            const vias = loop.stops.slice(0, 5).map((s, i) => ({
+              lat: s.lat,
+              lng: s.lng,
+              name: `Loop point ${i + 1}`,
+            }));
+            setSoloRoute({
+              destination: { lat: userLocation.lat, lng: userLocation.lng, name: 'Loop finish' },
+              stops: vias,
+            });
+            setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: 'Loop finish' });
+            setShowLoopPlanner(false);
+            toast.success(
+              `Loop ready · ${formatDistance(loop.distanceMeters, settings.distanceUnit)} · ${formatDuration(loop.durationSeconds * 1000)}`,
+            );
+          }}
+        />
+      )}
+
+      {showOfflinePacks && (
+        <OfflinePacksPanel map={map} onClose={() => setShowOfflinePacks(false)} />
+      )}
 
 
       {showSearchBar && (
