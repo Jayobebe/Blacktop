@@ -263,7 +263,7 @@ export default function Home() {
       {/* Header */}
       <header className="flex items-center justify-between mb-4 landscape:mb-2 animate-fade-in">
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
+          <p className="chrome-label mb-1 landscape:hidden">
             Welcome back
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{profile.name}</h1>
@@ -286,10 +286,10 @@ export default function Home() {
               className="glass-tile rounded-2xl p-2 md:p-3 animate-scale-in"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
-              <p className="text-base md:text-lg font-mono font-bold tracking-tighter leading-tight">
+              <p className="chrome-label text-[9px] md:text-[10px] mb-1 opacity-80">{stat.label}</p>
+              <p className="stat-numeric text-lg md:text-xl leading-none">
                 {stat.value}
-                {stat.unit && <span className="text-[10px] md:text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
+                {stat.unit && <span className="text-[10px] md:text-xs text-[hsl(var(--chrome-text))] ml-0.5 font-medium">{stat.unit}</span>}
               </p>
             </div>
           ))}

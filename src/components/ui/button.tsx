@@ -12,7 +12,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
-        outline: "border border-[hsl(var(--liquid-stroke))] bg-transparent hover:bg-[hsl(var(--liquid-surface))] backdrop-blur-sm",
+        outline: "border border-[hsl(var(--chrome-edge))] border-t-[hsl(var(--chrome-bright))] bg-transparent hover:bg-[hsl(var(--surface-2))] hover:border-t-[hsl(var(--chrome-bright))]",
         secondary: "glass-control text-secondary-foreground",
         ghost: "hover:bg-secondary/50 hover:text-foreground",
         link: "text-accent underline-offset-4 hover:underline",

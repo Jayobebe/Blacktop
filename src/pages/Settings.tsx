@@ -350,7 +350,7 @@ export default function Settings() {
               className="flex items-center justify-between w-full h-full text-left group"
             >
               <div className="flex flex-col min-w-0 justify-center">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mb-0.5">Profile Name</span>
+                <span className="chrome-label leading-none mb-0.5">Profile Name</span>
                 <span className="text-sm font-semibold truncate">{profile.name}</span>
               </div>
               <Pencil className="w-4 h-4 text-accent transition-colors shrink-0 ml-2" />
@@ -718,7 +718,7 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <Video className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Traffic Cameras</p>
+                    <p className="chrome-label">Traffic Cameras</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Show speed cameras &amp; ANPR poles on the map when zoomed in. Crowd-sourced from OpenStreetMap — informational only, coverage varies by area.
@@ -734,7 +734,7 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <CloudRain className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Weather Overlay</p>
+                    <p className="chrome-label">Weather Overlay</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Animated rain radar on the Blacktop map, powered by RainViewer.
@@ -753,7 +753,7 @@ export default function Settings() {
               <div className="pr-2">
                 <div className="flex items-center gap-2 mb-1">
                   <MonitorSmartphone className="w-4 h-4 text-accent" />
-                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Car Display</p>
+                  <p className="chrome-label">Car Display</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Oversized, low-clutter Active Ride layout for wired Android screen mirroring (USB/HDMI head units). Kicks in automatically in landscape. Bluetooth-only units and iPhone can't mirror.
@@ -849,7 +849,7 @@ export default function Settings() {
         <section className="bg-[hsl(var(--burn))]/5 rounded-2xl p-4 landscape:p-3 border border-[hsl(var(--burn))]/30 animate-slide-up delay-300">
           <div className="flex items-center gap-2 mb-3">
             <Flame className="w-4 h-4 text-[hsl(var(--burn))]" />
-            <p className="text-[10px] text-[hsl(var(--burn))] uppercase tracking-widest font-semibold">Burn Button</p>
+            <p className="text-[11px] text-[hsl(var(--burn))] uppercase tracking-[0.12em] font-medium">Burn Button</p>
           </div>
           
           <p className="text-xs text-muted-foreground mb-3">
@@ -890,7 +890,7 @@ export default function Settings() {
         <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-accent" />
-            <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
+            <p className="chrome-label">Enjoying Blacktop?</p>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
             Help keep us ad-free!
@@ -953,7 +953,7 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
         className="w-full flex items-center gap-2 text-left"
       >
         <Globe2 className="w-4 h-4 text-accent" />
-        <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktop World</p>
+        <p className="chrome-label">Blacktop World</p>
         <ChevronDown
           className={cn(
             'w-4 h-4 ml-auto text-muted-foreground transition-transform duration-300',
