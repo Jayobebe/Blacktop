@@ -39,6 +39,8 @@ export interface AppSettings {
   trafficCamerasEnabled: boolean;
   // Weather radar overlay (RainViewer) on the Blacktop map.
   weatherOverlayEnabled: boolean;
+  /** Warn about heavy rain on the planned route and offer a drier line. */
+  weatherRoutingEnabled: boolean;
   // 3D flyover overview button on ride history details.
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
@@ -80,6 +82,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   blacktopWorldEnabled: false,
   trafficCamerasEnabled: false,
   weatherOverlayEnabled: false,
+  weatherRoutingEnabled: false,
   flyoverEnabled: false,
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,

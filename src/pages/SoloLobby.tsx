@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, setSoloRoute, clearSoloRoute } from '@/features/ride';
-import { openBlacktopMap } from '@/features/map';
+import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
 import { DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +29,8 @@ export default function SoloLobby() {
   const [showAddStop, setShowAddStop] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
+  const [routeMode, setRouteMode] = useState<RouteMode>('direct');
+  const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -65,6 +67,8 @@ export default function SoloLobby() {
   const handleClearDestination = () => {
     setDestination(null);
     setSoloStops([]);
+    setRouteMode('direct');
+    setTwistyVia(null);
     setShowAddStop(false);
     clearSoloRoute();
   };
@@ -76,9 +80,13 @@ export default function SoloLobby() {
       clearSoloRoute();
       return;
     }
+    // A twisty pick rides through an extra via point before the rider's stops.
+    const via = routeMode === 'twisty' && twistyVia
+      ? [{ lat: twistyVia.lat, lng: twistyVia.lng, name: 'Twisty leg', address: '' }]
+      : [];
     setSoloRoute({
       destination: { lat: dest.lat, lng: dest.lng, name: dest.name, address: dest.address },
-      stops: soloStops.map((s) => ({ lat: s.lat, lng: s.lng, name: s.name, address: s.address })),
+      stops: [...via, ...soloStops.map((s) => ({ lat: s.lat, lng: s.lng, name: s.name, address: s.address }))],
     });
   };
 
@@ -200,20 +208,6 @@ export default function SoloLobby() {
             userLocation={userLocation}
             countryCode={countryCode}
             distanceUnit={settings.distanceUnit}
-            onApplyLoop={(loop) => {
-              // A loop finishes where it starts: via points become stops and
-              // the rider's own position becomes the destination.
-              setSoloStops(
-                loop.stops.slice(0, 5).map((s, i) => ({
-                  lat: s.lat,
-                  lng: s.lng,
-                  name: `Loop point ${i + 1}`,
-                  address: '',
-                })),
-              );
-              handleSetDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish', address: '' });
-              toast.success('Twisty loop ready');
-            }}
           />
         </div>
 
@@ -280,6 +274,16 @@ export default function SoloLobby() {
 
         {/* Action Buttons */}
         <div className="animate-slide-up delay-200 pb-4 space-y-3">
+          {destination && (
+            <RouteOptions
+              start={userLocation}
+              stops={soloStops.map((s) => ({ lat: s.lat, lng: s.lng }))}
+              destination={{ lat: destination.lat, lng: destination.lng }}
+              mode={routeMode}
+              onModeChange={setRouteMode}
+              onTwistyVia={setTwistyVia}
+            />
+          )}
           {destination && (
             <Button
               onClick={handleNavigate}

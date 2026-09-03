@@ -7,3 +7,5 @@ export type { MapDestination } from './types';
 export { getSavedPOIs, savePOI, deletePOI } from './lib/poiStore';
 export type { SavedPOI } from './lib/poiStore';
 export { LoopPlannerPanel } from './components/LoopPlannerPanel';
+export { RouteOptions } from './components/RouteOptions';
+export type { RouteMode } from './components/RouteOptions';

@@ -88,3 +88,44 @@ export async function generateLoopRoute(
     return null;
   }
 }
+
+export interface RoutePlanOption {
+  distanceMeters: number;
+  durationSeconds: number;
+  curviness: number;
+  /** Extra via point that makes the route twisty (direct routes have none). */
+  via?: { lat: number; lng: number };
+}
+
+export interface RoutePlan {
+  direct: RoutePlanOption;
+  twisty: RoutePlanOption | null;
+}
+
+// Compares the fastest way to the destination against a twistier line through
+// the backroads, so the rider can pick before the ride starts.
+export async function planRouteOptions(
+  stops: { lat: number; lng: number }[],
+): Promise<RoutePlan | null> {
+  if (stops.length < 2) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('place-search', {
+      body: { kind: 'twisty', coordinates: stops.map(s => [s.lng, s.lat]) },
+    });
+    if (error) throw error;
+    if (!data?.direct || typeof data.direct.duration !== 'number') return null;
+    const toOption = (o: any): RoutePlanOption => ({
+      distanceMeters: o.distance,
+      durationSeconds: o.duration,
+      curviness: o.curviness ?? 0,
+      via: o.via,
+    });
+    return {
+      direct: toOption(data.direct),
+      twisty: data.twisty ? toOption(data.twisty) : null,
+    };
+  } catch (err) {
+    console.error('Route planning failed:', err);
+    return null;
+  }
+}

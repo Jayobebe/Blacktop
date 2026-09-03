@@ -745,6 +745,22 @@ export default function Settings() {
                   onCheckedChange={(v) => updateSetting('weatherOverlayEnabled', v)}
                 />
               </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="pr-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CloudRain className="w-4 h-4 text-accent" />
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Weather Routing</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Warns when heavy rain sits on your route and offers a drier line.
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.weatherRoutingEnabled}
+                  onCheckedChange={(v) => updateSetting('weatherRoutingEnabled', v)}
+                />
+              </div>
             </div>
           )}
 

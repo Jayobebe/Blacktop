@@ -6,6 +6,9 @@ const ALLOWED_ORIGINS = new Set([
   "https://convoy-comms.lovable.app",
   "https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com",
   "https://id-preview--8006f12b-bc88-412a-bd3c-677561cc727f.lovable.app",
+  // Local dev servers (callers still need a valid session + rate limit).
+  "http://localhost:8080",
+  "http://localhost:5173",
 ]);
 
 function getCorsHeaders(origin: string) {
@@ -56,6 +59,12 @@ type LoopBody = {
   // Target loop length in kilometres.
   distanceKm: number;
   vibe?: "curvy" | "scenic" | "relaxed";
+};
+
+type TwistyBody = {
+  kind: "twisty";
+  // [lng, lat] pairs, start → destination (intermediate stops allowed).
+  coordinates: [number, number][];
 };
 
 type CamerasBody = {
@@ -189,7 +198,123 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody;
+
+    if (body.kind === "twisty") {
+      const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
+      if (coords.length < 2 || !coords.every(isLngLat)) {
+        return new Response(JSON.stringify({ error: "Need at least two valid [lng,lat] coordinates" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      const osrmRoute = async (stops: [number, number][]) => {
+        const path = stops.map(([lo, la]) => `${lo},${la}`).join(";");
+        const url = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
+        url.searchParams.set("overview", "full");
+        url.searchParams.set("geometries", "geojson");
+        url.searchParams.set("alternatives", "false");
+        url.searchParams.set("steps", "false");
+        const res = await fetchWithTimeout(url.toString(), {
+          headers: { "User-Agent": "Blacktop-App/1.0", "Accept": "application/json" },
+        }, 9000);
+        if (!res.ok) throw new Error(`OSRM ${res.status}`);
+        const json = await res.json();
+        return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+      };
+
+      // Total absolute heading change per km — twistier roads score higher.
+      const twistOf = (line: [number, number][], distMeters: number) => {
+        if (line.length < 3 || distMeters <= 0) return 0;
+        let turned = 0;
+        let prev: number | null = null;
+        for (let i = 1; i < line.length; i++) {
+          const [x1, y1] = line[i - 1];
+          const [x2, y2] = line[i];
+          const dx = (x2 - x1) * Math.cos((y1 * Math.PI) / 180);
+          const dy = y2 - y1;
+          if (dx === 0 && dy === 0) continue;
+          const b = (Math.atan2(dx, dy) * 180) / Math.PI;
+          if (prev !== null) {
+            let d = Math.abs(b - prev) % 360;
+            if (d > 180) d = 360 - d;
+            turned += d;
+          }
+          prev = b;
+        }
+        return turned / (distMeters / 1000);
+      };
+
+      let direct: any = null;
+      try {
+        direct = await osrmRoute(coords);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Twisty direct leg failed:", e instanceof Error ? e.message : e);
+      }
+      if (!direct?.geometry) {
+        return new Response(JSON.stringify({ error: "Routing unavailable" }), {
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
+          status: 200,
+        });
+      }
+
+      // Probe via points offset perpendicular to the straight line between the
+      // first and last stop; the twistiest candidate that isn't absurdly long wins.
+      const [sx, sy] = coords[0];
+      const [ex, ey] = coords[coords.length - 1];
+      const mx = (sx + ex) / 2;
+      const my = (sy + ey) / 2;
+      const dx = (ex - sx) * Math.cos((my * Math.PI) / 180);
+      const dy = ey - sy;
+      const len = Math.hypot(dx, dy) || 1e-6;
+      const perp = [-dy / len, dx / len] as [number, number];
+      const spanKm = len * 111;
+      const offsets = [0.18, 0.32, 0.5].map((f) => Math.min(35, Math.max(4, spanKm * f)));
+
+      const directTwist = twistOf(direct.geometry.coordinates, direct.distance);
+      let best: { route: any; via: [number, number]; twist: number } | null = null;
+
+      for (const km of offsets) {
+        for (const sign of [1, -1]) {
+          const dLat = (perp[1] * km * sign) / 111;
+          const dLng = (perp[0] * km * sign) / (111 * Math.cos((my * Math.PI) / 180) || 1);
+          const via: [number, number] = [mx + dLng, my + dLat];
+          if (!isLngLat(via)) continue;
+          try {
+            const r = await osrmRoute([coords[0], via, ...coords.slice(1)]);
+            if (!r?.geometry) continue;
+            // Reject detours that more than double the trip.
+            if (r.duration > direct.duration * 2.1) continue;
+            const t = twistOf(r.geometry.coordinates, r.distance);
+            if (!best || t > best.twist) best = { route: r, via, twist: t };
+          } catch { /* try the next candidate */ }
+        }
+      }
+
+      const useTwisty = best && best.twist > directTwist * 1.15;
+
+      return new Response(
+        JSON.stringify({
+          direct: {
+            geometry: direct.geometry,
+            distance: direct.distance,
+            duration: direct.duration,
+            curviness: Math.round(directTwist),
+          },
+          twisty: useTwisty
+            ? {
+              geometry: best!.route.geometry,
+              distance: best!.route.distance,
+              duration: best!.route.duration,
+              curviness: Math.round(best!.twist),
+              via: { lat: best!.via[1], lng: best!.via[0] },
+            }
+            : null,
+        }),
+        { headers: { ...cors, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
 
     if (body.kind === "loop") {
       const { lat, lng } = body;

@@ -8,7 +8,7 @@ import {
   MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
-  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock
+  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -87,6 +87,10 @@ export default function DemoShowcase() {
         { icon: Eye, label: 'Camera Alerts', text: 'Speed and ANPR cameras on your route, flagged as you approach.' },
         { icon: Mountain, label: 'Satellite & 3D', text: 'Toggle satellite imagery or a 3D terrain and building view.' },
         { icon: CloudRain, label: 'Weather Radar', text: 'Optional live rain overlay so you can dodge the downpour.' },
+        { icon: Waves, label: 'Direct or Twisty', text: 'Pick your line before you go — both ETAs shown side by side.' },
+        { icon: CloudRain, label: 'Weather Routing', text: 'Warns when heavy rain sits on your route and offers a drier line.' },
+        { icon: Repeat, label: 'Loop Planner', text: 'No destination? Generate a twisty round trip back to where you are.' },
+        { icon: Download, label: 'Offline Maps', text: 'Save map areas to your phone for rides with no signal.' },
         { icon: Navigation, label: 'Hand-Off', text: 'Send the route to Google, Apple or Waze and keep tracking.' },
       ],
     },
