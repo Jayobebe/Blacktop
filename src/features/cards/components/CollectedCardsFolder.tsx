@@ -15,6 +15,8 @@ import {
 } from '@/lib/format';
 import { TIER_STYLES } from '../types';
 import { decodeCard } from '../lib/cardCodec';
+import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 import { fetchCardPhoto } from '../lib/cardPhoto';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
 
@@ -296,19 +298,38 @@ function FullCard({ card }: { card: CollectedCard }) {
         </span>
       </div>
 
-      <div className="relative rounded-xl overflow-hidden bg-black/30 aspect-[4/3] border border-white/10 mt-1">
-        {card.img ? (
-          <img
-            src={card.img}
-            alt={card.n}
-            className="w-full h-full object-contain scale-125"
-            style={{ imageRendering: 'pixelated' }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
-            No photo
-          </div>
-        )}
+      <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 mt-1">
+        <div
+          className="absolute inset-0 bg-cover bg-center origin-center"
+          style={{
+            backgroundImage: `url(${garageShopAsset.url})`,
+            transform: `scale(${card.z ?? 1})`,
+          }}
+        >
+          <div className="absolute inset-0 bg-black/20" />
+          {card.img ? (() => {
+            const placement = card.pl ?? DEFAULT_BIKE_PLACEMENT;
+            return (
+              <img
+                src={card.img}
+                alt={card.n}
+                className="absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
+                style={{
+                  left: `${placement.xPct}%`,
+                  bottom: `${placement.yPct}%`,
+                  height: `${placement.scalePct}%`,
+                  maxWidth: '90%',
+                  transform: 'translateX(-50%)',
+                  imageRendering: 'pixelated',
+                }}
+              />
+            );
+          })() : (
+            <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
+              No photo
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
