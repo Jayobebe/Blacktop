@@ -279,6 +279,42 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_weekly_scores: {
+        Row: {
+          corner_score: number
+          crew_code: string
+          display_name: string
+          distance: number
+          max_lean: number
+          ride_count: number
+          updated_at: string
+          user_id: string
+          week_key: string
+        }
+        Insert: {
+          corner_score?: number
+          crew_code: string
+          display_name?: string
+          distance?: number
+          max_lean?: number
+          ride_count?: number
+          updated_at?: string
+          user_id: string
+          week_key: string
+        }
+        Update: {
+          corner_score?: number
+          crew_code?: string
+          display_name?: string
+          distance?: number
+          max_lean?: number
+          ride_count?: number
+          updated_at?: string
+          user_id?: string
+          week_key?: string
+        }
+        Relationships: []
+      }
       discord_integrations: {
         Row: {
           auto_announce: boolean
@@ -415,6 +451,16 @@ export type Database = {
       is_convoy_member: {
         Args: { _convoy_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_crew_challenge: {
+        Args: { _crew_code: string; _week_key: string }
+        Returns: {
+          corner_score: number
+          display_name: string
+          distance: number
+          max_lean: number
+          ride_count: number
+        }[]
       }
       list_crew_convoys: {
         Args: { _crew_code: string }
