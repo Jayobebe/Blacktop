@@ -35,7 +35,7 @@ export interface WorldLandmark {
   lng: number;
   label: string;
   /** Visual glyph drawn on the pin. */
-  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade';
+  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade' | 'challenge';
 }
 
 interface Props {
