@@ -379,170 +379,172 @@ export default function Settings() {
          )}
         </section>
 
-        {/* Two-column collapsible grid — zipper expand when individually opened */}
-        <div className="grid grid-cols-2 gap-3 landscape:gap-2 items-start">
-
-
-        {/* Speed Alert Thresholds */}
-        <CollapsibleSection icon={AlertTriangle} label="Speed Alerts" delayClass="delay-100">
-          {(() => {
-            const u = settings.speedUnit;
-            const label = getSpeedLabel(u);
-            // Convert stored mph thresholds to displayed unit
-            const toDisplay = (mph: number) => formatSpeed(mph, u);
-            const fromDisplay = (display: number) =>
-              u === 'kph' ? Math.round(display / 1.60934) : display;
-            const sliderMin = u === 'kph' ? 40 : 25;
-            const sliderMax = u === 'kph' ? 400 : 250;
-            const sliderStep = u === 'kph' ? 5 : 5;
-            const amberDisplay = toDisplay(settings.amberSpeedThreshold);
-            const redDisplay = toDisplay(settings.redSpeedThreshold);
-            return (
-              <div className="space-y-5">
-                {/* Amber threshold */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
+        {/* Safety */}
+        <CollapsibleSection icon={AlertTriangle} label="Safety" delayClass="delay-100">
+          <div className="space-y-5">
+            {/* Speed Alerts */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-3">Speed Alerts</p>
+              {(() => {
+                const u = settings.speedUnit;
+                const label = getSpeedLabel(u);
+                // Convert stored mph thresholds to displayed unit
+                const toDisplay = (mph: number) => formatSpeed(mph, u);
+                const fromDisplay = (display: number) =>
+                  u === 'kph' ? Math.round(display / 1.60934) : display;
+                const sliderMin = u === 'kph' ? 40 : 25;
+                const sliderMax = u === 'kph' ? 400 : 250;
+                const sliderStep = u === 'kph' ? 5 : 5;
+                const amberDisplay = toDisplay(settings.amberSpeedThreshold);
+                const redDisplay = toDisplay(settings.redSpeedThreshold);
+                return (
+                  <div className="space-y-5">
+                    {/* Amber threshold */}
                     <div>
-                      <p className="text-sm font-medium text-warning">Amber Warning</p>
-                      <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-sm font-medium text-warning">Amber Warning</p>
+                          <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                        </div>
+                        <span className="font-mono text-sm font-bold text-warning">
+                          {amberDisplay} {label}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={sliderMin}
+                        max={sliderMax}
+                        step={sliderStep}
+                        value={amberDisplay}
+                        onChange={(e) => {
+                          const newAmberMph = fromDisplay(Number(e.target.value));
+                          updateSetting('amberSpeedThreshold', newAmberMph);
+                          if (settings.redSpeedThreshold <= newAmberMph) {
+                            updateSetting('redSpeedThreshold', Math.min(newAmberMph + 10, 250));
+                          }
+                        }}
+                        className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
+                      />
                     </div>
-                    <span className="font-mono text-sm font-bold text-warning">
-                      {amberDisplay} {label}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={sliderMin}
-                    max={sliderMax}
-                    step={sliderStep}
-                    value={amberDisplay}
-                    onChange={(e) => {
-                      const newAmberMph = fromDisplay(Number(e.target.value));
-                      updateSetting('amberSpeedThreshold', newAmberMph);
-                      if (settings.redSpeedThreshold <= newAmberMph) {
-                        updateSetting('redSpeedThreshold', Math.min(newAmberMph + 10, 250));
-                      }
-                    }}
-                    className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-amber"
-                  />
-                </div>
 
-                {/* Red threshold */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
+                    {/* Red threshold */}
                     <div>
-                      <p className="text-sm font-medium text-destructive">Red Alert</p>
-                      <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-sm font-medium text-destructive">Red Alert</p>
+                          <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                        </div>
+                        <span className="font-mono text-sm font-bold text-destructive">
+                          {redDisplay} {label}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={sliderMin}
+                        max={sliderMax}
+                        step={sliderStep}
+                        value={redDisplay}
+                        onChange={(e) => {
+                          const newRedMph = fromDisplay(Number(e.target.value));
+                          if (newRedMph > settings.amberSpeedThreshold) {
+                            updateSetting('redSpeedThreshold', newRedMph);
+                          }
+                        }}
+                        className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
+                      />
                     </div>
-                    <span className="font-mono text-sm font-bold text-destructive">
-                      {redDisplay} {label}
-                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min={sliderMin}
-                    max={sliderMax}
-                    step={sliderStep}
-                    value={redDisplay}
-                    onChange={(e) => {
-                      const newRedMph = fromDisplay(Number(e.target.value));
-                      if (newRedMph > settings.amberSpeedThreshold) {
-                        updateSetting('redSpeedThreshold', newRedMph);
-                      }
-                    }}
-                    className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer slider-red"
-                  />
-                </div>
-              </div>
-            );
-          })()}
-        </CollapsibleSection>
-
-
-        {/* Safety / Auto-Rescue */}
-        <CollapsibleSection icon={AlertTriangle} label="Auto Rescue" delayClass="delay-200">
-          <div className="flex items-center justify-between mb-2">
-            <div className="pr-3">
-              <p className="text-sm font-medium">Crash detection</p>
-              <p className="text-[10px] text-muted-foreground">
-                If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader and Discord (if connected). Works on solo rides too (Discord only).
-              </p>
+                );
+              })()}
             </div>
-            <Switch
-              checked={settings.autoRescueEnabled}
-              onCheckedChange={async (v) => {
-                if (v) {
-                  // iOS 13+: motion permission must be requested from a user gesture
-                  const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
-                  if (anyMotion && typeof anyMotion.requestPermission === 'function') {
-                    try {
-                      const res = await anyMotion.requestPermission();
-                      if (res !== 'granted') {
-                        toast.error('Motion sensor permission denied');
-                        return;
+
+            {/* Auto Rescue */}
+            <div className="border-t border-border/30 pt-4">
+              <p className="text-xs text-muted-foreground mb-3">Auto Rescue</p>
+              <div className="flex items-center justify-between mb-2">
+                <div className="pr-3">
+                  <p className="text-sm font-medium">Crash detection</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to convoy leader and Discord (if connected). Works on solo rides too (Discord only).
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.autoRescueEnabled}
+                  onCheckedChange={async (v) => {
+                    if (v) {
+                      // iOS 13+: motion permission must be requested from a user gesture
+                      const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
+                      if (anyMotion && typeof anyMotion.requestPermission === 'function') {
+                        try {
+                          const res = await anyMotion.requestPermission();
+                          if (res !== 'granted') {
+                            toast.error('Motion sensor permission denied');
+                            return;
+                          }
+                        } catch {
+                          toast.error('Could not enable motion sensor');
+                          return;
+                        }
                       }
-                    } catch {
-                      toast.error('Could not enable motion sensor');
-                      return;
                     }
-                  }
-                }
-                updateSetting('autoRescueEnabled', v);
-              }}
-            />
-          </div>
-
-          {settings.autoRescueEnabled && (
-            <div className="pt-3 border-t border-border/30 space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium">Impact sensitivity</p>
-                  <span className="font-mono text-sm font-bold text-accent">
-                    {settings.autoRescueGThreshold} G
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={AUTO_RESCUE_MIN_G_THRESHOLD}
-                  max={AUTO_RESCUE_MAX_G_THRESHOLD}
-                  step={0.5}
-                  value={settings.autoRescueGThreshold}
-                  onChange={(e) => updateSetting('autoRescueGThreshold', Number(e.target.value))}
-                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                    updateSetting('autoRescueEnabled', v);
+                  }}
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{AUTO_RESCUE_MIN_G_THRESHOLD} G (sensitive)</span>
-                  <span>{AUTO_RESCUE_MAX_G_THRESHOLD} G (only crashes)</span>
-                </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium">Stop window after impact</p>
-                  <span className="font-mono text-sm font-bold text-accent">
-                    {settings.autoRescueStopWindowSec}s
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={AUTO_RESCUE_MIN_STOP_WINDOW_SEC}
-                  max={AUTO_RESCUE_MAX_STOP_WINDOW_SEC}
-                  step={1}
-                  value={settings.autoRescueStopWindowSec}
-                  onChange={(e) => updateSetting('autoRescueStopWindowSec', Number(e.target.value))}
-                  className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                  <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}s</span>
-                  <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}s</span>
-                </div>
-              </div>
+              {settings.autoRescueEnabled && (
+                <div className="pt-3 border-t border-border/30 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium">Impact sensitivity</p>
+                      <span className="font-mono text-sm font-bold text-accent">
+                        {settings.autoRescueGThreshold} G
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={AUTO_RESCUE_MIN_G_THRESHOLD}
+                      max={AUTO_RESCUE_MAX_G_THRESHOLD}
+                      step={0.5}
+                      value={settings.autoRescueGThreshold}
+                      onChange={(e) => updateSetting('autoRescueGThreshold', Number(e.target.value))}
+                      className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>{AUTO_RESCUE_MIN_G_THRESHOLD} G (sensitive)</span>
+                      <span>{AUTO_RESCUE_MAX_G_THRESHOLD} G (only crashes)</span>
+                    </div>
+                  </div>
 
-              <p className="text-[10px] text-muted-foreground">
-                Acknowledge timeout: <span className="font-mono">5:00</span>
-              </p>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium">Stop window after impact</p>
+                      <span className="font-mono text-sm font-bold text-accent">
+                        {settings.autoRescueStopWindowSec}s
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={AUTO_RESCUE_MIN_STOP_WINDOW_SEC}
+                      max={AUTO_RESCUE_MAX_STOP_WINDOW_SEC}
+                      step={1}
+                      value={settings.autoRescueStopWindowSec}
+                      onChange={(e) => updateSetting('autoRescueStopWindowSec', Number(e.target.value))}
+                      className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}s</span>
+                      <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}s</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-muted-foreground">
+                    Acknowledge timeout: <span className="font-mono">5:00</span>
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </CollapsibleSection>
 
          {/* Ride Metrics Section */}
