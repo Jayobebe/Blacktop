@@ -10,6 +10,7 @@ import { getCountryCode } from '../lib/placeSearch';
 import { fetchTrafficCameras, fetchCamerasOnRoute, metersBetween, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
 import { pingSpeedCamera, pingAnprCamera } from '../lib/cameraPing';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
+import { checkRouteWeather, findDryRoute, HEAVY_MM } from '../lib/weatherRoute';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
 import { LoopPlannerPanel } from './LoopPlannerPanel';
