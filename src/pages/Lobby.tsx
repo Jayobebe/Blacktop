@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 import { QRCodeSVG } from 'qrcode.react';
-import { openBlacktopMap } from '@/features/map';
+import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
 
 interface UserLocation {
   lat: number;
@@ -26,6 +26,8 @@ interface UserLocation {
 
 export default function Lobby() {
   const navigate = useNavigate();
+  const [routeMode, setRouteMode] = useState<RouteMode>('direct');
+  const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number } | null>(null);
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
   const { startRide, rideState } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
@@ -317,7 +319,17 @@ export default function Lobby() {
   // Unified navigate handler — resolves the right destination (first incomplete
   // waypoint, then convoy destination), opens the Blacktop map, marks this
   // member as ready, and starts the ride.
-  const handleNavigate = () => {
+  const handleNavigate = async () => {
+    // The leader's twisty pick becomes a real convoy waypoint so every rider
+    // follows the same line; it leads the list so it's ridden first.
+    if (convoy.isLeader && routeMode === 'twisty' && twistyVia && waypoints.length < 5) {
+      const added = await addWaypoint({ name: 'Twisty leg', address: '', lat: twistyVia.lat, lng: twistyVia.lng });
+      if (added !== false && waypoints.length > 0) {
+        await reorderWaypoints(waypoints.length, 0);
+      }
+      setTwistyVia(null);
+    }
+
     const dest = nextWaypoint
       ? { lat: nextWaypoint.lat, lng: nextWaypoint.lng, name: nextWaypoint.name, address: nextWaypoint.address }
       : convoy.destination
@@ -735,15 +747,6 @@ export default function Lobby() {
                   userLocation={userLocation}
                   countryCode={countryCode}
                   distanceUnit={settings.distanceUnit}
-                  onApplyLoop={convoy.isLeader ? async (loop) => {
-                    // Loop via points become convoy stops; the ride finishes
-                    // back at the leader's current position.
-                    for (const [i, stop] of loop.stops.slice(0, 5).entries()) {
-                      await addWaypoint({ name: `Loop point ${i + 1}`, address: '', lat: stop.lat, lng: stop.lng });
-                    }
-                    setDestination({ lat: loop.start.lat, lng: loop.start.lng, name: 'Loop finish', address: '' });
-                    toast.success('Twisty loop set for the convoy');
-                  } : undefined}
                 />
               )}
             </div>
