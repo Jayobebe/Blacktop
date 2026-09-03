@@ -155,7 +155,6 @@ export default function DemoShowcase() {
         { icon: Wrench, label: 'Maintenance', text: 'Chain, oil, brakes and tyres with bars that reset when serviced.' },
         { icon: CalendarClock, label: 'Time Reminders', text: 'Set "every N months" alongside mileage — whichever comes first nags you.' },
         { icon: History, label: 'Ride Assignment', text: 'Tag any ride to a vehicle and its stats roll up automatically.' },
-        { icon: Sparkles, label: 'Trading Cards', text: 'Bronze at 10 rides all the way to Orion at 1000.' },
       ],
     },
     {
