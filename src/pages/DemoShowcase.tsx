@@ -703,9 +703,10 @@ function MapsMockup() {
 
         {/* Speed badge */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-card/95 border border-border/40 flex items-baseline gap-1 animate-slide-up delay-200">
-          <span className="font-mono font-bold text-sm">58</span>
+          <span className="font-mono font-bold text-sm transition-all duration-300">{speed}</span>
           <span className="text-[8px] text-muted-foreground">MPH</span>
         </div>
+
       </div>
 
       <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
