@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { BookmarkPlus } from 'lucide-react';
 import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
+import { useProfile } from '@/features/profile';
+
 import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute } from '@/features/ride';
 import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
