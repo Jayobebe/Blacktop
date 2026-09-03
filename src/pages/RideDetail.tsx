@@ -283,7 +283,7 @@ export default function RideDetail() {
         )}
 
         {/* Download Overlay Section - show if overlay was recorded */}
-        {(ride.overlayAvailable || ride.overlayBlobUrl) && (
+        {settings.rideOverlayEnabled && (ride.overlayAvailable || ride.overlayBlobUrl) && (
           <button
             disabled={overlayProgress !== null}
             onClick={async () => {
