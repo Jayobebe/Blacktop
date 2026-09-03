@@ -159,7 +159,7 @@ export default function Stats() {
                     <stat.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                    <p className="chrome-label">
                       {stat.label}
                     </p>
                     <p className="font-mono text-xl landscape:text-lg font-bold break-words">
