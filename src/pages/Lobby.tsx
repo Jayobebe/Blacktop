@@ -752,6 +752,24 @@ export default function Lobby() {
             </div>
           )}
           
+          {/* Route choice — leader picks the line the whole convoy rides */}
+          {convoy.isLeader && (convoy.destination || nextWaypoint) && userLocation && (
+            <div className="mt-3">
+              <RouteOptions
+                start={userLocation}
+                stops={waypoints.filter(w => !w.isCompleted).map(w => ({ lat: w.lat, lng: w.lng }))}
+                destination={
+                  convoy.destination
+                    ? { lat: convoy.destination.lat, lng: convoy.destination.lng }
+                    : { lat: nextWaypoint!.lat, lng: nextWaypoint!.lng }
+                }
+                mode={routeMode}
+                onModeChange={setRouteMode}
+                onTwistyVia={setTwistyVia}
+              />
+            </div>
+          )}
+
           {/* Status message */}
           {(convoy.destination || nextWaypoint) && (
             <div className="mt-2 animate-fade-in">
