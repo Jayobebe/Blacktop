@@ -124,7 +124,7 @@ export const DEMO_BIKE_ID = 'demo-bike-01';
 
 export const DEMO_BIKE: Bike = {
   id: DEMO_BIKE_ID,
-  name: 'Demo Streetfighter',
+  name: 'V4 Ducati',
   makeModel: 'Ducati Streetfighter V4',
   createdAt: Date.now() - 365 * 86_400_000,
   photos: { hero: DEMO_BIKE_HERO },

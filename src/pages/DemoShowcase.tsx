@@ -1042,7 +1042,7 @@ function CompleteMockup() {
 function GarageMockup() {
   const { settings } = useSettings();
   const bikes = [
-    { name: 'Daily Twin', model: 'Yamaha MT-07', km: 12480, active: true },
+    { name: 'V4 Ducati', model: 'Ducati Streetfighter V4', km: 12480, active: true },
     { name: 'Track Toy', model: 'Aprilia RS660', km: 3210, active: false },
   ];
 
