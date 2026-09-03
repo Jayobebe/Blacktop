@@ -1076,3 +1076,23 @@
 .car-display .text-muted-foreground {
   opacity: 0.75;
 }
+
+/* ---- Depth budget ----
+   backdrop-filter is the main GPU cost on mid-range Android during a ride.
+   Drop to opaque surfaces when the device or user asks for less. */
+@media (prefers-reduced-transparency: reduce), (update: slow) {
+  .glass-panel,
+  .glass-tile,
+  .glass-control {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: hsl(var(--card));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-tile,
+  .glass-control {
+    transition: none;
+  }
+}
