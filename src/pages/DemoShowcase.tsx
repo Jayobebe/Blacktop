@@ -1735,25 +1735,29 @@ function TradingCardsMockup() {
                       {t.label}
                     </span>
                   </div>
-                  <div className="relative rounded-md bg-black/30 border border-white/10 aspect-[4/3] flex items-center justify-center">
-                    {locked ? (
-                      <Lock className="w-5 h-5 text-white/60" />
-                    ) : (
-                      <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 mt-auto">
-                    {['SPD', 'DST', 'TIME', 'RIDES'].map(s => (
-                      <div key={s} className="rounded bg-black/40 border border-white/10 px-1 py-0.5">
-                        <div className="text-[7px] tracking-widest text-white/60">{s}</div>
-                        <div className="text-[9px] font-mono font-bold text-white">
-                          {locked ? '—' : '••'}
+                  {/* Card body is intentionally blurred — the tier finish and
+                      title stay crisp so the progression reads clearly. */}
+                  <div className="flex-1 flex flex-col gap-1.5 blur-[2px] select-none">
+                    <div className="relative rounded-md bg-black/30 border border-white/10 aspect-[4/3] flex items-center justify-center">
+                      {locked ? (
+                        <Lock className="w-5 h-5 text-white/60" />
+                      ) : (
+                        <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 mt-auto">
+                      {['SPD', 'DST', 'TIME', 'RIDES'].map(s => (
+                        <div key={s} className="rounded bg-black/40 border border-white/10 px-1 py-0.5">
+                          <div className="text-[7px] tracking-widest text-white/60">{s}</div>
+                          <div className="text-[9px] font-mono font-bold text-white">
+                            {locked ? '—' : '••'}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-center text-[7px] tracking-widest text-white/60">
-                    {t.minRides === 0 ? '0 rides' : `${t.minRides}+ rides`}
+                  <div className="text-center text-[8px] font-semibold tracking-widest text-white/85 drop-shadow">
+                    {t.label.toUpperCase()} · {t.minRides === 0 ? '0 RIDES' : `${t.minRides}+ RIDES`}
                   </div>
                 </div>
               </div>
