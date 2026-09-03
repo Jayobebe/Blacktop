@@ -181,51 +181,99 @@
 }
 
 @layer components {
-  /* ---- Liquid glass primitives ----
-     Clean translucent foreground surfaces: soft blur, one hairline highlight,
-     no texture, no stacked shadows. */
+  /* ---- Noir + chrome surface primitives ----
+     Three elevations. Definition comes from the edge light, not from blur. */
   .glass-panel {
     position: relative;
     background:
-      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 42%),
-      hsl(var(--liquid-surface));
-    backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
-    border: 1px solid hsl(var(--liquid-stroke));
-    border-radius: 1.25rem;
+      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 38%),
+      hsl(var(--surface-1));
+    backdrop-filter: blur(var(--liquid-blur)) saturate(120%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(120%);
+    border: 1px solid hsl(var(--chrome-dim));
+    border-top-color: hsl(var(--chrome-edge));
+    border-radius: 1.5rem;
     box-shadow: var(--shadow-liquid), var(--shadow-liquid-inset);
   }
 
   .glass-tile {
     position: relative;
     background:
-      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 50%),
-      hsl(var(--liquid-surface));
-    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(140%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(140%);
-    border: 1px solid hsl(var(--liquid-stroke));
-    border-radius: 1rem;
-    box-shadow: var(--shadow-liquid-inset);
-    transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
-      border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      linear-gradient(180deg, hsl(var(--liquid-highlight)), transparent 46%),
+      hsl(var(--surface-2));
+    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(115%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(115%);
+    border: 1px solid hsl(var(--chrome-dim));
+    border-top-color: hsl(var(--chrome-edge));
+    border-radius: 1.125rem;
+    box-shadow: var(--shadow-liquid-inset), 0 6px 18px -12px hsl(0 0% 0% / 0.8);
+    transition: background-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .glass-tile:active {
-    transform: scale(0.99);
+  .glass-tile:hover {
+    border-top-color: hsl(var(--chrome-bright));
+  }
+
+  /* Physical press: the surface sinks and the edge light moves to the bottom. */
+  .glass-tile:active,
+  .glass-control:active {
+    transform: translateY(0.5px);
+    box-shadow:
+      inset 0 1px 2px hsl(0 0% 0% / 0.5),
+      inset 0 -1px 0 hsl(var(--chrome-edge));
   }
 
   .glass-control {
-    background: hsl(var(--liquid-surface-strong));
-    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(160%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(160%);
-    border: 1px solid hsl(var(--liquid-stroke));
+    background: hsl(var(--surface-3));
+    backdrop-filter: blur(var(--liquid-blur-sm)) saturate(120%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur-sm)) saturate(120%);
+    border: 1px solid hsl(var(--chrome-edge));
+    border-top-color: hsl(var(--chrome-bright));
+    border-radius: 0.875rem;
     box-shadow: var(--shadow-liquid-inset);
+    transition: background-color 160ms ease, border-color 160ms ease,
+      box-shadow 160ms ease, transform 160ms ease;
   }
 
   .glass-control:hover {
-    background: hsl(var(--liquid-tint) / 0.72);
+    background: hsl(var(--liquid-tint) / 0.9);
   }
+
+  /* Hairline: 1px rule that fades out at both ends. */
+  .hairline {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--chrome-edge)) 18%,
+      hsl(var(--chrome-edge)) 82%,
+      transparent
+    );
+  }
+
+  /* Section label: quiet, wide, chrome-grey. */
+  .chrome-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: hsl(var(--chrome-text));
+  }
+
+  /* Numerics: the loudest thing on screen. */
+  .stat-numeric {
+    font-family: 'Space Grotesk', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: hsl(var(--contrast-high));
+  }
+
 
   /* Legacy aliases — kept so existing screens inherit the new look. */
   .glass {
