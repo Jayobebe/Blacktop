@@ -1769,3 +1769,42 @@ function TradingCardsMockup() {
 }
 
 
+
+function PersonaliseMockup() {
+  const swatches = [
+    'hsl(38 95% 55%)', 'hsl(217 91% 60%)', 'hsl(142 71% 45%)', 'hsl(262 83% 58%)',
+    'hsl(330 81% 60%)', 'hsl(0 84% 60%)', 'hsl(186 94% 50%)', 'hsl(84 85% 50%)',
+  ];
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 animate-slide-up">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Accent Colour</p>
+        <div className="grid grid-cols-8 gap-2">
+          {swatches.map((c, i) => (
+            <div
+              key={c}
+              className={cn(
+                'aspect-square rounded-full animate-scale-in',
+                i === 0 && 'ring-2 ring-offset-2 ring-offset-background ring-accent',
+              )}
+              style={{ background: c, animationDelay: `${i * 50}ms` }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-3 animate-slide-up delay-200">
+        {[
+          { icon: Ruler, label: 'Units', value: 'MPH · Miles' },
+          { icon: AlertTriangle, label: 'Speed alerts', value: '80 / 100' },
+          { icon: MonitorSmartphone, label: 'Car display', value: 'Landscape' },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex items-center gap-3">
+            <Icon className="w-4 h-4 text-accent flex-shrink-0" />
+            <span className="text-xs text-muted-foreground flex-1">{label}</span>
+            <span className="text-xs font-mono font-semibold">{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
