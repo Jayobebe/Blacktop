@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { announceRescueToDiscord } from '@/features/integrations/discord';
+import { setRescueTarget, clearRescueTarget, registerRescueControls, clearRescueControls } from '../lib/rescueBridge';
 
 export interface RescueRequest {
   id: string;
@@ -33,6 +34,16 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       .on('broadcast', { event: 'rescue_request' }, async (payload) => {
         const request = payload.payload as RescueRequest;
 
+        // Everyone in the convoy gets the rescue location so the Blacktop map
+        // can draw a secondary (glowing orange) rescue route on top of the
+        // existing route/waypoints.
+        setRescueTarget({
+          userId: request.userId,
+          userName: request.userName,
+          lat: request.lat,
+          lng: request.lng,
+        });
+
         if (isLeader) {
           // Verify sender is actually in this convoy before surfacing the alert.
           // Realtime broadcast channels are open to any authenticated user who knows
@@ -59,6 +70,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       })
       .on('broadcast', { event: 'rescue_acknowledged' }, (payload) => {
         const { requestId, byLeader, riderUserId, riderName } = payload.payload as { requestId: string; byLeader: boolean; riderUserId?: string; riderName?: string };
+        clearRescueTarget(riderUserId);
         
         if (!isLeader && riderUserId === userId) {
           // Non-leader: their rescue was acknowledged
@@ -78,6 +90,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       })
       .on('broadcast', { event: 'rescue_dismissed' }, (payload) => {
         const { requestId } = payload.payload as { requestId: string };
+        clearRescueTarget();
         
         if (!isLeader) {
           setHasPendingRescue(false);
@@ -90,6 +103,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     return () => {
       supabase.removeChannel(channel);
       channelRef.current = null;
+      clearRescueTarget();
     };
   }, [convoyId, isLeader]);
 
@@ -120,6 +134,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     });
 
     setHasPendingRescue(true);
+    setRescueTarget({ userId, userName, lat, lng });
     toast.info('Rescue request sent to leader');
 
     // Fire-and-forget Discord ping to leader's server if configured
@@ -127,6 +142,15 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
     return true;
   }, [convoyId, userId, userName]);
+
+  // Convenience wrapper used by the map overlay: grabs a fresh GPS fix itself.
+  const sendRescueRequestFromGps = useCallback(async () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { void sendRescueRequest(pos.coords.latitude, pos.coords.longitude); },
+      () => toast.error('Unable to get your location'),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 },
+    );
+  }, [sendRescueRequest]);
 
   const acknowledgeRescue = useCallback(async (requestId: string, riderUserId?: string, riderName?: string) => {
     if (!channelRef.current) return;
@@ -162,7 +186,20 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     });
 
     setHasPendingRescue(false);
+    clearRescueTarget(userId);
   }, [userId]);
+
+  // Expose the rescue action to the Blacktop map overlay (which renders above
+  // ActiveRide) so members can request/cancel rescue without leaving the map.
+  useEffect(() => {
+    registerRescueControls({
+      hasPending: hasPendingRescue,
+      canRequest: !!convoyId && !isLeader,
+      send: sendRescueRequestFromGps,
+      cancel: cancelRescueRequest,
+    });
+    return () => clearRescueControls();
+  }, [convoyId, isLeader, hasPendingRescue, sendRescueRequestFromGps, cancelRescueRequest]);
 
   return {
     rescueRequests,

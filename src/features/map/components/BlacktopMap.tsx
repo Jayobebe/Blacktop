@@ -24,9 +24,10 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
+import { useRescueBridge } from '@/features/rescue';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -68,6 +69,30 @@ function applyMemberMarkerStyle(
 const ROUTE_SOURCE_ID = 'blacktop-route';
 const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
 const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
+// Secondary "rescue" route — burn-orange, glowing, always drawn above the
+// primary route/waypoint line so it can never be hidden by it.
+const RESCUE_SOURCE_ID = 'blacktop-rescue-route';
+const RESCUE_GLOW_OUTER_LAYER_ID = 'blacktop-rescue-glow-outer';
+const RESCUE_GLOW_INNER_LAYER_ID = 'blacktop-rescue-glow-inner';
+const RESCUE_LINE_LAYER_ID = 'blacktop-rescue-line';
+const RESCUE_LAYER_IDS = [RESCUE_GLOW_OUTER_LAYER_ID, RESCUE_GLOW_INNER_LAYER_ID, RESCUE_LINE_LAYER_ID];
+// Matches the Burn button colour (--burn: 15 85% 52%).
+const RESCUE_COLOR = 'hsl(15, 85%, 52%)';
+
+function createRescueMarkerElement(name: string): HTMLDivElement {
+  const el = document.createElement('div');
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
+  el.style.alignItems = 'center';
+  el.style.pointerEvents = 'none';
+  el.innerHTML = `
+    <div style="padding:2px 8px;border-radius:9999px;background:${RESCUE_COLOR};color:#fff;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 0 18px ${RESCUE_COLOR};">
+      RESCUE · ${name.replace(/[<>&]/g, '')}
+    </div>
+    <div style="width:14px;height:14px;margin-top:3px;border-radius:50%;background:${RESCUE_COLOR};border:2px solid #fff;box-shadow:0 0 20px ${RESCUE_COLOR};"></div>
+  `;
+  return el;
+}
 
 const LOCATE_RESUME_DELAY_MS = 5000;
 // Zoom level used to auto-follow the rider. We push in tighter when there's an
@@ -187,6 +212,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const soloRoute = useSoloRoute();
   const isSolo = !convoy.id;
   const [addingWaypoint, setAddingWaypoint] = useState(false);
+  const rescue = useRescueBridge();
+  const [rescueRoute, setRescueRoute] = useState<RouteResult | null>(null);
+  const rescueMarkerRef = useRef<Marker | null>(null);
 
   const mapPresentUserIds = useMapPresentUserIds();
   const speakingUsers = useSpeakingUsers();
@@ -923,6 +951,133 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     return removeRouteLayers;
   }, [map, route, accentColor]);
 
+  // ── Rescue route (secondary, always on top) ────────────────────────────────
+  // When any convoy member fires the rescue button, everyone's map gains a
+  // second route to that rider. The original destination/waypoints stay
+  // untouched — this is drawn as an extra, glowing burn-orange line.
+  const rescueTarget = rescue.target;
+  const rescueRequestRef = useRef(0);
+  useEffect(() => {
+    if (!rescueTarget || !routingLocation) {
+      setRescueRoute(null);
+      return;
+    }
+    const id = ++rescueRequestRef.current;
+    fetchRouteThroughStops([routingLocation, { lat: rescueTarget.lat, lng: rescueTarget.lng }])
+      .then((result) => {
+        if (rescueRequestRef.current === id) setRescueRoute(result);
+      })
+      .catch(() => {
+        if (rescueRequestRef.current === id) setRescueRoute(null);
+      });
+  }, [rescueTarget, routingLocation]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const removeRescueLayers = () => {
+      try {
+        if (!map.getStyle()) return;
+        RESCUE_LAYER_IDS.forEach((id) => { if (map.getLayer(id)) map.removeLayer(id); });
+        if (map.getSource(RESCUE_SOURCE_ID)) map.removeSource(RESCUE_SOURCE_ID);
+      } catch {
+        // Map already torn down.
+      }
+    };
+
+    if (!rescueRoute) {
+      removeRescueLayers();
+      return;
+    }
+
+    const feature = {
+      type: 'Feature' as const,
+      geometry: rescueRoute.geometry,
+      properties: {},
+    };
+
+    let pulse: ReturnType<typeof setInterval> | null = null;
+
+    const draw = () => {
+      const existing = map.getSource(RESCUE_SOURCE_ID);
+      if (existing) {
+        (existing as maplibregl.GeoJSONSource).setData(feature);
+      } else {
+        map.addSource(RESCUE_SOURCE_ID, { type: 'geojson', data: feature });
+        map.addLayer({
+          id: RESCUE_GLOW_OUTER_LAYER_ID,
+          type: 'line',
+          source: RESCUE_SOURCE_ID,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 'line-color': RESCUE_COLOR, 'line-width': 20, 'line-opacity': 0.18, 'line-blur': 12 },
+        });
+        map.addLayer({
+          id: RESCUE_GLOW_INNER_LAYER_ID,
+          type: 'line',
+          source: RESCUE_SOURCE_ID,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 'line-color': RESCUE_COLOR, 'line-width': 11, 'line-opacity': 0.35, 'line-blur': 5 },
+        });
+        map.addLayer({
+          id: RESCUE_LINE_LAYER_ID,
+          type: 'line',
+          source: RESCUE_SOURCE_ID,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 'line-color': RESCUE_COLOR, 'line-width': 5 },
+        });
+      }
+
+      // Keep the rescue line above the primary route no matter which was
+      // created first (the primary route re-draws on every reroute).
+      RESCUE_LAYER_IDS.forEach((id) => { if (map.getLayer(id)) map.moveLayer(id); });
+
+      // Soft breathing glow.
+      let t = 0;
+      pulse = setInterval(() => {
+        t += 0.12;
+        const wave = (Math.sin(t) + 1) / 2; // 0..1
+        try {
+          if (map.getLayer(RESCUE_GLOW_OUTER_LAYER_ID)) {
+            map.setPaintProperty(RESCUE_GLOW_OUTER_LAYER_ID, 'line-opacity', 0.12 + wave * 0.22);
+          }
+          if (map.getLayer(RESCUE_GLOW_INNER_LAYER_ID)) {
+            map.setPaintProperty(RESCUE_GLOW_INNER_LAYER_ID, 'line-opacity', 0.25 + wave * 0.3);
+          }
+        } catch {
+          // style swapped mid-pulse
+        }
+      }, 90);
+    };
+
+    if (map.isStyleLoaded()) draw();
+    else map.once('load', draw);
+
+    return () => {
+      if (pulse) clearInterval(pulse);
+      removeRescueLayers();
+    };
+  }, [map, rescueRoute, route, basemap]);
+
+  // Rescue pin (secondary waypoint marker) at the stranded rider's location.
+  useEffect(() => {
+    if (!map) return;
+    if (!rescueTarget) {
+      rescueMarkerRef.current?.remove();
+      rescueMarkerRef.current = null;
+      return;
+    }
+    if (!rescueMarkerRef.current) {
+      rescueMarkerRef.current = new maplibregl.Marker({
+        element: createRescueMarkerElement(rescueTarget.userName || 'Rider'),
+        anchor: 'bottom',
+      })
+        .setLngLat([rescueTarget.lng, rescueTarget.lat])
+        .addTo(map);
+    } else {
+      rescueMarkerRef.current.setLngLat([rescueTarget.lng, rescueTarget.lat]);
+    }
+  }, [map, rescueTarget]);
+
   // ── Derived display flags ──────────────────────────────────────────────────
   const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
   const canSkipWaypoint =
@@ -1216,6 +1371,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         </div>
       </div>
+
+      {/* Rescue button — available while the map overlay covers ActiveRide. */}
+      {rescue.canRequest && (
+        <div className="absolute bottom-16 left-3 z-20">
+          <button
+            onClick={() => { void (rescue.hasPending ? rescue.cancel?.() : rescue.send?.()); }}
+            className={cn(
+              'p-2.5 rounded-full border shadow-lg backdrop-blur transition-colors',
+              rescue.hasPending
+                ? 'bg-[hsl(var(--burn))]/25 border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse'
+                : 'bg-card/95 border-border text-warning hover:bg-warning/20',
+            )}
+            aria-label={rescue.hasPending ? 'Cancel rescue request' : 'Request rescue'}
+            title={rescue.hasPending ? 'Cancel rescue request' : 'Request rescue'}
+          >
+            <AlertTriangle className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* ── Save Location (Add POI) ──────────────────────────────────────────
           Sits at bottom-left, mirroring the overlay's exit button at bottom-right.
