@@ -114,7 +114,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Frosted backdrop: graphite-to-black wash with a silver sheen. */
+  /* Noir backdrop: near-black wash with a single cool chrome sheen. */
   body::before {
     content: '';
     position: fixed;
@@ -122,12 +122,12 @@
     z-index: -2;
     pointer-events: none;
     background:
-      radial-gradient(120% 85% at 50% -15%, hsl(var(--frost-silver) / 0.10), transparent 62%),
-      radial-gradient(95% 65% at 105% 105%, hsl(var(--frost-silver) / 0.07), transparent 66%),
-      linear-gradient(180deg, hsl(var(--frost-mid)), hsl(var(--frost-deep)) 70%);
+      radial-gradient(130% 80% at 50% -20%, hsl(var(--frost-silver) / 0.07), transparent 60%),
+      radial-gradient(90% 60% at 108% 108%, hsl(var(--frost-silver) / 0.045), transparent 64%),
+      linear-gradient(180deg, hsl(var(--frost-mid)), hsl(var(--frost-deep)) 62%);
   }
 
-  /* Whisper-level stylised tyre marks — background only, never on panels. */
+  /* Whisper-level stylised tyre marks — background only, never under text. */
   body::after {
     content: '';
     position: fixed;
@@ -141,20 +141,30 @@
       transparent 5px 17px
     );
     -webkit-mask-image:
-      radial-gradient(ellipse 42% 7% at 16% 20%, #000 0%, transparent 72%),
-      radial-gradient(ellipse 34% 6% at 82% 55%, #000 0%, transparent 72%),
-      radial-gradient(ellipse 46% 7% at 42% 90%, #000 0%, transparent 72%);
+      radial-gradient(ellipse 38% 6% at 12% 14%, #000 0%, transparent 74%),
+      radial-gradient(ellipse 30% 5% at 88% 58%, #000 0%, transparent 74%),
+      radial-gradient(ellipse 40% 6% at 46% 94%, #000 0%, transparent 74%);
     mask-image:
-      radial-gradient(ellipse 42% 7% at 16% 20%, #000 0%, transparent 72%),
-      radial-gradient(ellipse 34% 6% at 82% 55%, #000 0%, transparent 72%),
-      radial-gradient(ellipse 46% 7% at 42% 90%, #000 0%, transparent 72%);
+      radial-gradient(ellipse 38% 6% at 12% 14%, #000 0%, transparent 74%),
+      radial-gradient(ellipse 30% 5% at 88% 58%, #000 0%, transparent 74%),
+      radial-gradient(ellipse 40% 6% at 46% 94%, #000 0%, transparent 74%);
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
+
+  /* Chrome-language focus ring */
+  :focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 1px hsl(var(--background)),
+      0 0 0 2.5px hsl(var(--accent) / 0.7);
+    border-radius: inherit;
+  }
+
 
 
   /* Smooth page transitions */
