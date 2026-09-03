@@ -542,12 +542,17 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
           <div 
             key={member.name}
             className={cn(
-              "flex items-center gap-3 p-2.5 rounded-xl animate-slide-up",
-              member.isLeader ? "bg-accent/10 border border-accent/20" : "bg-card/30"
+              "flex items-center gap-3 p-2.5 rounded-xl animate-slide-up transition-all duration-300",
+              member.isLeader ? "bg-accent/10 border border-accent/20" : "bg-card/30",
+              speaking === i && "ring-1 ring-accent/60 shadow-[0_0_14px_hsl(var(--accent)/0.35)]"
             )}
             style={{ animationDelay: `${300 + i * 80}ms` }}
           >
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", member.color)}>
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300",
+              member.color,
+              speaking === i && "scale-110 shadow-[0_0_12px_3px_rgba(255,255,255,0.45)]"
+            )}>
               {member.isLeader ? (
                 <Crown className="w-4 h-4 text-white" />
               ) : (
@@ -557,7 +562,19 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
             <span className={cn("text-sm font-medium", member.isLeader && "text-accent")}>
               {member.name}
             </span>
+            {speaking === i && (
+              <span className="ml-auto flex items-end gap-0.5 h-3.5" aria-label="speaking">
+                {[0, 1, 2].map(b => (
+                  <span
+                    key={b}
+                    className="w-0.5 rounded-full bg-accent animate-pulse"
+                    style={{ height: `${6 + b * 4}px`, animationDelay: `${b * 120}ms` }}
+                  />
+                ))}
+              </span>
+            )}
           </div>
+
         ))}
       </div>
     </div>
