@@ -150,6 +150,21 @@ export default function DemoShowcase() {
       ],
     },
     {
+      id: 'trading-cards',
+      title: 'Trading Cards',
+      subtitle: 'Bronze To Orion',
+      description: 'Every vehicle earns a collectable card that levels up with your ride count — ten tiers, each with its own finish. Swipe to see the whole ladder.',
+      icon: Sparkles,
+      color: 'accent',
+      mockup: <TradingCardsMockup />,
+      cards: [
+        { icon: Sparkles, label: 'Tier Ladder', text: 'Locked, Bronze, Silver, Gold, Platinum, Diamond, Ruby, Obsidian, Polyatomic, Orion.' },
+        { icon: Camera, label: 'Garage Shot', text: 'The card uses your garage placement and zoom, so it looks how you set it.' },
+        { icon: QrCode, label: 'Share & Scan', text: 'Show your card QR — mates scan it straight into their vault.' },
+        { icon: Folder, label: 'Card Vault', text: 'Collected cards are kept in your folder, exactly as the owner styled them.' },
+      ],
+    },
+    {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
