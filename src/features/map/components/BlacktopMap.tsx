@@ -1288,7 +1288,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: 'Loop finish' });
             setShowLoopPlanner(false);
             toast.success(
-              `Loop ready · ${formatDistance(loop.distanceMeters, settings.distanceUnit)} · ${formatDuration(loop.durationSeconds)}`,
+              `Loop ready · ${formatDistance(metersToMiles(loop.distanceMeters), settings.distanceUnit)} · ${formatDuration(Math.round(loop.durationSeconds))}`,
             );
           }}
         />
