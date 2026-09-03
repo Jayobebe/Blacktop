@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Loader2, Repeat, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
-import { generateLoopRoute, LoopVibe, metersToMiles } from '../lib/routing';
+import { generateLoopRoute, LoopVibe } from '../lib/routing';
 
 const VIBES: { id: LoopVibe; label: string; hint: string }[] = [
   { id: 'curvy', label: 'Twisty', hint: 'Maximum corners' },
@@ -111,8 +111,7 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
         {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Building loop…</> : 'Generate loop'}
       </button>
       <p className="mt-2 text-[10px] text-muted-foreground">
-        Loops start and finish where you are now. Roughly {useMiles ? `${Math.round(length)} mi` : `${length} km`}
-        {' '}· about {Math.round((useMiles ? metersToMiles(length * 1609.34) : length) / (useMiles ? 38 : 60) * 60)} min riding.
+        Loops start and finish where you are now · roughly {Math.round((length / (useMiles ? 38 : 60)) * 60)} min riding.
       </p>
     </div>
   );
