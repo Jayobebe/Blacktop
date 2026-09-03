@@ -74,8 +74,8 @@
     --frost-tyre-opacity: 0.028;
 
     /* Chrome: edge light. Top edge catches light, bottom edge falls to black. */
-    --chrome-bright: 220 10% 88% / 0.30;
-    --chrome-edge: 220 10% 80% / 0.16;
+    --chrome-bright: 220 10% 90% / 0.40;
+    --chrome-edge: 220 10% 82% / 0.20;
     --chrome-dim: 220 10% 70% / 0.09;
     --chrome-text: 220 8% 66%;
 
