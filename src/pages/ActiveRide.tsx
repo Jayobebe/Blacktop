@@ -722,7 +722,7 @@ export default function ActiveRide() {
     : convoy.members;
 
   const endRideButton = (
-    <div className="flex justify-center">
+    <div className="flex justify-center items-center min-h-[2.25rem] md:min-h-[2.5rem] min-w-[230px]">
       {!showEndConfirm ? (
         <Button
           onClick={() => setShowEndConfirm(true)}
