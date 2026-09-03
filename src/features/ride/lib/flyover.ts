@@ -48,12 +48,6 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-/** Shortest-path angular interpolation, so the camera never spins the long way. */
-function lerpAngle(a: number, b: number, t: number) {
-  let diff = ((b - a + 540) % 360) - 180;
-  return a + diff * t;
-}
-
 function sampleAt<T extends { timestamp: number }>(samples: T[] | undefined, ts: number): T | null {
   if (!samples || samples.length === 0) return null;
   // Samples are chronological; a linear scan with a cached cursor is overkill
@@ -116,17 +110,15 @@ export function buildFlyoverFrames(
     const lat = lerp(a.lat, b.lat, t);
     const lng = lerp(a.lng, b.lng, t);
 
-    const prev = clean[Math.max(0, cursor - 1)];
-    const rawBearing = bearingBetween(prev, b);
-    const bearing = frames.length ? lerpAngle(frames[frames.length - 1].bearing, rawBearing, 0.12) : rawBearing;
-
+    // Bearing is derived after smoothing (below) so the camera never snaps at
+    // GPS vertices — placeholder for now.
     const lean = sampleAt(opts.leanSamples, ts)?.angle ?? a.leanAngle ?? 0;
     const g = sampleAt(opts.gForceSamples, ts)?.g ?? 0;
 
     frames.push({
       lat,
       lng,
-      bearing,
+      bearing: 0,
       index: cursor,
       elapsed: (ts - t0) / 1000,
       speed: lerp(a.speed ?? 0, b.speed ?? 0, t),
@@ -136,7 +128,70 @@ export function buildFlyoverFrames(
     });
   }
 
+  smoothFrames(frames, fps);
   return frames;
+}
+
+/**
+ * Piecewise-linear resampling leaves visible kinks at every GPS vertex, which
+ * reads as a choppy camera. Smooth the flown path and derive bearings from the
+ * smoothed track (with an unwrapped moving average) for a continuous glide.
+ */
+function smoothFrames(frames: FlyoverFrame[], fps: number) {
+  if (frames.length < 3) return;
+
+  const posWindow = Math.max(3, Math.round(fps * 0.6));
+  smoothSeries(frames, 'lat', posWindow, 2);
+  smoothSeries(frames, 'lng', posWindow, 2);
+  smoothSeries(frames, 'speed', Math.max(3, Math.round(fps * 0.8)), 1);
+  smoothSeries(frames, 'lean', Math.max(3, Math.round(fps * 0.4)), 1);
+  smoothSeries(frames, 'gForce', Math.max(3, Math.round(fps * 0.4)), 1);
+
+  // Raw bearings from the smoothed track, looking a little ahead so the camera
+  // leads the rider through corners rather than trailing them.
+  const lookahead = Math.max(1, Math.round(fps * 0.35));
+  const raw: number[] = [];
+  for (let i = 0; i < frames.length; i++) {
+    const a = frames[Math.max(0, i - 1)];
+    const b = frames[Math.min(frames.length - 1, i + lookahead)];
+    const bearing = a === b ? (raw[i - 1] ?? 0) : bearingBetween(a, b);
+    raw.push(bearing);
+  }
+
+  // Unwrap so 359° → 1° averages through 0 instead of spinning backwards.
+  const unwrapped: number[] = [raw[0]];
+  for (let i = 1; i < raw.length; i++) {
+    const prev = unwrapped[i - 1];
+    let d = ((raw[i] - (((prev % 360) + 360) % 360) + 540) % 360) - 180;
+    unwrapped.push(prev + d);
+  }
+
+  const bearingWindow = Math.max(5, Math.round(fps * 1.0));
+  const smoothedBearings = movingAverage(movingAverage(unwrapped, bearingWindow), bearingWindow);
+  for (let i = 0; i < frames.length; i++) frames[i].bearing = smoothedBearings[i];
+}
+
+function smoothSeries(frames: FlyoverFrame[], key: 'lat' | 'lng' | 'speed' | 'lean' | 'gForce', window: number, passes: number) {
+  let values = frames.map(f => f[key]);
+  for (let p = 0; p < passes; p++) values = movingAverage(values, window);
+  for (let i = 0; i < frames.length; i++) frames[i][key] = values[i];
+}
+
+/** Centred moving average with edge clamping. */
+function movingAverage(values: number[], window: number): number[] {
+  const half = Math.floor(window / 2);
+  const out = new Array<number>(values.length);
+  for (let i = 0; i < values.length; i++) {
+    let sum = 0;
+    let count = 0;
+    for (let j = i - half; j <= i + half; j++) {
+      const idx = Math.max(0, Math.min(values.length - 1, j));
+      sum += values[idx];
+      count++;
+    }
+    out[i] = sum / count;
+  }
+  return out;
 }
 
 function durationClamp(sec: number) {
