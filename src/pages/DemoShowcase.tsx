@@ -564,13 +564,48 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
 
 
 
+// Street network for the maps mockup (viewBox 100 x 125)
+const DEMO_ROADS: [number, number][][] = [
+  [[8, 122], [24, 96], [38, 70], [33, 40], [28, 8]],
+  [[92, 112], [74, 86], [56, 58], [64, 30], [74, 4]],
+  [[4, 48], [33, 52], [56, 58], [80, 62], [96, 64]],
+  [[24, 96], [50, 90], [74, 86]],
+];
+// The active route follows real street segments, not a free-hand curve
+const DEMO_ROUTE: [number, number][] = [
+  [24, 96], [38, 70], [33, 52], [56, 58], [64, 30],
+];
+
+function pointsToPath(pts: [number, number][]) {
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]} ${p[1]}`).join(' ');
+}
+
+function pointAlong(pts: [number, number][], t: number): [number, number] {
+  const segs = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
+  const total = segs.reduce((a, b) => a + b, 0);
+  let target = Math.max(0, Math.min(1, t)) * total;
+  for (let i = 0; i < segs.length; i++) {
+    if (target <= segs[i]) {
+      const r = segs[i] === 0 ? 0 : target / segs[i];
+      return [
+        pts[i][0] + (pts[i + 1][0] - pts[i][0]) * r,
+        pts[i][1] + (pts[i + 1][1] - pts[i][1]) * r,
+      ];
+    }
+    target -= segs[i];
+  }
+  return pts[pts.length - 1];
+}
+
 function MapsMockup() {
   const riders = [
-    { name: 'You', color: 'bg-orange-500', top: '40%', left: '44%' },
-    { name: 'Marcus', color: 'bg-blue-500', top: '60%', left: '64%' },
-    { name: 'Sarah', color: 'bg-pink-500', top: '22%', left: '68%' },
+    { name: 'You', color: 'bg-orange-500', road: DEMO_ROUTE, speed: 0.055, offset: 0.1 },
+    { name: 'Marcus', color: 'bg-blue-500', road: DEMO_ROADS[1], speed: 0.04, offset: 0.45 },
+    { name: 'Sarah', color: 'bg-pink-500', road: DEMO_ROADS[2], speed: 0.035, offset: 0.7 },
   ];
   const [speakingIdx, setSpeakingIdx] = useState(0);
+  const [tick, setTick] = useState(0);
+  const [speed, setSpeed] = useState(58);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -578,6 +613,15 @@ function MapsMockup() {
     }, 1200);
     return () => clearInterval(interval);
   }, [riders.length]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+      setSpeed((s) => Math.round(Math.max(34, Math.min(78, s + (Math.random() - 0.45) * 9))));
+    }, 250);
+    return () => clearInterval(interval);
+  }, []);
+
 
   return (
     <div className="w-full max-w-xs space-y-4">
