@@ -42,7 +42,7 @@ export default function Settings() {
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
-  const { settings, toggleSpeedRankings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
+  const { settings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const [burnStep, setBurnStep] = useState(0);
   const [burning, setBurning] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
