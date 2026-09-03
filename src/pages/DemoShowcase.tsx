@@ -483,8 +483,14 @@ function IntroMockup() {
 }
 
 function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+  const [speaking, setSpeaking] = useState(1);
+  useEffect(() => {
+    const interval = setInterval(() => setSpeaking(p => (p + 1) % 4), 1400);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <div className="w-full max-w-xs space-y-4">
+
       {/* Code Card */}
       <div className="bg-card/50 rounded-2xl border border-border/30 p-5 animate-slide-up">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center mb-3">
