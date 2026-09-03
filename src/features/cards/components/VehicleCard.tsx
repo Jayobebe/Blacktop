@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw } from 'lucide-react';
+import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw, Scan, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import {
   formatDistance,
   formatDuration,
@@ -18,6 +19,7 @@ import { uploadCardPhoto } from '../lib/cardPhoto';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
+
 interface Props {
   card: VehicleCardData;
 }
@@ -29,6 +31,11 @@ export function VehicleCard({ card }: Props) {
   const locked = card.tier === 'locked';
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [resizing, setResizing] = useState(false);
+  const zoom = zooms[card.bike.id] ?? 1;
+  const setZoom = (v: number) => setZooms((prev) => ({ ...prev, [card.bike.id]: v }));
+
   const shareable = !locked && settings.blacktopWorldEnabled;
   const hero = card.bike.photos.hero;
   // Never expose a QR for a pictured card until its photo has been published.
@@ -107,6 +114,20 @@ export function VehicleCard({ card }: Props) {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
+                {!locked && (
+                  <button
+                    type="button"
+                    data-export-hide
+                    onClick={() => setResizing((r) => !r)}
+                    aria-label={resizing ? 'Finish resizing image' : 'Resize card image'}
+                    className={cn(
+                      'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
+                      style.chip,
+                    )}
+                  >
+                    {resizing ? <Check className="w-3 h-3" /> : <Scan className="w-3 h-3" />}
+                  </button>
+                )}
                 {!locked && qrPayload && (
                   <button
                     type="button"
@@ -134,42 +155,71 @@ export function VehicleCard({ card }: Props) {
             </div>
 
             {/* Hero photo — sits inside Mecha-Nick's garage */}
-            <div
-              className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 bg-cover bg-center"
-              style={{ backgroundImage: `url(${garageShopAsset.url})` }}
-            >
-              <div className="absolute inset-0 bg-black/20" />
-              {card.bike.photos.hero ? (() => {
-                const placement = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
-                return (
-                  <img
-                    src={card.bike.photos.hero}
-                    alt={card.bike.name}
-                    className={cn(
-                      'absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
-                      locked && 'opacity-40 grayscale',
-                    )}
-                    style={{
-                      left: `${placement.xPct}%`,
-                      bottom: `${placement.yPct}%`,
-                      height: `${placement.scalePct}%`,
-                      maxWidth: '90%',
-                      transform: 'translateX(-50%)',
-                      imageRendering: 'pixelated',
-                    }}
-                  />
-                );
-              })() : (
-                <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
-                  No photo
-                </div>
-              )}
+            <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10">
+              <div
+                className="absolute inset-0 bg-cover bg-center origin-center transition-transform duration-200"
+                style={{
+                  backgroundImage: `url(${garageShopAsset.url})`,
+                  transform: `scale(${zoom})`,
+                }}
+              >
+                <div className="absolute inset-0 bg-black/20" />
+                {card.bike.photos.hero ? (() => {
+                  const placement = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
+                  return (
+                    <img
+                      src={card.bike.photos.hero}
+                      alt={card.bike.name}
+                      className={cn(
+                        'absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
+                        locked && 'opacity-40 grayscale',
+                      )}
+                      style={{
+                        left: `${placement.xPct}%`,
+                        bottom: `${placement.yPct}%`,
+                        height: `${placement.scalePct}%`,
+                        maxWidth: '90%',
+                        transform: 'translateX(-50%)',
+                        imageRendering: 'pixelated',
+                      }}
+                    />
+                  );
+                })() : (
+                  <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
+                    No photo
+                  </div>
+                )}
+              </div>
               {locked && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                   <Lock className="w-8 h-8 text-white/70" />
                 </div>
               )}
+              {resizing && !locked && (
+                <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15">
+                  <span className="text-[8px] uppercase tracking-widest text-white/70">Zoom</span>
+                  <input
+                    type="range"
+                    min={0.6}
+                    max={2.5}
+                    step={0.05}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    aria-label="Card image zoom"
+                    className="flex-1 accent-[hsl(var(--accent))]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setResizing(false)}
+                    aria-label="Confirm image size"
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/90 text-black active:scale-90"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
+
 
             {/* Stats grid */}
             {locked ? (
