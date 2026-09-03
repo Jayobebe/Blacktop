@@ -1139,7 +1139,7 @@ function TradingCardsMockup() {
               <div
                 key={t.id}
                 className={cn(
-                  'relative shrink-0 snap-center w-[150px] h-[200px] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
+                  'relative shrink-0 snap-center w-[150px] h-[224px] rounded-xl border-2 overflow-hidden shadow-lg flex flex-col animate-scale-in',
                   style.bg,
                   style.border,
                 )}
