@@ -5,7 +5,7 @@ import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
-import { History, BarChart3, Settings, Users, UserPlus, User, Play, Download, X, Wrench } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, User, Download, X, Wrench } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
@@ -375,7 +375,6 @@ export default function Home() {
       {/* Bottom Navigation */}
       <nav className="flex justify-around mt-4 pt-3 border-t border-border/30 animate-slide-up delay-300">
         {[
-          { icon: Play, label: 'Demo', onClick: () => navigate('/demo') },
           { icon: Wrench, label: 'Garage', onClick: () => navigate('/garage') },
           { icon: History, label: 'History', onClick: () => navigate('/history') },
           { icon: BarChart3, label: 'Stats', onClick: () => navigate('/stats') },
