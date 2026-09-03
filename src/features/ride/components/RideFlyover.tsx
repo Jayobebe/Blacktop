@@ -86,7 +86,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       bearing: 0,
       attributionControl: false,
       interactive: false,
-      preserveDrawingBuffer: true,
+      canvasContextAttributes: { preserveDrawingBuffer: true, antialias: true },
       fadeDuration: 0,
     });
     mapRef.current = map;
