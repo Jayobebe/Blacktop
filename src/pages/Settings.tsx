@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -747,6 +747,24 @@ export default function Settings() {
               </div>
             </div>
           )}
+
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <div className="flex items-center justify-between gap-3">
+              <div className="pr-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <MonitorSmartphone className="w-4 h-4 text-accent" />
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Car Display</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Oversized, low-clutter Active Ride layout for wired Android screen mirroring (USB/HDMI head units). Kicks in automatically in landscape. Bluetooth-only units and iPhone can't mirror.
+                </p>
+              </div>
+              <Switch
+                checked={settings.carDisplayEnabled}
+                onCheckedChange={(v) => updateSetting('carDisplayEnabled', v)}
+              />
+            </div>
+          </div>
         </CollapsibleSection>
 
         {/* Discord Integration */}

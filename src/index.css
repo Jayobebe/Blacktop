@@ -876,3 +876,32 @@
   box-shadow: 0 0 8px hsl(var(--accent) / 0.5);
   cursor: grab;
 }
+
+/* ------------------------------------------------------------------
+   Car Display mode — wired Android phone mirroring to a head unit.
+   Landscape-only: scales the ride HUD up and strips secondary chrome
+   so it stays legible at arm's length on a dash screen.
+------------------------------------------------------------------ */
+.car-display {
+  padding: 0.5rem 1rem;
+}
+
+.car-display .car-hide {
+  display: none !important;
+}
+
+/* Bigger live speed + stats without touching the layout structure */
+.car-display [data-ride-speed] {
+  font-size: clamp(6rem, 22vw, 14rem) !important;
+  line-height: 0.9 !important;
+}
+
+.car-display [data-ride-stat-value] {
+  font-size: clamp(1.75rem, 4.5vw, 3rem) !important;
+  line-height: 1.05 !important;
+}
+
+/* Dim non-critical text so the driver's eye lands on speed first */
+.car-display .text-muted-foreground {
+  opacity: 0.75;
+}
