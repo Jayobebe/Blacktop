@@ -935,12 +935,22 @@ function CompleteMockup() {
 function GarageMockup() {
   const { settings } = useSettings();
   const bikes = [
-    { name: 'Daily Twin', model: 'Yamaha MT-07', km: 12480, emoji: '🏍️', active: true },
-    { name: 'Track Toy', model: 'Aprilia RS660', km: 3210, emoji: '🏁', active: false },
+    { name: 'Daily Twin', model: 'Yamaha MT-07', km: 12480, active: true },
+    { name: 'Track Toy', model: 'Aprilia RS660', km: 3210, active: false },
   ];
 
   return (
     <div className="w-full max-w-xs space-y-3">
+      {/* Mecha-Nick's garage diorama */}
+      <div className="relative h-32 rounded-2xl overflow-hidden border border-border/30 animate-slide-up">
+        <img src={shopAsset.url} alt="Mecha-Nick's garage" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/25" />
+        <img src={demoBikeAsset.url} alt="Red pixel-art bike" className="absolute bottom-1 left-1/2 -translate-x-1/2 h-24 object-contain" />
+        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm border border-white/10">
+          <span className="text-[8px] uppercase tracking-[0.2em] text-white/70">Mecha-Nick's</span>
+        </div>
+      </div>
+
       {bikes.map((bike, i) => (
         <div
           key={bike.name}
@@ -950,11 +960,11 @@ function GarageMockup() {
               ? "bg-accent/10 border-accent/40"
               : "bg-card/50 border-border/30"
           )}
-          style={{ animationDelay: `${i * 150}ms` }}
+          style={{ animationDelay: `${150 + i * 150}ms` }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl">
-              {bike.emoji}
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+              <Bike className="w-6 h-6 text-accent" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -966,17 +976,23 @@ function GarageMockup() {
               <p className="text-xs text-muted-foreground truncate">{bike.model}</p>
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Odometer</span>
-            <span className="font-mono font-semibold">
-              {formatDistance(bike.km, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
-            </span>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Odometer</span>
+              <span className="font-mono font-semibold">
+                {formatDistance(bike.km, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Wrench className="w-3 h-3 text-muted-foreground" />
+              <div className="h-1.5 flex-1 rounded-full bg-secondary overflow-hidden">
+                <div className={cn("h-full", bike.active ? "bg-destructive" : "bg-accent")} style={{ width: bike.active ? '86%' : '34%' }} />
+              </div>
+              <span className="text-[9px] text-muted-foreground">Chain</span>
+            </div>
           </div>
         </div>
       ))}
-      <p className="text-center text-xs text-muted-foreground animate-fade-in delay-400">
-        Each vehicle keeps its own stats & maintenance
-      </p>
     </div>
   );
 }
@@ -1087,8 +1103,9 @@ function PersonaliseMockup() {
       </div>
       <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-3 animate-slide-up delay-200">
         {[
-          { icon: Ruler, label: 'Units', value: 'MPH · Miles' },
-          { icon: AlertTriangle, label: 'Speed alerts', value: '80 / 100' },
+          { icon: Gauge, label: 'Ride metrics', value: 'Lean · G · Flyover' },
+          { icon: AlertTriangle, label: 'Safety', value: 'Alerts · Auto-rescue' },
+          { icon: Play, label: 'Demo', value: 'Replay tour' },
           { icon: MonitorSmartphone, label: 'Car display', value: 'Landscape' },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3">
