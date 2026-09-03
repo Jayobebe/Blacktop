@@ -806,18 +806,18 @@ export default function ActiveRide() {
         <div className="hidden landscape:flex flex-col justify-center items-start gap-7 flex-1 min-w-0 pl-2">
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Distance</p>
-            <p className="font-mono text-4xl lg:text-5xl font-bold truncate">
+            <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
               {formatDistance(rideState.distance, settings.distanceUnit)}
               <span className="text-lg text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
             </p>
           </div>
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Time</p>
-            <p className="font-mono text-4xl lg:text-5xl font-bold truncate">{formatDuration(rideState.duration)}</p>
+            <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">{formatDuration(rideState.duration)}</p>
           </div>
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Max</p>
-            <p className="font-mono text-4xl lg:text-5xl font-bold truncate">
+            <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
               {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
               <span className="text-lg text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
             </p>
@@ -845,7 +845,7 @@ export default function ActiveRide() {
 
           {/* Speed Display - large and prominent */}
           <div className="text-center">
-            <div className={cn(
+            <div data-ride-speed className={cn(
               "font-mono font-black transition-all leading-none",
               "text-[8rem] [@media(max-height:820px)]:text-[6rem] [@media(max-height:700px)]:text-[5rem] md:text-[11rem] lg:text-[14rem] landscape:text-[7.5rem] landscape:[@media(max-height:500px)]:text-[5.5rem] landscape:[@media(max-height:420px)]:text-[4.5rem]",
               rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
