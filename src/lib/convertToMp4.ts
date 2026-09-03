@@ -65,7 +65,13 @@ export async function convertWebmToMp4(
   console.log('[FFmpeg] Starting remux...');
   await ff.exec([
     '-i', 'input.webm',
-    '-c', 'copy',        // Copy streams without re-encoding (fast)
+    '-c:v', 'copy',      // Copy video without re-encoding (fast)
+    // Opus in MP4 has poor player support, so transcode voice audio to AAC.
+    // '?' makes the mapping optional for silent (solo) recordings.
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-map', '0:v:0',
+    '-map', '0:a:0?',
     '-f', 'mp4',
     'output.mp4'
   ]);
