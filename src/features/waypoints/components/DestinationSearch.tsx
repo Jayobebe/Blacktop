@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark, Repeat } from 'lucide-react';
-import { LoopPlannerPanel } from '@/features/map';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,16 +28,6 @@ interface DestinationSearchProps {
   userLocation?: UserLocation | null;
   countryCode?: string | null;
   distanceUnit?: 'miles' | 'km';
-  /**
-   * When provided, a "Twisty" quick option appears that plans a round-trip
-   * loop from the rider's location instead of searching for a place.
-   */
-  onApplyLoop?: (loop: {
-    start: { lat: number; lng: number };
-    stops: { lat: number; lng: number }[];
-    distanceMeters: number;
-    durationSeconds: number;
-  }) => void;
 }
 
 interface UserLocation {
@@ -329,9 +318,7 @@ export function DestinationSearch({
   userLocation: externalUserLocation,
   countryCode: externalCountryCode,
   distanceUnit = 'km',
-  onApplyLoop,
 }: DestinationSearchProps) {
-  const [showLoopPlanner, setShowLoopPlanner] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -672,36 +659,7 @@ export function DestinationSearch({
             <span className="text-xs font-medium">{cat.label}</span>
           </button>
         ))}
-        {onApplyLoop && (
-          <button
-            onClick={() => setShowLoopPlanner(true)}
-            aria-label="Plan a twisty loop"
-            className={cn(
-              "flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border transition-all",
-              "active:scale-95",
-              showLoopPlanner
-                ? "bg-accent text-accent-foreground border-accent"
-                : "bg-card border-border hover:bg-muted"
-            )}
-          >
-            <Repeat className="w-4 h-4" />
-            <span className="text-xs font-medium">Twisty</span>
-          </button>
-        )}
       </div>
-
-      {onApplyLoop && showLoopPlanner && (
-        <div className="fixed inset-0 z-[80] bg-background/80 backdrop-blur-sm">
-          <LoopPlannerPanel
-            userLocation={userLocation ?? null}
-            onClose={() => setShowLoopPlanner(false)}
-            onApply={(loop) => {
-              setShowLoopPlanner(false);
-              onApplyLoop(loop);
-            }}
-          />
-        </div>
-      )}
 
       {/* Search input */}
       <div ref={inputWrapRef} className="flex gap-2">
