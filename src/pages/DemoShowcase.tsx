@@ -666,20 +666,26 @@ function MapsMockup() {
           <Eye className="w-2.5 h-2.5 text-orange-400" />
         </div>
 
-        {/* Convoy member markers — glow cycles to show who's speaking */}
-        {riders.map((rider, i) => (
-          <div
-            key={rider.name}
-            className={cn(
-              'absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 flex items-center justify-center text-[8px] font-bold text-white transition-all duration-300 animate-scale-in',
-              rider.color,
-              speakingIdx === i && 'scale-125 shadow-[0_0_10px_3px_rgba(255,255,255,0.5)]',
-            )}
-            style={{ top: rider.top, left: rider.left, animationDelay: `${i * 100}ms` }}
-          >
-            {rider.name[0]}
-          </div>
-        ))}
+        {/* Convoy member markers — move along the streets, glow when speaking */}
+        {riders.map((rider, i) => {
+          const t = (rider.offset + tick * rider.speed * 0.06) % 2;
+          const prog = t > 1 ? 2 - t : t; // ping-pong along the road
+          const [x, y] = pointAlong(rider.road, prog);
+          return (
+            <div
+              key={rider.name}
+              className={cn(
+                'absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 flex items-center justify-center text-[8px] font-bold text-white transition-all duration-300 ease-linear',
+                rider.color,
+                speakingIdx === i && 'scale-125 shadow-[0_0_10px_3px_rgba(255,255,255,0.5)]',
+              )}
+              style={{ top: `${(y / 125) * 100}%`, left: `${x}%` }}
+            >
+              {rider.name[0]}
+            </div>
+          );
+        })}
+
 
         {/* Waypoint carousel (max 5, horizontal) */}
         <div className="absolute bottom-10 left-2 right-2 flex gap-1.5 overflow-hidden animate-slide-up delay-200">
