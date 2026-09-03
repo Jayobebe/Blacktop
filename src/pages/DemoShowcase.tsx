@@ -8,7 +8,8 @@ import {
   MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
-  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat
+  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
+  CornerUpRight, Share2, Flag, CalendarClock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -136,6 +137,8 @@ export default function DemoShowcase() {
         { icon: Video, label: 'Overlay Download', text: 'MP4 with live speed, lean, distance and a mini-map for editing in.' },
         { icon: Mic, label: 'Voice Recording', text: 'Optionally mix convoy voice chat into the overlay MP4.' },
         { icon: Mountain, label: '3D Flyover', text: 'A cinematic 3D pass over your route with stats, ready to save.' },
+        { icon: CornerUpRight, label: 'Corner Report', text: 'Every corner detected and scored 0-100 on line, lean and pace, with a ride grade.' },
+        { icon: Share2, label: 'Recap Card', text: 'One tap renders a shareable image of your route, stats and corner grade.' },
         { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman and Fallback roll into lifetime totals.' },
       ],
     },
@@ -150,6 +153,7 @@ export default function DemoShowcase() {
       cards: [
         { icon: Bike, label: 'Your Vehicles', text: 'Photo, odometer and lifetime stats per machine.' },
         { icon: Wrench, label: 'Maintenance', text: 'Chain, oil, brakes and tyres with bars that reset when serviced.' },
+        { icon: CalendarClock, label: 'Time Reminders', text: 'Set "every N months" alongside mileage — whichever comes first nags you.' },
         { icon: History, label: 'Ride Assignment', text: 'Tag any ride to a vehicle and its stats roll up automatically.' },
         { icon: Sparkles, label: 'Trading Cards', text: 'Bronze at 10 rides all the way to Orion at 1000.' },
       ],
@@ -173,7 +177,7 @@ export default function DemoShowcase() {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
-      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, crew QR joining, your card collection and the arcade — with an anonymous glow showing where riders are active.',
+      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection and the arcade — with an anonymous glow showing where riders are active.',
       icon: Globe2,
       color: 'accent',
       mockup: <BlacktopWorldMockup />,
@@ -181,6 +185,7 @@ export default function DemoShowcase() {
         { icon: Users, label: 'Crew Convoys', text: 'A live list of your crew\'s open rides — tap for leader and riders.' },
         { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade.' },
         { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
+        { icon: Flag, label: 'Weekly Challenge', text: 'A rotating crew challenge each week — miles, corners, lean or ride count.' },
         { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy and Petrol Head, with personal bests saved locally.' },
       ],
     },
