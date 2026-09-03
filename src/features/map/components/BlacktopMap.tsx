@@ -204,6 +204,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
   const [isRouting, setIsRouting] = useState(false);
+  // Weather-avoidance detour via point, applied on top of the rider's own stops.
+  const [weatherVia, setWeatherVia] = useState<{ lat: number; lng: number } | null>(null);
+  const [weatherBusy, setWeatherBusy] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const [showSaveUI, setShowSaveUI] = useState(false);
   const [saveName, setSaveName] = useState('');
