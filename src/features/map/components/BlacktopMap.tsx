@@ -239,6 +239,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   const userMarkerRef = useRef<Marker | null>(null);
   const headingRef = useRef<number | null>(null);
+  // Mirrors the 3D toggle so the follow-camera calls (which live in effects with
+  // stable deps) can keep the chase pitch instead of flattening the map.
+  const threeDRef = useRef(false);
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -405,6 +408,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // flyover, and tilts the camera into a third-person chase view. Layers are
   // prefixed "blacktop-" so the dark/satellite visibility swap leaves them be.
   useEffect(() => {
+    threeDRef.current = threeD;
     const m = mapRef.current;
     if (!m) return;
 
@@ -439,7 +443,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             });
           }
           if (m.getPitch() < THREE_D_PITCH - 1) {
-            m.easeTo({ pitch: THREE_D_PITCH, duration: 600, essential: true });
+            const loc = userLocationRef.current;
+            m.easeTo({
+              pitch: THREE_D_PITCH,
+              ...(loc ? { center: [loc.lng, loc.lat] as [number, number] } : {}),
+              bearing: safeBearing(headingRef.current, m),
+              duration: 600,
+              essential: true,
+            });
           }
         } else {
           m.setTerrain(null);
@@ -505,6 +516,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             center: [loc.lng, loc.lat],
             zoom: followZoom,
             bearing: safeBearing(headingRef.current, map),
+            pitch: threeDRef.current ? THREE_D_PITCH : 0,
             essential: true,
           });
         } else {
@@ -516,6 +528,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             center: [loc.lng, loc.lat],
             zoom: currentZoom < followZoom ? followZoom : currentZoom,
             bearing: safeBearing(headingRef.current, map),
+            pitch: threeDRef.current ? THREE_D_PITCH : 0,
             duration: 800,
             essential: true,
           });
@@ -559,6 +572,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         center: [loc.lng, loc.lat],
         zoom: currentZoom < followZoom ? followZoom : currentZoom,
         bearing: safeBearing(headingRef.current, map),
+        pitch: threeDRef.current ? THREE_D_PITCH : 0,
         duration: 800,
         essential: true,
       });
@@ -962,6 +976,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           center: [userLocation.lng, userLocation.lat],
           zoom: 17,
           bearing: safeBearing(headingRef.current, map),
+          pitch: threeDRef.current ? THREE_D_PITCH : 0,
           essential: true,
         });
       }
