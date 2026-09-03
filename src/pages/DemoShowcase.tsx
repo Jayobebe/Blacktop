@@ -231,12 +231,12 @@ export default function DemoShowcase() {
 
   const exitDemo = () => {
     haptics.light();
-    navigate('/');
+    navigate('/settings');
   };
 
   const startApp = () => {
     haptics.success();
-    navigate('/');
+    navigate('/settings');
   };
 
   const isLastSlide = currentIndex === features.length - 1;
