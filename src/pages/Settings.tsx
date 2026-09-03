@@ -653,6 +653,16 @@ export default function Settings() {
                onCheckedChange={() => updateSetting('rideOverlayEnabled', !settings.rideOverlayEnabled)}
              />
            </div>
+           <div className="flex items-center justify-between mt-4">
+             <div>
+               <p className="text-sm font-medium">Voice Channel Recording</p>
+               <p className="text-[10px] text-muted-foreground">Add convoy voice audio to the recorded overlay</p>
+             </div>
+             <Switch
+               checked={settings.voiceRecordingEnabled}
+               onCheckedChange={() => updateSetting('voiceRecordingEnabled', !settings.voiceRecordingEnabled)}
+             />
+           </div>
          </CollapsibleSection>
 
 
