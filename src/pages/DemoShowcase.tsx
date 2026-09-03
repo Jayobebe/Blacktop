@@ -8,7 +8,7 @@ import {
   MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
-  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock
+  Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
