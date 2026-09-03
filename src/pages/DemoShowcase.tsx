@@ -397,18 +397,25 @@ export default function DemoShowcase() {
           {/* Feature cards for grouped slides */}
           {currentFeature.cards && (
             <div className="mt-6 grid grid-cols-2 gap-2.5 animate-fade-in delay-200">
-              {currentFeature.cards.map((card) => (
-                <div
-                  key={card.label}
-                  className="rounded-2xl border border-border/40 bg-card/60 p-3 flex flex-col gap-1.5"
-                >
-                  <div className="flex items-center gap-2">
-                    <card.icon className="w-4 h-4 text-accent flex-shrink-0" />
-                    <p className="text-[11px] font-semibold tracking-wide">{card.label}</p>
+              {currentFeature.cards.map((card, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                const isOdd = arr.length % 2 === 1;
+                return (
+                  <div
+                    key={card.label}
+                    className={cn(
+                      "rounded-2xl border border-border/40 bg-card/60 p-3 flex flex-col gap-1.5",
+                      isLast && isOdd && "col-span-2"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <card.icon className="w-4 h-4 text-accent flex-shrink-0" />
+                      <p className="text-[11px] font-semibold tracking-wide">{card.label}</p>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-snug">{card.text}</p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground leading-snug">{card.text}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
