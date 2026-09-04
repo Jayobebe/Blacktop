@@ -201,6 +201,8 @@ export function VehicleCard({ card }: Props) {
               onPointerMove={onPanMove}
               onPointerUp={onPanUp}
               onPointerCancel={onPanUp}
+              onTouchStart={resizing ? (e) => e.stopPropagation() : undefined}
+              onTouchMove={resizing ? (e) => e.stopPropagation() : undefined}
             >
               <div
                 className="absolute inset-0 bg-cover bg-center origin-center"
