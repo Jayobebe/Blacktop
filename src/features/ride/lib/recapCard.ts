@@ -197,7 +197,26 @@ export async function shareRecapCard(ride: RideSession, opts: RecapOptions = {})
   const base = (ride.name || new Date(ride.startedAt).toLocaleDateString())
     .replace(/[/\\?%*:|"<>]/g, '-')
     .trim();
-  const file = new File([blob], `${base}-recap.png`, { type: 'image/png' });
+  const filename = `${base || 'ride'}-recap.png`;
+
+  // Native shells can't anchor-download; save to the Documents folder instead.
+  if (Capacitor.isNativePlatform()) {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error('Failed to read recap'));
+      reader.readAsDataURL(blob);
+    });
+    await Filesystem.writeFile({
+      path: `Blacktop/${filename}`,
+      data: dataUrl.split(',')[1],
+      directory: Directory.Documents,
+      recursive: true,
+    });
+    return 'downloaded';
+  }
+
+  const file = new File([blob], filename, { type: 'image/png' });
 
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {
