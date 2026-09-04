@@ -90,8 +90,11 @@ export default function CrewChallenges() {
   // Hitting the weekly target earns a spare copy of your card to drop on the map.
   useEffect(() => {
     if (myValue < challenge.target) return;
-    if (grantChallengeCopy(key)) {
+    const result = grantChallengeCopy(key);
+    if (result === 'granted') {
       toast.success('Challenge complete', { description: 'Spare card copy earned — drop it on the map.' });
+    } else if (result === 'capped') {
+      toast('Challenge complete', { description: 'Copy bank full — 4/month max. Resets on the 1st.' });
     }
   }, [myValue, challenge.target, key]);
   const fmt = (v: number) =>
