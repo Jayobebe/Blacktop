@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark } from 'lucide-react';
+import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark, IdCard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,9 @@ import { ConvoyDestination } from '@/types/convoy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getSavedPOIs, type SavedPOI } from '@/features/map';
+import { useSettings } from '@/features/settings';
+import { useCardDrops } from '@/features/cards';
+
 
 interface SearchResult {
   id: string;
@@ -51,6 +54,16 @@ const quickCategories: QuickCategory[] = [
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
   { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
 ];
+
+// Card drops are a Blacktop World feature — the category only appears when
+// the rider has opted in.
+const CARDS_CATEGORY: QuickCategory = {
+  id: 'cards',
+  label: 'Cards',
+  icon: <IdCard className="w-4 h-4" />,
+  query: 'cards',
+};
+
 
 
 function getRecentLocations(): SearchResult[] {
@@ -329,6 +342,8 @@ export function DestinationSearch({
   const [recentLocations, setRecentLocations] = useState<SearchResult[]>([]);
   const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>(() => getSavedPOIs());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const { settings } = useSettings();
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -340,6 +355,12 @@ export function DestinationSearch({
   // Use external location if provided, otherwise use internal
   const userLocation = externalUserLocation ?? internalUserLocation;
   const countryCode = externalCountryCode ?? internalCountryCode;
+
+  // Nearby card drops — only ever fetched when Blacktop World is opted into.
+  const cardsEnabled = settings.blacktopWorldEnabled;
+  const { drops: cardDrops } = useCardDrops(cardsEnabled ? userLocation ?? null : null);
+  const categories = cardsEnabled ? [...quickCategories, CARDS_CATEGORY] : quickCategories;
+
 
   useEffect(() => {
     setRecentLocations(getRecentLocations());
@@ -450,8 +471,24 @@ export function DestinationSearch({
     }
   }, [userLocation, countryCode, savedPOIs]);
 
+  // Keep the card list in sync once nearby drops load.
+  useEffect(() => {
+    if (activeCategory !== 'cards') return;
+    setResults(
+      cardDrops.map((d) => ({
+        id: `card-${d.id}`,
+        name: `${d.vehicleName}${d.collected ? ' ✓' : ''}`,
+        address: `Card drop · ${d.ownerName}`,
+        lat: d.lat,
+        lng: d.lng,
+        type: 'card',
+      })),
+    );
+  }, [activeCategory, cardDrops]);
+
   // If location becomes available after the user typed or picked a category,
   // rerun the search so results appear without requiring another tap.
+
   useEffect(() => {
     if (!userLocation) return;
 
@@ -503,6 +540,27 @@ export function DestinationSearch({
   }, [performSearch]);
 
   const handleCategoryClick = async (category: QuickCategory) => {
+    // Card drops come from the World feed, not from Overpass.
+    if (category.id === 'cards') {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      searchIdRef.current++;
+      setQuery('');
+      setShowResults(true);
+      setIsSearching(false);
+      setActiveCategory((prev) => (prev === 'cards' ? null : 'cards'));
+      setResults(
+        cardDrops.map((d) => ({
+          id: `card-${d.id}`,
+          name: `${d.vehicleName}${d.collected ? ' ✓' : ''}`,
+          address: `Card drop · ${d.ownerName}`,
+          lat: d.lat,
+          lng: d.lng,
+          type: 'card',
+        })),
+      );
+      return;
+    }
+
     // Clear any pending text searches
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -643,7 +701,7 @@ export function DestinationSearch({
     <div ref={containerRef} className="relative z-50 isolate space-y-3">
       {/* Quick category buttons */}
       <div className="flex gap-2">
-        {quickCategories.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryClick(cat)}
@@ -749,8 +807,8 @@ export function DestinationSearch({
           )}
           {activeCategory && !isSearching && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
-              {quickCategories.find(c => c.id === activeCategory)?.icon}
-              <span>Nearby {quickCategories.find(c => c.id === activeCategory)?.label}</span>
+              {categories.find(c => c.id === activeCategory)?.icon}
+              <span>Nearby {categories.find(c => c.id === activeCategory)?.label}</span>
             </div>
           )}
           {isSearching ? (
