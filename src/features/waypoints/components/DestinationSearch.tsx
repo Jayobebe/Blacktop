@@ -8,6 +8,9 @@ import { ConvoyDestination } from '@/types/convoy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getSavedPOIs, type SavedPOI } from '@/features/map';
+import { useSettings } from '@/features/settings';
+import { useCardDrops } from '@/features/cards';
+
 
 interface SearchResult {
   id: string;
