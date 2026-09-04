@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Crown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { geoContains } from 'd3-geo';
 import { feature } from 'topojson-client';
@@ -8,7 +8,7 @@ import countriesTopo from 'world-atlas/countries-110m.json';
 import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
-import { CollectedCardsFolder, useCardDrops, copyLedger, useVehicleCards, MONTHLY_COPY_CAP } from '@/features/cards';
+import { CollectedCardsFolder, useCardDrops, useCardKickbacks, copyLedger, useVehicleCards, MONTHLY_COPY_CAP } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
@@ -44,7 +44,28 @@ export default function World() {
   const { updateSetting } = useSettings();
   const { cards } = useVehicleCards();
   const { myDrops } = useCardDrops(null);
+  useCardKickbacks();
   const cardLedger = copyLedger(cards.map((c) => c.stats.totalRides), myDrops.length);
+
+  // Local prestige: whose dropped cards get collected the most around here.
+  const { data: kings = [] } = useQuery({
+    queryKey: ['area-card-kings'],
+    enabled: settings.blacktopWorldEnabled,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 }),
+      );
+      const { data, error } = await supabase.rpc('area_card_kings', {
+        _lat: pos.coords.latitude,
+        _lng: pos.coords.longitude,
+        _radius_km: 50,
+      });
+      if (error) throw error;
+      return (data ?? []) as Array<{ owner_name: string; collected_count: number; active_drops: number }>;
+    },
+    retry: false,
+  });
 
 
 
@@ -169,9 +190,29 @@ export default function World() {
           </div>
           <p className="text-[11px] text-muted-foreground">
             Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
+            Every time someone collects one of yours, you earn a kickback badge point — your drops keep working for you.
             Earn more from tier milestones, crew challenges, every 4 cards you collect, and 3-day ride
             streaks — up to {MONTHLY_COPY_CAP} bonus copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month). Earn all {MONTHLY_COPY_CAP} and a 10th copy is granted free. Tier copies and 10-badge trades never count against the cap.
           </p>
+          {kings.length > 0 && (
+            <div className="rounded-xl border border-border/40 bg-background/40 p-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Crown className="w-3.5 h-3.5 text-accent" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em]">Local card kings</p>
+              </div>
+              <div className="space-y-1.5">
+                {kings.map((k, i) => (
+                  <div key={k.owner_name} className="flex items-center gap-2 text-[11px]">
+                    <span className="w-4 text-center font-mono text-muted-foreground">{i + 1}</span>
+                    <span className="font-semibold truncate">{k.owner_name}</span>
+                    <span className="ml-auto text-muted-foreground whitespace-nowrap">
+                      {k.collected_count} collected · {k.active_drops} planted
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex rounded-xl overflow-hidden border border-border/50">
             {(['crew', 'world'] as const).map((v) => (
               <button
