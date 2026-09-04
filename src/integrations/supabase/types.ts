@@ -14,6 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_drop_collections: {
+        Row: {
+          collector_id: string
+          created_at: string
+          drop_id: string
+          id: string
+        }
+        Insert: {
+          collector_id: string
+          created_at?: string
+          drop_id: string
+          id?: string
+        }
+        Update: {
+          collector_id?: string
+          created_at?: string
+          drop_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_drop_collections_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "card_drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_drops: {
+        Row: {
+          card_zoom: number
+          copy_index: number
+          created_at: string
+          crew_code: string
+          id: string
+          is_active: boolean
+          lat: number
+          lng: number
+          make_model: string | null
+          max_g_force: number
+          max_lean: number
+          owner_id: string
+          owner_name: string
+          photo_path: string | null
+          placement_scale: number
+          placement_x: number
+          placement_y: number
+          tier: string
+          top_speed_mph: number
+          total_distance_mi: number
+          total_duration_sec: number
+          total_rides: number
+          updated_at: string
+          vehicle_name: string
+          visibility: string
+        }
+        Insert: {
+          card_zoom?: number
+          copy_index?: number
+          created_at?: string
+          crew_code: string
+          id?: string
+          is_active?: boolean
+          lat: number
+          lng: number
+          make_model?: string | null
+          max_g_force?: number
+          max_lean?: number
+          owner_id: string
+          owner_name?: string
+          photo_path?: string | null
+          placement_scale?: number
+          placement_x?: number
+          placement_y?: number
+          tier?: string
+          top_speed_mph?: number
+          total_distance_mi?: number
+          total_duration_sec?: number
+          total_rides?: number
+          updated_at?: string
+          vehicle_name: string
+          visibility?: string
+        }
+        Update: {
+          card_zoom?: number
+          copy_index?: number
+          created_at?: string
+          crew_code?: string
+          id?: string
+          is_active?: boolean
+          lat?: number
+          lng?: number
+          make_model?: string | null
+          max_g_force?: number
+          max_lean?: number
+          owner_id?: string
+          owner_name?: string
+          photo_path?: string | null
+          placement_scale?: number
+          placement_x?: number
+          placement_y?: number
+          tier?: string
+          top_speed_mph?: number
+          total_distance_mi?: number
+          total_duration_sec?: number
+          total_rides?: number
+          updated_at?: string
+          vehicle_name?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       convoy_members: {
         Row: {
           accent_color: string | null
@@ -428,6 +541,29 @@ export type Database = {
         Args: { _convoy_id: string }
         Returns: boolean
       }
+      collect_card_drop: {
+        Args: { _drop_id: string; _lat: number; _lng: number }
+        Returns: {
+          card_zoom: number
+          id: string
+          lat: number
+          lng: number
+          make_model: string
+          max_g_force: number
+          max_lean: number
+          owner_name: string
+          photo_path: string
+          placement_scale: number
+          placement_x: number
+          placement_y: number
+          tier: string
+          top_speed_mph: number
+          total_distance_mi: number
+          total_duration_sec: number
+          total_rides: number
+          vehicle_name: string
+        }[]
+      }
       convoy_id_from_topic: { Args: { _topic: string }; Returns: string }
       crew_convoy_detail: {
         Args: { _convoy_id: string }
@@ -451,6 +587,37 @@ export type Database = {
       is_convoy_member: {
         Args: { _convoy_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_card_drops: {
+        Args: {
+          _crew_code: string
+          _lat: number
+          _lng: number
+          _radius_km: number
+        }
+        Returns: {
+          card_zoom: number
+          collected: boolean
+          created_at: string
+          id: string
+          is_own: boolean
+          lat: number
+          lng: number
+          make_model: string
+          max_g_force: number
+          max_lean: number
+          owner_name: string
+          photo_path: string
+          placement_scale: number
+          placement_x: number
+          placement_y: number
+          tier: string
+          top_speed_mph: number
+          total_distance_mi: number
+          total_duration_sec: number
+          total_rides: number
+          vehicle_name: string
+        }[]
       }
       list_crew_challenge: {
         Args: { _crew_code: string; _week_key: string }
