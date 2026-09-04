@@ -158,10 +158,20 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
 
   const handleCategoryClick = async (category: QuickCategory) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    setActiveCategory(category.id);
-    setCardsMode(false);
     setQuery('');
     setShowResults(true);
+
+    if (category.id === 'cards') {
+      setActiveCategory((prev) => {
+        const next = prev === 'cards' ? null : 'cards';
+        setCardsMode(next === 'cards');
+        return next;
+      });
+      return;
+    }
+
+    setActiveCategory(category.id);
+    setCardsMode(false);
     setIsSearching(true);
 
     const currentSearchId = ++searchIdRef.current;
@@ -239,6 +249,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
           <button
             key={cat.id}
             onClick={() => handleCategoryClick(cat)}
+            aria-pressed={cat.id === 'cards' ? cardsMode : activeCategory === cat.id}
             className={cn(
               'flex items-center gap-1.5 py-1.5 px-3 rounded-full border text-xs font-medium shadow-lg backdrop-blur transition-all active:scale-95',
               activeCategory === cat.id
@@ -250,26 +261,6 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             {cat.label}
           </button>
         ))}
-        {nearbyCards && (
-          <button
-            onClick={() => {
-              setActiveCategory(null);
-              setQuery('');
-              setCardsMode((v) => !v);
-              setShowResults(true);
-            }}
-            aria-pressed={cardsMode}
-            className={cn(
-              'flex items-center gap-1.5 py-1.5 px-3 rounded-full border text-xs font-medium shadow-lg backdrop-blur transition-all active:scale-95',
-              cardsMode
-                ? 'bg-accent text-accent-foreground border-accent'
-                : 'bg-card/95 border-border hover:bg-muted',
-            )}
-          >
-            <IdCard className="w-4 h-4" />
-            Cards
-          </button>
-        )}
       </div>
 
       {showResults && hasDisplayContent && (
