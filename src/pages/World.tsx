@@ -8,7 +8,7 @@ import countriesTopo from 'world-atlas/countries-110m.json';
 import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
-import { CollectedCardsFolder, useCardDrops, copyLedger, useVehicleCards } from '@/features/cards';
+import { CollectedCardsFolder, useCardDrops, copyLedger, useVehicleCards, MONTHLY_COPY_CAP } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
@@ -169,6 +169,8 @@ export default function World() {
           </div>
           <p className="text-[11px] text-muted-foreground">
             Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
+            Earn more from tier milestones, crew challenges, every 5 cards you collect, and 3-day ride
+            streaks — up to {MONTHLY_COPY_CAP} copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month).
           </p>
           <div className="flex rounded-xl overflow-hidden border border-border/50">
             {(['crew', 'world'] as const).map((v) => (
