@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ConvoyMemberInfo, calculateBadges, BADGE_INFO, MemberBadge, BadgeType } from '@/types/convoy';
+import { ConvoyMemberInfo, calculateBadges, BADGE_INFO, BADGE_ORDER, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
 import { Crown, User, Download, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -76,8 +76,9 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
       badgeAwards.push({ badge: { type, ...BADGE_INFO[type] } });
     });
   }
-  const badgeOrder = { 'speed-demon': 0, journeyman: 1, fallback: 2 } as const;
-  badgeAwards.sort((a, b) => badgeOrder[a.badge.type] - badgeOrder[b.badge.type]);
+  badgeAwards.sort(
+    (a, b) => BADGE_ORDER.indexOf(a.badge.type) - BADGE_ORDER.indexOf(b.badge.type)
+  );
 
   useEffect(() => {
     if (currentUserId && onBadgesEarned && shouldCalculateBadges) {
