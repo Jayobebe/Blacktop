@@ -188,7 +188,7 @@ export default function DemoShowcase() {
       cards: [
         { icon: Timer, label: 'Set The Line', text: 'Choose Yes + Challenge when you drop. Your spot is the start line, five seconds later the clock runs, and Finish challenge sets the finish where you stop.' },
         { icon: Flag, label: 'Take It On', text: 'Pull up within pick-up range of the card, ready up, and race the stored route with a live delta against the time to beat.' },
-        { icon: Trophy, label: 'Beat It, Bank It', text: 'Beat the setter and the card is claimed for you on the spot, plus 3x Speed Demon. Lose and it's 1x Fallback — you can still scan the card yourself.' },
+        { icon: Trophy, label: 'Beat It, Bank It', text: 'Beat the setter and the card is claimed for you on the spot, plus 3x Speed Demon. Lose and it is 1x Fallback — you can still scan the card yourself.' },
         { icon: AlertTriangle, label: 'Stay On Route', text: 'Stray more than 120m off the line for 15 seconds and the run is voided — Fallback earned, no time recorded.' },
         { icon: Receipt, label: 'Pink Receipt', text: 'Every time-attack ride lands in history with a pink receipt: your time, the target, the delta and the card you raced.' },
       ],
