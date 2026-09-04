@@ -42,6 +42,7 @@ import CrewJoin from "./pages/CrewJoin";
 import CrewChallenges from "./pages/CrewChallenges";
 import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
 import ArcadePetrolHead from "./pages/ArcadePetrolHead";
+import ArcadeLegacyDerez from "./pages/ArcadeLegacyDerez";
 
 
 function AppRoutes() {
