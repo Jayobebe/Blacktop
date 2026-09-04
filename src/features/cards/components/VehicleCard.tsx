@@ -237,8 +237,11 @@ export function VehicleCard({ card }: Props) {
                 </div>
               )}
               {resizing && !locked && (
-                <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15">
-                  <span className="text-[8px] uppercase tracking-widest text-white/70">Zoom</span>
+                <div
+                  className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15"
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <span className="text-[8px] uppercase tracking-widest text-white/70">Drag &amp; zoom</span>
                   <input
                     type="range"
                     min={0.6}
