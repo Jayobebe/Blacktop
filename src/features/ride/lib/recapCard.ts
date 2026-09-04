@@ -1,4 +1,6 @@
 import type { RideSession } from '@/types/blacktop';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { analyseCorners } from './cornerScoring';
 
 /**
