@@ -21,9 +21,12 @@ const CHALLENGE_KEY = 'bt.card_challenge_copies.v1';
 const COLLECT_KEY = 'bt.card_collect_copies.v1';
 const STREAK_KEY = 'bt.card_streak_copies.v1';
 const MONTH_KEY = 'bt.card_copy_month.v1';
+const BADGE_COPY_KEY = 'bt.card_badge_copies.v1';
 
 /** Max granted copies per calendar month, across all grant triggers. */
 export const MONTHLY_COPY_CAP = 9;
+/** Badge points traded for one card copy. */
+export const BADGES_PER_COPY = 10;
 /** Every N collected cards earns a copy. */
 export const COLLECT_COPY_EVERY = 4;
 
@@ -177,6 +180,27 @@ export function grantStreakCopy(streakStartDay: string): GrantResult {
   return 'granted';
 }
 
+// ── badge trades (uncapped) ─────────────────────────────────────────────────
+
+/** Copies bought with badge points. */
+export function badgeCopiesEarned(): number {
+  try {
+    return Number(localStorage.getItem(BADGE_COPY_KEY) || 0) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Records one copy bought with badge points. Never counts against the cap. */
+export function grantBadgeCopy() {
+  try {
+    localStorage.setItem(BADGE_COPY_KEY, String(badgeCopiesEarned() + 1));
+  } catch {
+    /* storage full — not fatal */
+  }
+  notify();
+}
+
 // ── ledger ──────────────────────────────────────────────────────────────────
 
 export interface CopyLedger {
@@ -201,6 +225,7 @@ export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
     claimedChallengeWeeks().length +
     claimedCollectMilestones().length +
     claimedStreaks().length +
+    badgeCopiesEarned() +
     monthlyBonusCopies();
   const droppable = Math.max(0, total - 1);
   return {
