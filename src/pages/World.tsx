@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
 import { CollectedCardsFolder, useCardDrops, useCardKickbacks, copyLedger, useVehicleCards, MONTHLY_COPY_CAP } from '@/features/cards';
-import { ArcadeLobby } from '@/features/arcade';
+
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
 import { X } from 'lucide-react';
