@@ -17,18 +17,21 @@ export type Database = {
       card_drop_collections: {
         Row: {
           collector_id: string
+          collector_name: string
           created_at: string
           drop_id: string
           id: string
         }
         Insert: {
           collector_id: string
+          collector_name?: string
           created_at?: string
           drop_id: string
           id?: string
         }
         Update: {
           collector_id?: string
+          collector_name?: string
           created_at?: string
           drop_id?: string
           id?: string
@@ -538,6 +541,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      area_card_kings: {
+        Args: { _lat: number; _lng: number; _radius_km?: number }
+        Returns: {
+          active_drops: number
+          collected_count: number
+          owner_name: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           _bucket: string
@@ -673,6 +684,16 @@ export type Database = {
           distance: number
           members: number
           ride_count: number
+        }[]
+      }
+      list_my_kickbacks: {
+        Args: never
+        Returns: {
+          collector_name: string
+          created_at: string
+          id: string
+          tier: string
+          vehicle_name: string
         }[]
       }
       lookup_convoy_by_code: {
