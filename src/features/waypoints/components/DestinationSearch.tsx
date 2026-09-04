@@ -471,8 +471,24 @@ export function DestinationSearch({
     }
   }, [userLocation, countryCode, savedPOIs]);
 
+  // Keep the card list in sync once nearby drops load.
+  useEffect(() => {
+    if (activeCategory !== 'cards') return;
+    setResults(
+      cardDrops.map((d) => ({
+        id: `card-${d.id}`,
+        name: `${d.vehicleName}${d.collected ? ' ✓' : ''}`,
+        address: `Card drop · ${d.ownerName}`,
+        lat: d.lat,
+        lng: d.lng,
+        type: 'card',
+      })),
+    );
+  }, [activeCategory, cardDrops]);
+
   // If location becomes available after the user typed or picked a category,
   // rerun the search so results appear without requiring another tap.
+
   useEffect(() => {
     if (!userLocation) return;
 
