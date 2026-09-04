@@ -11,6 +11,7 @@ import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
 import { formatChallengeTime, formatDelta } from '@/features/cards/lib/challenge';
+import { cn } from '@/lib/utils';
 import { useProfile } from '@/features/profile';
 import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
 import { shareRecapCard } from '@/features/ride/lib/recapCard';
