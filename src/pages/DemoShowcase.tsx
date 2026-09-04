@@ -1016,8 +1016,9 @@ function DerezMockup() {
   const riders = [
     { color: '#f97316', trail: 'M18 25 L45 25 L45 55 L70 55 L70 80', speed: 1.0 },
     { color: '#3b82f6', trail: 'M82 30 L82 60 L55 60 L55 82 L30 82', speed: 0.92 },
-    // pink steers straight into the orange wall at (45, 38)
-    { color: '#ec4899', trail: 'M20 88 L20 55 L20 38 L42 38 L45 38', speed: 1.0, diesAt: 0.62 },
+    // pink steers straight into the orange wall at (45, 38) — speed matches diesAt
+    // so the full trail is drawn before the burst
+    { color: '#ec4899', trail: 'M20 88 L20 55 L20 38 L42 38 L45 38', speed: 0.6, diesAt: 0.6 },
   ];
 
   return (
@@ -1073,7 +1074,7 @@ function DerezMockup() {
 
         {/* Status chip */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent">
-          {t < 0.62 ? '3 riders live' : t < 0.8 ? 'Rider derezzed!' : 'Round reset…'}
+          {t < 0.6 ? '3 riders live' : t < 0.78 ? 'Rider derezzed!' : 'Round reset…'}
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
