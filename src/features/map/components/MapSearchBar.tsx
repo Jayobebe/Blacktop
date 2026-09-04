@@ -28,7 +28,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   gas: <Fuel className="w-4 h-4" />,
   food: <UtensilsCrossed className="w-4 h-4" />,
   store: <ShoppingCart className="w-4 h-4" />,
-  '24h': <Clock className="w-4 h-4" />,
+  cards: <IdCard className="w-4 h-4" />,
 };
 
 interface MapSearchBarProps {

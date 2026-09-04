@@ -44,7 +44,7 @@ export const QUICK_CATEGORIES: QuickCategory[] = [
   { id: 'gas', label: 'Gas', query: 'fuel' },
   { id: 'food', label: 'Food', query: 'restaurant|fast_food|cafe' },
   { id: 'store', label: 'Store', query: 'supermarket|convenience' },
-  { id: '24h', label: '24h', query: '24h' },
+  { id: 'cards', label: 'Cards', query: 'cards' },
 ];
 
 const RECENT_LOCATIONS_KEY = 'blacktop_maps_recent_locations';
