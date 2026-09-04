@@ -1016,7 +1016,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         card,
         lat: spot.lat,
         lng: spot.lng,
-        copyIndex: placedCount + 3,
+        copyIndex: placedCount + 1,
         photoPath,
       });
       toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
