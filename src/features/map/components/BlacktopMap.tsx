@@ -1499,7 +1499,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
       {droppingCard && (
         <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs">
-          Tap the map to drop your card · {ledger.available} spare
+          Place card here? · {ledger.available} spare
         </div>
       )}
 
