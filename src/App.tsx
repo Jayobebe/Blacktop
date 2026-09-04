@@ -87,6 +87,8 @@ function AppRoutes() {
       <Route path="/crew/challenges" element={<CrewChallenges />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
+      <Route path="/arcade/legacy-derez" element={<ArcadeLegacyDerez />} />
+      <Route path="/arcade/legacy-derez/:code" element={<ArcadeLegacyDerez />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
