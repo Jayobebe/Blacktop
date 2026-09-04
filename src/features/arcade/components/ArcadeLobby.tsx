@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Zap, Car, Gamepad2 } from 'lucide-react';
+import { Zap, Car, Gamepad2, Bike } from 'lucide-react';
 import { useArcadeScores } from '../hooks/useArcadeScores';
 
 export function ArcadeLobby() {
