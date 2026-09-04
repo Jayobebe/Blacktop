@@ -925,38 +925,110 @@ function RescueMockup() {
 
 
 
+function MiniReceipt({ timeAttack }: { timeAttack?: boolean }) {
+  const rows = timeAttack
+    ? [
+        ['Max Spd', '118 MPH'],
+        ['Distance', '29.5 MI'],
+        ['Duration', '3:41'],
+        ['Target', '3:58'],
+        ['Delta', '-0:17'],
+      ]
+    : [
+        ['Max Spd', '104 MPH'],
+        ['Max Lean', '44°'],
+        ['Distance', '45.2 MI'],
+        ['Duration', '1:23:45'],
+        ['Avg Spd', '32 MPH'],
+      ];
+  return (
+    <div className="w-full">
+      <div className={cn('receipt-edge-top', timeAttack && 'receipt-edge-timeattack')} />
+      <div className={cn('receipt px-4 py-3 font-receipt text-[--ink]', timeAttack && 'receipt-timeattack')}>
+        <div className="text-center">
+          <div className="text-xl font-bold tracking-[0.15em]">BLACKTOP STORE</div>
+          <div className="text-[10px] tracking-[0.28em] opacity-70 mt-0.5">
+            {timeAttack ? '— TIME ATTACK RECEIPT —' : '— RIDE RECEIPT —'}
+          </div>
+        </div>
+        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
+        <div className="space-y-1">
+          {rows.map(([label, value]) => (
+            <div key={label} className="receipt-row font-receipt !text-sm">
+              <span className="uppercase tracking-wider">{label}</span>
+              <span className="leader" aria-hidden />
+              <span className="uppercase font-bold">{value}</span>
+            </div>
+          ))}
+        </div>
+        <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
+        {timeAttack ? (
+          <div className="text-center">
+            <div className="text-sm tracking-[0.2em] font-bold">WON · CARD CLAIMED</div>
+            <div className="text-[10px] opacity-70 mt-0.5">RICO&rsquo;S PANIGALE · GOLD</div>
+            <div className="text-[10px] opacity-70">3x SPEED DEMON</div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="text-sm tracking-[0.2em]">THANK YOU FOR THE RIDE</div>
+            <div className="text-[10px] opacity-60 tracking-widest mt-0.5">ORDER #4C1A9F</div>
+          </div>
+        )}
+        <div className="receipt-barcode mt-2" aria-hidden />
+      </div>
+      <div className={cn('receipt-edge-bottom', timeAttack && 'receipt-edge-timeattack')} />
+    </div>
+  );
+}
+
 function HistoryMockup() {
   const rides = [
-    { date: 'Today', distance: '45.2 mi', time: '1:23:45', badge: '⚡' },
-    { date: 'Yesterday', distance: '28.7 mi', time: '0:52:18', badge: '🛣️' },
-    { date: 'Dec 14', distance: '62.1 mi', time: '2:05:33', badge: null },
+    { date: 'Today', distance: '29.5 mi', time: '3:41', badge: '⏱️', tag: 'Time attack' },
+    { date: 'Yesterday', distance: '28.7 mi', time: '0:52:18', badge: '🛣️', tag: null },
+    { date: 'Dec 14', distance: '62.1 mi', time: '2:05:33', badge: null, tag: null },
   ];
 
   return (
     <div className="w-full max-w-xs space-y-3">
-      {rides.map((ride, i) => (
-        <div 
-          key={i}
-          className="bg-card/50 rounded-xl border border-border/30 p-4 animate-slide-up"
-          style={{ animationDelay: `${i * 120}ms` }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium">{ride.date}</p>
-            {ride.badge && <span className="text-lg">{ride.badge}</span>}
-          </div>
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Route className="w-3 h-3" /> {ride.distance}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" /> {ride.time}
-            </span>
-          </div>
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 no-scrollbar">
+        <div className="snap-center shrink-0 w-[15rem] space-y-3">
+          {rides.map((ride, i) => (
+            <div
+              key={i}
+              className="bg-card/50 rounded-xl border border-border/30 p-4 animate-slide-up"
+              style={{ animationDelay: `${i * 120}ms` }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium">{ride.date}</p>
+                {ride.badge && <span className="text-lg">{ride.badge}</span>}
+              </div>
+              {ride.tag && (
+                <span className="inline-flex items-center gap-1 mb-2 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
+                  <Timer className="w-2.5 h-2.5" />
+                  {ride.tag}
+                </span>
+              )}
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Route className="w-3 h-3" /> {ride.distance}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> {ride.time}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-      <div className="flex items-center justify-center gap-2 pt-2 animate-fade-in delay-400">
+        <div className="snap-center shrink-0 w-[15rem]">
+          <MiniReceipt />
+        </div>
+        <div className="snap-center shrink-0 w-[15rem]">
+          <MiniReceipt timeAttack />
+        </div>
+      </div>
+      <div className="flex items-center justify-center gap-2 animate-fade-in delay-400">
         <Video className="w-4 h-4 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground">Receipt, photos, overlay MP4 & 3D flyover per ride</p>
+        <p className="text-xs text-muted-foreground">Swipe: rides, receipt & pink time-attack receipt</p>
       </div>
     </div>
   );
