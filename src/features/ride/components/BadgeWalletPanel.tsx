@@ -38,7 +38,7 @@ export function BadgeWalletPanel() {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {BADGE_ORDER.map((type, index) => {
+        {BADGE_ORDER.filter(t => t !== 'fallback').map((type, index) => {
           const info = BADGE_INFO[type];
           const count = w.counts[type] || 0;
           const negative = info.points < 0;
