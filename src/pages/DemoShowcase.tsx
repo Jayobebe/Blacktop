@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
-import { Receipt, Sparkles } from 'lucide-react';
+import { IdCard, Receipt, Sparkles } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
