@@ -58,16 +58,32 @@ function monthKey(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/** Grants used in the current calendar month. */
-export function monthlyGrantsUsed(): number {
+interface MonthRecord {
+  month: string;
+  count: number;
+  /** Set when the 9th grant lands — a 10th bonus copy is awarded. */
+  bonus?: boolean;
+}
+
+function readMonth(): MonthRecord | null {
   try {
     const raw = localStorage.getItem(MONTH_KEY);
-    if (!raw) return 0;
-    const parsed = JSON.parse(raw) as { month: string; count: number };
-    return parsed.month === monthKey() ? parsed.count : 0;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as MonthRecord;
+    return parsed.month === monthKey() ? parsed : null;
   } catch {
-    return 0;
+    return null;
   }
+}
+
+/** Grants used in the current calendar month. */
+export function monthlyGrantsUsed(): number {
+  return readMonth()?.count ?? 0;
+}
+
+/** Bonus copies earned this month (1 once all 9 grants are used). */
+export function monthlyBonusCopies(): number {
+  return readMonth()?.bonus ? 1 : 0;
 }
 
 export function monthlyGrantsRemaining(): number {
@@ -75,10 +91,14 @@ export function monthlyGrantsRemaining(): number {
 }
 
 function spendMonthlyGrant(): boolean {
-  const used = monthlyGrantsUsed();
+  const rec = readMonth();
+  const used = rec?.count ?? 0;
   if (used >= MONTHLY_COPY_CAP) return false;
+  const next: MonthRecord = { month: monthKey(), count: used + 1 };
+  // Hitting the cap unlocks one bonus copy.
+  if (next.count >= MONTHLY_COPY_CAP) next.bonus = true;
   try {
-    localStorage.setItem(MONTH_KEY, JSON.stringify({ month: monthKey(), count: used + 1 }));
+    localStorage.setItem(MONTH_KEY, JSON.stringify(next));
     return true;
   } catch {
     return false;
