@@ -175,7 +175,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       const s = args.card.stats;
       const { error } = await supabase.from('card_drops').insert({
         owner_id: user.id,
-        owner_name: profile?.displayName || 'Rider',
+        owner_name: profile?.name || 'Rider',
         copy_index: args.copyIndex,
         crew_code: crew.code,
         visibility: settings.cardDropVisibility,
