@@ -197,6 +197,7 @@ export const DEMO_COLLECTED_CARDS: CollectedCard[] = [
 export const DEMO_SCORES: ArcadeScores = {
   'hit-heavy': 14,    // peak Gs
   'petrol-head': 83,  // seconds survived
+  'legacy-derez': 6,  // wins
 };
 
 const ACTIVE_MIN = 12;
