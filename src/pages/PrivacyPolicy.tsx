@@ -130,11 +130,15 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Card drops & collections</h2>
           <p className="text-muted-foreground">
-            When you plant a collector card on the map, the drop is stored on
+            Card drops are part of <span className="text-foreground">Blacktop World</span> and are
+            only active while you have opted into it in Settings. With Blacktop
+            World off, no drops are listed, planted, collected or synced. When
+            you plant a collector card on the map, the drop is stored on
             our server so other riders nearby can find and collect it. Unlike
             convoy data, a drop is <span className="text-foreground">persistent</span> — it
             stays live until you remove it. Each drop contains:
           </p>
+
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li>Your display name and vehicle info (name, make/model, tier)</li>
             <li>Your ride stats as they were at the moment of the drop</li>

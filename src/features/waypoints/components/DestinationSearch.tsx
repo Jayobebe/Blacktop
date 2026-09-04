@@ -50,8 +50,8 @@ const quickCategories: QuickCategory[] = [
   { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'fuel' },
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
   { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
-  { id: '24h', label: '24h', icon: <Clock className="w-4 h-4" />, query: '24h' },
 ];
+
 
 function getRecentLocations(): SearchResult[] {
   try {

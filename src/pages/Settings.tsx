@@ -1004,12 +1004,19 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
             each device; no rider data leaves your phone unless you show
             someone your QR.
           </p>
+          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+            <span className="text-foreground font-medium">Card drops</span> are a Blacktop World
+            feature only — planting, finding and collecting cards on the map is
+            active solely while you're opted in. Opt out and drops stop being
+            listed, planted or collected.
+          </p>
           <p className="text-[10px] text-muted-foreground mb-3">
             Opting in shares only your <span className="text-foreground">country</span> (derived
             from your coarse location) while the app is open — never your exact
             position, name, or ride data. Opt out any time; long-press, the
-            card folder, and the flip button all stop working immediately.
+            card folder, card drops, and the flip button all stop working immediately.
           </p>
+
           {enabled ? (
             <Button
               onClick={() => onToggle(false)}

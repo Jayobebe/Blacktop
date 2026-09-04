@@ -121,7 +121,37 @@ export default function World() {
     if (target?.route) navigate(target.route);
   };
 
+  // Blacktop World (and therefore card drops) is strictly opt-in.
+  if (!settings.blacktopWorldEnabled) {
+    return (
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-4 px-8 text-center safe-top safe-bottom">
+        <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Blacktop World</h1>
+        <p className="text-[12px] text-muted-foreground leading-relaxed">
+          You're opted out. Blacktop World — the crew globe, card collection and
+          card drops on the map — is only active once you opt in.
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="px-4 py-2.5 rounded-xl bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-[0.15em]"
+          >
+            Open settings
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/', { replace: true })}
+            className="px-4 py-2.5 rounded-xl border border-border/50 text-[11px] font-semibold uppercase tracking-[0.15em]"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
       {/* Header */}
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
@@ -188,7 +218,9 @@ export default function World() {
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
+            Card drops are a Blacktop World feature — active only while you're opted in.
             Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
+
             Every time someone collects one of yours, you earn a kickback badge point — your drops keep working for you.
             Earn more from tier milestones, crew challenges, every 4 cards you collect, and 3-day ride
             streaks — up to {MONTHLY_COPY_CAP} bonus copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month). Earn all {MONTHLY_COPY_CAP} and a 10th copy is granted free. Tier copies and 10-badge trades never count against the cap.
