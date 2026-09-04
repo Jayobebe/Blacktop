@@ -187,7 +187,7 @@ export default function DemoShowcase() {
         { icon: Users, label: 'Crew Convoys', text: 'A live list of your crew\'s open rides — tap for leader and riders.' },
         { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade.' },
         { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
-        { icon: Flag, label: 'Weekly Challenge', text: 'A rotating crew challenge each week — miles, corners, lean or ride count.' },
+        { icon: Flag, label: 'Challenges', text: 'Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year.' },
         { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy and Petrol Head, with personal bests saved locally.' },
       ],
     },

@@ -1,13 +1,23 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Flag, Timer } from 'lucide-react';
+import { ArrowLeft, Flag, Sparkles, Timer, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useRideHistory } from '@/features/ride';
 import { analyseCorners } from '@/features/ride/lib/cornerScoring';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
-import { challengeForWeek, daysLeftInWeek, weekKey, weekStart } from '@/features/crew/challenges';
+import {
+  Challenge,
+  challengesForWeek,
+  daysLeftInMonth,
+  daysLeftInWeek,
+  monthKey,
+  monthlyGoalFor,
+  specialForWeek,
+  weekKey,
+  weekStart,
+} from '@/features/crew/challenges';
 import { grantChallengeCopy } from '@/features/cards';
 import { toast } from 'sonner';
 
@@ -17,6 +27,86 @@ interface ChallengeRow {
   ride_count: number;
   max_lean: number;
   corner_score: number;
+  top_speed: number;
+  night_rides: number;
+  longest_ride: number;
+}
+
+type WeekStats = {
+  distance: number;
+  ride_count: number;
+  max_lean: number;
+  corner_score: number;
+  top_speed: number;
+  night_rides: number;
+  longest_ride: number;
+};
+
+function isNightRide(startedAt: string | number | Date): boolean {
+  const h = new Date(startedAt).getHours();
+  return h >= 20 || h < 5;
+}
+
+function ChallengeCard({
+  challenge,
+  rows,
+  myValue,
+  myName,
+}: {
+  challenge: Challenge;
+  rows: ChallengeRow[];
+  myValue: number;
+  myName: string;
+}) {
+  const sorted = useMemo(
+    () => [...rows].sort((a, b) => Number(b[challenge.metric] ?? 0) - Number(a[challenge.metric] ?? 0)),
+    [rows, challenge.metric],
+  );
+  const pct = Math.min(100, (myValue / challenge.target) * 100);
+  const fmt = (v: number) =>
+    challenge.metric === 'distance' || challenge.metric === 'longest_ride'
+      ? `${Number(v).toFixed(1)} ${challenge.unit}`
+      : `${Math.round(Number(v))} ${challenge.unit}`;
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/60 p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <Flag className="w-4 h-4 text-accent" />
+        <h3 className="font-display font-bold leading-none">{challenge.title}</h3>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-3">{challenge.blurb}</p>
+
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">You</span>
+        <span className="text-sm font-bold tabular-nums">{fmt(myValue)}</span>
+      </div>
+      <div className="h-2 rounded-full bg-secondary overflow-hidden mb-3">
+        <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+      </div>
+
+      {sorted.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground/70 text-center py-2">No crew entries yet.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {sorted.slice(0, 5).map((row, i) => {
+            const isMe = row.display_name === myName;
+            return (
+              <li
+                key={`${row.display_name}-${i}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
+                  isMe ? 'border-accent/60 bg-accent/5' : 'border-border/30 bg-card/40'
+                }`}
+              >
+                <span className="w-4 font-bold tabular-nums text-muted-foreground">{i + 1}</span>
+                <span className="flex-1 truncate">{row.display_name}</span>
+                <span className="font-bold tabular-nums">{fmt(Number(row[challenge.metric] ?? 0))}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default function CrewChallenges() {
@@ -26,11 +116,16 @@ export default function CrewChallenges() {
   const { profile } = useProfile();
 
   const key = weekKey();
-  const challenge = challengeForWeek(key);
+  const mKey = monthKey();
+  const [challengeA, challengeB] = challengesForWeek(key);
+  const special = specialForWeek(key);
+  const goal = monthlyGoalFor(mKey);
   const daysLeft = daysLeftInWeek();
+  const monthDaysLeft = daysLeftInMonth();
+  const myName = profile.name || 'Rider';
 
   // This rider's stats for the current week only.
-  const mine = useMemo(() => {
+  const mine: WeekStats = useMemo(() => {
     const from = weekStart().getTime();
     const week = rides.filter((r) => new Date(r.startedAt).getTime() >= from);
     const cornerScores = week
@@ -43,6 +138,9 @@ export default function CrewChallenges() {
       corner_score: cornerScores.length
         ? Math.round(cornerScores.reduce((s, v) => s + v, 0) / cornerScores.length)
         : 0,
+      top_speed: Math.round(Math.max(0, ...week.map((r) => r.maxSpeed || 0))),
+      night_rides: week.filter((r) => isNightRide(r.startedAt)).length,
+      longest_ride: Number(Math.max(0, ...week.map((r) => r.distance || 0)).toFixed(2)),
     };
   }, [rides]);
 
@@ -56,16 +154,19 @@ export default function CrewChallenges() {
         user_id: user.id,
         week_key: key,
         crew_code: crew.code,
-        display_name: profile.name || 'Rider',
+        display_name: myName,
         distance: mine.distance,
         ride_count: mine.ride_count,
         max_lean: mine.max_lean,
         corner_score: mine.corner_score,
+        top_speed: mine.top_speed,
+        night_rides: mine.night_rides,
+        longest_ride: mine.longest_ride,
         updated_at: new Date().toISOString(),
       } as any);
     })();
     return () => { cancelled = true; };
-  }, [crew.code, key, profile.name, mine]);
+  }, [crew.code, key, myName, mine]);
 
   const { data: rows = [] } = useQuery({
     queryKey: ['crew-challenge', crew.code, key],
@@ -79,26 +180,49 @@ export default function CrewChallenges() {
     refetchInterval: 30000,
   });
 
-  const sorted = useMemo(
-    () => [...rows].sort((a, b) => Number(b[challenge.metric] ?? 0) - Number(a[challenge.metric] ?? 0)),
-    [rows, challenge.metric],
-  );
+  // Monthly crew goal — combined totals across the crew for the month.
+  const { data: monthTotals } = useQuery({
+    queryKey: ['crew-month', crew.code, mKey],
+    queryFn: async () => {
+      const { data } = await (supabase as any).rpc('list_crew_month', {
+        _crew_code: crew.code,
+        _month_key: mKey,
+      });
+      return (data?.[0] ?? null) as { distance: number; ride_count: number; members: number } | null;
+    },
+    refetchInterval: 30000,
+  });
 
-  const myValue = mine[challenge.metric];
-  const pct = Math.min(100, (myValue / challenge.target) * 100);
+  const monthValue = Number(monthTotals?.[goal.metric] ?? 0);
+  const monthPct = Math.min(100, (monthValue / goal.target) * 100);
 
-  // Hitting the weekly target earns a spare copy of your card to drop on the map.
+  // Hitting a weekly target earns a spare copy of your card to drop on the map.
   useEffect(() => {
-    if (myValue < challenge.target) return;
-    const result = grantChallengeCopy(key);
-    if (result === 'granted') {
-      toast.success('Challenge complete', { description: 'Spare card copy earned — drop it on the map.' });
-    } else if (result === 'capped') {
-      toast('Challenge complete', { description: 'Copy bank full — 4/month max. Resets on the 1st.' });
+    for (const c of [challengeA, challengeB]) {
+      if (mine[c.metric] < c.target) continue;
+      const result = grantChallengeCopy(`${key}:${c.id}`);
+      if (result === 'granted') {
+        toast.success(`${c.title} complete`, { description: 'Spare card copy earned — drop it on the map.' });
+      } else if (result === 'capped') {
+        toast(`${c.title} complete`, { description: 'Copy bank full — 4/month max. Resets on the 1st.' });
+      }
     }
-  }, [myValue, challenge.target, key]);
-  const fmt = (v: number) =>
-    challenge.metric === 'distance' ? `${Number(v).toFixed(1)} ${challenge.unit}` : `${Math.round(Number(v))} ${challenge.unit}`;
+  }, [mine, challengeA, challengeB, key]);
+
+  // Crew hits the monthly goal → everyone participating earns a copy.
+  useEffect(() => {
+    if (!monthTotals || monthTotals.members === 0) return;
+    if (monthValue < goal.target) return;
+    const result = grantChallengeCopy(`${mKey}:${goal.id}`);
+    if (result === 'granted') {
+      toast.success(`${goal.title} smashed`, { description: 'Crew goal hit — spare card copy earned.' });
+    } else if (result === 'capped') {
+      toast(`${goal.title} smashed`, { description: 'Copy bank full — 4/month max. Resets on the 1st.' });
+    }
+  }, [monthTotals, monthValue, goal, mKey]);
+
+  const goalFmt = (v: number) =>
+    goal.metric === 'distance' ? `${Number(v).toFixed(0)} ${goal.unit}` : `${Math.round(Number(v))} ${goal.unit}`;
 
   return (
     <div className="min-h-dvh bg-background safe-top safe-bottom px-4 pt-4 pb-8">
@@ -114,61 +238,67 @@ export default function CrewChallenges() {
         <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Crew Challenge</h1>
       </header>
 
-      {/* Challenge banner */}
+      {/* Monthly crew goal (Forzathon-style) */}
       <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/15 to-accent/5 p-4 mb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Flag className="w-4 h-4 text-accent" />
-              <h2 className="font-display font-bold text-lg leading-none">{challenge.title}</h2>
+              <Users className="w-4 h-4 text-accent" />
+              <h2 className="font-display font-bold text-lg leading-none">{goal.title}</h2>
             </div>
-            <p className="text-xs text-muted-foreground">{challenge.blurb}</p>
+            <p className="text-xs text-muted-foreground">{goal.blurb}</p>
           </div>
           <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">
             <Timer className="w-3.5 h-3.5" />
-            {daysLeft}d left
+            {monthDaysLeft}d left
           </span>
         </div>
 
         <div className="mt-4">
           <div className="flex items-baseline justify-between mb-1.5">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">You</span>
-            <span className="text-sm font-bold tabular-nums">{fmt(myValue)}</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Crew {crew.code} · {monthTotals?.members ?? 0} riding
+            </span>
+            <span className="text-sm font-bold tabular-nums">
+              {goalFmt(monthValue)} / {goalFmt(goal.target)}
+            </span>
           </div>
-          <div className="h-2 rounded-full bg-secondary overflow-hidden">
-            <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+          <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+            <div className="h-full bg-accent transition-all" style={{ width: `${monthPct}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-1.5">
-            Crew {crew.code} · week {key}
+            Monthly crew goal — hit it together and everyone earns a spare card copy.
           </p>
         </div>
       </div>
 
-      {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground/70 py-10 text-center">
-          No crew entries this week yet. Get out and ride.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {sorted.map((row, i) => {
-            const isMe = row.display_name === (profile.name || 'Rider');
-            return (
-              <li
-                key={`${row.display_name}-${i}`}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
-                  isMe ? 'border-accent/60 bg-accent/5' : 'border-border/30 bg-card/40'
-                }`}
-              >
-                <span className="w-6 text-sm font-bold tabular-nums text-muted-foreground">{i + 1}</span>
-                <span className="flex-1 text-sm truncate">{row.display_name}</span>
-                <span className="text-sm font-bold tabular-nums">
-                  {fmt(Number(row[challenge.metric] ?? 0))}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+      {/* This week's pair of challenges */}
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-xs font-bold uppercase tracking-[0.2em]">This week</h2>
+        <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+          <Timer className="w-3.5 h-3.5" />
+          {daysLeft}d left
+        </span>
+      </div>
+
+      {special && (
+        <div className="flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2 mb-3">
+          <Sparkles className="w-4 h-4 text-accent" />
+          <div className="min-w-0">
+            <p className="text-xs font-bold leading-tight">{special.name}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight">{special.blurb}</p>
+          </div>
+        </div>
       )}
+
+      <div className="grid grid-cols-1 gap-3">
+        <ChallengeCard challenge={challengeA} rows={rows} myValue={mine[challengeA.metric]} myName={myName} />
+        <ChallengeCard challenge={challengeB} rows={rows} myValue={mine[challengeB.metric]} myName={myName} />
+      </div>
+
+      <p className="text-[10px] text-muted-foreground/60 text-center mt-4">
+        Crew {crew.code} · week {key}
+      </p>
     </div>
   );
 }
