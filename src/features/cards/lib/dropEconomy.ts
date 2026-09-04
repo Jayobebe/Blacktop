@@ -190,6 +190,8 @@ export interface CopyLedger {
   available: number;
   /** Granted copies used this calendar month (cap: MONTHLY_COPY_CAP). */
   monthlyUsed: number;
+  /** Bonus copies earned this month by hitting the cap. */
+  monthlyBonus: number;
 }
 
 export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
@@ -198,7 +200,8 @@ export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
     tierCopiesEarned(ridesPerBike) +
     claimedChallengeWeeks().length +
     claimedCollectMilestones().length +
-    claimedStreaks().length;
+    claimedStreaks().length +
+    monthlyBonusCopies();
   const droppable = Math.max(0, total - 1);
   return {
     total,
