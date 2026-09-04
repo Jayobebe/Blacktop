@@ -19,16 +19,18 @@ interface WalletRecord {
   counts: Partial<Record<BadgeType, number>>;
   /** Points already traded for card copies. */
   spent: number;
+  /** Points credited when another rider collects one of your dropped cards. */
+  kickbacks: number;
 }
 
-const EMPTY: WalletRecord = { counts: {}, spent: 0 };
+const EMPTY: WalletRecord = { counts: {}, spent: 0, kickbacks: 0 };
 
 function read(): WalletRecord {
   try {
     const raw = localStorage.getItem(WALLET_KEY);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as WalletRecord;
-    return { counts: parsed.counts || {}, spent: parsed.spent || 0 };
+    return { counts: parsed.counts || {}, spent: parsed.spent || 0, kickbacks: parsed.kickbacks || 0 };
   } catch {
     return EMPTY;
   }
@@ -45,10 +47,12 @@ function write(rec: WalletRecord) {
 
 export interface BadgeWallet {
   counts: Record<BadgeType, number>;
-  /** Points earned (positive badges minus Fallback penalties), never negative. */
+  /** Points earned (positive badges minus Fallback penalties, plus kickbacks), never negative. */
   earned: number;
   /** Points traded for card copies. */
   spent: number;
+  /** Kickback points from other riders collecting your drops. */
+  kickbacks: number;
   /** Points available to spend. */
   balance: number;
   /** Points still needed for the next card copy. */
@@ -65,15 +69,24 @@ export function badgeWallet(): BadgeWallet {
   const earned = Math.max(
     0,
     BADGE_ORDER.reduce((sum, type) => sum + counts[type] * BADGE_INFO[type].points, 0)
+    + rec.kickbacks
   );
   const balance = Math.max(0, earned - rec.spent);
   return {
     counts,
     earned,
     spent: rec.spent,
+    kickbacks: rec.kickbacks,
     balance,
     toNextCopy: Math.max(0, BADGES_PER_COPY - balance),
   };
+}
+
+/** Credits kickback points — one per card of yours another rider collects. */
+export function recordKickbacks(n: number) {
+  if (n <= 0) return;
+  const rec = read();
+  write({ ...rec, kickbacks: rec.kickbacks + n });
 }
 
 /** Banks a set of earned badges. */
