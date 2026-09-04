@@ -77,7 +77,47 @@ export function BadgeWalletPanel() {
             </div>
           );
         })}
+
+        {/* Kickback — earned when another rider collects one of your drops */}
+        <div
+          className={cn(
+            'flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
+            'bg-accent/10 border-accent/30',
+            w.kickbacks === 0 && 'opacity-50'
+          )}
+          style={{ animationDelay: `${8 * 50}ms` }}
+        >
+          <span className="text-2xl mb-1">🔁</span>
+          <span className="font-mono text-xl font-bold text-accent">{w.kickbacks}</span>
+          <span className="text-[10px] font-medium mt-0.5 text-accent">Kickback</span>
+          <span className="text-[9px] text-muted-foreground mt-0.5">+1 pt · drop collected</span>
+        </div>
       </div>
+
+      {/* Fallback — full width, deducts from the total */}
+      {(() => {
+        const info = BADGE_INFO.fallback;
+        const count = w.counts.fallback || 0;
+        return (
+          <div
+            className={cn(
+              'mt-2 flex items-center gap-3 p-3 rounded-2xl border transition-all animate-scale-in w-full',
+              'bg-stone-500/10 border-stone-500/30',
+              count === 0 && 'opacity-50'
+            )}
+            style={{ animationDelay: `${9 * 50}ms` }}
+          >
+            <span className="text-2xl">{info.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-stone-400">{info.label}</p>
+              <p className="text-[9px] text-muted-foreground mt-0.5">
+                {info.description} · −1 pt
+              </p>
+            </div>
+            <span className="font-mono text-xl font-bold text-stone-400">{count}</span>
+          </div>
+        );
+      })()}
 
       {/* Economy */}
       <div className="mt-3 rounded-2xl border border-border/30 bg-card/50 p-4">
