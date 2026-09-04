@@ -169,8 +169,8 @@ export default function World() {
           </div>
           <p className="text-[11px] text-muted-foreground">
             Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
-            Earn more from tier milestones, crew challenges, every 5 cards you collect, and 3-day ride
-            streaks — up to {MONTHLY_COPY_CAP} copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month).
+            Earn more from tier milestones, crew challenges, every 4 cards you collect, and 3-day ride
+            streaks — up to {MONTHLY_COPY_CAP} bonus copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month). Tier copies never count against the cap.
           </p>
           <div className="flex rounded-xl overflow-hidden border border-border/50">
             {(['crew', 'world'] as const).map((v) => (

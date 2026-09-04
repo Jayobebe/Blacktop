@@ -5,7 +5,7 @@
  * Copies are earned:
  *   • every card tier milestone reached (Bronze, Silver, Gold, …) on any bike
  *   • every weekly crew challenge you complete
- *   • every 5 unique card drops you collect from other riders
+ *   • every 4 unique card drops you collect from other riders
  *   • every 3-day ride streak
  *
  * Your own card is always in your vault by default; every earned copy from copy 2
@@ -25,7 +25,7 @@ const MONTH_KEY = 'bt.card_copy_month.v1';
 /** Max granted copies per calendar month, across all grant triggers. */
 export const MONTHLY_COPY_CAP = 4;
 /** Every N collected cards earns a copy. */
-export const COLLECT_COPY_EVERY = 5;
+export const COLLECT_COPY_EVERY = 4;
 
 export type GrantResult = 'granted' | 'already' | 'capped';
 
