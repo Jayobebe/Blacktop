@@ -113,10 +113,13 @@ export async function renderRecapCard(ride: RideSession, opts: RecapOptions = {}
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, size, size);
   const grad = ctx.createRadialGradient(size * 0.5, size * 0.42, 60, size * 0.5, size * 0.42, size * 0.75);
-  grad.addColorStop(0, `${accent}22`);
+  grad.addColorStop(0, accent);
   grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save();
+  ctx.globalAlpha = 0.13;
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
+  ctx.restore();
 
   // Header
   ctx.fillStyle = accent;
