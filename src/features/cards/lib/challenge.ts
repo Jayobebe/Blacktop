@@ -13,6 +13,11 @@ export const FINISH_RADIUS_M = 40;
 export const DEVIATION_LIMIT_M = 120;
 /** How long they may stay off route before the run is voided. */
 export const DEVIATION_GRACE_MS = 15_000;
+/**
+ * Seconds shaved off the setter's recorded time: they have to stop and tap
+ * Finish challenge, which a challenger never has to do.
+ */
+export const SETTER_STOP_ALLOWANCE_SEC = 5;
 /** Badges awarded for beating a challenge. */
 export const CHALLENGE_WIN_BADGES = 3;
 

@@ -32,8 +32,11 @@ export interface ChallengeRun {
   finish: ChallengePoint | null;
   /** Time to beat, seconds (attempting only). */
   targetSec: number | null;
-  /** Epoch ms when the 5-second countdown ends and the clock starts. */
-  startsAt: number;
+  /**
+   * Epoch ms when the 5-second countdown ends and the clock starts.
+   * `null` while the rider has not readied up yet.
+   */
+  startsAt: number | null;
   /** First moment the rider strayed off route, or null while on route. */
   offRouteSince: number | null;
   voided: boolean;

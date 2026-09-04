@@ -152,6 +152,39 @@ export default function Terms() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Card challenges (time attack)</h2>
+          <p className="text-muted-foreground">
+            Card challenges are a game layer inside Blacktop World, not a race.
+            By setting or taking one you agree that:
+          </p>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>
+              Both setting and taking a challenge start only after you press
+              Ready up and a five-second countdown finishes. Never ready up
+              while moving, in traffic, or anywhere it is unsafe to stop.
+            </li>
+            <li>
+              Five seconds are deducted from a setter's recorded time to allow
+              for stopping to mark the finish line. Times, routes and results
+              are approximate and derived from GPS.
+            </li>
+            <li>
+              Speed limits, traffic law and road conditions always take priority
+              over any time on screen. A faster time is never worth breaking the
+              law or riding beyond your ability.
+            </li>
+            <li>
+              You are solely responsible for your riding during a challenge. The
+              app owner and contributors accept
+              <span className="text-foreground font-medium"> no liability </span>
+              for any collision, injury, penalty or damage arising from setting
+              or attempting a challenge.
+            </li>
+          </ul>
+        </section>
+
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Blacktop Arcade — Derez Legacy</h2>
           <p className="text-muted-foreground">
             Derez Legacy is a multiplayer light-trail game played while riding
