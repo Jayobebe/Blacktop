@@ -32,9 +32,40 @@ export function VehicleCard({ card }: Props) {
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [pans, setPans] = useLocalStorage<Record<string, { x: number; y: number }>>(
+    'bt.cards.pan.v1',
+    {},
+  );
   const [resizing, setResizing] = useState(false);
   const zoom = zooms[card.bike.id] ?? 1;
+  const pan = pans[card.bike.id] ?? { x: 0, y: 0 };
   const setZoom = (v: number) => setZooms((prev) => ({ ...prev, [card.bike.id]: v }));
+  const setPan = (p: { x: number; y: number }) =>
+    setPans((prev) => ({ ...prev, [card.bike.id]: p }));
+
+  // Drag-to-pan the whole card image (backdrop + vehicle) while in resize mode.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+
+  const onPanDown = (e: React.PointerEvent) => {
+    if (!resizing || locked) return;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+  };
+  const onPanMove = (e: React.PointerEvent) => {
+    if (!dragRef.current || !frameRef.current) return;
+    const rect = frameRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - dragRef.current.x) / rect.width) * 100;
+    const dy = ((e.clientY - dragRef.current.y) / rect.height) * 100;
+    const limit = 60;
+    setPan({
+      x: Math.max(-limit, Math.min(limit, dragRef.current.px + dx)),
+      y: Math.max(-limit, Math.min(limit, dragRef.current.py + dy)),
+    });
+  };
+  const onPanUp = () => {
+    dragRef.current = null;
+  };
 
   const shareable = !locked && settings.blacktopWorldEnabled;
   const hero = card.bike.photos.hero;
