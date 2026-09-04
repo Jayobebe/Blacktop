@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl, { Map as MapLibreMap, Marker } from 'maplibre-gl';
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -904,13 +904,28 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   );
   const { addCard } = useCollectedCards();
   const { cards } = useVehicleCards();
-  const [selectedDrop, setSelectedDrop] = useState<CardDrop | null>(null);
+  const [selectedStack, setSelectedStack] = useState<CardDrop[] | null>(null);
+  const selectedDrop = selectedStack?.length === 1 ? selectedStack[0] : null;
   const [droppingCard, setDroppingCard] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{ lat: number; lng: number } | null>(null);
   const cardMarkersRef = useRef<Marker[]>([]);
 
   const placedCount = drops.filter((d) => d.isOwn).length;
   const ledger = copyLedger(cards.map((c) => c.stats.totalRides), placedCount);
   const canDropCard = cardsEnabled && !rideState.isActive && ledger.available > 0 && cards.length > 0;
+
+  // Drops within ~55m of each other read as one hot-spot stack on the map.
+  const cardStacks = useMemo(() => {
+    const buckets = new Map<string, CardDrop[]>();
+    for (const d of drops) {
+      const key = `${d.lat.toFixed(3)}:${d.lng.toFixed(3)}`;
+      const list = buckets.get(key);
+      if (list) list.push(d);
+      else buckets.set(key, [d]);
+    }
+    return Array.from(buckets.values());
+  }, [drops]);
+
 
   // Landmark-style card markers — home map only, so ride navigation stays clean.
   useEffect(() => {
@@ -918,45 +933,53 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     cardMarkersRef.current = [];
     if (!map || !cardsEnabled || rideState.isActive) return;
 
-    drops.forEach((drop) => {
-      const style = TIER_STYLES[drop.tier] ?? TIER_STYLES.locked;
+    cardStacks.forEach((stack) => {
+      const head = stack[0];
+      const count = stack.length;
+      const allCollected = stack.every((d) => d.collected || d.isOwn);
+      // Hot-spot heat: more cards stacked here, hotter the landmark reads.
+      const heat = count >= 5 ? 3 : count >= 3 ? 2 : count >= 2 ? 1 : 0;
+      const heatColor = ['', 'hsl(45 93% 58%)', 'hsl(25 95% 55%)', 'hsl(0 84% 60%)'][heat];
+      const edge = allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor;
       const el = document.createElement('div');
-      el.style.width = '30px';
-      el.style.height = '38px';
+      el.style.position = 'relative';
+      el.style.width = count > 1 ? '34px' : '30px';
+      el.style.height = count > 1 ? '42px' : '38px';
       el.style.borderRadius = '6px';
       el.style.cursor = 'pointer';
       el.style.display = 'flex';
       el.style.alignItems = 'center';
       el.style.justifyContent = 'center';
       el.style.background = 'linear-gradient(145deg, rgba(30,30,32,0.96), rgba(10,10,12,0.96))';
-      el.style.border = drop.collected
-        ? '1.5px solid hsl(142 71% 45%)'
-        : `1.5px solid ${accentColor}`;
-      el.style.boxShadow = drop.collected
+      el.style.border = `1.5px solid ${edge}`;
+      el.style.boxShadow = allCollected
         ? '0 0 8px hsl(142 71% 45% / 0.6)'
-        : '0 2px 8px rgba(0,0,0,0.7)';
+        : heat
+          ? `0 0 ${6 + heat * 4}px ${heatColor}`
+          : '0 2px 8px rgba(0,0,0,0.7)';
       el.setAttribute('role', 'button');
-      el.setAttribute('aria-label', `${drop.ownerName}'s ${drop.vehicleName} card`);
-      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${drop.collected ? 'hsl(142 71% 45%)' : accentColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
-      if (drop.collected) {
-        const tick = document.createElement('span');
-        tick.textContent = '✓';
-        tick.style.cssText =
-          'position:absolute;top:-6px;right:-6px;width:15px;height:15px;border-radius:50%;background:hsl(142 71% 45%);color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;';
-        el.style.position = 'relative';
-        el.appendChild(tick);
-      }
+      el.setAttribute(
+        'aria-label',
+        count > 1
+          ? `Card hot-spot · ${count} cards`
+          : `${head.ownerName}'s ${head.vehicleName} card`,
+      );
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${edge}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
+      const badge = document.createElement('span');
+      badge.textContent = allCollected ? '✓' : String(count);
+      badge.style.cssText = `position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:${allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor};color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;`;
+      if (allCollected || count > 1) el.appendChild(badge);
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        setSelectedDrop(drop);
+        setSelectedStack(stack);
       });
 
       const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([drop.lng, drop.lat])
+        .setLngLat([head.lng, head.lat])
         .addTo(map);
       cardMarkersRef.current.push(marker);
     });
-  }, [map, drops, cardsEnabled, rideState.isActive, accentColor]);
+  }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
 
   useEffect(() => {
     const markers = cardMarkersRef.current;
@@ -966,32 +989,40 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
   }, []);
 
-  // Plant a card: next tap on the map drops the copy there.
+  // Plant a card: next tap on the map picks the spot, then the rider confirms.
   useEffect(() => {
     if (!map || !droppingCard) return;
-    const handler = async (e: maplibregl.MapMouseEvent) => {
-      setDroppingCard(false);
-      const card = cards[0];
-      if (!card) return;
-      try {
-        const photoPath = card.bike.photos?.hero
-          ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
-          : null;
-        await placeDrop.mutateAsync({
-          card,
-          lat: e.lngLat.lat,
-          lng: e.lngLat.lng,
-          copyIndex: placedCount + 3,
-          photoPath,
-        });
-        toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
-      } catch {
-        toast.error("Couldn't drop that card");
-      }
+    const handler = (e: maplibregl.MapMouseEvent) => {
+      setPendingDrop({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     };
     map.on('click', handler);
     return () => { map.off('click', handler); };
-  }, [map, droppingCard, cards, placeDrop, placedCount]);
+  }, [map, droppingCard]);
+
+  const confirmDropCard = async () => {
+    if (!pendingDrop) return;
+    const card = cards[0];
+    const spot = pendingDrop;
+    setPendingDrop(null);
+    setDroppingCard(false);
+    if (!card) return;
+    try {
+      const photoPath = card.bike.photos?.hero
+        ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
+        : null;
+      await placeDrop.mutateAsync({
+        card,
+        lat: spot.lat,
+        lng: spot.lng,
+        copyIndex: placedCount + 3,
+        photoPath,
+      });
+      toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
+    } catch {
+      toast.error("Couldn't drop that card");
+    }
+  };
+
 
   // Proximity ping while riding without a destination.
   const pingedDropsRef = useRef<Set<string>>(new Set());
@@ -1019,14 +1050,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [cardsEnabled, userLocation, drops, rideState.isActive, destination, cardPingMeters]);
 
-  const handleCollectDrop = async (drop: CardDrop) => {
+  const handleCollectDrop = async (drop: CardDrop, silent = false) => {
     if (!userLocation) {
       toast.error('Need your location to scan this card');
-      return;
+      return false;
     }
     if (rideState.isActive && rideState.currentSpeed > 3) {
       toast.warning('Stop safely before scanning a card');
-      return;
+      return false;
     }
     try {
       const collected = await collectDrop.mutateAsync({
@@ -1035,12 +1066,34 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         lng: userLocation.lng,
       });
       addCard(dropToPayload(collected));
-      setSelectedDrop(null);
-      toast.success('Card collected', { description: 'Added to your vault.' });
+      if (!silent) {
+        setSelectedStack(null);
+        toast.success('Card collected', { description: 'Added to your vault.' });
+      }
+      return true;
     } catch {
-      toast.error(`Get within ${COLLECT_RADIUS_M}m of the card to scan it`);
+      if (!silent) toast.error(`Get within ${COLLECT_RADIUS_M}m of the card to scan it`);
+      return false;
     }
   };
+
+  const handleCollectStack = async (stack: CardDrop[]) => {
+    const targets = stack.filter((d) => !d.collected && !d.isOwn);
+    let got = 0;
+    for (const drop of targets) {
+      // eslint-disable-next-line no-await-in-loop
+      if (await handleCollectDrop(drop, true)) got += 1;
+    }
+    setSelectedStack(null);
+    if (got > 0) {
+      toast.success(`${got} card${got > 1 ? 's' : ''} collected`, {
+        description: 'Added to your vault.',
+      });
+    } else {
+      toast.error(`Get within ${COLLECT_RADIUS_M}m of the hot-spot to scan these cards`);
+    }
+  };
+
 
 
 
@@ -1498,10 +1551,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       </div>
 
       {droppingCard && (
-        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs">
-          Place card here? · {ledger.available} spare
+        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs text-center">
+          {pendingDrop ? (
+            <>
+              <p className="font-semibold">Place card here?</p>
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" className="h-7 px-4 text-xs" onClick={confirmDropCard}>
+                  Yes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-4 text-xs"
+                  onClick={() => setPendingDrop(null)}
+                >
+                  No
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>Place card here? · {ledger.available} spare</>
+          )}
         </div>
       )}
+
 
       {showLoopPlanner && (
         <LoopPlannerPanel
@@ -1835,7 +1908,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
           <button
             type="button"
-            onClick={() => setSelectedDrop(null)}
+            onClick={() => setSelectedStack(null)}
             className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
             aria-label="Close card details"
           >
@@ -1872,7 +1945,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   lng: selectedDrop.lng,
                   name: `${selectedDrop.ownerName}'s card`,
                 });
-                setSelectedDrop(null);
+                setSelectedStack(null);
               }}
             >
               Go for it
@@ -1883,7 +1956,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 variant="outline"
                 onClick={async () => {
                   await pickUpDrop.mutateAsync(selectedDrop.id);
-                  setSelectedDrop(null);
+                  setSelectedStack(null);
                   toast.success('Card picked back up');
                 }}
               >
@@ -1899,6 +1972,83 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         </div>
       )}
+
+      {selectedStack && selectedStack.length > 1 && (
+        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
+          <button
+            type="button"
+            onClick={() => setSelectedStack(null)}
+            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
+            aria-label="Close card hot-spot"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <IdCard className="w-4 h-4 text-accent" />
+            <p className="text-sm font-bold">Card hot-spot</p>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {selectedStack.length} cards
+            </span>
+          </div>
+          {userLocation && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {formatDistance(
+                (metersBetween(userLocation, selectedStack[0]) / 1000) * 0.621371,
+                settings.distanceUnit,
+              )}{' '}
+              {getDistanceLabel(settings.distanceUnit)} away
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2 mt-3 max-h-44 overflow-y-auto">
+            {selectedStack.map((d) => {
+              const done = d.collected || d.isOwn;
+              return (
+                <div
+                  key={d.id}
+                  className={cn(
+                    'rounded-xl border p-2 text-left',
+                    done ? 'border-[hsl(142_71%_45%)]/60 bg-[hsl(142_71%_45%)]/8' : 'border-border bg-secondary/40',
+                  )}
+                >
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs font-semibold truncate flex-1">{d.vehicleName}</p>
+                    {done && <Check className="w-3 h-3 text-[hsl(142_71%_45%)] shrink-0" />}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {d.ownerName} · {d.tier}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Button
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                setDestination({
+                  lat: selectedStack[0].lat,
+                  lng: selectedStack[0].lng,
+                  name: 'Card hot-spot',
+                });
+                setSelectedStack(null);
+              }}
+            >
+              Go for it
+            </Button>
+            {selectedStack.some((d) => !d.collected && !d.isOwn) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCollectStack(selectedStack)}
+              >
+                Collect all
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
