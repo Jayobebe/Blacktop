@@ -440,6 +440,95 @@ export type Database = {
         }
         Relationships: []
       }
+      derez_lobbies: {
+        Row: {
+          arena: Json | null
+          code: string
+          created_at: string
+          id: string
+          leader_id: string
+          lives: number
+          round_seq: number
+          started_at: string | null
+          state: string
+          updated_at: string
+          winner_id: string | null
+          winner_name: string | null
+        }
+        Insert: {
+          arena?: Json | null
+          code: string
+          created_at?: string
+          id?: string
+          leader_id: string
+          lives?: number
+          round_seq?: number
+          started_at?: string | null
+          state?: string
+          updated_at?: string
+          winner_id?: string | null
+          winner_name?: string | null
+        }
+        Update: {
+          arena?: Json | null
+          code?: string
+          created_at?: string
+          id?: string
+          leader_id?: string
+          lives?: number
+          round_seq?: number
+          started_at?: string | null
+          state?: string
+          updated_at?: string
+          winner_id?: string | null
+          winner_name?: string | null
+        }
+        Relationships: []
+      }
+      derez_players: {
+        Row: {
+          accent_color: string
+          display_name: string
+          id: string
+          is_alive: boolean
+          is_ready: boolean
+          joined_at: string
+          lives_left: number
+          lobby_id: string
+          user_id: string
+        }
+        Insert: {
+          accent_color?: string
+          display_name?: string
+          id?: string
+          is_alive?: boolean
+          is_ready?: boolean
+          joined_at?: string
+          lives_left?: number
+          lobby_id: string
+          user_id: string
+        }
+        Update: {
+          accent_color?: string
+          display_name?: string
+          id?: string
+          is_alive?: boolean
+          is_ready?: boolean
+          joined_at?: string
+          lives_left?: number
+          lobby_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "derez_players_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "derez_lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discord_integrations: {
         Row: {
           auto_announce: boolean
@@ -608,6 +697,10 @@ export type Database = {
         Args: { _convoy_id: string; _user_id: string }
         Returns: boolean
       }
+      is_derez_member: {
+        Args: { _lobby_id: string; _user_id: string }
+        Returns: boolean
+      }
       list_card_drops: {
         Args: {
           _crew_code: string
@@ -721,6 +814,29 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "convoys"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      lookup_derez_by_code: {
+        Args: { _code: string }
+        Returns: {
+          arena: Json | null
+          code: string
+          created_at: string
+          id: string
+          leader_id: string
+          lives: number
+          round_seq: number
+          started_at: string | null
+          state: string
+          updated_at: string
+          winner_id: string | null
+          winner_name: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "derez_lobbies"
           isOneToOne: true
           isSetofReturn: false
         }
