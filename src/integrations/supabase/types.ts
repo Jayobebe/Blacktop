@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_challenge_attempts: {
+        Row: {
+          challenger_id: string
+          challenger_name: string
+          created_at: string
+          drop_id: string
+          id: string
+          result: string
+          time_sec: number
+        }
+        Insert: {
+          challenger_id: string
+          challenger_name?: string
+          created_at?: string
+          drop_id: string
+          id?: string
+          result?: string
+          time_sec?: number
+        }
+        Update: {
+          challenger_id?: string
+          challenger_name?: string
+          created_at?: string
+          drop_id?: string
+          id?: string
+          result?: string
+          time_sec?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_challenge_attempts_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "card_drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_drop_collections: {
         Row: {
           collector_id: string
@@ -49,6 +87,12 @@ export type Database = {
       card_drops: {
         Row: {
           card_zoom: number
+          challenge_distance_mi: number | null
+          challenge_finish_lat: number | null
+          challenge_finish_lng: number | null
+          challenge_route: Json | null
+          challenge_set_at: string | null
+          challenge_time_sec: number | null
           copy_index: number
           created_at: string
           crew_code: string
@@ -76,6 +120,12 @@ export type Database = {
         }
         Insert: {
           card_zoom?: number
+          challenge_distance_mi?: number | null
+          challenge_finish_lat?: number | null
+          challenge_finish_lng?: number | null
+          challenge_route?: Json | null
+          challenge_set_at?: string | null
+          challenge_time_sec?: number | null
           copy_index?: number
           created_at?: string
           crew_code: string
@@ -103,6 +153,12 @@ export type Database = {
         }
         Update: {
           card_zoom?: number
+          challenge_distance_mi?: number | null
+          challenge_finish_lat?: number | null
+          challenge_finish_lng?: number | null
+          challenge_route?: Json | null
+          challenge_set_at?: string | null
+          challenge_time_sec?: number | null
           copy_index?: number
           created_at?: string
           crew_code?: string
@@ -710,6 +766,11 @@ export type Database = {
         }
         Returns: {
           card_zoom: number
+          challenge_distance_mi: number
+          challenge_finish_lat: number
+          challenge_finish_lng: number
+          challenge_route: Json
+          challenge_time_sec: number
           collected: boolean
           created_at: string
           id: string
