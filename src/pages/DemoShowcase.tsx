@@ -996,6 +996,70 @@ function BlacktopWorldMockup() {
 
 
 
+function DerezMockup() {
+  const [tick, setTick] = useState(0);
+  const riders = [
+    { color: 'text-orange-500', trail: 'M20 20 L20 40 L20 60 L40 60 L60 60 L60 40 L60 20 L40 20', speed: 0.018 },
+    { color: 'text-blue-500', trail: 'M80 80 L80 60 L80 40 L60 40 L40 40 L40 60 L40 80 L60 80', speed: 0.016 },
+    { color: 'text-pink-500', trail: 'M20 90 L35 90 L50 90 L50 75 L50 60 L35 60 L20 60 L20 75', speed: 0.014 },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => (t + 1) % 200), 80);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="relative aspect-square rounded-2xl border border-border/30 bg-[#0a0a0c] overflow-hidden animate-scale-in">
+        {/* Arena boundary */}
+        <svg className="absolute inset-0 w-full h-full p-4" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+          <polygon
+            points="10,10 90,10 90,90 50,95 10,90"
+            fill="none"
+            stroke="hsl(var(--accent))"
+            strokeWidth="1"
+            strokeDasharray="3 2"
+            opacity="0.6"
+          />
+          {riders.map((r, i) => (
+            <g key={i} opacity={0.85}>
+              <path d={r.trail} fill="none" stroke="currentColor" strokeWidth="2.5" className={r.color} />
+            </g>
+          ))}
+        </svg>
+
+        {/* Moving rider dots */}
+        {riders.map((r, i) => {
+          const len = 8;
+          const pos = Math.floor((tick * len * r.speed) % len);
+          const points = r.trail.replace(/M|L/g, ' ').trim().split(' ').map(Number);
+          const x = points[pos * 2] ?? 50;
+          const y = points[pos * 2 + 1] ?? 50;
+          return (
+            <div
+              key={`dot-${i}`}
+              className={cn(
+                'absolute w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 shadow-[0_0_8px_currentColor]',
+                r.color.replace('text-', 'bg-')
+              )}
+              style={{ left: `${x}%`, top: `${y}%`, transition: 'all 80ms linear' }}
+            />
+          );
+        })}
+
+        {/* Countdown / status */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent animate-pulse">
+          3 · 2 · 1 · GO
+        </div>
+      </div>
+      <p className="text-[10px] text-center text-muted-foreground">
+        Leader draws the arena · riders leave coloured walls · last one riding wins
+      </p>
+    </div>
+  );
+}
+
 function BurnMockup() {
 
   const [burned, setBurned] = useState(false);
