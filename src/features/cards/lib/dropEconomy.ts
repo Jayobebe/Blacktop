@@ -6,7 +6,8 @@
  *   • every card tier milestone reached (Bronze, Silver, Gold, …) on any bike
  *   • every weekly crew challenge you complete
  *
- * Copy 2 goes in your own vault. From copy 3 onward copies become droppable.
+ * Your own card is always in your vault by default; every earned copy from copy 2
+ * onward is droppable.
  */
 import { TIER_LADDER } from '../types';
 
@@ -48,7 +49,7 @@ export function grantChallengeCopy(week: string): boolean {
 export interface CopyLedger {
   /** Total copies in existence, including the one locked in Stats. */
   total: number;
-  /** Copies that may be planted on the map (total − stats copy − vault copy). */
+  /** Copies that may be planted on the map (total − the copy locked in Stats). */
   droppable: number;
   /** Copies currently planted. */
   placed: number;
@@ -58,6 +59,6 @@ export interface CopyLedger {
 
 export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
   const total = 1 + tierCopiesEarned(ridesPerBike) + claimedChallengeWeeks().length;
-  const droppable = Math.max(0, total - 2);
+  const droppable = Math.max(0, total - 1);
   return { total, droppable, placed, available: Math.max(0, droppable - placed) };
 }
