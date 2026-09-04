@@ -339,6 +339,8 @@ export function DestinationSearch({
   const [recentLocations, setRecentLocations] = useState<SearchResult[]>([]);
   const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>(() => getSavedPOIs());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const { settings } = useSettings();
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
