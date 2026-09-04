@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw, Scan, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/lib/utils';
@@ -32,9 +32,40 @@ export function VehicleCard({ card }: Props) {
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [pans, setPans] = useLocalStorage<Record<string, { x: number; y: number }>>(
+    'bt.cards.pan.v1',
+    {},
+  );
   const [resizing, setResizing] = useState(false);
   const zoom = zooms[card.bike.id] ?? 1;
+  const pan = pans[card.bike.id] ?? { x: 0, y: 0 };
   const setZoom = (v: number) => setZooms((prev) => ({ ...prev, [card.bike.id]: v }));
+  const setPan = (p: { x: number; y: number }) =>
+    setPans((prev) => ({ ...prev, [card.bike.id]: p }));
+
+  // Drag-to-pan the whole card image (backdrop + vehicle) while in resize mode.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+
+  const onPanDown = (e: React.PointerEvent) => {
+    if (!resizing || locked) return;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+  };
+  const onPanMove = (e: React.PointerEvent) => {
+    if (!dragRef.current || !frameRef.current) return;
+    const rect = frameRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - dragRef.current.x) / rect.width) * 100;
+    const dy = ((e.clientY - dragRef.current.y) / rect.height) * 100;
+    const limit = 60;
+    setPan({
+      x: Math.max(-limit, Math.min(limit, dragRef.current.px + dx)),
+      y: Math.max(-limit, Math.min(limit, dragRef.current.py + dy)),
+    });
+  };
+  const onPanUp = () => {
+    dragRef.current = null;
+  };
 
   const shareable = !locked && settings.blacktopWorldEnabled;
   const hero = card.bike.photos.hero;
@@ -155,12 +186,22 @@ export function VehicleCard({ card }: Props) {
             </div>
 
             {/* Hero photo — sits inside Mecha-Nick's garage */}
-            <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10">
+            <div
+              ref={frameRef}
+              className={cn(
+                'relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10',
+                resizing && !locked && 'cursor-grab active:cursor-grabbing touch-none',
+              )}
+              onPointerDown={onPanDown}
+              onPointerMove={onPanMove}
+              onPointerUp={onPanUp}
+              onPointerCancel={onPanUp}
+            >
               <div
-                className="absolute inset-0 bg-cover bg-center origin-center transition-transform duration-200"
+                className="absolute inset-0 bg-cover bg-center origin-center"
                 style={{
                   backgroundImage: `url(${garageShopAsset.url})`,
-                  transform: `scale(${zoom})`,
+                  transform: `translate(${pan.x}%, ${pan.y}%) scale(${zoom})`,
                 }}
               >
                 <div className="absolute inset-0 bg-black/20" />
@@ -196,8 +237,11 @@ export function VehicleCard({ card }: Props) {
                 </div>
               )}
               {resizing && !locked && (
-                <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15">
-                  <span className="text-[8px] uppercase tracking-widest text-white/70">Zoom</span>
+                <div
+                  className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15"
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <span className="text-[8px] uppercase tracking-widest text-white/70">Drag &amp; zoom</span>
                   <input
                     type="range"
                     min={0.6}

@@ -1,31 +1,83 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import nickAsset from '@/assets/mecha-nick.png.asset.json';
 
 interface MechaNickProps {
+  /** Highest-priority message — always shown first when present. */
   tip?: string | null;
+  /** Contextual lines Nick cycles through automatically. */
+  lines?: string[];
   className?: string;
 }
 
-const DEFAULT_TIPS = [
-  "Looking sharp out there.",
-  "Chain's looking dry…",
-  "Nice numbers today.",
-  "Ride safe, ride often.",
-  "Tank's not gonna fill itself.",
+const FALLBACK_LINES = [
+  'Ride safe, ride often.',
+  'Tank\'s not gonna fill itself.',
+  'Keep the shiny side up.',
 ];
 
-export function MechaNick({ tip, className }: MechaNickProps) {
-  const [open, setOpen] = useState(false);
-  const fallback = useMemo(
-    () => DEFAULT_TIPS[Math.floor(Math.random() * DEFAULT_TIPS.length)],
-    [],
-  );
-  const message = tip ?? fallback;
+/** Time a message stays on screen, and the quiet gap between messages. */
+const SHOW_MS = 7000;
+const GAP_MS = 5000;
+
+export function MechaNick({ tip, lines, className }: MechaNickProps) {
+  const pool = useMemo(() => {
+    const merged = [...(tip ? [tip] : []), ...(lines?.length ? lines : FALLBACK_LINES)];
+    return Array.from(new Set(merged.filter(Boolean)));
+  }, [tip, lines]);
+
+  const [message, setMessage] = useState<string | null>(null);
+  const lastRef = useRef<string | null>(null);
+  const poolRef = useRef(pool);
+  poolRef.current = pool;
+
+  const pickNext = useCallback(() => {
+    const p = poolRef.current;
+    if (!p.length) return null;
+    const options = p.length > 1 ? p.filter((l) => l !== lastRef.current) : p;
+    const next = options[Math.floor(Math.random() * options.length)];
+    lastRef.current = next;
+    return next;
+  }, []);
+
+  // Auto speech loop: show a line, hold it long enough to read, pause, repeat.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+
+    const show = () => {
+      if (cancelled) return;
+      setMessage(pickNext());
+      timer = setTimeout(hide, SHOW_MS);
+    };
+    const hide = () => {
+      if (cancelled) return;
+      setMessage(null);
+      timer = setTimeout(show, GAP_MS);
+    };
+
+    timer = setTimeout(show, 800);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [pickNext]);
+
+  // A new priority tip interrupts the loop immediately.
+  useEffect(() => {
+    if (tip) {
+      lastRef.current = tip;
+      setMessage(tip);
+    }
+  }, [tip]);
+
+  const speakNow = () => {
+    setMessage(pickNext());
+  };
 
   return (
     <div className={cn('relative flex flex-col items-end', className)}>
-      {open && (
+      {message && (
         <div className="mb-2 max-w-[180px] rounded-2xl rounded-br-sm bg-card border border-border/40 px-3 py-2 text-xs leading-snug shadow-lg animate-scale-in">
           <span className="block text-[10px] uppercase tracking-widest text-accent mb-0.5">
             Mecha-Nick
@@ -35,7 +87,7 @@ export function MechaNick({ tip, className }: MechaNickProps) {
       )}
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={speakNow}
         className="relative h-[260px] w-32 sm:h-[300px] sm:w-36 select-none focus:outline-none"
         aria-label="Talk to Mecha-Nick"
       >
@@ -43,7 +95,7 @@ export function MechaNick({ tip, className }: MechaNickProps) {
           src={nickAsset.url}
           alt="Mecha-Nick the mechanic"
           draggable={false}
-          className={`absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)] ${open ? 'animate-nick-bob' : ''}`}
+          className={`absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)] ${message ? 'animate-nick-bob' : ''}`}
         />
       </button>
     </div>

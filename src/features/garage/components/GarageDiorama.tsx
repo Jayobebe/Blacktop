@@ -6,6 +6,8 @@ import shopAsset from '@/assets/garage-shop.png.asset.json';
 interface Props {
   bike: Bike | null;
   tip?: string | null;
+  /** Contextual dialogue lines for Mecha-Nick. */
+  nickLines?: string[];
   /** When true, the bike can be dragged & resized. */
   editing?: boolean;
   /** Live placement updates while editing. */
@@ -21,7 +23,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
  * When `editing` is true, the bike PNG becomes draggable and a size slider is
  * shown. Position/size are reported back through `onPlacementChange`.
  */
-export function GarageDiorama({ bike, tip, editing = false, onPlacementChange }: Props) {
+export function GarageDiorama({ bike, tip, nickLines, editing = false, onPlacementChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initial = bike?.placement ?? DEFAULT_BIKE_PLACEMENT;
   const [placement, setPlacement] = useState<BikePlacement>(initial);
@@ -151,7 +153,7 @@ export function GarageDiorama({ bike, tip, editing = false, onPlacementChange }:
       {/* Nick — right side, on top */}
       <div className="relative px-4 pt-5 pb-3 h-[360px] sm:h-[400px] flex items-end justify-end pointer-events-none">
         <div className="pointer-events-auto">
-          <MechaNick tip={tip} className="flex-shrink-0 self-end -mr-1" />
+          <MechaNick tip={tip} lines={nickLines} className="flex-shrink-0 self-end -mr-1" />
         </div>
       </div>
 
