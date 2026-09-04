@@ -5,7 +5,7 @@ import { useSettings } from '@/features/settings';
 import { useGarage } from '@/features/garage';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Disc3 as BikeIcon } from 'lucide-react';
+import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Timer, Disc3 as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
