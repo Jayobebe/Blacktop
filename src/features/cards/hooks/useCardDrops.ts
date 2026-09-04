@@ -72,7 +72,7 @@ type DropRow = {
   max_g_force: number;
   collected?: boolean;
   is_own?: boolean;
-  challenge_route?: ChallengePoint[] | null;
+  challenge_route?: unknown;
   challenge_time_sec?: number | null;
   challenge_distance_mi?: number | null;
   challenge_finish_lat?: number | null;
@@ -162,7 +162,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
         _crew_code: crew.code,
       });
       if (error) throw error;
-      return ((data ?? []) as DropRow[]).map(toDrop);
+      return ((data ?? []) as unknown as DropRow[]).map(toDrop);
     },
   });
 
@@ -182,7 +182,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
         .eq('owner_id', user!.id)
         .eq('is_active', true);
       if (error) throw error;
-      return ((data ?? []) as DropRow[]).map((r) => toDrop({ ...r, is_own: true }));
+      return ((data ?? []) as unknown as DropRow[]).map((r) => toDrop({ ...r, is_own: true }));
     },
   });
 
@@ -239,7 +239,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       const { error } = await supabase
         .from('card_drops')
         .update({
-          challenge_route: compactRoute(args.route),
+          challenge_route: compactRoute(args.route) as unknown as never,
           challenge_time_sec: Math.max(1, Math.round(args.timeSec)),
           challenge_distance_mi: args.distanceMi,
           challenge_finish_lat: args.finish.lat,
@@ -283,7 +283,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
         _lng: args.lng,
       });
       if (error) throw error;
-      const row = ((data ?? []) as DropRow[])[0];
+      const row = ((data ?? []) as unknown as DropRow[])[0];
       if (!row) throw new Error('too_far');
       return toDrop({ ...row, collected: true });
     },
