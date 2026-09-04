@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
-import { ArrowLeft, Route, Clock, TrendingUp, Hash, Users, Trophy, Zap } from 'lucide-react';
+import { ArrowLeft, Route, Clock, TrendingUp, Hash, Users, Zap } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import { VehicleCardCarousel } from '@/features/cards';
+import { BadgeWalletPanel } from '@/features/ride';
 
 export default function Stats() {
   const navigate = useNavigate();
@@ -50,35 +50,6 @@ export default function Stats() {
     },
   ];
 
-  const badgeCards = [
-    {
-      type: 'speed-demon',
-      emoji: '⚡',
-      label: 'Speed Demon',
-      description: 'Highest top speed',
-      count: stats.badges.speedDemon,
-      color: 'yellow',
-    },
-    {
-      type: 'journeyman',
-      emoji: '🛣️',
-      label: 'Journeyman',
-      description: 'Most distance',
-      count: stats.badges.journeyman,
-      color: 'blue',
-    },
-    {
-      type: 'fallback',
-      emoji: '🪨',
-      label: 'Fallback',
-      description: 'Longest stationary',
-      count: stats.badges.fallback,
-      color: 'stone',
-    },
-  ];
-
-  const totalBadges = stats.badges.speedDemon + stats.badges.journeyman + stats.badges.fallback;
-
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
       {/* Header */}
@@ -101,45 +72,7 @@ export default function Stats() {
 
         {/* Badges Section */}
         <div className="landscape:flex-1 landscape:overflow-y-auto">
-          <div className="flex items-center gap-2 mb-3 landscape:mb-2">
-            <Trophy className="w-4 h-4 text-accent" />
-            <h2 className="text-sm font-semibold">Convoy Badges</h2>
-            <span className="ml-auto text-xs text-muted-foreground">{totalBadges} earned</span>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2">
-            {badgeCards.map((badge, index) => (
-              <div
-                key={badge.type}
-                className={cn(
-                  "flex flex-col items-center p-4 landscape:p-3 rounded-2xl border transition-all animate-scale-in",
-                  badge.color === 'yellow' && "bg-yellow-500/10 border-yellow-500/30",
-                  badge.color === 'blue' && "bg-blue-500/10 border-blue-500/30",
-                  badge.color === 'stone' && "bg-stone-500/10 border-stone-500/30",
-                  badge.count === 0 && "opacity-50"
-                )}
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                <span className="text-3xl landscape:text-2xl mb-2">{badge.emoji}</span>
-                <span className={cn(
-                  "font-mono text-2xl landscape:text-xl font-bold",
-                  badge.color === 'yellow' && "text-yellow-400",
-                  badge.color === 'blue' && "text-blue-400",
-                  badge.color === 'stone' && "text-stone-400"
-                )}>
-                  {badge.count}
-                </span>
-                <span className={cn(
-                  "text-[10px] font-medium text-center mt-1",
-                  badge.color === 'yellow' && "text-yellow-400",
-                  badge.color === 'blue' && "text-blue-400",
-                  badge.color === 'stone' && "text-stone-400"
-                )}>
-                  {badge.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          <BadgeWalletPanel />
         </div>
 
         {/* Stats Grid */}
