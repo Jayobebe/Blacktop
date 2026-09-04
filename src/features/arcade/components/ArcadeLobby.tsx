@@ -50,7 +50,7 @@ export function ArcadeLobby() {
         </button>
 
         <button
-          onClick={() => navigate('/arcade/legacy-derez')}
+          onClick={() => navigate('/arcade/derez-legacy')}
           className="col-span-2 flex items-center gap-3 py-5 px-4 bg-card/50 border border-border/30 rounded-2xl
                      hover:bg-card/70 hover:border-accent/40 active:scale-[0.98] transition-all duration-200"
         >
@@ -58,7 +58,7 @@ export function ArcadeLobby() {
             <Bike className="w-5 h-5 text-accent" />
           </div>
           <div className="text-left flex-1 min-w-0">
-            <div className="text-sm font-semibold tracking-tight text-white leading-none">Legacy Derez</div>
+            <div className="text-sm font-semibold tracking-tight text-white leading-none">Derez Legacy</div>
             <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">Real-world lightcycles · 2-8 riders</div>
           </div>
           <div className="text-[10px] text-muted-foreground text-right">

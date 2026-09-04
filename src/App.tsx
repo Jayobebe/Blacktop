@@ -43,7 +43,7 @@ import CrewChallenges from "./pages/CrewChallenges";
 import Arcade from "./pages/Arcade";
 import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
 import ArcadePetrolHead from "./pages/ArcadePetrolHead";
-import ArcadeLegacyDerez from "./pages/ArcadeLegacyDerez";
+import ArcadeDerezLegacy from "./pages/ArcadeDerezLegacy";
 
 
 function AppRoutes() {
@@ -90,8 +90,8 @@ function AppRoutes() {
       <Route path="/arcade" element={<Arcade />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
-      <Route path="/arcade/legacy-derez" element={<ArcadeLegacyDerez />} />
-      <Route path="/arcade/legacy-derez/:code" element={<ArcadeLegacyDerez />} />
+      <Route path="/arcade/derez-legacy" element={<ArcadeDerezLegacy />} />
+      <Route path="/arcade/derez-legacy/:code" element={<ArcadeDerezLegacy />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
