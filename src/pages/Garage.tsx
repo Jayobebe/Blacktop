@@ -27,6 +27,7 @@ import {
   MaintenanceList,
 } from '@/features/garage';
 import { BikePhotos } from '@/features/garage';
+import { buildNickLines } from '@/features/garage/lib/nickLines';
 import { toast } from 'sonner';
 
 
@@ -65,6 +66,8 @@ export default function Garage() {
     if (due) return `Heads up — ${due.m.name.toLowerCase()} due in ${Math.round(due.dueIn)} km.`;
     return null;
   }, [activeBike, stats.odometerKm]);
+
+  const nickLines = useMemo(() => buildNickLines(activeBike, stats), [activeBike, stats]);
 
   const idx = activeBikeId ? bikes.findIndex((b) => b.id === activeBikeId) : -1;
   const cycle = (dir: 1 | -1) => {
@@ -213,6 +216,7 @@ export default function Garage() {
       <GarageDiorama
         bike={activeBike}
         tip={placing ? null : tip}
+        nickLines={nickLines}
         editing={placing}
         onPlacementChange={setDraftPlacement}
       />
