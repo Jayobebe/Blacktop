@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, Lock, Gauge, Route, Clock, Hash, Sparkles, Zap, RotateCw, Scan, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/lib/utils';
@@ -186,12 +186,22 @@ export function VehicleCard({ card }: Props) {
             </div>
 
             {/* Hero photo — sits inside Mecha-Nick's garage */}
-            <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10">
+            <div
+              ref={frameRef}
+              className={cn(
+                'relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10',
+                resizing && !locked && 'cursor-grab active:cursor-grabbing touch-none',
+              )}
+              onPointerDown={onPanDown}
+              onPointerMove={onPanMove}
+              onPointerUp={onPanUp}
+              onPointerCancel={onPanUp}
+            >
               <div
-                className="absolute inset-0 bg-cover bg-center origin-center transition-transform duration-200"
+                className="absolute inset-0 bg-cover bg-center origin-center"
                 style={{
                   backgroundImage: `url(${garageShopAsset.url})`,
-                  transform: `scale(${zoom})`,
+                  transform: `translate(${pan.x}%, ${pan.y}%) scale(${zoom})`,
                 }}
               >
                 <div className="absolute inset-0 bg-black/20" />
