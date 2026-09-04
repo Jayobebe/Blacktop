@@ -904,13 +904,28 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   );
   const { addCard } = useCollectedCards();
   const { cards } = useVehicleCards();
-  const [selectedDrop, setSelectedDrop] = useState<CardDrop | null>(null);
+  const [selectedStack, setSelectedStack] = useState<CardDrop[] | null>(null);
+  const selectedDrop = selectedStack?.length === 1 ? selectedStack[0] : null;
   const [droppingCard, setDroppingCard] = useState(false);
+  const [pendingDrop, setPendingDrop] = useState<{ lat: number; lng: number } | null>(null);
   const cardMarkersRef = useRef<Marker[]>([]);
 
   const placedCount = drops.filter((d) => d.isOwn).length;
   const ledger = copyLedger(cards.map((c) => c.stats.totalRides), placedCount);
   const canDropCard = cardsEnabled && !rideState.isActive && ledger.available > 0 && cards.length > 0;
+
+  // Drops within ~55m of each other read as one hot-spot stack on the map.
+  const cardStacks = useMemo(() => {
+    const buckets = new Map<string, CardDrop[]>();
+    for (const d of drops) {
+      const key = `${d.lat.toFixed(3)}:${d.lng.toFixed(3)}`;
+      const list = buckets.get(key);
+      if (list) list.push(d);
+      else buckets.set(key, [d]);
+    }
+    return Array.from(buckets.values());
+  }, [drops]);
+
 
   // Landmark-style card markers — home map only, so ride navigation stays clean.
   useEffect(() => {
