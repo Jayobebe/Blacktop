@@ -24,7 +24,7 @@ import { useMapPresentUserIds } from '../hooks/useMapPresence';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 
-import { useActiveRide, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute, setSoloRoute } from '@/features/ride';
+import { useActiveRide, recordBadges, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute, setSoloRoute } from '@/features/ride';
 import { useConvoyMembers, useConvoyState } from '@/features/convoy';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
@@ -37,6 +37,25 @@ import { useRescueBridge } from '@/features/rescue';
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from '@/features/cards/hooks/useCardDrops';
 import { useCollectedCards, useVehicleCards, TIER_STYLES, useCardKickbacks } from '@/features/cards';
 import { copyLedger } from '@/features/cards/lib/dropEconomy';
+import {
+  CHALLENGE_COUNTDOWN_MS,
+  CHALLENGE_WIN_BADGES,
+  DEVIATION_GRACE_MS,
+  DEVIATION_LIMIT_M,
+  distanceToRoute,
+  formatChallengeTime,
+  formatDelta,
+  hasCrossedFinish,
+  scoreAttempt,
+} from '@/features/cards/lib/challenge';
+import {
+  clearChallengeRun,
+  setPendingChallengeReceipt,
+  startChallengeRun,
+  updateChallengeRun,
+  useChallengeRun,
+  type ChallengeResult,
+} from '@/lib/challengeRun';
 import { uploadCardPhoto } from '@/features/cards/lib/cardPhoto';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
@@ -218,7 +237,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
   const { user, profile } = useProfile();
-  const { rideState } = useActiveRide();
+  const { rideState, startRide, endRide } = useActiveRide();
   const convoyMembers = useConvoyMembers();
   const nextWaypoint = useNextWaypoint();
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
@@ -899,7 +918,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // ── Card drops (Blacktop World trading cards planted on the map) ─────────
   const cardsEnabled = settings.blacktopWorldEnabled;
-  const { drops, myDrops, collectDrop, placeDrop, pickUpDrop } = useCardDrops(
+  const { drops, myDrops, collectDrop, placeDrop, pickUpDrop, setChallenge, recordAttempt } = useCardDrops(
     cardsEnabled ? userLocation : null,
   );
   const { addCard } = useCollectedCards();
@@ -1002,7 +1021,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     setPendingDrop({ lat: userLocation.lat, lng: userLocation.lng });
   }, [droppingCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const confirmDropCard = async () => {
+  const confirmDropCard = async (withChallenge = false) => {
     if (!pendingDrop) return;
     const card = cards[0];
     const spot = pendingDrop;
@@ -1013,18 +1032,174 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       const photoPath = card.bike.photos?.hero
         ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
         : null;
-      await placeDrop.mutateAsync({
+      const dropId = await placeDrop.mutateAsync({
         card,
         lat: spot.lat,
         lng: spot.lng,
         copyIndex: placedCount + 1,
         photoPath,
       });
-      toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
+      if (!withChallenge) {
+        toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
+        return;
+      }
+      startChallengeRun({
+        mode: 'setting',
+        dropId,
+        vehicleName: card.bike.name,
+        ownerName: profile?.name || 'Rider',
+        tier: card.tier,
+        start: spot,
+        route: [],
+        finish: null,
+        targetSec: null,
+        startsAt: Date.now() + CHALLENGE_COUNTDOWN_MS,
+        offRouteSince: null,
+        voided: false,
+      });
+      startRide(false);
+      toast.success('Challenge armed', { description: 'Ride your route, then hit Finish challenge.' });
     } catch {
       toast.error("Couldn't drop that card");
     }
   };
+
+  // ── Card challenges (time attack attached to a dropped card) ─────────────
+  const challengeRun = useChallengeRun();
+  const [challengeNow, setChallengeNow] = useState(Date.now());
+  useEffect(() => {
+    if (!challengeRun) return;
+    const id = setInterval(() => setChallengeNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [challengeRun]);
+
+  const challengeCountdown = challengeRun
+    ? Math.ceil((challengeRun.startsAt - challengeNow) / 1000)
+    : 0;
+  const challengeElapsedSec = challengeRun
+    ? Math.max(0, (challengeNow - challengeRun.startsAt) / 1000)
+    : 0;
+
+  /** Owner finishes setting a route: the current spot becomes the finish line. */
+  const finishSettingChallenge = async () => {
+    if (!challengeRun || challengeRun.mode !== 'setting') return;
+    if (!userLocation) {
+      toast.error('Need your location to set the finish line');
+      return;
+    }
+    const timeSec = Math.max(1, Math.round((Date.now() - challengeRun.startsAt) / 1000));
+    const route = rideState.gpsPoints.map((p) => ({ lat: p.lat, lng: p.lng }));
+    const finish = { lat: userLocation.lat, lng: userLocation.lng };
+    try {
+      await setChallenge.mutateAsync({
+        dropId: challengeRun.dropId,
+        route: route.length > 1 ? route : [challengeRun.start, finish],
+        timeSec,
+        distanceMi: rideState.distance,
+        finish,
+      });
+      setPendingChallengeReceipt({
+        dropId: challengeRun.dropId,
+        vehicleName: challengeRun.vehicleName,
+        ownerName: challengeRun.ownerName,
+        tier: challengeRun.tier,
+        role: 'set',
+        targetSec: null,
+        timeSec,
+        route,
+      });
+      toast.success('Challenge set', {
+        description: `Time to beat: ${formatChallengeTime(timeSec)}`,
+      });
+    } catch {
+      toast.error("Couldn't save that challenge");
+    }
+    clearChallengeRun();
+    await endRide();
+  };
+
+  /** Challenger crosses the line (or gets voided). */
+  const finalizeAttempt = async (result: ChallengeResult, timeSec: number) => {
+    if (!challengeRun || challengeRun.mode !== 'attempting') return;
+    const run = challengeRun;
+    clearChallengeRun();
+    recordBadges(result === 'won' ? Array(CHALLENGE_WIN_BADGES).fill('speed-demon') : ['fallback']);
+    setPendingChallengeReceipt({
+      dropId: run.dropId,
+      vehicleName: run.vehicleName,
+      ownerName: run.ownerName,
+      tier: run.tier,
+      role: 'attempt',
+      targetSec: run.targetSec,
+      timeSec,
+      result,
+      route: run.route,
+    });
+    recordAttempt.mutate({ dropId: run.dropId, timeSec, result });
+    if (result === 'won') {
+      toast.success('Challenge beaten', {
+        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon earned`,
+      });
+    } else if (result === 'void') {
+      toast.error('Challenge voided', { description: 'You strayed off the route. 1x Fallback.' });
+    } else {
+      toast('Challenge lost', {
+        description: `${formatChallengeTime(timeSec)} vs ${formatChallengeTime(run.targetSec ?? 0)} · 1x Fallback`,
+      });
+    }
+    await endRide();
+  };
+
+  /** Start an attempt on a card's challenge — must be within pick-up range. */
+  const takeChallenge = (drop: CardDrop) => {
+    if (!drop.challenge) return;
+    if (!userLocation || metersBetween(userLocation, drop) > COLLECT_RADIUS_M) {
+      toast.error('Get closer to the card to take its challenge');
+      return;
+    }
+    setSelectedStack(null);
+    startChallengeRun({
+      mode: 'attempting',
+      dropId: drop.id,
+      vehicleName: drop.vehicleName,
+      ownerName: drop.ownerName,
+      tier: drop.tier,
+      start: { lat: drop.lat, lng: drop.lng },
+      route: drop.challenge.route,
+      finish: drop.challenge.finish,
+      targetSec: drop.challenge.timeSec,
+      startsAt: Date.now() + CHALLENGE_COUNTDOWN_MS,
+      offRouteSince: null,
+      voided: false,
+    });
+    startRide(false);
+  };
+
+  // Live attempt policing: route deviation and finish-line detection.
+  useEffect(() => {
+    if (!challengeRun || challengeRun.mode !== 'attempting' || !userLocation) return;
+    if (Date.now() < challengeRun.startsAt) return;
+    const here = { lat: userLocation.lat, lng: userLocation.lng };
+
+    const off = distanceToRoute(here, challengeRun.route) > DEVIATION_LIMIT_M;
+    if (off) {
+      const since = challengeRun.offRouteSince ?? Date.now();
+      if (challengeRun.offRouteSince == null) updateChallengeRun({ offRouteSince: since });
+      if (Date.now() - since > DEVIATION_GRACE_MS) {
+        void finalizeAttempt('void', (Date.now() - challengeRun.startsAt) / 1000);
+        return;
+      }
+    } else if (challengeRun.offRouteSince != null) {
+      updateChallengeRun({ offRouteSince: null });
+    }
+
+    // Ignore the finish line for the first few seconds when start and finish
+    // sit close together (short loops), so the run can't instantly complete.
+    const elapsed = (Date.now() - challengeRun.startsAt) / 1000;
+    if (elapsed > 5 && hasCrossedFinish(here, challengeRun.finish)) {
+      void finalizeAttempt(scoreAttempt(elapsed, challengeRun.targetSec ?? elapsed, false), elapsed);
+    }
+  }, [challengeRun, userLocation, challengeNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // Proximity ping while riding without a destination.
@@ -1559,8 +1734,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             <>
               <p className="font-semibold">Place card here?</p>
               <div className="flex gap-2 mt-2">
-                <Button size="sm" className="h-7 px-4 text-xs" onClick={confirmDropCard}>
+                <Button size="sm" className="h-7 px-4 text-xs" onClick={() => confirmDropCard(false)}>
                   Yes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 px-3 text-xs"
+                  onClick={() => confirmDropCard(true)}
+                >
+                  Yes + Challenge
                 </Button>
                 <Button
                   size="sm"
