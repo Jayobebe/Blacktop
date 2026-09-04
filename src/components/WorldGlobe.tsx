@@ -198,9 +198,7 @@ function drawLandmark(
   // Hit area covers the whole landmark: chip, stalk and surface anchor dot,
   // with generous padding so the full visible beacon is tappable.
   const pad = 10;
-  const hx = Math.min(bx, x) - pad;
-  const hw = Math.max(w, 0) + (Math.abs(x - bx) + pad) * 1 + pad; // ensure chip width + anchor side covered
-  const fullW = Math.max(w + pad * 2, Math.abs(x - bx) * 2 + pad * 2);
+  const fullW = Math.max(w, Math.abs(x - bx) * 2) + pad * 2;
   return { x: x - fullW / 2, y: by - pad, w: fullW, h: y + 8 - (by - pad) };
 }
 
