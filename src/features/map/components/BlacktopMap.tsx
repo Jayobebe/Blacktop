@@ -1551,10 +1551,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       </div>
 
       {droppingCard && (
-        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs">
-          Place card here? · {ledger.available} spare
+        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs text-center">
+          {pendingDrop ? (
+            <>
+              <p className="font-semibold">Place card here?</p>
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" className="h-7 px-4 text-xs" onClick={confirmDropCard}>
+                  Yes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-4 text-xs"
+                  onClick={() => setPendingDrop(null)}
+                >
+                  No
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>Place card here? · {ledger.available} spare</>
+          )}
         </div>
       )}
+
 
       {showLoopPlanner && (
         <LoopPlannerPanel
