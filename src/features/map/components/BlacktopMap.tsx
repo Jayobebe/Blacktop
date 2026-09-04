@@ -933,45 +933,53 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     cardMarkersRef.current = [];
     if (!map || !cardsEnabled || rideState.isActive) return;
 
-    drops.forEach((drop) => {
-      const style = TIER_STYLES[drop.tier] ?? TIER_STYLES.locked;
+    cardStacks.forEach((stack) => {
+      const head = stack[0];
+      const count = stack.length;
+      const allCollected = stack.every((d) => d.collected || d.isOwn);
+      // Hot-spot heat: more cards stacked here, hotter the landmark reads.
+      const heat = count >= 5 ? 3 : count >= 3 ? 2 : count >= 2 ? 1 : 0;
+      const heatColor = ['', 'hsl(45 93% 58%)', 'hsl(25 95% 55%)', 'hsl(0 84% 60%)'][heat];
+      const edge = allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor;
       const el = document.createElement('div');
-      el.style.width = '30px';
-      el.style.height = '38px';
+      el.style.position = 'relative';
+      el.style.width = count > 1 ? '34px' : '30px';
+      el.style.height = count > 1 ? '42px' : '38px';
       el.style.borderRadius = '6px';
       el.style.cursor = 'pointer';
       el.style.display = 'flex';
       el.style.alignItems = 'center';
       el.style.justifyContent = 'center';
       el.style.background = 'linear-gradient(145deg, rgba(30,30,32,0.96), rgba(10,10,12,0.96))';
-      el.style.border = drop.collected
-        ? '1.5px solid hsl(142 71% 45%)'
-        : `1.5px solid ${accentColor}`;
-      el.style.boxShadow = drop.collected
+      el.style.border = `1.5px solid ${edge}`;
+      el.style.boxShadow = allCollected
         ? '0 0 8px hsl(142 71% 45% / 0.6)'
-        : '0 2px 8px rgba(0,0,0,0.7)';
+        : heat
+          ? `0 0 ${6 + heat * 4}px ${heatColor}`
+          : '0 2px 8px rgba(0,0,0,0.7)';
       el.setAttribute('role', 'button');
-      el.setAttribute('aria-label', `${drop.ownerName}'s ${drop.vehicleName} card`);
-      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${drop.collected ? 'hsl(142 71% 45%)' : accentColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
-      if (drop.collected) {
-        const tick = document.createElement('span');
-        tick.textContent = '✓';
-        tick.style.cssText =
-          'position:absolute;top:-6px;right:-6px;width:15px;height:15px;border-radius:50%;background:hsl(142 71% 45%);color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;';
-        el.style.position = 'relative';
-        el.appendChild(tick);
-      }
+      el.setAttribute(
+        'aria-label',
+        count > 1
+          ? `Card hot-spot · ${count} cards`
+          : `${head.ownerName}'s ${head.vehicleName} card`,
+      );
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${edge}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
+      const badge = document.createElement('span');
+      badge.textContent = allCollected ? '✓' : String(count);
+      badge.style.cssText = `position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:${allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor};color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;`;
+      if (allCollected || count > 1) el.appendChild(badge);
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        setSelectedDrop(drop);
+        setSelectedStack(stack);
       });
 
       const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([drop.lng, drop.lat])
+        .setLngLat([head.lng, head.lat])
         .addTo(map);
       cardMarkersRef.current.push(marker);
     });
-  }, [map, drops, cardsEnabled, rideState.isActive, accentColor]);
+  }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
 
   useEffect(() => {
     const markers = cardMarkersRef.current;
@@ -981,32 +989,40 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
   }, []);
 
-  // Plant a card: next tap on the map drops the copy there.
+  // Plant a card: next tap on the map picks the spot, then the rider confirms.
   useEffect(() => {
     if (!map || !droppingCard) return;
-    const handler = async (e: maplibregl.MapMouseEvent) => {
-      setDroppingCard(false);
-      const card = cards[0];
-      if (!card) return;
-      try {
-        const photoPath = card.bike.photos?.hero
-          ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
-          : null;
-        await placeDrop.mutateAsync({
-          card,
-          lat: e.lngLat.lat,
-          lng: e.lngLat.lng,
-          copyIndex: placedCount + 3,
-          photoPath,
-        });
-        toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
-      } catch {
-        toast.error("Couldn't drop that card");
-      }
+    const handler = (e: maplibregl.MapMouseEvent) => {
+      setPendingDrop({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     };
     map.on('click', handler);
     return () => { map.off('click', handler); };
-  }, [map, droppingCard, cards, placeDrop, placedCount]);
+  }, [map, droppingCard]);
+
+  const confirmDropCard = async () => {
+    if (!pendingDrop) return;
+    const card = cards[0];
+    const spot = pendingDrop;
+    setPendingDrop(null);
+    setDroppingCard(false);
+    if (!card) return;
+    try {
+      const photoPath = card.bike.photos?.hero
+        ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
+        : null;
+      await placeDrop.mutateAsync({
+        card,
+        lat: spot.lat,
+        lng: spot.lng,
+        copyIndex: placedCount + 3,
+        photoPath,
+      });
+      toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
+    } catch {
+      toast.error("Couldn't drop that card");
+    }
+  };
+
 
   // Proximity ping while riding without a destination.
   const pingedDropsRef = useRef<Set<string>>(new Set());
