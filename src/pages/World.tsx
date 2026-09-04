@@ -188,7 +188,9 @@ export default function World() {
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
+            Card drops are a Blacktop World feature — active only while you're opted in.
             Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
+
             Every time someone collects one of yours, you earn a kickback badge point — your drops keep working for you.
             Earn more from tier milestones, crew challenges, every 4 cards you collect, and 3-day ride
             streaks — up to {MONTHLY_COPY_CAP} bonus copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month). Earn all {MONTHLY_COPY_CAP} and a 10th copy is granted free. Tier copies and 10-badge trades never count against the cap.
