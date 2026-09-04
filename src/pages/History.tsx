@@ -124,6 +124,12 @@ export default function History() {
                           Solo
                         </span>
                       )}
+                      {ride.challenge && (
+                        <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
+                          <Timer className="w-2.5 h-2.5" />
+                          Time attack
+                        </span>
+                      )}
                       {hasBadges && (
                         <span className="flex items-center gap-1 text-[10px] text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-lg font-medium">
                           <Trophy className="w-2.5 h-2.5" />
