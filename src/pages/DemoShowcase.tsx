@@ -997,23 +997,34 @@ function BlacktopWorldMockup() {
 
 
 function DerezMockup() {
-  const [tick, setTick] = useState(0);
-  const riders = [
-    { color: 'text-orange-500', trail: 'M20 20 L20 40 L20 60 L40 60 L60 60 L60 40 L60 20 L40 20', speed: 0.018 },
-    { color: 'text-blue-500', trail: 'M80 80 L80 60 L80 40 L60 40 L40 40 L40 60 L40 80 L60 80', speed: 0.016 },
-    { color: 'text-pink-500', trail: 'M20 90 L35 90 L50 90 L50 75 L50 60 L35 60 L20 60 L20 75', speed: 0.014 },
-  ];
+  // Progressive trails drawn inside the arena; pink dies at 72% of its path,
+  // then the loop resets after a winner flash.
+  const LOOP_MS = 7000;
+  const [t, setT] = useState(0); // 0..1 through the loop
 
   useEffect(() => {
-    const interval = setInterval(() => setTick(t => (t + 1) % 200), 80);
-    return () => clearInterval(interval);
+    const start = performance.now();
+    let raf: number;
+    const step = (now: number) => {
+      setT(((now - start) % LOOP_MS) / LOOP_MS);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, []);
+
+  const riders = [
+    { color: '#f97316', trail: 'M18 25 L45 25 L45 55 L70 55 L70 80', speed: 1.0 },
+    { color: '#3b82f6', trail: 'M82 30 L82 60 L55 60 L55 82 L30 82', speed: 0.92 },
+    // pink steers straight into the orange wall at (45, 38)
+    { color: '#ec4899', trail: 'M20 88 L20 55 L20 38 L42 38 L45 38', speed: 1.0, diesAt: 0.62 },
+  ];
 
   return (
     <div className="w-full max-w-xs space-y-3">
       <div className="relative aspect-square rounded-2xl border border-border/30 bg-[#0a0a0c] overflow-hidden animate-scale-in">
-        {/* Arena boundary */}
-        <svg className="absolute inset-0 w-full h-full p-4" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          {/* Arena boundary */}
           <polygon
             points="10,10 90,10 90,90 50,95 10,90"
             fill="none"
@@ -1022,41 +1033,100 @@ function DerezMockup() {
             strokeDasharray="3 2"
             opacity="0.6"
           />
-          {riders.map((r, i) => (
-            <g key={i} opacity={0.85}>
-              <path d={r.trail} fill="none" stroke="currentColor" strokeWidth="2.5" className={r.color} />
-            </g>
-          ))}
+          {riders.map((r, i) => {
+            const died = r.diesAt !== undefined && t >= r.diesAt;
+            const pct = died ? r.diesAt! / r.speed : Math.min(1, t / r.speed);
+            return (
+              <DerezTrail key={i} d={r.trail} color={r.color} pct={pct} faded={died} />
+            );
+          })}
+          {/* Death burst */}
+          {riders.map((r, i) => {
+            if (r.diesAt === undefined || t < r.diesAt) return null;
+            const burst = Math.min(1, (t - r.diesAt) / 0.08);
+            const fade = Math.max(0, 1 - (t - r.diesAt) / 0.18);
+            if (fade <= 0) return null;
+            return (
+              <g key={`death-${i}`}>
+                <circle cx={45} cy={38} r={4 + burst * 12} fill="none" stroke={r.color} strokeWidth={2 * fade} opacity={fade} />
+                <circle cx={45} cy={38} r={2.5} fill="#fff" opacity={fade} />
+                <text x={45} y={30} textAnchor="middle" fontSize="5.5" fill={r.color} opacity={fade} fontWeight="700">DEREZ!</text>
+              </g>
+            );
+          })}
         </svg>
 
         {/* Moving rider dots */}
         {riders.map((r, i) => {
-          const len = 8;
-          const pos = Math.floor((tick * len * r.speed) % len);
-          const points = r.trail.replace(/M|L/g, ' ').trim().split(' ').map(Number);
-          const x = points[pos * 2] ?? 50;
-          const y = points[pos * 2 + 1] ?? 50;
+          const died = r.diesAt !== undefined && t >= r.diesAt;
+          if (died) return null;
+          const pct = Math.min(1, t / r.speed);
+          const pt = trailPointAt(r.trail, pct);
           return (
             <div
               key={`dot-${i}`}
-              className={cn(
-                'absolute w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 shadow-[0_0_8px_currentColor]',
-                r.color.replace('text-', 'bg-')
-              )}
-              style={{ left: `${x}%`, top: `${y}%`, transition: 'all 80ms linear' }}
+              className="absolute w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80"
+              style={{ left: `${pt.x}%`, top: `${pt.y}%`, background: r.color, boxShadow: `0 0 10px ${r.color}` }}
             />
           );
         })}
 
-        {/* Countdown / status */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent animate-pulse">
-          3 · 2 · 1 · GO
+        {/* Status chip */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent">
+          {t < 0.62 ? '3 riders live' : t < 0.8 ? 'Rider derezzed!' : 'Round reset…'}
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        Leader draws the arena · riders leave coloured walls · last one riding wins
+        Leader draws the arena · riders leave coloured walls · hit a wall and you derez
       </p>
     </div>
+  );
+}
+
+/** Interpolated point along an SVG path made of straight M/L segments. */
+function trailPointAt(d: string, pct: number): { x: number; y: number } {
+  const nums = d.replace(/M|L/g, ' ').trim().split(/\s+/).map(Number);
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i + 1 < nums.length; i += 2) pts.push({ x: nums[i], y: nums[i + 1] });
+  if (pts.length === 0) return { x: 50, y: 50 };
+  const segs: number[] = [];
+  let total = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const len = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+    segs.push(len); total += len;
+  }
+  let target = total * pct;
+  for (let i = 1; i < pts.length; i++) {
+    if (target <= segs[i - 1] || i === pts.length - 1) {
+      const f = segs[i - 1] === 0 ? 0 : Math.min(1, target / segs[i - 1]);
+      return { x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * f, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * f };
+    }
+    target -= segs[i - 1];
+  }
+  return pts[pts.length - 1];
+}
+
+/** A trail rendered with stroke-dash trickery so it draws smoothly behind its rider. */
+function DerezTrail({ d, color, pct, faded }: { d: string; color: string; pct: number; faded?: boolean }) {
+  const ref = useRef<SVGPathElement>(null);
+  const [len, setLen] = useState(300);
+  useEffect(() => {
+    if (ref.current) setLen(ref.current.getTotalLength());
+  }, [d]);
+  return (
+    <path
+      ref={ref}
+      d={d}
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinejoin="round"
+      strokeLinecap="round"
+      pathLength={len}
+      strokeDasharray={`${len * pct} ${len}`}
+      opacity={faded ? 0.35 : 0.9}
+      style={{ filter: `drop-shadow(0 0 3px ${color})` }}
+    />
   );
 }
 
