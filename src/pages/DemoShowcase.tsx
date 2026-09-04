@@ -1013,13 +1013,17 @@ function DerezMockup() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  // Each dying rider's trail ends exactly on the wall it hits, and its speed
+  // equals diesAt so the full trail is drawn before the burst.
   const riders = [
-    { color: '#f97316', trail: 'M18 25 L45 25 L45 55 L70 55 L70 80', speed: 1.0 },
-    { color: '#3b82f6', trail: 'M82 30 L82 60 L55 60 L55 82 L30 82', speed: 0.92 },
-    // pink steers straight into the orange wall at (45, 38) — speed matches diesAt
-    // so the full trail is drawn before the burst
-    { color: '#ec4899', trail: 'M20 88 L20 55 L20 38 L42 38 L45 38', speed: 0.6, diesAt: 0.6 },
+    // orange clips blue's horizontal wall at (70, 60)
+    { color: '#f97316', trail: 'M18 25 L45 25 L45 55 L70 55 L70 60', speed: 0.78, diesAt: 0.78, deathPoint: { x: 70, y: 60 }, name: 'Orange' },
+    // blue survives — the winner
+    { color: '#3b82f6', trail: 'M82 30 L82 60 L55 60 L55 82 L30 82', speed: 0.92, name: 'Blue' },
+    // pink steers straight into the orange wall at (45, 38)
+    { color: '#ec4899', trail: 'M20 88 L20 55 L20 38 L42 38 L45 38', speed: 0.6, diesAt: 0.6, deathPoint: { x: 45, y: 38 }, name: 'Pink' },
   ];
+  const winner = riders[1];
 
   return (
     <div className="w-full max-w-xs space-y-3">
@@ -1036,25 +1040,42 @@ function DerezMockup() {
           />
           {riders.map((r, i) => {
             const died = r.diesAt !== undefined && t >= r.diesAt;
-            const pct = died ? r.diesAt! / r.speed : Math.min(1, t / r.speed);
+            const pct = died ? 1 : Math.min(1, t / r.speed);
+            // dead trails flash off over 0.15 of the loop, then disappear
+            const deadT = died ? t - r.diesAt! : 0;
+            if (died && deadT > 0.15) return null;
+            const flashOn = Math.floor(deadT / 0.025) % 2 === 0;
             return (
-              <DerezTrail key={i} d={r.trail} color={r.color} pct={pct} faded={died} />
+              <DerezTrail key={i} d={r.trail} color={r.color} pct={pct} opacity={died ? (flashOn ? 0.85 : 0.1) : 0.9} />
             );
           })}
-          {/* Death burst */}
+          {/* Death bursts */}
           {riders.map((r, i) => {
             if (r.diesAt === undefined || t < r.diesAt) return null;
             const burst = Math.min(1, (t - r.diesAt) / 0.08);
             const fade = Math.max(0, 1 - (t - r.diesAt) / 0.18);
             if (fade <= 0) return null;
+            const p = r.deathPoint!;
             return (
               <g key={`death-${i}`}>
-                <circle cx={45} cy={38} r={4 + burst * 12} fill="none" stroke={r.color} strokeWidth={2 * fade} opacity={fade} />
-                <circle cx={45} cy={38} r={2.5} fill="#fff" opacity={fade} />
-                <text x={45} y={30} textAnchor="middle" fontSize="5.5" fill={r.color} opacity={fade} fontWeight="700">DEREZ!</text>
+                <circle cx={p.x} cy={p.y} r={4 + burst * 12} fill="none" stroke={r.color} strokeWidth={2 * fade} opacity={fade} />
+                <circle cx={p.x} cy={p.y} r={2.5} fill="#fff" opacity={fade} />
+                <text x={p.x} y={p.y - 7} textAnchor="middle" fontSize="5.5" fill={r.color} opacity={fade} fontWeight="700">DEREZ!</text>
               </g>
             );
           })}
+          {/* Winner celebration */}
+          {t > 0.85 && (() => {
+            const pct = Math.min(1, t / winner.speed);
+            const pt = trailPointAt(winner.trail, pct);
+            const pulse = 3 + Math.sin(t * 60) * 1.2;
+            return (
+              <g>
+                <circle cx={pt.x} cy={pt.y} r={pulse + 3} fill="none" stroke={winner.color} strokeWidth="1" opacity="0.7" />
+                <text x={pt.x} y={pt.y - 8} textAnchor="middle" fontSize="6" fill={winner.color} fontWeight="800">WINNER!</text>
+              </g>
+            );
+          })()}
         </svg>
 
         {/* Moving rider dots */}
@@ -1074,7 +1095,7 @@ function DerezMockup() {
 
         {/* Status chip */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent">
-          {t < 0.6 ? '3 riders live' : t < 0.78 ? 'Rider derezzed!' : 'Round reset…'}
+          {t < 0.6 ? '3 riders live' : t < 0.68 ? 'Pink derezzed!' : t < 0.78 ? '2 riders live' : t < 0.86 ? 'Orange derezzed!' : 'Blue wins!'}
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
@@ -1108,7 +1129,7 @@ function trailPointAt(d: string, pct: number): { x: number; y: number } {
 }
 
 /** A trail rendered with stroke-dash trickery so it draws smoothly behind its rider. */
-function DerezTrail({ d, color, pct, faded }: { d: string; color: string; pct: number; faded?: boolean }) {
+function DerezTrail({ d, color, pct, opacity = 0.9 }: { d: string; color: string; pct: number; opacity?: number }) {
   const ref = useRef<SVGPathElement>(null);
   const [len, setLen] = useState(300);
   useEffect(() => {
@@ -1125,7 +1146,7 @@ function DerezTrail({ d, color, pct, faded }: { d: string; color: string; pct: n
       strokeLinecap="round"
       pathLength={len}
       strokeDasharray={`${len * pct} ${len}`}
-      opacity={faded ? 0.35 : 0.9}
+      opacity={opacity}
       style={{ filter: `drop-shadow(0 0 3px ${color})` }}
     />
   );
