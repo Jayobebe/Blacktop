@@ -11,9 +11,9 @@
  * Your own card is always in your vault by default; every earned copy from copy 2
  * onward is droppable.
  *
- * Economy cap: at most 4 granted copies per calendar month (across challenge,
- * collection and streak triggers). Tier-milestone copies are derived from ride
- * history and are not capped.
+ * Economy cap: at most 9 granted copies per calendar month (across challenge,
+ * collection and streak triggers). Earning the 9th grants a 10th bonus copy.
+ * Tier-milestone copies are derived from ride history and are not capped.
  */
 import { TIER_LADDER } from '../types';
 
@@ -23,7 +23,7 @@ const STREAK_KEY = 'bt.card_streak_copies.v1';
 const MONTH_KEY = 'bt.card_copy_month.v1';
 
 /** Max granted copies per calendar month, across all grant triggers. */
-export const MONTHLY_COPY_CAP = 4;
+export const MONTHLY_COPY_CAP = 9;
 /** Every N collected cards earns a copy. */
 export const COLLECT_COPY_EVERY = 4;
 
@@ -58,16 +58,32 @@ function monthKey(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/** Grants used in the current calendar month. */
-export function monthlyGrantsUsed(): number {
+interface MonthRecord {
+  month: string;
+  count: number;
+  /** Set when the 9th grant lands — a 10th bonus copy is awarded. */
+  bonus?: boolean;
+}
+
+function readMonth(): MonthRecord | null {
   try {
     const raw = localStorage.getItem(MONTH_KEY);
-    if (!raw) return 0;
-    const parsed = JSON.parse(raw) as { month: string; count: number };
-    return parsed.month === monthKey() ? parsed.count : 0;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as MonthRecord;
+    return parsed.month === monthKey() ? parsed : null;
   } catch {
-    return 0;
+    return null;
   }
+}
+
+/** Grants used in the current calendar month. */
+export function monthlyGrantsUsed(): number {
+  return readMonth()?.count ?? 0;
+}
+
+/** Bonus copies earned this month (1 once all 9 grants are used). */
+export function monthlyBonusCopies(): number {
+  return readMonth()?.bonus ? 1 : 0;
 }
 
 export function monthlyGrantsRemaining(): number {
@@ -75,10 +91,14 @@ export function monthlyGrantsRemaining(): number {
 }
 
 function spendMonthlyGrant(): boolean {
-  const used = monthlyGrantsUsed();
+  const rec = readMonth();
+  const used = rec?.count ?? 0;
   if (used >= MONTHLY_COPY_CAP) return false;
+  const next: MonthRecord = { month: monthKey(), count: used + 1 };
+  // Hitting the cap unlocks one bonus copy.
+  if (next.count >= MONTHLY_COPY_CAP) next.bonus = true;
   try {
-    localStorage.setItem(MONTH_KEY, JSON.stringify({ month: monthKey(), count: used + 1 }));
+    localStorage.setItem(MONTH_KEY, JSON.stringify(next));
     return true;
   } catch {
     return false;
@@ -170,6 +190,8 @@ export interface CopyLedger {
   available: number;
   /** Granted copies used this calendar month (cap: MONTHLY_COPY_CAP). */
   monthlyUsed: number;
+  /** Bonus copies earned this month by hitting the cap. */
+  monthlyBonus: number;
 }
 
 export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
@@ -178,7 +200,8 @@ export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
     tierCopiesEarned(ridesPerBike) +
     claimedChallengeWeeks().length +
     claimedCollectMilestones().length +
-    claimedStreaks().length;
+    claimedStreaks().length +
+    monthlyBonusCopies();
   const droppable = Math.max(0, total - 1);
   return {
     total,
@@ -186,5 +209,6 @@ export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
     placed,
     available: Math.max(0, droppable - placed),
     monthlyUsed: monthlyGrantsUsed(),
+    monthlyBonus: monthlyBonusCopies(),
   };
 }

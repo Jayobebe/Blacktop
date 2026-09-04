@@ -231,7 +231,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       if (result === 'granted') {
         toast.success("Collector's bonus", { description: 'Card copy earned — drop it on the map.' });
       } else if (result === 'capped') {
-        toast('Copy bank full', { description: '4/month max. Resets on the 1st.' });
+        toast('Copy bank full', { description: '9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
       }
     },
   });

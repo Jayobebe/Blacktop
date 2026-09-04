@@ -64,7 +64,7 @@ export function useRideHistory() {
     if (streakGrant === 'granted') {
       toast.success('3-day streak', { description: 'Card copy earned — drop it on the map.' });
     } else if (streakGrant === 'capped') {
-      toast('Copy bank full', { description: '4/month max. Resets on the 1st.' });
+      toast('Copy bank full', { description: '9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
     }
 
     if (savedFullRide) return true;

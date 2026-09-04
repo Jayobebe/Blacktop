@@ -36,7 +36,7 @@ export const CHALLENGES: Challenge[] = [
   { id: 'smooth', title: 'Smooth Operator', blurb: 'Silky inputs only — average corner score of 90+.', metric: 'corner_score', unit: 'pts', target: 90 },
   { id: 'terminal', title: 'Terminal Velocity', blurb: 'Highest top speed of the week.', metric: 'top_speed', unit: 'mph', target: 100 },
   { id: 'night-owl', title: 'Night Owl', blurb: 'Most rides started after 8pm or before 5am.', metric: 'night_rides', unit: 'rides', target: 3 },
-  { id: 'iron-butt', title: 'Iron Butt', blurb: 'Longest single ride this week.', metric: 'longest_ride', unit: 'mi', target: 150 },
+  { id: 'iron-butt', title: 'Hard Ass', blurb: 'Longest single ride this week.', metric: 'longest_ride', unit: 'mi', target: 150 },
 ];
 
 /** ISO-8601 week key, e.g. "2026-W36". */
