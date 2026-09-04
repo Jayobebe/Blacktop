@@ -4,6 +4,7 @@ export { CollectedCardsFolder } from './components/CollectedCardsFolder';
 export { useVehicleCards } from './hooks/useVehicleCards';
 export { useCollectedCards } from './hooks/useCollectedCards';
 export { useCardDrops, dropToPayload, COLLECT_RADIUS_M } from './hooks/useCardDrops';
+export { useCardKickbacks } from './hooks/useCardKickbacks';
 export type { CardDrop } from './hooks/useCardDrops';
 export * from './lib/dropEconomy';
 export * from './types';

@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 import { useRescueBridge } from '@/features/rescue';
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from '@/features/cards/hooks/useCardDrops';
-import { useCollectedCards, useVehicleCards, TIER_STYLES } from '@/features/cards';
+import { useCollectedCards, useVehicleCards, TIER_STYLES, useCardKickbacks } from '@/features/cards';
 import { copyLedger } from '@/features/cards/lib/dropEconomy';
 import { uploadCardPhoto } from '@/features/cards/lib/cardPhoto';
 
@@ -903,6 +903,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     cardsEnabled ? userLocation : null,
   );
   const { addCard } = useCollectedCards();
+  useCardKickbacks();
   const { cards } = useVehicleCards();
   const [selectedStack, setSelectedStack] = useState<CardDrop[] | null>(null);
   const selectedDrop = selectedStack?.length === 1 ? selectedStack[0] : null;
