@@ -990,6 +990,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       badge.textContent = allCollected ? '✓' : String(count);
       badge.style.cssText = `position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:${allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor};color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;`;
       if (allCollected || count > 1) el.appendChild(badge);
+      // Cards carrying a time attack get a stopwatch pip.
+      if (stack.some((d) => d.challenge)) {
+        const chip = document.createElement('span');
+        chip.textContent = '⏱';
+        chip.style.cssText = `position:absolute;bottom:-6px;left:-6px;width:16px;height:16px;border-radius:8px;background:${accentColor};color:#04140a;font-size:9px;display:flex;align-items:center;justify-content:center;`;
+        el.appendChild(chip);
+      }
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         setSelectedStack(stack);
@@ -1201,6 +1208,40 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [challengeRun, userLocation, challengeNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
+
+  // Draw the challenge route being raced.
+  useEffect(() => {
+    if (!map) return;
+    const SRC = 'challenge-route';
+    const LAYER = 'challenge-route-line';
+    const coords =
+      challengeRun && challengeRun.mode === 'attempting'
+        ? challengeRun.route.map((p) => [p.lng, p.lat])
+        : [];
+    const data = {
+      type: 'Feature' as const,
+      properties: {},
+      geometry: { type: 'LineString' as const, coordinates: coords },
+    };
+    const apply = () => {
+      const existing = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
+      if (existing) {
+        existing.setData(data);
+        return;
+      }
+      if (!coords.length) return;
+      map.addSource(SRC, { type: 'geojson', data });
+      map.addLayer({
+        id: LAYER,
+        type: 'line',
+        source: SRC,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': accentColor, 'line-width': 5, 'line-opacity': 0.75, 'line-dasharray': [2, 1] },
+      });
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once('load', apply);
+  }, [map, challengeRun, accentColor]);
 
   // Proximity ping while riding without a destination.
   const pingedDropsRef = useRef<Set<string>>(new Set());
