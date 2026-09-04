@@ -905,3 +905,14 @@
 .car-display .text-muted-foreground {
   opacity: 0.75;
 }
+
+
+/* Demo: card-challenge route drawing itself in */
+@keyframes demo-trail-draw {
+  0% { stroke-dasharray: 0 400; }
+  70% { stroke-dasharray: 400 0; }
+  100% { stroke-dasharray: 400 0; }
+}
+.animate-demo-trail {
+  animation: demo-trail-draw 3.2s ease-in-out infinite;
+}

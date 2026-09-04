@@ -9,7 +9,7 @@ import {
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
   Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
-  CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull
+  CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -174,6 +174,21 @@ export default function DemoShowcase() {
         { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones, crew challenges and 10-badge trades — can be planted on the Blacktop map, exactly where you\'re standing. Confirm with Yes / No, no map-pin fiddling.' },
         { icon: MapPin, label: 'Go Collect', text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
         { icon: IdCard, label: 'Hot-Spots', text: 'Cards stacked at one spot merge into a heat-coloured hot-spot with a count badge — tap it for a two-column list and collect them all at once.' },
+      ],
+    },
+    {
+      id: 'card-challenges',
+      title: 'Card Challenges',
+      subtitle: 'Time Attack On A Dropped Card',
+      description: 'Drop a card with a challenge attached: a five-second countdown, then you ride your route and hit Finish. Anyone who pulls up to that card can ready up and race your line against your time.',
+      icon: Timer,
+      color: 'accent',
+      mockup: <CardChallengeMockup />,
+      cards: [
+        { icon: Timer, label: 'Set The Line', text: 'Choose Yes + Challenge when you drop. Your spot is the start line, five seconds later the clock runs, and Finish challenge sets the finish where you stop.' },
+        { icon: Flag, label: 'Take It On', text: 'Pull up within pick-up range of the card, ready up, and race the stored route with a live delta against the time to beat.' },
+        { icon: Trophy, label: 'Beat It, Bank It', text: 'Faster than the setter earns 3x Speed Demon. Slower earns 1x Fallback. Either way the card is still yours to scan.' },
+        { icon: AlertTriangle, label: 'Stay On Route', text: 'Stray more than 120m off the line for 15 seconds and the run is voided — Fallback earned, no time recorded.' },
       ],
     },
     {
@@ -1297,6 +1312,47 @@ function GarageMockup() {
 
 
 
+
+function CardChallengeMockup() {
+  return (
+    <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden">
+      <div className="relative h-40 rounded-xl bg-[#0b0b0d] border border-border overflow-hidden">
+        <svg viewBox="0 0 240 150" className="absolute inset-0 w-full h-full">
+          <path
+            d="M24 122 C 60 118, 72 78, 108 72 S 176 60, 206 30"
+            fill="none"
+            stroke="hsl(var(--accent))"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray="6 5"
+            opacity="0.45"
+          />
+          <path
+            d="M24 122 C 60 118, 72 78, 108 72 S 176 60, 206 30"
+            fill="none"
+            stroke="hsl(var(--accent))"
+            strokeWidth="3"
+            strokeLinecap="round"
+            className="animate-demo-trail"
+          />
+          <circle cx="24" cy="122" r="5" fill="hsl(var(--accent))" />
+          <circle cx="206" cy="30" r="5" fill="hsl(142 71% 45%)" />
+        </svg>
+        <span className="absolute left-2 bottom-2 text-[9px] font-bold uppercase tracking-widest text-accent">Start · card</span>
+        <span className="absolute right-2 top-2 text-[9px] font-bold uppercase tracking-widest text-[hsl(142_71%_45%)]">Finish</span>
+        <div className="absolute left-1/2 -translate-x-1/2 top-3 rounded-lg bg-card/95 border border-accent px-3 py-1 text-center">
+          <p className="text-[8px] uppercase tracking-widest text-muted-foreground">Time attack</p>
+          <p className="text-base font-black tabular-nums leading-tight">3:41</p>
+          <p className="text-[9px] font-bold text-[hsl(142_71%_45%)] tabular-nums">Target 3:58 · -0:17</p>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center justify-between rounded-lg bg-secondary/50 px-2.5 py-1.5">
+        <span className="text-[10px] font-semibold">Challenge beaten</span>
+        <span className="text-[10px] font-bold text-[hsl(142_71%_45%)]">3x Speed Demon</span>
+      </div>
+    </div>
+  );
+}
 
 function TradingCardsMockup() {
   const tiers = TIER_LADDER;

@@ -1,4 +1,5 @@
 import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
+import { takePendingChallengeReceipt } from '@/lib/challengeRun';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
@@ -885,6 +886,7 @@ export function useActiveRide(convoyId?: string | null) {
         leanSamples: currentState.leanSamples,
         gForceSamples: currentState.gForceSamples,
         bikeId,
+        challenge: takePendingChallengeReceipt(),
       };
       const didSaveRide = addRideRef.current(ride);
       if (didSaveRide) {
