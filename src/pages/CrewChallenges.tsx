@@ -204,7 +204,7 @@ export default function CrewChallenges() {
       if (result === 'granted') {
         toast.success(`${c.title} complete`, { description: 'Spare card copy earned — drop it on the map.' });
       } else if (result === 'capped') {
-        toast(`${c.title} complete`, { description: 'Copy bank full — 4/month max. Resets on the 1st.' });
+        toast(`${c.title} complete`, { description: 'Copy bank full — 9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
       }
     }
   }, [mine, challengeA, challengeB, key]);
@@ -217,7 +217,7 @@ export default function CrewChallenges() {
     if (result === 'granted') {
       toast.success(`${goal.title} smashed`, { description: 'Crew goal hit — spare card copy earned.' });
     } else if (result === 'capped') {
-      toast(`${goal.title} smashed`, { description: 'Copy bank full — 4/month max. Resets on the 1st.' });
+      toast(`${goal.title} smashed`, { description: 'Copy bank full — 9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
     }
   }, [monthTotals, monthValue, goal, mKey]);
 
