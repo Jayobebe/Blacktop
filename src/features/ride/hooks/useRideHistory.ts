@@ -4,6 +4,8 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
 import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
 import { recordRideDay } from '../lib/rideStreak';
+import { recordBadges, soloBadgesForRide } from '../lib/badgeWallet';
+import { BadgeType } from '@/types/convoy';
 
 const RIDES_KEY = 'blacktop_rides';
 
@@ -59,6 +61,12 @@ export function useRideHistory() {
   const addRide = useCallback((ride: RideSession) => {
     const savedFullRide = setRides(prev => [ride, ...prev]);
 
+    // Threshold badges any rider can earn solo — banked as spendable currency.
+    const day = new Date(ride.startedAt).toDateString();
+    const ridesToday =
+      realRides.filter(r => new Date(r.startedAt).toDateString() === day).length + 1;
+    recordBadges(soloBadgesForRide(ride, ridesToday));
+
     // 3+ consecutive ride days earns a card copy (once per streak run).
     const streakGrant = recordRideDay(ride.endedAt ? new Date(ride.endedAt) : new Date());
     if (streakGrant === 'granted') {
@@ -78,9 +86,10 @@ export function useRideHistory() {
 
     const savedReceiptOnlyRide = setRides(prev => [receiptOnlyRide(ride), ...prev.map(receiptOnlyRide)]);
     return savedReceiptOnlyRide;
-  }, [setRides]);
+  }, [setRides, realRides]);
 
-  const updateRideBadges = useCallback((rideId: string, badges: ('speed-demon' | 'journeyman' | 'fallback')[]) => {
+  const updateRideBadges = useCallback((rideId: string, badges: BadgeType[]) => {
+    recordBadges(badges);
     setRides(prev => prev.map(r => 
       r.id === rideId ? { ...r, earnedBadges: badges } : r
     ));

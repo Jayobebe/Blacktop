@@ -1,3 +1,4 @@
+import type { BadgeType } from './convoy';
 export interface UserProfile {
   name: string;
   createdAt: string;
@@ -53,7 +54,7 @@ export interface RideSession {
   gpsPoints: GpsPoint[];
   leanSamples?: LeanSample[]; // High-frequency lean data (10Hz)
   gForceSamples?: GForceSample[]; // High-frequency G-force data (10Hz)
-  earnedBadges?: ('speed-demon' | 'journeyman' | 'fallback')[]; // Badges earned in this ride (convoy only)
+  earnedBadges?: BadgeType[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
   recording?: RideRecording; // Video recording from live stream
   overlayAvailable?: boolean; // Overlay video stored locally for download

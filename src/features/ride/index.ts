@@ -17,3 +17,6 @@ export {
 export type { SoloStop, SoloRouteState } from './lib/soloRoute';
 
 
+export { badgeWallet, recordBadges, spendBadgesForCopy, soloBadgesForRide, BADGES_PER_COPY } from './lib/badgeWallet';
+export type { BadgeWallet } from './lib/badgeWallet';
+export { BadgeWalletPanel } from './components/BadgeWalletPanel';
