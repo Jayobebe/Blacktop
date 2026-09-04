@@ -73,6 +73,17 @@ export function VehicleCardCarousel() {
     };
   }, [api]);
 
+  // Suspend embla drag while a card image is being resized/panned.
+  useEffect(() => {
+    if (!api) return;
+    const onResizeMode = (e: Event) => {
+      const resizing = (e as CustomEvent<boolean>).detail;
+      api.reInit({ align: 'center', loop: displayCards.length > 1, watchDrag: !resizing });
+    };
+    window.addEventListener('bt-card-resize', onResizeMode);
+    return () => window.removeEventListener('bt-card-resize', onResizeMode);
+  }, [api, displayCards.length]);
+
   // Mark the currently visible card as "seen" so the new-tier pulse resets.
   useEffect(() => {
     const card = displayCards[current];
