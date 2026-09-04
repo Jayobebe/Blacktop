@@ -209,5 +209,6 @@ export function copyLedger(ridesPerBike: number[], placed: number): CopyLedger {
     placed,
     available: Math.max(0, droppable - placed),
     monthlyUsed: monthlyGrantsUsed(),
+    monthlyBonus: monthlyBonusCopies(),
   };
 }
