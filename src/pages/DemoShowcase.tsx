@@ -1146,7 +1146,7 @@ function DerezTrail({ d, color, pct, opacity = 0.9 }: { d: string; color: string
       strokeLinecap="round"
       pathLength={len}
       strokeDasharray={`${len * pct} ${len}`}
-      opacity={faded ? 0.35 : 0.9}
+      opacity={opacity}
       style={{ filter: `drop-shadow(0 0 3px ${color})` }}
     />
   );
