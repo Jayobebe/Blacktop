@@ -899,7 +899,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // ── Card drops (Blacktop World trading cards planted on the map) ─────────
   const cardsEnabled = settings.blacktopWorldEnabled;
-  const { drops, collectDrop, placeDrop, pickUpDrop } = useCardDrops(
+  const { drops, myDrops, collectDrop, placeDrop, pickUpDrop } = useCardDrops(
     cardsEnabled ? userLocation : null,
   );
   const { addCard } = useCollectedCards();
@@ -910,7 +910,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [pendingDrop, setPendingDrop] = useState<{ lat: number; lng: number } | null>(null);
   const cardMarkersRef = useRef<Marker[]>([]);
 
-  const placedCount = drops.filter((d) => d.isOwn).length;
+  // Copy 0 is the one locked in the vault; planted copies number upward from 1.
+  const placedCount = myDrops.length;
   const ledger = copyLedger(cards.map((c) => c.stats.totalRides), placedCount);
   const canDropCard = cardsEnabled && !rideState.isActive && ledger.available > 0 && cards.length > 0;
 
