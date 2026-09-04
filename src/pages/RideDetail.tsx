@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
 import { useGarage } from '@/features/garage';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2 } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2, IdCard } from 'lucide-react';
 import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
+import { formatChallengeTime, formatDelta } from '@/features/cards/lib/challenge';
 import { useProfile } from '@/features/profile';
 import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
 import { shareRecapCard } from '@/features/ride/lib/recapCard';
@@ -124,6 +125,12 @@ export default function RideDetail() {
             <p className="text-xs text-muted-foreground">{formatDate(ride.startedAt)} • {formatTime(ride.startedAt)}</p>
           </div>
         </div>
+        {ride.challenge && (
+          <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded mr-2">
+            <IdCard className="w-3.5 h-3.5" />
+            Time attack
+          </span>
+        )}
         {ride.isConvoyRide && (
           <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded">
             <Users className="w-3.5 h-3.5" />
@@ -158,6 +165,61 @@ export default function RideDetail() {
             orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
           />
         </div>
+
+        {ride.challenge && (
+          <div className="bg-card rounded-lg p-3 border border-accent/50 mb-3 animate-slide-up">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <IdCard className="w-4 h-4 text-accent" />
+                <p className="text-sm font-bold">
+                  {ride.challenge.role === 'set' ? 'Challenge set' : 'Card challenge'}
+                </p>
+              </div>
+              {ride.challenge.result && (
+                <span
+                  className={cn(
+                    'text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded',
+                    ride.challenge.result === 'won'
+                      ? 'bg-[hsl(142_71%_45%)]/15 text-[hsl(142_71%_45%)]'
+                      : 'bg-destructive/15 text-destructive',
+                  )}
+                >
+                  {ride.challenge.result === 'won' ? 'Won' : ride.challenge.result === 'void' ? 'Void' : 'Lost'}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {ride.challenge.vehicleName} · {ride.challenge.ownerName}
+              {ride.challenge.tier ? ` · ${ride.challenge.tier}` : ''}
+            </p>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="rounded-lg bg-secondary/50 p-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Your time</p>
+                <p className="text-sm font-bold tabular-nums">{formatChallengeTime(ride.challenge.timeSec)}</p>
+              </div>
+              <div className="rounded-lg bg-secondary/50 p-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Target</p>
+                <p className="text-sm font-bold tabular-nums">
+                  {ride.challenge.targetSec != null ? formatChallengeTime(ride.challenge.targetSec) : '—'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-secondary/50 p-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Delta</p>
+                <p className="text-sm font-bold tabular-nums">
+                  {ride.challenge.targetSec != null
+                    ? formatDelta(ride.challenge.timeSec, ride.challenge.targetSec)
+                    : '—'}
+                </p>
+              </div>
+            </div>
+            {ride.challenge.result === 'won' && (
+              <p className="text-[11px] text-[hsl(142_71%_45%)] font-semibold mt-2">3x Speed Demon earned</p>
+            )}
+            {ride.challenge.result && ride.challenge.result !== 'won' && (
+              <p className="text-[11px] text-destructive font-semibold mt-2">1x Fallback earned</p>
+            )}
+          </div>
+        )}
 
         {/* Photos Section */}
         <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border mb-3 animate-slide-up">
