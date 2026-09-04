@@ -127,7 +127,7 @@ export default function RideDetail() {
           </div>
         </div>
         {ride.challenge && (
-          <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded mr-2">
+          <span className="flex items-center gap-1 text-xs text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded mr-2">
             <IdCard className="w-3.5 h-3.5" />
             Time attack
           </span>
@@ -164,14 +164,15 @@ export default function RideDetail() {
             earnedBadges={ride.earnedBadges}
             printedAt={ride.endedAt ?? ride.startedAt}
             orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
+            timeAttack={!!ride.challenge}
           />
         </div>
 
         {ride.challenge && (
-          <div className="bg-card rounded-lg p-3 border border-accent/50 mb-3 animate-slide-up">
+          <div className="bg-[hsl(330_81%_60%)]/5 rounded-lg p-3 border border-[hsl(330_81%_60%)]/50 mb-3 animate-slide-up">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <IdCard className="w-4 h-4 text-accent" />
+                <IdCard className="w-4 h-4 text-[hsl(330_81%_60%)]" />
                 <p className="text-sm font-bold">
                   {ride.challenge.role === 'set' ? 'Challenge set' : 'Card challenge'}
                 </p>
@@ -214,7 +215,9 @@ export default function RideDetail() {
               </div>
             </div>
             {ride.challenge.result === 'won' && (
-              <p className="text-[11px] text-[hsl(142_71%_45%)] font-semibold mt-2">3x Speed Demon earned</p>
+              <p className="text-[11px] text-[hsl(142_71%_45%)] font-semibold mt-2">
+                3x Speed Demon earned · card claimed
+              </p>
             )}
             {ride.challenge.result && ride.challenge.result !== 'won' && (
               <p className="text-[11px] text-destructive font-semibold mt-2">1x Fallback earned</p>

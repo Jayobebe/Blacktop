@@ -5,7 +5,7 @@ import { useSettings } from '@/features/settings';
 import { useGarage } from '@/features/garage';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Disc3 as BikeIcon } from 'lucide-react';
+import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Timer, Disc3 as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -122,6 +122,12 @@ export default function History() {
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-lg font-medium">
                           <User className="w-2.5 h-2.5" />
                           Solo
+                        </span>
+                      )}
+                      {ride.challenge && (
+                        <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
+                          <Timer className="w-2.5 h-2.5" />
+                          Time attack
                         </span>
                       )}
                       {hasBadges && (

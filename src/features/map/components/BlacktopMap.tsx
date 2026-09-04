@@ -1147,8 +1147,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     });
     recordAttempt.mutate({ dropId: run.dropId, timeSec, result });
     if (result === 'won') {
+      // Beating the setter claims the card outright — no separate scan needed.
+      const prize = drops.find((d) => d.id === run.dropId);
+      let claimed = false;
+      if (prize && !prize.collected && !prize.isOwn) {
+        claimed = await handleCollectDrop(prize, true);
+      }
       toast.success('Challenge beaten', {
-        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon earned`,
+        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon${claimed ? ' · card claimed' : ''}`,
       });
     } else if (result === 'void') {
       toast.error('Challenge voided', { description: 'You strayed off the route. 1x Fallback.' });

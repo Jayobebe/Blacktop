@@ -3,6 +3,7 @@ import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 import type { Bike } from '@/features/garage/types';
 import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
+import type { RideChallenge } from '@/lib/challengeRun';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
 /** Local mirror of CollectedCard so demoMode stays leaf-level (no cycle). */
@@ -135,6 +136,70 @@ export const DEMO_BIKE: Bike = {
     { id: 'demo-m-3', name: 'Tyres', intervalKm: 8000, lastServiceKm: 4200 },
   ],
 };
+
+/**
+ * Card-challenge (time-attack) demo rides — a win that claimed the card, a
+ * narrow loss and a route the demo rider set themselves. These drive the pink
+ * time-attack receipt in ride history.
+ */
+function demoRoute(lat: number, lng: number, n = 24) {
+  return Array.from({ length: n }, (_, i) => ({
+    lat: lat + i * 0.0009 + Math.sin(i / 3) * 0.0004,
+    lng: lng + i * 0.0012 + Math.cos(i / 4) * 0.0005,
+  }));
+}
+
+const DEMO_CHALLENGES: RideChallenge[] = [
+  {
+    dropId: 'demo-drop-01',
+    vehicleName: "Rico\u2019s Panigale",
+    ownerName: 'Rico',
+    tier: 'Gold',
+    role: 'attempt',
+    targetSec: 238,
+    timeSec: 221,
+    result: 'won',
+    route: demoRoute(51.5074, -0.1278),
+  },
+  {
+    dropId: 'demo-drop-02',
+    vehicleName: "Marlowe\u2019s R1",
+    ownerName: 'Marlowe',
+    tier: 'Silver',
+    role: 'attempt',
+    targetSec: 184,
+    timeSec: 199,
+    result: 'lost',
+    route: demoRoute(51.49, -0.09),
+  },
+  {
+    dropId: 'demo-drop-03',
+    vehicleName: 'V4 Ducati',
+    ownerName: DEMO_NAME,
+    tier: 'Gold',
+    role: 'set',
+    targetSec: null,
+    timeSec: 305,
+    route: demoRoute(51.46, -0.16),
+  },
+];
+
+// Staple the challenges onto the three most recent demo rides.
+DEMO_CHALLENGES.forEach((challenge, i) => {
+  const ride = DEMO_RIDES[i];
+  if (!ride) return;
+  ride.challenge = challenge;
+  ride.duration = Math.round(challenge.timeSec);
+  ride.distance = Math.round(challenge.timeSec / 60 * 8 * 10) / 10;
+  ride.averageSpeed = Math.round((ride.distance / (ride.duration / 3600)) * 10) / 10;
+  ride.endedAt = new Date(new Date(ride.startedAt).getTime() + ride.duration * 1000).toISOString();
+  ride.isConvoyRide = false;
+  ride.earnedBadges = challenge.result === 'won'
+    ? ['speed-demon', 'speed-demon', 'speed-demon']
+    : challenge.result === 'lost'
+      ? ['fallback']
+      : undefined;
+});
 
 // Tag every demo ride against the demo bike so Garage / VehicleCards roll up.
 DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });

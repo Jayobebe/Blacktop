@@ -39,6 +39,8 @@ interface RideSummaryProps {
   onClose?: () => void;
   /** 'overlay' (default): full-screen takeover shown right after a ride ends. 'embedded': a plain card for reuse elsewhere, e.g. Ride History. */
   variant?: 'overlay' | 'embedded';
+  /** Print this receipt on pink time-attack stock (card challenge rides). */
+  timeAttack?: boolean;
 }
 
 function ReceiptRow({ label, value }: { label: string; value: string }) {
@@ -51,7 +53,7 @@ function ReceiptRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay' }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false }: RideSummaryProps) {
   const { settings } = useSettings();
 
   const shouldCalculateBadges = members.length >= 2;
@@ -155,8 +157,8 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
         : 'flex flex-col items-center',
     )}>
       <div ref={receiptRef} className="w-full max-w-[360px] animate-receipt-print">
-        <div className="receipt-edge-top" />
-        <div className="receipt relative px-6 py-5 font-receipt text-[--ink]">
+        <div className={cn('receipt-edge-top', timeAttack && 'receipt-edge-timeattack')} />
+        <div className={cn('receipt relative px-6 py-5 font-receipt text-[--ink]', timeAttack && 'receipt-timeattack')}>
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
@@ -169,7 +171,9 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Title */}
           <div className="text-center mb-1">
             <div className="text-3xl font-bold tracking-[0.15em]">BLACKTOP STORE</div>
-            <div className="text-sm tracking-[0.3em] opacity-70 mt-1">— RIDE RECEIPT —</div>
+            <div className="text-sm tracking-[0.3em] opacity-70 mt-1">
+              {timeAttack ? '— TIME ATTACK RECEIPT —' : '— RIDE RECEIPT —'}
+            </div>
           </div>
 
           {/* Vehicle line (from garage) */}
@@ -303,7 +307,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             <div className="text-center py-4 text-sm opacity-60">No data to display.</div>
           )}
         </div>
-        <div className="receipt-edge-bottom" />
+        <div className={cn('receipt-edge-bottom', timeAttack && 'receipt-edge-timeattack')} />
       </div>
 
       {/* Action buttons (outside the receipt) */}
