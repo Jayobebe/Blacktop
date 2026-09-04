@@ -1811,7 +1811,42 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
       {challengeRun && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/97 shadow-2xl backdrop-blur px-4 py-3 text-center">
-          {challengeCountdown > 0 ? (
+          {challengeRun.startsAt == null ? (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Setting challenge
+              </p>
+              <p className="mt-1 text-sm font-bold">Card dropped — this is your start line</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ready up for a 5-second countdown, then ride your route and hit Finish challenge.
+                Five seconds are taken off your time for the stop.
+              </p>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                  onClick={() => {
+                    updateChallengeRun({ startsAt: Date.now() + CHALLENGE_COUNTDOWN_MS });
+                    startRide(false);
+                  }}
+                >
+                  Ready up
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    clearChallengeRun();
+                    setPendingChallengeReceipt(null);
+                    toast('Challenge cancelled', { description: 'Your card stays dropped without one.' });
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </>
+          ) : challengeCountdown > 0 ? (
             <>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {challengeRun.mode === 'setting' ? 'Setting challenge' : 'Time attack'}
