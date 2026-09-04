@@ -140,6 +140,7 @@ export default function DemoShowcase() {
         { icon: CornerUpRight, label: 'Corner Report', text: 'Every corner detected and scored 0-100 on line, lean and pace, with a ride grade.' },
         { icon: Share2, label: 'Recap Card', text: 'One tap renders a shareable image of your route, stats and corner grade.' },
         { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman, Lean Fiend, G-Lock, Corner Carver, Night Owl, Hard Ass and Always Out bank points in a 3×3 grid — Kickback joins them when riders collect your drops, while Fallback docks a point from a full-width row below.' },
+        { icon: Timer, label: 'Time-Attack Receipts', text: 'Card challenge rides print on pink stock — your time, the target, the delta, the card you raced and whether you claimed it.' },
         { icon: Sparkles, label: 'Badge Trades', text: 'Badges are currency: spend 10 banked badge points for a spare trading-card copy to drop on the map. Kickbacks from collected drops feed the same wallet.' },
       ],
     },
@@ -990,7 +991,7 @@ function HistoryMockup() {
 
   return (
     <div className="w-full max-w-xs space-y-3">
-      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 no-scrollbar">
+      <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1">
         <div className="snap-center shrink-0 w-[15rem] space-y-3">
           {rides.map((ride, i) => (
             <div
