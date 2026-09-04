@@ -1050,14 +1050,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [cardsEnabled, userLocation, drops, rideState.isActive, destination, cardPingMeters]);
 
-  const handleCollectDrop = async (drop: CardDrop) => {
+  const handleCollectDrop = async (drop: CardDrop, silent = false) => {
     if (!userLocation) {
       toast.error('Need your location to scan this card');
-      return;
+      return false;
     }
     if (rideState.isActive && rideState.currentSpeed > 3) {
       toast.warning('Stop safely before scanning a card');
-      return;
+      return false;
     }
     try {
       const collected = await collectDrop.mutateAsync({
@@ -1066,12 +1066,34 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         lng: userLocation.lng,
       });
       addCard(dropToPayload(collected));
-      setSelectedDrop(null);
-      toast.success('Card collected', { description: 'Added to your vault.' });
+      if (!silent) {
+        setSelectedStack(null);
+        toast.success('Card collected', { description: 'Added to your vault.' });
+      }
+      return true;
     } catch {
-      toast.error(`Get within ${COLLECT_RADIUS_M}m of the card to scan it`);
+      if (!silent) toast.error(`Get within ${COLLECT_RADIUS_M}m of the card to scan it`);
+      return false;
     }
   };
+
+  const handleCollectStack = async (stack: CardDrop[]) => {
+    const targets = stack.filter((d) => !d.collected && !d.isOwn);
+    let got = 0;
+    for (const drop of targets) {
+      // eslint-disable-next-line no-await-in-loop
+      if (await handleCollectDrop(drop, true)) got += 1;
+    }
+    setSelectedStack(null);
+    if (got > 0) {
+      toast.success(`${got} card${got > 1 ? 's' : ''} collected`, {
+        description: 'Added to your vault.',
+      });
+    } else {
+      toast.error(`Get within ${COLLECT_RADIUS_M}m of the hot-spot to scan these cards`);
+    }
+  };
+
 
 
 
