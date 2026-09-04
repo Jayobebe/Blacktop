@@ -45,7 +45,7 @@ export function useArcadeScores() {
   return { scores: demoEnabled ? DEMO_SCORES : realScores };
 }
 
-/** Increment a counter-style arcade score (Legacy Derez wins). Returns the new total. */
+/** Increment a counter-style arcade score (Derez Derez Legacy wins). Returns the new total. */
 export function bumpScore(game: ArcadeGame, by = 1): number {
   const next = Number(localStorage.getItem(LS_KEYS[game]) ?? 0) + by;
   localStorage.setItem(LS_KEYS[game], String(next));

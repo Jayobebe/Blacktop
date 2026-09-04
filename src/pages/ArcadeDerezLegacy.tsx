@@ -16,7 +16,7 @@ function colorOf(id: string) {
   return `hsl(${c.hsl.trim().split(/\s+/).join(', ')})`;
 }
 
-export default function ArcadeLegacyDerez() {
+export default function ArcadeDerezLegacy() {
   const navigate = useNavigate();
   const { code: codeParam } = useParams();
   const { settings } = useSettings();
@@ -82,7 +82,7 @@ export default function ArcadeLegacyDerez() {
   );
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);
-  const joinUrl = lobby ? `${window.location.origin}/arcade/legacy-derez/${lobby.code}` : '';
+  const joinUrl = lobby ? `${window.location.origin}/arcade/derez-legacy/${lobby.code}` : '';
 
   const exit = async () => { await leaveLobby(); navigate('/world'); };
 
@@ -90,7 +90,7 @@ export default function ArcadeLegacyDerez() {
   if (!lobby) {
     return (
       <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom">
-        <Header title="Legacy Derez" onBack={() => navigate(-1)} />
+        <Header title="Derez Legacy" onBack={() => navigate(-1)} />
         <div className="flex-1 px-4 pb-6 flex flex-col gap-4">
           <div className="rounded-2xl border border-border/30 bg-card/50 p-4">
             <p className="text-sm text-white font-semibold">Real-world lightcycles</p>
@@ -131,7 +131,7 @@ export default function ArcadeLegacyDerez() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-auto">
-            Legacy wins: <span className="font-mono text-white">{scores['legacy-derez']}</span>
+            Derez Legacy wins: <span className="font-mono text-white">{scores['legacy-derez']}</span>
           </p>
         </div>
       </div>
@@ -219,7 +219,7 @@ export default function ArcadeLegacyDerez() {
   // ---- Lobby -------------------------------------------------------------
   return (
     <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom">
-      <Header title="Legacy Derez" onBack={exit} />
+      <Header title="Derez Legacy" onBack={exit} />
 
       <div className="flex-1 px-4 pb-6 space-y-4 overflow-y-auto">
         {/* Code + QR */}
