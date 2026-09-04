@@ -989,15 +989,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
   }, []);
 
-  // Plant a card: next tap on the map picks the spot, then the rider confirms.
+  // Plant a card: the drop lands exactly where the rider is standing.
   useEffect(() => {
-    if (!map || !droppingCard) return;
-    const handler = (e: maplibregl.MapMouseEvent) => {
-      setPendingDrop({ lat: e.lngLat.lat, lng: e.lngLat.lng });
-    };
-    map.on('click', handler);
-    return () => { map.off('click', handler); };
-  }, [map, droppingCard]);
+    if (!droppingCard) return;
+    if (!userLocation) {
+      toast.error('Need your location to drop a card');
+      setDroppingCard(false);
+      return;
+    }
+    setPendingDrop({ lat: userLocation.lat, lng: userLocation.lng });
+  }, [droppingCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const confirmDropCard = async () => {
     if (!pendingDrop) return;
@@ -1563,14 +1564,17 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   size="sm"
                   variant="outline"
                   className="h-7 px-4 text-xs"
-                  onClick={() => setPendingDrop(null)}
+                  onClick={() => {
+                    setPendingDrop(null);
+                    setDroppingCard(false);
+                  }}
                 >
                   No
                 </Button>
               </div>
             </>
           ) : (
-            <>Place card here? · {ledger.available} spare</>
+            <>Finding your spot…</>
           )}
         </div>
       )}
