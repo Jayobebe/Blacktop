@@ -524,6 +524,27 @@ export function DestinationSearch({
   }, [performSearch]);
 
   const handleCategoryClick = async (category: QuickCategory) => {
+    // Card drops come from the World feed, not from Overpass.
+    if (category.id === 'cards') {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      searchIdRef.current++;
+      setQuery('');
+      setShowResults(true);
+      setIsSearching(false);
+      setActiveCategory((prev) => (prev === 'cards' ? null : 'cards'));
+      setResults(
+        cardDrops.map((d) => ({
+          id: `card-${d.id}`,
+          name: `${d.vehicleName}${d.collected ? ' ✓' : ''}`,
+          address: `Card drop · ${d.ownerName}`,
+          lat: d.lat,
+          lng: d.lng,
+          type: 'card',
+        })),
+      );
+      return;
+    }
+
     // Clear any pending text searches
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
