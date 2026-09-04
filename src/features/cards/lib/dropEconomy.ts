@@ -11,9 +11,9 @@
  * Your own card is always in your vault by default; every earned copy from copy 2
  * onward is droppable.
  *
- * Economy cap: at most 4 granted copies per calendar month (across challenge,
- * collection and streak triggers). Tier-milestone copies are derived from ride
- * history and are not capped.
+ * Economy cap: at most 9 granted copies per calendar month (across challenge,
+ * collection and streak triggers). Earning the 9th grants a 10th bonus copy.
+ * Tier-milestone copies are derived from ride history and are not capped.
  */
 import { TIER_LADDER } from '../types';
 
@@ -23,7 +23,7 @@ const STREAK_KEY = 'bt.card_streak_copies.v1';
 const MONTH_KEY = 'bt.card_copy_month.v1';
 
 /** Max granted copies per calendar month, across all grant triggers. */
-export const MONTHLY_COPY_CAP = 4;
+export const MONTHLY_COPY_CAP = 9;
 /** Every N collected cards earns a copy. */
 export const COLLECT_COPY_EVERY = 4;
 
