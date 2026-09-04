@@ -1074,7 +1074,7 @@ function DerezMockup() {
 
         {/* Status chip */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent">
-          {t < 0.62 ? '3 riders live' : t < 0.8 ? 'Rider derezzed!' : 'Round reset…'}
+          {t < 0.6 ? '3 riders live' : t < 0.78 ? 'Rider derezzed!' : 'Round reset…'}
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
