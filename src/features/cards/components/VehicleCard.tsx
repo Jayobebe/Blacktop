@@ -49,11 +49,16 @@ export function VehicleCard({ card }: Props) {
 
   const onPanDown = (e: React.PointerEvent) => {
     if (!resizing || locked) return;
+    // Keep the gesture on the image: while resizing, the card itself must not
+    // be draggable/swipeable by parent carousels.
+    e.stopPropagation();
+    e.preventDefault();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     dragRef.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
   };
   const onPanMove = (e: React.PointerEvent) => {
     if (!dragRef.current || !frameRef.current) return;
+    e.stopPropagation();
     const rect = frameRef.current.getBoundingClientRect();
     const dx = ((e.clientX - dragRef.current.x) / rect.width) * 100;
     const dy = ((e.clientY - dragRef.current.y) / rect.height) * 100;
