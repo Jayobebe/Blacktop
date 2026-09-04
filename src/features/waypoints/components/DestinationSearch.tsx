@@ -685,7 +685,7 @@ export function DestinationSearch({
     <div ref={containerRef} className="relative z-50 isolate space-y-3">
       {/* Quick category buttons */}
       <div className="flex gap-2">
-        {quickCategories.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryClick(cat)}
@@ -791,8 +791,8 @@ export function DestinationSearch({
           )}
           {activeCategory && !isSearching && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
-              {quickCategories.find(c => c.id === activeCategory)?.icon}
-              <span>Nearby {quickCategories.find(c => c.id === activeCategory)?.label}</span>
+              {categories.find(c => c.id === activeCategory)?.icon}
+              <span>Nearby {categories.find(c => c.id === activeCategory)?.label}</span>
             </div>
           )}
           {isSearching ? (
