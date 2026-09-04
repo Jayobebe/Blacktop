@@ -6,6 +6,8 @@ import shopAsset from '@/assets/garage-shop.png.asset.json';
 interface Props {
   bike: Bike | null;
   tip?: string | null;
+  /** Contextual dialogue lines for Mecha-Nick. */
+  nickLines?: string[];
   /** When true, the bike can be dragged & resized. */
   editing?: boolean;
   /** Live placement updates while editing. */
