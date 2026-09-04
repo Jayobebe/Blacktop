@@ -17,6 +17,8 @@ export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring:
   { id: 'lime', label: 'Neon', hsl: '84 85% 50%', ring: '84 85% 50%' },
 ];
 
+export type CardDropVisibility = 'crew' | 'world';
+
 export interface AppSettings {
   showSpeedRankings: boolean;
   speedUnit: SpeedUnit;
@@ -50,6 +52,8 @@ export interface AppSettings {
   // Car Display — oversized, low-chrome Active Ride layout for wired
   // phone-mirroring head units (Android USB/HDMI mirroring).
   carDisplayEnabled: boolean;
+  /** Who can see the trading cards you drop on the Blacktop map. */
+  cardDropVisibility: CardDropVisibility;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -87,6 +91,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,
   carDisplayEnabled: false,
+  cardDropVisibility: 'world',
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

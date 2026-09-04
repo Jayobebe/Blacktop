@@ -8,6 +8,8 @@ import { analyseCorners } from '@/features/ride/lib/cornerScoring';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
 import { challengeForWeek, daysLeftInWeek, weekKey, weekStart } from '@/features/crew/challenges';
+import { grantChallengeCopy } from '@/features/cards';
+import { toast } from 'sonner';
 
 interface ChallengeRow {
   display_name: string;
@@ -84,6 +86,14 @@ export default function CrewChallenges() {
 
   const myValue = mine[challenge.metric];
   const pct = Math.min(100, (myValue / challenge.target) * 100);
+
+  // Hitting the weekly target earns a spare copy of your card to drop on the map.
+  useEffect(() => {
+    if (myValue < challenge.target) return;
+    if (grantChallengeCopy(key)) {
+      toast.success('Challenge complete', { description: 'Spare card copy earned — drop it on the map.' });
+    }
+  }, [myValue, challenge.target, key]);
   const fmt = (v: number) =>
     challenge.metric === 'distance' ? `${Number(v).toFixed(1)} ${challenge.unit}` : `${Math.round(Number(v))} ${challenge.unit}`;
 

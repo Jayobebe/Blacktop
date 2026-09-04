@@ -8,7 +8,7 @@ import countriesTopo from 'world-atlas/countries-110m.json';
 import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
-import { CollectedCardsFolder } from '@/features/cards';
+import { CollectedCardsFolder, useCardDrops, copyLedger, useVehicleCards } from '@/features/cards';
 import { ArcadeLobby } from '@/features/arcade';
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
@@ -41,6 +41,10 @@ export default function World() {
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
   const { enabled: demoEnabled, activeRiders: demoActiveRiders } = useDemoMode();
+  const { updateSetting } = useSettings();
+  const { cards } = useVehicleCards();
+  const { myDrops } = useCardDrops(null);
+  const cardLedger = copyLedger(cards.map((c) => c.stats.totalRides), myDrops.length);
 
 
 
@@ -151,6 +155,38 @@ export default function World() {
         {/* Scroll hint */}
         <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
           <span className="text-[9px] tracking-[0.25em] uppercase text-white/40">scroll for collection</span>
+        </div>
+      </div>
+
+      {/* Card drops — who can find the cards you plant on the map */}
+      <div className="px-4 pb-4 flex-shrink-0">
+        <div className="rounded-2xl border border-border/40 bg-card/60 p-4 space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em]">Card drops</h2>
+            <span className="text-[11px] text-muted-foreground">
+              {cardLedger.available} spare · {myDrops.length} out there
+            </span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
+          </p>
+          <div className="flex rounded-xl overflow-hidden border border-border/50">
+            {(['crew', 'world'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => updateSetting('cardDropVisibility', v)}
+                aria-pressed={settings.cardDropVisibility === v}
+                className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] transition-colors ${
+                  settings.cardDropVisibility === v
+                    ? 'bg-accent text-accent-foreground'
+                    : 'bg-transparent text-muted-foreground hover:bg-secondary/50'
+                }`}
+              >
+                {v === 'crew' ? 'Crew only' : 'Worldwide'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

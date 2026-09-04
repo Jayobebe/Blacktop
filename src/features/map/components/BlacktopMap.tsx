@@ -30,10 +30,14 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box, AlertTriangle, Repeat, Download } from 'lucide-react';
+import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box, AlertTriangle, Repeat, Download, IdCard, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWaypoints } from '@/features/waypoints';
 import { useRescueBridge } from '@/features/rescue';
+import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from '@/features/cards/hooks/useCardDrops';
+import { useCollectedCards, useVehicleCards, TIER_STYLES } from '@/features/cards';
+import { copyLedger } from '@/features/cards/lib/dropEconomy';
+import { uploadCardPhoto } from '@/features/cards/lib/cardPhoto';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -893,6 +897,151 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
 
+  // ── Card drops (Blacktop World trading cards planted on the map) ─────────
+  const cardsEnabled = settings.blacktopWorldEnabled;
+  const { drops, collectDrop, placeDrop, pickUpDrop } = useCardDrops(
+    cardsEnabled ? userLocation : null,
+  );
+  const { addCard } = useCollectedCards();
+  const { cards } = useVehicleCards();
+  const [selectedDrop, setSelectedDrop] = useState<CardDrop | null>(null);
+  const [droppingCard, setDroppingCard] = useState(false);
+  const cardMarkersRef = useRef<Marker[]>([]);
+
+  const placedCount = drops.filter((d) => d.isOwn).length;
+  const ledger = copyLedger(cards.map((c) => c.stats.totalRides), placedCount);
+  const canDropCard = cardsEnabled && !rideState.isActive && ledger.available > 0 && cards.length > 0;
+
+  // Landmark-style card markers — home map only, so ride navigation stays clean.
+  useEffect(() => {
+    cardMarkersRef.current.forEach((m) => m.remove());
+    cardMarkersRef.current = [];
+    if (!map || !cardsEnabled || rideState.isActive) return;
+
+    drops.forEach((drop) => {
+      const style = TIER_STYLES[drop.tier] ?? TIER_STYLES.locked;
+      const el = document.createElement('div');
+      el.style.width = '30px';
+      el.style.height = '38px';
+      el.style.borderRadius = '6px';
+      el.style.cursor = 'pointer';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.background = 'linear-gradient(145deg, rgba(30,30,32,0.96), rgba(10,10,12,0.96))';
+      el.style.border = drop.collected
+        ? '1.5px solid hsl(142 71% 45%)'
+        : `1.5px solid ${accentColor}`;
+      el.style.boxShadow = drop.collected
+        ? '0 0 8px hsl(142 71% 45% / 0.6)'
+        : '0 2px 8px rgba(0,0,0,0.7)';
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', `${drop.ownerName}'s ${drop.vehicleName} card`);
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${drop.collected ? 'hsl(142 71% 45%)' : accentColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
+      if (drop.collected) {
+        const tick = document.createElement('span');
+        tick.textContent = '✓';
+        tick.style.cssText =
+          'position:absolute;top:-6px;right:-6px;width:15px;height:15px;border-radius:50%;background:hsl(142 71% 45%);color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;';
+        el.style.position = 'relative';
+        el.appendChild(tick);
+      }
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSelectedDrop(drop);
+      });
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([drop.lng, drop.lat])
+        .addTo(map);
+      cardMarkersRef.current.push(marker);
+    });
+  }, [map, drops, cardsEnabled, rideState.isActive, accentColor]);
+
+  useEffect(() => {
+    const markers = cardMarkersRef.current;
+    return () => {
+      markers.forEach((m) => m.remove());
+      markers.length = 0;
+    };
+  }, []);
+
+  // Plant a card: next tap on the map drops the copy there.
+  useEffect(() => {
+    if (!map || !droppingCard) return;
+    const handler = async (e: maplibregl.MapMouseEvent) => {
+      setDroppingCard(false);
+      const card = cards[0];
+      if (!card) return;
+      try {
+        const photoPath = card.bike.photos?.hero
+          ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
+          : null;
+        await placeDrop.mutateAsync({
+          card,
+          lat: e.lngLat.lat,
+          lng: e.lngLat.lng,
+          copyIndex: placedCount + 3,
+          photoPath,
+        });
+        toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
+      } catch {
+        toast.error("Couldn't drop that card");
+      }
+    };
+    map.on('click', handler);
+    return () => { map.off('click', handler); };
+  }, [map, droppingCard, cards, placeDrop, placedCount]);
+
+  // Proximity ping while riding without a destination.
+  const pingedDropsRef = useRef<Set<string>>(new Set());
+  const cardPingMeters = settings.distanceUnit === 'km' ? 10_000 : 16_093;
+  useEffect(() => {
+    if (!cardsEnabled || !userLocation) return;
+    if (!rideState.isActive || destination) return;
+    for (const drop of drops) {
+      if (drop.collected || drop.isOwn) continue;
+      if (pingedDropsRef.current.has(drop.id)) continue;
+      if (metersBetween(userLocation, drop) > cardPingMeters) continue;
+      pingedDropsRef.current.add(drop.id);
+      pingAnprCamera();
+      toast('Card nearby', {
+        description: `${drop.ownerName}'s ${drop.vehicleName} — tap to go for it`,
+        action: {
+          label: 'Go',
+          onClick: () => setDestination({
+            lat: drop.lat,
+            lng: drop.lng,
+            name: `${drop.ownerName}'s card`,
+          }),
+        },
+      });
+    }
+  }, [cardsEnabled, userLocation, drops, rideState.isActive, destination, cardPingMeters]);
+
+  const handleCollectDrop = async (drop: CardDrop) => {
+    if (!userLocation) {
+      toast.error('Need your location to scan this card');
+      return;
+    }
+    if (rideState.isActive && rideState.currentSpeed > 3) {
+      toast.warning('Stop safely before scanning a card');
+      return;
+    }
+    try {
+      const collected = await collectDrop.mutateAsync({
+        dropId: drop.id,
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+      });
+      addCard(dropToPayload(collected));
+      setSelectedDrop(null);
+      toast.success('Card collected', { description: 'Added to your vault.' });
+    } catch {
+      toast.error(`Get within ${COLLECT_RADIUS_M}m of the card to scan it`);
+    }
+  };
+
 
 
 
@@ -1329,7 +1478,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Download className="w-4 h-4" />
         </button>
+        {canDropCard && (
+          <>
+            <div className="h-px bg-border" />
+            <button
+              type="button"
+              onClick={() => setDroppingCard((v) => !v)}
+              aria-pressed={droppingCard}
+              aria-label="Drop a trading card on the map"
+              className={cn(
+                'w-9 h-9 flex items-center justify-center transition-colors',
+                droppingCard ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+              )}
+            >
+              <IdCard className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
+
+      {droppingCard && (
+        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs">
+          Tap the map to drop your card · {ledger.available} spare
+        </div>
+      )}
 
       {showLoopPlanner && (
         <LoopPlannerPanel
@@ -1367,6 +1539,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           map={map}
           userLocation={userLocation}
           countryCode={countryCode}
+          nearbyCards={cardsEnabled && !rideState.isActive
+            ? drops.map((d) => ({
+                id: `card:${d.id}`,
+                name: `${d.ownerName}'s ${d.vehicleName}`,
+                address: d.collected ? 'Card · collected' : 'Trading card drop',
+                lat: d.lat,
+                lng: d.lng,
+              }))
+            : undefined}
           onSelect={(result) => {
             if (addingWaypoint) {
               if (isSolo) {
@@ -1649,6 +1830,75 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </button>
         )}
       </div>
+
+      {selectedDrop && (
+        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
+          <button
+            type="button"
+            onClick={() => setSelectedDrop(null)}
+            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
+            aria-label="Close card details"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <IdCard className="w-4 h-4 text-accent" />
+            <p className="text-sm font-bold truncate">{selectedDrop.vehicleName}</p>
+            {selectedDrop.collected && (
+              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(142_71%_45%)]">
+                <Check className="w-3 h-3" /> Collected
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {selectedDrop.ownerName} · {selectedDrop.makeModel || 'Unknown model'} · {selectedDrop.tier}
+          </p>
+          {userLocation && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatDistance(
+                (metersBetween(userLocation, selectedDrop) / 1000) * 0.621371,
+                settings.distanceUnit,
+              )}{' '}
+              {getDistanceLabel(settings.distanceUnit)} away
+            </p>
+          )}
+          <div className="flex gap-2 mt-3">
+            <Button
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                setDestination({
+                  lat: selectedDrop.lat,
+                  lng: selectedDrop.lng,
+                  name: `${selectedDrop.ownerName}'s card`,
+                });
+                setSelectedDrop(null);
+              }}
+            >
+              Go for it
+            </Button>
+            {selectedDrop.isOwn ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  await pickUpDrop.mutateAsync(selectedDrop.id);
+                  setSelectedDrop(null);
+                  toast.success('Card picked back up');
+                }}
+              >
+                Pick up
+              </Button>
+            ) : (
+              !selectedDrop.collected && (
+                <Button size="sm" variant="outline" onClick={() => handleCollectDrop(selectedDrop)}>
+                  Scan
+                </Button>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

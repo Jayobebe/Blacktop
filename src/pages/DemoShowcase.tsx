@@ -170,6 +170,8 @@ export default function DemoShowcase() {
         { icon: Camera, label: 'Garage Shot', text: 'The card uses your garage placement and zoom, so it looks how you set it.' },
         { icon: QrCode, label: 'Share & Scan', text: 'Show your card QR — mates scan it straight into their vault.' },
         { icon: Folder, label: 'Card Vault', text: 'Collected cards are kept in your folder, exactly as the owner styled them.' },
+        { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones and crew challenges — can be planted on the Blacktop map.' },
+        { icon: MapPin, label: 'Go Collect', text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
       ],
     },
     {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X } from 'lucide-react';
+import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X, IdCard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
@@ -36,6 +36,8 @@ interface MapSearchBarProps {
   userLocation: { lat: number; lng: number } | null;
   countryCode: string | null;
   onSelect: (result: MapSearchResult) => void;
+  /** Card drops nearby — when provided, a "Nearby cards" toggle is shown. */
+  nearbyCards?: MapSearchResult[];
 }
 
 function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
@@ -49,7 +51,7 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
   };
 }
 
-export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSearchBarProps) {
+export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards }: MapSearchBarProps) {
   const { settings } = useSettings();
   const distanceText = (lat: number, lng: number): string | null => {
     if (!userLocation) return null;
@@ -63,6 +65,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [cardsMode, setCardsMode] = useState(false);
   const [recentLocations, setRecentLocations] = useState<MapSearchResult[]>([]);
   const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,6 +144,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
     setQuery(value);
     setShowResults(true);
     setActiveCategory(null);
+    setCardsMode(false);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (value.length < 2) {
@@ -155,6 +159,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
   const handleCategoryClick = async (category: QuickCategory) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setActiveCategory(category.id);
+    setCardsMode(false);
     setQuery('');
     setShowResults(true);
     setIsSearching(true);
@@ -182,6 +187,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
     setResults([]);
     setShowResults(false);
     setActiveCategory(null);
+    setCardsMode(false);
     onSelect(result);
   };
 
@@ -192,14 +198,24 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
     deletePOI(rawId);
   };
 
+  const sortedCards = (nearbyCards ?? [])
+    .slice()
+    .sort((a, b) =>
+      userLocation
+        ? calculateDistance(userLocation.lat, userLocation.lng, a.lat, a.lng) -
+          calculateDistance(userLocation.lat, userLocation.lng, b.lat, b.lng)
+        : 0,
+    );
+
   // Idle state (no query, no active category): show saved POIs + recent locations.
-  const showIdle = query.length < 2 && !activeCategory;
+  const showIdle = query.length < 2 && !activeCategory && !cardsMode;
   const hasSavedPOIs = savedPOIs.length > 0;
   const hasRecent = recentLocations.length > 0;
   const hasIdleContent = showIdle && (hasSavedPOIs || hasRecent);
 
   // Live-search state.
-  const hasSearchContent = !showIdle && (results.length > 0 || isSearching);
+  const displayResults = cardsMode ? sortedCards : results;
+  const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode);
 
   const hasDisplayContent = hasIdleContent || hasSearchContent;
 
@@ -234,6 +250,26 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
             {cat.label}
           </button>
         ))}
+        {nearbyCards && (
+          <button
+            onClick={() => {
+              setActiveCategory(null);
+              setQuery('');
+              setCardsMode((v) => !v);
+              setShowResults(true);
+            }}
+            aria-pressed={cardsMode}
+            className={cn(
+              'flex items-center gap-1.5 py-1.5 px-3 rounded-full border text-xs font-medium shadow-lg backdrop-blur transition-all active:scale-95',
+              cardsMode
+                ? 'bg-accent text-accent-foreground border-accent'
+                : 'bg-card/95 border-border hover:bg-muted',
+            )}
+          >
+            <IdCard className="w-4 h-4" />
+            Cards
+          </button>
+        )}
       </div>
 
       {showResults && hasDisplayContent && (
@@ -324,10 +360,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                 <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1.5" />
                 <span className="text-sm">Finding places...</span>
               </div>
-            ) : results.length === 0 ? (
-              <div className="p-5 text-center text-muted-foreground text-sm">No results found</div>
+            ) : displayResults.length === 0 ? (
+              <div className="p-5 text-center text-muted-foreground text-sm">
+                {cardsMode ? 'No cards dropped nearby' : 'No results found'}
+              </div>
             ) : (
-              results.map((result, index) => {
+              displayResults.map((result, index) => {
+                const isCard = result.id.startsWith('card:');
                 const isSavedPOI = result.id.startsWith('poi:');
                 const isRecent = !isSavedPOI && recentLocations.some(r => r.id === result.id);
                 return (
@@ -336,14 +375,16 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect }: MapSe
                     onClick={() => handleSelect(result)}
                     className={cn(
                       'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors',
-                      index !== results.length - 1 && 'border-b border-border',
+                      index !== displayResults.length - 1 && 'border-b border-border',
                     )}
                   >
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                       isSavedPOI ? 'bg-accent/15' : isRecent ? 'bg-muted' : 'bg-accent/10',
                     )}>
-                      {isSavedPOI
+                      {isCard
+                        ? <IdCard className="w-3.5 h-3.5 text-accent" />
+                        : isSavedPOI
                         ? <Bookmark className="w-3.5 h-3.5 text-accent" />
                         : isRecent
                           ? <Clock className="w-3.5 h-3.5 text-muted-foreground" />
