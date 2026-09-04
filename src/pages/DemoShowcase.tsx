@@ -139,8 +139,8 @@ export default function DemoShowcase() {
         { icon: Mountain, label: '3D Flyover', text: 'A cinematic 3D pass over your route with stats, ready to save.' },
         { icon: CornerUpRight, label: 'Corner Report', text: 'Every corner detected and scored 0-100 on line, lean and pace, with a ride grade.' },
         { icon: Share2, label: 'Recap Card', text: 'One tap renders a shareable image of your route, stats and corner grade.' },
-        { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman, Lean Fiend, G-Lock, Corner Carver, Night Owl, Hard Ass and Always Out all bank points — Fallback docks one.' },
-        { icon: Sparkles, label: 'Badge Trades', text: 'Badges are currency: spend 10 banked badge points for a spare trading-card copy to drop on the map.' },
+        { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman, Lean Fiend, G-Lock, Corner Carver, Night Owl, Hard Ass and Always Out bank points in a 3×3 grid — Kickback joins them when riders collect your drops, while Fallback docks a point from a full-width row below.' },
+        { icon: Sparkles, label: 'Badge Trades', text: 'Badges are currency: spend 10 banked badge points for a spare trading-card copy to drop on the map. Kickbacks from collected drops feed the same wallet.' },
       ],
     },
     {
