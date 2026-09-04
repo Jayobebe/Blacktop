@@ -52,6 +52,16 @@ const quickCategories: QuickCategory[] = [
   { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
 ];
 
+// Card drops are a Blacktop World feature — the category only appears when
+// the rider has opted in.
+const CARDS_CATEGORY: QuickCategory = {
+  id: 'cards',
+  label: 'Cards',
+  icon: <IdCard className="w-4 h-4" />,
+  query: 'cards',
+};
+
+
 
 function getRecentLocations(): SearchResult[] {
   try {
