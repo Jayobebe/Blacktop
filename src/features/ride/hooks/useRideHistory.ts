@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { RideSession, RideStats, RidePhoto, RideRecording } from '@/types/blacktop';
 import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
+import { recordRideDay } from '../lib/rideStreak';
 
 const RIDES_KEY = 'blacktop_rides';
 
@@ -56,6 +58,15 @@ export function useRideHistory() {
 
   const addRide = useCallback((ride: RideSession) => {
     const savedFullRide = setRides(prev => [ride, ...prev]);
+
+    // 3+ consecutive ride days earns a card copy (once per streak run).
+    const streakGrant = recordRideDay(ride.endedAt ? new Date(ride.endedAt) : new Date());
+    if (streakGrant === 'granted') {
+      toast.success('3-day streak', { description: 'Card copy earned — drop it on the map.' });
+    } else if (streakGrant === 'capped') {
+      toast('Copy bank full', { description: '4/month max. Resets on the 1st.' });
+    }
+
     if (savedFullRide) return true;
 
     // Some mobile webviews have tight localStorage limits. If the raw route +

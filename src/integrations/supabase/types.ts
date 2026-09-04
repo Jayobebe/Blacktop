@@ -684,6 +684,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      my_card_collection_count: { Args: never; Returns: number }
       profile_count: { Args: never; Returns: number }
       shares_convoy_with: { Args: { _other_user_id: string }; Returns: boolean }
       transfer_convoy_leadership: {
