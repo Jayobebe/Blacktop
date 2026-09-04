@@ -353,6 +353,12 @@ export function DestinationSearch({
   const userLocation = externalUserLocation ?? internalUserLocation;
   const countryCode = externalCountryCode ?? internalCountryCode;
 
+  // Nearby card drops — only ever fetched when Blacktop World is opted into.
+  const cardsEnabled = settings.blacktopWorldEnabled;
+  const { drops: cardDrops } = useCardDrops(cardsEnabled ? userLocation ?? null : null);
+  const categories = cardsEnabled ? [...quickCategories, CARDS_CATEGORY] : quickCategories;
+
+
   useEffect(() => {
     setRecentLocations(getRecentLocations());
   }, []);
