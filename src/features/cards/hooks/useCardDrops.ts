@@ -1,11 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import type { VehicleCardData } from './useVehicleCards';
 import type { SharedCardPayload } from '../lib/cardCodec';
+import { grantCollectCopy } from '../lib/dropEconomy';
 import { TIER_LADDER, type CardTier } from '../types';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
@@ -221,7 +223,17 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       if (!row) throw new Error('too_far');
       return toDrop({ ...row, collected: true });
     },
-    onSuccess: invalidate,
+    onSuccess: async () => {
+      invalidate();
+      // Every 5 unique cards collected earns a copy of your own card.
+      const { data: count } = await supabase.rpc('my_card_collection_count');
+      const result = grantCollectCopy(Number(count ?? 0));
+      if (result === 'granted') {
+        toast.success("Collector's bonus", { description: 'Card copy earned — drop it on the map.' });
+      } else if (result === 'capped') {
+        toast('Copy bank full', { description: '4/month max. Resets on the 1st.' });
+      }
+    },
   });
 
   const uncollected = useMemo(() => drops.filter((d) => !d.collected && !d.isOwn), [drops]);
