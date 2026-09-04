@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
-import { Receipt, Sparkles } from 'lucide-react';
+import { IdCard, Receipt, Sparkles } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
@@ -170,8 +170,9 @@ export default function DemoShowcase() {
         { icon: Camera, label: 'Garage Shot', text: 'The card uses your garage placement and zoom, so it looks how you set it.' },
         { icon: QrCode, label: 'Share & Scan', text: 'Show your card QR — mates scan it straight into their vault.' },
         { icon: Folder, label: 'Card Vault', text: 'Collected cards are kept in your folder, exactly as the owner styled them.' },
-        { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones and crew challenges — can be planted on the Blacktop map.' },
+        { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones and crew challenges — can be planted on the Blacktop map, exactly where you\'re standing. Confirm with Yes / No, no map-pin fiddling.' },
         { icon: MapPin, label: 'Go Collect', text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
+        { icon: IdCard, label: 'Hot-Spots', text: 'Cards stacked at one spot merge into a heat-coloured hot-spot with a count badge — tap it for a two-column list and collect them all at once.' },
       ],
     },
     {
