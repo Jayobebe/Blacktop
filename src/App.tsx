@@ -40,6 +40,7 @@ import CrewConvoys from "./pages/CrewConvoys";
 import CrewLeaderboard from "./pages/CrewLeaderboard";
 import CrewJoin from "./pages/CrewJoin";
 import CrewChallenges from "./pages/CrewChallenges";
+import Arcade from "./pages/Arcade";
 import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
 import ArcadePetrolHead from "./pages/ArcadePetrolHead";
 import ArcadeLegacyDerez from "./pages/ArcadeLegacyDerez";
