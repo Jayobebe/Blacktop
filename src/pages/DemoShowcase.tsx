@@ -1129,7 +1129,7 @@ function trailPointAt(d: string, pct: number): { x: number; y: number } {
 }
 
 /** A trail rendered with stroke-dash trickery so it draws smoothly behind its rider. */
-function DerezTrail({ d, color, pct, faded }: { d: string; color: string; pct: number; faded?: boolean }) {
+function DerezTrail({ d, color, pct, opacity = 0.9 }: { d: string; color: string; pct: number; opacity?: number }) {
   const ref = useRef<SVGPathElement>(null);
   const [len, setLen] = useState(300);
   useEffect(() => {
