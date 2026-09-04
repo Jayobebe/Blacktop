@@ -78,14 +78,14 @@ export function MechaNick({ tip, lines, className }: MechaNickProps) {
   return (
     <div className={cn('relative flex flex-col items-end', className)}>
       {message && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-4 z-10 w-max max-w-[200px] animate-scale-in">
+        <div className="pointer-events-none absolute bottom-full right-0 mb-4 z-10 w-max max-w-[190px] animate-scale-in">
           <div className="relative rounded-2xl bg-white px-3 py-2 text-xs leading-snug text-neutral-900 shadow-lg">
             <span className="block text-[10px] uppercase tracking-widest text-neutral-500 mb-0.5">
               Mecha-Nick
             </span>
             {message}
             {/* Bubble tail pointing down at Nick */}
-            <span className="absolute left-1/2 top-full -translate-x-1/2 border-8 border-transparent border-t-white" />
+            <span className="absolute right-6 top-full border-8 border-transparent border-t-white" />
           </div>
         </div>
       )}

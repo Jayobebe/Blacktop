@@ -36,7 +36,22 @@ export function VehicleCard({ card }: Props) {
     'bt.cards.pan.v1',
     {},
   );
-  const [resizing, setResizing] = useState(false);
+  const [resizing, setResizingState] = useState(false);
+  // Tell any wrapping carousel to suspend drag while the image is being panned.
+  // Embla attaches native listeners on its root, so React stopPropagation runs
+  // too late — the carousel itself must be told to stop watching drags.
+  const setResizing = (v: boolean | ((r: boolean) => boolean)) =>
+    setResizingState((prev) => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      window.dispatchEvent(new CustomEvent('bt-card-resize', { detail: next }));
+      return next;
+    });
+  useEffect(
+    () => () => {
+      window.dispatchEvent(new CustomEvent('bt-card-resize', { detail: false }));
+    },
+    [],
+  );
   const zoom = zooms[card.bike.id] ?? 1;
   const pan = pans[card.bike.id] ?? { x: 0, y: 0 };
   const setZoom = (v: number) => setZooms((prev) => ({ ...prev, [card.bike.id]: v }));
