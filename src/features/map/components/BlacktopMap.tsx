@@ -1765,6 +1765,83 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
 
+      {challengeRun && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/97 shadow-2xl backdrop-blur px-4 py-3 text-center">
+          {challengeCountdown > 0 ? (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {challengeRun.mode === 'setting' ? 'Setting challenge' : 'Time attack'}
+              </p>
+              <p className="text-5xl font-black tabular-nums text-accent leading-tight">
+                {challengeCountdown}
+              </p>
+              <p className="text-xs text-muted-foreground">Get ready…</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center gap-2">
+                <Flag className="w-4 h-4 text-accent" />
+                <p className="text-sm font-bold truncate">
+                  {challengeRun.mode === 'setting' ? 'Setting your route' : `Beat ${challengeRun.ownerName}`}
+                </p>
+              </div>
+              <p className="text-4xl font-black tabular-nums leading-tight">
+                {formatChallengeTime(challengeElapsedSec)}
+              </p>
+              {challengeRun.mode === 'attempting' && challengeRun.targetSec != null && (
+                <p
+                  className={cn(
+                    'text-xs font-bold tabular-nums',
+                    challengeElapsedSec < challengeRun.targetSec
+                      ? 'text-[hsl(142_71%_45%)]'
+                      : 'text-destructive',
+                  )}
+                >
+                  Target {formatChallengeTime(challengeRun.targetSec)} ·{' '}
+                  {formatDelta(challengeElapsedSec, challengeRun.targetSec)}
+                </p>
+              )}
+              {challengeRun.mode === 'attempting' && challengeRun.offRouteSince != null && (
+                <p className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-destructive">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Off route — get back on or the run is voided
+                </p>
+              )}
+              <div className="flex gap-2 mt-2">
+                {challengeRun.mode === 'setting' ? (
+                  <Button size="sm" className="flex-1 h-8 text-xs" onClick={finishSettingChallenge}>
+                    Finish challenge
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 h-8 text-xs"
+                    onClick={() => finalizeAttempt('void', challengeElapsedSec)}
+                  >
+                    Abandon run
+                  </Button>
+                )}
+                {challengeRun.mode === 'setting' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs"
+                    onClick={async () => {
+                      clearChallengeRun();
+                      setPendingChallengeReceipt(null);
+                      await endRide();
+                      toast('Challenge cancelled', { description: 'Your card stays dropped without one.' });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {showLoopPlanner && (
         <LoopPlannerPanel
           userLocation={userLocation}
@@ -2115,6 +2192,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           <p className="text-xs text-muted-foreground mt-0.5">
             {selectedDrop.ownerName} · {selectedDrop.makeModel || 'Unknown model'} · {selectedDrop.tier}
           </p>
+          {selectedDrop.challenge && (
+            <div className="mt-2 rounded-xl border border-accent/60 bg-accent/10 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Time attack</p>
+              <p className="text-xs text-muted-foreground">
+                Beat {formatChallengeTime(selectedDrop.challenge.timeSec)} over{' '}
+                {formatDistance(selectedDrop.challenge.distanceMi, settings.distanceUnit)}{' '}
+                {getDistanceLabel(settings.distanceUnit)} · stay on route
+              </p>
+            </div>
+          )}
           {userLocation && (
             <p className="text-xs text-muted-foreground mt-1">
               {formatDistance(
@@ -2139,6 +2226,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             >
               Go for it
             </Button>
+            {selectedDrop.challenge && !selectedDrop.isOwn && (
+              <Button size="sm" variant="secondary" onClick={() => takeChallenge(selectedDrop)}>
+                Take challenge
+              </Button>
+            )}
             {selectedDrop.isOwn ? (
               <Button
                 size="sm"
@@ -2206,6 +2298,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   <p className="text-[10px] text-muted-foreground truncate">
                     {d.ownerName} · {d.tier}
                   </p>
+                  {d.challenge && (
+                    <p className="text-[10px] font-bold text-accent">
+                      ⏱ {formatChallengeTime(d.challenge.timeSec)}
+                    </p>
+                  )}
                 </div>
               );
             })}
