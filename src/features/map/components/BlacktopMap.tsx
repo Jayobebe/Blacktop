@@ -1908,7 +1908,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
           <button
             type="button"
-            onClick={() => setSelectedDrop(null)}
+            onClick={() => setSelectedStack(null)}
             className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
             aria-label="Close card details"
           >
@@ -1945,7 +1945,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   lng: selectedDrop.lng,
                   name: `${selectedDrop.ownerName}'s card`,
                 });
-                setSelectedDrop(null);
+                setSelectedStack(null);
               }}
             >
               Go for it
@@ -1956,7 +1956,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 variant="outline"
                 onClick={async () => {
                   await pickUpDrop.mutateAsync(selectedDrop.id);
-                  setSelectedDrop(null);
+                  setSelectedStack(null);
                   toast.success('Card picked back up');
                 }}
               >
@@ -1972,6 +1972,83 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         </div>
       )}
+
+      {selectedStack && selectedStack.length > 1 && (
+        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
+          <button
+            type="button"
+            onClick={() => setSelectedStack(null)}
+            className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
+            aria-label="Close card hot-spot"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <IdCard className="w-4 h-4 text-accent" />
+            <p className="text-sm font-bold">Card hot-spot</p>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {selectedStack.length} cards
+            </span>
+          </div>
+          {userLocation && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {formatDistance(
+                (metersBetween(userLocation, selectedStack[0]) / 1000) * 0.621371,
+                settings.distanceUnit,
+              )}{' '}
+              {getDistanceLabel(settings.distanceUnit)} away
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2 mt-3 max-h-44 overflow-y-auto">
+            {selectedStack.map((d) => {
+              const done = d.collected || d.isOwn;
+              return (
+                <div
+                  key={d.id}
+                  className={cn(
+                    'rounded-xl border p-2 text-left',
+                    done ? 'border-[hsl(142_71%_45%)]/60 bg-[hsl(142_71%_45%)]/8' : 'border-border bg-secondary/40',
+                  )}
+                >
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs font-semibold truncate flex-1">{d.vehicleName}</p>
+                    {done && <Check className="w-3 h-3 text-[hsl(142_71%_45%)] shrink-0" />}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {d.ownerName} · {d.tier}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Button
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                setDestination({
+                  lat: selectedStack[0].lat,
+                  lng: selectedStack[0].lng,
+                  name: 'Card hot-spot',
+                });
+                setSelectedStack(null);
+              }}
+            >
+              Go for it
+            </Button>
+            {selectedStack.some((d) => !d.collected && !d.isOwn) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCollectStack(selectedStack)}
+              >
+                Collect all
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
