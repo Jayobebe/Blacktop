@@ -30,7 +30,7 @@ export default function Terms() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: June 26, 2026
+          Last updated: September 4, 2026
         </p>
 
         <section className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-2">
@@ -148,6 +148,51 @@ export default function Terms() {
           </ul>
           <p className="text-muted-foreground">
             If you are not willing to accept these risks, do not play Hit Heavy.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Blacktop Arcade — Derez Legacy</h2>
+          <p className="text-muted-foreground">
+            Derez Legacy is a multiplayer light-trail game played while riding
+            real vehicles. It is <span className="text-foreground font-medium">not</span> a
+            racing tool and must never be treated as one. By playing you
+            acknowledge and agree that:
+          </p>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>
+              Only ever play on private property or closed lots (e.g. an empty
+              car park) with the landowner's permission. Never play on public
+              roads, in traffic, or anywhere other vehicles or pedestrians may
+              be present.
+              </li>
+            <li>
+              Keep speeds low. The game works at walking pace — there is no
+              advantage to going faster, and doing so defeats the point and
+              endangers you and others.
+            </li>
+            <li>
+              Eyes up. Glance at the screen only when stationary or moving
+              slowly; your attention belongs on your surroundings, not your
+              trail.
+            </li>
+            <li>
+              You are solely responsible for your riding, for every other
+              player's conduct, and for any collision, injury, or property
+              damage arising from play. The app owner and contributors accept
+              <span className="text-foreground font-medium"> no liability </span>
+              for harm arising from Derez Legacy or any other Blacktop Arcade
+              game.
+            </li>
+            <li>
+              GPS trails are approximate. Collision detection and arena
+              boundaries are informational only and must never be relied on for
+              safety.
+            </li>
+          </ul>
+          <p className="text-muted-foreground">
+            If you cannot play slowly, legally, and with permission, do not
+            play.
           </p>
         </section>
 

@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: June 27, 2026 · Maintained by the Blacktop team.
+          Last updated: September 4, 2026 · Maintained by the Blacktop team.
         </p>
 
         <section className="space-y-2">
@@ -127,6 +127,55 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Card drops & collections</h2>
+          <p className="text-muted-foreground">
+            When you plant a collector card on the map, the drop is stored on
+            our server so other riders nearby can find and collect it. Unlike
+            convoy data, a drop is <span className="text-foreground">persistent</span> — it
+            stays live until you remove it. Each drop contains:
+          </p>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>Your display name and vehicle info (name, make/model, tier)</li>
+            <li>Your ride stats as they were at the moment of the drop</li>
+            <li>The GPS coordinates where you planted the card</li>
+            <li>Your card photo, if the card has one</li>
+          </ul>
+          <p className="text-muted-foreground">
+            When another rider collects one of your drops, the collection is
+            recorded server-side (with the collector's display name) so you can
+            be credited a badge-point kickback, and so area "card king" rankings
+            can be computed. Cards you collect from others are stored on your
+            device only. Deleting a drop (or burning your data) removes your
+            card from the map permanently.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Crews & challenges</h2>
+          <p className="text-muted-foreground">
+            Joining a crew stores your display name alongside the crew's code on
+            our server so crew members can see each other. If you take part in
+            weekly crew challenges, summary ride stats (weekly distance, top
+            speed, number of night rides, longest single ride) are uploaded
+            under your display name to power the crew leaderboard. These
+            persist from week to week. Leaving a crew removes your membership
+            and scores. Badges themselves are banked locally on your device.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Derez Legacy (multiplayer arcade)</h2>
+          <p className="text-muted-foreground">
+            When you create or join a Derez Legacy lobby, your display name and
+            assigned accent colour are stored in the lobby on our server.
+            During a round your GPS position is broadcast at high frequency to
+            the other players so their screens can draw your light trail — this
+            trail data is ephemeral and is never written to the database. Lobby
+            rows are removed when the lobby is closed. Win tallies are stored
+            locally on your device.
+          </p>
+        </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Stats overlay video</h2>
