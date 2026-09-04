@@ -123,12 +123,16 @@ export function claimedCollectMilestones(): number[] {
 
 /**
  * Given the rider's total collected-card count, claims a copy for every
- * 5-collect threshold newly crossed. Returns the grant outcome.
+ * 4-collect threshold newly crossed. Returns the grant outcome.
  */
 export function grantCollectCopy(collectedCount: number): GrantResult {
   const claimed = claimedCollectMilestones();
   const due = Math.floor(collectedCount / COLLECT_COPY_EVERY) * COLLECT_COPY_EVERY;
-  const next = claimed.length ? Math.max(...claimed) + COLLECT_COPY_EVERY : COLLECT_COPY_EVERY;
+  // Next multiple of 4 strictly above the highest claimed milestone, so
+  // milestones recorded under an older interval realign cleanly.
+  const next = claimed.length
+    ? (Math.floor(Math.max(...claimed) / COLLECT_COPY_EVERY) + 1) * COLLECT_COPY_EVERY
+    : COLLECT_COPY_EVERY;
   if (due < next) return 'already';
   if (!spendMonthlyGrant()) return 'capped';
   writeList(COLLECT_KEY, [...claimed.map(String), String(next)]);
