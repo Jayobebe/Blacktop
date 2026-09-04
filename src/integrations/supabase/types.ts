@@ -398,8 +398,11 @@ export type Database = {
           crew_code: string
           display_name: string
           distance: number
+          longest_ride: number
           max_lean: number
+          night_rides: number
           ride_count: number
+          top_speed: number
           updated_at: string
           user_id: string
           week_key: string
@@ -409,8 +412,11 @@ export type Database = {
           crew_code: string
           display_name?: string
           distance?: number
+          longest_ride?: number
           max_lean?: number
+          night_rides?: number
           ride_count?: number
+          top_speed?: number
           updated_at?: string
           user_id: string
           week_key: string
@@ -420,8 +426,11 @@ export type Database = {
           crew_code?: string
           display_name?: string
           distance?: number
+          longest_ride?: number
           max_lean?: number
+          night_rides?: number
           ride_count?: number
+          top_speed?: number
           updated_at?: string
           user_id?: string
           week_key?: string
@@ -625,8 +634,11 @@ export type Database = {
           corner_score: number
           display_name: string
           distance: number
+          longest_ride: number
           max_lean: number
+          night_rides: number
           ride_count: number
+          top_speed: number
         }[]
       }
       list_crew_convoys: {
@@ -653,6 +665,14 @@ export type Database = {
           ride_count: number
           top_speed: number
           total_distance: number
+        }[]
+      }
+      list_crew_month: {
+        Args: { _crew_code: string; _month_key: string }
+        Returns: {
+          distance: number
+          members: number
+          ride_count: number
         }[]
       }
       lookup_convoy_by_code: {
