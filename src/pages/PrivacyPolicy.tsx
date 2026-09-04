@@ -156,6 +156,29 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Card challenges (time attack)</h2>
+          <p className="text-muted-foreground">
+            Card challenges are also part of <span className="text-foreground">Blacktop World</span> and
+            only work while it is switched on. If you attach a challenge to a
+            card you drop, you ready up, a five-second countdown runs, and the
+            route you then ride is recorded. Five seconds are deducted from your
+            recorded time to account for stopping to set the finish line. The
+            challenge route, its distance, the time to beat and the finish-line
+            coordinates are stored on our server alongside the drop, and are
+            visible to any rider who can see that card.
+          </p>
+          <p className="text-muted-foreground">
+            When you take on someone else's challenge, your position is compared
+            against the stored route while the run is live so we can detect the
+            finish line and off-route deviations. Only the outcome (your display
+            name, your time and whether you won, lost or were voided) is stored
+            server-side; the raw track of your attempt stays on your device as a
+            normal ride in your history. Removing the drop, or burning your
+            data, removes the challenge and its attempts.
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Crews & challenges</h2>
           <p className="text-muted-foreground">
             Joining a crew stores your display name alongside the crew's code on
