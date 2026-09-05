@@ -7,7 +7,7 @@ import { useRadioStations, updateStation } from '../hooks/useRadioStations';
 import { useRadioPlayer, playStation, toggle, next, previous, seek } from '../hooks/useRadioPlayer';
 import { useRadioOverlay, closeRadioOverlay } from '../hooks/useRadioOverlay';
 import { getRadioIcon, stationHsl, trackTitle, formatClock } from '../lib/stationVisuals';
-import { pickWithInput, reattachByName } from '../lib/audioFiles';
+import { pickWithInput } from '../lib/audioFiles';
 import { StationManager } from './StationManager';
 
 /**
