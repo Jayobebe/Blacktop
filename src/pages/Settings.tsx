@@ -213,6 +213,10 @@ export default function Settings() {
         // aren't stored separately, so this also wipes the receipt bank.
         burnAllData();
         burnGarage();
+        // Radio stations only reference local files, but the list itself goes too.
+        resetRadio();
+        void burnRadioStations();
+
       } catch (err) {
         console.error('Burn failed:', err);
       }
