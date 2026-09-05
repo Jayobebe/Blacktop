@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,7 @@ import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
+import { StationManager, useRadioStations } from '@/features/radio';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -43,6 +44,8 @@ export default function Settings() {
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const { settings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
+  const { stations: radioStations } = useRadioStations();
+  const [showStations, setShowStations] = useState(false);
   const [burnStep, setBurnStep] = useState(0);
   const [burning, setBurning] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
