@@ -41,18 +41,15 @@ export function RadioOverlay() {
   const handleReselect = async () => {
     const station = stations.find((s) => s.id === player.stationId);
     if (!station) return;
+    // Browsers without persistent handles (iOS Safari) need the files picked
+    // again each session; the freshly picked list replaces the old one.
     const { tracks } = await pickWithInput();
-    const files: File[] = [];
-    // pickWithInput already cached the files; re-derive by name matching.
-    const matched = reattachByName(station.tracks, tracks.map((t) => new File([], t.name)));
-    if (!matched) {
-      // Fall back to replacing the track list with the freshly picked files.
-      await updateStation(station.id, { tracks });
-      toast.success('Station refreshed with your files');
-    }
-    void playStation({ ...station, tracks: matched ? station.tracks : tracks });
-    void files;
+    if (!tracks.length) return;
+    await updateStation(station.id, { tracks });
+    toast.success('Station reloaded from your files');
+    void playStation({ ...station, tracks });
   };
+
 
   return createPortal(
     <div className="fixed inset-0 z-[90] flex flex-col bg-background/92 backdrop-blur-xl animate-fade-in safe-bottom">
