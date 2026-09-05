@@ -983,12 +983,15 @@ export default function Settings() {
         </p>
       </div>
 
+      {showStations && <StationManager onClose={() => setShowStations(false)} />}
+
       <BurnFlameOverlay
         active={burning}
         origin={burnOrigin}
         onPeak={handleBurnPeak}
         onComplete={handleBurnComplete}
       />
+
     </div>
   );
 }
