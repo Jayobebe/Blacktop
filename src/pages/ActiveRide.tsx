@@ -1076,6 +1076,10 @@ export default function ActiveRide() {
             <Navigation className="w-7 h-7 landscape:w-8 landscape:h-8" />
           </Button>
 
+          {/* Blacktop Radio — tap to play/pause, hold for the station dial */}
+          <RadioButton variant="ride" />
+
+
           {/* Voice Controls (Convoy Mode) */}
           {rideState.isConvoyMode && (
             <div className="flex landscape:flex-col items-center gap-2">
