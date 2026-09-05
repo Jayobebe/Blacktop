@@ -781,7 +781,39 @@ export default function Settings() {
               />
             </div>
           </div>
+
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <div className="flex items-center justify-between gap-3">
+              <div className="pr-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <Radio className="w-4 h-4 text-accent" />
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktop Radio</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Build stations from the music already on your device and switch between them on a GTA-style dial during a ride. Files stay on your phone — nothing is uploaded.
+                </p>
+              </div>
+              <Switch
+                checked={settings.radioEnabled}
+                onCheckedChange={(v) => {
+                  updateSetting('radioEnabled', v);
+                  if (v) setShowStations(true);
+                }}
+              />
+            </div>
+            {settings.radioEnabled && (
+              <button
+                type="button"
+                onClick={() => setShowStations(true)}
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-accent/60 text-accent text-xs font-semibold"
+              >
+                <Radio className="w-3.5 h-3.5" />
+                {radioStations.length ? `Manage stations (${radioStations.length})` : 'Create your first station'}
+              </button>
+            )}
+          </div>
         </CollapsibleSection>
+
 
         {/* Discord Integration */}
         <CollapsibleSection icon={MessageSquare} label="Discord" delayClass="delay-200">
