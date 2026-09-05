@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- File System Access
+   and Media Session APIs aren't in the TS lib for this target. */
 import type { RadioTrack } from '../types';
 
 /**
