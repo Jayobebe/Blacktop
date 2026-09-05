@@ -237,7 +237,7 @@ export default function DemoShowcase() {
       cards: [
         { icon: FolderOpen, label: 'Your Files', text: 'Pick tracks or a whole folder from your phone — they never leave it.' },
         { icon: Palette, label: 'Name & Colour', text: 'Each station gets a name, an icon and one of the eight accent colours.' },
-        { icon: Disc3, label: 'Spin The Dial', text: 'Hold the radio button on a ride or the map to open the wheel and switch instantly.' },
+        { icon: Radio, label: 'Spin The Dial', text: 'Hold the radio button on a ride or the map to open the wheel and switch instantly.' },
         { icon: ListMusic, label: 'Lock Screen', text: 'Shuffled playback with play, skip and track name on your lock screen.' },
       ],
     },
