@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,7 @@ import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
+import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -43,6 +44,8 @@ export default function Settings() {
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const { settings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
+  const { stations: radioStations } = useRadioStations();
+  const [showStations, setShowStations] = useState(false);
   const [burnStep, setBurnStep] = useState(0);
   const [burning, setBurning] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -210,6 +213,10 @@ export default function Settings() {
         // aren't stored separately, so this also wipes the receipt bank.
         burnAllData();
         burnGarage();
+        // Radio stations only reference local files, but the list itself goes too.
+        resetRadio();
+        void burnRadioStations();
+
       } catch (err) {
         console.error('Burn failed:', err);
       }
@@ -781,7 +788,39 @@ export default function Settings() {
               />
             </div>
           </div>
+
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <div className="flex items-center justify-between gap-3">
+              <div className="pr-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <Radio className="w-4 h-4 text-accent" />
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktop Radio</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Build stations from the music already on your device and switch between them on a GTA-style dial during a ride. Files stay on your phone — nothing is uploaded.
+                </p>
+              </div>
+              <Switch
+                checked={settings.radioEnabled}
+                onCheckedChange={(v) => {
+                  updateSetting('radioEnabled', v);
+                  if (v) setShowStations(true);
+                }}
+              />
+            </div>
+            {settings.radioEnabled && (
+              <button
+                type="button"
+                onClick={() => setShowStations(true)}
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-accent/60 text-accent text-xs font-semibold"
+              >
+                <Radio className="w-3.5 h-3.5" />
+                {radioStations.length ? `Manage stations (${radioStations.length})` : 'Create your first station'}
+              </button>
+            )}
+          </div>
         </CollapsibleSection>
+
 
         {/* Discord Integration */}
         <CollapsibleSection icon={MessageSquare} label="Discord" delayClass="delay-200">
@@ -948,12 +987,15 @@ export default function Settings() {
         </p>
       </div>
 
+      {showStations && <StationManager onClose={() => setShowStations(false)} />}
+
       <BurnFlameOverlay
         active={burning}
         origin={burnOrigin}
         onPeak={handleBurnPeak}
         onComplete={handleBurnComplete}
       />
+
     </div>
   );
 }

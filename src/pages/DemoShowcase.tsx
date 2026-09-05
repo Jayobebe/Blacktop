@@ -9,7 +9,8 @@ import {
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
   Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
-  CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer
+  CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer,
+  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -223,6 +224,21 @@ export default function DemoShowcase() {
         { icon: Zap, label: 'Live Trails', text: 'High-frequency GPS paints a wall behind every rider in their own colour.' },
         { icon: Skull, label: 'Crash Out', text: 'Hit another wall or leave the arena for 5 seconds and you lose a life.' },
         { icon: Trophy, label: 'Last Rider Wins', text: 'Winner gets the round, wins are banked to the Arcade tile.' },
+      ],
+    },
+    {
+      id: 'radio',
+      title: 'Blacktop Radio',
+      subtitle: 'Your Music, GTA-Style Dial',
+      description: 'Build stations from the audio files already on your device, then spin a radio dial mid-ride without ever leaving the screen. Nothing is uploaded and no streaming account is needed.',
+      icon: Radio,
+      color: 'accent',
+      mockup: <RadioMockup />,
+      cards: [
+        { icon: FolderOpen, label: 'Your Files', text: 'Pick tracks or a whole folder from your phone — they never leave it.' },
+        { icon: Palette, label: 'Name & Colour', text: 'Each station gets a name, an icon and one of the eight accent colours.' },
+        { icon: Radio, label: 'Spin The Dial', text: 'Hold the radio button on a ride or the map to open the wheel and switch instantly.' },
+        { icon: ListMusic, label: 'Lock Screen', text: 'Shuffled playback with play, skip and track name on your lock screen.' },
       ],
     },
     {
@@ -1543,6 +1559,72 @@ function PersonaliseMockup() {
             <span className="text-xs font-mono font-semibold">{value}</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function RadioMockup() {
+  const stations = [
+    { name: 'Night Ride', hsl: '38 95% 55%' },
+    { name: 'Backroads', hsl: '186 94% 50%' },
+    { name: 'Redline', hsl: '0 84% 60%' },
+    { name: 'Cruise', hsl: '262 83% 58%' },
+  ];
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setActive((a) => (a + 1) % stations.length), 2200);
+    return () => clearInterval(id);
+  }, [stations.length]);
+
+  const step = 360 / stations.length;
+  const current = stations[active];
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 flex flex-col items-center animate-slide-up">
+        <div className="relative w-40 h-40">
+          <div className="absolute inset-0 rounded-full border border-border/50" />
+          <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[9px] border-l-transparent border-r-transparent border-t-accent" />
+          <div
+            className="absolute inset-0 transition-transform duration-700 ease-out"
+            style={{ transform: `rotate(${-active * step}deg)` }}
+          >
+            {stations.map((s, i) => (
+              <div
+                key={s.name}
+                className="absolute left-1/2 top-1/2 w-9 h-9 rounded-full flex items-center justify-center border"
+                style={{
+                  transform: `rotate(${i * step}deg) translateY(-64px) rotate(${-i * step + active * step}deg) translate(-50%, -50%)`,
+                  backgroundColor: `hsl(${s.hsl} / ${i === active ? 0.25 : 0.1})`,
+                  borderColor: `hsl(${s.hsl} / ${i === active ? 0.9 : 0.3})`,
+                  color: `hsl(${s.hsl})`,
+                }}
+              >
+                <Music className="w-4 h-4" />
+              </div>
+            ))}
+          </div>
+          <div className="absolute inset-[50px] rounded-full bg-card border border-border flex flex-col items-center justify-center">
+            <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Station</span>
+            <span className="text-[11px] font-bold text-center px-1 leading-tight">{current.name}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-2 animate-slide-up delay-200">
+        <p className="text-xs font-semibold text-center truncate">Midnight Run — Track 04</p>
+        <div className="h-1 rounded-full bg-secondary overflow-hidden">
+          <div className="h-full bg-accent animate-pulse" style={{ width: '42%' }} />
+        </div>
+        <div className="flex items-center justify-center gap-4 pt-1">
+          <SkipForward className="w-4 h-4 text-muted-foreground rotate-180" />
+          <span className="w-9 h-9 rounded-full bg-accent text-accent-foreground flex items-center justify-center">
+            <Pause className="w-4 h-4" />
+          </span>
+          <SkipForward className="w-4 h-4 text-muted-foreground" />
+        </div>
       </div>
     </div>
   );

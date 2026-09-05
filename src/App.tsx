@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { useMapOverlay, useMapPresenceTracker } from "@/features/map";
+import { RadioOverlay } from "@/features/radio";
+
 import { OrientationProvider } from "@/hooks/useOrientationLock";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Onboarding from "./pages/Onboarding";
@@ -127,6 +129,8 @@ const App = () => {
                   <BlacktopMapOverlay />
                 </Suspense>
               )}
+              <RadioOverlay />
+
             </BrowserRouter>
           </TooltipProvider>
         </OrientationProvider>

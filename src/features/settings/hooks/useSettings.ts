@@ -52,8 +52,11 @@ export interface AppSettings {
   // Car Display — oversized, low-chrome Active Ride layout for wired
   // phone-mirroring head units (Android USB/HDMI mirroring).
   carDisplayEnabled: boolean;
+  /** Blacktop Radio — local-file stations with an in-ride dial. */
+  radioEnabled: boolean;
   /** Who can see the trading cards you drop on the Blacktop map. */
   cardDropVisibility: CardDropVisibility;
+
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -91,7 +94,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,
   carDisplayEnabled: false,
+  radioEnabled: false,
   cardDropVisibility: 'world',
+
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

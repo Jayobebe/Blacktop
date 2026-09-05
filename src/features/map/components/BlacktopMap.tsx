@@ -11,6 +11,7 @@ import { fetchTrafficCameras, fetchCamerasOnRoute, metersBetween, CAMERA_MIN_ZOO
 import { pingSpeedCamera, pingAnprCamera } from '../lib/cameraPing';
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
 import { checkRouteWeather, findDryRoute, HEAVY_MM } from '../lib/weatherRoute';
+import { RadioButton } from '@/features/radio';
 import { useNextWaypoint } from '@/features/waypoints';
 import { MapSearchBar } from './MapSearchBar';
 import { LoopPlannerPanel } from './LoopPlannerPanel';
@@ -1759,8 +1760,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Download className="w-4 h-4" />
         </button>
+        <div className="h-px bg-border" />
+        {/* Blacktop Radio — hidden unless enabled in Settings */}
+        <RadioButton variant="map" />
         {canDropCard && (
           <>
+
             <div className="h-px bg-border" />
             <button
               type="button"

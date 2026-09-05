@@ -10,6 +10,7 @@ import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
+import { RadioButton } from '@/features/radio';
 import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
@@ -1075,6 +1076,10 @@ export default function ActiveRide() {
           >
             <Navigation className="w-7 h-7 landscape:w-8 landscape:h-8" />
           </Button>
+
+          {/* Blacktop Radio — tap to play/pause, hold for the station dial */}
+          <RadioButton variant="ride" />
+
 
           {/* Voice Controls (Convoy Mode) */}
           {rideState.isConvoyMode && (
