@@ -1759,7 +1759,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Download className="w-4 h-4" />
         </button>
-        {canDropCard && (
+        <div className="h-px bg-border" />
+        {/* Blacktop Radio — hidden unless enabled in Settings */}
+        <RadioButton variant="map" />
+
           <>
             <div className="h-px bg-border" />
             <button
