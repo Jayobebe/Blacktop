@@ -259,7 +259,7 @@ export default function DemoRide() {
       <div className="flex-1 pt-20 pb-28 overflow-y-auto">
         {/* Welcome Screen */}
         {step === 'welcome' && (
-          <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
+          <div className="min-h-[calc(100dvh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
             <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-8 animate-float border border-accent/20">
               <Play className="w-12 h-12 text-accent" />
             </div>
@@ -292,7 +292,7 @@ export default function DemoRide() {
 
         {/* Onboarding - Interactive name input */}
         {step === 'onboarding' && (
-          <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
+          <div className="min-h-[calc(100dvh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
             <div className="w-full max-w-sm">
               <h1 className="text-4xl font-semibold text-center mb-2 tracking-tight">
                 BLACKTOP
@@ -1174,7 +1174,7 @@ export default function DemoRide() {
 
         {/* Complete */}
         {step === 'complete' && (
-          <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
+          <div className="min-h-[calc(100dvh-12rem)] flex flex-col items-center justify-center p-6 animate-fade-in">
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center mb-6">
               <Check className="w-10 h-10 text-accent" />
             </div>
