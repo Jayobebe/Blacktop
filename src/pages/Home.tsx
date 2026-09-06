@@ -7,6 +7,7 @@ import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { History, BarChart3, Settings, Users, UserPlus, User, Download, X, Wrench } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
+import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
@@ -268,7 +269,7 @@ export default function Home() {
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{profile.name}</h1>
         </div>
-        <BTLogo size="md" />
+        <HomeRadioDock />
       </header>
 
       {/* Main content */}
