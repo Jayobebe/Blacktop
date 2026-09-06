@@ -10,7 +10,7 @@ import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
-import { RadioButton } from '@/features/radio';
+import { RadioButton, usePlayer } from '@/features/radio';
 import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
@@ -478,6 +478,9 @@ export default function ActiveRide() {
   }, [convoy.id, convoy.isLeader, rideState.isConvoyMode, handleRideEndedByLeader]);
 
   const handleEndRide = async () => {
+    // Kill any radio playback the moment the rider ends the ride
+    stopRadio();
+
     // Stop overlay recording and get the blob first
     const overlayBlob = await overlayRecorderRef.current.stopRecording();
     overlayStartedRef.current = false;
