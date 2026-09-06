@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   dragging?: boolean;
+  nearHome?: boolean;
 }
 
 /**
@@ -12,7 +13,7 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * BT logo plate. Shared by the docked slot and the free-floating overlay.
  */
 export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
-  { active, dragging, className, ...rest },
+  { active, dragging, nearHome, className, ...rest },
   ref,
 ) {
   return (
@@ -33,7 +34,10 @@ export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
     >
       <span
         aria-hidden
-        className="absolute inset-0 flex items-center justify-center font-display font-black tracking-tighter text-accent/25 text-sm saturate-50"
+        className={cn(
+          'absolute inset-0 flex items-center justify-center font-display font-black tracking-tighter text-sm saturate-50 transition-all',
+          nearHome ? 'text-accent/70 drop-shadow-[0_0_6px_hsl(var(--accent)/0.65)]' : 'text-accent/25',
+        )}
       >
         <span className="-mr-[0.1em]">B</span>
         <span className="-ml-[0.1em]">T</span>
