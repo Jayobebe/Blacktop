@@ -5,3 +5,7 @@ export { useRadioStations, burnRadioStations } from './hooks/useRadioStations';
 export { useRadioPlayer, playStation, resetRadio } from './hooks/useRadioPlayer';
 export { useRadioOverlay, openRadioOverlay, closeRadioOverlay } from './hooks/useRadioOverlay';
 export type { RadioStation, RadioTrack, RadioIcon, RadioPlayerState } from './types';
+export { PlayerProvider, usePlayer } from './context/PlayerContext';
+export { HomeRadioDock } from './components/HomeRadioDock';
+export { FloatingRadioLayer } from './components/FloatingRadioLayer';
+export { useFloatingRadio, dockRadio, undockRadio } from './hooks/useFloatingRadio';

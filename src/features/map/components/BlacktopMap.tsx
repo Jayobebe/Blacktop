@@ -1695,7 +1695,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       {/* Vertical basemap toggle — sits on the right, under the maplibre
           Navigation + Geolocate controls. Kept narrow (single column of
           icon buttons) so it stays out of the way of the map. */}
-      <div className="absolute right-2.5 top-[196px] z-20 flex flex-col rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+      <div className="absolute right-2.5 top-[clamp(96px,24dvh,196px)] z-20 flex flex-col rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
         <button
           type="button"
           onClick={() => setBasemap('dark')}

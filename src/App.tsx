@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { useMapOverlay, useMapPresenceTracker } from "@/features/map";
-import { RadioOverlay } from "@/features/radio";
+import { RadioOverlay, PlayerProvider, FloatingRadioLayer } from "@/features/radio";
 
 import { OrientationProvider } from "@/hooks/useOrientationLock";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
@@ -119,20 +119,23 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <AppErrorBoundary>
         <OrientationProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-              {hasEverOpened && (
-                <Suspense fallback={null}>
-                  <BlacktopMapOverlay />
-                </Suspense>
-              )}
-              <RadioOverlay />
+          <PlayerProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppRoutes />
+                {hasEverOpened && (
+                  <Suspense fallback={null}>
+                    <BlacktopMapOverlay />
+                  </Suspense>
+                )}
+                <RadioOverlay />
+                <FloatingRadioLayer />
 
-            </BrowserRouter>
-          </TooltipProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </PlayerProvider>
         </OrientationProvider>
       </AppErrorBoundary>
     </QueryClientProvider>
