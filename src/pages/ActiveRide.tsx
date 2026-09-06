@@ -88,6 +88,7 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
 export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused, updateLeanAngle, updateGForce } = useActiveRide();
+  const { stop: stopRadio } = usePlayer();
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
