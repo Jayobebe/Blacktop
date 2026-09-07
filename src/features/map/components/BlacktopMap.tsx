@@ -1695,91 +1695,162 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       {/* Map type / radio / card-drop toolbar — horizontal strip below the
           search bar, left of the MapLibre top-right controls so it never
           clips them or the exit button in landscape. */}
-      <div className="absolute top-28 left-3 z-20 flex flex-row flex-wrap items-center max-w-[calc(100vw-5rem)] rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
-        <button
-          type="button"
-          onClick={() => setBasemap('dark')}
-          aria-pressed={basemap === 'dark'}
-          aria-label="Dark map"
-          className={cn(
-            'w-9 h-9 flex items-center justify-center transition-colors',
-            basemap === 'dark' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+      <div className="absolute top-28 left-3 z-20 flex flex-row flex-wrap items-start gap-2">
+        <div className="flex flex-row flex-wrap items-center max-w-[calc(100vw-5rem)] rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setBasemap('dark')}
+            aria-pressed={basemap === 'dark'}
+            aria-label="Dark map"
+            className={cn(
+              'w-9 h-9 flex items-center justify-center transition-colors',
+              basemap === 'dark' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+            )}
+          >
+            <MapIcon className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
+          <button
+            type="button"
+            onClick={() => setBasemap('satellite')}
+            aria-pressed={basemap === 'satellite'}
+            aria-label="Satellite view"
+            className={cn(
+              'w-9 h-9 flex items-center justify-center transition-colors',
+              basemap === 'satellite' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+            )}
+          >
+            <Satellite className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
+          <button
+            type="button"
+            onClick={() => setThreeD((v) => !v)}
+            aria-pressed={threeD}
+            aria-label="3D terrain and buildings"
+            className={cn(
+              'w-9 h-9 flex items-center justify-center transition-colors',
+              threeD ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+            )}
+          >
+            <Box className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
+          <button
+            type="button"
+            onClick={() => { setShowOfflinePacks(false); setShowLoopPlanner((v) => !v); }}
+            aria-pressed={showLoopPlanner}
+            aria-label="Plan a loop ride"
+            className={cn(
+              'w-9 h-9 flex items-center justify-center transition-colors',
+              showLoopPlanner ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+            )}
+          >
+            <Repeat className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
+          <button
+            type="button"
+            onClick={() => { setShowLoopPlanner(false); setShowOfflinePacks((v) => !v); }}
+            aria-pressed={showOfflinePacks}
+            aria-label="Offline maps"
+            className={cn(
+              'w-9 h-9 flex items-center justify-center transition-colors',
+              showOfflinePacks ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+            )}
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
+          {/* Blacktop Radio — hidden unless enabled in Settings */}
+          <RadioButton variant="map" />
+          {canDropCard && (
+            <>
+              <div className="w-px h-6 bg-border" />
+              <button
+                type="button"
+                onClick={() => setDroppingCard((v) => !v)}
+                aria-pressed={droppingCard}
+                aria-label="Drop a trading card on the map"
+                className={cn(
+                  'w-9 h-9 flex items-center justify-center transition-colors',
+                  droppingCard ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+                )}
+              >
+                <IdCard className="w-4 h-4" />
+              </button>
+            </>
           )}
-        >
-          <MapIcon className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 bg-border" />
-        <button
-          type="button"
-          onClick={() => setBasemap('satellite')}
-          aria-pressed={basemap === 'satellite'}
-          aria-label="Satellite view"
-          className={cn(
-            'w-9 h-9 flex items-center justify-center transition-colors',
-            basemap === 'satellite' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
-          )}
-        >
-          <Satellite className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 bg-border" />
-        <button
-          type="button"
-          onClick={() => setThreeD((v) => !v)}
-          aria-pressed={threeD}
-          aria-label="3D terrain and buildings"
-          className={cn(
-            'w-9 h-9 flex items-center justify-center transition-colors',
-            threeD ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
-          )}
-        >
-          <Box className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 bg-border" />
-        <button
-          type="button"
-          onClick={() => { setShowOfflinePacks(false); setShowLoopPlanner((v) => !v); }}
-          aria-pressed={showLoopPlanner}
-          aria-label="Plan a loop ride"
-          className={cn(
-            'w-9 h-9 flex items-center justify-center transition-colors',
-            showLoopPlanner ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
-          )}
-        >
-          <Repeat className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 bg-border" />
-        <button
-          type="button"
-          onClick={() => { setShowLoopPlanner(false); setShowOfflinePacks((v) => !v); }}
-          aria-pressed={showOfflinePacks}
-          aria-label="Offline maps"
-          className={cn(
-            'w-9 h-9 flex items-center justify-center transition-colors',
-            showOfflinePacks ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
-          )}
-        >
-          <Download className="w-4 h-4" />
-        </button>
-        <div className="w-px h-6 bg-border" />
-        {/* Blacktop Radio — hidden unless enabled in Settings */}
-        <RadioButton variant="map" />
-        {canDropCard && (
-          <>
-            <div className="w-px h-6 bg-border" />
+        </div>
+
+        {/* Save Location (Add POI) — sits to the right of the toolbar and
+            still left of the MapLibre top-right controls. */}
+        <div className="relative">
+          {showSaveUI ? (
+            <div className="absolute top-full left-0 mt-2 bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
+              <p className="text-xs font-semibold text-foreground">Name this spot</p>
+              <Input
+                autoFocus
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="e.g. Home, Camp spot…"
+                className="h-9 text-sm bg-background/60"
+                maxLength={50}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && saveName.trim() && userLocation) {
+                    savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
+                    toast.success(`"${saveName.trim()}" saved`);
+                    setSaveName('');
+                    setShowSaveUI(false);
+                  }
+                  if (e.key === 'Escape') {
+                    setSaveName('');
+                    setShowSaveUI(false);
+                  }
+                }}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={!saveName.trim() || !userLocation}
+                  onClick={() => {
+                    if (!saveName.trim() || !userLocation) return;
+                    savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
+                    toast.success(`"${saveName.trim()}" saved`);
+                    setSaveName('');
+                    setShowSaveUI(false);
+                  }}
+                  className="flex-1 h-8 text-xs"
+                >
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => { setSaveName(''); setShowSaveUI(false); }}
+                  className="h-8 text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
             <button
-              type="button"
-              onClick={() => setDroppingCard((v) => !v)}
-              aria-pressed={droppingCard}
-              aria-label="Drop a trading card on the map"
-              className={cn(
-                'w-9 h-9 flex items-center justify-center transition-colors',
-                droppingCard ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
-              )}
+              onClick={() => {
+                if (!userLocation) {
+                  toast.info('Waiting for GPS fix…');
+                  return;
+                }
+                setSaveName('');
+                setShowSaveUI(true);
+              }}
+              className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
+              aria-label="Save current location as a POI"
             >
-              <IdCard className="w-4 h-4" />
+              <BookmarkPlus className="w-5 h-5" />
             </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       {droppingCard && (
