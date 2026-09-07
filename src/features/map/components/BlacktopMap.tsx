@@ -1810,7 +1810,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             still left of the MapLibre top-right controls. */}
         <div className="relative">
           {showSaveUI ? (
-            <div className="absolute top-full left-0 mt-2 bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
+            <div className="absolute top-full right-0 mt-2 bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
               <p className="text-xs font-semibold text-foreground">Name this spot</p>
               <Input
                 autoFocus
