@@ -1692,10 +1692,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
 
-      {/* Vertical basemap toggle — sits on the right, under the maplibre
-          Navigation + Geolocate controls. Kept narrow (single column of
-          icon buttons) so it stays out of the way of the map. */}
-      <div className="absolute left-3 top-[clamp(96px,24dvh,196px)] z-20 flex flex-col rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+      {/* Map type / radio / card-drop toolbar — horizontal strip below the
+          search bar, left of the MapLibre top-right controls so it never
+          clips them or the exit button in landscape. */}
+      <div className="absolute top-28 left-3 z-20 flex flex-row flex-wrap items-center max-w-[calc(100vw-5rem)] rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
         <button
           type="button"
           onClick={() => setBasemap('dark')}
@@ -1708,7 +1708,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <MapIcon className="w-4 h-4" />
         </button>
-        <div className="h-px bg-border" />
+        <div className="w-px h-6 bg-border" />
         <button
           type="button"
           onClick={() => setBasemap('satellite')}
@@ -1721,7 +1721,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Satellite className="w-4 h-4" />
         </button>
-        <div className="h-px bg-border" />
+        <div className="w-px h-6 bg-border" />
         <button
           type="button"
           onClick={() => setThreeD((v) => !v)}
@@ -1734,7 +1734,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Box className="w-4 h-4" />
         </button>
-        <div className="h-px bg-border" />
+        <div className="w-px h-6 bg-border" />
         <button
           type="button"
           onClick={() => { setShowOfflinePacks(false); setShowLoopPlanner((v) => !v); }}
@@ -1747,7 +1747,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Repeat className="w-4 h-4" />
         </button>
-        <div className="h-px bg-border" />
+        <div className="w-px h-6 bg-border" />
         <button
           type="button"
           onClick={() => { setShowLoopPlanner(false); setShowOfflinePacks((v) => !v); }}
@@ -1760,13 +1760,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         >
           <Download className="w-4 h-4" />
         </button>
-        <div className="h-px bg-border" />
+        <div className="w-px h-6 bg-border" />
         {/* Blacktop Radio — hidden unless enabled in Settings */}
         <RadioButton variant="map" />
         {canDropCard && (
           <>
-
-            <div className="h-px bg-border" />
+            <div className="w-px h-6 bg-border" />
             <button
               type="button"
               onClick={() => setDroppingCard((v) => !v)}
@@ -2191,9 +2190,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       {/* ── Save Location (Add POI) ──────────────────────────────────────────
-          Sits at bottom-left, mirroring the overlay's exit button at bottom-right.
-          Tapping prompts for a name, then saves the current GPS fix as a POI. */}
-      <div className="absolute bottom-3 left-3 z-20">
+          Sits under the MapLibre top-right controls so it stays clear of the
+          search bar and the map exit button. */}
+      <div className="absolute top-[7.5rem] right-3 z-20">
         {showSaveUI ? (
           <div className="bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
             <p className="text-xs font-semibold text-foreground">Name this spot</p>
