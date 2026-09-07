@@ -1,43 +1,72 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import maplibregl, { Map as MapLibreMap, Marker } from 'maplibre-gl';
-import type { StyleSpecification } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import './blacktopMap.css';
-import { closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
-import { useRadarOverlay } from '../hooks/useRadarOverlay';
-import { registerTileCacheProtocol, toCachedTileUrl } from '../lib/tileCache';
-import { getCountryCode } from '../lib/placeSearch';
-import { fetchTrafficCameras, fetchCamerasOnRoute, metersBetween, CAMERA_MIN_ZOOM, TrafficCamera } from '../lib/cameraStore';
-import { pingSpeedCamera, pingAnprCamera } from '../lib/cameraPing';
-import { fetchRouteThroughStops, metersToMiles, RouteResult } from '../lib/routing';
-import { checkRouteWeather, findDryRoute, HEAVY_MM } from '../lib/weatherRoute';
-import { RadioButton } from '@/features/radio';
-import { useNextWaypoint } from '@/features/waypoints';
-import { MapSearchBar } from './MapSearchBar';
-import { LoopPlannerPanel } from './LoopPlannerPanel';
-import { OfflinePacksPanel } from './OfflinePacksPanel';
-import { MapDestination } from '../types';
-import { savePOI } from '../lib/poiStore';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { BookmarkPlus } from 'lucide-react';
-import { useMapPresentUserIds } from '../hooks/useMapPresence';
-import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { useProfile } from '@/features/profile';
+import { useEffect, useMemo, useRef, useState } from "react";
+import maplibregl, { Map as MapLibreMap, Marker } from "maplibre-gl";
+import type { StyleSpecification } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import "./blacktopMap.css";
+import { closeBlacktopMap, clearMapDestination } from "../hooks/useMapOverlay";
+import { useRadarOverlay } from "../hooks/useRadarOverlay";
+import { registerTileCacheProtocol, toCachedTileUrl } from "../lib/tileCache";
+import { getCountryCode } from "../lib/placeSearch";
+import {
+  fetchTrafficCameras,
+  fetchCamerasOnRoute,
+  metersBetween,
+  CAMERA_MIN_ZOOM,
+  TrafficCamera,
+} from "../lib/cameraStore";
+import { pingSpeedCamera, pingAnprCamera } from "../lib/cameraPing";
+import { fetchRouteThroughStops, metersToMiles, RouteResult } from "../lib/routing";
+import { checkRouteWeather, findDryRoute, HEAVY_MM } from "../lib/weatherRoute";
+import { RadioButton } from "@/features/radio";
+import { useNextWaypoint } from "@/features/waypoints";
+import { MapSearchBar } from "./MapSearchBar";
+import { LoopPlannerPanel } from "./LoopPlannerPanel";
+import { OfflinePacksPanel } from "./OfflinePacksPanel";
+import { MapDestination } from "../types";
+import { savePOI } from "../lib/poiStore";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { BookmarkPlus } from "lucide-react";
+import { useMapPresentUserIds } from "../hooks/useMapPresence";
+import { ACCENT_COLORS, useSettings } from "@/features/settings";
+import { useProfile } from "@/features/profile";
 
-import { useActiveRide, recordBadges, useSoloRoute, addSoloStop, removeSoloStopAt, clearSoloRoute, setSoloRoute } from '@/features/ride';
-import { useConvoyMembers, useConvoyState } from '@/features/convoy';
-import { useSpeakingUsers } from '@/features/voice';
-import { getMemberColorStyles } from '@/lib/memberColors';
-import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import { cn } from '@/lib/utils';
-import { Navigation, Loader2, SkipForward, Plus, X, Flag, Map as MapIcon, Satellite, Box, AlertTriangle, Repeat, Download, IdCard, Check } from 'lucide-react';
-import { toast } from 'sonner';
-import { useWaypoints } from '@/features/waypoints';
-import { useRescueBridge } from '@/features/rescue';
-import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from '@/features/cards/hooks/useCardDrops';
-import { useCollectedCards, useVehicleCards, TIER_STYLES, useCardKickbacks } from '@/features/cards';
-import { copyLedger } from '@/features/cards/lib/dropEconomy';
+import {
+  useActiveRide,
+  recordBadges,
+  useSoloRoute,
+  addSoloStop,
+  removeSoloStopAt,
+  clearSoloRoute,
+  setSoloRoute,
+} from "@/features/ride";
+import { useConvoyMembers, useConvoyState } from "@/features/convoy";
+import { useSpeakingUsers } from "@/features/voice";
+import { getMemberColorStyles } from "@/lib/memberColors";
+import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import {
+  Navigation,
+  Loader2,
+  SkipForward,
+  Plus,
+  X,
+  Flag,
+  Map as MapIcon,
+  Satellite,
+  Box,
+  AlertTriangle,
+  Repeat,
+  Download,
+  IdCard,
+  Check,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useWaypoints } from "@/features/waypoints";
+import { useRescueBridge } from "@/features/rescue";
+import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
+import { useCollectedCards, useVehicleCards, TIER_STYLES, useCardKickbacks } from "@/features/cards";
+import { copyLedger } from "@/features/cards/lib/dropEconomy";
 import {
   CHALLENGE_COUNTDOWN_MS,
   CHALLENGE_WIN_BADGES,
@@ -49,7 +78,7 @@ import {
   formatDelta,
   hasCrossedFinish,
   scoreAttempt,
-} from '@/features/cards/lib/challenge';
+} from "@/features/cards/lib/challenge";
 import {
   clearChallengeRun,
   setPendingChallengeReceipt,
@@ -57,25 +86,25 @@ import {
   updateChallengeRun,
   useChallengeRun,
   type ChallengeResult,
-} from '@/lib/challengeRun';
-import { uploadCardPhoto } from '@/features/cards/lib/cardPhoto';
+} from "@/lib/challengeRun";
+import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
 
 function createMemberMarkerElement(): HTMLDivElement {
-  const el = document.createElement('div');
-  el.style.width = '32px';
-  el.style.height = '32px';
-  el.style.borderRadius = '50%';
-  el.style.display = 'flex';
-  el.style.alignItems = 'center';
-  el.style.justifyContent = 'center';
-  el.style.fontSize = '13px';
-  el.style.fontWeight = '700';
-  el.style.fontFamily = 'inherit';
-  el.style.border = '2px solid transparent';
-  el.style.transition = 'box-shadow 150ms ease, transform 150ms ease';
+  const el = document.createElement("div");
+  el.style.width = "32px";
+  el.style.height = "32px";
+  el.style.borderRadius = "50%";
+  el.style.display = "flex";
+  el.style.alignItems = "center";
+  el.style.justifyContent = "center";
+  el.style.fontSize = "13px";
+  el.style.fontWeight = "700";
+  el.style.fontFamily = "inherit";
+  el.style.border = "2px solid transparent";
+  el.style.transition = "box-shadow 150ms ease, transform 150ms ease";
   return el;
 }
 
@@ -89,36 +118,36 @@ function applyMemberMarkerStyle(
   colorStyles: ReturnType<typeof getMemberColorStyles>,
   isSpeaking: boolean,
 ) {
-  el.textContent = (name.trim()[0] || '?').toUpperCase();
+  el.textContent = (name.trim()[0] || "?").toUpperCase();
   el.style.backgroundColor = colorStyles.bg;
   el.style.borderColor = colorStyles.border;
   el.style.color = colorStyles.text;
-  el.style.boxShadow = isSpeaking ? colorStyles.glow : 'none';
-  el.style.transform = isSpeaking ? 'scale(1.15)' : 'scale(1)';
+  el.style.boxShadow = isSpeaking ? colorStyles.glow : "none";
+  el.style.transform = isSpeaking ? "scale(1.15)" : "scale(1)";
 }
 
-const ROUTE_SOURCE_ID = 'blacktop-route';
-const ROUTE_CASING_LAYER_ID = 'blacktop-route-casing';
-const ROUTE_LINE_LAYER_ID = 'blacktop-route-line';
+const ROUTE_SOURCE_ID = "blacktop-route";
+const ROUTE_CASING_LAYER_ID = "blacktop-route-casing";
+const ROUTE_LINE_LAYER_ID = "blacktop-route-line";
 // Secondary "rescue" route — burn-orange, glowing, always drawn above the
 // primary route/waypoint line so it can never be hidden by it.
-const RESCUE_SOURCE_ID = 'blacktop-rescue-route';
-const RESCUE_GLOW_OUTER_LAYER_ID = 'blacktop-rescue-glow-outer';
-const RESCUE_GLOW_INNER_LAYER_ID = 'blacktop-rescue-glow-inner';
-const RESCUE_LINE_LAYER_ID = 'blacktop-rescue-line';
+const RESCUE_SOURCE_ID = "blacktop-rescue-route";
+const RESCUE_GLOW_OUTER_LAYER_ID = "blacktop-rescue-glow-outer";
+const RESCUE_GLOW_INNER_LAYER_ID = "blacktop-rescue-glow-inner";
+const RESCUE_LINE_LAYER_ID = "blacktop-rescue-line";
 const RESCUE_LAYER_IDS = [RESCUE_GLOW_OUTER_LAYER_ID, RESCUE_GLOW_INNER_LAYER_ID, RESCUE_LINE_LAYER_ID];
 // Matches the Burn button colour (--burn: 15 85% 52%).
-const RESCUE_COLOR = 'hsl(15, 85%, 52%)';
+const RESCUE_COLOR = "hsl(15, 85%, 52%)";
 
 function createRescueMarkerElement(name: string): HTMLDivElement {
-  const el = document.createElement('div');
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.alignItems = 'center';
-  el.style.pointerEvents = 'none';
+  const el = document.createElement("div");
+  el.style.display = "flex";
+  el.style.flexDirection = "column";
+  el.style.alignItems = "center";
+  el.style.pointerEvents = "none";
   el.innerHTML = `
     <div style="padding:2px 8px;border-radius:9999px;background:${RESCUE_COLOR};color:#fff;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 0 18px ${RESCUE_COLOR};">
-      RESCUE · ${name.replace(/[<>&]/g, '')}
+      RESCUE · ${name.replace(/[<>&]/g, "")}
     </div>
     <div style="width:14px;height:14px;margin-top:3px;border-radius:50%;background:${RESCUE_COLOR};border:2px solid #fff;box-shadow:0 0 20px ${RESCUE_COLOR};"></div>
   `;
@@ -139,25 +168,25 @@ interface BlacktopMapProps {
 
 registerTileCacheProtocol();
 
-const SATELLITE_LAYER_ID = 'esri-satellite-layer';
+const SATELLITE_LAYER_ID = "esri-satellite-layer";
 // Free, key-less global elevation tiles (Terrarium encoding, AWS Open Data) —
 // same source the 3D ride flyover uses.
-const TERRAIN_SOURCE_ID = 'blacktop-dem';
-const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
-const BUILDINGS_LAYER_ID = 'blacktop-buildings-3d';
+const TERRAIN_SOURCE_ID = "blacktop-dem";
+const TERRAIN_TILES = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
+const BUILDINGS_LAYER_ID = "blacktop-buildings-3d";
 const THREE_D_PITCH = 60;
-const SATELLITE_SOURCE_ID = 'esri-satellite';
+const SATELLITE_SOURCE_ID = "esri-satellite";
 
 // Dark basemap: OpenFreeMap's free dark vector style (no API key required,
 // built on OpenMapTiles/OpenStreetMap). The satellite raster layer is merged
 // in so we can toggle visibility without calling setStyle() (which would
 // blow away dynamically added sources/layers like the route line).
-const OPENFREEMAP_DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+const OPENFREEMAP_DARK_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
 
-const SATELLITE_SOURCE: StyleSpecification['sources'][string] = {
-  type: 'raster',
+const SATELLITE_SOURCE: StyleSpecification["sources"][string] = {
+  type: "raster",
   tiles: [
-    toCachedTileUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+    toCachedTileUrl("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"),
   ],
   tileSize: 256,
   attribution:
@@ -170,12 +199,12 @@ const FALLBACK_DARK_STYLE: StyleSpecification = {
   version: 8,
   sources: { [SATELLITE_SOURCE_ID]: SATELLITE_SOURCE },
   layers: [
-    { id: 'dark-background', type: 'background', paint: { 'background-color': '#0a0a0a' } },
+    { id: "dark-background", type: "background", paint: { "background-color": "#0a0a0a" } },
     {
       id: SATELLITE_LAYER_ID,
-      type: 'raster',
+      type: "raster",
       source: SATELLITE_SOURCE_ID,
-      layout: { visibility: 'none' },
+      layout: { visibility: "none" },
     },
   ],
 };
@@ -196,14 +225,14 @@ function getBasemapStyle(): Promise<StyleSpecification> {
           ...style.layers,
           {
             id: SATELLITE_LAYER_ID,
-            type: 'raster',
+            type: "raster",
             source: SATELLITE_SOURCE_ID,
-            layout: { visibility: 'none' },
-          } as StyleSpecification['layers'][number],
+            layout: { visibility: "none" },
+          } as StyleSpecification["layers"][number],
         ],
       }))
       .catch((err) => {
-        console.error('[BlacktopMap] Falling back to plain dark basemap:', err);
+        console.error("[BlacktopMap] Falling back to plain dark basemap:", err);
         return FALLBACK_DARK_STYLE;
       });
   }
@@ -221,7 +250,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // draws the route + any waypoints — instead of opening blank and making
   // them re-search what they already chose in the lobby.
   const fallbackDestination: MapDestination | null = convoy.destination
-    ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
+    ? {
+        lat: convoy.destination.lat,
+        lng: convoy.destination.lng,
+        name: convoy.destination.name,
+        address: convoy.destination.address,
+      }
     : null;
   const seededDestination = initialDestination ?? fallbackDestination;
   const [destination, setDestination] = useState<MapDestination | null>(seededDestination);
@@ -234,8 +268,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [weatherVia, setWeatherVia] = useState<{ lat: number; lng: number } | null>(null);
   const [contextLost, setContextLost] = useState(false);
   const [showSaveUI, setShowSaveUI] = useState(false);
-  const [saveName, setSaveName] = useState('');
-  const [basemap, setBasemap] = useState<'dark' | 'satellite'>('dark');
+  const [saveName, setSaveName] = useState("");
+  const [basemap, setBasemap] = useState<"dark" | "satellite">("dark");
   const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
   const { user, profile } = useProfile();
@@ -257,16 +291,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const memberMarkersRef = useRef<Map<string, { marker: Marker; el: HTMLDivElement }>>(new Map());
 
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
-  const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
+  const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(", ")})`;
 
   // During an active ride use rideState speed; on the home map use raw geolocation speed.
   const displaySpeed = rideState.isActive ? rideState.currentSpeed : geoSpeed;
   const speedColorClass =
     displaySpeed >= settings.redSpeedThreshold
-      ? 'text-destructive'
+      ? "text-destructive"
       : displaySpeed >= settings.amberSpeedThreshold
-        ? 'text-warning'
-        : 'text-foreground';
+        ? "text-warning"
+        : "text-foreground";
 
   useRadarOverlay(map, displaySpeed, settings.weatherOverlayEnabled);
 
@@ -278,9 +312,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
-  useEffect(() => { userLocationRef.current = userLocation; }, [userLocation]);
+  useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
   const destinationRef = useRef<MapDestination | null>(seededDestination);
-  useEffect(() => { destinationRef.current = destination; }, [destination]);
+  useEffect(() => {
+    destinationRef.current = destination;
+  }, [destination]);
 
   // ── Inactivity guardrail for the home map ──────────────────────────────────
   // When there is no active ride, auto-close the map after HOME_MAP_INACTIVITY_MS
@@ -296,7 +334,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     const check = setInterval(() => {
       if (Date.now() - lastInteractionAtRef.current >= HOME_MAP_INACTIVITY_MS) {
-        toast.info('Map closed due to inactivity');
+        toast.info("Map closed due to inactivity");
         closeBlacktopMap();
       }
     }, 30_000); // check every 30 s
@@ -334,15 +372,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (!initialDestination) setRoute(null);
   }, [initialDestination, rideState.isActive]);
 
-
-
   // ── Map init ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const center = initialDestination
-      ? [initialDestination.lng, initialDestination.lat]
-      : [-0.1276, 51.5072];
+    const center = initialDestination ? [initialDestination.lng, initialDestination.lat] : [-0.1276, 51.5072];
 
     let cancelled = false;
     let instance: MapLibreMap | null = null;
@@ -350,41 +384,41 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     getBasemapStyle().then((style) => {
       if (cancelled || !containerRef.current || mapRef.current) return;
 
-    instance = new maplibregl.Map({
-      container: containerRef.current,
-      style,
-      center: center as [number, number],
-      zoom: initialDestination ? 15 : 14,
-      attributionControl: false,
-    });
+      instance = new maplibregl.Map({
+        container: containerRef.current,
+        style,
+        center: center as [number, number],
+        zoom: initialDestination ? 15 : 14,
+        attributionControl: false,
+      });
 
-    instance.addControl(new maplibregl.AttributionControl({ compact: true }));
-    instance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-    instance.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: true,
-        showAccuracyCircle: false,
-      }),
-      'top-right',
-    );
+      instance.addControl(new maplibregl.AttributionControl({ compact: true }));
+      instance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+      instance.addControl(
+        new maplibregl.GeolocateControl({
+          positionOptions: { enableHighAccuracy: true },
+          trackUserLocation: true,
+          showAccuracyCircle: false,
+        }),
+        "top-right",
+      );
 
-    const markInteraction = (e: { originalEvent?: unknown }) => {
-      if (e.originalEvent) lastInteractionAtRef.current = Date.now();
-    };
-    instance.on('dragstart', markInteraction);
-    instance.on('zoomstart', markInteraction);
-    instance.on('rotatestart', markInteraction);
-    instance.on('pitchstart', markInteraction);
+      const markInteraction = (e: { originalEvent?: unknown }) => {
+        if (e.originalEvent) lastInteractionAtRef.current = Date.now();
+      };
+      instance.on("dragstart", markInteraction);
+      instance.on("zoomstart", markInteraction);
+      instance.on("rotatestart", markInteraction);
+      instance.on("pitchstart", markInteraction);
 
-    instance.on('webglcontextlost', () => {
-      if (onContextLost) onContextLost();
-      else setContextLost(true);
-    });
-    instance.on('webglcontextrestored', () => setContextLost(false));
+      instance.on("webglcontextlost", () => {
+        if (onContextLost) onContextLost();
+        else setContextLost(true);
+      });
+      instance.on("webglcontextrestored", () => setContextLost(false));
 
-    mapRef.current = instance;
-    setMap(instance);
+      mapRef.current = instance;
+      setMap(instance);
     });
 
     return () => {
@@ -394,7 +428,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       try {
         m.remove();
       } catch (err) {
-        console.error('[BlacktopMap] Error removing map instance:', err);
+        console.error("[BlacktopMap] Error removing map instance:", err);
       }
       mapRef.current = null;
       setMap(null);
@@ -418,14 +452,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       if (!m.getLayer(SATELLITE_LAYER_ID)) return;
       // Dark basemap layers = everything except the satellite raster and our
       // dynamically added overlays (route line etc. keep their visibility).
-      const darkLayerIds = m.getStyle().layers
-        .map((l) => l.id)
-        .filter((id) => id !== SATELLITE_LAYER_ID && !id.startsWith('blacktop-'));
+      const darkLayerIds = m
+        .getStyle()
+        .layers.map((l) => l.id)
+        .filter((id) => id !== SATELLITE_LAYER_ID && !id.startsWith("blacktop-"));
       for (const id of darkLayerIds) {
-        m.setLayoutProperty(id, 'visibility', basemap === 'dark' ? 'visible' : 'none');
+        m.setLayoutProperty(id, "visibility", basemap === "dark" ? "visible" : "none");
       }
-      m.setLayoutProperty(SATELLITE_LAYER_ID, 'visibility', basemap === 'satellite' ? 'visible' : 'none');
-      if (basemap === 'satellite') {
+      m.setLayoutProperty(SATELLITE_LAYER_ID, "visibility", basemap === "satellite" ? "visible" : "none");
+      if (basemap === "satellite") {
         m.setMaxZoom(SAT_MAX_ZOOM);
         if (m.getZoom() > SAT_MAX_ZOOM) m.zoomTo(SAT_MAX_ZOOM, { duration: 250 });
       } else {
@@ -433,7 +468,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       }
     };
     if (m.isStyleLoaded()) apply();
-    else m.once('styledata', apply);
+    else m.once("styledata", apply);
   }, [basemap, map]);
 
   // ── 3D terrain + building extrusions ──────────────────────────────────────
@@ -450,28 +485,29 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         if (threeD) {
           if (!m.getSource(TERRAIN_SOURCE_ID)) {
             m.addSource(TERRAIN_SOURCE_ID, {
-              type: 'raster-dem',
+              type: "raster-dem",
               tiles: [TERRAIN_TILES],
               tileSize: 256,
-              encoding: 'terrarium',
+              encoding: "terrarium",
               maxzoom: 14,
-              attribution: 'Terrain © <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">AWS Terrain Tiles</a>',
+              attribution:
+                'Terrain © <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank">AWS Terrain Tiles</a>',
             });
           }
           m.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: 1.4 });
 
-          if (!m.getLayer(BUILDINGS_LAYER_ID) && m.getSource('openmaptiles')) {
+          if (!m.getLayer(BUILDINGS_LAYER_ID) && m.getSource("openmaptiles")) {
             m.addLayer({
               id: BUILDINGS_LAYER_ID,
-              type: 'fill-extrusion',
-              source: 'openmaptiles',
-              'source-layer': 'building',
+              type: "fill-extrusion",
+              source: "openmaptiles",
+              "source-layer": "building",
               minzoom: 13,
               paint: {
-                'fill-extrusion-color': '#2b2b31',
-                'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8],
-                'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-                'fill-extrusion-opacity': 0.85,
+                "fill-extrusion-color": "#2b2b31",
+                "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
+                "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+                "fill-extrusion-opacity": 0.85,
               },
             });
           }
@@ -491,12 +527,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           if (m.getPitch() > 1) m.easeTo({ pitch: 0, duration: 600, essential: true });
         }
       } catch (err) {
-        console.warn('[BlacktopMap] 3D toggle failed:', err);
+        console.warn("[BlacktopMap] 3D toggle failed:", err);
       }
     };
 
     if (m.isStyleLoaded()) apply();
-    else m.once('styledata', apply);
+    else m.once("styledata", apply);
   }, [threeD, map]);
 
   // When the overlay transitions from hidden (display:none) to visible, the
@@ -504,13 +540,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // lets the browser apply the display change before MapLibre recalculates.
   useEffect(() => {
     if (!isVisible || !mapRef.current) return;
-    const t = window.setTimeout(() => { mapRef.current?.resize(); }, 50);
+    const t = window.setTimeout(() => {
+      mapRef.current?.resize();
+    }, 50);
     return () => clearTimeout(t);
   }, [isVisible]);
 
   // ── Geolocation watch ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!('geolocation' in navigator)) return;
+    if (!("geolocation" in navigator)) return;
 
     let countryResolved = false;
     const watchId = navigator.geolocation.watchPosition(
@@ -583,23 +621,26 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (!map || !isVisible) return;
 
     const container = map.getCanvasContainer();
-    const mark = () => { lastInteractionAtRef.current = Date.now(); };
-    container.addEventListener('touchstart', mark, { passive: true });
-    container.addEventListener('mousedown', mark);
-    container.addEventListener('wheel', mark, { passive: true });
+    const mark = () => {
+      lastInteractionAtRef.current = Date.now();
+    };
+    container.addEventListener("touchstart", mark, { passive: true });
+    container.addEventListener("mousedown", mark);
+    container.addEventListener("wheel", mark, { passive: true });
 
     let resumed = true;
     const tick = setInterval(() => {
       const idleFor = Date.now() - lastInteractionAtRef.current;
-      if (idleFor < LOCATE_RESUME_DELAY_MS) { resumed = false; return; }
+      if (idleFor < LOCATE_RESUME_DELAY_MS) {
+        resumed = false;
+        return;
+      }
       if (resumed) return;
       resumed = true;
 
       const loc = userLocationRef.current;
       if (!loc) return;
-      const followZoom = destinationRef.current
-        ? FOLLOW_ZOOM_WITH_DESTINATION
-        : FOLLOW_ZOOM_NO_DESTINATION;
+      const followZoom = destinationRef.current ? FOLLOW_ZOOM_WITH_DESTINATION : FOLLOW_ZOOM_NO_DESTINATION;
       const currentZoom = map.getZoom();
       map.easeTo({
         center: [loc.lng, loc.lat],
@@ -613,9 +654,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     return () => {
       clearInterval(tick);
-      container.removeEventListener('touchstart', mark);
-      container.removeEventListener('mousedown', mark);
-      container.removeEventListener('wheel', mark);
+      container.removeEventListener("touchstart", mark);
+      container.removeEventListener("mousedown", mark);
+      container.removeEventListener("wheel", mark);
     };
   }, [map, isVisible]);
 
@@ -627,30 +668,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   useEffect(() => {
     if (!map || !userLocation) return;
 
-    const letter = (profile.name?.trim()[0] || '?').toUpperCase();
+    const letter = (profile.name?.trim()[0] || "?").toUpperCase();
 
     if (!userMarkerRef.current) {
-      const el = document.createElement('div');
-      el.className = 'blacktop-user-marker';
-      el.style.width = '32px';
-      el.style.height = '32px';
-      el.style.borderRadius = '9999px';
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      el.style.justifyContent = 'center';
-      el.style.fontSize = '13px';
-      el.style.fontWeight = '700';
-      el.style.fontFamily = 'inherit';
-      el.style.color = '#ffffff';
+      const el = document.createElement("div");
+      el.className = "blacktop-user-marker";
+      el.style.width = "32px";
+      el.style.height = "32px";
+      el.style.borderRadius = "9999px";
+      el.style.display = "flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.fontSize = "13px";
+      el.style.fontWeight = "700";
+      el.style.fontFamily = "inherit";
+      el.style.color = "#ffffff";
       el.style.background = accentColor;
-      el.style.border = '3px solid #ffffff';
-      el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.4)';
+      el.style.border = "3px solid #ffffff";
+      el.style.boxShadow = "0 0 0 2px rgba(0,0,0,0.4)";
       el.textContent = letter;
       userMarkerRef.current = new maplibregl.Marker({ element: el })
         .setLngLat([userLocation.lng, userLocation.lat])
         .addTo(map);
       // Own pin always sits above convoy member pins.
-      userMarkerRef.current.getElement().parentElement?.style.setProperty('z-index', '5');
+      userMarkerRef.current.getElement().parentElement?.style.setProperty("z-index", "5");
     } else {
       const el = userMarkerRef.current.getElement();
       el.textContent = letter;
@@ -658,7 +699,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       userMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
     }
   }, [map, userLocation, accentColor, profile.name]);
-
 
   useEffect(() => {
     return () => {
@@ -694,9 +734,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         // already carries the letter badge.
         m.userId !== user?.id &&
         mapPresentUserIds.has(m.userId) &&
-        typeof m.currentLat === 'number' &&
+        typeof m.currentLat === "number" &&
         Number.isFinite(m.currentLat) &&
-        typeof m.currentLng === 'number' &&
+        typeof m.currentLng === "number" &&
         Number.isFinite(m.currentLng),
     );
     const visibleIds = new Set(visibleMembers.map((m) => m.userId));
@@ -778,11 +818,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
 
     refresh();
-    map.on('moveend', scheduleRefresh);
+    map.on("moveend", scheduleRefresh);
     return () => {
       cancelled = true;
       if (debounce != null) window.clearTimeout(debounce);
-      map.off('moveend', scheduleRefresh);
+      map.off("moveend", scheduleRefresh);
     };
   }, [map, settings.trafficCamerasEnabled]);
 
@@ -795,29 +835,27 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     cameras.forEach((cam) => {
       const color =
-        cam.type === 'speed'
-          ? 'hsl(var(--destructive))'
-          : cam.type === 'alpr'
-            ? 'hsl(var(--warning))'
-            : 'hsl(var(--muted-foreground))';
-      const el = document.createElement('div');
-      el.style.width = '22px';
-      el.style.height = '22px';
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      el.style.justifyContent = 'center';
-      el.style.filter = 'drop-shadow(0 0 3px rgba(0,0,0,0.8))';
+        cam.type === "speed"
+          ? "hsl(var(--destructive))"
+          : cam.type === "alpr"
+            ? "hsl(var(--warning))"
+            : "hsl(var(--muted-foreground))";
+      const el = document.createElement("div");
+      el.style.width = "22px";
+      el.style.height = "22px";
+      el.style.display = "flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.filter = "drop-shadow(0 0 3px rgba(0,0,0,0.8))";
       el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
       el.title =
-        cam.type === 'speed'
-          ? `Speed camera${cam.maxspeed ? ` (${cam.maxspeed})` : ''}`
-          : cam.type === 'alpr'
-            ? 'ANPR camera'
-            : 'Traffic surveillance';
+        cam.type === "speed"
+          ? `Speed camera${cam.maxspeed ? ` (${cam.maxspeed})` : ""}`
+          : cam.type === "alpr"
+            ? "ANPR camera"
+            : "Traffic surveillance";
 
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([cam.lng, cam.lat])
-        .addTo(map);
+      const marker = new maplibregl.Marker({ element: el }).setLngLat([cam.lng, cam.lat]).addTo(map);
       cameraMarkersRef.current.push(marker);
     });
   }, [map, cameras]);
@@ -864,16 +902,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (!settings.trafficCamerasEnabled || routeCameras.length === 0) return;
     summarisedDestRef.current = key;
     alertedCamerasRef.current.clear();
-    const speed = routeCameras.filter((c) => c.type === 'speed').length;
+    const speed = routeCameras.filter((c) => c.type === "speed").length;
     const anpr = routeCameras.length - speed;
-    const parts = [
-      speed > 0 ? `${speed} speed` : null,
-      anpr > 0 ? `${anpr} ANPR` : null,
-    ].filter(Boolean);
-    toast.warning(
-      `${routeCameras.length} camera${routeCameras.length === 1 ? '' : 's'} on this route`,
-      { description: parts.join(' · ') },
-    );
+    const parts = [speed > 0 ? `${speed} speed` : null, anpr > 0 ? `${anpr} ANPR` : null].filter(Boolean);
+    toast.warning(`${routeCameras.length} camera${routeCameras.length === 1 ? "" : "s"} on this route`, {
+      description: parts.join(" · "),
+    });
   }, [destination, routeCameras, settings.trafficCamerasEnabled]);
 
   // Approach alerts + audible ping.
@@ -906,14 +940,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       }
 
       alertedCamerasRef.current.add(cam.id);
-      if (cam.type === 'speed') pingSpeedCamera();
+      if (cam.type === "speed") pingSpeedCamera();
       else pingAnprCamera();
       toast.warning(
-        cam.type === 'speed'
-          ? `Speed camera ahead${cam.maxspeed ? ` · ${cam.maxspeed}` : ''}`
-          : cam.type === 'alpr'
-            ? 'ANPR camera ahead'
-            : 'Surveillance camera ahead',
+        cam.type === "speed"
+          ? `Speed camera ahead${cam.maxspeed ? ` · ${cam.maxspeed}` : ""}`
+          : cam.type === "alpr"
+            ? "ANPR camera ahead"
+            : "Surveillance camera ahead",
       );
     }
   }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
@@ -934,7 +968,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // Copy 0 is the one locked in the vault; planted copies number upward from 1.
   const placedCount = myDrops.length;
-  const ledger = copyLedger(cards.map((c) => c.stats.totalRides), placedCount);
+  const ledger = copyLedger(
+    cards.map((c) => c.stats.totalRides),
+    placedCount,
+  );
   const canDropCard = cardsEnabled && !rideState.isActive && ledger.available > 0 && cards.length > 0;
 
   // Drops within ~55m of each other read as one hot-spot stack on the map.
@@ -949,7 +986,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     return Array.from(buckets.values());
   }, [drops]);
 
-
   // Landmark-style card markers — home map only, so ride navigation stays clean.
   useEffect(() => {
     cardMarkersRef.current.forEach((m) => m.remove());
@@ -962,49 +998,47 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       const allCollected = stack.every((d) => d.collected || d.isOwn);
       // Hot-spot heat: more cards stacked here, hotter the landmark reads.
       const heat = count >= 5 ? 3 : count >= 3 ? 2 : count >= 2 ? 1 : 0;
-      const heatColor = ['', 'hsl(45 93% 58%)', 'hsl(25 95% 55%)', 'hsl(0 84% 60%)'][heat];
-      const edge = allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor;
-      const el = document.createElement('div');
-      el.style.position = 'relative';
-      el.style.width = count > 1 ? '34px' : '30px';
-      el.style.height = count > 1 ? '42px' : '38px';
-      el.style.borderRadius = '6px';
-      el.style.cursor = 'pointer';
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      el.style.justifyContent = 'center';
-      el.style.background = 'linear-gradient(145deg, rgba(30,30,32,0.96), rgba(10,10,12,0.96))';
+      const heatColor = ["", "hsl(45 93% 58%)", "hsl(25 95% 55%)", "hsl(0 84% 60%)"][heat];
+      const edge = allCollected ? "hsl(142 71% 45%)" : heat ? heatColor : accentColor;
+      const el = document.createElement("div");
+      el.style.position = "relative";
+      el.style.width = count > 1 ? "34px" : "30px";
+      el.style.height = count > 1 ? "42px" : "38px";
+      el.style.borderRadius = "6px";
+      el.style.cursor = "pointer";
+      el.style.display = "flex";
+      el.style.alignItems = "center";
+      el.style.justifyContent = "center";
+      el.style.background = "linear-gradient(145deg, rgba(30,30,32,0.96), rgba(10,10,12,0.96))";
       el.style.border = `1.5px solid ${edge}`;
       el.style.boxShadow = allCollected
-        ? '0 0 8px hsl(142 71% 45% / 0.6)'
+        ? "0 0 8px hsl(142 71% 45% / 0.6)"
         : heat
           ? `0 0 ${6 + heat * 4}px ${heatColor}`
-          : '0 2px 8px rgba(0,0,0,0.7)';
-      el.setAttribute('role', 'button');
+          : "0 2px 8px rgba(0,0,0,0.7)";
+      el.setAttribute("role", "button");
       el.setAttribute(
-        'aria-label',
-        count > 1
-          ? `Card hot-spot · ${count} cards`
-          : `${head.ownerName}'s ${head.vehicleName} card`,
+        "aria-label",
+        count > 1 ? `Card hot-spot · ${count} cards` : `${head.ownerName}'s ${head.vehicleName} card`,
       );
       el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${edge}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
-      const badge = document.createElement('span');
-      badge.textContent = allCollected ? '✓' : String(count);
-      badge.style.cssText = `position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:${allCollected ? 'hsl(142 71% 45%)' : heat ? heatColor : accentColor};color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;`;
+      const badge = document.createElement("span");
+      badge.textContent = allCollected ? "✓" : String(count);
+      badge.style.cssText = `position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:${allCollected ? "hsl(142 71% 45%)" : heat ? heatColor : accentColor};color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;`;
       if (allCollected || count > 1) el.appendChild(badge);
       // Cards carrying a time attack get a stopwatch pip.
       if (stack.some((d) => d.challenge)) {
-        const chip = document.createElement('span');
-        chip.textContent = '⏱';
+        const chip = document.createElement("span");
+        chip.textContent = "⏱";
         chip.style.cssText = `position:absolute;bottom:-6px;left:-6px;width:16px;height:16px;border-radius:8px;background:${accentColor};color:#04140a;font-size:9px;display:flex;align-items:center;justify-content:center;`;
         el.appendChild(chip);
       }
-      el.addEventListener('click', (e) => {
+      el.addEventListener("click", (e) => {
         e.stopPropagation();
         setSelectedStack(stack);
       });
 
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([head.lng, head.lat])
         .addTo(map);
       cardMarkersRef.current.push(marker);
@@ -1023,7 +1057,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   useEffect(() => {
     if (!droppingCard) return;
     if (!userLocation) {
-      toast.error('Need your location to drop a card');
+      toast.error("Need your location to drop a card");
       setDroppingCard(false);
       return;
     }
@@ -1038,9 +1072,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     setDroppingCard(false);
     if (!card) return;
     try {
-      const photoPath = card.bike.photos?.hero
-        ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero)
-        : null;
+      const photoPath = card.bike.photos?.hero ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero) : null;
       const dropId = await placeDrop.mutateAsync({
         card,
         lat: spot.lat,
@@ -1049,14 +1081,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         photoPath,
       });
       if (!withChallenge) {
-        toast.success('Card dropped', { description: 'Riders nearby can now scan it.' });
+        toast.success("Card dropped", { description: "Riders nearby can now scan it." });
         return;
       }
       startChallengeRun({
-        mode: 'setting',
+        mode: "setting",
         dropId,
         vehicleName: card.bike.name,
-        ownerName: profile?.name || 'Rider',
+        ownerName: profile?.name || "Rider",
         tier: card.tier,
         start: spot,
         route: [],
@@ -1066,7 +1098,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         offRouteSince: null,
         voided: false,
       });
-      toast.success('Card dropped', { description: 'Ready up when you want the clock to start.' });
+      toast.success("Card dropped", { description: "Ready up when you want the clock to start." });
     } catch {
       toast.error("Couldn't drop that card");
     }
@@ -1081,18 +1113,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     return () => clearInterval(id);
   }, [challengeRun]);
 
-  const challengeCountdown = challengeRun?.startsAt
-    ? Math.ceil((challengeRun.startsAt - challengeNow) / 1000)
-    : 0;
-  const challengeElapsedSec = challengeRun?.startsAt
-    ? Math.max(0, (challengeNow - challengeRun.startsAt) / 1000)
-    : 0;
+  const challengeCountdown = challengeRun?.startsAt ? Math.ceil((challengeRun.startsAt - challengeNow) / 1000) : 0;
+  const challengeElapsedSec = challengeRun?.startsAt ? Math.max(0, (challengeNow - challengeRun.startsAt) / 1000) : 0;
 
   /** Owner finishes setting a route: the current spot becomes the finish line. */
   const finishSettingChallenge = async () => {
-    if (!challengeRun || challengeRun.mode !== 'setting') return;
+    if (!challengeRun || challengeRun.mode !== "setting") return;
     if (!userLocation) {
-      toast.error('Need your location to set the finish line');
+      toast.error("Need your location to set the finish line");
       return;
     }
     const timeSec = Math.max(
@@ -1114,12 +1142,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         vehicleName: challengeRun.vehicleName,
         ownerName: challengeRun.ownerName,
         tier: challengeRun.tier,
-        role: 'set',
+        role: "set",
         targetSec: null,
         timeSec,
         route,
       });
-      toast.success('Challenge set', {
+      toast.success("Challenge set", {
         description: `Time to beat: ${formatChallengeTime(timeSec)}`,
       });
     } catch {
@@ -1131,36 +1159,36 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   /** Challenger crosses the line (or gets voided). */
   const finalizeAttempt = async (result: ChallengeResult, timeSec: number) => {
-    if (!challengeRun || challengeRun.mode !== 'attempting') return;
+    if (!challengeRun || challengeRun.mode !== "attempting") return;
     const run = challengeRun;
     clearChallengeRun();
-    recordBadges(result === 'won' ? Array(CHALLENGE_WIN_BADGES).fill('speed-demon') : ['fallback']);
+    recordBadges(result === "won" ? Array(CHALLENGE_WIN_BADGES).fill("speed-demon") : ["fallback"]);
     setPendingChallengeReceipt({
       dropId: run.dropId,
       vehicleName: run.vehicleName,
       ownerName: run.ownerName,
       tier: run.tier,
-      role: 'attempt',
+      role: "attempt",
       targetSec: run.targetSec,
       timeSec,
       result,
       route: run.route,
     });
     recordAttempt.mutate({ dropId: run.dropId, timeSec, result });
-    if (result === 'won') {
+    if (result === "won") {
       // Beating the setter claims the card outright — no separate scan needed.
       const prize = drops.find((d) => d.id === run.dropId);
       let claimed = false;
       if (prize && !prize.collected && !prize.isOwn) {
         claimed = await handleCollectDrop(prize, true);
       }
-      toast.success('Challenge beaten', {
-        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon${claimed ? ' · card claimed' : ''}`,
+      toast.success("Challenge beaten", {
+        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon${claimed ? " · card claimed" : ""}`,
       });
-    } else if (result === 'void') {
-      toast.error('Challenge voided', { description: 'You strayed off the route. 1x Fallback.' });
+    } else if (result === "void") {
+      toast.error("Challenge voided", { description: "You strayed off the route. 1x Fallback." });
     } else {
-      toast('Challenge lost', {
+      toast("Challenge lost", {
         description: `${formatChallengeTime(timeSec)} vs ${formatChallengeTime(run.targetSec ?? 0)} · 1x Fallback`,
       });
     }
@@ -1171,12 +1199,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const takeChallenge = (drop: CardDrop) => {
     if (!drop.challenge) return;
     if (!userLocation || metersBetween(userLocation, drop) > COLLECT_RADIUS_M) {
-      toast.error('Get closer to the card to take its challenge');
+      toast.error("Get closer to the card to take its challenge");
       return;
     }
     setSelectedStack(null);
     startChallengeRun({
-      mode: 'attempting',
+      mode: "attempting",
       dropId: drop.id,
       vehicleName: drop.vehicleName,
       ownerName: drop.ownerName,
@@ -1194,7 +1222,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // Live attempt policing: route deviation and finish-line detection.
   useEffect(() => {
-    if (!challengeRun || challengeRun.mode !== 'attempting' || !userLocation) return;
+    if (!challengeRun || challengeRun.mode !== "attempting" || !userLocation) return;
     if (!challengeRun.startsAt || Date.now() < challengeRun.startsAt) return;
     const here = { lat: userLocation.lat, lng: userLocation.lng };
 
@@ -1203,7 +1231,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       const since = challengeRun.offRouteSince ?? Date.now();
       if (challengeRun.offRouteSince == null) updateChallengeRun({ offRouteSince: since });
       if (Date.now() - since > DEVIATION_GRACE_MS) {
-        void finalizeAttempt('void', (Date.now() - challengeRun.startsAt) / 1000);
+        void finalizeAttempt("void", (Date.now() - challengeRun.startsAt) / 1000);
         return;
       }
     } else if (challengeRun.offRouteSince != null) {
@@ -1218,20 +1246,17 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [challengeRun, userLocation, challengeNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
-
   // Draw the challenge route being raced.
   useEffect(() => {
     if (!map) return;
-    const SRC = 'challenge-route';
-    const LAYER = 'challenge-route-line';
+    const SRC = "challenge-route";
+    const LAYER = "challenge-route-line";
     const coords =
-      challengeRun && challengeRun.mode === 'attempting'
-        ? challengeRun.route.map((p) => [p.lng, p.lat])
-        : [];
+      challengeRun && challengeRun.mode === "attempting" ? challengeRun.route.map((p) => [p.lng, p.lat]) : [];
     const data = {
-      type: 'Feature' as const,
+      type: "Feature" as const,
       properties: {},
-      geometry: { type: 'LineString' as const, coordinates: coords },
+      geometry: { type: "LineString" as const, coordinates: coords },
     };
     const apply = () => {
       const existing = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
@@ -1240,22 +1265,22 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         return;
       }
       if (!coords.length) return;
-      map.addSource(SRC, { type: 'geojson', data });
+      map.addSource(SRC, { type: "geojson", data });
       map.addLayer({
         id: LAYER,
-        type: 'line',
+        type: "line",
         source: SRC,
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': accentColor, 'line-width': 5, 'line-opacity': 0.75, 'line-dasharray': [2, 1] },
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": accentColor, "line-width": 5, "line-opacity": 0.75, "line-dasharray": [2, 1] },
       });
     };
     if (map.isStyleLoaded()) apply();
-    else map.once('load', apply);
+    else map.once("load", apply);
   }, [map, challengeRun, accentColor]);
 
   // Proximity ping while riding without a destination.
   const pingedDropsRef = useRef<Set<string>>(new Set());
-  const cardPingMeters = settings.distanceUnit === 'km' ? 10_000 : 16_093;
+  const cardPingMeters = settings.distanceUnit === "km" ? 10_000 : 16_093;
   useEffect(() => {
     if (!cardsEnabled || !userLocation) return;
     if (!rideState.isActive || destination) return;
@@ -1265,15 +1290,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       if (metersBetween(userLocation, drop) > cardPingMeters) continue;
       pingedDropsRef.current.add(drop.id);
       pingAnprCamera();
-      toast('Card nearby', {
+      toast("Card nearby", {
         description: `${drop.ownerName}'s ${drop.vehicleName} — tap to go for it`,
         action: {
-          label: 'Go',
-          onClick: () => setDestination({
-            lat: drop.lat,
-            lng: drop.lng,
-            name: `${drop.ownerName}'s card`,
-          }),
+          label: "Go",
+          onClick: () =>
+            setDestination({
+              lat: drop.lat,
+              lng: drop.lng,
+              name: `${drop.ownerName}'s card`,
+            }),
         },
       });
     }
@@ -1281,11 +1307,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   const handleCollectDrop = async (drop: CardDrop, silent = false) => {
     if (!userLocation) {
-      toast.error('Need your location to scan this card');
+      toast.error("Need your location to scan this card");
       return false;
     }
     if (rideState.isActive && rideState.currentSpeed > 3) {
-      toast.warning('Stop safely before scanning a card');
+      toast.warning("Stop safely before scanning a card");
       return false;
     }
     try {
@@ -1297,7 +1323,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       addCard(dropToPayload(collected));
       if (!silent) {
         setSelectedStack(null);
-        toast.success('Card collected', { description: 'Added to your vault.' });
+        toast.success("Card collected", { description: "Added to your vault." });
       }
       return true;
     } catch {
@@ -1315,17 +1341,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
     setSelectedStack(null);
     if (got > 0) {
-      toast.success(`${got} card${got > 1 ? 's' : ''} collected`, {
-        description: 'Added to your vault.',
+      toast.success(`${got} card${got > 1 ? "s" : ""} collected`, {
+        description: "Added to your vault.",
       });
     } else {
       toast.error(`Get within ${COLLECT_RADIUS_M}m of the hot-spot to scan these cards`);
     }
   };
-
-
-
-
 
   // GPS fixes arrive ~1 Hz; throttle to at most once every 5s to avoid
   // hammering OSRM on every fix while still keeping the route reasonably fresh.
@@ -1400,31 +1422,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       if (cancelled || !weather?.worst || weather.worstMm < HEAVY_MM) return;
 
       const worst = weather.worst;
-      const minsIn = Math.round(((worst.etaMs - Date.now()) / 60000));
-      toast.warning(`Heavy rain on your route${minsIn > 0 ? ` in ~${minsIn} min` : ''}`, {
+      const minsIn = Math.round((worst.etaMs - Date.now()) / 60000);
+      toast.warning(`Heavy rain on your route${minsIn > 0 ? ` in ~${minsIn} min` : ""}`, {
         description: `${worst.mm.toFixed(1)} mm/h forecast where you'll be. Want a route around it?`,
         duration: 12000,
         action: {
-          label: 'Dry route',
+          label: "Dry route",
           onClick: async () => {
             if (!userLocation) return;
-            toast.loading('Finding a drier line…', { id: 'dry-route' });
+            toast.loading("Finding a drier line…", { id: "dry-route" });
             const dry = await findDryRoute(
               userLocation,
               { lat: destination.lat, lng: destination.lng },
               isSolo ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng })) : [],
               worst,
             );
-            toast.dismiss('dry-route');
+            toast.dismiss("dry-route");
             if (!dry) {
-              toast.error('No clearer route found from here');
+              toast.error("No clearer route found from here");
               return;
             }
             setWeatherVia(dry.via);
-            toast.success(
-              dry.worstMm < HEAVY_MM ? 'Rerouted around the weather' : 'Best available route applied',
-              { description: `Worst rain on the new line: ${dry.worstMm.toFixed(1)} mm/h` },
-            );
+            toast.success(dry.worstMm < HEAVY_MM ? "Rerouted around the weather" : "Best available route applied", {
+              description: `Worst rain on the new line: ${dry.worstMm.toFixed(1)} mm/h`,
+            });
           },
         },
       });
@@ -1439,8 +1460,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   useEffect(() => {
     setWeatherVia(null);
   }, [destination?.lat, destination?.lng]);
-
-
 
   // ── Route line drawing ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -1467,7 +1486,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
 
     const feature = {
-      type: 'Feature' as const,
+      type: "Feature" as const,
       geometry: route.geometry,
       properties: {},
     };
@@ -1477,20 +1496,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       if (existing) {
         (existing as maplibregl.GeoJSONSource).setData(feature);
       } else {
-        map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data: feature });
+        map.addSource(ROUTE_SOURCE_ID, { type: "geojson", data: feature });
         map.addLayer({
           id: ROUTE_CASING_LAYER_ID,
-          type: 'line',
+          type: "line",
           source: ROUTE_SOURCE_ID,
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': '#000000', 'line-opacity': 0.5, 'line-width': 8 },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#000000", "line-opacity": 0.5, "line-width": 8 },
         });
         map.addLayer({
           id: ROUTE_LINE_LAYER_ID,
-          type: 'line',
+          type: "line",
           source: ROUTE_SOURCE_ID,
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': accentColor, 'line-width': 4 },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": accentColor, "line-width": 4 },
         });
       }
 
@@ -1509,7 +1528,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (map.isStyleLoaded()) {
       draw();
     } else {
-      map.once('load', draw);
+      map.once("load", draw);
     }
 
     return removeRouteLayers;
@@ -1542,7 +1561,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     const removeRescueLayers = () => {
       try {
         if (!map.getStyle()) return;
-        RESCUE_LAYER_IDS.forEach((id) => { if (map.getLayer(id)) map.removeLayer(id); });
+        RESCUE_LAYER_IDS.forEach((id) => {
+          if (map.getLayer(id)) map.removeLayer(id);
+        });
         if (map.getSource(RESCUE_SOURCE_ID)) map.removeSource(RESCUE_SOURCE_ID);
       } catch {
         // Map already torn down.
@@ -1555,7 +1576,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
 
     const feature = {
-      type: 'Feature' as const,
+      type: "Feature" as const,
       geometry: rescueRoute.geometry,
       properties: {},
     };
@@ -1567,33 +1588,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       if (existing) {
         (existing as maplibregl.GeoJSONSource).setData(feature);
       } else {
-        map.addSource(RESCUE_SOURCE_ID, { type: 'geojson', data: feature });
+        map.addSource(RESCUE_SOURCE_ID, { type: "geojson", data: feature });
         map.addLayer({
           id: RESCUE_GLOW_OUTER_LAYER_ID,
-          type: 'line',
+          type: "line",
           source: RESCUE_SOURCE_ID,
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': RESCUE_COLOR, 'line-width': 20, 'line-opacity': 0.18, 'line-blur': 12 },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": RESCUE_COLOR, "line-width": 20, "line-opacity": 0.18, "line-blur": 12 },
         });
         map.addLayer({
           id: RESCUE_GLOW_INNER_LAYER_ID,
-          type: 'line',
+          type: "line",
           source: RESCUE_SOURCE_ID,
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': RESCUE_COLOR, 'line-width': 11, 'line-opacity': 0.35, 'line-blur': 5 },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": RESCUE_COLOR, "line-width": 11, "line-opacity": 0.35, "line-blur": 5 },
         });
         map.addLayer({
           id: RESCUE_LINE_LAYER_ID,
-          type: 'line',
+          type: "line",
           source: RESCUE_SOURCE_ID,
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': RESCUE_COLOR, 'line-width': 5 },
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": RESCUE_COLOR, "line-width": 5 },
         });
       }
 
       // Keep the rescue line above the primary route no matter which was
       // created first (the primary route re-draws on every reroute).
-      RESCUE_LAYER_IDS.forEach((id) => { if (map.getLayer(id)) map.moveLayer(id); });
+      RESCUE_LAYER_IDS.forEach((id) => {
+        if (map.getLayer(id)) map.moveLayer(id);
+      });
 
       // Soft breathing glow.
       let t = 0;
@@ -1602,10 +1625,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         const wave = (Math.sin(t) + 1) / 2; // 0..1
         try {
           if (map.getLayer(RESCUE_GLOW_OUTER_LAYER_ID)) {
-            map.setPaintProperty(RESCUE_GLOW_OUTER_LAYER_ID, 'line-opacity', 0.12 + wave * 0.22);
+            map.setPaintProperty(RESCUE_GLOW_OUTER_LAYER_ID, "line-opacity", 0.12 + wave * 0.22);
           }
           if (map.getLayer(RESCUE_GLOW_INNER_LAYER_ID)) {
-            map.setPaintProperty(RESCUE_GLOW_INNER_LAYER_ID, 'line-opacity', 0.25 + wave * 0.3);
+            map.setPaintProperty(RESCUE_GLOW_INNER_LAYER_ID, "line-opacity", 0.25 + wave * 0.3);
           }
         } catch {
           // style swapped mid-pulse
@@ -1614,7 +1637,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
 
     if (map.isStyleLoaded()) draw();
-    else map.once('load', draw);
+    else map.once("load", draw);
 
     return () => {
       if (pulse) clearInterval(pulse);
@@ -1632,8 +1655,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
     if (!rescueMarkerRef.current) {
       rescueMarkerRef.current = new maplibregl.Marker({
-        element: createRescueMarkerElement(rescueTarget.userName || 'Rider'),
-        anchor: 'bottom',
+        element: createRescueMarkerElement(rescueTarget.userName || "Rider"),
+        anchor: "bottom",
       })
         .setLngLat([rescueTarget.lng, rescueTarget.lat])
         .addTo(map);
@@ -1644,16 +1667,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // ── Derived display flags ──────────────────────────────────────────────────
   const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
-  const canSkipWaypoint =
-    rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
+  const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
   // "Finish" replaces "Skip" once we're heading to the very last stop (the
   // final destination, with no intermediate waypoints left). Tapping it
   // clears the route so the map is blank and ready for a new plan.
   const canFinishRoute =
-    rideState.isActive &&
-    destination != null &&
-    nextWaypoint == null &&
-    (isSolo || convoy.isLeader);
+    rideState.isActive && destination != null && nextWaypoint == null && (isSolo || convoy.isLeader);
 
   const handleFinishRoute = async () => {
     if (isSolo) {
@@ -1663,16 +1682,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
     setDestination(null);
     setRoute(null);
-    toast.success('Route finished');
+    toast.success("Route finished");
   };
 
-  const incompleteWaypoints = waypoints.filter(w => !w.isCompleted);
+  const incompleteWaypoints = waypoints.filter((w) => !w.isCompleted);
   // Show waypoints panel in any convoy context, or in a solo ride when we
   // have a destination (so the rider can add/remove mid-ride stops).
   const showWaypointsPanel = !!convoy.id
-    ? (incompleteWaypoints.length > 0 || convoy.isLeader)
-    : (rideState.isActive && !!destination);
-
+    ? incompleteWaypoints.length > 0 || convoy.isLeader
+    : rideState.isActive && !!destination;
 
   if (contextLost) {
     // Fallback when no parent remount handler is wired up — show a passive
@@ -1687,7 +1705,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     );
   }
 
-
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
@@ -1699,12 +1716,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         <div className="flex flex-row flex-wrap items-center max-w-[calc(100vw-5rem)] rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
           <button
             type="button"
-            onClick={() => setBasemap('dark')}
-            aria-pressed={basemap === 'dark'}
+            onClick={() => setBasemap("dark")}
+            aria-pressed={basemap === "dark"}
             aria-label="Dark map"
             className={cn(
-              'w-9 h-9 flex items-center justify-center transition-colors',
-              basemap === 'dark' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              basemap === "dark" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
             <MapIcon className="w-4 h-4" />
@@ -1712,12 +1729,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           <div className="w-px h-6 bg-border" />
           <button
             type="button"
-            onClick={() => setBasemap('satellite')}
-            aria-pressed={basemap === 'satellite'}
+            onClick={() => setBasemap("satellite")}
+            aria-pressed={basemap === "satellite"}
             aria-label="Satellite view"
             className={cn(
-              'w-9 h-9 flex items-center justify-center transition-colors',
-              basemap === 'satellite' ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              basemap === "satellite" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
             <Satellite className="w-4 h-4" />
@@ -1729,8 +1746,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             aria-pressed={threeD}
             aria-label="3D terrain and buildings"
             className={cn(
-              'w-9 h-9 flex items-center justify-center transition-colors',
-              threeD ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              threeD ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
             <Box className="w-4 h-4" />
@@ -1738,12 +1755,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           <div className="w-px h-6 bg-border" />
           <button
             type="button"
-            onClick={() => { setShowOfflinePacks(false); setShowLoopPlanner((v) => !v); }}
+            onClick={() => {
+              setShowOfflinePacks(false);
+              setShowLoopPlanner((v) => !v);
+            }}
             aria-pressed={showLoopPlanner}
             aria-label="Plan a loop ride"
             className={cn(
-              'w-9 h-9 flex items-center justify-center transition-colors',
-              showLoopPlanner ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              showLoopPlanner ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
             <Repeat className="w-4 h-4" />
@@ -1751,12 +1771,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           <div className="w-px h-6 bg-border" />
           <button
             type="button"
-            onClick={() => { setShowLoopPlanner(false); setShowOfflinePacks((v) => !v); }}
+            onClick={() => {
+              setShowLoopPlanner(false);
+              setShowOfflinePacks((v) => !v);
+            }}
             aria-pressed={showOfflinePacks}
             aria-label="Offline maps"
             className={cn(
-              'w-9 h-9 flex items-center justify-center transition-colors',
-              showOfflinePacks ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              showOfflinePacks ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
             <Download className="w-4 h-4" />
@@ -1773,8 +1796,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 aria-pressed={droppingCard}
                 aria-label="Drop a trading card on the map"
                 className={cn(
-                  'w-9 h-9 flex items-center justify-center transition-colors',
-                  droppingCard ? 'bg-accent text-accent-foreground' : 'text-foreground/80 hover:bg-secondary',
+                  "w-9 h-9 flex items-center justify-center transition-colors",
+                  droppingCard ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
                 )}
               >
                 <IdCard className="w-4 h-4" />
@@ -1797,14 +1820,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 className="h-9 text-sm bg-background/60"
                 maxLength={50}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && saveName.trim() && userLocation) {
+                  if (e.key === "Enter" && saveName.trim() && userLocation) {
                     savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
                     toast.success(`"${saveName.trim()}" saved`);
-                    setSaveName('');
+                    setSaveName("");
                     setShowSaveUI(false);
                   }
-                  if (e.key === 'Escape') {
-                    setSaveName('');
+                  if (e.key === "Escape") {
+                    setSaveName("");
                     setShowSaveUI(false);
                   }
                 }}
@@ -1817,7 +1840,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     if (!saveName.trim() || !userLocation) return;
                     savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
                     toast.success(`"${saveName.trim()}" saved`);
-                    setSaveName('');
+                    setSaveName("");
                     setShowSaveUI(false);
                   }}
                   className="flex-1 h-8 text-xs"
@@ -1827,7 +1850,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => { setSaveName(''); setShowSaveUI(false); }}
+                  onClick={() => {
+                    setSaveName("");
+                    setShowSaveUI(false);
+                  }}
                   className="h-8 text-xs"
                 >
                   Cancel
@@ -1838,10 +1864,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             <button
               onClick={() => {
                 if (!userLocation) {
-                  toast.info('Waiting for GPS fix…');
+                  toast.info("Waiting for GPS fix…");
                   return;
                 }
-                setSaveName('');
+                setSaveName("");
                 setShowSaveUI(true);
               }}
               className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
@@ -1889,18 +1915,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         </div>
       )}
 
-
       {challengeRun && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/97 shadow-2xl backdrop-blur px-4 py-3 text-center">
           {challengeRun.startsAt == null ? (
             <>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Setting challenge
-              </p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Setting challenge</p>
               <p className="mt-1 text-sm font-bold">Card dropped — this is your start line</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Ready up for a 5-second countdown, then ride your route and hit Finish challenge.
-                Five seconds are taken off your time for the stop.
+                Ready up for a 5-second countdown, then ride your route and hit Finish challenge. Five seconds are taken
+                off your time for the stop.
               </p>
               <div className="flex gap-2 mt-3">
                 <Button
@@ -1920,7 +1943,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   onClick={() => {
                     clearChallengeRun();
                     setPendingChallengeReceipt(null);
-                    toast('Challenge cancelled', { description: 'Your card stays dropped without one.' });
+                    toast("Challenge cancelled", { description: "Your card stays dropped without one." });
                   }}
                 >
                   Cancel
@@ -1930,11 +1953,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           ) : challengeCountdown > 0 ? (
             <>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {challengeRun.mode === 'setting' ? 'Setting challenge' : 'Time attack'}
+                {challengeRun.mode === "setting" ? "Setting challenge" : "Time attack"}
               </p>
-              <p className="text-5xl font-black tabular-nums text-accent leading-tight">
-                {challengeCountdown}
-              </p>
+              <p className="text-5xl font-black tabular-nums text-accent leading-tight">{challengeCountdown}</p>
               <p className="text-xs text-muted-foreground">Get ready…</p>
             </>
           ) : (
@@ -1942,32 +1963,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               <div className="flex items-center justify-center gap-2">
                 <Flag className="w-4 h-4 text-accent" />
                 <p className="text-sm font-bold truncate">
-                  {challengeRun.mode === 'setting' ? 'Setting your route' : `Beat ${challengeRun.ownerName}`}
+                  {challengeRun.mode === "setting" ? "Setting your route" : `Beat ${challengeRun.ownerName}`}
                 </p>
               </div>
               <p className="text-4xl font-black tabular-nums leading-tight">
                 {formatChallengeTime(challengeElapsedSec)}
               </p>
-              {challengeRun.mode === 'attempting' && challengeRun.targetSec != null && (
+              {challengeRun.mode === "attempting" && challengeRun.targetSec != null && (
                 <p
                   className={cn(
-                    'text-xs font-bold tabular-nums',
-                    challengeElapsedSec < challengeRun.targetSec
-                      ? 'text-[hsl(142_71%_45%)]'
-                      : 'text-destructive',
+                    "text-xs font-bold tabular-nums",
+                    challengeElapsedSec < challengeRun.targetSec ? "text-[hsl(142_71%_45%)]" : "text-destructive",
                   )}
                 >
-                  Target {formatChallengeTime(challengeRun.targetSec)} ·{' '}
+                  Target {formatChallengeTime(challengeRun.targetSec)} ·{" "}
                   {formatDelta(challengeElapsedSec, challengeRun.targetSec)}
                 </p>
               )}
-              {challengeRun.mode === 'attempting' && challengeRun.offRouteSince != null && (
+              {challengeRun.mode === "attempting" && challengeRun.offRouteSince != null && (
                 <p className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-destructive">
                   <AlertTriangle className="w-3.5 h-3.5" /> Off route — get back on or the run is voided
                 </p>
               )}
               <div className="flex gap-2 mt-2">
-                {challengeRun.mode === 'setting' ? (
+                {challengeRun.mode === "setting" ? (
                   <Button size="sm" className="flex-1 h-8 text-xs" onClick={finishSettingChallenge}>
                     Finish challenge
                   </Button>
@@ -1976,12 +1995,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     size="sm"
                     variant="outline"
                     className="flex-1 h-8 text-xs"
-                    onClick={() => finalizeAttempt('void', challengeElapsedSec)}
+                    onClick={() => finalizeAttempt("void", challengeElapsedSec)}
                   >
                     Abandon run
                   </Button>
                 )}
-                {challengeRun.mode === 'setting' && (
+                {challengeRun.mode === "setting" && (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -1990,7 +2009,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                       clearChallengeRun();
                       setPendingChallengeReceipt(null);
                       await endRide();
-                      toast('Challenge cancelled', { description: 'Your card stays dropped without one.' });
+                      toast("Challenge cancelled", { description: "Your card stays dropped without one." });
                     }}
                   >
                     Cancel
@@ -2016,10 +2035,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               name: `Loop point ${i + 1}`,
             }));
             setSoloRoute({
-              destination: { lat: userLocation.lat, lng: userLocation.lng, name: 'Loop finish' },
+              destination: { lat: userLocation.lat, lng: userLocation.lng, name: "Loop finish" },
               stops: vias,
             });
-            setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: 'Loop finish' });
+            setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: "Loop finish" });
             setShowLoopPlanner(false);
             toast.success(
               `Loop ready · ${formatDistance(metersToMiles(loop.distanceMeters), settings.distanceUnit)} · ${formatDuration(Math.round(loop.durationSeconds))}`,
@@ -2028,31 +2047,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         />
       )}
 
-      {showOfflinePacks && (
-        <OfflinePacksPanel map={map} onClose={() => setShowOfflinePacks(false)} />
-      )}
-
+      {showOfflinePacks && <OfflinePacksPanel map={map} onClose={() => setShowOfflinePacks(false)} />}
 
       {showSearchBar && (
         <MapSearchBar
           map={map}
           userLocation={userLocation}
           countryCode={countryCode}
-          nearbyCards={cardsEnabled && !rideState.isActive
-            ? drops.map((d) => ({
-                id: `card:${d.id}`,
-                name: `${d.ownerName}'s ${d.vehicleName}`,
-                address: d.collected ? 'Card · collected' : 'Trading card drop',
-                lat: d.lat,
-                lng: d.lng,
-              }))
-            : undefined}
+          nearbyCards={
+            cardsEnabled && !rideState.isActive
+              ? drops.map((d) => ({
+                  id: `card:${d.id}`,
+                  name: `${d.ownerName}'s ${d.vehicleName}`,
+                  address: d.collected ? "Card · collected" : "Trading card drop",
+                  lat: d.lat,
+                  lng: d.lng,
+                }))
+              : undefined
+          }
           onSelect={(result) => {
             if (addingWaypoint) {
               if (isSolo) {
                 addSoloStop({ name: result.name, address: result.address, lat: result.lat, lng: result.lng });
               } else {
-                addWaypoint({ name: result.name, address: result.address || '', lat: result.lat, lng: result.lng });
+                addWaypoint({ name: result.name, address: result.address || "", lat: result.lat, lng: result.lng });
               }
               setAddingWaypoint(false);
               return;
@@ -2073,7 +2091,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               }
             }
           }}
-
         />
       )}
 
@@ -2104,7 +2121,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                         <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
                           {i + 1}
                         </span>
-                        <p className="flex-1 truncate text-xs">{wp.name || 'Stop'}</p>
+                        <p className="flex-1 truncate text-xs">{wp.name || "Stop"}</p>
                         <button
                           onClick={() => removeSoloStopAt(i)}
                           className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
@@ -2150,23 +2167,22 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         )}
 
-
-
         {destination && (isRouting || route) && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/95 border border-border shadow-2xl backdrop-blur animate-slide-up">
             <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
               <Navigation className="w-4 h-4 text-accent" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate">{destination.name || 'Destination'}</p>
+              <p className="font-semibold text-sm truncate">{destination.name || "Destination"}</p>
               {isRouting ? (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Loader2 className="w-3 h-3 animate-spin" /> Finding route...
                 </p>
               ) : route ? (
                 <p className="text-xs text-muted-foreground">
-                  {formatDistance(metersToMiles(route.distanceMeters), settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
-                  {' · '}
+                  {formatDistance(metersToMiles(route.distanceMeters), settings.distanceUnit)}{" "}
+                  {getDistanceLabel(settings.distanceUnit)}
+                  {" · "}
                   {formatDuration(Math.round(route.durationSeconds))}
                 </p>
               ) : null}
@@ -2177,7 +2193,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               <button
                 onClick={async () => {
                   await completeWaypoint(nextWaypoint!.id);
-                  toast.success('Stop skipped');
+                  toast.success("Stop skipped");
                 }}
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted hover:bg-secondary text-xs font-medium text-muted-foreground transition-colors flex-shrink-0"
                 title="Skip this stop and advance to the next"
@@ -2223,20 +2239,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           {(rideState.isActive || geoSpeed > 0) && (
             <div
               className={cn(
-                'flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors',
+                "flex items-baseline gap-1.5 px-5 py-3 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors",
                 speedColorClass,
               )}
             >
-              <span className="text-5xl leading-none">
-                {formatSpeed(displaySpeed, settings.speedUnit)}
-              </span>
+              <span className="text-5xl leading-none">{formatSpeed(displaySpeed, settings.speedUnit)}</span>
               <span className="text-sm opacity-70">{getSpeedLabel(settings.speedUnit)}</span>
             </div>
           )}
 
           <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none text-center">
-            © <a href="https://openfreemap.org" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">OpenFreeMap</a>
-            {' '}© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto">OpenStreetMap</a> contributors
+            ©{" "}
+            <a
+              href="https://openfreemap.org"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto"
+            >
+              OpenFreeMap
+            </a>{" "}
+            ©{" "}
+            <a
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto"
+            >
+              OpenStreetMap
+            </a>{" "}
+            contributors
           </div>
         </div>
       </div>
@@ -2245,90 +2276,22 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       {rescue.canRequest && (
         <div className="absolute bottom-16 left-3 z-20">
           <button
-            onClick={() => { void (rescue.hasPending ? rescue.cancel?.() : rescue.send?.()); }}
+            onClick={() => {
+              void (rescue.hasPending ? rescue.cancel?.() : rescue.send?.());
+            }}
             className={cn(
-              'p-2.5 rounded-full border shadow-lg backdrop-blur transition-colors',
+              "p-2.5 rounded-full border shadow-lg backdrop-blur transition-colors",
               rescue.hasPending
-                ? 'bg-[hsl(var(--burn))]/25 border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse'
-                : 'bg-card/95 border-border text-warning hover:bg-warning/20',
+                ? "bg-[hsl(var(--burn))]/25 border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse"
+                : "bg-card/95 border-border text-warning hover:bg-warning/20",
             )}
-            aria-label={rescue.hasPending ? 'Cancel rescue request' : 'Request rescue'}
-            title={rescue.hasPending ? 'Cancel rescue request' : 'Request rescue'}
+            aria-label={rescue.hasPending ? "Cancel rescue request" : "Request rescue"}
+            title={rescue.hasPending ? "Cancel rescue request" : "Request rescue"}
           >
             <AlertTriangle className="w-5 h-5" />
           </button>
         </div>
       )}
-
-      {/* ── Save Location (Add POI) ──────────────────────────────────────────
-          Sits under the MapLibre top-right controls so it stays clear of the
-          search bar and the map exit button. */}
-      <div className="absolute top-[7.5rem] right-3 z-20">
-        {showSaveUI ? (
-          <div className="bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
-            <p className="text-xs font-semibold text-foreground">Name this spot</p>
-            <Input
-              autoFocus
-              value={saveName}
-              onChange={(e) => setSaveName(e.target.value)}
-              placeholder="e.g. Home, Camp spot…"
-              className="h-9 text-sm bg-background/60"
-              maxLength={50}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && saveName.trim() && userLocation) {
-                  savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
-                  toast.success(`"${saveName.trim()}" saved`);
-                  setSaveName('');
-                  setShowSaveUI(false);
-                }
-                if (e.key === 'Escape') {
-                  setSaveName('');
-                  setShowSaveUI(false);
-                }
-              }}
-            />
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                disabled={!saveName.trim() || !userLocation}
-                onClick={() => {
-                  if (!saveName.trim() || !userLocation) return;
-                  savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
-                  toast.success(`"${saveName.trim()}" saved`);
-                  setSaveName('');
-                  setShowSaveUI(false);
-                }}
-                className="flex-1 h-8 text-xs"
-              >
-                Save
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => { setSaveName(''); setShowSaveUI(false); }}
-                className="h-8 text-xs"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => {
-              if (!userLocation) {
-                toast.info('Waiting for GPS fix…');
-                return;
-              }
-              setSaveName('');
-              setShowSaveUI(true);
-            }}
-            className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
-            aria-label="Save current location as a POI"
-          >
-            <BookmarkPlus className="w-5 h-5" />
-          </button>
-        )}
-      </div>
 
       {selectedDrop && (
         <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
@@ -2350,24 +2313,21 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {selectedDrop.ownerName} · {selectedDrop.makeModel || 'Unknown model'} · {selectedDrop.tier}
+            {selectedDrop.ownerName} · {selectedDrop.makeModel || "Unknown model"} · {selectedDrop.tier}
           </p>
           {selectedDrop.challenge && (
             <div className="mt-2 rounded-xl border border-accent/60 bg-accent/10 px-3 py-2">
               <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Time attack</p>
               <p className="text-xs text-muted-foreground">
-                Beat {formatChallengeTime(selectedDrop.challenge.timeSec)} over{' '}
-                {formatDistance(selectedDrop.challenge.distanceMi, settings.distanceUnit)}{' '}
+                Beat {formatChallengeTime(selectedDrop.challenge.timeSec)} over{" "}
+                {formatDistance(selectedDrop.challenge.distanceMi, settings.distanceUnit)}{" "}
                 {getDistanceLabel(settings.distanceUnit)} · stay on route
               </p>
             </div>
           )}
           {userLocation && (
             <p className="text-xs text-muted-foreground mt-1">
-              {formatDistance(
-                (metersBetween(userLocation, selectedDrop) / 1000) * 0.621371,
-                settings.distanceUnit,
-              )}{' '}
+              {formatDistance((metersBetween(userLocation, selectedDrop) / 1000) * 0.621371, settings.distanceUnit)}{" "}
               {getDistanceLabel(settings.distanceUnit)} away
             </p>
           )}
@@ -2398,7 +2358,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 onClick={async () => {
                   await pickUpDrop.mutateAsync(selectedDrop.id);
                   setSelectedStack(null);
-                  toast.success('Card picked back up');
+                  toast.success("Card picked back up");
                 }}
               >
                 Pick up
@@ -2433,10 +2393,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
           {userLocation && (
             <p className="text-xs text-muted-foreground mt-0.5">
-              {formatDistance(
-                (metersBetween(userLocation, selectedStack[0]) / 1000) * 0.621371,
-                settings.distanceUnit,
-              )}{' '}
+              {formatDistance((metersBetween(userLocation, selectedStack[0]) / 1000) * 0.621371, settings.distanceUnit)}{" "}
               {getDistanceLabel(settings.distanceUnit)} away
             </p>
           )}
@@ -2447,8 +2404,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 <div
                   key={d.id}
                   className={cn(
-                    'rounded-xl border p-2 text-left',
-                    done ? 'border-[hsl(142_71%_45%)]/60 bg-[hsl(142_71%_45%)]/8' : 'border-border bg-secondary/40',
+                    "rounded-xl border p-2 text-left",
+                    done ? "border-[hsl(142_71%_45%)]/60 bg-[hsl(142_71%_45%)]/8" : "border-border bg-secondary/40",
                   )}
                 >
                   <div className="flex items-center gap-1">
@@ -2459,9 +2416,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     {d.ownerName} · {d.tier}
                   </p>
                   {d.challenge && (
-                    <p className="text-[10px] font-bold text-accent">
-                      ⏱ {formatChallengeTime(d.challenge.timeSec)}
-                    </p>
+                    <p className="text-[10px] font-bold text-accent">⏱ {formatChallengeTime(d.challenge.timeSec)}</p>
                   )}
                 </div>
               );
@@ -2475,7 +2430,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 setDestination({
                   lat: selectedStack[0].lat,
                   lng: selectedStack[0].lng,
-                  name: 'Card hot-spot',
+                  name: "Card hot-spot",
                 });
                 setSelectedStack(null);
               }}
@@ -2483,18 +2438,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               Go for it
             </Button>
             {selectedStack.some((d) => !d.collected && !d.isOwn) && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleCollectStack(selectedStack)}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleCollectStack(selectedStack)}>
                 Collect all
               </Button>
             )}
           </div>
         </div>
       )}
-
     </div>
   );
 }
