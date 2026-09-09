@@ -1,73 +1,89 @@
-# Welcome to your Lovable project
+# Blacktop
 
-## Project info
+Blacktop is a mobile-first motorcycle ride tracker and convoy communications app. Riders can record solo rides, create or join live convoys, share locations and ride statistics, coordinate destinations, talk over voice, and request help when something goes wrong.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- Solo and group ride tracking with GPS distance, speed, route, lean angle, and G-force data
+- Convoy creation and joining with six-character codes or QR scanning
+- Live member locations, readiness state, ride statistics, chat, and waypoint planning
+- Peer-to-peer convoy voice chat with push-to-talk and reconnect handling
+- Crash detection, rescue requests, leader acknowledgement, and optional Discord alerts
+- Ride history, badges, statistics, vehicle garage, odometer, and maintenance reminders
+- Map search, nearby points of interest, routing, and external navigation handoff
+- Anonymous Supabase authentication with local ride recovery after reload
+- Capacitor Android and iOS shells alongside the web app
 
-There are several ways of editing your application.
+## Stack
 
-**Use Lovable**
+- React 18, TypeScript, Vite, React Router, and TanStack Query
+- Tailwind CSS, shadcn/ui, and Radix UI
+- Supabase Auth, Postgres, Realtime, and Edge Functions
+- MapLibre GL, OpenStreetMap/Nominatim, Overpass, and OSRM
+- WebRTC for convoy voice communication
+- Capacitor for native device capabilities
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting started
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requirements: Node.js 20 or newer and npm.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone https://github.com/Jayobebe/convoy-comms.git
+cd convoy-comms
+npm install
+copy .env.example .env
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The development server runs on port `8080` by default. Set the Supabase values in `.env` when using a different project:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```dotenv
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+VITE_SUPABASE_PROJECT_ID=your-project-id
+```
 
-**Use GitHub Codespaces**
+The Supabase migrations and Edge Functions are in `supabase/`. Place search, Discord alerts, account deletion, dashboard statistics, and tip checkout require their corresponding Supabase configuration and secrets.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Useful commands
 
-## What technologies are used for this project?
+```sh
+npm run dev          # Start the Vite development server
+npm run build        # Create a production build
+npm run build:dev    # Create a development-mode build
+npm run lint         # Run ESLint
+npm run preview      # Preview the production build locally
+```
 
-This project is built with:
+## Project structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```text
+src/
+	pages/             Route-level screens
+	features/          Convoy, ride, map, voice, rescue, garage, and settings modules
+	components/        Shared UI components
+	hooks/             Cross-cutting browser and native behavior
+	integrations/      Supabase client and generated database types
+	lib/               Persistence, formatting, media, haptics, and utility code
+supabase/
+	migrations/        Database schema and row-level security changes
+	functions/         Authenticated Edge Functions
+```
 
-## How can I deploy this project?
+The active ride and completed ride history are primarily stored locally for fast recovery and privacy. Convoy membership, messages, waypoints, and live member state use Supabase.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Native builds
 
-## Can I connect a custom domain to my Lovable project?
+The app is configured as `com.blacktoplive.app` with Capacitor. Android sources are checked in. iOS setup requires macOS and Xcode; see [ios-setup.md](ios-setup.md) for the required permissions and capabilities.
 
-Yes, you can!
+For a local native build, create the web build and sync Capacitor before opening the platform project:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+npm run build
+npx cap sync
+npx cap open android
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Testing and limitations
+
+There is currently no automated test suite. GPS behavior, background execution, WebRTC voice, native permissions, Supabase Realtime, and external service integrations need device or integration testing. Local ride media can also consume significant browser or device storage over time.
