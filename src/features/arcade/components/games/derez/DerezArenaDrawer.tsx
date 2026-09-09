@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import maplibregl, { Map as MapLibreMap } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Check, Undo2, X, Crosshair } from 'lucide-react';
 import { simplifyPx, polygonAreaM2, ringToGeoJson, type LngLat } from '../../../lib/derezGeo';
