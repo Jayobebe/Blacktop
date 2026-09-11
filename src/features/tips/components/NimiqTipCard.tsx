@@ -27,7 +27,13 @@ import {
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
-import { openNimiqPayHome } from '../lib/walletBridge';
+import {
+  openNimiqPayHome,
+  isNimiqPayHost,
+  sendNimViaMiniApp,
+  sendUsdtViaWallet,
+  polygonscanTxUrl,
+} from '../lib/walletBridge';
 
 const CURRENCIES: TipCurrency[] = ['USDT', 'NIM'];
 
@@ -48,6 +54,8 @@ export function NimiqTipCard() {
   const [currency, setCurrency] = useState<TipCurrency>('USDT');
   const [amount, setAmount] = useState('5');
   const [payError, setPayError] = useState('');
+  const [paying, setPaying] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState<{ nim?: string; usdt?: string } | null>(null);
@@ -64,30 +72,56 @@ export function NimiqTipCard() {
   const selected: Payee = payees.find((p) => p.id === selectedId) ?? payees[0];
   const numericAmount = Number.parseFloat(amount.replace(',', '.'));
   const supported = selected ? payeeSupports(selected, currency) : false;
-  const sendUri = useMemo(
-    () => (selected ? buildPaymentUri(selected, currency, numericAmount) : null),
-    [selected, currency, numericAmount]
-  );
+  const address = selected ? payeeAddress(selected, currency) : '';
+  /** Inside Nimiq Pay we can send directly, so an amount is asked for there. */
+  const inMiniApp = useMemo(() => isNimiqPayHost(), []);
+  const sendUri = useMemo(() => {
+    if (!selected || !supported || !address) return null;
+    return inMiniApp && numericAmount > 0
+      ? buildPaymentUri(selected, currency, numericAmount)
+      : addressUri(currency, address);
+  }, [selected, supported, address, currency, inMiniApp, numericAmount]);
 
   const myAddress = myCurrency === 'NIM' ? wallet.nimAddress ?? '' : wallet.usdtAddress ?? '';
   const myUri = myAddress ? addressUri(myCurrency, myAddress) : null;
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setPayError('');
-    const address = selected ? payeeAddress(selected, currency) : '';
     if (!selected || !address || !supported) {
       setPayError(`Choose a payee with a ${currency} address.`);
       return;
     }
-    if (!(numericAmount > 0)) {
-      setPayError('Enter an amount greater than zero.');
+
+    if (inMiniApp) {
+      if (!(numericAmount > 0)) {
+        setPayError('Enter an amount greater than zero.');
+        return;
+      }
+      setPaying(true);
+      try {
+        const result = currency === 'NIM'
+          ? await sendNimViaMiniApp(address, numericAmount)
+          : await sendUsdtViaWallet(address, numericAmount);
+        setTxHash(result);
+        toast.success('Payment sent');
+      } catch (err) {
+        const message = (err as { message?: string })?.message ?? '';
+        setPayError(
+          /reject|denied|cancel/i.test(message)
+            ? 'Payment cancelled.'
+            : 'Nimiq Pay could not send that payment.'
+        );
+      } finally {
+        setPaying(false);
+      }
       return;
     }
+
     // Copy the address so it's ready to paste, then open Nimiq Pay's home screen.
     void handleCopy(address, setCopied);
     openNimiqPayHome();
     toast.info('Opening Nimiq Pay…', {
-      description: 'Address copied — paste it into Nimiq Pay to send, or scan the QR code below.',
+      description: 'Address copied — paste it into Nimiq Pay and choose your amount, or scan the QR code.',
     });
   };
 
@@ -238,42 +272,55 @@ export function NimiqTipCard() {
             </div>
           )}
 
-          {/* Currency + amount */}
-          <div className="flex gap-2 mt-3">
-            <div className="flex rounded-xl border border-border/40 overflow-hidden">
-              {CURRENCIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setCurrency(c)}
-                  className={cn(
-                    'px-3 h-11 text-xs font-semibold touch-target transition-colors',
-                    currency === c ? 'bg-accent text-accent-foreground' : 'bg-card/60 text-muted-foreground'
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
+          {/* Currency */}
+          <div className="grid grid-cols-2 gap-0 mt-3 rounded-xl border border-border/40 overflow-hidden">
+            {CURRENCIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCurrency(c)}
+                className={cn(
+                  'h-11 text-xs font-semibold touch-target transition-colors',
+                  currency === c ? 'bg-accent text-accent-foreground' : 'bg-card/60 text-muted-foreground'
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {inMiniApp && (
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ''))}
               inputMode="decimal"
-              placeholder="Amount"
-              aria-label="Tip amount"
-              className="flex-1 h-11 rounded-xl text-center font-semibold"
+              placeholder={`Amount in ${currency}`}
+              aria-label="Payment amount"
+              className="w-full h-11 mt-2 rounded-xl text-center font-semibold"
             />
-          </div>
+          )}
 
           <Button
-            onClick={handlePay}
+            onClick={() => void handlePay()}
+            disabled={paying}
             className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
           >
             <Heart className="w-4 h-4 mr-2" />
-            Open in Nimiq Pay
+            {paying ? 'Confirm in your wallet…' : inMiniApp ? `Pay ${currency}` : 'Open in Nimiq Pay'}
           </Button>
 
           {payError && (
             <p role="alert" className="text-[10px] text-destructive text-center mt-2">{payError}</p>
+          )}
+
+          {txHash && (
+            <p className="text-[10px] text-center mt-2 text-muted-foreground break-all">
+              Payment sent.{' '}
+              {currency === 'USDT' ? (
+                <a href={polygonscanTxUrl(txHash)} target="_blank" rel="noopener noreferrer" className="text-accent underline">
+                  View receipt
+                </a>
+              ) : null}
+            </p>
           )}
 
           {!supported && selected && (
@@ -284,8 +331,8 @@ export function NimiqTipCard() {
 
           {sendUri && (
             <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 flex flex-col items-center gap-3">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                Scan the QR, or copy the address and paste it into Nimiq Pay
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold text-center">
+                Scan the QR, or copy the address and set the amount in Nimiq Pay
               </p>
               <div className="bg-white p-2 rounded-lg">
                 <QRCodeSVG value={sendUri} size={160} />
