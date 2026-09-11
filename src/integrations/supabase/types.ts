@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      blacktank_places: {
+        Row: {
+          crew_code: string
+          label: string
+          lat: number
+          lng: number
+          set_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          crew_code: string
+          label?: string
+          lat: number
+          lng: number
+          set_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          crew_code?: string
+          label?: string
+          lat?: number
+          lng?: number
+          set_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blacktank_pledges: {
         Row: {
           amount: number
@@ -888,6 +915,14 @@ export type Database = {
         Args: { _request_id: string }
         Returns: undefined
       }
+      blacktank_get_place: {
+        Args: { _crew_code: string }
+        Returns: {
+          label: string
+          lat: number
+          lng: number
+        }[]
+      }
       blacktank_join: {
         Args: {
           _crew_code: string
@@ -946,6 +981,15 @@ export type Database = {
           _reason: string
         }
         Returns: string
+      }
+      blacktank_set_place: {
+        Args: {
+          _crew_code: string
+          _label?: string
+          _lat: number
+          _lng: number
+        }
+        Returns: undefined
       }
       blacktank_settle: {
         Args: { _amount: number; _request_id: string; _tx_ref?: string }
