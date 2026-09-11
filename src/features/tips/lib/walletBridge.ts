@@ -133,42 +133,11 @@ export function nimiqPayMiniAppLink(returnUrl?: string): string {
 export type PayCurrency = 'NIM' | 'USDT';
 
 /**
- * Deep link that opens the Nimiq Pay send screen prefilled with recipient,
- * amount and currency. Nimiq Pay picks the right rail from `currency`.
- */
-export function nimiqPayPaymentLink(
-  currency: PayCurrency,
-  address: string,
-  amount: number,
-  uri?: string | null
-): string {
-  const params = new URLSearchParams({
-    currency,
-    recipient: address.replace(/\s+/g, ''),
-    amount: String(amount),
-  });
-  if (currency === 'USDT') params.set('network', 'polygon');
-  if (uri) params.set('uri', uri);
-  return `nimiqpay://pay?${params.toString()}`;
-}
-
-/** Web-facing universal link equivalent of {@link nimiqPayPaymentLink}. */
-export function nimiqPayPaymentUniversalLink(
-  currency: PayCurrency,
-  address: string,
-  amount: number,
-  uri?: string | null
-): string {
-  return nimiqPayPaymentLink(currency, address, amount, uri).replace(
-    'nimiqpay://pay?',
-    'https://nimpay.app/pay?'
-  );
-}
-
-/**
- * Opens the Nimiq Pay app straight on a payment for either currency.
- * Falls back to the universal link, then to the raw wallet URI
- * (`nimiq:` / `ethereum:`) which the OS hands to any installed wallet.
+ * Opens a payment outside the mini app using the standard wallet URI schemes,
+ * which Nimiq Pay and other wallets register with the OS:
+ *  - NIM  → `nimiq:<address>?amount=<nim>`
+ *  - USDT → EIP-681 `ethereum:<token>@137/transfer?address=…&uint256=…`
+ * Falls back to the Nimiq Wallet web link (NIM) or the Nimiq Pay landing page.
  */
 export function openNimiqPayPayment(
   currency: PayCurrency,
@@ -178,8 +147,8 @@ export function openNimiqPayPayment(
 ): void {
   if (typeof window === 'undefined') return;
 
-  const scheme = nimiqPayPaymentLink(currency, address, amount, uri);
-  const universal = nimiqPayPaymentUniversalLink(currency, address, amount, uri);
+  const primary = uri ?? (currency === 'NIM' ? `nimiq:${address.replace(/\s+/g, '')}?amount=${amount}` : '');
+  const fallback = currency === 'NIM' ? nimiqWalletLink(address, amount) : 'https://nimpay.app/';
 
   let launched = false;
   const clear = () => {
@@ -188,15 +157,12 @@ export function openNimiqPayPayment(
   window.addEventListener('blur', clear, { once: true });
   window.addEventListener('pagehide', clear, { once: true });
 
-  window.location.href = scheme;
+  if (primary) window.location.href = primary;
 
   window.setTimeout(() => {
     if (launched) return;
-    window.location.href = universal;
-    window.setTimeout(() => {
-      if (!launched && uri) window.location.href = uri;
-    }, 2000);
-  }, 1200);
+    window.location.href = fallback;
+  }, 1500);
 }
 
 /** Web-facing universal link equivalent of {@link nimiqPayMiniAppLink}. */

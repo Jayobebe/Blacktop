@@ -26,7 +26,7 @@ import {
 } from '../lib/nimiqPay';
 import {
   getEvmProvider,
-  isNimiqPayHost,
+  
   openNimiqPayPayment,
   polygonscanTxUrl,
   sendNimViaMiniApp,
@@ -138,13 +138,8 @@ export function NimiqTipCard() {
       return;
     }
 
-    // USDT: inside Nimiq Pay the SDK has no token transfer method, so hand the
-    // payment (recipient + amount + currency) straight to the Nimiq Pay send screen.
-    if (isNimiqPayHost()) {
-      handOff();
-      return;
-    }
-
+    // USDT: Nimiq Pay injects an Ethereum provider inside the mini app, so the
+    // same path signs the Polygon transfer in-app and in any browser wallet.
     if (getEvmProvider()) {
       setPaying(true);
       try {
