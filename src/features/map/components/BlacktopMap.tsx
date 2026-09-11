@@ -60,8 +60,10 @@ import {
   Download,
   IdCard,
   Check,
+  Fuel,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BlacktankPanel, useBlacktankPlace } from "@/features/blacktank";
 import { useWaypoints } from "@/features/waypoints";
 import { useRescueBridge } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
