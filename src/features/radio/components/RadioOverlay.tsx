@@ -82,7 +82,7 @@ export function RadioOverlay() {
         ) : (
           <>
             {/* The dial */}
-            <div className="relative w-[280px] h-[280px] shrink-0">
+            <div className="relative w-[280px] h-[280px] landscape:w-[200px] landscape:h-[200px] shrink-0">
               <div className="absolute inset-0 rounded-full border border-border/60 bg-card/40" />
               <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-0 h-0 border-l-[7px] border-r-[7px] border-t-[10px] border-l-transparent border-r-transparent border-t-accent" />
               <div
@@ -108,7 +108,7 @@ export function RadioOverlay() {
                     >
                       <span
                         className={cn(
-                          'w-12 h-12 rounded-full flex items-center justify-center border transition-all',
+                          'w-12 h-12 landscape:w-9 landscape:h-9 rounded-full flex items-center justify-center border transition-all',
                           isActive ? 'scale-110' : 'opacity-70',
                         )}
                         style={{
@@ -118,9 +118,9 @@ export function RadioOverlay() {
                           color: `hsl(${hsl})`,
                         }}
                       >
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-5 h-5 landscape:w-4 landscape:h-4" />
                       </span>
-                      <span className={cn('text-[10px] max-w-[72px] truncate', isActive ? 'text-foreground font-semibold' : 'text-muted-foreground')}>
+                      <span className={cn('text-[10px] landscape:text-[9px] max-w-[72px] landscape:max-w-[60px] truncate', isActive ? 'text-foreground font-semibold' : 'text-muted-foreground')}>
                         {station.name}
                       </span>
                     </button>
@@ -129,7 +129,7 @@ export function RadioOverlay() {
               </div>
 
               {/* Hub */}
-              <div className="absolute inset-[86px] rounded-full bg-card border border-border flex flex-col items-center justify-center text-center px-2">
+              <div className="absolute inset-[86px] landscape:inset-[62px] rounded-full bg-card border border-border flex flex-col items-center justify-center text-center px-2">
                 <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Station</p>
                 <p className="text-sm font-bold truncate max-w-full">{player.stationName || 'Off air'}</p>
               </div>
