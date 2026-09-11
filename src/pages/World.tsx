@@ -26,7 +26,7 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
   { id: 'challenge', lat: -15.8, lng: -47.9, label: 'Crew Challenge', kind: 'challenge', route: '/crew/challenges' },
   { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
-  { id: 'blacktank', lat: 41.9, lng: 12.5, label: 'Blacktank', kind: 'tank' },
+  { id: 'blacktank', lat: 19.43, lng: -99.13, label: 'Blacktank', kind: 'tank' },
 
 ];
 
