@@ -4,8 +4,7 @@ import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { Button } from '@/components/ui/button';
-import { History, BarChart3, Settings, Users, UserPlus, User, Download, X, Wrench } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, User, Wrench } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
@@ -20,7 +19,6 @@ export default function Home() {
   const { rideState } = useActiveRide();
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isExploding, setIsExploding] = useState(false);
   const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,15 +194,6 @@ export default function Home() {
     };
   }, [accentColor]);
 
-  // Check if app can be installed
-  useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const dismissed = localStorage.getItem('install-banner-dismissed');
-    if (!isStandalone && !dismissed) {
-      setShowInstallBanner(true);
-    }
-  }, []);
-
   // Clear any stale map destination when returning to the home screen so it
   // doesn't bleed into the next session.
   useEffect(() => {
@@ -225,40 +214,9 @@ export default function Home() {
     }
   }, [convoy.isActive, convoy.isRestoring, navigate]);
 
-  const dismissInstallBanner = () => {
-    setShowInstallBanner(false);
-    localStorage.setItem('install-banner-dismissed', 'true');
-  };
-
   return (
     <div className={`h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}>
       {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
-
-      {/* Install Banner */}
-      {showInstallBanner && (
-        <div className="mb-3 bg-accent/10 border border-accent/20 rounded-2xl p-3 flex items-center gap-3 animate-slide-down landscape:hidden">
-          <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Download className="w-5 h-5 text-accent" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium">Install Blacktop</p>
-            <p className="text-xs text-muted-foreground">Add to home screen for the best experience</p>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => navigate('/install')}
-            className="flex-shrink-0 h-8 text-xs px-3 rounded-xl"
-          >
-            Install
-          </Button>
-          <button
-            onClick={dismissInstallBanner}
-            className="p-1.5 rounded-full hover:bg-secondary/50 flex-shrink-0"
-          >
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-      )}
 
       {/* Header */}
       <header className="flex items-center justify-between mb-4 landscape:mb-2 animate-fade-in">
