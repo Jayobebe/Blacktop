@@ -246,16 +246,17 @@ export default function DemoShowcase() {
       id: 'pay-up',
       title: 'Pay Up',
       subtitle: 'Support The Developer Or Send Fuel Money',
-      description: 'No ads, no subscription. Tip in NIM or USDT, save payees, and scan a friend’s QR to send fuel money. Everything stays local — no backend wallet or accounts.',
+      description: 'No ads, no subscription. Flip between Receive to show your own wallet QR and Send to scan someone else’s, then hand off to Nimiq Pay. Everything stays local — no backend wallet or accounts.',
       icon: Heart,
       color: 'accent',
       mockup: <PayUpMockup />,
       cards: [
-        { icon: Wallet, label: 'NIM or USDT', text: 'Pay with Nimiq or Polygon USDT — pick the currency that suits you.' },
-        { icon: Users, label: 'Saved Payees', text: 'Store developer, friends and crew payees locally for one-tap repeats.' },
-        { icon: QrCode, label: 'Scan QR', text: 'Point the camera at a friend’s address QR to auto-fill their wallet.' },
+        { icon: QrCode, label: 'Your Own QR', text: 'Save your wallet once and show your code with the address underneath.' },
+        { icon: Users, label: 'Send Or Receive', text: 'One toggle swaps between your code and the scanner for theirs.' },
+        { icon: Wallet, label: 'NIM Or USDT', text: 'Pay with Nimiq or Polygon USDT — Nimiq Pay handles the transaction.' },
         { icon: Heart, label: 'No Fees To Us', text: '100% of the tip goes to the payee. Blacktop never takes a cut.' },
       ],
+
     },
     {
       id: 'make-it-yours',
