@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Crown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
