@@ -150,9 +150,9 @@ export function NimiqTipCard() {
       return;
     }
 
-    // No injected wallet: hand off to the wallet app, keep the QR as a fallback.
-    const opened = window.open(uri, '_blank', 'noopener,noreferrer');
-    if (!opened) window.location.href = uri;
+    // No injected wallet: deep link into the Nimiq Pay app and keep the QR fallback.
+    openNimiqPayApp();
+    toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
   };
 
   const handleCopy = async () => {
