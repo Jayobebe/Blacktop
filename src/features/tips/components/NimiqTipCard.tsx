@@ -27,8 +27,8 @@ import {
 import {
   getEvmProvider,
   isNimiqPayHost,
-  
-  openNimiqPayPayment,
+  nimToLuna,
+  openNimiqPayCheckout,
   polygonscanTxUrl,
   sendNimViaMiniApp,
   sendUsdtViaWallet,
@@ -49,6 +49,7 @@ export function NimiqTipCard() {
   const [paying, setPaying] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [nimiqTx, setNimiqTx] = useState<string | null>(null);
+  const [payError, setPayError] = useState('');
 
   const [newLabel, setNewLabel] = useState('');
   const [newNim, setNewNim] = useState('');
@@ -152,14 +153,28 @@ export function NimiqTipCard() {
   }, []);
 
   const handlePay = async () => {
-    if (!uri || !selected) return;
-    const address = payeeAddress(selected, currency);
+    setPayError('');
+
+    if (showNewPayee) {
+      setPayError('Save the new payee first.');
+      return;
+    }
+    const address = selected ? payeeAddress(selected, currency) : '';
+    if (!selected || !address || !supported) {
+      setPayError(`Choose a payee with a ${currency} address.`);
+      return;
+    }
+    if (!(numericAmount > 0)) {
+      setPayError('Enter an amount greater than zero.');
+      return;
+    }
+
     setShowQr(true);
     setTxHash(null);
     setNimiqTx(null);
 
     const handOff = () => {
-      openNimiqPayPayment(currency, address, numericAmount, uri);
+      openNimiqPayCheckout(currency, address, currency === 'NIM' ? nimToLuna(numericAmount) : numericAmount);
       toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
     };
 
@@ -357,12 +372,16 @@ export function NimiqTipCard() {
 
       <Button
         onClick={handlePay}
-        disabled={!uri || paying}
+        disabled={paying}
         className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
       >
         <Heart className="w-4 h-4 mr-2" />
         {paying ? 'Confirm in your wallet…' : 'Pay up'}
       </Button>
+
+      {payError && (
+        <p role="alert" className="text-[10px] text-destructive text-center mt-2">{payError}</p>
+      )}
 
       {!supported && selected && (
         <p className="text-[10px] text-muted-foreground text-center mt-2">

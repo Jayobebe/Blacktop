@@ -228,6 +228,49 @@ export function openNimiqPayApp(returnUrl?: string): void {
   }, 1500);
 }
 
+/** 1 NIM = 100,000 Luna — the unit the Nimiq SDK expects. */
+export function nimToLuna(nim: number): number {
+  return Math.round(nim * 100_000);
+}
+
+/** Builds the Blacktop /pay handoff target used by the Nimiq Pay mini app. */
+export function buildPayPath(currency: PayCurrency, address: string, convertedAmount: number): string {
+  const recipient = currency === 'NIM' ? address.replace(/\s+/g, '') : address.trim();
+  return `blacktoplive.com/pay?recipient=${encodeURIComponent(recipient)}&amount=${convertedAmount}&currency=${currency}`;
+}
+
+/**
+ * Opens the Blacktop payment screen inside Nimiq Pay. Tries the custom scheme
+ * first and falls back to the https mini-app link if the page never lost focus
+ * (meaning Nimiq Pay is not installed).
+ */
+export function openNimiqPayCheckout(
+  currency: PayCurrency,
+  address: string,
+  convertedAmount: number
+): void {
+  if (typeof window === 'undefined') return;
+
+  const path = buildPayPath(currency, address, convertedAmount);
+  const deepLink = `nimiqpay://miniapp?url=${path}`;
+  const httpsLink = `https://nimpay.app/miniapps/open/${path}`;
+
+  let launched = false;
+  const clear = () => { launched = true; };
+  window.addEventListener('blur', clear, { once: true });
+  window.addEventListener('pagehide', clear, { once: true });
+  const onHidden = () => { if (document.visibilityState === 'hidden') launched = true; };
+  document.addEventListener('visibilitychange', onHidden);
+
+  window.location.href = deepLink;
+
+  window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHidden);
+    if (launched || document.visibilityState === 'hidden') return;
+    window.location.href = httpsLink;
+  }, 1500);
+}
+
 export function polygonscanTxUrl(hash: string): string {
   return `https://polygonscan.com/tx/${hash}`;
 }
