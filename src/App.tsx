@@ -29,6 +29,7 @@ import Install from "./pages/Install";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import Pay from "./pages/Pay";
 
 const queryClient = new QueryClient();
 
