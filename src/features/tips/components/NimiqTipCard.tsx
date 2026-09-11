@@ -111,6 +111,11 @@ export function NimiqTipCard() {
     setTxHash(null);
     setNimiqTx(null);
 
+    const handOff = () => {
+      openNimiqPayPayment(currency, address, numericAmount, uri);
+      toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
+    };
+
     if (currency === 'NIM') {
       setPaying(true);
       try {
@@ -121,8 +126,7 @@ export function NimiqTipCard() {
         const message = (err as { message?: string })?.message ?? '';
         if (message === 'NO_PROVIDER') {
           // Not inside Nimiq Pay — deep link into the app and keep the QR fallback.
-          openNimiqPayApp();
-          toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
+          handOff();
         } else if (/reject|denied|cancel/i.test(message)) {
           toast.info('Payment cancelled.');
         } else {
@@ -134,7 +138,14 @@ export function NimiqTipCard() {
       return;
     }
 
-    if (currency === 'USDT' && getEvmProvider()) {
+    // USDT: inside Nimiq Pay the SDK has no token transfer method, so hand the
+    // payment (recipient + amount + currency) straight to the Nimiq Pay send screen.
+    if (isNimiqPayHost()) {
+      handOff();
+      return;
+    }
+
+    if (getEvmProvider()) {
       setPaying(true);
       try {
         const hash = await sendUsdtViaWallet(address, numericAmount);
@@ -152,8 +163,7 @@ export function NimiqTipCard() {
     }
 
     // No injected wallet: deep link into the Nimiq Pay app and keep the QR fallback.
-    openNimiqPayApp();
-    toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
+    handOff();
   };
 
   const handleCopy = async () => {
