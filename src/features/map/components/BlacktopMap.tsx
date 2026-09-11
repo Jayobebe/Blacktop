@@ -1819,6 +1819,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             <Download className="w-4 h-4" />
           </button>
           <div className="w-px h-6 bg-border" />
+          <button
+            type="button"
+            onClick={() => setShowBlacktank((v) => !v)}
+            aria-pressed={showBlacktank}
+            aria-label="Blacktank — crew fuel pot"
+            className={cn(
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              showBlacktank ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
+            )}
+          >
+            <Fuel className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
           {/* Blacktop Radio — hidden unless enabled in Settings */}
           <RadioButton variant="map" />
           {canDropCard && (
