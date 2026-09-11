@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Crown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +16,8 @@ import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
 import { X } from 'lucide-react';
 import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
+import { BlacktankPanel } from '@/features/blacktank';
+
 
 // Crew hub landmarks dotted around the globe. Rotating the globe brings each
 // one into view; tapping the chip opens its page.
@@ -24,6 +28,8 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
   { id: 'challenge', lat: -15.8, lng: -47.9, label: 'Crew Challenge', kind: 'challenge', route: '/crew/challenges' },
   { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
+  { id: 'blacktank', lat: 30.04, lng: 31.24, label: 'Blacktank', kind: 'tank' },
+
 ];
 
 const countriesGeo = feature(
@@ -35,6 +41,9 @@ export default function World() {
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);
   const [showCrewQr, setShowCrewQr] = useState(false);
+  const [showBlacktank, setShowBlacktank] = useState(false);
+  const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
+
   const crew = useCrew();
   const { settings } = useSettings();
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
@@ -113,6 +122,17 @@ export default function World() {
       setShowCrewQr(true);
       return;
     }
+    if (id === 'blacktank') {
+      // Grab a rough position so the crew can pin the tank where they meet.
+      navigator.geolocation?.getCurrentPosition(
+        (p) => setMyPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => setMyPos(null),
+        { timeout: 8000 },
+      );
+      setShowBlacktank(true);
+      return;
+    }
+
     if (id === 'arcade') {
       navigate('/arcade');
       return;
@@ -269,7 +289,20 @@ export default function World() {
         <CollectedCardsFolder />
       </div>
 
+      {/* Blacktank — the crew fuel pot landmark. Portalled out of the page so
+          the animated (transformed) wrapper doesn't trap the fixed overlay. */}
+      {showBlacktank && createPortal(
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6">
+          <div className="w-full sm:max-w-md max-h-[88dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border/40 bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <BlacktankPanel userLocation={myPos} onClose={() => setShowBlacktank(false)} />
+          </div>
+        </div>,
+        document.body,
+      )}
+
+
       {/* Crew QR — mates scan this to join your crew */}
+
       {showCrewQr && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
           <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4">

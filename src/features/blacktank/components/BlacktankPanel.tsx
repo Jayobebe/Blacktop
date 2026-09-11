@@ -184,7 +184,7 @@ export function BlacktankPanel({
           {formatAmount(Number(pot?.balance ?? 0), currency)}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          {pot?.member_count ?? 0} riders · you're in for{' '}
+          {pot?.member_count ?? 0} {(pot?.member_count ?? 0) === 1 ? 'rider' : 'riders'} · you're in for{' '}
           {formatAmount(Number(pot?.my_pledged ?? 0), currency)}
         </p>
       </div>
