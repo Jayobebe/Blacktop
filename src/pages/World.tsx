@@ -287,14 +287,17 @@ export default function World() {
         <CollectedCardsFolder />
       </div>
 
-      {/* Blacktank — the crew fuel pot landmark */}
-      {showBlacktank && (
+      {/* Blacktank — the crew fuel pot landmark. Portalled out of the page so
+          the animated (transformed) wrapper doesn't trap the fixed overlay. */}
+      {showBlacktank && createPortal(
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6">
           <div className="w-full sm:max-w-md max-h-[88dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border/40 bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <BlacktankPanel userLocation={myPos} onClose={() => setShowBlacktank(false)} />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
+
 
       {/* Crew QR — mates scan this to join your crew */}
 
