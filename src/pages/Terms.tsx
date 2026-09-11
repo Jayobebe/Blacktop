@@ -185,6 +185,30 @@ export default function Terms() {
 
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Payments — Pay Up &amp; Blacktank</h2>
+          <p className="text-muted-foreground">
+            <span className="text-foreground font-medium">Pay Up</span> lets you
+            display your own wallet QR or scan another rider's to send NIM or
+            Polygon USDT via your own Nimiq Pay wallet. Blacktop is not a
+            payment processor: we never hold, route or take custody of funds,
+            we never see your keys, and every transaction is final and
+            irreversible once confirmed in your wallet. You are solely
+            responsible for checking the recipient address before sending.
+          </p>
+          <p className="text-muted-foreground">
+            <span className="text-foreground font-medium">Blacktank</span> is a
+            crew's shared fuel-pot pledge ledger. Pledges are promises between
+            crew members, not deposits — no money is pooled or held by the app.
+            Withdrawal requests require a unanimous vote from the rest of the
+            crew and expire unanswered. Approved requests are settled directly
+            wallet-to-wallet through Nimiq Pay. The app owner and contributors
+            accept<span className="text-foreground font-medium"> no liability </span>
+            for disputes, unpaid pledges, misdirected payments or losses
+            arising from Pay Up or Blacktank.
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Blacktop Arcade — Derez Legacy</h2>
           <p className="text-muted-foreground">
             Derez Legacy is a multiplayer light-trail game played while riding

@@ -987,6 +987,14 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
           </p>
 
           <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+            <span className="text-foreground font-medium">Blacktank</span> lives here too — your
+            crew's shared fuel-pot landmark. Members chip in pledges of NIM or USDT, and any
+            withdrawal needs a unanimous vote from the rest of the crew before it's released.
+            It's a pledge ledger only: payouts are settled directly between wallets via Nimiq
+            Pay, and Blacktop never holds the money.
+          </p>
+
+          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
             Opting in also unlocks the <span className="text-foreground font-medium">card
             collection folder</span> inside Blacktop World and the{' '}
             <span className="text-foreground font-medium">flip-to-QR</span> button on
