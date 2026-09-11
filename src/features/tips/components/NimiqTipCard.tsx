@@ -116,6 +116,13 @@ export function NimiqTipCard() {
       toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
     };
 
+    // Outside the Nimiq Pay mini app there is no provider to sign with, so hand
+    // off straight away while the user's tap is still "fresh" (iOS requirement).
+    if (!isNimiqPayHost() && !(currency === 'USDT' && getEvmProvider())) {
+      handOff();
+      return;
+    }
+
     if (currency === 'NIM') {
       setPaying(true);
       try {
