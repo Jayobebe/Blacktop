@@ -26,7 +26,7 @@ import {
 } from '../lib/nimiqPay';
 import {
   getEvmProvider,
-  nimiqWalletLink,
+  openNimiqPayApp,
   polygonscanTxUrl,
   sendNimViaMiniApp,
   sendUsdtViaWallet,
