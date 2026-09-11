@@ -1,3 +1,5 @@
+import { init, getHostLanguage } from '@nimiq/mini-app-sdk';
+import type { NimiqProvider } from '@nimiq/mini-app-sdk';
 import { USDT_POLYGON_CONTRACT } from './nimiqPay';
 
 type Eip1193Provider = {
@@ -7,6 +9,9 @@ type Eip1193Provider = {
 
 const POLYGON_CHAIN_ID = '0x89';
 const USDT_DECIMALS = 6;
+const NIM_DECIMALS = 5; // 1 NIM = 1e5 lunas
+
+let nimiqProviderPromise: Promise<NimiqProvider | null> | null = null;
 
 export function getEvmProvider(): Eip1193Provider | null {
   const injected = (window as unknown as { ethereum?: Eip1193Provider }).ethereum;
@@ -15,8 +20,20 @@ export function getEvmProvider(): Eip1193Provider | null {
 
 /** True when the app is running inside the Nimiq Pay mini-app browser. */
 export function isNimiqPayHost(): boolean {
-  const w = window as unknown as { nimiq?: unknown; ethereum?: Eip1193Provider };
-  return Boolean(w.nimiq) || Boolean(w.ethereum?.isNimiqPay);
+  return getHostLanguage() !== undefined || Boolean((window as unknown as { nimiq?: unknown }).nimiq);
+}
+
+/** Returns the injected Nimiq provider, or null if not running inside Nimiq Pay / timeout. */
+export async function getNimiqProvider(): Promise<NimiqProvider | null> {
+  if (typeof window === 'undefined') return null;
+
+  if (nimiqProviderPromise) return nimiqProviderPromise;
+
+  nimiqProviderPromise = init({ timeout: 3_000 })
+    .then((provider) => provider)
+    .catch(() => null);
+
+  return nimiqProviderPromise;
 }
 
 function pad32(hex: string): string {
@@ -51,6 +68,27 @@ async function ensurePolygon(provider: Eip1193Provider) {
       ],
     });
   }
+}
+
+/**
+ * Sends NIM through the Nimiq Pay mini-app provider.
+ * Returns the serialized transaction string, or throws on error / cancellation.
+ */
+export async function sendNimViaMiniApp(to: string, amount: number): Promise<string> {
+  const provider = await getNimiqProvider();
+  if (!provider) throw new Error('NO_PROVIDER');
+
+  const value = Math.round(amount * 10 ** NIM_DECIMALS);
+  const result = await provider.sendBasicTransaction({
+    recipient: to.replace(/\s+/g, ''),
+    value,
+  });
+
+  if (result && typeof result === 'object' && 'error' in result) {
+    throw new Error((result as { error: { message?: string } }).error?.message ?? 'NIM payment failed');
+  }
+
+  return result as string;
 }
 
 /**
