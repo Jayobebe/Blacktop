@@ -44,9 +44,10 @@ export function payeeAddress(payee: Payee, currency: TipCurrency): string {
 }
 
 /**
- * Builds a payment URI that the Nimiq Pay app can open or scan.
- * - NIM  : the `nimiq:` URI scheme
- * - USDT : EIP-681 token transfer on Polygon
+ * Builds a payment request URI in the exact format Nimiq's own request-link
+ * encoder produces, which is what Nimiq Pay parses:
+ * - NIM  : `nimiq:<address>?amount=<nim>`
+ * - USDT : `polygon:<contract>@137/transfer?address=<recipient>&uint256=<amount>e6`
  */
 export function buildPaymentUri(payee: Payee, currency: TipCurrency, amount: number): string | null {
   if (!(amount > 0) || !payeeSupports(payee, currency)) return null;
@@ -56,8 +57,12 @@ export function buildPaymentUri(payee: Payee, currency: TipCurrency, amount: num
     return `nimiq:${address}?amount=${amount}`;
   }
 
-  const units = BigInt(Math.round(amount * 10 ** USDT_DECIMALS));
-  return `ethereum:${USDT_POLYGON_CONTRACT}@137/transfer?address=${payee.usdtAddress!.trim()}&uint256=${units.toString()}`;
+  const value = amount.toFixed(USDT_DECIMALS).replace(/0+$/, '').replace(/\.$/, '');
+  const query = new URLSearchParams({
+    address: payee.usdtAddress!.trim(),
+    uint256: `${value}e${USDT_DECIMALS}`,
+  });
+  return `polygon:${USDT_POLYGON_CONTRACT}@137/transfer?${query.toString()}`;
 }
 
 export function formatAmount(amount: number, currency: TipCurrency): string {
@@ -79,8 +84,8 @@ export function parsePayeeQr(raw: string): { nim?: string; usdt?: string } | nul
     return isValidNimAddress(nim) ? { nim } : null;
   }
 
-  // EIP-681: ethereum:<contract>@<chain>/transfer?address=0x... or plain ethereum:0x...
-  const ethMatch = text.match(/^ethereum:(?:[^?]*[?&]address=)?(0x[a-fA-F0-9]{40})/i);
+  // EIP-681: ethereum:/polygon:<contract>@<chain>/transfer?address=0x... or plain 0x...
+  const ethMatch = text.match(/^(?:ethereum|polygon):(?:[^?]*[?&]address=)?(0x[a-fA-F0-9]{40})/i);
   if (ethMatch) return { usdt: ethMatch[1] };
 
   // Raw addresses
