@@ -136,7 +136,7 @@ export function RadioOverlay() {
             </div>
 
             {/* Now playing */}
-            <div className="w-full max-w-sm space-y-2">
+            <div className="w-full max-w-sm landscape:max-w-xs space-y-2 landscape:space-y-1">
               <p className="text-center text-sm font-semibold truncate">{trackTitle(player.trackName)}</p>
               {player.needsReselect && (
                 <button
@@ -162,27 +162,27 @@ export function RadioOverlay() {
                 <span>{formatClock(player.duration)}</span>
               </div>
 
-              <div className="flex items-center justify-center gap-6 pt-1">
-                <button type="button" onClick={() => void previous()} aria-label="Previous track" className="w-12 h-12 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
-                  <SkipBack className="w-5 h-5" />
+              <div className="flex items-center justify-center gap-6 landscape:gap-4 pt-1">
+                <button type="button" onClick={() => void previous()} aria-label="Previous track" className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+                  <SkipBack className="w-5 h-5 landscape:w-4 landscape:h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => void toggle()}
                   aria-label={player.isPlaying ? 'Pause' : 'Play'}
-                  className="w-16 h-16 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-glow"
+                  className="w-16 h-16 landscape:w-12 landscape:h-12 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-glow"
                 >
-                  {player.isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-0.5" />}
+                  {player.isPlaying ? <Pause className="w-7 h-7 landscape:w-5 landscape:h-5" /> : <Play className="w-7 h-7 landscape:w-5 landscape:h-5 ml-0.5" />}
                 </button>
-                <button type="button" onClick={() => void next()} aria-label="Next track" className="w-12 h-12 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
-                  <SkipForward className="w-5 h-5" />
+                <button type="button" onClick={() => void next()} aria-label="Next track" className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+                  <SkipForward className="w-5 h-5 landscape:w-4 landscape:h-4" />
                 </button>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowManager(true)}
-                className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+                className="w-full mt-2 landscape:mt-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
               >
                 Manage stations
               </button>
