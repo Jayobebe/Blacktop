@@ -130,6 +130,75 @@ export function nimiqPayMiniAppLink(returnUrl?: string): string {
   return `nimiqpay://miniapp?url=${encodeURIComponent(url)}`;
 }
 
+export type PayCurrency = 'NIM' | 'USDT';
+
+/**
+ * Deep link that opens the Nimiq Pay send screen prefilled with recipient,
+ * amount and currency. Nimiq Pay picks the right rail from `currency`.
+ */
+export function nimiqPayPaymentLink(
+  currency: PayCurrency,
+  address: string,
+  amount: number,
+  uri?: string | null
+): string {
+  const params = new URLSearchParams({
+    currency,
+    recipient: address.replace(/\s+/g, ''),
+    amount: String(amount),
+  });
+  if (currency === 'USDT') params.set('network', 'polygon');
+  if (uri) params.set('uri', uri);
+  return `nimiqpay://pay?${params.toString()}`;
+}
+
+/** Web-facing universal link equivalent of {@link nimiqPayPaymentLink}. */
+export function nimiqPayPaymentUniversalLink(
+  currency: PayCurrency,
+  address: string,
+  amount: number,
+  uri?: string | null
+): string {
+  return nimiqPayPaymentLink(currency, address, amount, uri).replace(
+    'nimiqpay://pay?',
+    'https://nimpay.app/pay?'
+  );
+}
+
+/**
+ * Opens the Nimiq Pay app straight on a payment for either currency.
+ * Falls back to the universal link, then to the raw wallet URI
+ * (`nimiq:` / `ethereum:`) which the OS hands to any installed wallet.
+ */
+export function openNimiqPayPayment(
+  currency: PayCurrency,
+  address: string,
+  amount: number,
+  uri?: string | null
+): void {
+  if (typeof window === 'undefined') return;
+
+  const scheme = nimiqPayPaymentLink(currency, address, amount, uri);
+  const universal = nimiqPayPaymentUniversalLink(currency, address, amount, uri);
+
+  let launched = false;
+  const clear = () => {
+    launched = true;
+  };
+  window.addEventListener('blur', clear, { once: true });
+  window.addEventListener('pagehide', clear, { once: true });
+
+  window.location.href = scheme;
+
+  window.setTimeout(() => {
+    if (launched) return;
+    window.location.href = universal;
+    window.setTimeout(() => {
+      if (!launched && uri) window.location.href = uri;
+    }, 2000);
+  }, 1200);
+}
+
 /** Web-facing universal link equivalent of {@link nimiqPayMiniAppLink}. */
 export function nimiqPayUniversalLink(returnUrl?: string): string {
   const url = returnUrl ?? (typeof window !== 'undefined' ? window.location.href : '');
