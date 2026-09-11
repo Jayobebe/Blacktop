@@ -75,9 +75,11 @@ function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], c
   } else if (kind === 'arcade') {
     // gamepad: body + d-pad + button
     ctx.beginPath();
-    (ctx as CanvasRenderingContext2D & { roundRect?: (...a: number[]) => void }).roundRect
-      ? ctx.roundRect(-5, -3, 10, 6, 3)
-      : ctx.rect(-5, -3, 10, 6);
+    if ((ctx as CanvasRenderingContext2D & { roundRect?: (...a: number[]) => void }).roundRect) {
+      ctx.roundRect(-5, -3, 10, 6, 3);
+    } else {
+      ctx.rect(-5, -3, 10, 6);
+    }
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(-3, -0.8); ctx.lineTo(-1, -0.8);

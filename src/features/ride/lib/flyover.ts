@@ -162,7 +162,7 @@ function smoothFrames(frames: FlyoverFrame[], fps: number) {
   const unwrapped: number[] = [raw[0]];
   for (let i = 1; i < raw.length; i++) {
     const prev = unwrapped[i - 1];
-    let d = ((raw[i] - (((prev % 360) + 360) % 360) + 540) % 360) - 180;
+    const d = ((raw[i] - (((prev % 360) + 360) % 360) + 540) % 360) - 180;
     unwrapped.push(prev + d);
   }
 
