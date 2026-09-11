@@ -1050,6 +1050,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     });
   }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
 
+  // ── Blacktank landmark — the crew's shared fuel pot, pinned on the map ──
+  useEffect(() => {
+    if (!map) return;
+    blacktankMarkerRef.current?.remove();
+    blacktankMarkerRef.current = null;
+    if (!blacktankPlace) return;
+
+    const el = document.createElement("div");
+    el.style.cssText =
+      "width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:hsl(var(--card));border:2px solid hsl(var(--accent));box-shadow:0 4px 14px rgba(0,0,0,.45);";
+    el.title = blacktankPlace.label || "Blacktank";
+    el.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:hsl(var(--accent))"><line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>';
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setShowBlacktank(true);
+    });
+
+    blacktankMarkerRef.current = new maplibregl.Marker({ element: el })
+      .setLngLat([blacktankPlace.lng, blacktankPlace.lat])
+      .addTo(map);
+
+    return () => {
+      blacktankMarkerRef.current?.remove();
+      blacktankMarkerRef.current = null;
+    };
+  }, [map, blacktankPlace]);
+
+
   useEffect(() => {
     const markers = cardMarkersRef.current;
     return () => {
