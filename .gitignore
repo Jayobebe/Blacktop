@@ -43,3 +43,12 @@ ios/App/App.xcworkspace/xcuserdata/
 ios/.idea/
 *.ipa
 DerivedData/
+
+# Lovable internal planning notes
+.lovable/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Local dependency tarballs
+*.tgz
