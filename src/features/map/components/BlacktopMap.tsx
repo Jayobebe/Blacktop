@@ -1728,13 +1728,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             aria-pressed={basemap === "dark"}
             aria-label="Dark map"
             className={cn(
-              "w-9 h-9 flex items-center justify-center transition-colors",
+              "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "dark" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
-            <MapIcon className="w-4 h-4" />
+            <MapIcon className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
           </button>
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 landscape:h-5 bg-border" />
           <button
             type="button"
             onClick={() => setBasemap("satellite")}
