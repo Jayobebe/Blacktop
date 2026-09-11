@@ -274,3 +274,29 @@ export function openNimiqPayCheckout(
 export function polygonscanTxUrl(hash: string): string {
   return `https://polygonscan.com/tx/${hash}`;
 }
+
+/**
+ * Opens the Nimiq Pay app home screen (no mini app). Falls back to the OS app
+ * store listing if the scheme cannot be handled.
+ */
+export function openNimiqPayHome(): void {
+  if (typeof window === 'undefined') return;
+
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const store = isAndroid ? NIMIQ_PAY_ANDROID_STORE : NIMIQ_PAY_IOS_STORE;
+
+  let launched = false;
+  const clear = () => { launched = true; };
+  window.addEventListener('blur', clear, { once: true });
+  window.addEventListener('pagehide', clear, { once: true });
+  const onHidden = () => { if (document.visibilityState === 'hidden') launched = true; };
+  document.addEventListener('visibilitychange', onHidden);
+
+  window.location.href = 'nimiqpay://';
+
+  window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHidden);
+    if (launched || document.visibilityState === 'hidden') return;
+    window.location.href = store;
+  }, 1500);
+}
