@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { haptics } from '@/lib/haptics';
 import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera,
-  Gauge, Flame, Route, Shield, ChevronRight, Play, X,
+  Gauge, Flame, Route, Shield, ChevronRight, ChevronDown, Play, X,
   MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
