@@ -41,6 +41,49 @@ export function NimiqTipCard() {
   const [newLabel, setNewLabel] = useState('');
   const [newNim, setNewNim] = useState('');
   const [newUsdt, setNewUsdt] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+
+  const stopScanner = async () => {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    if (!scanner) return;
+    try { await scanner.stop(); } catch { /* already stopped */ }
+    try { await scanner.clear(); } catch { /* already cleared */ }
+  };
+
+  useEffect(() => () => { void stopScanner(); }, []);
+
+  const startScanner = async () => {
+    setScanning(true);
+    await new Promise((r) => setTimeout(r, 100));
+    try {
+      const scanner = new Html5Qrcode(SCANNER_ID);
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        async (decoded) => {
+          const parsed = parsePayeeQr(decoded);
+          if (!parsed) return;
+          await stopScanner();
+          setScanning(false);
+          if (parsed.nim) setNewNim(parsed.nim);
+          if (parsed.usdt) setNewUsdt(parsed.usdt);
+          toast.success('Address scanned');
+        },
+        () => {}
+      );
+    } catch {
+      setScanning(false);
+      toast.error('Camera unavailable', { description: 'Allow camera access to scan a QR code.' });
+    }
+  };
+
+  const cancelScan = async () => {
+    await stopScanner();
+    setScanning(false);
+  };
 
   const selected: Payee = payees.find((p) => p.id === selectedId) ?? payees[0];
   const numericAmount = Number.parseFloat(amount.replace(',', '.'));
