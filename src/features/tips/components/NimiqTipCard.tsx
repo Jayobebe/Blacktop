@@ -119,10 +119,9 @@ export function NimiqTipCard() {
       } catch (err) {
         const message = (err as { message?: string })?.message ?? '';
         if (message === 'NO_PROVIDER') {
-          // Not inside Nimiq Pay — hand off to the wallet app, keep QR fallback.
-          const link = nimiqWalletLink(address, numericAmount);
-          const opened = window.open(link, '_blank', 'noopener,noreferrer');
-          if (!opened) window.location.href = link;
+          // Not inside Nimiq Pay — deep link into the app and keep the QR fallback.
+          openNimiqPayApp();
+          toast.info('Opening Nimiq Pay…', { description: 'Complete the payment in the app, or scan the QR code.' });
         } else if (/reject|denied|cancel/i.test(message)) {
           toast.info('Payment cancelled.');
         } else {
