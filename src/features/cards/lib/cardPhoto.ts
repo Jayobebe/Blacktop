@@ -43,15 +43,25 @@ export async function uploadCardPhoto(uid: string, heroDataUrl: string): Promise
   }
 }
 
-/** Downloads a shared card photo and returns it as a local data URL. */
+/**
+ * Downloads a shared card photo and returns it as a local data URL.
+ * Own photos come straight from storage; someone else's shared card photo is
+ * fetched through a short-lived signed URL minted by the `card-photo` function,
+ * so the bucket itself stays owner-only and cannot be browsed.
+ */
 export async function fetchCardPhoto(path: string): Promise<string | null> {
   try {
     const { data, error } = await supabase.storage.from(BUCKET).download(path);
-    if (error || !data) {
-      if (error) console.error('[cardPhoto] download failed', error);
-      return null;
-    }
-    return await blobToDataUrl(data);
+    if (!error && data) return await blobToDataUrl(data);
+
+    const { data: signed, error: fnError } = await supabase.functions.invoke('card-photo', {
+      body: { path },
+    });
+    if (fnError || !signed?.url) return null;
+
+    const res = await fetch(signed.url);
+    if (!res.ok) return null;
+    return await blobToDataUrl(await res.blob());
   } catch (err) {
     console.error('[cardPhoto] download error', err);
     return null;

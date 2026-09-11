@@ -98,8 +98,8 @@ Deno.serve(async (req) => {
 })
 
 function sanitizeText(s: string, maxLen: number): string {
-  // eslint-disable-next-line no-control-regex
   return (s ?? '')
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x1F\x7F]/g, ' ')
     .replace(/`{3,}/g, '``')
     .trim()

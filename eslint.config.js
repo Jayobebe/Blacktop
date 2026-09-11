@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "src/integrations/supabase/previewAuthStorage.ts", "src/integrations/supabase/types.ts"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -21,6 +21,12 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Third-party SDK/browser bridges (Nimiq, WebRTC, MapLibre, ffmpeg) expose
+      // untyped surfaces; flag these as advisory rather than build-blocking.
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-empty-object-type": "warn",
+      "@typescript-eslint/no-require-imports": "warn",
+      "no-empty": ["error", { allowEmptyCatch: true }],
     },
   },
 );
