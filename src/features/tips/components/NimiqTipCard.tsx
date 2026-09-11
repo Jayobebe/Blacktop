@@ -16,7 +16,6 @@ import { usePayees } from '../hooks/usePayees';
 import type { Payee, TipCurrency } from '../types';
 import {
   buildPaymentUri,
-  formatAmount,
   isValidNimAddress,
   isValidUsdtAddress,
   normalizeNimAddress,
@@ -87,10 +86,10 @@ export function NimiqTipCard() {
     <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
       <div className="flex items-center gap-2 mb-3">
         <Heart className="w-4 h-4 text-accent" />
-        <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Enjoying Blacktop?</p>
+        <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Send a tip with Nimiq Pay — crypto straight to the wallet, no middleman.
+        Support the developer or send a friend fuel money.
       </p>
 
       {/* Payee picker */}
@@ -185,7 +184,7 @@ export function NimiqTipCard() {
         className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
       >
         <Heart className="w-4 h-4 mr-2" />
-        {numericAmount > 0 ? `Pay ${formatAmount(numericAmount, currency)}` : 'Enter an amount'}
+        Pay up
       </Button>
 
       {!supported && selected && (
