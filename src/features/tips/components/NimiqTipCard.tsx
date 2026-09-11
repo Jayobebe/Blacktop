@@ -55,6 +55,7 @@ export function NimiqTipCard() {
   const [newUsdt, setNewUsdt] = useState('');
   const [scanning, setScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const resumedPaymentRef = useRef(false);
 
   const stopScanner = async () => {
     const scanner = scannerRef.current;
@@ -104,6 +105,51 @@ export function NimiqTipCard() {
     [selected, currency, numericAmount]
   );
   const supported = selected ? payeeSupports(selected, currency) : false;
+
+  useEffect(() => {
+    if (resumedPaymentRef.current || !isNimiqPayHost()) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const resumedCurrency = params.get('blacktopPayCurrency');
+    const resumedAddress = params.get('blacktopPayAddress')?.trim() ?? '';
+    const resumedAmount = Number.parseFloat(params.get('blacktopPayAmount') ?? '');
+    if ((resumedCurrency !== 'NIM' && resumedCurrency !== 'USDT') || !resumedAddress || !(resumedAmount > 0)) return;
+
+    resumedPaymentRef.current = true;
+    params.delete('blacktopPayCurrency');
+    params.delete('blacktopPayAddress');
+    params.delete('blacktopPayAmount');
+    const cleanUrl = `${window.location.pathname}${params.size ? `?${params.toString()}` : ''}${window.location.hash}`;
+    window.history.replaceState(window.history.state, '', cleanUrl);
+
+    setCurrency(resumedCurrency);
+    setAmount(String(resumedAmount));
+    setShowQr(true);
+    setPaying(true);
+
+    const resumePayment = async () => {
+      try {
+        if (resumedCurrency === 'NIM') {
+          const tx = await sendNimViaMiniApp(resumedAddress, resumedAmount);
+          setNimiqTx(tx);
+          toast.success('Payment sent', { description: 'NIM transaction signed in Nimiq Pay.' });
+          return;
+        }
+
+        const hash = await sendUsdtViaWallet(resumedAddress, resumedAmount);
+        setTxHash(hash);
+        toast.success('Payment sent', { description: 'Confirming on Polygon…' });
+      } catch (err) {
+        const message = (err as { message?: string })?.message ?? '';
+        if (/reject|denied|cancel/i.test(message)) toast.info('Payment cancelled.');
+        else toast.error('Wallet could not send that payment', { description: 'Please try Pay up again.' });
+      } finally {
+        setPaying(false);
+      }
+    };
+
+    void resumePayment();
+  }, []);
 
   const handlePay = async () => {
     if (!uri || !selected) return;
