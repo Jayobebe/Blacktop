@@ -31,6 +31,14 @@
   right: calc(10px + env(safe-area-inset-right));
 }
 
+/* In portrait the search bar spans almost full width; shift MapLibre controls
+   further right so they sit in the clear margin instead of clipping the input. */
+@media (orientation: portrait) {
+  .blacktop-maplibre .maplibregl-ctrl-top-right {
+    right: calc(0.25rem + env(safe-area-inset-right));
+  }
+}
+
 .blacktop-maplibre .maplibregl-ctrl-bottom-right {
   z-index: 20;
 }
