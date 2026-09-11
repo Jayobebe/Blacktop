@@ -27,8 +27,8 @@ import {
 import {
   getEvmProvider,
   isNimiqPayHost,
-  
-  openNimiqPayPayment,
+  nimToLuna,
+  openNimiqPayCheckout,
   polygonscanTxUrl,
   sendNimViaMiniApp,
   sendUsdtViaWallet,
