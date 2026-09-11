@@ -63,3 +63,31 @@ export function buildPaymentUri(payee: Payee, currency: TipCurrency, amount: num
 export function formatAmount(amount: number, currency: TipCurrency): string {
   return currency === 'NIM' ? `${amount} NIM` : `${amount.toFixed(2)} USDT`;
 }
+
+/**
+ * Parses scanned QR text into payee addresses.
+ * Handles raw NQ/0x addresses, `nimiq:` URIs and EIP-681 `ethereum:` token URIs.
+ */
+export function parsePayeeQr(raw: string): { nim?: string; usdt?: string } | null {
+  const text = raw.trim();
+  if (!text) return null;
+
+  // Nimiq URI: nimiq:NQ... (possibly with ?amount=...)
+  const nimiqMatch = text.match(/^nimiq:([A-Za-z0-9 ]+)/i);
+  if (nimiqMatch) {
+    const nim = normalizeNimAddress(nimiqMatch[1].split('?')[0]);
+    return isValidNimAddress(nim) ? { nim } : null;
+  }
+
+  // EIP-681: ethereum:<contract>@<chain>/transfer?address=0x... or plain ethereum:0x...
+  const ethMatch = text.match(/^ethereum:(?:[^?]*[?&]address=)?(0x[a-fA-F0-9]{40})/i);
+  if (ethMatch) return { usdt: ethMatch[1] };
+
+  // Raw addresses
+  const compact = text.split('?')[0];
+  if (EVM_RE.test(compact)) return { usdt: compact };
+  const nim = normalizeNimAddress(compact);
+  if (isValidNimAddress(nim)) return { nim };
+
+  return null;
+}
