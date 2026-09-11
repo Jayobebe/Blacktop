@@ -38,6 +38,8 @@ export function NimiqTipCard() {
   const [showNewPayee, setShowNewPayee] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   const [newLabel, setNewLabel] = useState('');
   const [newNim, setNewNim] = useState('');
