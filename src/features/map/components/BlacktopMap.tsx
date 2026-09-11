@@ -284,6 +284,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [showLoopPlanner, setShowLoopPlanner] = useState(false);
   const [showOfflinePacks, setShowOfflinePacks] = useState(false);
   const [addingWaypoint, setAddingWaypoint] = useState(false);
+  const [showBlacktank, setShowBlacktank] = useState(false);
+  const { data: blacktankPlace } = useBlacktankPlace();
+  const blacktankMarkerRef = useRef<maplibregl.Marker | null>(null);
   const rescue = useRescueBridge();
   const [rescueRoute, setRescueRoute] = useState<RouteResult | null>(null);
   const rescueMarkerRef = useRef<Marker | null>(null);
