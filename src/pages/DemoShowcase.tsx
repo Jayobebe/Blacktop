@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { haptics } from '@/lib/haptics';
 import {
   Users, Mic, Navigation, AlertTriangle, Trophy, Camera,
-  Gauge, Flame, Route, Shield, ChevronRight, ChevronDown, Play, X,
+  Gauge, Flame, Route, Shield, ChevronRight, Play, X,
   MapPin, Clock, TrendingUp, Crown, Copy, Check,
   Eye, Phone, Settings, History, Video,
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
   Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
   CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer,
-  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic, Wallet
+  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -240,21 +239,6 @@ export default function DemoShowcase() {
         { icon: Palette, label: 'Name & Colour', text: 'Each station gets a name, an icon and one of the eight accent colours.' },
         { icon: Radio, label: 'Spin The Dial', text: 'Hold the radio button on a ride or the map to open the wheel and switch instantly.' },
         { icon: ListMusic, label: 'Lock Screen', text: 'Shuffled playback with play, skip and track name on your lock screen.' },
-      ],
-    },
-    {
-      id: 'pay-up',
-      title: 'Pay Up',
-      subtitle: 'Support The Developer Or Send Fuel Money',
-      description: 'No ads, no subscription. Tip in NIM or USDT, save payees, and scan a friend’s QR to send fuel money. Everything stays local — no backend wallet or accounts.',
-      icon: Heart,
-      color: 'accent',
-      mockup: <PayUpMockup />,
-      cards: [
-        { icon: Wallet, label: 'NIM or USDT', text: 'Pay with Nimiq or Polygon USDT — pick the currency that suits you.' },
-        { icon: Users, label: 'Saved Payees', text: 'Store developer, friends and crew payees locally for one-tap repeats.' },
-        { icon: QrCode, label: 'Scan QR', text: 'Point the camera at a friend’s address QR to auto-fill their wallet.' },
-        { icon: Heart, label: 'No Fees To Us', text: '100% of the tip goes to the payee. Blacktop never takes a cut.' },
       ],
     },
     {
@@ -1650,72 +1634,6 @@ function RadioMockup() {
           </span>
           <SkipForward className="w-4 h-4 text-muted-foreground" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function PayUpMockup() {
-  const [currency, setCurrency] = useState<'NIM' | 'USDT'>('USDT');
-  const [amount, setAmount] = useState('5');
-
-  return (
-    <div className="w-full max-w-xs space-y-3">
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 animate-slide-up">
-        <div className="flex items-center gap-2 mb-3">
-          <Heart className="w-4 h-4 text-accent" />
-          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
-        </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Support the developer or send a friend fuel money.
-        </p>
-
-        <div className="rounded-xl border border-border/40 bg-card/50 p-2 flex items-center justify-between mb-3">
-          <span className="text-xs font-medium truncate">Developer</span>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        </div>
-
-        <div className="flex gap-2">
-          <div className="flex rounded-xl border border-border/40 overflow-hidden">
-            {(['USDT', 'NIM'] as const).map((c) => (
-              <button
-                key={c}
-                onClick={() => setCurrency(c)}
-                className={cn(
-                  'px-3 h-10 text-xs font-semibold touch-target transition-colors',
-                  currency === c ? 'bg-accent text-accent-foreground' : 'bg-card/60 text-muted-foreground'
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-          <Input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ''))}
-            inputMode="decimal"
-            placeholder="Amount"
-            className="flex-1 h-10 rounded-xl text-center font-semibold"
-          />
-        </div>
-
-        <Button className="w-full h-10 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target">
-          <Heart className="w-4 h-4 mr-2" />
-          Pay up
-        </Button>
-      </div>
-
-      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-2 animate-slide-up delay-200">
-        {[
-          { icon: QrCode, label: 'Scan friend QR' },
-          { icon: Wallet, label: 'NIM / Polygon USDT' },
-          { icon: Users, label: 'Saved payees' },
-        ].map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center gap-3">
-            <Icon className="w-4 h-4 text-accent flex-shrink-0" />
-            <span className="text-xs text-muted-foreground">{label}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
