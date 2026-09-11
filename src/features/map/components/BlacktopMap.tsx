@@ -1720,8 +1720,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       {/* Map type / radio / card-drop toolbar — horizontal strip below the
           search bar, left of the MapLibre top-right controls so it never
           clips them or the exit button in landscape. */}
-      <div className="absolute top-[calc(7rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] z-20 flex flex-row flex-wrap items-start gap-2">
-        <div className="flex flex-row flex-wrap items-center max-w-[calc(100vw-5rem)] rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+      <div className="absolute top-[calc(7rem+env(safe-area-inset-top))] landscape:top-[calc(5rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] z-20 flex flex-row flex-wrap landscape:flex-nowrap items-start gap-2">
+        <div className="flex flex-row flex-wrap landscape:flex-nowrap items-center max-w-[calc(100vw-5rem)] landscape:max-w-none rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
           <button
             type="button"
             onClick={() => setBasemap("dark")}
