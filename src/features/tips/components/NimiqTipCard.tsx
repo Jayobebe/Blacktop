@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Heart, ChevronDown, Plus, Trash2, Copy, Check, X } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
+import { Heart, ChevronDown, Plus, Trash2, Copy, Check, X, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,9 +20,12 @@ import {
   isValidNimAddress,
   isValidUsdtAddress,
   normalizeNimAddress,
+  parsePayeeQr,
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
+
+const SCANNER_ID = 'payee-qr-scanner';
 
 const CURRENCIES: TipCurrency[] = ['USDT', 'NIM'];
 
