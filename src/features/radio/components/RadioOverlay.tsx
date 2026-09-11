@@ -52,20 +52,20 @@ export function RadioOverlay() {
 
 
   return createPortal(
-    <div className="fixed inset-0 z-[90] flex flex-col bg-background/92 backdrop-blur-xl animate-fade-in safe-bottom">
-      <div className="flex items-center justify-between px-4 pt-4">
+    <div className="fixed inset-0 z-[90] flex flex-col bg-background/92 backdrop-blur-xl animate-fade-in safe-bottom landscape:justify-center">
+      <div className="flex items-center justify-between px-4 pt-4 landscape:pt-2 landscape:pb-2">
         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">Blacktop Radio</p>
         <button
           type="button"
           onClick={closeRadioOverlay}
           aria-label="Close radio"
-          className="w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
+          className="w-9 h-9 landscape:w-8 landscape:h-8 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center gap-6 px-4 py-4">
+      <div className="flex-1 landscape:flex-none overflow-y-auto flex flex-col items-center justify-center gap-6 landscape:gap-3 px-4 py-4 landscape:py-2">
         {stations.length === 0 ? (
           <div className="text-center max-w-xs space-y-3">
             <p className="text-sm text-muted-foreground">
