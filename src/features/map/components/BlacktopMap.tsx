@@ -2096,6 +2096,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
       {showOfflinePacks && <OfflinePacksPanel map={map} onClose={() => setShowOfflinePacks(false)} />}
 
+      {/* Blacktank — crew fuel pot bottom sheet */}
+      {showBlacktank && (
+        <div className="absolute inset-x-0 bottom-0 z-40 max-h-[75dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-card/97 backdrop-blur p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl animate-slide-up">
+          <BlacktankPanel userLocation={userLocation} onClose={() => setShowBlacktank(false)} />
+        </div>
+      )}
+
       {showSearchBar && (
         <MapSearchBar
           map={map}
