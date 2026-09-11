@@ -8,7 +8,7 @@ import type { Payee, TipCurrency } from '../types';
 export const DEVELOPER_PAYEE: Payee = {
   id: 'developer',
   label: 'Blacktop developer',
-  nimAddress: 'NQ00 0000 0000 0000 0000 0000 0000 0000 0000',
+  nimAddress: 'NQ73 3KC3 MGUD 6F04 MV5E AXF1 SL7F ACRS AM91',
   usdtAddress: '',
   builtIn: true,
 };
