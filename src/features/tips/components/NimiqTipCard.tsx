@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Heart, ChevronDown, Plus, Trash2, Copy, Check, X } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
+import { Heart, ChevronDown, Plus, Trash2, Copy, Check, X, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,9 +20,12 @@ import {
   isValidNimAddress,
   isValidUsdtAddress,
   normalizeNimAddress,
+  parsePayeeQr,
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
+
+const SCANNER_ID = 'payee-qr-scanner';
 
 const CURRENCIES: TipCurrency[] = ['USDT', 'NIM'];
 
@@ -37,6 +41,49 @@ export function NimiqTipCard() {
   const [newLabel, setNewLabel] = useState('');
   const [newNim, setNewNim] = useState('');
   const [newUsdt, setNewUsdt] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+
+  const stopScanner = async () => {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    if (!scanner) return;
+    try { await scanner.stop(); } catch { /* already stopped */ }
+    try { await scanner.clear(); } catch { /* already cleared */ }
+  };
+
+  useEffect(() => () => { void stopScanner(); }, []);
+
+  const startScanner = async () => {
+    setScanning(true);
+    await new Promise((r) => setTimeout(r, 100));
+    try {
+      const scanner = new Html5Qrcode(SCANNER_ID);
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        async (decoded) => {
+          const parsed = parsePayeeQr(decoded);
+          if (!parsed) return;
+          await stopScanner();
+          setScanning(false);
+          if (parsed.nim) setNewNim(parsed.nim);
+          if (parsed.usdt) setNewUsdt(parsed.usdt);
+          toast.success('Address scanned');
+        },
+        () => {}
+      );
+    } catch {
+      setScanning(false);
+      toast.error('Camera unavailable', { description: 'Allow camera access to scan a QR code.' });
+    }
+  };
+
+  const cancelScan = async () => {
+    await stopScanner();
+    setScanning(false);
+  };
 
   const selected: Payee = payees.find((p) => p.id === selectedId) ?? payees[0];
   const numericAmount = Number.parseFloat(amount.replace(',', '.'));
@@ -146,6 +193,20 @@ export function NimiqTipCard() {
           <Input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Name" className="h-10" />
           <Input value={newNim} onChange={(e) => setNewNim(e.target.value)} placeholder="NIM address (NQ…)" className="h-10 font-mono text-xs" />
           <Input value={newUsdt} onChange={(e) => setNewUsdt(e.target.value)} placeholder="USDT address (0x… on Polygon)" className="h-10 font-mono text-xs" />
+
+          {scanning ? (
+            <div className="space-y-2">
+              <div id={SCANNER_ID} className="w-full rounded-xl overflow-hidden border border-border/40" />
+              <Button variant="outline" onClick={cancelScan} className="w-full h-10 rounded-xl">
+                <X className="w-4 h-4 mr-2" /> Cancel scan
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" onClick={startScanner} className="w-full h-10 rounded-xl">
+              <ScanLine className="w-4 h-4 mr-2" /> Scan their QR
+            </Button>
+          )}
+
           <Button onClick={handleAddPayee} className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
             Save payee
           </Button>
