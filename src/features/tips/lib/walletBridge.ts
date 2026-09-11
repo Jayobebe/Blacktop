@@ -135,14 +135,6 @@ export type PayCurrency = 'NIM' | 'USDT';
 const NIMIQ_PAY_IOS_STORE = 'https://apps.apple.com/app/nimiq-pay/id6471844738';
 const NIMIQ_PAY_ANDROID_STORE = 'https://play.google.com/store/apps/details?id=com.nimiq.pay';
 
-function paymentMiniAppUrl(currency: PayCurrency, address: string, amount: number): string {
-  const url = new URL(window.location.href);
-  url.searchParams.set('blacktopPayCurrency', currency);
-  url.searchParams.set('blacktopPayAddress', address);
-  url.searchParams.set('blacktopPayAmount', String(amount));
-  return url.toString();
-}
-
 /**
  * Opens a payment outside the mini app using the standard wallet URI schemes,
  * which Nimiq Pay and other wallets register with the OS:
@@ -154,17 +146,17 @@ export function openNimiqPayPayment(
   currency: PayCurrency,
   address: string,
   amount: number,
-  _uri?: string | null
+  uri?: string | null
 ): void {
   if (typeof window === 'undefined') return;
 
-  const miniAppUrl = paymentMiniAppUrl(currency, address, amount);
-  const deepLink = nimiqPayMiniAppLink(miniAppUrl);
+  const paymentUri = uri ?? (currency === 'NIM'
+    ? `nimiq:${address.replace(/\s/g, '')}?amount=${amount}`
+    : null);
+  if (!paymentUri) return;
+
   const isAndroid = /Android/i.test(navigator.userAgent);
   const fallback = isAndroid ? NIMIQ_PAY_ANDROID_STORE : NIMIQ_PAY_IOS_STORE;
-  const primary = isAndroid
-    ? `intent://miniapp?url=${encodeURIComponent(miniAppUrl)}#Intent;scheme=nimiqpay;package=com.nimiq.pay;S.browser_fallback_url=${encodeURIComponent(fallback)};end`
-    : deepLink;
 
   let launched = false;
   const clear = () => {
@@ -177,11 +169,10 @@ export function openNimiqPayPayment(
   };
   document.addEventListener('visibilitychange', onHidden);
 
-  // Nimiq Pay's documented mini-app scheme opens Blacktop inside the wallet.
-  // The payment details travel in Blacktop's URL and are handled by the injected
-  // NIM/EVM provider after the mini app loads.
+  // Hand the actual NIM or EIP-681 Polygon request to the OS. Do not launch
+  // Blacktop as a mini app: the wallet must receive the transaction URI itself.
   const link = document.createElement('a');
-  link.href = primary;
+  link.href = paymentUri;
   link.rel = 'noopener';
   link.style.display = 'none';
   document.body.appendChild(link);
