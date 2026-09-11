@@ -11,7 +11,7 @@ import {
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
   Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
   CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer,
-  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic, Wallet
+  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic, Wallet, Fuel
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
