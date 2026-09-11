@@ -54,6 +54,8 @@ export function NimiqTipCard() {
   const [currency, setCurrency] = useState<TipCurrency>('USDT');
   const [amount, setAmount] = useState('5');
   const [payError, setPayError] = useState('');
+  const [paying, setPaying] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState<{ nim?: string; usdt?: string } | null>(null);
