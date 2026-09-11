@@ -9,7 +9,7 @@ export const DEVELOPER_PAYEE: Payee = {
   id: 'developer',
   label: 'Blacktop developer',
   nimAddress: 'NQ73 3KC3 MGUD 6F04 MV5E AXF1 SL7F ACRS AM91',
-  usdtAddress: '',
+  usdtAddress: '0xc1A5e093C8cC74740b6725aBbaaeb635AEB4B782',
   builtIn: true,
 };
 
