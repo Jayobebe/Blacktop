@@ -1720,47 +1720,47 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       {/* Map type / radio / card-drop toolbar — horizontal strip below the
           search bar, left of the MapLibre top-right controls so it never
           clips them or the exit button in landscape. */}
-      <div className="absolute top-[calc(7rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] z-20 flex flex-row flex-wrap items-start gap-2">
-        <div className="flex flex-row flex-wrap items-center max-w-[calc(100vw-5rem)] rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+      <div className="absolute top-[calc(7rem+env(safe-area-inset-top))] landscape:top-[calc(5rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] z-20 flex flex-row flex-wrap landscape:flex-nowrap items-start gap-2">
+        <div className="flex flex-row flex-wrap landscape:flex-nowrap items-center max-w-[calc(100vw-5rem)] landscape:max-w-none rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
           <button
             type="button"
             onClick={() => setBasemap("dark")}
             aria-pressed={basemap === "dark"}
             aria-label="Dark map"
             className={cn(
-              "w-9 h-9 flex items-center justify-center transition-colors",
+              "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "dark" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
-            <MapIcon className="w-4 h-4" />
+            <MapIcon className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
           </button>
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 landscape:h-5 bg-border" />
           <button
             type="button"
             onClick={() => setBasemap("satellite")}
             aria-pressed={basemap === "satellite"}
             aria-label="Satellite view"
             className={cn(
-              "w-9 h-9 flex items-center justify-center transition-colors",
+              "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "satellite" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
-            <Satellite className="w-4 h-4" />
+            <Satellite className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
           </button>
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 landscape:h-5 bg-border" />
           <button
             type="button"
             onClick={() => setThreeD((v) => !v)}
             aria-pressed={threeD}
             aria-label="3D terrain and buildings"
             className={cn(
-              "w-9 h-9 flex items-center justify-center transition-colors",
+              "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               threeD ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
-            <Box className="w-4 h-4" />
+            <Box className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
           </button>
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 landscape:h-5 bg-border" />
           <button
             type="button"
             onClick={() => {
