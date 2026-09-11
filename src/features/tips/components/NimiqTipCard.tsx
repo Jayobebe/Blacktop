@@ -272,42 +272,55 @@ export function NimiqTipCard() {
             </div>
           )}
 
-          {/* Currency + amount */}
-          <div className="flex gap-2 mt-3">
-            <div className="flex rounded-xl border border-border/40 overflow-hidden">
-              {CURRENCIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setCurrency(c)}
-                  className={cn(
-                    'px-3 h-11 text-xs font-semibold touch-target transition-colors',
-                    currency === c ? 'bg-accent text-accent-foreground' : 'bg-card/60 text-muted-foreground'
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
+          {/* Currency */}
+          <div className="grid grid-cols-2 gap-0 mt-3 rounded-xl border border-border/40 overflow-hidden">
+            {CURRENCIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCurrency(c)}
+                className={cn(
+                  'h-11 text-xs font-semibold touch-target transition-colors',
+                  currency === c ? 'bg-accent text-accent-foreground' : 'bg-card/60 text-muted-foreground'
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {inMiniApp && (
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ''))}
               inputMode="decimal"
-              placeholder="Amount"
-              aria-label="Tip amount"
-              className="flex-1 h-11 rounded-xl text-center font-semibold"
+              placeholder={`Amount in ${currency}`}
+              aria-label="Payment amount"
+              className="w-full h-11 mt-2 rounded-xl text-center font-semibold"
             />
-          </div>
+          )}
 
           <Button
-            onClick={handlePay}
+            onClick={() => void handlePay()}
+            disabled={paying}
             className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
           >
             <Heart className="w-4 h-4 mr-2" />
-            Open in Nimiq Pay
+            {paying ? 'Confirm in your wallet…' : inMiniApp ? `Pay ${currency}` : 'Open in Nimiq Pay'}
           </Button>
 
           {payError && (
             <p role="alert" className="text-[10px] text-destructive text-center mt-2">{payError}</p>
+          )}
+
+          {txHash && (
+            <p className="text-[10px] text-center mt-2 text-muted-foreground break-all">
+              Payment sent.{' '}
+              {currency === 'USDT' ? (
+                <a href={polygonscanTxUrl(txHash)} target="_blank" rel="noopener noreferrer" className="text-accent underline">
+                  View receipt
+                </a>
+              ) : null}
+            </p>
           )}
 
           {!supported && selected && (
@@ -318,8 +331,8 @@ export function NimiqTipCard() {
 
           {sendUri && (
             <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 flex flex-col items-center gap-3">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                Scan the QR, or copy the address and paste it into Nimiq Pay
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold text-center">
+                Scan the QR, or copy the address and set the amount in Nimiq Pay
               </p>
               <div className="bg-white p-2 rounded-lg">
                 <QRCodeSVG value={sendUri} size={160} />
