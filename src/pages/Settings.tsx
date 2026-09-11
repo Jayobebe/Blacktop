@@ -35,6 +35,7 @@ import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
+import { NimiqTipCard } from '@/features/tips';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
