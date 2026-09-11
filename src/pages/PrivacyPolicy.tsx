@@ -236,8 +236,27 @@ export default function PrivacyPolicy() {
             <li><span className="text-foreground">Lovable Cloud</span> — hosts the realtime convoy backend</li>
             <li><span className="text-foreground">OpenStreetMap / Nominatim / Overpass</span> — used for location search</li>
             <li><span className="text-foreground">Discord</span> — only if you opt in by adding a webhook in your account</li>
-            <li><span className="text-foreground">Nimiq Pay</span> — only if you send a tip; payments happen in your own wallet and we never see your keys</li>
+            <li><span className="text-foreground">Nimiq Pay</span> — only if you use Pay Up or Blacktank; payments happen in your own wallet and we never see your keys</li>
           </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Payments — Pay Up &amp; Blacktank</h2>
+          <p className="text-muted-foreground">
+            <span className="text-foreground">Pay Up</span> lets you show your own
+            wallet QR or scan someone else's to send NIM or Polygon USDT. Your
+            wallet address is stored only on your device, and all transactions
+            are handled by your own Nimiq Pay wallet — we never see, hold or
+            route your funds or keys.
+          </p>
+          <p className="text-muted-foreground">
+            <span className="text-foreground">Blacktank</span> is a crew's shared
+            fuel-pot ledger: pledges, withdrawal requests and votes are stored
+            on our backend under your crew code so crew members can see and
+            approve them. It is a pledge record only — no money is ever pooled
+            or held by the app, and approved payouts are settled directly
+            wallet-to-wallet via Nimiq Pay.
+          </p>
         </section>
 
         <section className="space-y-2">
