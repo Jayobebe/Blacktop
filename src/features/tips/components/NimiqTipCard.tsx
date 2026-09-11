@@ -24,6 +24,7 @@ import {
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
+import { getEvmProvider, nimiqWalletLink, polygonscanTxUrl, sendUsdtViaWallet } from '../lib/walletBridge';
 
 const SCANNER_ID = 'payee-qr-scanner';
 
