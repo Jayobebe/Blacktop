@@ -23,3 +23,6 @@ verify_jwt = true
 # Bearer token, just to pass this platform gate — the real access control is the
 # function's own X-Dashboard-Key check, since an anon key alone is public-by-design.
 verify_jwt = true
+
+[functions.card-photo]
+verify_jwt = true
