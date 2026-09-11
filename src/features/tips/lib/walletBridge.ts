@@ -124,6 +124,54 @@ export function nimiqWalletLink(address: string, amount: number): string {
   return `https://wallet.nimiq.com/nimiq:${compact}?amount=${amount}`;
 }
 
+/** Deep link that opens the Nimiq Pay app and loads the given URL as a mini app. */
+export function nimiqPayMiniAppLink(returnUrl?: string): string {
+  const url = returnUrl ?? (typeof window !== 'undefined' ? window.location.href : '');
+  return `nimiqpay://miniapp?url=${encodeURIComponent(url)}`;
+}
+
+/** Web-facing universal link equivalent of {@link nimiqPayMiniAppLink}. */
+export function nimiqPayUniversalLink(returnUrl?: string): string {
+  const url = returnUrl ?? (typeof window !== 'undefined' ? window.location.href : '');
+  return `https://nimpay.app/miniapps/open/${encodeURIComponent(url)}`;
+}
+
+/**
+ * Opens the Nimiq Pay app if installed. Falls back to the Nimiq Pay landing page
+ * if the custom scheme cannot be handled (desktop or app not installed).
+ */
+export function openNimiqPayApp(returnUrl?: string): void {
+  if (typeof window === 'undefined') return;
+
+  const scheme = nimiqPayMiniAppLink(returnUrl);
+  const fallback = nimiqPayUniversalLink(returnUrl);
+  const landing = 'https://nimpay.app/';
+
+  let launched = false;
+  const clear = () => {
+    launched = true;
+  };
+
+  window.addEventListener('blur', clear, { once: true });
+  window.addEventListener('pagehide', clear, { once: true });
+
+  // Try the custom scheme first. On mobile this hands off to the OS.
+  window.location.href = scheme;
+
+  // If the app opened, the page is paused and this timeout is cancelled on return.
+  // If not, fall back to the universal link, then the landing page.
+  window.setTimeout(() => {
+    if (launched) return;
+    window.removeEventListener('blur', clear);
+    window.removeEventListener('pagehide', clear);
+    window.location.href = fallback;
+
+    window.setTimeout(() => {
+      if (!launched) window.location.href = landing;
+    }, 2500);
+  }, 1500);
+}
+
 export function polygonscanTxUrl(hash: string): string {
   return `https://polygonscan.com/tx/${hash}`;
 }
