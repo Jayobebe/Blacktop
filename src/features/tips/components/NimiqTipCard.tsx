@@ -282,8 +282,18 @@ export function NimiqTipCard() {
       {showQr && uri && (
         <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 flex flex-col items-center gap-3">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Scan with Nimiq Pay
+            {txHash ? 'Payment sent' : 'Scan with Nimiq Pay'}
           </p>
+          {txHash && (
+            <a
+              href={polygonscanTxUrl(txHash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-accent underline break-all text-center"
+            >
+              View on Polygonscan
+            </a>
+          )}
           <div className="bg-white p-2 rounded-lg">
             <QRCodeSVG value={uri} size={160} />
           </div>
