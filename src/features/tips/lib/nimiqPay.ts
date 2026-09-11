@@ -84,8 +84,8 @@ export function parsePayeeQr(raw: string): { nim?: string; usdt?: string } | nul
     return isValidNimAddress(nim) ? { nim } : null;
   }
 
-  // EIP-681: ethereum:<contract>@<chain>/transfer?address=0x... or plain ethereum:0x...
-  const ethMatch = text.match(/^ethereum:(?:[^?]*[?&]address=)?(0x[a-fA-F0-9]{40})/i);
+  // EIP-681: ethereum:/polygon:<contract>@<chain>/transfer?address=0x... or plain 0x...
+  const ethMatch = text.match(/^(?:ethereum|polygon):(?:[^?]*[?&]address=)?(0x[a-fA-F0-9]{40})/i);
   if (ethMatch) return { usdt: ethMatch[1] };
 
   // Raw addresses
