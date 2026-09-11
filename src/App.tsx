@@ -66,6 +66,7 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
+        <Route path="/pay" element={<Pay />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Onboarding />} />
@@ -82,6 +83,7 @@ function AppRoutes() {
       <Route path="/solo-lobby" element={<SoloLobby />} />
       <Route path="/ride" element={<ActiveRide />} />
       <Route path="/demo" element={<DemoShowcase />} />
+      <Route path="/pay" element={<Pay />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
       
