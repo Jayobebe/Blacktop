@@ -51,7 +51,7 @@ export default function Settings() {
   const [burning, setBurning] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
-  const [isTipping, setIsTipping] = useState(false);
+  
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'applying'>('idle');
   const { enabled: demoEnabled } = useDemoMode();
@@ -165,21 +165,6 @@ export default function Settings() {
     { id: 'blacktop', label: 'Blacktop Maps' },
   ];
 
-  const handleTip = async (amount: 5 | 10 | 20 = 5) => {
-    setIsTipping(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-tip', { body: { amount } });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error('Error creating tip session:', error);
-      toast.error('Failed to open tip jar. Please try again.');
-    } finally {
-      setIsTipping(false);
-    }
-  };
 
   const [burnOrigin, setBurnOrigin] = useState<{ x: number; y: number } | null>(null);
   // Belt-and-suspenders against a same-tick double-fire (e.g. a script
