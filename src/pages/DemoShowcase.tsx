@@ -246,11 +246,12 @@ export default function DemoShowcase() {
       id: 'pay-up',
       title: 'Pay Up',
       subtitle: 'Support The Developer Or Send Fuel Money',
-      description: 'No ads, no subscription. Flip between Receive to show your own wallet QR and Send to scan someone else’s, then hand off to Nimiq Pay. Everything stays local — no backend wallet or accounts.',
+      description: 'No ads, no subscription. Chip into Blacktank, your crew’s shared fuel pot, or flip between Receive to show your own wallet QR and Send to scan someone else’s, then hand off to Nimiq Pay. Everything stays local — no backend wallet or accounts.',
       icon: Heart,
       color: 'accent',
       mockup: <PayUpMockup />,
       cards: [
+        { icon: Fuel, label: 'Blacktank', text: 'Your crew’s shared fuel pot — chip in NIM or USDT, and every withdrawal needs a unanimous crew vote.' },
         { icon: QrCode, label: 'Your Own QR', text: 'Save your wallet once and show your code with the address underneath.' },
         { icon: Users, label: 'Send Or Receive', text: 'One toggle swaps between your code and the scanner for theirs.' },
         { icon: Wallet, label: 'NIM Or USDT', text: 'Pay with Nimiq or Polygon USDT — Nimiq Pay handles the transaction.' },
@@ -1662,7 +1663,25 @@ function PayUpMockup() {
 
   return (
     <div className="w-full max-w-xs space-y-3">
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 animate-slide-up">
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 animate-slide-up">
+        <div className="flex items-center gap-2 mb-2">
+          <Fuel className="w-4 h-4 text-accent" />
+          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktank</p>
+          <span className="ml-auto text-[10px] font-semibold text-foreground">4 riders · 12.5 USDT</span>
+        </div>
+        <p className="text-xs text-muted-foreground mb-2">
+          Your crew’s shared fuel pot. Withdrawals need a unanimous crew vote.
+        </p>
+        <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+          <div className="h-full bg-accent animate-pulse" style={{ width: '62%' }} />
+        </div>
+        <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
+          <span>Chip in</span>
+          <span>Request withdrawal · 4/4 votes to release</span>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 animate-slide-up delay-100">
         <div className="flex items-center gap-2 mb-3">
           <Heart className="w-4 h-4 text-accent" />
           <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
