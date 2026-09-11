@@ -16,7 +16,6 @@ import { usePayees } from '../hooks/usePayees';
 import type { Payee, TipCurrency } from '../types';
 import {
   buildPaymentUri,
-  formatAmount,
   isValidNimAddress,
   isValidUsdtAddress,
   normalizeNimAddress,
