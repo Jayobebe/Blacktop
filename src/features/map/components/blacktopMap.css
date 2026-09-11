@@ -26,6 +26,9 @@
 /* Ensure zoom (+/-) and compass controls are always tappable above overlay UI. */
 .blacktop-maplibre .maplibregl-ctrl-top-right {
   z-index: 20;
+  /* Push below the iPhone notch / status bar and inward from the side notch in landscape. */
+  top: calc(10px + env(safe-area-inset-top));
+  right: calc(10px + env(safe-area-inset-right));
 }
 
 .blacktop-maplibre .maplibregl-ctrl-bottom-right {
