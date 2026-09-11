@@ -70,30 +70,56 @@ export function NimiqTipCard() {
   const selected: Payee = payees.find((p) => p.id === selectedId) ?? payees[0];
   const numericAmount = Number.parseFloat(amount.replace(',', '.'));
   const supported = selected ? payeeSupports(selected, currency) : false;
-  const sendUri = useMemo(
-    () => (selected ? buildPaymentUri(selected, currency, numericAmount) : null),
-    [selected, currency, numericAmount]
-  );
+  const address = selected ? payeeAddress(selected, currency) : '';
+  /** Inside Nimiq Pay we can send directly, so an amount is asked for there. */
+  const inMiniApp = useMemo(() => isNimiqPayHost(), []);
+  const sendUri = useMemo(() => {
+    if (!selected || !supported || !address) return null;
+    return inMiniApp && numericAmount > 0
+      ? buildPaymentUri(selected, currency, numericAmount)
+      : addressUri(currency, address);
+  }, [selected, supported, address, currency, inMiniApp, numericAmount]);
 
   const myAddress = myCurrency === 'NIM' ? wallet.nimAddress ?? '' : wallet.usdtAddress ?? '';
   const myUri = myAddress ? addressUri(myCurrency, myAddress) : null;
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setPayError('');
-    const address = selected ? payeeAddress(selected, currency) : '';
     if (!selected || !address || !supported) {
       setPayError(`Choose a payee with a ${currency} address.`);
       return;
     }
-    if (!(numericAmount > 0)) {
-      setPayError('Enter an amount greater than zero.');
+
+    if (inMiniApp) {
+      if (!(numericAmount > 0)) {
+        setPayError('Enter an amount greater than zero.');
+        return;
+      }
+      setPaying(true);
+      try {
+        const result = currency === 'NIM'
+          ? await sendNimViaMiniApp(address, numericAmount)
+          : await sendUsdtViaWallet(address, numericAmount);
+        setTxHash(result);
+        toast.success('Payment sent');
+      } catch (err) {
+        const message = (err as { message?: string })?.message ?? '';
+        setPayError(
+          /reject|denied|cancel/i.test(message)
+            ? 'Payment cancelled.'
+            : 'Nimiq Pay could not send that payment.'
+        );
+      } finally {
+        setPaying(false);
+      }
       return;
     }
+
     // Copy the address so it's ready to paste, then open Nimiq Pay's home screen.
     void handleCopy(address, setCopied);
     openNimiqPayHome();
     toast.info('Opening Nimiq Pay…', {
-      description: 'Address copied — paste it into Nimiq Pay to send, or scan the QR code below.',
+      description: 'Address copied — paste it into Nimiq Pay and choose your amount, or scan the QR code.',
     });
   };
 
