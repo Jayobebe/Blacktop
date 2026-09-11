@@ -93,10 +93,32 @@ export function NimiqTipCard() {
   );
   const supported = selected ? payeeSupports(selected, currency) : false;
 
-  const handlePay = () => {
-    if (!uri) return;
+  const handlePay = async () => {
+    if (!uri || !selected) return;
+    const address = payeeAddress(selected, currency);
     setShowQr(true);
-    window.open(uri, '_blank');
+
+    if (currency === 'USDT' && getEvmProvider()) {
+      setPaying(true);
+      try {
+        const hash = await sendUsdtViaWallet(address, numericAmount);
+        setTxHash(hash);
+        toast.success('Payment sent', { description: 'Confirming on Polygon…' });
+      } catch (err) {
+        const message = (err as { message?: string })?.message ?? '';
+        if (message === 'NO_ACCOUNT') toast.error('No wallet account available.');
+        else if (/reject|denied/i.test(message)) toast.info('Payment cancelled.');
+        else toast.error('Wallet could not send that payment', { description: 'Scan the QR code below instead.' });
+      } finally {
+        setPaying(false);
+      }
+      return;
+    }
+
+    // No injected wallet: hand off to the wallet app, keep the QR as a fallback.
+    const link = currency === 'NIM' ? nimiqWalletLink(address, numericAmount) : uri;
+    const opened = window.open(link, '_blank', 'noopener,noreferrer');
+    if (!opened) window.location.href = link;
   };
 
   const handleCopy = async () => {
