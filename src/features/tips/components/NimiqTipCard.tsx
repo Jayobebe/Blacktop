@@ -27,7 +27,13 @@ import {
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
-import { openNimiqPayHome } from '../lib/walletBridge';
+import {
+  openNimiqPayHome,
+  isNimiqPayHost,
+  sendNimViaMiniApp,
+  sendUsdtViaWallet,
+  polygonscanTxUrl,
+} from '../lib/walletBridge';
 
 const CURRENCIES: TipCurrency[] = ['USDT', 'NIM'];
 
