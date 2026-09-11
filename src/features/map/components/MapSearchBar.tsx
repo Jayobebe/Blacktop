@@ -230,7 +230,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const hasDisplayContent = hasIdleContent || hasSearchContent;
 
   return (
-    <div ref={containerRef} className="absolute top-3 left-3 right-3 z-30 space-y-2">
+    <div ref={containerRef} className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-3 right-3 z-30 space-y-2">
       <div className="flex gap-2 pr-12">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
