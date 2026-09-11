@@ -27,7 +27,7 @@ import {
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
-import { nimToLuna, openNimiqPayCheckout } from '../lib/walletBridge';
+import { openNimiqPayHome } from '../lib/walletBridge';
 
 const CURRENCIES: TipCurrency[] = ['USDT', 'NIM'];
 
@@ -83,8 +83,12 @@ export function NimiqTipCard() {
       setPayError('Enter an amount greater than zero.');
       return;
     }
-    openNimiqPayCheckout(currency, address, currency === 'NIM' ? nimToLuna(numericAmount) : numericAmount);
-    toast.info('Opening Nimiq Pay…', { description: 'Complete the payment there, or scan the QR code below.' });
+    // Copy the address so it's ready to paste, then open Nimiq Pay's home screen.
+    void handleCopy(address, setCopied);
+    openNimiqPayHome();
+    toast.info('Opening Nimiq Pay…', {
+      description: 'Address copied — paste it into Nimiq Pay to send, or scan the QR code below.',
+    });
   };
 
   const handleCopy = async (value: string, setter: (v: boolean) => void) => {
@@ -281,7 +285,7 @@ export function NimiqTipCard() {
           {sendUri && (
             <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 flex flex-col items-center gap-3">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                No Nimiq Pay? Scan from another device
+                Scan the QR, or copy the address and paste it into Nimiq Pay
               </p>
               <div className="bg-white p-2 rounded-lg">
                 <QRCodeSVG value={sendUri} size={160} />
