@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Fuel, MapPin, X, Check, ThumbsDown, Loader2, Wallet } from 'lucide-react';
+import { Fuel, X, Check, ThumbsDown, Loader2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,13 +52,7 @@ function timeLeft(iso: string): string {
  * unanimously approve any withdrawal, and once approved every other member pays
  * their share straight to the requester through Nimiq Pay.
  */
-export function BlacktankPanel({
-  userLocation,
-  onClose,
-}: {
-  userLocation?: { lat: number; lng: number } | null;
-  onClose?: () => void;
-}) {
+export function BlacktankPanel({ onClose }: { onClose?: () => void }) {
   const tank = useBlacktank();
   const { wallet } = useMyWallet();
 
@@ -377,23 +371,6 @@ export function BlacktankPanel({
         </div>
       )}
 
-      {/* Landmark */}
-      {userLocation && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() =>
-            tank.setPlace.mutate(
-              { lat: userLocation.lat, lng: userLocation.lng },
-              { onSuccess: () => toast.success('Blacktank pinned here') },
-            )
-          }
-        >
-          <MapPin className="w-4 h-4 mr-1" />
-          {tank.place ? 'Move the tank here' : 'Pin the tank here'}
-        </Button>
-      )}
     </div>
   );
 }

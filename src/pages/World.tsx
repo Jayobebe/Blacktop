@@ -28,7 +28,7 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
   { id: 'challenge', lat: -15.8, lng: -47.9, label: 'Crew Challenge', kind: 'challenge', route: '/crew/challenges' },
   { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
-  { id: 'blacktank', lat: 30.04, lng: 31.24, label: 'Blacktank', kind: 'tank' },
+  { id: 'blacktank', lat: 28.6, lng: 77.2, label: 'Blacktank', kind: 'tank' },
 
 ];
 
@@ -42,7 +42,6 @@ export default function World() {
   const [globeScale, setGlobeScale] = useState(1);
   const [showCrewQr, setShowCrewQr] = useState(false);
   const [showBlacktank, setShowBlacktank] = useState(false);
-  const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
 
   const crew = useCrew();
   const { settings } = useSettings();
@@ -123,12 +122,6 @@ export default function World() {
       return;
     }
     if (id === 'blacktank') {
-      // Grab a rough position so the crew can pin the tank where they meet.
-      navigator.geolocation?.getCurrentPosition(
-        (p) => setMyPos({ lat: p.coords.latitude, lng: p.coords.longitude }),
-        () => setMyPos(null),
-        { timeout: 8000 },
-      );
       setShowBlacktank(true);
       return;
     }
@@ -294,7 +287,7 @@ export default function World() {
       {showBlacktank && createPortal(
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6">
           <div className="w-full sm:max-w-md max-h-[88dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border/40 bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <BlacktankPanel userLocation={myPos} onClose={() => setShowBlacktank(false)} />
+            <BlacktankPanel onClose={() => setShowBlacktank(false)} />
           </div>
         </div>,
         document.body,
