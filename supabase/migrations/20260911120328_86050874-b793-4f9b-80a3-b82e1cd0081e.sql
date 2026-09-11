@@ -1,0 +1,23 @@
+REVOKE EXECUTE ON FUNCTION public.is_blacktank_member(text, uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_join(text, text, text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_pledge(text, text, numeric, text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_sweep(text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_request(text, text, numeric, text, text, integer) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_vote(uuid, boolean) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_cancel_request(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_settle(uuid, numeric, text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_summary(text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_list_requests(text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.blacktank_list_pledges(text) FROM anon, public;
+
+GRANT EXECUTE ON FUNCTION public.is_blacktank_member(text, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_join(text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_pledge(text, text, numeric, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_request(text, text, numeric, text, text, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_vote(uuid, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_cancel_request(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_settle(uuid, numeric, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_summary(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_list_requests(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_list_pledges(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.blacktank_sweep(text) TO authenticated;

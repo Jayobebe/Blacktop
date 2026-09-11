@@ -14,6 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
+      blacktank_members: {
+        Row: {
+          crew_code: string
+          display_name: string
+          id: string
+          joined_at: string
+          nim_address: string | null
+          updated_at: string
+          usdt_address: string | null
+          user_id: string
+        }
+        Insert: {
+          crew_code: string
+          display_name?: string
+          id?: string
+          joined_at?: string
+          nim_address?: string | null
+          updated_at?: string
+          usdt_address?: string | null
+          user_id: string
+        }
+        Update: {
+          crew_code?: string
+          display_name?: string
+          id?: string
+          joined_at?: string
+          nim_address?: string | null
+          updated_at?: string
+          usdt_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      blacktank_places: {
+        Row: {
+          crew_code: string
+          label: string
+          lat: number
+          lng: number
+          set_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          crew_code: string
+          label?: string
+          lat: number
+          lng: number
+          set_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          crew_code?: string
+          label?: string
+          lat?: number
+          lng?: number
+          set_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blacktank_pledges: {
+        Row: {
+          amount: number
+          created_at: string
+          crew_code: string
+          currency: string
+          display_name: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          crew_code: string
+          currency: string
+          display_name?: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          crew_code?: string
+          currency?: string
+          display_name?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      blacktank_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          crew_code: string
+          currency: string
+          expires_at: string
+          id: string
+          payout_address: string
+          reason: string
+          requester_id: string
+          requester_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          crew_code: string
+          currency: string
+          expires_at: string
+          id?: string
+          payout_address: string
+          reason: string
+          requester_id: string
+          requester_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          crew_code?: string
+          currency?: string
+          expires_at?: string
+          id?: string
+          payout_address?: string
+          reason?: string
+          requester_id?: string
+          requester_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blacktank_settlements: {
+        Row: {
+          amount: number
+          created_at: string
+          crew_code: string
+          currency: string
+          id: string
+          payer_id: string
+          payer_name: string
+          request_id: string
+          tx_ref: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          crew_code: string
+          currency: string
+          id?: string
+          payer_id: string
+          payer_name?: string
+          request_id: string
+          tx_ref?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          crew_code?: string
+          currency?: string
+          id?: string
+          payer_id?: string
+          payer_name?: string
+          request_id?: string
+          tx_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blacktank_settlements_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "blacktank_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blacktank_votes: {
+        Row: {
+          approve: boolean
+          created_at: string
+          id: string
+          request_id: string
+          voter_id: string
+          voter_name: string
+        }
+        Insert: {
+          approve: boolean
+          created_at?: string
+          id?: string
+          request_id: string
+          voter_id: string
+          voter_name?: string
+        }
+        Update: {
+          approve?: boolean
+          created_at?: string
+          id?: string
+          request_id?: string
+          voter_id?: string
+          voter_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blacktank_votes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "blacktank_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_challenge_attempts: {
         Row: {
           challenger_id: string
@@ -694,6 +911,106 @@ export type Database = {
           owner_name: string
         }[]
       }
+      blacktank_cancel_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
+      blacktank_get_place: {
+        Args: { _crew_code: string }
+        Returns: {
+          label: string
+          lat: number
+          lng: number
+        }[]
+      }
+      blacktank_join: {
+        Args: {
+          _crew_code: string
+          _nim_address?: string
+          _usdt_address?: string
+        }
+        Returns: undefined
+      }
+      blacktank_list_pledges: {
+        Args: { _crew_code: string }
+        Returns: {
+          currency: string
+          display_name: string
+          last_at: string
+          total: number
+        }[]
+      }
+      blacktank_list_requests: {
+        Args: { _crew_code: string }
+        Returns: {
+          amount: number
+          created_at: string
+          currency: string
+          expires_at: string
+          id: string
+          is_mine: boolean
+          my_settled: boolean
+          my_share: number
+          my_vote: boolean
+          no_votes: number
+          payout_address: string
+          reason: string
+          requester_id: string
+          requester_name: string
+          status: string
+          votes_needed: number
+          yes_votes: number
+        }[]
+      }
+      blacktank_pledge: {
+        Args: {
+          _amount: number
+          _crew_code: string
+          _currency: string
+          _note?: string
+        }
+        Returns: string
+      }
+      blacktank_request: {
+        Args: {
+          _amount: number
+          _crew_code: string
+          _currency: string
+          _expires_minutes?: number
+          _payout_address: string
+          _reason: string
+        }
+        Returns: string
+      }
+      blacktank_set_place: {
+        Args: {
+          _crew_code: string
+          _label?: string
+          _lat: number
+          _lng: number
+        }
+        Returns: undefined
+      }
+      blacktank_settle: {
+        Args: { _amount: number; _request_id: string; _tx_ref?: string }
+        Returns: undefined
+      }
+      blacktank_summary: {
+        Args: { _crew_code: string }
+        Returns: {
+          balance: number
+          currency: string
+          member_count: number
+          my_pledged: number
+          paid_out: number
+          pledged: number
+        }[]
+      }
+      blacktank_sweep: { Args: { _crew_code: string }; Returns: undefined }
+      blacktank_vote: {
+        Args: { _approve: boolean; _request_id: string }
+        Returns: string
+      }
       check_rate_limit: {
         Args: {
           _bucket: string
@@ -748,6 +1065,10 @@ export type Database = {
           lat: number
           lng: number
         }[]
+      }
+      is_blacktank_member: {
+        Args: { _crew_code: string; _user_id: string }
+        Returns: boolean
       }
       is_convoy_member: {
         Args: { _convoy_id: string; _user_id: string }

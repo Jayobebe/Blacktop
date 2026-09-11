@@ -60,8 +60,10 @@ import {
   Download,
   IdCard,
   Check,
+  Fuel,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BlacktankPanel, useBlacktankPlace } from "@/features/blacktank";
 import { useWaypoints } from "@/features/waypoints";
 import { useRescueBridge } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
@@ -282,6 +284,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [showLoopPlanner, setShowLoopPlanner] = useState(false);
   const [showOfflinePacks, setShowOfflinePacks] = useState(false);
   const [addingWaypoint, setAddingWaypoint] = useState(false);
+  const [showBlacktank, setShowBlacktank] = useState(false);
+  const { data: blacktankPlace } = useBlacktankPlace();
+  const blacktankMarkerRef = useRef<maplibregl.Marker | null>(null);
   const rescue = useRescueBridge();
   const [rescueRoute, setRescueRoute] = useState<RouteResult | null>(null);
   const rescueMarkerRef = useRef<Marker | null>(null);
@@ -1045,6 +1050,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     });
   }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
 
+  // ── Blacktank landmark — the crew's shared fuel pot, pinned on the map ──
+  useEffect(() => {
+    if (!map) return;
+    blacktankMarkerRef.current?.remove();
+    blacktankMarkerRef.current = null;
+    if (!blacktankPlace) return;
+
+    const el = document.createElement("div");
+    el.style.cssText =
+      "width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:hsl(var(--card));border:2px solid hsl(var(--accent));box-shadow:0 4px 14px rgba(0,0,0,.45);";
+    el.title = blacktankPlace.label || "Blacktank";
+    el.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:hsl(var(--accent))"><line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>';
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setShowBlacktank(true);
+    });
+
+    blacktankMarkerRef.current = new maplibregl.Marker({ element: el })
+      .setLngLat([blacktankPlace.lng, blacktankPlace.lat])
+      .addTo(map);
+
+    return () => {
+      blacktankMarkerRef.current?.remove();
+      blacktankMarkerRef.current = null;
+    };
+  }, [map, blacktankPlace]);
+
+
   useEffect(() => {
     const markers = cardMarkersRef.current;
     return () => {
@@ -1785,6 +1819,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             <Download className="w-4 h-4" />
           </button>
           <div className="w-px h-6 bg-border" />
+          <button
+            type="button"
+            onClick={() => setShowBlacktank((v) => !v)}
+            aria-pressed={showBlacktank}
+            aria-label="Blacktank — crew fuel pot"
+            className={cn(
+              "w-9 h-9 flex items-center justify-center transition-colors",
+              showBlacktank ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
+            )}
+          >
+            <Fuel className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-border" />
           {/* Blacktop Radio — hidden unless enabled in Settings */}
           <RadioButton variant="map" />
           {canDropCard && (
@@ -2048,6 +2095,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       {showOfflinePacks && <OfflinePacksPanel map={map} onClose={() => setShowOfflinePacks(false)} />}
+
+      {/* Blacktank — crew fuel pot bottom sheet */}
+      {showBlacktank && (
+        <div className="absolute inset-x-0 bottom-0 z-40 max-h-[75dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-card/97 backdrop-blur p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl animate-slide-up">
+          <BlacktankPanel userLocation={userLocation} onClose={() => setShowBlacktank(false)} />
+        </div>
+      )}
 
       {showSearchBar && (
         <MapSearchBar
