@@ -131,5 +131,11 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addVariant }: { addVariant: (name: string, selector: string) => void }) {
+      addVariant("landscape", "@media (orientation: landscape) { &:not(.no-landscape *) }");
+      addVariant("landscape", "@media (orientation: landscape) { & }");
+    },
+  ],
 } satisfies Config;
