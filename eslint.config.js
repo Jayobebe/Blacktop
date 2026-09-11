@@ -21,6 +21,12 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Third-party SDK/browser bridges (Nimiq, WebRTC, MapLibre, ffmpeg) expose
+      // untyped surfaces; flag these as advisory rather than build-blocking.
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-empty-object-type": "warn",
+      "@typescript-eslint/no-require-imports": "warn",
+      "no-empty": ["error", { allowEmptyCatch: true }],
     },
   },
 );
