@@ -236,7 +236,7 @@ export default function PrivacyPolicy() {
             <li><span className="text-foreground">Lovable Cloud</span> — hosts the realtime convoy backend</li>
             <li><span className="text-foreground">OpenStreetMap / Nominatim / Overpass</span> — used for location search</li>
             <li><span className="text-foreground">Discord</span> — only if you opt in by adding a webhook in your account</li>
-            <li><span className="text-foreground">Stripe</span> — only if you tip; we never see your card details</li>
+            <li><span className="text-foreground">Nimiq Pay</span> — only if you send a tip; payments happen in your own wallet and we never see your keys</li>
           </ul>
         </section>
 

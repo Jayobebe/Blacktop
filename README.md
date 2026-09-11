@@ -87,3 +87,7 @@ npx cap open android
 ## Testing and limitations
 
 There is currently no automated test suite. GPS behavior, background execution, WebRTC voice, native permissions, Supabase Realtime, and external service integrations need device or integration testing. Local ride media can also consume significant browser or device storage over time.
+
+## License
+
+Released under the [MIT License](LICENSE).
