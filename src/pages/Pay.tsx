@@ -76,7 +76,12 @@ export default function Pay() {
     void run();
   }, [recipient, amount, currency]);
 
-  const displayAmount = currency === 'NIM' ? `${amount / 100_000} NIM` : `${amount} USDT`;
+  const displayAmount = !(amount > 0)
+    ? '—'
+    : currency === 'NIM'
+      ? `${amount / 100_000} NIM`
+      : `${amount} USDT`;
+
 
   return (
     <main className="min-h-[100dvh] bg-background flex flex-col items-center justify-center px-6 text-center gap-5">
