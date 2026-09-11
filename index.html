@@ -25,8 +25,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=VT323&display=swap" rel="stylesheet">
     
-    <title>Blacktop</title>
-    <meta name="description" content="Live GPS convoy tracking, voice chat, and crash rescue for motorcycle groups. No account required. Free." />
+    <title>Blacktop — GPS Convoy Tracking, Voice Chat & Rescue for Riders</title>
+    <meta name="description" content="Blacktop: live GPS convoy tracking, in-ride voice chat, crash rescue, maps, ride stats, garage, card drops, radio and Nimiq Pay. No account, free." />
+    <link rel="canonical" href="https://blacktoplive.com/" />
 
     <!-- Open Graph -->
     <meta property="og:title" content="Blacktop — GPS convoy riding, finally connected" />
@@ -38,9 +39,63 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Blacktop — GPS convoy riding, finally connected" />
     <meta name="twitter:description" content="Live GPS convoy tracking, voice chat, and crash rescue for motorcycle groups. No account required. Free." />
+
+    <!-- Structured data so search engines and AI assistants can discover the full feature set -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "Blacktop",
+      "url": "https://blacktoplive.com",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "iOS, Android, Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "description": "Privacy-first motorcycle group ride app: live GPS convoy tracking, in-ride voice chat, crash detection and rescue alerts, maps, ride stats, garage, card collecting, arcade games, local radio and Nimiq Pay crypto payments. No account required.",
+      "featureList": [
+        "Live GPS convoy tracking with background location",
+        "Group convoys up to 8 riders with lobby, chat and QR code invites",
+        "In-ride peer-to-peer voice chat (mute/disconnect, headset routing)",
+        "Solo ride mode with full logging",
+        "Ride stats: distance, time, average and top speed, lean angle, G-force",
+        "Crash detection and rescue alerts broadcast to convoy leader and Discord",
+        "Blacktop Map: search, waypoints, routes, speed cameras, weather radar, offline map packs",
+        "Blacktop World: rotating globe of live riders, crews, leaderboards and challenges",
+        "Trading card drops on the map: collect cards, challenges, kickbacks, card kings",
+        "Blacktank: shared crew fuel fund with pledge ledger and unanimous withdrawal votes",
+        "Pay Up: Nimiq Pay (NIM and USDT) QR payments, tipping and payees — runs as a Nimiq mini-app",
+        "Garage: bikes, maintenance reminders, photos, Mecha-Nick assistant",
+        "Ride history, summaries, 3D flyover recaps, corner scoring, badges",
+        "Local radio: your own audio files, GTA-style station wheel, media controls",
+        "Arcade games: Hit Heavy, Petrol Head, Derez Legacy lightcycles",
+        "Privacy-first: anonymous accounts, local data by default, burn button wipes everything"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="font-family: sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; color: #eee; background: #0a0a0a;">
+        <h1>Blacktop — GPS convoy riding, finally connected</h1>
+        <p>Blacktop is a free, privacy-first motorcycle group ride app. No account required — anonymous sign-in, data stays local, and a burn button wipes everything.</p>
+        <h2>Everything Blacktop does</h2>
+        <ul>
+          <li><strong>Convoys:</strong> live GPS tracking for groups up to 8 riders, with a lobby, text chat, QR-code invites and leadership transfer.</li>
+          <li><strong>Voice:</strong> in-ride peer-to-peer voice chat with mute/disconnect and headset routing.</li>
+          <li><strong>Solo rides:</strong> the same full logging and stats when riding alone.</li>
+          <li><strong>Ride stats:</strong> distance, time, average/top speed, lean angle and G-force, with history, summaries, 3D flyover recaps, corner scoring and badges.</li>
+          <li><strong>Rescue:</strong> automatic crash detection that pings your convoy leader (and optionally Discord) with your coordinates.</li>
+          <li><strong>Blacktop Map:</strong> place search, waypoints, routes, speed cameras, weather radar and offline map packs.</li>
+          <li><strong>Blacktop World:</strong> a globe of live riders, crews, leaderboards, weekly challenges — and Blacktank, a shared crew fuel fund with pledge ledger and unanimous withdrawal votes.</li>
+          <li><strong>Card drops:</strong> trading cards dropped on the map to collect, trade, challenge for and earn kickbacks from.</li>
+          <li><strong>Pay Up:</strong> tips and payments via Nimiq Pay (NIM and USDT), QR codes — also runs as a Nimiq mini-app.</li>
+          <li><strong>Garage:</strong> your bikes, maintenance reminders, photos and the Mecha-Nick assistant.</li>
+          <li><strong>Radio:</strong> play your own local audio files with a GTA-style station wheel and media controls.</li>
+          <li><strong>Arcade:</strong> Hit Heavy, Petrol Head and Derez Legacy lightcycle games.</li>
+        </ul>
+        <p>This app needs JavaScript — open <a href="https://blacktoplive.com">blacktoplive.com</a> in a modern browser or install it to your home screen.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
