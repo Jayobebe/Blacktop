@@ -35,7 +35,7 @@ export interface WorldLandmark {
   lng: number;
   label: string;
   /** Visual glyph drawn on the pin. */
-  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade' | 'challenge';
+  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade' | 'challenge' | 'tank';
 }
 
 interface Props {
@@ -86,7 +86,19 @@ function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], c
     ctx.beginPath();
     ctx.arc(2.4, -0.8, 0.9, 0, Math.PI * 2);
     ctx.fill();
+  } else if (kind === 'tank') {
+    // fuel pump: body + nozzle arm
+    ctx.beginPath();
+    ctx.rect(-4.6, -4.2, 5.6, 8.6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-3.6, -2.2); ctx.lineTo(-0.1, -2.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(1, 0.6); ctx.lineTo(3, 0.6); ctx.lineTo(3, -3); ctx.lineTo(1.6, -4.4);
+    ctx.stroke();
   } else if (kind === 'challenge') {
+
     // chequered flag on a pole
     ctx.beginPath();
     ctx.moveTo(-3.6, -4.5); ctx.lineTo(-3.6, 4.5);
