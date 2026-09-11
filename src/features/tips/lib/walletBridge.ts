@@ -148,6 +148,8 @@ export function openNimiqPayPayment(
   if (typeof window === 'undefined') return;
 
   const primary = uri ?? (currency === 'NIM' ? `nimiq:${address.replace(/\s+/g, '')}?amount=${amount}` : '');
+  if (!primary) return;
+
   const fallback = currency === 'NIM' ? nimiqWalletLink(address, amount) : 'https://nimpay.app/';
 
   let launched = false;
@@ -156,13 +158,26 @@ export function openNimiqPayPayment(
   };
   window.addEventListener('blur', clear, { once: true });
   window.addEventListener('pagehide', clear, { once: true });
+  const onHidden = () => {
+    if (document.visibilityState === 'hidden') launched = true;
+  };
+  document.addEventListener('visibilitychange', onHidden);
 
-  if (primary) window.location.href = primary;
+  // An anchor click keeps the user gesture, which iOS Safari requires before it
+  // will hand a custom scheme (nimiq: / polygon:) over to a native app.
+  const link = document.createElement('a');
+  link.href = primary;
+  link.rel = 'noopener';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 
   window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHidden);
     if (launched) return;
     window.location.href = fallback;
-  }, 1500);
+  }, 1800);
 }
 
 /** Web-facing universal link equivalent of {@link nimiqPayMiniAppLink}. */
