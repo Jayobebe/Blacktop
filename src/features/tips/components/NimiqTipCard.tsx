@@ -24,6 +24,7 @@ import {
   payeeAddress,
   payeeSupports,
 } from '../lib/nimiqPay';
+import { getEvmProvider, nimiqWalletLink, polygonscanTxUrl, sendUsdtViaWallet } from '../lib/walletBridge';
 
 const SCANNER_ID = 'payee-qr-scanner';
 
@@ -37,6 +38,8 @@ export function NimiqTipCard() {
   const [showNewPayee, setShowNewPayee] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   const [newLabel, setNewLabel] = useState('');
   const [newNim, setNewNim] = useState('');
@@ -93,10 +96,32 @@ export function NimiqTipCard() {
   );
   const supported = selected ? payeeSupports(selected, currency) : false;
 
-  const handlePay = () => {
-    if (!uri) return;
+  const handlePay = async () => {
+    if (!uri || !selected) return;
+    const address = payeeAddress(selected, currency);
     setShowQr(true);
-    window.open(uri, '_blank');
+
+    if (currency === 'USDT' && getEvmProvider()) {
+      setPaying(true);
+      try {
+        const hash = await sendUsdtViaWallet(address, numericAmount);
+        setTxHash(hash);
+        toast.success('Payment sent', { description: 'Confirming on Polygon…' });
+      } catch (err) {
+        const message = (err as { message?: string })?.message ?? '';
+        if (message === 'NO_ACCOUNT') toast.error('No wallet account available.');
+        else if (/reject|denied/i.test(message)) toast.info('Payment cancelled.');
+        else toast.error('Wallet could not send that payment', { description: 'Scan the QR code below instead.' });
+      } finally {
+        setPaying(false);
+      }
+      return;
+    }
+
+    // No injected wallet: hand off to the wallet app, keep the QR as a fallback.
+    const link = currency === 'NIM' ? nimiqWalletLink(address, numericAmount) : uri;
+    const opened = window.open(link, '_blank', 'noopener,noreferrer');
+    if (!opened) window.location.href = link;
   };
 
   const handleCopy = async () => {
@@ -241,11 +266,11 @@ export function NimiqTipCard() {
 
       <Button
         onClick={handlePay}
-        disabled={!uri}
+        disabled={!uri || paying}
         className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
       >
         <Heart className="w-4 h-4 mr-2" />
-        Pay up
+        {paying ? 'Confirm in your wallet…' : 'Pay up'}
       </Button>
 
       {!supported && selected && (
@@ -257,8 +282,18 @@ export function NimiqTipCard() {
       {showQr && uri && (
         <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 flex flex-col items-center gap-3">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Scan with Nimiq Pay
+            {txHash ? 'Payment sent' : 'Scan with Nimiq Pay'}
           </p>
+          {txHash && (
+            <a
+              href={polygonscanTxUrl(txHash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-accent underline break-all text-center"
+            >
+              View on Polygonscan
+            </a>
+          )}
           <div className="bg-white p-2 rounded-lg">
             <QRCodeSVG value={uri} size={160} />
           </div>
