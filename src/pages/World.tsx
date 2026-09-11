@@ -250,7 +250,7 @@ export default function World() {
                     <span className="w-4 text-center font-mono text-muted-foreground">{i + 1}</span>
                     <span className="font-semibold truncate">{k.owner_name}</span>
                     <span className="ml-auto text-muted-foreground whitespace-nowrap">
-                      {k.collected_count} collected · {k.active_drops} planted
+                      {k.collected_count} grabs · {k.active_drops} drops
                     </span>
                   </div>
                 ))}
