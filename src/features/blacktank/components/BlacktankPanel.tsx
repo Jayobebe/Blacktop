@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Fuel, MapPin, X, Check, ThumbsDown, Loader2, Wallet } from 'lucide-react';
+import { Fuel, X, Check, ThumbsDown, Loader2, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
