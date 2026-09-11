@@ -193,6 +193,20 @@ export function NimiqTipCard() {
           <Input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Name" className="h-10" />
           <Input value={newNim} onChange={(e) => setNewNim(e.target.value)} placeholder="NIM address (NQ…)" className="h-10 font-mono text-xs" />
           <Input value={newUsdt} onChange={(e) => setNewUsdt(e.target.value)} placeholder="USDT address (0x… on Polygon)" className="h-10 font-mono text-xs" />
+
+          {scanning ? (
+            <div className="space-y-2">
+              <div id={SCANNER_ID} className="w-full rounded-xl overflow-hidden border border-border/40" />
+              <Button variant="outline" onClick={cancelScan} className="w-full h-10 rounded-xl">
+                <X className="w-4 h-4 mr-2" /> Cancel scan
+              </Button>
+            </div>
+          ) : (
+            <Button variant="outline" onClick={startScanner} className="w-full h-10 rounded-xl">
+              <ScanLine className="w-4 h-4 mr-2" /> Scan their QR
+            </Button>
+          )}
+
           <Button onClick={handleAddPayee} className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
             Save payee
           </Button>
