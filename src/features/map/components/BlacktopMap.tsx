@@ -1754,13 +1754,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             aria-pressed={threeD}
             aria-label="3D terrain and buildings"
             className={cn(
-              "w-9 h-9 flex items-center justify-center transition-colors",
+              "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               threeD ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
             )}
           >
-            <Box className="w-4 h-4" />
+            <Box className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
           </button>
-          <div className="w-px h-6 bg-border" />
+          <div className="w-px h-6 landscape:h-5 bg-border" />
           <button
             type="button"
             onClick={() => {
