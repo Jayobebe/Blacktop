@@ -47,7 +47,7 @@ export function payeeAddress(payee: Payee, currency: TipCurrency): string {
  * Builds a payment request URI in the exact format Nimiq's own request-link
  * encoder produces, which is what Nimiq Pay parses:
  * - NIM  : `nimiq:<address>?amount=<nim>`
- * - USDT : `polygon:<contract>@137/transfer?address=<recipient>&uint256=<amount>e6`
+ * - USDT : EIP-681 `ethereum:<contract>@137/transfer?address=<recipient>&uint256=<amount>e6`
  */
 export function buildPaymentUri(payee: Payee, currency: TipCurrency, amount: number): string | null {
   if (!(amount > 0) || !payeeSupports(payee, currency)) return null;
@@ -62,7 +62,7 @@ export function buildPaymentUri(payee: Payee, currency: TipCurrency, amount: num
     address: payee.usdtAddress!.trim(),
     uint256: `${value}e${USDT_DECIMALS}`,
   });
-  return `polygon:${USDT_POLYGON_CONTRACT}@137/transfer?${query.toString()}`;
+  return `ethereum:${USDT_POLYGON_CONTRACT}@137/transfer?${query.toString()}`;
 }
 
 export function formatAmount(amount: number, currency: TipCurrency): string {
