@@ -266,11 +266,11 @@ export function NimiqTipCard() {
 
       <Button
         onClick={handlePay}
-        disabled={!uri}
+        disabled={!uri || paying}
         className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
       >
         <Heart className="w-4 h-4 mr-2" />
-        Pay up
+        {paying ? 'Confirm in your wallet…' : 'Pay up'}
       </Button>
 
       {!supported && selected && (
