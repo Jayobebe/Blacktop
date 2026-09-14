@@ -284,6 +284,8 @@ export function openNimiqPayHome(): void {
 
   const isAndroid = /Android/i.test(navigator.userAgent);
   const store = isAndroid ? NIMIQ_PAY_ANDROID_STORE : NIMIQ_PAY_IOS_STORE;
+  // Universal link: iOS/Android open the installed app, browsers fall back to the page.
+  const universal = 'https://nimpay.app/';
 
   let launched = false;
   const clear = () => { launched = true; };
@@ -292,11 +294,23 @@ export function openNimiqPayHome(): void {
   const onHidden = () => { if (document.visibilityState === 'hidden') launched = true; };
   document.addEventListener('visibilitychange', onHidden);
 
-  window.location.href = 'nimiqpay://';
+  // A bare `nimiqpay://` has no host/path and Safari rejects it with
+  // "the address is invalid" — always give the scheme a path.
+  const link = document.createElement('a');
+  link.href = 'nimiqpay://home';
+  link.rel = 'noopener';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  try { link.click(); } catch { /* scheme unsupported */ }
+  link.remove();
 
   window.setTimeout(() => {
     document.removeEventListener('visibilitychange', onHidden);
     if (launched || document.visibilityState === 'hidden') return;
-    window.location.href = store;
-  }, 1500);
+    // Universal link first (opens the app on mobile if installed), store last.
+    window.location.href = universal;
+    window.setTimeout(() => {
+      if (!launched && document.visibilityState !== 'hidden') window.location.href = store;
+    }, 2000);
+  }, 1200);
 }
