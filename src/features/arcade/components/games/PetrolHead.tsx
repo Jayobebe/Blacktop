@@ -3,7 +3,8 @@ import { saveScore, useArcadeScores } from '../../hooks/useArcadeScores';
 
 type GameState = 'idle' | 'playing' | 'gameover';
 
-interface Enemy { lane: number; y: number; color: string; }
+type EnemyKind = 'car' | 'truck';
+interface Enemy { lane: number; y: number; color: string; kind: EnemyKind; hh: number; }
 
 const CW = 320;
 const CH = 500;
@@ -11,7 +12,9 @@ const LANES = [53, 160, 267] as const;
 const PLAYER_Y = 430;
 const PLAYER_HH = 20; // half-height for collision
 const ENEMY_HH = 21;
+const TRUCK_HH = 38;
 const CAR_COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'];
+const TRUCK_COLORS = ['#e5e7eb', '#94a3b8', '#facc15', '#22d3ee'];
 
 // --- Drawing primitives ---
 
@@ -70,6 +73,45 @@ function drawCar(ctx: CanvasRenderingContext2D, x: number, y: number, color: str
   ctx.fillRect(x + 12, y - 14, 3, 8);
   ctx.fillRect(x - 15, y + 6, 3, 8);
   ctx.fillRect(x + 12, y + 6, 3, 8);
+}
+
+function drawTruck(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  const top = y - TRUCK_HH;
+  const h = TRUCK_HH * 2;
+
+  // Trailer
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 16, top, 32, h - 22);
+  ctx.fillStyle = '#00000033';
+  ctx.fillRect(x - 13, top + 6, 26, h - 34);
+
+  // Cab
+  ctx.fillStyle = '#1f2937';
+  ctx.fillRect(x - 15, top + h - 22, 30, 22);
+  ctx.fillStyle = '#00000099';
+  ctx.fillRect(x - 11, top + h - 18, 22, 8);
+
+  // Headlights / tail lights
+  ctx.fillStyle = '#ffffffdd';
+  ctx.fillRect(x - 14, top + 1, 6, 4);
+  ctx.fillRect(x + 8, top + 1, 6, 4);
+  ctx.fillStyle = '#ff000099';
+  ctx.fillRect(x - 14, top + h - 4, 6, 3);
+  ctx.fillRect(x + 8, top + h - 4, 6, 3);
+
+  // Wheels
+  ctx.fillStyle = '#111';
+  ctx.fillRect(x - 18, top + 8, 3, 10);
+  ctx.fillRect(x + 15, top + 8, 3, 10);
+  ctx.fillRect(x - 18, top + h - 30, 3, 10);
+  ctx.fillRect(x + 15, top + h - 30, 3, 10);
+  ctx.fillRect(x - 18, top + h - 16, 3, 10);
+  ctx.fillRect(x + 15, top + h - 16, 3, 10);
+}
+
+function drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy) {
+  if (e.kind === 'truck') drawTruck(ctx, LANES[e.lane], e.y, e.color);
+  else drawCar(ctx, LANES[e.lane], e.y, e.color);
 }
 
 function drawBike(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
@@ -169,23 +211,41 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
     ctx.imageSmoothingEnabled = false;
 
     frameRef.current++;
-    speedRef.current = Math.min(12, 3 + frameRef.current * 0.0005);
+    // Never-ending acceleration: no cap, so every run eventually ends.
+    speedRef.current = 3 + frameRef.current * 0.00065 + Math.pow(frameRef.current / 60, 1.35) * 0.012;
     scoreRef.current = Math.floor(frameRef.current / 60);
 
     // Move enemies
     enemiesRef.current = enemiesRef.current
       .map(e => ({ ...e, y: e.y + speedRef.current }))
-      .filter(e => e.y < CH + 60);
+      .filter(e => e.y < CH + 90);
 
-    // Spawn (frequency increases over time)
-    const spawnEvery = Math.max(22, 70 - Math.floor(scoreRef.current * 0.8));
+    // Spawn: keep a roughly constant (and slowly tightening) gap in world distance,
+    // so traffic keeps coming no matter how fast we're going.
+    const gap = Math.max(130, 240 - scoreRef.current * 0.5);
+    const spawnEvery = Math.max(6, Math.round(gap / speedRef.current));
     if (frameRef.current % spawnEvery === 0) {
       const lane = Math.floor(Math.random() * 3);
-      const crowded = enemiesRef.current.some(e => e.lane === lane && e.y < 90);
-      if (!crowded) {
+      const truckChance = Math.min(0.4, 0.08 + scoreRef.current * 0.004);
+      const kind: EnemyKind = Math.random() < truckChance ? 'truck' : 'car';
+      const hh = kind === 'truck' ? TRUCK_HH : ENEMY_HH;
+      const crowded = enemiesRef.current.some(e => e.lane === lane && e.y < hh * 2 + 70);
+      // Never fill all three lanes at the same depth
+      const blocked = [0, 1, 2].every(l =>
+        l === lane || enemiesRef.current.some(e => e.lane === l && e.y > -60 && e.y < 140)
+      );
+      if (!crowded && !blocked) {
         enemiesRef.current = [
           ...enemiesRef.current,
-          { lane, y: -ENEMY_HH - 10, color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)] },
+          {
+            lane,
+            y: -hh - 10,
+            kind,
+            hh,
+            color: kind === 'truck'
+              ? TRUCK_COLORS[Math.floor(Math.random() * TRUCK_COLORS.length)]
+              : CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
+          },
         ];
       }
     }
@@ -193,7 +253,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
     // Collision detection
     const pl = playerLaneRef.current;
     const hit = enemiesRef.current.some(
-      e => e.lane === pl && e.y + ENEMY_HH >= PLAYER_Y - PLAYER_HH && e.y - ENEMY_HH <= PLAYER_Y + PLAYER_HH
+      e => e.lane === pl && e.y + e.hh >= PLAYER_Y - PLAYER_HH && e.y - e.hh <= PLAYER_Y + PLAYER_HH
     );
 
     if (hit) {
@@ -205,7 +265,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
       gameStateRef.current = 'gameover';
       // Draw one final frozen frame (bike + crash highlight)
       drawRoad(ctx, frameRef.current, speedRef.current);
-      for (const e of enemiesRef.current) drawCar(ctx, LANES[e.lane], e.y, e.color);
+      for (const e of enemiesRef.current) drawEnemy(ctx, e);
       ctx.fillStyle = '#ff000033';
       ctx.fillRect(0, 0, CW, CH);
       drawBike(ctx, LANES[pl], PLAYER_Y, '#ef4444');
@@ -214,7 +274,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
 
     // Draw
     drawRoad(ctx, frameRef.current, speedRef.current);
-    for (const e of enemiesRef.current) drawCar(ctx, LANES[e.lane], e.y, e.color);
+    for (const e of enemiesRef.current) drawEnemy(ctx, e);
     drawBike(ctx, LANES[pl], PLAYER_Y, accentColor);
     drawHUD(ctx, scoreRef.current, bestRef.current, accentColor);
 

@@ -107,7 +107,7 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const isActive = gameState === 'active';
-  const { currentG, isSupported, permissionGranted, requestPermission } = useGForce(isActive);
+  const { currentG, permissionGranted, requestPermission } = useGForce(isActive);
   const { scores } = useArcadeScores();
   const bestScore = scores['hit-heavy'];
 
@@ -226,11 +226,7 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
       {/* State-specific UI */}
       {gameState === 'idle' && (
         <div className="flex flex-col items-center gap-4 w-full">
-          {!isSupported ? (
-            <p className="font-mono text-xs tracking-widest uppercase text-red-400 text-center">
-              DEVICE NOT SUPPORTED
-            </p>
-          ) : !permissionGranted ? (
+          {!permissionGranted ? (
             <button
               onClick={() => requestPermission()}
               className="font-mono text-xs tracking-widest uppercase px-6 py-3 border-2 rounded-xl w-full max-w-xs"
