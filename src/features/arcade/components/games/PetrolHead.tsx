@@ -75,6 +75,45 @@ function drawCar(ctx: CanvasRenderingContext2D, x: number, y: number, color: str
   ctx.fillRect(x + 12, y + 6, 3, 8);
 }
 
+function drawTruck(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
+  const top = y - TRUCK_HH;
+  const h = TRUCK_HH * 2;
+
+  // Trailer
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 16, top, 32, h - 22);
+  ctx.fillStyle = '#00000033';
+  ctx.fillRect(x - 13, top + 6, 26, h - 34);
+
+  // Cab
+  ctx.fillStyle = '#1f2937';
+  ctx.fillRect(x - 15, top + h - 22, 30, 22);
+  ctx.fillStyle = '#00000099';
+  ctx.fillRect(x - 11, top + h - 18, 22, 8);
+
+  // Headlights / tail lights
+  ctx.fillStyle = '#ffffffdd';
+  ctx.fillRect(x - 14, top + 1, 6, 4);
+  ctx.fillRect(x + 8, top + 1, 6, 4);
+  ctx.fillStyle = '#ff000099';
+  ctx.fillRect(x - 14, top + h - 4, 6, 3);
+  ctx.fillRect(x + 8, top + h - 4, 6, 3);
+
+  // Wheels
+  ctx.fillStyle = '#111';
+  ctx.fillRect(x - 18, top + 8, 3, 10);
+  ctx.fillRect(x + 15, top + 8, 3, 10);
+  ctx.fillRect(x - 18, top + h - 30, 3, 10);
+  ctx.fillRect(x + 15, top + h - 30, 3, 10);
+  ctx.fillRect(x - 18, top + h - 16, 3, 10);
+  ctx.fillRect(x + 15, top + h - 16, 3, 10);
+}
+
+function drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy) {
+  if (e.kind === 'truck') drawTruck(ctx, LANES[e.lane], e.y, e.color);
+  else drawCar(ctx, LANES[e.lane], e.y, e.color);
+}
+
 function drawBike(ctx: CanvasRenderingContext2D, x: number, y: number, color: string) {
   // Rear wheel
   ctx.fillStyle = '#222';
