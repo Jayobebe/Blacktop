@@ -12,7 +12,9 @@ const LANES = [53, 160, 267] as const;
 const PLAYER_Y = 430;
 const PLAYER_HH = 20; // half-height for collision
 const ENEMY_HH = 21;
+const TRUCK_HH = 38;
 const CAR_COLORS = ['#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6'];
+const TRUCK_COLORS = ['#e5e7eb', '#94a3b8', '#facc15', '#22d3ee'];
 
 // --- Drawing primitives ---
 
