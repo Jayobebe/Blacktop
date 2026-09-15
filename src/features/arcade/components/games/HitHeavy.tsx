@@ -107,7 +107,7 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const isActive = gameState === 'active';
-  const { currentG, isSupported, permissionGranted, requestPermission } = useGForce(isActive);
+  const { currentG, permissionGranted, requestPermission } = useGForce(isActive);
   const { scores } = useArcadeScores();
   const bestScore = scores['hit-heavy'];
 
