@@ -31,7 +31,7 @@ export default function CrewLeaderboard() {
   const navigate = useNavigate();
   const crew = useCrew();
   const { rides } = useRideHistory();
-  const scores = useArcadeScores();
+  const { scores } = useArcadeScores();
   const { profile } = useProfile();
   const [metric, setMetric] = useState<keyof CrewRow>('total_distance');
 
