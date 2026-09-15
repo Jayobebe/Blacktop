@@ -3,7 +3,8 @@ import { saveScore, useArcadeScores } from '../../hooks/useArcadeScores';
 
 type GameState = 'idle' | 'playing' | 'gameover';
 
-interface Enemy { lane: number; y: number; color: string; }
+type EnemyKind = 'car' | 'truck';
+interface Enemy { lane: number; y: number; color: string; kind: EnemyKind; hh: number; }
 
 const CW = 320;
 const CH = 500;
