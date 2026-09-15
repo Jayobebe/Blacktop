@@ -170,23 +170,41 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
     ctx.imageSmoothingEnabled = false;
 
     frameRef.current++;
-    speedRef.current = Math.min(12, 3 + frameRef.current * 0.0005);
+    // Never-ending acceleration: no cap, so every run eventually ends.
+    speedRef.current = 3 + frameRef.current * 0.00065 + Math.pow(frameRef.current / 60, 1.35) * 0.012;
     scoreRef.current = Math.floor(frameRef.current / 60);
 
     // Move enemies
     enemiesRef.current = enemiesRef.current
       .map(e => ({ ...e, y: e.y + speedRef.current }))
-      .filter(e => e.y < CH + 60);
+      .filter(e => e.y < CH + 90);
 
-    // Spawn (frequency increases over time)
-    const spawnEvery = Math.max(22, 70 - Math.floor(scoreRef.current * 0.8));
+    // Spawn: keep a roughly constant (and slowly tightening) gap in world distance,
+    // so traffic keeps coming no matter how fast we're going.
+    const gap = Math.max(130, 240 - scoreRef.current * 0.5);
+    const spawnEvery = Math.max(6, Math.round(gap / speedRef.current));
     if (frameRef.current % spawnEvery === 0) {
       const lane = Math.floor(Math.random() * 3);
-      const crowded = enemiesRef.current.some(e => e.lane === lane && e.y < 90);
-      if (!crowded) {
+      const truckChance = Math.min(0.4, 0.08 + scoreRef.current * 0.004);
+      const kind: EnemyKind = Math.random() < truckChance ? 'truck' : 'car';
+      const hh = kind === 'truck' ? TRUCK_HH : ENEMY_HH;
+      const crowded = enemiesRef.current.some(e => e.lane === lane && e.y < hh * 2 + 70);
+      // Never fill all three lanes at the same depth
+      const blocked = [0, 1, 2].every(l =>
+        l === lane || enemiesRef.current.some(e => e.lane === l && e.y > -60 && e.y < 140)
+      );
+      if (!crowded && !blocked) {
         enemiesRef.current = [
           ...enemiesRef.current,
-          { lane, y: -ENEMY_HH - 10, color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)] },
+          {
+            lane,
+            y: -hh - 10,
+            kind,
+            hh,
+            color: kind === 'truck'
+              ? TRUCK_COLORS[Math.floor(Math.random() * TRUCK_COLORS.length)]
+              : CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
+          },
         ];
       }
     }
@@ -194,7 +212,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
     // Collision detection
     const pl = playerLaneRef.current;
     const hit = enemiesRef.current.some(
-      e => e.lane === pl && e.y + ENEMY_HH >= PLAYER_Y - PLAYER_HH && e.y - ENEMY_HH <= PLAYER_Y + PLAYER_HH
+      e => e.lane === pl && e.y + e.hh >= PLAYER_Y - PLAYER_HH && e.y - e.hh <= PLAYER_Y + PLAYER_HH
     );
 
     if (hit) {
@@ -206,7 +224,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
       gameStateRef.current = 'gameover';
       // Draw one final frozen frame (bike + crash highlight)
       drawRoad(ctx, frameRef.current, speedRef.current);
-      for (const e of enemiesRef.current) drawCar(ctx, LANES[e.lane], e.y, e.color);
+      for (const e of enemiesRef.current) drawEnemy(ctx, e);
       ctx.fillStyle = '#ff000033';
       ctx.fillRect(0, 0, CW, CH);
       drawBike(ctx, LANES[pl], PLAYER_Y, '#ef4444');
@@ -215,7 +233,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
 
     // Draw
     drawRoad(ctx, frameRef.current, speedRef.current);
-    for (const e of enemiesRef.current) drawCar(ctx, LANES[e.lane], e.y, e.color);
+    for (const e of enemiesRef.current) drawEnemy(ctx, e);
     drawBike(ctx, LANES[pl], PLAYER_Y, accentColor);
     drawHUD(ctx, scoreRef.current, bestRef.current, accentColor);
 
