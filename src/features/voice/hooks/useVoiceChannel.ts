@@ -1112,7 +1112,7 @@ export function useVoiceChannel(convoyId?: string) {
           channel.send({
             type: 'broadcast',
             event: 'user-joined',
-            payload: { from: user.id },
+            payload: { from: user.id, consent: readRecordConsent() },
           });
         }
       });
