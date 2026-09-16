@@ -295,7 +295,7 @@ export function useVoiceChannel(convoyId?: string) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'user-joined',
-        payload: { from: userIdRef.current },
+        payload: { from: userIdRef.current, consent: readRecordConsent() },
       });
     }, delay);
 
