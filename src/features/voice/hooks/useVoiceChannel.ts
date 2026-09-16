@@ -180,6 +180,21 @@ export function useVoiceChannel(convoyId?: string) {
   const reconnectTimersRef = useRef<Map<string, number>>(new Map()); // Pending per-peer reconnect retry
   const applyOutputDeviceRef = useRef<(() => void) | null>(null); // Late-bound speaker routing helper
   const swapInputDeviceRef = useRef<(() => void) | null>(null); // Late-bound mic hot-swap helper
+  // Per-rider recording consent. A peer is only mixed into someone else's ride
+  // recording if that peer has the "Voice Channel Recording" toggle enabled.
+  const peerConsentRef = useRef<Map<string, boolean>>(new Map());
+
+  // Read our own consent flag straight from persisted settings so the voice
+  // hook doesn't need to re-subscribe when the toggle changes mid-ride.
+  const readRecordConsent = useCallback((): boolean => {
+    try {
+      const raw = localStorage.getItem('blacktop-settings');
+      if (!raw) return false;
+      return Boolean(JSON.parse(raw)?.voiceRecordingEnabled);
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Tear down the local mic analyser (used both by cleanup and when hot-swapping
   // to a different input device, e.g. a Bluetooth intercom connecting mid-ride).
