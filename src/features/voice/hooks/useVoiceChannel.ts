@@ -840,6 +840,7 @@ export function useVoiceChannel(convoyId?: string) {
               answer: answerDesc,
               from: userIdRef.current,
               to: from,
+              consent: readRecordConsent(),
             },
           });
           console.log(`[Voice] Answer sent to ${from}`);
