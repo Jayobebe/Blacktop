@@ -133,10 +133,6 @@ export default function PrivacyPolicy() {
             delete any card from your collection at any time, and the Burn Button wipes the
             entire collection instantly.
           </p>
-          <p className="text-muted-foreground">
-            Public event markers on the globe (storms, wildfires, volcanoes, floods) come from
-            NASA EONET open data feeds and contain no personal information.
-          </p>
         </section>
 
         <section className="space-y-2">
