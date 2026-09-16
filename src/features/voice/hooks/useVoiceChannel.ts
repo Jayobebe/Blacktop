@@ -1278,7 +1278,7 @@ export function useVoiceChannel(convoyId?: string) {
         channelRef.current.send({
           type: 'broadcast',
           event: 'user-joined',
-          payload: { from: userIdRef.current },
+          payload: { from: userIdRef.current, consent: readRecordConsent() },
         });
         
         // Resume AudioContext if it was suspended (iOS/Safari)
