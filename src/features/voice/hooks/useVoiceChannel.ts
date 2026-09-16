@@ -248,6 +248,7 @@ export function useVoiceChannel(convoyId?: string) {
     });
     audioElementsRef.current.clear();
     remoteStreamsRef.current.clear();
+    peerConsentRef.current.clear();
     
     // Clear pending ICE candidates
     pendingCandidatesRef.current.clear();
@@ -541,6 +542,7 @@ export function useVoiceChannel(convoyId?: string) {
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
         remoteStreamsRef.current.delete(remoteUserId);
+        peerConsentRef.current.delete(remoteUserId);
         // Back off instead of relying on the flat 10s presence heartbeat to
         // eventually retry - important under sustained poor cellular signal.
         scheduleReconnect(remoteUserId);
@@ -763,6 +765,7 @@ export function useVoiceChannel(convoyId?: string) {
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
           remoteStreamsRef.current.delete(from);
+          peerConsentRef.current.delete(from);
         }
         
         // Use deterministic ordering: higher ID creates offer
@@ -925,6 +928,7 @@ export function useVoiceChannel(convoyId?: string) {
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
           remoteStreamsRef.current.delete(from);
+          peerConsentRef.current.delete(from);
         }
         // Clear from speaking users
         setState(prev => {
