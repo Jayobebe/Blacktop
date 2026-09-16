@@ -180,6 +180,21 @@ export function useVoiceChannel(convoyId?: string) {
   const reconnectTimersRef = useRef<Map<string, number>>(new Map()); // Pending per-peer reconnect retry
   const applyOutputDeviceRef = useRef<(() => void) | null>(null); // Late-bound speaker routing helper
   const swapInputDeviceRef = useRef<(() => void) | null>(null); // Late-bound mic hot-swap helper
+  // Per-rider recording consent. A peer is only mixed into someone else's ride
+  // recording if that peer has the "Voice Channel Recording" toggle enabled.
+  const peerConsentRef = useRef<Map<string, boolean>>(new Map());
+
+  // Read our own consent flag straight from persisted settings so the voice
+  // hook doesn't need to re-subscribe when the toggle changes mid-ride.
+  const readRecordConsent = useCallback((): boolean => {
+    try {
+      const raw = localStorage.getItem('blacktop-settings');
+      if (!raw) return false;
+      return Boolean(JSON.parse(raw)?.voiceRecordingEnabled);
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Tear down the local mic analyser (used both by cleanup and when hot-swapping
   // to a different input device, e.g. a Bluetooth intercom connecting mid-ride).
@@ -233,6 +248,7 @@ export function useVoiceChannel(convoyId?: string) {
     });
     audioElementsRef.current.clear();
     remoteStreamsRef.current.clear();
+    peerConsentRef.current.clear();
     
     // Clear pending ICE candidates
     pendingCandidatesRef.current.clear();
@@ -280,7 +296,7 @@ export function useVoiceChannel(convoyId?: string) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'user-joined',
-        payload: { from: userIdRef.current },
+        payload: { from: userIdRef.current, consent: readRecordConsent() },
       });
     }, delay);
 
@@ -526,6 +542,7 @@ export function useVoiceChannel(convoyId?: string) {
         audioElementsRef.current.get(remoteUserId)?.remove();
         audioElementsRef.current.delete(remoteUserId);
         remoteStreamsRef.current.delete(remoteUserId);
+        peerConsentRef.current.delete(remoteUserId);
         // Back off instead of relying on the flat 10s presence heartbeat to
         // eventually retry - important under sustained poor cellular signal.
         scheduleReconnect(remoteUserId);
@@ -700,12 +717,18 @@ export function useVoiceChannel(convoyId?: string) {
 
   // Handle signaling messages
   const handleSignaling = useCallback(async (payload: any) => {
-    const { type, from, to, offer, answer, candidate } = payload;
+    const { type, from, to, offer, answer, candidate, consent } = payload;
     
     // Ignore messages not meant for us
     if (to && to !== userIdRef.current) return;
     // Ignore our own messages
     if (from === userIdRef.current) return;
+
+    // Track each rider's recording consent so we never mix a non-consenting
+    // rider's voice into our own ride recording.
+    if (from && typeof consent === 'boolean') {
+      peerConsentRef.current.set(from, consent);
+    }
 
     console.log(`[Voice] Received signaling: ${type} from ${from}, our ID: ${userIdRef.current}`);
 
@@ -742,6 +765,7 @@ export function useVoiceChannel(convoyId?: string) {
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
           remoteStreamsRef.current.delete(from);
+          peerConsentRef.current.delete(from);
         }
         
         // Use deterministic ordering: higher ID creates offer
@@ -759,6 +783,7 @@ export function useVoiceChannel(convoyId?: string) {
                 offer: offerDesc,
                 from: userIdRef.current,
                 to: from,
+                consent: readRecordConsent(),
               },
             });
             console.log(`[Voice] Offer sent to ${from}`);
@@ -825,6 +850,7 @@ export function useVoiceChannel(convoyId?: string) {
               answer: answerDesc,
               from: userIdRef.current,
               to: from,
+              consent: readRecordConsent(),
             },
           });
           console.log(`[Voice] Answer sent to ${from}`);
@@ -902,6 +928,7 @@ export function useVoiceChannel(convoyId?: string) {
           audioElementsRef.current.get(from)?.remove();
           audioElementsRef.current.delete(from);
           remoteStreamsRef.current.delete(from);
+          peerConsentRef.current.delete(from);
         }
         // Clear from speaking users
         setState(prev => {
@@ -1097,7 +1124,7 @@ export function useVoiceChannel(convoyId?: string) {
           channel.send({
             type: 'broadcast',
             event: 'user-joined',
-            payload: { from: user.id },
+            payload: { from: user.id, consent: readRecordConsent() },
           });
         }
       });
@@ -1114,7 +1141,7 @@ export function useVoiceChannel(convoyId?: string) {
           channelRef.current.send({
             type: 'broadcast',
             event: 'user-joined',
-            payload: { from: userIdRef.current },
+            payload: { from: userIdRef.current, consent: readRecordConsent() },
           });
         }
       }, VOICE_REFRESH_INTERVAL_MS);
@@ -1263,7 +1290,7 @@ export function useVoiceChannel(convoyId?: string) {
         channelRef.current.send({
           type: 'broadcast',
           event: 'user-joined',
-          payload: { from: userIdRef.current },
+          payload: { from: userIdRef.current, consent: readRecordConsent() },
         });
         
         // Resume AudioContext if it was suspended (iOS/Safari)
@@ -1380,7 +1407,10 @@ export function useVoiceChannel(convoyId?: string) {
   const getAudioStreams = useCallback((): MediaStream[] => {
     const streams: MediaStream[] = [];
     if (localStreamRef.current) streams.push(localStreamRef.current);
-    remoteStreamsRef.current.forEach((stream) => streams.push(stream));
+    // Consent gate: only include riders who have opted into voice recording.
+    remoteStreamsRef.current.forEach((stream, peerId) => {
+      if (peerConsentRef.current.get(peerId)) streams.push(stream);
+    });
     return streams;
   }, []);
 
