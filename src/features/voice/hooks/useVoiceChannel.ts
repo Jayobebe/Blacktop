@@ -1395,7 +1395,10 @@ export function useVoiceChannel(convoyId?: string) {
   const getAudioStreams = useCallback((): MediaStream[] => {
     const streams: MediaStream[] = [];
     if (localStreamRef.current) streams.push(localStreamRef.current);
-    remoteStreamsRef.current.forEach((stream) => streams.push(stream));
+    // Consent gate: only include riders who have opted into voice recording.
+    remoteStreamsRef.current.forEach((stream, peerId) => {
+      if (peerConsentRef.current.get(peerId)) streams.push(stream);
+    });
     return streams;
   }, []);
 
