@@ -77,9 +77,21 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Voice communication</h2>
           <p className="text-muted-foreground">
-            Convoy voice uses peer-to-peer WebRTC. Audio is never recorded, never
-            stored, and never passes through a server we can listen to. When the
-            convoy ends, the connection is gone.
+            Convoy voice uses peer-to-peer WebRTC. Audio is never stored and
+            never passes through a server we can listen to. When the convoy
+            ends, the connection is gone.
+          </p>
+          <p className="text-muted-foreground">
+            <span className="text-foreground">Voice channel recording</span> is
+            an optional, off-by-default setting that lets you mix convoy voice
+            into your own locally recorded ride overlay video. It doubles as a
+            consent flag: your voice is only ever included in another rider's
+            recording if <span className="text-foreground">you</span> have this
+            toggle on. If you have it off, your voice is excluded from everyone
+            else's recordings; if every rider in the convoy has it on, everyone
+            can be heard. Recordings are generated and stored locally on the
+            recording rider's device only, are never uploaded, and are erased
+            by the Burn Button.
           </p>
         </section>
 

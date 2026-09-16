@@ -103,6 +103,19 @@ export default function Terms() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Voice recording consent</h2>
+          <p className="text-muted-foreground">
+            The optional Voice Channel Recording setting mixes convoy voice
+            into a rider's locally recorded ride overlay video. Enabling it
+            means you consent to your voice being included in other riders'
+            recordings. If you leave it off, your voice is excluded from
+            everyone else's recordings — only riders who have opted in can be
+            heard. Recordings stay on the recording rider's device and are
+            their responsibility to share lawfully.
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Blacktop Arcade — Hit Heavy</h2>
           <p className="text-muted-foreground">
             Hit Heavy is a novelty "punch machine" mini-game that measures the
