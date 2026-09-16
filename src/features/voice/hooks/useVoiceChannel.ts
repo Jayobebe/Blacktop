@@ -715,12 +715,18 @@ export function useVoiceChannel(convoyId?: string) {
 
   // Handle signaling messages
   const handleSignaling = useCallback(async (payload: any) => {
-    const { type, from, to, offer, answer, candidate } = payload;
+    const { type, from, to, offer, answer, candidate, consent } = payload;
     
     // Ignore messages not meant for us
     if (to && to !== userIdRef.current) return;
     // Ignore our own messages
     if (from === userIdRef.current) return;
+
+    // Track each rider's recording consent so we never mix a non-consenting
+    // rider's voice into our own ride recording.
+    if (from && typeof consent === 'boolean') {
+      peerConsentRef.current.set(from, consent);
+    }
 
     console.log(`[Voice] Received signaling: ${type} from ${from}, our ID: ${userIdRef.current}`);
 
