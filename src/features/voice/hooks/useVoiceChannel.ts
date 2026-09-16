@@ -774,6 +774,7 @@ export function useVoiceChannel(convoyId?: string) {
                 offer: offerDesc,
                 from: userIdRef.current,
                 to: from,
+                consent: readRecordConsent(),
               },
             });
             console.log(`[Voice] Offer sent to ${from}`);
