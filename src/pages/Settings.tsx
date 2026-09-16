@@ -649,8 +649,8 @@ export default function Settings() {
            {settings.rideOverlayEnabled && (
              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
                <div>
-                 <p className="text-sm font-medium">Voice Channel Recording</p>
-                 <p className="text-[10px] text-muted-foreground">Add convoy voice audio to the recorded overlay</p>
+                  <p className="text-sm font-medium">Voice Channel Recording</p>
+                  <p className="text-[10px] text-muted-foreground">Add convoy voice audio to the recorded overlay. This also acts as your consent: riders with this off are never included in anyone else's recording — only riders who have it on can be heard.</p>
                </div>
                <Switch
                  checked={settings.voiceRecordingEnabled}
