@@ -23,7 +23,7 @@ const METRICS: { id: keyof CrewRow; label: string; format: (v: number) => string
   { id: 'top_speed', label: 'Top speed', format: (v) => `${Math.round(v)} mph` },
   { id: 'max_lean', label: 'Lean', format: (v) => `${Math.round(v)}°` },
   { id: 'ride_count', label: 'Rides', format: (v) => String(Math.round(v)) },
-  { id: 'hit_heavy', label: 'Hit Heavy', format: (v) => String(Math.round(v)) },
+  { id: 'hit_heavy', label: 'Hit Heavy', format: (v) => `${Number(v).toFixed(2)}G` },
   { id: 'petrol_head', label: 'Petrol Head', format: (v) => String(Math.round(v)) },
 ];
 
@@ -50,7 +50,7 @@ export default function CrewLeaderboard() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || cancelled) return;
-      await supabase.from('crew_scores' as any).upsert({
+      const { error } = await supabase.from('crew_scores' as any).upsert({
         user_id: user.id,
         crew_code: crew.code,
         display_name: profile.name || 'Rider',
@@ -59,9 +59,10 @@ export default function CrewLeaderboard() {
         max_lean: mine.max_lean,
         ride_count: mine.ride_count,
         hit_heavy: mine.hit_heavy,
-        petrol_head: mine.petrol_head,
+        petrol_head: Math.round(mine.petrol_head),
         updated_at: new Date().toISOString(),
       } as any);
+      if (error) console.error('Failed to publish crew scores:', error);
     })();
     return () => { cancelled = true; };
   }, [crew.code, profile.name, mine]);

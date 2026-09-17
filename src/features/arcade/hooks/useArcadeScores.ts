@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { ArcadeGame, ArcadeScores } from '../types';
 import { useDemoMode, DEMO_SCORES } from '@/lib/demoMode';
+import { publishArcadeScore } from '../lib/publishArcadeScore';
 
 const LS_KEYS: Record<ArcadeGame, string> = {
   'hit-heavy': 'blacktop_arcade_hit_heavy_hs',
@@ -34,6 +35,9 @@ export function saveScore(game: ArcadeGame, score: number): boolean {
   if (score > current) {
     localStorage.setItem(LS_KEYS[game], String(score));
     listeners.forEach(cb => cb());
+    // Push straight to the crew board so mates see it without opening it first.
+    if (game === 'hit-heavy') void publishArcadeScore('hit_heavy', score);
+    if (game === 'petrol-head') void publishArcadeScore('petrol_head', Math.round(score));
     return true;
   }
   return false;
