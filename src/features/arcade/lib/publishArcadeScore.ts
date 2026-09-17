@@ -51,3 +51,15 @@ export async function publishArcadeScore(
     console.error('Failed to publish arcade score:', e);
   }
 }
+
+/**
+ * Push whatever bests are already stored on this device up to the crew board.
+ * Called when the arcade opens so scores set before the board existed (or
+ * before a failed sync) still appear for crew mates.
+ */
+export async function syncExistingArcadeScores(): Promise<void> {
+  const hh = Number(localStorage.getItem('blacktop_arcade_hit_heavy_hs') ?? 0);
+  const ph = Number(localStorage.getItem('blacktop_arcade_petrol_head_hs') ?? 0);
+  if (hh > 0) await publishArcadeScore('hit_heavy', hh);
+  if (ph > 0) await publishArcadeScore('petrol_head', Math.round(ph));
+}

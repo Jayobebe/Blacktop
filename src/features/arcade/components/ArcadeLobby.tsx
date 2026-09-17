@@ -1,10 +1,16 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Car, Gamepad2, Bike } from 'lucide-react';
 import { useArcadeScores } from '../hooks/useArcadeScores';
+import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
 
 export function ArcadeLobby() {
   const navigate = useNavigate();
   const { scores } = useArcadeScores();
+
+  // Backfill any bests set before scores were syncing to the crew board.
+  useEffect(() => { void syncExistingArcadeScores(); }, []);
+
 
   return (
     <section className="w-full">
