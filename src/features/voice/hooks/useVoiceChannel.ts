@@ -493,6 +493,34 @@ export function useVoiceChannel(convoyId?: string) {
     swapInputDeviceRef.current = () => void swapInputDevice();
   }, [applyOutputDevice, swapInputDevice]);
 
+  // Playback watchdog: a remote element can end up paused (autoplay policy,
+  // Bluetooth route switch, app backgrounded) while the WebRTC stream is
+  // perfectly healthy - which is exactly "I can see you talking but hear
+  // nothing". Nudge every element back into playback periodically and on any
+  // user gesture.
+  useEffect(() => {
+    const kick = () => {
+      audioElementsRef.current.forEach((audio, peerId) => {
+        const stream = audio.srcObject as MediaStream | null;
+        stream?.getAudioTracks().forEach((t) => { t.enabled = true; });
+        if (audio.muted) audio.muted = false;
+        if (audio.volume < 1) audio.volume = 1;
+        if (audio.paused) {
+          audio.play().catch((e) => console.warn('[Voice] Watchdog play failed for', peerId, e?.name));
+        }
+      });
+    };
+
+    const interval = window.setInterval(kick, 3000);
+    const events: string[] = ['pointerdown', 'touchend', 'click', 'visibilitychange'];
+    events.forEach((ev) => document.addEventListener(ev, kick, { passive: true }));
+
+    return () => {
+      window.clearInterval(interval);
+      events.forEach((ev) => document.removeEventListener(ev, kick));
+    };
+  }, []);
+
 
 
   // Create peer connection for a remote user
