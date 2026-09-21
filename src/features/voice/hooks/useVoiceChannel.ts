@@ -22,15 +22,32 @@ const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
-  // Open Relay (Metered) free public TURN - UDP, TCP and TLS/443 fallbacks so
-  // voice still works on restrictive mobile / tethered networks.
+  // Open Relay (Metered) free public TURN. Static credentials are only served
+  // from the `staticauth` host now - the bare openrelay host rejects them,
+  // which silently left every cellular pair with no relay path at all.
   {
-    urls: 'turn:openrelay.metered.ca:80',
+    urls: 'turn:staticauth.openrelay.metered.ca:80',
     username: 'openrelayproject',
     credential: 'openrelayproject',
   },
   {
-    urls: 'turn:openrelay.metered.ca:443',
+    urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:staticauth.openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turns:staticauth.openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  // Legacy host kept as a last-resort fallback.
+  {
+    urls: 'turn:openrelay.metered.ca:80',
     username: 'openrelayproject',
     credential: 'openrelayproject',
   },
@@ -39,6 +56,7 @@ const ICE_SERVERS: RTCIceServer[] = [
     username: 'openrelayproject',
     credential: 'openrelayproject',
   },
+
 ];
 
 const AUDIO_INPUT_KEY = 'blacktop_audio_input';
