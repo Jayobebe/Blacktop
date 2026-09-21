@@ -2,6 +2,11 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { setSpeakingUsers } from './voiceActivityStore';
+import {
+  refreshNativeCommunicationAudio,
+  startNativeCommunicationAudio,
+  stopNativeCommunicationAudio,
+} from '../lib/nativeAudioRoute';
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -86,7 +91,6 @@ const getAudioConstraints = (): MediaTrackConstraints => {
     echoCancellation: true,
     noiseSuppression: true,
     autoGainControl: true,
-    sampleRate: 24000, // Lower sample rate for battery optimization (was 48000)
     channelCount: 1,
     ...deviceConstraint,
   };
@@ -267,6 +271,7 @@ export function useVoiceChannel(convoyId?: string) {
     audioElementsRef.current.clear();
     remoteStreamsRef.current.clear();
     peerConsentRef.current.clear();
+    void stopNativeCommunicationAudio();
     
     // Clear pending ICE candidates
     pendingCandidatesRef.current.clear();
@@ -447,6 +452,8 @@ export function useVoiceChannel(convoyId?: string) {
   // doesn't leave the rider silent.
   const swapInputDevice = useCallback(async () => {
     if (!localStreamRef.current) return;
+
+    await refreshNativeCommunicationAudio();
 
     let stream: MediaStream;
     try {
@@ -1059,6 +1066,9 @@ export function useVoiceChannel(convoyId?: string) {
       userIdRef.current = user.id;
 
       // Get microphone access with optimized settings
+      // Native Android must enter communication mode before microphone capture;
+      // this activates the Bluetooth HFP/SCO path for both input and playback.
+      await startNativeCommunicationAudio();
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -1398,6 +1408,7 @@ export function useVoiceChannel(convoyId?: string) {
       if (swapTimer) clearTimeout(swapTimer);
       // Bluetooth stacks emit several devicechange events in a row.
       swapTimer = setTimeout(() => {
+        void refreshNativeCommunicationAudio();
         swapInputDeviceRef.current?.();
         applyOutputDeviceRef.current?.();
       }, 500);
