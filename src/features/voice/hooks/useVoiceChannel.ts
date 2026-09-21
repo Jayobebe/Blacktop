@@ -434,10 +434,6 @@ export function useVoiceChannel(convoyId?: string) {
   // Called when an element is created AND whenever the user picks a different
   // speaker or a Bluetooth headset connects mid-ride.
   const applyOutputDevice = useCallback(() => {
-    const isIOS = isIOSDevice();
-    const isSafari = isSafariBrowser();
-    if (isIOS || isSafari) return; // setSinkId unsupported - OS routing wins
-
     const saved = localStorage.getItem(AUDIO_OUTPUT_KEY) || 'default';
     audioElementsRef.current.forEach((audio) => {
       if (!('setSinkId' in audio)) return;

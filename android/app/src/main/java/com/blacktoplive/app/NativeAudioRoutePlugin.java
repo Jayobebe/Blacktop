@@ -27,6 +27,7 @@ public class NativeAudioRoutePlugin extends Plugin {
     private AudioManager audioManager;
     private int previousMode = AudioManager.MODE_NORMAL;
     private boolean wasSpeakerphoneOn = false;
+    private boolean communicationActive = false;
 
     @Override
     public void load() {
@@ -84,13 +85,17 @@ public class NativeAudioRoutePlugin extends Plugin {
             }
             audioManager.setSpeakerphoneOn(wasSpeakerphoneOn);
             audioManager.setMode(previousMode);
+            communicationActive = false;
         }
         call.resolve(new JSObject());
     }
 
     private void activateCommunicationRoute() {
-        previousMode = audioManager.getMode();
-        wasSpeakerphoneOn = audioManager.isSpeakerphoneOn();
+        if (!communicationActive) {
+            previousMode = audioManager.getMode();
+            wasSpeakerphoneOn = audioManager.isSpeakerphoneOn();
+            communicationActive = true;
+        }
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         audioManager.setSpeakerphoneOn(false);
 
