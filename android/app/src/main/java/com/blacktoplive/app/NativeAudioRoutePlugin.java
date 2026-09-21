@@ -53,7 +53,7 @@ public class NativeAudioRoutePlugin extends Plugin {
     }
 
     @PermissionCallback
-    private void startAfterBluetoothPermission(PluginCall call) {
+    public void startAfterBluetoothPermission(PluginCall call) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT)
                 != PackageManager.PERMISSION_GRANTED) {
