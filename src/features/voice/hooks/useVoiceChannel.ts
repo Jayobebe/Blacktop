@@ -522,7 +522,11 @@ export function useVoiceChannel(convoyId?: string) {
       });
     } else {
       console.warn(`[Voice] No local stream when creating peer for ${remoteUserId}`);
+      // Without any m-line the peer carries no audio at all in EITHER
+      // direction, so we'd stay permanently silent even once the mic arrives.
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
     }
+
 
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
