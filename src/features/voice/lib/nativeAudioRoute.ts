@@ -8,6 +8,20 @@ interface NativeAudioRoutePlugin {
 
 const NativeAudioRoute = registerPlugin<NativeAudioRoutePlugin>('NativeAudioRoute');
 
+interface AudioSessionNavigator extends Navigator {
+  audioSession?: { type: 'auto' | 'playback' | 'transient' | 'transient-solo' | 'ambient' | 'play-and-record' };
+}
+
+export function startBrowserCommunicationAudio(): void {
+  const audioSession = (navigator as AudioSessionNavigator).audioSession;
+  if (audioSession) audioSession.type = 'play-and-record';
+}
+
+export function stopBrowserCommunicationAudio(): void {
+  const audioSession = (navigator as AudioSessionNavigator).audioSession;
+  if (audioSession) audioSession.type = 'auto';
+}
+
 export async function startNativeCommunicationAudio(): Promise<void> {
   if (Capacitor.getPlatform() !== 'android') return;
   try {

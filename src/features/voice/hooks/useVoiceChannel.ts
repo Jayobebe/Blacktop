@@ -4,7 +4,9 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { setSpeakingUsers } from './voiceActivityStore';
 import {
   refreshNativeCommunicationAudio,
+  startBrowserCommunicationAudio,
   startNativeCommunicationAudio,
+  stopBrowserCommunicationAudio,
   stopNativeCommunicationAudio,
 } from '../lib/nativeAudioRoute';
 
@@ -271,6 +273,7 @@ export function useVoiceChannel(convoyId?: string) {
     audioElementsRef.current.clear();
     remoteStreamsRef.current.clear();
     peerConsentRef.current.clear();
+    stopBrowserCommunicationAudio();
     void stopNativeCommunicationAudio();
     
     // Clear pending ICE candidates
@@ -1068,6 +1071,8 @@ export function useVoiceChannel(convoyId?: string) {
       // Get microphone access with optimized settings
       // Native Android must enter communication mode before microphone capture;
       // this activates the Bluetooth HFP/SCO path for both input and playback.
+      // Safari's Audio Session API provides the equivalent HFP call route.
+      startBrowserCommunicationAudio();
       await startNativeCommunicationAudio();
       let stream: MediaStream;
       try {

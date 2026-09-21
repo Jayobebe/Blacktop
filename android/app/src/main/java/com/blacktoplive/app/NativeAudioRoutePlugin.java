@@ -15,6 +15,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 @CapacitorPlugin(
     name = "NativeAudioRoute",
@@ -50,7 +51,7 @@ public class NativeAudioRoutePlugin extends Plugin {
         call.resolve(new JSObject());
     }
 
-    @SuppressWarnings("unused")
+    @PermissionCallback
     private void startAfterBluetoothPermission(PluginCall call) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT)
