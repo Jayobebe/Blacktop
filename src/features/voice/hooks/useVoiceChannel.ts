@@ -648,12 +648,20 @@ export function useVoiceChannel(convoyId?: string) {
     pc.ontrack = (event) => {
       console.log(`[Voice] Received remote track from ${remoteUserId}`, event.streams);
       
-      if (!event.streams || event.streams.length === 0) {
-        console.warn(`[Voice] No streams in track event from ${remoteUserId}`);
-        return;
+      // Unified Plan often delivers tracks with no associated stream (e.g. from
+      // a pre-added transceiver). Never drop them — wrap the bare track instead.
+      let remoteStream: MediaStream;
+      if (event.streams && event.streams.length > 0) {
+        remoteStream = event.streams[0];
+      } else {
+        const existing = remoteStreamsRef.current.get(remoteUserId);
+        if (existing) {
+          if (!existing.getTracks().includes(event.track)) existing.addTrack(event.track);
+          remoteStream = existing;
+        } else {
+          remoteStream = new MediaStream([event.track]);
+        }
       }
-      
-      const remoteStream = event.streams[0];
       remoteStreamsRef.current.set(remoteUserId, remoteStream);
       console.log(`[Voice] Remote stream tracks:`, remoteStream.getTracks().map(t => ({
         kind: t.kind,

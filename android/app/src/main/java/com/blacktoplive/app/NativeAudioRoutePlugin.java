@@ -97,26 +97,44 @@ public class NativeAudioRoutePlugin extends Plugin {
             communicationActive = true;
         }
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-        audioManager.setSpeakerphoneOn(false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AudioDeviceInfo bluetooth = null;
-            AudioDeviceInfo earpiece = null;
+            AudioDeviceInfo headset = null;
             for (AudioDeviceInfo device : audioManager.getAvailableCommunicationDevices()) {
                 int type = device.getType();
                 if (type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
-                    || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                        && type == AudioDeviceInfo.TYPE_BLE_HEADSET)) {
-                    bluetooth = device;
+                    || type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                    || type == AudioDeviceInfo.TYPE_WIRED_HEADSET
+                    || type == AudioDeviceInfo.TYPE_USB_HEADSET
+                    || type == AudioDeviceInfo.TYPE_HEARING_AID) {
+                    headset = device;
+                    if (type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || type == AudioDeviceInfo.TYPE_BLE_HEADSET) break;
+                }
+            }
+            if (headset != null) {
+                audioManager.setSpeakerphoneOn(false);
+                audioManager.setCommunicationDevice(headset);
+            } else {
+                // No headset: use the loudspeaker, never the quiet call earpiece.
+                audioManager.clearCommunicationDevice();
+                audioManager.setSpeakerphoneOn(true);
+            }
+        } else {
+            boolean btAvailable = false;
+            for (AudioDeviceInfo device : audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+                int type = device.getType();
+                if (type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                    btAvailable = true;
                     break;
                 }
-                if (type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE) earpiece = device;
             }
-            AudioDeviceInfo route = bluetooth != null ? bluetooth : earpiece;
-            if (route != null) audioManager.setCommunicationDevice(route);
-        } else {
-            audioManager.setBluetoothScoOn(true);
-            audioManager.startBluetoothSco();
+            if (btAvailable) {
+                audioManager.setSpeakerphoneOn(false);
+                audioManager.setBluetoothScoOn(true);
+                audioManager.startBluetoothSco();
+            } else {
+                audioManager.setSpeakerphoneOn(true);
+            }
         }
     }
 }
