@@ -4,8 +4,9 @@ import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { clearRideRole } from '@/features/pillion';
+import { getRacerState } from '@/features/track';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route, Zap, QrCode, ScanLine } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
@@ -74,6 +75,59 @@ export default function Home() {
   };
   const primaryTiles = [...(exp.showGroup ? [convoyTile] : []), ...(exp.showSolo ? [soloTile] : [])];
   const singleTop = primaryTiles.length === 1;
+  // Track Pack: racer shows the pairing QR, pit crew scans it. Remembered per device.
+  const showTrack = settings.trackPackEnabled;
+  const [trackRole, setTrackRoleState] = useState<'racer' | 'pit'>(() => {
+    try {
+      return localStorage.getItem('bt.track_role') === 'pit' ? 'pit' : 'racer';
+    } catch {
+      return 'racer';
+    }
+  });
+  const setTrackRole = (r: 'racer' | 'pit') => {
+    haptics.tick();
+    setTrackRoleState(r);
+    try {
+      localStorage.setItem('bt.track_role', r);
+    } catch {
+      /* per-session is fine */
+    }
+  };
+  const openTrack = () => {
+    haptics.light();
+    navigate(trackRole === 'pit' ? '/track?role=pit' : '/track');
+  };
+  const trackRoleToggle = (compact: boolean) => (
+    <div
+      role="radiogroup"
+      aria-label="Track role"
+      onClick={(e) => e.stopPropagation()}
+      className={cn('flex rounded-xl border border-accent/40 bg-background/60 p-0.5', compact ? 'text-[10px]' : 'text-[11px]')}
+    >
+      {([
+        { id: 'racer', label: 'Racer', Icon: QrCode },
+        { id: 'pit', label: 'Pit crew', Icon: ScanLine },
+      ] as const).map(({ id, label, Icon }) => (
+        <span
+          key={id}
+          role="radio"
+          aria-checked={trackRole === id}
+          tabIndex={0}
+          onClick={() => setTrackRole(id)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setTrackRole(id)}
+          className={cn(
+            'flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors',
+            compact ? 'px-1.5 py-1' : 'px-2.5 py-1.5',
+            trackRole === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
+          )}
+        >
+          <Icon className="w-3 h-3" />
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+
   const secondaryTile = exp.showGroup
     ? { icon: UserPlus, label: 'Join Convoy', sub: 'Enter a convoy code', onClick: () => navigate('/join-convoy') }
     : { icon: Route, label: 'Plan a Route', sub: exp.motorised ? 'Weather, cameras and loops' : 'Weather and loop routes', onClick: () => openBlacktopMap() };
@@ -108,6 +162,7 @@ export default function Home() {
   const topATileRef = useRef<HTMLButtonElement>(null);
   const topBTileRef = useRef<HTMLButtonElement>(null);
   const bottomTileRef = useRef<HTMLButtonElement>(null);
+  const trackTileRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<HTMLDivElement>(null);
   const arcOverlayRef = useRef<SVGSVGElement>(null);
 
@@ -120,7 +175,10 @@ export default function Home() {
     const arcSvg = arcOverlayRef.current;
     if (!column || topTiles.length === 0 || !join || !globe || !arcSvg) return;
 
-    const tiles = [...topTiles, join];
+    // In landscape the Track tile sits beside Join, so it's notched too.
+    const trackTile = trackTileRef.current;
+    const bottomTiles: HTMLElement[] = [join, ...(trackTile && trackTile.getClientRects().length > 0 ? [trackTile] : [])];
+    const tiles: HTMLElement[] = [...topTiles, ...bottomTiles];
 
     const apply = () => {
       const colRect = column.getBoundingClientRect();
@@ -197,7 +255,7 @@ export default function Home() {
 
       const defs = document.createElementNS(svgNS, 'defs');
       // Every tile carries an accent border now, so every tile gets its arc.
-      const arcs = [...topRects, joinRect].map((rect, i) => {
+      const arcs = [...topRects, ...bottomTiles.map((el) => el.getBoundingClientRect())].map((rect, i) => {
         const id = `bt-top-clip-${i}`;
         defs.appendChild(mkClipRect(id, rect.left - colRect.left, rect.top - colRect.top, rect.width, rect.height));
         return mkCircle(id);
@@ -225,7 +283,7 @@ export default function Home() {
       });
       arcSvg.innerHTML = '';
     };
-  }, [accentColor, exp.rideMode]);
+  }, [accentColor, exp.rideMode, showTrack]);
 
   // Clear any stale map destination when returning to the home screen so it
   // doesn't bleed into the next session.
@@ -236,7 +294,8 @@ export default function Home() {
   // Redirect to active ride if one exists
   useEffect(() => {
     if (rideState.isActive) {
-      navigate('/ride');
+      // A Track Pack session runs on its own timing screen.
+      navigate(getRacerState().phase === 'running' ? '/track' : '/ride');
     }
   }, [rideState.isActive, navigate]);
 
@@ -319,26 +378,65 @@ export default function Home() {
             ))}
           </div>
 
-          <button
-            ref={bottomTileRef}
-            onClick={() => {
-              haptics.light();
-              secondaryTile.onClick();
-            }}
-            className={cn(
-              'pressable flex-1 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
-              // The globe sits over this tile's centre in landscape, so the label moves right of it.
-              'landscape:justify-end landscape:pr-8'
+          {/* Bottom row: Join (plus Track in landscape, making four tiles around the globe) */}
+          <div className="flex gap-3 flex-1">
+            <button
+              ref={bottomTileRef}
+              onClick={() => {
+                haptics.light();
+                secondaryTile.onClick();
+              }}
+              className={cn(
+                'pressable flex-1 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
+                // The globe sits over this tile's centre in landscape, so the label moves right of it;
+                // with Track beside it the globe is on its right corner, so the label goes left.
+                showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
+              )}
+            >
+              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
+                <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
+              </div>
+              <div className="text-left">
+                <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
+                <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
+              </div>
+            </button>
+            {showTrack && (
+              <div
+                ref={trackTileRef}
+                role="button"
+                tabIndex={0}
+                onClick={openTrack}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
+                className="pressable hidden landscape:flex flex-1 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 touch-target-lg cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-accent" />
+                </div>
+                <div className="flex flex-col items-start gap-1">
+                  <span className="text-base font-semibold tracking-tight text-accent">Track</span>
+                  {trackRoleToggle(true)}
+                </div>
+              </div>
             )}
-          >
-            <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
-              <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
+          </div>
+
+          {/* Track Pack (portrait): trims the bottom off Join, sits above the nav bar */}
+          {showTrack && (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={openTrack}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
+              className="pressable landscape:hidden flex-none h-16 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-accent" />
+              </div>
+              <span className="flex-1 text-base font-semibold tracking-tight text-accent">Track Pack</span>
+              {trackRoleToggle(false)}
             </div>
-            <div className="text-left">
-              <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
-              <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
-            </div>
-          </button>
+          )}
 
           {/* Rotating globe — tapping opens the map. Sits above the tiles (z-20)
               so pointer events land here first; the canvas fills the div exactly. */}

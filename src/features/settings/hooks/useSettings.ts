@@ -66,6 +66,8 @@ export interface AppSettings {
   burnTripsInterval: 'off' | 'week' | 'month';
   /** Nearby riders: find opted-in riders close by and pair up / merge convoys (Blacktop map). */
   proximityEnabled: boolean;
+  /** Track Pack: lap timing, pit crew link and track sessions (Home button). */
+  trackPackEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -111,6 +113,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   collectiblesEnabled: true,
   burnTripsInterval: 'off',
   proximityEnabled: false,
+  trackPackEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

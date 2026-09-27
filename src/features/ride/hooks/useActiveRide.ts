@@ -1,3 +1,4 @@
+import { takePendingTrackReceipt } from '@/lib/trackReceipt';
 import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { takePendingChallengeReceipt } from '@/lib/challengeRun';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
@@ -357,8 +358,48 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
 }
 
 // Web geolocation handler
+// ── Raw fix tap + GPS rate ──────────────────────────────────────────────────
+// Lap timing needs every fix with its device timestamp, before the ride
+// tracker's smoothing/throttling. Listeners get fixes while a ride is running.
+export interface RawFix {
+  lat: number;
+  lng: number;
+  /** m/s from the device, when it reports one. */
+  speed: number | null;
+  accuracy: number | null;
+  /** Device fix time, epoch ms. */
+  t: number;
+}
+const rawFixListeners = new Set<(fix: RawFix) => void>();
+export function subscribeRawFixes(cb: (fix: RawFix) => void) {
+  rawFixListeners.add(cb);
+  return () => {
+    rawFixListeners.delete(cb);
+  };
+}
+function emitRawFix(latitude: number, longitude: number, speed: number | null | undefined, accuracy: number | null | undefined, timestamp: number) {
+  if (rawFixListeners.size === 0) return;
+  const fix: RawFix = { lat: latitude, lng: longitude, speed: speed ?? null, accuracy: accuracy ?? null, t: timestamp };
+  rawFixListeners.forEach((l) => l(fix));
+}
+
+/**
+ * High-rate GPS (Track Pack): ask the platform for fixes as fast as it can.
+ * Normal rides ask for one a second (Android otherwise defaults to 5-10 s).
+ */
+let gpsHighRate = false;
+export async function setGpsHighRate(on: boolean) {
+  if (gpsHighRate === on) return;
+  gpsHighRate = on;
+  if (watchId !== null) {
+    await stopGpsWatch();
+    await startGpsWatch();
+  }
+}
+
 function handleWebPosition(position: GeolocationPosition) {
   const { latitude, longitude, speed, accuracy } = position.coords;
+  emitRawFix(latitude, longitude, speed, accuracy, position.timestamp);
   handlePositionUpdate(latitude, longitude, speed, accuracy, position.timestamp);
 }
 
@@ -366,6 +407,7 @@ function handleWebPosition(position: GeolocationPosition) {
 function handleNativePosition(position: Position | null) {
   if (!position) return;
   const { latitude, longitude, speed, accuracy } = position.coords;
+  emitRawFix(latitude, longitude, speed, accuracy, position.timestamp);
   handlePositionUpdate(latitude, longitude, speed, accuracy, position.timestamp);
 }
 
@@ -392,7 +434,12 @@ async function startGpsWatch() {
       handleNativePosition(position);
 
       watchId = await Geolocation.watchPosition(
-        { enableHighAccuracy: true },
+        {
+          enableHighAccuracy: true,
+          // Android only: without these the plugin delivers a fix every 5-10 s.
+          interval: gpsHighRate ? 100 : 1000,
+          minimumUpdateInterval: gpsHighRate ? 0 : 500,
+        },
         handleNativePosition
       );
       console.log('[GPS] Native watch started, id:', watchId);
@@ -904,6 +951,7 @@ export function useActiveRide(convoyId?: string | null) {
         gForceSamples: currentState.gForceSamples,
         bikeId,
         challenge: takePendingChallengeReceipt(),
+        track: takePendingTrackReceipt(),
       };
       const didSaveRide = addRideRef.current(ride);
       if (didSaveRide) {

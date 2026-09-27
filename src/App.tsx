@@ -22,6 +22,7 @@ import Lobby from "./pages/Lobby";
 import SoloLobby from "./pages/SoloLobby";
 import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
+import Track from "./pages/Track";
 import DemoShowcase from "./pages/DemoShowcase";
 import History from "./pages/History";
 import RideDetail from "./pages/RideDetail";
@@ -113,6 +114,7 @@ function AppRoutes() {
       <Route path="/solo-lobby" element={<SoloLobby />} />
       <Route path="/ride" element={<ActiveRide />} />
       <Route path="/pillion" element={<PillionRide />} />
+      <Route path="/track" element={<Track />} />
       <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/pay" element={<Pay />} />
       <Route path="/history" element={<History />} />

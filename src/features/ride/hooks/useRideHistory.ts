@@ -7,6 +7,7 @@ import { recordRideDay } from '../lib/rideStreak';
 import { recordBadges, soloBadgesForRide } from '../lib/badgeWallet';
 import { BadgeType } from '@/types/convoy';
 import { clearAllLogbooks } from '@/features/logbook/lib/logbookStore';
+import { clearTrackData } from '@/features/track/lib/trackStore';
 import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate, mergeAggregates, emptyAggregate, NO_BIKE } from '../lib/tripBurner';
 
 const MAX_GPS_POINTS_PER_STORED_RIDE = 900;
@@ -242,6 +243,7 @@ export function useRideHistory() {
     clearRides();
     clearBurnedTotals();
     clearAllLogbooks();
+    clearTrackData();
     try { localStorage.removeItem('bt.cards.v1'); } catch { console.warn('[RideHistory] Failed to clear card cache'); }
     try { localStorage.removeItem('bt.collected_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear collected cards'); }
     try { localStorage.removeItem('bt.spectre_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear spectre cards'); }

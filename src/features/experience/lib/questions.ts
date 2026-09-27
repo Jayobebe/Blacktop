@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { ShieldCheck, Gauge, Activity, CloudRain, Video, Globe2, Radio, Wrench, Sparkles } from 'lucide-react';
+import { ShieldCheck, Gauge, Activity, CloudRain, Video, Globe2, Radio, Wrench, Sparkles, Zap } from 'lucide-react';
 import type { AppSettings } from '@/features/settings';
 import type { ExperienceTerms } from './terms';
 import type { RideMode, RideStyle } from './profile';
@@ -14,7 +14,7 @@ import { VEHICLES, type VehicleType } from './vehicles';
  * of its (applicable) features is on, so AppSettings stays the single source
  * of truth and manual changes in Settings flow back here automatically.
  */
-export type CareId = 'safety' | 'speed' | 'performance' | 'routes' | 'garage' | 'content' | 'collect' | 'community' | 'music';
+export type CareId = 'safety' | 'speed' | 'performance' | 'routes' | 'garage' | 'content' | 'collect' | 'community' | 'music' | 'track';
 
 type BoolFeature = {
   [K in keyof AppSettings]: AppSettings[K] extends boolean ? K : never;
@@ -150,6 +150,19 @@ export const CARE_QUESTIONS: CareQuestion[] = [
     hides: () => 'Blacktop stays private to you and your convoys',
     features: ['blacktopWorldEnabled'],
     recommendedFor: ['social', 'performance'],
+  },
+  {
+    id: 'track',
+    icon: Zap,
+    label: 'Track Pack',
+    question: () => 'Do you do track days?',
+    pitch: () =>
+      'Lap and sector timing from your phone, live timing and a pit board for your pit crew on their phone, and lap-by-lap traces after every session.',
+    gets: () => ['Lap & sector timing', 'Pit crew link', 'Pit board messages', 'Lap traces & export'],
+    hides: () => 'No Track Pack button on Home',
+    features: ['trackPackEnabled'],
+    applies: (c) => c.motorised,
+    recommendedFor: ['performance'],
   },
   {
     id: 'music',

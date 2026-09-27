@@ -1,3 +1,4 @@
+import type { TrackReceipt } from '@/lib/trackReceipt';
 import type { BadgeType } from './convoy';
 import type { RideChallenge } from '@/lib/challengeRun';
 export interface UserProfile {
@@ -63,6 +64,7 @@ export interface RideSession {
   overlayBlobUrl?: string; // Legacy: temporary blob URL (not persisted); kept for backward compatibility
   bikeId?: string; // Garage: which bike this ride was logged against
   challenge?: RideChallenge; // Card time-attack: set or raced during this ride
+  track?: TrackReceipt; // Track Pack session run during this ride
 }
 
 export interface GpsPoint {

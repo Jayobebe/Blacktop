@@ -1,4 +1,5 @@
-export { useActiveRide, attachRideToConvoy } from './hooks/useActiveRide';
+export { useActiveRide, attachRideToConvoy, subscribeRawFixes, setGpsHighRate } from './hooks/useActiveRide';
+export type { RawFix } from './hooks/useActiveRide';
 export { useRideHistory } from './hooks/useRideHistory';
 export { burnExpiredTrips, burnedAggregate, NO_BIKE, aggregateRides, mergeAggregates, emptyAggregate, BURNED_TOTALS_KEY } from './lib/tripBurner';
 export type { BurnTripsInterval, BurnedAggregate, BurnedTotals } from './lib/tripBurner';
