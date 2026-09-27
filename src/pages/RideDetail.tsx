@@ -171,6 +171,7 @@ export default function RideDetail() {
             orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
             timeAttack={!!ride.challenge}
             trackDay={!!ride.track}
+            track={ride.track ?? null}
           />
         </div>
 

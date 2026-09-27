@@ -44,6 +44,8 @@ interface RideSummaryProps {
   timeAttack?: boolean;
   /** Track Pack session: prints on blue stock. */
   trackDay?: boolean;
+  /** Track Pack session details, printed on track-day receipts. */
+  track?: { trackName: string; laps: number; bestLapMs: number | null } | null;
 }
 
 function ReceiptRow({ label, value }: { label: string; value: string }) {
@@ -56,7 +58,15 @@ function ReceiptRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false, trackDay = false }: RideSummaryProps) {
+/** Lap time as m:ss.mmm (e.g. 1:32.418). */
+function formatLapTime(ms: number | null | undefined): string {
+  if (ms == null || !Number.isFinite(ms) || ms <= 0) return '—';
+  const m = Math.floor(ms / 60000);
+  const sec = ((ms % 60000) / 1000).toFixed(3).padStart(6, '0');
+  return `${m}:${sec}`;
+}
+
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false, trackDay = false, track = null }: RideSummaryProps) {
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();
   // Each receipt section follows the rider's setup answers.
@@ -197,12 +207,25 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             </div>
           )}
 
+          {/* Track line (track-day receipts) */}
+          {track && (
+            <div className={showVehicle ? 'mt-2' : 'mt-4'}>
+              <ReceiptRow label="Track" value={track.trackName || '—'} />
+            </div>
+          )}
+
           {/* Divider */}
           <div className="my-3 border-t-2 border-dashed border-[--ink] opacity-60" />
 
           {/* Stats */}
           {rideStats && (
             <div className="space-y-2">
+              {track && (
+                <>
+                  <ReceiptRow label="Best Lap" value={formatLapTime(track.bestLapMs)} />
+                  <ReceiptRow label="Laps" value={String(track.laps)} />
+                </>
+              )}
               {showSpeed && (
                 <ReceiptRow
                   label="Max Spd"
