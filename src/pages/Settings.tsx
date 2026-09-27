@@ -325,14 +325,14 @@ export default function Settings() {
           {/* Demo */}
           <CollapsibleSection
             icon={Play}
-            label="Demo"
+            label="Demo" index={0}
             delayClass="delay-75"
             rightElement={<Play className="w-4 h-4 text-accent" />}
             onHeaderClick={() => navigate('/demo')}
           />
 
           {/* Setup answers — same choices as onboarding, applied instantly */}
-          <CollapsibleSection icon={Sparkles} label="Your Blacktop" delayClass="delay-75">
+          <CollapsibleSection icon={Sparkles} label="Your Blacktop" index={1} delayClass="delay-75">
             <div className="space-y-5">
               <div>
                 <p className="text-xs text-muted-foreground mb-2">What you {exp.terms.ride} <span className="opacity-60">(first is your main)</span></p>
@@ -406,7 +406,7 @@ export default function Settings() {
           </CollapsibleSection>
 
           {/* Safety */}
-        <CollapsibleSection icon={AlertTriangle} label="Safety" delayClass="delay-100">
+        <CollapsibleSection icon={AlertTriangle} label="Safety" index={2} delayClass="delay-100">
           <div className="space-y-5">
             {/* Speed Alerts — they colour the live speed readout, so only for speed-focused riders */}
             {settings.speedFocusEnabled && (
@@ -577,7 +577,7 @@ export default function Settings() {
         </CollapsibleSection>
 
          {/* Ride Metrics Section */}
-         <CollapsibleSection icon={Gauge} label="Ride Metrics" delayClass="delay-200">
+         <CollapsibleSection icon={Gauge} label="Ride Metrics" index={3} delayClass="delay-200">
            <div className="space-y-3">
              <div className="flex items-center justify-between">
                <div>
@@ -710,7 +710,7 @@ export default function Settings() {
 
 
         {/* Navigation App Section */}
-        <CollapsibleSection icon={Navigation} label="Navigation" delayClass="delay-200">
+        <CollapsibleSection icon={Navigation} label="Navigation" index={4} delayClass="delay-200">
           <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
@@ -859,12 +859,12 @@ export default function Settings() {
 
 
         {/* Discord Integration */}
-        <CollapsibleSection icon={MessageSquare} label="Discord" delayClass="delay-200">
+        <CollapsibleSection icon={MessageSquare} label="Discord" index={5} delayClass="delay-200">
           <DiscordSettingsCard />
         </CollapsibleSection>
 
         {/* Accent Color Section */}
-        <CollapsibleSection icon={Palette} label="Accent Color" delayClass="delay-200">
+        <CollapsibleSection icon={Palette} label="Accent Color" index={6} delayClass="delay-200">
           <AccentColorPicker 
             selected={settings.accentColor} 
             onSelect={setAccentColor} 
@@ -872,7 +872,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Privacy Section */}
-        <CollapsibleSection icon={Shield} label="Privacy" delayClass="delay-250">
+        <CollapsibleSection icon={Shield} label="Privacy" index={7} delayClass="delay-250">
           <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li>• Ride history stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
@@ -908,13 +908,14 @@ export default function Settings() {
 
         {/* Blacktop World Opt-In */}
         <BlacktopWorldOptIn
+          index={8}
           enabled={settings.blacktopWorldEnabled}
           onToggle={(v) => updateSetting('blacktopWorldEnabled', v)}
         />
 
 
         {/* Pay Up — collapsed so the QR isn't the first thing on the page */}
-        <CollapsibleSection icon={Heart} label="Pay Up" delayClass="delay-300">
+        <CollapsibleSection icon={Heart} label="Pay Up" index={9} delayClass="delay-300">
           <NimiqTipCard bare />
         </CollapsibleSection>
         </div>
@@ -924,7 +925,6 @@ export default function Settings() {
           icon={Flame}
           label="Burn all data"
           delayClass="delay-300"
-          className="w-full min-h-0 landscape:min-h-0 flex-row items-center"
           labelClassName="text-[hsl(var(--burn))]"
           iconClassName="text-[hsl(var(--burn))]"
         >
@@ -971,13 +971,14 @@ export default function Settings() {
   );
 }
 
-function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle: (v: boolean) => void }) {
+function BlacktopWorldOptIn({ enabled, onToggle, index }: { enabled: boolean; onToggle: (v: boolean) => void; index?: number }) {
   return (
     <CollapsibleSection
       icon={Globe2}
-      label="Blacktop World"
+      label="World"
+      index={index}
       delayClass="delay-300"
-      status={enabled ? 'On' : 'Off'}
+      status={enabled ? 'On' : ''}
     >
       <div className="space-y-3 text-[13px] text-muted-foreground leading-relaxed">
         <p>

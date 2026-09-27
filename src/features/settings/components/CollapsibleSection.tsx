@@ -1,6 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 
@@ -14,18 +13,19 @@ interface CollapsibleSectionProps {
   labelClassName?: string;
   iconClassName?: string;
   rightElement?: ReactNode;
-  /** Short value shown on the tile (e.g. "On"). */
+  /** On/off indicator shown as a small dot before the chevron (truthy = on). */
   status?: ReactNode;
-  /** One line under the title inside the panel. */
-  description?: ReactNode;
   onHeaderClick?: () => void;
+  /**
+   * Position in a 2-column grid. When set, the tile never moves: its content
+   * opens as a full-width panel placed directly under the tile's row (via CSS
+   * `order`), so opening a section can't leave a half-empty row.
+   * Without it, the section expands inline (full-width blocks).
+   */
+  index?: number;
 }
 
-/**
- * A compact Settings tile. Tapping opens the section in a frosted panel that
- * slides up from the bottom, so the grid never reflows (no half-empty rows)
- * and the page stays short. Action tiles (`onHeaderClick`) just run the action.
- */
+/** Settings dropdown tile: accent icon, label, accent chevron; content drops down below. */
 export function CollapsibleSection({
   icon: Icon,
   label,
@@ -37,65 +37,116 @@ export function CollapsibleSection({
   iconClassName,
   rightElement,
   status,
-  description,
   onHeaderClick,
+  index,
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  // Grid panels leave the layout entirely once closed (an empty grid item would
+  // still add a row gap); `shown` lags `open` so the close animation can play.
+  const [shown, setShown] = useState(defaultOpen);
+  const [expanded, setExpanded] = useState(defaultOpen);
+  useEffect(() => {
+    if (open) {
+      setShown(true);
+      const raf = requestAnimationFrame(() => requestAnimationFrame(() => setExpanded(true)));
+      return () => cancelAnimationFrame(raf);
+    }
+    setExpanded(false);
+    const t = window.setTimeout(() => setShown(false), 300);
+    return () => window.clearTimeout(t);
+  }, [open]);
+  const isActionHeader = Boolean(onHeaderClick);
+  const inGrid = index !== undefined;
 
+  const header = (
+    <button
+      type="button"
+      aria-expanded={isActionHeader ? undefined : open}
+      onClick={() => {
+        haptics.tick();
+        if (onHeaderClick) {
+          onHeaderClick();
+          return;
+        }
+        setOpen((v) => !v);
+      }}
+      className="pressable w-full flex items-center gap-2 px-3 h-14 landscape:h-12 text-left"
+    >
+      {Icon && (
+        <span className="relative shrink-0">
+          <Icon className={cn('w-[17px] h-[17px] text-accent', iconClassName)} strokeWidth={1.9} />
+          {/* On/off status as a dot on the icon's corner, so it never squeezes the label */}
+          {status !== undefined && status !== null && status !== false && (
+            <span
+              className={cn(
+                'absolute -top-0.5 -right-1 w-[7px] h-[7px] rounded-full ring-2 ring-card',
+                status ? 'bg-emerald-400' : 'bg-muted-foreground/50',
+              )}
+              aria-label={typeof status === 'string' && status ? status : 'Off'}
+            />
+          )}
+        </span>
+      )}
+      <p className={cn('text-[13px] font-medium tracking-[-0.01em] text-foreground flex-1 min-w-0 truncate', labelClassName)}>{label}</p>
+      {rightElement ? (
+        <span className="shrink-0">{rightElement}</span>
+      ) : (
+        <ChevronDown
+          className={cn('w-4 h-4 text-accent transition-transform duration-300 ease-spring shrink-0', open && 'rotate-180')}
+        />
+      )}
+    </button>
+  );
+
+  const body = !isActionHeader && children && (
+    <div
+      className={cn(
+        'grid transition-[grid-template-rows] duration-300 ease-spring',
+        (inGrid ? expanded : open) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+      )}
+    >
+      {/* inert while closed: hidden content must not take focus or be read out */}
+      <div className="overflow-hidden" {...(!open ? { inert: '' as unknown as boolean } : {})}>
+        <div className="px-4 pb-4 pt-3 landscape:px-3 landscape:pb-3">{children}</div>
+      </div>
+    </div>
+  );
+
+  const surface = 'bg-card rounded-[18px] border border-white/[0.06] animate-slide-up overflow-hidden';
+
+  if (!inGrid) {
+    return (
+      <section className={cn(surface, delayClass, className)}>
+        {header}
+        {body && open && <div className="border-t border-white/[0.06]" />}
+        {body}
+      </section>
+    );
+  }
+
+  // Grid mode: tile stays put; panel follows the tile's row (row = pair of indices).
+  const rowEnd = index - (index % 2) + 1;
   return (
     <>
-      <button
-        type="button"
-        aria-haspopup={onHeaderClick ? undefined : 'dialog'}
-        onClick={() => {
-          haptics.tick();
-          if (onHeaderClick) onHeaderClick();
-          else setOpen(true);
-        }}
-        className={cn(
-          'pressable group relative bg-card rounded-[20px] border border-white/[0.06] p-3.5 text-left animate-slide-up',
-          'flex flex-col justify-between gap-3 min-h-[92px] landscape:min-h-[76px]',
-          delayClass,
-          className,
-        )}
+      <section
+        style={{ order: index * 2 }}
+        className={cn(surface, open && 'border-accent/40', delayClass, className)}
       >
-        <div className="flex items-start justify-between w-full">
-          {Icon && (
-            <span className="w-9 h-9 rounded-xl bg-white/[0.07] flex items-center justify-center shrink-0">
-              <Icon className={cn('w-[18px] h-[18px] text-foreground/85', iconClassName)} strokeWidth={1.9} />
-            </span>
+        {header}
+      </section>
+      {body && shown && (
+        <section
+          style={{ order: rowEnd * 2 + 1 }}
+          className={cn(
+            'col-span-2 rounded-[18px] overflow-hidden transition-opacity duration-300',
+            surface,
+            'border-accent/30',
+            expanded ? 'opacity-100' : 'opacity-0',
           )}
-          {rightElement ??
-            (status ? (
-              <span className="text-[12px] text-muted-foreground mt-1">{status}</span>
-            ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground/70 mt-1 transition-transform group-hover:translate-x-0.5" />
-            ))}
-        </div>
-        <p className={cn('text-[15px] font-medium leading-tight text-foreground', labelClassName)}>{label}</p>
-      </button>
-
-      {!onHeaderClick && (
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="bottom" className="rounded-t-[28px] max-h-[88dvh] overflow-y-auto safe-bottom px-5 pt-5 pb-6">
-            <SheetHeader className="text-left mb-4">
-              <SheetTitle className="flex items-center gap-2.5 text-[19px]">
-                {Icon && (
-                  <span className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">
-                    <Icon className={cn('w-[18px] h-[18px]', iconClassName)} strokeWidth={1.9} />
-                  </span>
-                )}
-                <span className={labelClassName}>{label}</span>
-              </SheetTitle>
-              {description ? (
-                <SheetDescription>{description}</SheetDescription>
-              ) : (
-                <SheetDescription className="sr-only">{label} settings</SheetDescription>
-              )}
-            </SheetHeader>
-            {children}
-          </SheetContent>
-        </Sheet>
+          aria-label={`${label} settings`}
+        >
+          {body}
+        </section>
       )}
     </>
   );
