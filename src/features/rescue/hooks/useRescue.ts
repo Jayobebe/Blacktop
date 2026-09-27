@@ -22,6 +22,8 @@ const RESCUE_COOLDOWN_MS = 30_000; // 30 seconds
 export function useRescue(convoyId: string | null, isLeader: boolean, userId: string | null, userName: string | null) {
   const [rescueRequests, setRescueRequests] = useState<RescueRequest[]>([]);
   const [hasPendingRescue, setHasPendingRescue] = useState(false);
+  // For the rider in distress: names of convoy members who've said they're coming.
+  const [responders, setResponders] = useState<string[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastRescueSentAtRef = useRef<number>(0);
 
@@ -70,16 +72,39 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
           duration: 10000,
         });
       })
+      // Any member (not just the leader) can answer a rescue card. The rider in
+      // distress is told who's coming; everyone else sees who's already on it,
+      // and the rescue route stays up so more riders can still turn back.
+      .on('broadcast', { event: 'rescue_responding' }, (payload) => {
+        const { riderUserId, riderName, responderId, responderName } = payload.payload as {
+          riderUserId: string;
+          riderName: string;
+          responderId: string;
+          responderName: string;
+        };
+        if (responderId === userId) return;
+        if (riderUserId === userId) {
+          setResponders((prev) => (prev.includes(responderName) ? prev : [...prev, responderName]));
+          toast.success(`${responderName} is on the way to you`, { duration: 15000 });
+          return;
+        }
+        toast(`${responderName} is heading to ${riderName}`, { duration: 6000 });
+      })
       .on('broadcast', { event: 'rescue_acknowledged' }, (payload) => {
-        const { requestId, byLeader, riderUserId, riderName } = payload.payload as { requestId: string; byLeader: boolean; riderUserId?: string; riderName?: string };
+        const { requestId, riderUserId, riderName, responderName } = payload.payload as {
+          requestId: string;
+          byLeader: boolean;
+          riderUserId?: string;
+          riderName?: string;
+          responderName?: string;
+        };
         clearRescueTarget(riderUserId);
         
         if (riderUserId === userId) {
           // The rider in trouble: their rescue was acknowledged
           setHasPendingRescue(false);
-          if (byLeader) {
-            toast.success('Help is on the way! Leader added your location as a waypoint.');
-          }
+          setResponders([]);
+          toast.success(`Help is on the way! ${responderName ?? 'Your leader'} added your location as a waypoint.`, { duration: 15000 });
           return;
         }
 
@@ -95,6 +120,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
         if (riderUserId === userId) {
           setHasPendingRescue(false);
+          setResponders([]);
         }
         setRescueRequests(prev => prev.filter(r => r.id !== requestId && (!riderUserId || r.userId !== riderUserId)));
       })
@@ -134,6 +160,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     });
 
     setHasPendingRescue(true);
+    setResponders([]);
     setRescueTarget({ userId, userName, lat, lng });
     toast.info('Rescue request sent to your convoy');
 
@@ -160,11 +187,32 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     await channelRef.current.send({
       type: 'broadcast',
       event: 'rescue_acknowledged',
-      payload: { requestId, byLeader: true, riderUserId, riderName },
+      payload: { requestId, byLeader: true, riderUserId, riderName, responderName: userName ?? undefined },
     });
 
     setRescueRequests(prev => prev.filter(r => r.id !== requestId));
-  }, []);
+  }, [userName]);
+
+  /**
+   * "I'm on my way" from any convoy member: tells the rider in distress (and the
+   * rest of the convoy) who's coming. The rescue route stays on everyone's map.
+   */
+  const respondToRescue = useCallback(async (request: RescueRequest) => {
+    setRescueRequests(prev => prev.filter(r => r.id !== request.id));
+    if (!channelRef.current || !userId) return;
+    await channelRef.current.send({
+      type: 'broadcast',
+      event: 'rescue_responding',
+      payload: {
+        requestId: request.id,
+        riderUserId: request.userId,
+        riderName: request.userName,
+        responderId: userId,
+        responderName: userName ?? 'A convoy member',
+      },
+    });
+    toast.success(`${request.userName} knows you're on the way`);
+  }, [userId, userName]);
 
   // Leader dismissal closes the request for the whole convoy; a member
   // dismissing only hides the alert on their own screen.
@@ -192,6 +240,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     void notifyRescueCancel({ convoyId });
 
     setHasPendingRescue(false);
+    setResponders([]);
     clearRescueTarget(userId);
   }, [userId, convoyId]);
 
@@ -210,8 +259,10 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
   return {
     rescueRequests,
     hasPendingRescue,
+    responders,
     sendRescueRequest,
     acknowledgeRescue,
+    respondToRescue,
     dismissRescue,
     cancelRescueRequest,
   };

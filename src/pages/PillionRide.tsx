@@ -30,7 +30,7 @@ export default function PillionRide() {
   const name = profile.name || 'Pillion';
 
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id ?? undefined);
-  const { rescueRequests, hasPendingRescue, sendRescueRequest, dismissRescue, cancelRescueRequest } = useRescue(
+  const { rescueRequests, hasPendingRescue, sendRescueRequest, dismissRescue, cancelRescueRequest, respondToRescue } = useRescue(
     convoy.id,
     convoy.isLeader,
     userId,
@@ -139,6 +139,7 @@ export default function PillionRide() {
         requests={rescueRequests}
         isLeader={false}
         onAddWaypoint={() => {}}
+        onRespond={respondToRescue}
         onDismiss={dismissRescue}
       />
 

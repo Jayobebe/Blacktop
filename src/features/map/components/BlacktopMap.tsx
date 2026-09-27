@@ -23,6 +23,7 @@ import { MapSearchBar } from "./MapSearchBar";
 import { LoopPlannerPanel } from "./LoopPlannerPanel";
 import { OfflinePacksPanel } from "./OfflinePacksPanel";
 import { TurnBanner } from "./TurnBanner";
+import { whenStyleReady } from "../lib/whenStyleReady";
 import { useTurnByTurn } from "../hooks/useTurnByTurn";
 import { remainingLine } from "../lib/navigation";
 import { stopSpeaking } from "../lib/speech";
@@ -1340,8 +1341,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         paint: { "line-color": accentColor, "line-width": 1.5, "line-opacity": 0.5, "line-dasharray": [2, 2] },
       });
     };
-    if (map.isStyleLoaded()) apply();
-    else map.once("load", apply);
+    return whenStyleReady(map, apply);
   }, [map, proximity.active, userLocation, accentColor]);
 
   // Gentle pulse on the ring while it's showing.
@@ -1419,8 +1419,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         paint: { "line-color": accentColor, "line-width": 5, "line-opacity": 0.75, "line-dasharray": [2, 1] },
       });
     };
-    if (map.isStyleLoaded()) apply();
-    else map.once("load", apply);
+    return whenStyleReady(map, apply);
   }, [map, challengeRun, accentColor]);
 
   // Proximity ping while riding without a destination.
@@ -1662,7 +1661,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     onStopReached: handleStopReached,
   });
   const navProgressNow = turnByTurn.progress;
-  const hasTurns = !!turnByTurn.nav?.maneuvers.length;
   // A convoy's next stop can be a shaping point (twisty leg): reaching it isn't an arrival.
   const arrivedAtDestination = turnByTurn.arrived && finalStopName != null;
 
@@ -1796,13 +1794,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       }
     };
 
-    if (map.isStyleLoaded()) {
-      draw();
-    } else {
-      map.once("load", draw);
-    }
+    const cancelReady = whenStyleReady(map, draw);
 
-    return removeRouteLayers;
+    return () => {
+      cancelReady();
+      removeRouteLayers();
+    };
   }, [map, route, accentColor]);
 
   // While guiding, trim the line behind the rider so only the road ahead shows.
@@ -1925,10 +1922,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       }, 90);
     };
 
-    if (map.isStyleLoaded()) draw();
-    else map.once("load", draw);
+    const cancelReady = whenStyleReady(map, draw);
 
     return () => {
+      cancelReady();
       if (pulse) clearInterval(pulse);
       removeRescueLayers();
     };
@@ -1990,7 +1987,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // search bar back only while adding a stop. Solo: search unless moving.
   // Turn-by-turn takes the search bar's slot while guiding (a leader adding a
   // stop gets the search bar back until they pick one).
-  const showTurnBanner = guiding && (hasTurns || rerouting) && !addingWaypoint;
+  // Any route being guided gets the banner (it shows "Follow the route" with
+  // time/distance left when the router returned no manoeuvres), so the search
+  // bar and the bottom destination card always make way for it.
+  const showTurnBanner = guiding && !addingWaypoint;
   const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving && !showTurnBanner));
   const showConvoyStrip = inConvoyRide && !showSearchBar;
   const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
@@ -2582,7 +2582,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             </div>
 
             {/* Start turn-by-turn without waiting to get moving. */}
-            {route && !isRouting && !guiding && hasTurns && (
+            {route && !isRouting && !guiding && (
               <button
                 onClick={() => {
                   setNavDismissed(false);

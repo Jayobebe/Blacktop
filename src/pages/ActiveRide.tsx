@@ -155,6 +155,8 @@ export default function ActiveRide() {
   const { 
     rescueRequests, 
     hasPendingRescue, 
+    responders: rescueResponders,
+    respondToRescue,
     sendRescueRequest, 
     acknowledgeRescue, 
     dismissRescue,
@@ -839,13 +841,25 @@ export default function ActiveRide() {
         requests={rescueRequests}
         isLeader={convoy.isLeader}
         onAddWaypoint={handleAddRescueWaypoint}
-        onShowOnMap={(request) => {
-          // Hide it locally; the map draws the rescue route to their location.
-          void dismissRescue(request.id);
+        onRespond={(request) => {
+          // Tell the rider (and convoy) we're coming, then show the rescue route.
+          void respondToRescue(request);
           openBlacktopMap();
         }}
         onDismiss={dismissRescue}
       />
+
+      {/* Rider in distress: who's coming. Stays up until the rescue is closed. */}
+      {hasPendingRescue && rideState.isConvoyMode && (
+        <div className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-40 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-[hsl(var(--burn))]/60 bg-[hsl(var(--burn))]/15 backdrop-blur-xl px-4 py-3 shadow-2xl animate-slide-down">
+          <p className="text-sm font-semibold text-[hsl(var(--burn))]">Rescue request sent</p>
+          <p className="text-xs text-foreground/85 mt-0.5">
+            {rescueResponders.length === 0
+              ? 'Waiting for your convoy to respond…'
+              : `${rescueResponders.join(', ')} ${rescueResponders.length === 1 ? 'is' : 'are'} on the way`}
+          </p>
+        </div>
+      )}
 
       {/* Auto-rescue crash check */}
       {crashPromptOpen && (

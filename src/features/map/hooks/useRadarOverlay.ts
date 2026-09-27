@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { App } from '@capacitor/app';
+import { whenStyleReady } from '../lib/whenStyleReady';
 
 const TIMELINE_URL = 'https://api.rainviewer.com/public/weather-maps.json';
 const TIMELINE_REFRESH_MS = 5 * 60 * 1000; // throttle window: at most one timeline fetch per 5 minutes
@@ -215,14 +216,14 @@ export function useRadarOverlay(
     async function refreshTimeline() {
       const data = await fetchTimelineThrottled();
       if (cancelled || !data) return;
-      loadFrames(data);
+      whenStyleReady(map, () => {
+        if (!cancelled) loadFrames(data);
+      });
     }
 
-    if (map.isStyleLoaded()) {
-      refreshTimeline();
-    } else {
-      map.once('load', refreshTimeline);
-    }
+    // Frames are added once the style can take them (see whenStyleReady) —
+    // 'load' may have fired long before the radar was switched on.
+    refreshTimeline();
     // Re-check every 5 minutes; fetchTimelineThrottled() is a no-op network-wise
     // if a fetch already happened that recently (e.g. via another mount).
     refreshTimer = setInterval(refreshTimeline, TIMELINE_REFRESH_MS);

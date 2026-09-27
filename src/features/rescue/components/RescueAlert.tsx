@@ -1,19 +1,23 @@
-import { Map as MapIcon, MapPin, UserPlus, X } from 'lucide-react';
+import { MapPin, Navigation, UserPlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RescueRequest } from '@/features/rescue';
 import { cn } from '@/lib/utils';
 
 interface RescueAlertProps {
   requests: RescueRequest[];
-  /** Leader adds the rider as a waypoint; everyone else can view the rescue route. */
+  /** Leader adds the rider as a waypoint; everyone else says they're on the way. */
   isLeader: boolean;
   onAddWaypoint: (request: RescueRequest) => void;
-  /** Omit where there's no map (pillion screen): the button just acknowledges. */
-  onShowOnMap?: (request: RescueRequest) => void;
+  /**
+   * "I'm on my way": tells the rider in distress (and the convoy) this member is
+   * coming. Every member can answer, not just the leader.
+   */
+  onRespond: (request: RescueRequest) => void;
+  /** Closes the card on this phone only, without answering. */
   onDismiss: (requestId: string) => void;
 }
 
-export function RescueAlert({ requests, isLeader, onAddWaypoint, onShowOnMap, onDismiss }: RescueAlertProps) {
+export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDismiss }: RescueAlertProps) {
   if (requests.length === 0) return null;
 
   return (
@@ -35,10 +39,8 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onShowOnMap, on
                 <p className="font-bold text-lg">{request.userName} needs rescue!</p>
                 <p className="text-sm opacity-80 mt-1">
                   {isLeader
-                    ? 'Add them as a waypoint to navigate to their location'
-                    : onShowOnMap
-                      ? 'Their location is marked on the map'
-                      : 'Your convoy has their location'}
+                    ? 'Add them as a waypoint to route the convoy to them'
+                    : 'Their location is marked on the map. Let them know you’re coming.'}
                 </p>
               </div>
               
@@ -55,11 +57,11 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onShowOnMap, on
                 ) : (
                   <Button
                     size="lg"
-                    onClick={() => (onShowOnMap ? onShowOnMap(request) : onDismiss(request.id))}
+                    onClick={() => onRespond(request)}
                     className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
                   >
-                    {onShowOnMap && <MapIcon className="w-5 h-5 mr-2" />}
-                    {onShowOnMap ? 'Show on map' : 'Got it'}
+                    <Navigation className="w-5 h-5 mr-2" />
+                    I'm on my way
                   </Button>
                 )}
                 <Button
