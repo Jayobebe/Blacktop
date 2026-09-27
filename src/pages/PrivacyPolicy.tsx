@@ -134,7 +134,7 @@ export default function PrivacyPolicy() {
           <p className="text-muted-foreground">
             <span className="text-foreground">Speedshop survey:</span> nothing is sold yet. When you answer
             whether you'd buy an item and what you'd pay, or send a suggestion, we store that answer linked to
-            your anonymous account. Other riders only ever see anonymous totals. The Burn Button deletes it.
+            your anonymous account. Other riders only ever see anonymous totals, and the survey table in the app's demo mode shows those totals and the suggestion text (never who sent them). The Burn Button deletes your answers.
           </p>
           <p className="text-muted-foreground">
             <span className="text-foreground">Track Pack (opt-in):</span> tracks, lap times and session

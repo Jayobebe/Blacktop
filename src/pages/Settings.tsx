@@ -34,7 +34,7 @@ import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
-import { clearSurveyAnswers } from '@/features/speedshop';
+import { clearSurveyAnswers, SurveyResultsTable } from '@/features/speedshop';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
 import { NimiqTipCard } from '@/features/tips';
@@ -986,6 +986,9 @@ export default function Settings() {
 
         {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
         <NimiqTipCard />
+
+        {/* Demo account: every rider's Speedshop survey answers */}
+        {demoEnabled && <SurveyResultsTable />}
 
         {/* Legal Disclaimer */}
         <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
