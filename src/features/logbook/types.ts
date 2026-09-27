@@ -19,6 +19,8 @@ export interface LogRide {
   earnedBadges?: BadgeType[];
   /** Time-attack result, if the ride was one. */
   challenge?: { vehicleName: string; ownerName: string; role: 'set' | 'attempt'; timeSec: number; targetSec: number | null; result?: string };
+  /** Track Pack session, if the ride was one. */
+  track?: { trackName: string; laps: number; bestLapMs: number | null };
   /** Rider who owned the vehicle at the time. */
   owner: string;
 }

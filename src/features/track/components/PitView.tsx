@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { ScanLine, Send, Wifi, WifiOff, Download } from 'lucide-react';
+import { ScanLine, Send, Wifi, WifiOff, Download, Footprints, Flag, Hourglass } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,11 +14,12 @@ import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { Lap, TrackDef } from '../types';
 import { PIT_PRESETS } from '../types';
 import { TrackLink, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
-import { toLocal } from '../lib/geometry';
 import { shareFile } from '../lib/export';
 import { DeltaReadout, LapTable, SectorBoxes } from './TimingParts';
 import { formatLap } from '../lib/timing';
 import { theoreticalBest } from '../lib/laps';
+import { TrackMinimap } from './TrackMinimap';
+import { TrackVoice } from './TrackVoice';
 
 const SCANNER_ID = 'track-pit-scanner';
 
@@ -95,11 +96,16 @@ export function PitView() {
     const onMsg = (m: LinkMessage) => {
       setLastSeen(Date.now());
       if (m.type === 'state') {
+        if (m.snap.running && !snapRef.current?.running) {
+          trailRef.current = [];
+          setSplits([]);
+          setTele(null);
+        }
         setSnap(m.snap);
         setLaps(m.snap.laps);
         setLapStartT(m.snap.lapStartT);
         setOffset(m.snap.now - Date.now());
-        setEnded(false);
+        if (m.snap.phase !== 'idle') setEnded(false);
       } else if (m.type === 'tele') {
         setTele(m.tele);
         setOffset(m.tele.now - Date.now());
@@ -161,6 +167,7 @@ export function PitView() {
   }, [laps, sectors]);
   const elapsed = lapStartT !== null && !ended ? Math.max(0, now + offset - lapStartT) : null;
   const live = now - lastSeen < 3000;
+  const running = !!snap?.running && !ended;
 
   if (!token) {
     return (
@@ -192,16 +199,24 @@ export function PitView() {
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom gap-3">
       <PageHeader
         title={snap ? snap.riderName : 'Connecting…'}
-        subtitle={track ? `${track.name} · Pit crew` : 'Waiting for the racer'}
+        subtitle={track ? `${track.name} · Pit crew` : snap?.phase === 'walking' ? 'Pacing a new track · Pit crew' : 'Waiting for the racer'}
         backTo="/"
         right={
-          <span className={cn('flex items-center gap-1 text-xs', live ? 'text-[#22c55e]' : 'text-muted-foreground')}>
-            {live ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-            {live ? 'Live' : ended ? 'Ended' : 'No data'}
-          </span>
+          <div className="flex items-center gap-2">
+            <TrackVoice linkToken={token} />
+            <span className={cn('flex items-center gap-1 text-xs', live ? 'text-[#22c55e]' : 'text-muted-foreground')}>
+              {live ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+              {live ? 'Live' : ended ? 'Ended' : 'No data'}
+            </span>
+          </div>
         }
       />
 
+      {!running && (
+        <IdlePanel snap={snap} ended={ended} />
+      )}
+
+      {running && (
       <div className="flex flex-col landscape:flex-row gap-3">
         <div className="flex-1 flex flex-col gap-2">
           <div className="rounded-3xl border-[3px] border-accent bg-card/50 py-3 text-center">
@@ -223,8 +238,18 @@ export function PitView() {
             <Box label="G" value={tele?.g != null ? tele.g.toFixed(2) : '—'} />
           </div>
         </div>
-        {track && <TrackMap track={track} trail={trailRef.current} dot={tele ? { lat: tele.lat, lng: tele.lng } : null} />}
+        {track && (
+          <TrackMinimap
+            className="landscape:w-[40%] aspect-square"
+            outline={track.outline ?? trailRef.current}
+            lines={track.outline ? [{ points: trailRef.current.slice(-150), color: 'hsl(var(--accent))', width: 0.7 }] : []}
+            startFinish={track.startFinish}
+            splits={track.splits}
+            dot={tele ? { lat: tele.lat, lng: tele.lng } : null}
+          />
+        )}
       </div>
+      )}
 
       <div>
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Pit board</p>
@@ -251,7 +276,7 @@ export function PitView() {
         </div>
       </div>
 
-      <LapTable laps={laps} sectors={sectors} />
+      {laps.length > 0 && <LapTable laps={laps} sectors={sectors} />}
       {logRef.current.length > 0 && (
         <Button
           variant="ghost"
@@ -283,30 +308,44 @@ function Box({ label, value, accent }: { label: string; value: string; accent?: 
   );
 }
 
-/** Track outline from the rider's own trail, plus the timing lines and a live dot. */
-function TrackMap({ track, trail, dot }: { track: TrackDef; trail: { lat: number; lng: number }[]; dot: { lat: number; lng: number } | null }) {
-  const ref = track.startFinish.a;
-  const pts = trail.map((p) => toLocal(p, ref));
-  const gates = [track.startFinish, ...track.splits].map((g) => [toLocal(g.a, ref), toLocal(g.b, ref)]);
-  const all = [...pts, ...gates.flat(), ...(dot ? [toLocal(dot, ref)] : [])];
-  if (all.length < 2) return null;
-  const xs = all.map((p) => p.x);
-  const ys = all.map((p) => p.y);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  const span = Math.max(maxX - minX, maxY - minY, 50);
-  const pad = span * 0.08;
-  const vb = `${minX - pad} ${-(maxY + pad)} ${span + pad * 2} ${span + pad * 2}`;
-  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${(-p.y).toFixed(1)}`).join(' ');
-  const dp = dot ? toLocal(dot, ref) : null;
+/**
+ * Before the lights: what the racer is doing right now, as a minimap — the
+ * track being paced out, the chosen track with the rider rolling to the grid,
+ * or just "waiting".
+ */
+function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean }) {
+  const phase = snap?.phase ?? 'idle';
+  const walk = snap?.walk ?? null;
+  const track = snap?.track ?? null;
+  const Icon = phase === 'walking' ? Footprints : phase === 'armed' ? Flag : Hourglass;
+  const title = !snap
+    ? 'Connecting to the racer…'
+    : phase === 'walking'
+      ? walk?.startFinish
+        ? `Pacing the track · ${walk.splits.length} sector line${walk.splits.length === 1 ? '' : 's'} · ${Math.round(walk.travelled)} m`
+        : 'Racer is finding the start/finish line'
+      : phase === 'armed'
+        ? 'On the grid, waiting for launch'
+        : ended
+          ? 'Session over. Waiting for the next run'
+          : track
+            ? `Last track: ${track.name}`
+            : 'Waiting for the racer to pick a track';
   return (
-    <div className="landscape:w-[40%] aspect-square rounded-2xl border border-border bg-card/50 p-2">
-      <svg viewBox={vb} className="w-full h-full">
-        <path d={d} fill="none" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.5} strokeWidth={span / 120} strokeLinejoin="round" />
-        {gates.map(([a, b], i) => (
-          <line key={i} x1={a.x} y1={-a.y} x2={b.x} y2={-b.y} stroke={i === 0 ? '#ffffff' : '#a855f7'} strokeWidth={span / 90} />
-        ))}
-        {dp && <circle cx={dp.x} cy={-dp.y} r={span / 40} fill="hsl(var(--accent))" stroke="#000" strokeWidth={span / 250} />}
-      </svg>
+    <div className="flex flex-col gap-2">
+      <div className={cn('rounded-2xl border px-3 py-2 flex items-center gap-2', phase === 'armed' ? 'border-accent bg-accent/10 animate-pulse' : 'border-border bg-card/50')}>
+        <Icon className="w-5 h-5 text-accent shrink-0" />
+        <p className="text-sm font-semibold">{title}</p>
+        {snap?.gpsHz ? <span className="ml-auto text-[10px] font-mono text-muted-foreground">GPS {snap.gpsHz} Hz</span> : null}
+      </div>
+      <TrackMinimap
+        className="aspect-square max-h-[55dvh] w-full mx-auto landscape:max-w-[55dvh]"
+        outline={phase === 'walking' ? undefined : track?.outline}
+        lines={phase === 'walking' && walk ? [{ points: walk.trail, color: 'hsl(var(--accent))', width: 1.2 }] : []}
+        startFinish={phase === 'walking' ? walk?.startFinish : track?.startFinish}
+        splits={phase === 'walking' ? walk?.splits : track?.splits}
+        dot={snap?.pos ?? null}
+      />
     </div>
   );
 }

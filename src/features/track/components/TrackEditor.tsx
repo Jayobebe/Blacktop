@@ -23,7 +23,7 @@ const SATELLITE_STYLE: StyleSpecification = {
   layers: [{ id: 'sat', type: 'raster', source: 'sat' }],
 };
 
-const MAX_SPLITS = 3;
+const MAX_SPLITS = 19;
 
 /**
  * Draw a track's timing lines on satellite imagery: tap either edge of the

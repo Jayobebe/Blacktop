@@ -13,9 +13,11 @@ export interface TrackDef {
   id: string;
   name: string;
   startFinish: Gate;
-  /** Sector split lines in running order (0–3). Sectors = splits + 1. */
+  /** Sector split lines in running order (any number). Sectors = splits + 1. */
   splits: Gate[];
   createdAt: number;
+  /** The walked lap, simplified, for minimaps. */
+  outline?: LatLng[];
 }
 
 /** One telemetry sample, at GPS rate with the latest lean / G merged in. */

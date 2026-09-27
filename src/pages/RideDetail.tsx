@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
 import { useGarage } from '@/features/garage';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2, IdCard } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2, IdCard, Zap, ChevronRight } from 'lucide-react';
 import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
@@ -17,6 +17,7 @@ import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
 import { shareRecapCard } from '@/features/ride/lib/recapCard';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { formatLap } from '@/features/track';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -128,6 +129,12 @@ export default function RideDetail() {
                 Time attack
               </span>
             )}
+            {ride.track && (
+              <span className="flex items-center gap-1 text-xs font-medium text-[#3987e5] bg-[#3987e5]/10 px-2.5 py-1 rounded-full">
+                <Zap className="w-3.5 h-3.5" />
+                Track
+              </span>
+            )}
             {ride.isConvoyRide && (
               <span className="flex items-center gap-1 text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
                 <Users className="w-3.5 h-3.5" />
@@ -163,8 +170,37 @@ export default function RideDetail() {
             printedAt={ride.endedAt ?? ride.startedAt}
             orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
             timeAttack={!!ride.challenge}
+            trackDay={!!ride.track}
           />
         </div>
+
+        {ride.track && (
+          <button
+            onClick={() => navigate(`/track?session=${ride.track!.sessionId}`)}
+            className="w-full text-left bg-[#3987e5]/5 rounded-lg p-3 border border-[#3987e5]/50 mb-3 animate-slide-up"
+          >
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[#3987e5]" />
+              <p className="text-sm font-bold flex-1">Track Pack · {ride.track.trackName}</p>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="rounded-lg bg-secondary/50 p-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Best lap</p>
+                <p className="text-sm font-bold tabular-nums">{formatLap(ride.track.bestLapMs)}</p>
+              </div>
+              <div className="rounded-lg bg-secondary/50 p-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Theoretical</p>
+                <p className="text-sm font-bold tabular-nums">{formatLap(ride.track.theoreticalMs)}</p>
+              </div>
+              <div className="rounded-lg bg-secondary/50 p-2 text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Laps</p>
+                <p className="text-sm font-bold tabular-nums">{ride.track.laps}</p>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">Open for lap traces, racing lines, corners and exports</p>
+          </button>
+        )}
 
         {ride.challenge && (
           <div className="bg-[hsl(330_81%_60%)]/5 rounded-lg p-3 border border-[hsl(330_81%_60%)]/50 mb-3 animate-slide-up">

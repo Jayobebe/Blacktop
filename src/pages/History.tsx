@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Users, User, Clock, Route, Pencil, Star, Flame, ChevronDown, Trophy, Timer, Disc3 as BikeIcon } from 'lucide-react';
+import { Users, User, Clock, Route, Pencil, Star, Flame, ChevronDown, Trophy, Timer, Zap, Disc3 as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useExperience } from '@/features/experience';
@@ -196,6 +196,12 @@ export default function History() {
                           Solo
                         </span>
                       ) : null}
+                      {ride.track && (
+                        <span className="flex items-center gap-1 text-[10px] text-[#3987e5] bg-[#3987e5]/10 px-2 py-0.5 rounded-lg font-medium">
+                          <Zap className="w-2.5 h-2.5" />
+                          {ride.track.trackName}
+                        </span>
+                      )}
                       {ride.challenge && (
                         <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
                           <Timer className="w-2.5 h-2.5" />

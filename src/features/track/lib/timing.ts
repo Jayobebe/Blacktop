@@ -100,6 +100,13 @@ export class LapTimer {
     return best;
   }
 
+  /** Standing start on the line: lap 1 starts at the launch itself. */
+  standingStart(t: number) {
+    if (this.lapStart !== null) return;
+    this.lastSfT = t;
+    this.beginLap(t);
+  }
+
   /** Settle anything still pending (e.g. when the session ends). */
   flush(): TimingEvent[] {
     const events: TimingEvent[] = [];

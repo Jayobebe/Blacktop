@@ -24,7 +24,7 @@ export function SectorBoxes({
   big?: boolean;
 }) {
   return (
-    <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
+    <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${count <= 5 ? count : Math.ceil(count / Math.ceil(count / 5))}, minmax(0, 1fr))` }}>
       {Array.from({ length: count }, (_, i) => {
         const ms = splits[i];
         return (
@@ -50,7 +50,8 @@ export function LapTable({ laps, sectors }: { laps: Lap[]; sectors: number }) {
   const bestSec = Array.from({ length: sectors }, (_, i) => Math.min(...valid.map((l) => l.sectors[i] ?? Infinity)));
   if (laps.length === 0) return <p className="text-xs text-muted-foreground text-center py-4">No laps yet. Cross the start / finish line to start timing.</p>;
   return (
-    <div className="rounded-xl border border-border overflow-hidden">
+    <div className="rounded-xl border border-border overflow-x-auto">
+      <div style={{ minWidth: sectors > 4 ? `${6 + sectors * 3.4 + 5}rem` : undefined }}>
       <div className="grid text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-2 py-1.5" style={{ gridTemplateColumns: `2rem 1fr repeat(${sectors}, 3.4rem)` }}>
         <span>Lap</span>
         <span>Time</span>
@@ -81,6 +82,7 @@ export function LapTable({ laps, sectors }: { laps: Lap[]; sectors: number }) {
           })}
         </div>
       ))}
+      </div>
     </div>
   );
 }

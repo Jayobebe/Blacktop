@@ -1,15 +1,20 @@
 import { useSyncExternalStore } from 'react';
-import { subscribeRawFixes, setGpsHighRate, type RawFix } from '@/features/ride';
 import { setPendingTrackReceipt } from '@/lib/trackReceipt';
 import { haptics } from '@/lib/haptics';
-import type { Lap, PitMessage, TelemetrySample, TrackDef, TrackSession } from '../types';
-import { LapTimer, liveDelta } from './timing';
-import { TrackLink, newLinkToken, type LinkMessage, type RacerSnapshot } from './link';
-import { saveSession } from './trackStore';
+import type { Gate, Lap, PitMessage, TelemetrySample, TrackDef, TrackSession } from '../types';
+import { LapTimer, liveDelta, type Fix } from './timing';
+import { TrackLink, newLinkToken, type LinkMessage, type RacerPhase, type RacerSnapshot, type WalkShape } from './link';
+import { saveSession, saveTrack } from './trackStore';
+import { subscribeTrackGps } from './trackGps';
+import { CLOSE_RADIUS_M, LaunchDetector, MIN_LAP_TRAVEL_M, gateAcross, gateCentre, headingFrom, simplify } from './walker';
+import { metres } from './geometry';
 
 /**
- * Racer-side Track Pack session: runs the lap timer on raw GPS fixes, merges
- * in lean / G from the phone, and keeps the pit crew's phones in sync.
+ * Racer-side Track Pack. Phases:
+ *   idle     — pairing QR up, choosing a track (crew can already join)
+ *   walking  — creating a track by walking/riding a lap and tapping lines
+ *   armed    — on the grid; timing starts itself when a launch is detected
+ *   running  — lap timing, live to the pit crew
  */
 export interface SplitMark {
   index: number;
@@ -18,11 +23,14 @@ export interface SplitMark {
 }
 
 export interface RacerState {
-  phase: 'idle' | 'running';
+  phase: RacerPhase;
   track: TrackDef | null;
   token: string | null;
   linked: boolean;
   crew: { id: string; name: string }[];
+  walk: WalkShape | null;
+  /** Back at the start/finish during a walk: offer to close the track. */
+  canClose: boolean;
   lapStartT: number | null;
   lapNumber: number;
   laps: Lap[];
@@ -35,8 +43,10 @@ export interface RacerState {
   delta: number | null;
   lastFixT: number | null;
   gpsHz: number;
+  gpsAccuracy: number | null;
   pit: PitMessage | null;
   riderName: string;
+  launchedAt: number | null;
 }
 
 const INITIAL: RacerState = {
@@ -45,6 +55,8 @@ const INITIAL: RacerState = {
   token: null,
   linked: false,
   crew: [],
+  walk: null,
+  canClose: false,
   lapStartT: null,
   lapNumber: 0,
   laps: [],
@@ -57,21 +69,28 @@ const INITIAL: RacerState = {
   delta: null,
   lastFixT: null,
   gpsHz: 0,
+  gpsAccuracy: null,
   pit: null,
   riderName: '',
+  launchedAt: null,
 };
 
 let state: RacerState = INITIAL;
 const listeners = new Set<() => void>();
 let timer: LapTimer | null = null;
 let link: TrackLink | null = null;
-let unsubFixes: (() => void) | null = null;
+let unsubGps: (() => void) | null = null;
+let launch: LaunchDetector | null = null;
+let onLaunch: ((t: number) => void) | null = null;
 let startedAt = 0;
 let sensorLean = 0;
 let sensorG = 0;
 let bestLapSamples: TelemetrySample[] = [];
 let bestLapStartT = 0;
 let lastTeleSent = 0;
+let lastWalkSent = 0;
+const recentFixes: Fix[] = [];
+const walkTrail: { lat: number; lng: number }[] = [];
 const fixGaps: number[] = [];
 
 function set(patch: Partial<RacerState>) {
@@ -96,14 +115,22 @@ export function getRacerState() {
 
 function snapshot(): RacerSnapshot {
   return {
+    phase: state.phase,
+    walk: state.walk ? { ...state.walk, trail: simplify(state.walk.trail, 4, 400) } : null,
     riderName: state.riderName,
-    track: state.track!,
+    track: state.track,
     laps: state.laps,
     lapStartT: state.lapStartT,
     currentSplits: state.splits.map((s) => s.t),
     now: Date.now(),
     running: state.phase === 'running',
+    pos: recentFixes.length ? { lat: recentFixes[recentFixes.length - 1].lat, lng: recentFixes[recentFixes.length - 1].lng } : null,
+    gpsHz: state.gpsHz,
   };
+}
+
+function broadcastState() {
+  link?.send({ type: 'state', snap: snapshot() });
 }
 
 function onLinkMessage(m: LinkMessage) {
@@ -112,10 +139,9 @@ function onLinkMessage(m: LinkMessage) {
       set({ crew: [...state.crew, { id: m.crewId, name: String(m.name || 'Pit crew').slice(0, 30) }] });
       haptics.light();
     }
-    if (state.track) link?.send({ type: 'state', snap: snapshot() });
+    broadcastState();
   } else if (m.type === 'pit' && m.msg?.from === 'crew') {
-    const msg: PitMessage = { ...m.msg, text: String(m.msg.text).slice(0, 40), at: Date.now() };
-    set({ pit: msg });
+    set({ pit: { ...m.msg, text: String(m.msg.text).slice(0, 40), at: Date.now() } });
     haptics.heavy();
     try {
       navigator.vibrate?.([200, 100, 200]);
@@ -125,22 +151,38 @@ function onLinkMessage(m: LinkMessage) {
   }
 }
 
-/** Opens the pairing link (and QR) for a track, before or during a session. */
-export function openRacerLink(track: TrackDef, riderName: string) {
+// ── link / GPS plumbing ──────────────────────────────────────────────────────
+
+/** Opens the pairing link as soon as the racer enters Track Pack. */
+export function openRacerLink(riderName: string) {
   if (!link) {
     const token = newLinkToken();
     link = new TrackLink(token, onLinkMessage, (ok) => set({ linked: ok }));
     set({ token });
   }
-  set({ track, riderName });
+  set({ riderName });
 }
 
 export function closeRacerLink() {
-  if (state.phase === 'running') return;
+  if (state.phase === 'running' || state.phase === 'walking') return;
   link?.send({ type: 'ended' });
   link?.close();
   link = null;
-  set({ token: null, linked: false, crew: [] });
+  stopGps();
+  set({ ...INITIAL });
+}
+
+export function getLinkToken() {
+  return state.token;
+}
+
+function startGps() {
+  if (!unsubGps) unsubGps = subscribeTrackGps(onFix);
+}
+
+function stopGps() {
+  unsubGps?.();
+  unsubGps = null;
 }
 
 export function updateSensors(lean: number, g: number) {
@@ -157,20 +199,196 @@ export function sendRiderCall(text: string) {
   haptics.tick();
 }
 
+// ── fixes ────────────────────────────────────────────────────────────────────
+
+function onFix(fix: Fix) {
+  if (state.lastFixT) {
+    fixGaps.push(fix.t - state.lastFixT);
+    if (fixGaps.length > 10) fixGaps.shift();
+  }
+  recentFixes.push(fix);
+  if (recentFixes.length > 40) recentFixes.shift();
+  const avgGap = fixGaps.length ? fixGaps.reduce((a, b) => a + b, 0) / fixGaps.length : 0;
+  const common = {
+    lastFixT: fix.t,
+    gpsHz: avgGap > 0 ? Math.round((1000 / avgGap) * 10) / 10 : 0,
+    gpsAccuracy: fix.accuracy,
+    speed: fix.speed ?? state.speed,
+  };
+
+  if (state.phase === 'walking') return onWalkFix(fix, common);
+  if (state.phase === 'armed') {
+    set(common);
+    // Let the crew see the rider rolling to the grid.
+    if (Date.now() - lastWalkSent > 1000) {
+      lastWalkSent = Date.now();
+      broadcastState();
+    }
+    const t = launch?.feed(fix);
+    if (t != null) onLaunch?.(t);
+    // The launch fix itself also feeds the timer (it was just created).
+    if (t != null) timer?.feed({ ...fix, lean: sensorLean, g: sensorG });
+    return;
+  }
+  if (state.phase === 'running') return onRaceFix(fix, common);
+  set(common);
+}
+
+// ── walking a new track ─────────────────────────────────────────────────────
+
+export function startWalk(riderName: string) {
+  openRacerLink(riderName);
+  walkTrail.length = 0;
+  set({
+    phase: 'walking',
+    track: null,
+    walk: { trail: [], startFinish: null, splits: [], travelled: 0 },
+    canClose: false,
+  });
+  startGps();
+  broadcastState();
+}
+
+export function cancelWalk() {
+  set({ phase: 'idle', walk: null, canClose: false });
+  stopGps();
+  broadcastState();
+}
+
+function currentGate(): Gate | null {
+  const last = recentFixes[recentFixes.length - 1];
+  const h = headingFrom(recentFixes);
+  if (!last || h === null) return null;
+  return gateAcross(last, h);
+}
+
+/** Drops the start/finish line here, square to the direction of travel. */
+export function markStartFinish(): boolean {
+  const gate = currentGate();
+  if (!gate || !state.walk) return false;
+  walkTrail.length = 0;
+  set({ walk: { trail: [], startFinish: gate, splits: [], travelled: 0 }, canClose: false });
+  haptics.success();
+  broadcastState();
+  return true;
+}
+
+export function markSplit(): boolean {
+  const gate = currentGate();
+  if (!gate || !state.walk?.startFinish) return false;
+  set({ walk: { ...state.walk, splits: [...state.walk.splits, gate] } });
+  haptics.medium();
+  broadcastState();
+  return true;
+}
+
+function onWalkFix(fix: Fix, common: Partial<RacerState>) {
+  const walk = state.walk;
+  if (!walk) return;
+  const prev = walkTrail[walkTrail.length - 1];
+  if (walk.startFinish && (!prev || metres(prev, fix) >= 1)) {
+    walkTrail.push({ lat: fix.lat, lng: fix.lng });
+  }
+  const travelled = walk.startFinish && prev ? walk.travelled + metres(prev, fix) : walk.travelled;
+  const canClose =
+    !!walk.startFinish && travelled >= MIN_LAP_TRAVEL_M && metres(gateCentre(walk.startFinish), fix) <= CLOSE_RADIUS_M;
+  if (canClose && !state.canClose) haptics.heavy();
+  set({ ...common, walk: { ...walk, trail: [...walkTrail], travelled }, canClose });
+  const now = Date.now();
+  if (now - lastWalkSent > 1000) {
+    lastWalkSent = now;
+    broadcastState();
+  }
+}
+
+/** Confirms the start/finish on returning to it: the track completes and saves. */
+export function confirmTrack(name: string): TrackDef | null {
+  const walk = state.walk;
+  if (!walk?.startFinish) return null;
+  const track: TrackDef = {
+    id: crypto.randomUUID(),
+    name: name.trim().slice(0, 40) || `Track ${new Date().toLocaleDateString()}`,
+    startFinish: walk.startFinish,
+    splits: walk.splits,
+    createdAt: Date.now(),
+    outline: simplify(walk.trail),
+  };
+  saveTrack(track);
+  stopGps();
+  set({ phase: 'idle', walk: null, canClose: false, track });
+  haptics.success();
+  broadcastState();
+  return track;
+}
+
+// ── on the grid ─────────────────────────────────────────────────────────────
+
+/**
+ * Arms timing on a track: GPS runs, and the first real launch starts the
+ * session (the caller starts the ride at that moment via `whenLaunched`).
+ */
+export function armTrack(track: TrackDef, riderName: string, whenLaunched: (t: number) => void) {
+  openRacerLink(riderName);
+  timer = new LapTimer(track);
+  launch = new LaunchDetector();
+  onLaunch = (t) => {
+    onLaunch = null;
+    launch = null;
+    beginRunning(track, t);
+    whenLaunched(t);
+  };
+  bestLapSamples = [];
+  fixGaps.length = 0;
+  set({
+    ...INITIAL,
+    phase: 'armed',
+    track,
+    riderName,
+    token: state.token,
+    linked: state.linked,
+    crew: state.crew,
+  });
+  startGps();
+  broadcastState();
+}
+
+export function disarm() {
+  if (state.phase !== 'armed') return;
+  timer = null;
+  launch = null;
+  onLaunch = null;
+  stopGps();
+  set({ phase: 'idle' });
+  broadcastState();
+}
+
+/** Start now without waiting for a launch (e.g. rolling onto track mid-session). */
+export function launchNow() {
+  if (state.phase === 'armed') onLaunch?.(Date.now());
+}
+
+function beginRunning(track: TrackDef, t: number) {
+  startedAt = t;
+  // Launched on the line: lap 1 starts with the launch.
+  const last = recentFixes[recentFixes.length - 1];
+  if (last && metres(gateCentre(track.startFinish), last) < 8) timer?.standingStart(t);
+  set({ phase: 'running', launchedAt: t, lapStartT: timer?.lapStartT ?? null });
+  haptics.success();
+  broadcastState();
+}
+
+// ── racing ──────────────────────────────────────────────────────────────────
+
 function refreshBestSamples() {
   const best = timer?.bestLap();
   bestLapSamples = best && timer ? timer.samples.filter((s) => s.lap === best.n && s.t <= best.endT) : [];
   bestLapStartT = best?.startT ?? 0;
 }
 
-function onFix(raw: RawFix) {
-  if (!timer || state.phase !== 'running') return;
-  if (state.lastFixT) {
-    fixGaps.push(raw.t - state.lastFixT);
-    if (fixGaps.length > 10) fixGaps.shift();
-  }
-  const events = timer.feed({ ...raw, lean: sensorLean, g: sensorG });
-  const patch: Partial<RacerState> = {};
+function onRaceFix(fix: Fix, common: Partial<RacerState>) {
+  if (!timer) return;
+  const events = timer.feed({ ...fix, lean: sensorLean, g: sensorG });
+  const patch: Partial<RacerState> = { ...common };
 
   for (const e of events) {
     if (e.type === 'lapStart') {
@@ -192,42 +410,19 @@ function onFix(raw: RawFix) {
 
   const last = timer.samples[timer.samples.length - 1];
   const lapStartT = patch.lapStartT ?? state.lapStartT;
-  const elapsed = lapStartT !== null ? raw.t - lapStartT : null;
+  const elapsed = lapStartT !== null ? fix.t - lapStartT : null;
   const delta = elapsed !== null && last ? liveDelta(bestLapSamples, bestLapStartT, last.d, elapsed) : null;
-  const avgGap = fixGaps.length ? fixGaps.reduce((a, b) => a + b, 0) / fixGaps.length : 0;
 
-  set({
-    ...patch,
-    lapNumber: timer.currentLapNumber,
-    speed: last?.v ?? 0,
-    lean: sensorLean,
-    g: sensorG,
-    delta,
-    lastFixT: raw.t,
-    gpsHz: avgGap > 0 ? Math.round((1000 / avgGap) * 10) / 10 : 0,
-  });
+  set({ ...patch, lapNumber: timer.currentLapNumber, speed: last?.v ?? 0, lean: sensorLean, g: sensorG, delta });
 
   const now = Date.now();
   if (link && last && now - lastTeleSent >= 200) {
     lastTeleSent = now;
     link.send({
       type: 'tele',
-      tele: { t: raw.t, now, lat: raw.lat, lng: raw.lng, v: last.v, lean: sensorLean, g: sensorG, lap: last.lap, d: last.d, lapStartT, delta },
+      tele: { t: fix.t, now, lat: fix.lat, lng: fix.lng, v: last.v, lean: sensorLean, g: sensorG, lap: last.lap, d: last.d, lapStartT, delta },
     });
   }
-}
-
-export function startSession(track: TrackDef, riderName: string) {
-  if (state.phase === 'running') return;
-  openRacerLink(track, riderName);
-  timer = new LapTimer(track);
-  startedAt = Date.now();
-  bestLapSamples = [];
-  fixGaps.length = 0;
-  set({ ...INITIAL, phase: 'running', track, riderName, token: state.token, linked: state.linked, crew: state.crew });
-  void setGpsHighRate(true);
-  unsubFixes = subscribeRawFixes(onFix);
-  link?.send({ type: 'state', snap: snapshot() });
 }
 
 /**
@@ -236,14 +431,12 @@ export function startSession(track: TrackDef, riderName: string) {
  */
 export function endSession(bikeId?: string): TrackSession | null {
   if (state.phase !== 'running' || !timer || !state.track) return null;
-  unsubFixes?.();
-  unsubFixes = null;
+  stopGps();
   const flushed = timer.flush();
   if (flushed.some((e) => e.type === 'lap')) refreshBestSamples();
-  void setGpsHighRate(false);
 
   const bestSectors = timer.bestSectors();
-  const theoretical = bestSectors.every(Number.isFinite) ? bestSectors.reduce((a, b) => a + b, 0) : null;
+  const theoretical = bestSectors.length && bestSectors.every(Number.isFinite) ? bestSectors.reduce((a, b) => a + b, 0) : null;
   const session: TrackSession = {
     id: crypto.randomUUID(),
     trackId: state.track.id,
@@ -264,8 +457,9 @@ export function endSession(bikeId?: string): TrackSession | null {
     bestLapMs: timer.bestLap()?.ms ?? null,
     theoreticalMs: theoretical,
   });
-  link?.send({ type: 'ended' });
   timer = null;
   set({ phase: 'idle', laps: session.laps, bestLap: session.laps.filter((l) => l.valid).sort((a, b) => a.ms - b.ms)[0] ?? null });
+  link?.send({ type: 'ended' });
+  broadcastState();
   return session;
 }

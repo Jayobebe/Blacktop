@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
+import { useDemoMode } from '@/lib/demoMode';
+import { demoTrackData } from '@/lib/demoTrack';
 import type { TelemetrySample, TrackDef, TrackSession } from '../types';
 
 /** Saved tracks and finished sessions, on this device. */
@@ -39,8 +41,12 @@ function persist(key: string, value: unknown): boolean {
   }
 }
 
+let demoStore: Store | null = null;
+
+/** Tracks and sessions; the demo circuit and session in demo mode. */
 export function useTrackStore(): Store {
-  return useSyncExternalStore(
+  const demo = useDemoMode().enabled;
+  const real = useSyncExternalStore(
     (l) => {
       listeners.add(l);
       return () => listeners.delete(l);
@@ -48,6 +54,12 @@ export function useTrackStore(): Store {
     () => store,
     () => store,
   );
+  if (!demo) return real;
+  if (!demoStore) {
+    const { track, session } = demoTrackData();
+    demoStore = { tracks: [track], sessions: [session] };
+  }
+  return demoStore;
 }
 
 export function getTracks() {

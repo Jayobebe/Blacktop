@@ -119,6 +119,13 @@ export default function PrivacyPolicy() {
             code. It passes through our realtime relay but is never stored on our servers.
           </p>
           <p className="text-muted-foreground">
+            <span className="text-foreground">Track Pack (opt-in):</span> tracks, lap times and session
+            data stay on your device. While Track Pack is open, anyone who scans your pairing QR receives
+            your display name, live position, speed, lean, lap and sector times, and pit board messages
+            over a temporary realtime channel keyed by that QR. Rider ⇄ crew voice is peer-to-peer.
+            Nothing is stored on our servers, and the link closes when you leave Track Pack.
+          </p>
+          <p className="text-muted-foreground">
             <span className="text-foreground">Nearby Riders (separate opt-in, Settings → Navigation):</span> while
             you ride with it on, your display name, precise position, speed and convoy (if any) are
             shared live with other riders who have also turned it on and are within a few kilometres.

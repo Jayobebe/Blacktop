@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Lap, PitMessage, TrackDef } from '../types';
+import type { Gate, Lap, PitMessage, TrackDef } from '../types';
 
 /**
  * Racer ⇄ pit crew link over a realtime channel whose name is a random key
@@ -22,14 +22,29 @@ export interface Telemetry {
   delta: number | null;
 }
 
+export type RacerPhase = 'idle' | 'walking' | 'armed' | 'running';
+
+/** The lap being walked / ridden to create a track. */
+export interface WalkShape {
+  trail: { lat: number; lng: number }[];
+  startFinish: Gate | null;
+  splits: Gate[];
+  travelled: number;
+}
+
 export interface RacerSnapshot {
+  phase: RacerPhase;
+  walk: WalkShape | null;
   riderName: string;
-  track: TrackDef;
+  track: TrackDef | null;
   laps: Lap[];
   lapStartT: number | null;
   currentSplits: number[];
   now: number;
   running: boolean;
+  /** Rider's latest position (walking / on the grid). */
+  pos?: { lat: number; lng: number } | null;
+  gpsHz?: number;
 }
 
 export type LinkMessage =

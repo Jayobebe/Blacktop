@@ -238,6 +238,21 @@ export default function DemoShowcase() {
       ],
     },
     {
+      id: 'track-pack',
+      title: 'Track Pack',
+      subtitle: 'Lap Timing With Your Pit Crew',
+      description: 'Pace a lap to make a track, get on the grid and the timer starts itself at launch. Your pit crew scans your QR for live timing, your line on a minimap and a pit board.',
+      icon: Zap,
+      color: 'accent',
+      mockup: <TrackPackMockup />,
+      cards: [
+        { icon: Flag, label: 'Walk The Track', text: 'Set the start/finish, tap Sector wherever you like, then confirm back at the line and it saves.' },
+        { icon: Timer, label: 'Launch To Start', text: 'Pick a saved track and get into position: timing begins the moment you move. Live delta, coloured sectors, theoretical best.' },
+        { icon: QrCode, label: 'Pit Crew', text: 'Anyone who scans joins, before or after the track is made, and follows along from walk to chequered flag. Pit board, rider calls and voice.' },
+        { icon: Receipt, label: 'Track Day Receipts', text: 'Sessions print on blue stock in History, with lap traces, racing lines, corner scores and CSV/GPX export.' },
+      ],
+    },
+    {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
@@ -1532,6 +1547,39 @@ function PillionMockup() {
       </div>
       <div className="mt-2 rounded-lg border-2 border-destructive/60 text-destructive text-center py-1.5 text-[11px] font-semibold flex items-center justify-center gap-1.5">
         <AlertTriangle className="w-3.5 h-3.5" /> Request rescue
+      </div>
+    </div>
+  );
+}
+
+function TrackPackMockup() {
+  const sectors: [string, string][] = [['7.34', 'bg-[#7c3aed] text-white border-[#7c3aed]'], ['7.45', 'bg-[hsl(142_71%_45%)]/20 text-[hsl(142_71%_45%)] border-[hsl(142_71%_45%)]/50'], ['7.75', 'bg-warning/15 text-warning border-warning/50']];
+  return (
+    <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden space-y-2">
+      <div className="rounded-2xl border-2 border-accent bg-background py-2 text-center">
+        <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">Lap 6</p>
+        <p className="font-mono font-black tabular-nums text-3xl leading-none">1:32.418</p>
+        <p className="font-mono font-black tabular-nums text-lg text-[hsl(142_71%_45%)]">−0.214</p>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {sectors.map(([t, c], i) => (
+          <div key={i} className={`rounded-lg border text-center py-1 ${c}`}>
+            <p className="text-[8px] font-bold uppercase tracking-widest opacity-80">S{i + 1}</p>
+            <p className="font-mono font-bold tabular-nums text-xs">{t}</p>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2 items-center">
+        <svg viewBox="0 0 120 70" className="w-24 h-14 rounded-lg bg-background border border-border">
+          <path d="M20 50 C 10 30, 30 12, 55 16 S 105 12, 108 34 S 80 62, 55 56 S 28 62, 20 50 Z" fill="none" stroke="hsl(var(--muted-foreground))" strokeOpacity="0.4" strokeWidth="5" />
+          <path d="M20 50 C 10 30, 30 12, 55 16 S 105 12, 108 34" fill="none" stroke="hsl(var(--accent))" strokeWidth="2" />
+          <line x1="14" y1="54" x2="26" y2="46" stroke="#fff" strokeWidth="2" />
+          <circle cx="108" cy="34" r="4" fill="hsl(var(--accent))" stroke="#000" />
+        </svg>
+        <div className="flex-1 rounded-lg bg-black border-2 border-accent text-center py-2">
+          <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-accent">Pit board</p>
+          <p className="text-xl font-black text-white">PUSH</p>
+        </div>
       </div>
     </div>
   );

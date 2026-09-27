@@ -70,6 +70,8 @@ function deltaAngle(a: number, b: number): number {
 
 /** Minimum total heading change (degrees) for a bend to count as a corner. */
 const MIN_ARC = 25;
+/** This much straight road ends a corner. */
+const STRAIGHT_M = 60;
 /** Ignore near-stationary noise. */
 const MIN_SPEED_MPH = 5;
 
@@ -113,12 +115,22 @@ export function analyseCorners(ride: Pick<RideSession, 'gpsPoints' | 'distance' 
     const startSeg = i;
     let j = i;
     // Grow while the turn keeps going the same way (small wobbles tolerated).
+    // A long straight also ends it, so two same-way bends aren't one corner.
+    let straightRun = 0;
+    let lastTurn = { j, arc, length };
     while (j < segs.length - 1) {
       const d = deltaAngle(segs[j].brg, segs[j + 1].brg);
       if (Math.sign(d) !== sign && Math.abs(d) > 6) break;
       arc += Math.abs(d) * (Math.sign(d) === sign ? 1 : 0);
       length += segs[j].len;
       j++;
+      if (Math.abs(d) >= 2) {
+        straightRun = 0;
+        lastTurn = { j, arc, length };
+      } else if ((straightRun += segs[j].len) > STRAIGHT_M) {
+        ({ j, arc, length } = lastTurn);
+        break;
+      }
     }
     length += segs[j]?.len ?? 0;
 

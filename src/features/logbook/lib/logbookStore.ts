@@ -108,6 +108,7 @@ export function toLogRide(r: RideSession, owner: string): LogRide {
           result: r.challenge.result,
         }
       : undefined,
+    track: r.track ? { trackName: r.track.trackName, laps: r.track.laps, bestLapMs: r.track.bestLapMs } : undefined,
     owner,
   };
 }

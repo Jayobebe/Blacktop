@@ -5,6 +5,7 @@ import type { Bike } from '@/features/garage/types';
 import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
 import type { RideChallenge } from '@/lib/challengeRun';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
+import { demoTrackData } from '@/lib/demoTrack';
 
 /** Local mirrors of CollectedCard / SpectreCard so demoMode stays leaf-level (no cycle). */
 type CollectedCard = SharedCardPayload & { collectedAt: number; key: string; img?: string };
@@ -122,6 +123,22 @@ function buildDemoRides(): RideSession[] {
       earnedBadges: isConvoyRide ? ridesBadges[i] : undefined,
     });
   }
+  // A Track Pack day (prints on blue stock and opens the demo session).
+  // Rides 0-3 carry the time attacks; 9 is a solo ride nothing else claims.
+  const { session, receipt } = demoTrackData();
+  const lapDistance = session.laps.reduce((a, l) => a + l.distance, 0) / 1609.344;
+  const lapDuration = (session.endedAt - session.startedAt) / 1000;
+  rides[9] = {
+    ...rides[9],
+    name: 'Track day',
+    track: receipt,
+    startedAt: new Date(session.startedAt).toISOString(),
+    endedAt: new Date(session.endedAt).toISOString(),
+    distance: Math.round(lapDistance * 10) / 10,
+    duration: Math.round(lapDuration),
+    averageSpeed: Math.round((lapDistance / (lapDuration / 3600)) * 10) / 10,
+    maxSpeed: Math.round(Math.max(...session.laps.map((l) => l.maxSpeed)) * 2.23694),
+  };
   return rides;
 }
 
@@ -215,8 +232,10 @@ DEMO_CHALLENGES.forEach((challenge, i) => {
   if (!ride) return;
   ride.challenge = challenge;
   ride.duration = Math.round(challenge.timeSec);
-  ride.distance = Math.round(challenge.timeSec / 60 * 8 * 10) / 10;
+  // ~0.9 mi a minute (≈ 54 mph average) over a time-attack run.
+  ride.distance = Math.round((challenge.timeSec / 60) * 0.9 * 10) / 10;
   ride.averageSpeed = Math.round((ride.distance / (ride.duration / 3600)) * 10) / 10;
+  ride.maxSpeed = Math.max(ride.maxSpeed, Math.round(ride.averageSpeed * 1.6));
   ride.endedAt = new Date(new Date(ride.startedAt).getTime() + ride.duration * 1000).toISOString();
   ride.isConvoyRide = false;
   ride.earnedBadges = challenge.own
