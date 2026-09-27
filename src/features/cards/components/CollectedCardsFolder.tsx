@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { toast } from 'sonner';
-import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw } from 'lucide-react';
+import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/features/settings';
@@ -19,11 +19,14 @@ import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 import { fetchCardPhoto } from '../lib/cardPhoto';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
+import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
+import { formatChallengeTime, formatDelta } from '../lib/challenge';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
 export function CollectedCardsFolder() {
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
+  const { spectres } = useSpectreCards();
   const [showScanner, setShowScanner] = useState(false);
   const [rescanKey, setRescanKey] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -164,6 +167,31 @@ export function CollectedCardsFolder() {
         </button>
       </div>
 
+      {/* Spectre row — earned only by beating time attacks; no QR, no trading */}
+      <div className="px-4 pb-3">
+        <div className="flex items-center gap-2 pb-2">
+          <Ghost className="w-4 h-4 text-cyan-300" />
+          <h3 className="text-sm font-semibold tracking-tight">Spectre</h3>
+          <span className="text-xs text-muted-foreground">{spectres.length}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground">Beat a time attack to earn one</span>
+        </div>
+        {spectres.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-cyan-300/30 px-4 py-6 text-center">
+            <p className="text-xs text-muted-foreground/70">
+              Take a card's time attack on the map and beat it. Spectre cards can't be scanned or traded.
+            </p>
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {spectres.map((sp) => (
+              <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+                <FullCard card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }} spectre={sp} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {collected.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 px-4 py-12">
           <p className="text-xs text-muted-foreground/60 text-center">
@@ -261,7 +289,7 @@ export function CollectedCardsFolder() {
 }
 
 
-function FullCard({ card }: { card: CollectedCard }) {
+function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
   const { settings } = useSettings();
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
   return (
@@ -270,8 +298,16 @@ function FullCard({ card }: { card: CollectedCard }) {
         'relative w-full aspect-[5/7] rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col p-3.5 gap-2.5',
         style.bg,
         style.border,
+        // Spectre: the same card, drained to a cold ghostly glow.
+        spectre && '[filter:grayscale(0.85)_hue-rotate(160deg)_saturate(1.6)] opacity-90 border-cyan-300/70 shadow-[0_0_24px_rgba(103,232,249,0.35)]',
       )}
     >
+      {spectre && (
+        <>
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-cyan-200/10 via-transparent to-cyan-300/15" />
+          <div className="absolute inset-0 pointer-events-none opacity-25 [background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.12)_0px,rgba(255,255,255,0.12)_1px,transparent_1px,transparent_3px)]" />
+        </>
+      )}
       {style.shine && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 animate-card-shine" />
@@ -293,8 +329,8 @@ function FullCard({ card }: { card: CollectedCard }) {
           )}
         </div>
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-black/50 text-white shrink-0">
-          <Sparkles className="w-2.5 h-2.5" />
-          {card.tl}
+          {spectre ? <Ghost className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
+          {spectre ? 'Spectre' : card.tl}
         </span>
       </div>
 
@@ -332,12 +368,23 @@ function FullCard({ card }: { card: CollectedCard }) {
         </div>
       </div>
 
+      {spectre ? (
+        <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
+          <Stat icon={Timer} label="Your time" value={formatChallengeTime(spectre.timeSec)} unit="" />
+          <Stat icon={Timer} label={`${spectre.setterName}'s`} value={formatChallengeTime(spectre.targetSec)} unit="" />
+          <div className="col-span-2 rounded-lg bg-black/35 border border-white/10 px-2 py-1.5 text-center">
+            <p className="text-[8px] uppercase tracking-widest text-white/60">Beaten by</p>
+            <p className="font-mono text-sm font-bold text-white">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
+          </div>
+        </div>
+      ) : (
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
         <Stat icon={Gauge} label="Top speed" value={`${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={getSpeedLabel(settings.speedUnit)} />
         <Stat icon={Clock} label="Time" value={formatDuration(card.s.totalDurationSec)} unit="" />
         <Stat icon={Route} label="Distance" value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
         <Stat icon={Hash} label="Rides" value={`${card.s.totalRides}`} unit="" />
       </div>
+      )}
     </div>
   );
 }

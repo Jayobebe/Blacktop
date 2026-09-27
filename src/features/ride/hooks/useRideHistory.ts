@@ -229,6 +229,7 @@ export function useRideHistory() {
     clearBurnedTotals();
     try { localStorage.removeItem('bt.cards.v1'); } catch { console.warn('[RideHistory] Failed to clear card cache'); }
     try { localStorage.removeItem('bt.collected_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear collected cards'); }
+    try { localStorage.removeItem('bt.spectre_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear spectre cards'); }
   }, [clearRides, clearBurnedTotals]);
 
 

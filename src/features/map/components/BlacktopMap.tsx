@@ -68,7 +68,8 @@ import { useWaypoints } from "@/features/waypoints";
 
 import { useRescueBridge } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
-import { useCollectedCards, useVehicleCards, TIER_STYLES, useCardKickbacks } from "@/features/cards";
+import { useCollectedCards, useSpectreCards, useVehicleCards, TIER_STYLES, useCardKickbacks, TIER_LADDER } from "@/features/cards";
+import { fetchCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { copyLedger } from "@/features/cards/lib/dropEconomy";
 import {
   CHALLENGE_COUNTDOWN_MS,
@@ -963,6 +964,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     cardsEnabled ? userLocation : null,
   );
   const { addCard } = useCollectedCards();
+  const { earnSpectre } = useSpectreCards();
   useCardKickbacks();
   const { cards } = useVehicleCards();
   const [selectedStack, setSelectedStack] = useState<CardDrop[] | null>(null);
@@ -1185,14 +1187,34 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     });
     recordAttempt.mutate({ dropId: run.dropId, timeSec, result });
     if (result === "won") {
-      // Beating the setter claims the card outright — no separate scan needed.
+      // Beating the setter earns the Spectre (ghost) version of their card.
+      // The normal card is still only collected by scanning it.
       const prize = drops.find((d) => d.id === run.dropId);
-      let claimed = false;
-      if (prize && !prize.collected && !prize.isOwn) {
-        claimed = await handleCollectDrop(prize, true);
-      }
+      const card = prize
+        ? dropToPayload(prize)
+        : {
+            v: 1 as const,
+            i: run.dropId.replace(/-/g, ""),
+            n: run.vehicleName,
+            o: run.ownerName,
+            t: (run.tier ?? "bronze") as CardDrop["tier"],
+            tl: TIER_LADDER.find((t) => t.id === run.tier)?.label ?? "Bronze",
+            s: { totalRides: 0, totalDistanceMi: 0, totalDurationSec: 0, topSpeedMph: 0, maxLean: 0, maxGForce: 0 },
+            ts: Date.now(),
+          };
+      const img = card.p ? await fetchCardPhoto(card.p) : null;
+      const outcome = earnSpectre({
+        key: run.dropId,
+        card,
+        img: img ?? undefined,
+        setterName: run.ownerName,
+        timeSec,
+        targetSec: run.targetSec ?? timeSec,
+      });
       toast.success("Challenge beaten", {
-        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon${claimed ? " · card claimed" : ""}`,
+        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon · ${
+          outcome === "new" ? "Spectre card unlocked" : outcome === "improved" ? "Spectre time improved" : "Spectre already yours"
+        }`,
       });
     } else if (result === "void") {
       toast.error("Challenge voided", { description: "You strayed off the route. 1x Fallback." });
