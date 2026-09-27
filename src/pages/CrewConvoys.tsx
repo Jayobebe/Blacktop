@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 interface CrewConvoyRow {
   id: string;
@@ -55,25 +56,16 @@ export default function CrewConvoys() {
 
   return (
     <div className="min-h-dvh bg-background safe-top safe-bottom px-4 pt-4 pb-8">
-      <header className="relative flex items-center justify-center pb-5">
-        <button
-          type="button"
-          onClick={() => navigate('/world')}
-          className="absolute left-0 top-0 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-          aria-label="Back to Blacktop World"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Crew Convoys</h1>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="absolute right-0 top-0 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-          aria-label="Refresh crew convoys"
-        >
-          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-        </button>
-      </header>
+      <PageHeader
+        title="Crew Convoys"
+        backTo="/world"
+        backLabel="Back to Blacktop World"
+        right={
+          <HeaderButton onClick={() => refetch()} aria-label="Refresh crew convoys">
+            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          </HeaderButton>
+        }
+      />
 
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
         Crew {crew.code} · {convoys.length} open {convoys.length === 1 ? 'lobby' : 'lobbies'}

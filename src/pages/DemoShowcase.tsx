@@ -20,6 +20,7 @@ import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
 import { IdCard, Receipt, Sparkles } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
+import { FrostedBackdrop } from '@/components/FrostedBackdrop';
 
 interface FeatureCard {
   icon: React.ElementType;
@@ -63,7 +64,7 @@ export default function DemoShowcase() {
       id: 'ride-together',
       title: 'Ride Together',
       subtitle: 'Convoys, Voice & Solo Runs',
-      description: 'Create or join a convoy of up to 8 with a simple code, talk hands-free over live voice, or head out solo — every mode shares the same tracking.',
+      description: 'Create or join a convoy with a simple code, talk hands-free over live voice, or head out solo — every mode shares the same tracking.',
       icon: Users,
       color: 'accent',
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />,
@@ -346,9 +347,10 @@ export default function DemoShowcase() {
   const isFirstSlide = currentIndex === 0;
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col overflow-hidden">
+    <div className="relative isolate min-h-dvh flex flex-col overflow-hidden">
+      <FrostedBackdrop />
       {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-secondary">
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-white/10">
         <div 
           className="h-full bg-accent transition-all duration-500 ease-out" 
           style={{ width: `${progress}%` }}
@@ -475,7 +477,7 @@ export default function DemoShowcase() {
                   <div
                     key={card.label}
                     className={cn(
-                      "rounded-2xl border border-border/40 bg-card/60 p-3 flex flex-col gap-1.5",
+                      "rounded-2xl border border-border/40 frost p-3 flex flex-col gap-1.5",
                       isLast && isOdd && "col-span-2"
                     )}
                   >
@@ -534,7 +536,7 @@ function IntroMockup() {
         {features.map(({ icon: Icon, label }, i) => (
           <div 
             key={label}
-            className="aspect-square bg-card/50 rounded-2xl border border-border/30 flex flex-col items-center justify-center gap-2 animate-scale-in"
+            className="aspect-square frost rounded-2xl border border-border/30 flex flex-col items-center justify-center gap-2 animate-scale-in"
             style={{ animationDelay: `${i * 80}ms` }}
           >
             <Icon className="w-6 h-6 text-accent" />
@@ -543,7 +545,7 @@ function IntroMockup() {
         ))}
       </div>
       <div className="mt-4 p-3 bg-accent/10 rounded-xl border border-accent/20 animate-slide-up delay-500">
-        <p className="text-xs text-center text-accent">🔒 No account required</p>
+        <p className="text-xs text-center text-accent">🔒 No sign-up required</p>
       </div>
     </div>
   );
@@ -559,7 +561,7 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
     <div className="w-full max-w-xs space-y-4">
 
       {/* Code Card */}
-      <div className="bg-card/50 rounded-2xl border border-border/30 p-5 animate-slide-up">
+      <div className="frost rounded-2xl border border-border/30 p-5 animate-slide-up">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center mb-3">
           Convoy Code
         </p>
@@ -588,7 +590,7 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
           { icon: MessageSquare, label: 'Lobby Chat' },
           { icon: Lock, label: 'Crew Listed' },
         ].map(({ icon: Icon, label }) => (
-          <div key={label} className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-card/30 border border-border/30">
+          <div key={label} className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl frost border border-border/30">
             <Icon className="w-4 h-4 text-accent" />
             <span className="text-[9px] text-muted-foreground">{label}</span>
           </div>
@@ -610,7 +612,7 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
             key={member.name}
             className={cn(
               "flex items-center gap-3 p-2.5 rounded-xl animate-slide-up transition-all duration-300",
-              member.isLeader ? "bg-accent/10 border border-accent/20" : "bg-card/30",
+              member.isLeader ? "bg-accent/10 border border-accent/20" : "frost",
               speaking === i && "ring-1 ring-accent/60 shadow-[0_0_14px_hsl(var(--accent)/0.35)]"
             )}
             style={{ animationDelay: `${300 + i * 80}ms` }}
@@ -856,7 +858,7 @@ function TrackingMockup() {
 
       {/* Lean & G gauges */}
       <div className="flex justify-center gap-3 animate-slide-up delay-100">
-        <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
+        <div className="frost rounded-xl px-4 py-2 border border-border/30">
           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Lean</p>
           <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
             {Math.abs(lean)}°{lean < 0 ? ' L' : ' R'} <span className="text-[9px] text-muted-foreground">max {maxLean}°</span>
@@ -868,7 +870,7 @@ function TrackingMockup() {
             />
           </div>
         </div>
-        <div className="bg-card/50 rounded-xl px-4 py-2 border border-border/30">
+        <div className="frost rounded-xl px-4 py-2 border border-border/30">
           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">G-Force</p>
           <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
             {gForce.toFixed(2)}G <span className="text-[9px] text-muted-foreground">max {maxG.toFixed(1)}G</span>
@@ -884,16 +886,16 @@ function TrackingMockup() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-3 animate-slide-up delay-200">
-        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+        <div className="frost rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Distance</p>
           <p className="font-mono text-lg font-semibold">{formatDistance(distance, settings.distanceUnit)}</p>
           <p className="text-[10px] text-muted-foreground">{dLabel}</p>
         </div>
-        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+        <div className="frost rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Time</p>
           <p className="font-mono text-lg font-semibold">{mmss}</p>
         </div>
-        <div className="bg-card/50 rounded-xl p-3 border border-border/30">
+        <div className="frost rounded-xl p-3 border border-border/30">
           <p className="text-xs text-muted-foreground mb-1">Max</p>
           <p className="font-mono text-lg font-semibold">{formatSpeed(maxSpeed, settings.speedUnit)}</p>
           <p className="text-[10px] text-muted-foreground">{sLabel}</p>
@@ -1031,7 +1033,7 @@ function HistoryMockup() {
           {rides.map((ride, i) => (
             <div
               key={i}
-              className="bg-card/50 rounded-xl border border-border/30 p-4 animate-slide-up"
+              className="frost rounded-xl border border-border/30 p-4 animate-slide-up"
               style={{ animationDelay: `${i * 120}ms` }}
             >
               <div className="flex items-center justify-between mb-2">
@@ -1379,7 +1381,7 @@ function GarageMockup() {
             "rounded-2xl border p-4 animate-slide-up",
             bike.active
               ? "bg-accent/10 border-accent/40"
-              : "bg-card/50 border-border/30"
+              : "frost border-border/30"
           )}
           style={{ animationDelay: `${150 + i * 150}ms` }}
         >
@@ -1549,7 +1551,7 @@ function PersonaliseMockup() {
   ];
   return (
     <div className="w-full max-w-xs space-y-3">
-      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 animate-slide-up">
+      <div className="rounded-2xl border border-border/30 frost p-4 animate-slide-up">
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Accent Colour</p>
         <div className="grid grid-cols-8 gap-2">
           {swatches.map((c, i) => (
@@ -1564,7 +1566,7 @@ function PersonaliseMockup() {
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-3 animate-slide-up delay-200">
+      <div className="rounded-2xl border border-border/30 frost p-4 space-y-3 animate-slide-up delay-200">
         {[
           { icon: Gauge, label: 'Ride metrics', value: 'Lean · G · Flyover' },
           { icon: AlertTriangle, label: 'Safety', value: 'Alerts · Auto-rescue' },
@@ -1601,7 +1603,7 @@ function RadioMockup() {
 
   return (
     <div className="w-full max-w-xs space-y-3">
-      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 flex flex-col items-center animate-slide-up">
+      <div className="rounded-2xl border border-border/30 frost p-4 flex flex-col items-center animate-slide-up">
         <div className="relative w-40 h-40">
           <div className="absolute inset-0 rounded-full border border-border/50" />
           <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[9px] border-l-transparent border-r-transparent border-t-accent z-10" />
@@ -1640,7 +1642,7 @@ function RadioMockup() {
 
       </div>
 
-      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-2 animate-slide-up delay-200">
+      <div className="rounded-2xl border border-border/30 frost p-4 space-y-2 animate-slide-up delay-200">
         <p className="text-xs font-semibold text-center truncate">Midnight Run — Track 04</p>
         <div className="h-1 rounded-full bg-secondary overflow-hidden">
           <div className="h-full bg-accent animate-pulse" style={{ width: '42%' }} />
@@ -1663,7 +1665,7 @@ function PayUpMockup() {
 
   return (
     <div className="w-full max-w-xs space-y-3">
-      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 animate-slide-up">
+      <div className="rounded-2xl border border-border/40 frost p-4 animate-slide-up">
         <div className="flex items-center gap-2 mb-2">
           <Fuel className="w-4 h-4 text-accent" />
           <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktank</p>
@@ -1690,7 +1692,7 @@ function PayUpMockup() {
           Support the developer or send a friend fuel money.
         </p>
 
-        <div className="rounded-xl border border-border/40 bg-card/50 p-2 flex items-center justify-between mb-3">
+        <div className="rounded-xl border border-border/40 frost p-2 flex items-center justify-between mb-3">
           <span className="text-xs font-medium truncate">Developer</span>
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </div>
@@ -1703,7 +1705,7 @@ function PayUpMockup() {
                 onClick={() => setCurrency(c)}
                 className={cn(
                   'px-3 h-10 text-xs font-semibold touch-target transition-colors',
-                  currency === c ? 'bg-accent text-accent-foreground' : 'bg-card/60 text-muted-foreground'
+                  currency === c ? 'bg-accent text-accent-foreground' : 'frost text-muted-foreground'
                 )}
               >
                 {c}
@@ -1725,7 +1727,7 @@ function PayUpMockup() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-2 animate-slide-up delay-200">
+      <div className="rounded-2xl border border-border/30 frost p-4 space-y-2 animate-slide-up delay-200">
         {[
           { icon: QrCode, label: 'Scan friend QR' },
           { icon: Wallet, label: 'NIM / Polygon USDT' },

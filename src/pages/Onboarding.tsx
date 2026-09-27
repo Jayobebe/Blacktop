@@ -92,7 +92,7 @@ export default function Onboarding() {
         }
       >
         <div className="space-y-3 stagger-in">
-          <div style={{ ['--i' as string]: 0 }} className="bg-card/50 rounded-2xl p-4 border border-border/50 space-y-2">
+          <div style={{ ['--i' as string]: 0 }} className="frost rounded-[20px] p-4 space-y-2">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-accent" />
               <p className="text-xs font-semibold uppercase tracking-widest text-accent">Privacy-first</p>
@@ -120,7 +120,7 @@ export default function Onboarding() {
             <label
               key={i}
               style={{ ['--i' as string]: i + 2 }}
-              className={`pressable flex items-start gap-3 cursor-pointer rounded-2xl border p-3.5 ${item.checked ? 'border-accent/50 bg-accent/[0.06]' : 'border-border/50 bg-card/30'}`}
+              className={`pressable flex items-start gap-3 cursor-pointer rounded-2xl border p-3.5 ${item.checked ? 'border-accent/50 bg-accent/[0.08]' : 'frost'}`}
             >
               <Checkbox
                 checked={item.checked}
@@ -195,7 +195,7 @@ export default function Onboarding() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
-          className="h-16 text-2xl font-semibold rounded-2xl px-5 bg-card/50"
+          className="h-16 text-2xl font-semibold rounded-2xl px-5 frost"
           maxLength={20}
           autoFocus
           autoComplete="nickname"
@@ -207,7 +207,7 @@ export default function Onboarding() {
       </form>
 
       {/* Install instructions, tucked away */}
-      <div className="mt-8 rounded-2xl border border-border/50 bg-card/30 overflow-hidden">
+      <div className="mt-8 rounded-[20px] frost overflow-hidden">
         <button
           type="button"
           onClick={() => setShowInstall((s) => !s)}

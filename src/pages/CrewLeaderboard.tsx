@@ -8,6 +8,7 @@ import { useRideHistory } from '@/features/ride';
 import { useArcadeScores } from '@/features/arcade';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 interface CrewRow {
   display_name: string;
@@ -85,17 +86,7 @@ export default function CrewLeaderboard() {
 
   return (
     <div className="min-h-dvh bg-background safe-top safe-bottom px-4 pt-4 pb-8">
-      <header className="relative flex items-center justify-center pb-5">
-        <button
-          type="button"
-          onClick={() => navigate('/world')}
-          className="absolute left-0 top-0 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-          aria-label="Back to Blacktop World"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Crew Leaderboards</h1>
-      </header>
+      <PageHeader title="Crew Leaderboards" backTo="/world" backLabel="Back to Blacktop World" />
 
       {/* This page publishes the rider's own totals (see the effect above), so say so. */}
       <p className="text-[11px] text-muted-foreground mb-3">

@@ -16,6 +16,7 @@ import { useProfile } from '@/features/profile';
 import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
 import { shareRecapCard } from '@/features/ride/lib/recapCard';
 import { useExperience } from '@/features/experience';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -115,32 +116,27 @@ export default function RideDetail() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center justify-between mb-4 landscape:mb-2 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/history')}
-            className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
-          >
-            <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-          </button>
-          <div>
-            <h1 className="text-lg landscape:text-base font-display font-bold">{ride.name || formatDate(ride.startedAt)}</h1>
-            <p className="text-xs text-muted-foreground">{formatDate(ride.startedAt)} • {formatTime(ride.startedAt)}</p>
-          </div>
-        </div>
-        {ride.challenge && (
-          <span className="flex items-center gap-1 text-xs text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded mr-2">
-            <IdCard className="w-3.5 h-3.5" />
-            Time attack
-          </span>
-        )}
-        {ride.isConvoyRide && (
-          <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 px-2 py-0.5 rounded">
-            <Users className="w-3.5 h-3.5" />
-            Convoy
-          </span>
-        )}
-      </header>
+      <PageHeader
+        title={ride.name || formatDate(ride.startedAt)}
+        subtitle={`${formatDate(ride.startedAt)} · ${formatTime(ride.startedAt)}`}
+        backTo="/history"
+        right={
+          <>
+            {ride.challenge && (
+              <span className="flex items-center gap-1 text-xs font-medium text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2.5 py-1 rounded-full">
+                <IdCard className="w-3.5 h-3.5" />
+                Time attack
+              </span>
+            )}
+            {ride.isConvoyRide && (
+              <span className="flex items-center gap-1 text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
+                <Users className="w-3.5 h-3.5" />
+                Convoy
+              </span>
+            )}
+          </>
+        }
+      />
 
       {/* Main content - scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">

@@ -60,8 +60,8 @@ export function BadgeWalletPanel() {
                 'basis-[calc((100%-1rem)/3)] flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
                 negative
                   ? 'bg-stone-500/10 border-stone-500/30'
-                  : 'bg-accent/10 border-accent/30',
-                count === 0 && 'opacity-50'
+                  : count > 0 ? 'bg-accent/10 border-accent/30' : 'bg-card border-white/[0.06]',
+                count === 0 && 'opacity-60'
               )}
               style={{ animationDelay: `${index * 50}ms` }}
             >
@@ -69,7 +69,7 @@ export function BadgeWalletPanel() {
               <span
                 className={cn(
                   'font-mono text-xl font-bold',
-                  negative ? 'text-stone-400' : 'text-accent'
+                  negative ? 'text-stone-400' : count > 0 ? 'text-accent' : 'text-foreground/70'
                 )}
               >
                 {count}
@@ -77,7 +77,7 @@ export function BadgeWalletPanel() {
               <span
                 className={cn(
                   'text-[10px] font-medium mt-0.5',
-                  negative ? 'text-stone-400' : 'text-accent'
+                  negative ? 'text-stone-400' : count > 0 ? 'text-accent' : 'text-foreground/80'
                 )}
               >
                 {info.label}
@@ -94,7 +94,7 @@ export function BadgeWalletPanel() {
         <div
           className={cn(
             'basis-[calc((100%-1rem)/3)] flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
-            'bg-accent/10 border-accent/30',
+            w.kickbacks > 0 ? 'bg-accent/10 border-accent/30' : 'bg-card border-white/[0.06]',
             w.kickbacks === 0 && 'opacity-50'
           )}
           style={{ animationDelay: `${8 * 50}ms` }}

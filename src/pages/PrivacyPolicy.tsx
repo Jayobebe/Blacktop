@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Shield } from 'lucide-react';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
@@ -10,23 +11,9 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-dvh bg-background safe-top safe-bottom">
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/30">
-        <div className="flex items-center gap-3 p-4 max-w-2xl mx-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="touch-target"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-accent" />
-            <h1 className="text-lg font-semibold">Privacy Policy</h1>
-          </div>
-        </div>
-      </header>
+      <div className="px-4 max-w-2xl mx-auto">
+        <PageHeader sticky title="Privacy Policy" onBack={handleBack} backLabel="Go back" />
+      </div>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
@@ -112,9 +99,10 @@ export default function PrivacyPolicy() {
           <p className="text-muted-foreground">
             <span className="text-foreground">What gets shared when you enable it and start a ride:</span> your
             precise GPS coordinates and a timestamp are written to our server every 30 seconds
-            while you are actively riding. This data powers the live rider count and the
-            country-level glow on the globe — other riders see how many people are riding globally
-            and which countries are active, not your individual pin or identity.
+            while you are actively riding. Only you can read that record. It powers the live rider
+            count and the glow on the globe: other riders see positions rounded to whole degrees of
+            latitude and longitude (about 110 km), with no name or ID, never your individual pin
+            or identity.
             No display name, speed, route history, or device identifier is included.
           </p>
           <p className="text-muted-foreground">

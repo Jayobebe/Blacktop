@@ -28,7 +28,7 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
     <div className="space-y-5">
       <div className="flex gap-4 items-stretch">
         {/* Phone */}
-        <div className="w-[136px] shrink-0 rounded-[26px] border-[3px] border-border/70 bg-background p-2 flex flex-col gap-1.5 shadow-[0_20px_50px_-20px_hsl(var(--accent)/0.5)] animate-scale-in">
+        <div className="w-[136px] shrink-0 rounded-[26px] border-[3px] border-white/15 bg-background/80 p-2 flex flex-col gap-1.5 shadow-[0_20px_50px_-20px_hsl(var(--accent)/0.5)] animate-scale-in">
           <div className="flex items-center justify-between px-0.5">
             <div className="h-1.5 w-10 rounded-full bg-foreground/70" />
             {settings.radioEnabled && <Radio className="w-2.5 h-2.5 text-accent" />}
@@ -110,7 +110,7 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
 
 function Fact({ label, value, icon: Icon, i }: { label: string; value: string; icon?: React.ElementType; i: number }) {
   return (
-    <div style={{ ['--i' as string]: i }} className="rounded-2xl border border-border/50 bg-card/40 px-3 py-2">
+    <div style={{ ['--i' as string]: i }} className="rounded-2xl frost px-3 py-2">
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold flex items-center gap-1.5 truncate">
         {Icon && <Icon className="w-4 h-4 text-accent shrink-0" />}

@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
-import { MotorcycleIcon } from './VehicleIcons';
+import { FrostedBackdrop } from '@/components/FrostedBackdrop';
+import { BTLogo } from '@/components/BTLogo';
 
 /**
  * First screen a new user sees. Above the fold: welcome, one-line summary,
@@ -93,20 +94,17 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
   };
 
   return (
-    <main className="relative h-dvh overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth page-in-fade">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[70dvh] setup-grid" />
-      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[160%] h-80 rounded-[100%] bg-accent/15 blur-3xl" />
+    <main className="relative isolate h-dvh overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth page-in-fade">
+      <FrostedBackdrop />
 
       {/* Above the fold */}
       <section className="relative min-h-dvh flex flex-col items-center px-6 pt-10 landscape:pt-4 pb-4 landscape:pb-2 safe-top text-center">
         {/* Hero + actions centred in the space above the scroll prompt */}
         <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-8 landscape:gap-12 w-full">
         <div className="max-w-sm animate-slide-up landscape:text-left">
-          <div className="mx-auto mb-5 landscape:hidden w-16 h-16 rounded-3xl bg-accent/10 border border-accent/30 flex items-center justify-center shadow-glow">
-            <MotorcycleIcon className="w-8 h-8 text-accent" />
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-3 landscape:mb-2">Welcome to Blacktop</p>
-          <h1 className="text-4xl landscape:text-3xl font-semibold tracking-tight leading-[1.05] mb-4 landscape:mb-3">
+          <BTLogo size="lg" className="mx-auto mb-6 landscape:hidden rounded-2xl" />
+          <p className="text-[13px] font-medium text-accent mb-2 landscape:mb-1.5">Welcome to Blacktop</p>
+          <h1 className="text-[40px] landscape:text-3xl font-semibold tracking-[-0.035em] leading-[1.02] mb-4 landscape:mb-3">
             Every road.<br />Your way.
           </h1>
           <p className="text-muted-foreground text-[15px] landscape:text-sm leading-relaxed">
@@ -120,7 +118,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
             Get started
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
-          <Button asChild variant="outline" className="w-full h-12 text-sm font-semibold rounded-2xl touch-target">
+          <Button asChild variant="ghost" className="frost w-full h-12 text-[15px] font-semibold rounded-2xl touch-target">
             <Link to="/demo">
               <Play className="w-4 h-4 mr-1" />
               Try the demo
@@ -155,7 +153,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, body }) => (
-            <article key={title} className="rounded-2xl border border-border/50 bg-card/50 p-4">
+            <article key={title} className="rounded-[20px] frost p-4">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <div className="rounded-lg bg-accent/10 p-1.5">
                   <Icon className="w-4 h-4 text-accent" />

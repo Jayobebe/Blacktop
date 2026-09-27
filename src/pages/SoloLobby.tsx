@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useConvoyState } from '@/features/convoy';
 import { useCrew } from '@/features/crew/useCrew';
 import { useExperience } from '@/features/experience';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 interface UserLocation {
   lat: number;
@@ -164,33 +165,22 @@ export default function SoloLobby() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
       {/* Header */}
-      <header className="flex items-center gap-3 mb-6 animate-fade-in">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2 -ml-2 rounded-xl hover:bg-secondary transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-xl font-semibold tracking-tight">{showGroup ? 'Solo' : 'New'} {terms.Ride}</h1>
-          <p className="text-xs text-muted-foreground">
-            {isUnlocked ? `Open to crew ${crew.code}` : 'Set a destination and hit the road'}
-          </p>
-        </div>
-        <button
-          onClick={toggleUnlocked}
-          disabled={busyLock}
-          className={`p-2.5 rounded-xl border transition-colors ${
-            isUnlocked
-              ? 'bg-accent/10 border-accent/60 text-accent'
-              : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary'
-          }`}
-          title={isUnlocked ? 'Locked to crew list — tap to lock' : 'Tap to list in Crew Convoys'}
-          aria-label={isUnlocked ? 'Lock lobby' : 'Unlock lobby to crew'}
-        >
-          {isUnlocked ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-        </button>
-      </header>
+      <PageHeader
+        title={`${showGroup ? 'Solo' : 'New'} ${terms.Ride}`}
+        subtitle={isUnlocked ? `Open to crew ${crew.code}` : 'Set a destination and hit the road'}
+        backTo="/"
+        right={
+          <HeaderButton
+            onClick={toggleUnlocked}
+            disabled={busyLock}
+            active={isUnlocked}
+            title={isUnlocked ? 'Locked to crew list — tap to lock' : 'Tap to list in Crew Convoys'}
+            aria-label={isUnlocked ? 'Lock lobby' : 'Unlock lobby to crew'}
+          >
+            {isUnlocked ? <Unlock className="w-[18px] h-[18px]" /> : <Lock className="w-[18px] h-[18px]" />}
+          </HeaderButton>
+        }
+      />
 
 
       {/* Main Content */}

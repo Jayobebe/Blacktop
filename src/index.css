@@ -4,24 +4,25 @@
 
 @layer base {
   :root {
-    /* Sonoma-inspired dark palette */
-    --background: 220 15% 6%;
-    --foreground: 220 10% 98%;
+    /* Near-black neutral palette (native dark-mode feel): a true-dark base with
+       gently lifted surfaces, instead of a blue-tinted slate. */
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 220 15% 10%;
-    --card-foreground: 220 10% 98%;
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 220 15% 8%;
-    --popover-foreground: 220 10% 98%;
+    --popover: 240 5% 9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 220 10% 98%;
-    --primary-foreground: 220 15% 6%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 4%;
 
-    --secondary: 220 15% 14%;
-    --secondary-foreground: 220 10% 90%;
+    --secondary: 240 4% 14%;
+    --secondary-foreground: 0 0% 92%;
 
-    --muted: 220 12% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 240 4% 17%;
+    --muted-foreground: 240 5% 62%;
 
     /* Warm orange-yellow accent - Apple-like vibrant but sophisticated */
     --accent: 38 95% 55%;
@@ -34,15 +35,15 @@
     --warning: 48 100% 50%;
     --warning-foreground: 220 15% 6%;
 
-    --border: 220 12% 18%;
-    --input: 220 15% 12%;
+    --border: 240 4% 19%;
+    --input: 240 5% 11%;
     --ring: 38 95% 55%;
 
     --radius: 1rem;
 
     /* Glass effect colors */
-    --glass-bg: 220 15% 10% / 0.7;
-    --glass-border: 220 15% 25% / 0.3;
+    --glass-bg: 240 5% 10% / 0.7;
+    --glass-border: 0 0% 100% / 0.08;
     --glass-shine: 220 15% 100% / 0.05;
 
     /* Blacktop specific */
@@ -51,7 +52,7 @@
     --speed-active: 38 95% 55%;
     --voice-active: 200 100% 60%;
     --ptt-active: 38 95% 55%;
-    --ptt-inactive: 220 15% 22%;
+    --ptt-inactive: 240 4% 20%;
 
     /* High contrast for sunlight */
     --contrast-high: 220 10% 100%;
@@ -72,6 +73,29 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  ::selection {
+    background: hsl(var(--accent) / 0.35);
+  }
+
+  /* Touch devices: no scrollbars, like native lists. Thin ones on desktop. */
+  @media (pointer: coarse) {
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+  }
+  @media (pointer: fine) {
+    * { scrollbar-width: thin; scrollbar-color: hsl(var(--muted)) transparent; }
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.7);
+    outline-offset: 2px;
   }
 
   body {
@@ -236,9 +260,13 @@
     letter-spacing: -0.02em;
   }
 
+  /* Numbers: the UI font with tabular figures (how native apps set stats),
+     instead of a monospace stack that falls back to Courier on Android/Windows. */
   .font-mono {
-    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
-    font-feature-settings: 'tnum';
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum', 'cv11', 'ss01';
+    letter-spacing: -0.02em;
   }
 
   /* Touch targets */
@@ -987,42 +1015,25 @@
   animation: skeleton-sweep 1.4s ease-in-out infinite;
 }
 
-/* Setup flow */
-@keyframes setup-road-dash { to { stroke-dashoffset: -26; } }
-.setup-road-dash { animation: setup-road-dash 0.5s linear infinite; }
-@keyframes setup-wheel-spin { to { transform: rotate(360deg); } }
-.setup-wheel-spin { animation: setup-wheel-spin 0.6s linear infinite; }
-@keyframes setup-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
+/* Frosted surface for content over FrostedBackdrop / app screens behind overlays. */
+.frost {
+  background: hsl(var(--card) / 0.55);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid hsl(0 0% 100% / 0.08);
 }
-.setup-bob { animation: setup-bob 0.4s ease-in-out infinite; }
-@keyframes setup-glow {
-  0%, 100% { filter: drop-shadow(0 0 2px currentColor); }
-  50% { filter: drop-shadow(0 0 7px currentColor); }
-}
-.setup-glow { animation: setup-glow 1.6s ease-in-out infinite; }
+
+/* Selected-state pop for checkmarks */
 @keyframes setup-pop {
   0% { transform: scale(0); }
   70% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
 .setup-pop { animation: setup-pop 320ms var(--ease-spring) both; }
-@keyframes setup-grid-drift { to { background-position: 0 48px; } }
-.setup-grid {
-  background-image:
-    linear-gradient(hsl(var(--accent) / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--accent) / 0.06) 1px, transparent 1px);
-  background-size: 48px 48px;
-  animation: setup-grid-drift 3s linear infinite;
-  mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .page-in-forward, .page-in-back, .page-in-fade, .stagger-in > *,
-  .setup-road-dash, .setup-wheel-spin, .setup-bob, .setup-glow, .setup-grid,
-  .skeleton-shimmer::after {
+  .setup-pop, .skeleton-shimmer::after {
     animation: none !important;
   }
   .pressable:active:not(:disabled) { transform: none; }

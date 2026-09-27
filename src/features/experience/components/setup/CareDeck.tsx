@@ -102,7 +102,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
             <div
               key={next.id}
               aria-hidden
-              className="absolute inset-0 rounded-[28px] border border-border/50 bg-card transition-transform duration-300 ease-spring"
+              className="absolute inset-0 rounded-[28px] frost transition-transform duration-300 ease-spring"
               style={{ transform: `translateY(${offset * 24}px) scale(${1 - offset * 0.05})`, opacity: 1 - offset * 0.3 }}
             >
               <div className="p-6 opacity-40">
@@ -122,8 +122,8 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           className={cn(
-            'absolute inset-0 rounded-[28px] border bg-card overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing animate-scale-in',
-            current ? 'border-accent/40' : 'border-border/60',
+            'absolute inset-0 rounded-[28px] border bg-card/80 backdrop-blur-2xl overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing animate-scale-in',
+            current ? 'border-accent/40' : 'border-white/10',
             !dragging && 'transition-[transform,opacity] ease-out'
           )}
           style={{
@@ -135,13 +135,12 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
         >
           {/* Hero */}
           <div className="relative h-[40%] flex items-center justify-center bg-[radial-gradient(ellipse_at_center,hsl(var(--accent)/0.22),transparent_70%)]">
-            <div className="absolute w-36 h-36 rounded-full border border-accent/20 animate-ping [animation-duration:2.4s]" />
             <div className="absolute w-28 h-28 rounded-full border border-accent/30" />
             <div className="relative w-20 h-20 rounded-3xl bg-accent text-accent-foreground flex items-center justify-center shadow-glow">
               <Icon className="w-10 h-10" />
             </div>
             {recommended && (
-              <span className="absolute top-4 left-4 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full bg-accent/15 text-accent border border-accent/30">
+              <span className="absolute top-4 left-4 flex items-center gap-1 text-[12px] font-medium px-2.5 py-1 rounded-full bg-accent/15 text-accent">
                 <Star className="w-3 h-3" />
                 {crowd ? `Popular with ${crowd}` : 'Recommended'}
               </span>
@@ -167,7 +166,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{q.pitch(context)}</p>
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
               {q.gets(context).map((g) => (
-                <span key={g} className="text-[11px] px-2 py-1 rounded-full bg-secondary text-foreground/80 border border-border/50">
+                <span key={g} className="text-[12px] px-2.5 py-1 rounded-full bg-white/[0.06] text-foreground/80">
                   {g}
                 </span>
               ))}
@@ -183,7 +182,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           onClick={() => answer(false)}
           className={cn(
             'pressable h-14 rounded-2xl border flex items-center justify-center gap-2 font-semibold',
-            !current ? 'border-foreground/40 bg-secondary/60' : 'border-border bg-card/50 text-muted-foreground'
+            !current ? 'border-white/25 bg-white/[0.08]' : 'frost text-muted-foreground'
           )}
         >
           <X className="w-5 h-5" />

@@ -36,6 +36,7 @@ import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
 import { NimiqTipCard } from '@/features/tips';
 import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type RideMode } from '@/features/experience';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -240,36 +241,31 @@ export default function Settings() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-        >
-          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Settings</h1>
-        </div>
-        <button
-          type="button"
-          onPointerDown={(e) => { e.preventDefault(); startDemoHold(); }}
-          onPointerUp={cancelDemoHold}
-          onPointerLeave={cancelDemoHold}
-          onPointerCancel={cancelDemoHold}
-          onContextMenu={(e) => e.preventDefault()}
-          className="relative rounded-lg touch-target select-none"
-          aria-label="Hold to reveal demo data toggle"
-          style={{ WebkitTouchCallout: 'none' }}
-        >
-          <BTLogo size="md" />
-          {demoHoldProgress > 0 && demoHoldProgress < 1 && (
-            <span
-              className="pointer-events-none absolute inset-0 rounded-lg border-2 border-accent"
-              style={{ opacity: 0.3 + demoHoldProgress * 0.7 }}
-            />
-          )}
-        </button>
-      </header>
+      <PageHeader
+        title="Settings"
+        backTo="/"
+        right={
+          <button
+            type="button"
+            onPointerDown={(e) => { e.preventDefault(); startDemoHold(); }}
+            onPointerUp={cancelDemoHold}
+            onPointerLeave={cancelDemoHold}
+            onPointerCancel={cancelDemoHold}
+            onContextMenu={(e) => e.preventDefault()}
+            className="relative rounded-lg touch-target select-none"
+            aria-label="Hold to reveal demo data toggle"
+            style={{ WebkitTouchCallout: 'none' }}
+          >
+            <BTLogo size="md" />
+            {demoHoldProgress > 0 && demoHoldProgress < 1 && (
+              <span
+                className="pointer-events-none absolute inset-0 rounded-lg border-2 border-accent"
+                style={{ opacity: 0.3 + demoHoldProgress * 0.7 }}
+              />
+            )}
+          </button>
+        }
+      />
 
       {/* Demo data toggle — only visible after a 3s long-press on the BT logo */}
       {demoActionRevealed && (
@@ -287,7 +283,7 @@ export default function Settings() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 landscape:space-y-2">
         {/* Profile Section */}
-        <section className="bg-card/50 rounded-2xl border border-border/30 animate-slide-up h-14 landscape:h-12 flex items-center px-4 landscape:px-3">
+        <section className="bg-card rounded-[20px] border border-white/[0.06] animate-slide-up h-[64px] landscape:h-14 flex items-center px-4 landscape:px-3">
           {isEditingName ? (
             <div className="flex-1 flex items-center h-full">
               <Input
@@ -309,11 +305,16 @@ export default function Settings() {
               }}
               className="flex items-center justify-between w-full h-full text-left group"
             >
-              <div className="flex flex-col min-w-0 justify-center">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mb-0.5">Profile Name</span>
-                <span className="text-sm font-semibold truncate">{profile.name}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-full bg-accent/15 text-accent flex items-center justify-center text-[15px] font-semibold shrink-0">
+                  {profile.name.trim().charAt(0).toUpperCase() || '?'}
+                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[15px] font-semibold truncate">{profile.name}</span>
+                  <span className="text-[12px] text-muted-foreground">Tap to change your name</span>
+                </div>
               </div>
-              <Pencil className="w-4 h-4 text-accent transition-colors shrink-0 ml-2" />
+              <Pencil className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
             </button>
          )}
         </section>
@@ -876,7 +877,7 @@ export default function Settings() {
             <li>• Ride history stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
             <li>• Voice is encrypted and never stored on a server; it's only in overlay videos of riders who opt in</li>
-            {settings.blacktopWorldEnabled && <li>• Blacktop World shows your live position while you ride, and crew boards see totals you publish</li>}
+            {settings.blacktopWorldEnabled && <li>• Blacktop World shows you as an anonymous glow (to about 110 km) while you ride, and crew boards see totals you publish</li>}
             <li>• Live convoy data is server-burned the moment a ride ends</li>
           </ul>
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
@@ -912,49 +913,42 @@ export default function Settings() {
         />
 
 
-        {/* Burn Button Section */}
-        <section className="bg-[hsl(var(--burn))]/5 rounded-2xl p-4 landscape:p-3 border border-[hsl(var(--burn))]/30 animate-slide-up delay-300">
-          <div className="flex items-center gap-2 mb-3">
-            <Flame className="w-4 h-4 text-[hsl(var(--burn))]" />
-            <p className="text-[10px] text-[hsl(var(--burn))] uppercase tracking-widest font-semibold">Burn Button</p>
-          </div>
-          
-          <p className="text-xs text-muted-foreground mb-3">
-            Permanently delete your name and all ride data ({stats.totalRides} rides, {stats.totalDistance.toFixed(1)} mi). Returns you to the welcome screen.
-          </p>
+        {/* Pay Up — collapsed so the QR isn't the first thing on the page */}
+        <CollapsibleSection icon={Heart} label="Pay Up" delayClass="delay-300">
+          <NimiqTipCard bare />
+        </CollapsibleSection>
 
+        {/* Burn — last, in the destructive colour */}
+        <CollapsibleSection
+          icon={Flame}
+          label="Burn all data"
+          delayClass="delay-300"
+          labelClassName="text-[hsl(var(--burn))]"
+          iconClassName="text-[hsl(var(--burn))]"
+        >
+          <p className="text-[13px] text-muted-foreground mb-3">
+            Permanently deletes your name and all ride data ({stats.totalRides} {stats.totalRides === 1 ? 'ride' : 'rides'},{' '}
+            {stats.totalDistance.toFixed(1)} mi) and returns you to the welcome screen. This can't be undone.
+          </p>
           <Button
             onClick={handleBurn}
             disabled={burning}
-            variant={burnStep === 1 ? "destructive" : "outline"}
+            variant={burnStep === 1 ? 'destructive' : 'outline'}
             className={cn(
-              "w-full h-11 font-semibold touch-target rounded-xl transition-all",
-              burnStep === 0 && "border-[hsl(var(--burn))] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background",
-              burnStep === 1 && "animate-burn-pulse"
+              'w-full h-11 font-semibold touch-target rounded-xl transition-all',
+              burnStep === 0 && 'border-[hsl(var(--burn))]/60 text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background',
+              burnStep === 1 && 'animate-burn-pulse'
             )}
           >
             <Flame className="w-4 h-4 mr-2" />
-            {burnStep === 0 ? "BURN ALL DATA" : "CONFIRM BURN"}
+            {burnStep === 0 ? 'Burn all data' : 'Tap again to confirm'}
           </Button>
-
           {burnStep === 1 && (
-            <Button
-              onClick={() => setBurnStep(0)}
-              variant="ghost"
-              className="w-full mt-2 touch-target"
-            >
+            <Button onClick={() => setBurnStep(0)} variant="ghost" className="w-full mt-2 touch-target">
               Cancel
             </Button>
           )}
-
-          <p className="text-[10px] text-destructive text-center mt-3">
-            This action cannot be undone
-          </p>
-        </section>
-
-
-        {/* Tip Jar Section — Nimiq Pay */}
-        <NimiqTipCard />
+        </CollapsibleSection>
 
         {/* Legal Disclaimer */}
         <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
@@ -976,93 +970,34 @@ export default function Settings() {
 }
 
 function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle: (v: boolean) => void }) {
-  const [open, setOpen] = useState(false);
   return (
-    <section className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up delay-300">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="w-full flex items-center gap-2 text-left"
-      >
-        <Globe2 className="w-4 h-4 text-accent" />
-        <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktop World</p>
-        <ChevronDown
-          className={cn(
-            'w-4 h-4 ml-auto text-muted-foreground transition-transform duration-300',
-            open && 'rotate-180',
-          )}
-        />
-      </button>
-
-      <div
-        className={cn(
-          'grid transition-all duration-300 ease-out',
-          open ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0',
-        )}
-      >
-        <div className="overflow-hidden">
-          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-            The crew hub — a spinning globe with landmarks for{' '}
-            <span className="text-foreground font-medium">crew convoys</span>,{' '}
-            <span className="text-foreground font-medium">crew leaderboards</span>,{' '}
-            <span className="text-foreground font-medium">crew QR joining</span>, your card
-            collection and the arcade, with an anonymous country-level glow showing where riders
-            are active. When opted in, you can also <span className="text-foreground font-medium">long-press
-            the spinning globe</span> on the home screen to launch it.
-          </p>
-
-          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-            <span className="text-foreground font-medium">Blacktank</span> lives here too — your
-            crew's shared fuel-pot landmark. Members chip in pledges of NIM or USDT, and any
-            withdrawal needs a unanimous vote from the rest of the crew before it's released.
-            It's a pledge ledger only: payouts are settled directly between wallets via Nimiq
-            Pay, and Blacktop never holds the money.
-          </p>
-
-          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-            Opting in also unlocks the <span className="text-foreground font-medium">card
-            collection folder</span> inside Blacktop World and the{' '}
-            <span className="text-foreground font-medium">flip-to-QR</span> button on
-            your own vehicle cards in Stats — so other riders can scan your card
-            and you can scan theirs to build a shared collection. Cards stay on
-            each device; no rider data leaves your phone unless you show
-            someone your QR.
-          </p>
-          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-            <span className="text-foreground font-medium">Card drops</span> are a Blacktop World
-            feature only — planting, finding and collecting cards on the map is
-            active solely while you're opted in. Opt out and drops stop being
-            listed, planted or collected.
-          </p>
-          <p className="text-[10px] text-muted-foreground mb-3">
-            Opting in shares only your <span className="text-foreground">country</span> (derived
-            from your coarse location) while the app is open — never your exact
-            position, name, or ride data. Opt out any time; long-press, the
-            card folder, card drops, and the flip button all stop working immediately.
-          </p>
-
-          {enabled ? (
-            <Button
-              onClick={() => onToggle(false)}
-              variant="outline"
-              className="w-full h-11 font-semibold rounded-xl touch-target border-border/50 mt-3"
-            >
-              <Globe2 className="w-4 h-4 mr-2" />
-              Opt out of Blacktop World
-            </Button>
-          ) : (
-            <Button
-              onClick={() => onToggle(true)}
-              className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target mt-3"
-            >
-              <Globe2 className="w-4 h-4 mr-2" />
-              Opt in to Blacktop World
-            </Button>
-          )}
-        </div>
+    <CollapsibleSection
+      icon={Globe2}
+      label="Blacktop World"
+      delayClass="delay-300"
+      status={enabled ? 'On' : 'Off'}
+    >
+      <div className="space-y-3 text-[13px] text-muted-foreground leading-relaxed">
+        <p>
+          The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew
+          fuel fund) and trading-card drops on the map. Long-press the globe on Home to open it.
+        </p>
+        <p>
+          <span className="text-foreground font-medium">What it shares.</span> While you ride, your position is saved
+          to our server so you can appear on the globe. Other riders only ever see an anonymous glow rounded to about
+          110 km, never your exact position or name. It's deleted when your ride ends. Crew boards see the totals you
+          publish, and card drops you plant are visible to the riders you choose.
+        </p>
+        <Button
+          onClick={() => onToggle(!enabled)}
+          variant={enabled ? 'outline' : 'default'}
+          className={cn('w-full h-11 font-semibold rounded-xl touch-target', !enabled && 'bg-accent hover:bg-accent/90 text-accent-foreground')}
+        >
+          <Globe2 className="w-4 h-4 mr-2" />
+          {enabled ? 'Turn off Blacktop World' : 'Turn on Blacktop World'}
+        </Button>
       </div>
-    </section>
+    </CollapsibleSection>
   );
 }
 

@@ -52,7 +52,7 @@ export function RadioOverlay() {
 
 
   return createPortal(
-    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/95 backdrop-blur-xl animate-fade-in safe-top safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
+    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-top safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-4 landscape:pt-2 landscape:px-6 shrink-0">
         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">Blacktop Radio</p>
         <button

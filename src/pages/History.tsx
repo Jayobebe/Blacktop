@@ -9,6 +9,7 @@ import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Timer, Disc3 as B
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useExperience } from '@/features/experience';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function History() {
   const navigate = useNavigate();
@@ -49,18 +50,11 @@ export default function History() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-        >
-          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-        </button>
-        <div>
-          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">{terms.Ride} History</h1>
-          <p className="text-xs text-muted-foreground">{rides.length} {rides.length === 1 ? terms.ride : terms.rides} recorded</p>
-        </div>
-      </header>
+      <PageHeader
+        title={`${terms.Ride} History`}
+        subtitle={`${rides.length} ${rides.length === 1 ? terms.ride : terms.rides} recorded`}
+        backTo="/"
+      />
 
       {/* Rides List */}
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 landscape:space-y-2 pr-1">
@@ -82,10 +76,8 @@ export default function History() {
                 key={ride.id}
                 onClick={() => navigate(`/ride/${ride.id}`)}
                 className={cn(
-                  "w-full bg-card/50 border rounded-2xl p-4 landscape:p-3 text-left hover:bg-secondary/50 transition-all animate-slide-up touch-target",
-                  isLatest 
-                    ? "border-accent/40 shadow-[0_0_30px_-10px] shadow-accent/30" 
-                    : "border-border/30"
+                  "pressable w-full bg-card border rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target",
+                  isLatest ? "border-accent/35" : "border-white/[0.06]"
                 )}
                 style={{ animationDelay: `${index * 60}ms` }}
               >
@@ -108,9 +100,10 @@ export default function History() {
                         <p className="font-semibold text-sm truncate">{displayName}</p>
                         <button
                           onClick={(e) => handleEditStart(ride.id, ride.name || '', e)}
-                          className="p-1.5 rounded-lg bg-accent/20 hover:bg-accent/30 transition-all"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.07] transition-colors"
+                          aria-label="Rename"
                         >
-                          <Pencil className="w-3.5 h-3.5 text-accent" />
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     )}

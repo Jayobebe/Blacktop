@@ -31,6 +31,7 @@ import { buildNickLines } from '@/features/garage/lib/nickLines';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
 import { useExperience } from '@/features/experience';
+import { HeaderButton } from '@/components/PageHeader';
 
 
 
@@ -115,26 +116,16 @@ export default function Garage() {
 
   return (
     <div className="min-h-dvh bg-background flex flex-col p-4 safe-top safe-bottom">
-      <header className="flex items-center justify-between mb-3">
-        <button
-          onClick={() => navigate('/')}
-          className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-secondary touch-target"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-2">
-          <BTLogo size="sm" />
-          <h1 className="text-lg font-semibold tracking-tight">Garage</h1>
-        </div>
+      <header className="flex items-center gap-3 mb-4">
+        <HeaderButton onClick={() => navigate('/')} aria-label="Back">
+          <ChevronLeft className="w-5 h-5 -ml-0.5" strokeWidth={2.25} />
+        </HeaderButton>
+        <h1 className="flex-1 text-[22px] font-semibold tracking-[-0.025em] leading-tight">Garage</h1>
         <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) resetAddForm(); }}>
           <DialogTrigger asChild>
-            <button
-              className="h-10 w-10 rounded-xl flex items-center justify-center bg-accent/10 text-accent hover:bg-accent/20 touch-target"
-              aria-label="Add vehicle"
-            >
+            <HeaderButton active aria-label="Add vehicle">
               <Plus className="w-5 h-5" />
-            </button>
+            </HeaderButton>
           </DialogTrigger>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>

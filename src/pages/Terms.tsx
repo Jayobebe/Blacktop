@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function Terms() {
   const navigate = useNavigate();
@@ -10,23 +11,9 @@ export default function Terms() {
 
   return (
     <div className="min-h-dvh bg-background safe-top safe-bottom">
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/30">
-        <div className="flex items-center gap-3 p-4 max-w-2xl mx-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="touch-target"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-accent" />
-            <h1 className="text-lg font-semibold">Terms & Safety</h1>
-          </div>
-        </div>
-      </header>
+      <div className="px-4 max-w-2xl mx-auto">
+        <PageHeader sticky title="Terms & Safety" onBack={handleBack} backLabel="Go back" />
+      </div>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">

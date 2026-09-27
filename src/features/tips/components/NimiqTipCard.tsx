@@ -43,7 +43,8 @@ function addressUri(currency: TipCurrency, address: string): string {
   return `ethereum:${USDT_POLYGON_CONTRACT}@137/transfer?address=${address}`;
 }
 
-export function NimiqTipCard() {
+/** `bare`: render content only, for embedding inside a Settings section. */
+export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
   const { payees, addPayee, removePayee } = usePayees();
   const { wallet, hasWallet, saveWallet } = useMyWallet();
 
@@ -165,11 +166,13 @@ export function NimiqTipCard() {
   };
 
   return (
-    <section className="bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300">
-      <div className="flex items-center gap-2 mb-3">
-        <Heart className="w-4 h-4 text-accent" />
-        <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
-      </div>
+    <section className={bare ? '' : 'bg-accent/5 rounded-2xl p-4 landscape:p-3 border border-accent/30 animate-slide-up delay-300'}>
+      {!bare && (
+        <div className="flex items-center gap-2 mb-3">
+          <Heart className="w-4 h-4 text-accent" />
+          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
+        </div>
+      )}
       <p className="text-xs text-muted-foreground mb-3">
         Support the developer or send a friend fuel money.
       </p>

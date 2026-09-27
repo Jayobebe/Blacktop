@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDiscordIntegration, announceConvoyToDiscord } from '@/features/integrations/discord';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 // Client-side floor on re-clicking "Generate Convoy Code", on top of the
 // persistent already-a-leader guard in createConvoy() itself: a quick retry
@@ -101,15 +102,7 @@ export default function CreateConvoy() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-4 landscape:mb-2 flex-shrink-0">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
-        >
-          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-        </button>
-        <h1 className="text-xl landscape:text-lg font-display font-bold">Start Convoy</h1>
-      </header>
+      <PageHeader title="Start Convoy" backTo="/" />
 
       <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-4 landscape:gap-8 animate-fade-in min-h-0">
         {!convoyCode ? (

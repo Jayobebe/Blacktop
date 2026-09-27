@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, UserPlus, ScanLine, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Html5Qrcode } from 'html5-qrcode';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function JoinConvoy() {
   const navigate = useNavigate();
@@ -105,15 +106,7 @@ export default function JoinConvoy() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-4 landscape:mb-2 flex-shrink-0">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-lg bg-secondary hover:bg-muted transition-colors touch-target"
-        >
-          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-        </button>
-        <h1 className="text-xl landscape:text-lg font-display font-bold">Join Convoy</h1>
-      </header>
+      <PageHeader title="Join Convoy" backTo="/" />
 
       {/* QR Scanner Overlay */}
       {showScanner && (

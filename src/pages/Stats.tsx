@@ -6,6 +6,7 @@ import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeed
 import { VehicleCardCarousel } from '@/features/cards';
 import { BadgeWalletPanel } from '@/features/ride';
 import { useExperience } from '@/features/experience';
+import { PageHeader, HeaderButton } from '@/components/PageHeader';
 
 export default function Stats() {
   const navigate = useNavigate();
@@ -62,18 +63,7 @@ export default function Stats() {
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
       {/* Header */}
-      <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
-        <button
-          onClick={() => navigate('/')}
-          className="p-2.5 landscape:p-2 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-        >
-          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-        </button>
-        <div>
-          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Statistics</h1>
-          <p className="text-xs text-muted-foreground">Your journey</p>
-        </div>
-      </header>
+      <PageHeader title="Statistics" subtitle="Your journey" backTo="/" />
 
       {/* Main content */}
       <div className="flex flex-col landscape:flex-row gap-4 landscape:gap-3 landscape:flex-1 landscape:min-h-0">
