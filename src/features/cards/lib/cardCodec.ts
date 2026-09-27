@@ -143,6 +143,34 @@ export function decodeCard(raw: string): SharedCardPayload | null {
   }
 }
 
+/**
+ * Re-encode a collected card so it can be passed on: same v2 format as the
+ * owner's QR, keeping the original capture time (the stats are a snapshot).
+ */
+export function encodePayload(p: SharedCardPayload): string {
+  const pl = p.pl ?? DEFAULT_BIKE_PLACEMENT;
+  const fields = [
+    esc(p.i),
+    esc(p.n),
+    esc(p.m || ''),
+    esc(p.o || ''),
+    esc(p.t),
+    num(p.s.totalRides, 0),
+    num(p.s.totalDistanceMi),
+    num(p.s.totalDurationSec, 0),
+    num(p.s.topSpeedMph),
+    num(p.s.maxLean),
+    num(p.s.maxGForce, 2),
+    String(Math.round((p.ts || Date.now()) / 1000)),
+    esc(p.p || ''),
+    num(pl.xPct),
+    num(pl.yPct),
+    num(pl.scalePct),
+    num(p.z ?? 1, 2),
+  ];
+  return PREFIX_V2 + fields.join(SEP);
+}
+
 /** Stable id for a collected card so duplicates can be detected. */
 export function collectedCardKey(p: SharedCardPayload): string {
   return `${p.i}::${p.o ?? ''}::${p.n}`;

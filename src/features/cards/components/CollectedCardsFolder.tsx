@@ -14,7 +14,8 @@ import {
   getSpeedLabel,
 } from '@/lib/format';
 import { TIER_STYLES } from '../types';
-import { decodeCard } from '../lib/cardCodec';
+import { decodeCard, encodePayload } from '../lib/cardCodec';
+import { QRCodeSVG } from 'qrcode.react';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 import { fetchCardPhoto } from '../lib/cardPhoto';
@@ -29,9 +30,7 @@ export function CollectedCardsFolder() {
   const { spectres } = useSpectreCards();
   const [showScanner, setShowScanner] = useState(false);
   const [rescanKey, setRescanKey] = useState<string | null>(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Repair cards saved by older builds where the payload had a photo path but
   // the first download was interrupted. The cached local image is filled in
@@ -50,12 +49,6 @@ export function CollectedCardsFolder() {
       cancelled = true;
     };
   }, [collected, rescanCard]);
-
-  const handleScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCurrentIdx(Math.round(el.scrollTop / el.clientHeight));
-  };
 
   const startScanner = async (keyToRescan: string | null = null) => {
     if (scannerRef.current || showScanner) return;
@@ -151,11 +144,6 @@ export function CollectedCardsFolder() {
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <Folder className="w-4 h-4 text-accent" />
         <h2 className="text-sm font-semibold tracking-tight">Card Collection</h2>
-        {collected.length > 0 && (
-          <span className="text-xs text-muted-foreground ml-1">
-            {Math.min(currentIdx + 1, collected.length)} / {collected.length}
-          </span>
-        )}
         <button
           type="button"
           onClick={() => startScanner(null)}
@@ -166,93 +154,61 @@ export function CollectedCardsFolder() {
           Scan card
         </button>
       </div>
+      <p className="px-4 pb-3 text-[10px] text-muted-foreground">Tap a card to flip it.</p>
 
       {/* Spectre row — earned only by beating time attacks; no QR, no trading */}
-      <div className="px-4 pb-3">
-        <div className="flex items-center gap-2 pb-2">
-          <Ghost className="w-4 h-4 text-cyan-300" />
-          <h3 className="text-sm font-semibold tracking-tight">Spectre</h3>
-          <span className="text-xs text-muted-foreground">{spectres.length}</span>
-          <span className="ml-auto text-[10px] text-muted-foreground">Beat a time attack to earn one</span>
-        </div>
-        {spectres.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-cyan-300/30 px-4 py-6 text-center">
-            <p className="text-xs text-muted-foreground/70">
-              Take a card's time attack on the map and beat it. Spectre cards can't be scanned or traded.
-            </p>
+      <CardRow
+        icon={<Ghost className="w-4 h-4 text-cyan-300" />}
+        title="Spectre"
+        count={spectres.length}
+        hint="Earned by beating time attacks"
+        empty="Take a card's time attack on the map and beat it. Spectre cards can't be scanned or traded."
+        emptyClass="border-cyan-300/30"
+      >
+        {spectres.map((sp) => (
+          <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+            <FlipCard
+              card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }}
+              spectre={sp}
+            />
           </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {spectres.map((sp) => (
-              <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-                <FullCard card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }} spectre={sp} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        ))}
+      </CardRow>
 
-      {collected.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 px-4 py-12">
-          <p className="text-xs text-muted-foreground/60 text-center">
-            Scan another rider's card QR to start your collection
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Vertical snap carousel — cards only, no scroll-to-scan */}
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="h-[85vh] overflow-y-scroll snap-y snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {collected.map((card) => (
-              <div
-                key={card.key}
-                className="h-full snap-start flex flex-col items-center justify-center gap-3 px-4 py-6"
+      {/* Collected row — scanned from other riders; flips to its QR to pass on */}
+      <CardRow
+        icon={<Sparkles className="w-4 h-4 text-accent" />}
+        title="Collected"
+        count={collected.length}
+        hint="Scanned from other riders"
+        empty="Scan another rider's card QR to start your collection."
+        emptyClass="border-border"
+      >
+        {collected.map((card) => (
+          <div key={card.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+            <FlipCard card={card} />
+            <div className="mt-2 flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => startScanner(card.key)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-xs font-medium"
               >
-                <div className="w-full max-w-[300px]">
-                  <FullCard card={card} />
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startScanner(card.key)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-sm font-medium"
-                    >
-                      <RefreshCw className="w-4 h-4" /> Rescan
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        removeCard(card.key);
-                        toast.success('Removed from collection');
-                      }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-sm font-medium"
-                    >
-                      <Trash2 className="w-4 h-4" /> Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Dot indicators */}
-          {collected.length > 1 && (
-            <div className="flex justify-center gap-1.5 mt-3 pb-2">
-              {Array.from({ length: collected.length }, (_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-200',
-                    i === currentIdx ? 'w-6 bg-accent' : 'w-1.5 bg-muted-foreground/30',
-                  )}
-                />
-              ))}
+                <RefreshCw className="w-3.5 h-3.5" /> Rescan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeCard(card.key);
+                  toast.success('Removed from collection');
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-xs font-medium"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Remove
+              </button>
             </div>
-          )}
-        </>
-      )}
+          </div>
+        ))}
+      </CardRow>
 
       {/* Scanner portal — rendered at document.body to escape the World page's
           transform stacking context, which would otherwise make fixed positioning
@@ -288,6 +244,112 @@ export function CollectedCardsFolder() {
   );
 }
 
+
+function CardRow({
+  icon,
+  title,
+  count,
+  hint,
+  empty,
+  emptyClass,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count: number;
+  hint: string;
+  empty: string;
+  emptyClass: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="px-4 pb-5">
+      <div className="flex items-center gap-2 pb-2">
+        {icon}
+        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        <span className="text-xs text-muted-foreground">{count}</span>
+        <span className="ml-auto text-[10px] text-muted-foreground">{hint}</span>
+      </div>
+      {count === 0 ? (
+        <div className={cn('rounded-2xl border border-dashed px-4 py-6 text-center', emptyClass)}>
+          <p className="text-xs text-muted-foreground/70">{empty}</p>
+        </div>
+      ) : (
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-px-4 -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Tap to flip. Collected cards show their QR on the back; Spectre cards show the win. */
+function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
+  const [flipped, setFlipped] = useState(false);
+  const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        haptics.light();
+        setFlipped((f) => !f);
+      }}
+      aria-label={flipped ? `Show front of ${card.n}` : spectre ? `Show ${card.n} Spectre result` : `Show ${card.n} QR code`}
+      className="block w-full aspect-[5/7] [perspective:1200px] text-left"
+    >
+      <div
+        className={cn(
+          'relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]',
+          flipped && '[transform:rotateY(180deg)]',
+        )}
+      >
+        <div className="absolute inset-0 [backface-visibility:hidden]">
+          <FullCard card={card} spectre={spectre} />
+        </div>
+        <div
+          className={cn(
+            'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col items-center p-3.5 gap-2.5 [backface-visibility:hidden] [transform:rotateY(180deg)]',
+            spectre ? 'bg-slate-900 border-cyan-300/70 shadow-[0_0_24px_rgba(103,232,249,0.35)]' : cn(style.bg, style.border),
+          )}
+        >
+          <div className="w-full min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">{card.o ?? 'Anonymous rider'}</p>
+            <h3 className="text-sm font-bold leading-tight text-white truncate">{card.n}</h3>
+          </div>
+          {spectre ? (
+            <div className="flex-1 w-full flex flex-col items-center justify-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-cyan-300/15 text-cyan-200 border border-cyan-300/40">
+                <Ghost className="w-3.5 h-3.5" /> Spectre
+              </span>
+              <div className="w-full grid grid-cols-2 gap-1.5">
+                <Stat icon={Timer} label="Your time" value={formatChallengeTime(spectre.timeSec)} unit="" />
+                <Stat icon={Timer} label={`${spectre.setterName}'s`} value={formatChallengeTime(spectre.targetSec)} unit="" />
+              </div>
+              <div className="w-full rounded-lg bg-cyan-300/10 border border-cyan-300/30 px-2 py-2 text-center">
+                <p className="text-[8px] uppercase tracking-widest text-cyan-100/70">Beaten by</p>
+                <p className="font-mono text-xl font-bold text-cyan-100">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
+              </div>
+              <p className="text-[9px] uppercase tracking-widest text-white/40 text-center">Earned, not traded · no QR</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 flex items-center justify-center w-full">
+                <div className="bg-white p-2 rounded-xl shadow-inner">
+                  <QRCodeSVG value={encodePayload(card)} size={168} level="L" marginSize={1} />
+                </div>
+              </div>
+              <p className="text-[9px] uppercase tracking-widest text-white/60 text-center">
+                Scan in Blacktop World
+                <br />
+                to add to a collection
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
 
 function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
   const { settings } = useSettings();
@@ -368,23 +430,12 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
         </div>
       </div>
 
-      {spectre ? (
-        <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
-          <Stat icon={Timer} label="Your time" value={formatChallengeTime(spectre.timeSec)} unit="" />
-          <Stat icon={Timer} label={`${spectre.setterName}'s`} value={formatChallengeTime(spectre.targetSec)} unit="" />
-          <div className="col-span-2 rounded-lg bg-black/35 border border-white/10 px-2 py-1.5 text-center">
-            <p className="text-[8px] uppercase tracking-widest text-white/60">Beaten by</p>
-            <p className="font-mono text-sm font-bold text-white">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
-          </div>
-        </div>
-      ) : (
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
         <Stat icon={Gauge} label="Top speed" value={`${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={getSpeedLabel(settings.speedUnit)} />
         <Stat icon={Clock} label="Time" value={formatDuration(card.s.totalDurationSec)} unit="" />
         <Stat icon={Route} label="Distance" value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
         <Stat icon={Hash} label="Rides" value={`${card.s.totalRides}`} unit="" />
       </div>
-      )}
     </div>
   );
 }
