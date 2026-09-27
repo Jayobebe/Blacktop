@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 import type { RadioPlayerState, RadioStation } from '../types';
 import { resolveTrackFile } from '../lib/audioFiles';
 import { getStation } from './useRadioStations';
+import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 
 const EMPTY: RadioPlayerState = {
   stationId: null,
@@ -34,6 +35,11 @@ function getAudio(): HTMLAudioElement {
   audio = new Audio();
   audio.preload = 'auto';
   audio.crossOrigin = 'anonymous';
+  // Turn-by-turn prompts lower the radio while they're spoken.
+  audio.volume = duckVolume();
+  onAudioDuckChange(() => {
+    if (audio) audio.volume = duckVolume();
+  });
   audio.addEventListener('ended', () => { void next(); });
   audio.addEventListener('timeupdate', () => {
     setState({ position: audio!.currentTime || 0, duration: Number.isFinite(audio!.duration) ? audio!.duration : 0 });

@@ -114,8 +114,8 @@ export default function DemoShowcase() {
     {
       id: 'navigation',
       title: 'Navigation',
-      subtitle: 'Maps, Waypoints & Camera Alerts',
-      description: 'Search a destination and get a route in-app. Leaders drop multiple stops, everyone sees the same line — and you get warned about cameras ahead.',
+      subtitle: 'Turn-By-Turn, Waypoints & Camera Alerts',
+      description: 'Search a destination and ride it in-app with turn-by-turn directions. Leaders drop multiple stops, everyone sees the same line — and you get warned about cameras ahead.',
       icon: MapIcon,
       color: 'accent',
       mockup: <MapsMockup />,
@@ -129,8 +129,9 @@ export default function DemoShowcase() {
         { icon: CloudRain, label: 'Weather Routing', text: 'Warns when heavy rain sits on your route and offers a drier line.' },
         { icon: Repeat, label: 'Loop Planner', text: 'No destination? Generate a twisty round trip back to where you are.' },
         { icon: Download, label: 'Offline Maps', text: 'Save map areas to your phone for rides with no signal.' },
-        { icon: Navigation, label: 'Hand-Off', text: 'Send the route to Google, Apple or Waze and keep tracking.' },
-        { icon: Search, label: 'Heads-Up Map', text: 'The search bar steps aside while you ride and comes back when you slow down; in a convoy the status strip takes its place.' },
+        { icon: CornerUpRight, label: 'Turn-By-Turn', text: 'The next turn sits where the search bar was, with distance, time left and arrival time. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
+        { icon: Navigation, label: 'Smart Rerouting', text: 'Miss a turn and Blacktop finds a new way from where you are. Stops you pass come off the route by themselves.' },
+        { icon: Search, label: 'Heads-Up Map', text: 'The search bar steps aside while you ride and comes back when you slow down; while navigating the turn banner takes its place, and in a convoy the status strip sits under it.' },
       ],
     },
     {
@@ -828,10 +829,18 @@ function MapsMockup() {
         {/* Weather radar wash */}
         <div className="absolute top-0 right-0 w-2/3 h-1/2 pointer-events-none opacity-30 bg-[radial-gradient(ellipse_at_top_right,hsl(200_90%_55%/0.5),transparent_65%)]" />
 
-        {/* Search bar */}
-        <div className="absolute top-2 left-2 right-2 h-7 rounded-full bg-card/90 border border-border/40 flex items-center px-3 animate-fade-in">
-          <MapPin className="w-3 h-3 text-muted-foreground mr-1.5" />
-          <span className="text-[9px] text-muted-foreground">Search destination...</span>
+        {/* Turn banner — takes the search bar's slot while navigating */}
+        <div className="absolute top-2 left-2 right-2 rounded-lg bg-card/95 border border-accent/60 flex items-center gap-2 px-2 py-1.5 animate-fade-in">
+          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center flex-shrink-0">
+            <CornerUpRight className="w-4 h-4 text-accent-foreground" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[12px] font-black leading-none tabular-nums">
+              {Math.max(50, 450 - ((tick * 10) % 400))}
+              <span className="text-[8px] text-muted-foreground ml-0.5">ft</span>
+            </p>
+            <p className="text-[9px] font-semibold truncate">Turn right onto Ridge Road</p>
+          </div>
         </div>
 
         {/* Satellite + 3D toggles */}

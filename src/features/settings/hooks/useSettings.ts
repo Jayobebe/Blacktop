@@ -43,6 +43,8 @@ export interface AppSettings {
   weatherOverlayEnabled: boolean;
   /** Warn about heavy rain on the planned route and offer a drier line. */
   weatherRoutingEnabled: boolean;
+  /** Read turn-by-turn directions aloud (the turn banner shows either way). */
+  navVoiceEnabled: boolean;
   // 3D flyover overview button on ride history details.
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
@@ -101,6 +103,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   trafficCamerasEnabled: false,
   weatherOverlayEnabled: false,
   weatherRoutingEnabled: false,
+  navVoiceEnabled: true,
   flyoverEnabled: false,
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,

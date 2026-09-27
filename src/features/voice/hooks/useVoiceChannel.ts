@@ -10,6 +10,7 @@ import {
   stopNativeCommunicationAudio,
 } from '../lib/nativeAudioRoute';
 import { toast } from 'sonner';
+import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
 
 // Warn once per app session, not on every reconnect.
@@ -496,7 +497,7 @@ export function useVoiceChannel(convoyId?: string) {
         const stream = audio.srcObject as MediaStream | null;
         stream?.getAudioTracks().forEach((t) => { t.enabled = true; });
         if (audio.muted) audio.muted = false;
-        if (audio.volume < 1) audio.volume = 1;
+        if (Math.abs(audio.volume - duckVolume()) > 0.01) audio.volume = duckVolume();
         if (audio.paused) {
           audio.play().catch((e) => console.warn('[Voice] Watchdog play failed for', peerId, e?.name));
         }
@@ -506,8 +507,11 @@ export function useVoiceChannel(convoyId?: string) {
     const interval = window.setInterval(kick, 3000);
     const events: string[] = ['pointerdown', 'touchend', 'click', 'visibilitychange'];
     events.forEach((ev) => document.addEventListener(ev, kick, { passive: true }));
+    // Turn-by-turn prompts lower the crew while they're spoken.
+    const offDuck = onAudioDuckChange(kick);
 
     return () => {
+      offDuck();
       window.clearInterval(interval);
       events.forEach((ev) => document.removeEventListener(ev, kick));
     };
@@ -681,7 +685,7 @@ export function useVoiceChannel(convoyId?: string) {
         // iOS Safari requires these attributes
         audio.setAttribute('webkit-playsinline', 'true');
         // Set volume explicitly
-        audio.volume = 1.0;
+        audio.volume = duckVolume();
         // iOS Safari specific - muted must be false for audio to play
         audio.muted = false;
         // iOS Safari is much more reliable if the element exists in the DOM
@@ -717,7 +721,7 @@ export function useVoiceChannel(convoyId?: string) {
 
           // Ensure element is configured correctly
           audio!.muted = false;
-          audio!.volume = 1.0;
+          audio!.volume = duckVolume();
           audio!.autoplay = true;
           audio!.setAttribute('playsinline', 'true');
           audio!.setAttribute('webkit-playsinline', 'true');
@@ -739,7 +743,7 @@ export function useVoiceChannel(convoyId?: string) {
           const playOnGesture = async () => {
             try {
               audio!.muted = false;
-              audio!.volume = 1.0;
+              audio!.volume = duckVolume();
               await audio!.play();
               console.log(`[Voice] Audio playing after gesture for ${remoteUserId}`);
             } catch (e2) {

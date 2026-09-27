@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -762,6 +762,22 @@ export default function Settings() {
 
           {preferredNavApp === 'blacktop' && (
             <div className="mt-3 pt-3 border-t border-border/30 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="pr-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Volume2 className="w-4 h-4 text-accent" />
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Spoken Directions</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Reads each turn aloud while you navigate on the Blacktop map, and lowers the radio and crew voice while it speaks. The turn banner stays on screen either way.
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.navVoiceEnabled}
+                  onCheckedChange={(v) => updateSetting('navVoiceEnabled', v)}
+                />
+              </div>
+
               <div className="flex items-center justify-between gap-3">
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">

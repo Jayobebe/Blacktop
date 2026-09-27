@@ -50,6 +50,8 @@ type RouteBody = {
   kind: "route";
   // [lng, lat] pairs, in order from start to destination.
   coordinates: [number, number][];
+  // Include the turn-by-turn manoeuvres for each leg.
+  steps?: boolean;
 };
 
 type LoopBody = {
@@ -525,7 +527,7 @@ serve(async (req) => {
       routeUrl.searchParams.set("overview", "full");
       routeUrl.searchParams.set("geometries", "geojson");
       routeUrl.searchParams.set("alternatives", "false");
-      routeUrl.searchParams.set("steps", "false");
+      routeUrl.searchParams.set("steps", body.steps === true ? "true" : "false");
 
       let osrm: any;
       try {
@@ -551,11 +553,34 @@ serve(async (req) => {
         });
       }
 
+      // Manoeuvres only (no per-step geometry): the client places each one on
+      // the full route line itself.
+      const legs = body.steps === true && Array.isArray(route.legs)
+        ? route.legs.map((leg: any) => ({
+          distance: leg.distance,
+          duration: leg.duration,
+          steps: (Array.isArray(leg.steps) ? leg.steps : []).map((st: any) => ({
+            type: st.maneuver?.type ?? "turn",
+            modifier: st.maneuver?.modifier ?? null,
+            exit: typeof st.maneuver?.exit === "number" ? st.maneuver.exit : null,
+            location: st.maneuver?.location ?? null,
+            name: typeof st.name === "string" ? st.name : "",
+            ref: typeof st.ref === "string" ? st.ref : "",
+            destinations: typeof st.destinations === "string" ? st.destinations : "",
+            rotary: typeof st.rotary_name === "string" ? st.rotary_name : "",
+            side: st.driving_side === "left" ? "left" : "right",
+            distance: st.distance,
+            duration: st.duration,
+          })),
+        }))
+        : undefined;
+
       return new Response(
         JSON.stringify({
           geometry: route.geometry,
           distance: route.distance,
           duration: route.duration,
+          ...(legs ? { legs } : {}),
         }),
         {
           headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },

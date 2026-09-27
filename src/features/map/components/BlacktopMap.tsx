@@ -22,6 +22,10 @@ import { useNextWaypoint } from "@/features/waypoints";
 import { MapSearchBar } from "./MapSearchBar";
 import { LoopPlannerPanel } from "./LoopPlannerPanel";
 import { OfflinePacksPanel } from "./OfflinePacksPanel";
+import { TurnBanner } from "./TurnBanner";
+import { useTurnByTurn } from "../hooks/useTurnByTurn";
+import { remainingLine } from "../lib/navigation";
+import { stopSpeaking } from "../lib/speech";
 import { MapDestination } from "../types";
 import { savePOI } from "../lib/poiStore";
 import { Input } from "@/components/ui/input";
@@ -110,6 +114,17 @@ function createMemberMarkerElement(): HTMLDivElement {
   el.style.border = "2px solid transparent";
   el.style.transition = "box-shadow 150ms ease, transform 150ms ease";
   return el;
+}
+
+/**
+ * What turn-by-turn calls a stop when announcing it. Points the app adds to
+ * shape a route (twisty legs, loop points) are passed through silently (null).
+ */
+function announcedStopName(name: string | null | undefined): string | null {
+  const n = (name ?? "").trim();
+  if (/^(twisty leg|loop point \d+)$/i.test(n)) return null;
+  if (/^loop finish$/i.test(n)) return "your start point";
+  return n || "your stop";
 }
 
 function safeBearing(heading: number | null, map: MapLibreMap): number {
@@ -339,6 +354,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     lastInteractionAtRef.current = Date.now();
 
     const check = setInterval(() => {
+      // Navigating on the home map counts as using it.
+      if (guidingRef.current) lastInteractionAtRef.current = Date.now();
       if (Date.now() - lastInteractionAtRef.current >= HOME_MAP_INACTIVITY_MS) {
         toast.info("Map closed due to inactivity");
         closeBlacktopMap();
@@ -1477,9 +1494,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   };
 
-  // GPS fixes arrive ~1 Hz; throttle to at most once every 5s to avoid
-  // hammering OSRM on every fix while still keeping the route reasonably fresh.
-  const ROUTE_RECALC_INTERVAL_MS = 5000;
+  // Where the rescue route is drawn from. GPS fixes arrive ~1 Hz; the rescue
+  // line only needs refreshing every 30 s as the rider closes in.
+  const ROUTE_RECALC_INTERVAL_MS = 30000;
   const [routingLocation, setRoutingLocation] = useState<{ lat: number; lng: number } | null>(null);
   const lastRoutingSampleAtRef = useRef(0);
   const pendingRoutingSampleRef = useRef<number | null>(null);
@@ -1506,32 +1523,152 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     };
   }, [userLocation]);
 
+  // Moving: the search bar gets out of the way so the toolbar (and, in a
+  // convoy, the status strip) can take its place. Comes back once slow or
+  // stopped. Hysteresis + delays so it doesn't flap at junctions/lights.
+  const [moving, setMoving] = useState(false);
+  useEffect(() => {
+    const MOVING_MPH = 12;
+    const STOPPED_MPH = 5;
+    if (!moving && displaySpeed >= MOVING_MPH) {
+      const t = window.setTimeout(() => setMoving(true), 2000);
+      return () => window.clearTimeout(t);
+    }
+    if (moving && displaySpeed <= STOPPED_MPH) {
+      const t = window.setTimeout(() => setMoving(false), 4000);
+      return () => window.clearTimeout(t);
+    }
+  }, [displaySpeed, moving]);
+
+  // ── Route ──────────────────────────────────────────────────────────────────
+  // Planned from where the rider is, then only re-planned when the stops change,
+  // the rider leaves the line (useTurnByTurn asks) or a request failed.
+  // Solo: through any user-added stops. A weather detour via (if the rider
+  // accepted one) always goes first.
+  const [rerouteTick, setRerouteTick] = useState(0);
+  const [rerouting, setRerouting] = useState(false);
+  const hasLocation = userLocation != null;
+  const intermediateStops = useMemo(
+    () => [
+      ...(weatherVia ? [{ lat: weatherVia.lat, lng: weatherVia.lng, name: null as string | null }] : []),
+      ...(isSolo ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng, name: announcedStopName(s.name) })) : []),
+    ],
+    [weatherVia, isSolo, soloRoute.stops],
+  );
+  const routeKey =
+    destination && Number.isFinite(destination.lat) && Number.isFinite(destination.lng)
+      ? JSON.stringify([destination.lat, destination.lng, intermediateStops.map((s) => [s.lat, s.lng])])
+      : null;
+  const routeKeyRef = useRef<string | null>(null);
   const routeRequestRef = useRef(0);
   useEffect(() => {
-    if (!destination || !routingLocation || !Number.isFinite(destination.lat) || !Number.isFinite(destination.lng)) {
+    if (!routeKey || !destination) {
+      routeRequestRef.current += 1;
+      routeKeyRef.current = null;
       setRoute(null);
       setIsRouting(false);
+      setRerouting(false);
       return;
     }
+    const from = userLocationRef.current;
+    if (!from) return;
 
-    // Solo: route through any user-added stops on the way to destination.
-    // A weather detour via point (if the rider accepted one) always goes first.
-    const intermediate = [
-      ...(weatherVia ? [weatherVia] : []),
-      ...(isSolo ? soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng })) : []),
-    ];
-    const stops = [routingLocation, ...intermediate, { lat: destination.lat, lng: destination.lng }];
-
+    // Same stops as the route on screen: this is a reroute, so keep the old
+    // line up until the new one lands.
+    const isReroute = routeKeyRef.current === routeKey;
     const requestId = ++routeRequestRef.current;
-    setIsRouting(true);
-    fetchRouteThroughStops(stops)
+    if (isReroute) setRerouting(true);
+    else setIsRouting(true);
+    let retry: number | null = null;
+    fetchRouteThroughStops(
+      [from, ...intermediateStops.map(({ lat, lng }) => ({ lat, lng })), { lat: destination.lat, lng: destination.lng }],
+      { steps: true },
+    )
       .then((result) => {
-        if (routeRequestRef.current === requestId) setRoute(result);
+        if (routeRequestRef.current !== requestId) return;
+        if (result) {
+          routeKeyRef.current = routeKey;
+          setRoute(result);
+        } else {
+          if (!isReroute) setRoute(null);
+          retry = window.setTimeout(() => setRerouteTick((t) => t + 1), 15000);
+        }
       })
       .finally(() => {
-        if (routeRequestRef.current === requestId) setIsRouting(false);
+        if (routeRequestRef.current === requestId) {
+          setIsRouting(false);
+          setRerouting(false);
+        }
       });
-  }, [destination, routingLocation, isSolo, soloRoute.stops, weatherVia]);
+    return () => {
+      if (retry != null) window.clearTimeout(retry);
+    };
+    // intermediateStops and destination are captured through routeKey.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeKey, hasLocation, rerouteTick]);
+
+  // ── Turn-by-turn ───────────────────────────────────────────────────────────
+  // Guidance starts once the rider sets off with a route (a ride starts, or
+  // they're moving on the home map) and stays up through stops at lights,
+  // until the destination is cleared.
+  const [guiding, setGuiding] = useState(false);
+  useEffect(() => {
+    if (!destination) {
+      setGuiding(false);
+      stopSpeaking();
+      return;
+    }
+    if (route && (rideState.isActive || moving)) setGuiding(true);
+  }, [destination, route, rideState.isActive, moving]);
+  const guidingRef = useRef(false);
+  guidingRef.current = guiding;
+
+  const finalStopName = destination ? announcedStopName(destination.name) : null;
+  const navStops = useMemo(
+    () => [...intermediateStops.map((s) => s.name), finalStopName],
+    [intermediateStops, finalStopName],
+  );
+
+  const handleStopReached = (index: number) => {
+    const stop = intermediateStops[index];
+    if (!stop) return;
+    // Passed stops come off the plan so the next route doesn't lead back to them.
+    if (weatherVia && index === 0) {
+      setWeatherVia(null);
+      return;
+    }
+    const soloIndex = index - (weatherVia ? 1 : 0);
+    if (isSolo && soloIndex >= 0) {
+      removeSoloStopAt(soloIndex);
+      if (stop.name) toast.success(`Reached ${stop.name}`);
+    }
+  };
+
+  const turnByTurn = useTurnByTurn({
+    route,
+    userLocation,
+    speedMph: displaySpeed,
+    active: guiding,
+    voice: settings.navVoiceEnabled,
+    unit: settings.distanceUnit,
+    stops: navStops,
+    onOffRoute: () => setRerouteTick((t) => t + 1),
+    onStopReached: handleStopReached,
+  });
+  const navProgressNow = turnByTurn.progress;
+  const hasTurns = !!turnByTurn.nav?.maneuvers.length;
+  // A convoy's next stop can be a shaping point (twisty leg): reaching it isn't an arrival.
+  const arrivedAtDestination = turnByTurn.arrived && finalStopName != null;
+
+  // Convoy leader reaching the current stop moves the convoy on to the next one.
+  const completedOnArrivalRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!turnByTurn.arrived || !rideState.isActive || !convoy.isLeader || !nextWaypoint) return;
+    if (completedOnArrivalRef.current === nextWaypoint.id) return;
+    completedOnArrivalRef.current = nextWaypoint.id;
+    void completeWaypoint(nextWaypoint.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnByTurn.arrived]);
 
   // ── Weather routing ────────────────────────────────────────────────────────
   // When a route is set, forecast the precipitation the rider will actually hit
@@ -1661,6 +1798,24 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     return removeRouteLayers;
   }, [map, route, accentColor]);
+
+  // While guiding, trim the line behind the rider so only the road ahead shows.
+  const trimmedAlongRef = useRef<number | null>(null);
+  useEffect(() => {
+    trimmedAlongRef.current = null;
+  }, [route]);
+  useEffect(() => {
+    const nav = turnByTurn.nav;
+    if (!map || !nav || !guiding || !navProgressNow) return;
+    const along = navProgressNow.along;
+    if (trimmedAlongRef.current != null && Math.abs(along - trimmedAlongRef.current) < 15) return;
+    const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+    if (!source) return;
+    trimmedAlongRef.current = along;
+    const coordinates = remainingLine(nav, along);
+    if (coordinates.length < 2) return;
+    source.setData({ type: "Feature", geometry: { type: "LineString", coordinates }, properties: {} });
+  }, [map, turnByTurn.nav, guiding, navProgressNow]);
 
   // ── Rescue route (secondary, always on top) ────────────────────────────────
   // When any convoy member fires the rescue button, everyone's map gains a
@@ -1821,29 +1976,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   };
 
   // ── Derived display flags ──────────────────────────────────────────────────
-  // Moving: the search bar gets out of the way so the toolbar (and, in a
-  // convoy, the status strip) can take its place. Comes back once slow or
-  // stopped. Hysteresis + delays so it doesn't flap at junctions/lights.
-  const [moving, setMoving] = useState(false);
-  useEffect(() => {
-    const MOVING_MPH = 12;
-    const STOPPED_MPH = 5;
-    if (!moving && displaySpeed >= MOVING_MPH) {
-      const t = window.setTimeout(() => setMoving(true), 2000);
-      return () => window.clearTimeout(t);
-    }
-    if (moving && displaySpeed <= STOPPED_MPH) {
-      const t = window.setTimeout(() => setMoving(false), 4000);
-      return () => window.clearTimeout(t);
-    }
-  }, [displaySpeed, moving]);
 
   // Only solo riders and convoy leaders ever search (members follow the leader).
   const canSearch = isSolo || convoy.isLeader;
   const inConvoyRide = !isSolo && rideState.isActive && rideState.isConvoyMode;
   // In a convoy ride the status strip owns the top slot; a leader gets the
   // search bar back only while adding a stop. Solo: search unless moving.
-  const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving));
+  // Turn-by-turn takes the search bar's slot while guiding (a leader adding a
+  // stop gets the search bar back until they pick one).
+  const showTurnBanner = guiding && (hasTurns || rerouting) && !addingWaypoint;
+  const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving && !showTurnBanner));
   const showConvoyStrip = inConvoyRide && !showSearchBar;
   const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
   // "Finish" replaces "Skip" once we're heading to the very last stop (the
@@ -1892,6 +2034,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           flowing underneath, so when the search bar steps aside while moving
           the toolbar slides up into its place. */}
       <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] z-30 flex flex-col items-start gap-2 pointer-events-none">
+        {showTurnBanner && (
+          <div className="w-full pointer-events-auto">
+            <TurnBanner
+              progress={navProgressNow}
+              describe={turnByTurn.describe}
+              unit={settings.distanceUnit}
+              arrived={arrivedAtDestination}
+              rerouting={rerouting}
+              destinationName={destination?.name}
+            />
+          </div>
+        )}
+
         {showSearchBar && (
           <MapSearchBar
             inline
@@ -1943,7 +2098,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               isLeader={convoy.isLeader}
               myLocation={userLocation}
               destination={destination}
-              routeSeconds={route ? route.durationSeconds : null}
+              routeSeconds={navProgressNow ? navProgressNow.remainingSeconds : route ? route.durationSeconds : null}
               speedUnit={settings.speedUnit}
             />
           </div>
@@ -2380,10 +2535,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 </p>
               ) : route ? (
                 <p className="text-xs text-muted-foreground">
-                  {formatDistance(metersToMiles(route.distanceMeters), settings.distanceUnit)}{" "}
+                  {formatDistance(
+                    metersToMiles(guiding && navProgressNow ? navProgressNow.remainingMeters : route.distanceMeters),
+                    settings.distanceUnit,
+                  )}{" "}
                   {getDistanceLabel(settings.distanceUnit)}
                   {" · "}
-                  {formatDuration(Math.round(route.durationSeconds))}
+                  {formatDuration(
+                    Math.round(guiding && navProgressNow ? navProgressNow.remainingSeconds : route.durationSeconds),
+                  )}
                 </p>
               ) : null}
             </div>

@@ -5,10 +5,37 @@ export interface RouteLineString {
   coordinates: [number, number][];
 }
 
+/** One OSRM manoeuvre (turn, roundabout, arrival…) on a leg. */
+export interface RouteStep {
+  type: string;
+  modifier: string | null;
+  /** Roundabout exit number, when there is one. */
+  exit: number | null;
+  /** [lng, lat] of the manoeuvre. */
+  location: [number, number] | null;
+  name: string;
+  ref: string;
+  destinations: string;
+  rotary: string;
+  /** Which side of the road traffic drives on here. */
+  side?: 'left' | 'right';
+  /** Distance and time from this manoeuvre to the next one. */
+  distance: number;
+  duration: number;
+}
+
+export interface RouteLeg {
+  distance: number;
+  duration: number;
+  steps: RouteStep[];
+}
+
 export interface RouteResult {
   geometry: RouteLineString;
   distanceMeters: number;
   durationSeconds: number;
+  /** One leg per stop-to-stop hop, present when turn-by-turn was asked for. */
+  legs?: RouteLeg[];
 }
 
 const METERS_PER_MILE = 1609.34;
@@ -25,6 +52,7 @@ export function metersToMiles(meters: number): number {
 // than erroring.
 export async function fetchRouteThroughStops(
   stops: { lat: number; lng: number }[],
+  opts: { steps?: boolean } = {},
 ): Promise<RouteResult | null> {
   if (stops.length < 2) return null;
   try {
@@ -32,6 +60,7 @@ export async function fetchRouteThroughStops(
       body: {
         kind: 'route',
         coordinates: stops.map(s => [s.lng, s.lat]),
+        ...(opts.steps ? { steps: true } : {}),
       },
     });
     if (error) throw error;
@@ -43,6 +72,8 @@ export async function fetchRouteThroughStops(
       geometry,
       distanceMeters: data.distance,
       durationSeconds: data.duration,
+      // Older deployments of the function don't send legs; the route still draws.
+      ...(Array.isArray(data.legs) ? { legs: data.legs as RouteLeg[] } : {}),
     };
   } catch (err) {
     console.error('Map routing failed:', err);
