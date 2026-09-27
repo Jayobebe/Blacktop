@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary, useSoloRoute, clearSoloRoute } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { useConvoyState } from '@/features/convoy';
+import { useConvoyState, useRegroupListener } from '@/features/convoy';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
 import { useNextWaypoint } from '@/features/waypoints';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
@@ -106,6 +106,8 @@ export default function ActiveRide() {
   const { activeBike } = useGarage();
   const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
   const { user, profile } = useProfile();
+  // Regroup calls from the convoy status bar (sent by the leader from the map).
+  useRegroupListener(rideState.isConvoyMode ? convoy.id : null, user?.id ?? null);
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const nextWaypoint = useNextWaypoint();

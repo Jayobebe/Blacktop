@@ -40,7 +40,7 @@ import {
   clearSoloRoute,
   setSoloRoute,
 } from "@/features/ride";
-import { useConvoyMembers, useConvoyState } from "@/features/convoy";
+import { useConvoyMembers, useConvoyState, ConvoyStatusBar } from "@/features/convoy";
 import { useSpeakingUsers } from "@/features/voice";
 import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
@@ -2106,6 +2106,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
+        {/* Convoy status: riders, group speed/ETA, who's dropped back */}
+        {!isSolo && rideState.isActive && rideState.isConvoyMode && (
+          <ConvoyStatusBar
+            members={convoyMembers}
+            myUserId={user?.id ?? null}
+            myName={profile.name || "Leader"}
+            isLeader={convoy.isLeader}
+            myLocation={userLocation}
+            destination={destination}
+            routeSeconds={route ? route.durationSeconds : null}
+            speedUnit={settings.speedUnit}
+          />
+        )}
         {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
         {showWaypointsPanel && (
           <div className="animate-slide-up">
