@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Timer, Disc3 as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useExperience } from '@/features/experience';
 
 export default function History() {
   const navigate = useNavigate();
   const { rides, updateRideName, updateRideBike } = useRideHistory();
   const { settings } = useSettings();
+  const { terms, showGroup } = useExperience();
   const { bikes } = useGarage();
   const [editingRideId, setEditingRideId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState('');
@@ -55,8 +57,8 @@ export default function History() {
           <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
         </button>
         <div>
-          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Ride History</h1>
-          <p className="text-xs text-muted-foreground">{rides.length} rides recorded</p>
+          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">{terms.Ride} History</h1>
+          <p className="text-xs text-muted-foreground">{rides.length} {rides.length === 1 ? terms.ride : terms.rides} recorded</p>
         </div>
       </header>
 
@@ -67,14 +69,14 @@ export default function History() {
             <div className="w-16 h-16 rounded-2xl bg-card/50 border border-border/30 flex items-center justify-center mb-4">
               <Route className="w-8 h-8 text-muted-foreground/50" />
             </div>
-            <p className="text-muted-foreground font-medium">No rides yet</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">Start your first ride to see it here</p>
+            <p className="text-muted-foreground font-medium">No {terms.rides} yet</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">Start your first {terms.ride} to see it here</p>
           </div>
         ) : (
           rides.map((ride, index) => {
             const isLatest = index === 0;
             const displayName = ride.name || formatDate(ride.startedAt);
-            const hasBadges = ride.earnedBadges && ride.earnedBadges.length > 0;
+            const hasBadges = settings.collectiblesEnabled && ride.earnedBadges && ride.earnedBadges.length > 0;
             return (
               <button
                 key={ride.id}
@@ -87,7 +89,7 @@ export default function History() {
                 )}
                 style={{ animationDelay: `${index * 60}ms` }}
               >
-                <div className="flex items-start justify-between mb-2 landscape:mb-1.5">
+                <div className={cn("flex items-start justify-between", settings.speedFocusEnabled && "mb-2 landscape:mb-1.5")}>
                   <div className="flex-1 min-w-0">
                     {editingRideId === ride.id ? (
                       <Input
@@ -99,7 +101,7 @@ export default function History() {
                         onClick={(e) => e.stopPropagation()}
                         maxLength={30}
                         className="h-8 text-sm font-medium rounded-xl"
-                        placeholder="Ride name"
+                        placeholder={`${terms.Ride} name`}
                       />
                     ) : (
                       <div className="flex items-center gap-2">
@@ -118,12 +120,13 @@ export default function History() {
                           <Users className="w-2.5 h-2.5" />
                           Convoy
                         </span>
-                      ) : (
+                      ) : showGroup ? (
+                        // Solo-only riders don't need every card labelled "Solo".
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-lg font-medium">
                           <User className="w-2.5 h-2.5" />
                           Solo
                         </span>
-                      )}
+                      ) : null}
                       {ride.challenge && (
                         <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
                           <Timer className="w-2.5 h-2.5" />
@@ -143,7 +146,7 @@ export default function History() {
                       {isLatest && (
                         <span className="text-[10px] text-accent font-semibold">Latest</span>
                       )}
-                      {bikes.length > 0 && (
+                      {settings.garageEnabled && bikes.length > 0 && (
                         <div onClick={(e) => e.stopPropagation()} className="ml-auto">
                           <Select
                             value={ride.bikeId ?? 'none'}
@@ -169,10 +172,12 @@ export default function History() {
                     <p className="text-[10px] text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</p>
                   </div>
                 </div>
-                <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
-                  <span>Avg: {formatSpeed(ride.averageSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
-                  <span>Max: {formatSpeed(ride.maxSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
-                </div>
+                {settings.speedFocusEnabled && (
+                  <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
+                    <span>Avg: {formatSpeed(ride.averageSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
+                    <span>Max: {formatSpeed(ride.maxSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
+                  </div>
+                )}
               </button>
             );
           })

@@ -15,6 +15,12 @@ export interface RecapOptions {
   /** 'miles' | 'km' */
   unit?: 'miles' | 'km';
   accent?: string;
+  /** Rider's setup choices — sections they opted out of are left off the card. */
+  showSpeed?: boolean;
+  showLean?: boolean;
+  showG?: boolean;
+  /** "RIDE" / "DRIVE" in the footer tag. */
+  rideWord?: string;
 }
 
 const MI_TO_KM = 1.60934;
@@ -147,14 +153,21 @@ export async function renderRecapCard(ride: RideSession, opts: RecapOptions = {}
   drawRoute(ctx, ride, { x: 70, y: 262, w: size - 140, h: 400 }, accent);
 
   // Stat grid
+  const { showSpeed = true, showLean = true, showG = true } = opts;
   const stats: { label: string; value: string }[] = [
     { label: `Distance (${distanceLabel})`, value: distance.toFixed(1) },
     { label: 'Duration', value: fmtDuration(ride.duration) },
-    { label: `Top speed (${speedLabel})`, value: String(Math.round(speed)) },
-    { label: 'Max lean', value: `${Math.round(Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0))}°` },
-    { label: 'Peak G', value: ride.maxGForce ? `${ride.maxGForce.toFixed(1)}g` : '—' },
-    { label: 'Corners', value: corners.count ? `${corners.count} · ${corners.grade}` : '—' },
+    ...(showSpeed ? [{ label: `Top speed (${speedLabel})`, value: String(Math.round(speed)) }] : []),
+    ...(showLean ? [{ label: 'Max lean', value: `${Math.round(Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0))}°` }] : []),
+    ...(showG ? [{ label: 'Peak G', value: ride.maxGForce ? `${ride.maxGForce.toFixed(1)}g` : '—' }] : []),
+    ...(showLean || showG ? [{ label: 'Corners', value: corners.count ? `${corners.count} · ${corners.grade}` : '—' }] : []),
   ];
+  // Keep the grid full: a lean card (distance + time only) gets start/finish times.
+  if (stats.length < 3) {
+    const t = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    stats.push({ label: 'Started', value: t(ride.startedAt) });
+    if (ride.endedAt) stats.push({ label: 'Finished', value: t(ride.endedAt) });
+  }
 
   const gridTop = 712;
   const colW = (size - 140) / 3;
@@ -186,7 +199,8 @@ export async function renderRecapCard(ride: RideSession, opts: RecapOptions = {}
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '600 24px system-ui, -apple-system, sans-serif';
   ctx.letterSpacing = '4px';
-  ctx.fillText(ride.isConvoyRide ? 'CONVOY RIDE' : 'SOLO RIDE', 70, size - 78);
+  const word = (opts.rideWord ?? 'ride').toUpperCase();
+  ctx.fillText(ride.isConvoyRide ? `CONVOY ${word}` : `SOLO ${word}`, 70, size - 78);
   ctx.letterSpacing = '0px';
 
   return await new Promise<Blob>((resolve, reject) => {

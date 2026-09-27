@@ -69,7 +69,16 @@ export function useRideHistory() {
 
     // 3+ consecutive ride days earns a card copy (once per streak run).
     const streakGrant = recordRideDay(ride.endedAt ? new Date(ride.endedAt) : new Date());
-    if (streakGrant === 'granted') {
+    // Card-copy messages only mean something to riders who collect.
+    let collects = true;
+    try {
+      collects = JSON.parse(localStorage.getItem('blacktop-settings') ?? '{}')?.collectiblesEnabled !== false;
+    } catch {
+      /* default: show */
+    }
+    if (!collects) {
+      // Copy is still banked; the rider just isn't told about a feature they switched off.
+    } else if (streakGrant === 'granted') {
       toast.success('3-day streak', { description: 'Card copy earned — drop it on the map.' });
     } else if (streakGrant === 'capped') {
       toast('Copy bank full', { description: '9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });

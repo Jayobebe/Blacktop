@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X, IdCard } from 'lucide-react';
+import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X, IdCard, Droplet, BatteryCharging } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
@@ -16,6 +16,7 @@ import {
 } from '../lib/placeSearch';
 import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
 import { useSettings } from '@/features/settings';
+import { useExperience, refuelCategory } from '@/features/experience';
 import { formatDistance, getDistanceLabel } from '@/lib/format';
 
 // km → miles for formatDistance (which expects miles input).
@@ -26,6 +27,8 @@ const FADE_RIGHT = '[mask-image:linear-gradient(to_right,black_calc(100%-28px),t
 
 const categoryIcons: Record<string, React.ReactNode> = {
   gas: <Fuel className="w-4 h-4" />,
+  water: <Droplet className="w-4 h-4" />,
+  charge: <BatteryCharging className="w-4 h-4" />,
   food: <UtensilsCrossed className="w-4 h-4" />,
   store: <ShoppingCart className="w-4 h-4" />,
   cards: <IdCard className="w-4 h-4" />,
@@ -53,6 +56,11 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
 
 export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards }: MapSearchBarProps) {
   const { settings } = useSettings();
+  const { vehicles } = useExperience();
+  // Top-up stop matches the vehicle; card search only for riders who collect.
+  const quickCategories: QuickCategory[] = QUICK_CATEGORIES.map((c) => (c.id === 'gas' ? refuelCategory(vehicles) : c)).filter(
+    (c) => c.id !== 'cards' || (settings.blacktopWorldEnabled && settings.collectiblesEnabled)
+  );
   const distanceText = (lat: number, lng: number): string | null => {
     if (!userLocation) return null;
     const km = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
@@ -245,7 +253,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
       </div>
 
       <div className="flex gap-1.5 pr-12">
-        {QUICK_CATEGORIES.map((cat) => (
+        {quickCategories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryClick(cat)}

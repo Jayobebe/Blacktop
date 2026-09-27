@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,7 @@ import { CollapsibleSection } from '@/features/settings/components/CollapsibleSe
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
 import { NimiqTipCard } from '@/features/tips';
+import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type RideMode } from '@/features/experience';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -44,6 +45,7 @@ export default function Settings() {
   const { preferredNavApp, updateNavApp } = useNavigation();
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
+  const exp = useExperience();
   const { settings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const { stations: radioStations } = useRadioStations();
   const [showStations, setShowStations] = useState(false);
@@ -362,10 +364,85 @@ export default function Settings() {
             onHeaderClick={() => navigate('/demo')}
           />
 
+          {/* Setup answers — same choices as onboarding, applied instantly */}
+          <CollapsibleSection icon={Sparkles} label="Your Blacktop" delayClass="delay-75">
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">What you {exp.terms.ride} <span className="opacity-60">(first is your main)</span></p>
+                <div className="flex flex-wrap gap-1.5">
+                  {VEHICLE_ORDER.map((v) => {
+                    const info = VEHICLES[v];
+                    const order = exp.vehicles.indexOf(v);
+                    const on = order !== -1;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        role="checkbox"
+                        aria-checked={on}
+                        onClick={() => exp.toggleVehicle(v)}
+                        className={cn(
+                          'pressable flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium',
+                          on ? 'bg-accent text-accent-foreground border-accent' : 'border-border/50 text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        <info.icon className="w-4 h-4" />
+                        {info.label}
+                        {order === 0 && exp.vehicles.length > 1 && <span className="text-[9px] uppercase tracking-wider opacity-80">· main</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Who you {exp.terms.ride} with</p>
+                <SegmentedChoice<RideMode>
+                  value={exp.rideMode}
+                  onChange={exp.setRideMode}
+                  options={[
+                    { id: 'solo', label: 'Just me', icon: User },
+                    { id: 'group', label: 'My crew', icon: Users },
+                    { id: 'both', label: 'Both', icon: Sparkles },
+                  ]}
+                />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Typical {exp.terms.ride}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {RIDE_STYLES.map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={exp.style === st.id}
+                      onClick={() => exp.setStyle(st.id)}
+                      className={cn(
+                        'pressable flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium',
+                        exp.style === st.id ? 'bg-accent text-accent-foreground border-accent' : 'border-border/50 text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <st.icon className="w-3.5 h-3.5" />
+                      {st.title(exp.terms)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">What you care about</p>
+                <CareList />
+              </div>
+              <Button variant="outline" className="w-full rounded-2xl" onClick={() => navigate('/setup')}>
+                <Repeat className="w-4 h-4" />
+                Redo full setup
+              </Button>
+            </div>
+          </CollapsibleSection>
+
           {/* Safety */}
         <CollapsibleSection icon={AlertTriangle} label="Safety" delayClass="delay-100">
           <div className="space-y-5">
-            {/* Speed Alerts */}
+            {/* Speed Alerts — they colour the live speed readout, so only for speed-focused riders */}
+            {settings.speedFocusEnabled && (
             <div>
               <p className="text-xs text-muted-foreground mb-3">Speed Alerts</p>
               {(() => {
@@ -441,8 +518,10 @@ export default function Settings() {
               })()}
             </div>
 
+            )}
+
             {/* Auto Rescue */}
-            <div className="border-t border-border/30 pt-4">
+            <div className={cn(settings.speedFocusEnabled && 'border-t border-border/30 pt-4')}>
               <p className="text-xs text-muted-foreground mb-3">Auto Rescue</p>
               <div className="flex items-center justify-between mb-2">
                 <div className="pr-3">
@@ -588,6 +667,7 @@ export default function Settings() {
               />
             </div>
 
+            {exp.canLean && (<>
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
               <div>
                 <p className="text-sm font-medium">Enable Lean Angle</p>
@@ -625,6 +705,7 @@ export default function Settings() {
                 </div>
               </div>
             )}
+            </>)}
 
            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
              <div>
@@ -757,6 +838,7 @@ export default function Settings() {
             </div>
           )}
 
+          {exp.hasCar && (
           <div className="mt-3 pt-3 border-t border-border/30">
             <div className="flex items-center justify-between gap-3">
               <div className="pr-2">
@@ -774,6 +856,7 @@ export default function Settings() {
               />
             </div>
           </div>
+          )}
 
           <div className="mt-3 pt-3 border-t border-border/30">
             <div className="flex items-center justify-between gap-3">
@@ -824,9 +907,10 @@ export default function Settings() {
         {/* Privacy Section */}
         <CollapsibleSection icon={Shield} label="Privacy" delayClass="delay-250" className="landscape:hidden">
           <ul className="space-y-1.5 text-xs text-muted-foreground">
-            <li>• All ride data stored locally on device</li>
+            <li>• Ride history stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
-            <li>• Voice data is never recorded or stored</li>
+            <li>• Voice is encrypted and never stored on a server; it's only in overlay videos of riders who opt in</li>
+            {settings.blacktopWorldEnabled && <li>• Blacktop World shows your live position while you ride, and crew boards see totals you publish</li>}
             <li>• Live convoy data is server-burned the moment a ride ends</li>
           </ul>
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
@@ -1040,3 +1124,36 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
   );
 }
 
+function SegmentedChoice<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { id: T; label: string; icon: React.ElementType }[];
+}) {
+  return (
+    <div role="radiogroup" className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-secondary/50 border border-border/30">
+      {options.map(({ id, label, icon: Icon }) => {
+        const active = value === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(id)}
+            className={cn(
+              'pressable flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium',
+              active ? 'bg-accent text-accent-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

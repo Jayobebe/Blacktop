@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Radio, Crown, Users, MapPin, X, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
 
@@ -31,7 +32,7 @@ export default function CrewConvoys() {
   const crew = useCrew();
   const [selected, setSelected] = useState<CrewConvoyRow | null>(null);
 
-  const { data: convoys = [], isFetching, refetch } = useQuery({
+  const { data: convoys = [], isFetching, isLoading, refetch } = useQuery({
     queryKey: ['crew-convoys', crew.code],
     queryFn: async () => {
       const { data } = await (supabase as any).rpc('list_crew_convoys', { _crew_code: crew.code });
@@ -78,7 +79,9 @@ export default function CrewConvoys() {
         Crew {crew.code} · {convoys.length} open {convoys.length === 1 ? 'lobby' : 'lobbies'}
       </p>
 
-      {convoys.length === 0 ? (
+      {isLoading ? (
+        <ListSkeleton rows={4} />
+      ) : convoys.length === 0 ? (
         <p className="text-sm text-muted-foreground/70 py-10 text-center">
           No unlocked convoys in your crew right now. Unlock a lobby to list it here.
         </p>

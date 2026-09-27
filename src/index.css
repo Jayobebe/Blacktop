@@ -933,3 +933,97 @@
 .animate-demo-trail {
   animation: demo-trail-draw 3.2s ease-in-out infinite;
 }
+
+/* ───────────────────────── Motion system ─────────────────────────
+   Shared easing + page/step transitions, press feedback, skeleton shimmer.
+   Page/step animations use fill-mode `backwards` so no transform lingers
+   after they finish (a leftover transform would re-parent position:fixed
+   children like overlays and sheets). */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes page-in-forward {
+  from { opacity: 0; transform: translate3d(24px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes page-in-back {
+  from { opacity: 0; transform: translate3d(-24px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes page-in-fade {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.page-in-forward { animation: page-in-forward 360ms var(--ease-out-expo) backwards; }
+.page-in-back { animation: page-in-back 360ms var(--ease-out-expo) backwards; }
+.page-in-fade { animation: page-in-fade 300ms var(--ease-out-expo) backwards; }
+
+/* Press feedback for custom tappable surfaces (shadcn Button has its own). */
+.pressable {
+  transition: transform 160ms var(--ease-out-expo), background-color 200ms, border-color 200ms, box-shadow 200ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.pressable:active:not(:disabled) { transform: scale(0.97); }
+
+/* Staggered entrance: set --i on children. */
+.stagger-in > * {
+  animation: slide-up 520ms var(--ease-out-expo) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+/* Skeleton shimmer */
+@keyframes skeleton-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.skeleton-shimmer { position: relative; overflow: hidden; }
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.06), transparent);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+/* Setup flow */
+@keyframes setup-road-dash { to { stroke-dashoffset: -26; } }
+.setup-road-dash { animation: setup-road-dash 0.5s linear infinite; }
+@keyframes setup-wheel-spin { to { transform: rotate(360deg); } }
+.setup-wheel-spin { animation: setup-wheel-spin 0.6s linear infinite; }
+@keyframes setup-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+.setup-bob { animation: setup-bob 0.4s ease-in-out infinite; }
+@keyframes setup-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor); }
+  50% { filter: drop-shadow(0 0 7px currentColor); }
+}
+.setup-glow { animation: setup-glow 1.6s ease-in-out infinite; }
+@keyframes setup-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.setup-pop { animation: setup-pop 320ms var(--ease-spring) both; }
+@keyframes setup-grid-drift { to { background-position: 0 48px; } }
+.setup-grid {
+  background-image:
+    linear-gradient(hsl(var(--accent) / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--accent) / 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: setup-grid-drift 3s linear infinite;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 10%, transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-in-forward, .page-in-back, .page-in-fade, .stagger-in > *,
+  .setup-road-dash, .setup-wheel-spin, .setup-bob, .setup-glow, .setup-grid,
+  .skeleton-shimmer::after {
+    animation: none !important;
+  }
+  .pressable:active:not(:disabled) { transform: none; }
+}

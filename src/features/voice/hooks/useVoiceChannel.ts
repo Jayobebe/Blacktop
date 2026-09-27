@@ -9,6 +9,11 @@ import {
   stopBrowserCommunicationAudio,
   stopNativeCommunicationAudio,
 } from '../lib/nativeAudioRoute';
+import { toast } from 'sonner';
+import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
+
+// Warn once per app session, not on every reconnect.
+let relayWarningShown = false;
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -16,55 +21,22 @@ interface PeerConnection {
   createdAt: number;
 }
 
+export type PeerAudioLink = 'connecting' | 'connected' | 'failed';
+
 interface VoiceChannelState {
   isConnected: boolean;
   isMuted: boolean;
   speakingUsers: Set<string>; // User IDs currently speaking
+  /**
+   * Real audio path per remote rider. Speaking indicators travel over Supabase,
+   * so a rider can "glow" while there is no WebRTC audio link at all — the UI
+   * uses this to say so instead of implying they can be heard.
+   */
+  peerLinks: Record<string, PeerAudioLink>;
 }
 
-// STUN alone only works when at least one peer is behind a cone NAT. Mobile
-// carriers (CGNAT / symmetric NAT) almost always block direct P2P, which is
-// why rider-to-rider voice failed on cellular. TURN relays fix that.
-const ICE_SERVERS: RTCIceServer[] = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  // Open Relay (Metered) free public TURN. Static credentials are only served
-  // from the `staticauth` host now - the bare openrelay host rejects them,
-  // which silently left every cellular pair with no relay path at all.
-  {
-    urls: 'turn:staticauth.openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:staticauth.openrelay.metered.ca:80?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turn:staticauth.openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turns:staticauth.openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  // Legacy host kept as a last-resort fallback.
-  {
-    urls: 'turn:openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
-  {
-    urls: 'turns:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
-  },
+// ICE servers (STUN + fetched TURN relay credentials) live in ../lib/iceServers.
 
-];
 
 const AUDIO_INPUT_KEY = 'blacktop_audio_input';
 const AUDIO_OUTPUT_KEY = 'blacktop_audio_output';
@@ -179,7 +151,18 @@ export function useVoiceChannel(convoyId?: string) {
     isConnected: false,
     isMuted: true,
     speakingUsers: new Set(),
+    peerLinks: {},
   });
+
+  const setPeerLink = useCallback((peerId: string, link: PeerAudioLink | null) => {
+    setState((prev) => {
+      if (link === null ? !(peerId in prev.peerLinks) : prev.peerLinks[peerId] === link) return prev;
+      const peerLinks = { ...prev.peerLinks };
+      if (link === null) delete peerLinks[peerId];
+      else peerLinks[peerId] = link;
+      return { ...prev, peerLinks };
+    });
+  }, []);
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<string, PeerConnection>>(new Map());
@@ -214,7 +197,10 @@ export function useVoiceChannel(convoyId?: string) {
     try {
       const raw = localStorage.getItem('blacktop-settings');
       if (!raw) return false;
-      return Boolean(JSON.parse(raw)?.voiceRecordingEnabled);
+      const s = JSON.parse(raw);
+      // The switch is only visible (and only does anything) while overlay recording
+      // is on, so consent requires both — a hidden stale "on" must not count.
+      return Boolean(s?.voiceRecordingEnabled && s?.rideOverlayEnabled);
     } catch {
       return false;
     }
@@ -533,8 +519,9 @@ export function useVoiceChannel(convoyId?: string) {
   const createPeerConnection = useCallback((remoteUserId: string): RTCPeerConnection => {
     console.log(`[Voice] Creating peer connection for ${remoteUserId}`);
     
+    setPeerLink(remoteUserId, 'connecting');
     const pc = new RTCPeerConnection({
-      iceServers: ICE_SERVERS,
+      iceServers: currentIceServers(),
       // Pre-gather a few candidates (incl. TURN) so the handshake completes
       // faster on flaky mobile links.
       iceCandidatePoolSize: 4,
@@ -584,6 +571,7 @@ export function useVoiceChannel(convoyId?: string) {
       if (pc.connectionState === 'connected') {
         console.log(`[Voice] Successfully connected to ${remoteUserId}`);
         clearReconnectSchedule(remoteUserId);
+        setPeerLink(remoteUserId, 'connected');
       }
       if (pc.connectionState === 'disconnected') {
         // Usually a transient mobile-network blip. Give ICE a chance to
@@ -593,6 +581,7 @@ export function useVoiceChannel(convoyId?: string) {
       }
       if (pc.connectionState === 'failed') {
         console.warn(`[Voice] Connection failed with ${remoteUserId}`);
+        setPeerLink(remoteUserId, 'failed');
         pc.close();
         peersRef.current.delete(remoteUserId);
         audioElementsRef.current.get(remoteUserId)?.remove();
@@ -986,6 +975,7 @@ export function useVoiceChannel(convoyId?: string) {
           remoteStreamsRef.current.delete(from);
           peerConsentRef.current.delete(from);
         }
+        setPeerLink(from, null);
         // Clear from speaking users
         setState(prev => {
           const newSet = new Set(prev.speakingUsers);
@@ -1041,6 +1031,9 @@ export function useVoiceChannel(convoyId?: string) {
     // NOTE: Do NOT `await` here. Awaiting yields the call stack and can break iOS gesture requirements.
     unlockIOSAudio();
 
+    // Start fetching TURN relay credentials in parallel; awaited before any peer is created.
+    const iceReady = loadIceServers();
+
     try {
       console.log('[Voice] Connecting to voice channel for convoy:', convoyId);
 
@@ -1063,6 +1056,13 @@ export function useVoiceChannel(convoyId?: string) {
         return { success: false, error: 'Not authenticated' };
       }
       userIdRef.current = user.id;
+      await iceReady;
+      if (!hasRelay() && !relayWarningShown) {
+        relayWarningShown = true;
+        toast.warning('Voice relay unavailable', {
+          description: 'Voice works on Wi-Fi, but riders on mobile data may not hear each other.',
+        });
+      }
 
       // Get microphone access with optimized settings
       // Native Android must enter communication mode before microphone capture;
@@ -1266,6 +1266,7 @@ export function useVoiceChannel(convoyId?: string) {
       isConnected: false,
       isMuted: true,
       speakingUsers: new Set(),
+      peerLinks: {},
     });
   }, [cleanup]);
 

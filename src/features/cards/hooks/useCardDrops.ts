@@ -145,7 +145,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
   const queryClient = useQueryClient();
   const { user, profile } = useProfile();
 
-  const enabled = !!center && settings.blacktopWorldEnabled;
+  const enabled = !!center && settings.blacktopWorldEnabled && settings.collectiblesEnabled;
   // Round the centre so panning around a town reuses one cached result.
   const key = center ? `${center.lat.toFixed(2)},${center.lng.toFixed(2)}` : 'none';
 

@@ -52,8 +52,8 @@ export function RadioOverlay() {
 
 
   return createPortal(
-    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/92 backdrop-blur-xl animate-fade-in safe-bottom landscape:justify-center landscape:items-center landscape:max-h-[100dvh] landscape:overflow-hidden">
-      <div className="flex items-center justify-between px-4 pt-4 landscape:pt-2 landscape:pb-2">
+    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/95 backdrop-blur-xl animate-fade-in safe-top safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
+      <div className="flex items-center justify-between px-4 pt-4 landscape:pt-2 landscape:px-6 shrink-0">
         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">Blacktop Radio</p>
         <button
           type="button"
@@ -65,7 +65,7 @@ export function RadioOverlay() {
         </button>
       </div>
 
-      <div className="flex-1 landscape:flex-none overflow-y-auto flex flex-col items-center justify-center gap-6 landscape:gap-3 px-4 py-4 landscape:py-2">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col landscape:flex-row items-center justify-center gap-6 landscape:gap-10 px-4 py-4 landscape:px-8 landscape:py-2">
         {stations.length === 0 ? (
           <div className="text-center max-w-xs space-y-3">
             <p className="text-sm text-muted-foreground">
@@ -82,7 +82,9 @@ export function RadioOverlay() {
         ) : (
           <>
             {/* The dial */}
-            <div className="relative w-[280px] h-[280px] landscape:w-[200px] landscape:h-[200px] shrink-0">
+            {/* --dial drives the dial, station orbit and hub, so they stay in proportion at any size.
+                Landscape caps it by viewport height so short phone screens never clip. */}
+            <div className="relative shrink-0 w-[var(--dial)] h-[var(--dial)] [--dial:280px] landscape:[--dial:min(230px,calc(100dvh-116px))]">
               <div className="absolute inset-0 rounded-full border border-border/60 bg-card/40" />
               <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-0 h-0 border-l-[7px] border-r-[7px] border-t-[10px] border-l-transparent border-r-transparent border-t-accent" />
               <div
@@ -103,7 +105,7 @@ export function RadioOverlay() {
                       aria-pressed={isActive}
                       className="absolute left-1/2 top-1/2 flex flex-col items-center gap-1"
                       style={{
-                        transform: `rotate(${angle}deg) translateY(-112px) rotate(${-angle - dialRotation}deg) translate(-50%, -50%)`,
+                        transform: `rotate(${angle}deg) translateY(calc(var(--dial) * -0.4)) rotate(${-angle - dialRotation}deg) translate(-50%, -50%)`,
                       }}
                     >
                       <span
@@ -129,14 +131,14 @@ export function RadioOverlay() {
               </div>
 
               {/* Hub */}
-              <div className="absolute inset-[86px] landscape:inset-[62px] rounded-full bg-card border border-border flex flex-col items-center justify-center text-center px-2">
+              <div className="absolute inset-[31%] rounded-full bg-card border border-border flex flex-col items-center justify-center text-center px-2">
                 <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Station</p>
                 <p className="text-sm font-bold truncate max-w-full">{player.stationName || 'Off air'}</p>
               </div>
             </div>
 
             {/* Now playing */}
-            <div className="w-full max-w-sm landscape:max-w-xs space-y-2 landscape:space-y-1">
+            <div className="w-full max-w-sm landscape:max-w-xs landscape:flex-1 space-y-2 landscape:space-y-1.5">
               <p className="text-center text-sm font-semibold truncate">{trackTitle(player.trackName)}</p>
               {player.needsReselect && (
                 <button

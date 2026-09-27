@@ -3,7 +3,8 @@ import { Plus, Wrench, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Bike, DEFAULT_MAINT_TEMPLATES } from '../types';
+import { Bike, DEFAULT_MAINT_TEMPLATES, CAR_MAINT_TEMPLATES, CYCLE_MAINT_TEMPLATES, SCOOTER_MAINT_TEMPLATES } from '../types';
+import { useExperience } from '@/features/experience';
 import { dueItems, serviceStatus } from '../lib/serviceReminders';
 import { useGarage } from '../hooks/useGarage';
 import { useSettings } from '@/features/settings';
@@ -21,6 +22,17 @@ const MI_TO_KM = 1.60934;
 export function MaintenanceList({ bike, odometerKm }: Props) {
   const { addMaintItem, updateMaintItem, deleteMaintItem } = useGarage();
   const { settings } = useSettings();
+  const { vehicles } = useExperience();
+  // Presets for every vehicle type the rider uses, main vehicle first, de-duplicated by name.
+  const templates = vehicles
+    .flatMap((v) =>
+      v === 'car' ? CAR_MAINT_TEMPLATES
+      : v === 'bicycle' || v === 'ebike' ? CYCLE_MAINT_TEMPLATES
+      : v === 'escooter' ? SCOOTER_MAINT_TEMPLATES
+      : DEFAULT_MAINT_TEMPLATES
+    )
+    .filter((t, i, all) => all.findIndex((o) => o.name === t.name) === i);
+  const partExample = vehicles[0] === 'car' ? 'Timing belt' : vehicles[0] === 'escooter' ? 'Stem clamp' : 'Chain';
   const isMiles = settings.distanceUnit === 'miles';
   const unitLabel = getDistanceLabel(settings.distanceUnit);
 
@@ -94,9 +106,9 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
             </DialogHeader>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-1.5">
-                {DEFAULT_MAINT_TEMPLATES.map((t) => (
+                {templates.map((t) => (
                   <button
-                    key={t.key}
+                    key={t.name}
                     type="button"
                     onClick={() => presetClick(t.name, t.intervalKm)}
                     className="pill hover:bg-accent/10 hover:border-accent/30"
@@ -106,7 +118,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                 ))}
               </div>
               <Input
-                placeholder="Part name (e.g. Chain)"
+                placeholder={`Part name (e.g. ${partExample})`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />

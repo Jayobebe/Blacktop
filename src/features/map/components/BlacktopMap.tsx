@@ -1924,7 +1924,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       {challengeRun && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/97 shadow-2xl backdrop-blur px-4 py-3 text-center">
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/95 shadow-2xl backdrop-blur px-4 py-3 text-center">
           {challengeRun.startsAt == null ? (
             <>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Setting challenge</p>
@@ -2305,7 +2305,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       {selectedDrop && (
-        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
+        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
           <button
             type="button"
             onClick={() => setSelectedStack(null)}
@@ -2386,7 +2386,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       {selectedStack && selectedStack.length > 1 && (
-        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/97 shadow-2xl backdrop-blur p-4 animate-slide-up">
+        <div className="absolute inset-x-3 bottom-3 z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
           <button
             type="button"
             onClick={() => setSelectedStack(null)}

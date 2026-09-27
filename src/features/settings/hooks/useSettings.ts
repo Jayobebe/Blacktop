@@ -56,6 +56,12 @@ export interface AppSettings {
   radioEnabled: boolean;
   /** Who can see the trading cards you drop on the Blacktop map. */
   cardDropVisibility: CardDropVisibility;
+  /** Speed-first UI: live speed as the hero number, top/avg speed in stats and receipts. */
+  speedFocusEnabled: boolean;
+  /** Garage: vehicles, service reminders, vehicle line + photo on receipts. */
+  garageEnabled: boolean;
+  /** Collectibles: trading cards, badges, card drops on the map. */
+  collectiblesEnabled: boolean;
 
 }
 
@@ -96,6 +102,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   carDisplayEnabled: false,
   radioEnabled: false,
   cardDropVisibility: 'world',
+  // Existing users keep everything they had; onboarding can switch these off.
+  speedFocusEnabled: true,
+  garageEnabled: true,
+  collectiblesEnabled: true,
 
 };
 
@@ -143,6 +153,13 @@ export function useSettings() {
     }));
   };
 
+  const updateSettings = (patch: Partial<AppSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+  };
+
   const toggleSpeedRankings = () => {
     updateSetting('showSpeedRankings', !settings.showSpeedRankings);
   };
@@ -170,6 +187,7 @@ export function useSettings() {
   return {
     settings,
     updateSetting,
+    updateSettings,
     toggleSpeedRankings,
     toggleSpeedUnit,
     toggleDistanceUnit,

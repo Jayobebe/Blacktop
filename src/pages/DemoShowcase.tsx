@@ -54,7 +54,7 @@ export default function DemoShowcase() {
       id: 'intro',
       title: 'BLACKTOP',
       subtitle: 'Ride Logging & Convoy Communication',
-      description: 'Privacy-first companion for motorcyclists and drivers. No account required. Your data stays on your device.',
+      description: 'Privacy-first companion for motorcyclists and drivers. No sign-up required. Your ride history is stored on your device.',
       icon: Shield,
       color: 'accent',
       mockup: <IntroMockup />

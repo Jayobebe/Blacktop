@@ -11,6 +11,7 @@ import { ConvoyDestination } from '@/types/convoy';
 import { toast } from 'sonner';
 import { useConvoyState } from '@/features/convoy';
 import { useCrew } from '@/features/crew/useCrew';
+import { useExperience } from '@/features/experience';
 
 interface UserLocation {
   lat: number;
@@ -21,6 +22,7 @@ export default function SoloLobby() {
   const navigate = useNavigate();
   const { startRide } = useActiveRide();
   const { settings } = useSettings();
+  const { terms, isCarOnly, showGroup } = useExperience();
   const { convoy, createConvoy, leaveConvoy } = useConvoyState();
   const crew = useCrew();
   const [busyLock, setBusyLock] = useState(false);
@@ -170,7 +172,7 @@ export default function SoloLobby() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-xl font-semibold tracking-tight">Solo Ride</h1>
+          <h1 className="text-xl font-semibold tracking-tight">{showGroup ? 'Solo' : 'New'} {terms.Ride}</h1>
           <p className="text-xs text-muted-foreground">
             {isUnlocked ? `Open to crew ${crew.code}` : 'Set a destination and hit the road'}
           </p>
@@ -304,12 +306,12 @@ export default function SoloLobby() {
             }
           >
             <Play className="w-5 h-5 mr-3" />
-            {destination ? 'Start without map' : 'Start Ride'}
+            {destination ? 'Start without map' : `Start ${terms.Ride}`}
           </Button>
           <p className="text-xs text-muted-foreground text-center">
             {destination
               ? 'Navigate opens the map with your route · Start without map tracks only'
-              : 'Destination is optional — you can ride freely'}
+              : `Destination is optional. You can just ${isCarOnly ? 'drive' : 'ride'}.`}
           </p>
         </div>
       </div>

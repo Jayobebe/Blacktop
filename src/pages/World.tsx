@@ -278,9 +278,11 @@ export default function World() {
       </div>
 
       {/* Card collection — full-height vertical snap carousel */}
-      <div className="flex-shrink-0">
-        <CollectedCardsFolder />
-      </div>
+      {settings.collectiblesEnabled && (
+        <div className="flex-shrink-0">
+          <CollectedCardsFolder />
+        </div>
+      )}
 
       {/* Blacktank — the crew fuel pot landmark. Portalled out of the page so
           the animated (transformed) wrapper doesn't trap the fixed overlay. */}

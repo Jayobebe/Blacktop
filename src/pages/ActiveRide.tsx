@@ -30,11 +30,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play, VolumeX } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { getMemberColorStyles } from '@/lib/memberColors';
+import { useExperience, getExperience, termsFor } from '@/features/experience';
+
+// Read at call time inside realtime handlers so wording never forces a resubscribe.
+const liveTerms = () => termsFor(getExperience().vehicles);
 
 // GPS Signal Indicator Component
 function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
@@ -92,8 +96,13 @@ export default function ActiveRide() {
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
-  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
+  const { isConnected, isMuted, speakingUsers, peerLinks, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
   const { settings } = useSettings();
+  const { terms, canLean } = useExperience();
+  // Riders who said they don't care about speed get distance as the hero number.
+  const speedHero = settings.speedFocusEnabled;
+  // Lean angle only exists for vehicles that lean into corners.
+  const leanOn = settings.leanAngleEnabled && canLean;
   const { activeBike } = useGarage();
   const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
   const { user, profile } = useProfile();
@@ -115,14 +124,14 @@ export default function ActiveRide() {
   useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
   
   // Lean angle sensor
-  const leanAngle = useLeanAngle(settings.leanAngleEnabled && rideState.isActive);
+  const leanAngle = useLeanAngle(leanOn && rideState.isActive);
 
   // G-force sensor - shared by the live gauge AND auto-rescue crash detection,
   // so there's a single devicemotion listener regardless of which feature(s) need it.
   const gForce = useGForce(rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled));
 
   // Check if ride has lean / G-force data for overlay
-  const hasLeanData = settings.leanAngleEnabled && leanAngle.isSupported;
+  const hasLeanData = leanOn && leanAngle.isSupported;
   const hasGForceData = settings.gForceEnabled && gForce.isSupported;
 
   // MapLibre-style problem: canvas color parsing can't resolve `hsl(var(--accent))`,
@@ -254,17 +263,17 @@ export default function ActiveRide() {
 
   // Request lean angle permission when ride starts (iOS requires user gesture)
   useEffect(() => {
-    if (rideState.isActive && settings.leanAngleEnabled && !leanAngle.permissionGranted) {
+    if (rideState.isActive && leanOn && !leanAngle.permissionGranted) {
       leanAngle.requestPermission();
     }
-  }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.permissionGranted, leanAngle.requestPermission]);
+  }, [rideState.isActive, leanOn, leanAngle.permissionGranted, leanAngle.requestPermission]);
 
   // Sync lean angle to ride state for recording
   useEffect(() => {
-    if (rideState.isActive && settings.leanAngleEnabled && leanAngle.isSupported) {
+    if (rideState.isActive && leanOn && leanAngle.isSupported) {
       updateLeanAngle(leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight);
     }
-  }, [rideState.isActive, settings.leanAngleEnabled, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
+  }, [rideState.isActive, leanOn, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
   // Request G-force sensor permission when needed (iOS requires user gesture; falls
   // back to a request here if the Settings-time prompt was skipped/denied/reloaded)
@@ -369,7 +378,7 @@ export default function ActiveRide() {
   const handleRideEndedByLeader = useCallback(async () => {
     if (endingFlowRef.current) return; // Already ending
     console.log('[ActiveRide] Ride ended by leader');
-    toast.info('Leader ended the ride');
+    toast.info(`Leader ended the ${liveTerms().ride}`);
     
     // Stop overlay recording and get the blob
     const overlayBlob = await overlayRecorderRef.current.stopRecording();
@@ -592,7 +601,7 @@ export default function ActiveRide() {
       });
       setSavedRideId(rideId);
     } else {
-      toast.info('Ride too short — not saved');
+      toast.info(`${terms.Ride} too short, not saved`);
       navigate('/');
     }
 
@@ -615,13 +624,16 @@ export default function ActiveRide() {
   const handleBadgesEarned = useCallback((badges: BadgeType[]) => {
     // Only save badges for convoy rides with 2+ members - solo rides never earn badges
     // RideSummary already gates this callback - it only calls when members.length >= 2
-    // Use finalMembers (captured at ride end) since convoy.members may be empty by now
-    if (badges.length > 0 && rideState.isConvoyMode && finalMembers.length >= 2) {
+    // Use finalMembers (captured at ride end, and only for convoy rides) rather than
+    // rideState.isConvoyMode: endRide() has already reset the ride state by the time
+    // the receipt mounts and reports badges, so that flag is always false here and
+    // every convoy badge was silently dropped before reaching the Stats wallet.
+    if (badges.length > 0 && finalMembers.length >= 2) {
       console.log('[ActiveRide] Badges earned:', badges);
       // Store badges - they'll be saved when savedRideId becomes available
       setPendingBadges(badges);
     }
-  }, [rideState.isConvoyMode, finalMembers.length]);
+  }, [finalMembers.length]);
 
   const handleCloseSummary = () => {
     setShowSummary(false);
@@ -735,7 +747,7 @@ export default function ActiveRide() {
   if (!rideState.isActive && !endingFlow) return null;
 
   // Sort members by top speed (highest first) if rankings enabled, otherwise by join time
-  const sortedMembers = settings.showSpeedRankings 
+  const sortedMembers = (settings.showSpeedRankings && settings.speedFocusEnabled) 
     ? [...convoy.members].sort((a, b) => (b.topSpeed || 0) - (a.topSpeed || 0))
     : convoy.members;
 
@@ -749,7 +761,7 @@ export default function ActiveRide() {
           className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           <Square className="w-3.5 h-3.5 mr-1.5" />
-          {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY' : 'END RIDE'}
+          {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY' : `END ${terms.Ride.toUpperCase()}`}
         </Button>
       ) : (
         <div className="flex gap-2">
@@ -758,7 +770,7 @@ export default function ActiveRide() {
             size="sm"
             className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
-            END RIDE
+            END {terms.Ride.toUpperCase()}
           </Button>
           <Button
             onClick={() => setShowEndConfirm(false)}
@@ -793,7 +805,7 @@ export default function ActiveRide() {
           timeoutSec={AUTO_RESCUE_ACK_TIMEOUT_SEC}
           onImFine={() => {
             setCrashPromptOpen(false);
-            toast.success('Glad you’re okay. Ride on.');
+            toast.success(`Glad you’re okay. ${terms.Ride} on.`);
           }}
           onSendNow={async () => {
             setCrashPromptOpen(false);
@@ -822,6 +834,7 @@ export default function ActiveRide() {
       <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center">
         {/* Landscape Left: Big Stats List */}
         <div className="hidden landscape:flex flex-col justify-center items-start gap-7 flex-1 min-w-0 pl-2">
+          {speedHero && (
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Distance</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
@@ -829,10 +842,12 @@ export default function ActiveRide() {
               <span className="text-lg text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
             </p>
           </div>
+          )}
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Time</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">{formatDuration(rideState.duration)}</p>
           </div>
+          {settings.speedFocusEnabled && (
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Max</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
@@ -840,6 +855,7 @@ export default function ActiveRide() {
               <span className="text-lg text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
             </p>
           </div>
+          )}
         </div>
 
         {/* Speed and Stats - centre column in landscape (auto width, centred by equal flanks) */}
@@ -861,24 +877,28 @@ export default function ActiveRide() {
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
           </div>
 
-          {/* Speed Display - large and prominent */}
+          {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">
             <div data-ride-speed className={cn(
               "font-mono font-black transition-all leading-none",
-              "text-[8rem] [@media(max-height:820px)]:text-[6rem] [@media(max-height:700px)]:text-[5rem] md:text-[11rem] lg:text-[14rem] landscape:text-[7.5rem] landscape:[@media(max-height:500px)]:text-[5.5rem] landscape:[@media(max-height:420px)]:text-[4.5rem]",
-              rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
-              rideState.currentSpeed >= settings.amberSpeedThreshold &&
+              speedHero
+                ? "text-[8rem] [@media(max-height:820px)]:text-[6rem] [@media(max-height:700px)]:text-[5rem] md:text-[11rem] lg:text-[14rem] landscape:text-[7.5rem] landscape:[@media(max-height:500px)]:text-[5.5rem] landscape:[@media(max-height:420px)]:text-[4.5rem]"
+                : "text-[6.5rem] [@media(max-height:820px)]:text-[5rem] [@media(max-height:700px)]:text-[4rem] md:text-[9rem] lg:text-[11rem] landscape:text-[6rem] landscape:[@media(max-height:500px)]:text-[4.5rem] landscape:[@media(max-height:420px)]:text-[3.75rem]",
+              speedHero && rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
+              speedHero && rideState.currentSpeed >= settings.amberSpeedThreshold &&
               rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
             )}>
-              {formatSpeed(rideState.currentSpeed, settings.speedUnit)}
+              {speedHero ? formatSpeed(rideState.currentSpeed, settings.speedUnit) : formatDistance(rideState.distance, settings.distanceUnit)}
             </div>
-            <p className="text-muted-foreground text-base landscape:text-sm -mt-3">{getSpeedLabel(settings.speedUnit)}</p>
+            <p className="text-muted-foreground text-base landscape:text-sm -mt-3">
+              {speedHero ? getSpeedLabel(settings.speedUnit) : getDistanceLabel(settings.distanceUnit)}
+            </p>
             
             {/* Lean Angle Bar + G-Force Gauge - portrait only */}
             <div className="landscape:hidden">
-              {(settings.leanAngleEnabled || (settings.gForceEnabled && gForce.isSupported)) && (
+              {(leanOn || (settings.gForceEnabled && gForce.isSupported)) && (
                 <div className="mt-2 flex flex-col">
-                  {settings.leanAngleEnabled && (
+                  {leanOn && (
                     <div>
                       <LeanAngleBar 
                         currentLean={leanAngle.currentLean}
@@ -906,7 +926,7 @@ export default function ActiveRide() {
           </div>
 
           {/* Lean Angle Bar - landscape only, centred below live speed */}
-          {settings.leanAngleEnabled && (
+          {leanOn && (
             <div className="hidden landscape:flex flex-col items-center mt-1 scale-125 origin-top">
               <LeanAngleBar
                 vertical
@@ -926,6 +946,7 @@ export default function ActiveRide() {
 
           {/* Stats Row - portrait only */}
           <div className="flex landscape:hidden gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 md:mt-5">
+            {speedHero && (
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
@@ -933,10 +954,12 @@ export default function ActiveRide() {
                 <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
               </p>
             </div>
+            )}
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
+            {settings.speedFocusEnabled && (
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
@@ -944,6 +967,7 @@ export default function ActiveRide() {
                 <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
               </p>
             </div>
+            )}
           </div>
 
           {/* End Ride Button - landscape only, pushed lower below the speed/lean cluster */}
@@ -969,7 +993,7 @@ export default function ActiveRide() {
             onClick={() => {
               const nextPaused = !rideState.isPaused;
               setRidePaused(nextPaused);
-              toast.info(nextPaused ? 'Ride paused' : 'Ride resumed');
+              toast.info(nextPaused ? `${terms.Ride} paused` : `${terms.Ride} resumed`);
             }}
             className={cn(
               "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target",
@@ -977,7 +1001,7 @@ export default function ActiveRide() {
                 ? "bg-accent/20 text-accent"
                 : "bg-secondary hover:bg-muted text-muted-foreground"
             )}
-            title={rideState.isPaused ? "Resume ride" : "Pause ride"}
+            title={rideState.isPaused ? `Resume ${terms.ride}` : `Pause ${terms.ride}`}
           >
             {rideState.isPaused ? (
               <Play className="w-7 h-7 landscape:w-8 landscape:h-8" />
@@ -1197,6 +1221,8 @@ export default function ActiveRide() {
                 {sortedMembers.map((member, index) => {
                   const colorStyles = getMemberStyles(member);
                   const isSpeaking = speakingUsers.has(member.userId);
+                  // Only say someone is audible when there's a real audio link to them.
+                  const audioLink = isConnected && member.userId !== user?.id ? peerLinks[member.userId] : undefined;
                   
                   return (
                     <div
@@ -1234,7 +1260,13 @@ export default function ActiveRide() {
                           {member.name}
                           {isSpeaking && <span className="ml-1 text-[10px] opacity-75">🎤</span>}
                         </p>
-                        {settings.showSpeedRankings && (
+                        {isConnected && member.userId !== user?.id && audioLink !== 'connected' && (
+                          <p className={cn('text-[10px] flex items-center gap-1', audioLink === 'failed' || !audioLink ? 'text-warning' : 'text-muted-foreground')}>
+                            <VolumeX className="w-2.5 h-2.5" />
+                            {audioLink === 'connecting' ? 'Connecting audio…' : 'No audio link'}
+                          </p>
+                        )}
+                        {(settings.showSpeedRankings && settings.speedFocusEnabled) && (
                           <p className="text-[10px] text-muted-foreground">
                             {formatSpeed(member.currentSpeed || 0, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}
                           </p>
@@ -1242,7 +1274,7 @@ export default function ActiveRide() {
                       </div>
                       
                       {/* Top speed badge - compact */}
-                      {settings.showSpeedRankings && (
+                      {(settings.showSpeedRankings && settings.speedFocusEnabled) && (
                         <div className="text-right flex-shrink-0">
                           <p className="font-mono text-xs font-bold" style={{ color: colorStyles.text }}>
                             {formatSpeed(member.topSpeed || 0, settings.speedUnit)}

@@ -1,22 +1,25 @@
 import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
-import { ArrowLeft, Route, Clock, TrendingUp, Hash, Users, Zap } from 'lucide-react';
+import { ArrowLeft, Route, Clock, TrendingUp, Hash, Users, Zap, Ruler } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { VehicleCardCarousel } from '@/features/cards';
 import { BadgeWalletPanel } from '@/features/ride';
+import { useExperience } from '@/features/experience';
 
 export default function Stats() {
   const navigate = useNavigate();
   const { stats } = useRideHistory();
   const { settings } = useSettings();
+  const { terms, showGroup } = useExperience();
 
+  // Only the numbers this rider said they care about.
   const statCards = [
     {
       icon: Hash,
-      label: 'Total Rides',
+      label: `Total ${terms.Rides}`,
       value: stats.totalRides.toString(),
-      unit: 'rides',
+      unit: terms.rides,
     },
     {
       icon: Route,
@@ -25,30 +28,36 @@ export default function Stats() {
       unit: getDistanceLabel(settings.distanceUnit),
     },
     {
+      icon: Ruler,
+      label: `Average ${terms.Ride}`,
+      value: stats.totalRides > 0 ? formatDistance(stats.averageRideLength, settings.distanceUnit) : '—',
+      unit: stats.totalRides > 0 ? getDistanceLabel(settings.distanceUnit) : '',
+    },
+    {
       icon: Clock,
       label: 'Time on the Road',
       value: formatDuration(stats.totalDuration),
       unit: '',
     },
-    {
+    settings.speedFocusEnabled && {
       icon: TrendingUp,
       label: 'Top Speed',
       value: formatSpeed(stats.personalTopSpeed, settings.speedUnit).toString(),
       unit: getSpeedLabel(settings.speedUnit),
     },
-    {
+    showGroup && {
       icon: Users,
-      label: 'Convoy Rides',
+      label: `Convoy ${terms.Rides}`,
       value: stats.convoyRides.toString(),
       unit: 'convoys',
     },
-    {
+    settings.gForceEnabled && {
       icon: Zap,
       label: 'Max G-Force',
       value: stats.personalMaxGForce > 0 ? stats.personalMaxGForce.toFixed(1) : '—',
       unit: stats.personalMaxGForce > 0 ? 'G' : '',
     },
-  ];
+  ].filter(Boolean) as { icon: typeof Hash; label: string; value: string; unit: string }[];
 
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
@@ -71,9 +80,11 @@ export default function Stats() {
 
 
         {/* Badges Section */}
-        <div className="landscape:flex-1 landscape:overflow-y-auto">
-          <BadgeWalletPanel />
-        </div>
+        {settings.collectiblesEnabled && (
+          <div className="landscape:flex-1 landscape:overflow-y-auto">
+            <BadgeWalletPanel />
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="landscape:flex-1 landscape:min-h-0 pr-1">
@@ -109,13 +120,17 @@ export default function Stats() {
 
           {/* Disclaimer */}
           <p className="text-[10px] text-muted-foreground text-center mt-4 px-4 landscape:mt-3">
-            All statistics stored locally on your device
+            {settings.blacktopWorldEnabled
+              ? 'Stored on your device. Crew leaderboards only see the totals you publish.'
+              : 'All statistics stored locally on your device'}
           </p>
 
-          {/* Vehicle trading cards */}
-          <div className="mt-6 pb-2 animate-fade-in">
-            <VehicleCardCarousel />
-          </div>
+          {/* Vehicle trading cards — minted from garage vehicles, so they need both */}
+          {settings.collectiblesEnabled && settings.garageEnabled && (
+            <div className="mt-6 pb-2 animate-fade-in">
+              <VehicleCardCarousel />
+            </div>
+          )}
         </div>
       </div>
     </div>

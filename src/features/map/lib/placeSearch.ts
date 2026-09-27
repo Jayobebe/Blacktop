@@ -56,6 +56,8 @@ const categoryToNominatimQuery: Record<string, string> = {
   'restaurant|fast_food|cafe': 'restaurant',
   'supermarket|convenience': 'supermarket',
   '24h': '24 hour store',
+  drinking_water: 'drinking water',
+  charging_station: 'charging station',
 };
 
 export function getRecentLocations(): MapSearchResult[] {

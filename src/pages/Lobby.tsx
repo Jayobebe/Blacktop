@@ -18,6 +18,10 @@ import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 import { QRCodeSVG } from 'qrcode.react';
 import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
+import { useExperience, getExperience, termsFor } from '@/features/experience';
+
+// Read at call time inside realtime handlers so wording never forces a resubscribe.
+const liveTerms = () => termsFor(getExperience().vehicles);
 
 interface UserLocation {
   lat: number;
@@ -33,6 +37,7 @@ export default function Lobby() {
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { settings } = useSettings();
+  const { terms } = useExperience();
   const { profile, user } = useProfile();
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
@@ -182,7 +187,7 @@ export default function Lobby() {
       if (age > 30000) return;
       hasStartedRide.current = true;
       console.log('[Lobby] Received start-ride broadcast');
-      toast.success('Leader started the ride');
+      toast.success(`Leader started the ${liveTerms().ride}`);
       const success = startRideRef.current(true, convoy.id);
       if (success) {
         navigateRef.current('/ride');
@@ -254,7 +259,7 @@ export default function Lobby() {
             }
             console.log('[Lobby] Detected ride_started_at via DB fallback');
             hasStartedRide.current = true;
-            toast.success('Leader started the ride');
+            toast.success(`Leader started the ${liveTerms().ride}`);
             const success = startRideRef.current(true, convoy.id);
             if (success) {
               navigateRef.current('/ride');
@@ -306,7 +311,7 @@ export default function Lobby() {
     if (readyToStart && !prevReadyToStart.current && !hasStartedRide.current) {
       hasStartedRide.current = true;
       console.log('[Lobby] All members ready, starting ride!');
-      toast.success('All members ready - starting ride!');
+      toast.success(`Everyone's ready. Starting the ${liveTerms().ride}!`);
       const success = startRide(true, convoy.id);
       if (success) {
         navigate('/ride');
@@ -988,11 +993,11 @@ export default function Lobby() {
               hasStartedRide.current = true;
               const success = startRide(true, convoy.id);
               if (success) {
-                toast.success('Starting ride for all members');
+                toast.success(`Starting the ${terms.ride} for everyone`);
 
                 const sent = await sendStartRideBroadcast();
                 if (!sent) {
-                  toast.error('Could not signal other members', { description: 'They can still tap Start Ride.' });
+                  toast.error('Could not signal other members', { description: `They can still tap Start ${terms.Ride}.` });
                 }
 
                 // Give followers a moment to receive before we leave the lobby
@@ -1015,11 +1020,11 @@ export default function Lobby() {
 
                 const success = startRide(true, convoy.id);
                 if (success) {
-                  toast.success('Starting ride for all members');
+                  toast.success(`Starting the ${terms.ride} for everyone`);
 
                   const sent = await sendStartRideBroadcast();
                   if (!sent) {
-                    toast.error('Could not signal other members', { description: 'They can still tap Start Ride.' });
+                    toast.error('Could not signal other members', { description: `They can still tap Start ${terms.Ride}.` });
                   }
 
                   // Give followers a moment to receive before we leave the lobby
@@ -1046,7 +1051,7 @@ export default function Lobby() {
             title={rideState.isActive ? 'Return to your active ride' : convoy.isLeader ? 'Tap to start your ride, hold to start for all' : 'Start your ride'}
           >
             <Play className="w-3.5 h-3.5 mr-1.5" />
-            {rideState.isActive ? 'Return to Ride' : 'Start Ride'}
+            {rideState.isActive ? `Return to ${terms.Ride}` : `Start ${terms.Ride}`}
           </Button>
         )}
       </div>

@@ -4,12 +4,16 @@ import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { History, BarChart3, Settings, Users, UserPlus, User, Wrench } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route, Globe2 } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap, clearMapDestination } from '@/features/map';
+import { SafetyStatusCard } from '@/features/rescue';
+import { useExperience } from '@/features/experience';
+import { haptics } from '@/lib/haptics';
+import { cn } from '@/lib/utils';
 
 
 export default function Home() {
@@ -19,6 +23,7 @@ export default function Home() {
   const { rideState } = useActiveRide();
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
+  const exp = useExperience();
   const [isExploding, setIsExploding] = useState(false);
   const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,6 +60,41 @@ export default function Home() {
   };
 
 
+  // Home adapts to the rider's setup: solo-only riders never see convoy tiles,
+  // group-only riders never see solo, and the vehicle picks icons + wording.
+  const SoloIcon = exp.VehicleIcon;
+  const convoyTile = { key: 'convoy', icon: Users, label: exp.rideMode === 'group' ? 'Start Convoy' : 'Convoy', sub: `Group ${exp.terms.ride}`, onClick: () => navigate('/create-convoy') };
+  const soloTile = {
+    key: 'solo',
+    icon: SoloIcon,
+    label: exp.rideMode === 'solo' ? `Start ${exp.terms.Ride}` : 'Solo',
+    sub: exp.rideMode === 'solo' ? (settings.autoRescueEnabled ? 'Tracking, stats and rescue' : 'Tracking and stats') : `${exp.terms.Ride} alone`,
+    onClick: () => navigate('/solo-lobby'),
+  };
+  const primaryTiles = [...(exp.showGroup ? [convoyTile] : []), ...(exp.showSolo ? [soloTile] : [])];
+  const singleTop = primaryTiles.length === 1;
+  const secondaryTile = exp.showGroup
+    ? { icon: UserPlus, label: 'Join Convoy', sub: 'Enter a convoy code', onClick: () => navigate('/join-convoy') }
+    : { icon: Route, label: 'Plan a Route', sub: exp.motorised ? 'Weather, cameras and loops' : 'Weather and loop routes', onClick: () => openBlacktopMap() };
+
+  // Speed only makes the cut for riders who said they care about it.
+  const quickStats = [
+    { label: exp.terms.Rides, value: formatCompactCount(stats.totalRides), unit: null },
+    { label: 'Distance', value: formatCompactDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
+    ...(settings.speedFocusEnabled
+      ? [{ label: 'Top Speed', value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) }]
+      : []),
+    { label: 'Time', value: formatCompactDuration(stats.totalDuration), unit: null },
+  ];
+
+  const navItems = [
+    ...(settings.garageEnabled ? [{ icon: Wrench, label: 'Garage', onClick: () => navigate('/garage') }] : []),
+    { icon: History, label: 'History', onClick: () => navigate('/history') },
+    ...(settings.blacktopWorldEnabled ? [{ icon: Globe2, label: 'World', onClick: () => navigate('/world') }] : []),
+    { icon: BarChart3, label: 'Stats', onClick: () => navigate('/stats') },
+    { icon: Settings, label: 'Settings', onClick: () => navigate('/settings') },
+  ];
+
   // Canvas can't resolve `hsl(var(--accent))`, so look up the literal HSL for
   // the active accent (same approach as BlacktopMap) for the globe's strokes.
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
@@ -65,34 +105,33 @@ export default function Home() {
   // matching circle out of each tile (fill + border) so the tiles "curve" around
   // the sphere, with the globe's accent rim tracing the cut.
   const tileColumnRef = useRef<HTMLDivElement>(null);
-  const convoyTileRef = useRef<HTMLButtonElement>(null);
-  const soloTileRef = useRef<HTMLButtonElement>(null);
-  const joinTileRef = useRef<HTMLButtonElement>(null);
+  const topATileRef = useRef<HTMLButtonElement>(null);
+  const topBTileRef = useRef<HTMLButtonElement>(null);
+  const bottomTileRef = useRef<HTMLButtonElement>(null);
   const globeRef = useRef<HTMLDivElement>(null);
   const arcOverlayRef = useRef<SVGSVGElement>(null);
 
   useLayoutEffect(() => {
     const column = tileColumnRef.current;
-    const convoy = convoyTileRef.current;
-    const solo = soloTileRef.current;
-    const join = joinTileRef.current;
+    // Top row has one tile (solo-only / group-only) or two (both).
+    const topTiles = [topATileRef.current, topBTileRef.current].filter((el): el is HTMLButtonElement => !!el);
+    const join = bottomTileRef.current;
     const globe = globeRef.current;
     const arcSvg = arcOverlayRef.current;
-    if (!column || !convoy || !solo || !join || !globe || !arcSvg) return;
+    if (!column || topTiles.length === 0 || !join || !globe || !arcSvg) return;
 
-    const tiles = [convoy, solo, join];
+    const tiles = [...topTiles, join];
 
     const apply = () => {
       const colRect = column.getBoundingClientRect();
       if (colRect.width === 0) return;
-      const convoyRect = convoy.getBoundingClientRect();
-      const soloRect = solo.getBoundingClientRect();
+      const topRects = topTiles.map((el) => el.getBoundingClientRect());
       const joinRect = join.getBoundingClientRect();
 
       // Junction: horizontal center of the column; vertically the middle of the
       // gap between the top row (Convoy/Solo) and the Join tile below.
       const cxAbs = colRect.left + colRect.width / 2;
-      const cyAbs = (convoyRect.bottom + joinRect.top) / 2;
+      const cyAbs = (topRects[0].bottom + joinRect.top) / 2;
       const r = Math.max(42, Math.min(99, Math.min(colRect.width, colRect.height) * 0.15));
 
       globe.style.width = `${r * 2}px`;
@@ -134,16 +173,6 @@ export default function Home() {
       const cx_col = cxAbs - colRect.left;
       const cy_col = cyAbs - colRect.top;
 
-      const cvx = convoyRect.left - colRect.left;
-      const cvy = convoyRect.top - colRect.top;
-      const cvw = convoyRect.width;
-      const cvh = convoyRect.height;
-
-      const slx = soloRect.left - colRect.left;
-      const sly = soloRect.top - colRect.top;
-      const slw = soloRect.width;
-      const slh = soloRect.height;
-
       const svgNS = 'http://www.w3.org/2000/svg';
 
       const mkClipRect = (id: string, x: number, y: number, w: number, h: number) => {
@@ -167,10 +196,13 @@ export default function Home() {
       };
 
       const defs = document.createElementNS(svgNS, 'defs');
-      defs.appendChild(mkClipRect('bt-convoy-clip', cvx, cvy, cvw, cvh));
-      defs.appendChild(mkClipRect('bt-solo-clip', slx, sly, slw, slh));
+      const arcs = topRects.map((rect, i) => {
+        const id = `bt-top-clip-${i}`;
+        defs.appendChild(mkClipRect(id, rect.left - colRect.left, rect.top - colRect.top, rect.width, rect.height));
+        return mkCircle(id);
+      });
 
-      arcSvg.replaceChildren(defs, mkCircle('bt-convoy-clip'), mkCircle('bt-solo-clip'));
+      arcSvg.replaceChildren(defs, ...arcs);
     };
 
     apply();
@@ -192,7 +224,7 @@ export default function Home() {
       });
       arcSvg.innerHTML = '';
     };
-  }, [accentColor]);
+  }, [accentColor, exp.rideMode]);
 
   // Clear any stale map destination when returning to the home screen so it
   // doesn't bleed into the next session.
@@ -229,16 +261,18 @@ export default function Home() {
         <HomeRadioDock />
       </header>
 
+      {/* Crash rescue status */}
+      {/* Riders who said no to crash rescue in setup aren't nagged about it. */}
+      {(settings.autoRescueEnabled || !exp.configured) && <SafetyStatusCard className="mb-3 landscape:mb-2 animate-fade-in" />}
+
       {/* Main content */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
         {/* Quick Stats */}
-        <div className="grid grid-cols-4 landscape:grid-cols-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start">
-          {[
-            { label: 'Rides', value: formatCompactCount(stats.totalRides), unit: null },
-            { label: 'Distance', value: formatCompactDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
-            { label: 'Top Speed', value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) },
-            { label: 'Time', value: formatCompactDuration(stats.totalDuration), unit: null },
-          ].map((stat, i) => (
+        <div
+          className="grid grid-cols-[repeat(var(--stat-cols),minmax(0,1fr))] landscape:grid-cols-2 landscape:[&>*:last-child:nth-child(odd)]:col-span-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start"
+          style={{ ['--stat-cols' as string]: quickStats.length }}
+        >
+          {quickStats.map((stat, i) => (
             <div 
               key={stat.label}
               className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
@@ -255,48 +289,51 @@ export default function Home() {
 
         {/* Ride Buttons */}
         <div ref={tileColumnRef} className="relative flex-1 flex flex-col gap-3 animate-slide-up delay-200">
-          {/* Start Buttons Row */}
+          {/* Start Buttons Row — one or two primary tiles depending on ride mode */}
           <div className="flex gap-3 flex-1">
-            <button
-              ref={convoyTileRef}
-              onClick={() => navigate('/create-convoy')}
-              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
-            >
-              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                <Users className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
-              </div>
-              <div className="text-left">
-                <span className="text-base font-semibold tracking-tight block text-accent">Convoy</span>
-                <span className="text-xs text-accent/70 landscape:hidden">Group ride</span>
-              </div>
-            </button>
-
-            <button
-              ref={soloTileRef}
-              onClick={() => navigate('/solo-lobby')}
-              className="flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-glow active:scale-[0.99] touch-target-lg"
-            >
-              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                <User className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
-              </div>
-              <div className="text-left">
-                <span className="text-base font-semibold tracking-tight block text-accent">Solo</span>
-                <span className="text-xs text-accent/70 landscape:hidden">Ride alone</span>
-              </div>
-            </button>
+            {primaryTiles.map((tile, i) => (
+              <button
+                key={tile.key}
+                ref={i === 0 ? topATileRef : topBTileRef}
+                onClick={() => {
+                  haptics.light();
+                  tile.onClick();
+                }}
+                className={cn(
+                  'pressable flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
+                  // One wide tile: in landscape the globe sits dead centre, so push the label left of it.
+                  singleTop && 'landscape:justify-start landscape:pl-8'
+                )}
+              >
+                <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <tile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
+                </div>
+                <div className="text-left">
+                  <span className="text-base font-semibold tracking-tight block text-accent">{tile.label}</span>
+                  <span className="text-xs text-accent/70 landscape:hidden">{tile.sub}</span>
+                </div>
+              </button>
+            ))}
           </div>
 
           <button
-            ref={joinTileRef}
-            onClick={() => navigate('/join-convoy')}
-            className="flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-3xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.99] touch-target-lg"
+            ref={bottomTileRef}
+            onClick={() => {
+              haptics.light();
+              secondaryTile.onClick();
+            }}
+            className={cn(
+              'pressable flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
+              // The globe sits over this tile's centre in landscape, so the label moves right of it.
+              'landscape:justify-end landscape:pr-8'
+            )}
           >
             <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
-              <UserPlus className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
+              <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
             </div>
             <div className="text-left">
-              <span className="text-base font-semibold tracking-tight block">Join Convoy</span>
-              <span className="text-xs text-muted-foreground landscape:hidden">Enter a convoy code</span>
+              <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
+              <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
             </div>
           </button>
 
@@ -332,16 +369,14 @@ export default function Home() {
 
       {/* Bottom Navigation */}
       <nav className="flex justify-around mt-4 pt-3 border-t border-border/30 animate-slide-up delay-300">
-        {[
-          { icon: Wrench, label: 'Garage', onClick: () => navigate('/garage') },
-          { icon: History, label: 'History', onClick: () => navigate('/history') },
-          { icon: BarChart3, label: 'Stats', onClick: () => navigate('/stats') },
-          { icon: Settings, label: 'Settings', onClick: () => navigate('/settings') },
-        ].map(({ icon: Icon, label, onClick }) => (
+        {navItems.map(({ icon: Icon, label, onClick }) => (
           <button
             key={label}
-            onClick={onClick}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 touch-target text-accent hover:bg-accent/10"
+            onClick={() => {
+              haptics.tick();
+              onClick();
+            }}
+            className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target text-accent hover:bg-accent/10"
           >
             <Icon className="w-5 h-5" />
             <span className="text-[10px] font-medium">{label}</span>

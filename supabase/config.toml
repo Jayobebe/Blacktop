@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.card-photo]
 verify_jwt = true
+
+[functions.turn-credentials]
+verify_jwt = true

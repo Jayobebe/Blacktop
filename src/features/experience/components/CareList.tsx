@@ -1,0 +1,43 @@
+import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { useSettings } from '@/features/settings';
+import { cn } from '@/lib/utils';
+import { haptics } from '@/lib/haptics';
+import { CARE_QUESTIONS, isCareOn, carePatch, requestMotionPermission, type CareQuestion } from '../lib/questions';
+import { useExperience } from '../hooks/useExperience';
+
+/** Settings view of the "Do you care about…" answers, as switches. */
+export function CareList({ className }: { className?: string }) {
+  const { settings, updateSettings } = useSettings();
+  const { care } = useExperience();
+
+  const toggle = async (q: CareQuestion, on: boolean) => {
+    if (on && q.needsMotion && !(await requestMotionPermission())) {
+      toast.error('Motion sensor permission denied');
+      return;
+    }
+    haptics.tick();
+    updateSettings(carePatch(q, on, care));
+  };
+
+  return (
+    <div className={cn('divide-y divide-border/30', className)}>
+      {CARE_QUESTIONS.filter((q) => !q.applies || q.applies(care)).map((q) => {
+        const on = isCareOn(q, settings, care);
+        const Icon = q.icon;
+        return (
+          <label key={q.id} className="flex items-center gap-3 py-3 cursor-pointer">
+            <div className={cn('rounded-lg p-2 shrink-0 transition-colors', on ? 'bg-accent/15 text-accent' : 'bg-secondary text-muted-foreground')}>
+              <Icon className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">{q.label}</p>
+              <p className="text-[11px] text-muted-foreground leading-snug">{on ? q.gets(care).join(' · ') : q.hides(care)}</p>
+            </div>
+            <Switch checked={on} onCheckedChange={(v) => toggle(q, v)} />
+          </label>
+        );
+      })}
+    </div>
+  );
+}

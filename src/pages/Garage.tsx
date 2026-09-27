@@ -29,6 +29,8 @@ import {
 import { BikePhotos } from '@/features/garage';
 import { buildNickLines } from '@/features/garage/lib/nickLines';
 import { toast } from 'sonner';
+import { useSettings } from '@/features/settings';
+import { useExperience } from '@/features/experience';
 
 
 
@@ -67,7 +69,18 @@ export default function Garage() {
     return null;
   }, [activeBike, stats.odometerKm]);
 
-  const nickLines = useMemo(() => buildNickLines(activeBike, stats), [activeBike, stats]);
+  const exp = useExperience();
+  const { settings } = useSettings();
+  const nickCtx = {
+    vehicle: exp.primary.id,
+    speed: settings.speedFocusEnabled,
+    lean: exp.canLean && settings.leanAngleEnabled,
+    g: settings.gForceEnabled,
+    ride: exp.terms.ride,
+    rides: exp.terms.rides,
+  };
+  const nickKey = JSON.stringify(nickCtx);
+  const nickLines = useMemo(() => buildNickLines(activeBike, stats, nickCtx), [activeBike, stats, nickKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const idx = activeBikeId ? bikes.findIndex((b) => b.id === activeBikeId) : -1;
   const cycle = (dir: 1 | -1) => {

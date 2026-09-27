@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useProfile } from '@/features/profile';
 import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
 import { shareRecapCard } from '@/features/ride/lib/recapCard';
+import { useExperience } from '@/features/experience';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ export default function RideDetail() {
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
   const { bikes } = useGarage();
   const { settings } = useSettings();
+  const { terms, canLean } = useExperience();
   const { profile } = useProfile();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [saveProgress, setSaveProgress] = useState<number | null>(null);
@@ -333,7 +335,7 @@ export default function RideDetail() {
         )}
 
         {/* Corner Report — scored from this ride's own GPS/lean trace */}
-        <CornerReportCard ride={ride} />
+        {(settings.leanAngleEnabled || settings.gForceEnabled) && <CornerReportCard ride={ride} />}
 
         {/* Shareable recap card */}
         <button
@@ -343,8 +345,12 @@ export default function RideDetail() {
             try {
               const result = await shareRecapCard(ride, {
                 riderName: profile.name,
-                bikeName: rideBike?.name ?? null,
+                bikeName: settings.garageEnabled ? rideBike?.name ?? null : null,
                 unit: settings.distanceUnit === 'km' ? 'km' : 'miles',
+                showSpeed: settings.speedFocusEnabled,
+                showLean: canLean && settings.leanAngleEnabled,
+                showG: settings.gForceEnabled,
+                rideWord: terms.ride,
               });
               toast.success(result === 'shared' ? 'Recap card shared' : 'Recap card saved');
             } catch (err) {
@@ -382,7 +388,7 @@ export default function RideDetail() {
                   <Box className="w-5 h-5 text-accent" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-sm">3D Ride Overview</h3>
+                  <h3 className="font-semibold text-sm">3D {terms.Ride} Overview</h3>
                   <p className="text-xs text-muted-foreground">Flyover of your route, downloadable as MP4</p>
                 </div>
               </div>
@@ -487,7 +493,7 @@ export default function RideDetail() {
             className="w-full h-10 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete Ride
+            Delete {terms.Ride}
           </Button>
         ) : (
           <div className="flex gap-2">

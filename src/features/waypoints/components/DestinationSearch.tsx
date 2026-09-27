@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark, IdCard } from 'lucide-react';
+import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark, IdCard, Droplet, BatteryCharging } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { getSavedPOIs, type SavedPOI } from '@/features/map';
 import { useSettings } from '@/features/settings';
 import { useCardDrops } from '@/features/cards';
+import { useExperience, refuelCategory, REFUEL_NOMINATIM } from '@/features/experience';
 
 
 interface SearchResult {
@@ -49,8 +50,14 @@ const RECENT_LOCATIONS_KEY = 'blacktop_recent_locations';
 const MAX_RECENT_LOCATIONS = 4;
 
 // OSM amenity tags for Overpass API
-const quickCategories: QuickCategory[] = [
-  { id: 'gas', label: 'Gas', icon: <Fuel className="w-4 h-4" />, query: 'fuel' },
+const REFUEL_ICONS: Record<string, React.ReactNode> = {
+  gas: <Fuel className="w-4 h-4" />,
+  water: <Droplet className="w-4 h-4" />,
+  charge: <BatteryCharging className="w-4 h-4" />,
+};
+
+// The first slot is the rider's "top up" stop (fuel / charging / water), filled in per vehicle.
+const baseCategories: QuickCategory[] = [
   { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
   { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
 ];
@@ -131,6 +138,7 @@ const categoryToNominatimQuery: Record<string, string> = {
   'restaurant|fast_food|cafe': 'restaurant',
   'supermarket|convenience': 'supermarket',
   '24h': '24 hour store',
+  ...REFUEL_NOMINATIM,
 };
 
 // Search nearby POIs (categories) using Overpass first (best for amenities),
@@ -357,8 +365,11 @@ export function DestinationSearch({
   const countryCode = externalCountryCode ?? internalCountryCode;
 
   // Nearby card drops — only ever fetched when Blacktop World is opted into.
-  const cardsEnabled = settings.blacktopWorldEnabled;
+  const cardsEnabled = settings.blacktopWorldEnabled && settings.collectiblesEnabled;
   const { drops: cardDrops } = useCardDrops(cardsEnabled ? userLocation ?? null : null);
+  const { vehicles } = useExperience();
+  const refuel = refuelCategory(vehicles);
+  const quickCategories: QuickCategory[] = [{ ...refuel, icon: REFUEL_ICONS[refuel.id] }, ...baseCategories];
   const categories = cardsEnabled ? [...quickCategories, CARDS_CATEGORY] : quickCategories;
 
 

@@ -77,9 +77,12 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">Voice communication</h2>
           <p className="text-muted-foreground">
-            Convoy voice uses peer-to-peer WebRTC. Audio is never stored and
-            never passes through a server we can listen to. When the convoy
-            ends, the connection is gone.
+            Convoy voice uses WebRTC and is encrypted end to end (DTLS-SRTP).
+            Phones connect directly when the network allows it. On most mobile
+            data connections a direct link isn't possible, so the encrypted
+            audio is forwarded through a Cloudflare TURN relay, which cannot
+            decrypt or listen to it. Audio is never stored on any server. When
+            the convoy ends, the connection is gone.
           </p>
           <p className="text-muted-foreground">
             <span className="text-foreground">Voice channel recording</span> is
@@ -193,8 +196,10 @@ export default function PrivacyPolicy() {
             our server so crew members can see each other. If you take part in
             weekly crew challenges, summary ride stats (weekly distance, top
             speed, number of night rides, longest single ride) are uploaded
-            under your display name to power the crew leaderboard. These
-            persist from week to week. Leaving a crew removes your membership
+            under your display name to power the crew leaderboard. Opening the
+            crew leaderboard publishes your all-time totals (distance, top
+            speed, max lean, number of rides and arcade high scores) the same
+            way. These persist from week to week. Leaving a crew removes your membership
             and scores. Badges themselves are banked locally on your device.
           </p>
         </section>
@@ -243,6 +248,10 @@ export default function PrivacyPolicy() {
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li><span className="text-foreground">Lovable Cloud</span> — hosts the realtime convoy backend</li>
             <li><span className="text-foreground">OpenStreetMap / Nominatim / Overpass</span> — used for location search</li>
+            <li><span className="text-foreground">OpenFreeMap, Esri World Imagery, AWS Open Data terrain</span> — map, satellite and elevation tiles (they see which map areas you load)</li>
+            <li><span className="text-foreground">RainViewer / Open-Meteo</span> — rain radar and route weather, only if you turn those on</li>
+            <li><span className="text-foreground">Google and Cloudflare STUN</span> — help two phones find each other for voice chat (they see your IP address)</li>
+            <li><span className="text-foreground">Cloudflare TURN</span> — relays encrypted voice audio when phones can't connect directly (typical on mobile data)</li>
             <li><span className="text-foreground">Discord</span> — only if you opt in by adding a webhook in your account</li>
             <li><span className="text-foreground">Nimiq Pay</span> — only if you use Pay Up or Blacktank; payments happen in your own wallet and we never see your keys</li>
           </ul>

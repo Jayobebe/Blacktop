@@ -5,6 +5,7 @@ import { Crown, User, Download, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { useSettings } from '@/features/settings';
+import { useExperience, badgeVisible } from '@/features/experience';
 import { BTLogo } from '@/components/BTLogo';
 import { GForceGraph } from '@/components/GForceGraph';
 import { GForceSample } from '@/types/blacktop';
@@ -55,6 +56,13 @@ function ReceiptRow({ label, value }: { label: string; value: string }) {
 
 export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false }: RideSummaryProps) {
   const { settings } = useSettings();
+  const { terms, canLean } = useExperience();
+  // Each receipt section follows the rider's setup answers.
+  const showVehicle = settings.garageEnabled;
+  const showSpeed = settings.speedFocusEnabled;
+  const showLean = canLean && settings.leanAngleEnabled;
+  const showG = settings.gForceEnabled;
+  const showBadges = settings.collectiblesEnabled;
 
   const shouldCalculateBadges = members.length >= 2;
   const badgesMap = useMemo(
@@ -78,7 +86,11 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
       badgeAwards.push({ badge: { type, ...BADGE_INFO[type] } });
     });
   }
-  badgeAwards.sort(
+  // Drop unknown (legacy) types and badges built on data this rider opted out of.
+  const visibleAwards = badgeAwards.filter(
+    (a) => BADGE_INFO[a.badge.type] && badgeVisible(a.badge.type, { speed: showSpeed, lean: showLean, g: showG })
+  );
+  visibleAwards.sort(
     (a, b) => BADGE_ORDER.indexOf(a.badge.type) - BADGE_ORDER.indexOf(b.badge.type)
   );
 
@@ -172,14 +184,16 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           <div className="text-center mb-1">
             <div className="text-3xl font-bold tracking-[0.15em]">BLACKTOP STORE</div>
             <div className="text-sm tracking-[0.3em] opacity-70 mt-1">
-              {timeAttack ? '— TIME ATTACK RECEIPT —' : '— RIDE RECEIPT —'}
+              {timeAttack ? '— TIME ATTACK RECEIPT —' : `— ${terms.Ride.toUpperCase()} RECEIPT —`}
             </div>
           </div>
 
           {/* Vehicle line (from garage) */}
-          <div className="mt-4" data-bike-slot>
-            <ReceiptRow label="Vehicle" value={bikeName || '—'} />
-          </div>
+          {showVehicle && (
+            <div className="mt-4" data-bike-slot>
+              <ReceiptRow label="Vehicle" value={bikeName || '—'} />
+            </div>
+          )}
 
           {/* Divider */}
           <div className="my-3 border-t-2 border-dashed border-[--ink] opacity-60" />
@@ -187,38 +201,47 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Stats */}
           {rideStats && (
             <div className="space-y-2">
-              <ReceiptRow
-                label="Max Spd"
-                value={`${formatSpeed(rideStats.maxSpeed, settings.speedUnit)} ${speedUnit}`}
-              />
-              <ReceiptRow
-                label="Max Lean"
-                value={
-                  typeof rideStats.maxLean === 'number' && rideStats.maxLean > 0
-                    ? `${Math.round(rideStats.maxLean)}°`
-                    : '—'
-                }
-              />
-              <ReceiptRow
-                label="Max G"
-                value={
-                  typeof rideStats.maxGForce === 'number' && rideStats.maxGForce > 0
-                    ? `${rideStats.maxGForce.toFixed(1)}G`
-                    : '—'
-                }
-              />
+              {showSpeed && (
+                <ReceiptRow
+                  label="Max Spd"
+                  value={`${formatSpeed(rideStats.maxSpeed, settings.speedUnit)} ${speedUnit}`}
+                />
+              )}
+              {showLean && (
+                <ReceiptRow
+                  label="Max Lean"
+                  value={
+                    typeof rideStats.maxLean === 'number' && rideStats.maxLean > 0
+                      ? `${Math.round(rideStats.maxLean)}°`
+                      : '—'
+                  }
+                />
+              )}
+              {showG && (
+                <ReceiptRow
+                  label="Max G"
+                  value={
+                    typeof rideStats.maxGForce === 'number' && rideStats.maxGForce > 0
+                      ? `${rideStats.maxGForce.toFixed(1)}G`
+                      : '—'
+                  }
+                />
+              )}
               <ReceiptRow
                 label="Distance"
                 value={`${formatDistance(rideStats.distance, settings.distanceUnit)} ${distUnit}`}
               />
               <ReceiptRow label="Duration" value={formatDuration(rideStats.duration)} />
-              <ReceiptRow
-                label="Avg Spd"
-                value={`${formatSpeed(rideStats.averageSpeed, settings.speedUnit)} ${speedUnit}`}
-              />
+              {showSpeed && (
+                <ReceiptRow
+                  label="Avg Spd"
+                  value={`${formatSpeed(rideStats.averageSpeed, settings.speedUnit)} ${speedUnit}`}
+                />
+              )}
             </div>
           )}
 
+          {(showVehicle || (showG && gForceSamples && gForceSamples.length > 1)) && (<>
           {/* Divider */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
@@ -228,7 +251,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               top so the bike clearly reads as the foreground. Ink-toned trace
               keeps the printed-paper feel. */}
           <div className="relative min-h-[10rem] flex items-center justify-center">
-            {gForceSamples && gForceSamples.length > 1 && (
+            {showG && gForceSamples && gForceSamples.length > 1 && (
               <GForceGraph
                 samples={gForceSamples}
                 color="var(--ink)"
@@ -236,6 +259,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0 pointer-events-none"
               />
             )}
+            {showVehicle && (
             <div className="relative z-10 w-full">
               {bikePhoto ? (
                 <div className="flex items-center justify-center py-2">
@@ -258,20 +282,22 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 )
               )}
             </div>
+            )}
           </div>
+          </>)}
 
           {/* Badges */}
-          {badgeAwards.length > 0 && (
+          {showBadges && visibleAwards.length > 0 && (
             <>
               <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
               <div className="text-center text-sm tracking-[0.3em] mb-2 opacity-70">— BADGES —</div>
               <div className={cn(
                 'grid gap-2',
-                badgeAwards.length === 1 && 'grid-cols-1',
-                badgeAwards.length === 2 && 'grid-cols-2',
-                badgeAwards.length >= 3 && 'grid-cols-3',
+                visibleAwards.length === 1 && 'grid-cols-1',
+                visibleAwards.length === 2 && 'grid-cols-2',
+                visibleAwards.length >= 3 && 'grid-cols-3',
               )}>
-                {badgeAwards.map(({ member, badge }) => (
+                {visibleAwards.map(({ member, badge }) => (
                   <div
                     key={`${member?.userId ?? 'self'}-${badge.type}`}
                     className="receipt-bracket text-center px-2 py-3"
@@ -297,13 +323,13 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Footer */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
           <div className="text-center space-y-2">
-            <div className="text-base tracking-[0.25em]">THANK YOU FOR THE RIDE</div>
+            <div className="text-base tracking-[0.25em]">THANK YOU FOR THE {terms.Ride.toUpperCase()}</div>
             <div className="text-xs opacity-60 tracking-widest">ORDER {orderId}</div>
             <div className="receipt-barcode mt-3" aria-hidden />
             <div className="text-[10px] tracking-[0.4em] opacity-70 mt-1">BLACKTOP · {dateStr}</div>
           </div>
 
-          {!rideStats && badgeAwards.length === 0 && (
+          {!rideStats && visibleAwards.length === 0 && (
             <div className="text-center py-4 text-sm opacity-60">No data to display.</div>
           )}
         </div>

@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { useMapOverlay, useMapPresenceTracker } from "@/features/map";
@@ -11,6 +11,7 @@ import { RadioOverlay, PlayerProvider, FloatingRadioLayer } from "@/features/rad
 
 import { OrientationProvider } from "@/hooks/useOrientationLock";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
+import { AppBootSkeleton, PanelSkeleton } from "@/components/skeletons";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
@@ -30,6 +31,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
+import Setup from "./pages/Setup";
 
 const queryClient = new QueryClient();
 
@@ -49,21 +51,35 @@ import ArcadePetrolHead from "./pages/ArcadePetrolHead";
 import ArcadeDerezLegacy from "./pages/ArcadeDerezLegacy";
 
 
+/**
+ * Replays an entrance animation whenever the path changes: slide in from the
+ * right on push, from the left on back/forward, fade on replace. Enter-only
+ * (no exit) so the outgoing page unmounts immediately and ride/voice hooks
+ * never run twice.
+ */
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const navType = useNavigationType();
+  const animation = navType === "POP" ? "page-in-back" : navType === "REPLACE" ? "page-in-fade" : "page-in-forward";
+  return (
+    <div key={location.pathname} className={animation}>
+      {children}
+    </div>
+  );
+}
+
 function AppRoutes() {
   const { hasProfile, isLoading } = useProfile();
   useSettings(); // Initialize accent color on app load
 
-  // Show nothing while checking auth/profile status
+  // Skeleton of Home while checking auth/profile status
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <AppBootSkeleton />;
   }
 
   if (!hasProfile) {
     return (
+      <PageTransition>
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
         <Route path="/pay" element={<Pay />} />
@@ -71,10 +87,12 @@ function AppRoutes() {
         <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
+      </PageTransition>
     );
   }
 
   return (
+    <PageTransition>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/create-convoy" element={<CreateConvoy />} />
@@ -103,8 +121,10 @@ function AppRoutes() {
       <Route path="/install" element={<Install />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/setup" element={<Setup />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </PageTransition>
   );
 }
 
@@ -129,7 +149,7 @@ const App = () => {
               <BrowserRouter>
                 <AppRoutes />
                 {hasEverOpened && (
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<PanelSkeleton className="fixed inset-0 z-50 bg-background" label="Loading map…" />}>
                     <BlacktopMapOverlay />
                   </Suspense>
                 )}

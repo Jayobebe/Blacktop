@@ -1,29 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle, MapPin, Mic, BarChart2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { SetupFlow, SetupShell, useExperience } from '@/features/experience';
+import { haptics } from '@/lib/haptics';
 
-type Step = 'landing' | 'consent' | 'profile';
+// consent → vehicles → mode → style → care deck → preview → name
+const TOTAL_STEPS = 7;
+
+type Step = 'landing' | 'consent' | 'setup' | 'profile';
 
 export default function Onboarding() {
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(true);
   const [step, setStep] = useState<Step>('landing');
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
   const [agreedSafety, setAgreedSafety] = useState(false);
+  const [showInstall, setShowInstall] = useState(false);
   const { createProfile } = useProfile();
+  const { showGroup, terms } = useExperience();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches;
-    setIsStandalone(standalone);
-  }, []);
+  const go = (next: Step, dir: 'forward' | 'back' = 'forward') => {
+    setDirection(dir);
+    setStep(next);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,21 +38,26 @@ export default function Onboarding() {
     setIsCreating(true);
     try {
       const ok = await createProfile(name.trim());
-      if (ok) navigate('/');
+      if (ok) {
+        haptics.success();
+        navigate('/');
+      }
     } finally {
       setIsCreating(false);
     }
   };
 
-
   if (step === 'landing') {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6 safe-top safe-bottom gap-8">
+      <div className="relative min-h-dvh flex flex-col items-center justify-center p-6 safe-top safe-bottom gap-8 overflow-hidden page-in-fade">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[60%] setup-grid" />
+        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[160%] h-80 rounded-[100%] bg-accent/15 blur-3xl" />
+
         {/* Hero */}
-        <div className="text-center max-w-sm">
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Blacktop</p>
-          <h1 className="text-3xl font-semibold tracking-tight leading-tight mb-3">
-            GPS convoy riding,<br />finally connected.
+        <div className="relative text-center max-w-sm animate-slide-up">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-3">Blacktop</p>
+          <h1 className="text-4xl font-semibold tracking-tight leading-[1.05] mb-3">
+            Every road.<br />Your way.
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
             Live tracking, voice chat, crash rescue.<br />No account, no subscription.
@@ -54,15 +65,15 @@ export default function Onboarding() {
         </div>
 
         {/* Feature list */}
-        <div className="w-full max-w-sm space-y-3">
+        <div className="relative w-full max-w-sm space-y-2.5 stagger-in">
           {[
-            { icon: MapPin, label: 'Live convoy tracking', desc: "See every rider's position in real-time" },
-            { icon: Mic, label: 'In-ride voice chat', desc: 'Peer-to-peer, never recorded' },
-            { icon: AlertTriangle, label: 'Crash rescue', desc: 'Auto-detects a fall, pings your group' },
-            { icon: BarChart2, label: 'Ride stats & lean angle', desc: 'Every run logged on-device, privately' },
-          ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-start gap-4 bg-card/50 rounded-2xl p-4 border border-border/50">
-              <div className="mt-0.5 rounded-lg bg-accent/10 p-2">
+            { icon: MapPin, label: 'Live convoy tracking', desc: "See every rider's position in real time" },
+            { icon: Mic, label: 'In-ride voice chat', desc: 'Encrypted, never stored on a server' },
+            { icon: AlertTriangle, label: 'Crash rescue', desc: 'Detects a fall and alerts your group' },
+            { icon: BarChart2, label: 'Stats that stay yours', desc: 'Every run logged privately on your device' },
+          ].map(({ icon: Icon, label, desc }, i) => (
+            <div key={label} style={{ ['--i' as string]: i + 1 }} className="flex items-center gap-4 bg-card/50 backdrop-blur-sm rounded-2xl p-3.5 border border-border/50">
+              <div className="rounded-xl bg-accent/10 p-2.5">
                 <Icon className="w-4 h-4 text-accent" />
               </div>
               <div>
@@ -73,23 +84,17 @@ export default function Onboarding() {
           ))}
         </div>
 
-        {/* Privacy badge */}
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
-          <Shield className="w-4 h-4 text-accent" />
-          <span className="text-xs text-accent font-medium">Privacy-first · No ads · No tracking</span>
-        </div>
-
         {/* CTAs */}
-        <div className="w-full max-w-sm space-y-3">
-          <Button
-            onClick={() => setStep('consent')}
-            className="w-full h-14 text-base font-semibold rounded-2xl touch-target"
-          >
-            Ride Free — No Account Needed
+        <div className="relative w-full max-w-sm space-y-3 animate-slide-up" style={{ animationDelay: '300ms', animationFillMode: 'backwards' }}>
+          <Button onClick={() => go('consent')} className="w-full h-14 text-base font-semibold rounded-2xl touch-target">
+            Set up my Blacktop
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
-          <div className="text-center">
-            <Link to="/demo" className="text-sm text-accent underline-offset-4 hover:underline">
+          <div className="flex items-center justify-center gap-4 text-xs">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Shield className="w-3.5 h-3.5 text-accent" /> No ads · No tracking
+            </span>
+            <Link to="/demo" className="text-accent underline-offset-4 hover:underline">
               See it in action →
             </Link>
           </div>
@@ -100,194 +105,190 @@ export default function Onboarding() {
 
   if (step === 'consent') {
     const allAgreed = agreedTerms && agreedAge && agreedSafety;
+    const items = [
+      {
+        checked: agreedAge,
+        set: setAgreedAge,
+        text: <>I'm at least 16 and licensed to operate a motor vehicle where I live.</>,
+      },
+      {
+        checked: agreedSafety,
+        set: setAgreedSafety,
+        text: <>Blacktop isn't a safety device or racing tool. I ride at my own risk and won't use the app while moving.</>,
+      },
+      {
+        checked: agreedTerms,
+        set: setAgreedTerms,
+        text: (
+          <>
+            I agree to the <Link to="/privacy" className="text-accent underline">Privacy Policy</Link> and{' '}
+            <Link to="/terms" className="text-accent underline">Terms & Safety</Link>.
+          </>
+        ),
+      },
+    ];
     return (
-      <div className="h-dvh max-h-dvh overflow-auto flex flex-col items-center justify-center p-4 safe-top safe-bottom gap-5">
-        <div className="text-center">
-          <h1 className="text-4xl font-semibold tracking-tight mb-2">BLACKTOP</h1>
-          <p className="text-muted-foreground text-sm">Before we set you up</p>
-        </div>
-
-        <div className="w-full max-w-sm space-y-4">
-          {/* Privacy summary */}
-          <div className="bg-card/50 rounded-2xl p-4 border border-border/50 space-y-2">
+      <SetupShell
+        stepKey="consent"
+        direction={direction}
+        progress={{ current: 1, total: TOTAL_STEPS }}
+        onBack={() => go('landing', 'back')}
+        eyebrow="Before we start"
+        title="The ground rules."
+        subtitle="Short version: your data stays yours, and the road comes first."
+        footer={
+          <Button onClick={() => go('setup')} disabled={!allAgreed} className="w-full h-14 text-base font-semibold rounded-2xl touch-target">
+            {allAgreed ? 'Agree and continue' : 'Tick all three to continue'}
+            {allAgreed && <ChevronRight className="w-5 h-5 ml-1" />}
+          </Button>
+        }
+      >
+        <div className="space-y-3 stagger-in">
+          <div style={{ ['--i' as string]: 0 }} className="bg-card/50 rounded-2xl p-4 border border-border/50 space-y-2">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-accent" />
               <p className="text-xs font-semibold uppercase tracking-widest text-accent">Privacy-first</p>
             </div>
             <ul className="space-y-1 text-xs text-muted-foreground">
-              <li>• Your rides, stats and garage stay on your device</li>
-              <li>• No accounts, no ads, no analytics, no tracking</li>
-              <li>• Live convoy data is server-burned the moment a ride ends</li>
-              <li>• Voice is peer-to-peer and never recorded</li>
+              <li>• Your rides, stats and garage are stored on your device</li>
+              <li>• No sign-up, no ads, no tracking SDKs</li>
+              <li>• Only features you turn on (convoys, Blacktop World, crews, card drops) share data</li>
+              <li>• Live convoy data is deleted from the server when a ride ends</li>
+              <li>• Voice is encrypted and never stored on a server</li>
             </ul>
           </div>
 
-          {/* Safety summary */}
-          <div className="bg-destructive/5 rounded-2xl p-4 border border-destructive/30 space-y-2">
+          <div style={{ ['--i' as string]: 1 }} className="bg-destructive/5 rounded-2xl p-4 border border-destructive/30 space-y-2">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-destructive" />
               <p className="text-xs font-semibold uppercase tracking-widest text-destructive">Ride safe</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Set up before you ride. Don't interact with the app in motion. Speed
-              and lean data are informational only — obey local laws.
+              Set up before you ride. Don't touch the app while moving. Speed and lean data are for information only. Obey local laws.
             </p>
           </div>
 
-          {/* Checkboxes */}
-          <div className="space-y-3 pt-1">
-            <label className="flex items-start gap-3 cursor-pointer">
+          {items.map((item, i) => (
+            <label
+              key={i}
+              style={{ ['--i' as string]: i + 2 }}
+              className={`pressable flex items-start gap-3 cursor-pointer rounded-2xl border p-3.5 ${item.checked ? 'border-accent/50 bg-accent/[0.06]' : 'border-border/50 bg-card/30'}`}
+            >
               <Checkbox
-                checked={agreedAge}
-                onCheckedChange={(v) => setAgreedAge(v === true)}
+                checked={item.checked}
+                onCheckedChange={(v) => {
+                  haptics.tick();
+                  item.set(v === true);
+                }}
                 className="mt-0.5"
               />
-              <span className="text-xs text-foreground leading-relaxed">
-                I'm at least 16 years old and licensed to operate a motor vehicle
-                in my jurisdiction.
-              </span>
+              <span className="text-xs text-foreground leading-relaxed">{item.text}</span>
             </label>
-
-            <label className="flex items-start gap-3 cursor-pointer">
-              <Checkbox
-                checked={agreedSafety}
-                onCheckedChange={(v) => setAgreedSafety(v === true)}
-                className="mt-0.5"
-              />
-              <span className="text-xs text-foreground leading-relaxed">
-                I understand Blacktop is not a safety device or racing tool. I ride
-                at my own risk and won't interact with the app while in motion.
-              </span>
-            </label>
-
-            <label className="flex items-start gap-3 cursor-pointer">
-              <Checkbox
-                checked={agreedTerms}
-                onCheckedChange={(v) => setAgreedTerms(v === true)}
-                className="mt-0.5"
-              />
-              <span className="text-xs text-foreground leading-relaxed">
-                I have read and agree to the{' '}
-                <Link to="/privacy" className="text-accent underline">Privacy Policy</Link>
-                {' '}and{' '}
-                <Link to="/terms" className="text-accent underline">Terms & Safety</Link>.
-              </span>
-            </label>
-          </div>
-
-          <Button
-            onClick={() => setStep('profile')}
-            disabled={!allAgreed}
-            className="w-full h-12 text-base font-semibold rounded-2xl touch-target"
-          >
-            Continue
-            <ChevronRight className="w-5 h-5 ml-1" />
-          </Button>
+          ))}
         </div>
-      </div>
+      </SetupShell>
+    );
+  }
+
+  if (step === 'setup') {
+    return (
+      <SetupFlow
+        progressOffset={1}
+        progressTotal={TOTAL_STEPS}
+        initialDirection={direction}
+        startAtEnd={direction === 'back'}
+        onExit={() => go('consent', 'back')}
+        onDone={() => go('profile')}
+        doneLabel="Looks good"
+      />
     );
   }
 
   // Permissions step removed — features now request OS permissions at point-of-use
   // (start ride → location, unmute → mic, scan QR → camera, attach photo → files, etc.)
 
-
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col landscape:flex-row items-center justify-center p-4 landscape:p-3 safe-top safe-bottom gap-6 landscape:gap-8">
-      {/* Branding - left side in landscape */}
-      <div className="text-center landscape:text-left landscape:flex-1 landscape:max-w-xs">
-        <h1 className="text-5xl landscape:text-4xl font-semibold tracking-tight mb-3">
-          BLACKTOP
-        </h1>
-        <p className="text-muted-foreground text-sm mb-4">
-          Ride logging & convoy communication
+    <SetupShell
+      stepKey="profile"
+      direction={direction}
+      progress={{ current: TOTAL_STEPS, total: TOTAL_STEPS }}
+      onBack={() => go('setup', 'back')}
+      eyebrow="Last thing"
+      title={showGroup ? 'What should your crew call you?' : 'What should we call you?'}
+      subtitle={showGroup ? `Other ${terms.riders} see this name in convoys and voice chat.` : 'Only you will see this, unless you join a convoy later.'}
+      footer={
+        <Button
+          type="submit"
+          form="profile-form"
+          disabled={!name.trim() || isCreating}
+          className="w-full h-14 text-base font-semibold rounded-2xl touch-target"
+        >
+          {isCreating ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Setting up…
+            </>
+          ) : (
+            <>
+              Let's {terms.ride}
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </>
+          )}
+        </Button>
+      }
+    >
+      <form id="profile-form" onSubmit={handleSubmit} className="space-y-3">
+        <label htmlFor="name" className="sr-only">
+          Profile name
+        </label>
+        <Input
+          id="name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your name"
+          className="h-16 text-2xl font-semibold rounded-2xl px-5 bg-card/50"
+          maxLength={20}
+          autoFocus
+          autoComplete="nickname"
+          disabled={isCreating}
+        />
+        <p className="text-xs text-muted-foreground px-1">
+          No email, no password. {20 - name.length} characters left.
         </p>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
-          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <span className="text-xs text-accent font-medium">No account required</span>
-        </div>
-      </div>
+      </form>
 
-      {/* Form - right side in landscape */}
-      <div className="w-full max-w-sm landscape:flex-1 landscape:max-w-xs">
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <label htmlFor="name" className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-              Profile Name
-            </label>
-            <Input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-              className="h-14 text-lg"
-              maxLength={20}
-              autoFocus
-              disabled={isCreating}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={!name.trim() || isCreating}
-            className="w-full h-14 text-base font-semibold rounded-2xl touch-target"
-          >
-            {isCreating ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Setting up...
-              </>
-            ) : (
-              'Get Started'
-            )}
-          </Button>
-        </form>
-
-        <div className="text-center mt-4 landscape:mt-2 px-4 space-y-2">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Your data stays on your device. No cloud sync, no tracking, no ads.
-          </p>
-          <p className="text-[10px] text-muted-foreground/60 landscape:hidden">
-            Blacktop is a ride logging tool, not a racing app.
-          </p>
-        </div>
-
-        {/* Install instructions - always show on onboarding */}
-        <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Smartphone className="w-3.5 h-3.5" />
-            <span className="font-medium">Install for the best experience</span>
-          </div>
-          
-          {/* iOS Instructions */}
-          <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
-            <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">iPhone / iPad</p>
-            <div className="flex items-center gap-2 text-[11px] text-foreground">
-              <span className="flex items-center gap-1">
-                <Share className="w-3 h-3" /> Tap Share
-              </span>
-              <ChevronRight className="w-3 h-3 text-muted-foreground" />
-              <span className="flex items-center gap-1">
+      {/* Install instructions, tucked away */}
+      <div className="mt-8 rounded-2xl border border-border/50 bg-card/30 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowInstall((s) => !s)}
+          className="w-full flex items-center gap-2 p-3.5 text-xs text-muted-foreground"
+          aria-expanded={showInstall}
+        >
+          <Smartphone className="w-4 h-4" />
+          <span className="font-medium flex-1 text-left">Install for the best experience</span>
+          <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${showInstall ? 'rotate-90' : ''}`} />
+        </button>
+        <div className={`grid transition-[grid-template-rows] duration-300 ease-spring ${showInstall ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+          <div className="overflow-hidden">
+            <div className="px-3.5 pb-3.5 space-y-2">
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="text-muted-foreground w-16">iPhone</span>
+                <Share className="w-3 h-3" /> Share
+                <ChevronRight className="w-3 h-3 text-muted-foreground" />
                 <PlusSquare className="w-3 h-3" /> Add to Home Screen
-              </span>
-            </div>
-          </div>
-
-          {/* Android Instructions */}
-          <div className="bg-card/50 rounded-lg p-2.5 border border-border/50">
-            <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Android</p>
-            <div className="flex items-center gap-2 text-[11px] text-foreground">
-              <span className="flex items-center gap-1">
-                <MoreVertical className="w-3 h-3" /> Tap Menu
-              </span>
-              <ChevronRight className="w-3 h-3 text-muted-foreground" />
-              <span>Install app / Add to Home</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="text-muted-foreground w-16">Android</span>
+                <MoreVertical className="w-3 h-3" /> Menu
+                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                Install app
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </SetupShell>
   );
 }

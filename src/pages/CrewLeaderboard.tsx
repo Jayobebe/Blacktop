@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
 import { useRideHistory } from '@/features/ride';
 import { useArcadeScores } from '@/features/arcade';
@@ -67,7 +68,7 @@ export default function CrewLeaderboard() {
     return () => { cancelled = true; };
   }, [crew.code, profile.name, mine]);
 
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading } = useQuery({
     queryKey: ['crew-leaderboard', crew.code],
     queryFn: async () => {
       const { data } = await (supabase as any).rpc('list_crew_leaderboard', { _crew_code: crew.code });
@@ -96,6 +97,11 @@ export default function CrewLeaderboard() {
         <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Crew Leaderboards</h1>
       </header>
 
+      {/* This page publishes the rider's own totals (see the effect above), so say so. */}
+      <p className="text-[11px] text-muted-foreground mb-3">
+        Your totals (distance, top speed, max lean, rides and arcade scores) are shared with your crew while you're in it.
+      </p>
+
       <div className="flex items-center gap-2 mb-3">
         <Trophy className="w-4 h-4 text-accent" />
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -121,7 +127,9 @@ export default function CrewLeaderboard() {
         ))}
       </div>
 
-      {sorted.length === 0 ? (
+      {isLoading ? (
+        <ListSkeleton rows={6} />
+      ) : sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground/70 py-10 text-center">
           No crew stats yet. Ride, then check back.
         </p>

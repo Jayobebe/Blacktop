@@ -4,6 +4,8 @@ import { Trophy, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BADGE_ORDER, BADGE_INFO } from '@/types/convoy';
 import { badgeWallet, spendBadgesForCopy, BADGES_PER_COPY } from '../lib/badgeWallet';
+import { useSettings } from '@/features/settings';
+import { useExperience, badgeVisible } from '@/features/experience';
 
 function subscribe(cb: () => void) {
   window.addEventListener('blacktop-badges', cb);
@@ -14,6 +16,14 @@ function subscribe(cb: () => void) {
 export function BadgeWalletPanel() {
   const wallet = useSyncExternalStore(subscribe, () => JSON.stringify(badgeWallet()));
   const w = JSON.parse(wallet) as ReturnType<typeof badgeWallet>;
+  const { settings } = useSettings();
+  const { canLean, isCarOnly } = useExperience();
+  // Badge copy is written for riders; drivers get "drove" / "drive".
+  const word = (text: string) =>
+    isCarOnly ? text.replace(/\bRode\b/g, 'Drove').replace(/\brides\b/g, 'drives').replace(/\bride\b/g, 'drive') : text;
+  // Card copies are of your own garage card and get dropped on the World map.
+  const cardEconomy = settings.garageEnabled && settings.blacktopWorldEnabled;
+  const vis = { speed: settings.speedFocusEnabled, lean: canLean && settings.leanAngleEnabled, g: settings.gForceEnabled };
 
   const trade = useCallback(() => {
     if (spendBadgesForCopy()) {
@@ -34,11 +44,11 @@ export function BadgeWalletPanel() {
       <div className="flex items-center gap-2 mb-3 landscape:mb-2">
         <Trophy className="w-4 h-4 text-accent" />
         <h2 className="text-sm font-semibold">Badges</h2>
-        <span className="ml-auto text-xs text-muted-foreground">{w.balance} pts banked</span>
+        {cardEconomy && <span className="ml-auto text-xs text-muted-foreground">{w.balance} pts banked</span>}
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {BADGE_ORDER.filter(t => t !== 'fallback').map((type, index) => {
+        {BADGE_ORDER.filter(t => t !== 'fallback' && badgeVisible(t, vis)).map((type, index) => {
           const info = BADGE_INFO[type];
           const count = w.counts[type] || 0;
           const negative = info.points < 0;
@@ -72,13 +82,14 @@ export function BadgeWalletPanel() {
                 {info.label}
               </span>
               <span className="text-[9px] text-muted-foreground mt-0.5">
-                {negative ? '−1 pt' : '+1 pt'}
+                {cardEconomy ? (negative ? '−1 pt' : '+1 pt') : word(info.description)}
               </span>
             </div>
           );
         })}
 
         {/* Kickback — earned when another rider collects one of your drops */}
+        {cardEconomy && (
         <div
           className={cn(
             'flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
@@ -92,6 +103,7 @@ export function BadgeWalletPanel() {
           <span className="text-[10px] font-medium mt-0.5 text-accent">Kickback</span>
           <span className="text-[9px] text-muted-foreground mt-0.5">+1 pt · drop collected</span>
         </div>
+        )}
       </div>
 
       {/* Fallback — full width, deducts from the total */}
@@ -111,7 +123,7 @@ export function BadgeWalletPanel() {
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-medium text-stone-400">{info.label}</p>
               <p className="text-[9px] text-muted-foreground mt-0.5">
-                {info.description} · −1 pt
+                {word(info.description)}{cardEconomy && ' · −1 pt'}
               </p>
             </div>
             <span className="font-mono text-xl font-bold text-stone-400">{count}</span>
@@ -120,6 +132,7 @@ export function BadgeWalletPanel() {
       })()}
 
       {/* Economy */}
+      {cardEconomy && (
       <div className="mt-3 rounded-2xl border border-border/30 bg-card/50 p-4">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent" />
@@ -152,6 +165,7 @@ export function BadgeWalletPanel() {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
