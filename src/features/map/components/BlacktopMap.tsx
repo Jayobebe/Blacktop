@@ -1173,7 +1173,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (!challengeRun || challengeRun.mode !== "attempting") return;
     const run = challengeRun;
     clearChallengeRun();
-    recordBadges(result === "won" ? Array(CHALLENGE_WIN_BADGES).fill("speed-demon") : ["fallback"]);
+    const prize = drops.find((d) => d.id === run.dropId);
+    // Racing your own challenge earns your own Spectre card, but never badges
+    // (they buy card copies, so an easy self-set challenge can't farm them).
+    const ownChallenge = !!prize?.isOwn;
+    if (!ownChallenge) {
+      recordBadges(result === "won" ? Array(CHALLENGE_WIN_BADGES).fill("speed-demon") : ["fallback"]);
+    }
     setPendingChallengeReceipt({
       dropId: run.dropId,
       vehicleName: run.vehicleName,
@@ -1189,7 +1195,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     if (result === "won") {
       // Beating the setter earns the Spectre (ghost) version of their card.
       // The normal card is still only collected by scanning it.
-      const prize = drops.find((d) => d.id === run.dropId);
       const card = prize
         ? dropToPayload(prize)
         : {
@@ -1212,15 +1217,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         targetSec: run.targetSec ?? timeSec,
       });
       toast.success("Challenge beaten", {
-        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)} · 3x Speed Demon · ${
+        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)}${ownChallenge ? "" : " · 3x Speed Demon"} · ${
           outcome === "new" ? "Spectre card unlocked" : outcome === "improved" ? "Spectre time improved" : "Spectre already yours"
         }`,
       });
     } else if (result === "void") {
-      toast.error("Challenge voided", { description: "You strayed off the route. 1x Fallback." });
+      toast.error("Challenge voided", { description: `You strayed off the route.${ownChallenge ? "" : " 1x Fallback."}` });
     } else {
       toast("Challenge lost", {
-        description: `${formatChallengeTime(timeSec)} vs ${formatChallengeTime(run.targetSec ?? 0)} · 1x Fallback`,
+        description: `${formatChallengeTime(timeSec)} vs ${formatChallengeTime(run.targetSec ?? 0)}${ownChallenge ? "" : " · 1x Fallback"}`,
       });
     }
     await endRide();
@@ -2540,7 +2545,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             >
               Go for it
             </Button>
-            {selectedDrop.challenge && !selectedDrop.isOwn && (
+            {selectedDrop.challenge && (
               <Button size="sm" variant="secondary" onClick={() => takeChallenge(selectedDrop)}>
                 Take challenge
               </Button>

@@ -21,6 +21,8 @@ import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 import { fetchCardPhoto } from '../lib/cardPhoto';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
+import { useVehicleCards } from '../hooks/useVehicleCards';
+import { VehicleCard } from './VehicleCard';
 import { formatChallengeTime, formatDelta } from '../lib/challenge';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
@@ -28,6 +30,8 @@ const SCANNER_ID = 'collected-cards-qr-scanner';
 export function CollectedCardsFolder() {
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const { spectres } = useSpectreCards();
+  // The rider's own vehicle cards always lead the regular row.
+  const { cards: myCards } = useVehicleCards();
   const [showScanner, setShowScanner] = useState(false);
   const [rescanKey, setRescanKey] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -179,11 +183,17 @@ export function CollectedCardsFolder() {
       <CardRow
         icon={<Sparkles className="w-4 h-4 text-accent" />}
         title="Collected"
-        count={collected.length}
-        hint="Scanned from other riders"
+        count={myCards.length + collected.length}
+        hint="Yours first, then scanned"
         empty="Scan another rider's card QR to start your collection."
         emptyClass="border-border"
       >
+        {myCards.map((c) => (
+          <div key={`own-${c.bike.id}`} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+            <VehicleCard card={c} />
+            <p className="mt-2 py-2 text-center text-xs font-medium text-accent">Your card</p>
+          </div>
+        ))}
         {collected.map((card) => (
           <div key={card.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
             <FlipCard card={card} />
@@ -391,8 +401,8 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
           )}
         </div>
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-black/50 text-white shrink-0">
-          {spectre ? <Ghost className="w-2.5 h-2.5" /> : <Sparkles className="w-2.5 h-2.5" />}
-          {spectre ? 'Spectre' : card.tl}
+          <Sparkles className="w-2.5 h-2.5" />
+          {card.tl}
         </span>
       </div>
 
