@@ -319,7 +319,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
         <div
           className={cn(
             'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col items-center p-3.5 gap-2.5 [backface-visibility:hidden] [transform:rotateY(180deg)]',
-            spectre ? 'bg-slate-900 border-cyan-300/70 shadow-[0_0_24px_rgba(103,232,249,0.35)]' : cn(style.bg, style.border),
+            spectre ? 'spectre-card' : cn(style.bg, style.border),
           )}
         >
           <div className="w-full min-w-0">
@@ -368,24 +368,24 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
     <div
       className={cn(
         'relative w-full aspect-[5/7] rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col p-3.5 gap-2.5',
-        style.bg,
-        style.border,
-        // Spectre: the same card, drained to a cold ghostly glow.
-        spectre && '[filter:grayscale(0.85)_hue-rotate(160deg)_saturate(1.6)] opacity-90 border-cyan-300/70 shadow-[0_0_24px_rgba(103,232,249,0.35)]',
+        // Spectre: the same card as a translucent ghost in drifting fog.
+        spectre ? 'spectre-card' : cn(style.bg, style.border),
       )}
     >
       {spectre && (
         <>
-          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-cyan-200/10 via-transparent to-cyan-300/15" />
-          <div className="absolute inset-0 pointer-events-none opacity-25 [background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.12)_0px,rgba(255,255,255,0.12)_1px,transparent_1px,transparent_3px)]" />
+          <div className="spectre-metal" />
+          <div className="spectre-fog" />
+          <div className="spectre-fog alt" />
+          <div className="spectre-shimmer" />
         </>
       )}
-      {style.shine && (
+      {!spectre && style.shine && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 animate-card-shine" />
         </div>
       )}
-      {style.sparkle && (
+      {!spectre && style.sparkle && (
         <div className="absolute inset-0 pointer-events-none opacity-60 [background-image:radial-gradient(circle_at_20%_30%,white_0.5px,transparent_1px),radial-gradient(circle_at_70%_60%,white_0.5px,transparent_1px),radial-gradient(circle_at_45%_80%,white_0.5px,transparent_1px),radial-gradient(circle_at_85%_20%,white_0.5px,transparent_1px)] [background-size:120px_120px,140px_140px,100px_100px,160px_160px]" />
       )}
       <div className="relative flex items-start justify-between gap-2">
