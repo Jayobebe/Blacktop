@@ -42,8 +42,19 @@ async function unregisterMatching() {
   }
 }
 
+let cleanup: Promise<void> | null = null;
+
 export function setupPWA() {
-  void unregisterMatching();
+  cleanup = unregisterMatching();
+}
+
+/**
+ * Resolves once the old app-shell worker is gone. The notifications worker
+ * (`/push-sw.js`, same "/" scope) must register after this, or the clean-up
+ * could unregister it mid-install.
+ */
+export function whenPwaCleanedUp(): Promise<void> {
+  return cleanup ?? Promise.resolve();
 }
 
 /** Returns true if a new version is now waiting to install. */

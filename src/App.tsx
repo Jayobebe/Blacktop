@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
+import { PushBridge } from "@/features/notifications";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { burnExpiredTrips } from "@/features/ride";
@@ -163,6 +164,7 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />
+                <PushBridge />
                 <AppRoutes />
                 {hasEverOpened && (
                   <Suspense fallback={<PanelSkeleton className="fixed inset-0 z-50 bg-background" label="Loading map…" />}>

@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
+import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
 import { NimiqTipCard } from '@/features/tips';
@@ -169,6 +170,8 @@ export default function Settings() {
         // aren't stored separately, so this also wipes the receipt bank.
         burnAllData();
         burnGarage();
+        // Drop this device's push subscription (the server copy also goes with the account).
+        void disablePush();
         // Radio stations only reference local files, but the list itself goes too.
         resetRadio();
         void burnRadioStations();
@@ -938,6 +941,9 @@ export default function Settings() {
 
         </div>
 
+        {/* Notifications — full width, dropdown */}
+        <NotificationsSection />
+
         {/* Blacktop World Opt-In — full width, dropdown */}
         <BlacktopWorldOptIn
           enabled={settings.blacktopWorldEnabled}
@@ -995,6 +1001,15 @@ export default function Settings() {
       />
 
     </div>
+  );
+}
+
+function NotificationsSection() {
+  const push = usePush();
+  return (
+    <CollapsibleSection icon={Bell} label="Notifications" delayClass="delay-300" status={push.enabled ? 'On' : ''}>
+      <NotificationSettings />
+    </CollapsibleSection>
   );
 }
 

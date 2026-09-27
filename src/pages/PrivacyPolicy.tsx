@@ -119,6 +119,14 @@ export default function PrivacyPolicy() {
             code. It passes through our realtime relay but is never stored on our servers.
           </p>
           <p className="text-muted-foreground">
+            <span className="text-foreground">Notifications (opt-in, Settings → Notifications):</span> if you
+            turn them on, we store this device's push address and keys (issued by your browser's push service,
+            e.g. Google or Apple) linked to your anonymous account, so Blacktop can alert you when the app is
+            closed. Notification text passes through that push service to reach your phone; it never includes
+            your location. Turning notifications off, or using the Burn Button, deletes the device from our
+            server.
+          </p>
+          <p className="text-muted-foreground">
             <span className="text-foreground">Track Pack (opt-in):</span> tracks, lap times and session
             data stay on your device. While Track Pack is open, anyone who scans your pairing QR receives
             your display name, live position, speed, lean, lap and sector times, and pit board messages

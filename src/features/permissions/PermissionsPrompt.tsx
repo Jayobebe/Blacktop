@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MapPin, Mic, Camera, CheckCircle2, XCircle, Loader2, Shield } from 'lucide-react';
+import { MapPin, Mic, Camera, Bell, CheckCircle2, XCircle, Loader2, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+import { enablePush, getPushState, usePush } from '@/features/notifications';
 import { cn } from '@/lib/utils';
 
 type Status = 'pending' | 'granted' | 'denied';
@@ -10,6 +12,7 @@ interface PermState {
   location: Status;
   mic: Status;
   camera: Status;
+  notifications: Status;
 }
 
 interface Props {
@@ -21,7 +24,9 @@ export function PermissionsPrompt({ onComplete }: Props) {
     location: 'pending',
     mic: 'pending',
     camera: 'pending',
+    notifications: 'pending',
   });
+  const push = usePush();
   const [busy, setBusy] = useState<keyof PermState | null>(null);
 
   const requestLocation = async () => {
@@ -64,6 +69,16 @@ export function PermissionsPrompt({ onComplete }: Props) {
     }
   };
 
+  const requestNotifications = async () => {
+    setBusy('notifications');
+    const ok = await enablePush();
+    const { permission, error } = getPushState();
+    setPerms(p => ({ ...p, notifications: ok || permission === 'granted' ? 'granted' : permission === 'denied' ? 'denied' : 'pending' }));
+    // Permission granted but the server isn't ready: it retries on the next launch.
+    if (!ok && permission === 'granted' && error) toast(error, { description: 'Blacktop will finish setting them up next time you open it.' });
+    setBusy(null);
+  };
+
   const finish = () => {
     localStorage.setItem(STORAGE_KEY, '1');
     onComplete();
@@ -81,7 +96,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
     title: string;
     desc: string;
     status: Status;
-    onRequest: () => void;
+    onRequest?: () => void;
     busyHere: boolean;
   }) => (
     <div
@@ -115,7 +130,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
         <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
       ) : status === 'denied' ? (
         <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-      ) : (
+      ) : !onRequest ? null : (
         <Button size="sm" variant="outline" onClick={onRequest} disabled={busyHere} className="flex-shrink-0 h-8">
           {busyHere ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Allow'}
         </Button>
@@ -161,6 +176,20 @@ export function PermissionsPrompt({ onComplete }: Props) {
             onRequest={requestCamera}
             busyHere={busy === 'camera'}
           />
+          {(push.support === 'supported' || push.support === 'needs-install') && (
+            <Row
+              icon={Bell}
+              title="Notifications"
+              desc={
+                push.support === 'supported'
+                  ? 'Alerts from Blacktop, even when the app is closed'
+                  : 'On iPhone, add Blacktop to your Home Screen first, then turn them on in Settings'
+              }
+              status={perms.notifications}
+              onRequest={push.support === 'supported' ? requestNotifications : undefined}
+              busyHere={busy === 'notifications'}
+            />
+          )}
         </div>
 
         <Button onClick={finish} className="w-full h-12 rounded-2xl text-base font-semibold touch-target">

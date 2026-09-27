@@ -30,7 +30,7 @@ Vite env vars required at build time (see local `.env`): `VITE_SUPABASE_URL`, `V
 
 ### Feature-based organization
 
-Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `integrations/discord`.
+Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `integrations/discord`.
 
 `src/pages/*` are route-level screens composed from features; routing lives in `src/App.tsx`.
 
@@ -51,6 +51,10 @@ Server data fetching/caching uses `@tanstack/react-query` (`QueryClient` set up 
 Core ride/convoy types live in `src/types/blacktop.ts` (`RideSession`, `GpsPoint`, `LeanSample`, `ActiveRideState`, `RideStats`, badges) and `src/types/convoy.ts` (`ConvoyState`, `ConvoyMemberInfo`, waypoints, `calculateBadges`). A `RideSession` accumulates GPS points and (optionally) 10Hz lean-angle samples for crash detection and lean-angle visualization; convoy-only "badges" (Speed Demon / Journeyman / Fallback) are computed client-side from member stats via `calculateBadges`.
 
 Crash/rescue flow: `useCrashDetection` (ride feature) watches device motion + speed to detect a crash, surfaces a confirmation prompt, and on confirmation/timeout calls into `useRescue` (rescue feature), which broadcasts a `rescue_request` over the convoy's realtime channel to the leader and can also notify a Discord webhook via `src/features/integrations/discord` and the `discord-announce-*` Supabase Edge Functions.
+
+### Push notifications
+
+`src/features/notifications` + `public/push-sw.js` + the `send-push` Edge Function (Web Push, VAPID; needs the `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` secrets). The worker only handles push and notification taps (no caching; the old app-shell worker in `public/sw.js` stays retired). Devices are stored in `push_subscriptions` via the `register_push_subscription` / `unregister_push_subscription` RPCs. Notification text is always written server-side in `send-push`, never taken from the caller; new notification types are added there as actions.
 
 ### Native device integration
 
