@@ -145,7 +145,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
     icon: Globe2,
     label: 'Community',
     question: (c) => `Want to meet other ${c.terms.riders}?`,
-    pitch: (c) => `Blacktop World: a live map of ${c.terms.riders} and crews, crew leaderboards, weekly challenges and the arcade. While you ${c.terms.ride}, you appear on the globe as an anonymous glow, rounded to about 110 km.`,
+    pitch: (c) => `Blacktop World (press and hold the globe on Home): a live map of ${c.terms.riders} and crews, crew leaderboards, weekly challenges and the arcade. While you ${c.terms.ride}, you appear on the globe as an anonymous glow, rounded to about 110 km.`,
     gets: () => ['Blacktop World', 'Crews & leaderboards', 'Challenges', 'Anonymous glow on the globe'],
     hides: () => 'Blacktop stays private to you and your convoys',
     features: ['blacktopWorldEnabled'],

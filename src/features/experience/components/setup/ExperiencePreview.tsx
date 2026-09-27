@@ -18,7 +18,6 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
   const nav = [
     ...(settings.garageEnabled ? [{ icon: Wrench, label: 'Garage' }] : []),
     { icon: History, label: 'History' },
-    ...(settings.blacktopWorldEnabled ? [{ icon: Globe2, label: 'World' }] : []),
     { icon: BarChart3, label: 'Stats' },
     { icon: Settings, label: 'Settings' },
   ];

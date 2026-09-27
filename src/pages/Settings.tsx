@@ -906,51 +906,48 @@ export default function Settings() {
         
 
 
-        {/* Blacktop World Opt-In */}
+        </div>
+
+        {/* Blacktop World Opt-In — full width, dropdown */}
         <BlacktopWorldOptIn
-          index={8}
           enabled={settings.blacktopWorldEnabled}
           onToggle={(v) => updateSetting('blacktopWorldEnabled', v)}
         />
 
-
-        {/* Pay Up — collapsed so the QR isn't the first thing on the page */}
-        <CollapsibleSection icon={Heart} label="Pay Up" index={9} delayClass="delay-300">
-          <NimiqTipCard bare />
-        </CollapsibleSection>
-        </div>
-
-        {/* Burn — last, in the destructive colour */}
-        <CollapsibleSection
-          icon={Flame}
-          label="Burn all data"
-          delayClass="delay-300"
-          labelClassName="text-[hsl(var(--burn))]"
-          iconClassName="text-[hsl(var(--burn))]"
-        >
+        {/* Burn Button — always-open card in fixed burn colours, whatever the accent */}
+        <section className="rounded-[18px] p-4 landscape:p-3 border border-[hsl(var(--burn))]/35 bg-[hsl(var(--burn))]/[0.06] backdrop-blur-xl animate-slide-up delay-300">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="w-[18px] h-[18px] text-[hsl(var(--burn))]" strokeWidth={1.9} />
+            <p className="text-[14px] font-semibold text-[hsl(var(--burn))]">Burn Button</p>
+          </div>
           <p className="text-[13px] text-muted-foreground mb-3">
             Permanently deletes your name and all ride data ({stats.totalRides} {stats.totalRides === 1 ? 'ride' : 'rides'},{' '}
-            {stats.totalDistance.toFixed(1)} mi) and returns you to the welcome screen. This can't be undone.
+            {stats.totalDistance.toFixed(1)} mi) and returns you to the welcome screen.
           </p>
           <Button
             onClick={handleBurn}
             disabled={burning}
-            variant={burnStep === 1 ? 'destructive' : 'outline'}
+            variant={burnStep === 1 ? 'destructive' : 'ghost'}
             className={cn(
               'w-full h-11 font-semibold touch-target rounded-xl transition-all',
-              burnStep === 0 && 'border-[hsl(var(--burn))]/60 text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background',
+              burnStep === 0 &&
+                'border border-[hsl(var(--burn))] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn))] hover:text-background',
               burnStep === 1 && 'animate-burn-pulse'
             )}
           >
             <Flame className="w-4 h-4 mr-2" />
-            {burnStep === 0 ? 'Burn all data' : 'Tap again to confirm'}
+            {burnStep === 0 ? 'BURN ALL DATA' : 'CONFIRM BURN'}
           </Button>
           {burnStep === 1 && (
             <Button onClick={() => setBurnStep(0)} variant="ghost" className="w-full mt-2 touch-target">
               Cancel
             </Button>
           )}
-        </CollapsibleSection>
+          <p className="text-[11px] text-destructive text-center mt-3">This action cannot be undone</p>
+        </section>
+
+        {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
+        <NimiqTipCard />
 
         {/* Legal Disclaimer */}
         <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
@@ -971,19 +968,22 @@ export default function Settings() {
   );
 }
 
-function BlacktopWorldOptIn({ enabled, onToggle, index }: { enabled: boolean; onToggle: (v: boolean) => void; index?: number }) {
+function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle: (v: boolean) => void }) {
   return (
     <CollapsibleSection
       icon={Globe2}
-      label="World"
-      index={index}
+      label="Blacktop World"
       delayClass="delay-300"
       status={enabled ? 'On' : ''}
     >
       <div className="space-y-3 text-[13px] text-muted-foreground leading-relaxed">
         <p>
           The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew
-          fuel fund) and trading-card drops on the map. Long-press the globe on Home to open it.
+          fuel fund) and trading-card drops on the map.
+        </p>
+        <p>
+          <span className="text-foreground font-medium">How to open it.</span> Once it's on, press and hold the
+          spinning globe on the Home screen.
         </p>
         <p>
           <span className="text-foreground font-medium">What it shares.</span> While you ride, your position is saved

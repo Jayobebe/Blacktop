@@ -122,8 +122,8 @@ export const AppBackdrop = memo(function AppBackdrop({ paused = false }: { pause
 
   return (
     <div aria-hidden className={cn('app-backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden', paused && 'lava-paused')}>
-      {/* 1. Lava lamp */}
-      <div className="absolute inset-0">
+      {/* 1. Lava lamp — kept dim: even a screen-filling blob only just reveals the wording */}
+      <div className="absolute inset-0 opacity-60">
         <span className="lava-blob lava-blob-1" />
         <span className="lava-blob lava-blob-2" />
         <span className="lava-blob lava-blob-3" />

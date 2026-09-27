@@ -4,7 +4,7 @@ import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route, Globe2 } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
@@ -90,7 +90,6 @@ export default function Home() {
   const navItems = [
     ...(settings.garageEnabled ? [{ icon: Wrench, label: 'Garage', onClick: () => navigate('/garage') }] : []),
     { icon: History, label: 'History', onClick: () => navigate('/history') },
-    ...(settings.blacktopWorldEnabled ? [{ icon: Globe2, label: 'World', onClick: () => navigate('/world') }] : []),
     { icon: BarChart3, label: 'Stats', onClick: () => navigate('/stats') },
     { icon: Settings, label: 'Settings', onClick: () => navigate('/settings') },
   ];
