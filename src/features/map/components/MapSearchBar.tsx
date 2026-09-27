@@ -41,6 +41,10 @@ interface MapSearchBarProps {
   onSelect: (result: MapSearchResult) => void;
   /** Card drops nearby — when provided, a "Nearby cards" toggle is shown. */
   nearbyCards?: MapSearchResult[];
+  /** Render in the parent's flow (the map's top-left column) instead of pinned to the map's top edge. */
+  inline?: boolean;
+  /** Open straight into typing (e.g. "Add stop"). */
+  autoFocus?: boolean;
 }
 
 function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
@@ -54,7 +58,7 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
   };
 }
 
-export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards }: MapSearchBarProps) {
+export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus }: MapSearchBarProps) {
   const { settings } = useSettings();
   const { vehicles } = useExperience();
   // Top-up stop matches the vehicle; card search only for riders who collect.
@@ -238,7 +242,15 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const hasDisplayContent = hasIdleContent || hasSearchContent;
 
   return (
-    <div ref={containerRef} className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] z-30 space-y-2 pointer-events-none">
+    <div
+      ref={containerRef}
+      className={cn(
+        'space-y-2 pointer-events-none',
+        inline
+          ? 'relative z-30 w-full'
+          : 'absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] z-30',
+      )}
+    >
       {/* Stops short of the MapLibre control column (zoom/compass/locate) so it never
           covers them; the wrapper itself ignores taps and only its children take them. */}
       <div className="flex gap-2 pointer-events-auto">
@@ -248,6 +260,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             onFocus={() => setShowResults(true)}
+            autoFocus={autoFocus}
             placeholder="Search destination..."
             className="pl-10 bg-card/95 border-border h-11 text-sm shadow-lg backdrop-blur"
           />

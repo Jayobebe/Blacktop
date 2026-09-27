@@ -6,7 +6,7 @@ import "./blacktopMap.css";
 import { closeBlacktopMap, clearMapDestination } from "../hooks/useMapOverlay";
 import { useRadarOverlay } from "../hooks/useRadarOverlay";
 import { registerTileCacheProtocol, toCachedTileUrl } from "../lib/tileCache";
-import { getCountryCode } from "../lib/placeSearch";
+import { getCountryCode, type MapSearchResult } from "../lib/placeSearch";
 import {
   fetchTrafficCameras,
   fetchCamerasOnRoute,
@@ -1765,8 +1765,58 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [map, rescueTarget]);
 
+  const handleSearchSelect = (result: MapSearchResult) => {
+    if (addingWaypoint) {
+      if (isSolo) {
+        addSoloStop({ name: result.name, address: result.address, lat: result.lat, lng: result.lng });
+      } else {
+        addWaypoint({ name: result.name, address: result.address || "", lat: result.lat, lng: result.lng });
+      }
+      setAddingWaypoint(false);
+      return;
+    }
+    setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
+    lastInteractionAtRef.current = Date.now();
+
+    if (map) {
+      if (userLocation) {
+        const bounds = new maplibregl.LngLatBounds(
+          [userLocation.lng, userLocation.lat],
+          [userLocation.lng, userLocation.lat],
+        );
+        bounds.extend([result.lng, result.lat]);
+        map.fitBounds(bounds, { padding: 80, maxZoom: 16, duration: 1500 });
+      } else {
+        map.flyTo({ center: [result.lng, result.lat], zoom: 13, essential: true });
+      }
+    }
+  };
+
   // ── Derived display flags ──────────────────────────────────────────────────
-  const showSearchBar = !(rideState.isConvoyMode && !convoy.isLeader);
+  // Moving: the search bar gets out of the way so the toolbar (and, in a
+  // convoy, the status strip) can take its place. Comes back once slow or
+  // stopped. Hysteresis + delays so it doesn't flap at junctions/lights.
+  const [moving, setMoving] = useState(false);
+  useEffect(() => {
+    const MOVING_MPH = 12;
+    const STOPPED_MPH = 5;
+    if (!moving && displaySpeed >= MOVING_MPH) {
+      const t = window.setTimeout(() => setMoving(true), 2000);
+      return () => window.clearTimeout(t);
+    }
+    if (moving && displaySpeed <= STOPPED_MPH) {
+      const t = window.setTimeout(() => setMoving(false), 4000);
+      return () => window.clearTimeout(t);
+    }
+  }, [displaySpeed, moving]);
+
+  // Only solo riders and convoy leaders ever search (members follow the leader).
+  const canSearch = isSolo || convoy.isLeader;
+  const inConvoyRide = !isSolo && rideState.isActive && rideState.isConvoyMode;
+  // In a convoy ride the status strip owns the top slot; a leader gets the
+  // search bar back only while adding a stop. Solo: search unless moving.
+  const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving));
+  const showConvoyStrip = inConvoyRide && !showSearchBar;
   const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
   // "Finish" replaces "Skip" once we're heading to the very last stop (the
   // final destination, with no intermediate waypoints left). Tapping it
@@ -1809,10 +1859,69 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
 
-      {/* Map type / radio / card-drop toolbar — horizontal strip below the
-          search bar, left of the MapLibre top-right controls so it never
-          clips them or the exit button in landscape. */}
-      <div className="absolute top-[calc(7rem+env(safe-area-inset-top))] landscape:top-[calc(7.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] z-20 flex flex-row flex-wrap landscape:flex-nowrap items-start gap-2">
+      {/* Top-left column, left of the MapLibre controls: the top slot (search
+          bar, or the convoy strip while riding in a convoy) with the toolbar
+          flowing underneath, so when the search bar steps aside while moving
+          the toolbar slides up into its place. */}
+      <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] z-30 flex flex-col items-start gap-2 pointer-events-none">
+        {showSearchBar && (
+          <MapSearchBar
+            inline
+            autoFocus={addingWaypoint}
+            map={map}
+            userLocation={userLocation}
+            countryCode={countryCode}
+            nearbyCards={
+              cardsEnabled && !rideState.isActive
+                ? drops.map((d) => ({
+                    id: `card:${d.id}`,
+                    name: `${d.ownerName}'s ${d.vehicleName}`,
+                    address: d.collected ? "Card · collected" : "Trading card drop",
+                    lat: d.lat,
+                    lng: d.lng,
+                  }))
+                : undefined
+            }
+            onSelect={handleSearchSelect}
+          />
+        )}
+
+        {showConvoyStrip && (
+          <div className="w-full space-y-1.5 pointer-events-auto">
+            {rescueTarget && (
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-card/95 border border-destructive/60 shadow-lg backdrop-blur text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+                <p className="flex-1 min-w-0 truncate">
+                  {rescueTarget.userId === user?.id ? (
+                    <>
+                      <span className="font-semibold">Rescue requested</span> · your convoy has your location
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold">{rescueTarget.userName || "A rider"} needs help</span>
+                      {rescueRoute
+                        ? ` · ${formatDistance(metersToMiles(rescueRoute.distanceMeters), settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)} · ${formatDuration(Math.round(rescueRoute.durationSeconds))}`
+                        : " · route on map"}
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+            <MergeBadge convoy={convoy} onUnmerge={() => void getMergeControls()?.unmerge()} />
+            <ConvoyStatusBar
+              members={convoyMembers}
+              myUserId={user?.id ?? null}
+              myName={profile.name || "Leader"}
+              isLeader={convoy.isLeader}
+              myLocation={userLocation}
+              destination={destination}
+              routeSeconds={route ? route.durationSeconds : null}
+              speedUnit={settings.speedUnit}
+            />
+          </div>
+        )}
+
+      <div className="flex flex-row flex-wrap landscape:flex-nowrap items-start gap-2 pointer-events-auto">
         <div className="flex flex-row flex-wrap landscape:flex-nowrap items-center max-w-[calc(100vw-5rem)] landscape:max-w-none rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
           <button
             type="button"
@@ -1910,7 +2019,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             still left of the MapLibre top-right controls. */}
         <div>
           {showSaveUI ? (
-            <div className="absolute top-[calc(7.5rem+env(safe-area-inset-top))] landscape:top-[calc(8.25rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
+            <div className="absolute top-full mt-2 left-0 bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
               <p className="text-xs font-semibold text-foreground">Name this spot</p>
               <Input
                 autoFocus
@@ -1977,6 +2086,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             </button>
           )}
         </div>
+
+        {/* Nearby riders (opt-in): between save-location and the MapLibre controls. */}
+        <HandshakeButton convoy={convoy} placement="down" />
+      </div>
       </div>
 
       {droppingCard && (
@@ -2152,67 +2265,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
 
 
-      {showSearchBar && (
-        <MapSearchBar
-          map={map}
-          userLocation={userLocation}
-          countryCode={countryCode}
-          nearbyCards={
-            cardsEnabled && !rideState.isActive
-              ? drops.map((d) => ({
-                  id: `card:${d.id}`,
-                  name: `${d.ownerName}'s ${d.vehicleName}`,
-                  address: d.collected ? "Card · collected" : "Trading card drop",
-                  lat: d.lat,
-                  lng: d.lng,
-                }))
-              : undefined
-          }
-          onSelect={(result) => {
-            if (addingWaypoint) {
-              if (isSolo) {
-                addSoloStop({ name: result.name, address: result.address, lat: result.lat, lng: result.lng });
-              } else {
-                addWaypoint({ name: result.name, address: result.address || "", lat: result.lat, lng: result.lng });
-              }
-              setAddingWaypoint(false);
-              return;
-            }
-            setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
-            lastInteractionAtRef.current = Date.now();
-
-            if (map) {
-              if (userLocation) {
-                const bounds = new maplibregl.LngLatBounds(
-                  [userLocation.lng, userLocation.lat],
-                  [userLocation.lng, userLocation.lat],
-                );
-                bounds.extend([result.lng, result.lat]);
-                map.fitBounds(bounds, { padding: 80, maxZoom: 16, duration: 1500 });
-              } else {
-                map.flyTo({ center: [result.lng, result.lat], zoom: 13, essential: true });
-              }
-            }
-          }}
-        />
-      )}
 
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
-        {!isSolo && <MergeBadge convoy={convoy} onUnmerge={() => void getMergeControls()?.unmerge()} />}
-
-        {/* Convoy status: riders, group speed/ETA, who's dropped back */}
-        {!isSolo && rideState.isActive && rideState.isConvoyMode && (
-          <ConvoyStatusBar
-            members={convoyMembers}
-            myUserId={user?.id ?? null}
-            myName={profile.name || "Leader"}
-            isLeader={convoy.isLeader}
-            myLocation={userLocation}
-            destination={destination}
-            routeSeconds={route ? route.durationSeconds : null}
-            speedUnit={settings.speedUnit}
-          />
-        )}
         {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
         {showWaypointsPanel && (
           <div className="animate-slide-up">
@@ -2389,10 +2443,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         </div>
       </div>
-
-      {/* Nearby riders (opt-in): list + invites behind one button, stacked
-          above the overlay's Ride/Close button in the bottom-right corner. */}
-      <HandshakeButton convoy={convoy} className="absolute bottom-16 right-3 z-30" />
 
       {/* Rescue button — available while the map overlay covers ActiveRide. */}
       {rescue.canRequest && (

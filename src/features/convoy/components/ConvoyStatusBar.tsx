@@ -57,7 +57,7 @@ export function ConvoyStatusBar({
   return (
     <div className="space-y-1.5 animate-slide-up">
       <div
-        className="flex items-center gap-2 min-[380px]:gap-3 px-3 py-2 rounded-xl whitespace-nowrap overflow-hidden bg-card/95 border border-border shadow-lg backdrop-blur text-xs"
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 rounded-xl whitespace-nowrap overflow-hidden bg-card/95 border border-border shadow-lg backdrop-blur text-xs"
         role="status"
         aria-label="Convoy status"
       >

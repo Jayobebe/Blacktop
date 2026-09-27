@@ -24,7 +24,20 @@ function secondsLeft(sentAt: number, now: number) {
  * with the same countdown, and tapping it opens the request to accept or
  * decline. Only rendered while Nearby Riders is on and the rider is riding.
  */
-export function HandshakeButton({ convoy, className }: { convoy: ConvoyState; className?: string }) {
+export function HandshakeButton({
+  convoy,
+  className,
+  placement = 'up',
+}: {
+  convoy: ConvoyState;
+  className?: string;
+  /**
+   * up: panel stacks above the button. down: panel drops below, positioned
+   * against the nearest positioned ancestor (the map's top-left column) so it
+   * never runs off-screen when the button sits mid-row.
+   */
+  placement?: 'up' | 'down';
+}) {
   const st = useProximityState();
   const { settings } = useSettings();
   const [now, setNow] = useState(Date.now());
@@ -67,7 +80,7 @@ export function HandshakeButton({ convoy, className }: { convoy: ConvoyState; cl
     <button
       onClick={onButton}
       className={cn(
-        'relative w-11 h-11 rounded-full flex items-center justify-center border shadow-lg backdrop-blur transition-colors',
+        'relative w-[42px] h-[42px] rounded-full flex items-center justify-center border shadow-lg backdrop-blur transition-colors',
         receiving
           ? 'bg-accent/25 border-accent text-accent animate-pulse shadow-[0_0_18px_hsl(var(--accent)/0.7)]'
           : st.outgoing
@@ -238,6 +251,14 @@ export function HandshakeButton({ convoy, className }: { convoy: ConvoyState; cl
     );
   }
 
+  if (placement === 'down') {
+    return (
+      <>
+        <div className={className}>{button}</div>
+        {panel && <div className="absolute top-full right-0 mt-2 z-40 max-w-full">{panel}</div>}
+      </>
+    );
+  }
   return (
     <div className={cn('flex flex-col items-end gap-2', className)}>
       {panel}
