@@ -120,7 +120,14 @@ public class NativeAudioRoutePlugin extends Plugin {
                 audioManager.setSpeakerphoneOn(true);
             }
         } else {
-            boolean btAvailable = audioManager.isBluetoothScoAvailableOffCall();
+            boolean btAvailable = false;
+            for (AudioDeviceInfo device : audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+                int type = device.getType();
+                if (type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
+                    btAvailable = true;
+                    break;
+                }
+            }
             if (btAvailable) {
                 audioManager.setSpeakerphoneOn(false);
                 audioManager.setBluetoothScoOn(true);
