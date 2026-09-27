@@ -81,7 +81,7 @@ Onboarding (`pages/Onboarding.tsx`: welcome → consent → setup flow → name)
 
 ### Native device integration
 
-Capacitor plugins (`@capacitor/geolocation`, `@capacitor/filesystem`) and browser device APIs are wrapped in small hooks rather than called ad hoc: `useWakeLock`, `useOrientationLock`, `useLeanAngle` (device orientation → lean angle), `useBackgroundAudio`, `usePictureInPicture`, `useLiveOverlayRecorder` (records a live ride overlay video, with `convertToMp4`/ffmpeg.wasm for conversion). New native-device features should follow this hook-wrapper pattern.
+Capacitor plugins (`@capacitor/geolocation`, `@capacitor/filesystem`) and browser device APIs are wrapped in small hooks rather than called ad hoc: `useWakeLock` (re-takes the lock after the browser drops it, until released; held by the ride, pillion, lobby and solo lobby screens and by the map overlay during a ride or from a lobby), `useOrientationLock`, `useLeanAngle` (device orientation → lean angle), `useBackgroundAudio`, `usePictureInPicture`, `useLiveOverlayRecorder` (records a live ride overlay video, with `convertToMp4`/ffmpeg.wasm for conversion). New native-device features should follow this hook-wrapper pattern.
 
 ### UI layer
 

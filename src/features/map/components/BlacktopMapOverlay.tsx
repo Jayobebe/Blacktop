@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
 import { useMapOverlay, closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
 import { BlacktopMap } from './BlacktopMap';
 import { cn } from '@/lib/utils';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 export function BlacktopMapOverlay() {
   const { isOpen, destination } = useMapOverlay();
@@ -14,6 +15,20 @@ export function BlacktopMapOverlay() {
   const [mountKey, setMountKey] = useState(0);
 
   const inLobby = !rideState.isActive && location.pathname === '/lobby';
+
+  // The map keeps the screen on during a ride or when opened from a lobby,
+  // whichever page is underneath it.
+  const wakeLock = useWakeLock();
+  const keepAwake =
+    isOpen && (rideState.isActive || location.pathname === '/lobby' || location.pathname === '/solo-lobby');
+  useEffect(() => {
+    if (!keepAwake) return;
+    void wakeLock.request();
+    return () => {
+      void wakeLock.release();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keepAwake]);
 
   // Don't unmount — use CSS to hide so BlacktopMap retains its MapLibre
   // instance, route geometry, and cached tiles across open/close cycles.

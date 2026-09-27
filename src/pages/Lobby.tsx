@@ -21,6 +21,7 @@ import { ConvoyDestination } from '@/types/convoy';
 import { QRCodeSVG } from 'qrcode.react';
 import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 // Read at call time inside realtime handlers so wording never forces a resubscribe.
 const liveTerms = () => termsFor(getExperience().vehicles);
@@ -82,6 +83,16 @@ export default function Lobby() {
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const [showAddWaypoint, setShowAddWaypoint] = useState(false);
   const [showAudioDevices, setShowAudioDevices] = useState(false);
+
+  // Screen stays on in the lobby (including on the map) while the convoy gathers.
+  const wakeLock = useWakeLock();
+  useEffect(() => {
+    void wakeLock.request();
+    return () => {
+      void wakeLock.release();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const hasStartedRide = useRef(false);

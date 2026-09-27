@@ -14,6 +14,7 @@ import { useConvoyState } from '@/features/convoy';
 import { useCrew } from '@/features/crew/useCrew';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 interface UserLocation {
   lat: number;
@@ -35,6 +36,16 @@ export default function SoloLobby() {
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [routeMode, setRouteMode] = useState<RouteMode>('direct');
   const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Screen stays on while planning (including on the map) and gearing up.
+  const wakeLock = useWakeLock();
+  useEffect(() => {
+    void wakeLock.request();
+    return () => {
+      void wakeLock.release();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
