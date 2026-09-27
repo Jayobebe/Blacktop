@@ -16,7 +16,7 @@ import { processEvent, rescue, rescueCancel, runScheduled } from './events.ts'
  * Background (no session; safe to call any number of times):
  *   { action: 'drain' }  sends events queued by database triggers (push_outbox)
  *   { action: 'tick' }   scheduled checks: weather, reminders, crew results
- *                        (pg_cron every 10 min; throttled to one run per 4 min)
+ *                        (pg_cron every 30 min; throttled to one run per 4 min)
  *
  * All notification text is written server-side (events.ts), never taken from
  * a caller. Needs the VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT secrets.

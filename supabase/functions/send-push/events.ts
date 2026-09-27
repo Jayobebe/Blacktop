@@ -16,7 +16,7 @@ import { findAlert, weatherMessage, type HourlyForecast } from './weather.ts'
  *
  *  - rescue / rescueCancel: called by the rider in trouble
  *  - processEvent: database events queued in push_outbox by triggers
- *  - runScheduled: the 10-minute tick (weather, reminders, crew results)
+ *  - runScheduled: the 30-minute tick (weather, reminders, crew results)
  */
 
 type Row = Record<string, unknown>
