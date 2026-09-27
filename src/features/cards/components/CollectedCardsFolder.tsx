@@ -328,16 +328,16 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
           </div>
           {spectre ? (
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-cyan-300/15 text-cyan-200 border border-cyan-300/40">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-white/10 text-slate-100 border border-white/30 spectre-text">
                 <Ghost className="w-3.5 h-3.5" /> Spectre
               </span>
               <div className="w-full grid grid-cols-2 gap-1.5">
                 <Stat icon={Timer} label="Your time" value={formatChallengeTime(spectre.timeSec)} unit="" />
                 <Stat icon={Timer} label={`${spectre.setterName}'s`} value={formatChallengeTime(spectre.targetSec)} unit="" />
               </div>
-              <div className="w-full rounded-lg bg-cyan-300/10 border border-cyan-300/30 px-2 py-2 text-center">
-                <p className="text-[8px] uppercase tracking-widest text-cyan-100/70">Beaten by</p>
-                <p className="font-mono text-xl font-bold text-cyan-100">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
+              <div className="w-full rounded-lg bg-white/5 border border-white/20 backdrop-blur-sm px-2 py-2 text-center">
+                <p className="text-[8px] uppercase tracking-widest text-slate-200/70">Beaten by</p>
+                <p className="font-mono text-xl font-bold text-slate-50 spectre-text">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
               </div>
               <p className="text-[9px] uppercase tracking-widest text-white/40 text-center">Earned, not traded · no QR</p>
             </div>
@@ -408,7 +408,7 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
 
       <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 mt-1">
         <div
-          className="absolute inset-0 bg-cover bg-center origin-center"
+          className={cn("absolute inset-0 bg-cover bg-center origin-center", spectre && "grayscale opacity-60")}
           style={{
             backgroundImage: `url(${garageShopAsset.url})`,
             transform: `scale(${card.z ?? 1})`,
@@ -421,7 +421,7 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
               <img
                 src={card.img}
                 alt={card.n}
-                className="absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
+                className={cn("absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]", spectre && "spectre-photo")}
                 style={{
                   left: `${placement.xPct}%`,
                   bottom: `${placement.yPct}%`,
