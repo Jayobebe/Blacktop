@@ -164,7 +164,6 @@ export default function Home() {
   const bottomTileRef = useRef<HTMLButtonElement>(null);
   const trackTileRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<HTMLDivElement>(null);
-  const notchPlateRef = useRef<HTMLDivElement>(null);
   const arcOverlayRef = useRef<SVGSVGElement>(null);
 
   useLayoutEffect(() => {
@@ -202,17 +201,6 @@ export default function Home() {
       // Per-tile SVG mask (evenodd path): outer rect = shown, inner circle = cut.
       // Two 180° arcs form the circle path (a full arc from a point to itself is degenerate).
       const pr = r + 14; // notch radius: 14px padding around the globe rim
-
-      // Opaque plate filling the notch behind the (transparent) globe. If a
-      // browser drops or misplaces the tile masks, the tiles' borders would
-      // otherwise show through the globe as thin lines.
-      const plate = notchPlateRef.current;
-      if (plate) {
-        plate.style.width = `${pr * 2}px`;
-        plate.style.height = `${pr * 2}px`;
-        plate.style.left = `${cxAbs - colRect.left - pr}px`;
-        plate.style.top = `${cyAbs - colRect.top - pr}px`;
-      }
       tiles.forEach((el) => {
         const rect = el.getBoundingClientRect();
         const cx = cxAbs - rect.left;
@@ -454,7 +442,6 @@ export default function Home() {
             </div>
           )}
 
-          <div ref={notchPlateRef} className="pointer-events-none absolute z-10 rounded-full bg-background" aria-hidden="true" />
           {/* Rotating globe — tapping opens the map. Sits above the tiles (z-20)
               so pointer events land here first; the canvas fills the div exactly. */}
           <div
