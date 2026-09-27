@@ -877,11 +877,105 @@ export type Database = {
         }
         Relationships: []
       }
+      push_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      push_outbox: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          id: number
+          kind: string
+          payload: Json
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          id?: number
+          kind: string
+          payload?: Json
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          id?: number
+          kind?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
+      push_reminders: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          due_at: string
+          id: string
+          key: string
+          sent_at: string | null
+          title: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          category: string
+          created_at?: string
+          due_at: string
+          id?: string
+          key: string
+          sent_at?: string | null
+          title: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          due_at?: string
+          id?: string
+          key?: string
+          sent_at?: string | null
+          title?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_sent: {
+        Row: {
+          key: string
+          sent_at: string
+        }
+        Insert: {
+          key: string
+          sent_at?: string
+        }
+        Update: {
+          key?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
           categories: string[]
           created_at: string
+          crew_code: string | null
           endpoint: string
           id: string
           last_sent_at: string | null
@@ -889,11 +983,15 @@ export type Database = {
           updated_at: string
           user_agent: string | null
           user_id: string
+          weather_at: string | null
+          weather_lat: number | null
+          weather_lng: number | null
         }
         Insert: {
           auth: string
           categories?: string[]
           created_at?: string
+          crew_code?: string | null
           endpoint: string
           id?: string
           last_sent_at?: string | null
@@ -901,11 +999,15 @@ export type Database = {
           updated_at?: string
           user_agent?: string | null
           user_id: string
+          weather_at?: string | null
+          weather_lat?: number | null
+          weather_lng?: number | null
         }
         Update: {
           auth?: string
           categories?: string[]
           created_at?: string
+          crew_code?: string | null
           endpoint?: string
           id?: string
           last_sent_at?: string | null
@@ -913,6 +1015,9 @@ export type Database = {
           updated_at?: string
           user_agent?: string | null
           user_id?: string
+          weather_at?: string | null
+          weather_lat?: number | null
+          weather_lng?: number | null
         }
         Relationships: []
       }
@@ -1061,6 +1166,22 @@ export type Database = {
       claim_convoy_leadership: {
         Args: { _convoy_id: string }
         Returns: boolean
+      }
+      claim_push_outbox: {
+        Args: { _limit?: number }
+        Returns: {
+          claimed_at: string | null
+          created_at: string
+          id: number
+          kind: string
+          payload: Json
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "push_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       collect_card_drop: {
         Args: { _drop_id: string; _lat: number; _lng: number }
@@ -1268,14 +1389,31 @@ export type Database = {
       }
       my_card_collection_count: { Args: never; Returns: number }
       profile_count: { Args: never; Returns: number }
+      push_call: { Args: { _action: string }; Returns: undefined }
+      push_enqueue: {
+        Args: { _kind: string; _payload: Json }
+        Returns: undefined
+      }
+      push_mark_once: {
+        Args: { _cooldown_seconds?: number; _key: string }
+        Returns: boolean
+      }
+      push_tick: { Args: never; Returns: undefined }
       register_push_subscription: {
         Args: {
           _auth: string
           _categories?: string[]
+          _crew_code?: string
           _endpoint: string
+          _lat?: number
+          _lng?: number
           _p256dh: string
           _user_agent?: string
         }
+        Returns: undefined
+      }
+      set_push_reminders: {
+        Args: { _category: string; _reminders: Json }
         Returns: undefined
       }
       shares_convoy_with: { Args: { _other_user_id: string }; Returns: boolean }
