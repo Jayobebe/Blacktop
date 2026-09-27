@@ -11,6 +11,7 @@ import {
   RotateCcw,
   RotateCw,
   Undo2,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { shortDistance, type DistanceUnit, type NavManeuver, type NavProgress } from '../lib/navigation';
@@ -55,14 +56,19 @@ interface Props {
   arrived: boolean;
   rerouting: boolean;
   destinationName?: string | null;
+  /** Banner X: stop navigating this route. */
+  onStop: () => void;
+  /** Convoy leader: skip the stop being navigated to. */
+  onSkip?: () => void;
 }
 
 /**
  * Turn-by-turn banner. Takes the search bar's slot at the top of the map while
- * guidance runs (spoken or not, see the Spoken Directions setting): the next
- * manoeuvre, how far to it, what follows straight after, and time/distance left.
+ * guidance runs (spoken or not, see the Spoken Directions setting), and stands
+ * in for the destination card: the next manoeuvre and how far to it, what
+ * follows straight after, where you're headed and time/distance left.
  */
-export function TurnBanner({ progress, describe, unit, arrived, rerouting, destinationName }: Props) {
+export function TurnBanner({ progress, describe, unit, arrived, rerouting, destinationName, onStop, onSkip }: Props) {
   const next = progress?.next ?? null;
 
   const eta = progress
@@ -70,10 +76,21 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting, desti
     : null;
   const left = progress ? shortDistance(progress.remainingMeters, unit) : null;
   const toNext = next ? shortDistance(progress!.distanceToNext, unit) : null;
+  const where = destinationName || 'Destination';
 
   return (
-    <div className="w-full rounded-xl bg-card/95 border border-accent/60 shadow-xl backdrop-blur overflow-hidden animate-slide-up" role="status" aria-live="polite">
-      <div className="flex items-center gap-3 px-3 py-2.5">
+    <div className="relative w-full rounded-xl bg-card/95 border border-accent/60 shadow-xl backdrop-blur overflow-hidden animate-slide-up" role="status" aria-live="polite">
+      <button
+        type="button"
+        onClick={onStop}
+        className="absolute top-1.5 right-1.5 w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        aria-label="Stop navigating"
+        title="Stop navigating"
+      >
+        <X className="w-4 h-4" />
+      </button>
+
+      <div className="flex items-center gap-3 pl-3 pr-10 py-2.5">
         <div className="w-12 h-12 rounded-lg bg-accent text-accent-foreground flex items-center justify-center flex-shrink-0">
           {rerouting ? (
             <Loader2 className="w-6 h-6 animate-spin" />
@@ -87,14 +104,11 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting, desti
         </div>
         <div className="flex-1 min-w-0">
           {rerouting ? (
-            <>
-              <p className="text-lg font-black leading-tight">Rerouting…</p>
-              <p className="text-xs text-muted-foreground truncate">Finding the way from here</p>
-            </>
+            <p className="text-lg font-black leading-tight">Rerouting…</p>
           ) : arrived ? (
             <>
               <p className="text-lg font-black leading-tight">Arrived</p>
-              <p className="text-xs text-muted-foreground truncate">{destinationName || 'Your destination'}</p>
+              <p className="text-xs text-muted-foreground truncate">{where}</p>
             </>
           ) : next && toNext ? (
             <>
@@ -103,29 +117,37 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting, desti
                 <span className="text-sm font-bold text-muted-foreground ml-1">{toNext.unit}</span>
               </p>
               <p className="text-sm font-semibold leading-snug line-clamp-2 mt-0.5">{describe(next)}</p>
+              {progress?.then && (
+                <p className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground mt-0.5">
+                  Then
+                  <ManeuverIcon m={progress.then} className="w-3.5 h-3.5 text-accent" />
+                </p>
+              )}
             </>
           ) : (
-            <>
-              <p className="text-lg font-black leading-tight">Follow the route</p>
-              <p className="text-xs text-muted-foreground truncate">{destinationName || 'On your way'}</p>
-            </>
+            <p className="text-lg font-black leading-tight">Follow the route</p>
           )}
         </div>
       </div>
 
-      {!rerouting && !arrived && (progress?.then || left) && (
-        <div className="flex items-center gap-3 px-3 py-1.5 border-t border-border/70 bg-background/40 text-xs">
-          {progress?.then && (
-            <span className="flex items-center gap-1.5 min-w-0 font-medium">
-              <span className="text-muted-foreground">Then</span>
-              <ManeuverIcon m={progress.then} className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+      {!arrived && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border/70 bg-background/40 text-xs">
+          <span className="flex-1 min-w-0 truncate font-semibold">{where}</span>
+          {left && progress && !rerouting && (
+            <span className="font-mono tabular-nums text-muted-foreground whitespace-nowrap">
+              <span className="text-foreground font-semibold">{timeLeft(progress.remainingSeconds)}</span>
+              {' '}· {left.value} {left.unit} · {eta}
             </span>
           )}
-          {left && progress && (
-            <span className="ml-auto flex items-center gap-1.5 font-mono tabular-nums text-muted-foreground whitespace-nowrap">
-              <span className="text-foreground font-semibold">{timeLeft(progress.remainingSeconds)}</span>
-              · {left.value} {left.unit} · {eta}
-            </span>
+          {onSkip && (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="px-2 py-0.5 rounded-md bg-muted hover:bg-secondary text-[11px] font-semibold text-muted-foreground transition-colors flex-shrink-0"
+              title="Skip this stop and head for the next"
+            >
+              Skip
+            </button>
           )}
         </div>
       )}

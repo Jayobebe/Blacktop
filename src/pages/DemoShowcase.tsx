@@ -129,7 +129,7 @@ export default function DemoShowcase() {
         { icon: CloudRain, label: 'Weather Routing', text: 'Warns when heavy rain sits on your route and offers a drier line.' },
         { icon: Repeat, label: 'Loop Planner', text: 'No destination? Generate a twisty round trip back to where you are.' },
         { icon: Download, label: 'Offline Maps', text: 'Save map areas to your phone for rides with no signal.' },
-        { icon: CornerUpRight, label: 'Turn-By-Turn', text: 'The next turn sits where the search bar was, with distance, time left and arrival time. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
+        { icon: CornerUpRight, label: 'Turn-By-Turn', text: 'The next turn sits where the search bar was, with your destination, time left and arrival time. Tap X to stop. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
         { icon: Navigation, label: 'Smart Rerouting', text: 'Miss a turn and Blacktop finds a new way from where you are. Stops you pass come off the route by themselves.' },
         { icon: Search, label: 'Heads-Up Map', text: 'The search bar steps aside while you ride and comes back when you slow down; while navigating the turn banner takes its place, and in a convoy the status strip sits under it.' },
       ],

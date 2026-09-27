@@ -1612,14 +1612,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // they're moving on the home map) and stays up through stops at lights,
   // until the destination is cleared.
   const [guiding, setGuiding] = useState(false);
+  // The rider closed the banner: no guidance for this destination until they
+  // tap Go again (a new destination starts fresh).
+  const [navDismissed, setNavDismissed] = useState(false);
   useEffect(() => {
-    if (!destination) {
+    setNavDismissed(false);
+  }, [destination?.lat, destination?.lng]);
+  useEffect(() => {
+    if (!destination || navDismissed) {
       setGuiding(false);
       stopSpeaking();
       return;
     }
     if (route && (rideState.isActive || moving)) setGuiding(true);
-  }, [destination, route, rideState.isActive, moving]);
+  }, [destination, route, rideState.isActive, moving, navDismissed]);
   const guidingRef = useRef(false);
   guidingRef.current = guiding;
 
@@ -1994,6 +2000,23 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const canFinishRoute =
     rideState.isActive && destination != null && nextWaypoint == null && (isSolo || convoy.isLeader);
 
+  // Banner X. Solo: the route is the rider's own, so it's cleared. Convoy: the
+  // route belongs to the convoy, so only this rider's directions stop.
+  const handleStopNavigating = () => {
+    setGuiding(false);
+    setNavDismissed(true);
+    stopSpeaking();
+    if (isSolo) {
+      clearSoloRoute();
+      setDestination(null);
+      setRoute(null);
+      if (!rideState.isActive) clearMapDestination();
+      toast("Navigation ended");
+    } else {
+      toast("Directions off", { description: "The route stays on the map for your convoy." });
+    }
+  };
+
   const handleFinishRoute = async () => {
     if (isSolo) {
       clearSoloRoute();
@@ -2043,6 +2066,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               arrived={arrivedAtDestination}
               rerouting={rerouting}
               destinationName={destination?.name}
+              onStop={handleStopNavigating}
+              onSkip={
+                canSkipWaypoint
+                  ? async () => {
+                      await completeWaypoint(nextWaypoint!.id);
+                      toast.success("Stop skipped");
+                    }
+                  : undefined
+              }
             />
           </div>
         )}
@@ -2522,7 +2554,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         )}
 
-        {destination && (isRouting || route) && (
+        {/* While guiding, the turn banner up top carries this. */}
+        {destination && (isRouting || route) && !showTurnBanner && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/95 border border-border shadow-2xl backdrop-blur animate-slide-up">
             <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
               <Navigation className="w-4 h-4 text-accent" />
@@ -2547,6 +2580,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 </p>
               ) : null}
             </div>
+
+            {/* Start turn-by-turn without waiting to get moving. */}
+            {route && !isRouting && !guiding && hasTurns && (
+              <button
+                onClick={() => {
+                  setNavDismissed(false);
+                  setGuiding(true);
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-bold transition-colors flex-shrink-0"
+                title="Start turn-by-turn directions"
+              >
+                Go
+              </button>
+            )}
 
             {/* Leader-only: skip current waypoint and advance to the next stop */}
             {canSkipWaypoint && (
