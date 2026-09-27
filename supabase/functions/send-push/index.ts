@@ -8,7 +8,7 @@ import { processEvent, rescue, rescueCancel, runScheduled } from './events.ts'
  * Push notifications for Blacktop (Web Push, works with the installed PWA).
  *
  * Rider actions (need the rider's session):
- *   { action: 'config' }        -> { publicKey }  VAPID key the browser subscribes with
+ *   { action: 'config' }        -> { publicKey }  VAPID key the browser subscribes with (no session needed)
  *   { action: 'test', delayed? } -> test notification to the caller's own devices
  *   { action: 'rescue', convoyId?, crewCode?, lat, lng, auto? }
  *   { action: 'rescue_cancel', convoyId?, crewCode? }
@@ -50,27 +50,32 @@ Deno.serve(async (req) => {
       return json({ drained, ...(await runScheduled(ctx)) })
     }
 
+    // The VAPID public key is public by design: no session needed to fetch it.
+    if (action === 'config') {
+      return json({ publicKey: vapid.publicKey })
+    }
+
     // ── Rider actions ──────────────────────────────────────────────────────
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Unauthorized' }, 401)
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
+    const token = authHeader.slice('Bearer '.length).trim()
+    // Checked against the auth server with the service key, so it works with
+    // any signing-key setup and doesn't depend on an anon-key secret.
+    const { data: auth, error: authErr } = await ctx.admin.auth.getUser(token)
+    if (authErr || !auth?.user?.id) return json({ error: 'Unauthorized' }, 401)
+    const userId = auth.user.id
+    // Runs as the rider (their token), so the rate limit counts per rider.
+    const asRider = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
     })
-    const token = authHeader.replace('Bearer ', '')
-    const { data: claims, error: authErr } = await supabase.auth.getClaims(token)
-    if (authErr || !claims?.claims?.sub) return json({ error: 'Unauthorized' }, 401)
-    const userId = claims.claims.sub as string
     const allowed = async (bucket: string, max: number, windowSec: number) => {
-      const { data, error } = await supabase.rpc('check_rate_limit', {
+      const { data, error } = await asRider.rpc('check_rate_limit', {
         _bucket: bucket,
         _max_requests: max,
         _window_seconds: windowSec,
       })
       return !error && data !== false
-    }
-
-    if (action === 'config') {
-      return json({ publicKey: vapid.publicKey })
     }
 
     if (action === 'test') {
