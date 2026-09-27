@@ -1472,6 +1472,24 @@ export type Database = {
           yes: number
         }[]
       }
+      speedshop_suggestion_list: {
+        Args: { _limit?: number }
+        Returns: {
+          body: string
+          created_at: string
+        }[]
+      }
+      speedshop_survey_table: {
+        Args: never
+        Returns: {
+          item_id: string
+          last_at: string
+          maybe: number
+          no: number
+          prices: Json
+          yes: number
+        }[]
+      }
       transfer_convoy_leadership: {
         Args: { _convoy_id: string; _new_leader_id: string }
         Returns: boolean
