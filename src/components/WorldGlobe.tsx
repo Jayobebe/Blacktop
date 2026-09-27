@@ -35,7 +35,7 @@ export interface WorldLandmark {
   lng: number;
   label: string;
   /** Visual glyph drawn on the pin. */
-  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade' | 'challenge' | 'tank';
+  kind: 'convoys' | 'leaderboard' | 'join' | 'qr' | 'arcade' | 'challenge' | 'tank' | 'shop';
 }
 
 interface Props {
@@ -98,6 +98,14 @@ function drawGlyph(ctx: CanvasRenderingContext2D, kind: WorldLandmark['kind'], c
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(1, 0.6); ctx.lineTo(3, 0.6); ctx.lineTo(3, -3); ctx.lineTo(1.6, -4.4);
+    ctx.stroke();
+  } else if (kind === 'shop') {
+    // shopping bag: body + handle
+    ctx.beginPath();
+    ctx.moveTo(-4.4, -2); ctx.lineTo(4.4, -2); ctx.lineTo(3.6, 4.4); ctx.lineTo(-3.6, 4.4); ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -2, 2.2, Math.PI, 0);
     ctx.stroke();
   } else if (kind === 'challenge') {
 

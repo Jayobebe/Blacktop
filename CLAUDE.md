@@ -30,7 +30,7 @@ Vite env vars required at build time (see local `.env`): `VITE_SUPABASE_URL`, `V
 
 ### Feature-based organization
 
-Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `integrations/discord`.
+Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `speedshop`, `integrations/discord`.
 
 `src/pages/*` are route-level screens composed from features; routing lives in `src/App.tsx`.
 

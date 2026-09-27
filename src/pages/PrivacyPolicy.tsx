@@ -132,6 +132,11 @@ export default function PrivacyPolicy() {
             notifications off, or using the Burn Button, deletes the device and its reminders from our server.
           </p>
           <p className="text-muted-foreground">
+            <span className="text-foreground">Speedshop survey:</span> nothing is sold yet. When you answer
+            whether you'd buy an item and what you'd pay, or send a suggestion, we store that answer linked to
+            your anonymous account. Other riders only ever see anonymous totals. The Burn Button deletes it.
+          </p>
+          <p className="text-muted-foreground">
             <span className="text-foreground">Track Pack (opt-in):</span> tracks, lap times and session
             data stay on your device. While Track Pack is open, anyone who scans your pairing QR receives
             your display name, live position, speed, lean, lap and sector times, and pit board messages

@@ -34,6 +34,7 @@ import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
+import { clearSurveyAnswers } from '@/features/speedshop';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
 import { NimiqTipCard } from '@/features/tips';
@@ -172,6 +173,7 @@ export default function Settings() {
         burnGarage();
         // Drop this device's push subscription (the server copy also goes with the account).
         void disablePush();
+        clearSurveyAnswers();
         // Radio stations only reference local files, but the list itself goes too.
         resetRadio();
         void burnRadioStations();

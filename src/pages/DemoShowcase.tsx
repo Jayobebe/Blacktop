@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
-import { IdCard, Receipt, Sparkles } from 'lucide-react';
+import { IdCard, Receipt, Sparkles, ShoppingBag } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
@@ -256,7 +256,7 @@ export default function DemoShowcase() {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
-      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection and the arcade — with an anonymous glow showing where riders are active.',
+      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade and the Speedshop — with an anonymous glow showing where riders are active.',
       icon: Globe2,
       color: 'accent',
       mockup: <BlacktopWorldMockup />,
@@ -266,6 +266,7 @@ export default function DemoShowcase() {
         { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
         { icon: Flag, label: 'Challenges', text: 'Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year.' },
         { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy, Petrol Head and Derez Legacy — personal bests and win tallies saved locally.' },
+        { icon: ShoppingBag, label: 'Speedshop', text: 'At the bottom of the globe: printed cards, receipts, posters, hoodies and more, previewed with your own stuff. Opening soon, so vote on what it should stock.' },
       ],
     },
     {

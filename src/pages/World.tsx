@@ -29,6 +29,8 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'challenge', lat: -15.8, lng: -47.9, label: 'Crew Challenge', kind: 'challenge', route: '/crew/challenges' },
   { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
   { id: 'blacktank', lat: 28.6, lng: 77.2, label: 'Blacktank', kind: 'tank' },
+  // Bottom of the globe: comes into view along the lower edge as it turns.
+  { id: 'speedshop', lat: -62, lng: -30, label: 'Speedshop', kind: 'shop', route: '/speedshop' },
 
 ];
 

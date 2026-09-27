@@ -34,6 +34,7 @@ import Garage from "./pages/Garage";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
 import RescueLocation from "./pages/RescueLocation";
+import Speedshop from "./pages/Speedshop";
 import Install from "./pages/Install";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
@@ -124,6 +125,7 @@ function AppRoutes() {
       <Route path="/pillion" element={<PillionRide />} />
       <Route path="/track" element={<Track />} />
       <Route path="/rescue" element={<RescueLocation />} />
+      <Route path="/speedshop" element={<Speedshop />} />
       <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/pay" element={<Pay />} />
       <Route path="/history" element={<History />} />
