@@ -30,7 +30,7 @@ Vite env vars required at build time (see local `.env`): `VITE_SUPABASE_URL`, `V
 
 ### Feature-based organization
 
-Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `speedshop`, `integrations/discord`.
+Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `speedshop`, `map`, `crew`, `blacktank`, `arcade`, `radio`, `experience`, `tips`, `integrations/discord`.
 
 `src/pages/*` are route-level screens composed from features; routing lives in `src/App.tsx`.
 
@@ -45,6 +45,10 @@ Server data fetching/caching uses `@tanstack/react-query` (`QueryClient` set up 
 - Convoy membership/destination/waypoints are rows in Postgres (`convoys`, `convoy_members`, ...) read/written via `supabase.from(...)`, with the active convoy id cached in `localStorage` (`blacktop_active_convoy_id`) so a reload can restore session state.
 - Ephemeral, low-latency events (rescue pings, lobby chat, live stats) go over `supabase.channel(...)` broadcast channels scoped per convoy (e.g. `rescue-${convoyId}`), not the database.
 - Voice chat (`src/features/voice/hooks/useVoiceChannel.ts`) is peer-to-peer WebRTC (`RTCPeerConnection` with public STUN servers), using a Supabase Realtime channel purely as the signaling transport. iOS/Safari needs special handling: audio must be "unlocked" via a user gesture (`unlockIOSAudio`) before `AudioContext`/playback will work, and audio constraints differ (no fixed `sampleRate`).
+
+### Map and routing
+
+`src/features/map` is the in-app map (MapLibre, `BlacktopMap` / `BlacktopMapOverlay`): place search, multi-stop routes, a direct-vs-twisty route choice (`RouteOptions`), a round-trip loop generator with Twisty/Scenic/Relaxed styles (`LoopPlannerPanel`), offline map packs (`OfflinePacksPanel`, `tileCache`), a rain radar overlay, a weather detour offer (`weatherRoute`), speed cameras and POIs. All routing, search and Overpass calls go through the `place-search` Edge Function (`kind`: `route`, `twisty`, `loop`, `search`, `reverse`, `cameras`, `overpass`), which proxies OSRM, Nominatim-style search and Overpass; the client only ever sends coordinates. Solo routes live in the `soloRoute` store; convoy routes come from convoy waypoints. There is no turn-by-turn guidance yet; `useNavigation` hands the destination off to Google/Apple Maps when the rider's preferred nav app isn't Blacktop.
 
 ### Ride tracking domain model
 
