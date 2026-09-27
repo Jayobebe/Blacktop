@@ -164,6 +164,7 @@ export default function Home() {
   const bottomTileRef = useRef<HTMLButtonElement>(null);
   const trackTileRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<HTMLDivElement>(null);
+  const notchPlateRef = useRef<HTMLDivElement>(null);
   const arcOverlayRef = useRef<SVGSVGElement>(null);
 
   useLayoutEffect(() => {
@@ -201,6 +202,17 @@ export default function Home() {
       // Per-tile SVG mask (evenodd path): outer rect = shown, inner circle = cut.
       // Two 180° arcs form the circle path (a full arc from a point to itself is degenerate).
       const pr = r + 14; // notch radius: 14px padding around the globe rim
+
+      // Opaque plate filling the notch behind the (transparent) globe. If a
+      // browser drops or misplaces the tile masks, the tiles' borders would
+      // otherwise show through the globe as thin lines.
+      const plate = notchPlateRef.current;
+      if (plate) {
+        plate.style.width = `${pr * 2}px`;
+        plate.style.height = `${pr * 2}px`;
+        plate.style.left = `${cxAbs - colRect.left - pr}px`;
+        plate.style.top = `${cyAbs - colRect.top - pr}px`;
+      }
       tiles.forEach((el) => {
         const rect = el.getBoundingClientRect();
         const cx = cxAbs - rect.left;
@@ -216,6 +228,10 @@ export default function Home() {
         el.style.maskImage = url;
         el.style.webkitMaskRepeat = 'no-repeat';
         el.style.maskRepeat = 'no-repeat';
+        // Pin the mask to the tile's exact box (some WebViews round the SVG's
+        // intrinsic size, shifting the notch by a pixel).
+        el.style.webkitMaskSize = '100% 100%';
+        el.style.maskSize = '100% 100%';
       });
 
       // Carry the accent border around the circular cut on Convoy + Solo tiles.
@@ -248,7 +264,7 @@ export default function Home() {
         const c = document.createElementNS(svgNS, 'circle');
         c.setAttribute('cx', String(cx_col)); c.setAttribute('cy', String(cy_col));
         c.setAttribute('r', String(pr)); c.setAttribute('fill', 'none');
-        c.setAttribute('stroke', accentColor); c.setAttribute('stroke-width', '3');
+        c.setAttribute('stroke', accentColor); c.setAttribute('stroke-width', '2');
         c.setAttribute('clip-path', `url(#${clipId})`);
         return c;
       };
@@ -362,7 +378,7 @@ export default function Home() {
                   tile.onClick();
                 }}
                 className={cn(
-                  'pressable flex-1 bg-card/50 border-[3px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
+                  'pressable flex-1 bg-card/50 border-2 border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
                   // One wide tile: in landscape the globe sits dead centre, so push the label left of it.
                   singleTop && 'landscape:justify-start landscape:pl-8'
                 )}
@@ -387,7 +403,7 @@ export default function Home() {
                 secondaryTile.onClick();
               }}
               className={cn(
-                'pressable flex-1 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
+                'pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
                 // The globe sits over this tile's centre in landscape, so the label moves right of it;
                 // with Track beside it the globe is on its right corner, so the label goes left.
                 showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
@@ -408,7 +424,7 @@ export default function Home() {
                 tabIndex={0}
                 onClick={openTrack}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                className="pressable hidden landscape:flex flex-1 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 touch-target-lg cursor-pointer"
+                className="pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 touch-target-lg cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                   <Zap className="w-4 h-4 text-accent" />
@@ -428,7 +444,7 @@ export default function Home() {
               tabIndex={0}
               onClick={openTrack}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-              className="pressable landscape:hidden flex-none h-16 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
+              className="pressable landscape:hidden flex-none h-16 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
             >
               <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-accent" />
@@ -438,6 +454,7 @@ export default function Home() {
             </div>
           )}
 
+          <div ref={notchPlateRef} className="pointer-events-none absolute z-10 rounded-full bg-background" aria-hidden="true" />
           {/* Rotating globe — tapping opens the map. Sits above the tiles (z-20)
               so pointer events land here first; the canvas fills the div exactly. */}
           <div
