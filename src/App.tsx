@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
+import { burnExpiredTrips } from "@/features/ride";
 import { useMapOverlay, useMapPresenceTracker } from "@/features/map";
 import { RadioOverlay, PlayerProvider, FloatingRadioLayer } from "@/features/radio";
 
@@ -78,6 +79,9 @@ function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
 function AppRoutes() {
   const { hasProfile, isLoading } = useProfile();
   useSettings(); // Initialize accent color on app load
+
+  // Burn trips: drop unstarred rides past the chosen window (no-op when off).
+  useEffect(() => { burnExpiredTrips(); }, []);
 
   // Skeleton of Home while checking auth/profile status
   if (isLoading) {

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useGarage } from '@/features/garage/hooks/useGarage';
-import { useRideHistory } from '@/features/ride';
+import { useRideHistory, burnedAggregate } from '@/features/ride';
 import { Bike } from '@/features/garage/types';
 import { CARDS_STORAGE_KEY, CardSnapshots, CardTier, VehicleCardSnapshot } from '../types';
 import { getTierForRides, tierRank } from '../lib/tier';
@@ -37,7 +37,7 @@ export interface VehicleCardData {
 
 export function useVehicleCards() {
   const { bikes, activeBikeId } = useGarage();
-  const { rides } = useRideHistory();
+  const { rides, burnedTotals } = useRideHistory();
   const [snapshots, setSnapshots] = useLocalStorage<CardSnapshots>(CARDS_STORAGE_KEY, {});
 
   const cards: VehicleCardData[] = useMemo(() => {
@@ -45,18 +45,21 @@ export function useVehicleCards() {
     return bikes
       .map((bike) => {
         const mine = completed.filter((r) => r.bikeId === bike.id);
-        const totalDistanceMi = mine.reduce((s, r) => s + r.distance, 0);
+        // Rides burned from history still count toward the card's tier and stats.
+        const burned = burnedAggregate(burnedTotals, bike.id);
+        const totalDistanceMi = mine.reduce((s, r) => s + r.distance, burned.distance);
         const stats: VehicleCardStats = {
-          totalRides: mine.length,
+          totalRides: mine.length + burned.rides,
           totalDistanceMi,
           totalDistanceKm: totalDistanceMi * MI_TO_KM,
-          totalDurationSec: mine.reduce((s, r) => s + r.duration, 0),
-          topSpeedMph: Math.max(0, ...mine.map((r) => r.maxSpeed)),
+          totalDurationSec: mine.reduce((s, r) => s + r.duration, burned.duration),
+          topSpeedMph: Math.max(burned.maxSpeed, ...mine.map((r) => r.maxSpeed)),
           maxLean: Math.max(
-            0,
+            burned.maxLeanLeft,
+            burned.maxLeanRight,
             ...mine.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)),
           ),
-          maxGForce: Math.max(0, ...mine.map((r) => r.maxGForce || 0)),
+          maxGForce: Math.max(burned.maxGForce, ...mine.map((r) => r.maxGForce || 0)),
         };
         const tierDef = getTierForRides(stats.totalRides);
         const snap = snapshots[bike.id];
@@ -96,7 +99,7 @@ export function useVehicleCards() {
         } as VehicleCardData;
       })
       .sort((a, b) => b.stats.totalRides - a.stats.totalRides);
-  }, [activeBikeId, bikes, rides, snapshots]);
+  }, [activeBikeId, bikes, rides, burnedTotals, snapshots]);
 
   /** Mark a vehicle's current tier + stats as "seen" so arrows/pulse don't repeat. */
   const markTierSeen = useCallback(

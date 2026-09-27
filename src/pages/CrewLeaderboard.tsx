@@ -4,7 +4,7 @@ import { ArrowLeft, Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
-import { useRideHistory } from '@/features/ride';
+import { useRideHistory, burnedAggregate } from '@/features/ride';
 import { useArcadeScores } from '@/features/arcade';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
@@ -32,19 +32,23 @@ const METRICS: { id: keyof CrewRow; label: string; format: (v: number) => string
 export default function CrewLeaderboard() {
   const navigate = useNavigate();
   const crew = useCrew();
-  const { rides } = useRideHistory();
+  const { rides, burnedTotals } = useRideHistory();
   const { scores } = useArcadeScores();
   const { profile } = useProfile();
   const [metric, setMetric] = useState<keyof CrewRow>('total_distance');
 
-  const mine = useMemo(() => ({
-    total_distance: rides.reduce((s, r) => s + (r.distance || 0), 0),
-    top_speed: rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), 0),
-    max_lean: rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), 0),
-    ride_count: rides.length,
-    hit_heavy: scores['hit-heavy'] ?? 0,
-    petrol_head: scores['petrol-head'] ?? 0,
-  }), [rides, scores]);
+  const mine = useMemo(() => {
+    // Rides burned from history still count toward crew totals.
+    const burned = burnedAggregate(burnedTotals);
+    return {
+      total_distance: rides.reduce((s, r) => s + (r.distance || 0), burned.distance),
+      top_speed: rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), burned.maxSpeed),
+      max_lean: rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), Math.max(burned.maxLeanLeft, burned.maxLeanRight)),
+      ride_count: rides.length + burned.rides,
+      hit_heavy: scores['hit-heavy'] ?? 0,
+      petrol_head: scores['petrol-head'] ?? 0,
+    };
+  }, [rides, burnedTotals, scores]);
 
   // Publish this rider's own aggregate stats to the crew board (own row only).
   useEffect(() => {

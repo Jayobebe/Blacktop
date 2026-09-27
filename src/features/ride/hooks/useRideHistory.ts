@@ -6,8 +6,7 @@ import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
 import { recordRideDay } from '../lib/rideStreak';
 import { recordBadges, soloBadgesForRide } from '../lib/badgeWallet';
 import { BadgeType } from '@/types/convoy';
-
-const RIDES_KEY = 'blacktop_rides';
+import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate } from '../lib/tripBurner';
 
 const MAX_GPS_POINTS_PER_STORED_RIDE = 900;
 const MAX_SENSOR_SAMPLES_PER_STORED_RIDE = 360;
@@ -57,6 +56,10 @@ export function useRideHistory() {
   // matching entries. Mutating callbacks below still target the REAL list so
   // local user data is never overwritten.
   const rides = demoEnabled ? DEMO_RIDES : realRides;
+  // Totals of rides burned from history (see tripBurner) — added back into
+  // every lifetime stat so burning only saves storage.
+  const [realBurnedTotals, , clearBurnedTotals] = useLocalStorage<BurnedTotals>(BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS);
+  const burnedTotals = demoEnabled ? EMPTY_BURNED_TOTALS : realBurnedTotals;
 
   const addRide = useCallback((ride: RideSession) => {
     const savedFullRide = setRides(prev => [ride, ...prev]);
@@ -107,6 +110,12 @@ export function useRideHistory() {
   const updateRideName = useCallback((rideId: string, name: string) => {
     setRides(prev => prev.map(r => 
       r.id === rideId ? { ...r, name: name.trim() || undefined } : r
+    ));
+  }, [setRides]);
+
+  const toggleRideStarred = useCallback((rideId: string) => {
+    setRides(prev => prev.map(r =>
+      r.id === rideId ? { ...r, starred: !r.starred || undefined } : r
     ));
   }, [setRides]);
 
@@ -174,11 +183,13 @@ export function useRideHistory() {
     // Demo rides roll up to DEMO_STATS — recomputing here keeps Stats and
     // History byte-for-byte consistent regardless of demo toggle.
     const completedRides = rides.filter(r => r.endedAt !== null);
-    const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, 0);
-    const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, 0);
-    const personalTopSpeed = Math.max(0, ...completedRides.map(r => r.maxSpeed));
-    const personalMaxGForce = Math.max(0, ...completedRides.map(r => r.maxGForce || 0));
-    const convoyRides = completedRides.filter(r => r.isConvoyRide).length;
+    const burned = burnedAggregate(burnedTotals);
+    const totalRides = completedRides.length + burned.rides;
+    const totalDistance = completedRides.reduce((sum, r) => sum + r.distance, burned.distance);
+    const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, burned.duration);
+    const personalTopSpeed = Math.max(burned.maxSpeed, ...completedRides.map(r => r.maxSpeed));
+    const personalMaxGForce = Math.max(burned.maxGForce, ...completedRides.map(r => r.maxGForce || 0));
+    const convoyRides = completedRides.filter(r => r.isConvoyRide).length + burned.convoyRides;
     
     // Count badges (only from convoy rides)
     const badges = completedRides.reduce(
@@ -192,20 +203,20 @@ export function useRideHistory() {
         }
         return acc;
       },
-      { speedDemon: 0, journeyman: 0, fallback: 0 }
+      { ...burned.badges }
     );
 
     return {
-      totalRides: completedRides.length,
+      totalRides,
       totalDistance,
       totalDuration,
       personalTopSpeed,
       personalMaxGForce,
-      averageRideLength: completedRides.length > 0 ? totalDistance / completedRides.length : 0,
+      averageRideLength: totalRides > 0 ? totalDistance / totalRides : 0,
       convoyRides,
       badges,
     };
-  }, [rides]);
+  }, [rides, burnedTotals]);
 
   // Ride receipts (Ride History) are rendered on demand from `rides` and the
   // garage's bike data - there is no separate receipt image/cache stored
@@ -215,18 +226,21 @@ export function useRideHistory() {
   // ever added, it MUST be wiped here too.
   const burnAllData = useCallback(() => {
     clearRides();
+    clearBurnedTotals();
     try { localStorage.removeItem('bt.cards.v1'); } catch { console.warn('[RideHistory] Failed to clear card cache'); }
     try { localStorage.removeItem('bt.collected_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear collected cards'); }
-  }, [clearRides]);
+  }, [clearRides, clearBurnedTotals]);
 
 
   return {
     rides,
     stats,
+    burnedTotals,
     addRide,
     updateRideBadges,
     updateRideName,
     updateRideBike,
+    toggleRideStarred,
     deleteRide,
     addRidePhoto,
     removeRidePhoto,

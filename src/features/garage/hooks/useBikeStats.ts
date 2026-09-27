@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useRideHistory } from '@/features/ride';
+import { useRideHistory, burnedAggregate } from '@/features/ride';
 import { Bike } from '../types';
 
 const MI_TO_KM = 1.60934;
@@ -18,7 +18,7 @@ export interface BikeStats {
 }
 
 export function useBikeStats(bike: Bike | null): BikeStats {
-  const { rides } = useRideHistory();
+  const { rides, burnedTotals } = useRideHistory();
 
   return useMemo(() => {
     const empty: BikeStats = {
@@ -36,19 +36,21 @@ export function useBikeStats(bike: Bike | null): BikeStats {
     if (!bike) return empty;
 
     const mine = rides.filter((r) => r.endedAt && (r as any).bikeId === bike.id);
-    const totalDistanceMi = mine.reduce((s, r) => s + r.distance, 0);
+    // Rides burned from history still count toward this vehicle.
+    const burned = burnedAggregate(burnedTotals, bike.id);
+    const totalDistanceMi = mine.reduce((s, r) => s + r.distance, burned.distance);
     const totalDistanceKm = totalDistanceMi * MI_TO_KM;
     return {
-      totalRides: mine.length,
+      totalRides: mine.length + burned.rides,
       totalDistanceMi,
       totalDistanceKm,
       odometerKm: bike.baseOdometerKm + totalDistanceKm,
-      totalDurationSec: mine.reduce((s, r) => s + r.duration, 0),
-      topSpeedMph: Math.max(0, ...mine.map((r) => r.maxSpeed)),
-      maxLeanLeft: Math.max(0, ...mine.map((r) => r.maxLeanLeft || 0)),
-      maxLeanRight: Math.max(0, ...mine.map((r) => r.maxLeanRight || 0)),
-      maxGForce: Math.max(0, ...mine.map((r) => r.maxGForce || 0)),
-      longestRideMi: Math.max(0, ...mine.map((r) => r.distance)),
+      totalDurationSec: mine.reduce((s, r) => s + r.duration, burned.duration),
+      topSpeedMph: Math.max(burned.maxSpeed, ...mine.map((r) => r.maxSpeed)),
+      maxLeanLeft: Math.max(burned.maxLeanLeft, ...mine.map((r) => r.maxLeanLeft || 0)),
+      maxLeanRight: Math.max(burned.maxLeanRight, ...mine.map((r) => r.maxLeanRight || 0)),
+      maxGForce: Math.max(burned.maxGForce, ...mine.map((r) => r.maxGForce || 0)),
+      longestRideMi: Math.max(burned.longestRide, ...mine.map((r) => r.distance)),
     };
-  }, [bike, rides]);
+  }, [bike, rides, burnedTotals]);
 }

@@ -1,20 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRideHistory } from '@/features/ride';
+import { useRideHistory, burnExpiredTrips, type BurnTripsInterval } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { useGarage } from '@/features/garage';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Users, User, Clock, Route, Pencil, Trophy, Timer, Disc3 as BikeIcon } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import { Users, User, Clock, Route, Pencil, Star, Flame, ChevronDown, Trophy, Timer, Disc3 as BikeIcon } from 'lucide-react';
 import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useExperience } from '@/features/experience';
-import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { PageHeader } from '@/components/PageHeader';
+
+const BURN_LABELS: Record<BurnTripsInterval, string> = {
+  off: 'Off',
+  week: 'Every week',
+  month: 'Every month',
+};
 
 export default function History() {
   const navigate = useNavigate();
-  const { rides, updateRideName, updateRideBike } = useRideHistory();
-  const { settings } = useSettings();
+  const { rides, updateRideName, updateRideBike, toggleRideStarred } = useRideHistory();
+  const { settings, updateSetting } = useSettings();
   const { terms, showGroup } = useExperience();
   const { bikes } = useGarage();
   const [editingRideId, setEditingRideId] = useState<string | null>(null);
@@ -39,6 +55,22 @@ export default function History() {
     setEditingRideId(null);
   };
 
+  const handleBurnChange = (value: string) => {
+    const interval = value as BurnTripsInterval;
+    updateSetting('burnTripsInterval', interval);
+    if (interval === 'off') {
+      toast('Burn trips off', { description: `${terms.Rides} stay until you delete them.` });
+      return;
+    }
+    const burned = burnExpiredTrips(interval);
+    const age = interval === 'week' ? 'a week' : 'a month';
+    toast.success(`Burning unstarred ${terms.rides} older than ${age}`, {
+      description: burned > 0
+        ? `${burned} burned now. Your totals and stats are kept.`
+        : 'Star a ride to keep it. Your totals and stats are kept.',
+    });
+  };
+
   const handleNameKeyDown = (e: React.KeyboardEvent, rideId: string) => {
     if (e.key === 'Enter') {
       handleNameSave(rideId);
@@ -54,6 +86,36 @@ export default function History() {
         title={`${terms.Ride} History`}
         subtitle={`${rides.length} ${rides.length === 1 ? terms.ride : terms.rides} recorded`}
         backTo="/"
+        right={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'pressable h-10 px-3.5 rounded-full flex items-center gap-1.5 frost-accent text-[13px] font-medium',
+                  settings.burnTripsInterval !== 'off' ? 'text-[hsl(var(--burn))]' : 'text-foreground',
+                )}
+                aria-label={`Burn trips: ${BURN_LABELS[settings.burnTripsInterval]}`}
+              >
+                <Flame className="w-4 h-4" />
+                Burn trips
+                <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                Unstarred {terms.rides} are wiped to save storage. Totals and stats stay.
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={settings.burnTripsInterval} onValueChange={handleBurnChange}>
+                <DropdownMenuRadioItem value="week">{BURN_LABELS.week}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="month">{BURN_LABELS.month}</DropdownMenuRadioItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioItem value="off">{BURN_LABELS.off}</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
       />
 
       {/* Rides List */}
@@ -98,6 +160,20 @@ export default function History() {
                     ) : (
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm truncate">{displayName}</p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRideStarred(ride.id);
+                          }}
+                          className={cn(
+                            "p-1.5 rounded-lg hover:bg-white/[0.07] transition-colors",
+                            ride.starred ? "text-accent" : "text-muted-foreground hover:text-foreground",
+                          )}
+                          aria-label={ride.starred ? "Unstar" : "Star to keep"}
+                          aria-pressed={!!ride.starred}
+                        >
+                          <Star className={cn("w-3.5 h-3.5", ride.starred && "fill-current")} />
+                        </button>
                         <button
                           onClick={(e) => handleEditStart(ride.id, ride.name || '', e)}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.07] transition-colors"

@@ -62,7 +62,8 @@ export interface AppSettings {
   garageEnabled: boolean;
   /** Collectibles: trading cards, badges, card drops on the map. */
   collectiblesEnabled: boolean;
-
+  /** Ride History: delete unstarred rides older than a week/month (totals are kept). */
+  burnTripsInterval: 'off' | 'week' | 'month';
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -106,7 +107,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   speedFocusEnabled: true,
   garageEnabled: true,
   collectiblesEnabled: true,
-
+  burnTripsInterval: 'off',
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

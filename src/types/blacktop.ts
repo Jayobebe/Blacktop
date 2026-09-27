@@ -42,6 +42,7 @@ export interface GForceSample {
 export interface RideSession {
   id: string;
   name?: string; // Optional custom name for the ride
+  starred?: boolean; // Starred rides are never burned from Ride History
   startedAt: string;
   endedAt: string | null;
   isConvoyRide: boolean;

@@ -1,5 +1,7 @@
 export { useActiveRide } from './hooks/useActiveRide';
 export { useRideHistory } from './hooks/useRideHistory';
+export { burnExpiredTrips, burnedAggregate, NO_BIKE } from './lib/tripBurner';
+export type { BurnTripsInterval, BurnedAggregate, BurnedTotals } from './lib/tripBurner';
 export { useCrashDetection } from './hooks/useCrashDetection';
 export { RideSummary } from './components/RideSummary';
 export { RidePhotos } from './components/RidePhotos';
