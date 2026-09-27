@@ -23,6 +23,14 @@ export interface LogRide {
   owner: string;
 }
 
+/** A remark written into the logbook by whoever held it at the time. */
+export interface LogNote {
+  id: string;
+  author: string;
+  at: number;
+  text: string;
+}
+
 export interface LogOwner {
   name: string;
   /** Epoch ms the vehicle came to them (garage add or hand-over). */
@@ -42,6 +50,8 @@ export interface InheritedLog {
   archived: BurnedAggregate;
   /** Passport number, fixed when the vehicle was first logged and kept for life. */
   passport?: string;
+  /** Remarks from every keeper; they travel with the vehicle. */
+  notes?: LogNote[];
 }
 
 /** What travels from the old owner's phone to the new owner's. */

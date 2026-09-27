@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { aggregateRides, emptyAggregate, mergeAggregates, type BurnedAggregate } from '@/features/ride/lib/tripBurner';
 import type { RideSession } from '@/types/blacktop';
 import { useDemoMode, DEMO_BIKE_ID, DEMO_LOGBOOK } from '@/lib/demoMode';
-import type { InheritedLog, LogRide } from '../types';
+import type { InheritedLog, LogNote, LogRide } from '../types';
 
 /**
  * Per-vehicle history inherited from previous owners, keyed by the local
@@ -45,6 +45,17 @@ export function setInheritedLog(bikeId: string, log: InheritedLog | null) {
   else delete next[bikeId];
   write(next);
 }
+
+/** Adds a remark to a vehicle's logbook (creating its record if needed). */
+export function addLogNote(bikeId: string, note: Omit<LogNote, 'id' | 'at'>) {
+  const text = note.text.trim().slice(0, NOTE_MAX_CHARS);
+  if (!text) return;
+  const prev: InheritedLog = store[bikeId] ?? { owners: [], rides: [], archived: emptyAggregate() };
+  const entry: LogNote = { id: crypto.randomUUID(), at: Date.now(), author: note.author, text };
+  setInheritedLog(bikeId, { ...prev, notes: [...(prev.notes ?? []), entry] });
+}
+
+export const NOTE_MAX_CHARS = 280;
 
 export function clearAllLogbooks() {
   write({});

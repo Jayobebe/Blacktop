@@ -47,7 +47,9 @@ export default function PillionRide() {
   const wakeLock = useWakeLock();
   useEffect(() => {
     wakeLock.request();
-    return () => wakeLock.release();
+    return () => {
+      void wakeLock.release();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useBackgroundAudio(isConnected && convoy.members.length > 1);

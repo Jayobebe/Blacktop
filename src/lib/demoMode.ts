@@ -231,6 +231,23 @@ DEMO_CHALLENGES.forEach((challenge, i) => {
 // Tag every demo ride against the demo bike so Garage / VehicleCards roll up.
 DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });
 
+// Name a spread of rides the way a real rider would, so history reads lived-in.
+([
+  [4, 'Box Hill loop'],
+  [8, 'Commute, the long way'],
+  [10, 'Ace Cafe bike night'],
+  [12, 'Rain, rain and more rain'],
+  [19, 'Chain stretched, limped home'],
+  [23, 'South Downs with Rico'],
+  [27, 'Sunset run'],
+  [31, 'First ride after service'],
+  [36, 'Wales weekend day 1'],
+  [37, 'Wales weekend day 2'],
+  [42, 'Picked her up'],
+] as const).forEach(([i, name]) => {
+  if (DEMO_RIDES[i]) DEMO_RIDES[i].name = name;
+});
+
 // A few starred favourites, so Burn Trips has rides it keeps.
 ([
   [0, 'Rico time attack'],
@@ -384,7 +401,46 @@ export const DEMO_LOGBOOK = {
     badges: { speedDemon: 2, journeyman: 3, fallback: 1 },
   },
   passport: 'BT-D4C1-0417',
+  notes: [
+    { id: 'demo-note-1', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 400 * 86_400_000, text: 'Termignoni slip-on fitted, stock can in the loft. Ask if you want it.' },
+    { id: 'demo-note-2', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 90 * 86_400_000, text: 'Front tyre scrubbed in at the track day. Rear has maybe 2,000 miles left.' },
+    { id: 'demo-note-3', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 2 * 86_400_000, text: 'Look after her. Warm-up takes a good five minutes when it is cold.' },
+    { id: 'demo-note-4', author: DEMO_NAME, at: DEMO_BOUGHT_AT + 30 * 86_400_000, text: 'Swapped to Pirelli Rosso IVs. Grip is unreal.' },
+    { id: 'demo-note-5', author: DEMO_NAME, at: Date.now() - 60 * 86_400_000, text: 'Chain adjusted at 8,900 km. Keep an eye on the rear sprocket.' },
+    { id: 'demo-note-6', author: DEMO_NAME, at: Date.now() - 6 * 86_400_000, text: 'Wales trip: 612 miles in two days, zero issues. Best bike I have owned.' },
+  ],
 };
+
+/** Badge wallet: every badge type earned over a year of riding, two card copies already traded. */
+export const DEMO_WALLET = {
+  counts: {
+    'speed-demon': 15,
+    journeyman: 9,
+    'lean-fiend': 6,
+    'g-lock': 4,
+    'corner-carver': 7,
+    'night-owl': 5,
+    'hard-ass': 3,
+    'always-out': 2,
+    fallback: 5,
+  },
+  spent: 20,
+  kickbacks: 6,
+};
+
+/** Saved spots and recent searches on the Blacktop map. */
+export const DEMO_SAVED_POIS = [
+  { id: 'demo-poi-1', name: 'Home', lat: 51.4613, lng: -0.1156, createdAt: new Date(Date.now() - 300 * 86_400_000).toISOString() },
+  { id: 'demo-poi-2', name: 'Ace Cafe London', lat: 51.5413, lng: -0.2789, createdAt: new Date(Date.now() - 200 * 86_400_000).toISOString() },
+  { id: 'demo-poi-3', name: 'Box Hill viewpoint', lat: 51.2525, lng: -0.3107, createdAt: new Date(Date.now() - 150 * 86_400_000).toISOString() },
+  { id: 'demo-poi-4', name: "Rico's garage", lat: 51.4012, lng: -0.2551, createdAt: new Date(Date.now() - 40 * 86_400_000).toISOString() },
+];
+
+export const DEMO_RECENT_LOCATIONS = [
+  { id: 'demo-recent-1', name: 'Loomies Cafe', address: 'West Meon, Hampshire', lat: 51.0386, lng: -1.0848 },
+  { id: 'demo-recent-2', name: 'Bwlch y Groes', address: 'Gwynedd, Wales', lat: 52.7869, lng: -3.6497 },
+  { id: 'demo-recent-3', name: 'Devil\u2019s Punch Bowl', address: 'Hindhead, Surrey', lat: 51.1195, lng: -0.7196 },
+];
 
 export const DEMO_SCORES: ArcadeScores = {
   'hit-heavy': 14,    // peak Gs

@@ -6,6 +6,7 @@ import { BADGE_ORDER, BADGE_INFO } from '@/types/convoy';
 import { badgeWallet, spendBadgesForCopy, BADGES_PER_COPY } from '../lib/badgeWallet';
 import { useSettings } from '@/features/settings';
 import { useExperience, badgeVisible } from '@/features/experience';
+import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 
 function subscribe(cb: () => void) {
   window.addEventListener('blacktop-badges', cb);
@@ -14,6 +15,7 @@ function subscribe(cb: () => void) {
 
 /** Badge collection + the badges-for-card-copies economy. */
 export function BadgeWalletPanel() {
+  useDemoMode(); // re-read the wallet when demo mode flips
   const wallet = useSyncExternalStore(subscribe, () => JSON.stringify(badgeWallet()));
   const w = JSON.parse(wallet) as ReturnType<typeof badgeWallet>;
   const { settings } = useSettings();
@@ -26,6 +28,10 @@ export function BadgeWalletPanel() {
   const vis = { speed: settings.speedFocusEnabled, lean: canLean && settings.leanAngleEnabled, g: settings.gForceEnabled };
 
   const trade = useCallback(() => {
+    if (isDemoModeActive()) {
+      toast('Trading is off in demo mode');
+      return;
+    }
     if (spendBadgesForCopy()) {
       toast.success('Card copy unlocked', {
         description: `${BADGES_PER_COPY} badges traded — drop it on the map.`,

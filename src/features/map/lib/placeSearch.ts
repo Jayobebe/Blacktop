@@ -1,3 +1,4 @@
+import { isDemoModeActive, DEMO_RECENT_LOCATIONS } from '@/lib/demoMode';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface MapSearchResult {
@@ -61,6 +62,7 @@ const categoryToNominatimQuery: Record<string, string> = {
 };
 
 export function getRecentLocations(): MapSearchResult[] {
+  if (isDemoModeActive()) return DEMO_RECENT_LOCATIONS;
   try {
     const stored = localStorage.getItem(RECENT_LOCATIONS_KEY);
     return stored ? JSON.parse(stored) : [];

@@ -1,4 +1,5 @@
 import type { MapSearchResult } from './placeSearch';
+import { isDemoModeActive, DEMO_SAVED_POIS } from '@/lib/demoMode';
 
 export interface SavedPOI {
   id: string;
@@ -12,6 +13,7 @@ const STORAGE_KEY = 'blacktop_saved_pois';
 const MAX_POIS = 50;
 
 export function getSavedPOIs(): SavedPOI[] {
+  if (isDemoModeActive()) return DEMO_SAVED_POIS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as SavedPOI[]) : [];

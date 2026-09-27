@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronsRight, QrCode, Loader2, Check, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsRight, QrCode, Loader2, Check, X, PenLine } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { HeaderButton } from '@/components/PageHeader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useDemoMode } from '@/lib/demoMode';
@@ -23,12 +25,16 @@ import { useProfile } from '@/features/profile';
 import { useRideHistory, burnedAggregate, mergeAggregates, emptyAggregate } from '@/features/ride';
 import { useGarage, useBikeStats, serviceStatus, type Bike } from '@/features/garage';
 import { useVehicleCards } from '@/features/cards';
-import { getInheritedLog, setInheritedLog, toLogRide, useInheritedLogs } from '../lib/logbookStore';
+import { addLogNote, getInheritedLog, setInheritedLog, toLogRide, useInheritedLogs, NOTE_MAX_CHARS } from '../lib/logbookStore';
 import { SCAN_WINDOW_MS, startHandover } from '../lib/transfer';
-import type { LogRide, LogbookPackage } from '../types';
+import type { LogNote, LogRide, LogbookPackage } from '../types';
 import { passportFor } from '../lib/passport';
 
 const RIDES_PER_PAGE = 7;
+/** Rough line budget of a page, used to flow notes onto as many pages as they need. */
+const NOTE_LINES_PER_PAGE = 24;
+const NOTE_CHARS_PER_LINE = 30;
+const noteLines = (n: LogNote) => 1.6 + Math.ceil(n.text.length / NOTE_CHARS_PER_LINE);
 const KM_PER_MI = 1.60934;
 
 function fmtDate(ms: number | string) {
@@ -251,12 +257,63 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     ));
   }
 
+  // Notes: remarks from every keeper, flowing onto as many pages as needed.
+  // The last notes page carries "Add a note".
+  const notes = [...(inherited?.notes ?? [])].sort((a, b) => a.at - b.at);
+  const notePages: LogNote[][] = [[]];
+  let used = 0;
+  for (const note of notes) {
+    const h = noteLines(note);
+    if (used + h > NOTE_LINES_PER_PAGE && notePages[notePages.length - 1].length > 0) {
+      notePages.push([]);
+      used = 0;
+    }
+    notePages[notePages.length - 1].push(note);
+    used += h;
+  }
+  // No room left for the button on the last page: give it a fresh page.
+  if (used > NOTE_LINES_PER_PAGE - 3) notePages.push([]);
+  notePages.forEach((pageNotes, i) => {
+    const isLast = i === notePages.length - 1;
+    pages.push((n, side) => (
+      <Page n={n} side={side}>
+        <PageTitle>{i === 0 ? 'Notes' : 'Notes (cont.)'}</PageTitle>
+        {notes.length === 0 && i === 0 && (
+          <p className="text-[9px] italic text-[#2b2118]/55">No remarks yet. Mods, quirks, tyre changes, anything the next keeper should know.</p>
+        )}
+        <div className="space-y-1.5">
+          {pageNotes.map((note) => (
+            <div key={note.id} className="leading-tight">
+              <p className="font-serif italic text-[10px] text-[#1f2a5a] break-words">&ldquo;{note.text}&rdquo;</p>
+              <p className="font-mono text-[7.5px] text-[#2b2118]/60 mt-0.5">
+                {note.author} · {fmtDate(note.at)}
+              </p>
+            </div>
+          ))}
+        </div>
+        {isLast && (
+          <button
+            onClick={() => {
+              if (demoEnabled) {
+                toast('Notes are read-only in demo mode');
+                return;
+              }
+              setNoteOpen(true);
+            }}
+            className="mt-auto mb-1 mx-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border-2 border-dashed border-[#2b2118]/60 text-[9px] font-bold uppercase tracking-wider active:scale-95"
+          >
+            <PenLine className="w-3 h-3" /> Add a note
+          </button>
+        )}
+      </Page>
+    ));
+  });
+
   // Keep the hand-over page on the right of the final spread.
   if (pages.length % 2 === 0) {
     pages.push((n, side) => (
       <Page n={n} side={side}>
-        <PageTitle>Notes</PageTitle>
-        <p className="text-[9px] italic text-[#2b2118]/50">Every ride on this vehicle is logged automatically.</p>
+        <p className="mt-auto text-center text-[9px] italic text-[#2b2118]/45">This page intentionally left blank</p>
       </Page>
     ));
   }
@@ -302,6 +359,16 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   // ── hand-over ────────────────────────────────────────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const saveNote = () => {
+    if (!noteText.trim()) return;
+    addLogNote(bike.id, { author: myName, text: noteText });
+    setNoteText('');
+    setNoteOpen(false);
+    haptics.success();
+    toast.success('Note added to the logbook');
+  };
   const [handover, setHandover] = useState<null | { qr: string; startedAt: number; phase: 'waiting' | 'sending' | 'done' | 'expired' | 'failed'; who?: string; msg?: string }>(null);
   const cancelRef = useRef<(() => void) | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -330,6 +397,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         rides: [...(prev?.rides ?? []), ...myEntries],
         archived: mergeAggregates(prev?.archived ?? emptyAggregate(), burnedAggregate(burnedTotals, bike.id)),
         passport: prev?.passport ?? passportFor(bike.id),
+        notes: prev?.notes ?? [],
       },
       fromName: myName,
       handedOverAt: Date.now(),
@@ -433,6 +501,30 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           <ChevronsRight className="w-4 h-4" /> Skip to end
         </Button>
       </div>
+
+      {/* Write a remark into the logbook */}
+      <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Add a note</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value.slice(0, NOTE_MAX_CHARS))}
+            placeholder="New tyres, a quirk, a mod, a great ride…"
+            rows={4}
+            autoFocus
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+              {noteText.length} / {NOTE_MAX_CHARS} · signed {myName}
+            </span>
+            <Button onClick={saveNote} disabled={!noteText.trim()}>
+              Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Warning before the QR is shown */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

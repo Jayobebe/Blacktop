@@ -10,6 +10,7 @@
 import { BadgeType, BADGE_INFO, BADGE_ORDER } from '@/types/convoy';
 import { RideSession } from '@/types/blacktop';
 import { grantBadgeCopy, BADGES_PER_COPY } from '@/features/cards/lib/dropEconomy';
+import { isDemoModeActive, DEMO_WALLET } from '@/lib/demoMode';
 
 const WALLET_KEY = 'bt.badge_wallet.v1';
 
@@ -60,7 +61,8 @@ export interface BadgeWallet {
 }
 
 export function badgeWallet(): BadgeWallet {
-  const rec = read();
+  // Demo mode shows the demo rider's wallet; the real one is never touched.
+  const rec: WalletRecord = isDemoModeActive() ? DEMO_WALLET : read();
   const counts = BADGE_ORDER.reduce((acc, type) => {
     acc[type] = rec.counts[type] || 0;
     return acc;
@@ -102,6 +104,7 @@ export function recordBadges(badges: BadgeType[]) {
 
 /** Spends BADGES_PER_COPY points for one card copy. Returns success. */
 export function spendBadgesForCopy(): boolean {
+  if (isDemoModeActive()) return false;
   const wallet = badgeWallet();
   if (wallet.balance < BADGES_PER_COPY) return false;
   grantBadgeCopy();
