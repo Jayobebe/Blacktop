@@ -6,6 +6,7 @@ import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState, useRegroupListener, getConvoySnapshot } from '@/features/convoy';
 import { useProximity, useConvoyMergeSync, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
 import { attachRideToConvoy } from '@/features/ride';
+import { useReactionsListener } from '@/features/pillion';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
 import { useNextWaypoint } from '@/features/waypoints';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
@@ -110,6 +111,8 @@ export default function ActiveRide() {
   const { user, profile } = useProfile();
   // Regroup calls from the convoy status bar (sent by the leader from the map).
   useRegroupListener(rideState.isConvoyMode ? convoy.id : null, user?.id ?? null);
+  // Waves / emoji reactions from pillions (and anyone else in the convoy).
+  useReactionsListener(rideState.isConvoyMode ? convoy.id : null, user?.id ?? null);
 
   // Nearby riders (opt-in, Blacktop map): pair up with riders close by, merge
   // convoys between leaders. Merge sync runs for every convoy rider so members

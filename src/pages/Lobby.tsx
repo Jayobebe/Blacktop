@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/features/convoy';
 import { useActiveRide } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
+import { useRideRole, getRideRole } from '@/features/pillion';
 import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
 import { useSettings } from '@/features/settings';
@@ -98,6 +99,21 @@ export default function Lobby() {
     startRideRef.current = startRide;
   }, [startRide]);
 
+  // Pillions skip the ride tracker (no GPS, stats or saved ride for a bike the
+  // operator is already tracking) and get the passenger screen instead.
+  const rideRole = useRideRole();
+  const isPillion = rideRole.role === 'pillion';
+  const beginRide = useCallback(
+    (): boolean => (getRideRole().role === 'pillion' ? true : startRideRef.current(true, convoy.id)),
+    [convoy.id],
+  );
+  const rideRoute = () => (getRideRole().role === 'pillion' ? '/pillion' : '/ride');
+
+  // A pillion who reloads mid-ride goes straight back to the passenger screen.
+  useEffect(() => {
+    if (convoy.id && rideRole.role === 'pillion' && rideRole.riding) navigate('/pillion', { replace: true });
+  }, [convoy.id, rideRole.role, rideRole.riding, navigate]);
+
   useEffect(() => {
     navigateRef.current = navigate;
   }, [navigate]);
@@ -188,9 +204,9 @@ export default function Lobby() {
       hasStartedRide.current = true;
       console.log('[Lobby] Received start-ride broadcast');
       toast.success(`Leader started the ${liveTerms().ride}`);
-      const success = startRideRef.current(true, convoy.id);
+      const success = beginRide();
       if (success) {
-        navigateRef.current('/ride');
+        navigateRef.current(rideRoute());
       }
     });
 
@@ -230,7 +246,7 @@ export default function Lobby() {
       supabase.removeChannel(channel);
       controlChannelRef.current = null;
     };
-  }, [convoy.id]);
+  }, [convoy.id, beginRide]);
 
   // Database fallback: listen for ride_started_at changes on the convoy (backup for broadcast)
   useEffect(() => {
@@ -260,9 +276,9 @@ export default function Lobby() {
             console.log('[Lobby] Detected ride_started_at via DB fallback');
             hasStartedRide.current = true;
             toast.success(`Leader started the ${liveTerms().ride}`);
-            const success = startRideRef.current(true, convoy.id);
+            const success = beginRide();
             if (success) {
-              navigateRef.current('/ride');
+              navigateRef.current(rideRoute());
             }
           }
         }
@@ -272,7 +288,7 @@ export default function Lobby() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [convoy.id, convoy.isLeader]);
+  }, [convoy.id, convoy.isLeader, beginRide]);
 
   // Redirect if not in a convoy
   useEffect(() => {
@@ -312,14 +328,14 @@ export default function Lobby() {
       hasStartedRide.current = true;
       console.log('[Lobby] All members ready, starting ride!');
       toast.success(`Everyone's ready. Starting the ${liveTerms().ride}!`);
-      const success = startRide(true, convoy.id);
+      const success = beginRide();
       if (success) {
-        navigate('/ride');
+        navigate(rideRoute());
       }
     }
 
     prevReadyToStart.current = readyToStart;
-  }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate, convoy.id]);
+  }, [allMembersNavigated, convoy.destination, convoy.members, startRide, navigate, convoy.id, beginRide]);
 
   // Unified navigate handler — resolves the right destination (first incomplete
   // waypoint, then convoy destination), opens the Blacktop map, marks this
@@ -341,13 +357,19 @@ export default function Lobby() {
         ? { lat: convoy.destination.lat, lng: convoy.destination.lng, name: convoy.destination.name, address: convoy.destination.address }
         : undefined;
     markAsNavigated();
+    // Pillion: ready up and go to the passenger screen (no map for passengers).
+    if (isPillion) {
+      hasStartedRide.current = true;
+      navigate('/pillion');
+      return;
+    }
     if (!hasStartedRide.current) {
       hasStartedRide.current = true;
-      const success = startRide(true, convoy.id);
+      const success = beginRide();
       if (!success) return;
       // Mount the active-ride screen first, then lay the map overlay on top of
       // it so the rider can flip between map and ride UI.
-      navigate('/ride');
+      navigate(rideRoute());
       queueMicrotask(() => (dest ? openBlacktopMap(dest) : openBlacktopMap()));
       return;
     }
@@ -958,7 +980,7 @@ export default function Lobby() {
             className="h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Navigation className="w-3.5 h-3.5 mr-1.5" />
-            Navigate
+            {isPillion ? 'Ready' : 'Navigate'}
           </Button>
         )}
 
@@ -974,15 +996,15 @@ export default function Lobby() {
 
               // A ride is already running for this rider — just rejoin it.
               if (rideState.isActive) {
-                navigate('/ride');
+                navigate(rideRoute());
                 return;
               }
 
               // Individual start - just this member
               hasStartedRide.current = true;
-              const success = startRide(true, convoy.id);
+              const success = beginRide();
               if (success) {
-                navigate('/ride');
+                navigate(rideRoute());
               }
             }}
             onContextMenu={async (e) => {
@@ -991,7 +1013,7 @@ export default function Lobby() {
               if (!convoy.isLeader) return;
 
               hasStartedRide.current = true;
-              const success = startRide(true, convoy.id);
+              const success = beginRide();
               if (success) {
                 toast.success(`Starting the ${terms.ride} for everyone`);
 
@@ -1002,7 +1024,7 @@ export default function Lobby() {
 
                 // Give followers a moment to receive before we leave the lobby
                 await new Promise((resolve) => setTimeout(resolve, 600));
-                navigate('/ride');
+                navigate(rideRoute());
               }
             }}
             onTouchStart={() => {
@@ -1018,7 +1040,7 @@ export default function Lobby() {
                 didLongPressRef.current = true;
                 hasStartedRide.current = true;
 
-                const success = startRide(true, convoy.id);
+                const success = beginRide();
                 if (success) {
                   toast.success(`Starting the ${terms.ride} for everyone`);
 
@@ -1029,7 +1051,7 @@ export default function Lobby() {
 
                   // Give followers a moment to receive before we leave the lobby
                   await new Promise((resolve) => setTimeout(resolve, 600));
-                  navigate('/ride');
+                  navigate(rideRoute());
                 }
               }, 500);
             }}

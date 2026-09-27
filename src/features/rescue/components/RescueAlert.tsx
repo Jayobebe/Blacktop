@@ -8,7 +8,8 @@ interface RescueAlertProps {
   /** Leader adds the rider as a waypoint; everyone else can view the rescue route. */
   isLeader: boolean;
   onAddWaypoint: (request: RescueRequest) => void;
-  onShowOnMap: (request: RescueRequest) => void;
+  /** Omit where there's no map (pillion screen): the button just acknowledges. */
+  onShowOnMap?: (request: RescueRequest) => void;
   onDismiss: (requestId: string) => void;
 }
 
@@ -35,7 +36,9 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onShowOnMap, on
                 <p className="text-sm opacity-80 mt-1">
                   {isLeader
                     ? 'Add them as a waypoint to navigate to their location'
-                    : 'Their location is marked on the map'}
+                    : onShowOnMap
+                      ? 'Their location is marked on the map'
+                      : 'Your convoy has their location'}
                 </p>
               </div>
               
@@ -52,11 +55,11 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onShowOnMap, on
                 ) : (
                   <Button
                     size="lg"
-                    onClick={() => onShowOnMap(request)}
+                    onClick={() => (onShowOnMap ? onShowOnMap(request) : onDismiss(request.id))}
                     className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
                   >
-                    <MapIcon className="w-5 h-5 mr-2" />
-                    Show on map
+                    {onShowOnMap && <MapIcon className="w-5 h-5 mr-2" />}
+                    {onShowOnMap ? 'Show on map' : 'Got it'}
                   </Button>
                 )}
                 <Button

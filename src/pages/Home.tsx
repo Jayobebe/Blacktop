@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
+import { clearRideRole } from '@/features/pillion';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
@@ -239,11 +240,12 @@ export default function Home() {
     }
   }, [rideState.isActive, navigate]);
 
-  // Redirect to lobby if in a convoy
+  // Redirect to lobby if in a convoy; outside one, the pillion role no longer
+  // applies (next convoy starts as operator unless chosen again on Join).
   useEffect(() => {
-    if (!convoy.isRestoring && convoy.isActive) {
-      navigate('/lobby');
-    }
+    if (convoy.isRestoring) return;
+    if (convoy.isActive) navigate('/lobby');
+    else clearRideRole();
   }, [convoy.isActive, convoy.isRestoring, navigate]);
 
   return (

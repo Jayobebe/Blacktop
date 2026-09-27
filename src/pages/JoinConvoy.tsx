@@ -3,16 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/features/convoy';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, UserPlus, ScanLine, X } from 'lucide-react';
+import { UserPlus, ScanLine, X, Bike, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Html5Qrcode } from 'html5-qrcode';
-import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { PageHeader } from '@/components/PageHeader';
+import { setRideRole, type RideRole } from '@/features/pillion';
+import { cn } from '@/lib/utils';
 
 export default function JoinConvoy() {
   const navigate = useNavigate();
   const { joinConvoy } = useConvoyState();
   const [code, setCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
+  const [role, setRole] = useState<RideRole>('operator');
   const [showScanner, setShowScanner] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = 'qr-scanner';
@@ -35,6 +38,7 @@ export default function JoinConvoy() {
     try {
       const success = await joinConvoy(joinCode);
       if (success) {
+        setRideRole(role);
         toast.success('Joined convoy successfully');
         navigate('/lobby');
       }
@@ -146,6 +150,36 @@ export default function JoinConvoy() {
 
         {/* Input and buttons - right side in landscape */}
         <div className="w-full max-w-xs space-y-3 landscape:flex-1 landscape:max-w-xs">
+          {/* Riding the bike, or on the back of it */}
+          <div>
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-card border border-border" role="radiogroup" aria-label="Joining as">
+              {([
+                { id: 'operator', label: 'Operator', Icon: Bike },
+                { id: 'pillion', label: 'Passenger', Icon: UserRound },
+              ] as const).map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={role === id}
+                  onClick={() => setRole(id)}
+                  className={cn(
+                    'h-10 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors',
+                    role === id ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-secondary',
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center mt-1.5">
+              {role === 'pillion'
+                ? 'On the back: voice, waves and rescue alerts. No map or stats.'
+                : 'Riding: map, stats and the full ride screen.'}
+            </p>
+          </div>
+
           <Input
             type="text"
             value={code}
