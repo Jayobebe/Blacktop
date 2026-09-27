@@ -17,6 +17,8 @@ export interface ProximityState {
   /** Set while a pair/join/merge is being carried out. */
   busy: string | null;
   merge: MergeRecord | null;
+  /** Handshake panel on the map: the nearby list, or an incoming request. */
+  panel: 'list' | 'request' | null;
 }
 
 const SNOOZE_KEY = 'blacktop_prox_snoozed';
@@ -51,6 +53,7 @@ let state: ProximityState = {
   outgoing: null,
   busy: null,
   merge: read<MergeRecord | null>(MERGE_KEY, null),
+  panel: null,
 };
 
 const listeners = new Set<() => void>();

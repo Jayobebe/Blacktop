@@ -1,6 +1,7 @@
 export { useProximity } from './hooks/useProximity';
 export { useConvoyMergeSync, announceMergeToConvoy } from './hooks/useConvoyMergeSync';
-export { ProximityPrompts, MergeBadge } from './components/ProximityPrompts';
+export { HandshakeButton } from './components/HandshakeButton';
+export { MergeBadge } from './components/MergeBadge';
 export { useProximityState, getBlocked, clearBlocked } from './lib/proximityStore';
 export { getMergeControls } from './lib/controls';
 export type { ConvoyActions } from './lib/controls';

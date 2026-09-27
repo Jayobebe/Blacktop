@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary, useSoloRoute, clearSoloRoute } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState, useRegroupListener, getConvoySnapshot } from '@/features/convoy';
-import { useProximity, useConvoyMergeSync, ProximityPrompts, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
+import { useProximity, useConvoyMergeSync, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
 import { attachRideToConvoy } from '@/features/ride';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
 import { useNextWaypoint } from '@/features/waypoints';
@@ -827,8 +827,6 @@ export default function ActiveRide() {
       "h-dvh max-h-dvh overflow-y-auto flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300",
       settings.carDisplayEnabled && orientation === 'landscape' && "car-display"
     )}>
-      <ProximityPrompts convoy={convoy} />
-
       {/* Rescue Alerts (every convoy member) */}
       <RescueAlert
         requests={rescueRequests}

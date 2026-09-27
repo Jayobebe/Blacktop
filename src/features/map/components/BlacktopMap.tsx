@@ -41,7 +41,7 @@ import {
   setSoloRoute,
 } from "@/features/ride";
 import { useConvoyMembers, useConvoyState, ConvoyStatusBar } from "@/features/convoy";
-import { useProximityState, MergeBadge, getMergeControls, ALERT_RADIUS_M } from "@/features/proximity";
+import { useProximityState, MergeBadge, HandshakeButton, getMergeControls, ALERT_RADIUS_M } from "@/features/proximity";
 import { useSpeakingUsers } from "@/features/voice";
 import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
@@ -2389,6 +2389,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         </div>
       </div>
+
+      {/* Nearby riders (opt-in): list + invites behind one button, stacked
+          above the overlay's Ride/Close button in the bottom-right corner. */}
+      <HandshakeButton convoy={convoy} className="absolute bottom-16 right-3 z-30" />
 
       {/* Rescue button — available while the map overlay covers ActiveRide. */}
       {rescue.canRequest && (

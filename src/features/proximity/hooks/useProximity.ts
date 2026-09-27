@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { haptics } from '@/lib/haptics';
+import { openBlacktopMap } from '@/features/map';
 import type { ConvoyState } from '@/types/convoy';
 import { ALERT_RADIUS_M, DWELL_MS, VISIBLE_RADIUS_M, cellKey, cellOf, distanceM, neighbourhood } from '../lib/geo';
-import { getProximityState, isBlocked, setProximityState } from '../lib/proximityStore';
+import { getProximityState, isBlocked, isSnoozed, setProximityState, snoozeParty } from '../lib/proximityStore';
 import { MAX_MERGED_RIDERS, registerProximityControls, type ConvoyActions } from '../lib/controls';
 import type { Invite, InviteKind, MergeRecord, NearbyParty, NearbyRider, RiderBeacon } from '../types';
 
@@ -128,7 +129,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
         if (!b?.userId || b.userId === uid) continue;
         if (now - b.at > BEACON_STALE_MS) continue;
         if (c.id && b.convoyId === c.id) continue; // my own convoy
-        if (isBlocked(b.userId)) continue;
+        if (isBlocked(b.userId) || (b.leaderId && isBlocked(b.leaderId))) continue;
         const prev = latest.get(b.userId);
         if (!prev || prev.at < b.at) latest.set(b.userId, b);
       }
@@ -171,6 +172,22 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
     for (const k of [...closeSinceRef.current.keys()]) if (!seenClose.has(k)) closeSinceRef.current.delete(k);
 
     parties.sort((a, b) => a.distanceM - b.distanceM);
+
+    // Nudge once when a rider has stuck close for a while (then quiet for 30 min).
+    const canAct = !c.id || c.isLeader;
+    const st = getProximityState();
+    if (canAct && !st.busy && !st.incoming && !st.outgoing) {
+      const ready = parties.find((p) => p.closeSince !== null && now - p.closeSince >= DWELL_MS && !isSnoozed(p.key));
+      if (ready) {
+        snoozeParty(ready.key);
+        haptics.light();
+        toast(ready.kind === 'convoy' ? `${ready.contactName}'s convoy is riding near you` : `${ready.contactName} is riding near you`, {
+          description: 'Tap the handshake to invite them.',
+          action: { label: 'View', onClick: () => { openBlacktopMap(); setProximityState({ panel: 'list' }); } },
+        });
+      }
+    }
+
     setProximityState({
       riders: all.filter((r) => r.distanceM <= VISIBLE_RADIUS_M).sort((a, b) => a.distanceM - b.distanceM),
       parties,
@@ -280,17 +297,30 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
         else awaitGo(inv.fromId, inv.fromName);
         return;
       }
-      if (st.incoming) return; // one prompt at a time; they can ask again
+      if (st.incoming) return; // one request at a time; they can ask again
       haptics.heavy();
-      setProximityState({ incoming: inv });
+      // Time the request on this device's clock (sender clocks drift).
+      setProximityState({ incoming: { ...inv, sentAt: Date.now() }, panel: st.panel === 'list' ? 'request' : st.panel });
+      const what = inv.kind === 'merge' ? 'wants to merge convoys' : inv.kind === 'pair' ? 'wants to ride together' : 'sent a convoy request';
+      toast(`${inv.fromName} ${what}`, {
+        id: `prox-invite-${inv.id}`,
+        duration: INVITE_TTL_MS,
+        action: { label: 'View', onClick: () => { openBlacktopMap(); setProximityState({ panel: 'request' }); } },
+      });
       setTimer('incoming', INVITE_TTL_MS, () => {
-        if (getProximityState().incoming?.id === inv.id) setProximityState({ incoming: null });
+        if (getProximityState().incoming?.id === inv.id) {
+          toast.dismiss(`prox-invite-${inv.id}`);
+          setProximityState({ incoming: null, panel: getProximityState().panel === 'request' ? null : getProximityState().panel });
+        }
       });
       return;
     }
 
     if (msg.type === 'cancel') {
-      if (st.incoming?.id === msg.inviteId) setProximityState({ incoming: null });
+      if (st.incoming?.id === msg.inviteId) {
+        toast.dismiss(`prox-invite-${msg.inviteId}`);
+        setProximityState({ incoming: null, panel: st.panel === 'request' ? null : st.panel });
+      }
       return;
     }
 
@@ -488,7 +518,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
           toast.error('Still connecting to nearby riders');
           return;
         }
-        setProximityState({ outgoing: { ...invite, toName: party.contactName } });
+        setProximityState({ outgoing: { ...invite, toName: party.contactName }, panel: null });
         setTimer('outgoing', INVITE_TTL_MS, () => {
           const out = getProximityState().outgoing;
           if (out?.id === invite.id) {
@@ -510,7 +540,8 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
         if (!inv || !live.current.userId) return;
         clearTimer('incoming');
         send({ type: 'answer', to: inv.fromId, from: live.current.userId, inviteId: inv.id, accept: false });
-        setProximityState({ incoming: null });
+        toast.dismiss(`prox-invite-${inv.id}`);
+        setProximityState({ incoming: null, panel: null });
       },
     });
 
@@ -519,6 +550,8 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       const uid = live.current.userId;
       if (!inv || !uid) return;
       clearTimer('incoming');
+      toast.dismiss(`prox-invite-${inv.id}`);
+      setProximityState({ panel: null });
       if (iAmHost(inv.kind, inv.fromId, inv.fromMemberCount, false)) {
         void runHost(inv.kind, inv.id, inv.fromId, inv.fromName);
       } else {
