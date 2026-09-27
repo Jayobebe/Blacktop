@@ -15,14 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, RefreshCw, CheckCircle2, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { checkForAppUpdate, applyAppUpdate, onUpdateAvailable } from '@/pwa';
 import { formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { NavigationApp } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
@@ -55,7 +54,6 @@ export default function Settings() {
   const [editedName, setEditedName] = useState(profile.name);
   
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'up-to-date' | 'applying'>('idle');
   const { enabled: demoEnabled } = useDemoMode();
   const [demoActionRevealed, setDemoActionRevealed] = useState(false);
   const [demoHoldProgress, setDemoHoldProgress] = useState(0);
@@ -96,39 +94,6 @@ export default function Settings() {
   };
 
   useEffect(() => () => cancelDemoHold(), []);
-
-  useEffect(() => {
-    const off = onUpdateAvailable((available) => {
-      if (available) setUpdateState('available');
-    });
-    return () => { off(); };
-  }, []);
-
-  const handleCheckUpdate = async () => {
-    if (updateState === 'available') {
-      setUpdateState('applying');
-      try {
-        await applyAppUpdate();
-      } catch {
-        toast.error('Could not apply update. Try again.');
-        setUpdateState('available');
-      }
-      return;
-    }
-    setUpdateState('checking');
-    try {
-      const found = await checkForAppUpdate();
-      if (found) {
-        setUpdateState('available');
-      } else {
-        setUpdateState('up-to-date');
-        setTimeout(() => setUpdateState('idle'), 2500);
-      }
-    } catch {
-      toast.error('Could not check for updates.');
-      setUpdateState('idle');
-    }
-  };
 
   useEffect(() => {
     const tipStatus = searchParams.get('tip');
@@ -936,30 +901,6 @@ export default function Settings() {
           </p>
         </CollapsibleSection>
 
-        {/* App Updates Section */}
-        <CollapsibleSection icon={RefreshCw} label="App Updates" delayClass="delay-300">
-          <p className="text-xs text-muted-foreground mb-3">
-            Pull the latest version without reinstalling. Your rides, garage and settings stay safe — only the app shell is refreshed.
-          </p>
-          <Button
-            onClick={handleCheckUpdate}
-            disabled={updateState === 'checking' || updateState === 'applying'}
-            variant={updateState === 'available' ? 'default' : 'outline'}
-            className={cn(
-              "w-full h-11 font-semibold touch-target rounded-xl",
-              updateState === 'available' && "bg-accent hover:bg-accent/90 text-accent-foreground"
-            )}
-          >
-            {updateState === 'checking' && (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Checking…</>)}
-            {updateState === 'applying' && (<><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Updating…</>)}
-            {updateState === 'available' && (<><RefreshCw className="w-4 h-4 mr-2" />Update available — tap to install</>)}
-            {updateState === 'up-to-date' && (<><CheckCircle2 className="w-4 h-4 mr-2" />You're up to date</>)}
-            {updateState === 'idle' && (<><RefreshCw className="w-4 h-4 mr-2" />Check for updates</>)}
-          </Button>
-          <p className="text-[10px] text-muted-foreground text-center mt-2">
-            Tip: keep the installed app — your stats live on your device.
-          </p>
-        </CollapsibleSection>
         </div>
 
 
