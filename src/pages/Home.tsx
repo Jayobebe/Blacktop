@@ -195,7 +195,8 @@ export default function Home() {
       };
 
       const defs = document.createElementNS(svgNS, 'defs');
-      const arcs = topRects.map((rect, i) => {
+      // Every tile carries an accent border now, so every tile gets its arc.
+      const arcs = [...topRects, joinRect].map((rect, i) => {
         const id = `bt-top-clip-${i}`;
         defs.appendChild(mkClipRect(id, rect.left - colRect.left, rect.top - colRect.top, rect.width, rect.height));
         return mkCircle(id);
@@ -250,19 +251,20 @@ export default function Home() {
       {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
 
       {/* Header */}
-      <header className="flex items-center justify-between mb-4 landscape:mb-2 animate-fade-in">
-        <div>
+      {/* Header: name · crash rescue status (fills the gap; full span without radio) · radio */}
+      <header className="flex items-center gap-3 mb-4 landscape:mb-2 animate-fade-in">
+        <div className="min-w-0 max-w-[45%] shrink-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
             Welcome back
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{profile.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
+        </div>
+        {/* Riders who said no to crash rescue in setup aren't nagged about it. */}
+        <div className="flex-1 min-w-0 flex justify-end">
+          {(settings.autoRescueEnabled || !exp.configured) && <SafetyStatusCard compact />}
         </div>
         <HomeRadioDock />
       </header>
-
-      {/* Crash rescue status */}
-      {/* Riders who said no to crash rescue in setup aren't nagged about it. */}
-      {(settings.autoRescueEnabled || !exp.configured) && <SafetyStatusCard className="mb-3 landscape:mb-2 animate-fade-in" />}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
@@ -322,7 +324,7 @@ export default function Home() {
               secondaryTile.onClick();
             }}
             className={cn(
-              'pressable flex-1 bg-card/50 hover:bg-secondary border border-border/30 hover:border-border rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
+              'pressable flex-1 bg-card/50 border-[3px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
               // The globe sits over this tile's centre in landscape, so the label moves right of it.
               'landscape:justify-end landscape:pr-8'
             )}

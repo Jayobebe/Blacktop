@@ -38,7 +38,19 @@ const LEVELS: Record<SafetyLevel, { icon: typeof ShieldCheck; title: string; hin
 };
 
 /** Home-screen strip showing whether crash rescue would work right now. Tap opens the quick safety panel. */
-export function SafetyStatusCard({ className }: { className?: string }) {
+/** `compact`: fits beside the name in the Home header (shorter title, tighter padding). */
+const COMPACT_TITLES: Record<SafetyLevel, string> = {
+  active: 'Rescue on',
+  off: 'Rescue off',
+  permissions: 'Rescue paused',
+};
+const COMPACT_HINTS: Record<SafetyLevel, string> = {
+  active: 'Tap for details',
+  off: 'Tap to turn on',
+  permissions: 'Needs location',
+};
+
+export function SafetyStatusCard({ className, compact = false }: { className?: string; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const status = useSafetyStatus();
   const { showGroup } = useExperience();
@@ -59,17 +71,22 @@ export function SafetyStatusCard({ className }: { className?: string }) {
           setOpen(true);
         }}
         className={cn(
-          'pressable w-full flex items-center gap-3 px-3 py-2 rounded-2xl border text-left touch-target',
+          'pressable w-full flex items-center text-left touch-target border',
+          compact ? 'gap-2 pl-2.5 pr-3 h-12 rounded-2xl' : 'gap-3 px-3 py-2 rounded-2xl',
           bg,
           className
         )}
       >
-        <Icon className={cn('w-5 h-5 shrink-0', tone)} />
+        <Icon className={cn('shrink-0', compact ? 'w-[18px] h-[18px]' : 'w-5 h-5', tone)} />
         <div className="flex-1 min-w-0">
-          <p className={cn('text-sm font-semibold leading-tight', tone)}>{title}</p>
-          <p className="text-[11px] text-muted-foreground truncate landscape:hidden">{hint}</p>
+          <p className={cn('font-semibold leading-tight truncate', compact ? 'text-[13px]' : 'text-sm', tone)}>
+            {compact ? COMPACT_TITLES[status.level] : title}
+          </p>
+          <p className={cn('text-muted-foreground truncate', compact ? 'text-[11px]' : 'text-[11px] landscape:hidden')}>
+            {compact ? COMPACT_HINTS[status.level] : hint}
+          </p>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        {!compact && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
