@@ -1021,6 +1021,51 @@ export type Database = {
         }
         Relationships: []
       }
+      speedshop_suggestions: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      speedshop_votes: {
+        Row: {
+          interest: string
+          item_id: string
+          price_band: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          interest: string
+          item_id: string
+          price_band?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          interest?: string
+          item_id?: string
+          price_band?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       world_locations: {
         Row: {
           last_seen: string
@@ -1417,6 +1462,16 @@ export type Database = {
         Returns: undefined
       }
       shares_convoy_with: { Args: { _other_user_id: string }; Returns: boolean }
+      speedshop_results: {
+        Args: never
+        Returns: {
+          item_id: string
+          maybe: number
+          no: number
+          top_price: string
+          yes: number
+        }[]
+      }
       transfer_convoy_leadership: {
         Args: { _convoy_id: string; _new_leader_id: string }
         Returns: boolean
