@@ -877,6 +877,45 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          categories: string[]
+          created_at: string
+          endpoint: string
+          id: string
+          last_sent_at: string | null
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          categories?: string[]
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_sent_at?: string | null
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          categories?: string[]
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_sent_at?: string | null
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       world_locations: {
         Row: {
           last_seen: string
@@ -1078,6 +1117,10 @@ export type Database = {
         Args: { _lobby_id: string; _user_id: string }
         Returns: boolean
       }
+      is_push_service_endpoint: {
+        Args: { _endpoint: string }
+        Returns: boolean
+      }
       list_card_drops: {
         Args: {
           _crew_code: string
@@ -1225,10 +1268,24 @@ export type Database = {
       }
       my_card_collection_count: { Args: never; Returns: number }
       profile_count: { Args: never; Returns: number }
+      register_push_subscription: {
+        Args: {
+          _auth: string
+          _categories?: string[]
+          _endpoint: string
+          _p256dh: string
+          _user_agent?: string
+        }
+        Returns: undefined
+      }
       shares_convoy_with: { Args: { _other_user_id: string }; Returns: boolean }
       transfer_convoy_leadership: {
         Args: { _convoy_id: string; _new_leader_id: string }
         Returns: boolean
+      }
+      unregister_push_subscription: {
+        Args: { _endpoint: string }
+        Returns: undefined
       }
     }
     Enums: {
