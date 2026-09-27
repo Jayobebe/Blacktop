@@ -4,8 +4,8 @@ import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle, MapPin, Mic, BarChart2 } from 'lucide-react';
-import { SetupFlow, SetupShell, useExperience } from '@/features/experience';
+import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
+import { SetupFlow, SetupShell, WelcomeScreen, useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 
 // consent → vehicles → mode → style → care deck → preview → name
@@ -48,59 +48,7 @@ export default function Onboarding() {
   };
 
   if (step === 'landing') {
-    return (
-      <div className="relative min-h-dvh flex flex-col items-center justify-center p-6 safe-top safe-bottom gap-8 overflow-hidden page-in-fade">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[60%] setup-grid" />
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[160%] h-80 rounded-[100%] bg-accent/15 blur-3xl" />
-
-        {/* Hero */}
-        <div className="relative text-center max-w-sm animate-slide-up">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-3">Blacktop</p>
-          <h1 className="text-4xl font-semibold tracking-tight leading-[1.05] mb-3">
-            Every road.<br />Your way.
-          </h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Live tracking, voice chat, crash rescue.<br />No account, no subscription.
-          </p>
-        </div>
-
-        {/* Feature list */}
-        <div className="relative w-full max-w-sm space-y-2.5 stagger-in">
-          {[
-            { icon: MapPin, label: 'Live convoy tracking', desc: "See every rider's position in real time" },
-            { icon: Mic, label: 'In-ride voice chat', desc: 'Encrypted, never stored on a server' },
-            { icon: AlertTriangle, label: 'Crash rescue', desc: 'Detects a fall and alerts your group' },
-            { icon: BarChart2, label: 'Stats that stay yours', desc: 'Every run logged privately on your device' },
-          ].map(({ icon: Icon, label, desc }, i) => (
-            <div key={label} style={{ ['--i' as string]: i + 1 }} className="flex items-center gap-4 bg-card/50 backdrop-blur-sm rounded-2xl p-3.5 border border-border/50">
-              <div className="rounded-xl bg-accent/10 p-2.5">
-                <Icon className="w-4 h-4 text-accent" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">{label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* CTAs */}
-        <div className="relative w-full max-w-sm space-y-3 animate-slide-up" style={{ animationDelay: '300ms', animationFillMode: 'backwards' }}>
-          <Button onClick={() => go('consent')} className="w-full h-14 text-base font-semibold rounded-2xl touch-target">
-            Set up my Blacktop
-            <ChevronRight className="w-5 h-5 ml-1" />
-          </Button>
-          <div className="flex items-center justify-center gap-4 text-xs">
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <Shield className="w-3.5 h-3.5 text-accent" /> No ads · No tracking
-            </span>
-            <Link to="/demo" className="text-accent underline-offset-4 hover:underline">
-              See it in action →
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <WelcomeScreen onStart={() => go('consent')} />;
   }
 
   if (step === 'consent') {

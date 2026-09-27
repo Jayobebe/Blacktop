@@ -47,7 +47,8 @@ export function BadgeWalletPanel() {
         {cardEconomy && <span className="ml-auto text-xs text-muted-foreground">{w.balance} pts banked</span>}
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      {/* Three per row; a partial last row is centred (the visible set depends on the rider's setup). */}
+      <div className="flex flex-wrap justify-center gap-2">
         {BADGE_ORDER.filter(t => t !== 'fallback' && badgeVisible(t, vis)).map((type, index) => {
           const info = BADGE_INFO[type];
           const count = w.counts[type] || 0;
@@ -56,7 +57,7 @@ export function BadgeWalletPanel() {
             <div
               key={type}
               className={cn(
-                'flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
+                'basis-[calc((100%-1rem)/3)] flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
                 negative
                   ? 'bg-stone-500/10 border-stone-500/30'
                   : 'bg-accent/10 border-accent/30',
@@ -92,7 +93,7 @@ export function BadgeWalletPanel() {
         {cardEconomy && (
         <div
           className={cn(
-            'flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
+            'basis-[calc((100%-1rem)/3)] flex flex-col items-center p-3 rounded-2xl border transition-all animate-scale-in text-center',
             'bg-accent/10 border-accent/30',
             w.kickbacks === 0 && 'opacity-50'
           )}

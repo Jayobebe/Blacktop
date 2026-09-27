@@ -1,4 +1,5 @@
 export { CareList } from './components/CareList';
+export { WelcomeScreen } from './components/WelcomeScreen';
 export { MotorcycleIcon, EBikeIcon, ScooterIcon } from './components/VehicleIcons';
 export { SetupFlow } from './components/setup/SetupFlow';
 export { SetupShell } from './components/setup/SetupShell';

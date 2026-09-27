@@ -215,13 +215,17 @@ export default function World() {
             </span>
           </div>
         </div>
-        {/* Scroll hint */}
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
-          <span className="text-[9px] tracking-[0.25em] uppercase text-white/40">scroll for collection</span>
-        </div>
+        {/* Scroll hint — only when there's a collection below to scroll to */}
+        {settings.collectiblesEnabled && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
+            <span className="text-[9px] tracking-[0.25em] uppercase text-white/40">scroll for collection</span>
+          </div>
+        )}
       </div>
 
-      {/* Card drops — who can find the cards you plant on the map */}
+      {/* Card drops — who can find the cards you plant on the map. Planting needs your
+          own card (minted from a garage vehicle), so it's only for collectors with a garage. */}
+      {settings.collectiblesEnabled && settings.garageEnabled && (
       <div className="px-4 pb-4 flex-shrink-0">
         <div className="rounded-2xl border border-border/40 bg-card/60 p-4 space-y-3">
           <div className="flex items-baseline justify-between">
@@ -276,6 +280,7 @@ export default function World() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Card collection — full-height vertical snap carousel */}
       {settings.collectiblesEnabled && (

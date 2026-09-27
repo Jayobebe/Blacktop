@@ -54,7 +54,7 @@ export default function DemoShowcase() {
       id: 'intro',
       title: 'BLACKTOP',
       subtitle: 'Ride Logging & Convoy Communication',
-      description: 'Privacy-first companion for motorcyclists and drivers. No sign-up required. Your ride history is stored on your device.',
+      description: 'Privacy-first ride companion for motorcycles, cars, bikes and scooters. No sign-up required. Your ride history is stored on your device.',
       icon: Shield,
       color: 'accent',
       mockup: <IntroMockup />
@@ -68,7 +68,7 @@ export default function DemoShowcase() {
       color: 'accent',
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />,
       cards: [
-        { icon: Users, label: 'Convoy Mode', text: 'Up to 8 riders synced in real time via a shared code.' },
+        { icon: Users, label: 'Convoy Mode', text: 'Every rider synced in real time via a shared code.' },
         { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute, disconnect and Bluetooth intercoms.' },
         { icon: Gauge, label: 'Solo Ride', text: 'Same tracking, no group needed — with Discord rescue on tap.' },
         { icon: QrCode, label: 'QR Join', text: 'Scan the lobby QR to jump straight into a convoy.' },

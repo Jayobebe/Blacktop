@@ -319,7 +319,8 @@ export default function Settings() {
         </section>
 
         {/* Settings grid */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Single column: sections expand in place, so there are never half-empty rows. */}
+        <div className="flex flex-col gap-3">
           {/* Demo */}
           <CollapsibleSection
             icon={Play}
