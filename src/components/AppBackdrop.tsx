@@ -14,8 +14,8 @@ import { cn } from '@/lib/utils';
  * `paused` freezes the blobs (active rides, open map) to save battery.
  */
 
-const ROWS = 34;
-const WORDS_PER_ROW = 9;
+const ROWS = 110;
+const WORDS_PER_ROW = 30;
 
 export const AppBackdrop = memo(function AppBackdrop({ paused = false }: { paused?: boolean }) {
   return (

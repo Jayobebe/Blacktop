@@ -321,7 +321,7 @@ export default function Settings() {
 
         {/* Settings grid */}
         {/* Single column: sections expand in place, so there are never half-empty rows. */}
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {/* Demo */}
           <CollapsibleSection
             icon={Play}
@@ -872,7 +872,7 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Privacy Section */}
-        <CollapsibleSection icon={Shield} label="Privacy" delayClass="delay-250" className="landscape:hidden">
+        <CollapsibleSection icon={Shield} label="Privacy" delayClass="delay-250">
           <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li>• Ride history stored locally on device</li>
             <li>• No background tracking unless ride is active</li>
@@ -903,7 +903,7 @@ export default function Settings() {
           </p>
         </CollapsibleSection>
 
-        </div>
+        
 
 
         {/* Blacktop World Opt-In */}
@@ -917,12 +917,14 @@ export default function Settings() {
         <CollapsibleSection icon={Heart} label="Pay Up" delayClass="delay-300">
           <NimiqTipCard bare />
         </CollapsibleSection>
+        </div>
 
         {/* Burn — last, in the destructive colour */}
         <CollapsibleSection
           icon={Flame}
           label="Burn all data"
           delayClass="delay-300"
+          className="w-full min-h-0 landscape:min-h-0 flex-row items-center"
           labelClassName="text-[hsl(var(--burn))]"
           iconClassName="text-[hsl(var(--burn))]"
         >

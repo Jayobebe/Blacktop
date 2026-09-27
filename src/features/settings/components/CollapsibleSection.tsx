@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { ChevronDown, type LucideIcon } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { haptics } from '@/lib/haptics';
 
 interface CollapsibleSectionProps {
   icon?: LucideIcon;
@@ -12,11 +14,18 @@ interface CollapsibleSectionProps {
   labelClassName?: string;
   iconClassName?: string;
   rightElement?: ReactNode;
-  /** Short value shown before the chevron (e.g. "On"), like a native settings row. */
+  /** Short value shown on the tile (e.g. "On"). */
   status?: ReactNode;
+  /** One line under the title inside the panel. */
+  description?: ReactNode;
   onHeaderClick?: () => void;
 }
 
+/**
+ * A compact Settings tile. Tapping opens the section in a frosted panel that
+ * slides up from the bottom, so the grid never reflows (no half-empty rows)
+ * and the page stays short. Action tiles (`onHeaderClick`) just run the action.
+ */
 export function CollapsibleSection({
   icon: Icon,
   label,
@@ -28,58 +37,66 @@ export function CollapsibleSection({
   iconClassName,
   rightElement,
   status,
+  description,
   onHeaderClick,
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
 
-  const isActionHeader = Boolean(onHeaderClick);
-
   return (
-    <section
-      className={cn(
-        'bg-card rounded-[20px] border border-white/[0.06] animate-slide-up overflow-hidden',
-        delayClass,
-        className,
-      )}
-    >
+    <>
       <button
         type="button"
-        aria-expanded={isActionHeader ? undefined : open}
+        aria-haspopup={onHeaderClick ? undefined : 'dialog'}
         onClick={() => {
-          if (onHeaderClick) {
-            onHeaderClick();
-            return;
-          }
-          setOpen((v) => !v);
+          haptics.tick();
+          if (onHeaderClick) onHeaderClick();
+          else setOpen(true);
         }}
-        className="pressable w-full flex items-center gap-3 px-4 landscape:px-3 h-[58px] landscape:h-12 text-left"
+        className={cn(
+          'pressable group relative bg-card rounded-[20px] border border-white/[0.06] p-3.5 text-left animate-slide-up',
+          'flex flex-col justify-between gap-3 min-h-[92px] landscape:min-h-[76px]',
+          delayClass,
+          className,
+        )}
       >
-        {Icon && (
-          <span className="w-8 h-8 rounded-[10px] bg-white/[0.07] flex items-center justify-center shrink-0">
-            <Icon className={cn('w-[17px] h-[17px] text-foreground/80', iconClassName)} strokeWidth={1.9} />
-          </span>
-        )}
-        <p className={cn('text-[15px] font-medium text-foreground flex-1 truncate', labelClassName)}>{label}</p>
-        {status && <span className="text-[14px] text-muted-foreground shrink-0">{status}</span>}
-        {rightElement ? (
-          <span className="shrink-0">{rightElement}</span>
-        ) : (
-          <ChevronDown
-            className={cn(
-              'w-[18px] h-[18px] text-muted-foreground transition-transform duration-300 ease-spring shrink-0',
-              open && 'rotate-180',
-            )}
-          />
-        )}
-      </button>
-      {!isActionHeader && children && (
-        <div className={cn('grid transition-[grid-template-rows] duration-300 ease-spring', open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-          {/* inert while closed: hidden content must not take focus or be read out */}
-          <div className="overflow-hidden" {...(!open ? { inert: '' as unknown as boolean } : {})}>
-            <div className="px-4 pb-4 pt-1 landscape:px-3 landscape:pb-3 border-t border-white/[0.06]">{children}</div>
-          </div>
+        <div className="flex items-start justify-between w-full">
+          {Icon && (
+            <span className="w-9 h-9 rounded-xl bg-white/[0.07] flex items-center justify-center shrink-0">
+              <Icon className={cn('w-[18px] h-[18px] text-foreground/85', iconClassName)} strokeWidth={1.9} />
+            </span>
+          )}
+          {rightElement ??
+            (status ? (
+              <span className="text-[12px] text-muted-foreground mt-1">{status}</span>
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground/70 mt-1 transition-transform group-hover:translate-x-0.5" />
+            ))}
         </div>
+        <p className={cn('text-[15px] font-medium leading-tight text-foreground', labelClassName)}>{label}</p>
+      </button>
+
+      {!onHeaderClick && (
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="bottom" className="rounded-t-[28px] max-h-[88dvh] overflow-y-auto safe-bottom px-5 pt-5 pb-6">
+            <SheetHeader className="text-left mb-4">
+              <SheetTitle className="flex items-center gap-2.5 text-[19px]">
+                {Icon && (
+                  <span className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">
+                    <Icon className={cn('w-[18px] h-[18px]', iconClassName)} strokeWidth={1.9} />
+                  </span>
+                )}
+                <span className={labelClassName}>{label}</span>
+              </SheetTitle>
+              {description ? (
+                <SheetDescription>{description}</SheetDescription>
+              ) : (
+                <SheetDescription className="sr-only">{label} settings</SheetDescription>
+              )}
+            </SheetHeader>
+            {children}
+          </SheetContent>
+        </Sheet>
       )}
-    </section>
+    </>
   );
 }
