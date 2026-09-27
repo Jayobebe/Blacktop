@@ -14,7 +14,7 @@ export interface RescueRequest {
 }
 
 // Minimum gap between rescue requests from the same device. Prevents a member
-// from hammering the leader's alert panel and Discord webhook by repeatedly
+// from hammering the convoy's alert panels and Discord webhook by repeatedly
 // tapping the rescue button or via a script.
 const RESCUE_COOLDOWN_MS = 30_000; // 30 seconds
 
@@ -33,6 +33,18 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     channel
       .on('broadcast', { event: 'rescue_request' }, async (payload) => {
         const request = payload.payload as RescueRequest;
+        if (request.userId === userId) return;
+
+        // Verify sender is actually in this convoy before surfacing anything.
+        // Realtime broadcast channels are open to any authenticated user who knows
+        // the channel name, so we must check membership server-side.
+        const { data: member } = await supabase
+          .from('convoy_members')
+          .select('user_id')
+          .eq('convoy_id', convoyId)
+          .eq('user_id', request.userId)
+          .maybeSingle();
+        if (!member) return;
 
         // Everyone in the convoy gets the rescue location so the Blacktop map
         // can draw a secondary (glowing orange) rescue route on top of the
@@ -44,59 +56,46 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
           lng: request.lng,
         });
 
-        if (isLeader) {
-          // Verify sender is actually in this convoy before surfacing the alert.
-          // Realtime broadcast channels are open to any authenticated user who knows
-          // the channel name, so we must check membership server-side.
-          const { data: member } = await supabase
-            .from('convoy_members')
-            .select('user_id')
-            .eq('convoy_id', convoyId)
-            .eq('user_id', request.userId)
-            .maybeSingle();
-          if (!member) return;
-
-          setRescueRequests(prev => {
-            // Avoid duplicates
-            if (prev.some(r => r.userId === request.userId)) {
-              return prev.map(r => r.userId === request.userId ? request : r);
-            }
-            return [...prev, request];
-          });
-          toast.warning(`${request.userName} needs rescue!`, {
-            duration: 10000,
-          });
-        }
+        // Every member is alerted, not just the leader — whoever is closest
+        // can turn back.
+        setRescueRequests(prev => {
+          // Avoid duplicates
+          if (prev.some(r => r.userId === request.userId)) {
+            return prev.map(r => r.userId === request.userId ? request : r);
+          }
+          return [...prev, request];
+        });
+        toast.warning(`${request.userName} needs rescue!`, {
+          duration: 10000,
+        });
       })
       .on('broadcast', { event: 'rescue_acknowledged' }, (payload) => {
         const { requestId, byLeader, riderUserId, riderName } = payload.payload as { requestId: string; byLeader: boolean; riderUserId?: string; riderName?: string };
         clearRescueTarget(riderUserId);
         
-        if (!isLeader && riderUserId === userId) {
-          // Non-leader: their rescue was acknowledged
+        if (riderUserId === userId) {
+          // The rider in trouble: their rescue was acknowledged
           setHasPendingRescue(false);
           if (byLeader) {
             toast.success('Help is on the way! Leader added your location as a waypoint.');
           }
+          return;
         }
-        
-        if (isLeader) {
-          // Leader: remove from list and show confirmation
-          setRescueRequests(prev => prev.filter(r => r.id !== requestId));
-          if (riderName) {
-            toast.success(`Rescue waypoint added for ${riderName}`);
-          }
+
+        // Everyone else: the leader has it in hand, so drop the alert
+        setRescueRequests(prev => prev.filter(r => r.id !== requestId && r.userId !== riderUserId));
+        if (riderName) {
+          toast.success(`Rescue waypoint added for ${riderName}`);
         }
       })
       .on('broadcast', { event: 'rescue_dismissed' }, (payload) => {
-        const { requestId } = payload.payload as { requestId: string };
-        clearRescueTarget();
-        
-        if (!isLeader) {
+        const { requestId, riderUserId } = payload.payload as { requestId: string; riderUserId?: string };
+        clearRescueTarget(riderUserId);
+
+        if (riderUserId === userId) {
           setHasPendingRescue(false);
-        } else {
-          setRescueRequests(prev => prev.filter(r => r.id !== requestId));
         }
+        setRescueRequests(prev => prev.filter(r => r.id !== requestId && (!riderUserId || r.userId !== riderUserId)));
       })
       .subscribe();
 
@@ -105,7 +104,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       channelRef.current = null;
       clearRescueTarget();
     };
-  }, [convoyId, isLeader]);
+  }, [convoyId, userId]);
 
   const sendRescueRequest = useCallback(async (lat: number, lng: number) => {
     if (!convoyId || !userId || !userName || !channelRef.current) return false;
@@ -135,9 +134,9 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
     setHasPendingRescue(true);
     setRescueTarget({ userId, userName, lat, lng });
-    toast.info('Rescue request sent to leader');
+    toast.info('Rescue request sent to your convoy');
 
-    // Fire-and-forget Discord ping to leader's server if configured
+    // Fire-and-forget Discord ping to the convoy's server if configured
     announceRescueToDiscord({ convoyId, riderName: userName, lat, lng });
 
     return true;
@@ -164,17 +163,20 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     setRescueRequests(prev => prev.filter(r => r.id !== requestId));
   }, []);
 
+  // Leader dismissal closes the request for the whole convoy; a member
+  // dismissing only hides the alert on their own screen.
   const dismissRescue = useCallback(async (requestId: string) => {
-    if (!channelRef.current) return;
+    const request = rescueRequests.find(r => r.id === requestId);
+    setRescueRequests(prev => prev.filter(r => r.id !== requestId));
+    if (!isLeader || !channelRef.current) return;
 
+    clearRescueTarget(request?.userId);
     await channelRef.current.send({
       type: 'broadcast',
       event: 'rescue_dismissed',
-      payload: { requestId },
+      payload: { requestId, riderUserId: request?.userId },
     });
-
-    setRescueRequests(prev => prev.filter(r => r.id !== requestId));
-  }, []);
+  }, [isLeader, rescueRequests]);
 
   const cancelRescueRequest = useCallback(async () => {
     if (!channelRef.current || !userId) return;
@@ -182,7 +184,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     await channelRef.current.send({
       type: 'broadcast',
       event: 'rescue_dismissed',
-      payload: { requestId: userId },
+      payload: { requestId: userId, riderUserId: userId },
     });
 
     setHasPendingRescue(false);
@@ -194,12 +196,12 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
   useEffect(() => {
     registerRescueControls({
       hasPending: hasPendingRescue,
-      canRequest: !!convoyId && !isLeader,
+      canRequest: !!convoyId,
       send: sendRescueRequestFromGps,
       cancel: cancelRescueRequest,
     });
     return () => clearRescueControls();
-  }, [convoyId, isLeader, hasPendingRescue, sendRescueRequestFromGps, cancelRescueRequest]);
+  }, [convoyId, hasPendingRescue, sendRescueRequestFromGps, cancelRescueRequest]);
 
   return {
     rescueRequests,

@@ -1,15 +1,18 @@
-import { MapPin, UserPlus, X } from 'lucide-react';
+import { Map as MapIcon, MapPin, UserPlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RescueRequest } from '@/features/rescue';
 import { cn } from '@/lib/utils';
 
 interface RescueAlertProps {
   requests: RescueRequest[];
+  /** Leader adds the rider as a waypoint; everyone else can view the rescue route. */
+  isLeader: boolean;
   onAddWaypoint: (request: RescueRequest) => void;
+  onShowOnMap: (request: RescueRequest) => void;
   onDismiss: (requestId: string) => void;
 }
 
-export function RescueAlert({ requests, onAddWaypoint, onDismiss }: RescueAlertProps) {
+export function RescueAlert({ requests, isLeader, onAddWaypoint, onShowOnMap, onDismiss }: RescueAlertProps) {
   if (requests.length === 0) return null;
 
   return (
@@ -29,18 +32,33 @@ export function RescueAlert({ requests, onAddWaypoint, onDismiss }: RescueAlertP
               </div>
               <div>
                 <p className="font-bold text-lg">{request.userName} needs rescue!</p>
-                <p className="text-sm opacity-80 mt-1">Add them as a waypoint to navigate to their location</p>
+                <p className="text-sm opacity-80 mt-1">
+                  {isLeader
+                    ? 'Add them as a waypoint to navigate to their location'
+                    : 'Their location is marked on the map'}
+                </p>
               </div>
               
               <div className="flex gap-3 mt-2 w-full">
-                <Button
-                  size="lg"
-                  onClick={() => onAddWaypoint(request)}
-                  className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
-                >
-                  <UserPlus className="w-5 h-5 mr-2" />
-                  Add Waypoint
-                </Button>
+                {isLeader ? (
+                  <Button
+                    size="lg"
+                    onClick={() => onAddWaypoint(request)}
+                    className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
+                  >
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    Add Waypoint
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={() => onShowOnMap(request)}
+                    className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
+                  >
+                    <MapIcon className="w-5 h-5 mr-2" />
+                    Show on map
+                  </Button>
+                )}
                 <Button
                   size="lg"
                   variant="ghost"

@@ -665,7 +665,7 @@ export default function ActiveRide() {
     const gpsPoints = rideState.gpsPoints;
     const fire = async (lat: number, lng: number) => {
       if (rideState.isConvoyMode) {
-        // Convoy: broadcast to leader (already pings Discord via useRescue)
+        // Convoy: broadcast to every member (already pings Discord via useRescue)
         await sendRescueRequest(lat, lng);
       } else {
         // Solo: Discord-only
@@ -790,14 +790,18 @@ export default function ActiveRide() {
       "h-dvh max-h-dvh overflow-y-auto flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300",
       settings.carDisplayEnabled && orientation === 'landscape' && "car-display"
     )}>
-      {/* Rescue Alerts (Leader only) */}
-      {convoy.isLeader && (
-        <RescueAlert
-          requests={rescueRequests}
-          onAddWaypoint={handleAddRescueWaypoint}
-          onDismiss={dismissRescue}
-        />
-      )}
+      {/* Rescue Alerts (every convoy member) */}
+      <RescueAlert
+        requests={rescueRequests}
+        isLeader={convoy.isLeader}
+        onAddWaypoint={handleAddRescueWaypoint}
+        onShowOnMap={(request) => {
+          // Hide it locally; the map draws the rescue route to their location.
+          void dismissRescue(request.id);
+          openBlacktopMap();
+        }}
+        onDismiss={dismissRescue}
+      />
 
       {/* Auto-rescue crash check */}
       {crashPromptOpen && (

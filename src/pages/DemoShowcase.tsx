@@ -120,7 +120,7 @@ export default function DemoShowcase() {
       color: 'destructive',
       mockup: <RescueMockup />,
       cards: [
-        { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the leader as a waypoint.' },
+        { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the whole convoy.' },
         { icon: Shield, label: 'Auto-Rescue', text: 'High-G impact plus a stop triggers a 5-minute check-in.' },
         { icon: MessageSquare, label: 'Discord', text: 'Webhook announces convoy starts and broadcasts rescue pings.' },
       ],

@@ -58,7 +58,7 @@ export function SafetyStatusCard({ className, compact = false }: { className?: s
   const hint =
     status.level === 'active'
       ? showGroup
-        ? 'Alerts your convoy leader, or Discord on solo rides'
+        ? 'Alerts your whole convoy, or Discord on solo rides'
         : 'Alerts your Discord server if you crash'
       : LEVELS[status.level].hint;
 
@@ -170,7 +170,7 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
         {showGroup && (
           <div className="flex items-center gap-3">
             <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-            <p className="text-sm flex-1">Convoy leader</p>
+            <p className="text-sm flex-1">Everyone in the convoy</p>
             <span className="text-[11px] text-muted-foreground">On group {terms.rides}</span>
           </div>
         )}

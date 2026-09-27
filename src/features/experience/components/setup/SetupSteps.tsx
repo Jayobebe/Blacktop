@@ -69,7 +69,7 @@ export function ModeStep({ value, terms, onChange }: { value: RideMode | null; t
       id: 'group',
       title: 'My crew',
       subtitle: `Group ${terms.rides}. Convoys and voice chat come first.`,
-      perks: ['Start or join a convoy from Home', 'Voice chat', 'Rescue alerts go to the leader'],
+      perks: ['Start or join a convoy from Home', 'Voice chat', 'Rescue alerts go to the whole convoy'],
       icon: Users,
     },
     {

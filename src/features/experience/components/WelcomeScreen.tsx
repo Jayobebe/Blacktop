@@ -38,7 +38,7 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: ShieldCheck,
     title: 'Crash rescue',
-    body: 'Optional crash detection watches for a hard impact followed by a stop, asks if you’re okay, and if you don’t answer, alerts your convoy leader or your Discord server with your location.',
+    body: 'Optional crash detection watches for a hard impact followed by a stop, asks if you’re okay, and if you don’t answer, alerts everyone in your convoy or your Discord server with your location.',
   },
   {
     icon: Map,
