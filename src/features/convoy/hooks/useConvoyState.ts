@@ -42,6 +42,11 @@ function rememberActiveConvoy(convoyId: string | null) {
   }
 }
 
+/** Current convoy state outside React (e.g. right after joinConvoy resolves). */
+export function getConvoySnapshot(): ConvoyState {
+  return convoyState;
+}
+
 function getSnapshot(): ConvoyState {
   return convoyState;
 }

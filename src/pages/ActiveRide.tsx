@@ -1,9 +1,11 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, RideSummary, useSoloRoute, clearSoloRoute } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { useConvoyState, useRegroupListener } from '@/features/convoy';
+import { useConvoyState, useRegroupListener, getConvoySnapshot } from '@/features/convoy';
+import { useProximity, useConvoyMergeSync, ProximityPrompts, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
+import { attachRideToConvoy } from '@/features/ride';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
 import { useNextWaypoint } from '@/features/waypoints';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
@@ -93,7 +95,7 @@ export default function ActiveRide() {
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused, updateLeanAngle, updateGForce } = useActiveRide();
   const { stop: stopRadio } = usePlayer();
-  const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended } = useConvoyState();
+  const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended, createConvoy, joinConvoy, leaveConvoy } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id : undefined);
   const { isConnected, isMuted, speakingUsers, peerLinks, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
@@ -108,6 +110,39 @@ export default function ActiveRide() {
   const { user, profile } = useProfile();
   // Regroup calls from the convoy status bar (sent by the leader from the map).
   useRegroupListener(rideState.isConvoyMode ? convoy.id : null, user?.id ?? null);
+
+  // Nearby riders (opt-in, Blacktop map): pair up with riders close by, merge
+  // convoys between leaders. Merge sync runs for every convoy rider so members
+  // follow their leader through a merge/unmerge even if they haven't opted in.
+  const proximityActions: ConvoyActions = {
+    createConvoy,
+    joinConvoy,
+    leaveConvoy,
+    attachRide: attachRideToConvoy,
+    getConvoyId: () => getConvoySnapshot().id,
+    announceMerge: (record, hostCode) => announceMergeToConvoy(record, hostCode, user?.id ?? ''),
+  };
+  const lastGps = rideState.gpsPoints.length > 0 ? rideState.gpsPoints[rideState.gpsPoints.length - 1] : null;
+  const lastLat = lastGps?.lat;
+  const lastLng = lastGps?.lng;
+  const proximityPosition = useMemo(
+    () => (lastLat != null && lastLng != null ? { lat: lastLat, lng: lastLng } : null),
+    [lastLat, lastLng],
+  );
+  useProximity({
+    enabled:
+      settings.proximityEnabled &&
+      profile.preferredNavApp === 'blacktop' &&
+      rideState.isActive &&
+      !!user?.id,
+    userId: user?.id ?? null,
+    name: profile.name,
+    position: proximityPosition,
+    speedMph: rideState.currentSpeed,
+    convoy,
+    actions: proximityActions,
+  });
+  useConvoyMergeSync({ convoy, userId: user?.id ?? null, actions: proximityActions });
   const wakeLock = useWakeLock();
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const nextWaypoint = useNextWaypoint();
@@ -792,6 +827,8 @@ export default function ActiveRide() {
       "h-dvh max-h-dvh overflow-y-auto flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300",
       settings.carDisplayEnabled && orientation === 'landscape' && "car-display"
     )}>
+      <ProximityPrompts convoy={convoy} />
+
       {/* Rescue Alerts (every convoy member) */}
       <RescueAlert
         requests={rescueRequests}

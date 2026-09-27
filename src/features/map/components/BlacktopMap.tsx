@@ -41,6 +41,7 @@ import {
   setSoloRoute,
 } from "@/features/ride";
 import { useConvoyMembers, useConvoyState, ConvoyStatusBar } from "@/features/convoy";
+import { useProximityState, MergeBadge, getMergeControls, ALERT_RADIUS_M } from "@/features/proximity";
 import { useSpeakingUsers } from "@/features/voice";
 import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
@@ -1254,6 +1255,97 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [challengeRun, userLocation, challengeNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Nearby riders (opt-in): voice-range ring + faint rider dots ─────────
+  const proximity = useProximityState();
+  const proxMarkersRef = useRef<Map<string, Marker>>(new Map());
+
+  // Ring = the radius other riders need to be within to be offered a join-up.
+  useEffect(() => {
+    if (!map) return;
+    const SRC = "prox-range";
+    const center = proximity.active ? userLocation : null;
+    const ring: [number, number][] = [];
+    if (center) {
+      const dLat = ALERT_RADIUS_M / 111_320;
+      const dLng = ALERT_RADIUS_M / (111_320 * Math.cos((center.lat * Math.PI) / 180));
+      for (let i = 0; i <= 64; i++) {
+        const a = (i / 64) * 2 * Math.PI;
+        ring.push([center.lng + dLng * Math.cos(a), center.lat + dLat * Math.sin(a)]);
+      }
+    }
+    const data = {
+      type: "FeatureCollection" as const,
+      features: ring.length
+        ? [{ type: "Feature" as const, properties: {}, geometry: { type: "Polygon" as const, coordinates: [ring] } }]
+        : [],
+    };
+    const apply = () => {
+      const existing = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
+      if (existing) {
+        existing.setData(data);
+        return;
+      }
+      if (!ring.length) return;
+      map.addSource(SRC, { type: "geojson", data });
+      map.addLayer({ id: `${SRC}-fill`, type: "fill", source: SRC, paint: { "fill-color": accentColor, "fill-opacity": 0.06 } });
+      map.addLayer({
+        id: `${SRC}-line`,
+        type: "line",
+        source: SRC,
+        paint: { "line-color": accentColor, "line-width": 1.5, "line-opacity": 0.5, "line-dasharray": [2, 2] },
+      });
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once("load", apply);
+  }, [map, proximity.active, userLocation, accentColor]);
+
+  // Gentle pulse on the ring while it's showing.
+  useEffect(() => {
+    if (!map || !proximity.active) return;
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      if (!map.getLayer("prox-range-fill")) return;
+      const t = (Date.now() - started) / 1000;
+      map.setPaintProperty("prox-range-fill", "fill-opacity", 0.04 + 0.05 * (0.5 + 0.5 * Math.sin(t * 2)));
+    }, 150);
+    return () => window.clearInterval(id);
+  }, [map, proximity.active]);
+
+  useEffect(() => {
+    if (!map) return;
+    const markers = proxMarkersRef.current;
+    const ids = new Set(proximity.riders.map((r) => r.userId));
+    markers.forEach((m, id) => {
+      if (!ids.has(id)) {
+        m.remove();
+        markers.delete(id);
+      }
+    });
+    for (const r of proximity.riders) {
+      const label = `${r.name}${r.convoyId ? ` · ${r.convoyName ?? "convoy"}` : ""}`;
+      let marker = markers.get(r.userId);
+      if (!marker) {
+        const el = document.createElement("div");
+        el.style.cssText = `width:12px;height:12px;border-radius:9999px;background:${accentColor};opacity:0.45;box-shadow:0 0 10px ${accentColor};cursor:pointer;`;
+        marker = new maplibregl.Marker({ element: el }).setLngLat([r.lng, r.lat]).addTo(map);
+        markers.set(r.userId, marker);
+      } else {
+        marker.setLngLat([r.lng, r.lat]);
+      }
+      const el = marker.getElement();
+      el.title = label;
+      el.setAttribute("aria-label", `Nearby rider ${label}`);
+    }
+  }, [map, proximity.riders, accentColor]);
+
+  useEffect(() => {
+    const markers = proxMarkersRef.current;
+    return () => {
+      markers.forEach((m) => m.remove());
+      markers.clear();
+    };
+  }, []);
+
   // Draw the challenge route being raced.
   useEffect(() => {
     if (!map) return;
@@ -2106,6 +2198,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       )}
 
       <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
+        {!isSolo && <MergeBadge convoy={convoy} onUnmerge={() => void getMergeControls()?.unmerge()} />}
+
         {/* Convoy status: riders, group speed/ETA, who's dropped back */}
         {!isSolo && rideState.isActive && rideState.isConvoyMode && (
           <ConvoyStatusBar

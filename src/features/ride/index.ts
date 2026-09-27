@@ -1,4 +1,4 @@
-export { useActiveRide } from './hooks/useActiveRide';
+export { useActiveRide, attachRideToConvoy } from './hooks/useActiveRide';
 export { useRideHistory } from './hooks/useRideHistory';
 export { burnExpiredTrips, burnedAggregate, NO_BIKE } from './lib/tripBurner';
 export type { BurnTripsInterval, BurnedAggregate, BurnedTotals } from './lib/tripBurner';

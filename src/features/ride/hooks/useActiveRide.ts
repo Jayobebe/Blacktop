@@ -684,6 +684,23 @@ function checkInactivityGuard(lat: number, lng: number, speedMph: number, timest
   }
 }
 
+/**
+ * Move a ride that's already running onto a convoy (or off one, with null)
+ * without restarting it — used when nearby riders pair up or convoys
+ * merge/unmerge mid-ride. Restarts the member stats sync against the new
+ * convoy so the rider shows up on its map straight away.
+ */
+export function attachRideToConvoy(convoyId: string | null) {
+  if (!rideState.isActive) return;
+  stopConvoySync();
+  currentConvoyId = convoyId;
+  setRideState(prev => ({ ...prev, isConvoyMode: !!convoyId }));
+  if (convoyId && !isPaused) {
+    startConvoySync();
+    syncConvoyStats().catch(err => console.warn('[Convoy] Sync error:', err));
+  }
+}
+
 export function useActiveRide(convoyId?: string | null) {
   const { addRide } = useRideHistory();
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

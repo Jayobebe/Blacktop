@@ -64,6 +64,8 @@ export interface AppSettings {
   collectiblesEnabled: boolean;
   /** Ride History: delete unstarred rides older than a week/month (totals are kept). */
   burnTripsInterval: 'off' | 'week' | 'month';
+  /** Nearby riders: find opted-in riders close by and pair up / merge convoys (Blacktop map). */
+  proximityEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -108,6 +110,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   garageEnabled: true,
   collectiblesEnabled: true,
   burnTripsInterval: 'off',
+  proximityEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

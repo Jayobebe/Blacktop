@@ -113,6 +113,14 @@ export default function PrivacyPolicy() {
             Disabling Blacktop World in Settings stops any further writes immediately.
           </p>
           <p className="text-muted-foreground">
+            <span className="text-foreground">Nearby Riders (separate opt-in, Settings → Navigation):</span> while
+            you ride with it on, your display name, precise position, speed and convoy (if any) are
+            shared live with other riders who have also turned it on and are within a few kilometres.
+            Nothing is stored on our servers: it is sent over a temporary realtime channel and
+            disappears when you stop riding or turn it off. Joining up or merging convoys always
+            needs both sides to accept, and you can block a rider from the prompt.
+          </p>
+          <p className="text-muted-foreground">
             <span className="text-foreground">Collector cards:</span> opting in also unlocks the
             ability to flip your custom vehicle stats card to reveal a shareable QR code. The QR
             contains your display name, vehicle info, tier, and ride stats — nothing else. Other

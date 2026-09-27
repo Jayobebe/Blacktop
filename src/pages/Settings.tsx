@@ -31,6 +31,7 @@ import { DiscordSettingsCard } from '@/features/integrations/discord';
 import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
+import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
@@ -43,6 +44,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
+  const [blockedRiders, setBlockedRiders] = useState(() => getBlocked().length);
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const exp = useExperience();
@@ -800,6 +802,34 @@ export default function Settings() {
                 <Switch
                   checked={settings.weatherRoutingEnabled}
                   onCheckedChange={(v) => updateSetting('weatherRoutingEnabled', v)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="pr-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="w-4 h-4 text-accent" />
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Nearby Riders</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    When another opted-in rider rides near you for a bit, Blacktop offers to join up. Both of you have to accept, then you share a convoy with voice. Convoy leaders can merge convoys and either leader can unmerge. Your name and position are only shared with opted-in riders within a few km, and only while you ride.
+                  </p>
+                  {blockedRiders > 0 && (
+                    <button
+                      onClick={() => {
+                        clearBlocked();
+                        setBlockedRiders(0);
+                        toast.success('Blocked riders cleared');
+                      }}
+                      className="mt-1.5 text-[11px] text-accent hover:underline"
+                    >
+                      {blockedRiders} blocked {blockedRiders === 1 ? 'rider' : 'riders'} · Clear
+                    </button>
+                  )}
+                </div>
+                <Switch
+                  checked={settings.proximityEnabled}
+                  onCheckedChange={(v) => updateSetting('proximityEnabled', v)}
                 />
               </div>
             </div>
