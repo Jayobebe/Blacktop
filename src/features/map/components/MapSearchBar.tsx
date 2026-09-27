@@ -238,8 +238,10 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const hasDisplayContent = hasIdleContent || hasSearchContent;
 
   return (
-    <div ref={containerRef} className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(0.75rem+env(safe-area-inset-right))] z-30 space-y-2">
-      <div className="flex gap-2 pr-12">
+    <div ref={containerRef} className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] z-30 space-y-2 pointer-events-none">
+      {/* Stops short of the MapLibre control column (zoom/compass/locate) so it never
+          covers them; the wrapper itself ignores taps and only its children take them. */}
+      <div className="flex gap-2 pointer-events-auto">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -252,14 +254,14 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
         </div>
       </div>
 
-      <div className="flex gap-1.5 pr-12">
+      <div className="flex gap-1.5 w-fit max-w-full overflow-x-auto scrollbar-hide pointer-events-auto">
         {quickCategories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryClick(cat)}
             aria-pressed={cat.id === 'cards' ? cardsMode : activeCategory === cat.id}
             className={cn(
-              'flex items-center gap-1.5 py-1.5 px-3 rounded-full border text-xs font-medium shadow-lg backdrop-blur transition-all active:scale-95',
+              'flex flex-shrink-0 items-center gap-1.5 py-1.5 px-3 rounded-full border text-xs font-medium shadow-lg backdrop-blur transition-all active:scale-95',
               activeCategory === cat.id
                 ? 'bg-accent text-accent-foreground border-accent'
                 : 'bg-card/95 border-border hover:bg-muted',
@@ -272,7 +274,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
       </div>
 
       {showResults && hasDisplayContent && (
-        <div className="absolute left-0 right-12 top-full mt-2 bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in">
+        <div className="absolute left-0 right-0 top-full mt-2 pointer-events-auto bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in">
 
 
           {/* ── Saved POIs (idle state only) ── */}
