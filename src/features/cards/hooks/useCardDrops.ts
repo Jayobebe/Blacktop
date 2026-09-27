@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
+import { nudgePush } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import type { VehicleCardData } from './useVehicleCards';
@@ -168,6 +169,8 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['card-drops'] });
+    // Pickups notify the card's owner.
+    nudgePush();
   }, [queryClient]);
 
   /** My own planted copies (any location). */
@@ -265,6 +268,8 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       });
       if (error) throw error;
     },
+    // The card's owner hears whether their time attack held.
+    onSuccess: () => nudgePush(),
   });
 
   const pickUpDrop = useMutation({

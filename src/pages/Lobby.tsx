@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones, Lock, Unlock } from 'lucide-react';
 import { useCrew } from '@/features/crew/useCrew';
 import { toast } from 'sonner';
+import { nudgePush } from '@/features/notifications';
 import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
@@ -74,6 +75,7 @@ export default function Lobby() {
       return;
     }
     toast.success(next ? `Listed in crew ${crew.code}` : 'Convoy locked');
+    if (next) nudgePush(); // the crew hears about the open convoy
   };
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members

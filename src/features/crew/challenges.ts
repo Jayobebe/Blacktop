@@ -2,6 +2,9 @@
  * Weekly crew challenges and the monthly crew goal. Everything is derived from
  * the ISO week / month numbers, so every rider in every crew sees the same
  * programme without any server-side scheduling.
+ *
+ * The notifications server keeps a copy (supabase/functions/send-push/crew.ts)
+ * to announce results: keep the two in sync.
  */
 
 export type ChallengeMetric =

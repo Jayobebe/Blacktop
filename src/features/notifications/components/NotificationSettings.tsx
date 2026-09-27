@@ -1,12 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellOff, Loader2, Send, Smartphone, Timer } from 'lucide-react';
+import { AlertTriangle, Bell, IdCard, BellOff, CloudLightning, Fuel, Loader2, Send, Smartphone, Swords, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { disablePush, enablePush, refreshPushPermission, sendTestPush, usePush } from '../lib/push';
+import { disablePush, enablePush, PUSH_CATEGORY_DEFS, refreshPushPermission, sendTestPush, setPushCategory, usePush, type PushCategory } from '../lib/push';
 
-/** Settings card: turn push notifications on/off for this device and send a test. */
+const ICONS: Record<PushCategory, React.ElementType> = {
+  rescue: AlertTriangle,
+  weather: CloudLightning,
+  blacktank: Fuel,
+  timeattack: Swords,
+  card_pickups: IdCard,
+  leaderboard: TrendingDown,
+  crew_convoys: Users,
+  challenges: Trophy,
+  maintenance: Wrench,
+};
+
+/** Settings card: turn push notifications on/off for this device, pick which kinds, and test. */
 export function NotificationSettings() {
   const push = usePush();
   const navigate = useNavigate();
@@ -65,10 +78,7 @@ export function NotificationSettings() {
 
   return (
     <div className="space-y-3">
-      <p className={text}>
-        Blacktop can alert this phone even when the app is closed. Which alerts you get will be listed here as
-        they're added.
-      </p>
+      <p className={text}>Blacktop can alert this phone even when the app is closed.</p>
 
       {blocked && (
         <p className="text-[12px] rounded-xl border border-destructive/40 bg-destructive/10 text-foreground px-3 py-2 leading-relaxed">
@@ -96,6 +106,32 @@ export function NotificationSettings() {
           <Button variant="ghost" className="w-full h-9 rounded-xl text-xs text-muted-foreground" onClick={() => void test(true)} disabled={testing}>
             <Timer className="w-3.5 h-3.5 mr-1.5" /> Test with the app closed (sends in 10 s)
           </Button>
+
+          <div className="pt-2 border-t border-border/30">
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">Notify me about</p>
+            <ul className="divide-y divide-border/20">
+              {PUSH_CATEGORY_DEFS.map((d) => {
+                const Icon = ICONS[d.id];
+                const on = push.categories.includes(d.id);
+                return (
+                  <li key={d.id}>
+                    <label className="flex items-center gap-3 py-2.5 cursor-pointer">
+                      <Icon className={cn('w-4 h-4 shrink-0', on ? 'text-accent' : 'text-muted-foreground')} />
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-medium">{d.label}</span>
+                        <span className="block text-[11px] text-muted-foreground leading-snug">{d.desc}</span>
+                      </span>
+                      <Switch checked={on} onCheckedChange={(v) => setPushCategory(d.id, v)} aria-label={d.label} />
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[10px] text-muted-foreground/80 mt-2 leading-relaxed">
+              Heavy weather uses where your last ride ended (or your phone's location if you've allowed it), rounded to
+              about 11 km. Crew alerts need Blacktop World on and use your current crew.
+            </p>
+          </div>
         </div>
       ) : (
         <Button

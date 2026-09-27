@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Crown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { geoContains } from 'd3-geo';
@@ -41,7 +41,9 @@ export default function World() {
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);
   const [showCrewQr, setShowCrewQr] = useState(false);
-  const [showBlacktank, setShowBlacktank] = useState(false);
+  const [searchParams] = useSearchParams();
+  // Blacktank notifications open the panel straight away (/world?tank=1).
+  const [showBlacktank, setShowBlacktank] = useState(() => searchParams.get('tank') === '1');
 
   const crew = useCrew();
   const { settings } = useSettings();

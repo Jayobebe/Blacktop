@@ -99,6 +99,16 @@ export function leaveCrew() {
   emit();
 }
 
+/** Current crew code without subscribing (non-React callers). */
+export function getCrewCode(): string {
+  return snapshot.code;
+}
+
+/** Called whenever the rider joins or leaves a crew. */
+export function subscribeCrew(cb: () => void) {
+  return subscribe(cb);
+}
+
 export function useCrew() {
   return useSyncExternalStore(subscribe, () => snapshot);
 }

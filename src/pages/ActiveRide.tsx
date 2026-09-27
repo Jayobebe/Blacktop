@@ -37,6 +37,7 @@ import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, S
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { notifyRescue } from '@/features/notifications';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 
@@ -700,27 +701,30 @@ export default function ActiveRide() {
     }
   };
 
+  // Solo rescue call: Discord (when connected) plus a push to the rider's crew.
+  // Returns who was told.
+  const sendSoloRescue = useCallback(async (lat: number, lng: number, auto = false): Promise<string[]> => {
+    const [discord, crewPush] = await Promise.all([
+      discordEnabled
+        ? announceSoloRescueToDiscord({ riderName: profile.name || 'Rider', lat, lng })
+        : Promise.resolve({ ok: false, skipped: true }),
+      notifyRescue({ lat, lng, auto }),
+    ]);
+    return [discord.ok ? 'Discord' : null, crewPush.sent ? 'your crew' : null].filter((x): x is string => !!x);
+  }, [discordEnabled, profile.name]);
+
   // ---- Auto-rescue (crash detection) ----
   const fireAutoRescue = useCallback(async () => {
     const gpsPoints = rideState.gpsPoints;
     const fire = async (lat: number, lng: number) => {
       if (rideState.isConvoyMode) {
-        // Convoy: broadcast to every member (already pings Discord via useRescue)
-        await sendRescueRequest(lat, lng);
+        // Convoy: broadcast to every member (useRescue also pings Discord and pushes to the crew)
+        await sendRescueRequest(lat, lng, { auto: true });
       } else {
-        // Solo: Discord-only
-        const res = await announceSoloRescueToDiscord({
-          riderName: profile.name || 'Rider',
-          lat,
-          lng,
-        });
-        if (res.skipped) {
-          toast.warning('Auto-rescue: no Discord webhook configured');
-        } else if (res.ok) {
-          toast.success('Auto-rescue ping sent to Discord');
-        } else {
-          toast.error('Auto-rescue failed to send');
-        }
+        // Solo: Discord (if connected) and a push to the rider's crew
+        const told = await sendSoloRescue(lat, lng, true);
+        if (told.length) toast.success(`Auto-rescue sent to ${told.join(' and ')}`);
+        else toast.warning('Auto-rescue: nobody to alert', { description: 'Connect Discord in Settings, or ask your crew to turn on notifications.' });
       }
     };
 
@@ -734,7 +738,7 @@ export default function ActiveRide() {
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
-  }, [rideState.gpsPoints, rideState.isConvoyMode, sendRescueRequest, profile.name]);
+  }, [rideState.gpsPoints, rideState.isConvoyMode, sendRescueRequest, sendSoloRescue]);
 
   useCrashDetection({
     enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen && !autoRescueFiredRef.current,
@@ -1073,7 +1077,7 @@ export default function ActiveRide() {
               <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </button>
           )}
-          {!rideState.isConvoyMode && discordEnabled && (
+          {!rideState.isConvoyMode && (
             <button
               onClick={async () => {
                 if (soloRescueSending || soloRescueSent) return;
@@ -1086,19 +1090,13 @@ export default function ActiveRide() {
                       maximumAge: 5000,
                     });
                   });
-                  const result = await announceSoloRescueToDiscord({
-                    riderName: profile.name || 'Driver',
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                  });
-                  if (result.skipped) {
-                    toast.error('Connect Discord in Settings to use rescue ping');
-                  } else if (result.ok) {
-                    toast.success('Rescue ping sent to Discord');
+                  const told = await sendSoloRescue(pos.coords.latitude, pos.coords.longitude);
+                  if (told.length) {
+                    toast.success(`Rescue call sent to ${told.join(' and ')}`);
                     setSoloRescueSent(true);
                     setTimeout(() => setSoloRescueSent(false), 30000);
                   } else {
-                    toast.error('Failed to send rescue ping');
+                    toast.error('Nobody to alert yet', { description: 'Connect Discord in Settings, or ask your crew to turn on notifications.' });
                   }
                 } catch (err) {
                   console.error('[SoloRescue]', err);
@@ -1114,7 +1112,7 @@ export default function ActiveRide() {
                   ? "bg-warning/20 text-warning animate-pulse"
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
-              title={soloRescueSent ? 'Rescue ping sent' : soloRescueSending ? 'Sending…' : 'Send rescue ping to Discord'}
+              title={soloRescueSent ? 'Rescue call sent' : soloRescueSending ? 'Sending…' : 'Call for rescue (your crew and Discord)'}
             >
               <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </button>

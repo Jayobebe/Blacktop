@@ -1,17 +1,34 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { syncPush } from '../lib/push';
+import { subscribeCrew } from '@/features/crew/useCrew';
+import { schedulePushResync, syncPush } from '../lib/push';
+
+const RESYNC_EVERY_MS = 60 * 60 * 1000;
 
 /**
- * Mounted once inside the router: keeps this device's push subscription
- * current on launch, and routes a tapped notification inside the running app
- * (the notifications worker posts the path instead of reloading the page).
+ * Mounted once inside the router. Keeps this device's push registration
+ * current (on launch, when the crew changes, and hourly while in use; the
+ * ride history reports each ride's end point for weather alerts), and routes a tapped
+ * notification inside the running app (the worker posts the path instead of
+ * reloading the page).
  */
 export function PushBridge() {
   const navigate = useNavigate();
+  const lastSync = useRef(Date.now());
 
   useEffect(() => {
     void syncPush();
+    const unsubscribe = subscribeCrew(() => schedulePushResync());
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - lastSync.current < RESYNC_EVERY_MS) return;
+      lastSync.current = Date.now();
+      schedulePushResync(0);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      unsubscribe();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   useEffect(() => {

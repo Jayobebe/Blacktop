@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { announceRescueToDiscord } from '@/features/integrations/discord';
+import { notifyRescue, notifyRescueCancel } from '@/features/notifications';
 import { setRescueTarget, clearRescueTarget, registerRescueControls, clearRescueControls } from '../lib/rescueBridge';
 
 export interface RescueRequest {
@@ -106,7 +107,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     };
   }, [convoyId, userId]);
 
-  const sendRescueRequest = useCallback(async (lat: number, lng: number) => {
+  const sendRescueRequest = useCallback(async (lat: number, lng: number, opts?: { auto?: boolean }) => {
     if (!convoyId || !userId || !userName || !channelRef.current) return false;
 
     const now = Date.now();
@@ -138,6 +139,8 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
     // Fire-and-forget Discord ping to the convoy's server if configured
     announceRescueToDiscord({ convoyId, riderName: userName, lat, lng });
+    // Push notification to the convoy and the rider's crew, even if their app is closed.
+    void notifyRescue({ convoyId, lat, lng, auto: opts?.auto });
 
     return true;
   }, [convoyId, userId, userName]);
@@ -186,10 +189,11 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       event: 'rescue_dismissed',
       payload: { requestId: userId, riderUserId: userId },
     });
+    void notifyRescueCancel({ convoyId });
 
     setHasPendingRescue(false);
     clearRescueTarget(userId);
-  }, [userId]);
+  }, [userId, convoyId]);
 
   // Expose the rescue action to the Blacktop map overlay (which renders above
   // ActiveRide) so members can request/cancel rescue without leaving the map.

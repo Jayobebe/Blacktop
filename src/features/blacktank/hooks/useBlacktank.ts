@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
+import { nudgePush } from '@/features/notifications';
 import type {
   TankCurrency,
   TankPledgeRow,
@@ -88,6 +89,8 @@ export function useBlacktank() {
 
   const invalidate = useCallback(() => {
     qc.invalidateQueries({ queryKey: ['blacktank'] });
+    // Requests, votes, chip-ins and payouts notify the crew.
+    nudgePush();
   }, [qc]);
 
   const join = useMutation({

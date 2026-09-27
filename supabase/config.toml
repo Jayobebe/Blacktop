@@ -31,4 +31,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.send-push]
-verify_jwt = true
+# drain/tick are called by the database (pg_net / pg_cron) without a session;
+# rider actions verify the session inside the function.
+verify_jwt = false

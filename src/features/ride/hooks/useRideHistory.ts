@@ -9,6 +9,7 @@ import { BadgeType } from '@/types/convoy';
 import { clearAllLogbooks } from '@/features/logbook/lib/logbookStore';
 import { clearTrackData } from '@/features/track/lib/trackStore';
 import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate, mergeAggregates, emptyAggregate, NO_BIKE } from '../lib/tripBurner';
+import { rememberPushLocation, schedulePushResync } from '@/features/notifications';
 
 const MAX_GPS_POINTS_PER_STORED_RIDE = 900;
 const MAX_SENSOR_SAMPLES_PER_STORED_RIDE = 360;
@@ -65,6 +66,13 @@ export function useRideHistory() {
 
   const addRide = useCallback((ride: RideSession) => {
     const savedFullRide = setRides(prev => [ride, ...prev]);
+
+    // Where the ride ended is the best guess at "your area" for weather alerts.
+    const end = ride.gpsPoints?.[ride.gpsPoints.length - 1];
+    if (end && ride.endedAt) {
+      rememberPushLocation(end.lat, end.lng, new Date(ride.endedAt).getTime());
+      schedulePushResync();
+    }
 
     // Threshold badges any rider can earn solo — banked as spendable currency.
     const day = new Date(ride.startedAt).toDateString();

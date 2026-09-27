@@ -4,7 +4,8 @@ import { ArrowLeft, Flag, Sparkles, Timer, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useRideHistory } from '@/features/ride';
-import { analyseCorners } from '@/features/ride/lib/cornerScoring';
+import { weekStats, publishWeekStats, type WeekStats } from '@/features/crew/stats';
+import { nudgePush } from '@/features/notifications';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
 import {
@@ -16,7 +17,6 @@ import {
   monthlyGoalFor,
   specialForWeek,
   weekKey,
-  weekStart,
 } from '@/features/crew/challenges';
 import { grantChallengeCopy } from '@/features/cards';
 import { toast } from 'sonner';
@@ -31,21 +31,6 @@ interface ChallengeRow {
   top_speed: number;
   night_rides: number;
   longest_ride: number;
-}
-
-type WeekStats = {
-  distance: number;
-  ride_count: number;
-  max_lean: number;
-  corner_score: number;
-  top_speed: number;
-  night_rides: number;
-  longest_ride: number;
-};
-
-function isNightRide(startedAt: string | number | Date): boolean {
-  const h = new Date(startedAt).getHours();
-  return h >= 20 || h < 5;
 }
 
 function ChallengeCard({
@@ -125,48 +110,11 @@ export default function CrewChallenges() {
   const monthDaysLeft = daysLeftInMonth();
   const myName = profile.name || 'Rider';
 
-  // This rider's stats for the current week only.
-  const mine: WeekStats = useMemo(() => {
-    const from = weekStart().getTime();
-    const week = rides.filter((r) => new Date(r.startedAt).getTime() >= from);
-    const cornerScores = week
-      .map((r) => analyseCorners(r).averageScore)
-      .filter((s) => s > 0);
-    return {
-      distance: Number(week.reduce((s, r) => s + (r.distance || 0), 0).toFixed(2)),
-      ride_count: week.length,
-      max_lean: Math.round(Math.max(0, ...week.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)))),
-      corner_score: cornerScores.length
-        ? Math.round(cornerScores.reduce((s, v) => s + v, 0) / cornerScores.length)
-        : 0,
-      top_speed: Math.round(Math.max(0, ...week.map((r) => r.maxSpeed || 0))),
-      night_rides: week.filter((r) => isNightRide(r.startedAt)).length,
-      longest_ride: Number(Math.max(0, ...week.map((r) => r.distance || 0)).toFixed(2)),
-    };
-  }, [rides]);
+  // This rider's stats for the current week only, published for the crew board.
+  const mine: WeekStats = useMemo(() => weekStats(rides), [rides]);
 
-  // Publish own row for the crew board.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      await supabase.from('crew_weekly_scores' as any).upsert({
-        user_id: user.id,
-        week_key: key,
-        crew_code: crew.code,
-        display_name: myName,
-        distance: mine.distance,
-        ride_count: mine.ride_count,
-        max_lean: mine.max_lean,
-        corner_score: mine.corner_score,
-        top_speed: mine.top_speed,
-        night_rides: mine.night_rides,
-        longest_ride: mine.longest_ride,
-        updated_at: new Date().toISOString(),
-      } as any);
-    })();
-    return () => { cancelled = true; };
+    void publishWeekStats(crew.code, myName, mine, key).then((ok) => ok && nudgePush());
   }, [crew.code, key, myName, mine]);
 
   const { data: rows = [] } = useQuery({

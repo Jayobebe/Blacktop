@@ -2,6 +2,8 @@ import { useSyncExternalStore } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { whenPwaCleanedUp } from '@/pwa';
+import { isDemoModeActive } from '@/lib/demoMode';
+import { getCrewCode } from '@/features/crew/useCrew';
 
 /**
  * Push notifications (Web Push) for the installed web app.
@@ -16,8 +18,35 @@ import { whenPwaCleanedUp } from '@/pwa';
 const SW_URL = '/push-sw.js';
 const PREF_KEY = 'bt.push.enabled.v1';
 
-/** Kinds of notification this device accepts; filled in as they're chosen. */
-export const PUSH_CATEGORIES: string[] = [];
+const CATEGORIES_KEY = 'bt.push.categories.v1';
+const LOCATION_KEY = 'bt.push.location.v1';
+
+/** Kinds of notification a device can switch on or off (ids match send-push). */
+export const PUSH_CATEGORY_DEFS = [
+  { id: 'rescue', label: 'Rescue calls', desc: 'A convoy or crew mate calls for rescue, with where they are' },
+  { id: 'weather', label: 'Heavy weather', desc: 'Storms, heavy rain, snow or strong winds heading to your area' },
+  { id: 'blacktank', label: 'Blacktank', desc: 'Requests to vote on, approvals, chip-ins and payouts' },
+  { id: 'timeattack', label: 'Your time attacks', desc: 'Someone beats, or loses to, a time attack you set' },
+  { id: 'card_pickups', label: 'Card pickups', desc: 'Someone picks up a card you dropped' },
+  { id: 'leaderboard', label: 'Crew leaderboard', desc: 'A crew mate passes you on the crew board' },
+  { id: 'crew_convoys', label: 'Crew convoys', desc: 'A crew mate opens an unlocked convoy you can join' },
+  { id: 'challenges', label: 'Crew challenges', desc: 'Targets hit, weekly and monthly results, and a 5-days-left nudge' },
+  { id: 'maintenance', label: 'Maintenance', desc: 'Service items coming due or overdue' },
+] as const;
+
+export type PushCategory = (typeof PUSH_CATEGORY_DEFS)[number]['id'];
+const ALL_CATEGORIES = PUSH_CATEGORY_DEFS.map((d) => d.id) as PushCategory[];
+
+function readCategories(): PushCategory[] {
+  try {
+    const raw = localStorage.getItem(CATEGORIES_KEY);
+    if (!raw) return ALL_CATEGORIES;
+    const saved = JSON.parse(raw) as string[];
+    return ALL_CATEGORIES.filter((c) => saved.includes(c));
+  } catch {
+    return ALL_CATEGORIES;
+  }
+}
 
 export type PushSupport =
   | 'supported'
@@ -32,6 +61,8 @@ export interface PushState {
   enabled: boolean;
   busy: boolean;
   error: string | null;
+  /** Which kinds of notification this device wants. */
+  categories: PushCategory[];
 }
 
 function isIOS() {
@@ -87,6 +118,7 @@ let state: PushState = {
   enabled: false,
   busy: false,
   error: null,
+  categories: readCategories(),
 };
 const listeners = new Set<() => void>();
 
@@ -139,6 +171,59 @@ function sameKey(a: ArrayBuffer | null | undefined, b: Uint8Array) {
 
 class PushSetupError extends Error {}
 
+// ── weather location ────────────────────────────────────────────────────────
+// Only ever sent rounded (the server keeps 0.1°, about 11 km). Comes from the
+// end of the last ride when there is one, otherwise a quick low-accuracy fix,
+// and never triggers a location prompt in the background.
+
+interface KnownLocation {
+  lat: number;
+  lng: number;
+  at: number;
+}
+
+function readLocation(): KnownLocation | null {
+  try {
+    const l = JSON.parse(localStorage.getItem(LOCATION_KEY) || 'null') as KnownLocation | null;
+    return l && Number.isFinite(l.lat) && Number.isFinite(l.lng) ? l : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Remembers where the rider last was (e.g. the end of a ride) for weather alerts. */
+export function rememberPushLocation(lat: number, lng: number, at = Date.now()) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  const known = readLocation();
+  if (known && known.at >= at) return;
+  try {
+    localStorage.setItem(LOCATION_KEY, JSON.stringify({ lat: Math.round(lat * 100) / 100, lng: Math.round(lng * 100) / 100, at }));
+  } catch {
+    /* not fatal */
+  }
+}
+
+async function weatherLocation(): Promise<{ lat: number; lng: number } | null> {
+  const known = readLocation();
+  if (known && Date.now() - known.at < 6 * 3600000) return known;
+  if (!navigator.geolocation || !navigator.permissions?.query) return known;
+  try {
+    const perm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+    if (perm.state !== 'granted') return known;
+  } catch {
+    return known;
+  }
+  const fix = await new Promise<{ lat: number; lng: number } | null>((resolve) =>
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, maximumAge: 30 * 60000, timeout: 8000 },
+    ),
+  );
+  if (fix) rememberPushLocation(fix.lat, fix.lng);
+  return fix ?? known;
+}
+
 async function ensureSession() {
   const { data } = await supabase.auth.getSession();
   if (data.session) return;
@@ -172,12 +257,16 @@ async function subscribeAndRegister(reg: ServiceWorkerRegistration) {
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
 
   const json = sub.toJSON();
+  const loc = state.categories.includes('weather') ? await weatherLocation() : null;
   const { error } = await supabase.rpc('register_push_subscription' as never, {
     _endpoint: sub.endpoint,
     _p256dh: json.keys?.p256dh ?? '',
     _auth: json.keys?.auth ?? '',
-    _categories: PUSH_CATEGORIES,
+    _categories: state.categories,
     _user_agent: navigator.userAgent,
+    _crew_code: getCrewCode(),
+    _lat: loc?.lat ?? null,
+    _lng: loc?.lng ?? null,
   } as never);
   if (error) throw new PushSetupError('Could not register this device. Try again in a moment.');
 }
@@ -223,6 +312,8 @@ export async function disablePush(): Promise<void> {
       const reg = await navigator.serviceWorker.getRegistration('/');
       const sub = await reg?.pushManager?.getSubscription();
       if (sub) {
+        await supabase.rpc('set_push_reminders' as never, { _category: 'maintenance', _reminders: [] } as never);
+        lastReminders = '';
         await supabase.rpc('unregister_push_subscription' as never, { _endpoint: sub.endpoint } as never);
         await sub.unsubscribe().catch(() => {});
       }
@@ -269,4 +360,122 @@ export async function sendTestPush(delayed = false): Promise<{ ok: boolean; mess
   if (data.queued) return { ok: true, message: 'Close Blacktop or lock your phone now. It arrives in about 10 seconds.' };
   if (!data.sent) return { ok: false, message: 'The push service refused it. Turn notifications off and on again.' };
   return { ok: true, message: 'Sent. It should appear in a moment.' };
+}
+
+// ── per-kind switches ───────────────────────────────────────────────────────
+
+let resyncTimer: number | null = null;
+
+/** Re-registers soon (debounced) so the server has the latest switches / crew / location. */
+export function schedulePushResync(delayMs = 800) {
+  if (!readPref()) return;
+  if (resyncTimer) window.clearTimeout(resyncTimer);
+  resyncTimer = window.setTimeout(() => {
+    resyncTimer = null;
+    void syncPush();
+  }, delayMs);
+}
+
+export function setPushCategory(id: PushCategory, on: boolean) {
+  const next = on ? [...new Set([...state.categories, id])] : state.categories.filter((c) => c !== id);
+  const ordered = ALL_CATEGORIES.filter((c) => next.includes(c));
+  try {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(ordered));
+  } catch {
+    /* not fatal */
+  }
+  set({ categories: ordered });
+  schedulePushResync();
+}
+
+export function wantsPush(id: PushCategory) {
+  return state.enabled && state.permission === 'granted' && state.categories.includes(id);
+}
+
+// ── sending ─────────────────────────────────────────────────────────────────
+
+export interface RescueNotice {
+  convoyId?: string | null;
+  crewCode?: string | null;
+  lat: number;
+  lng: number;
+  /** Fired by crash detection rather than the rider. */
+  auto?: boolean;
+}
+
+/** Tells this rider's convoy and crew they need rescue. Works even with notifications off here. */
+export async function notifyRescue(n: RescueNotice): Promise<{ sent: number }> {
+  if (isDemoModeActive()) return { sent: 0 };
+  try {
+    await ensureSession();
+    const { data, error } = await supabase.functions.invoke('send-push', {
+      body: { action: 'rescue', convoyId: n.convoyId ?? null, crewCode: n.crewCode ?? getCrewCode(), lat: n.lat, lng: n.lng, auto: !!n.auto },
+    });
+    return { sent: error ? 0 : Number(data?.sent) || 0 };
+  } catch {
+    return { sent: 0 };
+  }
+}
+
+export async function notifyRescueCancel(n: Omit<RescueNotice, 'lat' | 'lng' | 'auto'> = {}): Promise<void> {
+  if (isDemoModeActive()) return;
+  try {
+    await supabase.functions.invoke('send-push', {
+      body: { action: 'rescue_cancel', convoyId: n.convoyId ?? null, crewCode: n.crewCode ?? getCrewCode() },
+    });
+  } catch {
+    /* best effort */
+  }
+}
+
+let lastNudge = 0;
+
+/**
+ * Asks the server to send anything the database just queued. The database
+ * normally does this itself; this is the fallback when it can't.
+ */
+export function nudgePush() {
+  if (isDemoModeActive() || Date.now() - lastNudge < 3000) return;
+  lastNudge = Date.now();
+  void supabase.functions.invoke('send-push', { body: { action: 'drain' } }).catch(() => {});
+}
+
+/** A notification from this phone itself (no server), if the rider wants that kind. */
+export async function showLocalNotification(
+  kind: PushCategory,
+  n: { title: string; body: string; tag?: string; url?: string },
+): Promise<void> {
+  if (!wantsPush(kind) || !('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration('/');
+    await reg?.showNotification(n.title, { body: n.body, icon: '/pwa-192x192.png', tag: n.tag, data: { url: n.url ?? '/' } });
+  } catch (err) {
+    console.warn('[Push] local notification failed', err);
+  }
+}
+
+export interface PushReminder {
+  key: string;
+  title: string;
+  body: string;
+  url?: string;
+  /** ISO time to send it. */
+  due_at: string;
+}
+
+let lastReminders = '';
+
+/** Hands the server this rider's upcoming time-based reminders of one kind (replacing the old set). */
+export async function syncPushReminders(kind: 'maintenance', reminders: PushReminder[]): Promise<void> {
+  if (isDemoModeActive()) return;
+  const list = wantsPush(kind) ? reminders : [];
+  const sig = JSON.stringify([kind, list]);
+  if (sig === lastReminders) return;
+  try {
+    await ensureSession();
+    const { error } = await supabase.rpc('set_push_reminders' as never, { _category: kind, _reminders: list } as never);
+    if (!error) lastReminders = sig;
+  } catch {
+    /* retried on the next change */
+  }
 }

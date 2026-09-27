@@ -54,7 +54,13 @@ Crash/rescue flow: `useCrashDetection` (ride feature) watches device motion + sp
 
 ### Push notifications
 
-`src/features/notifications` + `public/push-sw.js` + the `send-push` Edge Function (Web Push, VAPID; needs the `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` secrets). The worker only handles push and notification taps (no caching; the old app-shell worker in `public/sw.js` stays retired). Devices are stored in `push_subscriptions` via the `register_push_subscription` / `unregister_push_subscription` RPCs. Notification text is always written server-side in `send-push`, never taken from the caller; new notification types are added there as actions.
+`src/features/notifications` + `public/push-sw.js` + the `send-push` Edge Function (Web Push, VAPID; needs the `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` secrets; `verify_jwt = false` because the database calls it, rider actions check the session in code). The worker only handles push and notification taps (no caching; the old app-shell worker in `public/sw.js` stays retired).
+
+- Devices live in `push_subscriptions` (per-kind `categories`, `crew_code`, weather location rounded to 0.1°) via the `register_push_subscription` / `unregister_push_subscription` RPCs; the app re-registers on launch, crew change, switch change and after rides.
+- Database events are queued into `push_outbox` by triggers (card attempts/pickups, Blacktank, crew scores, weekly scores, crew convoys); `pg_net` calls `send-push {action:'drain'}` straight away, and the app also nudges it after those actions as a fallback. `pg_cron` calls `{action:'tick'}` every 10 min for weather (Open-Meteo), dated reminders (`push_reminders`, used for time-based maintenance), weekly/monthly crew results and the 5-days-left reminder. `push_sent` de-duplicates.
+- Rescue calls go straight to `{action:'rescue'}` (convoy + crew).
+- All notification text is written in `send-push/events.ts`, never taken from a caller. `send-push/crew.ts` mirrors `src/features/crew/challenges.ts`; keep them in sync.
+- Mileage-based maintenance is checked on the phone (`MaintenanceNotifier`) and shown as a local notification.
 
 ### Native device integration
 

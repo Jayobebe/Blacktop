@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { PushBridge } from "@/features/notifications";
+import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
+import { MaintenanceNotifier } from "@/features/garage";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { burnExpiredTrips } from "@/features/ride";
@@ -31,6 +33,7 @@ import Garage from "./pages/Garage";
 
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
+import RescueLocation from "./pages/RescueLocation";
 import Install from "./pages/Install";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
@@ -106,6 +109,10 @@ function AppRoutes() {
   }
 
   return (
+    <>
+    {/* Background helpers for signed-in riders (render nothing). */}
+    <CrewStatsPublisher />
+    <MaintenanceNotifier />
     <PageTransition>
     <Routes>
       <Route path="/" element={<Home />} />
@@ -116,6 +123,7 @@ function AppRoutes() {
       <Route path="/ride" element={<ActiveRide />} />
       <Route path="/pillion" element={<PillionRide />} />
       <Route path="/track" element={<Track />} />
+      <Route path="/rescue" element={<RescueLocation />} />
       <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/pay" element={<Pay />} />
       <Route path="/history" element={<History />} />
@@ -141,6 +149,7 @@ function AppRoutes() {
       <Route path="*" element={<NotFound />} />
     </Routes>
     </PageTransition>
+    </>
   );
 }
 

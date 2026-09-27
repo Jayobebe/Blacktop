@@ -4,7 +4,9 @@ import { ArrowLeft, Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
-import { useRideHistory, burnedAggregate } from '@/features/ride';
+import { nudgePush } from '@/features/notifications';
+import { useRideHistory } from '@/features/ride';
+import { crewTotals, publishCrewTotals } from '@/features/crew/stats';
 import { useArcadeScores } from '@/features/arcade';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
@@ -37,40 +39,11 @@ export default function CrewLeaderboard() {
   const { profile } = useProfile();
   const [metric, setMetric] = useState<keyof CrewRow>('total_distance');
 
-  const mine = useMemo(() => {
-    // Rides burned from history still count toward crew totals.
-    const burned = burnedAggregate(burnedTotals);
-    return {
-      total_distance: rides.reduce((s, r) => s + (r.distance || 0), burned.distance),
-      top_speed: rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), burned.maxSpeed),
-      max_lean: rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), Math.max(burned.maxLeanLeft, burned.maxLeanRight)),
-      ride_count: rides.length + burned.rides,
-      hit_heavy: scores['hit-heavy'] ?? 0,
-      petrol_head: scores['petrol-head'] ?? 0,
-    };
-  }, [rides, burnedTotals, scores]);
+  const mine = useMemo(() => crewTotals(rides, burnedTotals, scores), [rides, burnedTotals, scores]);
 
   // Publish this rider's own aggregate stats to the crew board (own row only).
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const { error } = await supabase.from('crew_scores' as any).upsert({
-        user_id: user.id,
-        crew_code: crew.code,
-        display_name: profile.name || 'Rider',
-        total_distance: mine.total_distance,
-        top_speed: mine.top_speed,
-        max_lean: mine.max_lean,
-        ride_count: mine.ride_count,
-        hit_heavy: mine.hit_heavy,
-        petrol_head: Math.round(mine.petrol_head),
-        updated_at: new Date().toISOString(),
-      } as any);
-      if (error) console.error('Failed to publish crew scores:', error);
-    })();
-    return () => { cancelled = true; };
+    void publishCrewTotals(crew.code, profile.name, mine).then((ok) => ok && nudgePush());
   }, [crew.code, profile.name, mine]);
 
   const { data: rows = [], isLoading } = useQuery({

@@ -121,10 +121,15 @@ export default function PrivacyPolicy() {
           <p className="text-muted-foreground">
             <span className="text-foreground">Notifications (opt-in, Settings → Notifications):</span> if you
             turn them on, we store this device's push address and keys (issued by your browser's push service,
-            e.g. Google or Apple) linked to your anonymous account, so Blacktop can alert you when the app is
-            closed. Notification text passes through that push service to reach your phone; it never includes
-            your location. Turning notifications off, or using the Burn Button, deletes the device from our
-            server.
+            e.g. Google or Apple), which kinds of notification you've switched on and your crew code, linked to
+            your anonymous account. For heavy-weather alerts we also keep your last location rounded to about
+            11 km (from where your last ride ended, or your phone's location if you've allowed it) and check the
+            forecast there with Open-Meteo. For time-based maintenance reminders we keep the reminder text
+            (service item and vehicle name) and its date until it's sent. Notifications are encrypted end to end
+            to your phone; the push service only delivers them. A rescue call sends your name and location to
+            your convoy and your crew. With Blacktop World on, your crew-board totals and this week's challenge
+            stats are also published after each ride, so your crew can be told when the board changes. Turning
+            notifications off, or using the Burn Button, deletes the device and its reminders from our server.
           </p>
           <p className="text-muted-foreground">
             <span className="text-foreground">Track Pack (opt-in):</span> tracks, lap times and session

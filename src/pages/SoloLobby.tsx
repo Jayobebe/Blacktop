@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, MapPin, Map, Plus, X, Lock, Unlock } from 'lucide-react';
 import { ConvoyDestination } from '@/types/convoy';
 import { toast } from 'sonner';
+import { nudgePush } from '@/features/notifications';
 import { useConvoyState } from '@/features/convoy';
 import { useCrew } from '@/features/crew/useCrew';
 import { useExperience } from '@/features/experience';
@@ -143,6 +144,7 @@ export default function SoloLobby() {
           .from('convoys')
           .update({ is_listed: true, crew_code: crew.code } as any)
           .eq('id', created.id);
+        nudgePush(); // the crew hears about the open convoy
         toast.success(`Listed in crew ${crew.code}`, {
           description: 'Riders who join turn this into a group lobby.',
         });

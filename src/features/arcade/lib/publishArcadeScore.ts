@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { nudgePush } from '@/features/notifications';
 import { ownCrewCode } from '@/features/crew/useCrew';
 
 /**
@@ -47,6 +48,7 @@ export async function publishArcadeScore(
 
     const { error } = await (supabase as any).from('crew_scores').upsert(row);
     if (error) console.error('Failed to publish arcade score:', error);
+    else nudgePush(); // crew mates passed on the board hear about it
   } catch (e) {
     console.error('Failed to publish arcade score:', e);
   }

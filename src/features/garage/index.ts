@@ -8,3 +8,4 @@ export { MaintenanceList } from './components/MaintenanceList';
 export type { Bike, BikePhotos, MaintItem, GarageState } from './types';
 export { serviceStatus, dueItems } from './lib/serviceReminders';
 export type { ServiceStatus } from './lib/serviceReminders';
+export { MaintenanceNotifier } from './components/MaintenanceNotifier';
