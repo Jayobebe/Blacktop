@@ -12,7 +12,7 @@ import {
   Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
   CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer,
   Radio, Music, SkipForward, Pause, FolderOpen, ListMusic, Wallet, Fuel,
-  Handshake, Merge, Ghost, Star, UserRound, Ban, Search, MicOff
+  Handshake, Merge, Ghost, Star, UserRound, Ban, Search, MicOff, Bell, CloudLightning
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -150,16 +150,34 @@ export default function DemoShowcase() {
     {
       id: 'safety',
       title: 'Safety Net',
-      subtitle: 'Rescue, Crash Detection & Discord',
-      description: 'One button pings your location to the convoy leader or your Discord. If a hard impact is followed by a stop, the app asks if you\'re okay — and calls for help if you don\'t answer.',
+      subtitle: 'Rescue, Crash Detection & Alerts',
+      description: 'One button sends your location to your convoy, your crew and your Discord — as a notification on their phones, even with Blacktop closed. If a hard impact is followed by a stop, the app asks if you\'re okay, and calls for help if you don\'t answer.',
       icon: AlertTriangle,
       color: 'destructive',
       mockup: <RescueMockup />,
       cards: [
-        { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the whole convoy.' },
+        { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the whole convoy and your crew, straight to their lock screens.' },
+        { icon: UserRound, label: 'Solo Rescue', text: 'Riding alone? The same button alerts your crew, and Discord if you\'ve connected it.' },
         { icon: Shield, label: 'Auto-Rescue', text: 'High-G impact plus a stop triggers a 5-minute check-in.' },
         { icon: MessageSquare, label: 'Discord', text: 'Webhook announces convoy starts and broadcasts rescue pings.' },
-        { icon: MapPin, label: 'Rescue Card', text: 'Every rider gets the alert; the map shows who needs help with the distance and time to reach them.' },
+        { icon: MapPin, label: 'Rescue Card', text: 'Tap the alert to see where they are and route to them on the Blacktop map or Google Maps. Cancel and everyone hears you\'re OK.' },
+      ],
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      subtitle: 'Alerts Even When Blacktop Is Closed',
+      description: 'Turn them on in Settings and pick exactly what reaches your lock screen. Works from the Home Screen app on Android and iPhone.',
+      icon: Bell,
+      color: 'accent',
+      mockup: <NotificationsMockup />,
+      cards: [
+        { icon: AlertTriangle, label: 'Rescue Calls', text: 'A convoy or crew mate needs help, with where they are.' },
+        { icon: CloudLightning, label: 'Heavy Weather', text: 'Storms, heavy rain, snow or strong winds heading to your area in the next few hours.' },
+        { icon: Fuel, label: 'Blacktank', text: 'Requests to vote on, approvals, chip-ins and payouts.' },
+        { icon: Timer, label: 'Cards', text: 'Someone picks up your card, or beats or loses to your time attack.' },
+        { icon: Trophy, label: 'Crew', text: 'A mate passes you on the board, opens a crew convoy, or a challenge is won, lost or 5 days from closing.' },
+        { icon: Wrench, label: 'Maintenance', text: 'Service items coming due or overdue, by miles or by months.' },
       ],
     },
     {
@@ -196,6 +214,7 @@ export default function DemoShowcase() {
         { icon: Bike, label: 'Your Vehicles', text: 'Photo, odometer and lifetime stats per machine.' },
         { icon: Wrench, label: 'Maintenance', text: 'Chain, oil, brakes and tyres with bars that reset when serviced.' },
         { icon: CalendarClock, label: 'Time Reminders', text: 'Set "every N months" alongside mileage — whichever comes first nags you.' },
+        { icon: Bell, label: 'Service Alerts', text: 'A notification when something\'s due soon or overdue: after the ride that takes it there, or on the day for time-based items.' },
         { icon: History, label: 'Ride Assignment', text: 'Tag any ride to a vehicle and its stats roll up automatically.' },
         { icon: Receipt, label: 'Logbook', text: 'A leather logbook per vehicle: keepers, lifetime stats, service record, highlights and every ride, page by page.' },
         { icon: QrCode, label: 'Change Of Keeper', text: 'Selling up? Show the hand-over code for 10 seconds; the new keeper scans it and the logbook, card and stats go with the vehicle.' },
@@ -217,6 +236,7 @@ export default function DemoShowcase() {
         { icon: Ghost, label: 'Spectre Cards', text: 'Ghost versions of a rider\'s card, earned only by beating their time attack. Flip for your time, theirs and the margin. Never scanned or traded.' },
         { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones, crew challenges and 10-badge trades — can be planted on the Blacktop map, exactly where you\'re standing. Confirm with Yes / No, no map-pin fiddling.' },
         { icon: MapPin, label: 'Go Collect', text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
+        { icon: Bell, label: 'Pickup Alerts', text: 'Get a notification the moment someone picks up a card you dropped.' },
         { icon: IdCard, label: 'Hot-Spots', text: 'Cards stacked at one spot merge into a heat-coloured hot-spot with a count badge — tap it for a two-column list and collect them all at once.' },
       ],
     },
@@ -235,6 +255,7 @@ export default function DemoShowcase() {
         { icon: Ghost, label: 'Race Yourself', text: 'Take on your own time attack to earn your own vehicle\'s Spectre card. No badges either way, so nobody can farm them.' },
         { icon: AlertTriangle, label: 'Stay On Route', text: 'Stray more than 120m off the line for 15 seconds and the run is voided — Fallback earned, no time recorded.' },
         { icon: Receipt, label: 'Pink Receipt', text: 'Every time-attack ride lands in history with a pink receipt: your time, the target, the delta and the card you raced.' },
+        { icon: Bell, label: 'Result Alerts', text: 'Set a time attack and you\'re notified whenever someone beats it, or races it and loses.' },
       ],
     },
     {
@@ -256,17 +277,33 @@ export default function DemoShowcase() {
       id: 'blacktop-world',
       title: 'Blacktop World',
       subtitle: 'Your Crew Hub On A Globe',
-      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade and the Speedshop — with an anonymous glow showing where riders are active.',
+      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade, the Speedshop and, down on the South Pole, the Blacktank — with an anonymous glow showing where riders are active.',
       icon: Globe2,
       color: 'accent',
       mockup: <BlacktopWorldMockup />,
       cards: [
         { icon: Users, label: 'Crew Convoys', text: 'A live list of your crew\'s open rides — tap for leader and riders.' },
-        { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade.' },
+        { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade, updated after every ride. Get a heads-up when a mate passes you.' },
         { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
-        { icon: Flag, label: 'Challenges', text: 'Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year.' },
+        { icon: Flag, label: 'Challenges', text: 'Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year. Notifications for targets hit, results and a 5-days-left nudge.' },
         { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy, Petrol Head and Derez Legacy — personal bests and win tallies saved locally.' },
-        { icon: ShoppingBag, label: 'Speedshop', text: 'At the bottom of the globe: printed cards, receipts, hoodies, keychains and logbooks, previewed with your own stuff. Opening soon, so vote on what it should stock.' },
+        { icon: Fuel, label: 'Blacktank', text: 'On the South Pole: your crew\'s shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.' },
+        { icon: ShoppingBag, label: 'Speedshop', text: 'Printed cards, receipts, hoodies, keychains and logbooks, previewed with your own stuff. Opening soon, so vote on what it should stock.' },
+      ],
+    },
+    {
+      id: 'speedshop',
+      title: 'Speedshop',
+      subtitle: 'Help Stock The Shelves',
+      description: 'A landmark on the Blacktop World globe. Step into the garage and flick through what\'s coming, each piece shown with your own card, ride and logbook. Nothing\'s for sale yet: tell us what you\'d buy and what you\'d pay.',
+      icon: ShoppingBag,
+      color: 'accent',
+      mockup: <SpeedshopMockup />,
+      cards: [
+        { icon: IdCard, label: 'Your Stuff', text: 'Printed vehicle card, ride receipt, crew hoodie, card keychain and a bound logbook, previewed with your own data.' },
+        { icon: ChevronRight, label: 'Flick Through', text: 'Arrows under the garage floor, or swipe, to move between items.' },
+        { icon: Check, label: 'Vote', text: 'I\'d buy it, Maybe or Not for me, then what you\'d pay. See how other riders voted.' },
+        { icon: MessageSquare, label: 'Suggest', text: 'Something missing? The last slot takes your ideas.' },
       ],
     },
     {
@@ -330,6 +367,7 @@ export default function DemoShowcase() {
         { icon: Ruler, label: 'Units & Alerts', text: 'MPH or KPH, miles or km, plus amber and red speed thresholds.' },
         { icon: MonitorSmartphone, label: 'Car Display', text: 'Oversized landscape layout for wired Android head-unit mirroring.' },
         { icon: Download, label: 'Install App', text: 'Add Blacktop to your home screen for a full-screen, offline-ready ride.' },
+        { icon: Bell, label: 'Notifications', text: 'One switch per alert type, plus a test you can send with the app closed.' },
         { icon: Play, label: 'Demo Data', text: 'Hold the logo in settings to preview the app with sample stats.' },
         { icon: Heart, label: 'Tip Jar', text: 'No ads, no subscription — support the app only if you want to.' },
       ],
@@ -1135,6 +1173,8 @@ function BlacktopWorldMockup() {
     { label: 'Crew Leaderboards', top: '12%', right: '8%' },
     { label: 'Join Crew', bottom: '26%', left: '8%' },
     { label: 'Crew QR', bottom: '20%', right: '10%' },
+    { label: 'Speedshop', top: '34%', right: '4%' },
+    { label: 'Blacktank', bottom: '5%', left: '36%' },
   ];
   return (
     <div className="w-full max-w-xs space-y-3">
@@ -1581,6 +1621,67 @@ function TrackPackMockup() {
           <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-accent">Pit board</p>
           <p className="text-xl font-black text-white">PUSH</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function NotificationsMockup() {
+  const items = [
+    { icon: AlertTriangle, tint: 'text-destructive', title: '🚨 Rico needs rescue', body: 'Tap to see where they are.', when: 'now' },
+    { icon: CloudLightning, tint: 'text-sky-300', title: '⛈️ Thunderstorms heading your way', body: 'Expected in about 2 hours around your last location.', when: '4m' },
+    { icon: Ghost, tint: 'text-accent', title: '⏱️ Your time attack was beaten', body: 'Rico beat your V4 Ducati time: 3:41 vs your 3:58.', when: '1h' },
+    { icon: Wrench, tint: 'text-warning', title: '🔧 Chain lube due soon', body: 'V4 Ducati: due in 150 mi.', when: '3h' },
+  ];
+  return (
+    <div className="w-full max-w-xs rounded-[28px] border border-border/60 bg-gradient-to-b from-[hsl(230_30%_14%)] to-black p-3 space-y-2">
+      <p className="text-center font-mono text-3xl font-light text-white/90 pt-1">9:41</p>
+      <p className="text-center text-[10px] text-white/50 -mt-1 mb-1">Sunday</p>
+      {items.map((n, i) => (
+        <div key={n.title} className="rounded-2xl bg-white/10 backdrop-blur-md px-3 py-2 animate-slide-up" style={{ animationDelay: `${150 + i * 120}ms` }}>
+          <div className="flex items-center gap-1.5 text-[9px] text-white/60">
+            <n.icon className={cn('w-3 h-3', n.tint)} /> BLACKTOP <span className="ml-auto">{n.when}</span>
+          </div>
+          <p className="text-[11px] font-semibold text-white leading-tight mt-0.5">{n.title}</p>
+          <p className="text-[10px] text-white/70 leading-snug">{n.body}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpeedshopMockup() {
+  return (
+    <div className="w-full max-w-xs space-y-2">
+      <div className="relative h-44 rounded-2xl overflow-hidden border border-accent/60 bg-black">
+        <img src={shopAsset.url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 60%, transparent 35%, rgba(0,0,0,0.65) 100%)' }} />
+        <div className="absolute top-2 left-2 rounded-lg bg-black/75 border border-white/10 px-2 py-1">
+          <p className="text-[7px] uppercase tracking-[0.25em] text-accent">1 / 6</p>
+          <p className="text-[10px] font-bold">Printed Vehicle Card</p>
+        </div>
+        <span className="absolute top-2 right-2 rounded bg-accent text-accent-foreground text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rotate-3">Coming soon</span>
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-16 aspect-[5/7] rounded-md bg-gradient-to-br from-yellow-300 via-amber-500 to-yellow-700 border border-yellow-200/60 shadow-[0_10px_14px_rgba(0,0,0,0.8)] p-1">
+          <div className="h-1/2 rounded-sm bg-black/25" />
+          <div className="mt-1 grid grid-cols-2 gap-0.5">
+            {[0, 1, 2, 3].map((k) => <div key={k} className="h-2 rounded-sm bg-black/25" />)}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="h-8 w-10 rounded-xl border-2 border-accent/60 flex items-center justify-center"><ChevronRight className="w-4 h-4 rotate-180" /></span>
+        <div className="flex-1 flex justify-center gap-1">
+          {[0, 1, 2, 3, 4, 5].map((k) => <span key={k} className={cn('h-1.5 rounded-full', k === 0 ? 'w-4 bg-accent' : 'w-1.5 bg-muted-foreground/30')} />)}
+        </div>
+        <span className="h-8 w-10 rounded-xl border-2 border-accent/60 flex items-center justify-center"><ChevronRight className="w-4 h-4" /></span>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 text-[10px] font-semibold text-center">
+        <span className="rounded-xl bg-accent text-accent-foreground py-1.5">I'd buy it</span>
+        <span className="rounded-xl border border-border py-1.5 text-muted-foreground">Maybe</span>
+        <span className="rounded-xl border border-border py-1.5 text-muted-foreground">Not for me</span>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5 text-[10px] font-bold text-center">
+        {['£5', '£10', '£15', '£20+'].map((p) => <span key={p} className={cn('rounded-lg border py-1', p === '£10' ? 'bg-accent text-accent-foreground border-accent' : 'border-border text-muted-foreground')}>{p}</span>)}
       </div>
     </div>
   );

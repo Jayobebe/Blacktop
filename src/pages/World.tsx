@@ -28,9 +28,10 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
   { id: 'challenge', lat: -15.8, lng: -47.9, label: 'Crew Challenge', kind: 'challenge', route: '/crew/challenges' },
   { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
-  { id: 'blacktank', lat: 28.6, lng: 77.2, label: 'Blacktank', kind: 'tank' },
-  // Bottom of the globe: comes into view along the lower edge as it turns.
-  { id: 'speedshop', lat: -62, lng: -30, label: 'Speedshop', kind: 'shop', route: '/speedshop' },
+  { id: 'speedshop', lat: 28.6, lng: 77.2, label: 'Speedshop', kind: 'shop', route: '/speedshop' },
+  // Bottom of the globe, on the Antarctic landmass (Enderby Land): comes into
+  // view along the lower edge as the globe turns.
+  { id: 'blacktank', lat: -70, lng: 60, label: 'Blacktank', kind: 'tank' },
 
 ];
 
