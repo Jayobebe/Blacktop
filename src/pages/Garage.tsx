@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, ChevronLeft, ChevronRight, Trash2, Check, Move, X } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Trash2, Check, Move, X, BookDown } from 'lucide-react';
+import { LogbookCover, LogbookView, LogbookReceiver } from '@/features/logbook';
 import { DEFAULT_BIKE_PLACEMENT, BikePlacement } from '@/features/garage/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ import {
   StatsPanel,
   MaintenanceList,
 } from '@/features/garage';
-import { BikePhotos } from '@/features/garage';
+import { BikePhotos, type Bike } from '@/features/garage';
 import { buildNickLines } from '@/features/garage/lib/nickLines';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
@@ -53,6 +54,12 @@ export default function Garage() {
   const [photos, setPhotos] = useState<BikePhotos | null>(null);
   const [placing, setPlacing] = useState(false);
   const [draftPlacement, setDraftPlacement] = useState<BikePlacement | null>(null);
+  // Snapshot of the vehicle whose logbook is open: it stays open (showing the
+  // hand-over result) even after a hand-over removes the vehicle.
+  const [logbookBike, setLogbookBike] = useState<Bike | null>(null);
+  // The logbook scanner lives outside the Add dialog so closing the dialog
+  // doesn't unmount it mid-scan; the dialog's button just opens it.
+  const openReceiverRef = useRef<(() => void) | null>(null);
 
   const stats = useBikeStats(activeBike);
 
@@ -114,8 +121,20 @@ export default function Garage() {
     resetAddForm();
   };
 
+  // The logbook takes over the whole screen while it's open.
+  if (logbookBike) {
+    const live = bikes.find((b) => b.id === logbookBike.id) ?? logbookBike;
+    return <LogbookView bike={live} onBack={() => setLogbookBike(null)} />;
+  }
+
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom">
+      <LogbookReceiver
+        trigger={(open) => {
+          openReceiverRef.current = open;
+          return null;
+        }}
+      />
       <header className="flex items-center gap-3 mb-4">
         <HeaderButton onClick={() => navigate('/')} aria-label="Back">
           <ChevronLeft className="w-5 h-5 -ml-0.5" strokeWidth={2.25} />
@@ -143,6 +162,18 @@ export default function Garage() {
                   className="w-full"
                 >
                   Continue to image
+                </Button>
+                {/* Taking over someone else's vehicle: pull in its logbook instead */}
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setAddOpen(false);
+                    resetAddForm();
+                    openReceiverRef.current?.();
+                  }}
+                >
+                  <BookDown className="w-4 h-4" /> Scan new logbook
                 </Button>
               </div>
             ) : (
@@ -319,6 +350,12 @@ export default function Garage() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+
+          {/* Logbook: every ride, stat and service for this vehicle; hand-over lives at the back */}
+          <div className="mt-6 mb-4">
+            <LogbookCover vehicleName={activeBike.name} onOpen={() => setLogbookBike(activeBike)} />
+            <p className="mt-3 text-center text-[11px] text-muted-foreground">Tap the logbook to open it</p>
           </div>
         </div>
       )}

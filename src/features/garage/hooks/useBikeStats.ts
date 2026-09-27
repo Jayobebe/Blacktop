@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useRideHistory, burnedAggregate } from '@/features/ride';
+import { useRideHistory, burnedAggregate, mergeAggregates } from '@/features/ride';
+import { useInheritedLogs, inheritedAggregate } from '@/features/logbook/lib/logbookStore';
 import { Bike } from '../types';
 
 const MI_TO_KM = 1.60934;
@@ -19,6 +20,7 @@ export interface BikeStats {
 
 export function useBikeStats(bike: Bike | null): BikeStats {
   const { rides, burnedTotals } = useRideHistory();
+  const logs = useInheritedLogs();
 
   return useMemo(() => {
     const empty: BikeStats = {
@@ -36,8 +38,9 @@ export function useBikeStats(bike: Bike | null): BikeStats {
     if (!bike) return empty;
 
     const mine = rides.filter((r) => r.endedAt && (r as any).bikeId === bike.id);
-    // Rides burned from history still count toward this vehicle.
-    const burned = burnedAggregate(burnedTotals, bike.id);
+    // Rides burned from history, and history inherited from previous owners,
+    // still count toward this vehicle.
+    const burned = mergeAggregates(burnedAggregate(burnedTotals, bike.id), inheritedAggregate(logs[bike.id]));
     const totalDistanceMi = mine.reduce((s, r) => s + r.distance, burned.distance);
     const totalDistanceKm = totalDistanceMi * MI_TO_KM;
     return {
@@ -52,5 +55,5 @@ export function useBikeStats(bike: Bike | null): BikeStats {
       maxGForce: Math.max(burned.maxGForce, ...mine.map((r) => r.maxGForce || 0)),
       longestRideMi: Math.max(burned.longestRide, ...mine.map((r) => r.distance)),
     };
-  }, [bike, rides, burnedTotals]);
+  }, [bike, rides, burnedTotals, logs]);
 }

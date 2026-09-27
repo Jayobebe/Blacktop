@@ -113,6 +113,12 @@ export default function PrivacyPolicy() {
             Disabling Blacktop World in Settings stops any further writes immediately.
           </p>
           <p className="text-muted-foreground">
+            <span className="text-foreground">Logbook hand-over:</span> when you hand a vehicle to another
+            rider, its logbook (vehicle name, photo, service items, keepers and that vehicle's ride summaries,
+            without GPS tracks) is sent straight to their phone over a one-off realtime channel opened by the QR
+            code. It passes through our realtime relay but is never stored on our servers.
+          </p>
+          <p className="text-muted-foreground">
             <span className="text-foreground">Nearby Riders (separate opt-in, Settings → Navigation):</span> while
             you ride with it on, your display name, precise position, speed and convoy (if any) are
             shared live with other riders who have also turned it on and are within a few kilometres.

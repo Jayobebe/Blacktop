@@ -47,6 +47,17 @@ export function useGarage() {
     [setState],
   );
 
+  /** Add a vehicle handed over from another rider (keeps its maintenance, photo, placement). */
+  const importBike = useCallback(
+    (input: Omit<Bike, 'id' | 'createdAt'>) => {
+      const id = crypto.randomUUID();
+      const bike: Bike = { ...input, id, createdAt: Date.now() };
+      setState((s) => ({ bikes: [...s.bikes, bike], activeBikeId: id }));
+      return id;
+    },
+    [setState],
+  );
+
   const updateBike = useCallback(
     (id: string, patch: Partial<Omit<Bike, 'id' | 'createdAt'>>) => {
       setState((s) => ({
@@ -130,6 +141,7 @@ export function useGarage() {
     activeBike,
     activeBikeId,
     addBike,
+    importBike,
     updateBike,
     deleteBike,
     setActiveBike,

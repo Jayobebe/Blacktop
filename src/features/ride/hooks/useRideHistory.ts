@@ -6,7 +6,8 @@ import { useDemoMode, DEMO_RIDES } from '@/lib/demoMode';
 import { recordRideDay } from '../lib/rideStreak';
 import { recordBadges, soloBadgesForRide } from '../lib/badgeWallet';
 import { BadgeType } from '@/types/convoy';
-import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate } from '../lib/tripBurner';
+import { clearAllLogbooks } from '@/features/logbook/lib/logbookStore';
+import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate, mergeAggregates, emptyAggregate, NO_BIKE } from '../lib/tripBurner';
 
 const MAX_GPS_POINTS_PER_STORED_RIDE = 900;
 const MAX_SENSOR_SAMPLES_PER_STORED_RIDE = 360;
@@ -58,7 +59,7 @@ export function useRideHistory() {
   const rides = demoEnabled ? DEMO_RIDES : realRides;
   // Totals of rides burned from history (see tripBurner) — added back into
   // every lifetime stat so burning only saves storage.
-  const [realBurnedTotals, , clearBurnedTotals] = useLocalStorage<BurnedTotals>(BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS);
+  const [realBurnedTotals, setBurnedTotals, clearBurnedTotals] = useLocalStorage<BurnedTotals>(BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS);
   const burnedTotals = demoEnabled ? EMPTY_BURNED_TOTALS : realBurnedTotals;
 
   const addRide = useCallback((ride: RideSession) => {
@@ -124,6 +125,19 @@ export function useRideHistory() {
       r.id === rideId ? { ...r, bikeId: bikeId || undefined } : r
     ));
   }, [setRides]);
+
+  /**
+   * A vehicle left this garage (handed over): its rides stay in the rider's
+   * history and totals, they just stop belonging to that vehicle.
+   */
+  const detachBike = useCallback((bikeId: string) => {
+    setRides(prev => prev.map(r => (r.bikeId === bikeId ? { ...r, bikeId: undefined } : r)));
+    setBurnedTotals(prev => {
+      if (!prev[bikeId]) return prev;
+      const { [bikeId]: moved, ...rest } = prev;
+      return { ...rest, [NO_BIKE]: mergeAggregates(rest[NO_BIKE] ?? emptyAggregate(), moved) };
+    });
+  }, [setRides, setBurnedTotals]);
 
   const deleteRide = useCallback((rideId: string) => {
     setRides(prev => prev.filter(r => r.id !== rideId));
@@ -227,6 +241,7 @@ export function useRideHistory() {
   const burnAllData = useCallback(() => {
     clearRides();
     clearBurnedTotals();
+    clearAllLogbooks();
     try { localStorage.removeItem('bt.cards.v1'); } catch { console.warn('[RideHistory] Failed to clear card cache'); }
     try { localStorage.removeItem('bt.collected_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear collected cards'); }
     try { localStorage.removeItem('bt.spectre_cards.v1'); } catch { console.warn('[RideHistory] Failed to clear spectre cards'); }
@@ -242,6 +257,7 @@ export function useRideHistory() {
     updateRideName,
     updateRideBike,
     toggleRideStarred,
+    detachBike,
     deleteRide,
     addRidePhoto,
     removeRidePhoto,

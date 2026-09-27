@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useGarage } from '@/features/garage/hooks/useGarage';
-import { useRideHistory, burnedAggregate } from '@/features/ride';
+import { useRideHistory, burnedAggregate, mergeAggregates } from '@/features/ride';
+import { useInheritedLogs, inheritedAggregate } from '@/features/logbook/lib/logbookStore';
 import { Bike } from '@/features/garage/types';
 import { CARDS_STORAGE_KEY, CardSnapshots, CardTier, VehicleCardSnapshot } from '../types';
 import { getTierForRides, tierRank } from '../lib/tier';
@@ -38,6 +39,7 @@ export interface VehicleCardData {
 export function useVehicleCards() {
   const { bikes, activeBikeId } = useGarage();
   const { rides, burnedTotals } = useRideHistory();
+  const logs = useInheritedLogs();
   const [snapshots, setSnapshots] = useLocalStorage<CardSnapshots>(CARDS_STORAGE_KEY, {});
 
   const cards: VehicleCardData[] = useMemo(() => {
@@ -46,7 +48,7 @@ export function useVehicleCards() {
       .map((bike) => {
         const mine = completed.filter((r) => r.bikeId === bike.id);
         // Rides burned from history still count toward the card's tier and stats.
-        const burned = burnedAggregate(burnedTotals, bike.id);
+        const burned = mergeAggregates(burnedAggregate(burnedTotals, bike.id), inheritedAggregate(logs[bike.id]));
         const totalDistanceMi = mine.reduce((s, r) => s + r.distance, burned.distance);
         const stats: VehicleCardStats = {
           totalRides: mine.length + burned.rides,
@@ -99,7 +101,7 @@ export function useVehicleCards() {
         } as VehicleCardData;
       })
       .sort((a, b) => b.stats.totalRides - a.stats.totalRides);
-  }, [activeBikeId, bikes, rides, burnedTotals, snapshots]);
+  }, [activeBikeId, bikes, rides, burnedTotals, logs, snapshots]);
 
   /** Mark a vehicle's current tier + stats as "seen" so arrows/pulse don't repeat. */
   const markTierSeen = useCallback(

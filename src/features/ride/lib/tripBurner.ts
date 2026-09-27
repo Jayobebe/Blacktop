@@ -52,7 +52,10 @@ export function emptyAggregate(): BurnedAggregate {
   };
 }
 
-function addRide(agg: BurnedAggregate, ride: RideSession): BurnedAggregate {
+/** The ride fields an aggregate needs (full RideSessions and logbook entries both fit). */
+export type AggregatableRide = Pick<RideSession, 'isConvoyRide' | 'distance' | 'duration' | 'maxSpeed' | 'maxGForce' | 'maxLeanLeft' | 'maxLeanRight' | 'earnedBadges'>;
+
+function addRide(agg: BurnedAggregate, ride: AggregatableRide): BurnedAggregate {
   const badges = { ...agg.badges };
   for (const badge of ride.earnedBadges ?? []) {
     if (badge === 'speed-demon') badges.speedDemon++;
@@ -73,7 +76,7 @@ function addRide(agg: BurnedAggregate, ride: RideSession): BurnedAggregate {
   };
 }
 
-function merge(a: BurnedAggregate, b: BurnedAggregate): BurnedAggregate {
+export function mergeAggregates(a: BurnedAggregate, b: BurnedAggregate): BurnedAggregate {
   return {
     rides: a.rides + b.rides,
     convoyRides: a.convoyRides + b.convoyRides,
@@ -95,7 +98,12 @@ function merge(a: BurnedAggregate, b: BurnedAggregate): BurnedAggregate {
 /** Burned totals for one vehicle, or across every vehicle when bikeId is omitted. */
 export function burnedAggregate(totals: BurnedTotals, bikeId?: string): BurnedAggregate {
   if (bikeId !== undefined) return totals[bikeId] ?? emptyAggregate();
-  return Object.values(totals).reduce(merge, emptyAggregate());
+  return Object.values(totals).reduce(mergeAggregates, emptyAggregate());
+}
+
+/** Aggregate of a list of rides (e.g. a vehicle's logbook). */
+export function aggregateRides(rides: AggregatableRide[]): BurnedAggregate {
+  return rides.reduce(addRide, emptyAggregate());
 }
 
 function readJson<T>(key: string, fallback: T): T {

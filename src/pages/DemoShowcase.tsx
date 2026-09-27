@@ -197,6 +197,8 @@ export default function DemoShowcase() {
         { icon: Wrench, label: 'Maintenance', text: 'Chain, oil, brakes and tyres with bars that reset when serviced.' },
         { icon: CalendarClock, label: 'Time Reminders', text: 'Set "every N months" alongside mileage — whichever comes first nags you.' },
         { icon: History, label: 'Ride Assignment', text: 'Tag any ride to a vehicle and its stats roll up automatically.' },
+        { icon: Receipt, label: 'Logbook', text: 'A leather logbook per vehicle: keepers, lifetime stats, service record, highlights and every ride, page by page.' },
+        { icon: QrCode, label: 'Change Of Keeper', text: 'Selling up? Show the hand-over code for 10 seconds; the new keeper scans it and the logbook, card and stats go with the vehicle.' },
       ],
     },
     {
