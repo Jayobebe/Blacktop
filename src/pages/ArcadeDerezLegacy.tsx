@@ -89,7 +89,7 @@ export default function ArcadeDerezLegacy() {
   // ---- No lobby: create / join -----------------------------------------
   if (!lobby) {
     return (
-      <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom">
+      <div className="min-h-dvh flex flex-col safe-top safe-bottom">
         <Header title="Derez Legacy" onBack={() => navigate(-1)} />
         <div className="flex-1 px-4 pb-6 flex flex-col gap-4">
           <div className="rounded-2xl border border-border/30 bg-card/50 p-4">
@@ -173,7 +173,7 @@ export default function ArcadeDerezLegacy() {
   if (lobby.state === 'finished') {
     const winner = players.find(p => p.userId === lobby.winnerId);
     return (
-      <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-6 p-6 safe-top safe-bottom">
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6 safe-top safe-bottom">
         <Trophy className="w-10 h-10" style={{ color: winner ? colorOf(winner.accentColor) : accent }} />
         <div className="text-center">
           <p className="font-mono text-xs tracking-widest uppercase text-muted-foreground">
@@ -218,7 +218,7 @@ export default function ArcadeDerezLegacy() {
 
   // ---- Lobby -------------------------------------------------------------
   return (
-    <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom">
+    <div className="min-h-dvh flex flex-col safe-top safe-bottom">
       <Header title="Derez Legacy" onBack={exit} />
 
       <div className="flex-1 px-4 pb-6 space-y-4 overflow-y-auto">

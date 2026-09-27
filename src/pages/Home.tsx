@@ -300,7 +300,7 @@ export default function Home() {
                   tile.onClick();
                 }}
                 className={cn(
-                  'pressable flex-1 bg-transparent border-[3px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
+                  'pressable flex-1 bg-card/50 border-[3px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
                   // One wide tile: in landscape the globe sits dead centre, so push the label left of it.
                   singleTop && 'landscape:justify-start landscape:pl-8'
                 )}

@@ -12,6 +12,7 @@ import { RadioOverlay, PlayerProvider, FloatingRadioLayer } from "@/features/rad
 import { OrientationProvider } from "@/hooks/useOrientationLock";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { AppBootSkeleton, PanelSkeleton } from "@/components/skeletons";
+import { AppBackdrop } from "@/components/AppBackdrop";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
@@ -66,6 +67,12 @@ function PageTransition({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
+}
+
+/** Global backdrop; blobs pause during an active ride and while the map covers everything. */
+function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
+  const { pathname } = useLocation();
+  return <AppBackdrop paused={mapOpen || pathname === "/ride"} />;
 }
 
 function AppRoutes() {
@@ -147,6 +154,7 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <BackdropHost mapOpen={isOpen} />
                 <AppRoutes />
                 {hasEverOpened && (
                   <Suspense fallback={<PanelSkeleton className="fixed inset-0 z-50 bg-background" label="Loading map…" />}>

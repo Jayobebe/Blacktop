@@ -84,7 +84,7 @@ export default function Pay() {
 
 
   return (
-    <main className="min-h-[100dvh] bg-background flex flex-col items-center justify-center px-6 text-center gap-5">
+    <main className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-5">
       <BTLogo className="w-14 h-14 opacity-80" />
 
       <div>

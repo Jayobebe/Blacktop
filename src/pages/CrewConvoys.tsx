@@ -55,7 +55,7 @@ export default function CrewConvoys() {
   const leader = detail.find((d) => d.is_leader);
 
   return (
-    <div className="min-h-dvh bg-background safe-top safe-bottom px-4 pt-4 pb-8">
+    <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
       <PageHeader
         title="Crew Convoys"
         backTo="/world"

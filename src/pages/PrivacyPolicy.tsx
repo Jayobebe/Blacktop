@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
   const handleBack = () => navigate(hasProfile ? '/settings' : '/');
 
   return (
-    <div className="min-h-dvh bg-background safe-top safe-bottom">
+    <div className="min-h-dvh safe-top safe-bottom">
       <div className="px-4 max-w-2xl mx-auto">
         <PageHeader sticky title="Privacy Policy" onBack={handleBack} backLabel="Go back" />
       </div>

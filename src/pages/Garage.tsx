@@ -115,7 +115,7 @@ export default function Garage() {
   };
 
   return (
-    <div className="min-h-dvh bg-background flex flex-col p-4 safe-top safe-bottom">
+    <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom">
       <header className="flex items-center gap-3 mb-4">
         <HeaderButton onClick={() => navigate('/')} aria-label="Back">
           <ChevronLeft className="w-5 h-5 -ml-0.5" strokeWidth={2.25} />

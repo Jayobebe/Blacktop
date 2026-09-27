@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
-import { FrostedBackdrop } from '@/components/FrostedBackdrop';
 import { BTLogo } from '@/components/BTLogo';
 
 /**
@@ -95,7 +94,6 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
 
   return (
     <main className="relative isolate h-dvh overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth page-in-fade">
-      <FrostedBackdrop />
 
       {/* Above the fold */}
       <section className="relative min-h-dvh flex flex-col items-center px-6 pt-10 landscape:pt-4 pb-4 landscape:pb-2 safe-top text-center">
@@ -118,7 +116,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
             Get started
             <ChevronRight className="w-5 h-5 ml-1" />
           </Button>
-          <Button asChild variant="ghost" className="frost w-full h-12 text-[15px] font-semibold rounded-2xl touch-target">
+          <Button asChild variant="outline" className="w-full h-12 text-[15px] font-semibold rounded-2xl touch-target">
             <Link to="/demo">
               <Play className="w-4 h-4 mr-1" />
               Try the demo

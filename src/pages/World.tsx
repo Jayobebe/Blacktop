@@ -137,7 +137,7 @@ export default function World() {
   // Blacktop World (and therefore card drops) is strictly opt-in.
   if (!settings.blacktopWorldEnabled) {
     return (
-      <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-4 px-8 text-center safe-top safe-bottom">
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4 px-8 text-center safe-top safe-bottom">
         <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Blacktop World</h1>
         <p className="text-[12px] text-muted-foreground leading-relaxed">
           You're opted out. Blacktop World — the crew globe, card collection and
@@ -165,7 +165,7 @@ export default function World() {
 
   return (
 
-    <div className="min-h-dvh bg-background flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
+    <div className="min-h-dvh flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
       {/* Header */}
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button

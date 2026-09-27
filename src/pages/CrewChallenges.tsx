@@ -226,7 +226,7 @@ export default function CrewChallenges() {
     goal.metric === 'distance' ? `${Number(v).toFixed(0)} ${goal.unit}` : `${Math.round(Number(v))} ${goal.unit}`;
 
   return (
-    <div className="min-h-dvh bg-background safe-top safe-bottom px-4 pt-4 pb-8">
+    <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
       <PageHeader title="Crew Challenge" backTo="/world" backLabel="Back to Blacktop World" />
 
       {/* Monthly crew goal (Forzathon-style) */}

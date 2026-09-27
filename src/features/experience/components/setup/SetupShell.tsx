@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
-import { FrostedBackdrop } from '@/components/FrostedBackdrop';
 
 interface SetupShellProps {
   /** Unique per step — remounting on change replays the entrance animation. */
@@ -25,7 +24,6 @@ interface SetupShellProps {
 export function SetupShell({ stepKey, direction, progress, onBack, eyebrow, title, subtitle, children, footer }: SetupShellProps) {
   return (
     <div className="relative isolate h-dvh max-h-dvh flex flex-col overflow-hidden">
-      <FrostedBackdrop />
 
       {/* Top bar */}
       {(onBack || progress) && (
@@ -39,7 +37,7 @@ export function SetupShell({ stepKey, direction, progress, onBack, eyebrow, titl
             disabled={!onBack}
             aria-label="Back"
             className={cn(
-              'pressable frost w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-foreground/80 hover:text-foreground',
+              'pressable frost-accent w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-foreground',
               !onBack && 'invisible'
             )}
           >

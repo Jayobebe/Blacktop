@@ -20,7 +20,6 @@ import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
 import { IdCard, Receipt, Sparkles } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
-import { FrostedBackdrop } from '@/components/FrostedBackdrop';
 
 interface FeatureCard {
   icon: React.ElementType;
@@ -348,7 +347,6 @@ export default function DemoShowcase() {
 
   return (
     <div className="relative isolate min-h-dvh flex flex-col overflow-hidden">
-      <FrostedBackdrop />
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-white/10">
         <div 

@@ -787,7 +787,7 @@ export default function ActiveRide() {
 
   return (
     <div className={cn(
-      "h-dvh max-h-dvh overflow-y-auto flex flex-col bg-background p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300",
+      "h-dvh max-h-dvh overflow-y-auto flex flex-col p-3 safe-top safe-bottom md:p-4 lg:p-6 transition-all duration-300",
       settings.carDisplayEnabled && orientation === 'landscape' && "car-display"
     )}>
       {/* Rescue Alerts (Leader only) */}

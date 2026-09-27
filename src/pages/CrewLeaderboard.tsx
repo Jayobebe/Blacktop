@@ -85,7 +85,7 @@ export default function CrewLeaderboard() {
   );
 
   return (
-    <div className="min-h-dvh bg-background safe-top safe-bottom px-4 pt-4 pb-8">
+    <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
       <PageHeader title="Crew Leaderboards" backTo="/world" backLabel="Back to Blacktop World" />
 
       {/* This page publishes the rider's own totals (see the effect above), so say so. */}

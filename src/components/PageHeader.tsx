@@ -37,7 +37,7 @@ export function PageHeader({ title, subtitle, backTo, onBack, backLabel = 'Back'
     <header
       className={cn(
         'flex items-center gap-3 flex-shrink-0',
-        sticky ? 'sticky top-0 z-20 -mx-4 px-4 py-3 bg-background/75 backdrop-blur-xl border-b border-white/[0.06] safe-top' : 'mb-4 landscape:mb-3',
+        sticky ? 'sticky top-0 z-20 -mx-4 px-4 py-3 bg-card/40 backdrop-blur-xl border-b border-white/[0.06] safe-top' : 'mb-4 landscape:mb-3',
         className
       )}
     >
@@ -62,7 +62,8 @@ export function HeaderButton({ className, children, active, ...props }: React.Bu
       type="button"
       className={cn(
         'pressable w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-        active ? 'bg-accent/15 text-accent' : 'bg-white/[0.07] text-foreground/85 hover:bg-white/[0.11]',
+        'frost-accent text-foreground',
+        active ? '!bg-accent/20' : 'hover:!bg-accent/10',
         className
       )}
       {...props}
