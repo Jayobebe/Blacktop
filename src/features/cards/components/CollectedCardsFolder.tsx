@@ -319,7 +319,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
         <div
           className={cn(
             'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col items-center p-3.5 gap-2.5 [backface-visibility:hidden] [transform:rotateY(180deg)]',
-            spectre ? 'spectre-card' : cn(style.bg, style.border),
+            spectre ? 'spectre-card-back' : cn(style.bg, style.border),
           )}
         >
           <div className="w-full min-w-0">
@@ -408,7 +408,7 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
 
       <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 mt-1">
         <div
-          className={cn("absolute inset-0 bg-cover bg-center origin-center", spectre && "grayscale opacity-60")}
+          className={cn("absolute inset-0 bg-cover bg-center origin-center", spectre && "grayscale opacity-80")}
           style={{
             backgroundImage: `url(${garageShopAsset.url})`,
             transform: `scale(${card.z ?? 1})`,
