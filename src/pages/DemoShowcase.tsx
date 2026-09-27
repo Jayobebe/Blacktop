@@ -266,7 +266,7 @@ export default function DemoShowcase() {
         { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
         { icon: Flag, label: 'Challenges', text: 'Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year.' },
         { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy, Petrol Head and Derez Legacy — personal bests and win tallies saved locally.' },
-        { icon: ShoppingBag, label: 'Speedshop', text: 'At the bottom of the globe: printed cards, receipts, posters, hoodies and more, previewed with your own stuff. Opening soon, so vote on what it should stock.' },
+        { icon: ShoppingBag, label: 'Speedshop', text: 'At the bottom of the globe: printed cards, receipts, hoodies, keychains and logbooks, previewed with your own stuff. Opening soon, so vote on what it should stock.' },
       ],
     },
     {

@@ -1,16 +1,14 @@
-import { useMemo } from 'react';
 import { useGarage } from '@/features/garage';
 import { useRideHistory } from '@/features/ride';
 import { useVehicleCards, VehicleCard } from '@/features/cards';
 import { LogbookCover } from '@/features/logbook';
 import { useCrew } from '@/features/crew/useCrew';
-import { useProfile } from '@/features/profile';
 import { formatDuration } from '@/lib/format';
 import type { PreviewKind } from '../lib/catalogue';
 
 /**
  * What each Speedshop item would look like, using the rider's own stuff where
- * there is some: their vehicle card, latest ride receipt and route, logbook
+ * there is some: their vehicle card, latest ride receipt, logbook
  * and crew code.
  */
 export function ItemPreview({ kind }: { kind: PreviewKind }) {
@@ -19,8 +17,6 @@ export function ItemPreview({ kind }: { kind: PreviewKind }) {
       return <CardPreview />;
     case 'receipt':
       return <ReceiptPreview />;
-    case 'poster':
-      return <PosterPreview />;
     case 'logbook':
       return <LogbookPreview />;
     default:
@@ -83,42 +79,6 @@ function ReceiptPreview() {
   );
 }
 
-function PosterPreview() {
-  const { rides } = useRideHistory();
-  // The ride with the most shape to it makes the best poster.
-  const ride = useMemo(
-    () => [...rides].filter((r) => (r.gpsPoints?.length ?? 0) > 10).sort((a, b) => b.gpsPoints.length - a.gpsPoints.length)[0] ?? null,
-    [rides],
-  );
-  const path = useMemo(() => {
-    const pts = ride?.gpsPoints ?? [];
-    if (pts.length < 2) return 'M10,70 C25,20 40,85 55,45 S80,15 90,40';
-    const lat = pts.map((p) => p.lat);
-    const lng = pts.map((p) => p.lng);
-    const [minLat, maxLat, minLng, maxLng] = [Math.min(...lat), Math.max(...lat), Math.min(...lng), Math.max(...lng)];
-    const k = Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
-    const span = Math.max((maxLng - minLng) * k, maxLat - minLat) || 1;
-    const step = Math.max(1, Math.floor(pts.length / 300));
-    return pts
-      .filter((_, i) => i % step === 0)
-      .map((p, i) => {
-        const x = 10 + (((p.lng - minLng) * k) / span) * 80;
-        const y = 90 - ((p.lat - minLat) / span) * 80;
-        return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
-      })
-      .join(' ');
-  }, [ride]);
-  return (
-    <div className="w-32 aspect-[1/1.41] bg-[#f4f1e8] p-2 flex flex-col shadow-[0_18px_22px_-6px_rgba(0,0,0,0.9)] border-[3px] border-[#1a1a1a]">
-      <svg viewBox="0 0 100 100" className="w-full flex-1">
-        <path d={path} fill="none" stroke="#111" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
-      </svg>
-      <p className="text-[7px] font-black tracking-[0.2em] text-[#111] truncate">{(ride?.name || 'YOUR BEST RIDE').toUpperCase()}</p>
-      <p className="text-[6px] text-[#444]">{ride ? `${ride.distance.toFixed(1)} mi · ${formatDuration(ride.duration)}` : 'distance · time · top speed'}</p>
-    </div>
-  );
-}
-
 function LogbookPreview() {
   const { activeBike, bikes } = useGarage();
   const bike = activeBike ?? bikes[0];
@@ -129,31 +89,20 @@ function LogbookPreview() {
   );
 }
 
-function MerchPreview({ kind }: { kind: Exclude<PreviewKind, 'card' | 'receipt' | 'poster' | 'logbook'> }) {
+function MerchPreview({ kind }: { kind: Exclude<PreviewKind, 'card' | 'receipt' | 'logbook'> }) {
   const crew = useCrew();
-  const { profile } = useProfile();
   const accent = 'hsl(var(--accent))';
   const shadow = 'drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]';
 
-  if (kind === 'hoodie' || kind === 'tee') {
-    const hoodie = kind === 'hoodie';
+  if (kind === 'hoodie') {
     return (
-      <svg viewBox="0 0 120 120" className={`w-40 ${shadow}`} role="img" aria-label={hoodie ? 'Hoodie' : 'T-shirt'}>
-        {hoodie ? (
-          <path d="M42,14 Q60,4 78,14 L100,26 L112,62 L98,66 L94,52 L94,112 L26,112 L26,52 L22,66 L8,62 L20,26 Z" fill="#141414" stroke="#2c2c2c" strokeWidth={1.5} />
-        ) : (
-          <path d="M44,14 Q60,24 76,14 L104,26 L112,48 L96,54 L94,48 L94,112 L26,112 L26,48 L24,54 L8,48 L16,26 Z" fill="#141414" stroke="#2c2c2c" strokeWidth={1.5} />
-        )}
-        {hoodie && <path d="M44,15 Q60,34 76,15" fill="none" stroke="#2c2c2c" strokeWidth={2} />}
-        {hoodie && <rect x={40} y={82} width={40} height={16} rx={3} fill="#0d0d0d" stroke="#262626" />}
-        <text x={60} y={hoodie ? 58 : 56} textAnchor="middle" fontSize={hoodie ? 9 : 12} fontWeight={900} letterSpacing={1.5} fill={accent}>
-          {hoodie ? `CREW ${crew.code}` : 'BLACKTOP'}
+      <svg viewBox="0 0 120 120" className={`w-40 ${shadow}`} role="img" aria-label="Hoodie">
+        <path d="M42,14 Q60,4 78,14 L100,26 L112,62 L98,66 L94,52 L94,112 L26,112 L26,52 L22,66 L8,62 L20,26 Z" fill="#141414" stroke="#2c2c2c" strokeWidth={1.5} />
+        <path d="M44,15 Q60,34 76,15" fill="none" stroke="#2c2c2c" strokeWidth={2} />
+        <rect x={40} y={82} width={40} height={16} rx={3} fill="#0d0d0d" stroke="#262626" />
+        <text x={60} y={58} textAnchor="middle" fontSize={9} fontWeight={900} letterSpacing={1.5} fill={accent}>
+          CREW {crew.code}
         </text>
-        {!hoodie && (
-          <text x={60} y={68} textAnchor="middle" fontSize={5} letterSpacing={2} fill="#9a9a9a">
-            {(profile.name || 'RIDER').toUpperCase().slice(0, 18)}
-          </text>
-        )}
       </svg>
     );
   }
@@ -174,22 +123,5 @@ function MerchPreview({ kind }: { kind: Exclude<PreviewKind, 'card' | 'receipt' 
       </svg>
     );
   }
-
-  // stickers
-  return (
-    <svg viewBox="0 0 120 120" className={`w-40 ${shadow}`} role="img" aria-label="Sticker pack">
-      <g transform="rotate(-8 40 45)">
-        <circle cx={40} cy={45} r={24} fill="#f4f1e8" />
-        <text x={40} y={48} textAnchor="middle" fontSize={8} fontWeight={900} fill="#111">BLACKTOP</text>
-      </g>
-      <g transform="rotate(6 84 42)">
-        <rect x={64} y={24} width={40} height={36} rx={8} fill={accent} />
-        <text x={84} y={46} textAnchor="middle" fontSize={7} fontWeight={900} fill="#111">{crew.code}</text>
-      </g>
-      <g transform="rotate(-4 62 88)">
-        <rect x={34} y={72} width={56} height={30} rx={15} fill="#111" stroke={accent} strokeWidth={2} />
-        <text x={62} y={91} textAnchor="middle" fontSize={7} fontWeight={800} fill={accent}>GOLD TIER</text>
-      </g>
-    </svg>
-  );
+  return null;
 }

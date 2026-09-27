@@ -53,11 +53,8 @@ export function SurveyResultsTable() {
   }, [load]);
 
   const byId = new Map((rows ?? []).map((r) => [r.item_id, r]));
-  // Catalogue order first, then anything no longer in the catalogue.
-  const ordered = [
-    ...SHOP_ITEMS.map((i) => ({ id: i.id, name: i.name, prices: i.prices, row: byId.get(i.id) })),
-    ...(rows ?? []).filter((r) => !SHOP_ITEMS.some((i) => i.id === r.item_id)).map((r) => ({ id: r.item_id, name: r.item_id, prices: Object.keys(r.prices), row: r })),
-  ];
+  // Only items still in the shop (answers for removed items stay in the database).
+  const ordered = SHOP_ITEMS.map((i) => ({ id: i.id, name: i.name, prices: i.prices, row: byId.get(i.id) }));
   const voters = Math.max(0, ...ordered.map((o) => (o.row ? o.row.yes + o.row.maybe + o.row.no : 0)));
 
   return (
