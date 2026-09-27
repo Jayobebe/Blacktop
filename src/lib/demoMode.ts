@@ -142,8 +142,9 @@ export const DEMO_BIKE: Bike = {
   photos: { hero: DEMO_BIKE_HERO },
   baseOdometerKm: 4200,
   maintenance: [
-    { id: 'demo-m-1', name: 'Chain lube', intervalKm: 500, lastServiceKm: 4800 },
-    { id: 'demo-m-2', name: 'Engine oil', intervalKm: 5000, lastServiceKm: 4200 },
+    // Odometer includes the previous keeper's logbook (~9,260 km), so services sit near it.
+    { id: 'demo-m-1', name: 'Chain lube', intervalKm: 500, lastServiceKm: 9150 },
+    { id: 'demo-m-2', name: 'Engine oil', intervalKm: 5000, lastServiceKm: 8000 },
     { id: 'demo-m-3', name: 'Tyres', intervalKm: 8000, lastServiceKm: 4200 },
   ],
 };
@@ -318,9 +319,9 @@ export const DEMO_SPECTRE_CARDS: SpectreCard[] = [
       n: DEMO_BIKE.name,
       m: DEMO_BIKE.makeModel,
       o: DEMO_NAME,
-      t: 'silver',
-      tl: 'Silver',
-      s: { totalRides: 47, totalDistanceMi: 1234, totalDurationSec: 89 * 3600 + 12 * 60, topSpeedMph: 142, maxLean: 45, maxGForce: 1.6 },
+      t: 'gold',
+      tl: 'Gold',
+      s: { totalRides: 74, totalDistanceMi: 1234, totalDurationSec: 89 * 3600 + 12 * 60, topSpeedMph: 142, maxLean: 45, maxGForce: 1.6 },
       ts: Date.now() - 4 * 86_400_000,
     },
     img: DEMO_BIKE_HERO,
@@ -330,6 +331,60 @@ export const DEMO_SPECTRE_CARDS: SpectreCard[] = [
     earnedAt: Date.now() - 4 * 86_400_000,
   },
 ];
+
+/**
+ * The demo V4 Ducati's logbook history: bought second-hand from Marco, whose
+ * rides (and older, already-burned trips) came with it.
+ */
+const DEMO_BOUGHT_AT = DEMO_BIKE.createdAt;
+const DEMO_PREVIOUS_KEEPER = 'Marco';
+const demoInheritedRides = ([
+  // [days before hand-over, name, miles, minutes, top mph, lean L, lean R, convoy]
+  [12, 'Last ride with Marco', 64, 88, 131, 44, 47, false],
+  [26, 'Alps pass day', 142, 236, 118, 51, 49, true],
+  [33, '', 38, 55, 109, 39, 42, false],
+  [47, 'Track day warm-up', 22, 34, 149, 55, 56, false],
+  [61, '', 51, 70, 116, 41, 38, true],
+  [80, 'Coast to coast', 188, 301, 124, 43, 45, true],
+  [102, '', 29, 44, 98, 35, 37, false],
+  [131, 'Running-in done', 73, 110, 94, 31, 33, false],
+] as const).map(([daysBefore, name, mi, mins, top, ll, lr, convoy], i) => {
+  const start = DEMO_BOUGHT_AT - daysBefore * 86_400_000;
+  return {
+    id: `demo-inherited-${i}`,
+    startedAt: new Date(start).toISOString(),
+    endedAt: new Date(start + mins * 60_000).toISOString(),
+    name: name || undefined,
+    isConvoyRide: convoy,
+    distance: mi,
+    duration: mins * 60,
+    averageSpeed: Math.round((mi / (mins / 60)) * 10) / 10,
+    maxSpeed: top,
+    maxLeanLeft: ll,
+    maxLeanRight: lr,
+    maxGForce: Math.round((1 + (ll + lr) / 200) * 100) / 100,
+    owner: DEMO_PREVIOUS_KEEPER,
+  };
+});
+
+export const DEMO_LOGBOOK = {
+  owners: [{ name: DEMO_PREVIOUS_KEEPER, from: DEMO_BOUGHT_AT - 540 * 86_400_000, to: DEMO_BOUGHT_AT }],
+  rides: demoInheritedRides,
+  // Marco's older trips, burned from his history before the sale.
+  archived: {
+    rides: 19,
+    convoyRides: 6,
+    distance: 1310,
+    duration: 19 * 5400,
+    maxSpeed: 152,
+    maxGForce: 1.5,
+    maxLeanLeft: 48,
+    maxLeanRight: 50,
+    longestRide: 214,
+    badges: { speedDemon: 2, journeyman: 3, fallback: 1 },
+  },
+  passport: 'BT-D4C1-0417',
+};
 
 export const DEMO_SCORES: ArcadeScores = {
   'hit-heavy': 14,    // peak Gs

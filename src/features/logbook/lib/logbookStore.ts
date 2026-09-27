@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { aggregateRides, emptyAggregate, mergeAggregates, type BurnedAggregate } from '@/features/ride/lib/tripBurner';
 import type { RideSession } from '@/types/blacktop';
+import { useDemoMode, DEMO_BIKE_ID, DEMO_LOGBOOK } from '@/lib/demoMode';
 import type { InheritedLog, LogRide } from '../types';
 
 /**
@@ -49,8 +50,10 @@ export function clearAllLogbooks() {
   write({});
 }
 
+const DEMO_STORE: Store = { [DEMO_BIKE_ID]: DEMO_LOGBOOK as InheritedLog };
+
 export function useInheritedLogs(): Store {
-  return useSyncExternalStore(
+  const real = useSyncExternalStore(
     (l) => {
       listeners.add(l);
       return () => listeners.delete(l);
@@ -58,6 +61,9 @@ export function useInheritedLogs(): Store {
     () => store,
     () => store,
   );
+  // Demo mode shows the demo bike's logbook history; real logbooks are untouched.
+  const { enabled: demoEnabled } = useDemoMode();
+  return demoEnabled ? DEMO_STORE : real;
 }
 
 /** Totals of everything a vehicle did before it came to this rider. */
