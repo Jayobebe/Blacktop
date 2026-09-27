@@ -1172,3 +1172,57 @@
 @media (prefers-reduced-motion: reduce) {
   .lava-blob { animation: none !important; }
 }
+
+/* ===== Spectre cards: ghostly grey, drifting fog, cold shimmer, near-translucent ===== */
+.spectre-card {
+  background:
+    radial-gradient(120% 80% at 50% 0%, hsl(210 10% 85% / 0.18), transparent 60%),
+    linear-gradient(160deg, hsl(215 8% 62% / 0.28), hsl(220 8% 30% / 0.22) 55%, hsl(220 10% 12% / 0.35));
+  backdrop-filter: blur(6px) saturate(0.4);
+  -webkit-backdrop-filter: blur(6px) saturate(0.4);
+  border-color: hsl(210 15% 88% / 0.45) !important;
+  box-shadow:
+    0 0 0 1px hsl(210 20% 95% / 0.08) inset,
+    0 0 28px hsl(210 20% 85% / 0.18),
+    0 0 60px hsl(210 20% 70% / 0.12);
+  animation: spectre-breathe 6s ease-in-out infinite;
+}
+.spectre-card .spectre-photo { filter: grayscale(1) contrast(1.15) brightness(1.15) drop-shadow(0 0 6px hsl(210 20% 95% / 0.55)); opacity: 1; }
+.spectre-card-back {
+  background: linear-gradient(160deg, hsl(215 8% 32%), hsl(220 8% 18%) 55%, hsl(220 10% 9%));
+  border-color: hsl(210 15% 88% / 0.45) !important;
+  box-shadow: 0 0 28px hsl(210 20% 85% / 0.18);
+}
+.spectre-fog {
+  position: absolute; inset: -40%; pointer-events: none;
+  background:
+    radial-gradient(35% 25% at 30% 40%, hsl(0 0% 100% / 0.22), transparent 70%),
+    radial-gradient(30% 20% at 70% 65%, hsl(0 0% 100% / 0.16), transparent 70%),
+    radial-gradient(40% 25% at 50% 85%, hsl(210 10% 90% / 0.2), transparent 70%);
+  filter: blur(14px);
+  animation: spectre-drift 18s ease-in-out infinite alternate;
+}
+.spectre-fog.alt { animation-duration: 26s; animation-direction: alternate-reverse; opacity: 0.8; }
+.spectre-shimmer {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, hsl(0 0% 100% / 0.28) 45%, hsl(200 30% 95% / 0.12) 50%, transparent 62%);
+  background-size: 250% 100%;
+  mix-blend-mode: overlay;
+  animation: spectre-sheen 5.5s ease-in-out infinite;
+}
+.spectre-metal {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.18;
+  background-image: repeating-linear-gradient(90deg, hsl(0 0% 100% / 0.25) 0 1px, transparent 1px 3px);
+  mix-blend-mode: soft-light;
+}
+.spectre-text { text-shadow: 0 0 8px hsl(210 20% 95% / 0.55); }
+@keyframes spectre-drift {
+  0% { transform: translate3d(-6%, 3%, 0) scale(1); }
+  50% { transform: translate3d(5%, -4%, 0) scale(1.08); }
+  100% { transform: translate3d(-2%, 6%, 0) scale(1.02); }
+}
+@keyframes spectre-sheen { 0% { background-position: 150% 0; } 60%, 100% { background-position: -100% 0; } }
+@keyframes spectre-breathe { 0%, 100% { opacity: 0.86; } 50% { opacity: 0.97; } }
+@media (prefers-reduced-motion: reduce) {
+  .spectre-card, .spectre-fog, .spectre-shimmer { animation: none; }
+}
