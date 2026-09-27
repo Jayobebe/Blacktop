@@ -214,10 +214,10 @@ export default function RideDetail() {
             </div>
             {ride.challenge.result === 'won' && (
               <p className="text-[11px] text-[hsl(142_71%_45%)] font-semibold mt-2">
-                3x Speed Demon earned · card claimed
+                {ride.challenge.own ? 'Spectre card unlocked' : '3x Speed Demon earned · Spectre card unlocked'}
               </p>
             )}
-            {ride.challenge.result && ride.challenge.result !== 'won' && (
+            {ride.challenge.result && ride.challenge.result !== 'won' && !ride.challenge.own && (
               <p className="text-[11px] text-destructive font-semibold mt-2">1x Fallback earned</p>
             )}
           </div>

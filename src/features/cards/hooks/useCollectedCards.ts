@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useDemoMode, DEMO_COLLECTED_CARDS } from '@/lib/demoMode';
 import { collectedCardKey, type SharedCardPayload } from '../lib/cardCodec';
 
 export interface CollectedCard extends SharedCardPayload {
@@ -14,7 +15,10 @@ export interface CollectedCard extends SharedCardPayload {
 const STORAGE_KEY = 'bt.collected_cards.v1';
 
 export function useCollectedCards() {
-  const [collected, setCollected] = useLocalStorage<CollectedCard[]>(STORAGE_KEY, []);
+  const [realCollected, setCollected] = useLocalStorage<CollectedCard[]>(STORAGE_KEY, []);
+  // Demo mode shows the demo vault; scans/removals still only touch the real one.
+  const { enabled: demoEnabled } = useDemoMode();
+  const collected = demoEnabled ? DEMO_COLLECTED_CARDS : realCollected;
 
   const addCard = useCallback(
     (payload: SharedCardPayload, img?: string): { added: boolean; key: string } => {

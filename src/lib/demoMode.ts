@@ -6,14 +6,25 @@ import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
 import type { RideChallenge } from '@/lib/challengeRun';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
-/** Local mirror of CollectedCard so demoMode stays leaf-level (no cycle). */
-type CollectedCard = SharedCardPayload & { collectedAt: number; key: string };
+/** Local mirrors of CollectedCard / SpectreCard so demoMode stays leaf-level (no cycle). */
+type CollectedCard = SharedCardPayload & { collectedAt: number; key: string; img?: string };
+type SpectreCard = {
+  key: string;
+  card: SharedCardPayload;
+  img?: string;
+  setterName: string;
+  timeSec: number;
+  targetSec: number;
+  earnedAt: number;
+};
 
 /**
  * Demo-mode store. When enabled, read-only overrides are surfaced for:
  *  - profile name
  *  - ride stats
  *  - arcade high scores
+ *  - garage (demo bike), ride history (incl. starred rides and time-attack
+ *    receipts) and the card vault (collected + Spectre cards)
  *  - "active riders" count on the World globe (fluctuates 12-47)
  *
  * Real user data is never written or overwritten — toggling off restores
@@ -182,6 +193,19 @@ const DEMO_CHALLENGES: RideChallenge[] = [
     timeSec: 305,
     route: demoRoute(51.46, -0.16),
   },
+  {
+    // Raced their own line again and beat it: own Spectre card, no badges.
+    dropId: 'demo-drop-03',
+    vehicleName: 'V4 Ducati',
+    ownerName: DEMO_NAME,
+    tier: 'Gold',
+    role: 'attempt',
+    targetSec: 305,
+    timeSec: 297,
+    result: 'won',
+    route: demoRoute(51.46, -0.16),
+    own: true,
+  },
 ];
 
 // Staple the challenges onto the three most recent demo rides.
@@ -194,7 +218,9 @@ DEMO_CHALLENGES.forEach((challenge, i) => {
   ride.averageSpeed = Math.round((ride.distance / (ride.duration / 3600)) * 10) / 10;
   ride.endedAt = new Date(new Date(ride.startedAt).getTime() + ride.duration * 1000).toISOString();
   ride.isConvoyRide = false;
-  ride.earnedBadges = challenge.result === 'won'
+  ride.earnedBadges = challenge.own
+    ? undefined
+    : challenge.result === 'won'
     ? ['speed-demon', 'speed-demon', 'speed-demon']
     : challenge.result === 'lost'
       ? ['fallback']
@@ -203,6 +229,18 @@ DEMO_CHALLENGES.forEach((challenge, i) => {
 
 // Tag every demo ride against the demo bike so Garage / VehicleCards roll up.
 DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });
+
+// A few starred favourites, so Burn Trips has rides it keeps.
+([
+  [0, 'Rico time attack'],
+  [6, 'Sunday twisties'],
+  [15, 'Coast run with the crew'],
+] as const).forEach(([i, name]) => {
+  const ride = DEMO_RIDES[i];
+  if (!ride) return;
+  ride.starred = true;
+  ride.name = name;
+});
 
 export const DEMO_COLLECTED_CARDS: CollectedCard[] = [
   {
@@ -256,6 +294,40 @@ export const DEMO_COLLECTED_CARDS: CollectedCard[] = [
     ts: Date.now() - 40 * 86_400_000,
     key: 'demo-card-04::Nora::Nora\u2019s SV650',
     collectedAt: Date.now() - 40 * 86_400_000,
+  },
+];
+
+/**
+ * Spectre cards: one from beating Rico's time attack, one from the demo
+ * rider beating their own challenge on the V4 Ducati.
+ */
+export const DEMO_SPECTRE_CARDS: SpectreCard[] = [
+  {
+    key: 'demo-drop-01',
+    card: { ...DEMO_COLLECTED_CARDS[0], ts: Date.now() - 2 * 86_400_000 },
+    setterName: 'Rico',
+    timeSec: 221,
+    targetSec: 238,
+    earnedAt: Date.now() - 2 * 86_400_000,
+  },
+  {
+    key: 'demo-drop-03',
+    card: {
+      v: 1,
+      i: DEMO_BIKE_ID.replace(/-/g, ''),
+      n: DEMO_BIKE.name,
+      m: DEMO_BIKE.makeModel,
+      o: DEMO_NAME,
+      t: 'silver',
+      tl: 'Silver',
+      s: { totalRides: 47, totalDistanceMi: 1234, totalDurationSec: 89 * 3600 + 12 * 60, topSpeedMph: 142, maxLean: 45, maxGForce: 1.6 },
+      ts: Date.now() - 4 * 86_400_000,
+    },
+    img: DEMO_BIKE_HERO,
+    setterName: DEMO_NAME,
+    timeSec: 297,
+    targetSec: 305,
+    earnedAt: Date.now() - 4 * 86_400_000,
   },
 ];
 

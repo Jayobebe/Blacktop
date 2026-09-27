@@ -11,7 +11,8 @@ import {
   MessageSquare, Wrench, Disc3 as Bike, Map as MapIcon, Globe2, Folder, Gamepad2,
   Palette, QrCode, Mountain, CloudRain, MonitorSmartphone, Heart, Download, Ruler, Lock, Waves, Repeat,
   CornerUpRight, Share2, Flag, CalendarClock, Zap, Skull, Timer,
-  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic, Wallet, Fuel
+  Radio, Music, SkipForward, Pause, FolderOpen, ListMusic, Wallet, Fuel,
+  Handshake, Merge, Ghost, Star, UserRound, Ban, Search, MicOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
@@ -74,6 +75,40 @@ export default function DemoShowcase() {
         { icon: QrCode, label: 'QR Join', text: 'Scan the lobby QR to jump straight into a convoy.' },
         { icon: MessageSquare, label: 'Lobby Chat', text: 'Sort the plan before you set off, live in the lobby.' },
         { icon: Crown, label: 'Leadership', text: 'Hand over the lead, or auto-promote when the leader drops.' },
+        { icon: Users, label: 'Convoy Status', text: 'A strip on the map shows riders, group average speed, group ETA and how many riders have dropped behind.' },
+        { icon: Flag, label: 'Regroup', text: 'When riders fall back the leader gets a regroup card: one tap sends it to the whole convoy.' },
+      ],
+    },
+    {
+      id: 'nearby-riders',
+      title: 'Nearby Riders',
+      subtitle: 'Handshake, Pair Up & Merge',
+      description: 'Opt in and Blacktop finds other riders close by. Both sides accept a handshake to ride together, and convoy leaders can merge their groups and split them again any time.',
+      icon: Handshake,
+      color: 'accent',
+      mockup: <NearbyMockup />,
+      cards: [
+        { icon: Shield, label: 'Opt-In', text: 'Off by default. Only shared with other opted-in riders within a few km, and only while you ride.' },
+        { icon: Handshake, label: 'Handshake', text: 'One button next to save-location lists riders and convoys nearby, each with Invite, Join or Merge.' },
+        { icon: Timer, label: 'Request Timer', text: 'A sent request counts down on the button; the receiver\'s button pulses with the same timer until they accept or decline.' },
+        { icon: Users, label: 'Pair Up', text: 'Two solo riders who accept become a convoy with voice, mid-ride, without stopping.' },
+        { icon: Merge, label: 'Merge & Unmerge', text: 'Leaders merge convoys (up to 8 riders); either leader can unmerge and everyone returns to their own group.' },
+        { icon: Ban, label: 'Snooze & Block', text: 'Not now quietens a rider for 30 minutes; Block hides them for good.' },
+      ],
+    },
+    {
+      id: 'pillion',
+      title: 'Pillion Mode',
+      subtitle: 'For The Passenger',
+      description: 'Join as Operator or Passenger. Passengers get everything in the lobby, then a ride screen built for the back seat: voice, waves and rescue, with no map or stats.',
+      icon: UserRound,
+      color: 'accent',
+      mockup: <PillionMockup />,
+      cards: [
+        { icon: QrCode, label: 'Operator Or Passenger', text: 'Pick on Join Convoy before entering the code or scanning the QR.' },
+        { icon: Mic, label: 'Voice', text: 'Join, mute and unmute, and pick the audio device.' },
+        { icon: Heart, label: 'Wave & React', text: 'Wave and emoji reactions the whole convoy sees; "need a stop" buzzes the riders.' },
+        { icon: AlertTriangle, label: 'Rescue', text: 'Sees every rescue alert and can call one for the bike from their own phone.' },
       ],
     },
     {
@@ -95,6 +130,7 @@ export default function DemoShowcase() {
         { icon: Repeat, label: 'Loop Planner', text: 'No destination? Generate a twisty round trip back to where you are.' },
         { icon: Download, label: 'Offline Maps', text: 'Save map areas to your phone for rides with no signal.' },
         { icon: Navigation, label: 'Hand-Off', text: 'Send the route to Google, Apple or Waze and keep tracking.' },
+        { icon: Search, label: 'Heads-Up Map', text: 'The search bar steps aside while you ride and comes back when you slow down; in a convoy the status strip takes its place.' },
       ],
     },
     {
@@ -123,6 +159,7 @@ export default function DemoShowcase() {
         { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the whole convoy.' },
         { icon: Shield, label: 'Auto-Rescue', text: 'High-G impact plus a stop triggers a 5-minute check-in.' },
         { icon: MessageSquare, label: 'Discord', text: 'Webhook announces convoy starts and broadcasts rescue pings.' },
+        { icon: MapPin, label: 'Rescue Card', text: 'Every rider gets the alert; the map shows who needs help with the distance and time to reach them.' },
       ],
     },
     {
@@ -142,7 +179,8 @@ export default function DemoShowcase() {
         { icon: CornerUpRight, label: 'Corner Report', text: 'Every corner detected and scored 0-100 on line, lean and pace, with a ride grade.' },
         { icon: Share2, label: 'Recap Card', text: 'One tap renders a shareable image of your route, stats and corner grade.' },
         { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman, Lean Fiend, G-Lock, Corner Carver, Night Owl, Hard Ass and Always Out bank points in a 3×3 grid — Kickback joins them when riders collect your drops, while Fallback docks a point from a full-width row below.' },
-        { icon: Timer, label: 'Time-Attack Receipts', text: 'Card challenge rides print on pink stock — your time, the target, the delta, the card you raced and whether you claimed it.' },
+        { icon: Timer, label: 'Time-Attack Receipts', text: 'Card challenge rides print on pink stock — your time, the target, the delta, the card you raced and whether you unlocked its Spectre.' },
+        { icon: Star, label: 'Burn Trips', text: 'Star the rides you love; pick weekly or monthly and everything unstarred is wiped to save space. Your totals never change.' },
         { icon: Sparkles, label: 'Badge Trades', text: 'Badges are currency: spend 10 banked badge points for a spare trading-card copy to drop on the map. Kickbacks from collected drops feed the same wallet.' },
       ],
     },
@@ -173,7 +211,8 @@ export default function DemoShowcase() {
         { icon: Sparkles, label: 'Tier Ladder', text: 'Locked, Bronze, Silver, Gold, Platinum, Diamond, Ruby, Obsidian, Polyatomic, Orion.' },
         { icon: Camera, label: 'Garage Shot', text: 'The card uses your garage placement and zoom, so it looks how you set it.' },
         { icon: QrCode, label: 'Share & Scan', text: 'Show your card QR — mates scan it straight into their vault.' },
-        { icon: Folder, label: 'Card Vault', text: 'Collected cards are kept in your folder, exactly as the owner styled them.' },
+        { icon: Folder, label: 'Card Vault', text: 'Two sideways rows: Spectre cards, then your own card followed by everything you\'ve scanned. Tap any card to flip it: collected cards show their QR to pass on.' },
+        { icon: Ghost, label: 'Spectre Cards', text: 'Ghost versions of a rider\'s card, earned only by beating their time attack. Flip for your time, theirs and the margin. Never scanned or traded.' },
         { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones, crew challenges and 10-badge trades — can be planted on the Blacktop map, exactly where you\'re standing. Confirm with Yes / No, no map-pin fiddling.' },
         { icon: MapPin, label: 'Go Collect', text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
         { icon: IdCard, label: 'Hot-Spots', text: 'Cards stacked at one spot merge into a heat-coloured hot-spot with a count badge — tap it for a two-column list and collect them all at once.' },
@@ -190,7 +229,8 @@ export default function DemoShowcase() {
       cards: [
         { icon: Timer, label: 'Set The Line', text: 'Choose Yes + Challenge when you drop. Your spot is the start line, five seconds later the clock runs, and Finish challenge sets the finish where you stop.' },
         { icon: Flag, label: 'Take It On', text: 'Pull up within pick-up range of the card, ready up, and race the stored route with a live delta against the time to beat.' },
-        { icon: Trophy, label: 'Beat It, Bank It', text: 'Beat the setter and the card is claimed for you on the spot, plus 3x Speed Demon. Lose and it is 1x Fallback — you can still scan the card yourself.' },
+        { icon: Trophy, label: 'Beat It, Bank It', text: 'Beat the setter for 3x Speed Demon and their Spectre card. Lose and it is 1x Fallback. The normal card is still collected by scanning it.' },
+        { icon: Ghost, label: 'Race Yourself', text: 'Take on your own time attack to earn your own vehicle\'s Spectre card. No badges either way, so nobody can farm them.' },
         { icon: AlertTriangle, label: 'Stay On Route', text: 'Stray more than 120m off the line for 15 seconds and the run is voided — Fallback earned, no time recorded.' },
         { icon: Receipt, label: 'Pink Receipt', text: 'Every time-attack ride lands in history with a pink receipt: your time, the target, the delta and the card you raced.' },
       ],
@@ -949,7 +989,7 @@ function RescueMockup() {
 
       <div className="text-center animate-fade-in delay-500 space-y-1">
         <p className="text-xs text-muted-foreground">
-          Lost members send location to leader
+          Rescue alerts reach the whole convoy
         </p>
         <p className="text-[10px] text-muted-foreground/70">
           Lives in the map control row — never next to End Ride
@@ -1000,7 +1040,7 @@ function MiniReceipt({ timeAttack }: { timeAttack?: boolean }) {
         <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
         {timeAttack ? (
           <div className="text-center">
-            <div className="text-sm tracking-[0.2em] font-bold">WON · CARD CLAIMED</div>
+            <div className="text-sm tracking-[0.2em] font-bold">WON · SPECTRE UNLOCKED</div>
             <div className="text-[10px] opacity-70 mt-0.5">RICO&rsquo;S PANIGALE · GOLD</div>
             <div className="text-[10px] opacity-70">3x SPEED DEMON</div>
           </div>
@@ -1421,6 +1461,80 @@ function GarageMockup() {
 
 
 
+function NearbyMockup() {
+  return (
+    <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden">
+      <div className="relative h-24 rounded-xl bg-[#0b0b0d] border border-border overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-dashed border-accent/60 bg-accent/5 animate-pulse" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-accent" />
+        <div className="absolute left-[62%] top-[34%] w-2.5 h-2.5 rounded-full bg-accent/50 shadow-[0_0_8px_hsl(var(--accent))]" />
+        <div className="absolute left-[30%] top-[62%] w-2.5 h-2.5 rounded-full bg-accent/50 shadow-[0_0_8px_hsl(var(--accent))]" />
+        <div className="absolute left-[24%] top-[70%] w-2.5 h-2.5 rounded-full bg-accent/50 shadow-[0_0_8px_hsl(var(--accent))]" />
+        <div className="absolute right-2 top-2 w-8 h-8 rounded-full bg-accent/25 border border-accent text-accent flex items-center justify-center shadow-[0_0_14px_hsl(var(--accent)/0.7)]">
+          <Handshake className="w-4 h-4" />
+          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-accent-foreground text-[9px] font-bold flex items-center justify-center">32</span>
+        </div>
+      </div>
+      <div className="mt-2 rounded-xl border border-border bg-card/95 divide-y divide-border/60">
+        {[
+          { name: 'Ben', sub: '400 ft', cta: 'Invite', Icon: UserRound },
+          { name: "Eve's convoy", sub: '0.6 mi · 3 riders', cta: 'Merge', Icon: Users },
+        ].map(({ name, sub, cta, Icon }) => (
+          <div key={name} className="flex items-center gap-2 px-2.5 py-2">
+            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+              <Icon className="w-3.5 h-3.5 text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium truncate">{name}</p>
+              <p className="text-[9px] text-muted-foreground">{sub}</p>
+            </div>
+            <span className="px-2 py-1 rounded-md bg-accent text-accent-foreground text-[10px] font-semibold">{cta}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 rounded-xl border border-accent/60 bg-card/95 px-2.5 py-2">
+        <p className="text-[11px] font-semibold">Ana wants to ride together</p>
+        <div className="mt-1.5 flex gap-1.5">
+          <span className="flex-1 text-center py-1 rounded-md bg-foreground text-background text-[10px] font-semibold">Accept</span>
+          <span className="flex-1 text-center py-1 rounded-md bg-secondary text-[10px] font-semibold">Decline</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PillionMockup() {
+  return (
+    <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden">
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-background border border-border">
+        <span className="h-7 rounded-md flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+          <Bike className="w-3 h-3" /> Operator
+        </span>
+        <span className="h-7 rounded-md flex items-center justify-center gap-1 text-[10px] font-semibold bg-accent text-accent-foreground">
+          <UserRound className="w-3 h-3" /> Passenger
+        </span>
+      </div>
+      <div className="flex flex-col items-center gap-1.5 py-3">
+        <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-accent/60 flex items-center justify-center">
+          <MicOff className="w-7 h-7 text-accent" />
+        </div>
+        <p className="text-[10px] text-muted-foreground">Muted · tap to talk</p>
+      </div>
+      <div className="rounded-lg bg-foreground text-background text-center py-1.5 text-xs font-semibold">👋 Wave</div>
+      <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+        {['👍', '🔥', '🛑', '⛽'].map((e) => (
+          <div key={e} className="aspect-square rounded-lg bg-background border border-border flex items-center justify-center text-lg">
+            {e}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 rounded-lg border-2 border-destructive/60 text-destructive text-center py-1.5 text-[11px] font-semibold flex items-center justify-center gap-1.5">
+        <AlertTriangle className="w-3.5 h-3.5" /> Request rescue
+      </div>
+    </div>
+  );
+}
+
 function CardChallengeMockup() {
   return (
     <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden">
@@ -1456,7 +1570,7 @@ function CardChallengeMockup() {
       </div>
       <div className="mt-2 flex items-center justify-between rounded-lg bg-secondary/50 px-2.5 py-1.5">
         <span className="text-[10px] font-semibold">Challenge beaten</span>
-        <span className="text-[10px] font-bold text-[hsl(142_71%_45%)]">3x Speed Demon</span>
+        <span className="text-[10px] font-bold text-[hsl(142_71%_45%)]">3x Speed Demon + Spectre</span>
       </div>
     </div>
   );

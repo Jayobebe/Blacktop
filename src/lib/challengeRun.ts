@@ -54,6 +54,8 @@ export interface RideChallenge {
   timeSec: number;
   result?: ChallengeResult;
   route: ChallengePoint[];
+  /** Raced the rider's own challenge: a Spectre card, but no badges either way. */
+  own?: boolean;
 }
 
 let run: ChallengeRun | null = null;

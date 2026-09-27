@@ -1190,6 +1190,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       timeSec,
       result,
       route: run.route,
+      own: ownChallenge,
     });
     recordAttempt.mutate({ dropId: run.dropId, timeSec, result });
     if (result === "won") {

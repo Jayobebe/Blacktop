@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useDemoMode, DEMO_SPECTRE_CARDS } from '@/lib/demoMode';
 import type { SharedCardPayload } from '../lib/cardCodec';
 
 /**
@@ -25,7 +26,10 @@ export interface SpectreCard {
 export const SPECTRE_STORAGE_KEY = 'bt.spectre_cards.v1';
 
 export function useSpectreCards() {
-  const [spectres, setSpectres] = useLocalStorage<SpectreCard[]>(SPECTRE_STORAGE_KEY, []);
+  const [realSpectres, setSpectres] = useLocalStorage<SpectreCard[]>(SPECTRE_STORAGE_KEY, []);
+  // Demo mode shows the demo Spectre row; earning still writes the real one.
+  const { enabled: demoEnabled } = useDemoMode();
+  const spectres = demoEnabled ? DEMO_SPECTRE_CARDS : realSpectres;
 
   /** Returns 'new', 'improved' (faster than the stored win) or 'kept'. */
   const earnSpectre = useCallback(
