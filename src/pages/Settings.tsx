@@ -1001,7 +1001,8 @@ export default function Settings() {
         <CollapsibleSection icon={Palette} label="Accent Color" index={6} delayClass="delay-200">
           <AccentColorPicker 
             selected={settings.accentColor} 
-            onSelect={setAccentColor} 
+            secondary={settings.secondaryAccentColor}
+            onChange={(main, secondary) => updateSettings({ accentColor: main, secondaryAccentColor: secondary })}
           />
         </CollapsibleSection>
 

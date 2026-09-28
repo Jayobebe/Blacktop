@@ -1067,19 +1067,19 @@
   border-radius: 9999px;
   will-change: transform;
   /* Super-soft edges come from the gradient itself: no blur filter to repaint. */
-  background: radial-gradient(closest-side, hsl(var(--accent) / 0.11), hsl(var(--accent) / 0.035) 45%, transparent 100%);
+  background: radial-gradient(closest-side, hsl(var(--lava, var(--accent)) / 0.11), hsl(var(--lava, var(--accent)) / 0.035) 45%, transparent 100%);
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-direction: alternate;
 }
 .lava-blob-1 { width: 90vmax; height: 90vmax; animation-name: lava-1; animation-duration: 38s; }
 .lava-blob-2 { width: 70vmax; height: 70vmax; animation-name: lava-2; animation-duration: 47s;
-  background: radial-gradient(closest-side, hsl(var(--accent) / 0.09), hsl(12 90% 50% / 0.03) 50%, transparent 100%); }
+  background: radial-gradient(closest-side, hsl(var(--lava, var(--accent)) / 0.09), hsl(var(--lava, 12 90% 50%) / 0.03) 50%, transparent 100%); }
 .lava-blob-3 { width: 60vmax; height: 60vmax; animation-name: lava-3; animation-duration: 55s;
-  background: radial-gradient(closest-side, hsl(0 0% 100% / 0.03), hsl(var(--accent) / 0.02) 50%, transparent 100%); }
+  background: radial-gradient(closest-side, hsl(0 0% 100% / 0.03), hsl(var(--lava, var(--accent)) / 0.02) 50%, transparent 100%); }
 .lava-blob-4 { width: 75vmax; height: 75vmax; animation-name: lava-4; animation-duration: 61s; }
 .lava-blob-5 { width: 50vmax; height: 50vmax; animation-name: lava-5; animation-duration: 43s;
-  background: radial-gradient(closest-side, hsl(var(--accent) / 0.1), transparent 100%); }
+  background: radial-gradient(closest-side, hsl(var(--lava, var(--accent)) / 0.1), transparent 100%); }
 
 /* Paths wander corner to corner so the blobs "bounce" off the screen edges,
    growing and shrinking as they go. Offsets are relative to the blob's own size. */
