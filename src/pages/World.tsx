@@ -74,7 +74,7 @@ export default function World() {
         _radius_km: 50,
       });
       if (error) throw error;
-      return (data ?? []) as Array<{ owner_name: string; collected_count: number; active_drops: number }>;
+      return (data ?? []) as Array<{ owner_name: string; collected_count: number; active_drops: number; kickbacks?: number; points?: number }>;
     },
     retry: false,
   });
@@ -259,7 +259,8 @@ export default function World() {
                     <span className="w-4 text-center font-mono text-muted-foreground">{i + 1}</span>
                     <span className="font-semibold truncate">{k.owner_name}</span>
                     <span className="ml-auto text-muted-foreground whitespace-nowrap">
-                      {k.collected_count} {k.collected_count === 1 ? 'grab' : 'grabs'} · {k.active_drops} {k.active_drops === 1 ? 'drop' : 'drops'}
+                      {k.active_drops} {k.active_drops === 1 ? 'drop' : 'drops'} · {k.collected_count} {k.collected_count === 1 ? 'grab' : 'grabs'}
+                      {' · '}<span className="text-primary font-mono font-semibold">{k.points ?? 0} pts</span>
                     </span>
                   </div>
                 ))}
