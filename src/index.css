@@ -1274,8 +1274,10 @@
 
 /* Speedshop: items slowly turn on a turntable so riders see them at an angle. */
 @keyframes shop-turn {
-  0%, 100% { transform: perspective(900px) rotateY(-28deg) rotateX(6deg); }
-  50% { transform: perspective(900px) rotateY(28deg) rotateX(6deg); }
+  0%, 100% { transform: perspective(1600px) rotateY(-22deg) rotateX(4deg); }
+  50% { transform: perspective(1600px) rotateY(22deg) rotateX(4deg); }
 }
-.shop-turn { animation: shop-turn 7s ease-in-out infinite; transform-style: preserve-3d; }
+.shop-turn { animation: shop-turn 7s ease-in-out infinite; transform-style: preserve-3d; will-change: transform; }
+/* Flatten the card's own flip layers so its face can't slice through at an angle. */
+.shop-turn .shop-flat, .shop-turn .shop-flat * { transform-style: flat !important; backface-visibility: visible !important; }
 @media (prefers-reduced-motion: reduce) { .shop-turn { animation: none; transform: perspective(900px) rotateY(-18deg); } }
