@@ -2650,7 +2650,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         />
       )}
 
-      {showOfflinePacks && <OfflinePacksPanel map={map} onClose={() => setShowOfflinePacks(false)} />}
+      {showOfflinePacks && (
+        <OfflinePacksPanel
+          map={map}
+          onClose={() => setShowOfflinePacks(false)}
+          userLocation={userLocation}
+          routeCoords={destination && route ? (route.geometry.coordinates as [number, number][]) : null}
+          routeName={destination?.name ?? null}
+          onImportGpx={(g) => {
+            setSoloRoute({ destination: g.destination, stops: g.stops });
+            setDestination({ lat: g.destination.lat, lng: g.destination.lng, name: g.destination.name ?? g.name });
+            toast.success(tr("GPX route loaded · {0}", [g.name]));
+          }}
+        />
+      )}
 
 
 

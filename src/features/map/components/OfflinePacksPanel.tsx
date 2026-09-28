@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Download, Loader2, Trash2, X } from 'lucide-react';
+import { Download, FileUp, Loader2, Trash2, X } from 'lucide-react';
+import { useRef } from 'react';
+import { parseGpx, type GpxRoute } from '../lib/gpx';
 import { toast } from 'sonner';
 import {
   deletePack,
   downloadPack,
-  estimatePack,
+  boundsAround,
+  estimateTiles,
+  tilesForBounds,
+  tilesForCorridor,
   formatBytes,
   listPacks,
   MAX_PACK_TILES,
@@ -19,6 +24,12 @@ import { tr } from '@/lib/i18n';
 interface Props {
   map: MapLibreMap | null;
   onClose: () => void;
+  /** Rider's GPS fix: without a route, the pack is ~15 km around it. */
+  userLocation?: { lat: number; lng: number } | null;
+  /** Active route line ([lng,lat]); when set, the whole route corridor is saved. */
+  routeCoords?: [number, number][] | null;
+  routeName?: string | null;
+  onImportGpx?: (route: GpxRoute) => void;
 }
 
 const CACHE_PREFIX = 'blacktop-tile://';
@@ -59,7 +70,8 @@ async function getTileTemplates(map: MapLibreMap): Promise<string[]> {
 }
 
 /** Download-for-offline manager for the current map viewport. */
-export function OfflinePacksPanel({ map, onClose }: Props) {
+export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, routeName, onImportGpx }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const [packs, setPacks] = useState<OfflinePack[]>(() => listPacks());
   const [templates, setTemplates] = useState<string[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -73,13 +85,32 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
     return () => { cancelled = true; };
   }, [map]);
 
-  const bounds: PackBounds | null = useMemo(() => {
-    if (!map) return null;
-    const b = map.getBounds();
-    return { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() };
-  }, [map, progress]);
+  const mode: 'route' | 'local' | 'view' =
+    routeCoords && routeCoords.length > 1 ? 'route' : userLocation ? 'local' : 'view';
 
-  const estimate = bounds && templates.length > 0 ? estimatePack(bounds, templates) : null;
+  const plan = useMemo(() => {
+    if (!map) return null;
+    let bounds: PackBounds;
+    let tiles;
+    if (mode === 'route') {
+      const lngs = routeCoords!.map((c) => c[0]);
+      const lats = routeCoords!.map((c) => c[1]);
+      bounds = { west: Math.min(...lngs), east: Math.max(...lngs), south: Math.min(...lats), north: Math.max(...lats) };
+      tiles = tilesForCorridor(routeCoords!);
+    } else if (mode === 'local') {
+      bounds = boundsAround(userLocation!.lat, userLocation!.lng, 15);
+      tiles = tilesForBounds(bounds);
+    } else {
+      const b = map.getBounds();
+      bounds = { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() };
+      tiles = tilesForBounds(bounds);
+    }
+    return { bounds, tiles };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, mode, routeCoords, userLocation?.lat, userLocation?.lng]);
+
+  const bounds = plan?.bounds ?? null;
+  const estimate = plan && templates.length > 0 ? estimateTiles(plan.tiles, templates) : null;
   const totalStored = packs.reduce((sum, p) => sum + p.bytes, 0);
 
   const handleDownload = async () => {
@@ -89,12 +120,18 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
       return;
     }
     const centre = map.getCenter();
-    const name = `Area ${centre.lat.toFixed(2)}, ${centre.lng.toFixed(2)}`;
+    const name =
+      mode === 'route'
+        ? tr("Route · {0}", [routeName || tr("planned ride")])
+        : mode === 'local'
+          ? tr("Around {0}, {1} (15 km)", [userLocation!.lat.toFixed(2), userLocation!.lng.toFixed(2)])
+          : `Area ${centre.lat.toFixed(2)}, ${centre.lng.toFixed(2)}`;
     setProgress({ done: 0, total: estimate?.tileCount ?? 0 });
     const pack = await downloadPack({
       name,
       bounds,
       templates,
+      tiles: plan?.tiles,
       onProgress: (p) => setProgress({ done: p.done, total: p.total }),
     });
     setProgress(null);
@@ -124,16 +161,20 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
       </div>
 
       <p className="text-xs text-muted-foreground mb-3">
-        {tr("Saves the area you're looking at (zoom")}{" "}{PACK_MIN_ZOOM}–{PACK_MAX_ZOOM}{tr(") so it still draws with no signal.")}
+        {mode === 'route'
+          ? tr("Saves the whole route, plus a strip either side, so it still draws with no signal.")
+          : mode === 'local'
+            ? tr("Saves about 15 km around you so the map still draws with no signal. Set a route to save the whole ride instead.")
+            : <>{tr("Saves the area you're looking at (zoom")}{" "}{PACK_MIN_ZOOM}–{PACK_MAX_ZOOM}{tr(") so it still draws with no signal.")}</>}
       </p>
 
       {estimate && (
         <div className="text-xs mb-3">
-          <span className="text-muted-foreground">{tr("This view:")}{" "}</span>
+          <span className="text-muted-foreground">{mode === 'route' ? tr("This route:") : mode === 'local' ? tr("Around you:") : tr("This view:")}{" "}</span>
           <span className="font-medium">{estimate.tileCount.toLocaleString()}{" "}{tr("tiles · ~")}{formatBytes(estimate.bytes)}</span>
           {estimate.tooLarge && (
             <span className="block text-destructive mt-1">
-              {tr("Too large (max")}{" "}{MAX_PACK_TILES.toLocaleString()}{" "}{tr("tiles) — zoom in and try again.")}
+              {tr("Too large (max")}{" "}{MAX_PACK_TILES.toLocaleString()}{" "}{mode === 'route' ? tr("tiles) — try a shorter route.") : tr("tiles) — zoom in and try again.")}
             </span>
           )}
         </div>
@@ -148,9 +189,38 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
         {progress ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> {progress.done}/{progress.total}</>
         ) : (
-          tr("Download this area")
+          mode === 'route' ? tr("Download route") : mode === 'local' ? tr("Download area around me") : tr("Download this area")
         )}
       </button>
+
+      {onImportGpx && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".gpx,application/gpx+xml,application/xml,text/xml"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (!f) return;
+              const route = parseGpx(await f.text(), f.name.replace(/\.gpx$/i, ''));
+              if (!route) {
+                toast.error(tr("Couldn't read that GPX file"));
+                return;
+              }
+              onImportGpx(route);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="mt-2 w-full h-10 rounded-lg frost-accent font-medium text-sm flex items-center justify-center gap-2"
+          >
+            <FileUp className="w-4 h-4" /> {tr("Import GPX route")}
+          </button>
+        </>
+      )}
 
       {packs.length > 0 && (
         <div className="mt-4">
