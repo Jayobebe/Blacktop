@@ -219,7 +219,8 @@ export function BurnFlameOverlay({
     };
   }, [active, holdAtPeak, mode]);
 
-  if (!visible) return null;
+  // Rendered as soon as `active` flips, so the canvas exists when the effect runs.
+  if (!visible && !active) return null;
   return <canvas ref={canvasRef} aria-hidden className="fixed inset-0 z-[2000] pointer-events-auto" />;
 }
 

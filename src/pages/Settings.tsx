@@ -146,6 +146,11 @@ export default function Settings() {
   // prop) - `burning` state alone can't catch that since it only takes
   // effect after the next render.
   const burnLockRef = useRef(false);
+  // Demo or real is decided once, when the burn is confirmed. The demo burn
+  // switches demo mode off partway through, so reading `demoEnabled` later
+  // would turn it into a real burn (it did: the demo burn wiped real data).
+  const [burnKind, setBurnKind] = useState<'demo' | 'real' | null>(null);
+  const burnKindRef = useRef<'demo' | 'real' | null>(null);
 
   const handleBurn = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (burnStep === 0) {
@@ -160,11 +165,14 @@ export default function Settings() {
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2,
       });
+      const kind = demoEnabled ? 'demo' : 'real';
+      burnKindRef.current = kind;
+      setBurnKind(kind);
       setBurning(true);
 
-      if (demoEnabled) {
-        // In demo mode the burn is a "revert to personal stats" gesture —
-        // do NOT touch real ride/garage data or the auth identity.
+      if (kind === 'demo') {
+        // Burning the demo account just takes the rider back to their own
+        // account. Never touch real ride/garage data or the auth identity here.
         return;
       }
       try {
@@ -188,14 +196,19 @@ export default function Settings() {
 
   const handleBurnPeak = async () => {
     // Screen is fully covered by flame/smoke — safe to swap routes underneath.
-    if (demoEnabled) {
-      // Drop demo overrides; user lands back on Settings with real data.
-      setDemoMode(false);
+    const kind = burnKindRef.current;
+    if (kind !== 'real') {
+      // Demo burn (or a stray second peak): back to the rider's own account, nothing deleted.
+      if (kind === 'demo') {
+        setDemoMode(false);
+        toast.success('Back to your account', { description: 'Demo data cleared. Your own data is untouched.' });
+      }
       setBurnStep(0);
       burnLockRef.current = false;
-      toast.success('Personal stats restored.');
       return;
     }
+    // One real burn per confirm, whatever the animation does.
+    burnKindRef.current = null;
     try {
       await resetIdentity();
     } catch (e) {
@@ -210,6 +223,8 @@ export default function Settings() {
 
   const handleBurnComplete = () => {
     setBurning(false);
+    setBurnKind(null);
+    burnKindRef.current = null;
   };
 
   const handleOpenNavApp = (appId: NavigationApp) => {
@@ -1043,8 +1058,14 @@ export default function Settings() {
             <p className="text-[14px] font-semibold text-[hsl(var(--burn))]">Burn Button</p>
           </div>
           <p className="text-[13px] text-muted-foreground mb-3">
-            Permanently deletes your name and all ride data ({stats.totalRides} {stats.totalRides === 1 ? 'ride' : 'rides'},{' '}
-            {stats.totalDistance.toFixed(1)} mi) and returns you to the welcome screen.
+            {demoEnabled ? (
+              <>You're in the demo account. Burning it takes you back to your own account; nothing of yours is deleted.</>
+            ) : (
+              <>
+                Permanently deletes your name and all ride data ({stats.totalRides} {stats.totalRides === 1 ? 'ride' : 'rides'},{' '}
+                {stats.totalDistance.toFixed(1)} mi) and returns you to the welcome screen.
+              </>
+            )}
           </p>
           <Button
             onClick={handleBurn}
@@ -1058,14 +1079,14 @@ export default function Settings() {
             )}
           >
             <Flame className="w-4 h-4 mr-2" />
-            {burnStep === 0 ? 'BURN ALL DATA' : 'CONFIRM BURN'}
+            {demoEnabled ? (burnStep === 0 ? 'BURN DEMO' : 'CONFIRM: BACK TO MY ACCOUNT') : burnStep === 0 ? 'BURN ALL DATA' : 'CONFIRM BURN'}
           </Button>
           {burnStep === 1 && (
             <Button onClick={() => setBurnStep(0)} variant="ghost" className="w-full mt-2 touch-target">
               Cancel
             </Button>
           )}
-          <p className="text-[11px] text-destructive text-center mt-3">This action cannot be undone</p>
+          {!demoEnabled && <p className="text-[11px] text-destructive text-center mt-3">This action cannot be undone</p>}
         </section>
 
         {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
@@ -1088,7 +1109,7 @@ export default function Settings() {
         onPeak={handleBurnPeak}
         onComplete={handleBurnComplete}
         // A real burn reloads the app under full cover (BurnReveal finishes the flames).
-        holdAtPeak={!demoEnabled}
+        holdAtPeak={burnKind === 'real'}
       />
 
     </div>
