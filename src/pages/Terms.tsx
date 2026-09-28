@@ -17,7 +17,7 @@ export default function Terms() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: September 4, 2026
+          Last updated: September 28, 2026
         </p>
 
         <section className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-2">
@@ -26,7 +26,7 @@ export default function Terms() {
             <h2 className="text-base font-semibold text-destructive">Safety first</h2>
           </div>
           <p className="text-muted-foreground">
-            Motorcycling is inherently dangerous. Blacktop is a logging and
+            Riding and driving are inherently dangerous. Blacktop is a logging and
             communication tool — it is <span className="text-foreground font-medium">not</span> a
             safety device, racing tool, navigation system you should rely on
             exclusively, or a substitute for skill, training, attention, or
@@ -55,6 +55,7 @@ export default function Terms() {
             <li>No illegal racing, stunting on public roads, or evading law enforcement.</li>
             <li>No harassment, hate, or threats in convoy chat or voice channels.</li>
             <li>No using the app to commit, plan, or assist any crime.</li>
+            <li>No false or malicious hazard reports, and no false or prank rescue calls.</li>
             <li>No reverse engineering, scraping, or abusing the backend.</li>
           </ul>
         </section>
@@ -83,9 +84,64 @@ export default function Terms() {
           <h2 className="text-base font-semibold">Rescue & crash detection</h2>
           <p className="text-muted-foreground">
             The rescue ping and auto-rescue features are best-effort
-            notifications to your convoy leader (and optionally a Discord
-            channel). They are <span className="text-foreground font-medium">not</span> emergency
-            services. In a real emergency, call your local emergency number.
+            notifications to whoever you choose in Settings → Safety: your
+            convoy, your crew, a Discord channel, and riders nearby who have
+            opted in to help. They are <span className="text-foreground font-medium">not</span> emergency
+            services, delivery isn't guaranteed, and riders who receive a call
+            are volunteers with no obligation to respond. In a real emergency,
+            call your local emergency number.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Hazard reports</h2>
+          <p className="text-muted-foreground">
+            Hazard reports come from other riders. They can be wrong, late or
+            already gone, and a warning (or the lack of one) says nothing about
+            what's actually on the road. Always ride to the conditions you can see.
+          </p>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>Only report when it's safe: stopped, or as a passenger. Never take your attention off the road to report.</li>
+            <li>Only report what you've genuinely seen. Reports are anonymous to other riders, but abuse can still be limited or removed.</li>
+            <li>Some countries restrict sharing where police or speed checks are. You are responsible for following your local law when using the "Hi-vis" report.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Navigation, places and maps</h2>
+          <p className="text-muted-foreground">
+            Routes, turn-by-turn directions, places, speed cameras and weather
+            come from public and third-party data (such as OpenStreetMap) and may
+            be incomplete, out of date or wrong. Road signs, closures and the law
+            always take priority over anything on screen.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Track Pack</h2>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>Only use lap timing on a closed circuit or private ground with the owner's permission, never on public roads.</li>
+            <li>Lap and sector times come from your phone's GPS. They are approximate and not official timing.</li>
+            <li>The circuit library is built from public OpenStreetMap data (© OpenStreetMap contributors, ODbL). Layouts, lengths and directions may be inaccurate. Blacktop isn't affiliated with any circuit; circuit names belong to their owners.</li>
+            <li>Spoken pit board calls and the pit crew link are aids, not a replacement for circuit marshals, flags or official signals.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Burning your data</h2>
+          <p className="text-muted-foreground">
+            The Burn Button permanently deletes your data on your device and on our
+            servers, and it can't be undone. Burning the demo account deletes
+            nothing and returns you to your own account.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Languages</h2>
+          <p className="text-muted-foreground">
+            Blacktop is available in several languages. Translations are provided
+            for convenience; if a translation of these terms or the privacy policy
+            differs from the English, the English version applies.
           </p>
         </section>
 

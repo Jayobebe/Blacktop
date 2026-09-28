@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          Last updated: September 4, 2026 · Maintained by the Blacktop team.
+          Last updated: September 28, 2026 · Maintained by the Blacktop team.
         </p>
 
         <section className="space-y-2">
@@ -34,11 +34,15 @@ export default function PrivacyPolicy() {
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li>Your chosen display name</li>
             <li>Your ride history (distance, speed, route, photos)</li>
-            <li>Your garage, settings, and preferences</li>
+            <li>Your garage, settings, language and preferences</li>
+            <li>Your Track Pack tracks, sessions and lap times</li>
+            <li>Your saved places, recent destinations and where the map was last centred</li>
+            <li>Offline map areas you download</li>
           </ul>
           <p className="text-muted-foreground">
             Tap <span className="text-foreground font-medium">Burn All Data</span> in
-            Settings at any time to permanently erase everything.
+            Settings at any time to permanently erase everything, on your device and on our servers
+            (see Your rights).
           </p>
         </section>
 
@@ -124,10 +128,14 @@ export default function PrivacyPolicy() {
             e.g. Google or Apple), which kinds of notification you've switched on and your crew code, linked to
             your anonymous account. For heavy-weather alerts we also keep your last location rounded to about
             11 km (from where your last ride ended, or your phone's location if you've allowed it) and check the
-            forecast there with Open-Meteo. For time-based maintenance reminders we keep the reminder text
+            forecast there with Open-Meteo. If you switch on{' '}
+            <span className="text-foreground">Riders near me who need help</span>, the same rounded
+            location (about 11 km) is kept so a nearby rider's rescue call can reach you. For time-based
+            maintenance reminders we keep the reminder text
             (service item and vehicle name) and its date until it's sent. Notifications are encrypted end to end
             to your phone; the push service only delivers them. A rescue call sends your name and location to
-            your convoy and your crew. With Blacktop World on, your crew-board totals and this week's challenge
+            whoever you've chosen in Settings → Safety: your convoy, your crew, your Discord, and riders nearby
+            (within the distance you pick) who have opted in to help. With Blacktop World on, your crew-board totals and this week's challenge
             stats are also published after each ride, so your crew can be told when the board changes. Turning
             notifications off, or using the Burn Button, deletes the device and its reminders from our server.
           </p>
@@ -140,8 +148,13 @@ export default function PrivacyPolicy() {
             <span className="text-foreground">Track Pack (opt-in):</span> tracks, lap times and session
             data stay on your device. While Track Pack is open, anyone who scans your pairing QR receives
             your display name, live position, speed, lean, lap and sector times, and pit board messages
-            over a temporary realtime channel keyed by that QR. Rider ⇄ crew voice is peer-to-peer.
-            Nothing is stored on our servers, and the link closes when you leave Track Pack.
+            over a temporary realtime channel keyed by that QR, along with the track you've selected
+            (its name, outline and timing lines). Rider ⇄ crew voice is peer-to-peer, and pit board calls
+            are spoken by your phone's own text-to-speech. Nothing is stored on our servers, and the link
+            closes when you leave Track Pack. The circuit library is a file of public OpenStreetMap circuit
+            data served with the app: searching it happens on your phone and sends nothing. Building a track
+            from the map sends only the corners of the box you draw to our search service, which asks
+            OpenStreetMap (Overpass) for the roads inside it.
           </p>
           <p className="text-muted-foreground">
             <span className="text-foreground">Nearby Riders (separate opt-in, Settings → Navigation):</span> while
@@ -245,6 +258,32 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">Hazard reports</h2>
+          <p className="text-muted-foreground">
+            When you report a hazard, we store its type, the position where you reported it, your
+            direction of travel, when it was reported and when it expires. It's linked to your anonymous
+            account only so we can limit how often one rider can report, merge duplicate reports and let
+            you remove your own; other riders never see who reported anything. "Still there?" answers are
+            stored the same way (one per rider per report). To warn you about hazards ahead, the app
+            downloads the reports around where you are and does the checking on your phone; your position
+            isn't sent to us for this. When one of your reports or answers changes, the app sends other
+            riders viewing that area a rough position (about 100 m) so they refresh. Reports are deleted a
+            day after they expire, and the Burn Button deletes yours and your answers.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">Map, places and search</h2>
+          <p className="text-muted-foreground">
+            The places, icons and names on the Blacktop map come from the map tiles themselves, so showing
+            them sends nothing extra. Searching first looks through the map already on your phone; it then
+            sends what you typed, with your approximate area, to our search service, which asks
+            OpenStreetMap's Nominatim and Photon and returns the results. We don't keep your searches. Your
+            recent destinations, saved places and last map position stay on your device.
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">Stats overlay video</h2>
           <p className="text-muted-foreground">
             During each ride, the app draws your live stats (speed, distance,
@@ -274,7 +313,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-base font-semibold">Third parties</h2>
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li><span className="text-foreground">Lovable Cloud</span> — hosts the realtime convoy backend</li>
-            <li><span className="text-foreground">OpenStreetMap / Nominatim / Overpass</span> — used for location search</li>
+            <li><span className="text-foreground">OpenStreetMap / Nominatim / Overpass / Photon (komoot)</span> — location search, the roads for building tracks, and the circuit library (© OpenStreetMap contributors, ODbL)</li>
             <li><span className="text-foreground">OpenFreeMap, Esri World Imagery, AWS Open Data terrain</span> — map, satellite and elevation tiles (they see which map areas you load)</li>
             <li><span className="text-foreground">RainViewer / Open-Meteo</span> — rain radar and route weather, only if you turn those on</li>
             <li><span className="text-foreground">Google and Cloudflare STUN</span> — help two phones find each other for voice chat (they see your IP address)</li>
@@ -307,8 +346,13 @@ export default function PrivacyPolicy() {
           <h2 className="text-base font-semibold">Your rights</h2>
           <p className="text-muted-foreground">
             Because your data lives on your device, you already control it. You can
-            view it, export it (via screenshots/share), and erase it instantly with
-            the Burn Button. There is no account to delete.
+            view it, export it (via screenshots/share), and erase it with the Burn
+            Button. Burning deletes your anonymous account and everything linked to it
+            on our servers (crew membership and scores, card drops and challenges,
+            hazard reports and answers, survey answers, notification devices and
+            reminders, card photos), then everything Blacktop kept on your device,
+            including offline maps. Burning the demo account deletes nothing: it just
+            takes you back to your own.
           </p>
         </section>
 

@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { formatSpeed, formatDistance, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
-import { IdCard, Receipt, Sparkles, ShoppingBag } from 'lucide-react';
+import { IdCard, Receipt, Sparkles, ShoppingBag, Megaphone, TrafficCone, Droplets } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 
@@ -115,7 +115,7 @@ export default function DemoShowcase() {
       id: 'navigation',
       title: 'Navigation',
       subtitle: 'Turn-By-Turn, Waypoints & Camera Alerts',
-      description: 'Search a destination and ride it in-app with turn-by-turn directions. Leaders drop multiple stops, everyone sees the same line — and you get warned about cameras ahead.',
+      description: 'Search a destination, or tap a place on the map, and ride it in-app with turn-by-turn directions from the moment you pick it. Leaders drop multiple stops, everyone sees the same line, and you get warned about cameras ahead.',
       icon: MapIcon,
       color: 'accent',
       mockup: <MapsMockup />,
@@ -129,9 +129,29 @@ export default function DemoShowcase() {
         { icon: CloudRain, label: 'Weather Routing', text: 'Warns when heavy rain sits on your route and offers a drier line.' },
         { icon: Repeat, label: 'Loop Planner', text: 'No destination? Generate a twisty round trip back to where you are.' },
         { icon: Download, label: 'Offline Maps', text: 'Save map areas to your phone for rides with no signal.' },
-        { icon: CornerUpRight, label: 'Turn-By-Turn', text: 'The next turn sits where the search bar was, with your destination, time left and arrival time. Tap X to stop. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
+        { icon: CornerUpRight, label: 'Turn-By-Turn', text: 'Starts as soon as you pick a destination: the next turn sits where the search bar was, with your destination, time left and arrival time. Tap X to stop. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
+        { icon: MapPin, label: 'Places On The Map', text: 'Cafés, fuel, food, sights and more appear as you zoom in, each with its own icon, plus your saved places and recent destinations. They step aside while you ride.' },
+        { icon: Repeat, label: 'Orbit A Place', text: 'Tap a pin and the camera swings round it in 3D. Back returns you to where you were; Navigate sets the route.' },
+        { icon: Search, label: 'Instant Search', text: 'Places on the map show up as you type, even offline and however you spell them ("mcdonalds" finds McDonald\'s). Tap the clock on a recent to remove it.' },
+        { icon: MapIcon, label: 'Clearer Map', text: 'A higher-contrast dark map, opens where you last were, and a trimmed landscape layout for bar mounts.' },
         { icon: Navigation, label: 'Smart Rerouting', text: 'Miss a turn and Blacktop finds a new way from where you are. Stops you pass come off the route by themselves.' },
         { icon: Search, label: 'Heads-Up Map', text: 'The search bar steps aside while you ride and comes back when you slow down; while navigating the turn banner takes its place, and in a convoy the status strip sits under it.' },
+      ],
+    },
+    {
+      id: 'hazards',
+      title: 'Hazard Reports',
+      subtitle: 'Warn The Riders Behind You',
+      description: 'Spot something on the road? Tap Report, pick a category and the hazard, and every rider heading that way gets a warning. Anonymous, and it clears itself when it\'s gone.',
+      icon: Megaphone,
+      color: 'accent',
+      mockup: <HazardMockup />,
+      cards: [
+        { icon: Megaphone, label: 'Two Taps', text: 'Road surface, conditions, traffic or other, then the hazard: 17 in all, from potholes and oil to crashes, roadworks, standstills, animals and hi-vis.' },
+        { icon: Bell, label: 'Warned Ahead', text: 'A banner (and, if you like, a spoken warning) about 20 seconds before you reach one, on the map or the ride screen.' },
+        { icon: Check, label: 'Still There?', text: 'Ride past and Blacktop asks. Yes keeps it up for others; two Gone votes clear it.' },
+        { icon: Timer, label: 'Clears Itself', text: 'Each type has its own life: a standstill 20 minutes, an animal 30, a pothole a month, unless riders confirm it.' },
+        { icon: Shield, label: 'Anonymous', text: 'Nobody sees who reported what. Reports are rate-limited and merge when two riders flag the same thing.' },
       ],
     },
     {
@@ -162,6 +182,7 @@ export default function DemoShowcase() {
         { icon: Shield, label: 'Auto-Rescue', text: 'High-G impact plus a stop triggers a 5-minute check-in.' },
         { icon: MessageSquare, label: 'Discord', text: 'Webhook announces convoy starts and broadcasts rescue pings.' },
         { icon: MapPin, label: 'Rescue Card', text: 'Tap the alert to see where they are and route to them on the Blacktop map or Google Maps. Cancel and everyone hears you\'re OK.' },
+        { icon: Users, label: 'You Choose Who Hears', text: 'Settings → Safety: your convoy, your crew, Discord, and riders nearby within 5 to 50 km who\'ve opted in to help.' },
       ],
     },
     {
@@ -174,6 +195,7 @@ export default function DemoShowcase() {
       mockup: <NotificationsMockup />,
       cards: [
         { icon: AlertTriangle, label: 'Rescue Calls', text: 'A convoy or crew mate needs help, with where they are.' },
+        { icon: Handshake, label: 'Riders Near Me', text: 'Opt in to hear when a rider close by calls for rescue, so help can come from whoever\'s nearest.' },
         { icon: CloudLightning, label: 'Heavy Weather', text: 'Storms, heavy rain, snow or strong winds heading to your area in the next few hours.' },
         { icon: Fuel, label: 'Blacktank', text: 'Requests to vote on, approvals, chip-ins and payouts.' },
         { icon: Timer, label: 'Cards', text: 'Someone picks up your card, or beats or loses to your time attack.' },
@@ -263,14 +285,18 @@ export default function DemoShowcase() {
       id: 'track-pack',
       title: 'Track Pack',
       subtitle: 'Lap Timing With Your Pit Crew',
-      description: 'Pace a lap to make a track, get on the grid and the timer starts itself at launch. Your pit crew scans your QR for live timing, your line on a minimap and a pit board.',
+      description: 'Pick a circuit from the library, build your own from the map or with a GPS lap, place the start/finish and sectors with a chase cam, then ready up: the timer starts itself at launch. Your pit crew scans your QR for live timing and a pit board.',
       icon: Zap,
       color: 'accent',
       mockup: <TrackPackMockup />,
       cards: [
-        { icon: Flag, label: 'Walk The Track', text: 'Set the start/finish, tap Sector wherever you like, then confirm back at the line and it saves.' },
-        { icon: Timer, label: 'Launch To Start', text: 'Pick a saved track and get into position: timing begins the moment you move. Live delta, coloured sectors, theoretical best.' },
-        { icon: QrCode, label: 'Pit Crew', text: 'Anyone who scans joins, before or after the track is made, and follows along from walk to chequered flag. Pit board, rider calls and voice.' },
+        { icon: Search, label: 'Circuit Library', text: '175 circuit layouts from around the world, from Brands Hatch Indy to Suzuka, searchable offline, nearest first.' },
+        { icon: MapIcon, label: 'Build From The Map', text: 'Box the circuit and Blacktop finds its roads and every lap they make (GP or Indy?). Tap to drop the ones you don\'t race.' },
+        { icon: Route, label: 'Or Ride A Lap', text: 'GPS follows you and closes the lap itself when you\'re back on your line.' },
+        { icon: Play, label: 'Chase Cam', text: 'Play, pause, rewind, speed up and reverse a camera round the lap to place the start/finish and sector markers. Sectors fill themselves in.' },
+        { icon: Star, label: 'Your Tracks', text: 'Previous, custom and favourite tracks in rows you swipe, each with a mini map, length and best lap.' },
+        { icon: Timer, label: 'Ready Up', text: 'Pick a track and ready up: timing begins the moment you launch. Live delta, coloured sectors, theoretical best.' },
+        { icon: QrCode, label: 'Pit Crew', text: 'They get the track the moment you pick it. Pit board calls are spoken in your helmet ("Box, box"), and your calls are spoken to them. Voice too.' },
         { icon: Receipt, label: 'Track Day Receipts', text: 'Sessions print on blue stock in History, with lap traces, racing lines, corner scores and CSV/GPX export.' },
       ],
     },
@@ -369,7 +395,9 @@ export default function DemoShowcase() {
         { icon: MonitorSmartphone, label: 'Car Display', text: 'Oversized landscape layout for wired Android head-unit mirroring.' },
         { icon: Download, label: 'Install App', text: 'Add Blacktop to your home screen for a full-screen, offline-ready ride.' },
         { icon: Bell, label: 'Notifications', text: 'One switch per alert type, plus a test you can send with the app closed.' },
+        { icon: Globe2, label: 'Your Language', text: 'Tap the BT logo in Settings to switch the whole app to your language.' },
         { icon: Play, label: 'Demo Data', text: 'Hold the logo in settings to preview the app with sample stats.' },
+        { icon: Sparkles, label: 'Living Backdrop', text: 'The BLACKTOP wordmark drifts behind every screen, surges when you tap, follows your scrolling and speeds up with you on the ride. Pull down from the top to refresh.' },
         { icon: Heart, label: 'Tip Jar', text: 'No ads, no subscription — support the app only if you want to.' },
       ],
     },
@@ -377,7 +405,7 @@ export default function DemoShowcase() {
       id: 'privacy',
       title: 'Burn Button',
       subtitle: 'Your Data, Your Control',
-      description: 'Everything lives on your device by default. One tap permanently deletes all ride history, stats and convoy data.',
+      description: 'Everything lives on your device by default. Burn permanently deletes all of it, on your phone and on our servers: rides, tracks, cards, saved places, reports, photos, settings, all of it. Burning the demo account just takes you back to yours.',
       icon: Flame,
       color: 'burn',
       mockup: <BurnMockup />
@@ -1631,6 +1659,57 @@ function TrackPackMockup() {
           <p className="text-xl font-black text-white">PUSH</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function HazardMockup() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const a = setTimeout(() => setStage(1), 700);
+    const b = setTimeout(() => setStage(2), 2600);
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
+  }, []);
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <div className="grid grid-cols-2 gap-2 animate-scale-in">
+        {[
+          { label: 'Road surface', color: '#f59e0b', Icon: Route },
+          { label: 'Conditions', color: '#38bdf8', Icon: CloudRain },
+          { label: 'Traffic', color: '#ef4444', Icon: TrafficCone },
+          { label: 'Other', color: '#a78bfa', Icon: AlertTriangle },
+        ].map(({ label, color, Icon }) => (
+          <div key={label} className="h-16 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold" style={{ borderColor: `${color}99`, background: `${color}1f` }}>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: color }}>
+              <Icon className="w-4 h-4 text-white" />
+            </span>
+            {label}
+          </div>
+        ))}
+      </div>
+      {stage >= 1 && (
+        <div className="flex items-center gap-3 rounded-2xl border-2 bg-card/95 px-3 py-2.5 animate-slide-up" style={{ borderColor: '#f59e0b' }}>
+          <span className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#f59e0b' }}>
+            <Droplets className="w-5 h-5 text-white" />
+          </span>
+          <span>
+            <span className="block font-bold text-sm">Oil / diesel spill</span>
+            <span className="block text-xs text-muted-foreground">300 m ahead</span>
+          </span>
+        </div>
+      )}
+      {stage >= 2 && (
+        <div className="rounded-2xl border border-border bg-card/95 p-3 animate-slide-up">
+          <p className="text-xs font-semibold text-center">Oil / diesel spill: still there?</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="h-9 rounded-xl bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">Yes</div>
+            <div className="h-9 rounded-xl border-2 border-border flex items-center justify-center text-xs font-bold">Gone</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
