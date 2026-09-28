@@ -52,15 +52,24 @@ export function useGForce(isActive: boolean = false) {
 
     setState(prev => ({ ...prev, isSupported: true }));
 
+    // Every sample is read, but the screen/crash detector gets the peak of each
+    // ~50ms window (≈20Hz) so spikes are never lost and re-renders drop ~3x.
+    let windowPeak = 0;
+    let lastEmit = 0;
     const handler = (e: DeviceMotionEvent) => {
       const a = e.accelerationIncludingGravity || e.acceleration;
       if (!a) return;
       const x = a.x ?? 0, y = a.y ?? 0, z = a.z ?? 0;
-      const currentG = Math.sqrt(x * x + y * y + z * z) / 9.81;
+      const g = Math.sqrt(x * x + y * y + z * z) / 9.81;
 
-      if (currentG > maxGRef.current) {
-        maxGRef.current = currentG;
-      }
+      if (g > maxGRef.current) maxGRef.current = g;
+      if (g > windowPeak) windowPeak = g;
+
+      const now = performance.now();
+      if (now - lastEmit < 50) return;
+      lastEmit = now;
+      const currentG = windowPeak;
+      windowPeak = 0;
 
       setState(prev => ({
         ...prev,

@@ -47,6 +47,7 @@ export function useLeanAngle(isActive: boolean = false) {
   const maxLeanRightRef = useRef(0);
   const orientationAngleRef = useRef(getScreenOrientationAngle());
   const calibrationOffsetRef = useRef(0); // Offset to subtract from raw readings
+  const lastEmitRef = useRef(0);
 
   const requestPermission = useCallback(async () => {
     if (typeof DeviceOrientationEvent === 'undefined') {
@@ -224,14 +225,23 @@ export function useLeanAngle(isActive: boolean = false) {
         }
       }
 
-      setState(prev => ({
-        ...prev,
-        currentLean,
-        rawLean: Math.round(rawLean),
-        maxLeanLeft: maxLeanLeftRef.current,
-        maxLeanRight: maxLeanRightRef.current,
-        permissionGranted: true,
-      }));
+      // Sampling stays at full rate (smoothing + max); screen updates capped ~20Hz to save battery.
+      const now = performance.now();
+      if (now - lastEmitRef.current < 50) return;
+      lastEmitRef.current = now;
+      setState(prev => (
+        prev.currentLean === currentLean && prev.maxLeanLeft === maxLeanLeftRef.current &&
+        prev.maxLeanRight === maxLeanRightRef.current && prev.permissionGranted
+          ? prev
+          : {
+              ...prev,
+              currentLean,
+              rawLean: Math.round(rawLean),
+              maxLeanLeft: maxLeanLeftRef.current,
+              maxLeanRight: maxLeanRightRef.current,
+              permissionGranted: true,
+            }
+      ));
     };
 
     window.addEventListener('deviceorientation', handleOrientation, true);
