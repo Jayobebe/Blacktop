@@ -43,6 +43,8 @@ type OverpassBody = {
   radius_m?: number;
   amenities: string[];
   filter24h?: boolean;
+  /** Free-text name/brand search near the point. */
+  name?: string;
   limit?: number;
 };
 
@@ -694,11 +696,11 @@ serve(async (req) => {
         });
       }
 
-      const amenities = Array.isArray(body.amenities) ? body.amenities.filter(Boolean) : [];
+      const amenities = Array.isArray(body.amenities) ? body.amenities.filter(Boolean).slice(0, 10) : [];
       const filter24h = body.filter24h === true;
-      
-      // For 24h search, we don't require amenities
-      if (amenities.length === 0 && !filter24h) {
+      const nameQ = typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
+
+      if (amenities.length === 0 && !filter24h && nameQ.length < 2) {
         return new Response(JSON.stringify([]), {
           headers: { ...cors, "Content-Type": "application/json" },
           status: 200,
@@ -707,28 +709,41 @@ serve(async (req) => {
 
       const radius = Math.max(1000, Math.min(50000, body.radius_m ?? 30000));
       const limit = Math.max(1, Math.min(100, body.limit ?? 60));
+      const around = `(around:${radius},${body.lat},${body.lon})`;
 
       let query: string;
-      
+
+      // nwr + "out center" so places mapped as buildings/areas (most
+      // supermarkets, many fuel stations) are found, not just single points.
       if (filter24h) {
-        // Search for shops and petrol stations open 24 hours
         query = `
-          [out:json][timeout:8];
+          [out:json][timeout:10];
           (
-            node["shop"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
-            node["amenity"="fuel"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
-            node["amenity"="convenience"]["opening_hours"~"24/7|24 hours|24h"](around:${radius},${body.lat},${body.lon});
+            nwr["shop"]["opening_hours"~"24/7|24 hours|24h"]${around};
+            nwr["amenity"~"^(fuel|convenience)$"]["opening_hours"~"24/7|24 hours|24h"]${around};
           );
-          out body ${limit};
+          out center ${limit};
+        `;
+      } else if (nameQ.length >= 2) {
+        const safe = escapeRegexPart(nameQ).replace(/"/g, "");
+        query = `
+          [out:json][timeout:10];
+          (
+            nwr["name"~"${safe}",i]${around};
+            nwr["brand"~"${safe}",i]${around};
+          );
+          out center ${limit};
         `;
       } else {
         const regex = amenities.map(escapeRegexPart).join("|");
+        // Store categories (supermarket, convenience) are shop=*, not amenity=*.
         query = `
-          [out:json][timeout:8];
+          [out:json][timeout:10];
           (
-            node["amenity"~"^(${regex})$"]["name"](around:${radius},${body.lat},${body.lon});
+            nwr["amenity"~"^(${regex})$"]${around};
+            nwr["shop"~"^(${regex})$"]${around};
           );
-          out body ${limit};
+          out center ${limit};
         `;
       }
 
@@ -744,15 +759,14 @@ serve(async (req) => {
       }
 
       const elements = Array.isArray(data?.elements) ? data.elements : [];
-      // Return a slim payload for the client
       const slim = elements
-        .filter((el: any) => typeof el?.lat === "number" && typeof el?.lon === "number")
         .map((el: any) => ({
-          id: String(el.id),
-          lat: el.lat,
-          lon: el.lon,
+          id: `${el.type ?? "n"}${el.id}`,
+          lat: typeof el?.lat === "number" ? el.lat : el?.center?.lat,
+          lon: typeof el?.lon === "number" ? el.lon : el?.center?.lon,
           tags: el.tags ?? {},
-        }));
+        }))
+        .filter((el: any) => typeof el.lat === "number" && typeof el.lon === "number");
 
       return new Response(JSON.stringify(slim), {
         headers: {
