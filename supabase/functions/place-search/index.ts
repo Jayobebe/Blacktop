@@ -807,6 +807,8 @@ serve(async (req) => {
       let data: any;
       try {
         // Short budget: Photon below is the quick fallback.
+        // Name search goes straight to Photon (Overpass name regex is too slow).
+        if (nameQ.length >= 2) throw new Error("name search via Photon");
         data = await fetchOverpass(query, 9000);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Overpass unavailable, using Photon:", e instanceof Error ? e.message : e);
