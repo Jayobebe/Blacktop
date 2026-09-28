@@ -40,7 +40,7 @@ function CardPreview() {
   }
   // The rider's actual card, scaled down.
   return (
-    <div className="w-[300px] h-[420px] -mt-[235px] -mx-[84px] origin-bottom scale-[0.44] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
+    <div className="w-[300px] origin-bottom scale-[0.44] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
       <VehicleCard card={card} />
     </div>
   );
@@ -63,7 +63,7 @@ function ReceiptPreview() {
       }
     : { duration: 4320, distance: 42, maxSpeed: 78, averageSpeed: 35, maxLean: 38, maxGForce: 1.1 };
   return (
-    <div className="w-[360px] origin-bottom scale-[0.3] -mx-[126px] -mt-[70%] -rotate-3 drop-shadow-[0_24px_18px_rgba(0,0,0,0.85)] pointer-events-none">
+    <div className="w-[360px] origin-bottom scale-[0.3] -rotate-3 drop-shadow-[0_24px_18px_rgba(0,0,0,0.85)] pointer-events-none">
       <RideSummary
         variant="embedded"
         hideActions
