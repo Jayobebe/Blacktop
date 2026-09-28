@@ -32,7 +32,7 @@ export const PACK_MAX_ZOOM = 15;
 
 // Rough per-tile averages measured against OpenFreeMap vector + Esri raster.
 const AVG_TILE_BYTES = 22 * 1024;
-export const MAX_PACK_TILES = 4000;
+export const MAX_PACK_TILES = 8000;
 
 function lngToX(lng: number, z: number): number {
   return Math.floor(((lng + 180) / 360) * 2 ** z);
@@ -82,6 +82,60 @@ export function expandTemplates(
     }
   }
   return urls;
+}
+
+type Tile = { z: number; x: number; y: number };
+
+/** Square box of `radiusKm` around a point (the "local area" pack). */
+export function boundsAround(lat: number, lng: number, radiusKm = 15): PackBounds {
+  const dLat = radiusKm / 111.32;
+  const dLng = radiusKm / (111.32 * Math.max(0.2, Math.cos((lat * Math.PI) / 180)));
+  return { west: lng - dLng, east: lng + dLng, south: lat - dLat, north: lat + dLat };
+}
+
+/**
+ * Tiles along a route line ([lng,lat] pairs) with a buffer either side, so a
+ * long ride stores a narrow corridor instead of a huge rectangle.
+ */
+export function tilesForCorridor(
+  coords: [number, number][],
+  bufferKm = 1.5,
+  minZoom = PACK_MIN_ZOOM,
+  maxZoom = PACK_MAX_ZOOM,
+): Tile[] {
+  const seen = new Set<string>();
+  const out: Tile[] = [];
+  // Densify so no tile is skipped between far-apart vertices (~300 m steps).
+  const pts: [number, number][] = [];
+  for (let i = 0; i < coords.length; i++) {
+    const a = coords[i];
+    pts.push(a);
+    const b = coords[i + 1];
+    if (!b) break;
+    const km = Math.hypot((b[0] - a[0]) * 111 * Math.cos((a[1] * Math.PI) / 180), (b[1] - a[1]) * 111);
+    const n = Math.floor(km / 0.3);
+    for (let k = 1; k < n; k++) pts.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
+  }
+  for (let z = minZoom; z <= maxZoom; z++) {
+    for (const [lng, lat] of pts) {
+      const b = boundsAround(lat, lng, bufferKm);
+      const x0 = lngToX(b.west, z), x1 = lngToX(b.east, z);
+      const y0 = latToY(b.north, z), y1 = latToY(b.south, z);
+      for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+        const k = `${z}/${x}/${y}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push({ z, x, y });
+      }
+    }
+    if (out.length > MAX_PACK_TILES * 4) return out;
+  }
+  return out;
+}
+
+export function estimateTiles(tiles: Tile[], templates: string[]): PackEstimate {
+  const tileCount = tiles.length * Math.max(1, templates.length);
+  return { tileCount, bytes: tileCount * AVG_TILE_BYTES, tooLarge: tileCount > MAX_PACK_TILES };
 }
 
 export interface PackEstimate {
@@ -150,6 +204,8 @@ export async function downloadPack(opts: {
   name: string;
   bounds: PackBounds;
   templates: string[];
+  /** Explicit tile list (route corridor); defaults to every tile in `bounds`. */
+  tiles?: Tile[];
   minZoom?: number;
   maxZoom?: number;
   signal?: AbortSignal;
@@ -157,7 +213,7 @@ export async function downloadPack(opts: {
 }): Promise<OfflinePack | null> {
   const minZoom = opts.minZoom ?? PACK_MIN_ZOOM;
   const maxZoom = opts.maxZoom ?? PACK_MAX_ZOOM;
-  const urls = expandTemplates(opts.templates, tilesForBounds(opts.bounds, minZoom, maxZoom));
+  const urls = expandTemplates(opts.templates, opts.tiles ?? tilesForBounds(opts.bounds, minZoom, maxZoom));
   if (urls.length === 0 || urls.length > MAX_PACK_TILES) return null;
 
   let bytes = 0;
