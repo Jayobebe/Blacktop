@@ -35,7 +35,7 @@ export const CHALLENGES: Challenge[] = [
   { id: 'grand-tour', title: 'Grand Tour', blurb: 'Rack up the big miles — 350 or bust.', metric: 'distance', unit: 'mi', target: 350 },
   { id: 'sunday-smasher', title: 'Sunday Smasher', blurb: 'A quick-hit distance dash. 100 miles takes it.', metric: 'distance', unit: 'mi', target: 100 },
   { id: 'daily-rider', title: 'Daily Rider', blurb: 'Ride every single day. 10 rides this week.', metric: 'ride_count', unit: 'rides', target: 10 },
-  { id: 'full-send', title: 'Full Lean Send', blurb: 'Push past 55° of lean.', metric: 'max_lean', unit: '°', target: 55 },
+  { id: 'full-send', title: 'Full Lean Send', blurb: 'Push past 50° of lean.', metric: 'max_lean', unit: '°', target: 50 },
   { id: 'smooth', title: 'Smooth Operator', blurb: 'Silky inputs only — average corner score of 90+.', metric: 'corner_score', unit: 'pts', target: 90 },
   { id: 'terminal', title: 'Terminal Velocity', blurb: 'Highest top speed of the week.', metric: 'top_speed', unit: 'mph', target: 100 },
   { id: 'night-owl', title: 'Night Owl', blurb: 'Most rides started after 8pm or before 5am.', metric: 'night_rides', unit: 'rides', target: 3 },

@@ -30,7 +30,7 @@ export const CHALLENGES: Challenge[] = [
   { id: 'grand-tour', title: 'Grand Tour', metric: 'distance', unit: 'mi', target: 350 },
   { id: 'sunday-smasher', title: 'Sunday Smasher', metric: 'distance', unit: 'mi', target: 100 },
   { id: 'daily-rider', title: 'Daily Rider', metric: 'ride_count', unit: 'rides', target: 10 },
-  { id: 'full-send', title: 'Full Lean Send', metric: 'max_lean', unit: '°', target: 55 },
+  { id: 'full-send', title: 'Full Lean Send', metric: 'max_lean', unit: '°', target: 50 },
   { id: 'smooth', title: 'Smooth Operator', metric: 'corner_score', unit: 'pts', target: 90 },
   { id: 'terminal', title: 'Terminal Velocity', metric: 'top_speed', unit: 'mph', target: 100 },
   { id: 'night-owl', title: 'Night Owl', metric: 'night_rides', unit: 'rides', target: 3 },
