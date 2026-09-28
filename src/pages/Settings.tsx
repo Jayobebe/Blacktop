@@ -52,7 +52,7 @@ export default function Settings() {
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const exp = useExperience();
-  const { settings, toggleSpeedUnit, toggleDistanceUnit, setAccentColor, updateSetting, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
+  const { settings, toggleSpeedUnit, toggleDistanceUnit, updateSetting, updateSettings, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const { stations: radioStations } = useRadioStations();
   const [showStations, setShowStations] = useState(false);
   const [burnStep, setBurnStep] = useState(0);
