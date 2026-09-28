@@ -18,11 +18,14 @@ import { decodeCard, encodePayload } from '../lib/cardCodec';
 import { QRCodeSVG } from 'qrcode.react';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
-import { fetchCardPhoto } from '../lib/cardPhoto';
+import { fetchCardPhoto, uploadCardPhoto } from '../lib/cardPhoto';
+import { encodeCard } from '../lib/cardCodec';
+import { useProfile } from '@/features/profile';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import type { VehicleCardData } from '../hooks/useVehicleCards';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
 import { useVehicleCards } from '../hooks/useVehicleCards';
-import { VehicleCard } from './VehicleCard';
 import { formatChallengeTime, formatDelta } from '../lib/challenge';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
@@ -190,7 +193,7 @@ export function CollectedCardsFolder() {
       >
         {myCards.map((c) => (
           <div key={`own-${c.bike.id}`} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <VehicleCard card={c} />
+            <OwnFlipCard card={c} />
             <p className="mt-2 py-2 text-center text-xs font-medium text-accent">Your card</p>
           </div>
         ))}
@@ -293,6 +296,24 @@ function CardRow({
   );
 }
 
+/** The rider's own card in the vault: same tap-to-flip card as the rest, no edit controls. */
+function OwnFlipCard({ card }: { card: VehicleCardData }) {
+  const { profile } = useProfile();
+  const [zooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const hero = card.bike.photos.hero;
+  const uid = card.bike.id.replace(/-/g, '');
+  useEffect(() => {
+    if (!hero) return;
+    let cancelled = false;
+    void uploadCardPhoto(uid, hero).then((p) => { if (!cancelled && p) setPhotoPath(p); });
+    return () => { cancelled = true; };
+  }, [hero, uid]);
+  const payload = decodeCard(encodeCard(card, profile.name, photoPath ?? undefined, zooms[card.bike.id] ?? 1));
+  if (!payload) return null;
+  return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} />;
+}
+
 /** Tap to flip. Collected cards show their QR on the back; Spectre cards show the win. */
 function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
   const [flipped, setFlipped] = useState(false);
@@ -313,12 +334,12 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
           flipped && '[transform:rotateY(180deg)]',
         )}
       >
-        <div className="absolute inset-0 [backface-visibility:hidden]">
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(0deg)_translateZ(1px)]">
           <FullCard card={card} spectre={spectre} />
         </div>
         <div
           className={cn(
-            'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col items-center p-3.5 gap-2.5 [backface-visibility:hidden] [transform:rotateY(180deg)]',
+            'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col items-center p-3.5 gap-2.5 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]',
             spectre ? 'spectre-card-back' : cn(style.bg, style.border),
           )}
         >
