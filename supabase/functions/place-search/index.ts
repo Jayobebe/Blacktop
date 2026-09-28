@@ -933,6 +933,31 @@ serve(async (req) => {
 
     // Nominatim often refuses cloud servers: answer from Photon (same OSM
     // data) in Nominatim's shape so the app doesn't notice.
+    if (!upstream.ok && body.kind === "reverse") {
+      console.warn("[PLACE-SEARCH] Nominatim reverse", upstream.status, "- using Photon");
+      try {
+        const r = await fetchWithTimeout(`https://photon.komoot.io/reverse?lat=${body.lat}&lon=${body.lon}`, {
+          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "*/*" },
+        }, 6000);
+        const j = await r.json();
+        const pr = j?.features?.[0]?.properties ?? {};
+        const shaped = {
+          display_name: [pr.name, pr.street, pr.city, pr.state, pr.country].filter(Boolean).join(", "),
+          address: {
+            country_code: typeof pr.countrycode === "string" ? pr.countrycode.toLowerCase() : undefined,
+            country: pr.country, state: pr.state, city: pr.city, road: pr.street, postcode: pr.postcode,
+          },
+        };
+        return new Response(JSON.stringify(shaped), {
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "photon" }, status: 200,
+        });
+      } catch {
+        return new Response(JSON.stringify({}), {
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "none" }, status: 200,
+        });
+      }
+    }
+
     if (!upstream.ok && body.kind === "search") {
       console.warn("[PLACE-SEARCH] Nominatim", upstream.status, "- using Photon");
       const vb = (body.viewbox ?? "").split(",").map(Number);
