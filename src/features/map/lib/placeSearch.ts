@@ -1,3 +1,4 @@
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { isDemoModeActive, DEMO_RECENT_LOCATIONS } from '@/lib/demoMode';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -71,6 +72,17 @@ export function getRecentLocations(): MapSearchResult[] {
   }
 }
 
+/** Drops one suggestion from the recent list (the map's "visited recently" pins follow). */
+export function removeRecentLocation(id: string) {
+  try {
+    const updated = getRecentLocations().filter((l) => l.id !== id);
+    localStorage.setItem(RECENT_LOCATIONS_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('blacktop-recent-saved'));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function saveRecentLocation(location: MapSearchResult) {
   try {
     const recent = getRecentLocations();
@@ -113,6 +125,63 @@ export async function getCountryCode(lat: number, lng: number): Promise<string |
   } catch {
     return null;
   }
+}
+
+/** Lower-case letters and digits only: "McDonald's" and "mcdonalds" compare equal. */
+export function normaliseName(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+/**
+ * Places on the map right now whose name matches, straight from the basemap
+ * tiles already on the phone (the OpenMapTiles `poi` layer that also draws the
+ * pins). Instant, works offline, and doesn't depend on the online search
+ * services, which rate-limit and sometimes return nothing for "McDonald's",
+ * "Costa" and the like. Only covers the loaded area (roughly the screen).
+ */
+export function searchLoadedPlaces(
+  map: MapLibreMap | null,
+  query: string,
+  anchor: { lat: number; lng: number } | null,
+  limit = 12,
+): MapSearchResult[] {
+  const q = normaliseName(query);
+  if (!map || q.length < 2) return [];
+  let features: ReturnType<MapLibreMap['querySourceFeatures']> = [];
+  try {
+    if (!map.getSource('openmaptiles')) return [];
+    features = map.querySourceFeatures('openmaptiles', { sourceLayer: 'poi' });
+  } catch {
+    return [];
+  }
+  const seen = new Set<string>();
+  const out: MapSearchResult[] = [];
+  for (const f of features) {
+    if (f.geometry.type !== 'Point') continue;
+    const p = f.properties ?? {};
+    const name = String(p['name:latin'] ?? p.name ?? '');
+    if (!name || !normaliseName(name).includes(q)) continue;
+    const [lng, lat] = f.geometry.coordinates as [number, number];
+    // The same place turns up once per tile it touches.
+    const key = `${normaliseName(name)}:${lat.toFixed(4)}:${lng.toFixed(4)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const kind = String(p.subclass ?? p.class ?? '').replace(/_/g, ' ');
+    out.push({
+      id: `tile:${key}`,
+      name,
+      address: kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : 'Place',
+      lat,
+      lng,
+      distance: anchor ? calculateDistance(anchor.lat, anchor.lng, lat, lng) : undefined,
+    });
+  }
+  if (anchor) out.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+  return out.slice(0, limit);
 }
 
 export async function searchPlaces(

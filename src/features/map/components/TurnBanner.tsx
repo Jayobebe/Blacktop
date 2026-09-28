@@ -55,6 +55,8 @@ interface Props {
   unit: DistanceUnit;
   arrived: boolean;
   rerouting: boolean;
+  /** No route yet (guidance starts the moment there's a destination). */
+  finding?: boolean;
   destinationName?: string | null;
   /** Banner X: stop navigating this route. */
   onStop: () => void;
@@ -68,7 +70,9 @@ interface Props {
  * in for the destination card: the next manoeuvre and how far to it, what
  * follows straight after, where you're headed and time/distance left.
  */
-export function TurnBanner({ progress, describe, unit, arrived, rerouting, destinationName, onStop, onSkip }: Props) {
+export function TurnBanner({ progress, describe, unit, arrived, rerouting: reroutingNow, finding = false, destinationName, onStop, onSkip }: Props) {
+  // Both show the spinner; only the label differs.
+  const rerouting = reroutingNow || finding;
   const next = progress?.next ?? null;
 
   const eta = progress
@@ -104,7 +108,7 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting, desti
         </div>
         <div className="flex-1 min-w-0">
           {rerouting ? (
-            <p className="text-lg font-black leading-tight">Rerouting…</p>
+            <p className="text-lg font-black leading-tight">{finding && !reroutingNow ? 'Finding route…' : 'Rerouting…'}</p>
           ) : arrived ? (
             <>
               <p className="text-lg font-black leading-tight">Arrived</p>

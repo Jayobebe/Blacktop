@@ -14,6 +14,8 @@ export const LIBRARY_ATTRIBUTION = 'Circuit library © OpenStreetMap contributor
 export interface LibraryCircuit {
   id: number;
   name: string;
+  /** Another name it's found by (the local-language name, e.g. 鈴鹿サーキット). */
+  aka?: string;
   lat: number;
   lng: number;
   /** Lap length, metres. */
@@ -75,8 +77,8 @@ export function searchCircuits(all: LibraryCircuit[], query: string, near?: LatL
   const words = norm(query).split(/\s+/).filter(Boolean);
   if (!words.length) return [];
   const hits = all.filter((c) => {
-    const name = ` ${norm(c.name)}`;
-    return words.every((w) => name.includes(` ${w}`));
+    const name = ` ${norm(c.name)} ${norm(c.aka ?? '')}`;
+    return words.every((w) => name.includes(` ${w}`)) || (!!c.aka && c.aka.includes(query.trim()));
   });
   return sortByDistance(hits, near).slice(0, limit);
 }

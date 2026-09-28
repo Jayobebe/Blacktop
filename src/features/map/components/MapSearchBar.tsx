@@ -9,6 +9,9 @@ import {
   QUICK_CATEGORIES,
   QuickCategory,
   getRecentLocations,
+  normaliseName,
+  removeRecentLocation,
+  searchLoadedPlaces,
   saveRecentLocation,
   searchPlaces,
   searchNearbyPOIs,
@@ -79,6 +82,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cardsMode, setCardsMode] = useState(false);
   const [recentLocations, setRecentLocations] = useState<MapSearchResult[]>([]);
+  /** A recent suggestion whose clock was tapped: it offers Remove instead of its distance. */
+  const [removingRecent, setRemovingRecent] = useState<string | null>(null);
   const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchIdRef = useRef(0);
@@ -119,32 +124,40 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
       setIsSearching(true);
       try {
         const bias = currentViewBounds(map);
-        const [remoteResults] = await Promise.all([
-          searchPlaces(searchQuery, bias, userLocation, countryCode),
-        ]);
+        const anchor =
+          userLocation ?? (bias ? { lat: (bias.north + bias.south) / 2, lng: (bias.east + bias.west) / 2 } : null);
 
-        // Prepend any saved POIs whose names contain the query string so
-        // personal spots always surface first, before Nominatim results.
-        const q = searchQuery.toLowerCase();
-        const matchingPOIs = savedPOIs
-          .filter(p => p.name.toLowerCase().includes(q))
-          .map(poiToSearchResult);
-
-        // Also surface recent destinations matching the query as "local results".
+        // Saved places and recents first (ignoring case and apostrophes, so
+        // "mcdonalds" finds "McDonald's").
+        const q = normaliseName(searchQuery);
+        const matchingPOIs = savedPOIs.filter((p) => normaliseName(p.name).includes(q)).map(poiToSearchResult);
         const matchingRecents = recentLocations.filter(
-          r => r.name.toLowerCase().includes(q) || (r.address?.toLowerCase().includes(q) ?? false),
+          (r) => normaliseName(r.name).includes(q) || normaliseName(r.address ?? '').includes(q),
         );
 
-        // Deduplicate across saved POIs, recents, and remote results by id.
-        const seen = new Set<string>();
-        const merged: MapSearchResult[] = [];
-        for (const r of [...matchingPOIs, ...matchingRecents, ...remoteResults]) {
-          if (seen.has(r.id)) continue;
-          seen.add(r.id);
-          merged.push(r);
-        }
+        // Then places: what's on the map right now (instant, from the tiles), merged with
+        // the online search, nearest first, same place (name within ~100 m) only once.
+        const merge = (places: MapSearchResult[]) => {
+          const seenIds = new Set<string>();
+          const kept: MapSearchResult[] = [];
+          for (const r of places) {
+            if (seenIds.has(r.id)) continue;
+            seenIds.add(r.id);
+            const dup = kept.some(
+              (k) => normaliseName(k.name) === normaliseName(r.name) && calculateDistance(k.lat, k.lng, r.lat, r.lng) < 0.1,
+            );
+            if (!dup) kept.push(r);
+          }
+          if (anchor) kept.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+          const firstIds = new Set([...matchingPOIs, ...matchingRecents].map((r) => r.id));
+          return [...matchingPOIs, ...matchingRecents, ...kept.filter((r) => !firstIds.has(r.id)).slice(0, 10)];
+        };
 
-        if (searchIdRef.current === currentSearchId) setResults(merged);
+        const onMap = searchLoadedPlaces(map, searchQuery, anchor);
+        if (onMap.length && searchIdRef.current === currentSearchId) setResults(merge(onMap));
+
+        const remoteResults = await searchPlaces(searchQuery, bias, userLocation, countryCode);
+        if (searchIdRef.current === currentSearchId) setResults(merge([...onMap, ...remoteResults]));
       } finally {
         if (searchIdRef.current === currentSearchId) setIsSearching(false);
       }
@@ -346,29 +359,52 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                 <Clock className="w-3.5 h-3.5" />
                 Recent destinations
               </div>
-              {recentLocations.map((result, index) => (
-                <button
-                  key={result.id}
-                  onClick={() => handleSelect(result)}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors',
-                    index !== recentLocations.length - 1 && 'border-b border-border',
-                  )}
-                >
-                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+              {recentLocations.map((result, index) => {
+                const removing = removingRecent === result.id;
+                return (
+                  <div
+                    key={result.id}
+                    className={cn(
+                      'w-full flex items-center gap-3 p-3 hover:bg-accent/10 transition-colors',
+                      index !== recentLocations.length - 1 && 'border-b border-border',
+                    )}
+                  >
+                    {/* The clock: tap for Remove (tap again to keep it). */}
+                    <button
+                      onClick={() => setRemovingRecent(removing ? null : result.id)}
+                      className={cn(
+                        'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
+                        removing ? 'bg-destructive/15' : 'bg-accent/10 hover:bg-accent/20',
+                      )}
+                      aria-label={removing ? `Keep ${result.name}` : `Remove ${result.name} from recent destinations`}
+                    >
+                      {removing ? <X className="w-3.5 h-3.5 text-destructive" /> : <Clock className="w-3.5 h-3.5 text-muted-foreground" />}
+                    </button>
+                    <button onClick={() => handleSelect(result)} className="flex-1 min-w-0 text-left active:opacity-70">
+                      <p className="font-semibold text-sm truncate">{result.name}</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
+                    </button>
+                    {removing ? (
+                      <button
+                        onClick={() => {
+                          removeRecentLocation(result.id);
+                          setRecentLocations(getRecentLocations());
+                          setRemovingRecent(null);
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-xs font-semibold flex-shrink-0"
+                      >
+                        Remove
+                      </button>
+                    ) : (
+                      distanceText(result.lat, result.lng) && (
+                        <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
+                          {distanceText(result.lat, result.lng)}
+                        </span>
+                      )
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{result.name}</p>
-                    <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{result.address}</p>
-                  </div>
-                  {distanceText(result.lat, result.lng) && (
-                    <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
-                      {distanceText(result.lat, result.lng)}
-                    </span>
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </>
           )}
 

@@ -1773,9 +1773,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   }, [routeKey, hasLocation, rerouteTick]);
 
   // ── Turn-by-turn ───────────────────────────────────────────────────────────
-  // Guidance starts once the rider sets off with a route (a ride starts, or
-  // they're moving on the home map) and stays up through stops at lights,
-  // until the destination is cleared.
+  // Guidance starts as soon as there's a destination (search, a pin's
+  // Navigate, a convoy stop), on the home map or in a ride: the turn banner
+  // takes the top slot and shows "Finding route…" until the route arrives. It
+  // stays up until the destination is cleared or the rider closes it.
   const [guiding, setGuiding] = useState(false);
   // The rider closed the banner: no guidance for this destination until they
   // tap Go again (a new destination starts fresh).
@@ -1789,8 +1790,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       stopSpeaking();
       return;
     }
-    if (route && (rideState.isActive || moving)) setGuiding(true);
-  }, [destination, route, rideState.isActive, moving, navDismissed]);
+    setGuiding(true);
+  }, [destination, navDismissed]);
   const guidingRef = useRef(false);
   guidingRef.current = guiding;
 
@@ -2238,6 +2239,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               unit={settings.distanceUnit}
               arrived={arrivedAtDestination}
               rerouting={rerouting}
+              finding={!route}
               destinationName={destination?.name}
               onStop={handleStopNavigating}
               onSkip={
@@ -2727,7 +2729,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
         )}
 
-        {/* While guiding, the turn banner up top carries this. */}
+        {/* The turn banner up top carries this whenever there's a destination. This card only
+            shows after the rider closes the banner in a convoy (it stops just their own
+            directions, the route stays): Go brings the banner back. */}
         {destination && (isRouting || route) && !showTurnBanner && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card/95 border border-border shadow-2xl backdrop-blur animate-slide-up">
             <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">

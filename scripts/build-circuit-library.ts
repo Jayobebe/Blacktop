@@ -20,7 +20,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { analyseLoop, buildEdges, lapOptions, removalsFor, type RoadPiece } from '../src/features/track/lib/roadLoop';
+import { analyseLoop, buildEdges, initialRemovals, lapOptions, removalsFor, type RoadPiece } from '../src/features/track/lib/roadLoop';
 import { Centerline, resampleLoop, simplifyLine } from '../src/features/track/lib/centerline';
 import { toLocal } from '../src/features/track/lib/geometry';
 import type { LatLng } from '../src/features/track/types';
@@ -61,9 +61,20 @@ async function overpass(query: string): Promise<any> {
   throw last;
 }
 
+/**
+ * Circuits with no OpenStreetMap circuit relation: built from the race-track
+ * roads (`highway=raceway`) in a box, taking the longest lap (pit lanes
+ * dropped), exactly like the map builder. Ids are synthetic (9xxxxxxxx).
+ */
+const EXTRAS: { id: number; name: string; aka?: string; box: [south: number, west: number, north: number, east: number]; lat: number; lng: number }[] = [
+  { id: 900000001, name: 'Cadwell Park', aka: 'Cadwell Park Full Circuit', box: [53.298, -0.092, 53.322, -0.042], lat: 53.3095, lng: -0.0655 },
+];
+
 interface Layout {
   id: number;
   name: string;
+  /** Other names to find it by (the local-language name, a layout name). */
+  aka?: string;
   lat: number;
   lng: number;
   length: number;
@@ -95,8 +106,52 @@ function directionVote(line: Centerline, pieces: RoadPiece[], backward: Set<stri
   return vote;
 }
 
+/** Ways → a closed lap in running order (the longest lap when there's a choice), or why not. */
+function lapFrom(pieces: RoadPiece[], backward: Set<string>, removed = new Set<string>()): { loop: LatLng[]; length: number; direction: 'ways' | 'guess' } | string {
+  if (!pieces.length) return 'no ways';
+  const edges = buildEdges(pieces);
+  let analysis = analyseLoop(edges, removed);
+  if (analysis.status !== 'loop') {
+    // Extra bits (other layouts, spurs): take the longest lap.
+    const [best] = lapOptions(edges, removed);
+    if (!best) return `no lap (${analysis.status})`;
+    analysis = analyseLoop(edges, removalsFor(edges, best));
+    if (analysis.status !== 'loop') return `no lap (${analysis.status})`;
+  }
+  let loop = analysis.loop!;
+  const line = new Centerline(resampleLoop(loop, 2));
+  const vote = directionVote(line, pieces, backward);
+  if (vote < 0) loop = [...loop].reverse();
+  return { loop, length: Math.round(line.length), direction: vote !== 0 ? 'ways' : 'guess' };
+}
+
+/** An extra circuit, from the raceway roads in its box. */
+function extraLayout(extra: (typeof EXTRAS)[number], data: any): Layout | string {
+  const pieces: RoadPiece[] = [];
+  for (const w of data.elements ?? []) {
+    if (w.type !== 'way' || !w.geometry || !w.nodes || w.geometry.length !== w.nodes.length) continue;
+    pieces.push({ id: `${w.id}:0`, hw: 'raceway', name: w.tags?.name, raceway: w.tags?.raceway, pts: w.geometry.map((g: any, i: number) => [g.lat, g.lon, w.nodes[i]]) });
+  }
+  const lap = lapFrom(pieces, new Set(), initialRemovals(buildEdges(pieces)));
+  if (typeof lap === 'string') return lap;
+  const round = (p: LatLng) => ({ lat: Math.round(p.lat * 1e6) / 1e6, lng: Math.round(p.lng * 1e6) / 1e6 });
+  return {
+    id: extra.id,
+    name: extra.name,
+    aka: extra.aka,
+    lat: extra.lat,
+    lng: extra.lng,
+    length: lap.length,
+    loop: simplifyLine(lap.loop, 0.6).map(round),
+    direction: lap.direction,
+  };
+}
+
 function toLayout(rel: any, ways: Map<number, any>, nodes: Map<number, any>): Layout | string {
-  const name = String(rel.tags?.name ?? '').trim();
+  // English name first (Suzuka is mapped as 鈴鹿サーキット); the local name is kept for search.
+  const local = String(rel.tags?.name ?? '').trim();
+  const english = String(rel.tags?.['name:en'] ?? '').trim();
+  const name = english || local;
   if (!name) return 'no name';
   const pieces: RoadPiece[] = [];
   const backward = new Set<string>();
@@ -113,34 +168,20 @@ function toLayout(rel: any, ways: Map<number, any>, nodes: Map<number, any>): La
     pieces.push({ id, hw: 'raceway', name: w.tags?.name, pts: w.geometry.map((g: any, i: number) => [g.lat, g.lon, w.nodes[i]]) });
     if (m.role === 'backward') backward.add(id);
   }
-  if (!pieces.length) return 'no ways';
-
-  const edges = buildEdges(pieces);
-  let analysis = analyseLoop(edges, new Set());
-  if (analysis.status !== 'loop') {
-    // Extra bits in the relation: take its longest lap.
-    const [best] = lapOptions(edges, new Set());
-    if (!best) return `no lap (${analysis.status})`;
-    analysis = analyseLoop(edges, removalsFor(edges, best));
-    if (analysis.status !== 'loop') return `no lap (${analysis.status})`;
-  }
-  let loop = analysis.loop!;
-  const line = new Centerline(resampleLoop(loop, 2));
-  const edgePieces = pieces.map((p) => p); // votes use the original ways
-  const vote = directionVote(line, edgePieces, backward);
-  if (vote < 0) loop = [...loop].reverse();
-
+  const lap = lapFrom(pieces, backward);
+  if (typeof lap === 'string') return lap;
   const round = (p: LatLng) => ({ lat: Math.round(p.lat * 1e6) / 1e6, lng: Math.round(p.lng * 1e6) / 1e6 });
   return {
     id: rel.id,
     name: name.slice(0, 80),
-    lat: rel.center?.lat ?? loop[0].lat,
-    lng: rel.center?.lon ?? loop[0].lng,
-    length: Math.round(line.length),
+    aka: english && local && local !== english ? local.slice(0, 80) : undefined,
+    lat: rel.center?.lat ?? lap.loop[0].lat,
+    lng: rel.center?.lon ?? lap.loop[0].lng,
+    length: lap.length,
     sport: rel.tags?.sport,
-    loop: simplifyLine(loop, 0.6).map(round),
+    loop: simplifyLine(lap.loop, 0.6).map(round),
     start: start && round(start),
-    direction: vote !== 0 ? 'ways' : 'guess',
+    direction: lap.direction,
   };
 }
 
@@ -208,6 +249,24 @@ async function main() {
     await sleep(5000); // be kind to shared Overpass servers
   }
 
+  for (const extra of EXTRAS) {
+    const [south, west, north, east] = extra.box;
+    try {
+      const data = await cached(`extra-${extra.id}`, `[out:json][timeout:60];way["highway"="raceway"](${south},${west},${north},${east});out geom;`);
+      const result = extraLayout(extra, data);
+      if (typeof result === 'string') {
+        console.warn(`  ${extra.name}: ${result}`);
+        skipped[`extra: ${result}`] = (skipped[`extra: ${result}`] ?? 0) + 1;
+      } else {
+        console.log(`  ${extra.name}: ${result.length} m`);
+        layouts.push(result);
+      }
+    } catch {
+      console.warn(`  ${extra.name}: fetch failed, keeping any earlier file`);
+      unfetched.add(extra.id);
+    }
+  }
+
   layouts.sort((a, b) => a.name.localeCompare(b.name));
   // Only now, with the new set built, drop layouts that are no longer in it
   // (a stalled or failed run never leaves the library empty).
@@ -225,7 +284,7 @@ async function main() {
     JSON.stringify({
       attribution: ATTRIBUTION,
       generatedAt: new Date().toISOString(),
-      circuits: layouts.map(({ id, name, lat, lng, length, sport }) => ({ id, name, lat: +lat.toFixed(5), lng: +lng.toFixed(5), length, sport })),
+      circuits: layouts.map(({ id, name, aka, lat, lng, length, sport }) => ({ id, name, aka, lat: +lat.toFixed(5), lng: +lng.toFixed(5), length, sport })),
     }),
   );
   console.log(`\nWrote ${layouts.length} layouts. Skipped:`, skipped);
