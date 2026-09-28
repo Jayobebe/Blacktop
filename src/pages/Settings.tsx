@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
+import { RESCUE_RADIUS_OPTIONS_KM } from '@/features/rescue';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
 import {
@@ -15,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2 } from 'lucide-react';
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +32,7 @@ import { toast } from 'sonner';
 import { DiscordSettingsCard } from '@/features/integrations/discord';
 import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
-import { BurnFlameOverlay } from '@/components/BurnFlameOverlay';
+import { BurnFlameOverlay, markBurnReveal } from '@/components/BurnFlameOverlay';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
@@ -199,7 +201,11 @@ export default function Settings() {
     } catch (e) {
       console.error('Identity reset failed:', e);
     }
-    navigate('/', { replace: true });
+    // A full reload, not a route change: in-memory stores (tracks, pins,
+    // crew, convoy…) start empty too, not just what's on disk. The fresh app
+    // finishes the flames (BurnReveal), so the reload happens under full cover.
+    markBurnReveal();
+    window.location.replace('/');
   };
 
   const handleBurnComplete = () => {
@@ -580,6 +586,49 @@ export default function Settings() {
                 </div>
               )}
             </div>
+
+            {/* Who the rescue triangle (and auto-rescue after a crash) reaches. */}
+            <div className="pt-4 border-t border-border/30">
+              <p className="text-xs text-muted-foreground mb-1">Who your rescue call reaches</p>
+              <p className="text-[11px] text-muted-foreground/80 mb-3">The rescue button on the map and ride screen, and auto-rescue after a crash.</p>
+              <div className="space-y-3">
+                {(
+                  [
+                    ['rescueToConvoy', 'Your convoy', 'Everyone you’re riding with: an alert card, your location and a route to you.'],
+                    ['rescueToCrew', 'Your crew', 'A push to your crew mates’ phones, even with the app closed.'],
+                    ['rescueToDiscord', 'Discord', 'A post in your connected Discord channel.'],
+                    ['rescueToNearby', 'Riders nearby', 'Other Blacktop riders close by who’ve opted in to help (Notifications → Riders near me who need help).'],
+                  ] as const
+                ).map(([key, title, desc]) => (
+                  <div key={key} className="flex items-center justify-between gap-3">
+                    <div className="pr-2">
+                      <p className="text-sm font-medium">{title}</p>
+                      <p className="text-[11px] text-muted-foreground">{desc}</p>
+                    </div>
+                    <Switch checked={settings[key]} onCheckedChange={(v) => updateSetting(key, v)} />
+                  </div>
+                ))}
+                {settings.rescueToNearby && (
+                  <div>
+                    <p className="text-[11px] text-muted-foreground mb-1.5">How far to reach (about: riders’ areas are rounded to ~11 km)</p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {RESCUE_RADIUS_OPTIONS_KM.map((km) => (
+                        <button
+                          key={km}
+                          onClick={() => updateSetting('rescueNearbyKm', km)}
+                          className={cn(
+                            'h-9 rounded-lg border text-xs font-mono font-semibold',
+                            settings.rescueNearbyKm === km ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground',
+                          )}
+                        >
+                          {km} km
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CollapsibleSection>
 
@@ -856,6 +905,25 @@ export default function Settings() {
             </div>
           )}
 
+          {/* Hazard warnings run on the ride screen too, so this sits outside the Blacktop-map-only block. */}
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <div className="flex items-center justify-between gap-3">
+              <div className="pr-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <Megaphone className="w-4 h-4 text-accent" />
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Spoken Hazard Warnings</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Says it out loud when you're riding up to a reported hazard ("Oil on the road ahead, 300 metres") and lowers the radio and crew voice while it speaks. The warning banner shows either way.
+                </p>
+              </div>
+              <Switch
+                checked={settings.hazardVoiceEnabled}
+                onCheckedChange={(v) => updateSetting('hazardVoiceEnabled', v)}
+              />
+            </div>
+          </div>
+
           {exp.hasCar && (
           <div className="mt-3 pt-3 border-t border-border/30">
             <div className="flex items-center justify-between gap-3">
@@ -1019,6 +1087,8 @@ export default function Settings() {
         origin={burnOrigin}
         onPeak={handleBurnPeak}
         onComplete={handleBurnComplete}
+        // A real burn reloads the app under full cover (BurnReveal finishes the flames).
+        holdAtPeak={!demoEnabled}
       />
 
     </div>

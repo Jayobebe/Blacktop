@@ -6,6 +6,8 @@
  *   - scrollBackdrop(): rows follow page scrolling vertically, through the lens.
  *   - setBackdropPull(): pull-to-refresh; belts slow, rows follow the finger,
  *     the fish-eye lens bulges. Everything springs back on release.
+ *   - setBackdropCruise(): a sustained speed (the map loading, riding over
+ *     your amber / red speed thresholds). Changes ease in and out.
  *
  * One rAF loop runs only while something is moving; all writes go straight to
  * the DOM (belt playbackRate, row transforms, the lens filter's scale).
@@ -40,6 +42,7 @@ let frozen = false;
 let energy = 0;
 let rate = 1;
 let hold = 1; // target speed multiple from a pull
+let cruise = 1; // sustained speed multiple (map loading, ride speed)
 let scrollOffset = 0; // px the rows have travelled up, accumulated forever
 let pullTarget = 0; // px the rows are pulled down right now
 let pullShift = 0; // eased towards pullTarget
@@ -83,7 +86,7 @@ function step(now: number) {
 
   // Speed: surge energy bleeds away, the pull holds the belts back.
   energy *= Math.pow(0.5, dt / ENERGY_HALF_LIFE_MS);
-  const targetRate = (1 + energy) * hold;
+  const targetRate = (cruise + energy) * hold;
   rate += (targetRate - rate) * k(RATE_EASE);
 
   // Pull shift and lens stretch spring towards their targets.
@@ -130,6 +133,15 @@ export function surgeBackdrop(strength = 4) {
   wake();
 }
 
+/** Sustained belt speed, as a multiple of the normal drift (1 = normal). */
+export function setBackdropCruise(multiple: number) {
+  const next = Math.max(0.1, multiple);
+  if (next === cruise) return;
+  cruise = next;
+  if (!belts || frozen || reducedMotion()) return;
+  wake();
+}
+
 /** Page scrolled by `deltaY` px (positive = down); the rows follow at SCROLL_FOLLOW. */
 export function scrollBackdrop(deltaY: number) {
   if (!belts || frozen || reducedMotion() || !deltaY) return;
@@ -168,7 +180,10 @@ export function registerBackdropLens(el: SVGFEDisplacementMapElement | null, bas
 /** Freeze (active ride, open map): drop any surge/pull and snap back to rest. */
 export function setBackdropFrozen(next: boolean) {
   frozen = next;
-  if (!next) return;
+  if (!next) {
+    wake(); // pick up a cruise speed set while frozen
+    return;
+  }
   energy = 0;
   rate = 1;
   hold = 1;

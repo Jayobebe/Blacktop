@@ -262,12 +262,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             onFocus={() => setShowResults(true)}
             autoFocus={autoFocus}
             placeholder="Search destination..."
-            className="pl-10 bg-card/95 border-border h-11 text-sm shadow-lg backdrop-blur"
+            className="pl-10 bg-card/95 border-border h-11 short:h-9 text-sm shadow-lg backdrop-blur"
           />
         </div>
       </div>
 
-      <div className="flex gap-1.5 w-fit max-w-full overflow-x-auto scrollbar-hide pointer-events-auto">
+      {/* Landscape (short:): the chips only come out while searching, to leave the map clear. */}
+      <div className={cn('flex gap-1.5 w-fit max-w-full overflow-x-auto scrollbar-hide pointer-events-auto', !showResults && 'short:hidden')}>
         {quickCategories.map((cat) => (
           <button
             key={cat.id}

@@ -37,6 +37,16 @@ Deno.serve(async (req) => {
 
     // Always deletes the caller's own account only — userId comes from the
     // verified JWT, never from request input.
+    //
+    // Database rows go with the user (every table's user column cascades from
+    // auth.users: profiles, convoys, cards, crews, push, hazard reports and
+    // votes…). Two things don't cascade, so they go first:
+    //   - files in storage (card photos live under `<userId>/`);
+    //   - rate-limit counters (keyed by user id, no foreign key).
+    await burnStorageFolder(admin, 'card-photos', userId)
+    const { error: rlErr } = await admin.from('edge_rate_limits').delete().eq('user_id', userId)
+    if (rlErr) console.warn('[BURN] Rate-limit rows not removed', rlErr)
+
     const { error: deleteErr } = await admin.auth.admin.deleteUser(userId)
     if (deleteErr) {
       console.error('[BURN] Account deletion failed', deleteErr)
@@ -49,6 +59,23 @@ Deno.serve(async (req) => {
     return json({ error: 'Internal error' }, 500)
   }
 })
+
+/** Removes every file under `<folder>/` in a bucket (paged; best effort, logged). */
+async function burnStorageFolder(admin: ReturnType<typeof createClient>, bucket: string, folder: string) {
+  try {
+    for (let guard = 0; guard < 50; guard++) {
+      const { data, error } = await admin.storage.from(bucket).list(folder, { limit: 100 })
+      if (error) throw error
+      if (!data?.length) return
+      const paths = data.map((f) => `${folder}/${f.name}`)
+      const { error: rmErr } = await admin.storage.from(bucket).remove(paths)
+      if (rmErr) throw rmErr
+      if (data.length < 100) return
+    }
+  } catch (e) {
+    console.warn(`[BURN] ${bucket} files not fully removed`, e)
+  }
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

@@ -4,3 +4,4 @@ export { CrashCheckPrompt } from './components/CrashCheckPrompt';
 export { SafetyStatusCard } from './components/SafetyStatusCard';
 export { useSafetyStatus, type SafetyLevel, type LocationPermission } from './hooks/useSafetyStatus';
 export { useRescueBridge, setRescueTarget, clearRescueTarget, type RescueTarget } from './lib/rescueBridge';
+export { rescueReach, describeReach, RESCUE_RADIUS_OPTIONS_KM, type RescueReach } from './lib/reach';

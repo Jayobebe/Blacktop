@@ -16,8 +16,16 @@ export interface TrackDef {
   /** Sector split lines in running order (any number). Sectors = splits + 1. */
   splits: Gate[];
   createdAt: number;
-  /** The walked lap, simplified, for minimaps. */
+  /** The lap, starting at the start/finish, in running order (minimaps, re-editing). */
   outline?: LatLng[];
+  /** Pinned to the top of Track Pack. */
+  starred?: boolean;
+  /** How it was made: picked on the map, recorded with GPS, or from the circuit library. */
+  source?: 'map' | 'gps' | 'library';
+  /** Circuit library (OpenStreetMap relation) id, when imported from it. */
+  osmId?: number;
+  /** Last picked, readied up or saved (for the Previous tracks list). */
+  lastUsedAt?: number;
 }
 
 /** One telemetry sample, at GPS rate with the latest lean / G merged in. */

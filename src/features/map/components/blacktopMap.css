@@ -52,3 +52,15 @@
 /* Hide horizontal scrollbar on the waypoints carousel while keeping native scroll/snap. */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Phone on its side (the `short:` screen in tailwind.config.ts): pinch zooms,
+   so drop the +/- buttons and keep the compass and locate. More map, less chrome. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .blacktop-maplibre .maplibregl-ctrl-zoom-in,
+  .blacktop-maplibre .maplibregl-ctrl-zoom-out {
+    display: none;
+  }
+  .blacktop-maplibre .maplibregl-ctrl-group button + button {
+    border-top: none;
+  }
+}

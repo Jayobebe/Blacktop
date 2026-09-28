@@ -6,9 +6,10 @@ import { useMapOverlay, closeBlacktopMap, clearMapDestination } from '../hooks/u
 import { BlacktopMap } from './BlacktopMap';
 import { cn } from '@/lib/utils';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { MapLoading } from '@/components/MapLoading';
 
 export function BlacktopMapOverlay() {
-  const { isOpen, destination } = useMapOverlay();
+  const { isOpen, destination, ready } = useMapOverlay();
   const { rideState } = useActiveRide();
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,15 +45,21 @@ export function BlacktopMapOverlay() {
 
   return (
     <div className={cn(
-      'fixed inset-0 z-[1000] bg-background',
+      'fixed inset-0 z-[1000]',
+      // Until the map has drawn, the app backdrop (brought in front of the
+      // page, belts sped up) is the loading screen; then the map fades in.
+      ready ? 'bg-background' : 'bg-transparent',
       isOpen ? 'animate-fade-in' : 'hidden',
     )}>
-      <BlacktopMap
-        key={mountKey}
-        initialDestination={destination}
-        onContextLost={() => setMountKey((k) => k + 1)}
-        isVisible={isOpen}
-      />
+      <div className={cn('absolute inset-0 transition-opacity duration-500', ready ? 'opacity-100' : 'opacity-0')}>
+        <BlacktopMap
+          key={mountKey}
+          initialDestination={destination}
+          onContextLost={() => setMountKey((k) => k + 1)}
+          isVisible={isOpen}
+        />
+      </div>
+      {isOpen && !ready && <MapLoading />}
 
       {rideState.isActive ? (
         <button

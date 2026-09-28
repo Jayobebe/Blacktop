@@ -13,6 +13,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { Lap, TrackDef } from '../types';
 import { PIT_PRESETS } from '../types';
+import { speakRiderCall } from '../lib/pitCalls';
 import { TrackLink, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
 import { shareFile } from '../lib/export';
 import { DeltaReadout, LapTable, SectorBoxes } from './TimingParts';
@@ -121,6 +122,7 @@ export function PitView() {
         haptics.light();
       } else if (m.type === 'pit' && m.msg.from === 'rider') {
         haptics.heavy();
+        speakRiderCall(m.msg.text);
         toast.warning(`Rider: ${String(m.msg.text).slice(0, 40)}`, { duration: 10000 });
       } else if (m.type === 'ended') {
         setEnded(true);
@@ -321,15 +323,15 @@ function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean
   const title = !snap
     ? 'Connecting to the racer…'
     : phase === 'walking'
-      ? walk?.startFinish
-        ? `Pacing the track · ${walk.splits.length} sector line${walk.splits.length === 1 ? '' : 's'} · ${Math.round(walk.travelled)} m`
-        : 'Racer is finding the start/finish line'
+      ? walk?.closed
+        ? 'Lap recorded. Racer is placing the timing lines'
+        : `Recording a new track · ${Math.round(walk?.travelled ?? 0)} m`
       : phase === 'armed'
-        ? 'On the grid, waiting for launch'
+        ? 'Racer is ready on the grid. Timing starts at launch'
         : ended
           ? 'Session over. Waiting for the next run'
           : track
-            ? `Last track: ${track.name}`
+            ? `${track.name} selected. Waiting for the racer to ready up`
             : 'Waiting for the racer to pick a track';
   return (
     <div className="flex flex-col gap-2">

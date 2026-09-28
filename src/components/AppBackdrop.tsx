@@ -24,8 +24,8 @@ import {
  *      frosted-glass finish.
  *
  * The lens is an SVG displacement filter on the wordmark layer; the map is
- * drawn once per viewport size. `paused` freezes the blobs and belts (active
- * rides, open map) to save battery.
+ * drawn once per viewport size. `paused` freezes the blobs and belts (while
+ * the map covers everything) to save battery.
  */
 
 /** Row pitch in px; must match `.backdrop-belt-slot` height in index.css. */
@@ -166,7 +166,7 @@ function useScrollFollow(enabled: boolean) {
   }, [enabled]);
 }
 
-export const AppBackdrop = memo(function AppBackdrop({ paused = false }: { paused?: boolean }) {
+export const AppBackdrop = memo(function AppBackdrop({ paused = false, front = false }: { paused?: boolean; front?: boolean }) {
   const lens = useLensMap();
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<SVGFEDisplacementMapElement>(null);
@@ -198,7 +198,8 @@ export const AppBackdrop = memo(function AppBackdrop({ paused = false }: { pause
   useScrollFollow(!paused);
 
   return (
-    <div aria-hidden className={cn('app-backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden', paused && 'lava-paused')}>
+    // `front`: over the page (under the map overlay) while the map loads, so the backdrop is the loading screen.
+    <div aria-hidden className={cn('app-backdrop pointer-events-none fixed inset-0 overflow-hidden', front ? 'z-[999]' : '-z-10', paused && 'lava-paused')}>
       {/* 1. Lava lamp — kept dim: even a screen-filling blob only just reveals the wording */}
       <div className="absolute inset-0 opacity-60">
         <span className="lava-blob lava-blob-1" />

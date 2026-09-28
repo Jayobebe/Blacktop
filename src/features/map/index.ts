@@ -9,3 +9,8 @@ export type { SavedPOI } from './lib/poiStore';
 export { LoopPlannerPanel } from './components/LoopPlannerPanel';
 export { RouteOptions } from './components/RouteOptions';
 export type { RouteMode } from './components/RouteOptions';
+export { whenStyleReady } from './lib/whenStyleReady';
+export { searchPlaces } from './lib/placeSearch';
+export type { MapSearchResult } from './lib/placeSearch';
+export { speak, stopSpeaking, speechSupported } from './lib/speech';
+export { loadDarkMapStyle } from './lib/darkStyle';

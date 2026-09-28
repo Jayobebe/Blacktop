@@ -748,6 +748,17 @@ export function attachRideToConvoy(convoyId: string | null) {
   }
 }
 
+/**
+ * Read-only: whether a ride is on and its current speed, without the side
+ * effects useActiveRide runs (it resumes GPS / convoy sync for a restored ride).
+ * For app-wide listeners like the backdrop.
+ */
+export function useRideSpeed(): { isActive: boolean; currentSpeed: number } {
+  const isActive = useSyncExternalStore(subscribe, () => getSnapshot().isActive, () => getServerSnapshot().isActive);
+  const currentSpeed = useSyncExternalStore(subscribe, () => getSnapshot().currentSpeed, () => getServerSnapshot().currentSpeed);
+  return { isActive, currentSpeed };
+}
+
 export function useActiveRide(convoyId?: string | null) {
   const { addRide } = useRideHistory();
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

@@ -175,14 +175,23 @@ export default function Home() {
     const arcSvg = arcOverlayRef.current;
     if (!column || topTiles.length === 0 || !join || !globe || !arcSvg) return;
 
-    // In landscape the Track tile sits beside Join, so it's notched too.
+    // In landscape the Track tile sits beside Join, so it's notched too. It's
+    // hidden in portrait, so which tiles to notch is decided on every layout
+    // pass (rotating the phone shows or hides it without a re-render).
     const trackTile = trackTileRef.current;
-    const bottomTiles: HTMLElement[] = [join, ...(trackTile && trackTile.getClientRects().length > 0 ? [trackTile] : [])];
-    const tiles: HTMLElement[] = [...topTiles, ...bottomTiles];
+    const allTiles: HTMLElement[] = [...topTiles, join, ...(trackTile ? [trackTile] : [])];
+    const clearMask = (el: HTMLElement) => {
+      el.style.webkitMaskImage = '';
+      el.style.maskImage = '';
+    };
 
     const apply = () => {
       const colRect = column.getBoundingClientRect();
       if (colRect.width === 0) return;
+      const trackShown = !!trackTile && trackTile.getClientRects().length > 0;
+      if (trackTile && !trackShown) clearMask(trackTile);
+      const bottomTiles: HTMLElement[] = [join, ...(trackShown ? [trackTile!] : [])];
+      const tiles: HTMLElement[] = [...topTiles, ...bottomTiles];
       const topRects = topTiles.map((el) => el.getBoundingClientRect());
       const joinRect = join.getBoundingClientRect();
 
@@ -281,10 +290,7 @@ export default function Home() {
       window.removeEventListener('resize', apply);
       window.clearTimeout(settleTimer);
       column.removeEventListener('animationend', apply);
-      tiles.forEach((el) => {
-        el.style.webkitMaskImage = '';
-        el.style.maskImage = '';
-      });
+      allTiles.forEach(clearMask);
       arcSvg.innerHTML = '';
     };
   }, [accentColor, exp.rideMode, showTrack]);
@@ -375,8 +381,8 @@ export default function Home() {
                   <tile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
                 </div>
                 <div className="text-left">
-                  <span className="text-base font-semibold tracking-tight block text-accent">{tile.label}</span>
-                  <span className="text-xs text-accent/70 landscape:hidden">{tile.sub}</span>
+                  <span className="text-base font-semibold tracking-tight block text-foreground">{tile.label}</span>
+                  <span className="text-xs text-muted-foreground landscape:hidden">{tile.sub}</span>
                 </div>
               </button>
             ))}
@@ -397,8 +403,8 @@ export default function Home() {
                 showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
               )}
             >
-              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-secondary flex items-center justify-center">
-                <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-muted-foreground" />
+              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
               </div>
               <div className="text-left">
                 <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
@@ -418,7 +424,7 @@ export default function Home() {
                   <Zap className="w-4 h-4 text-accent" />
                 </div>
                 <div className="flex flex-col items-start gap-1">
-                  <span className="text-base font-semibold tracking-tight text-accent">Track</span>
+                  <span className="text-base font-semibold tracking-tight text-foreground">Track</span>
                   {trackRoleToggle(true)}
                 </div>
               </div>
@@ -437,7 +443,7 @@ export default function Home() {
               <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-accent" />
               </div>
-              <span className="flex-1 text-base font-semibold tracking-tight text-accent">Track Pack</span>
+              <span className="flex-1 text-base font-semibold tracking-tight text-foreground">Track Pack</span>
               {trackRoleToggle(false)}
             </div>
           )}
@@ -481,10 +487,10 @@ export default function Home() {
               haptics.tick();
               onClick();
             }}
-            className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target text-accent hover:bg-accent/10"
+            className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target hover:bg-accent/10"
           >
-            <Icon className="w-5 h-5" />
-            <span className="text-[10px] font-medium">{label}</span>
+            <Icon className="w-5 h-5 text-accent" />
+            <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
           </button>
         ))}
       </nav>

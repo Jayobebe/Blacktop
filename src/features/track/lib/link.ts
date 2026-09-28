@@ -30,6 +30,8 @@ export interface WalkShape {
   startFinish: Gate | null;
   splits: Gate[];
   travelled: number;
+  /** The lap has closed; the racer is placing the timing lines. */
+  closed?: boolean;
 }
 
 export interface RacerSnapshot {

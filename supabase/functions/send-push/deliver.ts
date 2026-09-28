@@ -16,6 +16,8 @@ export interface PushMessage {
 /** Notification kinds a device can switch on or off (see the app's settings). */
 export type Category =
   | 'rescue'
+  /** Rescue calls from riders near this device (opt-in; uses its rounded location). */
+  | 'rescue_nearby'
   | 'weather'
   | 'blacktank'
   | 'timeattack'
@@ -36,6 +38,8 @@ export interface Target {
   crew?: string
   /** Every device whose rounded weather location is this area. */
   area?: { lat: number; lng: number }
+  /** Every device whose rounded location falls in this box. */
+  box?: { south: number; north: number; west: number; east: number }
   exclude?: string[]
 }
 
@@ -65,6 +69,11 @@ export async function deliver(
   if (target.userIds) q = q.in('user_id', target.userIds)
   if (target.crew) q = q.eq('crew_code', target.crew)
   if (target.area) q = q.eq('weather_lat', target.area.lat).eq('weather_lng', target.area.lng)
+  if (target.box) {
+    q = q
+      .gte('weather_lat', target.box.south).lte('weather_lat', target.box.north)
+      .gte('weather_lng', target.box.west).lte('weather_lng', target.box.east)
+  }
   const { data, error } = await q.limit(2000)
   if (error) throw error
   const exclude = new Set(target.exclude ?? [])

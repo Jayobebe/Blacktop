@@ -3,7 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { announceRescueToDiscord } from '@/features/integrations/discord';
 import { notifyRescue, notifyRescueCancel } from '@/features/notifications';
+import { useSettings } from '@/features/settings';
 import { setRescueTarget, clearRescueTarget, registerRescueControls, clearRescueControls } from '../lib/rescueBridge';
+import { describeReach, rescueReach } from '../lib/reach';
 
 export interface RescueRequest {
   id: string;
@@ -20,6 +22,11 @@ export interface RescueRequest {
 const RESCUE_COOLDOWN_MS = 30_000; // 30 seconds
 
 export function useRescue(convoyId: string | null, isLeader: boolean, userId: string | null, userName: string | null) {
+  // Who a rescue call reaches (Settings → Safety), read at send time.
+  const { settings } = useSettings();
+  const reachRef = useRef(rescueReach(settings));
+  reachRef.current = rescueReach(settings);
+  const lastCallRef = useRef<{ lat: number; lng: number } | null>(null);
   const [rescueRequests, setRescueRequests] = useState<RescueRequest[]>([]);
   const [hasPendingRescue, setHasPendingRescue] = useState(false);
   // For the rider in distress: names of convoy members who've said they're coming.
@@ -153,21 +160,39 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       timestamp: Date.now(),
     };
 
-    await channelRef.current.send({
-      type: 'broadcast',
-      event: 'rescue_request',
-      payload: request,
-    });
+    const reach = reachRef.current;
+    if (reach.convoy) {
+      await channelRef.current.send({
+        type: 'broadcast',
+        event: 'rescue_request',
+        payload: request,
+      });
+    }
 
     setHasPendingRescue(true);
     setResponders([]);
     setRescueTarget({ userId, userName, lat, lng });
-    toast.info('Rescue request sent to your convoy');
+    lastCallRef.current = { lat, lng };
+    const told = [
+      reach.convoy && 'your convoy',
+      reach.crew && 'your crew',
+      reach.discord && 'Discord',
+      reach.nearbyKm && `riders within ${reach.nearbyKm} km`,
+    ].filter((x): x is string => !!x);
+    if (told.length) toast.info(`Rescue call sent to ${describeReach(told)}`);
+    else toast.warning('Rescue call not sent to anyone', { description: 'Settings → Safety chooses who it reaches.' });
 
     // Fire-and-forget Discord ping to the convoy's server if configured
-    announceRescueToDiscord({ convoyId, riderName: userName, lat, lng });
-    // Push notification to the convoy and the rider's crew, even if their app is closed.
-    void notifyRescue({ convoyId, lat, lng, auto: opts?.auto });
+    if (reach.discord) announceRescueToDiscord({ convoyId, riderName: userName, lat, lng });
+    // Push to the convoy, the crew and riders nearby (as chosen), even if their app is closed.
+    void notifyRescue({
+      convoyId: reach.convoy ? convoyId : null,
+      crewCode: reach.crew ? undefined : null,
+      nearbyKm: reach.nearbyKm,
+      lat,
+      lng,
+      auto: opts?.auto,
+    });
 
     return true;
   }, [convoyId, userId, userName]);
@@ -237,7 +262,13 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       event: 'rescue_dismissed',
       payload: { requestId: userId, riderUserId: userId },
     });
-    void notifyRescueCancel({ convoyId });
+    const reach = reachRef.current;
+    void notifyRescueCancel({
+      convoyId: reach.convoy ? convoyId : null,
+      crewCode: reach.crew ? undefined : null,
+      nearbyKm: reach.nearbyKm,
+      ...(lastCallRef.current ?? {}),
+    });
 
     setHasPendingRescue(false);
     setResponders([]);

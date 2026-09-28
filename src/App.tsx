@@ -15,10 +15,14 @@ import { RadioOverlay, PlayerProvider, FloatingRadioLayer } from "@/features/rad
 
 import { OrientationProvider } from "@/hooks/useOrientationLock";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
-import { AppBootSkeleton, PanelSkeleton } from "@/components/skeletons";
+import { AppBootSkeleton } from "@/components/skeletons";
 import { AppBackdrop } from "@/components/AppBackdrop";
 import { PullToRefresh } from "@/components/PullToRefresh";
-import { surgeBackdrop } from "@/lib/backdropMotion";
+import { setBackdropCruise, surgeBackdrop } from "@/lib/backdropMotion";
+import { MapLoading } from "@/components/MapLoading";
+import { HazardAlerts } from "@/features/hazards";
+import { BurnReveal } from "@/components/BurnFlameOverlay";
+import { useRideSpeed } from "@/features/ride";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
@@ -80,13 +84,24 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Global backdrop; blobs and belts pause during an active ride and while the map
- * covers everything. Tapping anything interactive nudges the wordmark belts;
+ * Global backdrop. Tapping anything interactive nudges the wordmark belts;
  * arriving on a new page surges them, then they coast back to cruising speed.
+ * While the map loads, the backdrop is the loading screen (in front of the
+ * page, belts running fast) and pauses once the map has drawn. On the ride
+ * screen the belts speed up with you: faster past the amber speed threshold,
+ * faster again past red (the same moments the speed turns yellow / red).
  * Pull-to-refresh lives here too since it drives the same backdrop.
  */
+const CRUISE_MAP_LOADING = 6;
+const CRUISE_AMBER = 3.5;
+const CRUISE_RED = 7;
+
 function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
   const { pathname } = useLocation();
+  const { ready: mapReady } = useMapOverlay();
+  const rideState = useRideSpeed();
+  const { settings } = useSettings();
+  const mapLoading = mapOpen && !mapReady;
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
@@ -106,11 +121,27 @@ function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
     surgeBackdrop(30);
   }, [pathname]);
 
-  const paused = mapOpen || pathname === "/ride";
+  // Opening the map: a burst, then the loading cruise holds the speed until it has drawn.
+  useEffect(() => {
+    if (mapOpen) surgeBackdrop(30);
+  }, [mapOpen]);
+
+  const onRide = pathname === "/ride" && rideState.isActive && settings.speedFocusEnabled;
+  const speed = rideState.currentSpeed;
+  const cruise = mapLoading
+    ? CRUISE_MAP_LOADING
+    : onRide && speed >= settings.redSpeedThreshold
+      ? CRUISE_RED
+      : onRide && speed >= settings.amberSpeedThreshold
+        ? CRUISE_AMBER
+        : 1;
+  useEffect(() => setBackdropCruise(cruise), [cruise]);
+
+  const paused = mapOpen && mapReady;
   return (
     <>
-      <AppBackdrop paused={paused} />
-      <PullToRefresh disabled={paused} />
+      <AppBackdrop paused={paused} front={mapLoading} />
+      <PullToRefresh disabled={mapOpen || pathname === "/ride"} />
     </>
   );
 }
@@ -208,9 +239,13 @@ const App = () => {
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />
                 <PushBridge />
+                {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
+                <HazardAlerts />
+                {/* Finishes the burn flames after the post-burn reload. */}
+                <BurnReveal />
                 <AppRoutes />
                 {hasEverOpened && (
-                  <Suspense fallback={<PanelSkeleton className="fixed inset-0 z-50 bg-background" label="Loading map…" />}>
+                  <Suspense fallback={<MapLoading />}>
                     <BlacktopMapOverlay />
                   </Suspense>
                 )}

@@ -17,6 +17,11 @@ export default {
       },
     },
     extend: {
+      screens: {
+        // Phones on their side (a bar/handlebar mount): little height, so
+        // screens trim their chrome. Tablets in landscape are unaffected.
+        short: { raw: "(orientation: landscape) and (max-height: 560px)" },
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

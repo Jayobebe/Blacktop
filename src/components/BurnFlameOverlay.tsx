@@ -1,193 +1,243 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Origin = { x: number; y: number } | null;
 
 /**
- * Burn overlay. Fire spreads radially from the burn button, grows to a
- * dense flame mass, hands off to opaque smoke that fully covers the page,
- * then dissipates to reveal whatever is underneath (the onboarding screen).
+ * Burn overlay, in the spirit of DuckDuckGo's Fire Button ("Inferno"): a wall
+ * of flames rises from the bottom, swallows the whole screen, then burns off
+ * the top to reveal a clean app. Drawn on a canvas as layered flat flames (red
+ * tips, orange body, yellow core) with sparks, so it's cheap on phones.
+ *
+ * A real burn reloads the app while the screen is covered, so the animation is
+ * split in two: `mode="burn"` rises to full cover, fires `onPeak`, and (with
+ * `holdAtPeak`) keeps burning there while the wipe runs; after the reload
+ * `<BurnReveal />` plays `mode="reveal"`, picking up fully covered and burning
+ * off the top. `prefers-reduced-motion` gets a quick fade instead.
  */
+
+const BURN_KEY = 'blacktop_burn_reveal';
+/** Set just before the post-burn reload so the fresh app finishes the flames. */
+export function markBurnReveal() {
+  try {
+    sessionStorage.setItem(BURN_KEY, '1');
+  } catch {
+    /* no reveal then: the app just appears */
+  }
+}
+
+const RISE_MS = 1100; // bottom → fully covered
+const CLEAR_MS = 1100; // fully covered → gone off the top
+
+interface Spark {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  size: number;
+}
+
 export function BurnFlameOverlay({
   active,
-  origin,
+  origin: _origin,
   onPeak,
   onComplete,
+  holdAtPeak = false,
+  mode = 'burn',
 }: {
   active: boolean;
+  /** Kept for the old API; the fire now rises from the whole bottom edge. */
   origin?: Origin;
-  /** Fires when the screen is fully covered — safe to swap routes underneath. */
+  /** Fires when the screen is fully covered — safe to swap routes (or reload) underneath. */
   onPeak?: () => void;
   onComplete?: () => void;
+  /** Keep burning at full cover after the peak (the page is about to reload). */
+  holdAtPeak?: boolean;
+  /** 'burn': rise and (unless holding) clear. 'reveal': start covered and clear. */
+  mode?: 'burn' | 'reveal';
 }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [visible, setVisible] = useState(active);
-  const peakFired = useRef(false);
+  const cb = useRef({ onPeak, onComplete });
+  cb.current = { onPeak, onComplete };
 
   useEffect(() => {
     if (!active) return;
     setVisible(true);
-    peakFired.current = false;
-    const peak = setTimeout(() => {
-      if (!peakFired.current) {
-        peakFired.current = true;
-        onPeak?.();
-      }
-    }, 900);
-    const done = setTimeout(() => {
-      onComplete?.();
-    }, 2600);
-    return () => {
-      clearTimeout(peak);
-      clearTimeout(done);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    let W = 0;
+    let H = 0;
+    const resize = () => {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = `${W}px`;
+      canvas.style.height = `${H}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-  }, [active, onPeak, onComplete]);
+    resize();
+    window.addEventListener('resize', resize);
 
-  const ox = origin?.x ?? (typeof window !== 'undefined' ? window.innerWidth / 2 : 0);
-  const oy = origin?.y ?? (typeof window !== 'undefined' ? window.innerHeight * 0.85 : 0);
+    // Timeline: p runs 0 → 0.5 (rising to full cover) → 1 (cleared off the top).
+    const start = performance.now();
+    const startP = mode === 'reveal' ? 0.5 : 0;
+    let peaked = mode === 'reveal';
+    let raf = 0;
+    const sparks: Spark[] = [];
+    const phase = Math.random() * 100;
 
-  // Flame "blobs" that get merged by the gooey filter into solid flame shapes.
-  const blobs = useMemo(
-    () =>
-      Array.from({ length: 36 }).map((_, i) => {
-        const angle = (i / 36) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-        const dist = 55 + Math.random() * 55; // vmax
-        return {
-          tx: Math.cos(angle) * dist,
-          ty: Math.sin(angle) * dist - 10, // bias upward like real flame
-          size: 22 + Math.random() * 18, // vmax
-          delay: Math.random() * 200,
-          duration: 900 + Math.random() * 500,
-          hue: 8 + Math.random() * 30,
-          light: 45 + Math.random() * 18,
-        };
-      }),
-    [visible]
-  );
+    // Flame tongues: pointed tips that flicker and drift.
+    const tongues = (x: number, t: number, amp: number, seed: number) => {
+      const a = Math.abs(Math.sin(x * 0.021 + t * 6.3 + seed));
+      const b = Math.abs(Math.sin(x * 0.053 - t * 9.1 + seed * 1.7));
+      const c = Math.sin(x * 0.009 + t * 2.2 + seed * 0.3) * 0.5 + 0.5;
+      return amp * (0.35 + 0.65 * Math.pow(a, 3) * (0.55 + 0.45 * b)) * (0.7 + 0.3 * c);
+    };
 
-  const embers = useMemo(
-    () =>
-      Array.from({ length: 40 }).map((_, i) => {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 70 + Math.random() * 60;
-        return {
-          tx: Math.cos(angle) * dist,
-          ty: Math.sin(angle) * dist - 30,
-          size: 2 + Math.random() * 3,
-          delay: Math.random() * 700,
-          duration: 1200 + Math.random() * 900,
-          hot: i % 3 === 0,
-        };
-      }),
-    [visible]
-  );
+    // One flame layer: tongues along its top edge, ragged tail along its bottom edge.
+    const layer = (top: number, bottom: number, t: number, amp: number, seed: number, fill: string | CanvasGradient) => {
+      if (bottom <= top) return;
+      ctx.beginPath();
+      ctx.moveTo(-10, bottom);
+      for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, top - tongues(x, t, amp, seed));
+      for (let x = W + 10; x >= -10; x -= 6) ctx.lineTo(x, bottom + tongues(x, t * 0.8, amp * 0.55, seed + 11));
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+    };
+
+    const frame = (now: number) => {
+      const elapsed = now - start;
+      let p: number;
+      if (reduce) {
+        p = mode === 'reveal' ? 1 : 0.5;
+      } else if (mode === 'reveal') {
+        p = Math.min(1, startP + (elapsed / CLEAR_MS) * 0.5);
+      } else if (elapsed < RISE_MS) {
+        p = (elapsed / RISE_MS) * 0.5;
+      } else if (holdAtPeak) {
+        p = 0.5;
+      } else {
+        p = Math.min(1, 0.5 + ((elapsed - RISE_MS) / CLEAR_MS) * 0.5);
+      }
+      // Ease the band so it surges up, then slows as it covers.
+      const e = p < 0.5 ? 0.5 * (1 - Math.pow(1 - p * 2, 2.2)) : 0.5 + 0.5 * Math.pow((p - 0.5) * 2, 1.6);
+      const t = elapsed / 1000;
+
+      // The band is the screen plus 400 px tall. Its head starts just below the
+      // screen; at e = 0.5 the head is above the top and the tail below the
+      // bottom (fully covered, on any screen height); at e = 1 the tail has
+      // cleared the top.
+      const band = H + 400;
+      const head = e <= 0.5 ? H + 160 - (e / 0.5) * (H + 320) : -160 - ((e - 0.5) / 0.5) * (band + 60);
+      const tail = head + band;
+
+      ctx.clearRect(0, 0, W, H);
+      const body = ctx.createLinearGradient(0, head - 60, 0, tail);
+      body.addColorStop(0, '#f97316');
+      body.addColorStop(0.35, '#ea580c');
+      body.addColorStop(1, '#7f1d1d');
+      const core = ctx.createLinearGradient(0, head, 0, tail);
+      core.addColorStop(0, '#fde047');
+      core.addColorStop(0.5, '#fbbf24');
+      core.addColorStop(1, '#f97316');
+
+      // Heat haze ahead of the flames.
+      const haze = ctx.createLinearGradient(0, head - 220, 0, head);
+      haze.addColorStop(0, 'rgba(249, 115, 22, 0)');
+      haze.addColorStop(1, 'rgba(249, 115, 22, 0.35)');
+      ctx.fillStyle = haze;
+      ctx.fillRect(0, head - 220, W, 220);
+
+      layer(head - 40, tail + 40, t, 120, phase, '#b91c1c'); // red tips / smouldering tail
+      layer(head, tail - 30, t, 95, phase + 3, body); // orange body
+      layer(head + 55, tail - 110, t, 70, phase + 7, core); // yellow core
+
+      // Inside the fire: rows of flame tongues rising faster than the wall, so a
+      // fully covered screen still reads as burning rather than a flat fill.
+      const rowGap = Math.max(170, H * 0.3);
+      const scroll = (t * 320) % rowGap;
+      for (let k = -1; k < H / rowGap + 2; k++) {
+        const rowTop = head + 170 + k * rowGap - scroll;
+        const rowBottom = rowTop + rowGap * 0.55;
+        if (rowTop < head + 120 || rowBottom > tail - 150) continue;
+        layer(rowTop, rowBottom, t * 1.3, 60, phase + 20 + k * 3.1, k % 2 ? 'rgba(234, 88, 12, 0.42)' : 'rgba(254, 240, 138, 0.45)');
+      }
+
+      // Sparks off the flame front (and embers off the tail once it's passing).
+      if (!reduce && sparks.length < 90) {
+        for (let i = 0; i < 3; i++) {
+          sparks.push({ x: Math.random() * W, y: head - Math.random() * 80, vx: (Math.random() - 0.5) * 40, vy: -120 - Math.random() * 220, life: 1, size: 1 + Math.random() * 2.5 });
+        }
+        if (p > 0.5 && tail < H + 60) {
+          sparks.push({ x: Math.random() * W, y: tail + 20, vx: (Math.random() - 0.5) * 30, vy: -40 - Math.random() * 80, life: 0.8, size: 1 + Math.random() * 1.5 });
+        }
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.x += s.vx / 60;
+        s.y += s.vy / 60;
+        s.life -= 1 / 50;
+        if (s.life <= 0) {
+          sparks.splice(i, 1);
+          continue;
+        }
+        ctx.fillStyle = `rgba(253, 224, 71, ${s.life.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      if (reduce) {
+        canvas.style.opacity = mode === 'reveal' ? '0' : '1';
+        canvas.style.transition = 'opacity 400ms ease';
+      }
+
+      if (!peaked && p >= 0.5) {
+        peaked = true;
+        cb.current.onPeak?.();
+      }
+      if (p >= 1 || (reduce && mode === 'reveal' && elapsed > 450)) {
+        setVisible(false);
+        cb.current.onComplete?.();
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+    };
+  }, [active, holdAtPeak, mode]);
 
   if (!visible) return null;
+  return <canvas ref={canvasRef} aria-hidden className="fixed inset-0 z-[2000] pointer-events-auto" />;
+}
 
-  return (
-    <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden">
-      {/* SVG filter that fuses blurred blobs into solid flame shapes */}
-      <svg className="absolute w-0 h-0" aria-hidden="true">
-        <defs>
-          <filter id="burn-goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0
-                      0 1 0 0 0
-                      0 0 1 0 0
-                      0 0 0 22 -10"
-              result="goo"
-            />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-        </defs>
-      </svg>
-
-      {/* Initial dark wash that scales from origin to fully cover the screen */}
-      <div
-        className="absolute animate-burn-cover"
-        style={{
-          left: ox,
-          top: oy,
-          width: '40vmax',
-          height: '40vmax',
-          marginLeft: '-20vmax',
-          marginTop: '-20vmax',
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle, hsl(15 60% 18%) 0%, hsl(10 50% 10%) 60%, hsl(0 0% 4%) 100%)',
-        }}
-      />
-
-      {/* Flame mass — gooey-fused blobs spreading outward from origin */}
-      <div
-        className="absolute inset-0"
-        style={{ filter: 'url(#burn-goo)' }}
-      >
-        {/* Core */}
-        <div
-          className="absolute animate-burn-core"
-          style={{
-            left: ox,
-            top: oy,
-            width: '28vmax',
-            height: '28vmax',
-            marginLeft: '-14vmax',
-            marginTop: '-14vmax',
-            borderRadius: '50%',
-            background:
-              'radial-gradient(circle, hsl(48 100% 62%) 0%, hsl(28 100% 55%) 35%, hsl(12 95% 48%) 65%, hsl(0 90% 35%) 100%)',
-          }}
-        />
-        {blobs.map((b, i) => (
-          <span
-            key={`b-${i}`}
-            className="absolute block animate-burn-blob"
-            style={{
-              left: ox,
-              top: oy,
-              width: `${b.size}vmax`,
-              height: `${b.size}vmax`,
-              marginLeft: `-${b.size / 2}vmax`,
-              marginTop: `-${b.size / 2}vmax`,
-              borderRadius: '50%',
-              background: `radial-gradient(circle, hsl(${b.hue + 25} 100% ${b.light + 10}%) 0%, hsl(${b.hue + 10} 100% ${b.light}%) 45%, hsl(${b.hue} 95% ${b.light - 10}%) 100%)`,
-              ['--tx' as string]: `${b.tx}vmax`,
-              ['--ty' as string]: `${b.ty}vmax`,
-              animationDelay: `${b.delay}ms`,
-              animationDuration: `${b.duration}ms`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Embers fly outward */}
-      {embers.map((e, i) => (
-        <span
-          key={`e-${i}`}
-          className="absolute block rounded-full animate-burn-ember-out"
-          style={{
-            left: ox,
-            top: oy,
-            width: `${e.size}px`,
-            height: `${e.size}px`,
-            marginLeft: `-${e.size / 2}px`,
-            marginTop: `-${e.size / 2}px`,
-            background: e.hot ? 'hsl(50 100% 78%)' : 'hsl(22 100% 60%)',
-            boxShadow: '0 0 10px hsl(30 100% 60% / 0.95)',
-            ['--tx' as string]: `${e.tx}vmax`,
-            ['--ty' as string]: `${e.ty}vmax`,
-            animationDelay: `${e.delay}ms`,
-            animationDuration: `${e.duration}ms`,
-          }}
-        />
-      ))}
-
-      {/* Opaque smoke wall takes over once flames peak, fully covering the screen */}
-      <div className="absolute inset-0 animate-burn-smoke-wall" />
-
-      {/* Soft drifting smoke wisps as it lifts to reveal the page below */}
-      <div className="absolute inset-0 animate-burn-smoke-lift" />
-    </div>
-  );
+/**
+ * After a real burn the app reloads under full cover; this finishes the
+ * flames on the fresh page. Mounted once in App.
+ */
+export function BurnReveal() {
+  const [show] = useState(() => {
+    try {
+      const on = sessionStorage.getItem(BURN_KEY) === '1';
+      if (on) sessionStorage.removeItem(BURN_KEY);
+      return on;
+    } catch {
+      return false;
+    }
+  });
+  const [done, setDone] = useState(false);
+  if (!show || done) return null;
+  return <BurnFlameOverlay active mode="reveal" onComplete={() => setDone(true)} />;
 }

@@ -77,6 +77,8 @@ export function saveRecentLocation(location: MapSearchResult) {
     const filtered = recent.filter((l) => l.id !== location.id);
     const updated = [location, ...filtered].slice(0, MAX_RECENT_LOCATIONS);
     localStorage.setItem(RECENT_LOCATIONS_KEY, JSON.stringify(updated));
+    // The map's "visited recently" pins refresh on this.
+    window.dispatchEvent(new CustomEvent('blacktop-recent-saved'));
   } catch {
     // Ignore storage errors
   }

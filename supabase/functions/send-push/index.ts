@@ -10,8 +10,8 @@ import { processEvent, rescue, rescueCancel, runScheduled } from './events.ts'
  * Rider actions (need the rider's session):
  *   { action: 'config' }        -> { publicKey }  VAPID key the browser subscribes with (no session needed)
  *   { action: 'test', delayed? } -> test notification to the caller's own devices
- *   { action: 'rescue', convoyId?, crewCode?, lat, lng, auto? }
- *   { action: 'rescue_cancel', convoyId?, crewCode? }
+ *   { action: 'rescue', convoyId?, crewCode?, lat, lng, auto?, nearbyKm? }
+ *   { action: 'rescue_cancel', convoyId?, crewCode?, lat?, lng?, nearbyKm? }
  *
  * Background (no session; safe to call any number of times):
  *   { action: 'drain' }  sends events queued by database triggers (push_outbox)
@@ -107,13 +107,19 @@ Deno.serve(async (req) => {
       if (!(await allowed('send-push-rescue', 6, 600))) return json({ error: 'Too many requests' }, 429)
       const convoyId = typeof body.convoyId === 'string' ? body.convoyId : null
       const crewCode = typeof body.crewCode === 'string' ? body.crewCode : null
-      if (action === 'rescue_cancel') return json(await rescueCancel(ctx, { userId, convoyId, crewCode }))
+      // Riders nearby: 1–50 km, only when the rider chose to reach them.
+      const km = Number(body.nearbyKm)
+      const nearbyKm = Number.isFinite(km) && km >= 1 ? Math.min(50, Math.round(km)) : null
       const lat = Number(body.lat)
       const lng = Number(body.lng)
+      if (action === 'rescue_cancel') {
+        const hasLoc = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+        return json(await rescueCancel(ctx, { userId, convoyId, crewCode, nearbyKm, lat: hasLoc ? lat : null, lng: hasLoc ? lng : null }))
+      }
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
         return json({ error: 'Invalid location' }, 400)
       }
-      return json(await rescue(ctx, { userId, convoyId, crewCode, lat, lng, auto: body.auto === true }))
+      return json(await rescue(ctx, { userId, convoyId, crewCode, lat, lng, auto: body.auto === true, nearbyKm }))
     }
 
     return json({ error: 'Unknown action' }, 400)

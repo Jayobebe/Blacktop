@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Zap, Flag, Trash2, Pencil, QrCode, Users, Satellite, X, Footprints, Map as MapIcon, Split, Check, Timer, History } from 'lucide-react';
+import { Zap, Flag, Trash2, Pencil, QrCode, Users, Satellite, X, Footprints, Map as MapIcon, Check, Timer, History, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
@@ -17,28 +16,32 @@ import { useGForce } from '@/hooks/useGForce';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { TrackDef, TrackSession } from '../types';
 import { RIDER_CALLS } from '../types';
-import { deleteTrack, saveTrack, useTrackStore } from '../lib/trackStore';
+import { deleteTrack, markTrackUsed, saveTrack, toggleStar, trackLength, useTrackStore } from '../lib/trackStore';
+import { loadCircuit, type LibraryCircuit, type LibraryLayout } from '../lib/circuitLibrary';
 import { TRACK_QR_PREFIX } from '../lib/link';
 import {
   armTrack,
   cancelWalk,
   closeRacerLink,
-  confirmTrack,
   disarm,
   dismissPit,
   endSession,
+  finishLapNow,
+  finishWalk,
   launchNow,
-  markSplit,
-  markStartFinish,
   openRacerLink,
+  redoLap,
+  selectTrack,
   sendRiderCall,
   startWalk,
   updateSensors,
   useRacer,
 } from '../lib/session';
 import { formatLap } from '../lib/timing';
+import { metres as distanceBetween } from '../lib/geometry';
 import { theoreticalBest } from '../lib/laps';
 import { TrackEditor } from './TrackEditor';
+import { TrackSearch } from './TrackSearch';
 import { TrackMinimap } from './TrackMinimap';
 import { SessionDetail } from './SessionDetail';
 import { TrackVoice } from './TrackVoice';
@@ -54,7 +57,8 @@ export function RacerView() {
   const [showQr, setShowQr] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [viewing, setViewing] = useState<TrackSession | null>(null);
-  const [trackName, setTrackName] = useState('');
+  const [importing, setImporting] = useState<LibraryLayout | null>(null);
+  const [loadingCircuit, setLoadingCircuit] = useState<number | null>(null);
   const riderName = profile.name || 'Racer';
 
   const { phase } = racer;
@@ -108,6 +112,7 @@ export function RacerView() {
       return;
     }
     haptics.medium();
+    markTrackUsed(t.id);
     await Promise.all([lean.requestPermission?.(), gForce.requestPermission?.()]).catch(() => {});
     armTrack(t, riderName, () => {
       // The ride (history + totals) starts with the launch.
@@ -152,81 +157,99 @@ export function RacerView() {
   );
   const qrOverlay = showQr && qrValue && <QrOverlay value={qrValue} crew={racer.crew} onClose={() => setShowQr(false)} />;
 
-  if (editing) {
+  /** Library layout → the chase cam, to place the start/finish and sectors. */
+  const importCircuit = async (c: LibraryCircuit) => {
+    const existing = tracks.find((t) => t.osmId === c.id);
+    if (existing) {
+      selectTrack(existing);
+      return;
+    }
+    setLoadingCircuit(c.id);
+    try {
+      setImporting(await loadCircuit(c.id));
+    } catch {
+      toast.error(`Couldn't load ${c.name}`, { description: 'Check your connection, or build it from the map.' });
+    } finally {
+      setLoadingCircuit(null);
+    }
+  };
+
+  if (editing || importing) {
+    const done = (t: TrackDef) => {
+      saveTrack(t);
+      selectTrack(t);
+      setEditing(null);
+      setImporting(null);
+      toast.success(`${t.name} saved`, { description: `${t.splits.length + 1} sectors. Ready up when you're on the grid.` });
+    };
     return (
       <TrackEditor
-        initial={editing === 'new' ? undefined : editing}
-        onCancel={() => setEditing(null)}
-        onSave={(t) => {
-          saveTrack(t);
+        initial={editing && editing !== 'new' ? editing : undefined}
+        library={importing ?? undefined}
+        onCancel={() => {
           setEditing(null);
-          toast.success(`${t.name} saved`);
+          setImporting(null);
         }}
+        onSave={done}
       />
     );
   }
 
   if (viewing) return <SessionDetail session={viewing} onBack={() => setViewing(null)} />;
 
-  // ── Walking / riding a lap to create a track ─────────────────────────────
+  // ── Recording a lap to create a track ────────────────────────────────────
+  if (phase === 'walking' && racer.walkLoop) {
+    return (
+      <TrackEditor
+        loop={racer.walkLoop}
+        onCancel={cancelWalk}
+        onSave={(t) => {
+          saveTrack(t);
+          finishWalk(t);
+          selectTrack(t);
+          toast.success(`${t.name} saved`, { description: `${t.splits.length + 1} sectors` });
+        }}
+      />
+    );
+  }
   if (phase === 'walking' && racer.walk) {
     const w = racer.walk;
+    const gap = w.trail.length > 1 ? Math.round(distanceBetween(w.trail[0], w.trail[w.trail.length - 1])) : null;
     return (
       <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-3">
         {statusBar}
         <TrackMinimap
           className="flex-1 min-h-[240px]"
           lines={[{ points: w.trail, color: 'hsl(var(--accent))', width: 1.4 }]}
-          startFinish={w.startFinish}
-          splits={w.splits}
           dot={w.trail[w.trail.length - 1] ?? null}
         />
-        <p className="text-center text-xs text-muted-foreground">
-          {!w.startFinish
-            ? 'Stand at the start/finish facing the way you race, start moving, and tap the button as you cross the line.'
-            : racer.canClose
-              ? 'Back at the start/finish. Confirm to finish the track.'
-              : `Walk or ride the lap. Tap Sector wherever you want a split. ${Math.round(w.travelled)} m · ${w.splits.length + 1} sectors`}
-        </p>
-        {!w.startFinish ? (
-          <Button
-            className="h-16 text-lg font-bold gap-2"
-            onClick={() => {
-              if (!markStartFinish()) toast('Keep moving a few metres so the line can be squared to the track');
-            }}
-          >
-            <Flag className="w-5 h-5" /> Set start/finish line here
-          </Button>
-        ) : racer.canClose ? (
-          <div className="space-y-2">
-            <Input value={trackName} onChange={(e) => setTrackName(e.target.value)} placeholder="Track name" maxLength={40} />
-            <Button
-              className="w-full h-16 text-lg font-bold gap-2"
-              onClick={() => {
-                const t = confirmTrack(trackName);
-                if (t) {
-                  toast.success(`${t.name} saved`, { description: `${t.splits.length + 1} sectors` });
-                  setTrackName('');
-                }
-              }}
-            >
-              <Check className="w-5 h-5" /> Confirm start/finish line
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="secondary"
-            className="h-16 text-lg font-bold gap-2 border-2 border-[#a855f7]"
-            onClick={() => {
-              if (!markSplit()) toast('Keep moving so the line can be squared to the track');
-            }}
-          >
-            <Split className="w-5 h-5" /> Sector here ({w.splits.length + 1})
-          </Button>
-        )}
-        <Button variant="ghost" onClick={cancelWalk}>
-          Cancel
+        <div className="text-center space-y-1">
+          <p className="font-mono text-2xl font-bold">{w.travelled >= 1000 ? `${(w.travelled / 1000).toFixed(2)} km` : `${Math.round(w.travelled)} m`}</p>
+          <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+            {w.trail.length < 2
+              ? 'Ride or walk one lap of the track. Recording starts as soon as GPS locks on.'
+              : 'Keep going. The lap closes by itself when you’re back on your line, then you place the start/finish and sectors.'}
+          </p>
+          {racer.canClose && gap !== null && <p className="text-[11px] text-muted-foreground">{gap} m from where you started</p>}
+        </div>
+        <Button
+          variant="secondary"
+          className="h-14 gap-2"
+          disabled={!racer.canClose}
+          onClick={() => {
+            if (!finishLapNow()) toast('Go a bit further round first');
+          }}
+        >
+          <Check className="w-5 h-5" /> Finish the lap here
         </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="ghost" onClick={redoLap} disabled={w.trail.length < 2}>
+            Start again
+          </Button>
+          <Button variant="ghost" onClick={cancelWalk}>
+            Cancel
+          </Button>
+        </div>
         {qrOverlay}
       </div>
     );
@@ -313,72 +336,94 @@ export function RacerView() {
     );
   }
 
-  // ── Track Pack home: pairing, tracks, sessions ───────────────────────────
+  // ── Track Pack home: search, build, your tracks, sessions ────────────────
+  const selected = phase === 'idle' && track ? tracks.find((t) => t.id === track.id) ?? null : null;
+  const lastUsed = (t: TrackDef) =>
+    Math.max(t.lastUsedAt ?? 0, ...sessions.filter((x) => x.trackId === t.id).map((x) => x.startedAt), t.createdAt ?? 0);
+  const previous = [...tracks].sort((a, b) => lastUsed(b) - lastUsed(a));
+  const custom = tracks.filter((t) => t.source !== 'library').sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  const favourites = tracks.filter((t) => t.starred).sort((a, b) => a.name.localeCompare(b.name));
+  const pick = (t: TrackDef) => {
+    haptics.light();
+    selectTrack(t);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
-      <PageHeader title="Track Pack" subtitle="Racer" backTo="/" right={<TrackVoice linkToken={racer.token} />} />
+      <PageHeader
+        title="Track Pack"
+        subtitle="Racer"
+        backTo="/"
+        right={
+          <div className="flex items-center gap-1.5">
+            <TrackVoice linkToken={racer.token} />
+            <button onClick={() => setShowQr(true)} className="flex items-center gap-1 h-9 px-2.5 rounded-xl frost-accent text-xs" aria-label="Pit crew QR">
+              <QrCode className="w-4 h-4" /> {racer.crew.length}
+            </button>
+          </div>
+        }
+      />
 
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/50 p-3">
-        {qrValue ? (
-          <button onClick={() => setShowQr(true)} className="p-1.5 rounded-lg bg-white shrink-0" aria-label="Show pit crew QR larger">
-            <QRCodeSVG value={qrValue} size={72} level="M" marginSize={0} />
-          </button>
-        ) : (
-          <div className="w-[84px] h-[84px] rounded-lg bg-muted animate-pulse shrink-0" />
-        )}
-        <div className="min-w-0">
-          <p className="text-sm font-semibold flex items-center gap-1.5">
-            <QrCode className="w-4 h-4 text-accent" /> Pit crew
-          </p>
-          <p className="text-xs text-muted-foreground">Track Pack → Pit crew → scan. They can join now or any time.</p>
-          <p className="text-xs mt-0.5">{racer.crew.length ? `Linked: ${racer.crew.map((c) => c.name).join(', ')}` : 'Nobody linked yet'}</p>
-        </div>
-      </div>
+      <TrackSearch tracks={tracks} onPickTrack={pick} onPickCircuit={importCircuit} loadingId={loadingCircuit} />
 
       <div className="grid grid-cols-2 gap-2">
-        <Button className="h-14 gap-2" onClick={() => startWalk(riderName)}>
-          <Footprints className="w-5 h-5" /> Walk a new track
+        <Button variant="secondary" className="h-12 gap-2" onClick={() => startWalk(riderName)}>
+          <Footprints className="w-5 h-5" /> Ride a lap (GPS)
         </Button>
-        <Button variant="secondary" className="h-14 gap-2" onClick={() => setEditing('new')}>
-          <MapIcon className="w-5 h-5" /> Draw on map
+        <Button variant="secondary" className="h-12 gap-2" onClick={() => setEditing('new')}>
+          <MapIcon className="w-5 h-5" /> Pick on the map
         </Button>
       </div>
 
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Tracks · tap to get on the grid</p>
-        {tracks.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No tracks yet. Walk or ride one lap to create it.</p>
-        ) : (
-          <div className="space-y-2">
-            {tracks.map((t) => (
-              <div key={t.id} className="flex items-center gap-2 rounded-2xl border border-border bg-card/50 p-2">
-                <button onClick={() => arm(t)} className="flex-1 flex items-center gap-3 text-left">
-                  <TrackMinimap className="w-14 h-14 p-1 shrink-0" outline={t.outline} startFinish={t.startFinish} splits={t.splits} />
-                  <span>
-                    <span className="block font-semibold">{t.name}</span>
-                    <span className="block text-[11px] text-muted-foreground">
-                      {t.splits.length + 1} sectors · best {formatLap(bestFor(sessions, t.id))}
-                    </span>
-                  </span>
-                </button>
-                <button onClick={() => setEditing(t)} className="p-2 rounded-lg text-muted-foreground hover:bg-muted" aria-label={`Edit ${t.name}`}>
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    deleteTrack(t.id);
-                    toast(`${t.name} deleted`);
-                  }}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  aria-label={`Delete ${t.name}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {selected && (
+        <SelectedTrack
+          track={selected}
+          best={bestFor(sessions, selected.id)}
+          crew={racer.crew}
+          onReady={() => arm(selected)}
+          onEdit={() => setEditing(selected)}
+          onStar={() => toggleStar(selected.id)}
+          onDelete={() => {
+            deleteTrack(selected.id);
+            selectTrack(null);
+            toast(`${selected.name} deleted`);
+          }}
+          onClose={() => selectTrack(null)}
+          onShowQr={() => setShowQr(true)}
+        />
+      )}
+
+      <TrackShelf
+        title="Previous tracks"
+        icon={<History className="w-4 h-4 text-accent" />}
+        hint="Last raced first"
+        empty="Tracks you save or race show up here."
+        tracks={previous}
+        sessions={sessions}
+        selectedId={selected?.id}
+        onPick={pick}
+      />
+      <TrackShelf
+        title="Custom tracks"
+        icon={<Pencil className="w-4 h-4 text-accent" />}
+        hint="Built by you"
+        empty="Tracks you build from the map or a GPS lap show up here."
+        tracks={custom}
+        sessions={sessions}
+        selectedId={selected?.id}
+        onPick={pick}
+      />
+      <TrackShelf
+        title="Favourite tracks"
+        icon={<Star className="w-4 h-4 text-accent fill-current" />}
+        hint="Starred"
+        empty="Tap the star on any track to keep it here."
+        tracks={favourites}
+        sessions={sessions}
+        selectedId={selected?.id}
+        onPick={pick}
+      />
 
       {sessions.length > 0 && (
         <div>
@@ -404,6 +449,146 @@ export function RacerView() {
         </div>
       )}
       {qrOverlay}
+    </div>
+  );
+}
+
+const km = (m: number | null) => (m == null ? null : m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`);
+
+/** One horizontally scrolling row of track cards, like the card vault's shelves. */
+export function TrackShelf({
+  title,
+  icon,
+  hint,
+  empty,
+  tracks,
+  sessions,
+  selectedId,
+  onPick,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  hint: string;
+  empty: string;
+  tracks: TrackDef[];
+  sessions: TrackSession[];
+  selectedId?: string;
+  onPick: (t: TrackDef) => void;
+}) {
+  return (
+    <section>
+      <div className="flex items-center gap-2 pb-2">
+        {icon}
+        <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+        <span className="text-xs text-muted-foreground">{tracks.length}</span>
+        <span className="ml-auto text-[10px] text-muted-foreground">{hint}</span>
+      </div>
+      {tracks.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border px-4 py-5 text-center">
+          <p className="text-xs text-muted-foreground/70">{empty}</p>
+        </div>
+      ) : (
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-px-4 -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {tracks.map((t) => (
+            <TrackCard key={t.id} track={t} best={bestFor(sessions, t.id)} selected={t.id === selectedId} onPick={() => onPick(t)} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TrackCard({ track: t, best, selected, onPick }: { track: TrackDef; best: number | null; selected: boolean; onPick: () => void }) {
+  return (
+    <div className={cn('relative snap-start flex-shrink-0 w-[46%] max-w-[190px] rounded-2xl border bg-card/50 p-2', selected ? 'border-accent' : 'border-border')}>
+      <button onClick={onPick} className="w-full text-left" aria-label={`Select ${t.name}`}>
+        <TrackMinimap className="aspect-square w-full p-1.5" outline={t.outline} startFinish={t.startFinish} splits={t.splits} />
+        <span className="block mt-1.5 text-sm font-semibold leading-tight truncate">{t.name}</span>
+        <span className="block text-[11px] text-muted-foreground truncate">
+          {[km(trackLength(t)), `${t.splits.length + 1} sectors`].filter(Boolean).join(' · ')}
+        </span>
+        <span className="block text-[11px] text-muted-foreground font-mono">Best {formatLap(best)}</span>
+      </button>
+      <button
+        onClick={() => toggleStar(t.id)}
+        className={cn('absolute top-3 right-3 p-1.5 rounded-full frost-accent', t.starred ? 'text-accent' : 'text-muted-foreground')}
+        aria-label={t.starred ? `Unfavourite ${t.name}` : `Favourite ${t.name}`}
+        aria-pressed={!!t.starred}
+      >
+        <Star className={cn('w-3.5 h-3.5', t.starred && 'fill-current')} />
+      </button>
+    </div>
+  );
+}
+
+/** The picked track: what the pit crew sees, and the Ready up button that puts the racer on the grid. */
+export function SelectedTrack({
+  track,
+  best,
+  crew,
+  onReady,
+  onEdit,
+  onStar,
+  onDelete,
+  onClose,
+  onShowQr,
+}: {
+  track: TrackDef;
+  best: number | null;
+  crew: { id: string; name: string }[];
+  onReady: () => void;
+  onEdit: () => void;
+  onStar: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+  onShowQr: () => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
+  return (
+    <div className="rounded-3xl border-2 border-accent bg-card/60 p-3 space-y-3">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-widest text-accent">Selected track</p>
+          <p className="text-lg font-bold leading-tight truncate">{track.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {[km(trackLength(track)), `${track.splits.length + 1} sectors`, `best ${formatLap(best)}`].filter(Boolean).join(' · ')}
+          </p>
+        </div>
+        <button onClick={onStar} className={cn('p-2 rounded-lg', track.starred ? 'text-accent' : 'text-muted-foreground')} aria-label={track.starred ? 'Unstar' : 'Star'} aria-pressed={!!track.starred}>
+          <Star className={cn('w-5 h-5', track.starred && 'fill-current')} />
+        </button>
+        <button onClick={onClose} className="p-2 rounded-lg text-muted-foreground" aria-label="Close">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      <TrackMinimap className="aspect-[4/3] w-full" outline={track.outline} startFinish={track.startFinish} splits={track.splits} />
+      <button onClick={onShowQr} className="w-full flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-xs">
+        <Users className="w-4 h-4 text-accent shrink-0" />
+        <span className="flex-1">
+          {crew.length ? `Pit crew linked: ${crew.map((c) => c.name).join(', ')}. They have this track.` : 'Pit crew: scan my QR to get this track and live timing.'}
+        </span>
+        <QrCode className="w-4 h-4 shrink-0" />
+      </button>
+      <Button className="w-full h-14 text-lg font-bold gap-2" onClick={onReady}>
+        <Flag className="w-5 h-5" /> Ready up
+      </Button>
+      <div className="flex gap-2">
+        <Button variant="ghost" className="flex-1 gap-1" onClick={onEdit}>
+          <Pencil className="w-4 h-4" /> Edit lines
+        </Button>
+        <Button
+          variant="ghost"
+          className={cn('flex-1 gap-1', confirmDelete ? 'text-destructive-foreground bg-destructive' : 'text-destructive')}
+          onClick={() => (confirmDelete ? onDelete() : setConfirmDelete(true))}
+        >
+          <Trash2 className="w-4 h-4" /> {confirmDelete ? 'Tap to delete' : 'Delete'}
+        </Button>
+      </div>
     </div>
   );
 }

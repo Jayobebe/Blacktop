@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { useDemoMode } from '@/lib/demoMode';
 import { demoTrackData } from '@/lib/demoTrack';
 import type { TelemetrySample, TrackDef, TrackSession } from '../types';
+import { metres } from './geometry';
 
 /** Saved tracks and finished sessions, on this device. */
 const TRACKS_KEY = 'bt.tracks.v1';
@@ -67,10 +68,37 @@ export function getTracks() {
 }
 
 export function saveTrack(track: TrackDef) {
-  const tracks = [track, ...store.tracks.filter((t) => t.id !== track.id)];
+  const prev = store.tracks.find((t) => t.id === track.id);
+  const saved = { ...track, starred: track.starred ?? prev?.starred, lastUsedAt: Date.now() };
+  const tracks = [saved, ...store.tracks.filter((t) => t.id !== track.id)];
   store = { ...store, tracks };
   persist(TRACKS_KEY, tracks);
   emit();
+}
+
+/** Stamps a track as just used, so it leads the Previous tracks list. */
+export function markTrackUsed(id: string) {
+  const at = Date.now();
+  const tracks = store.tracks.map((t) => (t.id === id ? { ...t, lastUsedAt: at } : t));
+  store = { ...store, tracks };
+  persist(TRACKS_KEY, tracks);
+  emit();
+}
+
+export function toggleStar(id: string) {
+  const tracks = store.tracks.map((t) => (t.id === id ? { ...t, starred: !t.starred } : t));
+  store = { ...store, tracks };
+  persist(TRACKS_KEY, tracks);
+  emit();
+}
+
+/** Lap length in metres, from the outline (null for old tracks without one). */
+export function trackLength(t: TrackDef): number | null {
+  const o = t.outline;
+  if (!o || o.length < 3) return null;
+  let d = 0;
+  for (let i = 1; i <= o.length; i++) d += metres(o[i - 1], o[i % o.length]);
+  return d;
 }
 
 export function deleteTrack(id: string) {

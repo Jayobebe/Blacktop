@@ -24,6 +24,7 @@ const LOCATION_KEY = 'bt.push.location.v1';
 /** Kinds of notification a device can switch on or off (ids match send-push). */
 export const PUSH_CATEGORY_DEFS = [
   { id: 'rescue', label: 'Rescue calls', desc: 'A convoy or crew mate calls for rescue, with where they are' },
+  { id: 'rescue_nearby', label: 'Riders near me who need help', desc: 'Another rider close by calls for rescue. Keeps this phone’s rough area (about 11 km) on the server' },
   { id: 'weather', label: 'Heavy weather', desc: 'Storms, heavy rain, snow or strong winds heading to your area' },
   { id: 'blacktank', label: 'Blacktank', desc: 'Requests to vote on, approvals, chip-ins and payouts' },
   { id: 'timeattack', label: 'Your time attacks', desc: 'Someone beats, or loses to, a time attack you set' },
@@ -259,7 +260,8 @@ async function subscribeAndRegister(reg: ServiceWorkerRegistration) {
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
 
   const json = sub.toJSON();
-  const loc = state.categories.includes('weather') ? await weatherLocation() : null;
+  // Rough area (rounded server-side to ~11 km) for weather alerts and for helping nearby riders.
+  const loc = state.categories.includes('weather') || state.categories.includes('rescue_nearby') ? await weatherLocation() : null;
   const { error } = await supabase.rpc('register_push_subscription' as never, {
     _endpoint: sub.endpoint,
     _p256dh: json.keys?.p256dh ?? '',
@@ -398,12 +400,17 @@ export function wantsPush(id: PushCategory) {
 
 export interface RescueNotice {
   convoyId?: string | null;
+  /** Crew to tell: left out = this device's crew; null = don't tell the crew. */
   crewCode?: string | null;
   lat: number;
   lng: number;
   /** Fired by crash detection rather than the rider. */
   auto?: boolean;
+  /** Also reach opted-in riders within this many km. */
+  nearbyKm?: number | null;
 }
+
+const crewFor = (code: string | null | undefined) => (code === undefined ? getCrewCode() : code);
 
 /** Tells this rider's convoy and crew they need rescue. Works even with notifications off here. */
 export async function notifyRescue(n: RescueNotice): Promise<{ sent: number }> {
@@ -411,7 +418,7 @@ export async function notifyRescue(n: RescueNotice): Promise<{ sent: number }> {
   try {
     await ensureSession();
     const { data, error } = await supabase.functions.invoke('send-push', {
-      body: { action: 'rescue', convoyId: n.convoyId ?? null, crewCode: n.crewCode ?? getCrewCode(), lat: n.lat, lng: n.lng, auto: !!n.auto },
+      body: { action: 'rescue', convoyId: n.convoyId ?? null, crewCode: crewFor(n.crewCode), lat: n.lat, lng: n.lng, auto: !!n.auto, nearbyKm: n.nearbyKm ?? null },
     });
     return { sent: error ? 0 : Number(data?.sent) || 0 };
   } catch {
@@ -419,11 +426,11 @@ export async function notifyRescue(n: RescueNotice): Promise<{ sent: number }> {
   }
 }
 
-export async function notifyRescueCancel(n: Omit<RescueNotice, 'lat' | 'lng' | 'auto'> = {}): Promise<void> {
+export async function notifyRescueCancel(n: Omit<RescueNotice, 'lat' | 'lng' | 'auto'> & { lat?: number; lng?: number } = {}): Promise<void> {
   if (isDemoModeActive()) return;
   try {
     await supabase.functions.invoke('send-push', {
-      body: { action: 'rescue_cancel', convoyId: n.convoyId ?? null, crewCode: n.crewCode ?? getCrewCode() },
+      body: { action: 'rescue_cancel', convoyId: n.convoyId ?? null, crewCode: crewFor(n.crewCode), nearbyKm: n.nearbyKm ?? null, lat: n.lat ?? null, lng: n.lng ?? null },
     });
   } catch {
     /* best effort */

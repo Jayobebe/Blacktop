@@ -4,6 +4,8 @@ import { MapDestination } from '../types';
 interface MapOverlayState {
   isOpen: boolean;
   destination: MapDestination | null;
+  /** The map has drawn its first full view (style + tiles). Until then the app backdrop shows through. */
+  ready: boolean;
 }
 
 type Listener = () => void;
@@ -12,6 +14,7 @@ const listeners = new Set<Listener>();
 let overlayState: MapOverlayState = {
   isOpen: false,
   destination: null,
+  ready: false,
 };
 
 function getSnapshot(): MapOverlayState {
@@ -30,6 +33,7 @@ function emitChange() {
 export function openBlacktopMap(destination?: MapDestination) {
   // If a destination is provided, update it; otherwise keep the existing one.
   overlayState = {
+    ...overlayState,
     isOpen: true,
     destination: destination !== undefined ? (destination ?? null) : overlayState.destination,
   };
@@ -47,6 +51,13 @@ export function closeBlacktopMap() {
 // doesn't bleed into a completely different session.
 export function clearMapDestination() {
   overlayState = { ...overlayState, destination: null };
+  emitChange();
+}
+
+/** BlacktopMap reports its first full draw (and resets it when the map is torn down). */
+export function setBlacktopMapReady(ready: boolean) {
+  if (overlayState.ready === ready) return;
+  overlayState = { ...overlayState, ready };
   emitChange();
 }
 

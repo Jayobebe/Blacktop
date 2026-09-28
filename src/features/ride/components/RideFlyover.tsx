@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
+import { loadDarkMapStyle } from '@/features/map';
 import { useProfile } from '@/features/profile';
 import { formatDistance, formatDuration, formatSpeed, getSpeedLabel } from '@/lib/format';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
@@ -79,9 +80,13 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current || routeCoords.length < 2) return;
 
+    // The same dark basemap as the Blacktop map (contrast lifted), so replays match.
+    let cancelled = false;
+    void loadDarkMapStyle().catch(() => STYLE_URL).then((style) => {
+    if (cancelled || !mapContainerRef.current) return;
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: STYLE_URL,
+      style,
       center: routeCoords[0],
       zoom: 15.5,
       pitch: 62,
@@ -162,9 +167,11 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
 
       setReady(true);
     });
+    });
 
     return () => {
-      map.remove();
+      cancelled = true;
+      mapRef.current?.remove();
       mapRef.current = null;
     };
   }, [routeCoords, accentColor]);

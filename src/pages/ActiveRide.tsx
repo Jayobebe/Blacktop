@@ -14,7 +14,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton, usePlayer } from '@/features/radio';
-import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, rescueReach } from '@/features/rescue';
 import { useCrashDetection } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
@@ -706,14 +706,21 @@ export default function ActiveRide() {
   // Solo rescue call: Discord (when connected) plus a push to the rider's crew.
   // Returns who was told.
   const sendSoloRescue = useCallback(async (lat: number, lng: number, auto = false): Promise<string[]> => {
-    const [discord, crewPush] = await Promise.all([
-      discordEnabled
+    // Settings → Safety decides who hears it.
+    const reach = rescueReach(settings);
+    const [discord, push] = await Promise.all([
+      discordEnabled && reach.discord
         ? announceSoloRescueToDiscord({ riderName: profile.name || 'Rider', lat, lng })
         : Promise.resolve({ ok: false, skipped: true }),
-      notifyRescue({ lat, lng, auto }),
+      reach.crew || reach.nearbyKm
+        ? notifyRescue({ lat, lng, auto, crewCode: reach.crew ? undefined : null, nearbyKm: reach.nearbyKm })
+        : Promise.resolve({ sent: 0 }),
     ]);
-    return [discord.ok ? 'Discord' : null, crewPush.sent ? 'your crew' : null].filter((x): x is string => !!x);
-  }, [discordEnabled, profile.name]);
+    return [
+      discord.ok ? 'Discord' : null,
+      push.sent ? (reach.nearbyKm ? (reach.crew ? 'your crew and riders nearby' : 'riders nearby') : 'your crew') : null,
+    ].filter((x): x is string => !!x);
+  }, [discordEnabled, profile.name, settings]);
 
   // ---- Auto-rescue (crash detection) ----
   const fireAutoRescue = useCallback(async () => {

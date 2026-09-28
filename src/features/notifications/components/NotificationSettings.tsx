@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, IdCard, BellOff, CloudLightning, Fuel, Loader2, Send, Smartphone, Swords, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
+import { AlertTriangle, Bell, HeartHandshake, IdCard, BellOff, CloudLightning, Fuel, Loader2, Send, Smartphone, Swords, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { disablePush, enablePush, PUSH_CATEGORY_DEFS, refreshPushPermission, sen
 
 const ICONS: Record<PushCategory, React.ElementType> = {
   rescue: AlertTriangle,
+  rescue_nearby: HeartHandshake,
   weather: CloudLightning,
   blacktank: Fuel,
   timeattack: Swords,

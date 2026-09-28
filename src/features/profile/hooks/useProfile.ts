@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavigationApp, UserProfile } from '@/types/blacktop';
 import { supabase } from '@/integrations/supabase/client';
+import { burnLocalDevice } from '@/lib/burnLocal';
 import { User } from '@supabase/supabase-js';
 import { displayNameSchema } from '@/lib/validation';
 import { toast } from 'sonner';
@@ -143,6 +144,9 @@ export function useProfile() {
       // ignore
     }
 
+    // Everything else Blacktop kept on this device (saved places, crew,
+    // settings, map position, offline maps, overlays…).
+    await burnLocalDevice();
     window.localStorage.removeItem(PROFILE_KEY);
     setProfile(defaultProfile);
     setUser(null);

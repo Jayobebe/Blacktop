@@ -1,25 +1,12 @@
 import type { Gate, LatLng } from '../types';
-import type { Fix } from './timing';
 import { metres, toLocal } from './geometry';
+import type { Fix } from './timing';
 
-/** Half-width of a walked timing line (the line spans the whole track). */
+/** Half-width of a timing line (the line spans the whole track). */
 export const WALK_GATE_HALF_M = 14;
-/** How close to the start/finish (after a real lap) before offering to close the track. */
-export const CLOSE_RADIUS_M = 25;
+/** Finishing a lap by hand joins it up from the first point within this of where it ends. */
+const CLOSE_RADIUS_M = 25;
 export const MIN_LAP_TRAVEL_M = 150;
-
-/** Direction of travel (radians, local frame) from recent fixes spanning ≥ 5 m. */
-export function headingFrom(fixes: Fix[]): number | null {
-  if (fixes.length < 2) return null;
-  const last = fixes[fixes.length - 1];
-  for (let i = fixes.length - 2; i >= 0; i--) {
-    if (metres(fixes[i], last) >= 5) {
-      const d = toLocal(last, fixes[i]);
-      return Math.atan2(d.y, d.x);
-    }
-  }
-  return null;
-}
 
 /** A timing line through `at`, square to the direction of travel. */
 export function gateAcross(at: LatLng, heading: number, halfM = WALK_GATE_HALF_M): Gate {
@@ -46,6 +33,79 @@ export function simplify(points: LatLng[], minStepM = 4, max = 600): LatLng[] {
   if (out.length <= max) return out;
   const step = out.length / max;
   return Array.from({ length: max }, (_, i) => out[Math.floor(i * step)]);
+}
+
+/** How close (m) the trail has to come back to itself to close the lap. */
+export const LOOP_CLOSE_M = 12;
+/** Ignore the last this-many metres of trail when looking for the closure. */
+const LOOP_IGNORE_RECENT_M = 100;
+/** Once back on the line, how much further to go before closing (to find the closest pass). */
+const LOOP_SETTLE_M = 25;
+/** Coming back the same way: within this angle of the original direction. */
+const LOOP_SAME_WAY = Math.cos((60 * Math.PI) / 180);
+
+/**
+ * Track builder, method 2: records a GPS trail and spots the moment it
+ * comes back onto itself, heading the same way (so a hairpin running back
+ * alongside a straight, or a figure-of-eight crossover, doesn't count). The
+ * lap is the trail between the two passes; anything ridden before joining the
+ * track (paddock, pit exit) is left off.
+ */
+export class LoopCloser {
+  readonly pts: LatLng[] = [];
+  private cum: number[] = [];
+  private best: { seg: number; off: number; at: number } | null = null;
+
+  get travelled() {
+    return this.cum.length ? this.cum[this.cum.length - 1] : 0;
+  }
+
+  /** Adds a fix; returns the closed lap once found. */
+  push(p: LatLng): LatLng[] | null {
+    const n = this.pts.length;
+    if (n && metres(this.pts[n - 1], p) < 2) return null;
+    this.pts.push({ lat: p.lat, lng: p.lng });
+    this.cum.push(n ? this.cum[n - 1] + metres(this.pts[n - 1], p) : 0);
+    const total = this.travelled;
+    if (total < MIN_LAP_TRAVEL_M) return null;
+
+    const last = this.pts.length - 1;
+    const dir = toLocal(p, this.pts[last - 1]);
+    const dirLen = Math.hypot(dir.x, dir.y) || 1;
+    for (let j = 0; j + 1 < last && this.cum[j + 1] <= total - LOOP_IGNORE_RECENT_M; j++) {
+      const a = this.pts[j];
+      const ab = toLocal(this.pts[j + 1], a);
+      const abLen = Math.hypot(ab.x, ab.y) || 1;
+      if ((ab.x * dir.x + ab.y * dir.y) / (abLen * dirLen) < LOOP_SAME_WAY) continue;
+      const ap = toLocal(p, a);
+      const t = Math.max(0, Math.min(1, (ap.x * ab.x + ap.y * ab.y) / (abLen * abLen)));
+      const off = Math.hypot(ap.x - ab.x * t, ap.y - ab.y * t);
+      if (off < LOOP_CLOSE_M && (!this.best || off < this.best.off)) this.best = { seg: j, off, at: last };
+    }
+    if (this.best && total - this.cum[this.best.at] >= LOOP_SETTLE_M) {
+      return this.pts.slice(this.best.seg + 1, this.best.at + 1);
+    }
+    return null;
+  }
+
+  /**
+   * Closes the lap by hand: from the earliest point near where the trail ends
+   * (or the whole trail when it never came back), end joined to start.
+   */
+  forceClose(): LatLng[] | null {
+    if (this.travelled < MIN_LAP_TRAVEL_M) return null;
+    const end = this.pts[this.pts.length - 1];
+    const total = this.travelled;
+    for (let j = 0; j < this.pts.length && this.cum[j] <= total - LOOP_IGNORE_RECENT_M; j++) {
+      if (metres(this.pts[j], end) <= CLOSE_RADIUS_M * 2) return this.pts.slice(j);
+    }
+    return this.pts.slice();
+  }
+
+  /** Distance from the latest fix back to where the trail started. */
+  gapToStart(): number | null {
+    return this.pts.length > 1 ? metres(this.pts[0], this.pts[this.pts.length - 1]) : null;
+  }
 }
 
 /**

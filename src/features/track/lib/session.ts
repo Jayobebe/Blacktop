@@ -1,18 +1,20 @@
 import { useSyncExternalStore } from 'react';
 import { setPendingTrackReceipt } from '@/lib/trackReceipt';
 import { haptics } from '@/lib/haptics';
-import type { Gate, Lap, PitMessage, TelemetrySample, TrackDef, TrackSession } from '../types';
+import type { Lap, LatLng, PitMessage, TelemetrySample, TrackDef, TrackSession } from '../types';
 import { LapTimer, liveDelta, type Fix } from './timing';
 import { TrackLink, newLinkToken, type LinkMessage, type RacerPhase, type RacerSnapshot, type WalkShape } from './link';
 import { saveSession, saveTrack } from './trackStore';
 import { subscribeTrackGps } from './trackGps';
-import { CLOSE_RADIUS_M, LaunchDetector, MIN_LAP_TRAVEL_M, gateAcross, gateCentre, headingFrom, simplify } from './walker';
+import { LaunchDetector, LoopCloser, MIN_LAP_TRAVEL_M, gateCentre, simplify } from './walker';
+import { resampleLoop, smoothLoop } from './centerline';
+import { speakPitBoard } from './pitCalls';
 import { metres } from './geometry';
 
 /**
  * Racer-side Track Pack. Phases:
  *   idle     — pairing QR up, choosing a track (crew can already join)
- *   walking  — creating a track by walking/riding a lap and tapping lines
+ *   walking  — recording a lap with GPS to create a track (then placing its lines)
  *   armed    — on the grid; timing starts itself when a launch is detected
  *   running  — lap timing, live to the pit crew
  */
@@ -29,7 +31,9 @@ export interface RacerState {
   linked: boolean;
   crew: { id: string; name: string }[];
   walk: WalkShape | null;
-  /** Back at the start/finish during a walk: offer to close the track. */
+  /** The recorded lap once it has closed, ready for placing the lines. */
+  walkLoop: LatLng[] | null;
+  /** Far enough round to finish the lap by hand. */
   canClose: boolean;
   lapStartT: number | null;
   lapNumber: number;
@@ -56,6 +60,7 @@ const INITIAL: RacerState = {
   linked: false,
   crew: [],
   walk: null,
+  walkLoop: null,
   canClose: false,
   lapStartT: null,
   lapNumber: 0,
@@ -90,7 +95,7 @@ let bestLapStartT = 0;
 let lastTeleSent = 0;
 let lastWalkSent = 0;
 const recentFixes: Fix[] = [];
-const walkTrail: { lat: number; lng: number }[] = [];
+let closer: LoopCloser | null = null;
 const fixGaps: number[] = [];
 
 function set(patch: Partial<RacerState>) {
@@ -142,6 +147,7 @@ function onLinkMessage(m: LinkMessage) {
     broadcastState();
   } else if (m.type === 'pit' && m.msg?.from === 'crew') {
     set({ pit: { ...m.msg, text: String(m.msg.text).slice(0, 40), at: Date.now() } });
+    speakPitBoard(m.msg.text);
     haptics.heavy();
     try {
       navigator.vibrate?.([200, 100, 200]);
@@ -234,15 +240,21 @@ function onFix(fix: Fix) {
   set(common);
 }
 
-// ── walking a new track ─────────────────────────────────────────────────────
+// ── recording a new track (method 2) ────────────────────────────────────────
+// GPS follows the rider until the lap closes on itself (or they finish it by
+// hand); the smoothed lap then goes to the chase cam to place the lines.
+
+/** Fixes worse than this don't go into the lap. */
+const WALK_MAX_ACCURACY_M = 20;
 
 export function startWalk(riderName: string) {
   openRacerLink(riderName);
-  walkTrail.length = 0;
+  closer = new LoopCloser();
   set({
     phase: 'walking',
     track: null,
     walk: { trail: [], startFinish: null, splits: [], travelled: 0 },
+    walkLoop: null,
     canClose: false,
   });
   startGps();
@@ -250,50 +262,51 @@ export function startWalk(riderName: string) {
 }
 
 export function cancelWalk() {
-  set({ phase: 'idle', walk: null, canClose: false });
+  closer = null;
+  set({ phase: 'idle', walk: null, walkLoop: null, canClose: false });
   stopGps();
   broadcastState();
 }
 
-function currentGate(): Gate | null {
-  const last = recentFixes[recentFixes.length - 1];
-  const h = headingFrom(recentFixes);
-  if (!last || h === null) return null;
-  return gateAcross(last, h);
+function lapFrom(points: LatLng[]): LatLng[] {
+  return smoothLoop(resampleLoop(points, 2), 3);
 }
 
-/** Drops the start/finish line here, square to the direction of travel. */
-export function markStartFinish(): boolean {
-  const gate = currentGate();
-  if (!gate || !state.walk) return false;
-  walkTrail.length = 0;
-  set({ walk: { trail: [], startFinish: gate, splits: [], travelled: 0 }, canClose: false });
+function closeLap(points: LatLng[]) {
+  stopGps();
+  closer = null;
+  set({ walkLoop: lapFrom(points), walk: state.walk ? { ...state.walk, closed: true } : null, canClose: false });
   haptics.success();
   broadcastState();
+}
+
+/** Finish the lap by hand (the trail didn't quite meet itself). */
+export function finishLapNow(): boolean {
+  const lap = closer?.forceClose();
+  if (!lap) return false;
+  closeLap(lap);
   return true;
 }
 
-export function markSplit(): boolean {
-  const gate = currentGate();
-  if (!gate || !state.walk?.startFinish) return false;
-  set({ walk: { ...state.walk, splits: [...state.walk.splits, gate] } });
-  haptics.medium();
+/** Throw the recorded lap away and ride it again. */
+export function redoLap() {
+  closer = new LoopCloser();
+  set({ walk: { trail: [], startFinish: null, splits: [], travelled: 0 }, walkLoop: null, canClose: false });
+  startGps();
   broadcastState();
-  return true;
 }
 
 function onWalkFix(fix: Fix, common: Partial<RacerState>) {
   const walk = state.walk;
-  if (!walk) return;
-  const prev = walkTrail[walkTrail.length - 1];
-  if (walk.startFinish && (!prev || metres(prev, fix) >= 1)) {
-    walkTrail.push({ lat: fix.lat, lng: fix.lng });
+  if (!walk || !closer || state.walkLoop) return;
+  if (fix.accuracy != null && fix.accuracy > WALK_MAX_ACCURACY_M) {
+    set(common);
+    return;
   }
-  const travelled = walk.startFinish && prev ? walk.travelled + metres(prev, fix) : walk.travelled;
-  const canClose =
-    !!walk.startFinish && travelled >= MIN_LAP_TRAVEL_M && metres(gateCentre(walk.startFinish), fix) <= CLOSE_RADIUS_M;
-  if (canClose && !state.canClose) haptics.heavy();
-  set({ ...common, walk: { ...walk, trail: [...walkTrail], travelled }, canClose });
+  const lap = closer.push(fix);
+  if (lap) return closeLap(lap);
+  const canClose = closer.travelled >= MIN_LAP_TRAVEL_M;
+  set({ ...common, walk: { ...walk, trail: closer.pts.slice(), travelled: closer.travelled }, canClose });
   const now = Date.now();
   if (now - lastWalkSent > 1000) {
     lastWalkSent = now;
@@ -301,24 +314,24 @@ function onWalkFix(fix: Fix, common: Partial<RacerState>) {
   }
 }
 
-/** Confirms the start/finish on returning to it: the track completes and saves. */
-export function confirmTrack(name: string): TrackDef | null {
-  const walk = state.walk;
-  if (!walk?.startFinish) return null;
-  const track: TrackDef = {
-    id: crypto.randomUUID(),
-    name: name.trim().slice(0, 40) || `Track ${new Date().toLocaleDateString()}`,
-    startFinish: walk.startFinish,
-    splits: walk.splits,
-    createdAt: Date.now(),
-    outline: simplify(walk.trail),
-  };
-  saveTrack(track);
+/** The lines are placed and the track saved: back to the Track Pack home, on that track. */
+export function finishWalk(track: TrackDef) {
+  closer = null;
   stopGps();
-  set({ phase: 'idle', walk: null, canClose: false, track });
-  haptics.success();
+  set({ phase: 'idle', walk: null, walkLoop: null, canClose: false, track });
   broadcastState();
-  return track;
+}
+
+// ── choosing a track ────────────────────────────────────────────────────────
+
+/**
+ * The racer picked a track: the pit crew gets it (lines, outline, name) right
+ * away, before the racer readies up.
+ */
+export function selectTrack(track: TrackDef | null) {
+  if (state.phase !== 'idle') return;
+  set({ track });
+  broadcastState();
 }
 
 // ── on the grid ─────────────────────────────────────────────────────────────

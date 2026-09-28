@@ -46,6 +46,15 @@ type OverpassBody = {
   limit?: number;
 };
 
+/** Track Pack builder: every drivable road inside a box, cut at the box edge. */
+type RoadsBody = {
+  kind: "roads";
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+};
+
 type RouteBody = {
   kind: "route";
   // [lng, lat] pairs, in order from start to destination.
@@ -112,7 +121,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-async function fetchOverpass(query: string) {
+async function fetchOverpass(query: string, timeoutMs = 9000) {
   const endpoints = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
@@ -131,7 +140,7 @@ async function fetchOverpass(query: string) {
           "User-Agent": "Blacktop-App/1.0",
         },
         body: `data=${encodeURIComponent(query)}`,
-      }, 9000);
+      }, timeoutMs);
 
       const text = await res.text();
       if (!res.ok) {
@@ -200,7 +209,7 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody | RoadsBody;
 
     if (body.kind === "twisty") {
       const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
@@ -439,6 +448,88 @@ serve(async (req) => {
         }),
         { headers: { ...cors, "Content-Type": "application/json" }, status: 200 },
       );
+    }
+
+    if (body.kind === "roads") {
+      const { west, south, east, north } = body;
+      const valid =
+        [west, south, east, north].every((n) => typeof n === "number" && Number.isFinite(n)) &&
+        south >= -90 && north <= 90 && south < north &&
+        west >= -180 && east <= 180 && west < east;
+      if (!valid) {
+        return new Response(JSON.stringify({ error: "Invalid bounds" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      // ~40 km² is plenty for any circuit short of the Nordschleife, and keeps
+      // Overpass (and the phone) from choking on a whole town's streets.
+      const midLat = (south + north) / 2;
+      const wM = (east - west) * 111320 * Math.cos((midLat * Math.PI) / 180);
+      const hM = (north - south) * 110540;
+      if (wM * hM > 40_000_000) {
+        return new Response(JSON.stringify({ error: "area_too_big" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      const query = `
+        [out:json][timeout:20];
+        way["highway"~"^(raceway|motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street|service|track|road|cycleway)$"]["service"!~"^(parking_aisle|driveway|drive-through)$"]["area"!="yes"](${south},${west},${north},${east});
+        out geom;
+      `;
+      let data: any;
+      try {
+        data = await fetchOverpass(query, 22000);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Overpass roads unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify({ error: "overpass_unavailable" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 503,
+        });
+      }
+
+      // Cut every way into the runs of points inside the box (plus a small
+      // margin), keeping node ids so the client can find junctions.
+      const padLat = (north - south) * 0.03;
+      const padLng = (east - west) * 0.03;
+      const inside = (lat: number, lon: number) =>
+        lat >= south - padLat && lat <= north + padLat && lon >= west - padLng && lon <= east + padLng;
+      const pieces: { id: string; hw: string; name?: string; raceway?: string; pts: [number, number, number][] }[] = [];
+      for (const el of Array.isArray(data?.elements) ? data.elements : []) {
+        if (el?.type !== "way" || !Array.isArray(el.geometry) || !Array.isArray(el.nodes)) continue;
+        if (el.geometry.length !== el.nodes.length) continue;
+        let run: [number, number, number][] = [];
+        let k = 0;
+        const flush = () => {
+          if (run.length >= 2) {
+            pieces.push({
+              id: `${el.id}:${k++}`,
+              hw: String(el.tags?.highway ?? ""),
+              name: el.tags?.name ? String(el.tags.name).slice(0, 60) : undefined,
+              raceway: el.tags?.raceway ? String(el.tags.raceway).slice(0, 30) : undefined,
+              pts: run,
+            });
+          }
+          run = [];
+        };
+        for (let i = 0; i < el.geometry.length; i++) {
+          const g = el.geometry[i];
+          if (g && typeof g.lat === "number" && typeof g.lon === "number" && inside(g.lat, g.lon)) {
+            run.push([Math.round(g.lat * 1e7) / 1e7, Math.round(g.lon * 1e7) / 1e7, Number(el.nodes[i])]);
+          } else {
+            flush();
+          }
+        }
+        flush();
+        if (pieces.length >= 5000) break;
+      }
+
+      return new Response(JSON.stringify({ pieces }), {
+        headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+        status: 200,
+      });
     }
 
     if (body.kind === "cameras") {

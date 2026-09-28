@@ -45,6 +45,18 @@ export interface AppSettings {
   weatherRoutingEnabled: boolean;
   /** Read turn-by-turn directions aloud (the turn banner shows either way). */
   navVoiceEnabled: boolean;
+  /** Speak hazard warnings when riding up to a report (the banner shows either way). One switch for every hazard type. */
+  hazardVoiceEnabled: boolean;
+  /**
+   * Who a rescue call reaches (the rescue button, and auto-rescue after a crash):
+   * the convoy you're riding with, your crew, your Discord, and opted-in riders
+   * within `rescueNearbyKm`.
+   */
+  rescueToConvoy: boolean;
+  rescueToCrew: boolean;
+  rescueToDiscord: boolean;
+  rescueToNearby: boolean;
+  rescueNearbyKm: number;
   // 3D flyover overview button on ride history details.
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
@@ -104,6 +116,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   weatherOverlayEnabled: false,
   weatherRoutingEnabled: false,
   navVoiceEnabled: true,
+  hazardVoiceEnabled: true,
+  rescueToConvoy: true,
+  rescueToCrew: true,
+  rescueToDiscord: true,
+  rescueToNearby: false,
+  rescueNearbyKm: 10,
   flyoverEnabled: false,
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,

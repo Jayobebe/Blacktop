@@ -60,6 +60,22 @@ export interface RescueInput {
   lat: number
   lng: number
   auto?: boolean
+  /** Also reach riders who opted in to help nearby, within this many km. */
+  nearbyKm?: number | null
+}
+
+/**
+ * Devices near a point. Their locations are rounded to 0.1° (~11 km), so the
+ * box gets that much slack: "within N km" is approximate by design.
+ */
+function nearbyBox(lat: number, lng: number, km: number) {
+  const dLat = km / 110.54 + 0.1
+  const dLng = km / (111.32 * Math.max(0.05, Math.cos((lat * Math.PI) / 180))) + 0.1
+  return { south: lat - dLat, north: lat + dLat, west: lng - dLng, east: lng + dLng }
+}
+
+function addResults(a: { sent: number; failed: number; devices: number }, b: { sent: number; failed: number; devices: number }) {
+  return { sent: a.sent + b.sent, failed: a.failed + b.failed, devices: a.devices + b.devices }
 }
 
 /** Everyone who should hear about this rider's rescue: their convoy and their crew. */
@@ -83,24 +99,40 @@ export async function rescue(ctx: Ctx, input: RescueInput) {
   const name = await displayName(ctx, input.userId)
   const recipients = await rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode)
   const url = `/rescue?lat=${input.lat.toFixed(5)}&lng=${input.lng.toFixed(5)}&name=${encodeURIComponent(name)}&at=${Date.now()}`
-  return deliver(ctx, { userIds: recipients }, 'rescue', {
+  const opts = { ttl: 1800, urgency: 'high' as const, topic: `rescue-${input.userId.slice(0, 20)}` }
+  const known = await deliver(ctx, { userIds: recipients }, 'rescue', {
     title: `🚨 ${name} needs rescue`,
     body: input.auto ? 'Automatic crash alert: they may have come off. Tap to see where they are.' : 'Tap to see where they are.',
     tag: `rescue-${input.userId}`,
     url,
     urgent: true,
-  }, { ttl: 1800, urgency: 'high', topic: `rescue-${input.userId.slice(0, 20)}` })
+  }, opts)
+  if (!input.nearbyKm) return known
+  // Riders nearby who opted in to help (not the convoy / crew, who already have it).
+  const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', {
+    title: `🚨 A rider near you needs help`,
+    body: `${name} called for rescue within about ${input.nearbyKm} km of you. Tap to see where they are.`,
+    tag: `rescue-${input.userId}`,
+    url,
+    urgent: true,
+  }, opts)
+  return addResults(known, nearby)
 }
 
-export async function rescueCancel(ctx: Ctx, input: Omit<RescueInput, 'lat' | 'lng' | 'auto'>) {
+export async function rescueCancel(ctx: Ctx, input: Omit<RescueInput, 'lat' | 'lng' | 'auto'> & { lat?: number | null; lng?: number | null }) {
   const name = await displayName(ctx, input.userId)
   const recipients = await rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode)
-  return deliver(ctx, { userIds: recipients }, 'rescue', {
+  const message = {
     title: `✅ ${name} is OK`,
     body: 'They cancelled their rescue call.',
     tag: `rescue-${input.userId}`,
     url: '/',
-  }, { ttl: 1800, urgency: 'high', topic: `rescue-${input.userId.slice(0, 20)}` })
+  }
+  const opts = { ttl: 1800, urgency: 'high' as const, topic: `rescue-${input.userId.slice(0, 20)}` }
+  const known = await deliver(ctx, { userIds: recipients }, 'rescue', message, opts)
+  if (!input.nearbyKm || input.lat == null || input.lng == null) return known
+  const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', message, opts)
+  return addResults(known, nearby)
 }
 
 // ── Database events (push_outbox) ───────────────────────────────────────────
