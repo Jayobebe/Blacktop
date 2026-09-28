@@ -161,9 +161,10 @@ async function main() {
   console.log(`${rels.length} circuit relations`);
 
   mkdirSync(OUT, { recursive: true });
-  for (const f of readdirSync(OUT)) if (f.endsWith('.json')) rmSync(join(OUT, f));
 
   const layouts: Layout[] = [];
+  /** Layouts whose batch failed this run: their files from an earlier run are kept. */
+  const unfetched = new Set<number>();
   const skipped: Record<string, number> = {};
   for (let i = 0; i < rels.length; i += BATCH) {
     const batch = rels.slice(i, i + BATCH);
@@ -176,6 +177,7 @@ async function main() {
       // Overpass gave up on this batch: carry on, and a re-run fills the gap from cache.
       console.warn(`  batch failed (${String((e as Error).message ?? e).slice(0, 80)}); re-run later to fill it in`);
       skipped['batch failed (re-run)'] = (skipped['batch failed (re-run)'] ?? 0) + batch.length;
+      ids.forEach((id) => unfetched.add(id));
       continue;
     }
     const ways = new Map<number, any>();
@@ -207,6 +209,10 @@ async function main() {
   }
 
   layouts.sort((a, b) => a.name.localeCompare(b.name));
+  // Only now, with the new set built, drop layouts that are no longer in it
+  // (a stalled or failed run never leaves the library empty).
+  const keep = new Set([...layouts.map((l) => `${l.id}.json`), ...[...unfetched].map((id) => `${id}.json`), 'index.json']);
+  for (const f of readdirSync(OUT)) if (f.endsWith('.json') && !keep.has(f)) rmSync(join(OUT, f));
   for (const l of layouts) {
     const { id, name, length, loop, start, direction } = l;
     writeFileSync(
