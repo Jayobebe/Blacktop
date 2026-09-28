@@ -46,6 +46,8 @@ interface RideSummaryProps {
   trackDay?: boolean;
   /** Track Pack session details, printed on track-day receipts. */
   track?: { trackName: string; laps: number; bestLapMs: number | null } | null;
+  /** Hide the Save/Continue buttons (e.g. Speedshop preview). */
+  hideActions?: boolean;
 }
 
 function ReceiptRow({ label, value }: { label: string; value: string }) {
@@ -66,7 +68,7 @@ function formatLapTime(ms: number | null | undefined): string {
   return `${m}:${sec}`;
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false, trackDay = false, track = null }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false, trackDay = false, track = null, hideActions = false }: RideSummaryProps) {
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();
   // Each receipt section follows the rider's setup answers.
@@ -180,7 +182,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
         ? 'fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in'
         : 'flex flex-col items-center',
     )}>
-      <div ref={receiptRef} className="w-full max-w-[360px] animate-receipt-print">
+      <div ref={receiptRef} className={cn("w-full max-w-[360px]", !hideActions && "animate-receipt-print")}>
         <div className={cn('receipt-edge-top', timeAttack && 'receipt-edge-timeattack', !timeAttack && trackDay && 'receipt-edge-track')} />
         <div className={cn('receipt relative px-6 py-5 font-receipt text-[--ink]', timeAttack && 'receipt-timeattack', !timeAttack && trackDay && 'receipt-track')}>
           {/* Header */}
@@ -362,7 +364,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
       </div>
 
       {/* Action buttons (outside the receipt) */}
-      <div className={cn('w-full max-w-[360px] gap-3 mt-6', variant === 'overlay' && onClose ? 'grid grid-cols-2' : 'grid grid-cols-1')}>
+      {!hideActions && <div className={cn('w-full max-w-[360px] gap-3 mt-6', variant === 'overlay' && onClose ? 'grid grid-cols-2' : 'grid grid-cols-1')}>
           <Button
             onClick={handleSave}
             disabled={saving}
@@ -380,7 +382,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               Continue
             </Button>
           )}
-        </div>
+        </div>}
     </div>
   );
 }
