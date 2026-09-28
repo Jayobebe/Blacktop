@@ -40,7 +40,7 @@ function CardPreview() {
   }
   // The rider's actual card, scaled down.
   return (
-    <div className="w-[300px] origin-bottom scale-[0.44] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
+    <div className="shop-flat w-[300px] origin-bottom scale-[0.44] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
       <VehicleCard card={card} />
     </div>
   );
@@ -87,7 +87,7 @@ function ReceiptPreview() {
 function LogbookPreview() {
   const { activeBike, bikes } = useGarage();
   const bike = activeBike ?? bikes[0];
-  const depth = 14;
+  const depth = 10;
   return (
     <div className="relative w-40 h-56 scale-[0.8] origin-bottom pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
       {/* back cover */}
@@ -104,7 +104,7 @@ function LogbookPreview() {
       />
       {/* front */}
       <div className="absolute inset-0" style={{ transform: `translateZ(${depth}px)` }}>
-        <LogbookCover vehicleName={bike?.name ?? 'Your vehicle'} onOpen={() => {}} className="m-0 [&>div:last-child]:shadow-none" />
+        <LogbookCover vehicleName={bike?.name ?? 'Your vehicle'} onOpen={() => {}} className="shop-flat m-0 [&>div:last-child]:shadow-none" />
       </div>
     </div>
   );
