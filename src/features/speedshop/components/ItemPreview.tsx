@@ -1,3 +1,6 @@
+import { geoOrthographic, geoPath, type GeoPermissibleObjects } from 'd3-geo';
+import { feature } from 'topojson-client';
+import landTopo from 'world-atlas/land-110m.json';
 import { useGarage } from '@/features/garage';
 import { useRideHistory, RideSummary } from '@/features/ride';
 import { useVehicleCards, VehicleCard } from '@/features/cards';
@@ -111,6 +114,13 @@ function LogbookPreview() {
   );
 }
 
+const HOODIE_LAND = (() => {
+  const topo = landTopo as unknown as { objects: { land: unknown } };
+  const land = feature(landTopo as never, topo.objects.land as never) as unknown as GeoPermissibleObjects;
+  const proj = geoOrthographic().clipAngle(90).rotate([10, -18]).scale(21.5).translate([22, 22]);
+  return geoPath(proj)(land) ?? '';
+})();
+
 const STITCH = { strokeDasharray: '1.2 0.8', strokeLinecap: 'round' as const };
 
 /** Hoodie outline shared by front and back. */
@@ -186,20 +196,16 @@ function HoodiePreview() {
         <Fabric id="hb" />
         <HoodieShell id="hb" back>
           <defs>
-            <path id="hb-arc" d="M32,58 A28,28 0 0 1 88,58" />
+            <path id="hb-arc" d="M29,66 A31,31 0 0 1 91,66" />
           </defs>
           <g filter="url(#hb-emb)">
             <text fontSize={6.6} fontWeight={900} letterSpacing={1.4} fill="#f4f4f4" stroke="#c4c4c4" strokeWidth={0.25} {...STITCH}>
               <textPath href="#hb-arc" startOffset="50%" textAnchor="middle">BLACKTOP WORLD</textPath>
             </text>
-            <circle cx={60} cy={78} r={21} fill={accent} stroke="#000" strokeOpacity={0.4} strokeWidth={0.8} />
-            <g fill="none" stroke="#000" strokeOpacity={0.45} strokeWidth={0.7} {...STITCH}>
-              <ellipse cx={60} cy={78} rx={9} ry={21} />
-              <ellipse cx={60} cy={78} rx={17} ry={21} />
-              <path d="M39,78 L81,78 M42,68 L78,68 M42,88 L78,88" />
-            </g>
-            <path d="M50,66 q6,-3 9,2 q-2,5 -7,4 z M64,80 q7,-2 9,4 q-3,6 -8,3 z M46,84 q4,1 5,6 q-4,1 -6,-3 z" fill="#000" fillOpacity={0.35} />
-            <circle cx={60} cy={78} r={21} fill="none" stroke="#fff" strokeOpacity={0.35} strokeWidth={0.5} {...STITCH} />
+            {/* Globe like the home screen's: dark sphere, accent coastlines and rim, stitched */}
+            <circle cx={60} cy={66} r={22} fill="#050506" />
+            <path d={HOODIE_LAND} transform="translate(38 44)" fill="none" stroke={accent} strokeWidth={0.55} strokeLinejoin="round" />
+            <circle cx={60} cy={66} r={22} fill="none" stroke={accent} strokeWidth={0.9} {...STITCH} />
           </g>
         </HoodieShell>
       </svg>
