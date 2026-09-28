@@ -1271,3 +1271,11 @@
   background: hsl(var(--accent));
   border: 3px solid #000;
 }
+
+/* Speedshop: items slowly turn on a turntable so riders see them at an angle. */
+@keyframes shop-turn {
+  0%, 100% { transform: perspective(900px) rotateY(-28deg) rotateX(6deg); }
+  50% { transform: perspective(900px) rotateY(28deg) rotateX(6deg); }
+}
+.shop-turn { animation: shop-turn 7s ease-in-out infinite; transform-style: preserve-3d; }
+@media (prefers-reduced-motion: reduce) { .shop-turn { animation: none; transform: perspective(900px) rotateY(-18deg); } }
