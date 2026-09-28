@@ -125,7 +125,7 @@ export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, rou
         ? tr("Route · {0}", [routeName || tr("planned ride")])
         : mode === 'local'
           ? tr("Around {0}, {1} (15 km)", [userLocation!.lat.toFixed(2), userLocation!.lng.toFixed(2)])
-          : `Area ${centre.lat.toFixed(2)}, ${centre.lng.toFixed(2)}`;
+          : tr("Area {0}, {1}", [centre.lat.toFixed(2), centre.lng.toFixed(2)]);
     setProgress({ done: 0, total: estimate?.tileCount ?? 0 });
     const pack = await downloadPack({
       name,
