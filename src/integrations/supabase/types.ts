@@ -1165,7 +1165,9 @@ export type Database = {
         Returns: {
           active_drops: number
           collected_count: number
+          kickbacks: number
           owner_name: string
+          points: number
         }[]
       }
       blacktank_cancel_request: {

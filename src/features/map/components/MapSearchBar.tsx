@@ -165,7 +165,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     }
 
     const currentSearchId = ++searchIdRef.current;
-    debounceRef.current = setTimeout(() => performSearch(value, currentSearchId), 150);
+    // The free search service allows ~1 request/sec; faster typing got blocked (empty results).
+    debounceRef.current = setTimeout(() => performSearch(value, currentSearchId), 450);
   };
 
   const handleCategoryClick = async (category: QuickCategory) => {
@@ -188,14 +189,17 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
 
     const currentSearchId = ++searchIdRef.current;
 
-    if (!userLocation) {
+    const view = currentViewBounds(map);
+    const origin = userLocation
+      ?? (view ? { lat: (view.north + view.south) / 2, lng: (view.east + view.west) / 2 } : null);
+    if (!origin) {
       setResults([]);
       setIsSearching(false);
       return;
     }
 
     try {
-      const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode);
+      const searchResults = await searchNearbyPOIs(category.query, origin, countryCode);
       if (searchIdRef.current === currentSearchId) setResults(searchResults);
     } finally {
       if (searchIdRef.current === currentSearchId) setIsSearching(false);

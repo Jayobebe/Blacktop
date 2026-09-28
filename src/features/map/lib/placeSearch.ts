@@ -121,67 +121,68 @@ export async function searchPlaces(
   userLocation: { lat: number; lng: number } | null,
   countryCode: string | null,
 ): Promise<MapSearchResult[]> {
-  if (!query.trim()) return [];
+  const q = query.trim();
+  if (!q) return [];
 
-  // Build a soft proximity bias centered on the rider (~50km box). This
-  // tells Nominatim to rank nearby matches higher without hard-excluding
-  // legitimate long-distance destinations.
-  const NEAR_DEG = 0.45; // ~50km lat; ~50km lng at mid-latitudes
-  const nearbyViewbox = userLocation
-    ? `${userLocation.lng - NEAR_DEG},${userLocation.lat + NEAR_DEG},${userLocation.lng + NEAR_DEG},${userLocation.lat - NEAR_DEG}`
+  // Anchor on the rider, else the middle of the map they're looking at.
+  const anchor = userLocation
+    ?? (bias ? { lat: (bias.north + bias.south) / 2, lng: (bias.east + bias.west) / 2 } : null);
+
+  const NEAR_DEG = 0.45; // ~50km box
+  const nearbyViewbox = anchor
+    ? `${anchor.lng - NEAR_DEG},${anchor.lat + NEAR_DEG},${anchor.lng + NEAR_DEG},${anchor.lat - NEAR_DEG}`
     : null;
   const mapViewbox = bias ? `${bias.west},${bias.north},${bias.east},${bias.south}` : null;
 
+  const toResult = (id: string, name: string, address: string, lat: number, lng: number): MapSearchResult => ({
+    id, name, address, lat, lng,
+    distance: anchor ? calculateDistance(anchor.lat, anchor.lng, lat, lng) : undefined,
+  });
+  const fromNominatim = (list: NominatimPlace[] | null) => (list || []).map((p) =>
+    toResult(p.place_id.toString(), p.name || String(p.display_name || '').split(',')[0], p.display_name, parseFloat(p.lat), parseFloat(p.lon)));
+
   try {
-    // 1) Hard-bounded to a tight nearby box first so local hits dominate.
-    let results0: NominatimPlace[] = [];
-    if (nearbyViewbox) {
-      results0 = await callPlaceSearch<NominatimPlace[]>({
-        kind: 'search',
-        q: query,
-        countryCode,
-        viewbox: nearbyViewbox,
-        bounded: '1',
-        limit: 25,
+    // Nearby name/brand matches (OSM directly) + address-style matches in a
+    // ~50km box, together, so local places like "Tesco" or "Costa" show up.
+    const [local, bounded] = await Promise.all([
+      anchor
+        ? callPlaceSearch<OverpassElement[]>({ kind: 'overpass', lat: anchor.lat, lon: anchor.lng, radius_m: 20000, amenities: [], name: q, limit: 60 })
+            .catch(() => [] as OverpassElement[])
+        : Promise.resolve([] as OverpassElement[]),
+      nearbyViewbox
+        ? callPlaceSearch<NominatimPlace[]>({ kind: 'search', q, countryCode, viewbox: nearbyViewbox, bounded: '1', limit: 20 })
+            .catch(() => [] as NominatimPlace[])
+        : Promise.resolve([] as NominatimPlace[]),
+    ]);
+
+    const localResults = (local || [])
+      .filter((el) => !!(el.tags?.name || el.tags?.brand))
+      .map((el) => {
+        const name = el.tags?.name || el.tags?.brand;
+        const address = [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']].filter(Boolean).join(', ') || name;
+        return toResult(`op:${el.id}`, name, address, el.lat, el.lon);
       });
-    }
 
-    // 2) If nothing nearby, retry softly biased (not bounded) so wider
-    //    results surface but still ranked toward the rider's area.
-    if (!results0 || results0.length === 0) {
-      results0 = await callPlaceSearch<NominatimPlace[]>({
-        kind: 'search',
-        q: query,
-        countryCode,
-        viewbox: nearbyViewbox ?? mapViewbox,
-        bounded: '0',
-        limit: 30,
+    let results = [...localResults, ...fromNominatim(bounded)];
+
+    // Nothing nearby: widen out (legit long-distance destinations, towns).
+    if (results.length === 0) {
+      const wide = await callPlaceSearch<NominatimPlace[]>({
+        kind: 'search', q, countryCode, viewbox: nearbyViewbox ?? mapViewbox, bounded: '0', limit: 20,
       });
+      results = fromNominatim(wide);
     }
 
-    let results: MapSearchResult[] = (results0 || []).map((place) => {
-      const lat = parseFloat(place.lat);
-      const lng = parseFloat(place.lon);
-      const result: MapSearchResult = {
-        id: place.place_id.toString(),
-        name: place.name || String(place.display_name || '').split(',')[0],
-        address: place.display_name,
-        lat,
-        lng,
-      };
-      if (userLocation) {
-        result.distance = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
-      }
-      return result;
-    });
-
-    // Rank closer-to-rider results first, but never drop far-away matches —
-    // genuine long-distance destinations still need to surface.
-    if (userLocation) {
-      results = results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    // Drop near-duplicates (same name within ~100m).
+    const seen: MapSearchResult[] = [];
+    for (const r of results) {
+      if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
+      const dup = seen.some((s) => s.name.toLowerCase() === r.name.toLowerCase()
+        && calculateDistance(s.lat, s.lng, r.lat, r.lng) < 0.1);
+      if (!dup) seen.push(r);
     }
-
-    return results.slice(0, 8);
+    if (anchor) seen.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+    return seen.slice(0, 8);
   } catch (error) {
     console.error('Map place search failed:', error);
     return [];
