@@ -853,6 +853,74 @@ export type Database = {
         }
         Relationships: []
       }
+      hazard_votes: {
+        Row: {
+          created_at: string
+          hazard_id: string
+          still_there: boolean
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          hazard_id: string
+          still_there: boolean
+          voter_id?: string
+        }
+        Update: {
+          created_at?: string
+          hazard_id?: string
+          still_there?: boolean
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hazard_votes_hazard_id_fkey"
+            columns: ["hazard_id"]
+            isOneToOne: false
+            referencedRelation: "hazards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hazards: {
+        Row: {
+          confirmations: number
+          created_at: string
+          denials: number
+          expires_at: string
+          heading: number | null
+          id: string
+          kind: string
+          lat: number
+          lng: number
+          reporter_id: string
+        }
+        Insert: {
+          confirmations?: number
+          created_at?: string
+          denials?: number
+          expires_at: string
+          heading?: number | null
+          id?: string
+          kind: string
+          lat: number
+          lng: number
+          reporter_id?: string
+        }
+        Update: {
+          confirmations?: number
+          created_at?: string
+          denials?: number
+          expires_at?: string
+          heading?: number | null
+          id?: string
+          kind?: string
+          lat?: number
+          lng?: number
+          reporter_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1271,6 +1339,23 @@ export type Database = {
           lng: number
         }[]
       }
+      hazard_ttl: { Args: { _kind: string }; Returns: string }
+      hazards_in_bbox: {
+        Args: { _east: number; _north: number; _south: number; _west: number }
+        Returns: {
+          confirmations: number
+          created_at: string
+          denials: number
+          expires_at: string
+          heading: number
+          id: string
+          kind: string
+          lat: number
+          lng: number
+          mine: boolean
+          my_vote: boolean
+        }[]
+      }
       is_blacktank_member: {
         Args: { _crew_code: string; _user_id: string }
         Returns: boolean
@@ -1457,6 +1542,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      remove_my_hazard: { Args: { _id: string }; Returns: undefined }
+      report_hazard: {
+        Args: { _heading?: number; _kind: string; _lat: number; _lng: number }
+        Returns: string
+      }
       set_push_reminders: {
         Args: { _category: string; _reminders: Json }
         Returns: undefined
@@ -1496,6 +1586,10 @@ export type Database = {
       }
       unregister_push_subscription: {
         Args: { _endpoint: string }
+        Returns: undefined
+      }
+      vote_hazard: {
+        Args: { _id: string; _still_there: boolean }
         Returns: undefined
       }
     }
