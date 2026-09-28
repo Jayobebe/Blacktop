@@ -11,13 +11,13 @@ interface AccentColorPickerProps {
 /**
  * Tap one colour for the main accent; tap another to add it as the secondary
  * (tints the background lava). Tap the secondary again to remove it; tapping
- * the main colour when a secondary exists swaps them.
+ * the main colour promotes the secondary to main.
  */
 export function AccentColorPicker({ selected, secondary, onChange }: AccentColorPickerProps) {
   const pick = (id: AccentColor) => {
     if (id === secondary) return onChange(selected, null);
-    if (id === selected) return;
-    if (!secondary) return onChange(selected, id);
+    // Tapping the main colour hands the main role to the secondary (if any).
+    if (id === selected) return secondary ? onChange(secondary, null) : undefined;
     onChange(selected, id);
   };
 
@@ -34,7 +34,6 @@ export function AccentColorPicker({ selected, secondary, onChange }: AccentColor
             <button
               key={color.id}
               onClick={() => pick(color.id)}
-              onDoubleClick={() => !isMain && onChange(color.id, null)}
               className={cn(
                 "relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200",
                 "hover:bg-secondary/50 active:scale-95",
