@@ -121,7 +121,7 @@ function Fabric({ id }: { id: string }) {
     <defs>
       <pattern id={`${id}-type`} width="34" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
         <rect width="34" height="9" fill="#0b0b0c" />
-        <text x="0" y="7.5" fontSize="8.6" fontWeight={900} letterSpacing="-0.4" fill="#232326">BLACKTOP</text>
+        <text x="0" y="7.5" fontSize="8.6" fontWeight={900} letterSpacing="-0.4" fill="#161618">BLACKTOP</text>
       </pattern>
       <radialGradient id={`${id}-shade`} cx="50%" cy="40%" r="70%">
         <stop offset="0%" stopColor="#fff" stopOpacity="0.06" />
@@ -169,14 +169,15 @@ function HoodiePreview() {
   const burn = 'hsl(var(--burn))';
   const face = 'absolute inset-0 [backface-visibility:hidden]';
   return (
-    <div className="shop-spin relative w-44 h-44 drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]" style={{ transformStyle: 'preserve-3d' }}>
+    <div className="drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]">
+    <div className="shop-spin relative w-44 h-44" style={{ transformStyle: 'preserve-3d' }}>
       {/* Front */}
       <svg viewBox="0 0 120 120" className={face} role="img" aria-label="Hoodie front">
         <Fabric id="hf" />
         <HoodieShell id="hf">
           <g filter="url(#hf-emb)">
-            <text x={60} y={60} textAnchor="middle" fontSize={7.5} fontWeight={900} letterSpacing={0.8} fill="#f4f4f4" stroke="#bdbdbd" strokeWidth={0.25} {...STITCH}>{name}</text>
-            <text x={60} y={68} textAnchor="middle" fontSize={4.4} fontWeight={800} letterSpacing={1.2} fill={burn} stroke={burn} strokeWidth={0.2} {...STITCH}>BURN IT ALL</text>
+            <text x={78} y={46} textAnchor="middle" fontSize={3.6} fontWeight={900} letterSpacing={0.4} fill="#f4f4f4" stroke="#bdbdbd" strokeWidth={0.12}>{name}</text>
+            <text x={78} y={50.5} textAnchor="middle" fontSize={2.4} fontWeight={800} letterSpacing={0.5} fill={burn} stroke={burn} strokeWidth={0.1}>BURN IT ALL</text>
           </g>
         </HoodieShell>
       </svg>
@@ -202,6 +203,7 @@ function HoodiePreview() {
           </g>
         </HoodieShell>
       </svg>
+    </div>
     </div>
   );
 }
