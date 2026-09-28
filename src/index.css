@@ -1281,3 +1281,7 @@
 /* Flatten the card's own flip layers so its face can't slice through at an angle. */
 .shop-turn .shop-flat, .shop-turn .shop-flat * { transform-style: flat !important; }
 @media (prefers-reduced-motion: reduce) { .shop-turn { animation: none; transform: perspective(900px) rotateY(-18deg); } }
+/* Speedshop hoodie: full slow spin so both front and back show. */
+@keyframes shop-spin { from { transform: perspective(1600px) rotateY(0deg); } to { transform: perspective(1600px) rotateY(360deg); } }
+.shop-spin { animation: shop-spin 10s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .shop-spin { animation: none; } }

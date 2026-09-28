@@ -2,6 +2,7 @@ import { useGarage } from '@/features/garage';
 import { useRideHistory, RideSummary } from '@/features/ride';
 import { useVehicleCards, VehicleCard } from '@/features/cards';
 import { LogbookCover } from '@/features/logbook';
+import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
 import type { PreviewKind } from '../lib/catalogue';
 
@@ -11,7 +12,7 @@ import type { PreviewKind } from '../lib/catalogue';
  * and crew code.
  */
 export function ItemPreview({ kind }: { kind: PreviewKind }) {
-  return <div className="shop-turn origin-bottom">{renderItem(kind)}</div>;
+  return <div className={kind === 'hoodie' ? 'origin-bottom' : 'shop-turn origin-bottom'}>{renderItem(kind)}</div>;
 }
 
 function renderItem(kind: PreviewKind) {
@@ -110,39 +111,133 @@ function LogbookPreview() {
   );
 }
 
-function MerchPreview({ kind }: { kind: Exclude<PreviewKind, 'card' | 'receipt' | 'logbook'> }) {
+const STITCH = { strokeDasharray: '1.2 0.8', strokeLinecap: 'round' as const };
+
+/** Hoodie outline shared by front and back. */
+const HOODIE_BODY = 'M42,16 Q60,6 78,16 L102,28 Q108,32 110,40 L116,70 Q117,75 112,76 L102,78 Q98,78 97,73 L95,60 L95,110 Q95,114 91,114 L29,114 Q25,114 25,110 L25,60 L23,73 Q22,78 18,78 L8,76 Q3,75 4,70 L10,40 Q12,32 18,28 Z';
+
+function Fabric({ id }: { id: string }) {
+  return (
+    <defs>
+      <pattern id={`${id}-type`} width="34" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
+        <rect width="34" height="9" fill="#0b0b0c" />
+        <text x="0" y="7.5" fontSize="8.6" fontWeight={900} letterSpacing="-0.4" fill="#232326">BLACKTOP</text>
+      </pattern>
+      <radialGradient id={`${id}-shade`} cx="50%" cy="40%" r="70%">
+        <stop offset="0%" stopColor="#fff" stopOpacity="0.06" />
+        <stop offset="100%" stopColor="#000" stopOpacity="0.55" />
+      </radialGradient>
+      <filter id={`${id}-emb`} x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="0.5" stdDeviation="0.3" floodColor="#000" floodOpacity="0.9" />
+      </filter>
+    </defs>
+  );
+}
+
+function HoodieShell({ id, children, back }: { id: string; children: React.ReactNode; back?: boolean }) {
+  return (
+    <>
+      <path d={HOODIE_BODY} fill={`url(#${id}-type)`} stroke="#1c1c1e" strokeWidth={1.2} />
+      <path d={HOODIE_BODY} fill={`url(#${id}-shade)`} />
+      {/* ribbed cuffs + waistband */}
+      <path d="M8,74 L18,76 M103,76 L113,74" stroke="#1d1d20" strokeWidth={4} />
+      <rect x={25} y={106} width={70} height={8} rx={2} fill="#101012" stroke="#1d1d20" />
+      {/* sleeve seams + folds */}
+      <path d="M25,60 L28,34 M95,60 L92,34" stroke="#1a1a1c" strokeWidth={1} fill="none" />
+      <path d="M40,96 Q46,90 44,82 M80,98 Q74,92 76,84" stroke="#000" strokeOpacity={0.5} strokeWidth={1.2} fill="none" />
+      {back ? (
+        <path d="M42,16 Q60,2 78,16 Q74,30 60,32 Q46,30 42,16 Z" fill="#0e0e10" stroke="#1d1d20" strokeWidth={1.2} />
+      ) : (
+        <>
+          {/* hood opening, drawstrings, pocket */}
+          <path d="M42,16 Q60,40 78,16 Q70,24 60,25 Q50,24 42,16 Z" fill="#050505" stroke="#1d1d20" strokeWidth={1.2} />
+          <path d="M55,26 L54,46 M65,26 L66,46" stroke="#d9d9d9" strokeWidth={1.1} strokeLinecap="round" />
+          <circle cx={54} cy={47} r={1.2} fill="#9a9a9a" /><circle cx={66} cy={47} r={1.2} fill="#9a9a9a" />
+          <path d="M38,84 L82,84 L86,104 L34,104 Z" fill="#0d0d0f" stroke="#1f1f22" strokeWidth={1} />
+          <path d="M38,84 L82,84 L86,104 L34,104 Z" fill="none" stroke="#2c2c30" strokeWidth={0.5} {...STITCH} />
+        </>
+      )}
+      {children}
+    </>
+  );
+}
+
+function HoodiePreview() {
+  const { profile } = useProfile();
+  const name = (profile?.name || 'RIDER').toUpperCase().slice(0, 14);
+  const accent = 'hsl(var(--accent))';
+  const burn = 'hsl(var(--burn))';
+  const face = 'absolute inset-0 [backface-visibility:hidden]';
+  return (
+    <div className="shop-spin relative w-44 h-44 drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]" style={{ transformStyle: 'preserve-3d' }}>
+      {/* Front */}
+      <svg viewBox="0 0 120 120" className={face} role="img" aria-label="Hoodie front">
+        <Fabric id="hf" />
+        <HoodieShell id="hf">
+          <g filter="url(#hf-emb)">
+            <text x={60} y={60} textAnchor="middle" fontSize={7.5} fontWeight={900} letterSpacing={0.8} fill="#f4f4f4" stroke="#bdbdbd" strokeWidth={0.25} {...STITCH}>{name}</text>
+            <text x={60} y={68} textAnchor="middle" fontSize={4.4} fontWeight={800} letterSpacing={1.2} fill={burn} stroke={burn} strokeWidth={0.2} {...STITCH}>BURN IT ALL</text>
+          </g>
+        </HoodieShell>
+      </svg>
+      {/* Back */}
+      <svg viewBox="0 0 120 120" className={face} style={{ transform: 'rotateY(180deg)' }} role="img" aria-label="Hoodie back">
+        <Fabric id="hb" />
+        <HoodieShell id="hb" back>
+          <defs>
+            <path id="hb-arc" d="M32,58 A28,28 0 0 1 88,58" />
+          </defs>
+          <g filter="url(#hb-emb)">
+            <text fontSize={6.6} fontWeight={900} letterSpacing={1.4} fill="#f4f4f4" stroke="#c4c4c4" strokeWidth={0.25} {...STITCH}>
+              <textPath href="#hb-arc" startOffset="50%" textAnchor="middle">BLACKTOP WORLD</textPath>
+            </text>
+            <circle cx={60} cy={78} r={21} fill={accent} stroke="#000" strokeOpacity={0.4} strokeWidth={0.8} />
+            <g fill="none" stroke="#000" strokeOpacity={0.45} strokeWidth={0.7} {...STITCH}>
+              <ellipse cx={60} cy={78} rx={9} ry={21} />
+              <ellipse cx={60} cy={78} rx={17} ry={21} />
+              <path d="M39,78 L81,78 M42,68 L78,68 M42,88 L78,88" />
+            </g>
+            <path d="M50,66 q6,-3 9,2 q-2,5 -7,4 z M64,80 q7,-2 9,4 q-3,6 -8,3 z M46,84 q4,1 5,6 q-4,1 -6,-3 z" fill="#000" fillOpacity={0.35} />
+            <circle cx={60} cy={78} r={21} fill="none" stroke="#fff" strokeOpacity={0.35} strokeWidth={0.5} {...STITCH} />
+          </g>
+        </HoodieShell>
+      </svg>
+    </div>
+  );
+}
+
+/** Chunky rubber tag in the accent colour: BT logo and crew code. */
+function KeychainPreview() {
   const crew = useCrew();
   const accent = 'hsl(var(--accent))';
-  const shadow = 'drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]';
+  return (
+    <svg viewBox="0 0 120 140" className="w-32 drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]" role="img" aria-label="Rubber keychain tag">
+      <defs>
+        <linearGradient id="kt-shine" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.28" />
+          <stop offset="45%" stopColor="#fff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0.35" />
+        </linearGradient>
+      </defs>
+      {/* split ring */}
+      <circle cx={60} cy={16} r={12} fill="none" stroke="#bfbfbf" strokeWidth={2.6} />
+      <circle cx={60} cy={16} r={12} fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={0.8} strokeDasharray="10 60" />
+      {/* tag body: side edge for thickness, then the face */}
+      <rect x={30} y={31} width={62} height={100} rx={16} fill="#000" fillOpacity={0.55} />
+      <rect x={28} y={28} width={62} height={100} rx={16} fill={accent} />
+      <rect x={28} y={28} width={62} height={100} rx={16} fill="url(#kt-shine)" />
+      <circle cx={59} cy={40} r={5} fill="#0b0b0b" />
+      {/* raised border */}
+      <rect x={33} y={50} width={52} height={72} rx={11} fill="none" stroke="#000" strokeOpacity={0.25} strokeWidth={2} />
+      {/* BT logo, debossed */}
+      <rect x={42} y={58} width={34} height={30} rx={7} fill="#0b0b0b" />
+      <text x={59} y={79} textAnchor="middle" fontSize={17} fontWeight={900} fill={accent} letterSpacing={-1}>BT</text>
+      <text x={59} y={101} textAnchor="middle" fontSize={7} fontWeight={900} letterSpacing={1.5} fill="#0b0b0b">CREW</text>
+      <text x={59} y={113} textAnchor="middle" fontSize={9} fontWeight={900} letterSpacing={1} fill="#0b0b0b">{crew.code || '----'}</text>
+    </svg>
+  );
+}
 
-  if (kind === 'hoodie') {
-    return (
-      <svg viewBox="0 0 120 120" className={`w-40 ${shadow}`} role="img" aria-label="Hoodie">
-        <path d="M42,14 Q60,4 78,14 L100,26 L112,62 L98,66 L94,52 L94,112 L26,112 L26,52 L22,66 L8,62 L20,26 Z" fill="#141414" stroke="#2c2c2c" strokeWidth={1.5} />
-        <path d="M44,15 Q60,34 76,15" fill="none" stroke="#2c2c2c" strokeWidth={2} />
-        <rect x={40} y={82} width={40} height={16} rx={3} fill="#0d0d0d" stroke="#262626" />
-        <text x={60} y={58} textAnchor="middle" fontSize={9} fontWeight={900} letterSpacing={1.5} fill={accent}>
-          CREW {crew.code}
-        </text>
-      </svg>
-    );
-  }
-
-  if (kind === 'keychain') {
-    return (
-      <svg viewBox="0 0 120 120" className={`w-32 ${shadow}`} role="img" aria-label="Keychain">
-        <circle cx={60} cy={20} r={12} fill="none" stroke="#c9c9c9" strokeWidth={3} />
-        <rect x={56} y={30} width={8} height={10} rx={2} fill="#9a9a9a" />
-        <rect x={38} y={40} width={44} height={62} rx={6} fill="#1a1a1a" stroke={accent} strokeWidth={2.5} />
-        <rect x={44} y={46} width={32} height={26} rx={3} fill="#2a2a2a" />
-        <text x={60} y={84} textAnchor="middle" fontSize={6} fontWeight={800} fill={accent} letterSpacing={1}>
-          BLACKTOP
-        </text>
-        <text x={60} y={93} textAnchor="middle" fontSize={4.5} fill="#9a9a9a" letterSpacing={1}>
-          {crew.code}
-        </text>
-      </svg>
-    );
-  }
-  return null;
+function MerchPreview({ kind }: { kind: Exclude<PreviewKind, 'card' | 'receipt' | 'logbook'> }) {
+  return kind === 'hoodie' ? <HoodiePreview /> : kind === 'keychain' ? <KeychainPreview /> : null;
 }
