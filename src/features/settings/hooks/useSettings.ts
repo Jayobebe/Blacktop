@@ -24,6 +24,8 @@ export interface AppSettings {
   speedUnit: SpeedUnit;
   distanceUnit: DistanceUnit;
   accentColor: AccentColor;
+  /** Optional second accent, used for the background lava glow. */
+  secondaryAccentColor: AccentColor | null;
   amberSpeedThreshold: number;
   redSpeedThreshold: number;
   leanAngleEnabled: boolean;
@@ -103,6 +105,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   speedUnit: 'mph',
   distanceUnit: 'miles',
   accentColor: 'orange',
+  secondaryAccentColor: null,
   amberSpeedThreshold: 80,
   redSpeedThreshold: 100,
   leanAngleEnabled: false,
@@ -165,6 +168,9 @@ export function useSettings() {
     const color = ACCENT_COLORS.find(c => c.id === settings.accentColor) || ACCENT_COLORS[0];
     document.documentElement.style.setProperty('--accent', color.hsl);
     document.documentElement.style.setProperty('--ring', color.ring);
+    const second = ACCENT_COLORS.find(c => c.id === settings.secondaryAccentColor);
+    if (second && second.id !== color.id) document.documentElement.style.setProperty('--lava', second.hsl);
+    else document.documentElement.style.removeProperty('--lava');
 
     // Keep warning (amber) independent of the chosen accent color
     // (this ensures Speed Alerts are always amber/red for all users)
@@ -172,7 +178,7 @@ export function useSettings() {
 
     document.documentElement.style.setProperty('--speed-active', color.hsl);
     document.documentElement.style.setProperty('--ptt-active', color.hsl);
-  }, [settings.accentColor]);
+  }, [settings.accentColor, settings.secondaryAccentColor]);
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => ({
