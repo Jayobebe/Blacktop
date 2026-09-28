@@ -202,7 +202,7 @@ export async function searchNearbyPOIs(
       kind: 'overpass',
       lat: userLocation.lat,
       lon: userLocation.lng,
-      radius_m: 30000,
+      radius_m: 15000,
       amenities,
       filter24h: is24hSearch,
       limit: 80,

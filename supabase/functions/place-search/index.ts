@@ -788,13 +788,17 @@ serve(async (req) => {
           out center ${limit};
         `;
       } else {
-        const regex = amenities.map(escapeRegexPart).join("|");
-        // Store categories (supermarket, convenience) are shop=*, not amenity=*.
+        // Exact tag matches only: regex tag filters time out (504) on public Overpass.
+        const SHOP_VALUES = new Set(["supermarket", "convenience", "bakery", "motorcycle", "car_repair", "tyres"]);
+        const clauses = amenities
+          .map((a) => a.replace(/[^a-z0-9_]/gi, ""))
+          .filter(Boolean)
+          .map((a) => `nwr["${SHOP_VALUES.has(a) ? "shop" : "amenity"}"="${a}"]${around};`)
+          .join("\n            ");
         query = `
           [out:json][timeout:10];
           (
-            nwr["amenity"~"^(${regex})$"]${around};
-            nwr["shop"~"^(${regex})$"]${around};
+            ${clauses}
           );
           out center ${limit};
         `;
@@ -803,7 +807,7 @@ serve(async (req) => {
       let data: any;
       try {
         // Short budget: Photon below is the quick fallback.
-        data = await fetchOverpass(query, 5000);
+        data = await fetchOverpass(query, 9000);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Overpass unavailable, using Photon:", e instanceof Error ? e.message : e);
         const bbox = boxAround(body.lat, body.lon, radius);
