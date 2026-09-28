@@ -821,14 +821,18 @@ serve(async (req) => {
           } else if (filter24h) {
             hits = await photonSearch({ q: "24 hour", center, bbox, osmTags: ["shop", "amenity:fuel"], limit });
           } else {
-            const words: Record<string, string> = {
-              fuel: "fuel station", restaurant: "restaurant", fast_food: "fast food", cafe: "cafe",
-              supermarket: "supermarket", convenience: "convenience store",
+            // Photon matches names, not categories, so fuel also searches the big brands.
+            const words: Record<string, string[]> = {
+              fuel: ["petrol station", "Shell", "BP", "Esso", "Texaco", "TotalEnergies"],
+              restaurant: ["restaurant"], fast_food: ["fast food"], cafe: ["cafe"],
+              supermarket: ["supermarket"], convenience: ["convenience store"],
             };
-            const lists = await Promise.all(amenities.slice(0, 4).map((a) =>
-              photonSearch({ q: words[a] ?? a.replace(/_/g, " "), center, bbox, osmTags: [`amenity:${a}`, `shop:${a}`], limit: 20 })
-                .catch(() => [] as PhotonHit[])));
-            hits = lists.flat();
+            const jobs = amenities.slice(0, 4).flatMap((a) =>
+              (words[a] ?? [a.replace(/_/g, " ")]).map((w) =>
+                photonSearch({ q: w, center, bbox, osmTags: [`amenity:${a}`, `shop:${a}`], limit: 15 })
+                  .catch(() => [] as PhotonHit[])));
+            const seenIds = new Set<string>();
+            hits = (await Promise.all(jobs)).flat().filter((h) => !seenIds.has(h.id) && !!seenIds.add(h.id));
           }
         } catch { /* empty */ }
         return new Response(JSON.stringify(hits.slice(0, limit)), {
