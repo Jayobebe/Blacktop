@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ConvoyWaypoint } from '@/types/convoy';
+import { tr } from '@/lib/i18n';
 
 interface WaypointListProps {
   waypoints: ConvoyWaypoint[];
@@ -64,7 +65,7 @@ export function WaypointList({
   return (
     <div className="mb-2">
       <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">
-        Route ({completedCount}/{totalCount} stops)
+        {tr("Route (")}{completedCount}/{totalCount}{" "}{tr("stops)")}
       </p>
       <div className="space-y-1 max-h-32 overflow-y-auto">
         {waypoints.map((wp, index) => (
@@ -101,14 +102,14 @@ export function WaypointList({
                 <button
                   onClick={() => onComplete(wp.id)}
                   className="p-1 hover:bg-accent/20 rounded text-accent"
-                  title="Mark complete"
+                  title={tr("Mark complete")}
                 >
                   <Check className="w-3 h-3" />
                 </button>
                 <button
                   onClick={() => onRemove(wp.id)}
                   className="p-1 hover:bg-destructive/20 rounded text-destructive"
-                  title="Remove"
+                  title={tr("Remove")}
                 >
                   <X className="w-3 h-3" />
                 </button>

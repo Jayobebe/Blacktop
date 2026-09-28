@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { shortDistance, type DistanceUnit, type NavManeuver, type NavProgress } from '../lib/navigation';
+import { tr } from '@/lib/i18n';
 
 function timeLeft(seconds: number): string {
   const mins = Math.max(1, Math.round(seconds / 60));
@@ -88,8 +89,8 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
         type="button"
         onClick={onStop}
         className="absolute top-1.5 right-1.5 w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        aria-label="Stop navigating"
-        title="Stop navigating"
+        aria-label={tr("Stop navigating")}
+        title={tr("Stop navigating")}
       >
         <X className="w-4 h-4" />
       </button>
@@ -108,10 +109,10 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
         </div>
         <div className="flex-1 min-w-0">
           {rerouting ? (
-            <p className="text-lg font-black leading-tight">{finding && !reroutingNow ? 'Finding route…' : 'Rerouting…'}</p>
+            <p className="text-lg font-black leading-tight">{finding && !reroutingNow ? tr("Finding route…") : tr("Rerouting…")}</p>
           ) : arrived ? (
             <>
-              <p className="text-lg font-black leading-tight">Arrived</p>
+              <p className="text-lg font-black leading-tight">{tr("Arrived")}</p>
               <p className="text-xs text-muted-foreground truncate">{where}</p>
             </>
           ) : next && toNext ? (
@@ -123,13 +124,13 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
               <p className="text-sm font-semibold leading-snug line-clamp-2 mt-0.5">{describe(next)}</p>
               {progress?.then && (
                 <p className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground mt-0.5">
-                  Then
+                  {tr("Then")}
                   <ManeuverIcon m={progress.then} className="w-3.5 h-3.5 text-accent" />
                 </p>
               )}
             </>
           ) : (
-            <p className="text-lg font-black leading-tight">Follow the route</p>
+            <p className="text-lg font-black leading-tight">{tr("Follow the route")}</p>
           )}
         </div>
       </div>
@@ -148,9 +149,9 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
               type="button"
               onClick={onSkip}
               className="px-2 py-0.5 rounded-md bg-muted hover:bg-secondary text-[11px] font-semibold text-muted-foreground transition-colors flex-shrink-0"
-              title="Skip this stop and head for the next"
+              title={tr("Skip this stop and head for the next")}
             >
-              Skip
+              {tr("Skip")}
             </button>
           )}
         </div>

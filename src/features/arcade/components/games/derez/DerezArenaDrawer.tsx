@@ -3,6 +3,7 @@ import maplibregl, { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Check, Undo2, X, Crosshair } from 'lucide-react';
 import { simplifyPx, polygonAreaM2, ringToGeoJson, type LngLat } from '../../../lib/derezGeo';
+import { tr } from '@/lib/i18n';
 
 const DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 const SRC = 'derez-arena';
@@ -134,13 +135,13 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
 
       {/* Header */}
       <div className="relative z-10 safe-top px-4 pt-3 flex items-center justify-between">
-        <button onClick={onCancel} className="p-2.5 rounded-xl bg-card/90 border border-border/40 backdrop-blur" aria-label="Cancel arena">
+        <button onClick={onCancel} className="p-2.5 rounded-xl bg-card/90 border border-border/40 backdrop-blur" aria-label={tr("Cancel arena")}>
           <X className="w-5 h-5" />
         </button>
         <div className="text-center">
-          <p className="text-sm font-semibold text-white">Draw the arena</p>
+          <p className="text-sm font-semibold text-white">{tr("Draw the arena")}</p>
           <p className="text-[10px] text-muted-foreground">
-            {drawing ? 'Trace the boundary with your finger' : ring.length > 2 ? `${Math.round(area).toLocaleString()} m²` : 'Tap Draw, then trace the play area'}
+            {drawing ? tr("Trace the boundary with your finger") : ring.length > 2 ? tr("{0} m²", [Math.round(area).toLocaleString()]) : tr("Tap Draw, then trace the play area")}
           </p>
         </div>
         <button
@@ -149,7 +150,7 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
             () => {}, { enableHighAccuracy: true },
           )}
           className="p-2.5 rounded-xl bg-card/90 border border-border/40 backdrop-blur"
-          aria-label="Centre on me"
+          aria-label={tr("Centre on me")}
         >
           <Crosshair className="w-5 h-5" />
         </button>
@@ -162,10 +163,10 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
           className="flex-1 py-3 rounded-xl border-2 font-semibold text-sm"
           style={{ borderColor: accentColor, color: drawing ? '#000' : accentColor, background: drawing ? accentColor : 'transparent' }}
         >
-          {drawing ? 'Drawing…' : ring.length > 2 ? 'Redraw' : 'Draw'}
+          {drawing ? tr("Drawing…") : ring.length > 2 ? tr("Redraw") : tr("Draw")}
         </button>
         {ring.length > 2 && (
-          <button onClick={() => setRing([])} className="p-3 rounded-xl bg-card/90 border border-border/40" aria-label="Clear arena">
+          <button onClick={() => setRing([])} className="p-3 rounded-xl bg-card/90 border border-border/40" aria-label={tr("Clear arena")}>
             <Undo2 className="w-5 h-5" />
           </button>
         )}
@@ -174,7 +175,7 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
           disabled={ring.length < 3}
           className="flex-1 py-3 rounded-xl bg-card/90 border border-border/40 font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
         >
-          <Check className="w-4 h-4" /> Confirm
+          <Check className="w-4 h-4" />{" "}{tr("Confirm")}
         </button>
       </div>
     </div>

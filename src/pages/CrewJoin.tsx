@@ -5,6 +5,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { useCrew, joinCrew, leaveCrew, parseCrewQr } from '@/features/crew/useCrew';
 import { toast } from 'sonner';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 export default function CrewJoin() {
   const navigate = useNavigate();
@@ -38,14 +39,14 @@ export default function CrewJoin() {
           await stopScanner();
           setScanning(false);
           joinCrew(code);
-          toast.success(`Joined crew ${code}`);
+          toast.success(tr("Joined crew {0}", [code]));
           navigate('/crew/convoys');
         },
         () => {},
       );
     } catch {
       setScanning(false);
-      toast.error('Camera unavailable', { description: 'Allow camera access to scan a crew QR.' });
+      toast.error(tr("Camera unavailable"), { description: tr("Allow camera access to scan a crew QR.") });
     }
   };
 
@@ -56,7 +57,7 @@ export default function CrewJoin() {
 
   return (
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
-      <PageHeader title="Join Crew" backTo="/world" backLabel="Back to Blacktop World" />
+      <PageHeader title={tr("Join Crew")} backTo="/world" backLabel={tr("Back to Blacktop World")} />
 
       {scanning ? (
         <div className="space-y-4">
@@ -66,22 +67,22 @@ export default function CrewJoin() {
             onClick={cancelScan}
             className="w-full py-3 rounded-xl border border-border/40 text-sm font-semibold uppercase tracking-widest flex items-center justify-center gap-2"
           >
-            <X className="w-4 h-4" /> Cancel
+            <X className="w-4 h-4" />{" "}{tr("Cancel")}
           </button>
         </div>
       ) : (
         <div className="space-y-5">
           <div className="rounded-2xl border border-border/40 bg-card/40 p-5 text-center">
             <Users className="w-6 h-6 mx-auto mb-3 text-accent" />
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Current crew</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{tr("Current crew")}</p>
             <p className="text-2xl font-bold mt-1">{crew.code}</p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {crew.isOwn ? 'Your own crew' : 'Joined crew'}
+              {crew.isOwn ? tr("Your own crew") : tr("Joined crew")}
             </p>
           </div>
 
           <p className="text-sm text-muted-foreground text-center">
-            Scan a mate's crew QR from their Blacktop World page to ride in their crew.
+            {tr("Scan a mate's crew QR from their Blacktop World page to ride in their crew.")}
           </p>
 
           <button
@@ -89,16 +90,16 @@ export default function CrewJoin() {
             onClick={startScanner}
             className="w-full py-4 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors flex items-center justify-center gap-2"
           >
-            <ScanLine className="w-5 h-5" /> Scan crew QR
+            <ScanLine className="w-5 h-5" />{" "}{tr("Scan crew QR")}
           </button>
 
           {!crew.isOwn && (
             <button
               type="button"
-              onClick={() => { leaveCrew(); toast.success('Back in your own crew'); }}
+              onClick={() => { leaveCrew(); toast.success(tr("Back in your own crew")); }}
               className="w-full py-3 rounded-xl border border-destructive/50 text-destructive text-sm font-semibold uppercase tracking-widest"
             >
-              Leave crew
+              {tr("Leave crew")}
             </button>
           )}
         </div>

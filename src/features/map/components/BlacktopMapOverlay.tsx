@@ -7,6 +7,7 @@ import { BlacktopMap } from './BlacktopMap';
 import { cn } from '@/lib/utils';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { MapLoading } from '@/components/MapLoading';
+import { tr } from '@/lib/i18n';
 
 export function BlacktopMapOverlay() {
   const { isOpen, destination, ready } = useMapOverlay();
@@ -65,25 +66,25 @@ export function BlacktopMapOverlay() {
         <button
           onClick={handleExit}
           className="absolute bottom-3 right-3 z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
-          aria-label="Exit map and return to ride"
+          aria-label={tr("Exit map and return to ride")}
         >
           <ChevronLeft className="w-4 h-4" />
-          Ride
+          {tr("Ride")}
         </button>
       ) : inLobby ? (
         <button
           onClick={() => closeBlacktopMap()}
           className="absolute bottom-3 right-3 z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
-          aria-label="Back to lobby"
+          aria-label={tr("Back to lobby")}
         >
           <ChevronLeft className="w-4 h-4" />
-          Lobby
+          {tr("Lobby")}
         </button>
       ) : (
         <button
           onClick={handleExit}
           className="absolute bottom-3 right-3 z-20 p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
-          aria-label="Close map"
+          aria-label={tr("Close map")}
         >
           <X className="w-5 h-5" />
         </button>

@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/features/settings';
 import { planRouteOptions, RoutePlan } from '../lib/routing';
+import { tr } from '@/lib/i18n';
 
 export type RouteMode = 'direct' | 'twisty';
 
@@ -63,8 +64,8 @@ export function RouteOptions({ start, stops, destination, mode, onModeChange, on
     useMiles ? `${(meters / 1609.34).toFixed(1)} mi` : `${(meters / 1000).toFixed(1)} km`;
 
   const options: { id: RouteMode; label: string; icon: typeof Route; hint: string }[] = [
-    { id: 'direct', label: 'Direct', icon: Route, hint: 'Fastest line' },
-    { id: 'twisty', label: 'Twisty', icon: Waves, hint: 'More corners' },
+    { id: 'direct', label: tr("Direct"), icon: Route, hint: tr("Fastest line") },
+    { id: 'twisty', label: tr("Twisty"), icon: Waves, hint: tr("More corners") },
   ];
 
   const select = (id: RouteMode) => {
@@ -119,14 +120,14 @@ export function RouteOptions({ start, stops, destination, mode, onModeChange, on
         <div className="flex items-center gap-2 min-w-0">
           <CloudRain className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs font-medium">Weather routing</p>
-            <p className="text-[10px] text-muted-foreground truncate">Reroute around heavy rain</p>
+            <p className="text-xs font-medium">{tr("Weather routing")}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{tr("Reroute around heavy rain")}</p>
           </div>
         </div>
         <Switch
           checked={settings.weatherRoutingEnabled}
           onCheckedChange={(v) => updateSetting('weatherRoutingEnabled', v)}
-          aria-label="Weather routing"
+          aria-label={tr("Weather routing")}
         />
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import type { Gate, LatLng } from '../types';
 import { toLocal } from '../lib/geometry';
+import { tr } from '@/lib/i18n';
 
 export interface MinimapLine {
   points: LatLng[];
@@ -33,7 +34,7 @@ export function TrackMinimap({
   const gates = [...(startFinish ? [{ g: startFinish, sf: true }] : []), ...splits.map((g) => ({ g, sf: false }))];
   const ref = startFinish?.a ?? outline?.[0] ?? lines.find((l) => l.points.length)?.points[0] ?? dot ?? null;
   if (!ref) {
-    return <div className={cn('rounded-2xl border border-border bg-card/50 flex items-center justify-center text-xs text-muted-foreground', className)}>Waiting for GPS…</div>;
+    return <div className={cn('rounded-2xl border border-border bg-card/50 flex items-center justify-center text-xs text-muted-foreground', className)}>{tr("Waiting for GPS…")}</div>;
   }
   const P = (p: LatLng) => toLocal(p, ref);
   const all = [
@@ -57,7 +58,7 @@ export function TrackMinimap({
 
   return (
     <div className={cn('rounded-2xl border border-border bg-card/50 p-2', className)}>
-      <svg viewBox={vb} className="w-full h-full" role="img" aria-label="Track map">
+      <svg viewBox={vb} className="w-full h-full" role="img" aria-label={tr("Track map")}>
         {outline && outline.length > 1 && (
           <path d={path(outline)} fill="none" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.35} strokeWidth={u * 2.2} strokeLinejoin="round" strokeLinecap="round" />
         )}

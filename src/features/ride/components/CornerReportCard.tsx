@@ -3,6 +3,7 @@ import { CornerUpRight, ChevronDown } from 'lucide-react';
 import { analyseCorners } from '../lib/cornerScoring';
 import type { RideSession } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   ride: RideSession;
@@ -31,9 +32,9 @@ export function CornerReportCard({ ride }: Props) {
             <CornerUpRight className="w-5 h-5 text-accent" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">Corner Report</h3>
+            <h3 className="font-semibold text-sm">{tr("Corner Report")}</h3>
             <p className="text-xs text-muted-foreground">
-              {report.count} corners · {report.cornersPerMile}/mi · {report.totalArc}° turned
+              {report.count}{" "}{tr("corners ·")}{" "}{report.cornersPerMile}{tr("/mi ·")}{" "}{report.totalArc}{tr("° turned")}
             </p>
           </div>
         </div>
@@ -52,10 +53,10 @@ export function CornerReportCard({ ride }: Props) {
             className="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary/40 border border-border/30"
           >
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground w-10">
-              {c.direction === 'left' ? 'Left' : 'Right'}
+              {c.direction === 'left' ? tr("Left") : tr("Right")}
             </span>
             <span className="flex-1 text-xs text-muted-foreground truncate">
-              {c.arc}° · {c.apexSpeed} mph apex{c.maxLean ? ` · ${c.maxLean}° lean` : ''}
+              {c.arc}° · {c.apexSpeed}{" "}{tr("mph apex")}{c.maxLean ? tr(" · {0}° lean", [c.maxLean]) : ''}
             </span>
             <span className={cn('text-sm font-bold tabular-nums', toneFor(c.score))}>{c.score}</span>
           </li>
@@ -68,7 +69,7 @@ export function CornerReportCard({ ride }: Props) {
           onClick={() => setExpanded((v) => !v)}
           className="w-full flex items-center justify-center gap-1 py-2 text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground border-t border-border/40"
         >
-          {expanded ? 'Show best 3' : `All ${report.count} corners`}
+          {expanded ? tr("Show best 3") : tr("All {0} corners", [report.count])}
           <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', expanded && 'rotate-180')} />
         </button>
       )}

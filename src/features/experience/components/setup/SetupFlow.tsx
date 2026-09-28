@@ -12,6 +12,7 @@ import { SetupShell } from './SetupShell';
 import { VehicleStep, ModeStep, StyleStep } from './SetupSteps';
 import { CareDeck } from './CareDeck';
 import { ExperiencePreview } from './ExperiencePreview';
+import { tr } from '@/lib/i18n';
 
 interface SetupFlowProps {
   /** Called when the user backs out of the first step. */
@@ -116,7 +117,7 @@ export function SetupFlow({
             onClick={() => goTo(index + 1, 'forward')}
             className="w-full text-center text-sm text-muted-foreground py-2 hover:text-foreground"
           >
-            Skip the rest
+            {tr("Skip the rest")}
           </button>
         ) : (
           <Button onClick={next} disabled={!canContinue} className="w-full h-14 text-base font-semibold rounded-2xl touch-target">

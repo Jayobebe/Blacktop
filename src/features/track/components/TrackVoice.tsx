@@ -2,6 +2,7 @@ import { Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
+import { tr } from '@/lib/i18n';
 
 /** Rider ⇄ pit crew voice, on a voice channel keyed by the pairing link. */
 export function TrackVoice({ linkToken, className }: { linkToken: string | null; className?: string }) {
@@ -13,8 +14,8 @@ export function TrackVoice({ linkToken, className }: { linkToken: string | null;
         unlockIOSAudio();
         if (!isConnected) {
           const r = await connect();
-          if (!r.success) toast.error('Could not join voice', { description: r.error || 'Check microphone permission' });
-          else toast.success('Voice on', { description: 'Tap again to unmute' });
+          if (!r.success) toast.error(tr("Could not join voice"), { description: r.error || tr("Check microphone permission") });
+          else toast.success(tr("Voice on"), { description: tr("Tap again to unmute") });
           return;
         }
         toggleMute();
@@ -24,10 +25,10 @@ export function TrackVoice({ linkToken, className }: { linkToken: string | null;
         isConnected && !isMuted ? 'bg-accent text-accent-foreground border-accent' : isConnected ? 'border-accent/60 text-accent' : 'border-border text-muted-foreground',
         className,
       )}
-      aria-label={!isConnected ? 'Join voice with crew' : isMuted ? 'Unmute' : 'Mute'}
+      aria-label={!isConnected ? tr("Join voice with crew") : isMuted ? tr("Unmute") : tr("Mute")}
     >
       {isConnected && !isMuted ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
-      {!isConnected ? 'Voice' : isMuted ? 'Muted' : 'Live'}
+      {!isConnected ? tr("Voice") : isMuted ? tr("Muted") : tr("Live")}
     </button>
   );
 }

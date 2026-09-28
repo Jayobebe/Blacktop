@@ -14,6 +14,7 @@ import {
   PACK_MIN_ZOOM,
   PackBounds,
 } from '../lib/offlinePacks';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   map: MapLibreMap | null;
@@ -84,7 +85,7 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
   const handleDownload = async () => {
     if (!map || !bounds || templates.length === 0 || progress) return;
     if (estimate?.tooLarge) {
-      toast.error('Zoom in a little — that area is too big to store offline.');
+      toast.error(tr("Zoom in a little — that area is too big to store offline."));
       return;
     }
     const centre = map.getCenter();
@@ -98,11 +99,11 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
     });
     setProgress(null);
     if (!pack) {
-      toast.error('Offline download failed');
+      toast.error(tr("Offline download failed"));
       return;
     }
     setPacks(listPacks());
-    toast.success(`Saved offline · ${formatBytes(pack.bytes)}`);
+    toast.success(tr("Saved offline · {0}", [formatBytes(pack.bytes)]));
   };
 
   const handleDelete = async (id: string) => {
@@ -115,24 +116,24 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Download className="w-4 h-4 text-accent" />
-          <h2 className="text-sm font-semibold">Offline maps</h2>
+          <h2 className="text-sm font-semibold">{tr("Offline maps")}</h2>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close offline maps" className="p-1 rounded hover:bg-secondary">
+        <button type="button" onClick={onClose} aria-label={tr("Close offline maps")} className="p-1 rounded hover:bg-secondary">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       <p className="text-xs text-muted-foreground mb-3">
-        Saves the area you're looking at (zoom {PACK_MIN_ZOOM}–{PACK_MAX_ZOOM}) so it still draws with no signal.
+        {tr("Saves the area you're looking at (zoom")}{" "}{PACK_MIN_ZOOM}–{PACK_MAX_ZOOM}{tr(") so it still draws with no signal.")}
       </p>
 
       {estimate && (
         <div className="text-xs mb-3">
-          <span className="text-muted-foreground">This view: </span>
-          <span className="font-medium">{estimate.tileCount.toLocaleString()} tiles · ~{formatBytes(estimate.bytes)}</span>
+          <span className="text-muted-foreground">{tr("This view:")}{" "}</span>
+          <span className="font-medium">{estimate.tileCount.toLocaleString()}{" "}{tr("tiles · ~")}{formatBytes(estimate.bytes)}</span>
           {estimate.tooLarge && (
             <span className="block text-destructive mt-1">
-              Too large (max {MAX_PACK_TILES.toLocaleString()} tiles) — zoom in and try again.
+              {tr("Too large (max")}{" "}{MAX_PACK_TILES.toLocaleString()}{" "}{tr("tiles) — zoom in and try again.")}
             </span>
           )}
         </div>
@@ -147,14 +148,14 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
         {progress ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> {progress.done}/{progress.total}</>
         ) : (
-          'Download this area'
+          tr("Download this area")
         )}
       </button>
 
       {packs.length > 0 && (
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-            <span>Saved areas</span>
+            <span>{tr("Saved areas")}</span>
             <span>{formatBytes(totalStored)}</span>
           </div>
           <ul className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -167,7 +168,7 @@ export function OfflinePacksPanel({ map, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => handleDelete(p.id)}
-                  aria-label={`Delete ${p.name}`}
+                  aria-label={tr("Delete {0}", [p.name])}
                   className="p-1.5 rounded hover:bg-secondary text-muted-foreground"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

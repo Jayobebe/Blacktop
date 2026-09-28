@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { TelemetrySample } from '../types';
+import { tr } from '@/lib/i18n';
 
 /** Validated for the dark surface (dataviz check: all six pass). */
 export const LAP_A_COLOR = '#3987e5';
@@ -54,9 +55,9 @@ export function LapTraces({ a, b, speedUnit }: { a: Series; b?: Series | null; s
   const hasG = a.samples.some((s) => s.g != null && s.g !== 0);
 
   const channels: Channel[] = [
-    { key: 'v', title: 'Speed', unit: speedUnit, get: (s) => s.v * k, fmt: (v) => v.toFixed(0), zero: true },
-    ...(hasLean ? [{ key: 'lean', title: 'Lean', unit: '°', get: (s: TelemetrySample) => s.lean, fmt: (v: number) => v.toFixed(0) }] : []),
-    ...(hasG ? [{ key: 'g', title: 'G', unit: 'g', get: (s: TelemetrySample) => s.g, fmt: (v: number) => v.toFixed(2), zero: true }] : []),
+    { key: 'v', title: tr("Speed"), unit: speedUnit, get: (s) => s.v * k, fmt: (v) => v.toFixed(0), zero: true },
+    ...(hasLean ? [{ key: 'lean', title: tr("Lean"), unit: '°', get: (s: TelemetrySample) => s.lean, fmt: (v: number) => v.toFixed(0) }] : []),
+    ...(hasG ? [{ key: 'g', title: tr("G"), unit: 'g', get: (s: TelemetrySample) => s.g, fmt: (v: number) => v.toFixed(2), zero: true }] : []),
   ];
 
   const maxD = Math.max(a.samples[a.samples.length - 1]?.d ?? 0, b?.samples[b.samples.length - 1]?.d ?? 0, 1);
@@ -84,7 +85,7 @@ export function LapTraces({ a, b, speedUnit }: { a: Series; b?: Series | null; s
       <div className="flex items-center gap-3 text-[11px]">
         <span className="flex items-center gap-1.5"><span className="w-4 h-[2px] rounded" style={{ background: LAP_A_COLOR }} />{a.label}</span>
         {b && <span className="flex items-center gap-1.5"><span className="w-4 border-t-2 border-dashed" style={{ borderColor: LAP_B_COLOR }} />{b.label}</span>}
-        {hoverD !== null && <span className="ml-auto font-mono text-muted-foreground">{Math.round(hoverD)} m</span>}
+        {hoverD !== null && <span className="ml-auto font-mono text-muted-foreground">{Math.round(hoverD)}{" "}{tr("m")}</span>}
       </div>
 
       {channels.map((ch) => {
@@ -131,10 +132,10 @@ export function LapTraces({ a, b, speedUnit }: { a: Series; b?: Series | null; s
         return (
           <>
           <Chart
-            title={`Time gap: ${b.label} vs ${a.label} (s)`}
+            title={tr("Time gap: {0} vs {1} (s)", [b.label, a.label])}
             hi={`+${m.toFixed(2)}`}
             lo={`−${m.toFixed(2)}`}
-            readout={g != null ? <span className="text-foreground">{g > 0 ? '+' : '−'}{Math.abs(g / 1000).toFixed(3)} s</span> : null}
+            readout={g != null ? <span className="text-foreground">{g > 0 ? '+' : '−'}{Math.abs(g / 1000).toFixed(3)}{" "}{tr("s")}</span> : null}
           >
             <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-[84px] touch-none" onPointerMove={onMove} onPointerDown={onMove}>
               <line x1={0} x2={W} y1={H / 2} y2={H / 2} stroke="hsl(var(--border))" strokeWidth={1} vectorEffect="non-scaling-stroke" />
@@ -142,7 +143,7 @@ export function LapTraces({ a, b, speedUnit }: { a: Series; b?: Series | null; s
               {hoverD !== null && <line x1={X(hoverD)} x2={X(hoverD)} y1={0} y2={H} stroke="hsl(var(--foreground))" strokeOpacity={0.5} strokeWidth={1} vectorEffect="non-scaling-stroke" />}
             </svg>
           </Chart>
-          <p className="text-[9px] text-muted-foreground -mt-1 px-1">Above the line: {b.label} is behind. Rising: losing time there.</p>
+          <p className="text-[9px] text-muted-foreground -mt-1 px-1">{tr("Above the line:")}{" "}{b.label}{" "}{tr("is behind. Rising: losing time there.")}</p>
           </>
         );
       })()}

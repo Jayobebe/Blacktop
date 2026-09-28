@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import { notifyRescue } from '@/features/notifications';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
+import { tr } from '@/lib/i18n';
 
 // Read at call time inside realtime handlers so wording never forces a resubscribe.
 const liveTerms = () => termsFor(getExperience().vehicles);
@@ -269,7 +270,7 @@ export default function ActiveRide() {
           setRideOverlayAvailable(savedRideId, true);
         } catch (error) {
           console.error('[ActiveRide] Failed to persist overlay blob:', error);
-          toast.error('Failed to save overlay');
+          toast.error(tr("Failed to save overlay"));
         } finally {
           setPendingOverlayBlob(null);
         }
@@ -421,7 +422,7 @@ export default function ActiveRide() {
   const handleRideEndedByLeader = useCallback(async () => {
     if (endingFlowRef.current) return; // Already ending
     console.log('[ActiveRide] Ride ended by leader');
-    toast.info(`Leader ended the ${liveTerms().ride}`);
+    toast.info(tr("Leader ended the {0}", [liveTerms().ride]));
     
     // Stop overlay recording and get the blob
     const overlayBlob = await overlayRecorderRef.current.stopRecording();
@@ -644,7 +645,7 @@ export default function ActiveRide() {
       });
       setSavedRideId(rideId);
     } else {
-      toast.info(`${terms.Ride} too short, not saved`);
+      toast.info(tr("{0} too short, not saved", [terms.Ride]));
       navigate('/');
     }
 
@@ -697,7 +698,7 @@ export default function ActiveRide() {
           await sendRescueRequest(position.coords.latitude, position.coords.longitude);
         },
         () => {
-          toast.error('Unable to get your location');
+          toast.error(tr("Unable to get your location"));
         }
       );
     }
@@ -732,8 +733,8 @@ export default function ActiveRide() {
       } else {
         // Solo: Discord (if connected) and a push to the rider's crew
         const told = await sendSoloRescue(lat, lng, true);
-        if (told.length) toast.success(`Auto-rescue sent to ${told.join(' and ')}`);
-        else toast.warning('Auto-rescue: nobody to alert', { description: 'Connect Discord in Settings, or ask your crew to turn on notifications.' });
+        if (told.length) toast.success(tr("Auto-rescue sent to {0}", [told.join(' and ')]));
+        else toast.warning(tr("Auto-rescue: nobody to alert"), { description: tr("Connect Discord in Settings, or ask your crew to turn on notifications.") });
       }
     };
 
@@ -777,7 +778,7 @@ export default function ActiveRide() {
       await acknowledgeRescue(request.id, request.userId, request.userName);
     } else {
       console.error('[ActiveRide] Failed to add rescue waypoint');
-      toast.error('Failed to add rescue waypoint');
+      toast.error(tr("Failed to add rescue waypoint"));
     }
   };
 
@@ -814,7 +815,7 @@ export default function ActiveRide() {
           className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           <Square className="w-3.5 h-3.5 mr-1.5" />
-          {rideState.isConvoyMode && convoy.isLeader ? 'END CONVOY' : `END ${terms.Ride.toUpperCase()}`}
+          {rideState.isConvoyMode && convoy.isLeader ? tr("END CONVOY") : tr("END {0}", [terms.Ride.toUpperCase()])}
         </Button>
       ) : (
         <div className="flex gap-2">
@@ -823,7 +824,7 @@ export default function ActiveRide() {
             size="sm"
             className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
-            END {terms.Ride.toUpperCase()}
+            {tr("END")}{" "}{terms.Ride.toUpperCase()}
           </Button>
           <Button
             onClick={() => setShowEndConfirm(false)}
@@ -831,7 +832,7 @@ export default function ActiveRide() {
             size="sm"
             className="h-9 md:h-10"
           >
-            Cancel
+            {tr("Cancel")}
           </Button>
         </div>
       )}
@@ -859,11 +860,11 @@ export default function ActiveRide() {
       {/* Rider in distress: who's coming. Stays up until the rescue is closed. */}
       {hasPendingRescue && rideState.isConvoyMode && (
         <div className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-40 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-[hsl(var(--burn))]/60 bg-[hsl(var(--burn))]/15 backdrop-blur-xl px-4 py-3 shadow-2xl animate-slide-down">
-          <p className="text-sm font-semibold text-[hsl(var(--burn))]">Rescue request sent</p>
+          <p className="text-sm font-semibold text-[hsl(var(--burn))]">{tr("Rescue request sent")}</p>
           <p className="text-xs text-foreground/85 mt-0.5">
             {rescueResponders.length === 0
-              ? 'Waiting for your convoy to respond…'
-              : `${rescueResponders.join(', ')} ${rescueResponders.length === 1 ? 'is' : 'are'} on the way`}
+              ? tr("Waiting for your convoy to respond…")
+              : tr("{0} {1} on the way", [rescueResponders.join(', '), rescueResponders.length === 1 ? 'is' : 'are'])}
           </p>
         </div>
       )}
@@ -874,7 +875,7 @@ export default function ActiveRide() {
           timeoutSec={AUTO_RESCUE_ACK_TIMEOUT_SEC}
           onImFine={() => {
             setCrashPromptOpen(false);
-            toast.success(`Glad you’re okay. ${terms.Ride} on.`);
+            toast.success(tr("Glad you’re okay. {0} on.", [terms.Ride]));
           }}
           onSendNow={async () => {
             setCrashPromptOpen(false);
@@ -889,8 +890,8 @@ export default function ActiveRide() {
             autoRescueFiredRef.current = true;
             setCrashPromptOpen(false);
             await fireAutoRescue();
-            toast.error('Auto-rescue sent - ending ride', {
-              description: 'No response detected, so a rescue alert was sent and your ride was ended.',
+            toast.error(tr("Auto-rescue sent - ending ride"), {
+              description: tr("No response detected, so a rescue alert was sent and your ride was ended."),
             });
             await handleEndRide();
           }}
@@ -905,7 +906,7 @@ export default function ActiveRide() {
         <div className="hidden landscape:flex flex-col justify-center items-start gap-7 flex-1 min-w-0 pl-2">
           {speedHero && (
           <div className="text-left">
-            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Distance</p>
+            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">{tr("Distance")}</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
               {formatDistance(rideState.distance, settings.distanceUnit)}
               <span className="text-lg text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
@@ -913,12 +914,12 @@ export default function ActiveRide() {
           </div>
           )}
           <div className="text-left">
-            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Time</p>
+            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">{tr("Time")}</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">{formatDuration(rideState.duration)}</p>
           </div>
           {settings.speedFocusEnabled && (
           <div className="text-left">
-            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">Max</p>
+            <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">{tr("Max")}</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
               {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
               <span className="text-lg text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
@@ -934,13 +935,13 @@ export default function ActiveRide() {
             {rideState.isConvoyMode && (
               <span className="flex items-center gap-1 text-accent text-xs font-medium px-2 py-0.5 bg-accent/10 rounded">
                 <Users className="w-3 h-3" />
-                {convoy.isLeader ? 'LEADER' : 'CONVOY'}
+                {convoy.isLeader ? tr("LEADER") : tr("CONVOY")}
               </span>
             )}
             {rideState.isPaused && (
               <span className="flex items-center gap-1 text-warning text-xs font-medium px-2 py-0.5 bg-warning/10 rounded animate-pulse">
                 <Pause className="w-3 h-3" />
-                PAUSED
+                {tr("PAUSED")}
               </span>
             )}
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
@@ -975,11 +976,11 @@ export default function ActiveRide() {
                         threshold={settings.leanAngleThreshold}
                         onReset={() => {
                           leanAngle.calibrate();
-                          toast.success('Lean sensor zeroed', { duration: 1500 });
+                          toast.success(tr("Lean sensor zeroed"), { duration: 1500 });
                         }}
                       />
                       {leanAngle.isCalibrated && (
-                        <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+                        <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">{tr("zeroed")}</p>
                       )}
                     </div>
                   )}
@@ -1004,11 +1005,11 @@ export default function ActiveRide() {
                 threshold={settings.leanAngleThreshold}
                 onReset={() => {
                   leanAngle.calibrate();
-                  toast.success('Lean sensor zeroed', { duration: 1500 });
+                  toast.success(tr("Lean sensor zeroed"), { duration: 1500 });
                 }}
               />
               {leanAngle.isCalibrated && (
-                <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">zeroed</p>
+                <p className="text-[10px] text-muted-foreground/60 text-center mt-0.5">{tr("zeroed")}</p>
               )}
             </div>
           )}
@@ -1017,7 +1018,7 @@ export default function ActiveRide() {
           <div className="flex landscape:hidden gap-8 [@media(max-height:820px)]:gap-5 [@media(max-height:820px)]:mt-2 md:gap-14 mt-3 md:mt-5">
             {speedHero && (
             <div className="text-center min-w-0">
-              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Distance</p>
+              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">{tr("Distance")}</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
                 {formatDistance(rideState.distance, settings.distanceUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getDistanceLabel(settings.distanceUnit)}</span>
@@ -1025,12 +1026,12 @@ export default function ActiveRide() {
             </div>
             )}
             <div className="text-center min-w-0">
-              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Time</p>
+              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">{tr("Time")}</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">{formatDuration(rideState.duration)}</p>
             </div>
             {settings.speedFocusEnabled && (
             <div className="text-center min-w-0">
-              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">Max</p>
+              <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">{tr("Max")}</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
                 {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
                 <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
@@ -1062,7 +1063,7 @@ export default function ActiveRide() {
             onClick={() => {
               const nextPaused = !rideState.isPaused;
               setRidePaused(nextPaused);
-              toast.info(nextPaused ? `${terms.Ride} paused` : `${terms.Ride} resumed`);
+              toast.info(nextPaused ? tr("{0} paused", [terms.Ride]) : tr("{0} resumed", [terms.Ride]));
             }}
             className={cn(
               "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target",
@@ -1070,7 +1071,7 @@ export default function ActiveRide() {
                 ? "bg-accent/20 text-accent"
                 : "bg-secondary hover:bg-muted text-muted-foreground"
             )}
-            title={rideState.isPaused ? `Resume ${terms.ride}` : `Pause ${terms.ride}`}
+            title={rideState.isPaused ? tr("Resume {0}", [terms.ride]) : tr("Pause {0}", [terms.ride])}
           >
             {rideState.isPaused ? (
               <Play className="w-7 h-7 landscape:w-8 landscape:h-8" />
@@ -1093,7 +1094,7 @@ export default function ActiveRide() {
                   ? "bg-warning/20 text-warning animate-pulse" 
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
-              title={hasPendingRescue ? "Cancel rescue request" : "Request rescue"}
+              title={hasPendingRescue ? tr("Cancel rescue request") : tr("Request rescue")}
             >
               <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </button>
@@ -1113,15 +1114,15 @@ export default function ActiveRide() {
                   });
                   const told = await sendSoloRescue(pos.coords.latitude, pos.coords.longitude);
                   if (told.length) {
-                    toast.success(`Rescue call sent to ${told.join(' and ')}`);
+                    toast.success(tr("Rescue call sent to {0}", [told.join(' and ')]));
                     setSoloRescueSent(true);
                     setTimeout(() => setSoloRescueSent(false), 30000);
                   } else {
-                    toast.error('Nobody to alert yet', { description: 'Connect Discord in Settings, or ask your crew to turn on notifications.' });
+                    toast.error(tr("Nobody to alert yet"), { description: tr("Connect Discord in Settings, or ask your crew to turn on notifications.") });
                   }
                 } catch (err) {
                   console.error('[SoloRescue]', err);
-                  toast.error('Could not get your location');
+                  toast.error(tr("Could not get your location"));
                 } finally {
                   setSoloRescueSending(false);
                 }
@@ -1133,7 +1134,7 @@ export default function ActiveRide() {
                   ? "bg-warning/20 text-warning animate-pulse"
                   : "bg-secondary hover:bg-warning/20 text-warning"
               )}
-              title={soloRescueSent ? 'Rescue call sent' : soloRescueSending ? 'Sending…' : 'Call for rescue (your crew and Discord)'}
+              title={soloRescueSent ? tr("Rescue call sent") : soloRescueSending ? tr("Sending…") : tr("Call for rescue (your crew and Discord)")}
             >
               <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
             </button>
@@ -1163,7 +1164,7 @@ export default function ActiveRide() {
             }}
 
             className="h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full bg-secondary hover:bg-muted touch-target"
-            title="Open map with route"
+            title={tr("Open map with route")}
           >
             <Navigation className="w-7 h-7 landscape:w-8 landscape:h-8" />
           </Button>
@@ -1184,18 +1185,18 @@ export default function ActiveRide() {
 
                     if (isConnected) {
                       disconnect();
-                      toast.success('Left voice channel', { description: 'Saving battery' });
+                      toast.success(tr("Left voice channel"), { description: tr("Saving battery") });
                     } else {
                       const result = await connect();
                       if (result.success) {
-                        toast.success('Joined voice channel', { description: 'Tap mic to unmute' });
+                        toast.success(tr("Joined voice channel"), { description: tr("Tap mic to unmute") });
                       } else {
-                        toast.error('Failed to join voice channel', { description: result.error || 'Check microphone permissions' });
+                        toast.error(tr("Failed to join voice channel"), { description: result.error || tr("Check microphone permissions") });
                       }
                     }
                   } catch (e) {
                     console.error('[Voice] Button error', e);
-                    toast.error('Voice action failed');
+                    toast.error(tr("Voice action failed"));
                   }
                 }}
                 className={cn(
@@ -1204,7 +1205,7 @@ export default function ActiveRide() {
                     ? "bg-destructive/20 hover:bg-destructive/30 text-destructive"
                     : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
                 )}
-                title={isConnected ? "Leave voice channel (saves battery)" : "Join voice channel"}
+                title={isConnected ? tr("Leave voice channel (saves battery)") : tr("Join voice channel")}
               >
                 {isConnected ? (
                   <PhoneOff className="w-5 h-5 landscape:w-7 landscape:h-7" />
@@ -1269,11 +1270,11 @@ export default function ActiveRide() {
             <div className="bg-card border border-border rounded-xl p-2 md:p-3 h-full max-h-full flex flex-col shadow-lg">
               <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
                 <Users className="w-3 h-3" />
-                Convoy ({convoy.members.length})
+                {tr("Convoy (")}{convoy.members.length})
                 <button
                   onClick={() => setShowMembers(false)}
                   className="ml-auto text-muted-foreground hover:text-foreground px-1"
-                  aria-label="Close convoy members"
+                  aria-label={tr("Close convoy members")}
                 >
                   ✕
                 </button>
@@ -1326,7 +1327,7 @@ export default function ActiveRide() {
                         {isConnected && member.userId !== user?.id && audioLink !== 'connected' && (
                           <p className={cn('text-[10px] flex items-center gap-1', audioLink === 'failed' || !audioLink ? 'text-warning' : 'text-muted-foreground')}>
                             <VolumeX className="w-2.5 h-2.5" />
-                            {audioLink === 'connecting' ? 'Connecting audio…' : 'No audio link'}
+                            {audioLink === 'connecting' ? tr("Connecting audio…") : tr("No audio link")}
                           </p>
                         )}
                         {(settings.showSpeedRankings && settings.speedFocusEnabled) && (

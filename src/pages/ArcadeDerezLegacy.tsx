@@ -10,6 +10,7 @@ import { DerezArenaDrawer } from '@/features/arcade/components/games/derez/Derez
 import { DerezGameView } from '@/features/arcade/components/games/derez/DerezGameView';
 import { polygonAreaM2 } from '@/features/arcade/lib/derezGeo';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 function colorOf(id: string) {
   const c = ACCENT_COLORS.find(a => a.id === id) ?? ACCENT_COLORS[0];
@@ -72,7 +73,7 @@ export default function ArcadeDerezLegacy() {
     setWinRecorded(stamp);
     if (lobby.winnerId === userId) {
       bumpScore('legacy-derez');
-      toast.success('Last rider standing', { description: 'Legacy win banked.' });
+      toast.success(tr("Last rider standing"), { description: tr("Legacy win banked.") });
     }
   }, [lobby?.state, lobby?.winnerId, lobby?.id, lobby?.roundSeq, userId, winRecorded]);
 
@@ -90,16 +91,15 @@ export default function ArcadeDerezLegacy() {
   if (!lobby) {
     return (
       <div className="min-h-dvh flex flex-col safe-top safe-bottom">
-        <Header title="Derez Legacy" onBack={() => navigate(-1)} />
+        <Header title={tr("Derez Legacy")} onBack={() => navigate(-1)} />
         <div className="flex-1 px-4 pb-6 flex flex-col gap-4">
           <div className="rounded-2xl border border-border/30 bg-card/50 p-4">
-            <p className="text-sm text-white font-semibold">Real-world lightcycles</p>
+            <p className="text-sm text-white font-semibold">{tr("Real-world lightcycles")}</p>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Draw an arena on the map, ride inside it, and leave a trail in your accent colour.
-              Cross anyone's line — or your own — and you lose a life. Last rider standing wins.
+              {tr("Draw an arena on the map, ride inside it, and leave a trail in your accent colour. Cross anyone's line — or your own — and you lose a life. Last rider standing wins.")}
             </p>
             <p className="text-[10px] text-amber-500/80 mt-2">
-              Private land or a quiet car park only. Ride slow, eyes up, phone mounted.
+              {tr("Private land or a quiet car park only. Ride slow, eyes up, phone mounted.")}
             </p>
           </div>
 
@@ -109,16 +109,16 @@ export default function ArcadeDerezLegacy() {
             className="w-full py-4 rounded-2xl border-2 font-semibold text-sm disabled:opacity-50"
             style={{ borderColor: accent, color: accent }}
           >
-            Create lobby
+            {tr("Create lobby")}
           </button>
 
           <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-3">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Join with a code</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Join with a code")}</p>
             <input
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={6}
-              placeholder="ABC123"
+              placeholder={tr("ABC123")}
               className="w-full bg-secondary/50 border border-border/40 rounded-xl px-4 py-3 font-mono text-lg tracking-[0.3em] text-center text-white uppercase"
             />
             <button
@@ -126,12 +126,12 @@ export default function ArcadeDerezLegacy() {
               disabled={joinCode.length < 4 || busy}
               className="w-full py-3 rounded-xl bg-secondary/60 border border-border/40 font-semibold text-sm disabled:opacity-40"
             >
-              Join
+              {tr("Join")}
             </button>
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-auto">
-            Derez Legacy wins: <span className="font-mono text-white">{scores['legacy-derez']}</span>
+            {tr("Derez Legacy wins:")}{" "}<span className="font-mono text-white">{scores['legacy-derez']}</span>
           </p>
         </div>
       </div>
@@ -156,11 +156,11 @@ export default function ArcadeDerezLegacy() {
       <div className="min-h-dvh bg-black flex flex-col safe-top safe-bottom">
         {lobby.state === 'countdown' ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3">
-            <p className="font-mono text-xs tracking-widest uppercase text-white/50">Derez in</p>
+            <p className="font-mono text-xs tracking-widest uppercase text-white/50">{tr("Derez in")}</p>
             <p className="font-mono text-8xl font-bold tabular-nums" style={{ color: accent, textShadow: `0 0 30px ${accent}` }}>
               {countdown ?? 5}
             </p>
-            <p className="font-mono text-[10px] tracking-widest uppercase text-white/40">Stay inside the grid</p>
+            <p className="font-mono text-[10px] tracking-widest uppercase text-white/40">{tr("Stay inside the grid")}</p>
           </div>
         ) : (
           <DerezGameView lobby={lobby} players={players} me={me} onDeath={reportDeath} />
@@ -177,12 +177,12 @@ export default function ArcadeDerezLegacy() {
         <Trophy className="w-10 h-10" style={{ color: winner ? colorOf(winner.accentColor) : accent }} />
         <div className="text-center">
           <p className="font-mono text-xs tracking-widest uppercase text-muted-foreground">
-            {winner ? 'Winner' : 'Everyone derezzed'}
+            {winner ? tr("Winner") : tr("Everyone derezzed")}
           </p>
           <p className="text-3xl font-bold mt-1" style={{ color: winner ? colorOf(winner.accentColor) : undefined }}>
-            {lobby.winnerName ?? 'Draw'}
+            {lobby.winnerName ?? tr("Draw")}
           </p>
-          {winner && <p className="text-xs text-muted-foreground mt-1">{winner.livesLeft} lives remaining</p>}
+          {winner && <p className="text-xs text-muted-foreground mt-1">{winner.livesLeft}{" "}{tr("lives remaining")}</p>}
         </div>
 
         <div className="w-full max-w-sm rounded-2xl border border-border/30 bg-card/50 p-4 space-y-2">
@@ -192,7 +192,7 @@ export default function ArcadeDerezLegacy() {
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: colorOf(p.accentColor) }} />
                 {p.displayName}
               </span>
-              <span className="font-mono text-muted-foreground">{p.livesLeft} left</span>
+              <span className="font-mono text-muted-foreground">{p.livesLeft}{" "}{tr("left")}</span>
             </div>
           ))}
         </div>
@@ -204,14 +204,14 @@ export default function ArcadeDerezLegacy() {
               className="flex-1 py-3.5 rounded-xl border-2 font-semibold text-sm"
               style={{ borderColor: accent, color: accent }}
             >
-              Reset
+              {tr("Reset")}
             </button>
           )}
           <button onClick={exit} className="flex-1 py-3.5 rounded-xl bg-secondary/60 border border-border/40 font-semibold text-sm">
-            Arcade
+            {tr("Arcade")}
           </button>
         </div>
-        {!isLeader && <p className="text-xs text-muted-foreground">Waiting for the leader to reset…</p>}
+        {!isLeader && <p className="text-xs text-muted-foreground">{tr("Waiting for the leader to reset…")}</p>}
       </div>
     );
   }
@@ -219,15 +219,15 @@ export default function ArcadeDerezLegacy() {
   // ---- Lobby -------------------------------------------------------------
   return (
     <div className="min-h-dvh flex flex-col safe-top safe-bottom">
-      <Header title="Derez Legacy" onBack={exit} />
+      <Header title={tr("Derez Legacy")} onBack={exit} />
 
       <div className="flex-1 px-4 pb-6 space-y-4 overflow-y-auto">
         {/* Code + QR */}
         <div className="rounded-2xl border border-border/30 bg-card/50 p-4 flex items-center gap-4">
           <div className="flex-1">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Lobby code</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("Lobby code")}</p>
             <p className="font-mono text-2xl tracking-[0.25em] text-white">{lobby.code}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Scan or share the code to bring riders in.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{tr("Scan or share the code to bring riders in.")}</p>
           </div>
           <div className="bg-white p-2 rounded-xl">
             <QRCodeSVG value={joinUrl} size={78} />
@@ -238,7 +238,7 @@ export default function ArcadeDerezLegacy() {
         <div className="rounded-2xl border border-border/30 bg-card/50 p-4">
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-4 h-4 text-muted-foreground" />
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Riders {players.length}/8</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Riders")}{" "}{players.length}/8</p>
           </div>
           <div className="space-y-2">
             {players.map(p => (
@@ -249,8 +249,8 @@ export default function ArcadeDerezLegacy() {
                   {p.userId === lobby.leaderId && <Crown className="w-3.5 h-3.5 text-amber-400" />}
                 </span>
                 {p.isReady
-                  ? <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-400"><Check className="w-3 h-3" /> Ready</span>
-                  : <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Waiting</span>}
+                  ? <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-400"><Check className="w-3 h-3" />{" "}{tr("Ready")}</span>
+                  : <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("Waiting")}</span>}
               </div>
             ))}
           </div>
@@ -260,10 +260,10 @@ export default function ArcadeDerezLegacy() {
         <div className="rounded-2xl border border-border/30 bg-card/50 p-4 space-y-3">
           <div className="flex items-center gap-2">
             <MapIcon className="w-4 h-4 text-muted-foreground" />
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Arena</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Arena")}</p>
           </div>
           <p className="text-sm text-white">
-            {arenaArea > 0 ? `${arenaArea.toLocaleString()} m² grid set` : 'No grid drawn yet'}
+            {arenaArea > 0 ? tr("{0} m² grid set", [arenaArea.toLocaleString()]) : tr("No grid drawn yet")}
           </p>
           {isLeader && (
             <button
@@ -271,7 +271,7 @@ export default function ArcadeDerezLegacy() {
               className="w-full py-3 rounded-xl border-2 font-semibold text-sm"
               style={{ borderColor: accent, color: accent }}
             >
-              {arenaArea > 0 ? 'Redraw arena' : 'Draw arena'}
+              {arenaArea > 0 ? tr("Redraw arena") : tr("Draw arena")}
             </button>
           )}
         </div>
@@ -280,7 +280,7 @@ export default function ArcadeDerezLegacy() {
         <div className="rounded-2xl border border-border/30 bg-card/50 p-4">
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-muted-foreground" />
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Lives per rider</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">{tr("Lives per rider")}</p>
           </div>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5].map(n => (
@@ -309,7 +309,7 @@ export default function ArcadeDerezLegacy() {
             ? { borderColor: accent, background: accent, color: '#000' }
             : { borderColor: accent, color: accent }}
         >
-          {me?.isReady ? 'Ready ✓' : 'Ready up'}
+          {me?.isReady ? tr("Ready ✓") : tr("Ready up")}
         </button>
 
         {isLeader && (
@@ -318,12 +318,12 @@ export default function ArcadeDerezLegacy() {
             disabled={!allReady || arenaArea === 0}
             className="w-full py-4 rounded-2xl bg-secondary/60 border border-border/40 font-semibold text-sm disabled:opacity-40"
           >
-            {arenaArea === 0 ? 'Draw an arena first' : allReady ? 'Start round' : 'Waiting for riders…'}
+            {arenaArea === 0 ? tr("Draw an arena first") : allReady ? tr("Start round") : tr("Waiting for riders…")}
           </button>
         )}
 
         <button onClick={exit} className="w-full py-3 rounded-xl text-xs text-muted-foreground flex items-center justify-center gap-2">
-          <LogOut className="w-3.5 h-3.5" /> Leave lobby
+          <LogOut className="w-3.5 h-3.5" />{" "}{tr("Leave lobby")}
         </button>
       </div>
     </div>
@@ -336,7 +336,7 @@ function Header({ title, onBack }: { title: string; onBack: () => void }) {
       <button
         onClick={onBack}
         className="absolute left-4 top-3.5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-        aria-label="Back"
+        aria-label={tr("Back")}
       >
         <ArrowLeft className="w-5 h-5" />
       </button>

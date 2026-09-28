@@ -6,6 +6,7 @@ import { VEHICLES, VEHICLE_ORDER, type VehicleType } from '../../lib/vehicles';
 import { RIDE_STYLES } from '../../lib/styles';
 import type { ExperienceTerms } from '../../lib/terms';
 import { ChoiceCard, IconTile, RadioDot } from './ChoiceCard';
+import { tr } from '@/lib/i18n';
 
 const VEHICLE_BLURB: Record<VehicleType, string> = {
   motorcycle: 'Lean angle, chain care',
@@ -18,7 +19,7 @@ const VEHICLE_BLURB: Record<VehicleType, string> = {
 /** Multi-select list. First pick becomes the main vehicle (icons, speed alerts, garage presets). */
 export function VehicleStep({ value, onToggle }: { value: VehicleType[]; onToggle: (v: VehicleType) => void }) {
   return (
-    <div className="frost rounded-[22px] overflow-hidden divide-y divide-white/[0.06] stagger-in" role="group" aria-label="Vehicles">
+    <div className="frost rounded-[22px] overflow-hidden divide-y divide-white/[0.06] stagger-in" role="group" aria-label={tr("Vehicles")}>
       {VEHICLE_ORDER.map((id, i) => {
         const info = VEHICLES[id];
         const order = value.indexOf(id);
@@ -42,7 +43,7 @@ export function VehicleStep({ value, onToggle }: { value: VehicleType[]; onToggl
                 {info.label}
                 {order === 0 && value.length > 1 && (
                   <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-accent/15 text-accent setup-pop">
-                    Main
+                    {tr("Main")}
                   </span>
                 )}
               </p>
@@ -60,22 +61,22 @@ export function ModeStep({ value, terms, onChange }: { value: RideMode | null; t
   const options: { id: RideMode; title: string; subtitle: string; perks: string[]; icon: typeof User }[] = [
     {
       id: 'solo',
-      title: 'Just me',
-      subtitle: `Solo ${terms.rides}. No groups, no convoy screens.`,
+      title: tr("Just me"),
+      subtitle: tr("Solo {0}. No groups, no convoy screens.", [terms.rides]),
       perks: [`One-tap ${terms.ride}`, 'Route planning up front', 'Rescue alerts to your Discord'],
       icon: User,
     },
     {
       id: 'group',
-      title: 'My crew',
-      subtitle: `Group ${terms.rides}. Convoys and voice chat come first.`,
+      title: tr("My crew"),
+      subtitle: tr("Group {0}. Convoys and voice chat come first.", [terms.rides]),
       perks: ['Start or join a convoy from Home', 'Voice chat', 'Rescue alerts go to the whole convoy'],
       icon: Users,
     },
     {
       id: 'both',
-      title: 'A bit of both',
-      subtitle: `Solo ${terms.rides} and convoys, side by side.`,
+      title: tr("A bit of both"),
+      subtitle: tr("Solo {0} and convoys, side by side.", [terms.rides]),
       perks: ['Solo and convoy on Home'],
       icon: Sparkles,
     },

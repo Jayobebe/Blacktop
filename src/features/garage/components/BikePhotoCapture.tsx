@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { BikePhotos } from '../types';
 import { toast } from 'sonner';
 import { removeImageBackgroundFile } from '../lib/compressImage';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   initial?: Partial<BikePhotos>;
@@ -25,11 +26,11 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
     e.target.value = '';
     if (!file) return;
     if (!/png|webp/i.test(file.type)) {
-      toast.error('Please use a PNG or WebP vehicle image');
+      toast.error(tr("Please use a PNG or WebP vehicle image"));
       return;
     }
     if (file.size > MAX_BYTES) {
-      toast.error('Image too large — keep it under 8MB');
+      toast.error(tr("Image too large — keep it under 8MB"));
       return;
     }
     setBusy(true);
@@ -38,7 +39,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
       setHero(dataUrl);
     } catch (err) {
       console.error('[BikePhotoCapture]', err);
-      toast.error('Could not read image');
+      toast.error(tr("Could not read image"));
     } finally {
       setBusy(false);
     }
@@ -47,8 +48,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Upload a <span className="text-foreground">pixelated PNG</span> of your vehicle —
-        the app will clear the flat background and drop it onto the shop floor.
+        {tr("Upload a")}{" "}<span className="text-foreground">{tr("pixelated PNG")}</span>{" "}{tr("of your vehicle — the app will clear the flat background and drop it onto the shop floor.")}
       </p>
 
       <button
@@ -61,29 +61,29 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
           <>
             <img
               src={hero}
-              alt="Vehicle"
+              alt={tr("Vehicle")}
               className="absolute inset-0 h-full w-full object-contain"
               style={{ imageRendering: 'pixelated' }}
               onError={() => {
                 setHero(undefined);
-                toast.error('Image failed to load. Try another file.');
+                toast.error(tr("Image failed to load. Try another file."));
               }}
             />
             <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] uppercase tracking-widest px-2 py-1 rounded-full flex items-center gap-1">
-              <RefreshCw className="w-3 h-3" /> Replace
+              <RefreshCw className="w-3 h-3" />{" "}{tr("Replace")}
             </div>
           </>
         ) : (
           <>
             <ImagePlus className="w-7 h-7 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Tap to upload image
+              {tr("Tap to upload image")}
             </span>
           </>
         )}
         {busy && (
           <div className="absolute inset-0 bg-background/60 flex items-center justify-center text-xs">
-            Loading…
+            {tr("Loading…")}
           </div>
         )}
       </button>
@@ -99,7 +99,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
       <div className="flex gap-2">
         {onCancel && (
           <Button variant="ghost" onClick={onCancel} className="flex-1">
-            <X className="w-4 h-4 mr-1" /> Cancel
+            <X className="w-4 h-4 mr-1" />{" "}{tr("Cancel")}
           </Button>
         )}
         <Button
@@ -107,7 +107,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
           disabled={!hero || busy}
           className="flex-1"
         >
-          Save vehicle
+          {tr("Save vehicle")}
         </Button>
       </div>
     </div>

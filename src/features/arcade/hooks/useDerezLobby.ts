@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ACCENT_COLORS } from '@/features/settings';
 import type { DerezArena, DerezLobby, DerezPlayer, DerezState } from '../types';
+import { tr } from '@/lib/i18n';
 
 const LS_LOBBY_KEY = 'blacktop_derez_lobby_id';
 
@@ -115,7 +116,7 @@ export function useDerezLobby() {
       await refresh(l.id);
       return mapLobby(l);
     } catch (e: any) {
-      toast.error('Could not create lobby', { description: e.message });
+      toast.error(tr("Could not create lobby"), { description: e.message });
       return null;
     } finally { setBusy(false); }
   }, [refresh]);
@@ -130,7 +131,7 @@ export function useDerezLobby() {
       const { data: found, error } = await supabase.rpc('lookup_derez_by_code', { _code: code.toUpperCase().trim() });
       if (error) throw error;
       const row: any = Array.isArray(found) ? found[0] : found;
-      if (!row) { toast.error('Lobby not found', { description: 'Check the code and try again.' }); return null; }
+      if (!row) { toast.error(tr("Lobby not found"), { description: tr("Check the code and try again.") }); return null; }
 
       const { data: existing } = await supabase.from('derez_players').select('accent_color').eq('lobby_id', row.id);
       const taken = (existing ?? []).map((p: any) => p.accent_color);
@@ -145,10 +146,10 @@ export function useDerezLobby() {
       const mapped = mapLobby(row);
       setLobby(mapped);
       await refresh(row.id);
-      if (color !== accentColor) toast.info('Colour reassigned', { description: 'Someone already had yours.' });
+      if (color !== accentColor) toast.info(tr("Colour reassigned"), { description: tr("Someone already had yours.") });
       return mapped;
     } catch (e: any) {
-      toast.error('Could not join lobby', { description: e.message });
+      toast.error(tr("Could not join lobby"), { description: e.message });
       return null;
     } finally { setBusy(false); }
   }, [pickColor, refresh]);

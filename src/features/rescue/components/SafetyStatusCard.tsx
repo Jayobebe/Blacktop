@@ -12,26 +12,27 @@ import { requestMotionPermission, useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { useSafetyStatus, type SafetyLevel } from '../hooks/useSafetyStatus';
+import { tr } from '@/lib/i18n';
 
 const LEVELS: Record<SafetyLevel, { icon: typeof ShieldCheck; title: string; hint: string; tone: string; bg: string }> = {
   active: {
     icon: ShieldCheck,
-    title: 'Crash Rescue Active',
-    hint: 'Your group gets pinged if you crash',
+    title: tr("Crash Rescue Active"),
+    hint: tr("Your group gets pinged if you crash"),
     tone: 'text-emerald-400',
     bg: 'bg-emerald-500/10 border-emerald-500/30',
   },
   off: {
     icon: ShieldOff,
-    title: 'Crash Rescue Off',
-    hint: 'Tap to turn on crash detection',
+    title: tr("Crash Rescue Off"),
+    hint: tr("Tap to turn on crash detection"),
     tone: 'text-warning',
     bg: 'bg-warning/10 border-warning/30',
   },
   permissions: {
     icon: ShieldAlert,
-    title: 'Permissions missing',
-    hint: 'Rescue needs location access to work',
+    title: tr("Permissions missing"),
+    hint: tr("Rescue needs location access to work"),
     tone: 'text-destructive',
     bg: 'bg-destructive/10 border-destructive/30',
   },
@@ -107,7 +108,7 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
 
   const toggleRescue = async (on: boolean) => {
     if (on && !(await requestMotionPermission())) {
-      toast.error('Motion sensor permission denied');
+      toast.error(tr("Motion sensor permission denied"));
       return;
     }
     updateSetting('autoRescueEnabled', on);
@@ -126,16 +127,16 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
           {title}
         </SheetTitle>
         <SheetDescription>
-          If a hard impact is followed by a stop, Blacktop asks "Are you okay?". No reply in 5 minutes sends a rescue ping.
+          {tr("If a hard impact is followed by a stop, Blacktop asks \"Are you okay?\". No reply in 5 minutes sends a rescue ping.")}
         </SheetDescription>
       </SheetHeader>
 
       {/* Crash detection */}
       <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-card/50 border border-border/50">
         <div>
-          <p className="text-sm font-medium">Crash detection</p>
+          <p className="text-sm font-medium">{tr("Crash detection")}</p>
           <p className="text-[11px] text-muted-foreground">
-            Impact over {settings.autoRescueGThreshold} G, then stopped for {settings.autoRescueStopWindowSec}s
+            {tr("Impact over")}{" "}{settings.autoRescueGThreshold}{" "}{tr("G, then stopped for")}{" "}{settings.autoRescueStopWindowSec}{tr("s")}
           </p>
         </div>
         <Switch checked={settings.autoRescueEnabled} onCheckedChange={toggleRescue} />
@@ -146,59 +147,59 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
         <div className="flex items-center gap-3 min-w-0">
           <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-medium">Location</p>
+            <p className="text-sm font-medium">{tr("Location")}</p>
             <p className="text-[11px] text-muted-foreground">
-              {status.location === 'granted' && 'Allowed. Rescue pings include your position'}
-              {status.location === 'prompt' && 'Not allowed yet'}
-              {status.location === 'denied' && 'Blocked. Turn it on in your device or browser settings'}
-              {status.location === 'unknown' && 'Checked when you start a ride'}
+              {status.location === 'granted' && tr("Allowed. Rescue pings include your position")}
+              {status.location === 'prompt' && tr("Not allowed yet")}
+              {status.location === 'denied' && tr("Blocked. Turn it on in your device or browser settings")}
+              {status.location === 'unknown' && tr("Checked when you start a ride")}
             </p>
           </div>
         </div>
         {status.location === 'prompt' && (
           <Button size="sm" variant="outline" className="h-8 shrink-0" onClick={status.requestLocation}>
-            Allow
+            {tr("Allow")}
           </Button>
         )}
-        {status.location === 'granted' && <span className="text-xs font-medium text-emerald-400 shrink-0">On</span>}
-        {status.location === 'denied' && <span className="text-xs font-medium text-destructive shrink-0">Blocked</span>}
+        {status.location === 'granted' && <span className="text-xs font-medium text-emerald-400 shrink-0">{tr("On")}</span>}
+        {status.location === 'denied' && <span className="text-xs font-medium text-destructive shrink-0">{tr("Blocked")}</span>}
       </div>
 
       {/* Who gets alerted */}
       <div className="p-3 rounded-2xl bg-card/50 border border-border/50 space-y-3">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Who gets alerted</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("Who gets alerted")}</p>
         {showGroup && (
           <div className="flex items-center gap-3">
             <Users className="w-4 h-4 text-muted-foreground shrink-0" />
-            <p className="text-sm flex-1">Everyone in the convoy</p>
-            <span className="text-[11px] text-muted-foreground">On group {terms.rides}</span>
+            <p className="text-sm flex-1">{tr("Everyone in the convoy")}</p>
+            <span className="text-[11px] text-muted-foreground">{tr("On group")}{" "}{terms.rides}</span>
           </div>
         )}
         <div className="flex items-center gap-3">
           <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0" />
-          <p className="text-sm flex-1">Discord</p>
+          <p className="text-sm flex-1">{tr("Discord")}</p>
           {discordLoading ? (
             <Skeleton className="h-3 w-20" />
           ) : integration ? (
-            <span className="text-[11px] text-emerald-400 truncate max-w-[50%]">{integration.server_name || 'Connected'}</span>
+            <span className="text-[11px] text-emerald-400 truncate max-w-[50%]">{integration.server_name || tr("Connected")}</span>
           ) : (
             <button type="button" onClick={goToSettings} className="text-[11px] text-accent underline-offset-4 hover:underline">
-              Not connected. Set up
+              {tr("Not connected. Set up")}
             </button>
           )}
         </div>
         {!discordLoading && !integration && (
           <p className="text-[11px] text-muted-foreground">
             {showGroup
-              ? `On solo ${terms.rides}, rescue pings only go to Discord. Connect a server so someone hears about it.`
-              : 'Discord is the only place rescue pings can go. Connect a server so someone hears about it.'}
+              ? tr("On solo {0}, rescue pings only go to Discord. Connect a server so someone hears about it.", [terms.rides])
+              : tr("Discord is the only place rescue pings can go. Connect a server so someone hears about it.")}
           </p>
         )}
       </div>
 
       <Button variant="outline" className="w-full h-11 rounded-2xl" onClick={goToSettings}>
         <Settings2 className="w-4 h-4 mr-2" />
-        All safety settings
+        {tr("All safety settings")}
       </Button>
     </div>
   );

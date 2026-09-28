@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Bike, BikePlacement, DEFAULT_BIKE_PLACEMENT } from '../types';
 import { MechaNick } from './MechaNick';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   bike: Bike | null;
@@ -142,10 +143,10 @@ export function GarageDiorama({ bike, tip, nickLines, editing = false, onPlaceme
       ) : (
         <div className="absolute left-[38%] bottom-16 -translate-x-1/2 text-center text-foreground/80">
           <p className="text-sm uppercase tracking-widest opacity-80 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            No vehicle yet
+            {tr("No vehicle yet")}
           </p>
           <p className="text-xs opacity-70 mt-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            Add one to fill the garage
+            {tr("Add one to fill the garage")}
           </p>
         </div>
       )}
@@ -160,7 +161,7 @@ export function GarageDiorama({ bike, tip, nickLines, editing = false, onPlaceme
       {/* Size slider overlay when editing */}
       {editing && bike?.photos?.hero && (
         <div className="absolute left-3 right-3 top-3 flex items-center gap-2 rounded-xl bg-black/70 backdrop-blur px-3 py-2 border border-accent/40">
-          <span className="text-[10px] uppercase tracking-widest text-accent">Size</span>
+          <span className="text-[10px] uppercase tracking-widest text-accent">{tr("Size")}</span>
           <input
             type="range"
             min={20}
@@ -177,7 +178,7 @@ export function GarageDiorama({ bike, tip, nickLines, editing = false, onPlaceme
       )}
       {editing && (
         <div className="absolute left-3 right-3 bottom-3 text-center text-[11px] uppercase tracking-widest text-accent/90 pointer-events-none">
-          Drag the vehicle to position it
+          {tr("Drag the vehicle to position it")}
         </div>
       )}
     </div>

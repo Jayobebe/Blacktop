@@ -1,5 +1,6 @@
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useEffect } from 'react';
+import { tr } from '@/lib/i18n';
 
 export type SpeedUnit = 'mph' | 'kph';
 export type DistanceUnit = 'miles' | 'km';
@@ -7,14 +8,14 @@ export type DistanceUnit = 'miles' | 'km';
 export type AccentColor = 'orange' | 'blue' | 'green' | 'purple' | 'pink' | 'red' | 'cyan' | 'lime';
 
 export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring: string }[] = [
-  { id: 'orange', label: 'Sunset', hsl: '38 95% 55%', ring: '38 95% 55%' },
-  { id: 'blue', label: 'Ocean', hsl: '217 91% 60%', ring: '217 91% 60%' },
-  { id: 'green', label: 'Forest', hsl: '142 71% 45%', ring: '142 71% 45%' },
-  { id: 'purple', label: 'Violet', hsl: '262 83% 58%', ring: '262 83% 58%' },
-  { id: 'pink', label: 'Coral', hsl: '330 81% 60%', ring: '330 81% 60%' },
-  { id: 'red', label: 'Crimson', hsl: '0 84% 60%', ring: '0 84% 60%' },
-  { id: 'cyan', label: 'Arctic', hsl: '186 94% 50%', ring: '186 94% 50%' },
-  { id: 'lime', label: 'Neon', hsl: '84 85% 50%', ring: '84 85% 50%' },
+  { id: 'orange', label: tr("Sunset"), hsl: '38 95% 55%', ring: '38 95% 55%' },
+  { id: 'blue', label: tr("Ocean"), hsl: '217 91% 60%', ring: '217 91% 60%' },
+  { id: 'green', label: tr("Forest"), hsl: '142 71% 45%', ring: '142 71% 45%' },
+  { id: 'purple', label: tr("Violet"), hsl: '262 83% 58%', ring: '262 83% 58%' },
+  { id: 'pink', label: tr("Coral"), hsl: '330 81% 60%', ring: '330 81% 60%' },
+  { id: 'red', label: tr("Crimson"), hsl: '0 84% 60%', ring: '0 84% 60%' },
+  { id: 'cyan', label: tr("Arctic"), hsl: '186 94% 50%', ring: '186 94% 50%' },
+  { id: 'lime', label: tr("Neon"), hsl: '84 85% 50%', ring: '84 85% 50%' },
 ];
 
 export type CardDropVisibility = 'crew' | 'world';

@@ -12,6 +12,7 @@ import {
 import { toast } from 'sonner';
 import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
+import { tr } from '@/lib/i18n';
 
 // Warn once per app session, not on every reconnect.
 let relayWarningShown = false;
@@ -1071,8 +1072,8 @@ export function useVoiceChannel(convoyId?: string) {
       await iceReady;
       if (!hasRelay() && !relayWarningShown) {
         relayWarningShown = true;
-        toast.warning('Voice relay unavailable', {
-          description: 'Voice works on Wi-Fi, but riders on mobile data may not hear each other.',
+        toast.warning(tr("Voice relay unavailable"), {
+          description: tr("Voice works on Wi-Fi, but riders on mobile data may not hear each other."),
         });
       }
 

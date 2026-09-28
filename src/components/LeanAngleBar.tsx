@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface LeanAngleBarProps {
   currentLean: number; // -90 to 90 degrees
@@ -43,7 +44,7 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, vertica
     <button 
       onClick={onReset}
       className={cn("flex flex-col items-center gap-1 touch-target", !vertical && "landscape:flex-row landscape:gap-2", className)}
-      title="Tap to zero"
+      title={tr("Tap to zero")}
     >
       {/* Current lean display - left side in landscape */}
       <div className={cn("items-center gap-1", vertical ? "hidden" : "hidden landscape:flex")}>
@@ -56,7 +57,7 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, vertica
         >
           {absLean}°
           <span className="text-muted-foreground ml-0.5 text-[10px] font-normal">
-            {currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : ''}
+            {currentLean < -2 ? tr("L") : currentLean > 2 ? tr("R") : ''}
           </span>
         </span>
       </div>
@@ -113,11 +114,11 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, vertica
         >
           {absLean}°
           <span className="text-muted-foreground ml-0.5 text-xs font-normal">
-            {currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : ''}
+            {currentLean < -2 ? tr("L") : currentLean > 2 ? tr("R") : ''}
           </span>
         </span>
         <span className={cn("text-muted-foreground text-[10px]", !vertical && "landscape:text-[9px]")}>
-          max {maxLean}°
+          {tr("max")}{" "}{maxLean}°
         </span>
       </div>
     </button>

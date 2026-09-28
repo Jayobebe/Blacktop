@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { ACCENT_COLORS, AccentColor } from '@/features/settings';
 import { Check } from 'lucide-react';
+import { tr } from '@/lib/i18n';
 
 interface AccentColorPickerProps {
   selected: AccentColor;
@@ -24,7 +25,7 @@ export function AccentColorPicker({ selected, secondary, onChange }: AccentColor
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Tap a second colour to tint the background glow. Tap it again to remove it.
+        {tr("Tap a second colour to tint the background glow. Tap it again to remove it.")}
       </p>
       <div className="grid grid-cols-4 gap-3">
         {ACCENT_COLORS.map((color) => {
@@ -59,7 +60,7 @@ export function AccentColorPicker({ selected, secondary, onChange }: AccentColor
                 "text-xs font-medium transition-colors",
                 isMain || isSecondary ? "text-foreground" : "text-muted-foreground"
               )}>
-                {isSecondary ? `${color.label} · glow` : color.label}
+                {isSecondary ? tr("{0} · glow", [color.label]) : color.label}
               </span>
             </button>
           );

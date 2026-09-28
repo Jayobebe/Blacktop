@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { parsePayeeQr } from '../lib/nimiqPay';
+import { tr } from '@/lib/i18n';
 
 interface QrScannerProps {
   /** Unique DOM id for the camera surface. */
@@ -46,7 +47,7 @@ export function QrScanner({ id, onResult, onCancel }: QrScannerProps) {
       } catch {
         if (cancelled) return;
         setStarting(false);
-        toast.error('Camera unavailable', { description: 'Allow camera access to scan a QR code.' });
+        toast.error(tr("Camera unavailable"), { description: tr("Allow camera access to scan a QR code.") });
         onCancel();
       }
     };
@@ -63,10 +64,10 @@ export function QrScanner({ id, onResult, onCancel }: QrScannerProps) {
     <div className="space-y-2">
       <div id={id} className="w-full rounded-xl overflow-hidden border border-border/40" />
       {starting && (
-        <p className="text-[10px] text-muted-foreground text-center">Starting camera…</p>
+        <p className="text-[10px] text-muted-foreground text-center">{tr("Starting camera…")}</p>
       )}
       <Button variant="outline" onClick={onCancel} className="w-full h-10 rounded-xl">
-        <X className="w-4 h-4 mr-2" /> Cancel scan
+        <X className="w-4 h-4 mr-2" />{" "}{tr("Cancel scan")}
       </Button>
     </div>
   );

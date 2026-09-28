@@ -14,6 +14,7 @@ import { useRideRole, setPillionRiding, clearRideRole, useReactionsListener, sen
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 /**
  * Passenger screen for a convoy ride: voice, Wave / emoji reactions and
@@ -73,7 +74,7 @@ export default function PillionRide() {
       endedRef.current = true;
       disconnect();
       clearRideRole();
-      toast.info('Ride over', { description: 'Thanks for riding pillion.' });
+      toast.info(tr("Ride over"), { description: tr("Thanks for riding pillion.") });
       navigate('/', { replace: true });
     }, 3000);
     return () => clearTimeout(t);
@@ -84,10 +85,10 @@ export default function PillionRide() {
     if (!isConnected) {
       const res = await connect();
       if (!res.success) {
-        toast.error('Could not join voice', { description: res.error || 'Check microphone permission' });
+        toast.error(tr("Could not join voice"), { description: res.error || tr("Check microphone permission") });
         return;
       }
-      toast.success('Voice on', { description: 'Tap again to unmute' });
+      toast.success(tr("Voice on"), { description: tr("Tap again to unmute") });
       return;
     }
     toggleMute();
@@ -106,7 +107,7 @@ export default function PillionRide() {
     setConfirmRescue(false);
     navigator.geolocation.getCurrentPosition(
       (pos) => void sendRescueRequest(pos.coords.latitude, pos.coords.longitude),
-      () => toast.error('Unable to get your location'),
+      () => toast.error(tr("Unable to get your location")),
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 },
     );
   };
@@ -127,7 +128,7 @@ export default function PillionRide() {
   const react = async (emoji: string) => {
     if (!userId) return;
     const sent = await sendReaction(userId, name, emoji);
-    if (sent) toast(`${emoji}  Sent`, { duration: 1200 });
+    if (sent) toast(tr("{0}  Sent", [emoji]), { duration: 1200 });
   };
 
   const leader = convoy.members.find((m) => m.isLeader);
@@ -144,11 +145,11 @@ export default function PillionRide() {
       />
 
       <PageHeader
-        title="Pillion"
+        title={tr("Pillion")}
         subtitle={`${leader ? `${leader.name}'s convoy` : 'Convoy'} · ${convoy.members.length} ${convoy.members.length === 1 ? 'rider' : 'riders'}`}
         backTo={false}
         right={
-          <HeaderButton onClick={() => setShowAudio(true)} aria-label="Audio device">
+          <HeaderButton onClick={() => setShowAudio(true)} aria-label={tr("Audio device")}>
             <Headphones className="w-5 h-5" />
           </HeaderButton>
         }
@@ -166,7 +167,7 @@ export default function PillionRide() {
                 ? 'bg-accent/20 border-2 border-accent/60'
                 : 'bg-card border-2 border-border',
           )}
-          aria-label={!isConnected ? 'Join voice' : isMuted ? 'Unmute' : 'Mute'}
+          aria-label={!isConnected ? tr("Join voice") : isMuted ? tr("Unmute") : tr("Mute")}
         >
           {isConnected && !isMuted ? (
             <Mic className="w-12 h-12 text-background" />
@@ -175,7 +176,7 @@ export default function PillionRide() {
           )}
         </button>
         <p className="text-sm text-muted-foreground">
-          {!isConnected ? 'Tap to join voice' : isMuted ? 'Muted · tap to talk' : 'Live · tap to mute'}
+          {!isConnected ? tr("Tap to join voice") : isMuted ? tr("Muted · tap to talk") : tr("Live · tap to mute")}
         </p>
         {others.length > 0 && (
           <div className="flex flex-wrap justify-center gap-1.5 max-w-sm">
@@ -197,7 +198,7 @@ export default function PillionRide() {
       {/* Wave + reactions */}
       <div className="space-y-3">
         <Button onClick={() => react(WAVE)} className="w-full h-14 text-lg font-semibold">
-          <span className="text-2xl mr-2">{WAVE}</span> Wave
+          <span className="text-2xl mr-2">{WAVE}</span>{" "}{tr("Wave")}
         </Button>
         <div className="grid grid-cols-4 gap-2">
           {REACTIONS.map((r) => (
@@ -231,11 +232,11 @@ export default function PillionRide() {
           )}
         >
           <AlertTriangle className="w-5 h-5 mr-2" />
-          {hasPendingRescue ? 'Rescue sent · tap to cancel' : confirmRescue ? 'Tap again to alert the convoy' : 'Request rescue'}
+          {hasPendingRescue ? tr("Rescue sent · tap to cancel") : confirmRescue ? tr("Tap again to alert the convoy") : tr("Request rescue")}
         </Button>
         <Button onClick={handleLeave} variant="ghost" className="w-full h-11 text-muted-foreground">
           <LogOut className="w-4 h-4 mr-2" />
-          {confirmLeave ? 'Tap again to leave the convoy' : 'Leave convoy'}
+          {confirmLeave ? tr("Tap again to leave the convoy") : tr("Leave convoy")}
         </Button>
       </div>
 
@@ -248,15 +249,15 @@ export default function PillionRide() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Headphones className="w-4 h-4 text-accent" />
-                <h3 className="font-semibold text-sm">Voice Chat Audio</h3>
+                <h3 className="font-semibold text-sm">{tr("Voice Chat Audio")}</h3>
               </div>
-              <button onClick={() => setShowAudio(false)} className="p-1 hover:bg-muted rounded-lg transition-colors" aria-label="Close">
+              <button onClick={() => setShowAudio(false)} className="p-1 hover:bg-muted rounded-lg transition-colors" aria-label={tr("Close")}>
                 <X className="w-4 h-4" />
               </button>
             </div>
             <AudioDeviceSelector compact />
             <Button onClick={() => setShowAudio(false)} className="w-full mt-4" size="sm">
-              Done
+              {tr("Done")}
             </Button>
           </div>
         </div>

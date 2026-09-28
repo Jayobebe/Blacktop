@@ -9,6 +9,7 @@ import { useRadioOverlay, closeRadioOverlay } from '../hooks/useRadioOverlay';
 import { getRadioIcon, stationHsl, trackTitle, formatClock } from '../lib/stationVisuals';
 import { pickWithInput } from '../lib/audioFiles';
 import { StationManager } from './StationManager';
+import { tr } from '@/lib/i18n';
 
 /**
  * GTA-style radio dial: stations sit around a wheel, the active one locks to
@@ -46,7 +47,7 @@ export function RadioOverlay() {
     const { tracks } = await pickWithInput();
     if (!tracks.length) return;
     await updateStation(station.id, { tracks });
-    toast.success('Station reloaded from your files');
+    toast.success(tr("Station reloaded from your files"));
     void playStation({ ...station, tracks });
   };
 
@@ -54,11 +55,11 @@ export function RadioOverlay() {
   return createPortal(
     <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-top safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-4 landscape:pt-2 landscape:px-6 shrink-0">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">Blacktop Radio</p>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Blacktop Radio")}</p>
         <button
           type="button"
           onClick={closeRadioOverlay}
-          aria-label="Close radio"
+          aria-label={tr("Close radio")}
           className="w-9 h-9 landscape:w-8 landscape:h-8 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
         >
           <X className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
@@ -69,14 +70,14 @@ export function RadioOverlay() {
         {stations.length === 0 ? (
           <div className="text-center max-w-xs space-y-3">
             <p className="text-sm text-muted-foreground">
-              No stations yet. Build one from the music already on your device.
+              {tr("No stations yet. Build one from the music already on your device.")}
             </p>
             <button
               type="button"
               onClick={() => setShowManager(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-accent text-accent text-sm font-semibold"
             >
-              <Plus className="w-4 h-4" /> Add Station
+              <Plus className="w-4 h-4" />{" "}{tr("Add Station")}
             </button>
           </div>
         ) : (
@@ -101,7 +102,7 @@ export function RadioOverlay() {
                       key={station.id}
                       type="button"
                       onClick={() => void playStation(station)}
-                      aria-label={`Play ${station.name}`}
+                      aria-label={tr("Play {0}", [station.name])}
                       aria-pressed={isActive}
                       className="absolute left-1/2 top-1/2 flex flex-col items-center gap-1"
                       style={{
@@ -132,8 +133,8 @@ export function RadioOverlay() {
 
               {/* Hub */}
               <div className="absolute inset-[31%] rounded-full bg-card border border-border flex flex-col items-center justify-center text-center px-2">
-                <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Station</p>
-                <p className="text-sm font-bold truncate max-w-full">{player.stationName || 'Off air'}</p>
+                <p className="text-[9px] uppercase tracking-widest text-muted-foreground">{tr("Station")}</p>
+                <p className="text-sm font-bold truncate max-w-full">{player.stationName || tr("Off air")}</p>
               </div>
             </div>
 
@@ -146,7 +147,7 @@ export function RadioOverlay() {
                   onClick={handleReselect}
                   className="w-full flex items-center justify-center gap-2 text-xs text-warning border border-warning/50 rounded-lg py-2"
                 >
-                  <FolderOpen className="w-3.5 h-3.5" /> Please reselect your files for this station
+                  <FolderOpen className="w-3.5 h-3.5" />{" "}{tr("Please reselect your files for this station")}
                 </button>
               )}
               <input
@@ -156,7 +157,7 @@ export function RadioOverlay() {
                 step={0.5}
                 value={Math.min(player.position, player.duration || 0)}
                 onChange={(e) => seek(Number(e.target.value))}
-                aria-label="Track position"
+                aria-label={tr("Track position")}
                 className="w-full accent-[hsl(var(--accent))]"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -165,18 +166,18 @@ export function RadioOverlay() {
               </div>
 
               <div className="flex items-center justify-center gap-6 landscape:gap-4 pt-1">
-                <button type="button" onClick={() => void previous()} aria-label="Previous track" className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+                <button type="button" onClick={() => void previous()} aria-label={tr("Previous track")} className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
                   <SkipBack className="w-5 h-5 landscape:w-4 landscape:h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => void toggle()}
-                  aria-label={player.isPlaying ? 'Pause' : 'Play'}
+                  aria-label={player.isPlaying ? tr("Pause") : tr("Play")}
                   className="w-16 h-16 landscape:w-12 landscape:h-12 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-glow"
                 >
                   {player.isPlaying ? <Pause className="w-7 h-7 landscape:w-5 landscape:h-5" /> : <Play className="w-7 h-7 landscape:w-5 landscape:h-5 ml-0.5" />}
                 </button>
-                <button type="button" onClick={() => void next()} aria-label="Next track" className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+                <button type="button" onClick={() => void next()} aria-label={tr("Next track")} className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
                   <SkipForward className="w-5 h-5 landscape:w-4 landscape:h-4" />
                 </button>
               </div>
@@ -186,7 +187,7 @@ export function RadioOverlay() {
                 onClick={() => setShowManager(true)}
                 className="w-full mt-2 landscape:mt-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
               >
-                Manage stations
+                {tr("Manage stations")}
               </button>
             </div>
           </>

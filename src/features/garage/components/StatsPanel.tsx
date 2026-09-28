@@ -1,6 +1,7 @@
 import { useSettings } from '@/features/settings';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { BikeStats } from '../hooks/useBikeStats';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   stats: BikeStats;
@@ -12,24 +13,24 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
 
   const items = [
     {
-      label: 'On this vehicle',
+      label: tr("On this vehicle"),
       value: formatDistance(stats.totalDistanceMi, settings.distanceUnit),
       unit: getDistanceLabel(settings.distanceUnit),
     },
     {
-      label: 'Top Speed',
+      label: tr("Top Speed"),
       value: formatSpeed(stats.topSpeedMph, settings.speedUnit),
       unit: getSpeedLabel(settings.speedUnit),
     },
     {
-      label: 'Max Lean',
+      label: tr("Max Lean"),
       value: Math.round(Math.max(stats.maxLeanLeft, stats.maxLeanRight)),
       unit: '°',
     },
-    { label: 'Rides', value: stats.totalRides, unit: null },
-    { label: 'Time', value: formatDuration(stats.totalDurationSec), unit: null },
+    { label: tr("Rides"), value: stats.totalRides, unit: null },
+    { label: tr("Time"), value: formatDuration(stats.totalDurationSec), unit: null },
     {
-      label: 'Max G',
+      label: tr("Max G"),
       value: stats.maxGForce > 0 ? stats.maxGForce.toFixed(1) : '—',
       unit: stats.maxGForce > 0 ? 'G' : null,
     },

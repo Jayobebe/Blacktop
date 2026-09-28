@@ -9,6 +9,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { PageHeader } from '@/components/PageHeader';
 import { setRideRole, type RideRole } from '@/features/pillion';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 export default function JoinConvoy() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function JoinConvoy() {
   const handleJoin = async (codeToJoin?: string) => {
     const joinCode = codeToJoin || code;
     if (joinCode.length !== 6) {
-      toast.error('Please enter a valid 6-character code');
+      toast.error(tr("Please enter a valid 6-character code"));
       return;
     }
 
@@ -39,7 +40,7 @@ export default function JoinConvoy() {
       const success = await joinConvoy(joinCode);
       if (success) {
         setRideRole(role);
-        toast.success('Joined convoy successfully');
+        toast.success(tr("Joined convoy successfully"));
         navigate('/lobby');
       }
     } finally {
@@ -69,7 +70,7 @@ export default function JoinConvoy() {
           if (scannedCode.length === 6) {
             stopScanner();
             setCode(scannedCode);
-            toast.success('Code scanned!');
+            toast.success(tr("Code scanned!"));
             // Auto-join after successful scan
             handleJoin(scannedCode);
           }
@@ -80,7 +81,7 @@ export default function JoinConvoy() {
       );
     } catch (err) {
       console.error('[JoinConvoy] Scanner error:', err);
-      toast.error('Could not access camera', { description: 'Please check camera permissions' });
+      toast.error(tr("Could not access camera"), { description: tr("Please check camera permissions") });
       setShowScanner(false);
     }
   };
@@ -110,13 +111,13 @@ export default function JoinConvoy() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <PageHeader title="Join Convoy" backTo="/" />
+      <PageHeader title={tr("Join Convoy")} backTo="/" />
 
       {/* QR Scanner Overlay */}
       {showScanner && (
         <div className="fixed inset-0 z-50 bg-background flex flex-col">
           <div className="p-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Scan Convoy QR Code</h2>
+            <h2 className="text-lg font-semibold">{tr("Scan Convoy QR Code")}</h2>
             <button
               onClick={stopScanner}
               className="p-2 rounded-lg bg-secondary hover:bg-muted transition-colors"
@@ -131,7 +132,7 @@ export default function JoinConvoy() {
             />
           </div>
           <p className="text-center text-muted-foreground text-sm pb-8">
-            Point your camera at a convoy QR code
+            {tr("Point your camera at a convoy QR code")}
           </p>
         </div>
       )}
@@ -142,9 +143,9 @@ export default function JoinConvoy() {
           <div className="w-20 h-20 landscape:w-16 landscape:h-16 rounded-full bg-secondary flex items-center justify-center mb-4 landscape:mb-2">
             <UserPlus className="w-10 h-10 landscape:w-8 landscape:h-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg landscape:text-base font-display font-semibold mb-1">Enter Convoy Code</h2>
+          <h2 className="text-lg landscape:text-base font-display font-semibold mb-1">{tr("Enter Convoy Code")}</h2>
           <p className="text-muted-foreground text-center landscape:text-left text-sm landscape:text-xs max-w-xs">
-            Ask your convoy leader for the 6-character code or scan the QR
+            {tr("Ask your convoy leader for the 6-character code or scan the QR")}
           </p>
         </div>
 
@@ -152,10 +153,10 @@ export default function JoinConvoy() {
         <div className="w-full max-w-xs space-y-3 landscape:flex-1 landscape:max-w-xs">
           {/* Riding the bike, or on the back of it */}
           <div>
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-card border border-border" role="radiogroup" aria-label="Joining as">
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-card border border-border" role="radiogroup" aria-label={tr("Joining as")}>
               {([
-                { id: 'operator', label: 'Operator', Icon: Bike },
-                { id: 'pillion', label: 'Passenger', Icon: UserRound },
+                { id: 'operator', label: tr("Operator"), Icon: Bike },
+                { id: 'pillion', label: tr("Passenger"), Icon: UserRound },
               ] as const).map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -175,8 +176,8 @@ export default function JoinConvoy() {
             </div>
             <p className="text-[11px] text-muted-foreground text-center mt-1.5">
               {role === 'pillion'
-                ? 'On the back: voice, waves and rescue alerts. No map or stats.'
-                : 'Riding: map, stats and the full ride screen.'}
+                ? tr("On the back: voice, waves and rescue alerts. No map or stats.")
+                : tr("Riding: map, stats and the full ride screen.")}
             </p>
           </div>
 
@@ -184,7 +185,7 @@ export default function JoinConvoy() {
             type="text"
             value={code}
             onChange={handleCodeChange}
-            placeholder="XXXXXX"
+            placeholder={tr("XXXXXX")}
             className="h-14 landscape:h-12 text-center font-mono text-3xl landscape:text-2xl tracking-widest uppercase bg-card border-2 focus:border-accent"
             maxLength={6}
             autoFocus
@@ -196,7 +197,7 @@ export default function JoinConvoy() {
               disabled={code.length !== 6 || isJoining}
               className="flex-1 h-12 landscape:h-10 text-base landscape:text-sm font-semibold touch-target"
             >
-              {isJoining ? 'Joining...' : 'Join Convoy'}
+              {isJoining ? tr("Joining...") : tr("Join Convoy")}
             </Button>
             
             <Button

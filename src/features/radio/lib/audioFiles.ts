@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- File System Access
    and Media Session APIs aren't in the TS lib for this target. */
 import type { RadioTrack } from '../types';
+import { tr } from '@/lib/i18n';
 
 /**
  * Files picked through a plain <input type="file"> can't be persisted, so we
@@ -77,7 +78,7 @@ export async function pickAudioFiles(): Promise<PickResult> {
     try {
       const handles: FileSystemFileHandle[] = await (window as any).showOpenFilePicker({
         multiple: true,
-        types: [{ description: 'Audio', accept: { 'audio/*': ['.mp3', '.m4a', '.aac', '.wav', '.ogg', '.opus', '.flac'] } }],
+        types: [{ description: tr("Audio"), accept: { 'audio/*': ['.mp3', '.m4a', '.aac', '.wav', '.ogg', '.opus', '.flac'] } }],
       });
       const tracks: RadioTrack[] = [];
       for (const handle of handles) {

@@ -1,4 +1,5 @@
 import type { ExperienceTerms } from './terms';
+import { tr } from '@/lib/i18n';
 
 export type SetupStep = 'vehicle' | 'mode' | 'style' | 'care' | 'preview';
 
@@ -8,14 +9,14 @@ export const SETUP_STEPS: SetupStep[] = ['vehicle', 'mode', 'style', 'care', 'pr
 export function stepCopy(step: SetupStep, t: ExperienceTerms) {
   switch (step) {
     case 'vehicle':
-      return { eyebrow: 'Your machine', title: 'What do you ride?', subtitle: 'Pick everything you use. The first one is your main.' };
+      return { eyebrow: 'Your machine', title: tr("What do you ride?"), subtitle: tr("Pick everything you use. The first one is your main.") };
     case 'mode':
-      return { eyebrow: 'Your crew', title: "Who's coming with you?", subtitle: 'This sets up your Home screen.' };
+      return { eyebrow: 'Your crew', title: tr("Who's coming with you?"), subtitle: tr("This sets up your Home screen.") };
     case 'style':
-      return { eyebrow: 'Your style', title: `What's a typical ${t.ride}?`, subtitle: "We'll ask about the things that matter most to you first." };
+      return { eyebrow: 'Your style', title: tr("What's a typical {0}?", [t.ride]), subtitle: tr("We'll ask about the things that matter most to you first.") };
     case 'care':
-      return { eyebrow: 'Your priorities', title: 'Make it yours.', subtitle: 'Anything you skip is hidden, not deleted. Bring it back any time in Settings.' };
+      return { eyebrow: 'Your priorities', title: tr("Make it yours."), subtitle: tr("Anything you skip is hidden, not deleted. Bring it back any time in Settings.") };
     case 'preview':
-      return { eyebrow: 'Your Blacktop', title: `Built around how you ${t.ride}.`, subtitle: 'Change any of this later in Settings.' };
+      return { eyebrow: 'Your Blacktop', title: tr("Built around how you {0}.", [t.ride]), subtitle: tr("Change any of this later in Settings.") };
   }
 }

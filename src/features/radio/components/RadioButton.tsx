@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { useRadioPlayer, toggle } from '../hooks/useRadioPlayer';
 import { openRadioOverlay } from '../hooks/useRadioOverlay';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   /** Ride = large circular control; map = slim toolbar square. */
@@ -57,8 +58,8 @@ export function RadioButton({ variant = 'ride', className }: Props) {
       onPointerCancel={endHold}
       onContextMenu={(e) => e.preventDefault()}
       onClick={handleClick}
-      aria-label={active ? 'Pause radio (hold for stations)' : 'Blacktop Radio (hold for stations)'}
-      title="Blacktop Radio — hold for stations"
+      aria-label={active ? tr("Pause radio (hold for stations)") : tr("Blacktop Radio (hold for stations)")}
+      title={tr("Blacktop Radio — hold for stations")}
       className={cn(
         variant === 'ride'
           ? 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target'

@@ -21,6 +21,7 @@ import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../li
 import { useSettings } from '@/features/settings';
 import { useExperience, refuelCategory } from '@/features/experience';
 import { formatDistance, getDistanceLabel } from '@/lib/format';
+import { tr } from '@/lib/i18n';
 
 // km → miles for formatDistance (which expects miles input).
 const KM_TO_MILES = 0.621371;
@@ -278,7 +279,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             onChange={(e) => handleSearch(e.target.value)}
             onFocus={() => setShowResults(true)}
             autoFocus={autoFocus}
-            placeholder="Search destination..."
+            placeholder={tr("Search destination...")}
             className="pl-10 bg-card/95 border-border h-11 short:h-9 text-sm shadow-lg backdrop-blur"
           />
         </div>
@@ -313,7 +314,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             <>
               <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
                 <Bookmark className="w-3.5 h-3.5" />
-                Saved places
+                {tr("Saved places")}
               </div>
               {savedPOIs.map((poi, index) => {
                 const result = poiToSearchResult(poi);
@@ -331,7 +332,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{poi.name}</p>
-                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>Saved location</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>{tr("Saved location")}</p>
                     </div>
                     {distanceText(poi.lat, poi.lng) && (
                       <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">
@@ -342,7 +343,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                     <button
                       onClick={(e) => handleDeletePOI(e, result.id)}
                       className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all flex-shrink-0"
-                      aria-label={`Remove ${poi.name}`}
+                      aria-label={tr("Remove {0}", [poi.name])}
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -357,7 +358,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             <>
               <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
                 <Clock className="w-3.5 h-3.5" />
-                Recent destinations
+                {tr("Recent destinations")}
               </div>
               {recentLocations.map((result, index) => {
                 const removing = removingRecent === result.id;
@@ -376,7 +377,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                         'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
                         removing ? 'bg-destructive/15' : 'bg-accent/10 hover:bg-accent/20',
                       )}
-                      aria-label={removing ? `Keep ${result.name}` : `Remove ${result.name} from recent destinations`}
+                      aria-label={removing ? tr("Keep {0}", [result.name]) : tr("Remove {0} from recent destinations", [result.name])}
                     >
                       {removing ? <X className="w-3.5 h-3.5 text-destructive" /> : <Clock className="w-3.5 h-3.5 text-muted-foreground" />}
                     </button>
@@ -393,7 +394,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                         }}
                         className="px-2.5 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-xs font-semibold flex-shrink-0"
                       >
-                        Remove
+                        {tr("Remove")}
                       </button>
                     ) : (
                       distanceText(result.lat, result.lng) && (
@@ -413,11 +414,11 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             isSearching ? (
               <div className="p-5 text-center text-muted-foreground">
                 <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1.5" />
-                <span className="text-sm">Finding places...</span>
+                <span className="text-sm">{tr("Finding places...")}</span>
               </div>
             ) : displayResults.length === 0 ? (
               <div className="p-5 text-center text-muted-foreground text-sm">
-                {cardsMode ? 'No cards dropped nearby' : 'No results found'}
+                {cardsMode ? tr("No cards dropped nearby") : tr("No results found")}
               </div>
             ) : (
               displayResults.map((result, index) => {

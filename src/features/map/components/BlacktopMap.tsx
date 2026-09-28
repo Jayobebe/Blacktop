@@ -111,6 +111,7 @@ import {
   type ChallengeResult,
 } from "@/lib/challengeRun";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
+import { tr } from '@/lib/i18n';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -375,7 +376,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       // Navigating on the home map counts as using it.
       if (guidingRef.current) lastInteractionAtRef.current = Date.now();
       if (Date.now() - lastInteractionAtRef.current >= HOME_MAP_INACTIVITY_MS) {
-        toast.info("Map closed due to inactivity");
+        toast.info(tr("Map closed due to inactivity"));
         closeBlacktopMap();
       }
     }, 30_000); // check every 30 s
@@ -966,7 +967,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     const speed = routeCameras.filter((c) => c.type === "speed").length;
     const anpr = routeCameras.length - speed;
     const parts = [speed > 0 ? `${speed} speed` : null, anpr > 0 ? `${anpr} ANPR` : null].filter(Boolean);
-    toast.warning(`${routeCameras.length} camera${routeCameras.length === 1 ? "" : "s"} on this route`, {
+    toast.warning(tr("{0} camera{1} on this route", [routeCameras.length, routeCameras.length === 1 ? "" : "s"]), {
       description: parts.join(" · "),
     });
   }, [destination, routeCameras, settings.trafficCamerasEnabled]);
@@ -1005,10 +1006,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       else pingAnprCamera();
       toast.warning(
         cam.type === "speed"
-          ? `Speed camera ahead${cam.maxspeed ? ` · ${cam.maxspeed}` : ""}`
+          ? tr("Speed camera ahead{0}", [cam.maxspeed ? ` · ${cam.maxspeed}` : ""])
           : cam.type === "alpr"
-            ? "ANPR camera ahead"
-            : "Surveillance camera ahead",
+            ? tr("ANPR camera ahead")
+            : tr("Surveillance camera ahead"),
       );
     }
   }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
@@ -1123,7 +1124,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   useEffect(() => {
     if (!droppingCard) return;
     if (!userLocation) {
-      toast.error("Need your location to drop a card");
+      toast.error(tr("Need your location to drop a card"));
       setDroppingCard(false);
       return;
     }
@@ -1147,7 +1148,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         photoPath,
       });
       if (!withChallenge) {
-        toast.success("Card dropped", { description: "Riders nearby can now scan it." });
+        toast.success(tr("Card dropped"), { description: tr("Riders nearby can now scan it.") });
         return;
       }
       startChallengeRun({
@@ -1164,9 +1165,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         offRouteSince: null,
         voided: false,
       });
-      toast.success("Card dropped", { description: "Ready up when you want the clock to start." });
+      toast.success(tr("Card dropped"), { description: tr("Ready up when you want the clock to start.") });
     } catch {
-      toast.error("Couldn't drop that card");
+      toast.error(tr("Couldn't drop that card"));
     }
   };
 
@@ -1186,7 +1187,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const finishSettingChallenge = async () => {
     if (!challengeRun || challengeRun.mode !== "setting") return;
     if (!userLocation) {
-      toast.error("Need your location to set the finish line");
+      toast.error(tr("Need your location to set the finish line"));
       return;
     }
     const timeSec = Math.max(
@@ -1213,11 +1214,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         timeSec,
         route,
       });
-      toast.success("Challenge set", {
-        description: `Time to beat: ${formatChallengeTime(timeSec)}`,
+      toast.success(tr("Challenge set"), {
+        description: tr("Time to beat: {0}", [formatChallengeTime(timeSec)]),
       });
     } catch {
-      toast.error("Couldn't save that challenge");
+      toast.error(tr("Couldn't save that challenge"));
     }
     clearChallengeRun();
     await endRide();
@@ -1272,16 +1273,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         timeSec,
         targetSec: run.targetSec ?? timeSec,
       });
-      toast.success("Challenge beaten", {
+      toast.success(tr("Challenge beaten"), {
         description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)}${ownChallenge ? "" : " · 3x Speed Demon"} · ${
           outcome === "new" ? "Spectre card unlocked" : outcome === "improved" ? "Spectre time improved" : "Spectre already yours"
         }`,
       });
     } else if (result === "void") {
-      toast.error("Challenge voided", { description: `You strayed off the route.${ownChallenge ? "" : " 1x Fallback."}` });
+      toast.error(tr("Challenge voided"), { description: tr("You strayed off the route.{0}", [ownChallenge ? "" : " 1x Fallback."]) });
     } else {
-      toast("Challenge lost", {
-        description: `${formatChallengeTime(timeSec)} vs ${formatChallengeTime(run.targetSec ?? 0)}${ownChallenge ? "" : " · 1x Fallback"}`,
+      toast(tr("Challenge lost"), {
+        description: tr("{0} vs {1}{2}", [formatChallengeTime(timeSec), formatChallengeTime(run.targetSec ?? 0), ownChallenge ? "" : " · 1x Fallback"]),
       });
     }
     await endRide();
@@ -1291,7 +1292,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const takeChallenge = (drop: CardDrop) => {
     if (!drop.challenge) return;
     if (!userLocation || metersBetween(userLocation, drop) > COLLECT_RADIUS_M) {
-      toast.error("Get closer to the card to take its challenge");
+      toast.error(tr("Get closer to the card to take its challenge"));
       return;
     }
     setSelectedStack(null);
@@ -1471,10 +1472,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       if (metersBetween(userLocation, drop) > cardPingMeters) continue;
       pingedDropsRef.current.add(drop.id);
       pingAnprCamera();
-      toast("Card nearby", {
-        description: `${drop.ownerName}'s ${drop.vehicleName} — tap to go for it`,
+      toast(tr("Card nearby"), {
+        description: tr("{0}'s {1} — tap to go for it", [drop.ownerName, drop.vehicleName]),
         action: {
-          label: "Go",
+          label: tr("Go"),
           onClick: () =>
             setDestination({
               lat: drop.lat,
@@ -1488,11 +1489,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   const handleCollectDrop = async (drop: CardDrop, silent = false) => {
     if (!userLocation) {
-      toast.error("Need your location to scan this card");
+      toast.error(tr("Need your location to scan this card"));
       return false;
     }
     if (rideState.isActive && rideState.currentSpeed > 3) {
-      toast.warning("Stop safely before scanning a card");
+      toast.warning(tr("Stop safely before scanning a card"));
       return false;
     }
     try {
@@ -1504,11 +1505,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       addCard(dropToPayload(collected));
       if (!silent) {
         setSelectedStack(null);
-        toast.success("Card collected", { description: "Added to your vault." });
+        toast.success(tr("Card collected"), { description: tr("Added to your vault.") });
       }
       return true;
     } catch {
-      if (!silent) toast.error(`Get within ${COLLECT_RADIUS_M}m of the card to scan it`);
+      if (!silent) toast.error(tr("Get within {0}m of the card to scan it", [COLLECT_RADIUS_M]));
       return false;
     }
   };
@@ -1522,11 +1523,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
     setSelectedStack(null);
     if (got > 0) {
-      toast.success(`${got} card${got > 1 ? "s" : ""} collected`, {
-        description: "Added to your vault.",
+      toast.success(tr("{0} card{1} collected", [got, got > 1 ? "s" : ""]), {
+        description: tr("Added to your vault."),
       });
     } else {
-      toast.error(`Get within ${COLLECT_RADIUS_M}m of the hot-spot to scan these cards`);
+      toast.error(tr("Get within {0}m of the hot-spot to scan these cards", [COLLECT_RADIUS_M]));
     }
   };
 
@@ -1812,7 +1813,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     const soloIndex = index - (weatherVia ? 1 : 0);
     if (isSolo && soloIndex >= 0) {
       removeSoloStopAt(soloIndex);
-      if (stop.name) toast.success(`Reached ${stop.name}`);
+      if (stop.name) toast.success(tr("Reached {0}", [stop.name]));
     }
   };
 
@@ -1859,14 +1860,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
       const worst = weather.worst;
       const minsIn = Math.round((worst.etaMs - Date.now()) / 60000);
-      toast.warning(`Heavy rain on your route${minsIn > 0 ? ` in ~${minsIn} min` : ""}`, {
-        description: `${worst.mm.toFixed(1)} mm/h forecast where you'll be. Want a route around it?`,
+      toast.warning(tr("Heavy rain on your route{0}", [minsIn > 0 ? ` in ~${minsIn} min` : ""]), {
+        description: tr("{0} mm/h forecast where you'll be. Want a route around it?", [worst.mm.toFixed(1)]),
         duration: 12000,
         action: {
-          label: "Dry route",
+          label: tr("Dry route"),
           onClick: async () => {
             if (!userLocation) return;
-            toast.loading("Finding a drier line…", { id: "dry-route" });
+            toast.loading(tr("Finding a drier line…"), { id: "dry-route" });
             const dry = await findDryRoute(
               userLocation,
               { lat: destination.lat, lng: destination.lng },
@@ -1875,12 +1876,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             );
             toast.dismiss("dry-route");
             if (!dry) {
-              toast.error("No clearer route found from here");
+              toast.error(tr("No clearer route found from here"));
               return;
             }
             setWeatherVia(dry.via);
-            toast.success(dry.worstMm < HEAVY_MM ? "Rerouted around the weather" : "Best available route applied", {
-              description: `Worst rain on the new line: ${dry.worstMm.toFixed(1)} mm/h`,
+            toast.success(dry.worstMm < HEAVY_MM ? tr("Rerouted around the weather") : tr("Best available route applied"), {
+              description: tr("Worst rain on the new line: {0} mm/h", [dry.worstMm.toFixed(1)]),
             });
           },
         },
@@ -2178,9 +2179,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       setDestination(null);
       setRoute(null);
       if (!rideState.isActive) clearMapDestination();
-      toast("Navigation ended");
+      toast(tr("Navigation ended"));
     } else {
-      toast("Directions off", { description: "The route stays on the map for your convoy." });
+      toast(tr("Directions off"), { description: tr("The route stays on the map for your convoy.") });
     }
   };
 
@@ -2192,7 +2193,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
     setDestination(null);
     setRoute(null);
-    toast.success("Route finished");
+    toast.success(tr("Route finished"));
   };
 
   const incompleteWaypoints = waypoints.filter((w) => !w.isCompleted);
@@ -2209,7 +2210,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       <div className="absolute inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="w-5 h-5 animate-spin" />
-          Refreshing map…
+          {tr("Refreshing map…")}
         </div>
       </div>
     );
@@ -2246,7 +2247,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 canSkipWaypoint
                   ? async () => {
                       await completeWaypoint(nextWaypoint!.id);
-                      toast.success("Stop skipped");
+                      toast.success(tr("Stop skipped"));
                     }
                   : undefined
               }
@@ -2284,14 +2285,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 <p className="flex-1 min-w-0 truncate">
                   {rescueTarget.userId === user?.id ? (
                     <>
-                      <span className="font-semibold">Rescue requested</span> · your convoy has your location
+                      <span className="font-semibold">{tr("Rescue requested")}</span>{" "}{tr("· your convoy has your location")}
                     </>
                   ) : (
                     <>
-                      <span className="font-semibold">{rescueTarget.userName || "A rider"} needs help</span>
+                      <span className="font-semibold">{rescueTarget.userName || tr("A rider")}{" "}{tr("needs help")}</span>
                       {rescueRoute
                         ? ` · ${formatDistance(metersToMiles(rescueRoute.distanceMeters), settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)} · ${formatDuration(Math.round(rescueRoute.durationSeconds))}`
-                        : " · route on map"}
+                        : tr(" · route on map")}
                     </>
                   )}
                 </p>
@@ -2317,7 +2318,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             type="button"
             onClick={() => setBasemap("dark")}
             aria-pressed={basemap === "dark"}
-            aria-label="Dark map"
+            aria-label={tr("Dark map")}
             className={cn(
               "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "dark" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2330,7 +2331,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             type="button"
             onClick={() => setBasemap("satellite")}
             aria-pressed={basemap === "satellite"}
-            aria-label="Satellite view"
+            aria-label={tr("Satellite view")}
             className={cn(
               "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "satellite" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2343,7 +2344,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             type="button"
             onClick={() => setThreeD((v) => !v)}
             aria-pressed={threeD}
-            aria-label="3D terrain and buildings"
+            aria-label={tr("3D terrain and buildings")}
             className={cn(
               "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               threeD ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2359,7 +2360,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               setShowLoopPlanner((v) => !v);
             }}
             aria-pressed={showLoopPlanner}
-            aria-label="Plan a loop ride"
+            aria-label={tr("Plan a loop ride")}
             className={cn(
               "w-9 h-9 flex items-center justify-center transition-colors",
               showLoopPlanner ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2375,7 +2376,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               setShowOfflinePacks((v) => !v);
             }}
             aria-pressed={showOfflinePacks}
-            aria-label="Offline maps"
+            aria-label={tr("Offline maps")}
             className={cn(
               "w-9 h-9 flex items-center justify-center transition-colors",
               showOfflinePacks ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2393,7 +2394,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 type="button"
                 onClick={() => setDroppingCard((v) => !v)}
                 aria-pressed={droppingCard}
-                aria-label="Drop a trading card on the map"
+                aria-label={tr("Drop a trading card on the map")}
                 className={cn(
                   "w-9 h-9 flex items-center justify-center transition-colors",
                   droppingCard ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2410,18 +2411,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         <div>
           {showSaveUI ? (
             <div className="absolute top-full mt-2 left-0 bg-card/95 border border-border rounded-2xl shadow-2xl backdrop-blur p-3 space-y-2 animate-slide-up w-64">
-              <p className="text-xs font-semibold text-foreground">Name this spot</p>
+              <p className="text-xs font-semibold text-foreground">{tr("Name this spot")}</p>
               <Input
                 autoFocus
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
-                placeholder="e.g. Home, Camp spot…"
+                placeholder={tr("e.g. Home, Camp spot…")}
                 className="h-9 text-sm bg-background/60"
                 maxLength={50}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && saveName.trim() && userLocation) {
                     savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
-                    toast.success(`"${saveName.trim()}" saved`);
+                    toast.success(tr("\"{0}\" saved", [saveName.trim()]));
                     setSaveName("");
                     setShowSaveUI(false);
                   }
@@ -2438,13 +2439,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   onClick={() => {
                     if (!saveName.trim() || !userLocation) return;
                     savePOI({ name: saveName.trim(), lat: userLocation.lat, lng: userLocation.lng });
-                    toast.success(`"${saveName.trim()}" saved`);
+                    toast.success(tr("\"{0}\" saved", [saveName.trim()]));
                     setSaveName("");
                     setShowSaveUI(false);
                   }}
                   className="flex-1 h-8 text-xs"
                 >
-                  Save
+                  {tr("Save")}
                 </Button>
                 <Button
                   size="sm"
@@ -2455,7 +2456,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   }}
                   className="h-8 text-xs"
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </Button>
               </div>
             </div>
@@ -2463,14 +2464,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             <button
               onClick={() => {
                 if (!userLocation) {
-                  toast.info("Waiting for GPS fix…");
+                  toast.info(tr("Waiting for GPS fix…"));
                   return;
                 }
                 setSaveName("");
                 setShowSaveUI(true);
               }}
               className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
-              aria-label="Save current location as a POI"
+              aria-label={tr("Save current location as a POI")}
             >
               <BookmarkPlus className="w-5 h-5" />
             </button>
@@ -2486,10 +2487,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs text-center">
           {pendingDrop ? (
             <>
-              <p className="font-semibold">Place card here?</p>
+              <p className="font-semibold">{tr("Place card here?")}</p>
               <div className="flex gap-2 mt-2">
                 <Button size="sm" className="h-7 px-4 text-xs" onClick={() => confirmDropCard(false)}>
-                  Yes
+                  {tr("Yes")}
                 </Button>
                 <Button
                   size="sm"
@@ -2497,7 +2498,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   className="h-7 px-3 text-xs"
                   onClick={() => confirmDropCard(true)}
                 >
-                  Yes + Challenge
+                  {tr("Yes + Challenge")}
                 </Button>
                 <Button
                   size="sm"
@@ -2508,12 +2509,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     setDroppingCard(false);
                   }}
                 >
-                  No
+                  {tr("No")}
                 </Button>
               </div>
             </>
           ) : (
-            <>Finding your spot…</>
+            <>{tr("Finding your spot…")}</>
           )}
         </div>
       )}
@@ -2522,11 +2523,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/95 shadow-2xl backdrop-blur px-4 py-3 text-center">
           {challengeRun.startsAt == null ? (
             <>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Setting challenge</p>
-              <p className="mt-1 text-sm font-bold">Card dropped — this is your start line</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{tr("Setting challenge")}</p>
+              <p className="mt-1 text-sm font-bold">{tr("Card dropped — this is your start line")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Ready up for a 5-second countdown, then ride your route and hit Finish challenge. Five seconds are taken
-                off your time for the stop.
+                {tr("Ready up for a 5-second countdown, then ride your route and hit Finish challenge. Five seconds are taken off your time for the stop.")}
               </p>
               <div className="flex gap-2 mt-3">
                 <Button
@@ -2537,7 +2537,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     startRide(false);
                   }}
                 >
-                  Ready up
+                  {tr("Ready up")}
                 </Button>
                 <Button
                   size="sm"
@@ -2546,27 +2546,27 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   onClick={() => {
                     clearChallengeRun();
                     setPendingChallengeReceipt(null);
-                    toast("Challenge cancelled", { description: "Your card stays dropped without one." });
+                    toast(tr("Challenge cancelled"), { description: tr("Your card stays dropped without one.") });
                   }}
                 >
-                  Cancel
+                  {tr("Cancel")}
                 </Button>
               </div>
             </>
           ) : challengeCountdown > 0 ? (
             <>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {challengeRun.mode === "setting" ? "Setting challenge" : "Time attack"}
+                {challengeRun.mode === "setting" ? tr("Setting challenge") : tr("Time attack")}
               </p>
               <p className="text-5xl font-black tabular-nums text-accent leading-tight">{challengeCountdown}</p>
-              <p className="text-xs text-muted-foreground">Get ready…</p>
+              <p className="text-xs text-muted-foreground">{tr("Get ready…")}</p>
             </>
           ) : (
             <>
               <div className="flex items-center justify-center gap-2">
                 <Flag className="w-4 h-4 text-accent" />
                 <p className="text-sm font-bold truncate">
-                  {challengeRun.mode === "setting" ? "Setting your route" : `Beat ${challengeRun.ownerName}`}
+                  {challengeRun.mode === "setting" ? tr("Setting your route") : tr("Beat {0}", [challengeRun.ownerName])}
                 </p>
               </div>
               <p className="text-4xl font-black tabular-nums leading-tight">
@@ -2579,19 +2579,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     challengeElapsedSec < challengeRun.targetSec ? "text-[hsl(142_71%_45%)]" : "text-destructive",
                   )}
                 >
-                  Target {formatChallengeTime(challengeRun.targetSec)} ·{" "}
+                  {tr("Target")}{" "}{formatChallengeTime(challengeRun.targetSec)} ·{" "}
                   {formatDelta(challengeElapsedSec, challengeRun.targetSec)}
                 </p>
               )}
               {challengeRun.mode === "attempting" && challengeRun.offRouteSince != null && (
                 <p className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-destructive">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Off route — get back on or the run is voided
+                  <AlertTriangle className="w-3.5 h-3.5" />{" "}{tr("Off route — get back on or the run is voided")}
                 </p>
               )}
               <div className="flex gap-2 mt-2">
                 {challengeRun.mode === "setting" ? (
                   <Button size="sm" className="flex-1 h-8 text-xs" onClick={finishSettingChallenge}>
-                    Finish challenge
+                    {tr("Finish challenge")}
                   </Button>
                 ) : (
                   <Button
@@ -2600,7 +2600,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                     className="flex-1 h-8 text-xs"
                     onClick={() => finalizeAttempt("void", challengeElapsedSec)}
                   >
-                    Abandon run
+                    {tr("Abandon run")}
                   </Button>
                 )}
                 {challengeRun.mode === "setting" && (
@@ -2612,10 +2612,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                       clearChallengeRun();
                       setPendingChallengeReceipt(null);
                       await endRide();
-                      toast("Challenge cancelled", { description: "Your card stays dropped without one." });
+                      toast(tr("Challenge cancelled"), { description: tr("Your card stays dropped without one.") });
                     }}
                   >
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                 )}
               </div>
@@ -2644,7 +2644,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: "Loop finish" });
             setShowLoopPlanner(false);
             toast.success(
-              `Loop ready · ${formatDistance(metersToMiles(loop.distanceMeters), settings.distanceUnit)} · ${formatDuration(Math.round(loop.durationSeconds))}`,
+              tr("Loop ready · {0} · {1}", [formatDistance(metersToMiles(loop.distanceMeters), settings.distanceUnit), formatDuration(Math.round(loop.durationSeconds))]),
             );
           }}
         />
@@ -2663,11 +2663,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             {addingWaypoint ? (
               <div className="flex items-center gap-2 px-3 py-2.5 bg-card/95 border border-border rounded-xl shadow-xl backdrop-blur">
                 <Plus className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                <p className="flex-1 text-xs text-accent">Search for a stop above…</p>
+                <p className="flex-1 text-xs text-accent">{tr("Search for a stop above…")}</p>
                 <button
                   onClick={() => setAddingWaypoint(false)}
                   className="p-1 hover:bg-muted rounded transition-colors"
-                  aria-label="Cancel adding stop"
+                  aria-label={tr("Cancel adding stop")}
                 >
                   <X className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -2683,11 +2683,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                         <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
                           {i + 1}
                         </span>
-                        <p className="flex-1 truncate text-xs">{wp.name || "Stop"}</p>
+                        <p className="flex-1 truncate text-xs">{wp.name || tr("Stop")}</p>
                         <button
                           onClick={() => removeSoloStopAt(i)}
                           className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-                          aria-label={`Remove stop ${wp.name || i + 1}`}
+                          aria-label={tr("Remove stop {0}", [wp.name || i + 1])}
                         >
                           <X className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
@@ -2706,7 +2706,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                           <button
                             onClick={() => removeWaypoint(wp.id)}
                             className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-                            aria-label={`Remove stop ${wp.name}`}
+                            aria-label={tr("Remove stop {0}", [wp.name])}
                           >
                             <X className="w-3.5 h-3.5 text-muted-foreground" />
                           </button>
@@ -2718,10 +2718,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   <button
                     onClick={() => setAddingWaypoint(true)}
                     className="snap-start flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-card/95 border border-dashed border-accent/60 rounded-xl shadow-lg backdrop-blur text-xs text-accent hover:bg-accent/10 transition-colors"
-                    aria-label="Add stop"
+                    aria-label={tr("Add stop")}
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Stop
+                    {tr("Add Stop")}
                   </button>
                 )}
               </div>
@@ -2738,10 +2738,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               <Navigation className="w-4 h-4 text-accent" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate">{destination.name || "Destination"}</p>
+              <p className="font-semibold text-sm truncate">{destination.name || tr("Destination")}</p>
               {isRouting ? (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Finding route...
+                  <Loader2 className="w-3 h-3 animate-spin" />{" "}{tr("Finding route...")}
                 </p>
               ) : route ? (
                 <p className="text-xs text-muted-foreground">
@@ -2766,9 +2766,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   setGuiding(true);
                 }}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-bold transition-colors flex-shrink-0"
-                title="Start turn-by-turn directions"
+                title={tr("Start turn-by-turn directions")}
               >
-                Go
+                {tr("Go")}
               </button>
             )}
 
@@ -2777,23 +2777,23 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               <button
                 onClick={async () => {
                   await completeWaypoint(nextWaypoint!.id);
-                  toast.success("Stop skipped");
+                  toast.success(tr("Stop skipped"));
                 }}
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted hover:bg-secondary text-xs font-medium text-muted-foreground transition-colors flex-shrink-0"
-                title="Skip this stop and advance to the next"
+                title={tr("Skip this stop and advance to the next")}
               >
                 <SkipForward className="w-3.5 h-3.5" />
-                Skip
+                {tr("Skip")}
               </button>
             )}
             {!canSkipWaypoint && canFinishRoute && (
               <button
                 onClick={handleFinishRoute}
                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-accent/15 hover:bg-accent/25 text-xs font-semibold text-accent transition-colors flex-shrink-0"
-                title="Finish the route and clear the map"
+                title={tr("Finish the route and clear the map")}
               >
                 <Flag className="w-3.5 h-3.5" />
-                Finish
+                {tr("Finish")}
               </button>
             )}
             {!rideState.isActive && (
@@ -2805,8 +2805,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                   clearMapDestination();
                 }}
                 className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted hover:bg-destructive/15 hover:text-destructive text-muted-foreground transition-colors flex-shrink-0"
-                aria-label="Remove destination"
-                title="Remove destination"
+                aria-label={tr("Remove destination")}
+                title={tr("Remove destination")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2817,7 +2817,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         {/* Landscape (short:): the speed card sits bottom-left, credits beside it. */}
         <div className="flex flex-col items-center short:items-start gap-1.5">
           <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none short:hidden">
-            Weather: RainViewer
+            {tr("Weather: RainViewer")}
           </div>
 
           {/* Bottom-left action stack (Rescue above Report): beside the speed card in
@@ -2836,8 +2836,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                       ? "bg-[hsl(var(--burn))]/25 border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse"
                       : "bg-card/95 border-border text-warning hover:bg-warning/20",
                   )}
-                  aria-label={rescue.hasPending ? "Cancel rescue request" : "Request rescue"}
-                  title={rescue.hasPending ? "Cancel rescue request" : "Request rescue"}
+                  aria-label={rescue.hasPending ? tr("Cancel rescue request") : tr("Request rescue")}
+                  title={rescue.hasPending ? tr("Cancel rescue request") : tr("Request rescue")}
                 >
                   <AlertTriangle className="w-5 h-5" />
                 </button>
@@ -2890,7 +2890,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               <p className="font-semibold text-sm truncate">{pin.name}</p>
               <p className="text-xs text-muted-foreground truncate">
                 {pin.category}
-                {userLocation ? ` · ${formatDistance(metersToMiles(calculateDistance(userLocation.lat, userLocation.lng, pin.lat, pin.lng) * 1000), settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)} away` : ""}
+                {userLocation ? tr(" · {0} {1} away", [formatDistance(metersToMiles(calculateDistance(userLocation.lat, userLocation.lng, pin.lat, pin.lng) * 1000), settings.distanceUnit), getDistanceLabel(settings.distanceUnit)]) : ""}
               </p>
             </div>
             {pin.kind === "saved" ? (
@@ -2898,10 +2898,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 className="p-1.5 -m-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 onClick={() => {
                   if (pin.id) deletePOI(pin.id);
-                  toast("Removed from saved places");
+                  toast(tr("Removed from saved places"));
                   exitOrbit(true);
                 }}
-                aria-label="Remove from saved places"
+                aria-label={tr("Remove from saved places")}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -2910,10 +2910,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 className="p-1.5 -m-1 rounded-lg text-muted-foreground hover:text-accent hover:bg-accent/10"
                 onClick={() => {
                   const saved = savePOI({ name: pin.name, lat: pin.lat, lng: pin.lng });
-                  toast.success(`${pin.name} saved`);
+                  toast.success(tr("{0} saved", [pin.name]));
                   setPin({ ...pin, kind: "saved", category: "Saved place", id: saved.id });
                 }}
-                aria-label="Save this place"
+                aria-label={tr("Save this place")}
               >
                 <BookmarkPlus className="w-4 h-4" />
               </button>
@@ -2921,7 +2921,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           </div>
           <div className="mt-2.5 flex gap-2">
             <Button size="sm" variant="outline" className="gap-1" onClick={() => exitOrbit(true)}>
-              <ArrowLeft className="w-3.5 h-3.5" /> Back
+              <ArrowLeft className="w-3.5 h-3.5" />{" "}{tr("Back")}
             </Button>
             <Button
               size="sm"
@@ -2932,7 +2932,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 handleSearchSelect({ id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng });
               }}
             >
-              <Navigation className="w-3.5 h-3.5" /> Navigate
+              <Navigation className="w-3.5 h-3.5" />{" "}{tr("Navigate")}
             </Button>
           </div>
         </div>
@@ -2944,7 +2944,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             type="button"
             onClick={() => setSelectedStack(null)}
             className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
-            aria-label="Close card details"
+            aria-label={tr("Close card details")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -2953,27 +2953,27 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             <p className="text-sm font-bold truncate">{selectedDrop.vehicleName}</p>
             {selectedDrop.collected && (
               <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(142_71%_45%)]">
-                <Check className="w-3 h-3" /> Collected
+                <Check className="w-3 h-3" />{" "}{tr("Collected")}
               </span>
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {selectedDrop.ownerName} · {selectedDrop.makeModel || "Unknown model"} · {selectedDrop.tier}
+            {selectedDrop.ownerName} · {selectedDrop.makeModel || tr("Unknown model")} · {selectedDrop.tier}
           </p>
           {selectedDrop.challenge && (
             <div className="mt-2 rounded-xl border border-accent/60 bg-accent/10 px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Time attack</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{tr("Time attack")}</p>
               <p className="text-xs text-muted-foreground">
-                Beat {formatChallengeTime(selectedDrop.challenge.timeSec)} over{" "}
+                {tr("Beat")}{" "}{formatChallengeTime(selectedDrop.challenge.timeSec)}{" "}{tr("over")}{" "}
                 {formatDistance(selectedDrop.challenge.distanceMi, settings.distanceUnit)}{" "}
-                {getDistanceLabel(settings.distanceUnit)} · stay on route
+                {getDistanceLabel(settings.distanceUnit)}{" "}{tr("· stay on route")}
               </p>
             </div>
           )}
           {userLocation && (
             <p className="text-xs text-muted-foreground mt-1">
               {formatDistance((metersBetween(userLocation, selectedDrop) / 1000) * 0.621371, settings.distanceUnit)}{" "}
-              {getDistanceLabel(settings.distanceUnit)} away
+              {getDistanceLabel(settings.distanceUnit)}{" "}{tr("away")}
             </p>
           )}
           <div className="flex gap-2 mt-3">
@@ -2989,11 +2989,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 setSelectedStack(null);
               }}
             >
-              Go for it
+              {tr("Go for it")}
             </Button>
             {selectedDrop.challenge && (
               <Button size="sm" variant="secondary" onClick={() => takeChallenge(selectedDrop)}>
-                Take challenge
+                {tr("Take challenge")}
               </Button>
             )}
             {selectedDrop.isOwn ? (
@@ -3003,15 +3003,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 onClick={async () => {
                   await pickUpDrop.mutateAsync(selectedDrop.id);
                   setSelectedStack(null);
-                  toast.success("Card picked back up");
+                  toast.success(tr("Card picked back up"));
                 }}
               >
-                Pick up
+                {tr("Pick up")}
               </Button>
             ) : (
               !selectedDrop.collected && (
                 <Button size="sm" variant="outline" onClick={() => handleCollectDrop(selectedDrop)}>
-                  Scan
+                  {tr("Scan")}
                 </Button>
               )
             )}
@@ -3025,21 +3025,21 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             type="button"
             onClick={() => setSelectedStack(null)}
             className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary"
-            aria-label="Close card hot-spot"
+            aria-label={tr("Close card hot-spot")}
           >
             <X className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-2">
             <IdCard className="w-4 h-4 text-accent" />
-            <p className="text-sm font-bold">Card hot-spot</p>
+            <p className="text-sm font-bold">{tr("Card hot-spot")}</p>
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              {selectedStack.length} cards
+              {selectedStack.length}{" "}{tr("cards")}
             </span>
           </div>
           {userLocation && (
             <p className="text-xs text-muted-foreground mt-0.5">
               {formatDistance((metersBetween(userLocation, selectedStack[0]) / 1000) * 0.621371, settings.distanceUnit)}{" "}
-              {getDistanceLabel(settings.distanceUnit)} away
+              {getDistanceLabel(settings.distanceUnit)}{" "}{tr("away")}
             </p>
           )}
           <div className="grid grid-cols-2 gap-2 mt-3 max-h-44 overflow-y-auto">
@@ -3080,11 +3080,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 setSelectedStack(null);
               }}
             >
-              Go for it
+              {tr("Go for it")}
             </Button>
             {selectedStack.some((d) => !d.collected && !d.isOwn) && (
               <Button size="sm" variant="outline" onClick={() => handleCollectStack(selectedStack)}>
-                Collect all
+                {tr("Collect all")}
               </Button>
             )}
           </div>
@@ -3105,7 +3105,7 @@ function MapCredits() {
         rel="noreferrer"
         className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto"
       >
-        OpenFreeMap
+        {tr("OpenFreeMap")}
       </a>{" "}
       ©{" "}
       <a
@@ -3114,9 +3114,9 @@ function MapCredits() {
         rel="noreferrer"
         className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto"
       >
-        OpenStreetMap
+        {tr("OpenStreetMap")}
       </a>{" "}
-      contributors
+      {tr("contributors")}
     </>
   );
 }

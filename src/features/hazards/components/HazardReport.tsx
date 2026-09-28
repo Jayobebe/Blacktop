@@ -6,6 +6,7 @@ import { haptics } from '@/lib/haptics';
 import { HAZARD_CATEGORIES, HAZARD_TYPES, type HazardCategoryId, type HazardKind } from '../types';
 import { HazardError, removeMyHazard, reportHazard } from '../lib/hazardStore';
 import { getLastHazardPosition } from '../lib/position';
+import { tr } from '@/lib/i18n';
 
 export interface ReportPosition {
   lat: number;
@@ -31,9 +32,9 @@ export function HazardReport({ getPosition, className }: { getPosition?: () => R
           'pointer-events-auto flex items-center gap-1.5 h-11 pl-3 pr-3.5 rounded-full frost-accent shadow-lg text-sm font-semibold active:scale-95 transition-transform',
           className,
         )}
-        aria-label="Report a hazard"
+        aria-label={tr("Report a hazard")}
       >
-        <Megaphone className="w-4 h-4" /> Report
+        <Megaphone className="w-4 h-4" />{" "}{tr("Report")}
       </button>
       {open && <HazardPicker onClose={() => setOpen(false)} getPosition={getPosition} />}
     </>
@@ -53,7 +54,7 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
   const report = async (kind: HazardKind) => {
     const pos = getPosition?.() ?? getLastHazardPosition();
     if (!pos) {
-      toast.error('No GPS fix yet', { description: 'Reports go where you are. Try again in a moment.' });
+      toast.error(tr("No GPS fix yet"), { description: tr("Reports go where you are. Try again in a moment.") });
       return;
     }
     setBusy(true);
@@ -62,16 +63,16 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
     try {
       const id = await reportHazard(kind, pos, pos.heading);
       onClose();
-      toast.success(`${type.label} reported`, {
-        description: 'Riders coming this way will be warned.',
+      toast.success(tr("{0} reported", [type.label]), {
+        description: tr("Riders coming this way will be warned."),
         duration: 6000,
-        action: { label: 'Undo', onClick: () => void removeMyHazard(id).catch(() => toast.error("Couldn't undo that")) },
+        action: { label: tr("Undo"), onClick: () => void removeMyHazard(id).catch(() => toast.error(tr("Couldn't undo that"))) },
       });
     } catch (e) {
       const reason = e instanceof HazardError ? e.reason : 'failed';
       toast.error(
-        reason === 'rate-limited' ? "That's a lot of reports" : reason === 'signed-out' ? 'Sign in to report' : "Couldn't send the report",
-        { description: reason === 'rate-limited' ? 'Try again in a little while.' : 'Check your connection and try again.' },
+        reason === 'rate-limited' ? tr("That's a lot of reports") : reason === 'signed-out' ? tr("Sign in to report") : tr("Couldn't send the report"),
+        { description: reason === 'rate-limited' ? tr("Try again in a little while.") : tr("Check your connection and try again.") },
       );
     } finally {
       setBusy(false);
@@ -85,20 +86,20 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
     <div className="fixed inset-0 z-[1250] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] animate-fade-in" onClick={onClose}>
       <div
         role="dialog"
-        aria-label="Report a hazard"
+        aria-label={tr("Report a hazard")}
         className="w-full max-w-md short:max-w-2xl rounded-3xl border border-border bg-card/95 shadow-2xl p-3 animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-1 pb-3">
           {cat ? (
-            <button onClick={() => setCategory(null)} className="p-2 -ml-1 rounded-xl hover:bg-muted" aria-label="Back to categories">
+            <button onClick={() => setCategory(null)} className="p-2 -ml-1 rounded-xl hover:bg-muted" aria-label={tr("Back to categories")}>
               <ArrowLeft className="w-5 h-5" />
             </button>
           ) : (
             <Megaphone className="w-5 h-5 text-accent ml-1" />
           )}
-          <p className="flex-1 font-bold">{cat ? cat.label : 'Report a hazard'}</p>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted" aria-label="Close">
+          <p className="flex-1 font-bold">{cat ? cat.label : tr("Report a hazard")}</p>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted" aria-label={tr("Close")}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -140,7 +141,7 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
             ))}
           </div>
         )}
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">Reports are anonymous and placed where you are now.</p>
+        <p className="mt-3 text-center text-[11px] text-muted-foreground">{tr("Reports are anonymous and placed where you are now.")}</p>
       </div>
     </div>
   );

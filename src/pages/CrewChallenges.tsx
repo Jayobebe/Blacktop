@@ -21,6 +21,7 @@ import {
 import { grantChallengeCopy } from '@/features/cards';
 import { toast } from 'sonner';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 interface ChallengeRow {
   display_name: string;
@@ -63,7 +64,7 @@ function ChallengeCard({
       <p className="text-[11px] text-muted-foreground mb-3">{challenge.blurb}</p>
 
       <div className="flex items-baseline justify-between mb-1.5">
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">You</span>
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("You")}</span>
         <span className="text-sm font-bold tabular-nums">{fmt(myValue)}</span>
       </div>
       <div className="h-2 rounded-full bg-secondary overflow-hidden mb-3">
@@ -71,7 +72,7 @@ function ChallengeCard({
       </div>
 
       {sorted.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground/70 text-center py-2">No crew entries yet.</p>
+        <p className="text-[11px] text-muted-foreground/70 text-center py-2">{tr("No crew entries yet.")}</p>
       ) : (
         <ul className="space-y-1.5">
           {sorted.slice(0, 5).map((row, i) => {
@@ -151,9 +152,9 @@ export default function CrewChallenges() {
       if (mine[c.metric] < c.target) continue;
       const result = grantChallengeCopy(`${key}:${c.id}`);
       if (result === 'granted') {
-        toast.success(`${c.title} complete`, { description: 'Spare card copy earned — drop it on the map.' });
+        toast.success(tr("{0} complete", [c.title]), { description: tr("Spare card copy earned — drop it on the map.") });
       } else if (result === 'capped') {
-        toast(`${c.title} complete`, { description: 'Copy bank full — 9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
+        toast(tr("{0} complete", [c.title]), { description: tr("Copy bank full — 9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.") });
       }
     }
   }, [mine, challengeA, challengeB, key]);
@@ -164,9 +165,9 @@ export default function CrewChallenges() {
     if (monthValue < goal.target) return;
     const result = grantChallengeCopy(`${mKey}:${goal.id}`);
     if (result === 'granted') {
-      toast.success(`${goal.title} smashed`, { description: 'Crew goal hit — spare card copy earned.' });
+      toast.success(tr("{0} smashed", [goal.title]), { description: tr("Crew goal hit — spare card copy earned.") });
     } else if (result === 'capped') {
-      toast(`${goal.title} smashed`, { description: 'Copy bank full — 9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
+      toast(tr("{0} smashed", [goal.title]), { description: tr("Copy bank full — 9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.") });
     }
   }, [monthTotals, monthValue, goal, mKey]);
 
@@ -175,7 +176,7 @@ export default function CrewChallenges() {
 
   return (
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
-      <PageHeader title="Crew Challenge" backTo="/world" backLabel="Back to Blacktop World" />
+      <PageHeader title={tr("Crew Challenge")} backTo="/world" backLabel={tr("Back to Blacktop World")} />
 
       {/* Monthly crew goal (Forzathon-style) */}
       <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/15 to-accent/5 p-4 mb-4">
@@ -189,14 +190,14 @@ export default function CrewChallenges() {
           </div>
           <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">
             <Timer className="w-3.5 h-3.5" />
-            {monthDaysLeft}d left
+            {monthDaysLeft}{tr("d left")}
           </span>
         </div>
 
         <div className="mt-4">
           <div className="flex items-baseline justify-between mb-1.5">
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Crew {crew.code} · {monthTotals?.members ?? 0} riding
+              {tr("Crew")}{" "}{crew.code} · {monthTotals?.members ?? 0}{" "}{tr("riding")}
             </span>
             <span className="text-sm font-bold tabular-nums">
               {goalFmt(monthValue)} / {goalFmt(goal.target)}
@@ -206,17 +207,17 @@ export default function CrewChallenges() {
             <div className="h-full bg-accent transition-all" style={{ width: `${monthPct}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-1.5">
-            Monthly crew goal — hit it together and everyone earns a spare card copy.
+            {tr("Monthly crew goal — hit it together and everyone earns a spare card copy.")}
           </p>
         </div>
       </div>
 
       {/* This week's pair of challenges */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xs font-bold uppercase tracking-[0.2em]">This week</h2>
+        <h2 className="text-xs font-bold uppercase tracking-[0.2em]">{tr("This week")}</h2>
         <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground">
           <Timer className="w-3.5 h-3.5" />
-          {daysLeft}d left
+          {daysLeft}{tr("d left")}
         </span>
       </div>
 
@@ -236,7 +237,7 @@ export default function CrewChallenges() {
       </div>
 
       <p className="text-[10px] text-muted-foreground/60 text-center mt-4">
-        Crew {crew.code} · week {key}
+        {tr("Crew")}{" "}{crew.code}{" "}{tr("· week")}{" "}{key}
       </p>
     </div>
   );

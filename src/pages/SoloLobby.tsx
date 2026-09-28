@@ -15,6 +15,7 @@ import { useCrew } from '@/features/crew/useCrew';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { tr } from '@/lib/i18n';
 
 interface UserLocation {
   lat: number;
@@ -147,7 +148,7 @@ export default function SoloLobby() {
       if (convoy.isActive && convoy.isLeader) {
         await supabase.from('convoys').update({ is_listed: false } as any).eq('id', convoy.id!);
         await leaveConvoy();
-        toast.success('Solo lobby locked');
+        toast.success(tr("Solo lobby locked"));
       } else {
         const created = await createConvoy();
         if (!created?.id) return;
@@ -156,8 +157,8 @@ export default function SoloLobby() {
           .update({ is_listed: true, crew_code: crew.code } as any)
           .eq('id', created.id);
         nudgePush(); // the crew hears about the open convoy
-        toast.success(`Listed in crew ${crew.code}`, {
-          description: 'Riders who join turn this into a group lobby.',
+        toast.success(tr("Listed in crew {0}", [crew.code]), {
+          description: tr("Riders who join turn this into a group lobby."),
         });
       }
     } finally {
@@ -170,7 +171,7 @@ export default function SoloLobby() {
   // Somebody joined the open solo lobby → it's a group ride now.
   useEffect(() => {
     if (isUnlocked && convoy.members.length > 1) {
-      toast.success('Rider joined — group lobby');
+      toast.success(tr("Rider joined — group lobby"));
       navigate('/lobby');
     }
   }, [isUnlocked, convoy.members.length, navigate]);
@@ -180,15 +181,15 @@ export default function SoloLobby() {
       {/* Header */}
       <PageHeader
         title={`${showGroup ? 'Solo' : 'New'} ${terms.Ride}`}
-        subtitle={isUnlocked ? `Open to crew ${crew.code}` : 'Set a destination and hit the road'}
+        subtitle={isUnlocked ? tr("Open to crew {0}", [crew.code]) : tr("Set a destination and hit the road")}
         backTo="/"
         right={
           <HeaderButton
             onClick={toggleUnlocked}
             disabled={busyLock}
             active={isUnlocked}
-            title={isUnlocked ? 'Locked to crew list — tap to lock' : 'Tap to list in Crew Convoys'}
-            aria-label={isUnlocked ? 'Lock lobby' : 'Unlock lobby to crew'}
+            title={isUnlocked ? tr("Locked to crew list — tap to lock") : tr("Tap to list in Crew Convoys")}
+            aria-label={isUnlocked ? tr("Lock lobby") : tr("Unlock lobby to crew")}
           >
             {isUnlocked ? <Unlock className="w-[18px] h-[18px]" /> : <Lock className="w-[18px] h-[18px]" />}
           </HeaderButton>
@@ -202,7 +203,7 @@ export default function SoloLobby() {
         <div className="animate-slide-up">
           <div className="flex items-center gap-2 mb-3">
             <MapPin className="w-4 h-4 text-accent" />
-            <h2 className="text-sm font-medium">Destination</h2>
+            <h2 className="text-sm font-medium">{tr("Destination")}</h2>
           </div>
           <DestinationSearch
             destination={destination}
@@ -241,7 +242,7 @@ export default function SoloLobby() {
         {showAddStop && (
           <div className="animate-fade-in">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Add Stop</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{tr("Add Stop")}</p>
               <button
                 onClick={() => setShowAddStop(false)}
                 className="text-muted-foreground hover:text-foreground"
@@ -271,7 +272,7 @@ export default function SoloLobby() {
             className="flex items-center gap-2 text-xs text-accent hover:text-accent/80 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            Add another stop
+            {tr("Add another stop")}
           </button>
         )}
 
@@ -296,7 +297,7 @@ export default function SoloLobby() {
               className="w-full h-16 text-lg font-semibold bg-accent hover:bg-accent/90 text-accent-foreground rounded-2xl shadow-glow"
             >
               <Map className="w-6 h-6 mr-3" />
-              Navigate
+              {tr("Navigate")}
             </Button>
           )}
           <Button
@@ -309,12 +310,12 @@ export default function SoloLobby() {
             }
           >
             <Play className="w-5 h-5 mr-3" />
-            {destination ? 'Start without map' : `Start ${terms.Ride}`}
+            {destination ? tr("Start without map") : tr("Start {0}", [terms.Ride])}
           </Button>
           <p className="text-xs text-muted-foreground text-center">
             {destination
-              ? 'Navigate opens the map with your route · Start without map tracks only'
-              : `Destination is optional. You can just ${isCarOnly ? 'drive' : 'ride'}.`}
+              ? tr("Navigate opens the map with your route · Start without map tracks only")
+              : tr("Destination is optional. You can just {0}.", [isCarOnly ? 'drive' : 'ride'])}
           </p>
         </div>
       </div>

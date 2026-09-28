@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 export interface DiscordIntegration {
   webhook_url: string;
@@ -55,7 +56,7 @@ export function useDiscordIntegration() {
       // Anonymous sign in if needed
       const { error } = await supabase.auth.signInAnonymously();
       if (error) {
-        toast.error('Could not connect to backend');
+        toast.error(tr("Could not connect to backend"));
         return false;
       }
     }
@@ -73,11 +74,11 @@ export function useDiscordIntegration() {
       .from('discord_integrations' as any)
       .upsert(row, { onConflict: 'user_id' });
     if (error) {
-      toast.error('Failed to save Discord integration');
+      toast.error(tr("Failed to save Discord integration"));
       return false;
     }
     await refresh();
-    toast.success('Discord server connected');
+    toast.success(tr("Discord server connected"));
     return true;
   }, [refresh]);
 
@@ -89,11 +90,11 @@ export function useDiscordIntegration() {
       .delete()
       .eq('user_id', user.id);
     if (error) {
-      toast.error('Failed to disconnect');
+      toast.error(tr("Failed to disconnect"));
       return;
     }
     setIntegration(null);
-    toast.success('Discord disconnected');
+    toast.success(tr("Discord disconnected"));
   }, []);
 
   return { integration, loading, save, disconnect, refresh };

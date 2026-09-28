@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGForce } from '@/hooks/useGForce';
 import { saveScore, useArcadeScores } from '../../hooks/useArcadeScores';
+import { tr } from '@/lib/i18n';
 
 type GameState = 'idle' | 'countdown' | 'active' | 'result';
 
@@ -194,7 +195,7 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
               className="font-mono text-7xl font-bold"
               style={{ color: accentColor, textShadow: `0 0 20px ${accentColor}` }}
             >
-              {countdown === 0 ? 'GO' : countdown}
+              {countdown === 0 ? tr("GO") : countdown}
             </span>
           </div>
         )}
@@ -207,18 +208,18 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
           style={{ color: isActive ? accentColor : '#555', textShadow: isActive ? `0 0 16px ${accentColor}88` : 'none' }}
         >
           {displayG.toFixed(2)}
-          <span className="text-2xl ml-1 opacity-60">G</span>
+          <span className="text-2xl ml-1 opacity-60">{tr("G")}</span>
         </div>
 
         {(gameState === 'active' || gameState === 'result') && (
           <div className="mt-1 font-mono text-xs tracking-widest uppercase text-white/30">
-            {gameState === 'active' ? `PEAK ${peakG.toFixed(2)}G` : 'PEAK'}
+            {gameState === 'active' ? tr("PEAK {0}G", [peakG.toFixed(2)]) : tr("PEAK")}
           </div>
         )}
 
         {gameState === 'active' && (
           <div className="mt-3 font-mono text-sm tracking-widest uppercase" style={{ color: accentColor }}>
-            {timeLeft}s
+            {timeLeft}{tr("s")}
           </div>
         )}
       </div>
@@ -232,13 +233,13 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
               className="font-mono text-xs tracking-widest uppercase px-6 py-3 border-2 rounded-xl w-full max-w-xs"
               style={{ borderColor: accentColor, color: accentColor }}
             >
-              GRANT SENSOR ACCESS
+              {tr("GRANT SENSOR ACCESS")}
             </button>
           ) : null}
 
           {bestScore > 0 && (
             <p className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">
-              BEST: {bestScore.toFixed(2)}G
+              {tr("BEST:")}{" "}{bestScore.toFixed(2)}{tr("G")}
             </p>
           )}
 
@@ -247,11 +248,11 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
             className="font-mono text-sm tracking-widest uppercase px-8 py-4 w-full max-w-xs border-2 rounded-xl font-bold"
             style={{ borderColor: accentColor, color: accentColor, boxShadow: `0 0 12px ${accentColor}44` }}
           >
-            HIT IT
+            {tr("HIT IT")}
           </button>
 
           <p className="font-mono text-[9px] tracking-widest uppercase text-muted-foreground/50 text-center">
-            PUNCH THE AIR · GIVE IT YOUR BEST SHOT
+            {tr("PUNCH THE AIR · GIVE IT YOUR BEST SHOT")}
           </p>
         </div>
       )}
@@ -263,11 +264,11 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
               className="font-mono text-xs tracking-widest uppercase font-bold"
               style={{ color: accentColor, textShadow: `0 0 8px ${accentColor}` }}
             >
-              ★ NEW RECORD ★
+              {tr("★ NEW RECORD ★")}
             </p>
           ) : bestScore > 0 ? (
             <p className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">
-              BEST: {bestScore.toFixed(2)}G
+              {tr("BEST:")}{" "}{bestScore.toFixed(2)}{tr("G")}
             </p>
           ) : null}
 
@@ -277,13 +278,13 @@ export function HitHeavy({ accentColor }: HitHeavyProps) {
               className="font-mono text-xs tracking-widest uppercase py-4 border-2 rounded-xl"
               style={{ borderColor: accentColor, color: accentColor }}
             >
-              AGAIN
+              {tr("AGAIN")}
             </button>
             <button
               onClick={reset}
               className="font-mono text-xs tracking-widest uppercase py-4 rounded-xl border border-border/40 text-muted-foreground"
             >
-              BACK
+              {tr("BACK")}
             </button>
           </div>
         </div>

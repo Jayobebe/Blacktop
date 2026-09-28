@@ -3,6 +3,7 @@ import { Plus, X, Image as ImageIcon, Play } from 'lucide-react';
 import { RidePhoto, RideRecording } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 interface RidePhotosProps {
   photos: RidePhoto[];
@@ -73,13 +74,13 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
     if (!files?.length) return;
 
     if (photos.length >= MAX_PHOTOS) {
-      toast.error(`Maximum ${MAX_PHOTOS} photos per ride`);
+      toast.error(tr("Maximum {0} photos per ride", [MAX_PHOTOS]));
       return;
     }
 
     const file = files[0];
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error(tr("Please select an image file"));
       return;
     }
 
@@ -91,9 +92,9 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
         addedAt: new Date().toISOString(),
       };
       onAddPhoto(photo);
-      toast.success('Photo added');
+      toast.success(tr("Photo added"));
     } catch (err) {
-      toast.error('Failed to add photo');
+      toast.error(tr("Failed to add photo"));
       console.error('Photo compression error:', err);
     }
 
@@ -106,14 +107,14 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
   const handleRemove = (photoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     onRemovePhoto(photoId);
-    toast.success('Photo removed');
+    toast.success(tr("Photo removed"));
   };
 
   const handleRemoveVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onRemoveRecording) {
       onRemoveRecording();
-      toast.success('Video removed from gallery');
+      toast.success(tr("Video removed from gallery"));
     }
   };
 
@@ -122,7 +123,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-muted-foreground">
           <ImageIcon className="w-4 h-4" />
-          <span className="text-xs uppercase tracking-wide">Photos ({photos.length}/{MAX_PHOTOS})</span>
+          <span className="text-xs uppercase tracking-wide">{tr("Photos (")}{photos.length}/{MAX_PHOTOS})</span>
         </div>
       </div>
 
@@ -136,7 +137,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
           >
             <img
               src={recording.thumbnailUrl}
-              alt="Ride video"
+              alt={tr("Ride video")}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
             {/* Play icon overlay */}
@@ -147,7 +148,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
             </div>
             {/* Video badge */}
             <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 rounded text-[10px] text-white font-medium">
-              VIDEO
+              {tr("VIDEO")}
             </span>
             {/* Delete button */}
             {onRemoveRecording && (
@@ -169,7 +170,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
           >
             <img
               src={photo.dataUrl}
-              alt="Ride photo"
+              alt={tr("Ride photo")}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
             <button
@@ -188,7 +189,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
             className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-accent hover:bg-accent/5 transition-colors flex flex-col items-center justify-center gap-1"
           >
             <Plus className="w-5 h-5 text-muted-foreground" />
-            <span className="text-[10px] text-muted-foreground">Add</span>
+            <span className="text-[10px] text-muted-foreground">{tr("Add")}</span>
           </button>
         )}
       </div>
@@ -215,7 +216,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
           </button>
           <img
             src={selectedPhoto.dataUrl}
-            alt="Ride photo"
+            alt={tr("Ride photo")}
             className="max-w-full max-h-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
@@ -237,7 +238,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
           <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
             <img
               src={selectedVideo.thumbnailUrl}
-              alt="Video thumbnail"
+              alt={tr("Video thumbnail")}
               className="max-w-full max-h-[80vh] object-contain rounded-lg"
             />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -245,7 +246,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
                 <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                   <Play className="w-8 h-8 text-white fill-white ml-1" />
                 </div>
-                <p className="text-white/80 text-sm">Video saved to device</p>
+                <p className="text-white/80 text-sm">{tr("Video saved to device")}</p>
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ import type { ConvoyState } from '@/types/convoy';
 import { blockRider, setProximityState, unblockRider, useProximityState } from '../lib/proximityStore';
 import { MAX_MERGED_RIDERS, getProximityControls } from '../lib/controls';
 import type { NearbyParty } from '../types';
+import { tr } from '@/lib/i18n';
 
 const INVITE_TTL_S = 45;
 const M_TO_MI = 1 / 1609.344;
@@ -88,7 +89,7 @@ export function HandshakeButton({
             : 'bg-card/95 border-border text-foreground hover:bg-secondary',
       )}
       aria-label={
-        receiving ? `Request from ${st.incoming!.fromName}, ${left}s left` : st.outgoing ? `Waiting for ${st.outgoing.toName}` : 'Nearby riders'
+        receiving ? tr("Request from {0}, {1}s left", [st.incoming!.fromName, left]) : st.outgoing ? tr("Waiting for {0}", [st.outgoing.toName]) : tr("Nearby riders")
       }
     >
       {st.busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Handshake className="w-5 h-5" />}
@@ -151,14 +152,14 @@ export function HandshakeButton({
             <p className="text-sm font-semibold">{title}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{detail}</p>
           </div>
-          <span className="text-[11px] font-mono text-accent tabular-nums">{left}s</span>
+          <span className="text-[11px] font-mono text-accent tabular-nums">{left}{tr("s")}</span>
         </div>
         <div className="flex gap-2 mt-3">
           <Button className="flex-1 h-10" onClick={() => controls?.accept()}>
-            Accept
+            {tr("Accept")}
           </Button>
           <Button variant="secondary" className="flex-1 h-10" onClick={() => controls?.decline()}>
-            Decline
+            {tr("Decline")}
           </Button>
         </div>
       </div>
@@ -168,11 +169,11 @@ export function HandshakeButton({
     panel = (
       <div className="w-72 max-h-[50dvh] overflow-y-auto rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur animate-slide-up">
         <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-border/60">
-          <p className="text-sm font-semibold">Nearby riders</p>
+          <p className="text-sm font-semibold">{tr("Nearby riders")}</p>
           <button
             onClick={() => setProximityState({ panel: null })}
             className="p-1 rounded-lg text-muted-foreground hover:bg-muted"
-            aria-label="Close nearby riders"
+            aria-label={tr("Close nearby riders")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -181,22 +182,22 @@ export function HandshakeButton({
         {st.outgoing && (
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/60 text-xs">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-            <p className="flex-1">Waiting for {st.outgoing.toName}… {left}s</p>
+            <p className="flex-1">{tr("Waiting for")}{" "}{st.outgoing.toName}… {left}{tr("s")}</p>
             <button onClick={() => controls?.cancelInvite()} className="font-medium text-muted-foreground hover:text-foreground">
-              Cancel
+              {tr("Cancel")}
             </button>
           </div>
         )}
 
         {!canAct && (
           <p className="px-4 py-2 text-[11px] text-muted-foreground border-b border-border/60">
-            Only your convoy leader can send invites.
+            {tr("Only your convoy leader can send invites.")}
           </p>
         )}
 
         {rows.length === 0 ? (
           <p className="px-4 py-5 text-xs text-muted-foreground text-center">
-            No riders nearby yet. Riders with Nearby Riders on show up here when they're within a few km.
+            {tr("No riders nearby yet. Riders with Nearby Riders on show up here when they're within a few km.")}
           </p>
         ) : (
           rows.map((p: NearbyParty) => {
@@ -212,10 +213,10 @@ export function HandshakeButton({
                   {isConvoy ? <Users className="w-4 h-4 text-accent" /> : <User className="w-4 h-4 text-accent" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{isConvoy ? `${p.contactName}'s convoy` : p.contactName}</p>
+                  <p className="text-sm font-medium truncate">{isConvoy ? tr("{0}'s convoy", [p.contactName]) : p.contactName}</p>
                   <p className="text-[11px] text-muted-foreground">
                     {dist(p.distanceM)}
-                    {isConvoy ? ` · ${p.memberCount} riders` : ''}
+                    {isConvoy ? tr(" · {0} riders", [p.memberCount]) : ''}
                     {disabledReason ? ` · ${disabledReason}` : ''}
                   </p>
                 </div>
@@ -232,14 +233,14 @@ export function HandshakeButton({
                 <button
                   onClick={() => {
                     blockRider(p.contactId);
-                    toast(`${p.contactName} blocked`, {
-                      description: "You won't see them or get their requests.",
-                      action: { label: 'Undo', onClick: () => unblockRider(p.contactId) },
+                    toast(tr("{0} blocked", [p.contactName]), {
+                      description: tr("You won't see them or get their requests."),
+                      action: { label: tr("Undo"), onClick: () => unblockRider(p.contactId) },
                     });
                   }}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                  aria-label={`Block ${p.contactName}`}
-                  title="Block"
+                  aria-label={tr("Block {0}", [p.contactName])}
+                  title={tr("Block")}
                 >
                   <Ban className="w-3.5 h-3.5" />
                 </button>

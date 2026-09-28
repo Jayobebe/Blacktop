@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CATEGORY_BY_ID, HAZARD_BY_KIND, hazardColor, type Hazard } from '../types';
 import { HazardError, removeMyHazard, voteHazard } from '../lib/hazardStore';
+import { tr } from '@/lib/i18n';
 
 function ago(t: number) {
   const m = Math.max(0, Math.round((Date.now() - t) / 60_000));
@@ -20,10 +21,10 @@ export function HazardCard({ hazard, onClose, className }: { hazard: Hazard; onC
   const vote = async (stillThere: boolean) => {
     try {
       await voteHazard(hazard.id, stillThere);
-      toast(stillThere ? 'Thanks, confirmed' : 'Thanks, noted as gone', { duration: 2000 });
+      toast(stillThere ? tr("Thanks, confirmed") : tr("Thanks, noted as gone"), { duration: 2000 });
       onClose();
     } catch (e) {
-      toast.error(e instanceof HazardError && e.reason === 'rate-limited' ? 'Slow down on the votes a little' : "Couldn't send that");
+      toast.error(e instanceof HazardError && e.reason === 'rate-limited' ? tr("Slow down on the votes a little") : tr("Couldn't send that"));
     }
   };
   return (
@@ -35,11 +36,11 @@ export function HazardCard({ hazard, onClose, className }: { hazard: Hazard; onC
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-sm truncate">{type.label}</p>
           <p className="text-xs text-muted-foreground">
-            {CATEGORY_BY_ID[type.category].label} · reported {ago(hazard.createdAt)}
-            {hazard.confirmations > 0 ? ` · ${hazard.confirmations} confirmed` : ''}
+            {CATEGORY_BY_ID[type.category].label}{" "}{tr("· reported")}{" "}{ago(hazard.createdAt)}
+            {hazard.confirmations > 0 ? tr(" · {0} confirmed", [hazard.confirmations]) : ''}
           </p>
         </div>
-        <button className="p-1.5 -m-1 rounded-lg hover:bg-secondary" onClick={onClose} aria-label="Close">
+        <button className="p-1.5 -m-1 rounded-lg hover:bg-secondary" onClick={onClose} aria-label={tr("Close")}>
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -50,22 +51,22 @@ export function HazardCard({ hazard, onClose, className }: { hazard: Hazard; onC
             variant="outline"
             className="flex-1 gap-1"
             onClick={() => {
-              void removeMyHazard(hazard.id).catch(() => toast.error("Couldn't remove it"));
-              toast('Your report was removed');
+              void removeMyHazard(hazard.id).catch(() => toast.error(tr("Couldn't remove it")));
+              toast(tr("Your report was removed"));
               onClose();
             }}
           >
-            <Trash2 className="w-3.5 h-3.5" /> Remove my report
+            <Trash2 className="w-3.5 h-3.5" />{" "}{tr("Remove my report")}
           </Button>
         ) : hazard.myVote !== null ? (
-          <p className="flex-1 text-xs text-muted-foreground text-center py-1.5">You said it's {hazard.myVote ? 'still there' : 'gone'}. Thanks.</p>
+          <p className="flex-1 text-xs text-muted-foreground text-center py-1.5">{tr("You said it's")}{" "}{hazard.myVote ? tr("still there") : 'gone'}{tr(". Thanks.")}</p>
         ) : (
           <>
             <Button size="sm" className="flex-1 gap-1" onClick={() => void vote(true)}>
-              <ThumbsUp className="w-3.5 h-3.5" /> Still there
+              <ThumbsUp className="w-3.5 h-3.5" />{" "}{tr("Still there")}
             </Button>
             <Button size="sm" variant="outline" className="flex-1 gap-1" onClick={() => void vote(false)}>
-              <ThumbsDown className="w-3.5 h-3.5" /> Gone
+              <ThumbsDown className="w-3.5 h-3.5" />{" "}{tr("Gone")}
             </Button>
           </>
         )}

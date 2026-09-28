@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import type { Lap } from '../types';
 import { formatDelta, formatLap } from '../lib/timing';
 import { sectorTone, type SectorTone } from '../lib/laps';
+import { tr } from '@/lib/i18n';
 
 const TONE: Record<SectorTone, string> = {
   best: 'bg-[#7c3aed] text-white border-[#a78bfa]',
@@ -29,7 +30,7 @@ export function SectorBoxes({
         const ms = splits[i];
         return (
           <div key={i} className={cn('rounded-lg border text-center py-1.5', TONE[sectorTone(ms, i, bestBefore, lastLap)])}>
-            <p className="text-[9px] font-bold uppercase tracking-widest opacity-80">S{i + 1}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest opacity-80">{tr("S")}{i + 1}</p>
             <p className={cn('font-mono font-bold tabular-nums', big ? 'text-lg' : 'text-sm')}>{ms != null ? (ms / 1000).toFixed(3) : '—'}</p>
           </div>
         );
@@ -48,15 +49,15 @@ export function LapTable({ laps, sectors }: { laps: Lap[]; sectors: number }) {
   const valid = laps.filter((l) => l.valid);
   const best = valid.reduce<Lap | null>((b, l) => (!b || l.ms < b.ms ? l : b), null);
   const bestSec = Array.from({ length: sectors }, (_, i) => Math.min(...valid.map((l) => l.sectors[i] ?? Infinity)));
-  if (laps.length === 0) return <p className="text-xs text-muted-foreground text-center py-4">No laps yet. Cross the start / finish line to start timing.</p>;
+  if (laps.length === 0) return <p className="text-xs text-muted-foreground text-center py-4">{tr("No laps yet. Cross the start / finish line to start timing.")}</p>;
   return (
     <div className="rounded-xl border border-border overflow-x-auto">
       <div style={{ minWidth: sectors > 4 ? `${6 + sectors * 3.4 + 5}rem` : undefined }}>
       <div className="grid text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/40 px-2 py-1.5" style={{ gridTemplateColumns: `2rem 1fr repeat(${sectors}, 3.4rem)` }}>
-        <span>Lap</span>
-        <span>Time</span>
+        <span>{tr("Lap")}</span>
+        <span>{tr("Time")}</span>
         {Array.from({ length: sectors }, (_, i) => (
-          <span key={i} className="text-right">S{i + 1}</span>
+          <span key={i} className="text-right">{tr("S")}{i + 1}</span>
         ))}
       </div>
       {[...laps].reverse().map((l) => (
@@ -69,8 +70,8 @@ export function LapTable({ laps, sectors }: { laps: Lap[]; sectors: number }) {
           <span className="font-mono font-bold tabular-nums">
             {formatLap(l.ms)}
             {best?.n === l.n && <span className="ml-1 text-[#a78bfa]">★</span>}
-            {!l.valid && <span className="ml-1 text-[9px] font-sans text-muted-foreground">cut</span>}
-            {l.valid && l.lowConfidence && <span className="ml-1 text-[9px] font-sans text-warning" title="GPS gap near a line">~</span>}
+            {!l.valid && <span className="ml-1 text-[9px] font-sans text-muted-foreground">{tr("cut")}</span>}
+            {l.valid && l.lowConfidence && <span className="ml-1 text-[9px] font-sans text-warning" title={tr("GPS gap near a line")}>~</span>}
           </span>
           {Array.from({ length: sectors }, (_, i) => {
             const ms = l.sectors[i];

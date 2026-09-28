@@ -9,6 +9,7 @@ import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { useRideHistory } from './useRideHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 const SPEED_SMOOTHING_FACTOR = 0.75; // Higher = more responsive to current reading
 const MIN_SPEED_THRESHOLD = 0.3; // mph - very low threshold to catch movement early
@@ -684,8 +685,8 @@ function pauseRideTracking(dueToInactivity: boolean) {
     stopWorldSync();
     clearWorldLocation().catch(() => {});
     console.log('[Ride] Inactivity guard - tracking paused after 15 stationary minutes');
-    toast('Tracking paused due to inactivity.', {
-      description: 'No movement detected for 15 minutes. Resume the ride to continue broadcasting your location.',
+    toast(tr("Tracking paused due to inactivity."), {
+      description: tr("No movement detected for 15 minutes. Resume the ride to continue broadcasting your location."),
     });
   } else {
     console.log('[Ride] Paused - GPS stopped to save battery');
@@ -968,8 +969,8 @@ export function useActiveRide(convoyId?: string | null) {
       if (didSaveRide) {
         savedRideId = rideId;
       } else {
-        toast.error('Ride could not be saved', {
-          description: 'Device storage is full. Burn old data or remove large ride photos, then try again.',
+        toast.error(tr("Ride could not be saved"), {
+          description: tr("Device storage is full. Burn old data or remove large ride photos, then try again."),
         });
       }
     } else if (currentState.startedAt) {
@@ -980,12 +981,12 @@ export function useActiveRide(convoyId?: string | null) {
       });
       const tooShort = finalDuration < MIN_RIDE_DURATION_SEC;
       const tooFar = finalDistance < MIN_RIDE_DISTANCE_MI && !hasMovementEvidence;
-      toast.info('Ride not saved', {
+      toast.info(tr("Ride not saved"), {
         description: tooShort && tooFar
-          ? 'Rides under 1 min and 0.1 mi are discarded.'
+          ? tr("Rides under 1 min and 0.1 mi are discarded.")
           : tooShort
-            ? `Ride was under 1 minute (${finalDuration}s) — not saved.`
-            : `Ride was under 0.1 mi (${finalDistance.toFixed(2)} mi) — not saved.`,
+            ? tr("Ride was under 1 minute ({0}s) — not saved.", [finalDuration])
+            : tr("Ride was under 0.1 mi ({0} mi) — not saved.", [finalDistance.toFixed(2)]),
       });
     }
 

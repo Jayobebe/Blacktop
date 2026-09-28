@@ -10,6 +10,7 @@ import { useProfile } from '@/features/profile';
 import { useGarage } from '@/features/garage';
 import { setInheritedLog } from '../lib/logbookStore';
 import { parseLogbookQr, receiveLogbook } from '../lib/transfer';
+import { tr } from '@/lib/i18n';
 
 const SCANNER_ID = 'logbook-qr-scanner';
 
@@ -58,7 +59,7 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
 
   const open = async () => {
     if (demoEnabled) {
-      toast('Receiving a logbook is off in demo mode');
+      toast(tr("Receiving a logbook is off in demo mode"));
       return;
     }
     setScanning(true);
@@ -81,7 +82,7 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
       );
     } catch (err) {
       console.error('[Logbook] scanner error', err);
-      toast.error('Could not access camera');
+      toast.error(tr("Could not access camera"));
       setScanning(false);
     }
   };
@@ -102,16 +103,16 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
         createPortal(
           <div className="fixed inset-0 z-[9999] bg-background flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
             <div className="flex items-center gap-3 px-4 py-3">
-              <button onClick={() => void stopScanner()} className="p-2.5 rounded-xl bg-secondary hover:bg-muted" aria-label="Back">
+              <button onClick={() => void stopScanner()} className="p-2.5 rounded-xl bg-secondary hover:bg-muted" aria-label={tr("Back")}>
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-base font-semibold">Receive logbook</h2>
+              <h2 className="text-base font-semibold">{tr("Receive logbook")}</h2>
             </div>
             <div className="flex-1 overflow-hidden">
               <div id={SCANNER_ID} className="w-full h-full" />
             </div>
             <p className="text-center text-muted-foreground text-xs px-6 py-3">
-              Scan the code on their Logbook's hand-over page. It's only live for 10 seconds.
+              {tr("Scan the code on their Logbook's hand-over page. It's only live for 10 seconds.")}
             </p>
           </div>,
           document.body,
@@ -124,7 +125,7 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
               {state.phase === 'receiving' && (
                 <>
                   <BookOpen className="w-10 h-10 text-accent" />
-                  <p className="text-sm font-semibold">Receiving {state.vehicle ? `${state.vehicle}'s` : 'the'} logbook…</p>
+                  <p className="text-sm font-semibold">{tr("Receiving")}{" "}{state.vehicle ? tr("{0}'s", [state.vehicle]) : 'the'}{" "}{tr("logbook…")}</p>
                   <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                     <div className="h-full bg-accent transition-[width]" style={{ width: `${Math.round(state.progress * 100)}%` }} />
                   </div>
@@ -136,9 +137,9 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
                   <div className="w-14 h-14 rounded-full bg-accent/20 flex items-center justify-center">
                     <Check className="w-7 h-7 text-accent" />
                   </div>
-                  <p className="text-sm font-semibold">{state.vehicle} is in your garage</p>
-                  <p className="text-xs text-muted-foreground">{state.msg}. Its logbook, card and stats came with it; your own totals are unchanged.</p>
-                  <Button onClick={() => setState(null)}>Nice</Button>
+                  <p className="text-sm font-semibold">{state.vehicle}{" "}{tr("is in your garage")}</p>
+                  <p className="text-xs text-muted-foreground">{state.msg}{tr(". Its logbook, card and stats came with it; your own totals are unchanged.")}</p>
+                  <Button onClick={() => setState(null)}>{tr("Nice")}</Button>
                 </>
               )}
               {state.phase === 'failed' && (
@@ -146,9 +147,9 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
                   <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
                     <X className="w-7 h-7 text-muted-foreground" />
                   </div>
-                  <p className="text-sm font-semibold">No logbook received</p>
+                  <p className="text-sm font-semibold">{tr("No logbook received")}</p>
                   <p className="text-xs text-muted-foreground">{state.msg}</p>
-                  <Button onClick={() => setState(null)}>OK</Button>
+                  <Button onClick={() => setState(null)}>{tr("OK")}</Button>
                 </>
               )}
             </div>

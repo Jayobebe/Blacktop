@@ -27,6 +27,7 @@ import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCard
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
 import { useVehicleCards } from '../hooks/useVehicleCards';
 import { formatChallengeTime, formatDelta } from '../lib/challenge';
+import { tr } from '@/lib/i18n';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
@@ -80,20 +81,20 @@ export function CollectedCardsFolder() {
           void (async () => {
             const img = payload.p ? await fetchCardPhoto(payload.p) : null;
             if (payload.p && !img) {
-              toast.info('Bike photo unavailable — ask them to reopen their card, then rescan');
+              toast.info(tr("Bike photo unavailable — ask them to reopen their card, then rescan"));
             } else if (!payload.p) {
-              toast.info('This card was shared without a bike photo');
+              toast.info(tr("This card was shared without a bike photo"));
             }
 
             if (keyToRescan !== null) {
               rescanCard(keyToRescan, payload, img ?? undefined);
-              toast.success(`${payload.n} updated`);
+              toast.success(tr("{0} updated", [payload.n]));
             } else {
               const { added } = addCard(payload, img ?? undefined);
               if (added) {
-                toast.success(`Added ${payload.n} to your collection`);
+                toast.success(tr("Added {0} to your collection", [payload.n]));
               } else {
-                toast.info(`${payload.n} is already in your collection`);
+                toast.info(tr("{0} is already in your collection", [payload.n]));
               }
             }
           })();
@@ -111,10 +112,10 @@ export function CollectedCardsFolder() {
           // The scanner never reached a clearable state.
         }
       }
-      toast.error('Could not access camera', {
+      toast.error(tr("Could not access camera"), {
         description: err instanceof DOMException && err.name === 'NotAllowedError'
-          ? 'Camera permission was denied'
-          : 'Close other camera views and try again',
+          ? tr("Camera permission was denied")
+          : tr("Close other camera views and try again"),
       });
       setShowScanner(false);
       setRescanKey(null);
@@ -150,26 +151,26 @@ export function CollectedCardsFolder() {
       {/* Header — scan button always visible here, no scrolling required */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <Folder className="w-4 h-4 text-accent" />
-        <h2 className="text-sm font-semibold tracking-tight">Card Collection</h2>
+        <h2 className="text-sm font-semibold tracking-tight">{tr("Card Collection")}</h2>
         <button
           type="button"
           onClick={() => startScanner(null)}
           className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
-          aria-label="Scan a card"
+          aria-label={tr("Scan a card")}
         >
           <ScanLine className="w-3.5 h-3.5" />
-          Scan card
+          {tr("Scan card")}
         </button>
       </div>
-      <p className="px-4 pb-3 text-[10px] text-muted-foreground">Tap a card to flip it.</p>
+      <p className="px-4 pb-3 text-[10px] text-muted-foreground">{tr("Tap a card to flip it.")}</p>
 
       {/* Spectre row — earned only by beating time attacks; no QR, no trading */}
       <CardRow
         icon={<Ghost className="w-4 h-4 text-cyan-300" />}
-        title="Spectre"
+        title={tr("Spectre")}
         count={spectres.length}
-        hint="Earned by beating time attacks"
-        empty="Take a card's time attack on the map and beat it. Spectre cards can't be scanned or traded."
+        hint={tr("Earned by beating time attacks")}
+        empty={tr("Take a card's time attack on the map and beat it. Spectre cards can't be scanned or traded.")}
         emptyClass="border-cyan-300/30"
       >
         {spectres.map((sp) => (
@@ -185,16 +186,16 @@ export function CollectedCardsFolder() {
       {/* Collected row — scanned from other riders; flips to its QR to pass on */}
       <CardRow
         icon={<Sparkles className="w-4 h-4 text-accent" />}
-        title="Collected"
+        title={tr("Collected")}
         count={myCards.length + collected.length}
-        hint="Yours first, then scanned"
-        empty="Scan another rider's card QR to start your collection."
+        hint={tr("Yours first, then scanned")}
+        empty={tr("Scan another rider's card QR to start your collection.")}
         emptyClass="border-border"
       >
         {myCards.map((c) => (
           <div key={`own-${c.bike.id}`} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
             <OwnFlipCard card={c} />
-            <p className="mt-2 py-2 text-center text-xs font-medium text-accent">Your card</p>
+            <p className="mt-2 py-2 text-center text-xs font-medium text-accent">{tr("Your card")}</p>
           </div>
         ))}
         {collected.map((card) => (
@@ -206,17 +207,17 @@ export function CollectedCardsFolder() {
                 onClick={() => startScanner(card.key)}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-xs font-medium"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Rescan
+                <RefreshCw className="w-3.5 h-3.5" />{" "}{tr("Rescan")}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   removeCard(card.key);
-                  toast.success('Removed from collection');
+                  toast.success(tr("Removed from collection"));
                 }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-xs font-medium"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Remove
+                <Trash2 className="w-3.5 h-3.5" />{" "}{tr("Remove")}
               </button>
             </div>
           </div>
@@ -232,12 +233,12 @@ export function CollectedCardsFolder() {
             <button
               onClick={stopScanner}
               className="p-2.5 rounded-xl bg-secondary hover:bg-muted transition-colors"
-              aria-label="Back"
+              aria-label={tr("Back")}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h2 className="text-base font-semibold">
-              {rescanKey ? 'Rescan Card' : 'Scan Card QR'}
+              {rescanKey ? tr("Rescan Card") : tr("Scan Card QR")}
             </h2>
           </div>
 
@@ -247,8 +248,8 @@ export function CollectedCardsFolder() {
 
           <p className="flex-shrink-0 text-center text-muted-foreground text-xs px-6 py-3">
             {rescanKey
-              ? "Point at the rider's updated QR to refresh their card"
-              : "Point your camera at a rider's card QR"}
+              ? tr("Point at the rider's updated QR to refresh their card")
+              : tr("Point your camera at a rider's card QR")}
           </p>
         </div>,
         document.body,
@@ -325,7 +326,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
         haptics.light();
         setFlipped((f) => !f);
       }}
-      aria-label={flipped ? `Show front of ${card.n}` : spectre ? `Show ${card.n} Spectre result` : `Show ${card.n} QR code`}
+      aria-label={flipped ? tr("Show front of {0}", [card.n]) : spectre ? tr("Show {0} Spectre result", [card.n]) : tr("Show {0} QR code", [card.n])}
       className="block w-full aspect-[5/7] [perspective:1200px] text-left"
     >
       <div
@@ -344,23 +345,23 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
           )}
         >
           <div className="w-full min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">{card.o ?? 'Anonymous rider'}</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">{card.o ?? tr("Anonymous rider")}</p>
             <h3 className="text-sm font-bold leading-tight text-white truncate">{card.n}</h3>
           </div>
           {spectre ? (
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2.5">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-white/10 text-slate-100 border border-white/30 spectre-text">
-                <Ghost className="w-3.5 h-3.5" /> Spectre
+                <Ghost className="w-3.5 h-3.5" />{" "}{tr("Spectre")}
               </span>
               <div className="w-full grid grid-cols-2 gap-1.5">
-                <Stat icon={Timer} label="Your time" value={formatChallengeTime(spectre.timeSec)} unit="" />
-                <Stat icon={Timer} label={`${spectre.setterName}'s`} value={formatChallengeTime(spectre.targetSec)} unit="" />
+                <Stat icon={Timer} label={tr("Your time")} value={formatChallengeTime(spectre.timeSec)} unit="" />
+                <Stat icon={Timer} label={tr("{0}'s", [spectre.setterName])} value={formatChallengeTime(spectre.targetSec)} unit="" />
               </div>
               <div className="w-full rounded-lg bg-white/5 border border-white/20 backdrop-blur-sm px-2 py-2 text-center">
-                <p className="text-[8px] uppercase tracking-widest text-slate-200/70">Beaten by</p>
+                <p className="text-[8px] uppercase tracking-widest text-slate-200/70">{tr("Beaten by")}</p>
                 <p className="font-mono text-xl font-bold text-slate-50 spectre-text">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
               </div>
-              <p className="text-[9px] uppercase tracking-widest text-white/40 text-center">Earned, not traded · no QR</p>
+              <p className="text-[9px] uppercase tracking-widest text-white/40 text-center">{tr("Earned, not traded · no QR")}</p>
             </div>
           ) : (
             <>
@@ -370,9 +371,9 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
                 </div>
               </div>
               <p className="text-[9px] uppercase tracking-widest text-white/60 text-center">
-                Scan in Blacktop World
+                {tr("Scan in Blacktop World")}
                 <br />
-                to add to a collection
+                {tr("to add to a collection")}
               </p>
             </>
           )}
@@ -412,7 +413,7 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
       <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">
-            {card.o ?? 'Anonymous rider'}
+            {card.o ?? tr("Anonymous rider")}
           </p>
           <h3 className="text-base font-bold leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">
             {card.n}
@@ -455,17 +456,17 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
             );
           })() : (
             <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
-              No photo
+              {tr("No photo")}
             </div>
           )}
         </div>
       </div>
 
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
-        <Stat icon={Gauge} label="Top speed" value={`${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={getSpeedLabel(settings.speedUnit)} />
-        <Stat icon={Clock} label="Time" value={formatDuration(card.s.totalDurationSec)} unit="" />
-        <Stat icon={Route} label="Distance" value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
-        <Stat icon={Hash} label="Rides" value={`${card.s.totalRides}`} unit="" />
+        <Stat icon={Gauge} label={tr("Top speed")} value={`${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={getSpeedLabel(settings.speedUnit)} />
+        <Stat icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
+        <Stat icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
+        <Stat icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />
       </div>
     </div>
   );

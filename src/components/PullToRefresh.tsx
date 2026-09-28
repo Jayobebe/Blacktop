@@ -4,6 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { setBackdropPull, surgeBackdrop } from '@/lib/backdropMotion';
+import { tr } from '@/lib/i18n';
 
 /**
  * App-wide pull-to-refresh. Dragging down from the top of any screen pulls the
@@ -135,7 +136,7 @@ export function PullToRefresh({ disabled = false }: { disabled?: boolean }) {
     <div
       aria-hidden={!refreshing}
       role={refreshing ? 'status' : undefined}
-      aria-label={refreshing ? 'Refreshing' : undefined}
+      aria-label={refreshing ? tr("Refreshing") : undefined}
       className="pointer-events-none fixed inset-x-0 z-40 flex justify-center"
       style={{ top: 'calc(env(safe-area-inset-top) - 40px)' }}
     >

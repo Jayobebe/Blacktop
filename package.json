@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "i18n:check": "node scripts/i18n/extract.mjs",
     "tracks:build": "esbuild scripts/build-circuit-library.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/build-circuit-library.mjs --log-level=warning && node node_modules/.cache/build-circuit-library.mjs",
     "preview": "vite preview"
   },

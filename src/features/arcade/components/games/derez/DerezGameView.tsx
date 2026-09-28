@@ -10,6 +10,7 @@ import {
   pointInPolygon, ringBounds, ringToGeoJson, segmentsIntersect, toMetres,
   type LngLat,
 } from '../../../lib/derezGeo';
+import { tr } from '@/lib/i18n';
 
 const DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 const ARENA_SRC = 'derez-arena';
@@ -240,7 +241,7 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
       {/* HUD: lives + rider list */}
       <div className="absolute top-3 left-3 right-3 z-20 flex items-start justify-between gap-2 pointer-events-none">
         <div className="rounded-xl bg-black/70 border border-white/10 backdrop-blur px-3 py-2">
-          <p className="text-[9px] uppercase tracking-widest text-white/40">Lives</p>
+          <p className="text-[9px] uppercase tracking-widest text-white/40">{tr("Lives")}</p>
           <div className="flex items-center gap-1 mt-0.5">
             {Array.from({ length: lobby.lives }).map((_, i) => (
               <Heart key={i} className={`w-4 h-4 ${i < me.livesLeft ? 'text-red-500 fill-red-500' : 'text-white/15'}`} />
@@ -262,20 +263,20 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
       {/* Speed */}
       <div className="absolute bottom-4 left-3 z-20 rounded-xl bg-black/70 border border-white/10 backdrop-blur px-3 py-2 pointer-events-none">
         <p className="font-mono text-2xl font-bold tabular-nums text-white leading-none">{speed.toFixed(0)}</p>
-        <p className="text-[9px] uppercase tracking-widest text-white/40">mph</p>
+        <p className="text-[9px] uppercase tracking-widest text-white/40">{tr("mph")}</p>
       </div>
 
       <div className="absolute bottom-4 right-3 z-20 rounded-xl bg-black/70 border border-white/10 backdrop-blur px-3 py-2 pointer-events-none">
-        <p className="text-[9px] uppercase tracking-widest text-white/40">Alive</p>
+        <p className="text-[9px] uppercase tracking-widest text-white/40">{tr("Alive")}</p>
         <p className="font-mono text-xl font-bold text-white leading-none">{alive.length}</p>
       </div>
 
       {/* Out of bounds */}
       {oobLeft !== null && me.isAlive && (
         <div className="absolute inset-x-0 top-1/3 z-30 flex flex-col items-center pointer-events-none">
-          <p className="font-mono text-xs tracking-widest uppercase text-red-400">Out of bounds</p>
+          <p className="font-mono text-xs tracking-widest uppercase text-red-400">{tr("Out of bounds")}</p>
           <p className="font-mono text-7xl font-bold text-red-500 tabular-nums" style={{ textShadow: '0 0 24px rgba(239,68,68,0.7)' }}>{oobLeft}</p>
-          <p className="font-mono text-[10px] tracking-widest uppercase text-white/50">Get back in the grid</p>
+          <p className="font-mono text-[10px] tracking-widest uppercase text-white/50">{tr("Get back in the grid")}</p>
         </div>
       )}
 
@@ -283,7 +284,7 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
       {!me.isAlive && (
         <div className="absolute inset-x-0 top-1/3 z-30 flex flex-col items-center gap-1 pointer-events-none">
           <Skull className="w-8 h-8 text-white/50" />
-          <p className="font-mono text-xs tracking-widest uppercase text-white/60">Derezzed — spectating</p>
+          <p className="font-mono text-xs tracking-widest uppercase text-white/60">{tr("Derezzed — spectating")}</p>
         </div>
       )}
     </div>

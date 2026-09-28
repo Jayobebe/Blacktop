@@ -33,6 +33,7 @@ import { DiscordSettingsCard } from '@/features/integrations/discord';
 import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay, markBurnReveal } from '@/components/BurnFlameOverlay';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
@@ -42,6 +43,7 @@ import { StationManager, useRadioStations, burnRadioStations, resetRadio } from 
 import { NimiqTipCard } from '@/features/tips';
 import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type RideMode } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 export default function Settings() {
   const [searchParams] = useSearchParams();
@@ -64,6 +66,8 @@ export default function Settings() {
   const { enabled: demoEnabled } = useDemoMode();
   const [demoActionRevealed, setDemoActionRevealed] = useState(false);
   const [demoHoldProgress, setDemoHoldProgress] = useState(0);
+  // The BT logo: a tap opens the language picker, a 3 s hold reveals the demo toggle.
+  const [languageOpen, setLanguageOpen] = useState(false);
   const demoHoldStartRef = useRef<number | null>(null);
   const demoHoldRafRef = useRef<number | null>(null);
 
@@ -96,7 +100,7 @@ export default function Settings() {
   const handleToggleDemoMode = () => {
     const next = !demoEnabled;
     setDemoMode(next);
-    toast.success(next ? 'Demo data injected.' : 'Personal stats restored.');
+    toast.success(next ? tr("Demo data injected.") : tr("Personal stats restored."));
     setDemoActionRevealed(false);
   };
 
@@ -105,7 +109,7 @@ export default function Settings() {
   useEffect(() => {
     const tipStatus = searchParams.get('tip');
     if (tipStatus === 'success') {
-      toast.success('Thank you for your support!');
+      toast.success(tr("Thank you for your support!"));
     }
   }, [searchParams]);
 
@@ -133,10 +137,10 @@ export default function Settings() {
   };
 
   const navApps: { id: NavigationApp; label: string }[] = [
-    { id: 'google', label: 'Google Maps' },
-    { id: 'waze', label: 'Waze' },
-    { id: 'apple', label: 'Apple Maps' },
-    { id: 'blacktop', label: 'Blacktop Maps' },
+    { id: 'google', label: tr("Google Maps") },
+    { id: 'waze', label: tr("Waze") },
+    { id: 'apple', label: tr("Apple Maps") },
+    { id: 'blacktop', label: tr("Blacktop Maps") },
   ];
 
 
@@ -201,7 +205,7 @@ export default function Settings() {
       // Demo burn (or a stray second peak): back to the rider's own account, nothing deleted.
       if (kind === 'demo') {
         setDemoMode(false);
-        toast.success('Back to your account', { description: 'Demo data cleared. Your own data is untouched.' });
+        toast.success(tr("Back to your account"), { description: tr("Demo data cleared. Your own data is untouched.") });
       }
       setBurnStep(0);
       burnLockRef.current = false;
@@ -270,18 +274,28 @@ export default function Settings() {
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
       <PageHeader
-        title="Settings"
+        title={tr("Settings")}
         backTo="/"
         right={
           <button
             type="button"
             onPointerDown={(e) => { e.preventDefault(); startDemoHold(); }}
-            onPointerUp={cancelDemoHold}
+            onPointerUp={() => {
+              const held = demoHoldStartRef.current != null ? performance.now() - demoHoldStartRef.current : Infinity;
+              cancelDemoHold();
+              if (held < 450) setLanguageOpen(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setLanguageOpen(true);
+              }
+            }}
             onPointerLeave={cancelDemoHold}
             onPointerCancel={cancelDemoHold}
             onContextMenu={(e) => e.preventDefault()}
             className="relative rounded-lg touch-target select-none"
-            aria-label="Hold to reveal demo data toggle"
+            aria-label={tr("Language (hold for demo data)")}
             style={{ WebkitTouchCallout: 'none' }}
           >
             <BTLogo size="md" />
@@ -302,7 +316,7 @@ export default function Settings() {
             onClick={handleToggleDemoMode}
             className="w-full px-4 py-3 rounded-2xl bg-accent/10 border border-accent/40 text-accent text-sm font-semibold tracking-wide hover:bg-accent/20 transition-colors"
           >
-            {demoEnabled ? 'Revert to personal stats' : 'Inject demo data'}
+            {demoEnabled ? tr("Revert to personal stats") : tr("Inject demo data")}
           </button>
         </div>
       )}
@@ -322,7 +336,7 @@ export default function Settings() {
                 onKeyDown={handleNameKeyDown}
                 maxLength={20}
                 className="text-sm font-medium h-9 rounded-lg bg-background/50 border-border/30 flex-1"
-                placeholder="Enter your name"
+                placeholder={tr("Enter your name")}
               />
             </div>
           ) : (
@@ -339,7 +353,7 @@ export default function Settings() {
                 </span>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[15px] font-semibold truncate">{profile.name}</span>
-                  <span className="text-[12px] text-muted-foreground">Tap to change your name</span>
+                  <span className="text-[12px] text-muted-foreground">{tr("Tap to change your name")}</span>
                 </div>
               </div>
               <Pencil className="w-4 h-4 text-muted-foreground shrink-0 ml-2" />
@@ -353,17 +367,17 @@ export default function Settings() {
           {/* Demo */}
           <CollapsibleSection
             icon={Play}
-            label="Demo" index={0}
+            label={tr("Demo")} index={0}
             delayClass="delay-75"
             rightElement={<Play className="w-4 h-4 text-accent" />}
             onHeaderClick={() => navigate('/demo')}
           />
 
           {/* Setup answers — same choices as onboarding, applied instantly */}
-          <CollapsibleSection icon={Sparkles} label="Your Blacktop" index={1} delayClass="delay-75">
+          <CollapsibleSection icon={Sparkles} label={tr("Your Blacktop")} index={1} delayClass="delay-75">
             <div className="space-y-5">
               <div>
-                <p className="text-xs text-muted-foreground mb-2">What you {exp.terms.ride} <span className="opacity-60">(first is your main)</span></p>
+                <p className="text-xs text-muted-foreground mb-2">{tr("What you")}{" "}{exp.terms.ride} <span className="opacity-60">{tr("(first is your main)")}</span></p>
                 <div className="flex flex-wrap gap-1.5">
                   {VEHICLE_ORDER.map((v) => {
                     const info = VEHICLES[v];
@@ -383,26 +397,26 @@ export default function Settings() {
                       >
                         <info.icon className="w-4 h-4" />
                         {info.label}
-                        {order === 0 && exp.vehicles.length > 1 && <span className="text-[9px] uppercase tracking-wider opacity-80">· main</span>}
+                        {order === 0 && exp.vehicles.length > 1 && <span className="text-[9px] uppercase tracking-wider opacity-80">{tr("· main")}</span>}
                       </button>
                     );
                   })}
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Who you {exp.terms.ride} with</p>
+                <p className="text-xs text-muted-foreground mb-2">{tr("Who you")}{" "}{exp.terms.ride}{" "}{tr("with")}</p>
                 <SegmentedChoice<RideMode>
                   value={exp.rideMode}
                   onChange={exp.setRideMode}
                   options={[
-                    { id: 'solo', label: 'Just me', icon: User },
-                    { id: 'group', label: 'My crew', icon: Users },
-                    { id: 'both', label: 'Both', icon: Sparkles },
+                    { id: 'solo', label: tr("Just me"), icon: User },
+                    { id: 'group', label: tr("My crew"), icon: Users },
+                    { id: 'both', label: tr("Both"), icon: Sparkles },
                   ]}
                 />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Typical {exp.terms.ride}</p>
+                <p className="text-xs text-muted-foreground mb-2">{tr("Typical")}{" "}{exp.terms.ride}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {RIDE_STYLES.map((st) => (
                     <button
@@ -423,23 +437,23 @@ export default function Settings() {
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">What you care about</p>
+                <p className="text-xs text-muted-foreground">{tr("What you care about")}</p>
                 <CareList />
               </div>
               <Button variant="outline" className="w-full rounded-2xl" onClick={() => navigate('/setup')}>
                 <Repeat className="w-4 h-4" />
-                Redo full setup
+                {tr("Redo full setup")}
               </Button>
             </div>
           </CollapsibleSection>
 
           {/* Safety */}
-        <CollapsibleSection icon={AlertTriangle} label="Safety" index={2} delayClass="delay-100">
+        <CollapsibleSection icon={AlertTriangle} label={tr("Safety")} index={2} delayClass="delay-100">
           <div className="space-y-5">
             {/* Speed Alerts — they colour the live speed readout, so only for speed-focused riders */}
             {settings.speedFocusEnabled && (
             <div>
-              <p className="text-xs text-muted-foreground mb-3">Speed Alerts</p>
+              <p className="text-xs text-muted-foreground mb-3">{tr("Speed Alerts")}</p>
               {(() => {
                 const u = settings.speedUnit;
                 const label = getSpeedLabel(u);
@@ -458,8 +472,8 @@ export default function Settings() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <p className="text-sm font-medium text-warning">Amber Warning</p>
-                          <p className="text-[10px] text-muted-foreground">Display turns amber</p>
+                          <p className="text-sm font-medium text-warning">{tr("Amber Warning")}</p>
+                          <p className="text-[10px] text-muted-foreground">{tr("Display turns amber")}</p>
                         </div>
                         <span className="font-mono text-sm font-bold text-warning">
                           {amberDisplay} {label}
@@ -486,8 +500,8 @@ export default function Settings() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <p className="text-sm font-medium text-destructive">Red Alert</p>
-                          <p className="text-[10px] text-muted-foreground">Display turns red</p>
+                          <p className="text-sm font-medium text-destructive">{tr("Red Alert")}</p>
+                          <p className="text-[10px] text-muted-foreground">{tr("Display turns red")}</p>
                         </div>
                         <span className="font-mono text-sm font-bold text-destructive">
                           {redDisplay} {label}
@@ -517,12 +531,12 @@ export default function Settings() {
 
             {/* Auto Rescue */}
             <div className={cn(settings.speedFocusEnabled && 'border-t border-border/30 pt-4')}>
-              <p className="text-xs text-muted-foreground mb-3">Auto Rescue</p>
+              <p className="text-xs text-muted-foreground mb-3">{tr("Auto Rescue")}</p>
               <div className="flex items-center justify-between mb-2">
                 <div className="pr-3">
-                  <p className="text-sm font-medium">Crash detection</p>
+                  <p className="text-sm font-medium">{tr("Crash detection")}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    If a hard impact is followed by a stop, the app asks "Are you okay?". No reply in 5 min → rescue ping fires to your whole convoy and Discord (if connected). Works on solo rides too (Discord only).
+                    {tr("If a hard impact is followed by a stop, the app asks \"Are you okay?\". No reply in 5 min → rescue ping fires to your whole convoy and Discord (if connected). Works on solo rides too (Discord only).")}
                   </p>
                 </div>
                 <Switch
@@ -535,11 +549,11 @@ export default function Settings() {
                         try {
                           const res = await anyMotion.requestPermission();
                           if (res !== 'granted') {
-                            toast.error('Motion sensor permission denied');
+                            toast.error(tr("Motion sensor permission denied"));
                             return;
                           }
                         } catch {
-                          toast.error('Could not enable motion sensor');
+                          toast.error(tr("Could not enable motion sensor"));
                           return;
                         }
                       }
@@ -553,9 +567,9 @@ export default function Settings() {
                 <div className="pt-3 border-t border-border/30 space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium">Impact sensitivity</p>
+                      <p className="text-sm font-medium">{tr("Impact sensitivity")}</p>
                       <span className="font-mono text-sm font-bold text-accent">
-                        {settings.autoRescueGThreshold} G
+                        {settings.autoRescueGThreshold}{" "}{tr("G")}
                       </span>
                     </div>
                     <input
@@ -568,16 +582,16 @@ export default function Settings() {
                       className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
                     />
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{AUTO_RESCUE_MIN_G_THRESHOLD} G (sensitive)</span>
-                      <span>{AUTO_RESCUE_MAX_G_THRESHOLD} G (only crashes)</span>
+                      <span>{AUTO_RESCUE_MIN_G_THRESHOLD}{" "}{tr("G (sensitive)")}</span>
+                      <span>{AUTO_RESCUE_MAX_G_THRESHOLD}{" "}{tr("G (only crashes)")}</span>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium">Stop window after impact</p>
+                      <p className="text-sm font-medium">{tr("Stop window after impact")}</p>
                       <span className="font-mono text-sm font-bold text-accent">
-                        {settings.autoRescueStopWindowSec}s
+                        {settings.autoRescueStopWindowSec}{tr("s")}
                       </span>
                     </div>
                     <input
@@ -590,13 +604,13 @@ export default function Settings() {
                       className="w-full h-2 bg-secondary rounded-full appearance-none cursor-pointer accent-[hsl(var(--accent))]"
                     />
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}s</span>
-                      <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}s</span>
+                      <span>{AUTO_RESCUE_MIN_STOP_WINDOW_SEC}{tr("s")}</span>
+                      <span>{AUTO_RESCUE_MAX_STOP_WINDOW_SEC}{tr("s")}</span>
                     </div>
                   </div>
 
                   <p className="text-[10px] text-muted-foreground">
-                    Acknowledge timeout: <span className="font-mono">5:00</span>
+                    {tr("Acknowledge timeout:")}{" "}<span className="font-mono">5:00</span>
                   </p>
                 </div>
               )}
@@ -604,8 +618,8 @@ export default function Settings() {
 
             {/* Who the rescue triangle (and auto-rescue after a crash) reaches. */}
             <div className="pt-4 border-t border-border/30">
-              <p className="text-xs text-muted-foreground mb-1">Who your rescue call reaches</p>
-              <p className="text-[11px] text-muted-foreground/80 mb-3">The rescue button on the map and ride screen, and auto-rescue after a crash.</p>
+              <p className="text-xs text-muted-foreground mb-1">{tr("Who your rescue call reaches")}</p>
+              <p className="text-[11px] text-muted-foreground/80 mb-3">{tr("The rescue button on the map and ride screen, and auto-rescue after a crash.")}</p>
               <div className="space-y-3">
                 {(
                   [
@@ -625,7 +639,7 @@ export default function Settings() {
                 ))}
                 {settings.rescueToNearby && (
                   <div>
-                    <p className="text-[11px] text-muted-foreground mb-1.5">How far to reach (about: riders’ areas are rounded to ~11 km)</p>
+                    <p className="text-[11px] text-muted-foreground mb-1.5">{tr("How far to reach (about: riders’ areas are rounded to ~11 km)")}</p>
                     <div className="grid grid-cols-4 gap-1.5">
                       {RESCUE_RADIUS_OPTIONS_KM.map((km) => (
                         <button
@@ -636,7 +650,7 @@ export default function Settings() {
                             settings.rescueNearbyKm === km ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground',
                           )}
                         >
-                          {km} km
+                          {km}{" "}{tr("km")}
                         </button>
                       ))}
                     </div>
@@ -648,12 +662,12 @@ export default function Settings() {
         </CollapsibleSection>
 
          {/* Ride Metrics Section */}
-         <CollapsibleSection icon={Gauge} label="Ride Metrics" index={3} delayClass="delay-200">
+         <CollapsibleSection icon={Gauge} label={tr("Ride Metrics")} index={3} delayClass="delay-200">
            <div className="space-y-3">
              <div className="flex items-center justify-between">
                <div>
-                 <p className="text-sm font-medium">Speed</p>
-                 <p className="text-[10px] text-muted-foreground">Currently {getSpeedLabel(settings.speedUnit)}</p>
+                 <p className="text-sm font-medium">{tr("Speed")}</p>
+                 <p className="text-[10px] text-muted-foreground">{tr("Currently")}{" "}{getSpeedLabel(settings.speedUnit)}</p>
                </div>
                <button
                  onClick={toggleSpeedUnit}
@@ -664,8 +678,8 @@ export default function Settings() {
              </div>
              <div className="flex items-center justify-between">
                <div>
-                 <p className="text-sm font-medium">Distance</p>
-                 <p className="text-[10px] text-muted-foreground">Currently {getDistanceLabel(settings.distanceUnit)}</p>
+                 <p className="text-sm font-medium">{tr("Distance")}</p>
+                 <p className="text-[10px] text-muted-foreground">{tr("Currently")}{" "}{getDistanceLabel(settings.distanceUnit)}</p>
                </div>
                <button
                  onClick={toggleDistanceUnit}
@@ -678,8 +692,8 @@ export default function Settings() {
 
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
               <div>
-                <p className="text-sm font-medium">Enable G-Force Gauge</p>
-                <p className="text-[10px] text-muted-foreground">Live G-force gauge and max-G tracking during rides</p>
+                <p className="text-sm font-medium">{tr("Enable G-Force Gauge")}</p>
+                <p className="text-[10px] text-muted-foreground">{tr("Live G-force gauge and max-G tracking during rides")}</p>
               </div>
               <Switch
                 checked={settings.gForceEnabled}
@@ -691,11 +705,11 @@ export default function Settings() {
                       try {
                         const res = await anyMotion.requestPermission();
                         if (res !== 'granted') {
-                          toast.error('Motion sensor permission denied');
+                          toast.error(tr("Motion sensor permission denied"));
                           return;
                         }
                       } catch {
-                        toast.error('Could not enable motion sensor');
+                        toast.error(tr("Could not enable motion sensor"));
                         return;
                       }
                     }
@@ -708,8 +722,8 @@ export default function Settings() {
             {exp.canLean && (<>
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
               <div>
-                <p className="text-sm font-medium">Enable Lean Angle</p>
-                <p className="text-[10px] text-muted-foreground">Track vehicle lean angle in real-time</p>
+                <p className="text-sm font-medium">{tr("Enable Lean Angle")}</p>
+                <p className="text-[10px] text-muted-foreground">{tr("Track vehicle lean angle in real-time")}</p>
               </div>
               <Switch
                 checked={settings.leanAngleEnabled}
@@ -721,8 +735,8 @@ export default function Settings() {
               <div className="pt-3 pb-4 border-t border-border/30 mt-3">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="text-sm font-medium text-destructive">Warning Threshold</p>
-                    <p className="text-[10px] text-muted-foreground">Arc glows red above this angle</p>
+                    <p className="text-sm font-medium text-destructive">{tr("Warning Threshold")}</p>
+                    <p className="text-[10px] text-muted-foreground">{tr("Arc glows red above this angle")}</p>
                   </div>
                   <span className="font-mono text-sm font-bold text-destructive">
                     {settings.leanAngleThreshold}°
@@ -747,8 +761,8 @@ export default function Settings() {
 
            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
              <div>
-               <p className="text-sm font-medium">3D Ride Flyover</p>
-               <p className="text-[10px] text-muted-foreground">3D route overview button in ride history</p>
+               <p className="text-sm font-medium">{tr("3D Ride Flyover")}</p>
+               <p className="text-[10px] text-muted-foreground">{tr("3D route overview button in ride history")}</p>
              </div>
              <Switch
                checked={settings.flyoverEnabled}
@@ -757,8 +771,8 @@ export default function Settings() {
            </div>
            <div className="flex items-center justify-between mt-4">
              <div>
-               <p className="text-sm font-medium">Ride Overlay</p>
-               <p className="text-[10px] text-muted-foreground">Recorded overlay download in ride history</p>
+               <p className="text-sm font-medium">{tr("Ride Overlay")}</p>
+               <p className="text-[10px] text-muted-foreground">{tr("Recorded overlay download in ride history")}</p>
              </div>
              <Switch
                checked={settings.rideOverlayEnabled}
@@ -768,8 +782,8 @@ export default function Settings() {
            {settings.rideOverlayEnabled && (
              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
                <div>
-                  <p className="text-sm font-medium">Voice Channel Recording</p>
-                  <p className="text-[10px] text-muted-foreground">Add convoy voice audio to the recorded overlay. This also acts as your consent: riders with this off are never included in anyone else's recording — only riders who have it on can be heard.</p>
+                  <p className="text-sm font-medium">{tr("Voice Channel Recording")}</p>
+                  <p className="text-[10px] text-muted-foreground">{tr("Add convoy voice audio to the recorded overlay. This also acts as your consent: riders with this off are never included in anyone else's recording — only riders who have it on can be heard.")}</p>
                </div>
                <Switch
                  checked={settings.voiceRecordingEnabled}
@@ -781,7 +795,7 @@ export default function Settings() {
 
 
         {/* Navigation App Section */}
-        <CollapsibleSection icon={Navigation} label="Navigation" index={4} delayClass="delay-200">
+        <CollapsibleSection icon={Navigation} label={tr("Navigation")} index={4} delayClass="delay-200">
           <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
@@ -812,7 +826,7 @@ export default function Settings() {
                         ? "text-accent hover:bg-accent/20"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
-                    title={app.id === 'blacktop' ? 'Preview Blacktop Maps' : `Open ${app.label}`}
+                    title={app.id === 'blacktop' ? tr("Preview Blacktop Maps") : tr("Open {0}", [app.label])}
                   >
                     {app.id === 'blacktop' ? <Eye className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
                   </button>
@@ -821,7 +835,7 @@ export default function Settings() {
             })}
           </div>
           <p className="text-[10px] text-muted-foreground mt-3">
-            Blacktop opens your preferred app for directions
+            {tr("Blacktop opens your preferred app for directions")}
           </p>
 
           {preferredNavApp === 'blacktop' && (
@@ -830,10 +844,10 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <Volume2 className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Spoken Directions</p>
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Spoken Directions")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Reads each turn aloud while you navigate on the Blacktop map, and lowers the radio and crew voice while it speaks. The turn banner stays on screen either way.
+                    {tr("Reads each turn aloud while you navigate on the Blacktop map, and lowers the radio and crew voice while it speaks. The turn banner stays on screen either way.")}
                   </p>
                 </div>
                 <Switch
@@ -846,10 +860,10 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <Video className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Traffic Cameras</p>
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Traffic Cameras")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Show speed cameras &amp; ANPR poles on the map when zoomed in. Crowd-sourced from OpenStreetMap — informational only, coverage varies by area.
+                    {tr("Show speed cameras &amp; ANPR poles on the map when zoomed in. Crowd-sourced from OpenStreetMap — informational only, coverage varies by area.")}
                   </p>
                 </div>
                 <Switch
@@ -862,10 +876,10 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <CloudRain className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Weather Overlay</p>
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Weather Overlay")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Animated rain radar on the Blacktop map, powered by RainViewer.
+                    {tr("Animated rain radar on the Blacktop map, powered by RainViewer.")}
                   </p>
                 </div>
                 <Switch
@@ -878,10 +892,10 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <CloudRain className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Weather Routing</p>
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Weather Routing")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Warns when heavy rain sits on your route and offers a drier line.
+                    {tr("Warns when heavy rain sits on your route and offers a drier line.")}
                   </p>
                 </div>
                 <Switch
@@ -894,21 +908,21 @@ export default function Settings() {
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <Users className="w-4 h-4 text-accent" />
-                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Nearby Riders</p>
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Nearby Riders")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    When another opted-in rider rides near you for a bit, Blacktop offers to join up. Both of you have to accept, then you share a convoy with voice. Convoy leaders can merge convoys and either leader can unmerge. Your name and position are only shared with opted-in riders within a few km, and only while you ride.
+                    {tr("When another opted-in rider rides near you for a bit, Blacktop offers to join up. Both of you have to accept, then you share a convoy with voice. Convoy leaders can merge convoys and either leader can unmerge. Your name and position are only shared with opted-in riders within a few km, and only while you ride.")}
                   </p>
                   {blockedRiders > 0 && (
                     <button
                       onClick={() => {
                         clearBlocked();
                         setBlockedRiders(0);
-                        toast.success('Blocked riders cleared');
+                        toast.success(tr("Blocked riders cleared"));
                       }}
                       className="mt-1.5 text-[11px] text-accent hover:underline"
                     >
-                      {blockedRiders} blocked {blockedRiders === 1 ? 'rider' : 'riders'} · Clear
+                      {blockedRiders}{" "}{tr("blocked")}{" "}{blockedRiders === 1 ? 'rider' : 'riders'}{" "}{tr("· Clear")}
                     </button>
                   )}
                 </div>
@@ -926,10 +940,10 @@ export default function Settings() {
               <div className="pr-2">
                 <div className="flex items-center gap-2 mb-1">
                   <Megaphone className="w-4 h-4 text-accent" />
-                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Spoken Hazard Warnings</p>
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Spoken Hazard Warnings")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Says it out loud when you're riding up to a reported hazard ("Oil on the road ahead, 300 metres") and lowers the radio and crew voice while it speaks. The warning banner shows either way.
+                  {tr("Says it out loud when you're riding up to a reported hazard (\"Oil on the road ahead, 300 metres\") and lowers the radio and crew voice while it speaks. The warning banner shows either way.")}
                 </p>
               </div>
               <Switch
@@ -945,10 +959,10 @@ export default function Settings() {
               <div className="pr-2">
                 <div className="flex items-center gap-2 mb-1">
                   <MonitorSmartphone className="w-4 h-4 text-accent" />
-                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Car Display</p>
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Car Display")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Oversized, low-clutter Active Ride layout for wired Android screen mirroring (USB/HDMI head units). Kicks in automatically in landscape. Bluetooth-only units and iPhone can't mirror.
+                  {tr("Oversized, low-clutter Active Ride layout for wired Android screen mirroring (USB/HDMI head units). Kicks in automatically in landscape. Bluetooth-only units and iPhone can't mirror.")}
                 </p>
               </div>
               <Switch
@@ -964,10 +978,10 @@ export default function Settings() {
               <div className="pr-2">
                 <div className="flex items-center gap-2 mb-1">
                   <Radio className="w-4 h-4 text-accent" />
-                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktop Radio</p>
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Blacktop Radio")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Build stations from the music already on your device and switch between them on a GTA-style dial during a ride. Files stay on your phone — nothing is uploaded.
+                  {tr("Build stations from the music already on your device and switch between them on a GTA-style dial during a ride. Files stay on your phone — nothing is uploaded.")}
                 </p>
               </div>
               <Switch
@@ -985,7 +999,7 @@ export default function Settings() {
                 className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-accent/60 text-accent text-xs font-semibold"
               >
                 <Radio className="w-3.5 h-3.5" />
-                {radioStations.length ? `Manage stations (${radioStations.length})` : 'Create your first station'}
+                {radioStations.length ? tr("Manage stations ({0})", [radioStations.length]) : tr("Create your first station")}
               </button>
             )}
           </div>
@@ -993,12 +1007,12 @@ export default function Settings() {
 
 
         {/* Discord Integration */}
-        <CollapsibleSection icon={MessageSquare} label="Discord" index={5} delayClass="delay-200">
+        <CollapsibleSection icon={MessageSquare} label={tr("Discord")} index={5} delayClass="delay-200">
           <DiscordSettingsCard />
         </CollapsibleSection>
 
         {/* Accent Color Section */}
-        <CollapsibleSection icon={Palette} label="Accent Color" index={6} delayClass="delay-200">
+        <CollapsibleSection icon={Palette} label={tr("Accent Color")} index={6} delayClass="delay-200">
           <AccentColorPicker 
             selected={settings.accentColor} 
             secondary={settings.secondaryAccentColor}
@@ -1007,13 +1021,13 @@ export default function Settings() {
         </CollapsibleSection>
 
         {/* Privacy Section */}
-        <CollapsibleSection icon={Shield} label="Privacy" index={7} delayClass="delay-250">
+        <CollapsibleSection icon={Shield} label={tr("Privacy")} index={7} delayClass="delay-250">
           <ul className="space-y-1.5 text-xs text-muted-foreground">
-            <li>• Ride history stored locally on device</li>
-            <li>• No background tracking unless ride is active</li>
-            <li>• Voice is encrypted and never stored on a server; it's only in overlay videos of riders who opt in</li>
-            {settings.blacktopWorldEnabled && <li>• Blacktop World shows you as an anonymous glow (to about 110 km) while you ride, and crew boards see totals you publish</li>}
-            <li>• Live convoy data is server-burned the moment a ride ends</li>
+            <li>{tr("• Ride history stored locally on device")}</li>
+            <li>{tr("• No background tracking unless ride is active")}</li>
+            <li>{tr("• Voice is encrypted and never stored on a server; it's only in overlay videos of riders who opt in")}</li>
+            {settings.blacktopWorldEnabled && <li>{tr("• Blacktop World shows you as an anonymous glow (to about 110 km) while you ride, and crew boards see totals you publish")}</li>}
+            <li>{tr("• Live convoy data is server-burned the moment a ride ends")}</li>
           </ul>
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
             <Button
@@ -1022,7 +1036,7 @@ export default function Settings() {
               onClick={() => navigate('/privacy')}
               className="h-9 text-xs rounded-lg touch-target"
             >
-              Privacy Policy
+              {tr("Privacy Policy")}
             </Button>
             <Button
               variant="outline"
@@ -1030,11 +1044,11 @@ export default function Settings() {
               onClick={() => navigate('/terms')}
               className="h-9 text-xs rounded-lg touch-target"
             >
-              Terms & Safety
+              {tr("Terms & Safety")}
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground/70 mt-3">
-            Battery use increases while a ride is active.
+            {tr("Battery use increases while a ride is active.")}
           </p>
         </CollapsibleSection>
 
@@ -1056,15 +1070,15 @@ export default function Settings() {
         <section className="rounded-[18px] p-4 landscape:p-3 border border-[hsl(var(--burn))]/35 bg-[hsl(var(--burn))]/[0.06] backdrop-blur-xl animate-slide-up delay-300">
           <div className="flex items-center gap-2 mb-2">
             <Flame className="w-[18px] h-[18px] text-[hsl(var(--burn))]" strokeWidth={1.9} />
-            <p className="text-[14px] font-semibold text-[hsl(var(--burn))]">Burn Button</p>
+            <p className="text-[14px] font-semibold text-[hsl(var(--burn))]">{tr("Burn Button")}</p>
           </div>
           <p className="text-[13px] text-muted-foreground mb-3">
             {demoEnabled ? (
-              <>You're in the demo account. Burning it takes you back to your own account; nothing of yours is deleted.</>
+              <>{tr("You're in the demo account. Burning it takes you back to your own account; nothing of yours is deleted.")}</>
             ) : (
               <>
-                Permanently deletes your name and all ride data ({stats.totalRides} {stats.totalRides === 1 ? 'ride' : 'rides'},{' '}
-                {stats.totalDistance.toFixed(1)} mi) and returns you to the welcome screen.
+                {tr("Permanently deletes your name and all ride data (")}{stats.totalRides} {stats.totalRides === 1 ? 'ride' : 'rides'},{' '}
+                {stats.totalDistance.toFixed(1)}{" "}{tr("mi) and returns you to the welcome screen.")}
               </>
             )}
           </p>
@@ -1080,14 +1094,14 @@ export default function Settings() {
             )}
           >
             <Flame className="w-4 h-4 mr-2" />
-            {demoEnabled ? (burnStep === 0 ? 'BURN DEMO' : 'CONFIRM: BACK TO MY ACCOUNT') : burnStep === 0 ? 'BURN ALL DATA' : 'CONFIRM BURN'}
+            {demoEnabled ? (burnStep === 0 ? tr("BURN DEMO") : tr("CONFIRM: BACK TO MY ACCOUNT")) : burnStep === 0 ? tr("BURN ALL DATA") : tr("CONFIRM BURN")}
           </Button>
           {burnStep === 1 && (
             <Button onClick={() => setBurnStep(0)} variant="ghost" className="w-full mt-2 touch-target">
-              Cancel
+              {tr("Cancel")}
             </Button>
           )}
-          {!demoEnabled && <p className="text-[11px] text-destructive text-center mt-3">This action cannot be undone</p>}
+          {!demoEnabled && <p className="text-[11px] text-destructive text-center mt-3">{tr("This action cannot be undone")}</p>}
         </section>
 
         {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
@@ -1098,11 +1112,13 @@ export default function Settings() {
 
         {/* Legal Disclaimer */}
         <p className="text-[10px] text-muted-foreground text-center px-4 pb-4">
-          Blacktop is a ride logging tool, not a racing or enforcement-avoidance app.
+          {tr("Blacktop is a ride logging tool, not a racing or enforcement-avoidance app.")}
         </p>
       </div>
 
       {showStations && <StationManager onClose={() => setShowStations(false)} />}
+
+      <LanguagePicker open={languageOpen} onOpenChange={setLanguageOpen} />
 
       <BurnFlameOverlay
         active={burning}
@@ -1120,7 +1136,7 @@ export default function Settings() {
 function NotificationsSection() {
   const push = usePush();
   return (
-    <CollapsibleSection icon={Bell} label="Notifications" delayClass="delay-300" status={push.enabled ? 'On' : ''}>
+    <CollapsibleSection icon={Bell} label={tr("Notifications")} delayClass="delay-300" status={push.enabled ? 'On' : ''}>
       <NotificationSettings />
     </CollapsibleSection>
   );
@@ -1130,24 +1146,19 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
   return (
     <CollapsibleSection
       icon={Globe2}
-      label="Blacktop World"
+      label={tr("Blacktop World")}
       delayClass="delay-300"
       status={enabled ? 'On' : ''}
     >
       <div className="space-y-3 text-[13px] text-muted-foreground leading-relaxed">
         <p>
-          The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew
-          fuel fund) and trading-card drops on the map.
+          {tr("The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew fuel fund) and trading-card drops on the map.")}
         </p>
         <p>
-          <span className="text-foreground font-medium">How to open it.</span> Once it's on, press and hold the
-          spinning globe on the Home screen.
+          <span className="text-foreground font-medium">{tr("How to open it.")}</span>{" "}{tr("Once it's on, press and hold the spinning globe on the Home screen.")}
         </p>
         <p>
-          <span className="text-foreground font-medium">What it shares.</span> While you ride, your position is saved
-          to our server so you can appear on the globe. Other riders only ever see an anonymous glow rounded to about
-          110 km, never your exact position or name. It's deleted when your ride ends. Crew boards see the totals you
-          publish, and card drops you plant are visible to the riders you choose.
+          <span className="text-foreground font-medium">{tr("What it shares.")}</span>{" "}{tr("While you ride, your position is saved to our server so you can appear on the globe. Other riders only ever see an anonymous glow rounded to about 110 km, never your exact position or name. It's deleted when your ride ends. Crew boards see the totals you publish, and card drops you plant are visible to the riders you choose.")}
         </p>
         <Button
           onClick={() => onToggle(!enabled)}
@@ -1155,7 +1166,7 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
           className={cn('w-full h-11 font-semibold rounded-xl touch-target', !enabled && 'bg-accent hover:bg-accent/90 text-accent-foreground')}
         >
           <Globe2 className="w-4 h-4 mr-2" />
-          {enabled ? 'Turn off Blacktop World' : 'Turn on Blacktop World'}
+          {enabled ? tr("Turn off Blacktop World") : tr("Turn on Blacktop World")}
         </Button>
       </div>
     </CollapsibleSection>

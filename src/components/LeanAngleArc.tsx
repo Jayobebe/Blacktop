@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface LeanAngleArcProps {
   currentLean: number; // -90 to 90 degrees
@@ -120,13 +121,13 @@ export function LeanAngleArc({ currentLean, maxLean, threshold, className }: Lea
           {absLean}°
         </span>
         <span className="text-[10px] text-muted-foreground uppercase">
-          {currentLean < -2 ? 'L' : currentLean > 2 ? 'R' : ''}
+          {currentLean < -2 ? tr("L") : currentLean > 2 ? tr("R") : ''}
         </span>
       </div>
       
       {/* Max lean indicator */}
       <div className="text-[10px] text-muted-foreground">
-        MAX {maxLean}°
+        {tr("MAX")}{" "}{maxLean}°
       </div>
     </div>
   );

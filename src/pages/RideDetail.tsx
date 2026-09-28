@@ -18,6 +18,7 @@ import { shareRecapCard } from '@/features/ride/lib/recapCard';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { formatLap } from '@/features/track';
+import { tr } from '@/lib/i18n';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,9 +40,9 @@ export default function RideDetail() {
   if (!ride) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-4">
-        <p className="text-muted-foreground">Ride not found</p>
+        <p className="text-muted-foreground">{tr("Ride not found")}</p>
         <Button onClick={() => navigate('/history')} className="mt-4">
-          Back to History
+          {tr("Back to History")}
         </Button>
       </div>
     );
@@ -96,14 +97,14 @@ export default function RideDetail() {
       setTimeout(() => {
         markRecordingSaved(ride.id);
         setSaveProgress(null);
-        toast.success('Recording saved to device');
+        toast.success(tr("Recording saved to device"));
         URL.revokeObjectURL(url);
       }, 500);
       
     } catch (error) {
       console.error('Error saving recording:', error);
       setSaveProgress(null);
-      toast.error('Failed to save recording');
+      toast.error(tr("Failed to save recording"));
     }
   };
 
@@ -126,19 +127,19 @@ export default function RideDetail() {
             {ride.challenge && (
               <span className="flex items-center gap-1 text-xs font-medium text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2.5 py-1 rounded-full">
                 <IdCard className="w-3.5 h-3.5" />
-                Time attack
+                {tr("Time attack")}
               </span>
             )}
             {ride.track && (
               <span className="flex items-center gap-1 text-xs font-medium text-[#3987e5] bg-[#3987e5]/10 px-2.5 py-1 rounded-full">
                 <Zap className="w-3.5 h-3.5" />
-                Track
+                {tr("Track")}
               </span>
             )}
             {ride.isConvoyRide && (
               <span className="flex items-center gap-1 text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
                 <Users className="w-3.5 h-3.5" />
-                Convoy
+                {tr("Convoy")}
               </span>
             )}
           </>
@@ -182,24 +183,24 @@ export default function RideDetail() {
           >
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-[#3987e5]" />
-              <p className="text-sm font-bold flex-1">Track Pack · {ride.track.trackName}</p>
+              <p className="text-sm font-bold flex-1">{tr("Track Pack ·")}{" "}{ride.track.trackName}</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Best lap</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Best lap")}</p>
                 <p className="text-sm font-bold tabular-nums">{formatLap(ride.track.bestLapMs)}</p>
               </div>
               <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Theoretical</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Theoretical")}</p>
                 <p className="text-sm font-bold tabular-nums">{formatLap(ride.track.theoreticalMs)}</p>
               </div>
               <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Laps</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Laps")}</p>
                 <p className="text-sm font-bold tabular-nums">{ride.track.laps}</p>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2">Open for lap traces, racing lines, corners and exports</p>
+            <p className="text-[10px] text-muted-foreground mt-2">{tr("Open for lap traces, racing lines, corners and exports")}</p>
           </button>
         )}
 
@@ -209,7 +210,7 @@ export default function RideDetail() {
               <div className="flex items-center gap-2">
                 <IdCard className="w-4 h-4 text-[hsl(330_81%_60%)]" />
                 <p className="text-sm font-bold">
-                  {ride.challenge.role === 'set' ? 'Challenge set' : 'Card challenge'}
+                  {ride.challenge.role === 'set' ? tr("Challenge set") : tr("Card challenge")}
                 </p>
               </div>
               {ride.challenge.result && (
@@ -221,7 +222,7 @@ export default function RideDetail() {
                       : 'bg-destructive/15 text-destructive',
                   )}
                 >
-                  {ride.challenge.result === 'won' ? 'Won' : ride.challenge.result === 'void' ? 'Void' : 'Lost'}
+                  {ride.challenge.result === 'won' ? tr("Won") : ride.challenge.result === 'void' ? tr("Void") : tr("Lost")}
                 </span>
               )}
             </div>
@@ -231,17 +232,17 @@ export default function RideDetail() {
             </p>
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Your time</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Your time")}</p>
                 <p className="text-sm font-bold tabular-nums">{formatChallengeTime(ride.challenge.timeSec)}</p>
               </div>
               <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Target</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Target")}</p>
                 <p className="text-sm font-bold tabular-nums">
                   {ride.challenge.targetSec != null ? formatChallengeTime(ride.challenge.targetSec) : '—'}
                 </p>
               </div>
               <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Delta</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Delta")}</p>
                 <p className="text-sm font-bold tabular-nums">
                   {ride.challenge.targetSec != null
                     ? formatDelta(ride.challenge.timeSec, ride.challenge.targetSec)
@@ -251,11 +252,11 @@ export default function RideDetail() {
             </div>
             {ride.challenge.result === 'won' && (
               <p className="text-[11px] text-[hsl(142_71%_45%)] font-semibold mt-2">
-                {ride.challenge.own ? 'Spectre card unlocked' : '3x Speed Demon earned · Spectre card unlocked'}
+                {ride.challenge.own ? tr("Spectre card unlocked") : tr("3x Speed Demon earned · Spectre card unlocked")}
               </p>
             )}
             {ride.challenge.result && ride.challenge.result !== 'won' && !ride.challenge.own && (
-              <p className="text-[11px] text-destructive font-semibold mt-2">1x Fallback earned</p>
+              <p className="text-[11px] text-destructive font-semibold mt-2">{tr("1x Fallback earned")}</p>
             )}
           </div>
         )}
@@ -278,12 +279,12 @@ export default function RideDetail() {
             <div className="flex items-center justify-between px-3 py-2 bg-card/80">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Video className="w-4 h-4" />
-                <span className="text-xs uppercase tracking-wide">Ride Recording</span>
+                <span className="text-xs uppercase tracking-wide">{tr("Ride Recording")}</span>
               </div>
               {ride.recording.savedAt && (
                 <span className="flex items-center gap-1 text-xs text-accent">
                   <Check className="w-3.5 h-3.5" />
-                  Saved
+                  {tr("Saved")}
                 </span>
               )}
             </div>
@@ -295,7 +296,7 @@ export default function RideDetail() {
                 {ride.recording.thumbnailUrl ? (
                   <img
                     src={ride.recording.thumbnailUrl}
-                    alt="Recording preview"
+                    alt={tr("Recording preview")}
                     className="w-full h-full object-cover blur-md scale-105"
                   />
                 ) : (
@@ -316,7 +317,7 @@ export default function RideDetail() {
                         onClick={handleSaveRecording}
                       >
                         <Download className="w-5 h-5" />
-                        Save Recording
+                        {tr("Save Recording")}
                       </Button>
                       <div className="text-center">
                         <p className="text-white/80 text-sm font-medium">
@@ -338,7 +339,7 @@ export default function RideDetail() {
                         />
                       </div>
                       <p className="text-white/80 text-xs text-center">
-                        {saveProgress < 100 ? 'Saving...' : 'Complete!'}
+                        {saveProgress < 100 ? tr("Saving...") : tr("Complete!")}
                       </p>
                     </div>
                   )}
@@ -351,7 +352,7 @@ export default function RideDetail() {
               <div className="relative aspect-video bg-muted">
                 <img
                   src={ride.recording.thumbnailUrl}
-                  alt="Recording preview"
+                  alt={tr("Recording preview")}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded text-white text-xs">
@@ -385,10 +386,10 @@ export default function RideDetail() {
                 showG: settings.gForceEnabled,
                 rideWord: terms.ride,
               });
-              toast.success(result === 'shared' ? 'Recap card shared' : 'Recap card saved');
+              toast.success(result === 'shared' ? tr("Recap card shared") : tr("Recap card saved"));
             } catch (err) {
               console.error('Recap card failed:', err);
-              toast.error('Could not create recap card');
+              toast.error(tr("Could not create recap card"));
             } finally {
               setRecapBusy(false);
             }
@@ -401,8 +402,8 @@ export default function RideDetail() {
                 <Share2 className="w-5 h-5 text-accent" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-sm">{recapBusy ? 'Building recap…' : 'Share Recap Card'}</h3>
-                <p className="text-xs text-muted-foreground">Route, stats & corner grade as one image</p>
+                <h3 className="font-semibold text-sm">{recapBusy ? tr("Building recap…") : tr("Share Recap Card")}</h3>
+                <p className="text-xs text-muted-foreground">{tr("Route, stats & corner grade as one image")}</p>
               </div>
             </div>
             <Download className="w-5 h-5 text-muted-foreground" />
@@ -421,8 +422,8 @@ export default function RideDetail() {
                   <Box className="w-5 h-5 text-accent" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-sm">3D {terms.Ride} Overview</h3>
-                  <p className="text-xs text-muted-foreground">Flyover of your route, downloadable as MP4</p>
+                  <h3 className="font-semibold text-sm">{tr("3D")}{" "}{terms.Ride}{" "}{tr("Overview")}</h3>
+                  <p className="text-xs text-muted-foreground">{tr("Flyover of your route, downloadable as MP4")}</p>
                 </div>
               </div>
               <Download className="w-5 h-5 text-accent" />
@@ -451,13 +452,13 @@ export default function RideDetail() {
                 }
 
                 if (!webmBlob) {
-                  toast.error('Overlay not available on this device anymore');
+                  toast.error(tr("Overlay not available on this device anymore"));
                   return;
                 }
 
                 // Convert WebM to MP4
                 setOverlayProgress(0);
-                toast.info('Converting overlay to MP4...');
+                toast.info(tr("Converting overlay to MP4..."));
                 
                 const mp4Blob = await convertWebmToMp4(webmBlob, (progress) => {
                   setOverlayProgress(progress);
@@ -476,11 +477,11 @@ export default function RideDetail() {
                 await deleteRideOverlayBlob(ride.id);
                 clearRideOverlay(ride.id);
                 setOverlayProgress(null);
-                toast.success('Overlay video downloaded!');
+                toast.success(tr("Overlay video downloaded!"));
               } catch (error) {
                 console.error('Failed to download overlay video:', error);
                 setOverlayProgress(null);
-                toast.error('Failed to download overlay video');
+                toast.error(tr("Failed to download overlay video"));
               }
             }}
             className="w-full bg-gradient-to-r from-accent/20 to-accent/10 rounded-xl overflow-hidden border border-accent/30 mb-3 animate-slide-up hover:from-accent/30 hover:to-accent/20 transition-colors group disabled:opacity-70"
@@ -492,10 +493,10 @@ export default function RideDetail() {
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold text-sm">
-                    {overlayProgress !== null ? `Converting... ${overlayProgress}%` : 'Download Overlay Video'}
+                    {overlayProgress !== null ? tr("Converting... {0}%", [overlayProgress]) : tr("Download Overlay Video")}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {overlayProgress !== null ? 'Please wait' : 'MP4 format for video editors'}
+                    {overlayProgress !== null ? tr("Please wait") : tr("MP4 format for video editors")}
                   </p>
                 </div>
               </div>
@@ -511,7 +512,7 @@ export default function RideDetail() {
         {/* GPS Points Info */}
         <div className="bg-card rounded-lg p-2.5 border border-border mb-3 animate-slide-up">
           <p className="text-xs text-muted-foreground">
-            {ride.gpsPoints.length} GPS points recorded
+            {ride.gpsPoints.length}{" "}{tr("GPS points recorded")}
           </p>
         </div>
       </div>
@@ -526,7 +527,7 @@ export default function RideDetail() {
             className="w-full h-10 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete {terms.Ride}
+            {tr("Delete")}{" "}{terms.Ride}
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -535,7 +536,7 @@ export default function RideDetail() {
               size="sm"
               className="flex-1 h-10 bg-destructive hover:bg-destructive/90 text-destructive-foreground touch-target"
             >
-              Confirm Delete
+              {tr("Confirm Delete")}
             </Button>
             <Button
               onClick={() => setShowDeleteConfirm(false)}
@@ -543,7 +544,7 @@ export default function RideDetail() {
               size="sm"
               className="flex-1 h-10 touch-target"
             >
-              Cancel
+              {tr("Cancel")}
             </Button>
           </div>
         )}

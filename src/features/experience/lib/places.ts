@@ -1,4 +1,5 @@
 import { VEHICLES, primaryVehicle, type VehicleType } from './vehicles';
+import { tr } from '@/lib/i18n';
 
 export interface RefuelCategory {
   id: 'gas' | 'charge' | 'water';
@@ -14,9 +15,9 @@ export interface RefuelCategory {
  */
 export function refuelCategory(vehicles: VehicleType[]): RefuelCategory {
   const primary = primaryVehicle(vehicles);
-  if (VEHICLES[primary.id].motorised) return { id: 'gas', label: 'Gas', query: 'fuel' };
-  if (primary.id === 'bicycle') return { id: 'water', label: 'Water', query: 'drinking_water' };
-  return { id: 'charge', label: 'Charge', query: 'charging_station' };
+  if (VEHICLES[primary.id].motorised) return { id: 'gas', label: tr("Gas"), query: 'fuel' };
+  if (primary.id === 'bicycle') return { id: 'water', label: tr("Water"), query: 'drinking_water' };
+  return { id: 'charge', label: tr("Charge"), query: 'charging_station' };
 }
 
 /** Nominatim fallback terms for the refuel queries. */

@@ -14,6 +14,7 @@ import { analyseLoop, buildEdges, initialRemovals, lapOptions, removalsFor, type
 import { Centerline, resampleLoop } from '../lib/centerline';
 import { metres } from '../lib/geometry';
 import { SATELLITE_STYLE, accentColor } from '../lib/mapStyle';
+import { tr } from '@/lib/i18n';
 
 /**
  * Track builder, method 1, part 1: frame the circuit with a box, and Blacktop
@@ -220,7 +221,7 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
     const wM = metres({ lat: bounds.south, lng: bounds.west }, { lat: bounds.south, lng: bounds.east });
     const hM = metres({ lat: bounds.south, lng: bounds.west }, { lat: bounds.north, lng: bounds.west });
     if (wM * hM > MAX_AREA_M2) {
-      toast.error('That box is too big', { description: 'Zoom in so the box just covers the track.' });
+      toast.error(tr("That box is too big"), { description: tr("Zoom in so the box just covers the track.") });
       return;
     }
     setStep('loading');
@@ -230,7 +231,7 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
       const pieces = (data?.pieces ?? []) as RoadPiece[];
       const built = buildEdges(pieces);
       if (!built.length) {
-        toast('No roads found in the box', { description: 'Move the box over the track, or record a lap with GPS instead.' });
+        toast(tr("No roads found in the box"), { description: tr("Move the box over the track, or record a lap with GPS instead.") });
         setStep('frame');
         return;
       }
@@ -242,10 +243,10 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
       setReversed(false);
       setStep('roads');
       map.fitBounds([[bounds.west, bounds.south], [bounds.east, bounds.north]], { padding: 24, duration: 600 });
-      if (base.size) toast('Race track found', { description: 'Other roads are hidden. Tap one to bring it back.' });
+      if (base.size) toast(tr("Race track found"), { description: tr("Other roads are hidden. Tap one to bring it back.") });
     } catch (e) {
       console.warn('[Track] roads lookup failed', e);
-      toast.error("Couldn't load the roads", { description: 'The map data service is busy. Try again in a moment.' });
+      toast.error(tr("Couldn't load the roads"), { description: tr("The map data service is busy. Try again in a moment.") });
       setStep('frame');
     }
   };
@@ -263,16 +264,16 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
     step !== 'roads'
       ? null
       : analysis.status === 'loop'
-        ? { tone: 'ok', text: `Lap ready · ${km(analysis.length)}`, sub: 'Check the arrows show the way you race. Tap a road to add or drop it.' }
+        ? { tone: 'ok', text: tr("Lap ready · {0}", [km(analysis.length)]), sub: tr("Check the arrows show the way you race. Tap a road to add or drop it.") }
         : analysis.status === 'junctions'
           ? {
               tone: 'warn',
-              text: `${analysis.junctions.length} junction${analysis.junctions.length === 1 ? '' : 's'} to sort out`,
-              sub: options.length ? 'Pick a lap below, or tap the roads you don’t race on at the orange dots.' : 'Tap the roads you don’t race on at the orange dots.',
+              text: tr("{0} junction{1} to sort out", [analysis.junctions.length, analysis.junctions.length === 1 ? '' : 's']),
+              sub: options.length ? tr("Pick a lap below, or tap the roads you don’t race on at the orange dots.") : tr("Tap the roads you don’t race on at the orange dots."),
             }
           : analysis.status === 'several'
-            ? { tone: 'warn', text: `${analysis.components.length} separate loops`, sub: 'Pick the lap you race below, or tap a road on the others to drop them.' }
-            : { tone: 'bad', text: 'These roads don’t make a lap', sub: 'Tap faded roads to bring them back, reset, or change the box.' };
+            ? { tone: 'warn', text: tr("{0} separate loops", [analysis.components.length]), sub: tr("Pick the lap you race below, or tap a road on the others to drop them.") }
+            : { tone: 'bad', text: tr("These roads don’t make a lap"), sub: tr("Tap faded roads to bring them back, reset, or change the box.") };
   const pickedLength = analysis.status === 'loop' ? analysis.length : null;
 
   return (
@@ -298,13 +299,13 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
 
         {step === 'frame' && (
           <p className="absolute bottom-3 inset-x-3 text-center text-[11px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-            Move the map and drag the corners so the box covers the whole track
+            {tr("Move the map and drag the corners so the box covers the whole track")}
           </p>
         )}
         {step === 'loading' && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
             <div className="rounded-xl frost-accent px-4 py-3 text-sm flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> Finding roads…
+              <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Finding roads…")}
             </div>
           </div>
         )}
@@ -314,7 +315,7 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
               navigator.geolocation?.getCurrentPosition((p) => mapRef.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 15 }))
             }
             className="absolute bottom-10 right-3 w-10 h-10 rounded-full frost-accent flex items-center justify-center"
-            aria-label="Centre on me"
+            aria-label={tr("Centre on me")}
           >
             <Crosshair className="w-4 h-4" />
           </button>
@@ -324,7 +325,7 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
       <div className="p-3 space-y-2 border-t border-border safe-bottom bg-background">
         {step === 'roads' && options.length > 1 && (
           <div className="flex gap-1.5 overflow-x-auto -mx-3 px-3 pb-0.5">
-            <span className="shrink-0 self-center text-[10px] uppercase tracking-widest text-muted-foreground mr-1">Laps</span>
+            <span className="shrink-0 self-center text-[10px] uppercase tracking-widest text-muted-foreground mr-1">{tr("Laps")}</span>
             {options.map((o, i) => (
               <button
                 key={i}
@@ -341,29 +342,29 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
         )}
         {step === 'roads' ? (
           <div className="flex gap-2">
-            <Button variant="ghost" size="icon" onClick={backToFrame} aria-label="Change the box">
+            <Button variant="ghost" size="icon" onClick={backToFrame} aria-label={tr("Change the box")}>
               <ScanSearch className="w-4 h-4" />
             </Button>
-            <Button variant="secondary" size="icon" onClick={undo} disabled={!history.length} aria-label="Undo">
+            <Button variant="secondary" size="icon" onClick={undo} disabled={!history.length} aria-label={tr("Undo")}>
               <Undo2 className="w-4 h-4" />
             </Button>
-            <Button variant="secondary" size="icon" onClick={reset} aria-label="Reset roads">
+            <Button variant="secondary" size="icon" onClick={reset} aria-label={tr("Reset roads")}>
               <RotateCcw className="w-4 h-4" />
             </Button>
             <Button variant="secondary" className="gap-1" onClick={() => setReversed((r) => !r)} disabled={!loop}>
-              <RefreshCcw className="w-4 h-4" /> Reverse
+              <RefreshCcw className="w-4 h-4" />{" "}{tr("Reverse")}
             </Button>
             <Button className="flex-1 gap-1" disabled={!loop} onClick={() => loop && onLoop(loop)}>
-              Continue <ArrowRight className="w-4 h-4" />
+              {tr("Continue")}{" "}<ArrowRight className="w-4 h-4" />
             </Button>
           </div>
         ) : (
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onCancel} className="gap-1">
-              <X className="w-4 h-4" /> Cancel
+              <X className="w-4 h-4" />{" "}{tr("Cancel")}
             </Button>
             <Button className="flex-1 gap-1" onClick={findRoads} disabled={step === 'loading' || !box}>
-              <ScanSearch className="w-4 h-4" /> Find roads in the box
+              <ScanSearch className="w-4 h-4" />{" "}{tr("Find roads in the box")}
             </Button>
           </div>
         )}
@@ -477,7 +478,7 @@ function PlaceSearch({ map, disabled }: { map: React.MutableRefObject<MapLibreMa
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Find a circuit or place"
+        placeholder={tr("Find a circuit or place")}
         className="pl-9 frost-accent h-10"
         disabled={disabled}
       />

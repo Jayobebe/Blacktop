@@ -10,6 +10,7 @@ import { useGarage } from '../hooks/useGarage';
 import { useSettings } from '@/features/settings';
 import { getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   bike: Bike;
@@ -85,24 +86,24 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
           <Wrench className={cn('w-4 h-4 mt-0.5 flex-shrink-0', due[0].status.tone === 'over' ? 'text-destructive' : 'text-warning')} />
           <p className="text-xs">
             <span className="font-semibold">
-              {due.length === 1 ? `${due[0].item.name} ` : `${due.length} services `}
+              {due.length === 1 ? `${due[0].item.name} ` : tr("{0} services ", [due.length])}
             </span>
-            {due[0].status.tone === 'over' ? 'overdue' : 'due soon'}
+            {due[0].status.tone === 'over' ? 'overdue' : tr("due soon")}
             <span className="text-muted-foreground"> · {due.map((d) => d.item.name).slice(0, 3).join(', ')}</span>
           </p>
         </div>
       )}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Maintenance</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">{tr("Maintenance")}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline" className="gap-1 h-8 text-xs">
-              <Plus className="w-3.5 h-3.5" /> Add
+              <Plus className="w-3.5 h-3.5" />{" "}{tr("Add")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>Add maintenance item</DialogTitle>
+              <DialogTitle>{tr("Add maintenance item")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-1.5">
@@ -118,12 +119,12 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                 ))}
               </div>
               <Input
-                placeholder={`Part name (e.g. ${partExample})`}
+                placeholder={tr("Part name (e.g. {0})", [partExample])}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
               <div>
-                <label className="text-xs text-muted-foreground">Service interval ({unitLabel})</label>
+                <label className="text-xs text-muted-foreground">{tr("Service interval (")}{unitLabel})</label>
                 <Input
                   type="number"
                   min={isMiles ? 30 : 50}
@@ -134,22 +135,22 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">
-                  Or every … months (optional — whichever comes first)
+                  {tr("Or every … months (optional — whichever comes first)")}
                 </label>
                 <Input
                   type="number"
                   min={0}
                   step={1}
                   value={months || ''}
-                  placeholder="e.g. 12"
+                  placeholder={tr("e.g. 12")}
                   onChange={(e) => setMonths(Math.max(0, Number(e.target.value)))}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Starts counting from your current odometer ({fmt(odometerKm)} {unitLabel}).
+                {tr("Starts counting from your current odometer (")}{fmt(odometerKm)} {unitLabel}).
               </p>
               <Button onClick={submit} disabled={!name.trim() || !interval} className="w-full">
-                Add item
+                {tr("Add item")}
               </Button>
             </div>
           </DialogContent>
@@ -159,7 +160,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
       {bike.maintenance.length === 0 ? (
         <div className="bg-card/40 border border-dashed border-border/40 rounded-2xl p-6 text-center text-sm text-muted-foreground">
           <Wrench className="w-5 h-5 mx-auto mb-2 opacity-60" />
-          No parts tracked yet. Add chain, oil, tyres…
+          {tr("No parts tracked yet. Add chain, oil, tyres…")}
         </div>
       ) : (
         <ul className="space-y-2">
@@ -178,13 +179,13 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                     )}>
                       {reason === 'time' && dueInDays !== null
                         ? dueInDays > 0
-                          ? `Due in ${dueInDays} day${dueInDays === 1 ? '' : 's'}`
-                          : `Overdue by ${-dueInDays} day${dueInDays === -1 ? '' : 's'}`
+                          ? tr("Due in {0} day{1}", [dueInDays, dueInDays === 1 ? '' : 's'])
+                          : tr("Overdue by {0} day{1}", [-dueInDays, dueInDays === -1 ? '' : 's'])
                         : dueInKm > 0
-                          ? `Due in ${fmt(dueInKm)} ${unitLabel}`
-                          : `Overdue by ${fmt(-dueInKm)} ${unitLabel}`}
+                          ? tr("Due in {0} {1}", [fmt(dueInKm), unitLabel])
+                          : tr("Overdue by {0} {1}", [fmt(-dueInKm), unitLabel])}
                       <span className="text-muted-foreground">
-                        {' '}· every {fmt(item.intervalKm)} {unitLabel}
+                        {' '}{tr("· every")}{" "}{fmt(item.intervalKm)} {unitLabel}
                         {item.intervalMonths ? ` / ${item.intervalMonths} mo` : ''}
                       </span>
                     </p>
@@ -201,14 +202,14 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                         })
                       }
                     >
-                      <Check className="w-3.5 h-3.5" /> Serviced
+                      <Check className="w-3.5 h-3.5" />{" "}{tr("Serviced")}
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                       onClick={() => deleteMaintItem(bike.id, item.id)}
-                      aria-label="Delete part"
+                      aria-label={tr("Delete part")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>

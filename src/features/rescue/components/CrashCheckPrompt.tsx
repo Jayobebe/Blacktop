@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, ShieldCheck, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   /** Total seconds before auto-firing rescue. */
@@ -73,9 +74,9 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
         <div className="mx-auto w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center animate-pulse mb-4">
           <AlertTriangle className="w-10 h-10 text-destructive" />
         </div>
-        <h2 className="text-2xl font-bold mb-1">Are you okay?</h2>
+        <h2 className="text-2xl font-bold mb-1">{tr("Are you okay?")}</h2>
         <p className="text-sm text-muted-foreground mb-5">
-          Possible crash detected. If you don't respond, a rescue ping will be sent automatically.
+          {tr("Possible crash detected. If you don't respond, a rescue ping will be sent automatically.")}
         </p>
 
         {/* Countdown bar */}
@@ -96,7 +97,7 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
             className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold gap-2"
           >
             <ShieldCheck className="w-5 h-5" />
-            I'm fine
+            {tr("I'm fine")}
           </Button>
           <Button
             size="lg"
@@ -105,7 +106,7 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
             className="w-full h-12 border-destructive/60 text-destructive hover:bg-destructive/10 gap-2"
           >
             <Send className="w-4 h-4" />
-            Send rescue now
+            {tr("Send rescue now")}
           </Button>
         </div>
       </div>

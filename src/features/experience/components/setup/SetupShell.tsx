@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
+import { tr } from '@/lib/i18n';
 
 interface SetupShellProps {
   /** Unique per step — remounting on change replays the entrance animation. */
@@ -35,7 +36,7 @@ export function SetupShell({ stepKey, direction, progress, onBack, eyebrow, titl
               onBack?.();
             }}
             disabled={!onBack}
-            aria-label="Back"
+            aria-label={tr("Back")}
             className={cn(
               'pressable frost-accent w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-foreground',
               !onBack && 'invisible'

@@ -1,4 +1,5 @@
 import { AccentColor, ACCENT_COLORS } from '@/features/settings';
+import { tr } from '@/lib/i18n';
 
 // Map accent color to tailwind-compatible inline styles
 export function getMemberColorStyles(accentColor: string = 'orange') {
@@ -7,7 +8,7 @@ export function getMemberColorStyles(accentColor: string = 'orange') {
   
   return {
     bg: `hsl(${hsl} / 0.2)`,
-    text: `hsl(${hsl})`,
+    text: tr("hsl({0})", [hsl]),
     border: `hsl(${hsl} / 0.3)`,
     ring: `hsl(${hsl} / 0.5)`,
     glow: `0 0 8px 2px hsl(${hsl} / 0.6)`,
@@ -30,7 +31,7 @@ export function getFallbackColorStyles(index: number) {
   
   return {
     bg: `hsl(${hsl} / 0.2)`,
-    text: `hsl(${hsl})`,
+    text: tr("hsl({0})", [hsl]),
     border: `hsl(${hsl} / 0.3)`,
     ring: `hsl(${hsl} / 0.5)`,
     glow: `0 0 8px 2px hsl(${hsl} / 0.6)`,

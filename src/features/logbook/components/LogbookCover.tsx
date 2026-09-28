@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 /**
  * Cartoon leather-bound logbook, receipts spilling out of the top — sits in
@@ -9,7 +10,7 @@ export function LogbookCover({ vehicleName, onOpen, className }: { vehicleName: 
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`Open the ${vehicleName} logbook`}
+      aria-label={tr("Open the {0} logbook", [vehicleName])}
       className={cn('group relative mx-auto block w-40 h-56 active:scale-[0.97] transition-transform', className)}
     >
       {/* Receipts overflowing from the pages */}
@@ -49,7 +50,7 @@ export function LogbookCover({ vehicleName, onOpen, className }: { vehicleName: 
         {/* title plate */}
         <div className="absolute left-7 right-3 top-[26%] flex flex-col items-center">
           <span className="text-[17px] font-black tracking-[0.2em] text-[#f0cf83] [text-shadow:0_2px_0_rgba(0,0,0,0.6),0_-1px_0_rgba(255,236,190,0.35)]">
-            LOGBOOK
+            {tr("LOGBOOK")}
           </span>
           <div className="mt-1 h-[2px] w-16 bg-[#f0cf83]/70" />
           <span className="mt-2 max-w-full truncate text-[9px] font-bold uppercase tracking-widest text-[#f0cf83]/80">

@@ -1,4 +1,5 @@
 import { Component, ReactNode } from 'react';
+import { tr } from '@/lib/i18n';
 
 interface State {
   error: Error | null;
@@ -38,9 +39,9 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 gap-4 safe-top safe-bottom">
         <div className="max-w-md w-full bg-card border border-border rounded-2xl p-5 space-y-3">
-          <h1 className="text-lg font-semibold">Something went wrong</h1>
+          <h1 className="text-lg font-semibold">{tr("Something went wrong")}</h1>
           <p className="text-sm text-muted-foreground break-words">
-            {error.message || 'Unknown error'}
+            {error.message || tr("Unknown error")}
           </p>
           {error.stack && (
             <pre className="text-[10px] text-muted-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-words">
@@ -52,13 +53,13 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
               onClick={this.handleReset}
               className="flex-1 h-10 rounded-xl bg-secondary hover:bg-muted text-sm font-medium"
             >
-              Try again
+              {tr("Try again")}
             </button>
             <button
               onClick={this.handleReload}
               className="flex-1 h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 text-sm font-medium"
             >
-              Reload
+              {tr("Reload")}
             </button>
           </div>
         </div>

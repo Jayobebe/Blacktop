@@ -6,6 +6,7 @@ import { notifyRescue, notifyRescueCancel } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
 import { setRescueTarget, clearRescueTarget, registerRescueControls, clearRescueControls } from '../lib/rescueBridge';
 import { describeReach, rescueReach } from '../lib/reach';
+import { tr } from '@/lib/i18n';
 
 export interface RescueRequest {
   id: string;
@@ -75,7 +76,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
           }
           return [...prev, request];
         });
-        toast.warning(`${request.userName} needs rescue!`, {
+        toast.warning(tr("{0} needs rescue!", [request.userName]), {
           duration: 10000,
         });
       })
@@ -92,10 +93,10 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
         if (responderId === userId) return;
         if (riderUserId === userId) {
           setResponders((prev) => (prev.includes(responderName) ? prev : [...prev, responderName]));
-          toast.success(`${responderName} is on the way to you`, { duration: 15000 });
+          toast.success(tr("{0} is on the way to you", [responderName]), { duration: 15000 });
           return;
         }
-        toast(`${responderName} is heading to ${riderName}`, { duration: 6000 });
+        toast(tr("{0} is heading to {1}", [responderName, riderName]), { duration: 6000 });
       })
       .on('broadcast', { event: 'rescue_acknowledged' }, (payload) => {
         const { requestId, riderUserId, riderName, responderName } = payload.payload as {
@@ -111,14 +112,14 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
           // The rider in trouble: their rescue was acknowledged
           setHasPendingRescue(false);
           setResponders([]);
-          toast.success(`Help is on the way! ${responderName ?? 'Your leader'} added your location as a waypoint.`, { duration: 15000 });
+          toast.success(tr("Help is on the way! {0} added your location as a waypoint.", [responderName ?? 'Your leader']), { duration: 15000 });
           return;
         }
 
         // Everyone else: the leader has it in hand, so drop the alert
         setRescueRequests(prev => prev.filter(r => r.id !== requestId && r.userId !== riderUserId));
         if (riderName) {
-          toast.success(`Rescue waypoint added for ${riderName}`);
+          toast.success(tr("Rescue waypoint added for {0}", [riderName]));
         }
       })
       .on('broadcast', { event: 'rescue_dismissed' }, (payload) => {
@@ -146,7 +147,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
     const now = Date.now();
     if (now - lastRescueSentAtRef.current < RESCUE_COOLDOWN_MS) {
       const remaining = Math.ceil((RESCUE_COOLDOWN_MS - (now - lastRescueSentAtRef.current)) / 1000);
-      toast.error(`Please wait ${remaining}s before sending another rescue request`);
+      toast.error(tr("Please wait {0}s before sending another rescue request", [remaining]));
       return false;
     }
     lastRescueSentAtRef.current = now;
@@ -179,8 +180,8 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       reach.discord && 'Discord',
       reach.nearbyKm && `riders within ${reach.nearbyKm} km`,
     ].filter((x): x is string => !!x);
-    if (told.length) toast.info(`Rescue call sent to ${describeReach(told)}`);
-    else toast.warning('Rescue call not sent to anyone', { description: 'Settings → Safety chooses who it reaches.' });
+    if (told.length) toast.info(tr("Rescue call sent to {0}", [describeReach(told)]));
+    else toast.warning(tr("Rescue call not sent to anyone"), { description: tr("Settings → Safety chooses who it reaches.") });
 
     // Fire-and-forget Discord ping to the convoy's server if configured
     if (reach.discord) announceRescueToDiscord({ convoyId, riderName: userName, lat, lng });
@@ -201,7 +202,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
   const sendRescueRequestFromGps = useCallback(async () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => { void sendRescueRequest(pos.coords.latitude, pos.coords.longitude); },
-      () => toast.error('Unable to get your location'),
+      () => toast.error(tr("Unable to get your location")),
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 },
     );
   }, [sendRescueRequest]);
@@ -236,7 +237,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
         responderName: userName ?? 'A convoy member',
       },
     });
-    toast.success(`${request.userName} knows you're on the way`);
+    toast.success(tr("{0} knows you're on the way", [request.userName]));
   }, [userId, userName]);
 
   // Leader dismissal closes the request for the whole convoy; a member

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { getCrewCode } from '@/features/crew/useCrew';
+import { tr } from '@/lib/i18n';
 
 /**
  * Push notifications (Web Push) for the installed web app.
@@ -23,16 +24,16 @@ const LOCATION_KEY = 'bt.push.location.v1';
 
 /** Kinds of notification a device can switch on or off (ids match send-push). */
 export const PUSH_CATEGORY_DEFS = [
-  { id: 'rescue', label: 'Rescue calls', desc: 'A convoy or crew mate calls for rescue, with where they are' },
-  { id: 'rescue_nearby', label: 'Riders near me who need help', desc: 'Another rider close by calls for rescue. Keeps this phone’s rough area (about 11 km) on the server' },
-  { id: 'weather', label: 'Heavy weather', desc: 'Storms, heavy rain, snow or strong winds heading to your area' },
-  { id: 'blacktank', label: 'Blacktank', desc: 'Requests to vote on, approvals, chip-ins and payouts' },
-  { id: 'timeattack', label: 'Your time attacks', desc: 'Someone beats, or loses to, a time attack you set' },
-  { id: 'card_pickups', label: 'Card pickups', desc: 'Someone picks up a card you dropped' },
-  { id: 'leaderboard', label: 'Crew leaderboard', desc: 'A crew mate passes you on the crew board' },
-  { id: 'crew_convoys', label: 'Crew convoys', desc: 'A crew mate opens an unlocked convoy you can join' },
-  { id: 'challenges', label: 'Crew challenges', desc: 'Targets hit, weekly and monthly results, and a 5-days-left nudge' },
-  { id: 'maintenance', label: 'Maintenance', desc: 'Service items coming due or overdue' },
+  { id: 'rescue', label: tr("Rescue calls"), desc: tr("A convoy or crew mate calls for rescue, with where they are") },
+  { id: 'rescue_nearby', label: tr("Riders near me who need help"), desc: tr("Another rider close by calls for rescue. Keeps this phone’s rough area (about 11 km) on the server") },
+  { id: 'weather', label: tr("Heavy weather"), desc: tr("Storms, heavy rain, snow or strong winds heading to your area") },
+  { id: 'blacktank', label: tr("Blacktank"), desc: tr("Requests to vote on, approvals, chip-ins and payouts") },
+  { id: 'timeattack', label: tr("Your time attacks"), desc: tr("Someone beats, or loses to, a time attack you set") },
+  { id: 'card_pickups', label: tr("Card pickups"), desc: tr("Someone picks up a card you dropped") },
+  { id: 'leaderboard', label: tr("Crew leaderboard"), desc: tr("A crew mate passes you on the crew board") },
+  { id: 'crew_convoys', label: tr("Crew convoys"), desc: tr("A crew mate opens an unlocked convoy you can join") },
+  { id: 'challenges', label: tr("Crew challenges"), desc: tr("Targets hit, weekly and monthly results, and a 5-days-left nudge") },
+  { id: 'maintenance', label: tr("Maintenance"), desc: tr("Service items coming due or overdue") },
 ] as const;
 
 export type PushCategory = (typeof PUSH_CATEGORY_DEFS)[number]['id'];
@@ -356,14 +357,14 @@ export async function sendTestPush(delayed = false): Promise<{ ok: boolean; mess
   const { data, error } = await supabase.functions.invoke('send-push', { body: { action: 'test', delayed } });
   if (error) {
     const status = (error as { context?: Response }).context?.status;
-    if (status === 429) return { ok: false, message: 'Too many tests. Try again in a few minutes.' };
-    if (status === 503) return { ok: false, message: "Notifications aren't switched on for Blacktop's server yet." };
-    return { ok: false, message: 'Could not send a test notification.' };
+    if (status === 429) return { ok: false, message: tr("Too many tests. Try again in a few minutes.") };
+    if (status === 503) return { ok: false, message: tr("Notifications aren't switched on for Blacktop's server yet.") };
+    return { ok: false, message: tr("Could not send a test notification.") };
   }
-  if (!data?.devices) return { ok: false, message: 'This device isn\'t registered. Turn notifications off and on again.' };
-  if (data.queued) return { ok: true, message: 'Close Blacktop or lock your phone now. It arrives in about 10 seconds.' };
-  if (!data.sent) return { ok: false, message: 'The push service refused it. Turn notifications off and on again.' };
-  return { ok: true, message: 'Sent. It should appear in a moment.' };
+  if (!data?.devices) return { ok: false, message: tr("This device isn't registered. Turn notifications off and on again.") };
+  if (data.queued) return { ok: true, message: tr("Close Blacktop or lock your phone now. It arrives in about 10 seconds.") };
+  if (!data.sent) return { ok: false, message: tr("The push service refused it. Turn notifications off and on again.") };
+  return { ok: true, message: tr("Sent. It should appear in a moment.") };
 }
 
 // ── per-kind switches ───────────────────────────────────────────────────────

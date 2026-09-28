@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ArcadeLobby } from '@/features/arcade';
+import { tr } from '@/lib/i18n';
 
 export default function Arcade() {
   const navigate = useNavigate();
@@ -15,8 +16,8 @@ export default function Arcade() {
           <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
         </button>
         <div>
-          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">Blacktop Arcade</h1>
-          <p className="text-xs text-muted-foreground">Games & personal bests</p>
+          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">{tr("Blacktop Arcade")}</h1>
+          <p className="text-xs text-muted-foreground">{tr("Games & personal bests")}</p>
         </div>
       </header>
 

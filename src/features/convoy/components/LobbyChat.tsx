@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { chatMessageSchema } from '@/lib/validation';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 interface ChatMessage {
   id: string;
@@ -110,7 +111,7 @@ export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProp
     if (isSending || isRateLimited) return;
     const parsed = chatMessageSchema.safeParse(newMessage);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? 'Invalid message');
+      toast.error(parsed.error.issues[0]?.message ?? tr("Invalid message"));
       return;
     }
 
@@ -165,7 +166,7 @@ export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProp
       >
         {messages.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-4">
-            No messages yet
+            {tr("No messages yet")}
           </p>
         ) : (
           messages.map((msg) => {
@@ -210,7 +211,7 @@ export function LobbyChat({ convoyId, userId, userName, members }: LobbyChatProp
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isRateLimited ? 'Sending too fast... please wait.' : 'Message...'}
+          placeholder={isRateLimited ? tr("Sending too fast... please wait.") : tr("Message...")}
           disabled={isRateLimited}
           className="h-8 text-xs bg-background/50 border-border/50"
           maxLength={200}

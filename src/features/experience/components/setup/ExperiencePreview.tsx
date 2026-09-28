@@ -5,6 +5,7 @@ import { CARE_QUESTIONS, isCareOn } from '../../lib/questions';
 import { deriveExperience } from '../../hooks/useExperience';
 import type { ExperienceProfile } from '../../lib/profile';
 import { VEHICLES } from '../../lib/vehicles';
+import { tr } from '@/lib/i18n';
 
 /**
  * Miniature of the Home screen built from the user's answers, plus the
@@ -16,10 +17,10 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
   const { VehicleIcon, terms, care } = exp;
 
   const nav = [
-    ...(settings.garageEnabled ? [{ icon: Wrench, label: 'Garage' }] : []),
-    { icon: History, label: 'History' },
-    { icon: BarChart3, label: 'Stats' },
-    { icon: Settings, label: 'Settings' },
+    ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage") }] : []),
+    { icon: History, label: tr("History") },
+    { icon: BarChart3, label: tr("Stats") },
+    { icon: Settings, label: tr("Settings") },
   ];
   const statCount = settings.speedFocusEnabled ? 4 : 3;
 
@@ -50,10 +51,10 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
           {/* Tiles — mirrors Home's layout for the chosen ride mode */}
           <div className="relative flex-1 min-h-[150px] flex flex-col gap-1">
             <div className="flex gap-1 flex-1">
-              {exp.showGroup && <MiniTile icon={Users} label={profile.rideMode === 'group' ? 'Start Convoy' : 'Convoy'} accent />}
-              {exp.showSolo && <MiniTile icon={VehicleIcon} label={profile.rideMode === 'solo' ? `Start ${terms.Ride}` : 'Solo'} accent />}
+              {exp.showGroup && <MiniTile icon={Users} label={profile.rideMode === 'group' ? tr("Start Convoy") : tr("Convoy")} accent />}
+              {exp.showSolo && <MiniTile icon={VehicleIcon} label={profile.rideMode === 'solo' ? tr("Start {0}", [terms.Ride]) : tr("Solo")} accent />}
             </div>
-            {exp.showGroup ? <MiniTile icon={UserPlus} label="Join" /> : <MiniTile icon={Route} label="Plan route" />}
+            {exp.showGroup ? <MiniTile icon={UserPlus} label={tr("Join")} /> : <MiniTile icon={Route} label={tr("Plan route")} />}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-accent bg-background flex items-center justify-center">
               <Globe2 className="w-4 h-4 text-accent" />
             </div>
@@ -68,17 +69,17 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
 
         {/* Headline facts */}
         <div className="flex-1 min-w-0 flex flex-col gap-2 stagger-in">
-          <Fact i={0} label="Main vehicle" value={exp.primary.label} icon={VehicleIcon} />
+          <Fact i={0} label={tr("Main vehicle")} value={exp.primary.label} icon={VehicleIcon} />
           {profile.vehicles.length > 1 && (
-            <Fact i={1} label="Also" value={profile.vehicles.slice(1).map((v) => VEHICLES[v].label).join(', ')} />
+            <Fact i={1} label={tr("Also")} value={profile.vehicles.slice(1).map((v) => VEHICLES[v].label).join(', ')} />
           )}
           <Fact
             i={2}
-            label="Home"
+            label={tr("Home")}
             value={profile.rideMode === 'solo' ? `Solo ${terms.rides}` : profile.rideMode === 'group' ? 'Convoys' : 'Solo + convoys'}
           />
-          <Fact i={3} label="Big number" value={settings.speedFocusEnabled ? 'Live speed' : 'Distance'} />
-          {exp.hasCar && <Fact i={4} label="Layout" value="Car display" />}
+          <Fact i={3} label={tr("Big number")} value={settings.speedFocusEnabled ? 'Live speed' : 'Distance'} />
+          {exp.hasCar && <Fact i={4} label={tr("Layout")} value="Car display" />}
         </div>
       </div>
 

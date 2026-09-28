@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { setRescueTarget } from '@/features/rescue';
 import { openBlacktopMap } from '@/features/map';
+import { tr } from '@/lib/i18n';
 
 function ago(ms: number) {
   const min = Math.max(0, Math.round((Date.now() - ms) / 60000));
@@ -36,19 +37,19 @@ export default function RescueLocation() {
 
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
-      <PageHeader title="Rescue call" backTo="/" />
+      <PageHeader title={tr("Rescue call")} backTo="/" />
       <div className="rounded-2xl border-2 border-warning/60 bg-warning/10 p-4 flex items-start gap-3">
         <AlertTriangle className="w-7 h-7 text-warning shrink-0 mt-0.5" />
         <div className="min-w-0">
-          <p className="text-lg font-bold">{name} needs rescue</p>
-          {at && <p className="text-xs text-muted-foreground">Called {ago(at)}</p>}
+          <p className="text-lg font-bold">{name}{" "}{tr("needs rescue")}</p>
+          {at && <p className="text-xs text-muted-foreground">{tr("Called")}{" "}{ago(at)}</p>}
           <p className="text-sm text-muted-foreground mt-2">
             {coords ? (
               <>
-                Last known position <span className="font-mono text-foreground">{coords}</span>
+                {tr("Last known position")}{" "}<span className="font-mono text-foreground">{coords}</span>
               </>
             ) : (
-              "Their phone couldn't get a location. Try calling them."
+              tr("Their phone couldn't get a location. Try calling them.")
             )}
           </p>
         </div>
@@ -57,18 +58,18 @@ export default function RescueLocation() {
       {known && (
         <div className="grid gap-2">
           <Button className="h-12 gap-2" onClick={showOnMap}>
-            <MapIcon className="w-5 h-5" /> Route to them on the Blacktop map
+            <MapIcon className="w-5 h-5" />{" "}{tr("Route to them on the Blacktop map")}
           </Button>
           <Button asChild variant="outline" className="h-12 gap-2">
             <a href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-5 h-5" /> Open in Google Maps
+              <ExternalLink className="w-5 h-5" />{" "}{tr("Open in Google Maps")}
             </a>
           </Button>
         </div>
       )}
 
       <p className="text-[11px] text-muted-foreground">
-        If they may be hurt and you can't reach them, call the emergency services and give them this location.
+        {tr("If they may be hurt and you can't reach them, call the emergency services and give them this location.")}
       </p>
     </div>
   );

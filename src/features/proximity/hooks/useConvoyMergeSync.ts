@@ -6,6 +6,7 @@ import type { ConvoyState } from '@/types/convoy';
 import { getProximityState, setProximityState } from '../lib/proximityStore';
 import { registerMergeControls, type ConvoyActions } from '../lib/controls';
 import type { MergeRecord } from '../types';
+import { tr } from '@/lib/i18n';
 
 type Channel = ReturnType<typeof supabase.channel>;
 
@@ -50,7 +51,7 @@ export function useConvoyMergeSync({
       toast.success(label);
     } else {
       a.attachRide(null);
-      toast.error("Couldn't rejoin the convoy", { description: 'You can rejoin with its code from Home.' });
+      toast.error(tr("Couldn't rejoin the convoy"), { description: tr("You can rejoin with its code from Home.") });
     }
     return ok;
   };
@@ -80,7 +81,7 @@ export function useConvoyMergeSync({
       if (msg.fromId !== record.hostLeaderId && msg.fromId !== record.homeLeaderId) return;
       if (record.role === 'host') {
         setProximityState({ merge: null });
-        toast(`${record.homeName}'s convoy split off`);
+        toast(tr("{0}'s convoy split off", [record.homeName]));
         return;
       }
       setProximityState({ busy: `Returning to ${record.homeName}'s convoy…` });
@@ -126,7 +127,7 @@ export function useConvoyMergeSync({
         }
         if (record.role === 'host') {
           setProximityState({ merge: null });
-          toast.success(`Unmerged from ${record.homeName}'s convoy`);
+          toast.success(tr("Unmerged from {0}'s convoy", [record.homeName]));
           return;
         }
         setProximityState({ busy: 'Unmerging…' });

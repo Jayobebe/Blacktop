@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { saveScore, useArcadeScores } from '../../hooks/useArcadeScores';
+import { tr } from '@/lib/i18n';
 
 type GameState = 'idle' | 'playing' | 'gameover';
 
@@ -361,7 +362,7 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
           <div className="flex flex-col items-center gap-4">
             {scores['petrol-head'] > 0 && (
               <p className="font-mono text-[10px] tracking-widest uppercase text-white/30">
-                BEST: {scores['petrol-head']}s
+                {tr("BEST:")}{" "}{scores['petrol-head']}{tr("s")}
               </p>
             )}
             <button
@@ -369,10 +370,10 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
               className="font-mono text-sm tracking-widest uppercase px-10 py-4 border-2 rounded-xl font-bold"
               style={{ borderColor: accentColor, color: accentColor, boxShadow: `0 0 14px ${accentColor}44` }}
             >
-              START
+              {tr("START")}
             </button>
             <p className="font-mono text-[9px] tracking-widest uppercase text-muted-foreground/50 text-center">
-              TAP LEFT / RIGHT TO CHANGE LANES
+              {tr("TAP LEFT / RIGHT TO CHANGE LANES")}
             </p>
           </div>
         </div>
@@ -382,24 +383,24 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
       {gameState === 'gameover' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-20" style={{ background: '#00000088' }}>
           <div className="text-center">
-            <p className="font-mono text-xs tracking-widest uppercase text-red-400 mb-2">GAME OVER</p>
+            <p className="font-mono text-xs tracking-widest uppercase text-red-400 mb-2">{tr("GAME OVER")}</p>
             <p
               className="font-mono text-6xl font-bold tabular-nums"
               style={{ color: accentColor, textShadow: `0 0 16px ${accentColor}88` }}
             >
-              {score}<span className="text-2xl ml-1 opacity-60">s</span>
+              {score}<span className="text-2xl ml-1 opacity-60">{tr("s")}</span>
             </p>
             {isNewRecord && (
               <p
                 className="mt-2 font-mono text-xs tracking-widest uppercase font-bold"
                 style={{ color: accentColor, textShadow: `0 0 8px ${accentColor}` }}
               >
-                ★ NEW RECORD ★
+                {tr("★ NEW RECORD ★")}
               </p>
             )}
             {!isNewRecord && scores['petrol-head'] > 0 && (
               <p className="mt-2 font-mono text-[10px] tracking-widest uppercase text-white/30">
-                BEST: {scores['petrol-head']}s
+                {tr("BEST:")}{" "}{scores['petrol-head']}{tr("s")}
               </p>
             )}
           </div>
@@ -410,13 +411,13 @@ export function PetrolHead({ accentColor }: PetrolHeadProps) {
               className="font-mono text-xs tracking-widest uppercase px-6 py-4 border-2 rounded-xl"
               style={{ borderColor: accentColor, color: accentColor }}
             >
-              AGAIN
+              {tr("AGAIN")}
             </button>
             <button
               onClick={() => setGameState('idle')}
               className="font-mono text-xs tracking-widest uppercase px-6 py-4 rounded-xl border border-border/40 text-muted-foreground"
             >
-              MENU
+              {tr("MENU")}
             </button>
           </div>
         </div>

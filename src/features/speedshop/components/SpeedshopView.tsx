@@ -9,11 +9,12 @@ import shopAsset from '@/assets/garage-shop.png.asset.json';
 import { SHOP_ITEMS } from '../lib/catalogue';
 import { answer, fetchResults, flushPending, sendSuggestion, useSurveyAnswers, type Interest, type ItemResult } from '../lib/surveyStore';
 import { ItemPreview } from './ItemPreview';
+import { tr } from '@/lib/i18n';
 
 const INTERESTS: { id: Interest; label: string; icon: React.ElementType }[] = [
-  { id: 'yes', label: "I'd buy it", icon: ThumbsUp },
-  { id: 'maybe', label: 'Maybe', icon: HelpCircle },
-  { id: 'no', label: 'Not for me', icon: ThumbsDown },
+  { id: 'yes', label: tr("I'd buy it"), icon: ThumbsUp },
+  { id: 'maybe', label: tr("Maybe"), icon: HelpCircle },
+  { id: 'no', label: tr("Not for me"), icon: ThumbsDown },
 ];
 
 /** The last slide asks what else riders would want. */
@@ -69,9 +70,9 @@ export function SpeedshopView() {
     setSending(false);
     if (r === 'sent') {
       setSuggestion('');
-      toast.success('Thanks, noted for the shop');
-    } else if (r === 'limit') toast.error("That's plenty for today", { description: 'Try again tomorrow.' });
-    else toast.error("Couldn't send that", { description: 'Check your connection and try again.' });
+      toast.success(tr("Thanks, noted for the shop"));
+    } else if (r === 'limit') toast.error(tr("That's plenty for today"), { description: tr("Try again tomorrow.") });
+    else toast.error(tr("Couldn't send that"), { description: tr("Check your connection and try again.") });
   };
 
   const crowd = item && results?.[item.id];
@@ -79,7 +80,7 @@ export function SpeedshopView() {
 
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom gap-3">
-      <PageHeader title="Speedshop" subtitle="Opening soon · help us stock the shelves" backTo="/world" backLabel="Back to Blacktop World" />
+      <PageHeader title={tr("Speedshop")} subtitle={tr("Opening soon · help us stock the shelves")} backTo="/world" backLabel={tr("Back to Blacktop World")} />
 
       <div className="flex flex-col landscape:flex-row gap-3 flex-1 min-h-0">
         <div className="flex flex-col gap-2 landscape:w-[55%] landscape:h-[calc(100dvh-7rem)]">
@@ -114,17 +115,17 @@ export function SpeedshopView() {
             <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none">
               <div className="rounded-xl bg-black/75 border border-white/10 px-3 py-1.5 backdrop-blur-sm min-w-0">
                 <p className="text-[9px] uppercase tracking-[0.25em] text-accent">{index + 1} / {total}</p>
-                <p className="text-sm font-bold truncate">{item ? item.name : 'Something else?'}</p>
+                <p className="text-sm font-bold truncate">{item ? item.name : tr("Something else?")}</p>
               </div>
               {item && <span className="shrink-0 rounded-md bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest px-2 py-1 rotate-3 shadow">
-                Coming soon
+                {tr("Coming soon")}
               </span>}
             </div>
           </div>
 
           {/* Arrows */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-14 landscape:h-11 w-16 rounded-2xl border-2 border-accent/60" onClick={() => go(-1)} aria-label="Previous item">
+            <Button variant="outline" className="h-14 landscape:h-11 w-16 rounded-2xl border-2 border-accent/60" onClick={() => go(-1)} aria-label={tr("Previous item")}>
               <ChevronLeft className="w-7 h-7" />
             </Button>
             <div className="flex-1 flex justify-center gap-1.5 flex-wrap">
@@ -135,7 +136,7 @@ export function SpeedshopView() {
                     key={i}
                     type="button"
                     onClick={() => setIndex(i)}
-                    aria-label={i < SUGGEST ? SHOP_ITEMS[i].name : 'Suggest something'}
+                    aria-label={i < SUGGEST ? SHOP_ITEMS[i].name : tr("Suggest something")}
                     className={cn(
                       'h-2.5 rounded-full transition-all',
                       i === index ? 'w-6 bg-accent' : done ? 'w-2.5 bg-accent/50' : 'w-2.5 bg-muted-foreground/30',
@@ -144,7 +145,7 @@ export function SpeedshopView() {
                 );
               })}
             </div>
-            <Button variant="outline" className="h-14 landscape:h-11 w-16 rounded-2xl border-2 border-accent/60" onClick={() => go(1)} aria-label="Next item">
+            <Button variant="outline" className="h-14 landscape:h-11 w-16 rounded-2xl border-2 border-accent/60" onClick={() => go(1)} aria-label={tr("Next item")}>
               <ChevronRight className="w-7 h-7" />
             </Button>
           </div>
@@ -156,7 +157,7 @@ export function SpeedshopView() {
             <>
               <p className="text-[13px] text-muted-foreground leading-relaxed">{item.blurb}</p>
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Would you buy it?</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{tr("Would you buy it?")}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {INTERESTS.map(({ id, label, icon: Icon }) => (
                     <button
@@ -178,7 +179,7 @@ export function SpeedshopView() {
 
               {mine && mine.interest !== 'no' && (
                 <div className="animate-fade-in">
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">What would you pay?</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{tr("What would you pay?")}</p>
                   <div className="grid grid-cols-4 gap-2">
                     {item.prices.map((p) => (
                       <button
@@ -203,11 +204,11 @@ export function SpeedshopView() {
                   <Check className="w-3.5 h-3.5 text-accent shrink-0" />
                   {crowd && crowdTotal >= 3 ? (
                     <span>
-                      {Math.round(((crowd.yes + crowd.maybe) / crowdTotal) * 100)}% of {crowdTotal} riders are interested
-                      {crowd.topPrice ? `, most would pay ${crowd.topPrice}` : ''}.
+                      {Math.round(((crowd.yes + crowd.maybe) / crowdTotal) * 100)}{tr("% of")}{" "}{crowdTotal}{" "}{tr("riders are interested")}
+                      {crowd.topPrice ? tr(", most would pay {0}", [crowd.topPrice]) : ''}.
                     </span>
                   ) : (
-                    <span>Saved. You're one of the first to weigh in.</span>
+                    <span>{tr("Saved. You're one of the first to weigh in.")}</span>
                   )}
                 </div>
               )}
@@ -215,22 +216,22 @@ export function SpeedshopView() {
           ) : (
             <>
               <p className="text-[13px] text-muted-foreground leading-relaxed">
-                What else should the Speedshop sell? Parts, kit, prints, anything you'd want with your Blacktop stats on it.
+                {tr("What else should the Speedshop sell? Parts, kit, prints, anything you'd want with your Blacktop stats on it.")}
               </p>
               <Textarea
                 value={suggestion}
                 onChange={(e) => setSuggestion(e.target.value.slice(0, 500))}
-                placeholder="e.g. a tyre-pressure gauge keyring, a tank pad with my crew code…"
+                placeholder={tr("e.g. a tyre-pressure gauge keyring, a tank pad with my crew code…")}
                 className="min-h-[96px]"
               />
               <Button onClick={() => void submitSuggestion()} disabled={sending || suggestion.trim().length < 3} className="h-11 gap-2">
-                <Send className="w-4 h-4" /> Send suggestion
+                <Send className="w-4 h-4" />{" "}{tr("Send suggestion")}
               </Button>
             </>
           )}
 
           <p className="text-[10px] text-muted-foreground/80">
-            {answered} of {SHOP_ITEMS.length} answered · nothing is charged, this just tells us what to stock
+            {answered}{" "}{tr("of")}{" "}{SHOP_ITEMS.length}{" "}{tr("answered · nothing is charged, this just tells us what to stock")}
           </p>
         </div>
       </div>

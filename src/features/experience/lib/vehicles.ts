@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { Car, Bike } from 'lucide-react';
 import type { AppSettings } from '@/features/settings';
 import { MotorcycleIcon, EBikeIcon, ScooterIcon } from '../components/VehicleIcons';
+import { tr } from '@/lib/i18n';
 
 export type VehicleType = 'motorcycle' | 'car' | 'bicycle' | 'ebike' | 'escooter';
 
@@ -21,11 +22,11 @@ export interface VehicleInfo {
 }
 
 export const VEHICLES: Record<VehicleType, VehicleInfo> = {
-  motorcycle: { id: 'motorcycle', label: 'Motorcycle', noun: 'bike', icon: MotorcycleIcon, motorised: true, canLean: true, amberMph: 80, redMph: 100, leanThreshold: 45 },
-  car: { id: 'car', label: 'Car', noun: 'car', icon: Car, motorised: true, canLean: false, amberMph: 80, redMph: 100, leanThreshold: 45 },
-  bicycle: { id: 'bicycle', label: 'Bicycle', noun: 'bike', icon: Bike, motorised: false, canLean: true, amberMph: 30, redMph: 40, leanThreshold: 30 },
-  ebike: { id: 'ebike', label: 'E-bike', noun: 'e-bike', icon: EBikeIcon, motorised: false, canLean: true, amberMph: 25, redMph: 30, leanThreshold: 30 },
-  escooter: { id: 'escooter', label: 'E-scooter', noun: 'scooter', icon: ScooterIcon, motorised: false, canLean: false, amberMph: 25, redMph: 30, leanThreshold: 30 },
+  motorcycle: { id: 'motorcycle', label: tr("Motorcycle"), noun: 'bike', icon: MotorcycleIcon, motorised: true, canLean: true, amberMph: 80, redMph: 100, leanThreshold: 45 },
+  car: { id: 'car', label: tr("Car"), noun: 'car', icon: Car, motorised: true, canLean: false, amberMph: 80, redMph: 100, leanThreshold: 45 },
+  bicycle: { id: 'bicycle', label: tr("Bicycle"), noun: 'bike', icon: Bike, motorised: false, canLean: true, amberMph: 30, redMph: 40, leanThreshold: 30 },
+  ebike: { id: 'ebike', label: tr("E-bike"), noun: 'e-bike', icon: EBikeIcon, motorised: false, canLean: true, amberMph: 25, redMph: 30, leanThreshold: 30 },
+  escooter: { id: 'escooter', label: tr("E-scooter"), noun: 'scooter', icon: ScooterIcon, motorised: false, canLean: false, amberMph: 25, redMph: 30, leanThreshold: 30 },
 };
 
 export const VEHICLE_ORDER: VehicleType[] = ['motorcycle', 'car', 'bicycle', 'ebike', 'escooter'];

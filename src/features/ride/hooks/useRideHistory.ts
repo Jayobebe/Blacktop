@@ -10,6 +10,7 @@ import { clearAllLogbooks } from '@/features/logbook/lib/logbookStore';
 import { clearTrackData } from '@/features/track/lib/trackStore';
 import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate, mergeAggregates, emptyAggregate, NO_BIKE } from '../lib/tripBurner';
 import { rememberPushLocation, schedulePushResync } from '@/features/notifications';
+import { tr } from '@/lib/i18n';
 
 const MAX_GPS_POINTS_PER_STORED_RIDE = 900;
 const MAX_SENSOR_SAMPLES_PER_STORED_RIDE = 360;
@@ -92,9 +93,9 @@ export function useRideHistory() {
     if (!collects) {
       // Copy is still banked; the rider just isn't told about a feature they switched off.
     } else if (streakGrant === 'granted') {
-      toast.success('3-day streak', { description: 'Card copy earned — drop it on the map.' });
+      toast.success(tr("3-day streak"), { description: tr("Card copy earned — drop it on the map.") });
     } else if (streakGrant === 'capped') {
-      toast('Copy bank full', { description: '9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
+      toast(tr("Copy bank full"), { description: tr("9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.") });
     }
 
     if (savedFullRide) return true;

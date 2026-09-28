@@ -13,6 +13,7 @@ import { TIER_LADDER, type CardTier } from '../types';
 import type { ChallengePoint, ChallengeResult } from '@/lib/challengeRun';
 import { compactRoute } from '../lib/challenge';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
+import { tr } from '@/lib/i18n';
 
 /** A card planted on the Blacktop map. */
 export interface CardDrop {
@@ -298,9 +299,9 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       const { data: count } = await supabase.rpc('my_card_collection_count');
       const result = grantCollectCopy(Number(count ?? 0));
       if (result === 'granted') {
-        toast.success("Collector's bonus", { description: 'Card copy earned — drop it on the map.' });
+        toast.success(tr("Collector's bonus"), { description: tr("Card copy earned — drop it on the map.") });
       } else if (result === 'capped') {
-        toast('Copy bank full', { description: '9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.' });
+        toast(tr("Copy bank full"), { description: tr("9/month max. Resets on the 1st. Earn all 9 for a 10th bonus copy.") });
       }
     },
   });

@@ -29,6 +29,7 @@ import { addLogNote, getInheritedLog, setInheritedLog, toLogRide, useInheritedLo
 import { SCAN_WINDOW_MS, startHandover } from '../lib/transfer';
 import type { LogNote, LogRide, LogbookPackage } from '../types';
 import { passportFor } from '../lib/passport';
+import { tr } from '@/lib/i18n';
 
 const RIDES_PER_PAGE = 7;
 /** Rough line budget of a page, used to flow notes onto as many pages as they need. */
@@ -130,33 +131,33 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   pages.push((n, side) => (
     <Page n={n} side={side}>
-      <p className="text-center text-[9px] font-black uppercase tracking-[0.25em]">Vehicle Logbook</p>
+      <p className="text-center text-[9px] font-black uppercase tracking-[0.25em]">{tr("Vehicle Logbook")}</p>
       <div className="mt-2 mx-auto w-full aspect-[4/3] rounded border-2 border-[#2b2118]/70 bg-[#e6d9b8] flex items-center justify-center overflow-hidden">
         {bike.photos?.hero ? (
           <img src={bike.photos.hero} alt={bike.name} className="max-h-full max-w-full object-contain [image-rendering:pixelated]" />
         ) : (
-          <span className="text-[9px] text-[#2b2118]/50">No photo</span>
+          <span className="text-[9px] text-[#2b2118]/50">{tr("No photo")}</span>
         )}
       </div>
       <p className="mt-2 text-center text-[13px] font-black leading-tight truncate">{bike.name}</p>
       {bike.makeModel && <p className="text-center text-[9px] uppercase tracking-wider text-[#2b2118]/70 truncate">{bike.makeModel}</p>}
       <div className="mt-auto space-y-0.5">
-        <Row label="Passport" value={passport} />
-        <Row label="Keeper" value={myName} />
-        <Row label="Card" value={card?.tierLabel ?? '—'} />
+        <Row label={tr("Passport")} value={passport} />
+        <Row label={tr("Keeper")} value={myName} />
+        <Row label={tr("Card")} value={card?.tierLabel ?? '—'} />
       </div>
     </Page>
   ));
 
   pages.push((n, side) => (
     <Page n={n} side={side}>
-      <PageTitle>Keepers</PageTitle>
+      <PageTitle>{tr("Keepers")}</PageTitle>
       <div className="space-y-1.5">
         {owners.map((o, i) => (
           <div key={i} className="text-[9.5px] leading-tight">
             <p className="font-bold">
               {i + 1}. {o.name}
-              {i === owners.length - 1 && <span className="ml-1 text-[8px] uppercase tracking-wider text-[#8a3b12]">current</span>}
+              {i === owners.length - 1 && <span className="ml-1 text-[8px] uppercase tracking-wider text-[#8a3b12]">{tr("current")}</span>}
             </p>
             <p className="font-mono text-[8.5px] text-[#2b2118]/70">
               {fmtDate(o.from)} → {o.to ? fmtDate(o.to) : 'now'}
@@ -164,30 +165,30 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           </div>
         ))}
       </div>
-      <p className="mt-auto text-[8.5px] italic text-[#2b2118]/60">History travels with the vehicle when it changes hands.</p>
+      <p className="mt-auto text-[8.5px] italic text-[#2b2118]/60">{tr("History travels with the vehicle when it changes hands.")}</p>
     </Page>
   ));
 
   pages.push((n, side) => (
     <Page n={n} side={side}>
-      <PageTitle>Lifetime stats</PageTitle>
-      <Row label="Odometer" value={kmOrMi(stats.odometerKm)} />
-      <Row label="Rides" value={stats.totalRides} />
-      <Row label="Distance" value={dist(stats.totalDistanceMi)} />
-      <Row label="Riding time" value={formatDuration(stats.totalDurationSec)} />
-      <Row label="Top speed" value={spd(stats.topSpeedMph)} />
-      <Row label="Lean L / R" value={`${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
-      <Row label="Peak G" value={stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : '—'} />
-      <Row label="Longest ride" value={dist(stats.longestRideMi)} />
-      <Row label="Convoy rides" value={allRides.filter((r) => r.isConvoyRide).length} />
+      <PageTitle>{tr("Lifetime stats")}</PageTitle>
+      <Row label={tr("Odometer")} value={kmOrMi(stats.odometerKm)} />
+      <Row label={tr("Rides")} value={stats.totalRides} />
+      <Row label={tr("Distance")} value={dist(stats.totalDistanceMi)} />
+      <Row label={tr("Riding time")} value={formatDuration(stats.totalDurationSec)} />
+      <Row label={tr("Top speed")} value={spd(stats.topSpeedMph)} />
+      <Row label={tr("Lean L / R")} value={`${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
+      <Row label={tr("Peak G")} value={stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : '—'} />
+      <Row label={tr("Longest ride")} value={dist(stats.longestRideMi)} />
+      <Row label={tr("Convoy rides")} value={allRides.filter((r) => r.isConvoyRide).length} />
     </Page>
   ));
 
   pages.push((n, side) => (
     <Page n={n} side={side}>
-      <PageTitle>Service record</PageTitle>
+      <PageTitle>{tr("Service record")}</PageTitle>
       {bike.maintenance.length === 0 ? (
-        <p className="text-[9px] italic text-[#2b2118]/60">No service items logged.</p>
+        <p className="text-[9px] italic text-[#2b2118]/60">{tr("No service items logged.")}</p>
       ) : (
         <div className="space-y-1.5">
           {bike.maintenance.map((m) => {
@@ -202,12 +203,12 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
                       st.tone === 'over' ? 'border-[#a3261b] text-[#a3261b]' : st.tone === 'warn' ? 'border-[#a86a12] text-[#a86a12]' : 'border-[#2f6b2f] text-[#2f6b2f]',
                     )}
                   >
-                    {st.tone === 'over' ? 'Overdue' : st.tone === 'warn' ? 'Due soon' : 'OK'}
+                    {st.tone === 'over' ? tr("Overdue") : st.tone === 'warn' ? tr("Due soon") : tr("OK")}
                   </span>
                 </div>
                 <p className="font-mono text-[8px] text-[#2b2118]/70">
-                  every {kmOrMi(m.intervalKm)}
-                  {m.intervalMonths ? ` / ${m.intervalMonths} mo` : ''} · last {kmOrMi(m.lastServiceKm)}
+                  {tr("every")}{" "}{kmOrMi(m.intervalKm)}
+                  {m.intervalMonths ? ` / ${m.intervalMonths} mo` : ''}{" "}{tr("· last")}{" "}{kmOrMi(m.lastServiceKm)}
                   {m.lastServiceAt ? ` (${fmtDate(m.lastServiceAt)})` : ''}
                 </p>
               </div>
@@ -220,32 +221,32 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   pages.push((n, side) => (
     <Page n={n} side={side}>
-      <PageTitle>Highlights</PageTitle>
-      <Row label="Longest" value={longest ? dist(longest.distance) : '—'} />
+      <PageTitle>{tr("Highlights")}</PageTitle>
+      <Row label={tr("Longest")} value={longest ? dist(longest.distance) : '—'} />
       {longest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(longest.startedAt)} · {longest.owner}</p>}
-      <Row label="Fastest" value={fastest ? spd(fastest.maxSpeed) : '—'} />
+      <Row label={tr("Fastest")} value={fastest ? spd(fastest.maxSpeed) : '—'} />
       {fastest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
-      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">Badges</p>
+      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Badges")}</p>
       {Object.keys(badgeCounts).length === 0 ? (
-        <p className="text-[9px] italic text-[#2b2118]/60">None yet.</p>
+        <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
       ) : (
         Object.entries(badgeCounts).map(([b, c]) => <Row key={b} label={b.replace(/-/g, ' ')} value={`×${c}`} />)
       )}
-      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">Time attacks</p>
+      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Time attacks")}</p>
       {challenges.length === 0 ? (
-        <p className="text-[9px] italic text-[#2b2118]/60">None yet.</p>
+        <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
       ) : (
         challenges.slice(0, 4).map((r) => (
           <Row
             key={r.id}
-            label={r.challenge!.role === 'set' ? `Set · ${r.challenge!.vehicleName}` : `${r.challenge!.result ?? ''} · ${r.challenge!.ownerName}`}
+            label={r.challenge!.role === 'set' ? tr("Set · {0}", [r.challenge!.vehicleName]) : `${r.challenge!.result ?? ''} · ${r.challenge!.ownerName}`}
             value={`${Math.floor(r.challenge!.timeSec / 60)}:${String(Math.round(r.challenge!.timeSec % 60)).padStart(2, '0')}`}
           />
         ))
       )}
       {trackBests.length > 0 && (
         <>
-          <p className="mt-1 text-[9px] font-black uppercase tracking-wider">Track days</p>
+          <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Track days")}</p>
           {trackBests.slice(0, 4).map((t) => (
             <Row key={t.name} label={`${t.name} ×${t.days}`} value={t.best != null ? `${Math.floor(t.best / 60000)}:${((t.best % 60000) / 1000).toFixed(3).padStart(6, '0')}` : '—'} />
           ))}
@@ -258,9 +259,9 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     const slice = allRides.slice(i * RIDES_PER_PAGE, (i + 1) * RIDES_PER_PAGE);
     pages.push((n, side) => (
       <Page n={n} side={side}>
-        <PageTitle>Ride log {i > 0 ? `(${i + 1})` : ''}</PageTitle>
+        <PageTitle>{tr("Ride log")}{" "}{i > 0 ? `(${i + 1})` : ''}</PageTitle>
         {slice.length === 0 ? (
-          <p className="text-[9px] italic text-[#2b2118]/60">No rides logged yet.</p>
+          <p className="text-[9px] italic text-[#2b2118]/60">{tr("No rides logged yet.")}</p>
         ) : (
           <div className="space-y-[3px]">
             {slice.map((r) => (
@@ -270,7 +271,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
                   <span className="font-mono">{dist(r.distance)}</span>
                 </div>
                 <div className="flex justify-between gap-1 font-mono text-[8px] text-[#2b2118]/65">
-                  <span className="truncate">{r.name ? fmtDate(r.startedAt) : r.owner}{r.isConvoyRide ? ' · convoy' : ''}</span>
+                  <span className="truncate">{r.name ? fmtDate(r.startedAt) : r.owner}{r.isConvoyRide ? tr(" · convoy") : ''}</span>
                   <span>{formatDuration(r.duration)} · {spd(r.maxSpeed)}</span>
                 </div>
               </div>
@@ -301,14 +302,14 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     const isLast = i === notePages.length - 1;
     pages.push((n, side) => (
       <Page n={n} side={side}>
-        <PageTitle>{i === 0 ? 'Notes' : 'Notes (cont.)'}</PageTitle>
+        <PageTitle>{i === 0 ? tr("Notes") : tr("Notes (cont.)")}</PageTitle>
         {notes.length === 0 && i === 0 && (
-          <p className="text-[9px] italic text-[#2b2118]/55">No remarks yet. Mods, quirks, tyre changes, anything the next keeper should know.</p>
+          <p className="text-[9px] italic text-[#2b2118]/55">{tr("No remarks yet. Mods, quirks, tyre changes, anything the next keeper should know.")}</p>
         )}
         <div className="space-y-1.5">
           {pageNotes.map((note) => (
             <div key={note.id} className="leading-tight">
-              <p className="font-serif italic text-[10px] text-[#1f2a5a] break-words">&ldquo;{note.text}&rdquo;</p>
+              <p className="font-serif italic text-[10px] text-[#1f2a5a] break-words">{tr("&ldquo;")}{note.text}{tr("&rdquo;")}</p>
               <p className="font-mono text-[7.5px] text-[#2b2118]/60 mt-0.5">
                 {note.author} · {fmtDate(note.at)}
               </p>
@@ -319,14 +320,14 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           <button
             onClick={() => {
               if (demoEnabled) {
-                toast('Notes are read-only in demo mode');
+                toast(tr("Notes are read-only in demo mode"));
                 return;
               }
               setNoteOpen(true);
             }}
             className="mt-auto mb-1 mx-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border-2 border-dashed border-[#2b2118]/60 text-[9px] font-bold uppercase tracking-wider active:scale-95"
           >
-            <PenLine className="w-3 h-3" /> Add a note
+            <PenLine className="w-3 h-3" />{" "}{tr("Add a note")}
           </button>
         )}
       </Page>
@@ -337,24 +338,24 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
   if (pages.length % 2 === 0) {
     pages.push((n, side) => (
       <Page n={n} side={side}>
-        <p className="mt-auto text-center text-[9px] italic text-[#2b2118]/45">This page intentionally left blank</p>
+        <p className="mt-auto text-center text-[9px] italic text-[#2b2118]/45">{tr("This page intentionally left blank")}</p>
       </Page>
     ));
   }
   const handoverPageIndex = pages.length;
   pages.push((n, side) => (
     <Page n={n} side={side}>
-      <PageTitle>Change of keeper</PageTitle>
+      <PageTitle>{tr("Change of keeper")}</PageTitle>
       <p className="text-[9px] leading-snug">
-        Selling or passing it on? The new keeper scans your code and gets this logbook, its trading card and its stats.
+        {tr("Selling or passing it on? The new keeper scans your code and gets this logbook, its trading card and its stats.")}
       </p>
       <p className="mt-1.5 text-[9px] leading-snug text-[#2b2118]/70">
-        Your own ride history and totals stay with you.
+        {tr("Your own ride history and totals stay with you.")}
       </p>
       <button
         onClick={() => {
           if (demoEnabled) {
-            toast('Hand-over is off in demo mode');
+            toast(tr("Hand-over is off in demo mode"));
             return;
           }
           setConfirmOpen(true);
@@ -362,7 +363,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         className="mt-auto mb-1 mx-auto flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-[#2b2118] bg-[#2b2118] text-[#f6eed9] active:scale-95 transition-transform"
       >
         <QrCode className="w-6 h-6" />
-        <span className="text-[9px] font-black uppercase tracking-widest">Hand over</span>
+        <span className="text-[9px] font-black uppercase tracking-widest">{tr("Hand over")}</span>
       </button>
     </Page>
   ));
@@ -391,7 +392,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     setNoteText('');
     setNoteOpen(false);
     haptics.success();
-    toast.success('Note added to the logbook');
+    toast.success(tr("Note added to the logbook"));
   };
   const [handover, setHandover] = useState<null | { qr: string; startedAt: number; phase: 'waiting' | 'sending' | 'done' | 'expired' | 'failed'; who?: string; msg?: string }>(null);
   const cancelRef = useRef<(() => void) | null>(null);
@@ -462,12 +463,12 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       `}</style>
 
       <header className="flex items-center gap-3 mb-4">
-        <HeaderButton onClick={onBack} aria-label="Back to garage">
+        <HeaderButton onClick={onBack} aria-label={tr("Back to garage")}>
           <ChevronLeft className="w-5 h-5 -ml-0.5" strokeWidth={2.25} />
         </HeaderButton>
         <div className="min-w-0">
-          <h1 className="text-[22px] font-semibold tracking-[-0.025em] leading-tight truncate">Logbook</h1>
-          <p className="text-[13px] text-muted-foreground truncate">{bike.name} · Garage</p>
+          <h1 className="text-[22px] font-semibold tracking-[-0.025em] leading-tight truncate">{tr("Logbook")}</h1>
+          <p className="text-[13px] text-muted-foreground truncate">{bike.name}{" "}{tr("· Garage")}</p>
         </div>
       </header>
 
@@ -498,7 +499,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           onClick={() => go(spread - 1)}
           disabled={spread === 0}
           className="w-12 h-12 rounded-full border border-border bg-card flex items-center justify-center disabled:opacity-30 active:scale-95"
-          aria-label="Previous page"
+          aria-label={tr("Previous page")}
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
@@ -509,7 +510,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           onClick={() => go(spread + 1)}
           disabled={spread === spreads - 1}
           className="w-12 h-12 rounded-full border border-border bg-card flex items-center justify-center disabled:opacity-30 active:scale-95"
-          aria-label="Next page"
+          aria-label={tr("Next page")}
         >
           <ChevronRight className="w-6 h-6" />
         </button>
@@ -522,7 +523,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           onClick={() => go(Math.floor(handoverPageIndex / 2))}
           disabled={spread === spreads - 1}
         >
-          <ChevronsRight className="w-4 h-4" /> Skip to end
+          <ChevronsRight className="w-4 h-4" />{" "}{tr("Skip to end")}
         </Button>
       </div>
 
@@ -530,21 +531,21 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Add a note</DialogTitle>
+            <DialogTitle>{tr("Add a note")}</DialogTitle>
           </DialogHeader>
           <Textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value.slice(0, NOTE_MAX_CHARS))}
-            placeholder="New tyres, a quirk, a mod, a great ride…"
+            placeholder={tr("New tyres, a quirk, a mod, a great ride…")}
             rows={4}
             autoFocus
           />
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground tabular-nums">
-              {noteText.length} / {NOTE_MAX_CHARS} · signed {myName}
+              {noteText.length} / {NOTE_MAX_CHARS}{" "}{tr("· signed")}{" "}{myName}
             </span>
             <Button onClick={saveNote} disabled={!noteText.trim()}>
-              Save
+              {tr("Save")}
             </Button>
           </div>
         </DialogContent>
@@ -554,17 +555,16 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hand over {bike.name}?</AlertDialogTitle>
+            <AlertDialogTitle>{tr("Hand over")}{" "}{bike.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              The new keeper gets this logbook, the vehicle's trading card and its stats. Once their phone confirms,{' '}
-              {bike.name} is removed from your garage for good. Your own ride history and totals stay. The code is live for 10
-              seconds; if nobody scans it, nothing changes.
+              {tr("The new keeper gets this logbook, the vehicle's trading card and its stats. Once their phone confirms,")}{' '}
+              {bike.name}{" "}{tr("is removed from your garage for good. Your own ride history and totals stay. The code is live for 10 seconds; if nobody scans it, nothing changes.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogCancel>{tr("Keep it")}</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={beginHandover}>
-              Show code
+              {tr("Show code")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -576,25 +576,25 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           <div className="w-full max-w-xs flex flex-col items-center text-center gap-4">
             {handover.phase === 'waiting' && (
               <>
-                <p className="text-sm font-semibold">Scan to take over {bike.name}</p>
+                <p className="text-sm font-semibold">{tr("Scan to take over")}{" "}{bike.name}</p>
                 <div className="relative p-3 rounded-2xl bg-white">
                   <QRCodeSVG value={handover.qr} size={220} level="M" marginSize={1} />
                 </div>
                 <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                   <div className="h-full bg-accent transition-[width] duration-100" style={{ width: `${windowFrac * 100}%` }} />
                 </div>
-                <p className="text-3xl font-black font-mono tabular-nums text-accent">{secondsLeft}s</p>
-                <p className="text-xs text-muted-foreground">On their phone: Garage → + → Scan new logbook.</p>
+                <p className="text-3xl font-black font-mono tabular-nums text-accent">{secondsLeft}{tr("s")}</p>
+                <p className="text-xs text-muted-foreground">{tr("On their phone: Garage → + → Scan new logbook.")}</p>
                 <Button variant="ghost" onClick={closeHandover}>
-                  Cancel
+                  {tr("Cancel")}
                 </Button>
               </>
             )}
             {handover.phase === 'sending' && (
               <>
                 <Loader2 className="w-10 h-10 animate-spin text-accent" />
-                <p className="text-sm font-semibold">Handing over to {handover.who}…</p>
-                <p className="text-xs text-muted-foreground">Keep both phones open.</p>
+                <p className="text-sm font-semibold">{tr("Handing over to")}{" "}{handover.who}…</p>
+                <p className="text-xs text-muted-foreground">{tr("Keep both phones open.")}</p>
               </>
             )}
             {handover.phase === 'done' && (
@@ -603,10 +603,10 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
                   <Check className="w-7 h-7 text-accent" />
                 </div>
                 <p className="text-sm font-semibold">
-                  {bike.name} is now with {handover.who}
+                  {bike.name}{" "}{tr("is now with")}{" "}{handover.who}
                 </p>
-                <p className="text-xs text-muted-foreground">Removed from your garage. Your ride history stays.</p>
-                <Button onClick={closeHandover}>Back to garage</Button>
+                <p className="text-xs text-muted-foreground">{tr("Removed from your garage. Your ride history stays.")}</p>
+                <Button onClick={closeHandover}>{tr("Back to garage")}</Button>
               </>
             )}
             {(handover.phase === 'expired' || handover.phase === 'failed') && (
@@ -615,12 +615,12 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
                   <X className="w-7 h-7 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-semibold">
-                  {handover.phase === 'expired' ? 'Nobody scanned it in time' : 'Hand-over stopped'}
+                  {handover.phase === 'expired' ? tr("Nobody scanned it in time") : tr("Hand-over stopped")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {handover.msg ?? `${bike.name} stays in your garage. Show the code again when they're ready.`}
+                  {handover.msg ?? tr("{0} stays in your garage. Show the code again when they're ready.", [bike.name])}
                 </p>
-                <Button onClick={closeHandover}>OK</Button>
+                <Button onClick={closeHandover}>{tr("OK")}</Button>
               </>
             )}
           </div>

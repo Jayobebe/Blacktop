@@ -13,6 +13,7 @@ import { toPng } from 'html-to-image';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 interface RideStats {
   duration: number;
@@ -156,7 +157,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           data: base64,
           directory: Directory.Documents,
         });
-        toast.success('Receipt saved to Documents');
+        toast.success(tr("Receipt saved to Documents"));
       } else {
         const a = document.createElement('a');
         a.href = dataUrl;
@@ -164,13 +165,13 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
         document.body.appendChild(a);
         a.click();
         a.remove();
-        toast.success('Receipt downloaded');
+        toast.success(tr("Receipt downloaded"));
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
       console.error('[RideSummary] save failed', err);
-      toast.error('Could not save receipt');
+      toast.error(tr("Could not save receipt"));
     } finally {
       setSaving(false);
     }
@@ -196,23 +197,23 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
 
           {/* Title */}
           <div className="text-center mb-1">
-            <div className="text-3xl font-bold tracking-[0.15em]">BLACKTOP STORE</div>
+            <div className="text-3xl font-bold tracking-[0.15em]">{tr("BLACKTOP STORE")}</div>
             <div className="text-sm tracking-[0.3em] opacity-70 mt-1">
-              {timeAttack ? '— TIME ATTACK RECEIPT —' : trackDay ? '— TRACK DAY RECEIPT —' : `— ${terms.Ride.toUpperCase()} RECEIPT —`}
+              {timeAttack ? tr("— TIME ATTACK RECEIPT —") : trackDay ? tr("— TRACK DAY RECEIPT —") : tr("— {0} RECEIPT —", [terms.Ride.toUpperCase()])}
             </div>
           </div>
 
           {/* Vehicle line (from garage) */}
           {showVehicle && (
             <div className="mt-4" data-bike-slot>
-              <ReceiptRow label="Vehicle" value={bikeName || '—'} />
+              <ReceiptRow label={tr("Vehicle")} value={bikeName || '—'} />
             </div>
           )}
 
           {/* Track line (track-day receipts) */}
           {track && (
             <div className={showVehicle ? 'mt-2' : 'mt-4'}>
-              <ReceiptRow label="Track" value={track.trackName || '—'} />
+              <ReceiptRow label={tr("Track")} value={track.trackName || '—'} />
             </div>
           )}
 
@@ -224,19 +225,19 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             <div className="space-y-2">
               {track && (
                 <>
-                  <ReceiptRow label="Best Lap" value={formatLapTime(track.bestLapMs)} />
-                  <ReceiptRow label="Laps" value={String(track.laps)} />
+                  <ReceiptRow label={tr("Best Lap")} value={formatLapTime(track.bestLapMs)} />
+                  <ReceiptRow label={tr("Laps")} value={String(track.laps)} />
                 </>
               )}
               {showSpeed && (
                 <ReceiptRow
-                  label="Max Spd"
+                  label={tr("Max Spd")}
                   value={`${formatSpeed(rideStats.maxSpeed, settings.speedUnit)} ${speedUnit}`}
                 />
               )}
               {showLean && (
                 <ReceiptRow
-                  label="Max Lean"
+                  label={tr("Max Lean")}
                   value={
                     typeof rideStats.maxLean === 'number' && rideStats.maxLean > 0
                       ? `${Math.round(rideStats.maxLean)}°`
@@ -246,7 +247,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               )}
               {showG && (
                 <ReceiptRow
-                  label="Max G"
+                  label={tr("Max G")}
                   value={
                     typeof rideStats.maxGForce === 'number' && rideStats.maxGForce > 0
                       ? `${rideStats.maxGForce.toFixed(1)}G`
@@ -255,13 +256,13 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 />
               )}
               <ReceiptRow
-                label="Distance"
+                label={tr("Distance")}
                 value={`${formatDistance(rideStats.distance, settings.distanceUnit)} ${distUnit}`}
               />
-              <ReceiptRow label="Duration" value={formatDuration(rideStats.duration)} />
+              <ReceiptRow label={tr("Duration")} value={formatDuration(rideStats.duration)} />
               {showSpeed && (
                 <ReceiptRow
-                  label="Avg Spd"
+                  label={tr("Avg Spd")}
                   value={`${formatSpeed(rideStats.averageSpeed, settings.speedUnit)} ${speedUnit}`}
                 />
               )}
@@ -292,7 +293,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 <div className="flex items-center justify-center py-2">
                   <img
                     src={bikePhoto}
-                    alt={bikeName || 'Vehicle'}
+                    alt={bikeName || tr("Vehicle")}
                     crossOrigin="anonymous"
                     className="max-h-40 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
                     style={{ filter: 'grayscale(100%) contrast(1.15)' }}
@@ -303,8 +304,8 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                   <div className="receipt-bracket text-center bg-[--paper]" data-bike-slot>
                     <span className="receipt-bracket-tr" />
                     <span className="receipt-bracket-bl" />
-                    <div className="text-xl tracking-[0.2em]">VEHICLE MODEL</div>
-                    <div className="text-sm opacity-60 mt-1">add in garage</div>
+                    <div className="text-xl tracking-[0.2em]">{tr("VEHICLE MODEL")}</div>
+                    <div className="text-sm opacity-60 mt-1">{tr("add in garage")}</div>
                   </div>
                 )
               )}
@@ -317,7 +318,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {showBadges && visibleAwards.length > 0 && (
             <>
               <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
-              <div className="text-center text-sm tracking-[0.3em] mb-2 opacity-70">— BADGES —</div>
+              <div className="text-center text-sm tracking-[0.3em] mb-2 opacity-70">{tr("— BADGES —")}</div>
               <div className={cn(
                 'grid gap-2',
                 visibleAwards.length === 1 && 'grid-cols-1',
@@ -350,14 +351,14 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Footer */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
           <div className="text-center space-y-2">
-            <div className="text-base tracking-[0.25em]">THANK YOU FOR THE {terms.Ride.toUpperCase()}</div>
-            <div className="text-xs opacity-60 tracking-widest">ORDER {orderId}</div>
+            <div className="text-base tracking-[0.25em]">{tr("THANK YOU FOR THE")}{" "}{terms.Ride.toUpperCase()}</div>
+            <div className="text-xs opacity-60 tracking-widest">{tr("ORDER")}{" "}{orderId}</div>
             <div className="receipt-barcode mt-3" aria-hidden />
-            <div className="text-[10px] tracking-[0.4em] opacity-70 mt-1">BLACKTOP · {dateStr}</div>
+            <div className="text-[10px] tracking-[0.4em] opacity-70 mt-1">{tr("BLACKTOP ·")}{" "}{dateStr}</div>
           </div>
 
           {!rideStats && visibleAwards.length === 0 && (
-            <div className="text-center py-4 text-sm opacity-60">No data to display.</div>
+            <div className="text-center py-4 text-sm opacity-60">{tr("No data to display.")}</div>
           )}
         </div>
         <div className={cn('receipt-edge-bottom', timeAttack && 'receipt-edge-timeattack', !timeAttack && trackDay && 'receipt-edge-track')} />
@@ -372,14 +373,14 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             className="h-12 text-base font-semibold gap-2"
           >
             {saved ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-            {saved ? 'Saved' : saving ? 'Saving…' : 'Save'}
+            {saved ? tr("Saved") : saving ? tr("Saving…") : tr("Save")}
           </Button>
           {variant === 'overlay' && onClose && (
             <Button
               onClick={onClose}
               className="h-12 text-base font-semibold"
             >
-              Continue
+              {tr("Continue")}
             </Button>
           )}
         </div>}

@@ -11,6 +11,7 @@ import { useArcadeScores } from '@/features/arcade';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 interface CrewRow {
   display_name: string;
@@ -23,12 +24,12 @@ interface CrewRow {
 }
 
 const METRICS: { id: keyof CrewRow; label: string; format: (v: number) => string }[] = [
-  { id: 'total_distance', label: 'Distance', format: (v) => `${v.toFixed(1)} mi` },
-  { id: 'top_speed', label: 'Top speed', format: (v) => `${Math.round(v)} mph` },
-  { id: 'max_lean', label: 'Lean', format: (v) => `${Math.round(v)}°` },
-  { id: 'ride_count', label: 'Rides', format: (v) => String(Math.round(v)) },
-  { id: 'hit_heavy', label: 'Hit Heavy', format: (v) => `${Number(v).toFixed(2)}G` },
-  { id: 'petrol_head', label: 'Petrol Head', format: (v) => String(Math.round(v)) },
+  { id: 'total_distance', label: tr("Distance"), format: (v) => `${v.toFixed(1)} mi` },
+  { id: 'top_speed', label: tr("Top speed"), format: (v) => `${Math.round(v)} mph` },
+  { id: 'max_lean', label: tr("Lean"), format: (v) => `${Math.round(v)}°` },
+  { id: 'ride_count', label: tr("Rides"), format: (v) => String(Math.round(v)) },
+  { id: 'hit_heavy', label: tr("Hit Heavy"), format: (v) => `${Number(v).toFixed(2)}G` },
+  { id: 'petrol_head', label: tr("Petrol Head"), format: (v) => String(Math.round(v)) },
 ];
 
 export default function CrewLeaderboard() {
@@ -63,17 +64,17 @@ export default function CrewLeaderboard() {
 
   return (
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
-      <PageHeader title="Crew Leaderboards" backTo="/world" backLabel="Back to Blacktop World" />
+      <PageHeader title={tr("Crew Leaderboards")} backTo="/world" backLabel={tr("Back to Blacktop World")} />
 
       {/* This page publishes the rider's own totals (see the effect above), so say so. */}
       <p className="text-[11px] text-muted-foreground mb-3">
-        Your totals (distance, top speed, max lean, rides and arcade scores) are shared with your crew while you're in it.
+        {tr("Your totals (distance, top speed, max lean, rides and arcade scores) are shared with your crew while you're in it.")}
       </p>
 
       <div className="flex items-center gap-2 mb-3">
         <Trophy className="w-4 h-4 text-accent" />
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          Crew {crew.code}
+          {tr("Crew")}{" "}{crew.code}
         </p>
       </div>
 
@@ -99,7 +100,7 @@ export default function CrewLeaderboard() {
         <ListSkeleton rows={6} />
       ) : sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground/70 py-10 text-center">
-          No crew stats yet. Ride, then check back.
+          {tr("No crew stats yet. Ride, then check back.")}
         </p>
       ) : (
         <ul className="space-y-2">

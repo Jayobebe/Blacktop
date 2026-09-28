@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { PetrolHead } from '@/features/arcade/components/games/PetrolHead';
+import { tr } from '@/lib/i18n';
 
 export default function ArcadePetrolHead() {
   const navigate = useNavigate();
@@ -15,11 +16,11 @@ export default function ArcadePetrolHead() {
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-3.5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-          aria-label="Back"
+          aria-label={tr("Back")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-bold tracking-tight text-white">Petrol Head</h1>
+        <h1 className="text-lg font-bold tracking-tight text-white">{tr("Petrol Head")}</h1>
       </header>
 
       <PetrolHead accentColor={accentColor} />

@@ -8,6 +8,7 @@ import { useRadioPlayer, playStation, resetRadio } from '../hooks/useRadioPlayer
 import { RADIO_ICONS, getRadioIcon, stationHsl } from '../lib/stationVisuals';
 import { pickAudioFiles, pickAudioFolder, supportsDirectoryPicker, hasSessionFile } from '../lib/audioFiles';
 import type { RadioIcon, RadioStation, RadioTrack } from '../types';
+import { tr } from '@/lib/i18n';
 
 interface Props {
   onClose: () => void;
@@ -38,7 +39,7 @@ export function StationManager({ onClose }: Props) {
       if (!result.tracks.length) return;
       setTracks((prev) => [...prev, ...result.tracks]);
       if (!result.persistent) {
-        toast.info('This browser can\'t remember files', { description: 'You\'ll be asked to reselect them next session.' });
+        toast.info(tr("This browser can't remember files"), { description: tr("You'll be asked to reselect them next session.") });
       }
     } finally {
       setBusy(false);
@@ -49,15 +50,15 @@ export function StationManager({ onClose }: Props) {
     const result = folder ? await pickAudioFolder() : await pickAudioFiles();
     if (!result.tracks.length) return;
     await addTracks(station.id, result.tracks);
-    toast.success(`Added ${result.tracks.length} track${result.tracks.length === 1 ? '' : 's'}`);
+    toast.success(tr("Added {0} track{1}", [result.tracks.length, result.tracks.length === 1 ? '' : 's']));
   };
 
   const save = async () => {
-    if (!tracks.length) { toast.error('Pick at least one audio file'); return; }
+    if (!tracks.length) { toast.error(tr("Pick at least one audio file")); return; }
     const station = await createStation({ name: name || 'New Station', color, icon, tracks });
     resetDraft();
     setCreating(false);
-    toast.success(`${station.name} is on air`);
+    toast.success(tr("{0} is on air", [station.name]));
     void playStation(station);
   };
 
@@ -65,10 +66,10 @@ export function StationManager({ onClose }: Props) {
     <div className="fixed inset-0 z-[95] bg-background/95 backdrop-blur-xl flex flex-col animate-fade-in">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">Stations</p>
-          <p className="text-xs text-muted-foreground">Your own files. Nothing leaves the phone.</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Stations")}</p>
+          <p className="text-xs text-muted-foreground">{tr("Your own files. Nothing leaves the phone.")}</p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close station manager" className="w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+        <button type="button" onClick={onClose} aria-label={tr("Close station manager")} className="w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -94,21 +95,21 @@ export function StationManager({ onClose }: Props) {
                     <input
                       value={station.name}
                       onChange={(e) => void updateStation(station.id, { name: e.target.value })}
-                      aria-label="Station name"
+                      aria-label={tr("Station name")}
                       className="w-full bg-secondary rounded-lg px-2 py-1 text-sm"
                     />
                   ) : (
                     <p className="text-sm font-semibold truncate">{station.name}</p>
                   )}
                   <p className="text-[11px] text-muted-foreground">
-                    {station.tracks.length} track{station.tracks.length === 1 ? '' : 's'}
-                    {missing > 0 && ` · ${missing} need reselecting`}
+                    {station.tracks.length}{" "}{tr("track")}{station.tracks.length === 1 ? '' : 's'}
+                    {missing > 0 && tr(" · {0} need reselecting", [missing])}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setEditingId(isEditing ? null : station.id)}
-                  aria-label={isEditing ? 'Done editing station' : 'Edit station'}
+                  aria-label={isEditing ? tr("Done editing station") : tr("Edit station")}
                   className="w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
                 >
                   {isEditing ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
@@ -118,9 +119,9 @@ export function StationManager({ onClose }: Props) {
                   onClick={async () => {
                     if (player.stationId === station.id) resetRadio();
                     await deleteStation(station.id);
-                    toast.success('Station deleted');
+                    toast.success(tr("Station deleted"));
                   }}
-                  aria-label={`Delete ${station.name}`}
+                  aria-label={tr("Delete {0}", [station.name])}
                   className="w-9 h-9 rounded-full bg-secondary hover:bg-destructive/20 text-destructive flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -135,7 +136,7 @@ export function StationManager({ onClose }: Props) {
                         key={c.id}
                         type="button"
                         onClick={() => void updateStation(station.id, { color: c.id })}
-                        aria-label={`${c.label} cover`}
+                        aria-label={tr("{0} cover", [c.label])}
                         className={cn('w-7 h-7 rounded-full border-2', station.color === c.id ? 'border-foreground' : 'border-transparent')}
                         style={{ backgroundColor: `hsl(${c.hsl})` }}
                       />
@@ -147,7 +148,7 @@ export function StationManager({ onClose }: Props) {
                         key={id}
                         type="button"
                         onClick={() => void updateStation(station.id, { icon: id })}
-                        aria-label={`${label} icon`}
+                        aria-label={tr("{0} icon", [label])}
                         className={cn(
                           'w-8 h-8 rounded-lg flex items-center justify-center border',
                           station.icon === id ? 'border-accent text-accent bg-accent/10' : 'border-border text-muted-foreground',
@@ -166,7 +167,7 @@ export function StationManager({ onClose }: Props) {
                         <button
                           type="button"
                           onClick={() => void removeTrack(station.id, t.id)}
-                          aria-label={`Remove ${t.name}`}
+                          aria-label={tr("Remove {0}", [t.name])}
                           className="text-destructive"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -177,11 +178,11 @@ export function StationManager({ onClose }: Props) {
 
                   <div className="flex gap-2">
                     <button type="button" onClick={() => void pickInto(station, false)} className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-border rounded-lg py-2">
-                      <Plus className="w-3.5 h-3.5" /> Add files
+                      <Plus className="w-3.5 h-3.5" />{" "}{tr("Add files")}
                     </button>
                     {supportsDirectoryPicker() && (
                       <button type="button" onClick={() => void pickInto(station, true)} className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-border rounded-lg py-2">
-                        <FolderOpen className="w-3.5 h-3.5" /> Add folder
+                        <FolderOpen className="w-3.5 h-3.5" />{" "}{tr("Add folder")}
                       </button>
                     )}
                   </div>
@@ -194,12 +195,12 @@ export function StationManager({ onClose }: Props) {
         {/* Create form */}
         {creating ? (
           <div className="rounded-2xl border border-accent/60 bg-card/70 p-3 space-y-3">
-            <p className="text-[10px] uppercase tracking-widest text-accent font-semibold">New station</p>
+            <p className="text-[10px] uppercase tracking-widest text-accent font-semibold">{tr("New station")}</p>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Station name"
-              aria-label="New station name"
+              placeholder={tr("Station name")}
+              aria-label={tr("New station name")}
               className="w-full bg-secondary rounded-lg px-3 py-2 text-sm"
             />
             <div className="flex flex-wrap gap-2">
@@ -208,7 +209,7 @@ export function StationManager({ onClose }: Props) {
                   key={c.id}
                   type="button"
                   onClick={() => setColor(c.id)}
-                  aria-label={`${c.label} cover`}
+                  aria-label={tr("{0} cover", [c.label])}
                   className={cn('w-7 h-7 rounded-full border-2', color === c.id ? 'border-foreground' : 'border-transparent')}
                   style={{ backgroundColor: `hsl(${c.hsl})` }}
                 />
@@ -220,7 +221,7 @@ export function StationManager({ onClose }: Props) {
                   key={id}
                   type="button"
                   onClick={() => setIcon(id)}
-                  aria-label={`${label} icon`}
+                  aria-label={tr("{0} icon", [label])}
                   className={cn(
                     'w-8 h-8 rounded-lg flex items-center justify-center border',
                     icon === id ? 'border-accent text-accent bg-accent/10' : 'border-border text-muted-foreground',
@@ -233,25 +234,25 @@ export function StationManager({ onClose }: Props) {
 
             <div className="flex gap-2">
               <button type="button" disabled={busy} onClick={() => void pick(false)} className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-border rounded-lg py-2 disabled:opacity-50">
-                <Music className="w-3.5 h-3.5" /> Pick files
+                <Music className="w-3.5 h-3.5" />{" "}{tr("Pick files")}
               </button>
               {supportsDirectoryPicker() && (
                 <button type="button" disabled={busy} onClick={() => void pick(true)} className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-border rounded-lg py-2 disabled:opacity-50">
-                  <FolderOpen className="w-3.5 h-3.5" /> Pick folder
+                  <FolderOpen className="w-3.5 h-3.5" />{" "}{tr("Pick folder")}
                 </button>
               )}
             </div>
 
             {tracks.length > 0 && (
-              <p className="text-[11px] text-muted-foreground">{tracks.length} track{tracks.length === 1 ? '' : 's'} queued</p>
+              <p className="text-[11px] text-muted-foreground">{tracks.length}{" "}{tr("track")}{tracks.length === 1 ? '' : 's'}{" "}{tr("queued")}</p>
             )}
 
             <div className="flex gap-2">
               <button type="button" onClick={() => { resetDraft(); setCreating(false); }} className="flex-1 text-xs border border-border rounded-lg py-2">
-                Cancel
+                {tr("Cancel")}
               </button>
               <button type="button" onClick={() => void save()} className="flex-1 text-xs rounded-lg py-2 bg-accent text-accent-foreground font-semibold">
-                Save station
+                {tr("Save station")}
               </button>
             </div>
           </div>
@@ -261,7 +262,7 @@ export function StationManager({ onClose }: Props) {
             onClick={() => setCreating(true)}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-accent/60 text-accent text-sm font-semibold"
           >
-            <Plus className="w-4 h-4" /> Add Station
+            <Plus className="w-4 h-4" />{" "}{tr("Add Station")}
           </button>
         )}
       </div>

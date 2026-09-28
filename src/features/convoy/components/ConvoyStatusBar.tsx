@@ -6,6 +6,7 @@ import type { SpeedUnit } from '@/features/settings';
 import { cn } from '@/lib/utils';
 import { computeConvoyStatus } from '../lib/convoyStatus';
 import { describeRegroup, sendRegroup } from '../lib/regroup';
+import { tr } from '@/lib/i18n';
 
 interface ConvoyStatusBarProps {
   members: ConvoyMemberInfo[];
@@ -59,7 +60,7 @@ export function ConvoyStatusBar({
       <div
         className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 rounded-xl whitespace-nowrap overflow-hidden bg-card/95 border border-border shadow-lg backdrop-blur text-xs"
         role="status"
-        aria-label="Convoy status"
+        aria-label={tr("Convoy status")}
       >
         <span className="flex items-center gap-1.5 font-semibold">
           <Users className="w-3.5 h-3.5 text-accent" aria-hidden />
@@ -73,14 +74,14 @@ export function ConvoyStatusBar({
         {status.groupEtaSeconds != null && (
           <span className="flex items-center gap-1.5 font-mono tabular-nums">
             <Flag className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground font-sans">ETA</span>
+            <span className="text-muted-foreground font-sans">{tr("ETA")}</span>
             {formatClock(status.groupEtaSeconds)}
           </span>
         )}
         {behindCount > 0 && (
           <span className="ml-auto flex items-center gap-1 font-semibold text-warning whitespace-nowrap">
             <AlertTriangle className="w-3.5 h-3.5" />
-            {behindCount} {behindCount === 1 ? 'rider' : 'riders'} behind
+            {behindCount} {behindCount === 1 ? 'rider' : 'riders'}{" "}{tr("behind")}
           </span>
         )}
       </div>
@@ -88,7 +89,7 @@ export function ConvoyStatusBar({
       {showRegroup && (
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-card/95 border border-warning/50 shadow-xl backdrop-blur">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">Regroup?</p>
+            <p className="text-sm font-semibold">{tr("Regroup?")}</p>
             <p className="text-xs text-muted-foreground line-clamp-2">{describeRegroup(behindNames, false)}</p>
           </div>
           <button
@@ -103,12 +104,12 @@ export function ConvoyStatusBar({
             )}
           >
             <Send className="w-3.5 h-3.5" />
-            Send to convoy
+            {tr("Send to convoy")}
           </button>
           <button
             onClick={() => setDismissedAt(behindCount)}
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
-            aria-label="Dismiss regroup suggestion"
+            aria-label={tr("Dismiss regroup suggestion")}
           >
             <X className="w-3.5 h-3.5" />
           </button>

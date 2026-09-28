@@ -6,6 +6,7 @@ import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
 import type { RideChallenge } from '@/lib/challengeRun';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 import { demoTrackData } from '@/lib/demoTrack';
+import { tr } from '@/lib/i18n';
 
 /** Local mirrors of CollectedCard / SpectreCard so demoMode stays leaf-level (no cycle). */
 type CollectedCard = SharedCardPayload & { collectedAt: number; key: string; img?: string };
@@ -421,12 +422,12 @@ export const DEMO_LOGBOOK = {
   },
   passport: 'BT-D4C1-0417',
   notes: [
-    { id: 'demo-note-1', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 400 * 86_400_000, text: 'Termignoni slip-on fitted, stock can in the loft. Ask if you want it.' },
-    { id: 'demo-note-2', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 90 * 86_400_000, text: 'Front tyre scrubbed in at the track day. Rear has maybe 2,000 miles left.' },
-    { id: 'demo-note-3', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 2 * 86_400_000, text: 'Look after her. Warm-up takes a good five minutes when it is cold.' },
-    { id: 'demo-note-4', author: DEMO_NAME, at: DEMO_BOUGHT_AT + 30 * 86_400_000, text: 'Swapped to Pirelli Rosso IVs. Grip is unreal.' },
-    { id: 'demo-note-5', author: DEMO_NAME, at: Date.now() - 60 * 86_400_000, text: 'Chain adjusted at 8,900 km. Keep an eye on the rear sprocket.' },
-    { id: 'demo-note-6', author: DEMO_NAME, at: Date.now() - 6 * 86_400_000, text: 'Wales trip: 612 miles in two days, zero issues. Best bike I have owned.' },
+    { id: 'demo-note-1', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 400 * 86_400_000, text: tr("Termignoni slip-on fitted, stock can in the loft. Ask if you want it.") },
+    { id: 'demo-note-2', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 90 * 86_400_000, text: tr("Front tyre scrubbed in at the track day. Rear has maybe 2,000 miles left.") },
+    { id: 'demo-note-3', author: DEMO_PREVIOUS_KEEPER, at: DEMO_BOUGHT_AT - 2 * 86_400_000, text: tr("Look after her. Warm-up takes a good five minutes when it is cold.") },
+    { id: 'demo-note-4', author: DEMO_NAME, at: DEMO_BOUGHT_AT + 30 * 86_400_000, text: tr("Swapped to Pirelli Rosso IVs. Grip is unreal.") },
+    { id: 'demo-note-5', author: DEMO_NAME, at: Date.now() - 60 * 86_400_000, text: tr("Chain adjusted at 8,900 km. Keep an eye on the rear sprocket.") },
+    { id: 'demo-note-6', author: DEMO_NAME, at: Date.now() - 6 * 86_400_000, text: tr("Wales trip: 612 miles in two days, zero issues. Best bike I have owned.") },
   ],
 };
 

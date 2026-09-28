@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, Car, Gamepad2, Bike } from 'lucide-react';
 import { useArcadeScores } from '../hooks/useArcadeScores';
 import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
+import { tr } from '@/lib/i18n';
 
 export function ArcadeLobby() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export function ArcadeLobby() {
       {/* Header */}
       <div className="flex items-center justify-center gap-2 px-4 pt-4 pb-3">
         <Gamepad2 className="w-4 h-4 text-accent" />
-        <h2 className="text-sm font-semibold tracking-tight text-white">Blacktop Arcade</h2>
+        <h2 className="text-sm font-semibold tracking-tight text-white">{tr("Blacktop Arcade")}</h2>
       </div>
 
       {/* Game tiles */}
@@ -31,10 +32,10 @@ export function ArcadeLobby() {
             <Zap className="w-5 h-5 text-accent" />
           </div>
           <div className="text-center">
-            <div className="text-sm font-semibold tracking-tight text-white leading-none">Hit Heavy</div>
-            <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">Punch machine</div>
+            <div className="text-sm font-semibold tracking-tight text-white leading-none">{tr("Hit Heavy")}</div>
+            <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{tr("Punch machine")}</div>
             <div className="text-[10px] text-muted-foreground mt-1">
-              {scores['hit-heavy'] > 0 ? `Best: ${scores['hit-heavy'].toFixed(2)}G` : 'No score yet'}
+              {scores['hit-heavy'] > 0 ? tr("Best: {0}G", [scores['hit-heavy'].toFixed(2)]) : tr("No score yet")}
             </div>
           </div>
         </button>
@@ -48,9 +49,9 @@ export function ArcadeLobby() {
             <Car className="w-5 h-5 text-accent" />
           </div>
           <div className="text-center">
-            <div className="text-sm font-semibold tracking-tight text-white leading-none">Petrol Head</div>
+            <div className="text-sm font-semibold tracking-tight text-white leading-none">{tr("Petrol Head")}</div>
             <div className="text-[10px] text-muted-foreground mt-1">
-              {scores['petrol-head'] > 0 ? `Best: ${scores['petrol-head']}s` : 'No score yet'}
+              {scores['petrol-head'] > 0 ? tr("Best: {0}s", [scores['petrol-head']]) : tr("No score yet")}
             </div>
           </div>
         </button>
@@ -64,11 +65,11 @@ export function ArcadeLobby() {
             <Bike className="w-5 h-5 text-accent" />
           </div>
           <div className="text-left flex-1 min-w-0">
-            <div className="text-sm font-semibold tracking-tight text-white leading-none">Derez Legacy</div>
-            <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">Real-world lightcycles · 2-8 riders</div>
+            <div className="text-sm font-semibold tracking-tight text-white leading-none">{tr("Derez Legacy")}</div>
+            <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{tr("Real-world lightcycles · 2-8 riders")}</div>
           </div>
           <div className="text-[10px] text-muted-foreground text-right">
-            {scores['legacy-derez'] > 0 ? `Wins: ${scores['legacy-derez']}` : 'No wins yet'}
+            {scores['legacy-derez'] > 0 ? tr("Wins: {0}", [scores['legacy-derez']]) : tr("No wins yet")}
           </div>
         </button>
       </div>

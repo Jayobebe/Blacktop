@@ -11,6 +11,7 @@ import { whenStyleReady } from '@/features/map';
 import type { LatLng, TrackDef } from '../types';
 import { Centerline, bearingOf, buildTrack, gateAt, loopGap, markersFromTrack, orderedSplits, resampleLoop, sectorsOf, type Markers } from '../lib/centerline';
 import { SATELLITE_STYLE, SF_COLOR, SPLIT_COLOR, accentColor, sectorColor } from '../lib/mapStyle';
+import { tr } from '@/lib/i18n';
 
 /**
  * Track builder, part 2 (both methods): a camera runs round the lap, and the
@@ -267,19 +268,19 @@ export function ChaseCamPlacer({
     return others.some((o) => loopGap(line, o, d) < MIN_MARKER_GAP_M);
   };
   const inCorner = (d: number) => Math.abs(angleDiff(bearingOf(line.headingAt(d, 15, 0)), bearingOf(line.headingAt(d, 0, 15)))) * (Math.PI / 180) > CORNER_TURN;
-  const cornerNote = () => toast('That line is in a corner', { description: 'Lines on straights time most accurately, but it will still work.' });
+  const cornerNote = () => toast(tr("That line is in a corner"), { description: tr("Lines on straights time most accurately, but it will still work.") });
 
   const placeSf = () => {
     const d = posRef.current;
-    if (tooClose(d, 'sf')) return toast.error(`Keep lines at least ${MIN_MARKER_GAP_M} m apart`);
+    if (tooClose(d, 'sf')) return toast.error(tr("Keep lines at least {0} m apart", [MIN_MARKER_GAP_M]));
     setMarkers((m) => ({ ...m, sf: d }));
     haptics.success();
     if (inCorner(d)) cornerNote();
   };
   const addSplit = () => {
     const d = posRef.current;
-    if (tooClose(d)) return toast.error(`Keep lines at least ${MIN_MARKER_GAP_M} m apart`);
-    if (markers.splits.length >= 19) return toast.error('20 sectors is the most a lap can have');
+    if (tooClose(d)) return toast.error(tr("Keep lines at least {0} m apart", [MIN_MARKER_GAP_M]));
+    if (markers.splits.length >= 19) return toast.error(tr("20 sectors is the most a lap can have"));
     setMarkers((m) => ({ ...m, splits: [...m.splits, d] }));
     haptics.medium();
     if (inCorner(d)) cornerNote();
@@ -301,7 +302,7 @@ export function ChaseCamPlacer({
     setPos(posRef.current);
     setPlaying(false);
     haptics.medium();
-    toast('Direction reversed', { description: 'Sectors are renumbered for the new direction.' });
+    toast(tr("Direction reversed"), { description: tr("Sectors are renumbered for the new direction.") });
   };
 
   const togglePlay = () => {
@@ -318,12 +319,12 @@ export function ChaseCamPlacer({
   };
 
   const complete = () => {
-    if (markers.sf === null) return toast.error('Place the start/finish line first');
+    if (markers.sf === null) return toast.error(tr("Place the start/finish line first"));
     setPlaying(false);
     setFinishing(true);
   };
   const save = () => {
-    if (!name.trim()) return toast.error('Name the track');
+    if (!name.trim()) return toast.error(tr("Name the track"));
     onSave(buildTrack(line, markers, name, base, meta));
   };
 
@@ -343,19 +344,19 @@ export function ChaseCamPlacer({
           <div className="flex-1 rounded-xl frost-accent px-3 py-2 text-xs shadow-lg">
             <p className="font-semibold flex items-center gap-1.5">
               {markers.sf === null ? <Flag className="w-3.5 h-3.5" /> : <Split className="w-3.5 h-3.5" />}
-              {markers.sf === null ? 'Run the lap and stop on the start/finish line' : 'Add sector markers where you want splits'}
+              {markers.sf === null ? tr("Run the lap and stop on the start/finish line") : tr("Add sector markers where you want splits")}
             </p>
             <p className="mt-0.5 text-muted-foreground">
-              {km(line.length)} lap{markers.sf !== null ? ` · ${sectors.length} sector${sectors.length === 1 ? '' : 's'}` : ''}
-              {sectorHere !== null ? ` · you're in sector ${sectorHere + 1}` : ''}
+              {km(line.length)}{" "}{tr("lap")}{markers.sf !== null ? tr(" · {0} sector{1}", [sectors.length, sectors.length === 1 ? '' : 's']) : ''}
+              {sectorHere !== null ? tr(" · you're in sector {0}", [sectorHere + 1]) : ''}
             </p>
-            {startHint && !base && markers.sf !== null && <p className="mt-0.5 text-muted-foreground">Start/finish placed from the map. Check it, or move it.</p>}
+            {startHint && !base && markers.sf !== null && <p className="mt-0.5 text-muted-foreground">{tr("Start/finish placed from the map. Check it, or move it.")}</p>}
             {attribution && <p className="mt-0.5 text-[10px] text-muted-foreground/80">{attribution}</p>}
           </div>
           <div className="flex flex-col rounded-xl frost-accent overflow-hidden text-[11px] font-semibold shrink-0">
             {(['chase', 'bird', 'whole'] as View[]).map((v) => (
               <button key={v} onClick={() => setView(v)} className={cn('px-2.5 py-1.5', view === v ? 'bg-accent text-accent-foreground' : 'text-muted-foreground')}>
-                {v === 'chase' ? 'Chase' : v === 'bird' ? 'Bird’s-eye' : 'Whole lap'}
+                {v === 'chase' ? tr("Chase") : v === 'bird' ? tr("Bird’s-eye") : tr("Whole lap")}
               </button>
             ))}
           </div>
@@ -365,24 +366,24 @@ export function ChaseCamPlacer({
       <div className="p-3 space-y-2.5 border-t border-border safe-bottom bg-background">
         {finishing ? (
           <div className="space-y-2">
-            <p className="text-sm font-semibold">Complete the track</p>
+            <p className="text-sm font-semibold">{tr("Complete the track")}</p>
             <div className="flex flex-wrap gap-1.5">
               {sectors.map(([a, b], i) => (
                 <span key={i} className="rounded-full border border-border px-2 py-0.5 text-[11px] font-mono" style={{ borderColor: sectorColor(i) }}>
-                  S{i + 1} · {km(b - a)}
+                  {tr("S")}{i + 1} · {km(b - a)}
                 </span>
               ))}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Sector {sectors.length} runs from {orderedMarkers.length ? `marker ${orderedMarkers.length}` : 'the start/finish'} back to the start/finish line.
+              {tr("Sector")}{" "}{sectors.length}{" "}{tr("runs from")}{" "}{orderedMarkers.length ? tr("marker {0}", [orderedMarkers.length]) : tr("the start/finish")}{" "}{tr("back to the start/finish line.")}
             </p>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Track name (e.g. Brands Hatch Indy)" maxLength={40} autoFocus />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Track name (e.g. Brands Hatch Indy)")} maxLength={40} autoFocus />
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => setFinishing(false)} className="gap-1">
-                <ArrowLeft className="w-4 h-4" /> Keep editing
+                <ArrowLeft className="w-4 h-4" />{" "}{tr("Keep editing")}
               </Button>
               <Button className="flex-1 gap-1" onClick={save}>
-                <Save className="w-4 h-4" /> Save track
+                <Save className="w-4 h-4" />{" "}{tr("Save track")}
               </Button>
             </div>
           </div>
@@ -391,13 +392,13 @@ export function ChaseCamPlacer({
             {/* Position + scrub strip */}
             <div>
               <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground mb-1">
-                <button className="p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current - 1); }} aria-label="Back 1 metre">
+                <button className="p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current - 1); }} aria-label={tr("Back 1 metre")}>
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <span>
-                  {km(rel)} / {km(line.length)} {markers.sf !== null ? 'from S/F' : ''}
+                  {km(rel)} / {km(line.length)} {markers.sf !== null ? tr("from S/F") : ''}
                 </span>
-                <button className="p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current + 1); }} aria-label="Forward 1 metre">
+                <button className="p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current + 1); }} aria-label={tr("Forward 1 metre")}>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -419,43 +420,43 @@ export function ChaseCamPlacer({
                     seek(origin + Number(e.target.value));
                   }}
                   className="track-scrub absolute inset-0 w-full"
-                  aria-label="Position on the lap"
+                  aria-label={tr("Position on the lap")}
                 />
               </div>
             </div>
 
             {/* Transport */}
             <div className="flex items-center justify-center gap-2">
-              <Button variant={playing && dir === -1 ? 'default' : 'secondary'} size="icon" onClick={rewind} aria-label="Rewind">
+              <Button variant={playing && dir === -1 ? 'default' : 'secondary'} size="icon" onClick={rewind} aria-label={tr("Rewind")}>
                 <Rewind className="w-4 h-4" />
               </Button>
-              <Button variant="secondary" size="icon" onClick={() => setSpeedIx((i) => Math.max(0, i - 1))} disabled={speedIx === 0} aria-label="Slower">
+              <Button variant="secondary" size="icon" onClick={() => setSpeedIx((i) => Math.max(0, i - 1))} disabled={speedIx === 0} aria-label={tr("Slower")}>
                 <Minus className="w-4 h-4" />
               </Button>
-              <Button size="icon" className="w-14 h-11" onClick={togglePlay} aria-label={playing && dir === 1 ? 'Pause' : 'Play'}>
+              <Button size="icon" className="w-14 h-11" onClick={togglePlay} aria-label={playing && dir === 1 ? tr("Pause") : tr("Play")}>
                 {playing && dir === 1 ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </Button>
-              <Button variant="secondary" size="icon" onClick={() => setSpeedIx((i) => Math.min(SPEEDS.length - 1, i + 1))} disabled={speedIx === SPEEDS.length - 1} aria-label="Faster">
+              <Button variant="secondary" size="icon" onClick={() => setSpeedIx((i) => Math.min(SPEEDS.length - 1, i + 1))} disabled={speedIx === SPEEDS.length - 1} aria-label={tr("Faster")}>
                 <Plus className="w-4 h-4" />
               </Button>
               <span className="w-10 text-center font-mono text-xs">{SPEEDS[speedIx]}×</span>
-              <Button variant="secondary" size="sm" className="gap-1 text-xs" onClick={reverseDirection} aria-label="Reverse the direction of travel">
-                <ArrowLeftRight className="w-4 h-4" /> <span className="hidden min-[400px]:inline">Reverse</span>
+              <Button variant="secondary" size="sm" className="gap-1 text-xs" onClick={reverseDirection} aria-label={tr("Reverse the direction of travel")}>
+                <ArrowLeftRight className="w-4 h-4" /> <span className="hidden min-[400px]:inline">{tr("Reverse")}</span>
               </Button>
             </div>
 
             {/* Placing */}
             {markers.sf === null ? (
               <Button className="w-full h-12 gap-2 font-bold" onClick={placeSf}>
-                <Flag className="w-4 h-4" /> Set start/finish line here
+                <Flag className="w-4 h-4" />{" "}{tr("Set start/finish line here")}
               </Button>
             ) : (
               <div className="flex gap-2">
                 <Button variant="secondary" className="h-12 gap-1 text-xs" onClick={placeSf}>
-                  <Flag className="w-4 h-4" /> Move S/F here
+                  <Flag className="w-4 h-4" />{" "}{tr("Move S/F here")}
                 </Button>
                 <Button className="flex-1 h-12 gap-2 font-bold" style={{ background: SPLIT_COLOR, color: '#fff' }} onClick={addSplit}>
-                  <Split className="w-4 h-4" /> Sector marker here
+                  <Split className="w-4 h-4" />{" "}{tr("Sector marker here")}
                 </Button>
               </div>
             )}
@@ -463,14 +464,14 @@ export function ChaseCamPlacer({
             {markers.sf !== null && (
               <div className="flex gap-1.5 overflow-x-auto -mx-3 px-3">
                 <button onClick={() => { setPlaying(false); seek(markers.sf!); }} className="shrink-0 rounded-full border border-white/70 px-2.5 py-1 text-[11px] font-semibold">
-                  S/F
+                  {tr("S/F")}
                 </button>
                 {orderedMarkers.map((d, i) => (
                   <span key={d} className="shrink-0 flex items-center rounded-full border px-1 py-0.5 text-[11px] font-semibold" style={{ borderColor: SPLIT_COLOR }}>
                     <button className="px-1.5" onClick={() => { setPlaying(false); seek(d); }}>
-                      M{i + 1}
+                      {tr("M")}{i + 1}
                     </button>
-                    <button className="p-0.5 text-muted-foreground" onClick={() => removeSplit(d)} aria-label={`Remove marker ${i + 1}`}>
+                    <button className="p-0.5 text-muted-foreground" onClick={() => removeSplit(d)} aria-label={tr("Remove marker {0}", [i + 1])}>
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -484,11 +485,11 @@ export function ChaseCamPlacer({
                   <ArrowLeft className="w-4 h-4" /> {backLabel}
                 </Button>
               ) : null}
-              <Button variant="ghost" size="icon" onClick={onCancel} aria-label="Cancel">
+              <Button variant="ghost" size="icon" onClick={onCancel} aria-label={tr("Cancel")}>
                 <X className="w-4 h-4" />
               </Button>
               <Button variant="secondary" className="flex-1 gap-1" onClick={complete} disabled={markers.sf === null}>
-                <Check className="w-4 h-4" /> Complete track
+                <Check className="w-4 h-4" />{" "}{tr("Complete track")}
               </Button>
             </div>
           </>

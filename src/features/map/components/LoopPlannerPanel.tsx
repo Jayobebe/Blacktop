@@ -3,11 +3,12 @@ import { Loader2, Repeat, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { generateLoopRoute, LoopVibe } from '../lib/routing';
+import { tr } from '@/lib/i18n';
 
 const VIBES: { id: LoopVibe; label: string; hint: string }[] = [
-  { id: 'curvy', label: 'Twisty', hint: 'Maximum corners' },
-  { id: 'scenic', label: 'Scenic', hint: 'Backroads, steadier' },
-  { id: 'relaxed', label: 'Relaxed', hint: 'Flowing, fewer turns' },
+  { id: 'curvy', label: tr("Twisty"), hint: tr("Maximum corners") },
+  { id: 'scenic', label: tr("Scenic"), hint: tr("Backroads, steadier") },
+  { id: 'relaxed', label: tr("Relaxed"), hint: tr("Flowing, fewer turns") },
 ];
 
 interface Props {
@@ -62,9 +63,9 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Repeat className="w-4 h-4 text-accent" />
-          <h2 className="text-sm font-semibold">Plan a loop</h2>
+          <h2 className="text-sm font-semibold">{tr("Plan a loop")}</h2>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close loop planner" className="p-1 rounded hover:bg-secondary">
+        <button type="button" onClick={onClose} aria-label={tr("Close loop planner")} className="p-1 rounded hover:bg-secondary">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -88,7 +89,7 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
       </div>
 
       <label className="block text-xs text-muted-foreground mb-1" htmlFor="loop-length">
-        Length · <span className="text-foreground font-medium">{length} {unit}</span>
+        {tr("Length ·")}{" "}<span className="text-foreground font-medium">{length} {unit}</span>
       </label>
       <input
         id="loop-length"
@@ -102,7 +103,7 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
       />
 
       {error && <p className="text-xs text-destructive mb-2">{error}</p>}
-      {!userLocation && <p className="text-xs text-muted-foreground mb-2">Waiting for GPS…</p>}
+      {!userLocation && <p className="text-xs text-muted-foreground mb-2">{tr("Waiting for GPS…")}</p>}
 
       <button
         type="button"
@@ -110,10 +111,10 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
         disabled={!userLocation || busy}
         className="w-full h-10 rounded-lg border border-accent text-accent font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Building loop…</> : 'Generate loop'}
+        {busy ? <><Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Building loop…")}</> : tr("Generate loop")}
       </button>
       <p className="mt-2 text-[10px] text-muted-foreground">
-        Loops start and finish where you are now · roughly {Math.round((length / (useMiles ? 38 : 60)) * 60)} min riding.
+        {tr("Loops start and finish where you are now · roughly")}{" "}{Math.round((length / (useMiles ? 38 : 60)) * 60)}{" "}{tr("min riding.")}
       </p>
     </div>
   );

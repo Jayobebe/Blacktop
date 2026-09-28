@@ -20,6 +20,7 @@ import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLab
 import { cn } from '@/lib/utils';
 import { useExperience } from '@/features/experience';
 import { PageHeader } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 const BURN_LABELS: Record<BurnTripsInterval, string> = {
   off: 'Off',
@@ -59,15 +60,15 @@ export default function History() {
     const interval = value as BurnTripsInterval;
     updateSetting('burnTripsInterval', interval);
     if (interval === 'off') {
-      toast('Burn trips off', { description: `${terms.Rides} stay until you delete them.` });
+      toast(tr("Burn trips off"), { description: tr("{0} stay until you delete them.", [terms.Rides]) });
       return;
     }
     const burned = burnExpiredTrips(interval);
     const age = interval === 'week' ? 'a week' : 'a month';
-    toast.success(`Burning unstarred ${terms.rides} older than ${age}`, {
+    toast.success(tr("Burning unstarred {0} older than {1}", [terms.rides, age]), {
       description: burned > 0
-        ? `${burned} burned now. Your totals and stats are kept.`
-        : 'Star a ride to keep it. Your totals and stats are kept.',
+        ? tr("{0} burned now. Your totals and stats are kept.", [burned])
+        : tr("Star a ride to keep it. Your totals and stats are kept."),
     });
   };
 
@@ -83,8 +84,8 @@ export default function History() {
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
       <PageHeader
-        title={`${terms.Ride} History`}
-        subtitle={`${rides.length} ${rides.length === 1 ? terms.ride : terms.rides} recorded`}
+        title={tr("{0} History", [terms.Ride])}
+        subtitle={tr("{0} {1} recorded", [rides.length, rides.length === 1 ? terms.ride : terms.rides])}
         backTo="/"
         right={
           <DropdownMenu>
@@ -95,16 +96,16 @@ export default function History() {
                   'pressable h-10 px-3.5 rounded-full flex items-center gap-1.5 frost-accent text-[13px] font-medium',
                   settings.burnTripsInterval !== 'off' ? 'text-[hsl(var(--burn))]' : 'text-foreground',
                 )}
-                aria-label={`Burn trips: ${BURN_LABELS[settings.burnTripsInterval]}`}
+                aria-label={tr("Burn trips: {0}", [BURN_LABELS[settings.burnTripsInterval]])}
               >
                 <Flame className="w-4 h-4" />
-                Burn trips
+                {tr("Burn trips")}
                 <ChevronDown className="w-3.5 h-3.5 opacity-70" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Unstarred {terms.rides} are wiped to save storage. Totals and stats stay.
+                {tr("Unstarred")}{" "}{terms.rides}{" "}{tr("are wiped to save storage. Totals and stats stay.")}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuRadioGroup value={settings.burnTripsInterval} onValueChange={handleBurnChange}>
@@ -125,8 +126,8 @@ export default function History() {
             <div className="w-16 h-16 rounded-2xl bg-card/50 border border-border/30 flex items-center justify-center mb-4">
               <Route className="w-8 h-8 text-muted-foreground/50" />
             </div>
-            <p className="text-muted-foreground font-medium">No {terms.rides} yet</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">Start your first {terms.ride} to see it here</p>
+            <p className="text-muted-foreground font-medium">{tr("No")}{" "}{terms.rides}{" "}{tr("yet")}</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">{tr("Start your first")}{" "}{terms.ride}{" "}{tr("to see it here")}</p>
           </div>
         ) : (
           rides.map((ride, index) => {
@@ -155,7 +156,7 @@ export default function History() {
                         onClick={(e) => e.stopPropagation()}
                         maxLength={30}
                         className="h-8 text-sm font-medium rounded-xl"
-                        placeholder={`${terms.Ride} name`}
+                        placeholder={tr("{0} name", [terms.Ride])}
                       />
                     ) : (
                       <div className="flex items-center gap-2">
@@ -169,7 +170,7 @@ export default function History() {
                             "p-1.5 rounded-lg hover:bg-white/[0.07] transition-colors",
                             ride.starred ? "text-accent" : "text-muted-foreground hover:text-foreground",
                           )}
-                          aria-label={ride.starred ? "Unstar" : "Star to keep"}
+                          aria-label={ride.starred ? tr("Unstar") : tr("Star to keep")}
                           aria-pressed={!!ride.starred}
                         >
                           <Star className={cn("w-3.5 h-3.5", ride.starred && "fill-current")} />
@@ -177,7 +178,7 @@ export default function History() {
                         <button
                           onClick={(e) => handleEditStart(ride.id, ride.name || '', e)}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.07] transition-colors"
-                          aria-label="Rename"
+                          aria-label={tr("Rename")}
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -187,13 +188,13 @@ export default function History() {
                       {ride.isConvoyRide ? (
                         <span className="flex items-center gap-1 text-[10px] text-accent bg-accent/10 px-2 py-0.5 rounded-lg font-medium">
                           <Users className="w-2.5 h-2.5" />
-                          Convoy
+                          {tr("Convoy")}
                         </span>
                       ) : showGroup ? (
                         // Solo-only riders don't need every card labelled "Solo".
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-lg font-medium">
                           <User className="w-2.5 h-2.5" />
-                          Solo
+                          {tr("Solo")}
                         </span>
                       ) : null}
                       {ride.track && (
@@ -205,7 +206,7 @@ export default function History() {
                       {ride.challenge && (
                         <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
                           <Timer className="w-2.5 h-2.5" />
-                          Time attack
+                          {tr("Time attack")}
                         </span>
                       )}
                       {hasBadges && (
@@ -219,7 +220,7 @@ export default function History() {
                         {formatDuration(ride.duration)}
                       </span>
                       {isLatest && (
-                        <span className="text-[10px] text-accent font-semibold">Latest</span>
+                        <span className="text-[10px] text-accent font-semibold">{tr("Latest")}</span>
                       )}
                       {settings.garageEnabled && bikes.length > 0 && (
                         <div onClick={(e) => e.stopPropagation()} className="ml-auto">
@@ -229,10 +230,10 @@ export default function History() {
                           >
                             <SelectTrigger className="h-6 px-2 py-0 text-[10px] rounded-lg bg-secondary/60 border-border/40 gap-1 w-auto min-w-0">
                               <BikeIcon className="w-2.5 h-2.5 text-muted-foreground" />
-                              <SelectValue placeholder="Vehicle" />
+                              <SelectValue placeholder={tr("Vehicle")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">No vehicle</SelectItem>
+                              <SelectItem value="none">{tr("No vehicle")}</SelectItem>
                               {bikes.map((b) => (
                                 <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                               ))}
@@ -249,8 +250,8 @@ export default function History() {
                 </div>
                 {settings.speedFocusEnabled && (
                   <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
-                    <span>Avg: {formatSpeed(ride.averageSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
-                    <span>Max: {formatSpeed(ride.maxSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
+                    <span>{tr("Avg:")}{" "}{formatSpeed(ride.averageSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
+                    <span>{tr("Max:")}{" "}{formatSpeed(ride.maxSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
                   </div>
                 )}
               </button>

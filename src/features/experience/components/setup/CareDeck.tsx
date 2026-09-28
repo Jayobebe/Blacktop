@@ -7,6 +7,7 @@ import { haptics } from '@/lib/haptics';
 import { carePatch, isCareOn, requestMotionPermission, type CareContext, type CareQuestion } from '../../lib/questions';
 import type { RideStyle } from '../../lib/profile';
 import { RIDE_STYLES } from '../../lib/styles';
+import { tr } from '@/lib/i18n';
 
 const SWIPE_COMMIT_PX = 90;
 const EXIT_MS = 260;
@@ -47,7 +48,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
   const answer = async (yes: boolean) => {
     if (exiting) return;
     if (yes && q.needsMotion && !(await requestMotionPermission())) {
-      toast.error('Motion sensor permission denied', { description: 'You can turn this on later in Settings.' });
+      toast.error(tr("Motion sensor permission denied"), { description: tr("You can turn this on later in Settings.") });
       setDx(0);
       return;
     }
@@ -89,7 +90,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
         <span className="font-mono">
           {index + 1} / {questions.length}
         </span>
-        <span>Swipe or tap</span>
+        <span>{tr("Swipe or tap")}</span>
       </div>
 
       <div className="relative h-[390px] mb-4 [@media(max-height:700px)]:h-[340px]">
@@ -142,7 +143,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
             {recommended && (
               <span className="absolute top-4 left-4 flex items-center gap-1 text-[12px] font-medium px-2.5 py-1 rounded-full bg-accent/15 text-accent">
                 <Star className="w-3 h-3" />
-                {crowd ? `Popular with ${crowd}` : 'Recommended'}
+                {crowd ? tr("Popular with {0}", [crowd]) : tr("Recommended")}
               </span>
             )}
             {/* Swipe stamps */}
@@ -150,13 +151,13 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
               className="absolute top-5 right-5 px-3 py-1 rounded-lg border-2 border-emerald-400 text-emerald-400 font-black tracking-widest text-lg rotate-12"
               style={{ opacity: yesOpacity }}
             >
-              YES
+              {tr("YES")}
             </span>
             <span
               className="absolute top-5 left-5 px-3 py-1 rounded-lg border-2 border-muted-foreground text-muted-foreground font-black tracking-widest text-lg -rotate-12"
               style={{ opacity: noOpacity }}
             >
-              NOPE
+              {tr("NOPE")}
             </span>
           </div>
 
@@ -186,7 +187,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           )}
         >
           <X className="w-5 h-5" />
-          No thanks
+          {tr("No thanks")}
         </button>
         <button
           type="button"
@@ -197,10 +198,10 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           )}
         >
           <Check className="w-5 h-5" strokeWidth={3} />
-          Yes
+          {tr("Yes")}
         </button>
       </div>
-      <p className="text-[11px] text-center text-muted-foreground -mt-1">{current ? 'Currently on' : q.hides(context)}</p>
+      <p className="text-[11px] text-center text-muted-foreground -mt-1">{current ? tr("Currently on") : q.hides(context)}</p>
     </div>
   );
 }

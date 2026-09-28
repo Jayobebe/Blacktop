@@ -5,6 +5,7 @@ import { gateCentre } from '../lib/walker';
 import { LIBRARY_ATTRIBUTION, type LibraryLayout } from '../lib/circuitLibrary';
 import { RoadPicker } from './RoadPicker';
 import { ChaseCamPlacer } from './ChaseCamPlacer';
+import { tr } from '@/lib/i18n';
 
 /**
  * Creates or edits a track:
@@ -60,7 +61,7 @@ export function TrackEditor({
       meta={initial ? undefined : { source: picked ? 'map' : source, osmId: picked ? undefined : library?.id }}
       attribution={library && !picked ? LIBRARY_ATTRIBUTION : undefined}
       onBack={recorded ? undefined : () => setLoop(null)}
-      backLabel="Roads"
+      backLabel={tr("Roads")}
       onSave={onSave}
       onCancel={onCancel}
     />

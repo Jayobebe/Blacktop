@@ -12,6 +12,7 @@ import { useSettings } from '@/features/settings';
 import { useCardDrops } from '@/features/cards';
 import { useExperience, refuelCategory, REFUEL_NOMINATIM } from '@/features/experience';
 
+import { tr } from '@/lib/i18n';
 
 interface SearchResult {
   id: string;
@@ -58,15 +59,15 @@ const REFUEL_ICONS: Record<string, React.ReactNode> = {
 
 // The first slot is the rider's "top up" stop (fuel / charging / water), filled in per vehicle.
 const baseCategories: QuickCategory[] = [
-  { id: 'food', label: 'Food', icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
-  { id: 'store', label: 'Store', icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
+  { id: 'food', label: tr("Food"), icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
+  { id: 'store', label: tr("Store"), icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
 ];
 
 // Card drops are a Blacktop World feature — the category only appears when
 // the rider has opted in.
 const CARDS_CATEGORY: QuickCategory = {
   id: 'cards',
-  label: 'Cards',
+  label: tr("Cards"),
   icon: <IdCard className="w-4 h-4" />,
   query: 'cards',
 };
@@ -423,7 +424,7 @@ export function DestinationSearch({
 
   const handleLocate = () => {
     if (!('geolocation' in navigator)) {
-      toast.error('Location not supported');
+      toast.error(tr("Location not supported"));
       return;
     }
 
@@ -437,11 +438,11 @@ export function DestinationSearch({
         setInternalUserLocation(loc);
         const code = await getCountryCode(loc.lat, loc.lng);
         if (code) setInternalCountryCode(code);
-        toast.success('Location updated');
+        toast.success(tr("Location updated"));
         setIsLocating(false);
       },
       () => {
-        toast.error('Could not get location');
+        toast.error(tr("Could not get location"));
         setIsLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -692,7 +693,7 @@ export function DestinationSearch({
             className="w-full mt-3 h-10 text-sm font-medium"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add Stop
+            {tr("Add Stop")}
           </Button>
         )}
       </div>
@@ -703,7 +704,7 @@ export function DestinationSearch({
     return (
       <div className="bg-card border border-border rounded-xl p-4 text-center">
         <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">Waiting for leader to set destination...</p>
+        <p className="text-sm text-muted-foreground">{tr("Waiting for leader to set destination...")}</p>
       </div>
     );
   }
@@ -739,7 +740,7 @@ export function DestinationSearch({
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             onFocus={handleFocus}
-            placeholder={userLocation ? "Search nearby..." : "Search destination..."}
+            placeholder={userLocation ? tr("Search nearby...") : tr("Search destination...")}
             className="pl-10 pr-10 bg-card border-border h-12 text-base"
           />
           {isSearching && (
@@ -757,7 +758,7 @@ export function DestinationSearch({
               ? "bg-accent/10 border-accent text-accent" 
               : "bg-card border-border text-muted-foreground hover:bg-muted"
           )}
-          title="Use my location"
+          title={tr("Use my location")}
         >
           {isLocating ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -785,7 +786,7 @@ export function DestinationSearch({
             <>
               <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
                 <Bookmark className="w-3.5 h-3.5" />
-                Saved places
+                {tr("Saved places")}
               </div>
               {savedPOIs.map((poi, index) => (
                 <button
@@ -802,7 +803,7 @@ export function DestinationSearch({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{poi.name}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">Saved location</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{tr("Saved location")}</p>
                   </div>
                 </button>
               ))}
@@ -813,29 +814,29 @@ export function DestinationSearch({
           {showRecent && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               <Clock className="w-3.5 h-3.5" />
-              Recent destinations
+              {tr("Recent destinations")}
             </div>
           )}
           {activeCategory && !isSearching && (
             <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               {categories.find(c => c.id === activeCategory)?.icon}
-              <span>Nearby {categories.find(c => c.id === activeCategory)?.label}</span>
+              <span>{tr("Nearby")}{" "}{categories.find(c => c.id === activeCategory)?.label}</span>
             </div>
           )}
           {isSearching ? (
             <div className="p-6 text-center text-muted-foreground">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-              <span className="text-sm">Finding places...</span>
+              <span className="text-sm">{tr("Finding places...")}</span>
             </div>
           ) : displayResults.length === 0 && !hasSavedPOIs ? (
             <div className="p-6 text-center text-muted-foreground">
               <MapPin className="w-6 h-6 mx-auto mb-2 opacity-50" />
               <span className="text-sm">
                 {!userLocation && query.length >= 2 && !isPostalSearch
-                  ? "Tap the target icon to enable nearby search."
+                  ? tr("Tap the target icon to enable nearby search.")
                   : userLocation && !isPostalSearch
-                    ? "No nearby matches. Try a postcode to search farther."
-                    : "No results found"}
+                    ? tr("No nearby matches. Try a postcode to search farther.")
+                    : tr("No results found")}
               </span>
             </div>
           ) : (
@@ -872,11 +873,11 @@ export function DestinationSearch({
                       <span className="text-sm font-medium text-accent">
                         {distanceUnit === 'miles'
                           ? result.distance < 1.6
-                            ? `${Math.round(result.distance * 1000 * 3.281)} ft`
-                            : `${(result.distance * 0.621371).toFixed(1)} mi`
+                            ? tr("{0} ft", [Math.round(result.distance * 1000 * 3.281)])
+                            : tr("{0} mi", [(result.distance * 0.621371).toFixed(1)])
                           : result.distance < 1
-                            ? `${Math.round(result.distance * 1000)} m`
-                            : `${result.distance.toFixed(1)} km`
+                            ? tr("{0} m", [Math.round(result.distance * 1000)])
+                            : tr("{0} km", [result.distance.toFixed(1)])
                         }
                       </span>
                     </div>

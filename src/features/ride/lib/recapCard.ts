@@ -2,6 +2,7 @@ import type { RideSession } from '@/types/blacktop';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { analyseCorners } from './cornerScoring';
+import { tr } from '@/lib/i18n';
 
 /**
  * Shareable ride recap card — a single square image rendered on-device from
@@ -155,18 +156,18 @@ export async function renderRecapCard(ride: RideSession, opts: RecapOptions = {}
   // Stat grid
   const { showSpeed = true, showLean = true, showG = true } = opts;
   const stats: { label: string; value: string }[] = [
-    { label: `Distance (${distanceLabel})`, value: distance.toFixed(1) },
-    { label: 'Duration', value: fmtDuration(ride.duration) },
-    ...(showSpeed ? [{ label: `Top speed (${speedLabel})`, value: String(Math.round(speed)) }] : []),
-    ...(showLean ? [{ label: 'Max lean', value: `${Math.round(Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0))}°` }] : []),
-    ...(showG ? [{ label: 'Peak G', value: ride.maxGForce ? `${ride.maxGForce.toFixed(1)}g` : '—' }] : []),
-    ...(showLean || showG ? [{ label: 'Corners', value: corners.count ? `${corners.count} · ${corners.grade}` : '—' }] : []),
+    { label: tr("Distance ({0})", [distanceLabel]), value: distance.toFixed(1) },
+    { label: tr("Duration"), value: fmtDuration(ride.duration) },
+    ...(showSpeed ? [{ label: tr("Top speed ({0})", [speedLabel]), value: String(Math.round(speed)) }] : []),
+    ...(showLean ? [{ label: tr("Max lean"), value: `${Math.round(Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0))}°` }] : []),
+    ...(showG ? [{ label: tr("Peak G"), value: ride.maxGForce ? `${ride.maxGForce.toFixed(1)}g` : '—' }] : []),
+    ...(showLean || showG ? [{ label: tr("Corners"), value: corners.count ? `${corners.count} · ${corners.grade}` : '—' }] : []),
   ];
   // Keep the grid full: a lean card (distance + time only) gets start/finish times.
   if (stats.length < 3) {
     const t = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-    stats.push({ label: 'Started', value: t(ride.startedAt) });
-    if (ride.endedAt) stats.push({ label: 'Finished', value: t(ride.endedAt) });
+    stats.push({ label: tr("Started"), value: t(ride.startedAt) });
+    if (ride.endedAt) stats.push({ label: tr("Finished"), value: t(ride.endedAt) });
   }
 
   const gridTop = 712;
@@ -238,7 +239,7 @@ export async function shareRecapCard(ride: RideSession, opts: RecapOptions = {})
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.share && nav.canShare?.({ files: [file] })) {
     try {
-      await nav.share({ files: [file], title: 'Blacktop ride recap' });
+      await nav.share({ files: [file], title: tr("Blacktop ride recap") });
       return 'shared';
     } catch (err) {
       if ((err as DOMException)?.name === 'AbortError') return 'shared';

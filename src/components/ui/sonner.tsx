@@ -1,5 +1,6 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
+import { tr } from '@/lib/i18n';
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -15,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         classNames: {
           toast:
             "group toast frost-accent group-[.toaster]:!bg-card/60 group-[.toaster]:text-foreground group-[.toaster]:shadow-2xl group-[.toaster]:rounded-2xl group-[.toaster]:text-sm",
-          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-xs",
+          description: tr("group-[.toast]:text-muted-foreground group-[.toast]:text-xs"),
           actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },

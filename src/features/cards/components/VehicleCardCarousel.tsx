@@ -14,6 +14,7 @@ import { getTierForRides, ridesToNext } from '../lib/tier';
 import { useVehicleCards } from '../hooks/useVehicleCards';
 import type { VehicleCardData } from '../hooks/useVehicleCards';
 import { VehicleCard } from './VehicleCard';
+import { tr } from '@/lib/i18n';
 
 const MI_TO_KM = 1.60934;
 
@@ -98,13 +99,13 @@ export function VehicleCardCarousel() {
       <div className="w-full">
         <div className="flex items-center gap-2 mb-3">
           <Disc3 className="w-4 h-4 text-accent" />
-          <h2 className="text-sm font-semibold">Vehicle Cards</h2>
+          <h2 className="text-sm font-semibold">{tr("Vehicle Cards")}</h2>
         </div>
         <div className="rounded-2xl border border-border/30 bg-card/40 p-6 text-center">
           <Disc3 className="w-8 h-8 mx-auto text-muted-foreground/60 mb-2" />
-          <p className="text-sm font-medium">0 / 10 rides</p>
+          <p className="text-sm font-medium">{tr("0 / 10 rides")}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            First vehicle card unlocks at 10 rides
+            {tr("First vehicle card unlocks at 10 rides")}
           </p>
         </div>
       </div>
@@ -115,7 +116,7 @@ export function VehicleCardCarousel() {
     <div className="w-full">
       <div className="flex items-center gap-2 mb-3">
         <Disc3 className="w-4 h-4 text-accent" />
-        <h2 className="text-sm font-semibold">Vehicle Cards</h2>
+        <h2 className="text-sm font-semibold">{tr("Vehicle Cards")}</h2>
         <span className="ml-auto text-xs text-muted-foreground">
           {displayCards.length} {displayCards.length === 1 ? 'vehicle' : 'vehicles'}
         </span>
@@ -147,7 +148,7 @@ export function VehicleCardCarousel() {
             <button
               key={i}
               onClick={() => api?.scrollTo(i)}
-              aria-label={`Go to card ${i + 1}`}
+              aria-label={tr("Go to card {0}", [i + 1])}
               className={cn(
                 'h-1.5 rounded-full transition-all',
                 i === current ? 'w-6 bg-accent' : 'w-1.5 bg-muted-foreground/40',

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { haptics } from '@/lib/haptics';
+import { tr } from '@/lib/i18n';
 
 /**
  * Wave and emoji reactions: tiny convoy-wide broadcasts (no database). Any
@@ -11,14 +12,14 @@ import { haptics } from '@/lib/haptics';
 
 export const WAVE = '👋';
 export const REACTIONS: { emoji: string; label: string }[] = [
-  { emoji: '👍', label: 'Thumbs up' },
-  { emoji: '🔥', label: 'Fire' },
-  { emoji: '😂', label: 'Laughing' },
-  { emoji: '😱', label: 'Whoa' },
-  { emoji: '🛑', label: 'Need a stop' },
-  { emoji: '⛽', label: 'Fuel' },
-  { emoji: '☕', label: 'Coffee' },
-  { emoji: '📸', label: 'Photo stop' },
+  { emoji: '👍', label: tr("Thumbs up") },
+  { emoji: '🔥', label: tr("Fire") },
+  { emoji: '😂', label: tr("Laughing") },
+  { emoji: '😱', label: tr("Whoa") },
+  { emoji: '🛑', label: tr("Need a stop") },
+  { emoji: '⛽', label: tr("Fuel") },
+  { emoji: '☕', label: tr("Coffee") },
+  { emoji: '📸', label: tr("Photo stop") },
 ];
 
 const ALLOWED = new Set([WAVE, ...REACTIONS.map((r) => r.emoji)]);

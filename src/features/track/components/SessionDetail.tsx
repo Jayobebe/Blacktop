@@ -15,6 +15,7 @@ import { fileStem, lapsCsv, sessionCsv, sessionGpx, shareFile } from '../lib/exp
 import { LapTable } from './TimingParts';
 import { TrackMinimap } from './TrackMinimap';
 import { LAP_A_COLOR, LAP_B_COLOR, LapTraces } from './LapTraces';
+import { tr } from '@/lib/i18n';
 
 /**
  * After a session: lap list, two laps compared (traces, racing lines, corner
@@ -60,17 +61,17 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
       <PageHeader title={session.trackName} subtitle={new Date(session.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} onBack={onBack} />
 
       <div className="grid grid-cols-4 gap-2 text-center">
-        <Box label="Best" value={formatLap(best?.ms)} accent />
-        <Box label="Theoretical" value={formatLap(theoreticalBest(session.laps, sectors))} />
-        <Box label="Laps" value={String(session.laps.length)} />
-        <Box label="Top" value={spd(topSpeed)} />
+        <Box label={tr("Best")} value={formatLap(best?.ms)} accent />
+        <Box label={tr("Theoretical")} value={formatLap(theoreticalBest(session.laps, sectors))} />
+        <Box label={tr("Laps")} value={String(session.laps.length)} />
+        <Box label={tr("Top")} value={spd(topSpeed)} />
       </div>
 
       {session.laps.length > 0 && (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <LapSelect label="Lap A" color={LAP_A_COLOR} value={aN} onChange={setAN} laps={session.laps} />
-            <LapSelect label="Lap B (compare)" color={LAP_B_COLOR} value={bN} onChange={setBN} laps={session.laps} allowNone />
+            <LapSelect label={tr("Lap A")} color={LAP_A_COLOR} value={aN} onChange={setAN} laps={session.laps} />
+            <LapSelect label={tr("Lap B (compare)")} color={LAP_B_COLOR} value={bN} onChange={setBN} laps={session.laps} allowNone />
           </div>
 
           {A && A.samples.length > 1 ? (
@@ -80,11 +81,11 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
               speedUnit={settings.speedUnit}
             />
           ) : (
-            <p className="text-xs text-muted-foreground text-center">No trace saved for this lap.</p>
+            <p className="text-xs text-muted-foreground text-center">{tr("No trace saved for this lap.")}</p>
           )}
 
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">Racing line</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{tr("Racing line")}</p>
             <TrackMinimap
               className="aspect-square"
               outline={track?.outline ?? session.samples.filter((s) => s.lap > 0).map((s) => ({ lat: s.lat, lng: s.lng }))}
@@ -100,29 +101,29 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
           {corners.a && corners.a.corners.length > 0 && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                Corners · {lapLabel(aN)} grade {corners.a.grade}
-                {corners.b ? ` · ${lapLabel(bN)} grade ${corners.b.grade}` : ''}
+                {tr("Corners ·")}{" "}{lapLabel(aN)}{" "}{tr("grade")}{" "}{corners.a.grade}
+                {corners.b ? tr(" · {0} grade {1}", [lapLabel(bN), corners.b.grade]) : ''}
               </p>
               <div className="rounded-xl border border-border overflow-hidden text-xs">
                 <div className="grid grid-cols-[2rem_1fr_1fr_1fr] px-2 py-1 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                   <span>#</span>
-                  <span>Turn</span>
-                  <span className="text-right" style={{ color: LAP_A_COLOR }}>A</span>
-                  <span className="text-right" style={{ color: LAP_B_COLOR }}>B</span>
+                  <span>{tr("Turn")}</span>
+                  <span className="text-right" style={{ color: LAP_A_COLOR }}>{tr("A")}</span>
+                  <span className="text-right" style={{ color: LAP_B_COLOR }}>{tr("B")}</span>
                 </div>
                 {corners.a.corners.map((c, i) => {
                   const cb = corners.b?.corners[i];
                   return (
                     <div key={i} className="grid grid-cols-[2rem_1fr_1fr_1fr] px-2 py-1 border-t border-border/60 font-mono">
                       <span className="text-muted-foreground">{i + 1}</span>
-                      <span className="font-sans">{c.direction === 'left' ? 'Left' : 'Right'} {Math.round(c.arc)}°</span>
+                      <span className="font-sans">{c.direction === 'left' ? tr("Left") : tr("Right")} {Math.round(c.arc)}°</span>
                       <span className="text-right">{c.score} · {Math.round(c.apexSpeed)}</span>
                       <span className="text-right">{cb ? `${cb.score} · ${Math.round(cb.apexSpeed)}` : '—'}</span>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-[9px] text-muted-foreground mt-1">Score 0–100 · apex speed mph</p>
+              <p className="text-[9px] text-muted-foreground mt-1">{tr("Score 0–100 · apex speed mph")}</p>
             </div>
           )}
         </>
@@ -132,13 +133,13 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
 
       <div className="grid grid-cols-3 gap-2">
         <Button variant="secondary" className="gap-1 text-xs" onClick={() => shareFile(`${fileStem(session)}-laps.csv`, lapsCsv(session), 'text/csv')}>
-          <FileText className="w-4 h-4" /> Laps CSV
+          <FileText className="w-4 h-4" />{" "}{tr("Laps CSV")}
         </Button>
         <Button variant="secondary" className="gap-1 text-xs" onClick={() => shareFile(`${fileStem(session)}.csv`, sessionCsv(session), 'text/csv')}>
-          <Download className="w-4 h-4" /> Data CSV
+          <Download className="w-4 h-4" />{" "}{tr("Data CSV")}
         </Button>
         <Button variant="secondary" className="gap-1 text-xs" onClick={() => shareFile(`${fileStem(session)}.gpx`, sessionGpx(session), 'application/gpx+xml')}>
-          <Download className="w-4 h-4" /> GPX
+          <Download className="w-4 h-4" />{" "}{tr("GPX")}
         </Button>
       </div>
       <Button
@@ -146,11 +147,11 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
         className="text-destructive gap-1 text-xs"
         onClick={() => {
           deleteSession(session.id);
-          toast('Session deleted');
+          toast(tr("Session deleted"));
           onBack();
         }}
       >
-        <Trash2 className="w-4 h-4" /> Delete session
+        <Trash2 className="w-4 h-4" />{" "}{tr("Delete session")}
       </Button>
     </div>
   );
@@ -191,10 +192,10 @@ function LapSelect({
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         className="bg-transparent font-mono font-bold outline-none"
       >
-        {allowNone && <option value="">None</option>}
+        {allowNone && <option value="">{tr("None")}</option>}
         {laps.map((l) => (
           <option key={l.n} value={l.n} className="bg-background">
-            Lap {l.n} · {formatLap(l.ms)}{l.valid ? '' : ' (cut)'}
+            {tr("Lap")}{" "}{l.n} · {formatLap(l.ms)}{l.valid ? '' : tr(" (cut)")}
           </option>
         ))}
       </select>

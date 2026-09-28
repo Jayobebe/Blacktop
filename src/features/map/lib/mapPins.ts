@@ -1,6 +1,7 @@
 import type { GeoJSONSource, Map as MapLibreMap, MapStyleImageMissingEvent } from 'maplibre-gl';
 import type { SavedPOI } from './poiStore';
 import type { MapSearchResult } from './placeSearch';
+import { tr } from '@/lib/i18n';
 
 /**
  * Pins on the map, Google-style:
@@ -27,14 +28,14 @@ interface Group {
 }
 
 const GROUPS: Group[] = [
-  { color: '#f97316', label: 'Food & drink', classes: ['restaurant', 'fast_food', 'cafe', 'bar', 'beer', 'pub', 'ice_cream', 'bakery', 'food_court', 'biergarten'] },
-  { color: '#3b82f6', label: 'Fuel & vehicles', classes: ['fuel', 'charging_station', 'car', 'motorcycle', 'bicycle', 'parking', 'parking_garage', 'car_repair', 'bicycle_rental'] },
-  { color: '#22c55e', label: 'Places to see', classes: ['attraction', 'museum', 'castle', 'monument', 'viewpoint', 'park', 'garden', 'campsite', 'picnic_site', 'art_gallery', 'zoo', 'aquarium', 'lighthouse', 'information', 'theatre', 'cinema', 'stadium', 'golf'] },
-  { color: '#ec4899', label: 'Shops', classes: ['shop', 'grocery', 'clothing_store', 'alcohol_shop', 'gift', 'furniture', 'hardware', 'florist', 'butcher', 'convenience', 'mall', 'music', 'books'] },
-  { color: '#8b5cf6', label: 'Places to stay', classes: ['lodging'] },
-  { color: '#ef4444', label: 'Health', classes: ['hospital', 'pharmacy', 'doctors', 'dentist', 'veterinary'] },
+  { color: '#f97316', label: tr("Food & drink"), classes: ['restaurant', 'fast_food', 'cafe', 'bar', 'beer', 'pub', 'ice_cream', 'bakery', 'food_court', 'biergarten'] },
+  { color: '#3b82f6', label: tr("Fuel & vehicles"), classes: ['fuel', 'charging_station', 'car', 'motorcycle', 'bicycle', 'parking', 'parking_garage', 'car_repair', 'bicycle_rental'] },
+  { color: '#22c55e', label: tr("Places to see"), classes: ['attraction', 'museum', 'castle', 'monument', 'viewpoint', 'park', 'garden', 'campsite', 'picnic_site', 'art_gallery', 'zoo', 'aquarium', 'lighthouse', 'information', 'theatre', 'cinema', 'stadium', 'golf'] },
+  { color: '#ec4899', label: tr("Shops"), classes: ['shop', 'grocery', 'clothing_store', 'alcohol_shop', 'gift', 'furniture', 'hardware', 'florist', 'butcher', 'convenience', 'mall', 'music', 'books'] },
+  { color: '#8b5cf6', label: tr("Places to stay"), classes: ['lodging'] },
+  { color: '#ef4444', label: tr("Health"), classes: ['hospital', 'pharmacy', 'doctors', 'dentist', 'veterinary'] },
 ];
-const OTHER: Group = { color: '#9ca3af', label: 'Place', classes: [] };
+const OTHER: Group = { color: '#9ca3af', label: tr("Place"), classes: [] };
 const GROUP_OF = new Map(GROUPS.flatMap((g) => g.classes.map((c) => [c, g] as const)));
 export const groupOf = (cls: string) => GROUP_OF.get(cls) ?? OTHER;
 

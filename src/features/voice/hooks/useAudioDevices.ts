@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tr } from '@/lib/i18n';
 
 export interface AudioDevice {
   deviceId: string;
@@ -45,7 +46,7 @@ export function useAudioDevices() {
         .filter(d => d.kind === 'audioinput')
         .map(d => ({
           deviceId: d.deviceId,
-          label: d.label || `Microphone ${d.deviceId.slice(0, 4)}`,
+          label: d.label || tr("Microphone {0}", [d.deviceId.slice(0, 4)]),
           kind: 'audioinput' as const,
         }));
       
@@ -53,7 +54,7 @@ export function useAudioDevices() {
         .filter(d => d.kind === 'audiooutput')
         .map(d => ({
           deviceId: d.deviceId,
-          label: d.label || `Speaker ${d.deviceId.slice(0, 4)}`,
+          label: d.label || tr("Speaker {0}", [d.deviceId.slice(0, 4)]),
           kind: 'audiooutput' as const,
         }));
 

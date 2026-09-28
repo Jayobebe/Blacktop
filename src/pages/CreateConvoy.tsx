@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDiscordIntegration, announceConvoyToDiscord } from '@/features/integrations/discord';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 // Client-side floor on re-clicking "Generate Convoy Code", on top of the
 // persistent already-a-leader guard in createConvoy() itself: a quick retry
@@ -58,7 +59,7 @@ export default function CreateConvoy() {
       }
     } catch (err) {
       console.error('[CreateConvoy] Unexpected error creating convoy:', err);
-      toast.error('Failed to create convoy. Please check your connection and try again.');
+      toast.error(tr("Failed to create convoy. Please check your connection and try again."));
       startCooldown(CREATE_COOLDOWN_AFTER_FAILURE_MS);
     } finally {
       setIsCreating(false);
@@ -76,9 +77,9 @@ export default function CreateConvoy() {
     setPinging(false);
     if (ok) {
       setPinged(true);
-      toast.success('Pinged your Discord server');
+      toast.success(tr("Pinged your Discord server"));
     } else {
-      toast.error('Could not ping Discord');
+      toast.error(tr("Could not ping Discord"));
     }
   };
 
@@ -87,10 +88,10 @@ export default function CreateConvoy() {
     try {
       await navigator.clipboard.writeText(convoyCode);
       setCopied(true);
-      toast.success('Code copied to clipboard');
+      toast.success(tr("Code copied to clipboard"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy code');
+      toast.error(tr("Failed to copy code"));
     }
   };
 
@@ -102,7 +103,7 @@ export default function CreateConvoy() {
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
-      <PageHeader title="Start Convoy" backTo="/" />
+      <PageHeader title={tr("Start Convoy")} backTo="/" />
 
       <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-4 landscape:gap-8 animate-fade-in min-h-0">
         {!convoyCode ? (
@@ -112,9 +113,9 @@ export default function CreateConvoy() {
               <div className="w-20 h-20 landscape:w-16 landscape:h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 landscape:mb-2">
                 <Users className="w-10 h-10 landscape:w-8 landscape:h-8 text-accent" />
               </div>
-              <h2 className="text-lg landscape:text-base font-display font-semibold mb-1">Create Your Convoy</h2>
+              <h2 className="text-lg landscape:text-base font-display font-semibold mb-1">{tr("Create Your Convoy")}</h2>
               <p className="text-muted-foreground text-center landscape:text-left text-sm landscape:text-xs max-w-xs">
-                Start a new convoy and share the code with your crew
+                {tr("Start a new convoy and share the code with your crew")}
               </p>
             </div>
             {/* Button */}
@@ -127,10 +128,10 @@ export default function CreateConvoy() {
                 {isCreating ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Creating...
+                    {tr("Creating...")}
                   </>
                 ) : (
-                  'Generate Convoy Code'
+                  tr("Generate Convoy Code")
                 )}
               </Button>
             </div>
@@ -152,7 +153,7 @@ export default function CreateConvoy() {
               </div>
               
               <p className="text-muted-foreground text-sm uppercase tracking-wide mb-2 landscape:mb-1">
-                Your Convoy Code
+                {tr("Your Convoy Code")}
               </p>
               <button
                 onClick={handleCopyCode}
@@ -168,7 +169,7 @@ export default function CreateConvoy() {
                 )}
               </button>
               <p className="text-muted-foreground text-sm landscape:text-xs text-center landscape:text-left mt-3 landscape:mt-2 max-w-xs">
-                Share this code or scan the QR with your crew
+                {tr("Share this code or scan the QR with your crew")}
               </p>
             </div>
             {/* Continue button - right side in landscape */}
@@ -181,19 +182,19 @@ export default function CreateConvoy() {
                   className="w-full h-12 landscape:h-10 text-sm font-semibold touch-target"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  {pinged ? 'Pinged Discord' : pinging ? 'Pinging…' : 'Ping Discord server'}
+                  {pinged ? tr("Pinged Discord") : pinging ? tr("Pinging…") : tr("Ping Discord server")}
                 </Button>
               )}
               {integration?.auto_announce && (
                 <p className="text-[11px] text-muted-foreground text-center">
-                  {pinging ? 'Pinging Discord…' : pinged ? '✓ Discord pinged' : 'Auto-pinging Discord…'}
+                  {pinging ? tr("Pinging Discord…") : pinged ? tr("✓ Discord pinged") : tr("Auto-pinging Discord…")}
                 </p>
               )}
               <Button
                 onClick={handleContinue}
                 className="w-full h-12 landscape:h-10 text-base landscape:text-sm font-semibold touch-target"
               >
-                Continue to Lobby
+                {tr("Continue to Lobby")}
               </Button>
             </div>
           </>

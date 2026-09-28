@@ -34,6 +34,7 @@ import {
   sendUsdtViaWallet,
   polygonscanTxUrl,
 } from '../lib/walletBridge';
+import { tr } from '@/lib/i18n';
 
 const CURRENCIES: TipCurrency[] = ['USDT', 'NIM'];
 
@@ -104,7 +105,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
           ? await sendNimViaMiniApp(address, numericAmount)
           : await sendUsdtViaWallet(address, numericAmount);
         setTxHash(result);
-        toast.success('Payment sent');
+        toast.success(tr("Payment sent"));
       } catch (err) {
         const message = (err as { message?: string })?.message ?? '';
         setPayError(
@@ -121,8 +122,8 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
     // Copy the address so it's ready to paste, then open Nimiq Pay's home screen.
     void handleCopy(address, setCopied);
     openNimiqPayHome();
-    toast.info('Opening Nimiq Pay…', {
-      description: 'Address copied — paste it into Nimiq Pay and choose your amount, or scan the QR code.',
+    toast.info(tr("Opening Nimiq Pay…"), {
+      description: tr("Address copied — paste it into Nimiq Pay and choose your amount, or scan the QR code."),
     });
   };
 
@@ -132,7 +133,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
       setter(true);
       setTimeout(() => setter(false), 1800);
     } catch {
-      toast.error('Could not copy the address.');
+      toast.error(tr("Could not copy the address."));
     }
   };
 
@@ -144,19 +145,19 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
     setCurrency(scanned.usdt ? 'USDT' : 'NIM');
     setScanned(null);
     setScannedLabel('');
-    toast.success(`${label} saved`);
+    toast.success(tr("{0} saved", [label]));
   };
 
   const handleSaveWallet = () => {
     const nim = myNim.trim() ? normalizeNimAddress(myNim) : '';
     const usdt = myUsdt.trim();
-    if (nim && !isValidNimAddress(nim)) return toast.error('That NIM address does not look right.');
-    if (usdt && !isValidUsdtAddress(usdt)) return toast.error('That USDT address does not look right.');
-    if (!nim && !usdt) return toast.error('Add a NIM or a USDT address.');
+    if (nim && !isValidNimAddress(nim)) return toast.error(tr("That NIM address does not look right."));
+    if (usdt && !isValidUsdtAddress(usdt)) return toast.error(tr("That USDT address does not look right."));
+    if (!nim && !usdt) return toast.error(tr("Add a NIM or a USDT address."));
     saveWallet({ nimAddress: nim || undefined, usdtAddress: usdt || undefined });
     setMyCurrency(usdt ? 'USDT' : 'NIM');
     setEditingWallet(false);
-    toast.success('Your wallet is saved on this device');
+    toast.success(tr("Your wallet is saved on this device"));
   };
 
   const startWalletEdit = () => {
@@ -170,11 +171,11 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
       {!bare && (
         <div className="flex items-center gap-2 mb-3">
           <Heart className="w-4 h-4 text-accent" />
-          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
+          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Pay up")}</p>
         </div>
       )}
       <p className="text-xs text-muted-foreground mb-3">
-        Support the developer or send a friend fuel money.
+        {tr("Support the developer or send a friend fuel money.")}
       </p>
 
       {/* Send / Receive toggle */}
@@ -189,7 +190,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
             )}
           >
             {m === 'send' ? <Send className="w-3.5 h-3.5" /> : <QrCode className="w-3.5 h-3.5" />}
-            {m === 'send' ? 'Send' : 'Receive'}
+            {m === 'send' ? tr("Send") : tr("Receive")}
           </button>
         ))}
       </div>
@@ -203,7 +204,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                 variant="outline"
                 className="w-full h-11 justify-between rounded-xl bg-card/60 border-border/40 touch-target"
               >
-                <span className="truncate">{selected?.label ?? 'Choose payee'}</span>
+                <span className="truncate">{selected?.label ?? tr("Choose payee")}</span>
                 <ChevronDown className="w-4 h-4 shrink-0 opacity-70" />
               </Button>
             </DropdownMenuTrigger>
@@ -217,7 +218,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                   <span className="truncate">{p.label}</span>
                   {!p.builtIn && (
                     <button
-                      aria-label={`Remove ${p.label}`}
+                      aria-label={tr("Remove {0}", [p.label])}
                       onClick={(e) => {
                         e.stopPropagation();
                         removePayee(p.id);
@@ -233,7 +234,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => { setScanned(null); setScanning(true); }}>
                 <Plus className="w-3.5 h-3.5 mr-2" />
-                New payee — scan their QR
+                {tr("New payee — scan their QR")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -245,7 +246,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                 onResult={(res) => {
                   setScanning(false);
                   setScanned(res);
-                  toast.success('Address scanned');
+                  toast.success(tr("Address scanned"));
                 }}
                 onCancel={() => setScanning(false)}
               />
@@ -255,8 +256,8 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
           {scanned && (
             <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Save payee</p>
-                <button aria-label="Discard" onClick={() => setScanned(null)} className="text-muted-foreground">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{tr("Save payee")}</p>
+                <button aria-label={tr("Discard")} onClick={() => setScanned(null)} className="text-muted-foreground">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -266,11 +267,11 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
               <Input
                 value={scannedLabel}
                 onChange={(e) => setScannedLabel(e.target.value)}
-                placeholder="Name (optional)"
+                placeholder={tr("Name (optional)")}
                 className="h-10"
               />
               <Button onClick={handleSaveScanned} className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
-                Save payee
+                {tr("Save payee")}
               </Button>
             </div>
           )}
@@ -296,8 +297,8 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ''))}
               inputMode="decimal"
-              placeholder={`Amount in ${currency}`}
-              aria-label="Payment amount"
+              placeholder={tr("Amount in {0}", [currency])}
+              aria-label={tr("Payment amount")}
               className="w-full h-11 mt-2 rounded-xl text-center font-semibold"
             />
           )}
@@ -308,7 +309,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
             className="w-full h-11 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target"
           >
             <Heart className="w-4 h-4 mr-2" />
-            {paying ? 'Confirm in your wallet…' : inMiniApp ? `Pay ${currency}` : 'Open in Nimiq Pay'}
+            {paying ? tr("Confirm in your wallet…") : inMiniApp ? tr("Pay {0}", [currency]) : tr("Open in Nimiq Pay")}
           </Button>
 
           {payError && (
@@ -317,10 +318,10 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
 
           {txHash && (
             <p className="text-[10px] text-center mt-2 text-muted-foreground break-all">
-              Payment sent.{' '}
+              {tr("Payment sent.")}{' '}
               {currency === 'USDT' ? (
                 <a href={polygonscanTxUrl(txHash)} target="_blank" rel="noopener noreferrer" className="text-accent underline">
-                  View receipt
+                  {tr("View receipt")}
                 </a>
               ) : null}
             </p>
@@ -328,14 +329,14 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
 
           {!supported && selected && (
             <p className="text-[10px] text-muted-foreground text-center mt-2">
-              {selected.label} has no {currency} address saved yet.
+              {selected.label}{" "}{tr("has no")}{" "}{currency}{" "}{tr("address saved yet.")}
             </p>
           )}
 
           {sendUri && (
             <div className="mt-3 rounded-xl border border-border/40 bg-card/50 p-3 flex flex-col items-center gap-3">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold text-center">
-                Scan the QR, or copy the address and set the amount in Nimiq Pay
+                {tr("Scan the QR, or copy the address and set the amount in Nimiq Pay")}
               </p>
               <div className="bg-white p-2 rounded-lg">
                 <QRCodeSVG value={sendUri} size={160} />
@@ -349,7 +350,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                 className="h-9 rounded-xl"
               >
                 {copied ? <Check className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
-                {copied ? 'Copied' : 'Copy address'}
+                {copied ? tr("Copied") : tr("Copy address")}
               </Button>
             </div>
           )}
@@ -359,21 +360,21 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
           {!hasWallet || editingWallet ? (
             <div className="rounded-xl border border-border/40 bg-card/50 p-3 space-y-2">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                Your wallet
+                {tr("Your wallet")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Add your address to show your own code. It stays on this device.
+                {tr("Add your address to show your own code. It stays on this device.")}
               </p>
               <Input
                 value={myNim}
                 onChange={(e) => setMyNim(e.target.value)}
-                placeholder="NIM address (NQ…)"
+                placeholder={tr("NIM address (NQ…)")}
                 className="h-10 font-mono text-xs"
               />
               <Input
                 value={myUsdt}
                 onChange={(e) => setMyUsdt(e.target.value)}
-                placeholder="USDT address (0x… on Polygon)"
+                placeholder={tr("USDT address (0x… on Polygon)")}
                 className="h-10 font-mono text-xs"
               />
 
@@ -384,24 +385,24 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                     setWalletScanning(false);
                     if (res.nim) setMyNim(res.nim);
                     if (res.usdt) setMyUsdt(res.usdt);
-                    toast.success('Address scanned');
+                    toast.success(tr("Address scanned"));
                   }}
                   onCancel={() => setWalletScanning(false)}
                 />
               ) : (
                 <Button variant="outline" onClick={() => setWalletScanning(true)} className="w-full h-10 rounded-xl">
-                  <ScanLine className="w-4 h-4 mr-2" /> Scan from my wallet app
+                  <ScanLine className="w-4 h-4 mr-2" />{" "}{tr("Scan from my wallet app")}
                 </Button>
               )}
 
               <div className="flex gap-2">
                 {hasWallet && (
                   <Button variant="outline" onClick={() => setEditingWallet(false)} className="flex-1 h-10 rounded-xl">
-                    Cancel
+                    {tr("Cancel")}
                   </Button>
                 )}
                 <Button onClick={handleSaveWallet} className="flex-1 h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90">
-                  Save
+                  {tr("Save")}
                 </Button>
               </div>
             </div>
@@ -432,20 +433,20 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => handleCopy(myAddress, setMyCopied)} className="h-9 rounded-xl">
                       {myCopied ? <Check className="w-3.5 h-3.5 mr-2" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
-                      {myCopied ? 'Copied' : 'Copy'}
+                      {myCopied ? tr("Copied") : tr("Copy")}
                     </Button>
                     <Button variant="outline" onClick={startWalletEdit} className="h-9 rounded-xl">
-                      <Pencil className="w-3.5 h-3.5 mr-2" /> Edit
+                      <Pencil className="w-3.5 h-3.5 mr-2" />{" "}{tr("Edit")}
                     </Button>
                   </div>
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-2">
                   <p className="text-xs text-muted-foreground text-center">
-                    No {myCurrency} address saved yet.
+                    {tr("No")}{" "}{myCurrency}{" "}{tr("address saved yet.")}
                   </p>
                   <Button variant="outline" onClick={startWalletEdit} className="h-9 rounded-xl">
-                    <Pencil className="w-3.5 h-3.5 mr-2" /> Edit wallet
+                    <Pencil className="w-3.5 h-3.5 mr-2" />{" "}{tr("Edit wallet")}
                   </Button>
                 </div>
               )}

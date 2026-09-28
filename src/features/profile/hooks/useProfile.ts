@@ -6,6 +6,7 @@ import { User } from '@supabase/supabase-js';
 import { displayNameSchema } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useDemoMode, DEMO_NAME } from '@/lib/demoMode';
+import { tr } from '@/lib/i18n';
 
 const PROFILE_KEY = 'blacktop_profile';
 
@@ -168,7 +169,7 @@ export function useProfile() {
   const createProfile = useCallback(async (name: string): Promise<boolean> => {
     const parsed = displayNameSchema.safeParse(name);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? 'Invalid name');
+      toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));
       return false;
     }
     const trimmedName = parsed.data;
@@ -179,7 +180,7 @@ export function useProfile() {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
         console.error('Failed to sign in anonymously:', error);
-        toast.error("Couldn't set you up — check your connection and try again.");
+        toast.error(tr("Couldn't set you up — check your connection and try again."));
         return false;
       }
       currentUser = data.user;
@@ -187,7 +188,7 @@ export function useProfile() {
     }
 
     if (!currentUser) {
-      toast.error("Couldn't set you up — try again.");
+      toast.error(tr("Couldn't set you up — try again."));
       return false;
     }
 
@@ -201,7 +202,7 @@ export function useProfile() {
 
     if (profileError) {
       console.error('Failed to create profile:', profileError);
-      toast.error("Couldn't save your profile — try again.");
+      toast.error(tr("Couldn't save your profile — try again."));
       return false;
     }
 
@@ -226,7 +227,7 @@ export function useProfile() {
   const updateName = useCallback(async (name: string) => {
     const parsed = displayNameSchema.safeParse(name);
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? 'Invalid name');
+      toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));
       return;
     }
     const trimmedName = parsed.data;

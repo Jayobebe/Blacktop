@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface BTLogoProps {
   className?: string;
@@ -23,8 +24,8 @@ export function BTLogo({ className, size = 'md' }: BTLogoProps) {
         textShadow: '0 0 12px hsl(var(--accent) / 0.5)',
       }}
     >
-      <span className="-mr-[0.1em]">B</span>
-      <span className="-ml-[0.1em]">T</span>
+      <span className="-mr-[0.1em]">{tr("B")}</span>
+      <span className="-ml-[0.1em]">{tr("T")}</span>
     </div>
   );
 }

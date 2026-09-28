@@ -4,6 +4,7 @@ import { useProfile } from '@/features/profile';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 export const MAX_CONVOY_MEMBERS = 8;
 const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
@@ -341,7 +342,7 @@ export function useConvoyState() {
       }));
       rememberActiveConvoy(convoy.id);
 
-      toast.success('Convoy session restored');
+      toast.success(tr("Convoy session restored"));
       } finally {
         if (convoyState.isRestoring) {
           setConvoyState((prev) => ({ ...prev, isRestoring: false }));
@@ -420,7 +421,7 @@ export function useConvoyState() {
           .rpc('claim_convoy_leadership' as any, { _convoy_id: convoyId });
 
         if (!error) {
-          toast.success('You are now the convoy leader');
+          toast.success(tr("You are now the convoy leader"));
           setConvoyState((prev) => ({
             ...prev,
             isLeader: true,
@@ -445,8 +446,8 @@ export function useConvoyState() {
     // reaching the DB (the unconditional "deactivate stale convoys" cleanup
     // below would otherwise silently churn through real rows every call).
     if (convoyState.isLeader && convoyState.isActive && convoyState.id) {
-      toast.error('You already have an active convoy', {
-        description: 'End your current session before starting a new one.',
+      toast.error(tr("You already have an active convoy"), {
+        description: tr("End your current session before starting a new one."),
       });
       return null;
     }
@@ -457,7 +458,7 @@ export function useConvoyState() {
     if (!user) {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
-        toast.error('Failed to connect');
+        toast.error(tr("Failed to connect"));
         return null;
       }
       user = data.user;
@@ -497,7 +498,7 @@ export function useConvoyState() {
       .single();
 
     if (error || !convoy) {
-      toast.error('Failed to create convoy');
+      toast.error(tr("Failed to create convoy"));
       return null;
     }
 
@@ -549,7 +550,7 @@ export function useConvoyState() {
     if (!user) {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
-        toast.error('Failed to connect');
+        toast.error(tr("Failed to connect"));
         return false;
       }
       user = data.user;
@@ -564,7 +565,7 @@ export function useConvoyState() {
     }
 
     if (!user) {
-      toast.error('Failed to connect');
+      toast.error(tr("Failed to connect"));
       return false;
     }
 
@@ -573,7 +574,7 @@ export function useConvoyState() {
       .rpc('lookup_convoy_by_code' as any, { _code: code.toUpperCase() });
 
     if (error || !convoy) {
-      toast.error('Convoy not found');
+      toast.error(tr("Convoy not found"));
       return false;
     }
 
@@ -584,8 +585,8 @@ export function useConvoyState() {
       .eq('convoy_id', convoy.id);
 
     if (memberCount !== null && memberCount >= MAX_CONVOY_MEMBERS) {
-      toast.error(`Convoy full (${MAX_CONVOY_MEMBERS}/${MAX_CONVOY_MEMBERS})`, {
-        description: 'Ask the leader to create a second convoy for overflow members.',
+      toast.error(tr("Convoy full ({0}/{1})", [MAX_CONVOY_MEMBERS, MAX_CONVOY_MEMBERS]), {
+        description: tr("Ask the leader to create a second convoy for overflow members."),
       });
       return false;
     }
@@ -601,9 +602,9 @@ export function useConvoyState() {
 
     if (memberError) {
       if (memberError.code === '23505') {
-        toast.error('Already in this convoy');
+        toast.error(tr("Already in this convoy"));
       } else {
-        toast.error('Failed to join convoy');
+        toast.error(tr("Failed to join convoy"));
       }
       return false;
     }
@@ -722,7 +723,7 @@ export function useConvoyState() {
       .eq('id', state.id);
 
     if (error) {
-      toast.error('Failed to set destination');
+      toast.error(tr("Failed to set destination"));
       return;
     }
 
@@ -749,7 +750,7 @@ export function useConvoyState() {
       .eq('id', state.id);
 
     if (error) {
-      toast.error('Failed to clear destination');
+      toast.error(tr("Failed to clear destination"));
       return;
     }
 
@@ -852,7 +853,7 @@ export function useConvoyState() {
       .rpc('transfer_convoy_leadership' as any, { _convoy_id: state.id, _new_leader_id: newLeaderUserId });
 
     if (error) {
-      toast.error('Failed to transfer leadership');
+      toast.error(tr("Failed to transfer leadership"));
       return false;
     }
 
@@ -877,7 +878,7 @@ export function useConvoyState() {
       })),
     }));
 
-    toast.success('Leadership transferred');
+    toast.success(tr("Leadership transferred"));
     return true;
   }, [state.id, state.isLeader]);
 
@@ -893,7 +894,7 @@ export function useConvoyState() {
       isPaused: newPausedState,
     }));
 
-    toast.success(newPausedState ? 'Ride paused' : 'Ride resumed');
+    toast.success(newPausedState ? tr("Ride paused") : tr("Ride resumed"));
 
     // Broadcast to all members - await subscription before sending
     const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);

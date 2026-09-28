@@ -21,6 +21,7 @@ import {
   Waves,
   Wrench,
 } from 'lucide-react';
+import { tr } from '@/lib/i18n';
 
 /**
  * What riders can report. Lifetimes mirror public.hazard_ttl() in
@@ -54,33 +55,33 @@ export interface HazardCategory {
 }
 
 export const HAZARD_CATEGORIES: HazardCategory[] = [
-  { id: 'surface', label: 'Road surface', color: '#f59e0b', icon: Route },
-  { id: 'conditions', label: 'Conditions', color: '#38bdf8', icon: CloudRain },
-  { id: 'traffic', label: 'Traffic', color: '#ef4444', icon: TrafficCone },
-  { id: 'other', label: 'Other', color: '#a78bfa', icon: TriangleAlert },
+  { id: 'surface', label: tr("Road surface"), color: '#f59e0b', icon: Route },
+  { id: 'conditions', label: tr("Conditions"), color: '#38bdf8', icon: CloudRain },
+  { id: 'traffic', label: tr("Traffic"), color: '#ef4444', icon: TrafficCone },
+  { id: 'other', label: tr("Other"), color: '#a78bfa', icon: TriangleAlert },
 ];
 
 const H = 60;
 const D = 24 * H;
 
 export const HAZARD_TYPES: HazardType[] = [
-  { kind: 'pothole', category: 'surface', label: 'Pothole', spoken: 'Pothole', icon: CircleDashed, ttlMinutes: 30 * D },
-  { kind: 'debris', category: 'surface', label: 'Debris on road', spoken: 'Debris on the road', icon: Package, ttlMinutes: 2 * H },
-  { kind: 'oil', category: 'surface', label: 'Oil / diesel spill', spoken: 'Oil on the road', icon: Droplets, ttlMinutes: 6 * H },
-  { kind: 'gravel', category: 'surface', label: 'Gravel / loose chippings', spoken: 'Loose gravel', icon: Grip, ttlMinutes: 7 * D },
-  { kind: 'flooding', category: 'conditions', label: 'Flooding / standing water', spoken: 'Flooding', icon: Waves, ttlMinutes: 12 * H },
-  { kind: 'ice', category: 'conditions', label: 'Ice / frost', spoken: 'Ice', icon: Snowflake, ttlMinutes: 6 * H },
-  { kind: 'mud', category: 'conditions', label: 'Mud / leaves', spoken: 'Mud on the road', icon: Leaf, ttlMinutes: 2 * D },
-  { kind: 'fog', category: 'conditions', label: 'Fog / low visibility', spoken: 'Fog', icon: CloudFog, ttlMinutes: 3 * H },
-  { kind: 'crash', category: 'traffic', label: 'Crash', spoken: 'Crash', icon: CarFront, ttlMinutes: 2 * H },
-  { kind: 'breakdown', category: 'traffic', label: 'Broken-down vehicle', spoken: 'Broken-down vehicle', icon: Wrench, ttlMinutes: 2 * H },
-  { kind: 'roadworks', category: 'traffic', label: 'Roadworks', spoken: 'Roadworks', icon: Construction, ttlMinutes: 7 * D },
-  { kind: 'closed', category: 'traffic', label: 'Road closed', spoken: 'Road closed', icon: Ban, ttlMinutes: 24 * H },
-  { kind: 'standstill', category: 'traffic', label: 'Heavy traffic (standstill)', spoken: 'Standstill traffic', icon: Timer, ttlMinutes: 20 },
-  { kind: 'hivis', category: 'other', label: 'Hi-vis', spoken: 'Hi-vis', icon: Eye, ttlMinutes: H },
-  { kind: 'animal', category: 'other', label: 'Animal on road', spoken: 'Animal on the road', icon: PawPrint, ttlMinutes: 30 },
-  { kind: 'jam', category: 'other', label: 'Traffic jam', spoken: 'Traffic jam', icon: Car, ttlMinutes: 45 },
-  { kind: 'other', category: 'other', label: 'Other hazard', spoken: 'Hazard', icon: TriangleAlert, ttlMinutes: 2 * H },
+  { kind: 'pothole', category: 'surface', label: tr("Pothole"), spoken: tr("Pothole"), icon: CircleDashed, ttlMinutes: 30 * D },
+  { kind: 'debris', category: 'surface', label: tr("Debris on road"), spoken: tr("Debris on the road"), icon: Package, ttlMinutes: 2 * H },
+  { kind: 'oil', category: 'surface', label: tr("Oil / diesel spill"), spoken: tr("Oil on the road"), icon: Droplets, ttlMinutes: 6 * H },
+  { kind: 'gravel', category: 'surface', label: tr("Gravel / loose chippings"), spoken: tr("Loose gravel"), icon: Grip, ttlMinutes: 7 * D },
+  { kind: 'flooding', category: 'conditions', label: tr("Flooding / standing water"), spoken: tr("Flooding"), icon: Waves, ttlMinutes: 12 * H },
+  { kind: 'ice', category: 'conditions', label: tr("Ice / frost"), spoken: tr("Ice"), icon: Snowflake, ttlMinutes: 6 * H },
+  { kind: 'mud', category: 'conditions', label: tr("Mud / leaves"), spoken: tr("Mud on the road"), icon: Leaf, ttlMinutes: 2 * D },
+  { kind: 'fog', category: 'conditions', label: tr("Fog / low visibility"), spoken: tr("Fog"), icon: CloudFog, ttlMinutes: 3 * H },
+  { kind: 'crash', category: 'traffic', label: tr("Crash"), spoken: tr("Crash"), icon: CarFront, ttlMinutes: 2 * H },
+  { kind: 'breakdown', category: 'traffic', label: tr("Broken-down vehicle"), spoken: tr("Broken-down vehicle"), icon: Wrench, ttlMinutes: 2 * H },
+  { kind: 'roadworks', category: 'traffic', label: tr("Roadworks"), spoken: tr("Roadworks"), icon: Construction, ttlMinutes: 7 * D },
+  { kind: 'closed', category: 'traffic', label: tr("Road closed"), spoken: tr("Road closed"), icon: Ban, ttlMinutes: 24 * H },
+  { kind: 'standstill', category: 'traffic', label: tr("Heavy traffic (standstill)"), spoken: tr("Standstill traffic"), icon: Timer, ttlMinutes: 20 },
+  { kind: 'hivis', category: 'other', label: tr("Hi-vis"), spoken: tr("Hi-vis"), icon: Eye, ttlMinutes: H },
+  { kind: 'animal', category: 'other', label: tr("Animal on road"), spoken: tr("Animal on the road"), icon: PawPrint, ttlMinutes: 30 },
+  { kind: 'jam', category: 'other', label: tr("Traffic jam"), spoken: tr("Traffic jam"), icon: Car, ttlMinutes: 45 },
+  { kind: 'other', category: 'other', label: tr("Other hazard"), spoken: tr("Hazard"), icon: TriangleAlert, ttlMinutes: 2 * H },
 ];
 
 export const HAZARD_BY_KIND = Object.fromEntries(HAZARD_TYPES.map((t) => [t.kind, t])) as Record<HazardKind, HazardType>;

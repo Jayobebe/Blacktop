@@ -19,6 +19,7 @@ import { uploadCardPhoto } from '../lib/cardPhoto';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
+import { tr } from '@/lib/i18n';
 
 interface Props {
   card: VehicleCardData;
@@ -170,7 +171,7 @@ export function VehicleCard({ card }: Props) {
                     type="button"
                     data-export-hide
                     onClick={() => setResizing((r) => !r)}
-                    aria-label={resizing ? 'Finish resizing image' : 'Resize card image'}
+                    aria-label={resizing ? tr("Finish resizing image") : tr("Resize card image")}
                     className={cn(
                       'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
                       style.chip,
@@ -184,7 +185,7 @@ export function VehicleCard({ card }: Props) {
                     type="button"
                     data-export-hide
                     onClick={() => setFlipped(true)}
-                    aria-label="Flip to show QR code"
+                    aria-label={tr("Flip to show QR code")}
                     className={cn(
                       'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
                       style.chip,
@@ -249,7 +250,7 @@ export function VehicleCard({ card }: Props) {
                   );
                 })() : (
                   <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
-                    No photo
+                    {tr("No photo")}
                   </div>
                 )}
               </div>
@@ -263,7 +264,7 @@ export function VehicleCard({ card }: Props) {
                   className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15"
                   onPointerDown={(e) => e.stopPropagation()}
                 >
-                  <span className="text-[8px] uppercase tracking-widest text-white/70">Drag &amp; zoom</span>
+                  <span className="text-[8px] uppercase tracking-widest text-white/70">{tr("Drag &amp; zoom")}</span>
                   <input
                     type="range"
                     min={0.6}
@@ -271,13 +272,13 @@ export function VehicleCard({ card }: Props) {
                     step={0.05}
                     value={zoom}
                     onChange={(e) => setZoom(Number(e.target.value))}
-                    aria-label="Card image zoom"
+                    aria-label={tr("Card image zoom")}
                     className="flex-1 accent-[hsl(var(--accent))]"
                   />
                   <button
                     type="button"
                     onClick={() => setResizing(false)}
-                    aria-label="Confirm image size"
+                    aria-label={tr("Confirm image size")}
                     className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/90 text-black active:scale-90"
                   >
                     <Check className="w-3 h-3" />
@@ -291,10 +292,10 @@ export function VehicleCard({ card }: Props) {
             {locked ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
                 <p className="text-sm font-semibold text-white/90">
-                  {card.stats.totalRides} / 10 rides
+                  {card.stats.totalRides}{" "}{tr("/ 10 rides")}
                 </p>
                 <p className="text-[10px] text-white/60 mt-1">
-                  First card unlocks at 10 rides
+                  {tr("First card unlocks at 10 rides")}
                 </p>
               </div>
             ) : (() => {
@@ -302,7 +303,7 @@ export function VehicleCard({ card }: Props) {
                 {
                   key: 'speed',
                   icon: Gauge,
-                  label: 'Top speed',
+                  label: tr("Top speed"),
                   value: `${formatSpeed(card.stats.topSpeedMph, settings.speedUnit)}`,
                   unit: getSpeedLabel(settings.speedUnit),
                   improved: card.improved.topSpeed,
@@ -310,7 +311,7 @@ export function VehicleCard({ card }: Props) {
                 {
                   key: 'time',
                   icon: Clock,
-                  label: 'Time',
+                  label: tr("Time"),
                   value: formatDuration(card.stats.totalDurationSec),
                   unit: '',
                   improved: card.improved.duration,
@@ -318,7 +319,7 @@ export function VehicleCard({ card }: Props) {
                 {
                   key: 'distance',
                   icon: Route,
-                  label: 'Distance',
+                  label: tr("Distance"),
                   value: formatDistance(card.stats.totalDistanceMi, settings.distanceUnit),
                   unit: getDistanceLabel(settings.distanceUnit),
                   improved: card.improved.distance,
@@ -326,7 +327,7 @@ export function VehicleCard({ card }: Props) {
                 {
                   key: 'rides',
                   icon: Hash,
-                  label: 'Rides',
+                  label: tr("Rides"),
                   value: `${card.stats.totalRides}`,
                   unit: '',
                   improved: card.improved.rides,
@@ -336,7 +337,7 @@ export function VehicleCard({ card }: Props) {
               if (settings.leanAngleEnabled) {
                 cells.push({
                   key: 'lean',
-                  label: 'Max lean',
+                  label: tr("Max lean"),
                   value: `${Math.round(card.stats.maxLean)}`,
                   unit: '°',
                   improved: card.improved.maxLean,
@@ -346,7 +347,7 @@ export function VehicleCard({ card }: Props) {
                 cells.push({
                   key: 'gforce',
                   icon: Zap,
-                  label: 'Max G',
+                  label: tr("Max G"),
                   value: card.stats.maxGForce > 0 ? card.stats.maxGForce.toFixed(1) : '—',
                   unit: card.stats.maxGForce > 0 ? 'G' : '',
                   improved: card.improved.maxGForce,
@@ -361,7 +362,7 @@ export function VehicleCard({ card }: Props) {
 
             {!locked && card.nextTierRides > 0 && (
               <p className="text-center text-[9px] uppercase tracking-widest text-white/60 mt-1">
-                {card.nextTierRides} rides to next tier
+                {card.nextTierRides}{" "}{tr("rides to next tier")}
               </p>
             )}
           </div>
@@ -385,7 +386,7 @@ export function VehicleCard({ card }: Props) {
               <div className="w-full flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">
-                    {profile.name || 'Anonymous rider'}
+                    {profile.name || tr("Anonymous rider")}
                   </p>
                   <h3 className="text-sm font-bold leading-tight text-white truncate">
                     {card.bike.name}
@@ -394,7 +395,7 @@ export function VehicleCard({ card }: Props) {
                 <button
                   type="button"
                   onClick={() => setFlipped(false)}
-                  aria-label="Flip back"
+                  aria-label={tr("Flip back")}
                   className={cn(
                     'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90 shrink-0',
                     style.chip,
@@ -416,7 +417,7 @@ export function VehicleCard({ card }: Props) {
               </div>
 
               <p className="text-[9px] uppercase tracking-widest text-white/60 text-center">
-                Scan in Blacktop World<br />to add to a collection
+                {tr("Scan in Blacktop World")}<br />{tr("to add to a collection")}
               </p>
             </div>
           </div>

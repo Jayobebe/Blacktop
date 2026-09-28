@@ -2,6 +2,7 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { ConvoyWaypoint, RouteStop } from '@/types/convoy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tr } from '@/lib/i18n';
 
 // Module-level singleton store (mirrors useConvoyState/useActiveRide) so the
 // map overlay can read live route stops via useWaypointRouteStops() without
@@ -172,13 +173,13 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
 
     if (!isLeader) {
       console.error('[Waypoints] Only leader can add waypoints');
-      toast.error('Only the leader can add waypoints');
+      toast.error(tr("Only the leader can add waypoints"));
       return false;
     }
 
     const incompleteCount = waypoints.filter(w => !w.isCompleted).length;
     if (incompleteCount >= MAX_WAYPOINTS) {
-      toast.error(`Maximum ${MAX_WAYPOINTS} stops allowed. Complete or remove a stop first.`);
+      toast.error(tr("Maximum {0} stops allowed. Complete or remove a stop first.", [MAX_WAYPOINTS]));
       return false;
     }
 
@@ -201,7 +202,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     setStoreState(prev => ({ ...prev, isLoading: false }));
 
     if (error) {
-      toast.error('Failed to add waypoint');
+      toast.error(tr("Failed to add waypoint"));
       console.error('Failed to add waypoint:', error);
       return false;
     }
@@ -232,7 +233,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     setStoreState(prev => ({ ...prev, isLoading: false }));
 
     if (error) {
-      toast.error('Failed to remove waypoint');
+      toast.error(tr("Failed to remove waypoint"));
       return false;
     }
 
@@ -265,7 +266,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
       .eq('id', waypointId);
 
     if (error) {
-      toast.error('Failed to complete waypoint');
+      toast.error(tr("Failed to complete waypoint"));
       return false;
     }
 
@@ -293,7 +294,7 @@ export function useWaypoints(convoyId: string | null, isLeader: boolean) {
     setStoreState(prev => ({ ...prev, isLoading: false }));
 
     if (error) {
-      toast.error('Failed to clear waypoints');
+      toast.error(tr("Failed to clear waypoints"));
       return false;
     }
 

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/features/profile';
 import { useSettings } from '@/features/settings';
 import { recordKickbacks } from '@/features/ride/lib/badgeWallet';
+import { tr } from '@/lib/i18n';
 
 const SEEN_KEY = 'bt.card_kickback_seen.v1';
 
@@ -72,11 +73,11 @@ export function useCardKickbacks() {
 
     recordKickbacks(fresh.length);
     const latest = fresh[0];
-    toast.success('Your card was collected', {
+    toast.success(tr("Your card was collected"), {
       description:
         fresh.length === 1
-          ? `${latest.collector_name} picked up your ${latest.vehicle_name} · +${fresh.length} badge pt`
-          : `${latest.collector_name} and ${fresh.length - 1} more picked up your cards · +${fresh.length} badge pts`,
+          ? tr("{0} picked up your {1} · +{2} badge pt", [latest.collector_name, latest.vehicle_name, fresh.length])
+          : tr("{0} and {1} more picked up your cards · +{2} badge pts", [latest.collector_name, fresh.length - 1, fresh.length]),
     });
   }, [data]);
 }

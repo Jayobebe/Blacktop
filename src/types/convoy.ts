@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n';
 export interface ConvoyDestination {
   name: string;
   address: string;
@@ -83,15 +84,15 @@ export const BADGE_INFO: Record<
   BadgeType,
   { label: string; emoji: string; points: number; description: string }
 > = {
-  'speed-demon': { label: 'Speed Demon', emoji: '⚡', points: 1, description: 'Highest top speed' },
-  journeyman: { label: 'Journeyman', emoji: '🛣️', points: 1, description: 'Most distance' },
-  'lean-fiend': { label: 'Lean Fiend', emoji: '🏍️', points: 1, description: 'Deepest lean angle' },
-  'g-lock': { label: 'G-Lock', emoji: '🌀', points: 1, description: 'Highest g-force' },
-  'corner-carver': { label: 'Corner Carver', emoji: '🌊', points: 1, description: 'Best corner score' },
-  'night-owl': { label: 'Night Owl', emoji: '🌙', points: 1, description: 'Rode after dark' },
-  'hard-ass': { label: 'Hard Ass', emoji: '🪑', points: 1, description: '150+ mile ride' },
-  'always-out': { label: 'Always Out', emoji: '📅', points: 1, description: '3 rides in a day' },
-  fallback: { label: 'Fallback', emoji: '🪨', points: -1, description: 'Longest stationary' },
+  'speed-demon': { label: tr("Speed Demon"), emoji: '⚡', points: 1, description: tr("Highest top speed") },
+  journeyman: { label: tr("Journeyman"), emoji: '🛣️', points: 1, description: tr("Most distance") },
+  'lean-fiend': { label: tr("Lean Fiend"), emoji: '🏍️', points: 1, description: tr("Deepest lean angle") },
+  'g-lock': { label: tr("G-Lock"), emoji: '🌀', points: 1, description: tr("Highest g-force") },
+  'corner-carver': { label: tr("Corner Carver"), emoji: '🌊', points: 1, description: tr("Best corner score") },
+  'night-owl': { label: tr("Night Owl"), emoji: '🌙', points: 1, description: tr("Rode after dark") },
+  'hard-ass': { label: tr("Hard Ass"), emoji: '🪑', points: 1, description: tr("150+ mile ride") },
+  'always-out': { label: tr("Always Out"), emoji: '📅', points: 1, description: tr("3 rides in a day") },
+  fallback: { label: tr("Fallback"), emoji: '🪨', points: -1, description: tr("Longest stationary") },
 };
 
 /** Display / sort order for badges across the app. */

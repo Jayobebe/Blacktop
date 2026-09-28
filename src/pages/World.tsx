@@ -18,20 +18,21 @@ import { X } from 'lucide-react';
 import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
 import { BlacktankPanel } from '@/features/blacktank';
 
+import { tr } from '@/lib/i18n';
 
 // Crew hub landmarks dotted around the globe. Rotating the globe brings each
 // one into view; tapping the chip opens its page.
 const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
-  { id: 'convoys', lat: 51.5, lng: -0.12, label: 'Crew Convoys', kind: 'convoys', route: '/crew/convoys' },
-  { id: 'leaderboard', lat: 35.68, lng: 139.69, label: 'Crew Leaderboards', kind: 'leaderboard', route: '/crew/leaderboard' },
-  { id: 'join', lat: 34.05, lng: -118.24, label: 'Join Crew', kind: 'join', route: '/crew/join' },
-  { id: 'crewqr', lat: -33.87, lng: 151.21, label: 'Crew QR', kind: 'qr' },
-  { id: 'challenge', lat: -15.8, lng: -47.9, label: 'Crew Challenge', kind: 'challenge', route: '/crew/challenges' },
-  { id: 'arcade', lat: -29.0, lng: 25.0, label: 'Blacktop Arcade', kind: 'arcade' },
-  { id: 'speedshop', lat: 28.6, lng: 77.2, label: 'Speedshop', kind: 'shop', route: '/speedshop' },
+  { id: 'convoys', lat: 51.5, lng: -0.12, label: tr("Crew Convoys"), kind: 'convoys', route: '/crew/convoys' },
+  { id: 'leaderboard', lat: 35.68, lng: 139.69, label: tr("Crew Leaderboards"), kind: 'leaderboard', route: '/crew/leaderboard' },
+  { id: 'join', lat: 34.05, lng: -118.24, label: tr("Join Crew"), kind: 'join', route: '/crew/join' },
+  { id: 'crewqr', lat: -33.87, lng: 151.21, label: tr("Crew QR"), kind: 'qr' },
+  { id: 'challenge', lat: -15.8, lng: -47.9, label: tr("Crew Challenge"), kind: 'challenge', route: '/crew/challenges' },
+  { id: 'arcade', lat: -29.0, lng: 25.0, label: tr("Blacktop Arcade"), kind: 'arcade' },
+  { id: 'speedshop', lat: 28.6, lng: 77.2, label: tr("Speedshop"), kind: 'shop', route: '/speedshop' },
   // Bottom of the globe, on the Antarctic landmass (Enderby Land): comes into
   // view along the lower edge as the globe turns.
-  { id: 'blacktank', lat: -70, lng: 60, label: 'Blacktank', kind: 'tank' },
+  { id: 'blacktank', lat: -70, lng: 60, label: tr("Blacktank"), kind: 'tank' },
 
 ];
 
@@ -143,10 +144,9 @@ export default function World() {
   if (!settings.blacktopWorldEnabled) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4 px-8 text-center safe-top safe-bottom">
-        <h1 className="text-lg font-bold tracking-[0.22em] uppercase">Blacktop World</h1>
+        <h1 className="text-lg font-bold tracking-[0.22em] uppercase">{tr("Blacktop World")}</h1>
         <p className="text-[12px] text-muted-foreground leading-relaxed">
-          You're opted out. Blacktop World — the crew globe, card collection and
-          card drops on the map — is only active once you opt in.
+          {tr("You're opted out. Blacktop World — the crew globe, card collection and card drops on the map — is only active once you opt in.")}
         </p>
         <div className="flex gap-2">
           <button
@@ -154,14 +154,14 @@ export default function World() {
             onClick={() => navigate('/settings')}
             className="px-4 py-2.5 rounded-xl bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-[0.15em]"
           >
-            Open settings
+            {tr("Open settings")}
           </button>
           <button
             type="button"
             onClick={() => navigate('/', { replace: true })}
             className="px-4 py-2.5 rounded-xl border border-border/50 text-[11px] font-semibold uppercase tracking-[0.15em]"
           >
-            Back
+            {tr("Back")}
           </button>
         </div>
       </div>
@@ -178,16 +178,16 @@ export default function World() {
           onPointerUp={() => navigate('/', { replace: true })}
           onClick={() => navigate('/', { replace: true })}
           className="absolute left-4 top-3.5 p-2.5 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-          aria-label="Back"
+          aria-label={tr("Back")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-lg font-bold tracking-[0.22em] text-white uppercase">
-            Blacktop World
+            {tr("Blacktop World")}
           </h1>
           <p className="text-[9px] tracking-[0.2em] uppercase text-white/40 mt-1">
-            spin the globe · tap a landmark
+            {tr("spin the globe · tap a landmark")}
           </p>
         </div>
       </header>
@@ -216,14 +216,14 @@ export default function World() {
                 : { backgroundColor: '#f87171', boxShadow: '0 0 6px #f87171cc' }}
             />
             <span className="text-[9px] tracking-[0.15em] uppercase text-white/60">
-              {`${displayedActiveCount.toLocaleString()} total burners`}
+              {tr("{0} total burners", [displayedActiveCount.toLocaleString()])}
             </span>
           </div>
         </div>
         {/* Scroll hint — only when there's a collection below to scroll to */}
         {settings.collectiblesEnabled && (
           <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
-            <span className="text-[9px] tracking-[0.25em] uppercase text-white/40">scroll for collection</span>
+            <span className="text-[9px] tracking-[0.25em] uppercase text-white/40">{tr("scroll for collection")}</span>
           </div>
         )}
       </div>
@@ -234,24 +234,19 @@ export default function World() {
       <div className="px-4 pb-4 flex-shrink-0">
         <div className="rounded-2xl border border-border/40 bg-card/60 p-4 space-y-3">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em]">Card drops</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em]">{tr("Card drops")}</h2>
             <span className="text-[11px] text-muted-foreground">
-              {cardLedger.available} spare · {myDrops.length} out there
+              {cardLedger.available}{" "}{tr("spare ·")}{" "}{myDrops.length}{" "}{tr("out there")}
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Card drops are a Blacktop World feature — active only while you're opted in.
-            Spare copies of your card can be planted on the Blacktop map for other riders to find and scan.
-
-            Every time someone collects one of yours, you earn a kickback badge point — your drops keep working for you.
-            Earn more from tier milestones, crew challenges, every 4 cards you collect, and 3-day ride
-            streaks — up to {MONTHLY_COPY_CAP} bonus copies a month ({Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)} left this month). Earn all {MONTHLY_COPY_CAP} and a 10th copy is granted free. Tier copies and 10-badge trades never count against the cap.
+            {tr("Card drops are a Blacktop World feature — active only while you're opted in. Spare copies of your card can be planted on the Blacktop map for other riders to find and scan. Every time someone collects one of yours, you earn a kickback badge point — your drops keep working for you. Earn more from tier milestones, crew challenges, every 4 cards you collect, and 3-day ride streaks — up to")}{" "}{MONTHLY_COPY_CAP}{" "}{tr("bonus copies a month (")}{Math.max(0, MONTHLY_COPY_CAP - cardLedger.monthlyUsed)}{" "}{tr("left this month). Earn all")}{" "}{MONTHLY_COPY_CAP}{" "}{tr("and a 10th copy is granted free. Tier copies and 10-badge trades never count against the cap.")}
           </p>
           {kings.length > 0 && (
             <div className="rounded-xl border border-border/40 bg-background/40 p-3">
               <div className="flex items-center gap-1.5 mb-2">
                 <Crown className="w-3.5 h-3.5 text-accent" />
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em]">Local card kings</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em]">{tr("Local card kings")}</p>
               </div>
               <div className="space-y-1.5">
                 {kings.map((k, i) => (
@@ -260,7 +255,7 @@ export default function World() {
                     <span className="font-semibold truncate">{k.owner_name}</span>
                     <span className="ml-auto text-muted-foreground whitespace-nowrap">
                       {k.active_drops} {k.active_drops === 1 ? 'drop' : 'drops'} · {k.collected_count} {k.collected_count === 1 ? 'grab' : 'grabs'}
-                      {' · '}<span className="text-primary font-mono font-semibold">{k.points ?? 0} pts</span>
+                      {' · '}<span className="text-primary font-mono font-semibold">{k.points ?? 0}{" "}{tr("pts")}</span>
                     </span>
                   </div>
                 ))}
@@ -280,7 +275,7 @@ export default function World() {
                     : 'bg-transparent text-muted-foreground hover:bg-secondary/50'
                 }`}
               >
-                {v === 'crew' ? 'Crew only' : 'Worldwide'}
+                {v === 'crew' ? tr("Crew only") : tr("Worldwide")}
               </button>
             ))}
           </div>
@@ -313,12 +308,12 @@ export default function World() {
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
           <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Crew QR</h2>
+              <h2 className="text-sm font-bold uppercase tracking-[0.2em]">{tr("Crew QR")}</h2>
               <button
                 type="button"
                 onClick={() => setShowCrewQr(false)}
                 className="p-2 rounded-lg bg-secondary/60"
-                aria-label="Close crew QR"
+                aria-label={tr("Close crew QR")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -328,7 +323,7 @@ export default function World() {
             </div>
             <p className="text-2xl font-bold tracking-[0.2em]">{crew.code}</p>
             <p className="text-[11px] text-muted-foreground">
-              Mates scan this from Join Crew to ride in your crew.
+              {tr("Mates scan this from Join Crew to ride in your crew.")}
             </p>
           </div>
         </div>

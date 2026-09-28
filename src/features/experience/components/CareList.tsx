@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { CARE_QUESTIONS, isCareOn, carePatch, requestMotionPermission, type CareQuestion } from '../lib/questions';
 import { useExperience } from '../hooks/useExperience';
+import { tr } from '@/lib/i18n';
 
 /** Settings view of the "Do you care about…" answers, as switches. */
 export function CareList({ className }: { className?: string }) {
@@ -13,7 +14,7 @@ export function CareList({ className }: { className?: string }) {
 
   const toggle = async (q: CareQuestion, on: boolean) => {
     if (on && q.needsMotion && !(await requestMotionPermission())) {
-      toast.error('Motion sensor permission denied');
+      toast.error(tr("Motion sensor permission denied"));
       return;
     }
     haptics.tick();

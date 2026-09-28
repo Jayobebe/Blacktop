@@ -6,6 +6,7 @@ import type { LatLng, TrackDef } from '../types';
 import { LIBRARY_ATTRIBUTION, loadCircuitIndex, nearbyCircuits, searchCircuits, type LibraryCircuit } from '../lib/circuitLibrary';
 import { trackLength } from '../lib/trackStore';
 import { metres } from '../lib/geometry';
+import { tr } from '@/lib/i18n';
 
 const km = (m: number | null | undefined) => (m == null ? '' : m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`);
 
@@ -85,12 +86,12 @@ export function TrackSearch({
           setOpen(true);
         }}
         onFocus={onFocus}
-        placeholder="Search tracks (e.g. Brands Hatch Indy)"
+        placeholder={tr("Search tracks (e.g. Brands Hatch Indy)")}
         className="pl-9 pr-9 h-12 rounded-2xl"
-        aria-label="Search tracks"
+        aria-label={tr("Search tracks")}
       />
       {q && (
-        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setQ('')} aria-label="Clear search">
+        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setQ('')} aria-label={tr("Clear search")}>
           <X className="w-4 h-4" />
         </button>
       )}
@@ -98,7 +99,7 @@ export function TrackSearch({
       {open && (query || library.length > 0 || indexFailed) && (
         <div className="absolute z-30 mt-1.5 inset-x-0 rounded-2xl frost-accent shadow-xl overflow-hidden max-h-[60dvh] overflow-y-auto">
           {mine.length > 0 && (
-            <Section title="Your tracks" icon={<Star className="w-3 h-3" />}>
+            <Section title={tr("Your tracks")} icon={<Star className="w-3 h-3" />}>
               {mine.map((t) => (
                 <Row
                   key={t.id}
@@ -113,7 +114,7 @@ export function TrackSearch({
             </Section>
           )}
           {library.length > 0 && (
-            <Section title={query ? 'Circuit library' : 'Circuits near you'} icon={query ? <Library className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}>
+            <Section title={query ? tr("Circuit library") : tr("Circuits near you")} icon={query ? <Library className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}>
               {library.map((c) => (
                 <Row
                   key={c.id}
@@ -127,10 +128,10 @@ export function TrackSearch({
           )}
           {query && !mine.length && !library.length && (
             <p className="px-3 py-3 text-xs text-muted-foreground">
-              {index || indexFailed ? 'No tracks by that name. Build it below, from the map or with a GPS lap.' : 'Searching…'}
+              {index || indexFailed ? tr("No tracks by that name. Build it below, from the map or with a GPS lap.") : tr("Searching…")}
             </p>
           )}
-          {indexFailed && <p className="px-3 pb-2 text-[11px] text-destructive">The circuit library didn't load. Your own tracks still work.</p>}
+          {indexFailed && <p className="px-3 pb-2 text-[11px] text-destructive">{tr("The circuit library didn't load. Your own tracks still work.")}</p>}
           <p className="px-3 py-1.5 text-[10px] text-muted-foreground/80 border-t border-border/40">{LIBRARY_ATTRIBUTION}</p>
         </div>
       )}

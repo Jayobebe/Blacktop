@@ -2,6 +2,7 @@ import { MapPin, Navigation, UserPlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RescueRequest } from '@/features/rescue';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface RescueAlertProps {
   requests: RescueRequest[];
@@ -36,11 +37,11 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDi
                 <MapPin className="w-7 h-7" />
               </div>
               <div>
-                <p className="font-bold text-lg">{request.userName} needs rescue!</p>
+                <p className="font-bold text-lg">{request.userName}{" "}{tr("needs rescue!")}</p>
                 <p className="text-sm opacity-80 mt-1">
                   {isLeader
-                    ? 'Add them as a waypoint to route the convoy to them'
-                    : 'Their location is marked on the map. Let them know you’re coming.'}
+                    ? tr("Add them as a waypoint to route the convoy to them")
+                    : tr("Their location is marked on the map. Let them know you’re coming.")}
                 </p>
               </div>
               
@@ -52,7 +53,7 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDi
                     className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
                   >
                     <UserPlus className="w-5 h-5 mr-2" />
-                    Add Waypoint
+                    {tr("Add Waypoint")}
                   </Button>
                 ) : (
                   <Button
@@ -61,7 +62,7 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDi
                     className="flex-1 h-12 bg-background text-foreground hover:bg-background/90 font-semibold"
                   >
                     <Navigation className="w-5 h-5 mr-2" />
-                    I'm on my way
+                    {tr("I'm on my way")}
                   </Button>
                 )}
                 <Button

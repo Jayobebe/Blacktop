@@ -4,6 +4,7 @@ import type { AppSettings } from '@/features/settings';
 import type { ExperienceTerms } from './terms';
 import type { RideMode, RideStyle } from './profile';
 import { VEHICLES, type VehicleType } from './vehicles';
+import { tr } from '@/lib/i18n';
 
 /**
  * The "Do you care about…?" deck. Each answer owns a set of opt-in feature
@@ -52,7 +53,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'safety',
     icon: ShieldCheck,
-    label: 'Crash rescue',
+    label: tr("Crash rescue"),
     question: () => 'Want help sent if you crash?',
     pitch: (c) =>
       c.rideMode === 'solo'
@@ -67,7 +68,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'speed',
     icon: Gauge,
-    label: 'Speed',
+    label: tr("Speed"),
     question: () => 'Do you care about your speed?',
     pitch: (c) => `Live speed as the big number while you ${c.terms.ride}, plus top and average speed afterwards.`,
     gets: () => ['Live speed readout', 'Top speed stats', 'Speed on receipts'],
@@ -78,7 +79,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'performance',
     icon: Activity,
-    label: 'Cornering data',
+    label: tr("Cornering data"),
     question: (c) => (c.canLean ? 'Want to see how far you lean?' : 'Want to feel the G-forces?'),
     pitch: (c) =>
       c.canLean
@@ -94,7 +95,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'routes',
     icon: CloudRain,
-    label: 'Routes & weather',
+    label: tr("Routes & weather"),
     question: () => 'Want to plan around the weather?',
     pitch: (c) =>
       c.motorised
@@ -109,7 +110,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'garage',
     icon: Wrench,
-    label: 'Garage',
+    label: tr("Garage"),
     question: (c) => `Want to keep your ${c.terms.vehicle} in a garage?`,
     pitch: (c) => `Photograph your ${c.terms.vehicle}, log the miles on it and get reminded when servicing is due.`,
     gets: (c) => ['Service reminders', `${cap(c.terms.vehicle)} photo on receipts`, 'Mileage per vehicle'],
@@ -120,7 +121,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'content',
     icon: Video,
-    label: 'Film & share',
+    label: tr("Film & share"),
     question: (c) => `Want to film and share your ${c.terms.rides}?`,
     pitch: () => 'Export a video overlay with your stats for your helmet or dash cam footage, and replay any route as a 3D flyover.',
     gets: () => ['Overlay videos', '3D flyovers'],
@@ -131,7 +132,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'collect',
     icon: Sparkles,
-    label: 'Collecting',
+    label: tr("Collecting"),
     question: () => 'Into collecting?',
     pitch: (c) => `Earn badges and trading cards from your ${c.terms.rides}, and find card drops hidden on the map.`,
     gets: () => ['Badges', 'Trading cards', 'Card drops on the map'],
@@ -143,7 +144,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'community',
     icon: Globe2,
-    label: 'Community',
+    label: tr("Community"),
     question: (c) => `Want to meet other ${c.terms.riders}?`,
     pitch: (c) => `Blacktop World (press and hold the globe on Home): a live map of ${c.terms.riders} and crews, crew leaderboards, weekly challenges and the arcade. While you ${c.terms.ride}, you appear on the globe as an anonymous glow, rounded to about 110 km.`,
     gets: () => ['Blacktop World', 'Crews & leaderboards', 'Challenges', 'Anonymous glow on the globe'],
@@ -154,7 +155,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'track',
     icon: Zap,
-    label: 'Track Pack',
+    label: tr("Track Pack"),
     question: () => 'Do you do track days?',
     pitch: () =>
       'Lap and sector timing from your phone, live timing and a pit board for your pit crew on their phone, and lap-by-lap traces after every session.',
@@ -167,7 +168,7 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'music',
     icon: Radio,
-    label: 'Music',
+    label: tr("Music"),
     question: (c) => `Music while you ${c.terms.ride}?`,
     pitch: () => 'Blacktop Radio: build stations from your own music files and flip between them from Home or mid-ride.',
     gets: () => ['Blacktop Radio', 'Radio button on Home'],

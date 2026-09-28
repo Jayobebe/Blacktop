@@ -8,6 +8,7 @@ import { ALERT_RADIUS_M, DWELL_MS, VISIBLE_RADIUS_M, cellKey, cellOf, distanceM,
 import { getProximityState, isBlocked, isSnoozed, setProximityState, snoozeParty } from '../lib/proximityStore';
 import { MAX_MERGED_RIDERS, registerProximityControls, type ConvoyActions } from '../lib/controls';
 import type { Invite, InviteKind, MergeRecord, NearbyParty, NearbyRider, RiderBeacon } from '../types';
+import { tr } from '@/lib/i18n';
 
 const INVITE_TTL_MS = 45_000;
 const GO_TIMEOUT_MS = 30_000;
@@ -181,9 +182,9 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       if (ready) {
         snoozeParty(ready.key);
         haptics.light();
-        toast(ready.kind === 'convoy' ? `${ready.contactName}'s convoy is riding near you` : `${ready.contactName} is riding near you`, {
-          description: 'Tap the handshake to invite them.',
-          action: { label: 'View', onClick: () => { openBlacktopMap(); setProximityState({ panel: 'list' }); } },
+        toast(ready.kind === 'convoy' ? tr("{0}'s convoy is riding near you", [ready.contactName]) : tr("{0} is riding near you", [ready.contactName]), {
+          description: tr("Tap the handshake to invite them."),
+          action: { label: tr("View"), onClick: () => { openBlacktopMap(); setProximityState({ panel: 'list' }); } },
         });
       }
     }
@@ -201,9 +202,9 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
     if (ok) {
       a.attachRide(a.getConvoyId());
       haptics.success();
-      toast.success(`Riding with ${withName}`, { description: 'Voice and the convoy map are live.' });
+      toast.success(tr("Riding with {0}", [withName]), { description: tr("Voice and the convoy map are live.") });
     } else {
-      toast.error(`Couldn't join ${withName}`);
+      toast.error(tr("Couldn't join {0}", [withName]));
     }
     return ok;
   };
@@ -228,7 +229,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
         const guest = getProximityState().parties.find((p) => p.contactId === guestId)?.contact;
         if (!guest?.convoyId || !guest.convoyCode) throw new Error('guest convoy unknown');
         if (c.members.length + guest.memberCount > MAX_MERGED_RIDERS) {
-          toast.error(`Too many riders to merge (${c.members.length + guest.memberCount}/${MAX_MERGED_RIDERS})`);
+          toast.error(tr("Too many riders to merge ({0}/{1})", [c.members.length + guest.memberCount, MAX_MERGED_RIDERS]));
           send({ type: 'answer', to: guestId, from: live.current.userId!, inviteId, accept: false });
           return;
         }
@@ -248,10 +249,10 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       }
 
       send({ type: 'go', to: guestId, from: live.current.userId!, fromName: myName, inviteId, kind, code, convoyId, mergeId });
-      toast.success(kind === 'merge' ? `Merging with ${guestName}'s convoy` : `${guestName} is joining you`);
+      toast.success(kind === 'merge' ? tr("Merging with {0}'s convoy", [guestName]) : tr("{0} is joining you", [guestName]));
     } catch (e) {
       console.warn('[Proximity] host failed', e);
-      toast.error('Could not set up the convoy');
+      toast.error(tr("Could not set up the convoy"));
     } finally {
       setProximityState({ busy: null, outgoing: null, incoming: null });
     }
@@ -265,7 +266,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       if (getProximityState().busy) {
         expectedHostRef.current = null;
         setProximityState({ busy: null });
-        toast.error(`${fromName} didn't respond`);
+        toast.error(tr("{0} didn't respond", [fromName]));
       }
     });
   };
@@ -305,7 +306,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       toast(`${inv.fromName} ${what}`, {
         id: `prox-invite-${inv.id}`,
         duration: INVITE_TTL_MS,
-        action: { label: 'View', onClick: () => { openBlacktopMap(); setProximityState({ panel: 'request' }); } },
+        action: { label: tr("View"), onClick: () => { openBlacktopMap(); setProximityState({ panel: 'request' }); } },
       });
       setTimer('incoming', INVITE_TTL_MS, () => {
         if (getProximityState().incoming?.id === inv.id) {
@@ -329,7 +330,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       clearTimer('outgoing');
       if (!msg.accept) {
         setProximityState({ outgoing: null });
-        toast(`${st.outgoing.toName} said not now`);
+        toast(tr("{0} said not now", [st.outgoing.toName]));
         return;
       }
       // An accept only ever comes back to the host.
@@ -490,13 +491,13 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
         const inConvoy = !!c.id;
         if (inConvoy && !c.isLeader) return;
         if (party.kind === 'convoy' && !party.contact) {
-          toast.error("Their leader isn't in range");
+          toast.error(tr("Their leader isn't in range"));
           return;
         }
         const kind: InviteKind = !inConvoy && party.kind === 'solo' ? 'pair' : inConvoy && party.kind === 'convoy' ? 'merge' : 'join';
         const total = (inConvoy ? c.members.length : 1) + party.memberCount;
         if (total > MAX_MERGED_RIDERS) {
-          toast.error(`Too many riders to ride as one convoy (${total}/${MAX_MERGED_RIDERS})`);
+          toast.error(tr("Too many riders to ride as one convoy ({0}/{1})", [total, MAX_MERGED_RIDERS]));
           return;
         }
         // They already asked us: just accept.
@@ -515,7 +516,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
           sentAt: Date.now(),
         };
         if (!send({ type: 'invite', to: party.contactId, invite })) {
-          toast.error('Still connecting to nearby riders');
+          toast.error(tr("Still connecting to nearby riders"));
           return;
         }
         setProximityState({ outgoing: { ...invite, toName: party.contactName }, panel: null });
@@ -523,7 +524,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
           const out = getProximityState().outgoing;
           if (out?.id === invite.id) {
             setProximityState({ outgoing: null });
-            toast(`No answer from ${party.contactName}`);
+            toast(tr("No answer from {0}", [party.contactName]));
           }
         });
       },

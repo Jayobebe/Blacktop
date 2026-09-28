@@ -4,6 +4,7 @@ import { MapPin, Mic, Camera, Bell, CheckCircle2, XCircle, Loader2, Shield } fro
 import { toast } from 'sonner';
 import { enablePush, getPushState, usePush } from '@/features/notifications';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 type Status = 'pending' | 'granted' | 'denied';
 const STORAGE_KEY = 'blacktop_permissions_prompted_v1';
@@ -75,7 +76,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
     const { permission, error } = getPushState();
     setPerms(p => ({ ...p, notifications: ok || permission === 'granted' ? 'granted' : permission === 'denied' ? 'denied' : 'pending' }));
     // Permission granted but the server isn't ready: it retries on the next launch.
-    if (!ok && permission === 'granted' && error) toast(error, { description: 'Blacktop will finish setting them up next time you open it.' });
+    if (!ok && permission === 'granted' && error) toast(error, { description: tr("Blacktop will finish setting them up next time you open it.") });
     setBusy(null);
   };
 
@@ -132,7 +133,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
         <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
       ) : !onRequest ? null : (
         <Button size="sm" variant="outline" onClick={onRequest} disabled={busyHere} className="flex-shrink-0 h-8">
-          {busyHere ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Allow'}
+          {busyHere ? <Loader2 className="w-4 h-4 animate-spin" /> : tr("Allow")}
         </Button>
       )}
     </div>
@@ -145,16 +146,16 @@ export function PermissionsPrompt({ onComplete }: Props) {
           <div className="w-12 h-12 mx-auto rounded-full bg-accent/15 flex items-center justify-center">
             <Shield className="w-6 h-6 text-accent" />
           </div>
-          <h2 className="text-xl font-semibold">Quick setup</h2>
+          <h2 className="text-xl font-semibold">{tr("Quick setup")}</h2>
           <p className="text-xs text-muted-foreground">
-            Grant access so features work when you need them. You can change these later in device settings.
+            {tr("Grant access so features work when you need them. You can change these later in device settings.")}
           </p>
         </div>
 
         <div className="space-y-3">
           <Row
             icon={MapPin}
-            title="Location"
+            title={tr("Location")}
             desc="Track speed, distance and convoy position during rides"
             status={perms.location}
             onRequest={requestLocation}
@@ -162,7 +163,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
           />
           <Row
             icon={Mic}
-            title="Microphone"
+            title={tr("Microphone")}
             desc="Voice chat with your convoy"
             status={perms.mic}
             onRequest={requestMic}
@@ -170,7 +171,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
           />
           <Row
             icon={Camera}
-            title="Camera"
+            title={tr("Camera")}
             desc="Scan QR codes to join convoys"
             status={perms.camera}
             onRequest={requestCamera}
@@ -179,7 +180,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
           {(push.support === 'supported' || push.support === 'needs-install') && (
             <Row
               icon={Bell}
-              title="Notifications"
+              title={tr("Notifications")}
               desc={
                 push.support === 'supported'
                   ? 'Alerts from Blacktop, even when the app is closed'
@@ -193,10 +194,10 @@ export function PermissionsPrompt({ onComplete }: Props) {
         </div>
 
         <Button onClick={finish} className="w-full h-12 rounded-2xl text-base font-semibold touch-target">
-          Continue
+          {tr("Continue")}
         </Button>
         <p className="text-[11px] text-muted-foreground text-center">
-          Denied permissions can be re-enabled later from your device settings.
+          {tr("Denied permissions can be re-enabled later from your device settings.")}
         </p>
       </div>
     </div>

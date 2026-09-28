@@ -21,6 +21,7 @@ import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
 import { IdCard, Receipt, Sparkles, ShoppingBag, Megaphone, TrafficCone, Droplets } from 'lucide-react';
 import shopAsset from '@/assets/garage-shop.png.asset.json';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
+import { tr } from '@/lib/i18n';
 
 interface FeatureCard {
   icon: React.ElementType;
@@ -53,368 +54,368 @@ export default function DemoShowcase() {
   const features: Feature[] = [
     {
       id: 'intro',
-      title: 'BLACKTOP',
-      subtitle: 'Ride Logging & Convoy Communication',
-      description: 'Privacy-first ride companion for motorcycles, cars, bikes and scooters. No sign-up required. Your ride history is stored on your device.',
+      title: tr("BLACKTOP"),
+      subtitle: tr("Ride Logging & Convoy Communication"),
+      description: tr("Privacy-first ride companion for motorcycles, cars, bikes and scooters. No sign-up required. Your ride history is stored on your device."),
       icon: Shield,
       color: 'accent',
       mockup: <IntroMockup />
     },
     {
       id: 'ride-together',
-      title: 'Ride Together',
-      subtitle: 'Convoys, Voice & Solo Runs',
-      description: 'Create or join a convoy with a simple code, talk hands-free over live voice, or head out solo — every mode shares the same tracking.',
+      title: tr("Ride Together"),
+      subtitle: tr("Convoys, Voice & Solo Runs"),
+      description: tr("Create or join a convoy with a simple code, talk hands-free over live voice, or head out solo — every mode shares the same tracking."),
       icon: Users,
       color: 'accent',
       mockup: <ConvoyMockup copied={copied} onCopy={() => setCopied(true)} />,
       cards: [
-        { icon: Users, label: 'Convoy Mode', text: 'Every rider synced in real time via a shared code.' },
-        { icon: Mic, label: 'Voice Comms', text: 'Hands-free chat with mute, disconnect and Bluetooth intercoms.' },
-        { icon: Gauge, label: 'Solo Ride', text: 'Same tracking, no group needed — with Discord rescue on tap.' },
-        { icon: QrCode, label: 'QR Join', text: 'Scan the lobby QR to jump straight into a convoy.' },
-        { icon: MessageSquare, label: 'Lobby Chat', text: 'Sort the plan before you set off, live in the lobby.' },
-        { icon: Crown, label: 'Leadership', text: 'Hand over the lead, or auto-promote when the leader drops.' },
-        { icon: Users, label: 'Convoy Status', text: 'A strip on the map shows riders, group average speed, group ETA and how many riders have dropped behind.' },
-        { icon: Flag, label: 'Regroup', text: 'When riders fall back the leader gets a regroup card: one tap sends it to the whole convoy.' },
+        { icon: Users, label: tr("Convoy Mode"), text: tr("Every rider synced in real time via a shared code.") },
+        { icon: Mic, label: tr("Voice Comms"), text: tr("Hands-free chat with mute, disconnect and Bluetooth intercoms.") },
+        { icon: Gauge, label: tr("Solo Ride"), text: tr("Same tracking, no group needed — with Discord rescue on tap.") },
+        { icon: QrCode, label: tr("QR Join"), text: tr("Scan the lobby QR to jump straight into a convoy.") },
+        { icon: MessageSquare, label: tr("Lobby Chat"), text: tr("Sort the plan before you set off, live in the lobby.") },
+        { icon: Crown, label: tr("Leadership"), text: tr("Hand over the lead, or auto-promote when the leader drops.") },
+        { icon: Users, label: tr("Convoy Status"), text: tr("A strip on the map shows riders, group average speed, group ETA and how many riders have dropped behind.") },
+        { icon: Flag, label: tr("Regroup"), text: tr("When riders fall back the leader gets a regroup card: one tap sends it to the whole convoy.") },
       ],
     },
     {
       id: 'nearby-riders',
-      title: 'Nearby Riders',
-      subtitle: 'Handshake, Pair Up & Merge',
-      description: 'Opt in and Blacktop finds other riders close by. Both sides accept a handshake to ride together, and convoy leaders can merge their groups and split them again any time.',
+      title: tr("Nearby Riders"),
+      subtitle: tr("Handshake, Pair Up & Merge"),
+      description: tr("Opt in and Blacktop finds other riders close by. Both sides accept a handshake to ride together, and convoy leaders can merge their groups and split them again any time."),
       icon: Handshake,
       color: 'accent',
       mockup: <NearbyMockup />,
       cards: [
-        { icon: Shield, label: 'Opt-In', text: 'Off by default. Only shared with other opted-in riders within a few km, and only while you ride.' },
-        { icon: Handshake, label: 'Handshake', text: 'One button next to save-location lists riders and convoys nearby, each with Invite, Join or Merge.' },
-        { icon: Timer, label: 'Request Timer', text: 'A sent request counts down on the button; the receiver\'s button pulses with the same timer until they accept or decline.' },
-        { icon: Users, label: 'Pair Up', text: 'Two solo riders who accept become a convoy with voice, mid-ride, without stopping.' },
-        { icon: Merge, label: 'Merge & Unmerge', text: 'Leaders merge convoys (up to 8 riders); either leader can unmerge and everyone returns to their own group.' },
-        { icon: Ban, label: 'Snooze & Block', text: 'Not now quietens a rider for 30 minutes; Block hides them for good.' },
+        { icon: Shield, label: tr("Opt-In"), text: tr("Off by default. Only shared with other opted-in riders within a few km, and only while you ride.") },
+        { icon: Handshake, label: tr("Handshake"), text: tr("One button next to save-location lists riders and convoys nearby, each with Invite, Join or Merge.") },
+        { icon: Timer, label: tr("Request Timer"), text: 'A sent request counts down on the button; the receiver\'s button pulses with the same timer until they accept or decline.' },
+        { icon: Users, label: tr("Pair Up"), text: tr("Two solo riders who accept become a convoy with voice, mid-ride, without stopping.") },
+        { icon: Merge, label: tr("Merge & Unmerge"), text: 'Leaders merge convoys (up to 8 riders); either leader can unmerge and everyone returns to their own group.' },
+        { icon: Ban, label: tr("Snooze & Block"), text: 'Not now quietens a rider for 30 minutes; Block hides them for good.' },
       ],
     },
     {
       id: 'pillion',
-      title: 'Pillion Mode',
-      subtitle: 'For The Passenger',
-      description: 'Join as Operator or Passenger. Passengers get everything in the lobby, then a ride screen built for the back seat: voice, waves and rescue, with no map or stats.',
+      title: tr("Pillion Mode"),
+      subtitle: tr("For The Passenger"),
+      description: tr("Join as Operator or Passenger. Passengers get everything in the lobby, then a ride screen built for the back seat: voice, waves and rescue, with no map or stats."),
       icon: UserRound,
       color: 'accent',
       mockup: <PillionMockup />,
       cards: [
-        { icon: QrCode, label: 'Operator Or Passenger', text: 'Pick on Join Convoy before entering the code or scanning the QR.' },
-        { icon: Mic, label: 'Voice', text: 'Join, mute and unmute, and pick the audio device.' },
-        { icon: Heart, label: 'Wave & React', text: 'Wave and emoji reactions the whole convoy sees; "need a stop" buzzes the riders.' },
-        { icon: AlertTriangle, label: 'Rescue', text: 'Sees every rescue alert and can call one for the bike from their own phone.' },
+        { icon: QrCode, label: tr("Operator Or Passenger"), text: tr("Pick on Join Convoy before entering the code or scanning the QR.") },
+        { icon: Mic, label: tr("Voice"), text: tr("Join, mute and unmute, and pick the audio device.") },
+        { icon: Heart, label: tr("Wave & React"), text: 'Wave and emoji reactions the whole convoy sees; "need a stop" buzzes the riders.' },
+        { icon: AlertTriangle, label: tr("Rescue"), text: tr("Sees every rescue alert and can call one for the bike from their own phone.") },
       ],
     },
     {
       id: 'navigation',
-      title: 'Navigation',
-      subtitle: 'Turn-By-Turn, Waypoints & Camera Alerts',
-      description: 'Search a destination, or tap a place on the map, and ride it in-app with turn-by-turn directions from the moment you pick it. Leaders drop multiple stops, everyone sees the same line, and you get warned about cameras ahead.',
+      title: tr("Navigation"),
+      subtitle: tr("Turn-By-Turn, Waypoints & Camera Alerts"),
+      description: tr("Search a destination, or tap a place on the map, and ride it in-app with turn-by-turn directions from the moment you pick it. Leaders drop multiple stops, everyone sees the same line, and you get warned about cameras ahead."),
       icon: MapIcon,
       color: 'accent',
       mockup: <MapsMockup />,
       cards: [
-        { icon: MapIcon, label: 'Blacktop Maps', text: 'Built-in routing with live convoy dots coloured by accent.' },
-        { icon: Route, label: 'Multi-Stop Routes', text: 'Add, reorder and skip waypoints mid-ride, up to five at a time.' },
-        { icon: Eye, label: 'Camera Alerts', text: 'Speed and ANPR cameras on your route, flagged as you approach.' },
-        { icon: Mountain, label: 'Satellite & 3D', text: 'Toggle satellite imagery or a 3D terrain and building view.' },
-        { icon: CloudRain, label: 'Weather Radar', text: 'Optional live rain overlay so you can dodge the downpour.' },
-        { icon: Waves, label: 'Direct or Twisty', text: 'Pick your line before you go — both ETAs shown side by side.' },
-        { icon: CloudRain, label: 'Weather Routing', text: 'Warns when heavy rain sits on your route and offers a drier line.' },
-        { icon: Repeat, label: 'Loop Planner', text: 'No destination? Generate a twisty round trip back to where you are.' },
-        { icon: Download, label: 'Offline Maps', text: 'Save map areas to your phone for rides with no signal.' },
-        { icon: CornerUpRight, label: 'Turn-By-Turn', text: 'Starts as soon as you pick a destination: the next turn sits where the search bar was, with your destination, time left and arrival time. Tap X to stop. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
-        { icon: MapPin, label: 'Places On The Map', text: 'Cafés, fuel, food, sights and more appear as you zoom in, each with its own icon, plus your saved places and recent destinations. They step aside while you ride.' },
-        { icon: Repeat, label: 'Orbit A Place', text: 'Tap a pin and the camera swings round it in 3D. Back returns you to where you were; Navigate sets the route.' },
-        { icon: Search, label: 'Instant Search', text: 'Places on the map show up as you type, even offline and however you spell them ("mcdonalds" finds McDonald\'s). Tap the clock on a recent to remove it.' },
-        { icon: MapIcon, label: 'Clearer Map', text: 'A higher-contrast dark map, opens where you last were, and a trimmed landscape layout for bar mounts.' },
-        { icon: Navigation, label: 'Smart Rerouting', text: 'Miss a turn and Blacktop finds a new way from where you are. Stops you pass come off the route by themselves.' },
-        { icon: Search, label: 'Heads-Up Map', text: 'The search bar steps aside while you ride and comes back when you slow down; while navigating the turn banner takes its place, and in a convoy the status strip sits under it.' },
+        { icon: MapIcon, label: tr("Blacktop Maps"), text: tr("Built-in routing with live convoy dots coloured by accent.") },
+        { icon: Route, label: tr("Multi-Stop Routes"), text: tr("Add, reorder and skip waypoints mid-ride, up to five at a time.") },
+        { icon: Eye, label: tr("Camera Alerts"), text: tr("Speed and ANPR cameras on your route, flagged as you approach.") },
+        { icon: Mountain, label: tr("Satellite & 3D"), text: tr("Toggle satellite imagery or a 3D terrain and building view.") },
+        { icon: CloudRain, label: tr("Weather Radar"), text: tr("Optional live rain overlay so you can dodge the downpour.") },
+        { icon: Waves, label: tr("Direct or Twisty"), text: tr("Pick your line before you go — both ETAs shown side by side.") },
+        { icon: CloudRain, label: tr("Weather Routing"), text: tr("Warns when heavy rain sits on your route and offers a drier line.") },
+        { icon: Repeat, label: tr("Loop Planner"), text: tr("No destination? Generate a twisty round trip back to where you are.") },
+        { icon: Download, label: tr("Offline Maps"), text: tr("Save map areas to your phone for rides with no signal.") },
+        { icon: CornerUpRight, label: tr("Turn-By-Turn"), text: 'Starts as soon as you pick a destination: the next turn sits where the search bar was, with your destination, time left and arrival time. Tap X to stop. Spoken directions lower the radio and crew voice while they talk; switch them off in Settings and the banner stays.' },
+        { icon: MapPin, label: tr("Places On The Map"), text: tr("Cafés, fuel, food, sights and more appear as you zoom in, each with its own icon, plus your saved places and recent destinations. They step aside while you ride.") },
+        { icon: Repeat, label: tr("Orbit A Place"), text: 'Tap a pin and the camera swings round it in 3D. Back returns you to where you were; Navigate sets the route.' },
+        { icon: Search, label: tr("Instant Search"), text: tr("Places on the map show up as you type, even offline and however you spell them (\"mcdonalds\" finds McDonald's). Tap the clock on a recent to remove it.") },
+        { icon: MapIcon, label: tr("Clearer Map"), text: tr("A higher-contrast dark map, opens where you last were, and a trimmed landscape layout for bar mounts.") },
+        { icon: Navigation, label: tr("Smart Rerouting"), text: tr("Miss a turn and Blacktop finds a new way from where you are. Stops you pass come off the route by themselves.") },
+        { icon: Search, label: tr("Heads-Up Map"), text: 'The search bar steps aside while you ride and comes back when you slow down; while navigating the turn banner takes its place, and in a convoy the status strip sits under it.' },
       ],
     },
     {
       id: 'hazards',
-      title: 'Hazard Reports',
-      subtitle: 'Warn The Riders Behind You',
-      description: 'Spot something on the road? Tap Report, pick a category and the hazard, and every rider heading that way gets a warning. Anonymous, and it clears itself when it\'s gone.',
+      title: tr("Hazard Reports"),
+      subtitle: tr("Warn The Riders Behind You"),
+      description: tr("Spot something on the road? Tap Report, pick a category and the hazard, and every rider heading that way gets a warning. Anonymous, and it clears itself when it's gone."),
       icon: Megaphone,
       color: 'accent',
       mockup: <HazardMockup />,
       cards: [
-        { icon: Megaphone, label: 'Two Taps', text: 'Road surface, conditions, traffic or other, then the hazard: 17 in all, from potholes and oil to crashes, roadworks, standstills, animals and hi-vis.' },
-        { icon: Bell, label: 'Warned Ahead', text: 'A banner (and, if you like, a spoken warning) about 20 seconds before you reach one, on the map or the ride screen.' },
-        { icon: Check, label: 'Still There?', text: 'Ride past and Blacktop asks. Yes keeps it up for others; two Gone votes clear it.' },
-        { icon: Timer, label: 'Clears Itself', text: 'Each type has its own life: a standstill 20 minutes, an animal 30, a pothole a month, unless riders confirm it.' },
-        { icon: Shield, label: 'Anonymous', text: 'Nobody sees who reported what. Reports are rate-limited and merge when two riders flag the same thing.' },
+        { icon: Megaphone, label: tr("Two Taps"), text: tr("Road surface, conditions, traffic or other, then the hazard: 17 in all, from potholes and oil to crashes, roadworks, standstills, animals and hi-vis.") },
+        { icon: Bell, label: tr("Warned Ahead"), text: tr("A banner (and, if you like, a spoken warning) about 20 seconds before you reach one, on the map or the ride screen.") },
+        { icon: Check, label: tr("Still There?"), text: 'Ride past and Blacktop asks. Yes keeps it up for others; two Gone votes clear it.' },
+        { icon: Timer, label: tr("Clears Itself"), text: tr("Each type has its own life: a standstill 20 minutes, an animal 30, a pothole a month, unless riders confirm it.") },
+        { icon: Shield, label: tr("Anonymous"), text: tr("Nobody sees who reported what. Reports are rate-limited and merge when two riders flag the same thing.") },
       ],
     },
     {
       id: 'live-data',
-      title: 'Live Ride Data',
-      subtitle: 'Speed, Lean & G-Force',
-      description: 'Big, glove-friendly GPS readouts backed by your phone\'s gyroscope and accelerometer for real-time lean angle and cornering G.',
+      title: tr("Live Ride Data"),
+      subtitle: tr("Speed, Lean & G-Force"),
+      description: tr("Big, glove-friendly GPS readouts backed by your phone's gyroscope and accelerometer for real-time lean angle and cornering G."),
       icon: Gauge,
       color: 'speed-active',
       mockup: <TrackingMockup />,
       cards: [
-        { icon: Gauge, label: 'Speed & Distance', text: 'Real-time GPS speed, distance and duration at a glance.' },
-        { icon: TrendingUp, label: 'Lean & G-Force', text: 'Max lean each way, peak G, and warnings near your threshold.' },
-        { icon: Clock, label: 'Smart Timer', text: 'Idle rides auto-stop, so a forgotten session never logs 70 hours.' },
+        { icon: Gauge, label: tr("Speed & Distance"), text: tr("Real-time GPS speed, distance and duration at a glance.") },
+        { icon: TrendingUp, label: tr("Lean & G-Force"), text: tr("Max lean each way, peak G, and warnings near your threshold.") },
+        { icon: Clock, label: tr("Smart Timer"), text: tr("Idle rides auto-stop, so a forgotten session never logs 70 hours.") },
       ],
     },
     {
       id: 'safety',
-      title: 'Safety Net',
-      subtitle: 'Rescue, Crash Detection & Alerts',
-      description: 'One button sends your location to your convoy, your crew and your Discord — as a notification on their phones, even with Blacktop closed. If a hard impact is followed by a stop, the app asks if you\'re okay, and calls for help if you don\'t answer.',
+      title: tr("Safety Net"),
+      subtitle: tr("Rescue, Crash Detection & Alerts"),
+      description: tr("One button sends your location to your convoy, your crew and your Discord — as a notification on their phones, even with Blacktop closed. If a hard impact is followed by a stop, the app asks if you're okay, and calls for help if you don't answer."),
       icon: AlertTriangle,
       color: 'destructive',
       mockup: <RescueMockup />,
       cards: [
-        { icon: AlertTriangle, label: 'Rescue', text: 'Sends your live position to the whole convoy and your crew, straight to their lock screens.' },
-        { icon: UserRound, label: 'Solo Rescue', text: 'Riding alone? The same button alerts your crew, and Discord if you\'ve connected it.' },
-        { icon: Shield, label: 'Auto-Rescue', text: 'High-G impact plus a stop triggers a 5-minute check-in.' },
-        { icon: MessageSquare, label: 'Discord', text: 'Webhook announces convoy starts and broadcasts rescue pings.' },
-        { icon: MapPin, label: 'Rescue Card', text: 'Tap the alert to see where they are and route to them on the Blacktop map or Google Maps. Cancel and everyone hears you\'re OK.' },
-        { icon: Users, label: 'You Choose Who Hears', text: 'Settings → Safety: your convoy, your crew, Discord, and riders nearby within 5 to 50 km who\'ve opted in to help.' },
+        { icon: AlertTriangle, label: tr("Rescue"), text: tr("Sends your live position to the whole convoy and your crew, straight to their lock screens.") },
+        { icon: UserRound, label: tr("Solo Rescue"), text: tr("Riding alone? The same button alerts your crew, and Discord if you've connected it.") },
+        { icon: Shield, label: tr("Auto-Rescue"), text: tr("High-G impact plus a stop triggers a 5-minute check-in.") },
+        { icon: MessageSquare, label: tr("Discord"), text: tr("Webhook announces convoy starts and broadcasts rescue pings.") },
+        { icon: MapPin, label: tr("Rescue Card"), text: tr("Tap the alert to see where they are and route to them on the Blacktop map or Google Maps. Cancel and everyone hears you're OK.") },
+        { icon: Users, label: tr("You Choose Who Hears"), text: tr("Settings → Safety: your convoy, your crew, Discord, and riders nearby within 5 to 50 km who've opted in to help.") },
       ],
     },
     {
       id: 'notifications',
-      title: 'Notifications',
-      subtitle: 'Alerts Even When Blacktop Is Closed',
-      description: 'Turn them on in Settings and pick exactly what reaches your lock screen. Works from the Home Screen app on Android and iPhone.',
+      title: tr("Notifications"),
+      subtitle: tr("Alerts Even When Blacktop Is Closed"),
+      description: tr("Turn them on in Settings and pick exactly what reaches your lock screen. Works from the Home Screen app on Android and iPhone."),
       icon: Bell,
       color: 'accent',
       mockup: <NotificationsMockup />,
       cards: [
-        { icon: AlertTriangle, label: 'Rescue Calls', text: 'A convoy or crew mate needs help, with where they are.' },
-        { icon: Handshake, label: 'Riders Near Me', text: 'Opt in to hear when a rider close by calls for rescue, so help can come from whoever\'s nearest.' },
-        { icon: CloudLightning, label: 'Heavy Weather', text: 'Storms, heavy rain, snow or strong winds heading to your area in the next few hours.' },
-        { icon: Fuel, label: 'Blacktank', text: 'Requests to vote on, approvals, chip-ins and payouts.' },
-        { icon: Timer, label: 'Cards', text: 'Someone picks up your card, or beats or loses to your time attack.' },
-        { icon: Trophy, label: 'Crew', text: 'A mate passes you on the board, opens a crew convoy, or a challenge is won, lost or 5 days from closing.' },
-        { icon: Wrench, label: 'Maintenance', text: 'Service items coming due or overdue, by miles or by months.' },
+        { icon: AlertTriangle, label: tr("Rescue Calls"), text: tr("A convoy or crew mate needs help, with where they are.") },
+        { icon: Handshake, label: tr("Riders Near Me"), text: tr("Opt in to hear when a rider close by calls for rescue, so help can come from whoever's nearest.") },
+        { icon: CloudLightning, label: tr("Heavy Weather"), text: tr("Storms, heavy rain, snow or strong winds heading to your area in the next few hours.") },
+        { icon: Fuel, label: tr("Blacktank"), text: tr("Requests to vote on, approvals, chip-ins and payouts.") },
+        { icon: Timer, label: tr("Cards"), text: tr("Someone picks up your card, or beats or loses to your time attack.") },
+        { icon: Trophy, label: tr("Crew"), text: tr("A mate passes you on the board, opens a crew convoy, or a challenge is won, lost or 5 days from closing.") },
+        { icon: Wrench, label: tr("Maintenance"), text: tr("Service items coming due or overdue, by miles or by months.") },
       ],
     },
     {
       id: 'after-ride',
-      title: 'After The Ride',
-      subtitle: 'History, Receipts, Badges & Overlays',
-      description: 'Every ride is saved locally with photos, a shareable receipt, earned badges, and an MP4 stats overlay for your action-cam footage.',
+      title: tr("After The Ride"),
+      subtitle: tr("History, Receipts, Badges & Overlays"),
+      description: tr("Every ride is saved locally with photos, a shareable receipt, earned badges, and an MP4 stats overlay for your action-cam footage."),
       icon: History,
       color: 'accent',
       mockup: <HistoryMockup />,
       cards: [
-        { icon: Camera, label: 'History & Photos', text: 'Full stats per ride, plus up to 9 photos, stored on device.' },
-        { icon: Receipt, label: 'Ride Receipts', text: 'A printable stat slip with vehicle and badges, saved as an image.' },
-        { icon: Video, label: 'Overlay Download', text: 'MP4 with live speed, lean, distance and a mini-map for editing in.' },
-        { icon: Mic, label: 'Voice Recording', text: 'Optionally mix convoy voice chat into the overlay MP4.' },
-        { icon: Mountain, label: '3D Flyover', text: 'A cinematic 3D pass over your route with stats, ready to save.' },
-        { icon: CornerUpRight, label: 'Corner Report', text: 'Every corner detected and scored 0-100 on line, lean and pace, with a ride grade.' },
-        { icon: Share2, label: 'Recap Card', text: 'One tap renders a shareable image of your route, stats and corner grade.' },
-        { icon: Trophy, label: 'Badges & Stats', text: 'Speed Demon, Journeyman, Lean Fiend, G-Lock, Corner Carver, Night Owl, Hard Ass and Always Out bank points in a 3×3 grid — Kickback joins them when riders collect your drops, while Fallback docks a point from a full-width row below.' },
-        { icon: Timer, label: 'Time-Attack Receipts', text: 'Card challenge rides print on pink stock — your time, the target, the delta, the card you raced and whether you unlocked its Spectre.' },
-        { icon: Star, label: 'Burn Trips', text: 'Star the rides you love; pick weekly or monthly and everything unstarred is wiped to save space. Your totals never change.' },
-        { icon: Sparkles, label: 'Badge Trades', text: 'Badges are currency: spend 10 banked badge points for a spare trading-card copy to drop on the map. Kickbacks from collected drops feed the same wallet.' },
+        { icon: Camera, label: tr("History & Photos"), text: tr("Full stats per ride, plus up to 9 photos, stored on device.") },
+        { icon: Receipt, label: tr("Ride Receipts"), text: tr("A printable stat slip with vehicle and badges, saved as an image.") },
+        { icon: Video, label: tr("Overlay Download"), text: tr("MP4 with live speed, lean, distance and a mini-map for editing in.") },
+        { icon: Mic, label: tr("Voice Recording"), text: tr("Optionally mix convoy voice chat into the overlay MP4.") },
+        { icon: Mountain, label: tr("3D Flyover"), text: tr("A cinematic 3D pass over your route with stats, ready to save.") },
+        { icon: CornerUpRight, label: tr("Corner Report"), text: tr("Every corner detected and scored 0-100 on line, lean and pace, with a ride grade.") },
+        { icon: Share2, label: tr("Recap Card"), text: tr("One tap renders a shareable image of your route, stats and corner grade.") },
+        { icon: Trophy, label: tr("Badges & Stats"), text: tr("Speed Demon, Journeyman, Lean Fiend, G-Lock, Corner Carver, Night Owl, Hard Ass and Always Out bank points in a 3×3 grid — Kickback joins them when riders collect your drops, while Fallback docks a point from a full-width row below.") },
+        { icon: Timer, label: tr("Time-Attack Receipts"), text: tr("Card challenge rides print on pink stock — your time, the target, the delta, the card you raced and whether you unlocked its Spectre.") },
+        { icon: Star, label: tr("Burn Trips"), text: 'Star the rides you love; pick weekly or monthly and everything unstarred is wiped to save space. Your totals never change.' },
+        { icon: Sparkles, label: tr("Badge Trades"), text: tr("Badges are currency: spend 10 banked badge points for a spare trading-card copy to drop on the map. Kickbacks from collected drops feed the same wallet.") },
       ],
     },
     {
       id: 'garage',
-      title: "Mecha-Nick's Garage",
-      subtitle: 'Vehicles, Maintenance & Cards',
-      description: 'Every vehicle in your stable gets its own photo, odometer, service intervals and a trading card that levels up as you ride it.',
+      title: tr("Mecha-Nick's Garage"),
+      subtitle: tr("Vehicles, Maintenance & Cards"),
+      description: tr("Every vehicle in your stable gets its own photo, odometer, service intervals and a trading card that levels up as you ride it."),
       icon: Bike,
       color: 'accent',
       mockup: <GarageMockup />,
       cards: [
-        { icon: Bike, label: 'Your Vehicles', text: 'Photo, odometer and lifetime stats per machine.' },
-        { icon: Wrench, label: 'Maintenance', text: 'Chain, oil, brakes and tyres with bars that reset when serviced.' },
-        { icon: CalendarClock, label: 'Time Reminders', text: 'Set "every N months" alongside mileage — whichever comes first nags you.' },
-        { icon: Bell, label: 'Service Alerts', text: 'A notification when something\'s due soon or overdue: after the ride that takes it there, or on the day for time-based items.' },
-        { icon: History, label: 'Ride Assignment', text: 'Tag any ride to a vehicle and its stats roll up automatically.' },
-        { icon: Receipt, label: 'Logbook', text: 'A leather logbook per vehicle: keepers, lifetime stats, service record, highlights and every ride, page by page.' },
-        { icon: QrCode, label: 'Change Of Keeper', text: 'Selling up? Show the hand-over code for 10 seconds; the new keeper scans it and the logbook, card and stats go with the vehicle.' },
+        { icon: Bike, label: tr("Your Vehicles"), text: tr("Photo, odometer and lifetime stats per machine.") },
+        { icon: Wrench, label: tr("Maintenance"), text: tr("Chain, oil, brakes and tyres with bars that reset when serviced.") },
+        { icon: CalendarClock, label: tr("Time Reminders"), text: tr("Set \"every N months\" alongside mileage — whichever comes first nags you.") },
+        { icon: Bell, label: tr("Service Alerts"), text: tr("A notification when something's due soon or overdue: after the ride that takes it there, or on the day for time-based items.") },
+        { icon: History, label: tr("Ride Assignment"), text: tr("Tag any ride to a vehicle and its stats roll up automatically.") },
+        { icon: Receipt, label: tr("Logbook"), text: tr("A leather logbook per vehicle: keepers, lifetime stats, service record, highlights and every ride, page by page.") },
+        { icon: QrCode, label: tr("Change Of Keeper"), text: 'Selling up? Show the hand-over code for 10 seconds; the new keeper scans it and the logbook, card and stats go with the vehicle.' },
       ],
     },
     {
       id: 'trading-cards',
-      title: 'Trading Cards',
-      subtitle: 'Bronze To Orion',
-      description: 'Every vehicle earns a collectable card that levels up with your ride count — ten tiers, each with its own finish. Swipe to see the whole ladder.',
+      title: tr("Trading Cards"),
+      subtitle: tr("Bronze To Orion"),
+      description: tr("Every vehicle earns a collectable card that levels up with your ride count — ten tiers, each with its own finish. Swipe to see the whole ladder."),
       icon: Sparkles,
       color: 'accent',
       mockup: <TradingCardsMockup />,
       cards: [
-        { icon: Sparkles, label: 'Tier Ladder', text: 'Locked, Bronze, Silver, Gold, Platinum, Diamond, Ruby, Obsidian, Polyatomic, Orion.' },
-        { icon: Camera, label: 'Garage Shot', text: 'The card uses your garage placement and zoom, so it looks how you set it.' },
-        { icon: QrCode, label: 'Share & Scan', text: 'Show your card QR — mates scan it straight into their vault.' },
-        { icon: Folder, label: 'Card Vault', text: 'Two sideways rows: Spectre cards, then your own card followed by everything you\'ve scanned. Tap any card to flip it: collected cards show their QR to pass on.' },
-        { icon: Ghost, label: 'Spectre Cards', text: 'Ghost versions of a rider\'s card, earned only by beating their time attack. Flip for your time, theirs and the margin. Never scanned or traded.' },
-        { icon: MapIcon, label: 'Card Drops', text: 'Spare copies — earned from tier milestones, crew challenges and 10-badge trades — can be planted on the Blacktop map, exactly where you\'re standing. Confirm with Yes / No, no map-pin fiddling.' },
-        { icon: MapPin, label: 'Go Collect', text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
-        { icon: Bell, label: 'Pickup Alerts', text: 'Get a notification the moment someone picks up a card you dropped.' },
-        { icon: IdCard, label: 'Hot-Spots', text: 'Cards stacked at one spot merge into a heat-coloured hot-spot with a count badge — tap it for a two-column list and collect them all at once.' },
+        { icon: Sparkles, label: tr("Tier Ladder"), text: tr("Locked, Bronze, Silver, Gold, Platinum, Diamond, Ruby, Obsidian, Polyatomic, Orion.") },
+        { icon: Camera, label: tr("Garage Shot"), text: tr("The card uses your garage placement and zoom, so it looks how you set it.") },
+        { icon: QrCode, label: tr("Share & Scan"), text: tr("Show your card QR — mates scan it straight into their vault.") },
+        { icon: Folder, label: tr("Card Vault"), text: tr("Two sideways rows: Spectre cards, then your own card followed by everything you've scanned. Tap any card to flip it: collected cards show their QR to pass on.") },
+        { icon: Ghost, label: tr("Spectre Cards"), text: tr("Ghost versions of a rider's card, earned only by beating their time attack. Flip for your time, theirs and the margin. Never scanned or traded.") },
+        { icon: MapIcon, label: tr("Card Drops"), text: tr("Spare copies — earned from tier milestones, crew challenges and 10-badge trades — can be planted on the Blacktop map, exactly where you're standing. Confirm with Yes / No, no map-pin fiddling.") },
+        { icon: MapPin, label: tr("Go Collect"), text: 'Cards show as landmarks with distance and time away. Pull up beside one to scan it; collected cards get a green tick.' },
+        { icon: Bell, label: tr("Pickup Alerts"), text: tr("Get a notification the moment someone picks up a card you dropped.") },
+        { icon: IdCard, label: tr("Hot-Spots"), text: tr("Cards stacked at one spot merge into a heat-coloured hot-spot with a count badge — tap it for a two-column list and collect them all at once.") },
       ],
     },
     {
       id: 'card-challenges',
-      title: 'Card Challenges',
-      subtitle: 'Time Attack On A Dropped Card',
-      description: 'Drop a card with a challenge attached: a five-second countdown, then you ride your route and hit Finish. Anyone who pulls up to that card can ready up and race your line against your time.',
+      title: tr("Card Challenges"),
+      subtitle: tr("Time Attack On A Dropped Card"),
+      description: tr("Drop a card with a challenge attached: a five-second countdown, then you ride your route and hit Finish. Anyone who pulls up to that card can ready up and race your line against your time."),
       icon: Timer,
       color: 'accent',
       mockup: <CardChallengeMockup />,
       cards: [
-        { icon: Timer, label: 'Set The Line', text: 'Choose Yes + Challenge when you drop. Your spot is the start line, five seconds later the clock runs, and Finish challenge sets the finish where you stop.' },
-        { icon: Flag, label: 'Take It On', text: 'Pull up within pick-up range of the card, ready up, and race the stored route with a live delta against the time to beat.' },
-        { icon: Trophy, label: 'Beat It, Bank It', text: 'Beat the setter for 3x Speed Demon and their Spectre card. Lose and it is 1x Fallback. The normal card is still collected by scanning it.' },
-        { icon: Ghost, label: 'Race Yourself', text: 'Take on your own time attack to earn your own vehicle\'s Spectre card. No badges either way, so nobody can farm them.' },
-        { icon: AlertTriangle, label: 'Stay On Route', text: 'Stray more than 120m off the line for 15 seconds and the run is voided — Fallback earned, no time recorded.' },
-        { icon: Receipt, label: 'Pink Receipt', text: 'Every time-attack ride lands in history with a pink receipt: your time, the target, the delta and the card you raced.' },
-        { icon: Bell, label: 'Result Alerts', text: 'Set a time attack and you\'re notified whenever someone beats it, or races it and loses.' },
+        { icon: Timer, label: tr("Set The Line"), text: tr("Choose Yes + Challenge when you drop. Your spot is the start line, five seconds later the clock runs, and Finish challenge sets the finish where you stop.") },
+        { icon: Flag, label: tr("Take It On"), text: tr("Pull up within pick-up range of the card, ready up, and race the stored route with a live delta against the time to beat.") },
+        { icon: Trophy, label: tr("Beat It, Bank It"), text: tr("Beat the setter for 3x Speed Demon and their Spectre card. Lose and it is 1x Fallback. The normal card is still collected by scanning it.") },
+        { icon: Ghost, label: tr("Race Yourself"), text: tr("Take on your own time attack to earn your own vehicle's Spectre card. No badges either way, so nobody can farm them.") },
+        { icon: AlertTriangle, label: tr("Stay On Route"), text: tr("Stray more than 120m off the line for 15 seconds and the run is voided — Fallback earned, no time recorded.") },
+        { icon: Receipt, label: tr("Pink Receipt"), text: tr("Every time-attack ride lands in history with a pink receipt: your time, the target, the delta and the card you raced.") },
+        { icon: Bell, label: tr("Result Alerts"), text: tr("Set a time attack and you're notified whenever someone beats it, or races it and loses.") },
       ],
     },
     {
       id: 'track-pack',
-      title: 'Track Pack',
-      subtitle: 'Lap Timing With Your Pit Crew',
-      description: 'Pick a circuit from the library, build your own from the map or with a GPS lap, place the start/finish and sectors with a chase cam, then ready up: the timer starts itself at launch. Your pit crew scans your QR for live timing and a pit board.',
+      title: tr("Track Pack"),
+      subtitle: tr("Lap Timing With Your Pit Crew"),
+      description: tr("Pick a circuit from the library, build your own from the map or with a GPS lap, place the start/finish and sectors with a chase cam, then ready up: the timer starts itself at launch. Your pit crew scans your QR for live timing and a pit board."),
       icon: Zap,
       color: 'accent',
       mockup: <TrackPackMockup />,
       cards: [
-        { icon: Search, label: 'Circuit Library', text: '175 circuit layouts from around the world, from Brands Hatch Indy to Suzuka, searchable offline, nearest first.' },
-        { icon: MapIcon, label: 'Build From The Map', text: 'Box the circuit and Blacktop finds its roads and every lap they make (GP or Indy?). Tap to drop the ones you don\'t race.' },
-        { icon: Route, label: 'Or Ride A Lap', text: 'GPS follows you and closes the lap itself when you\'re back on your line.' },
-        { icon: Play, label: 'Chase Cam', text: 'Play, pause, rewind, speed up and reverse a camera round the lap to place the start/finish and sector markers. Sectors fill themselves in.' },
-        { icon: Star, label: 'Your Tracks', text: 'Previous, custom and favourite tracks in rows you swipe, each with a mini map, length and best lap.' },
-        { icon: Timer, label: 'Ready Up', text: 'Pick a track and ready up: timing begins the moment you launch. Live delta, coloured sectors, theoretical best.' },
-        { icon: QrCode, label: 'Pit Crew', text: 'They get the track the moment you pick it. Pit board calls are spoken in your helmet ("Box, box"), and your calls are spoken to them. Voice too.' },
-        { icon: Receipt, label: 'Track Day Receipts', text: 'Sessions print on blue stock in History, with lap traces, racing lines, corner scores and CSV/GPX export.' },
+        { icon: Search, label: tr("Circuit Library"), text: tr("175 circuit layouts from around the world, from Brands Hatch Indy to Suzuka, searchable offline, nearest first.") },
+        { icon: MapIcon, label: tr("Build From The Map"), text: tr("Box the circuit and Blacktop finds its roads and every lap they make (GP or Indy?). Tap to drop the ones you don't race.") },
+        { icon: Route, label: tr("Or Ride A Lap"), text: tr("GPS follows you and closes the lap itself when you're back on your line.") },
+        { icon: Play, label: tr("Chase Cam"), text: tr("Play, pause, rewind, speed up and reverse a camera round the lap to place the start/finish and sector markers. Sectors fill themselves in.") },
+        { icon: Star, label: tr("Your Tracks"), text: tr("Previous, custom and favourite tracks in rows you swipe, each with a mini map, length and best lap.") },
+        { icon: Timer, label: tr("Ready Up"), text: tr("Pick a track and ready up: timing begins the moment you launch. Live delta, coloured sectors, theoretical best.") },
+        { icon: QrCode, label: tr("Pit Crew"), text: tr("They get the track the moment you pick it. Pit board calls are spoken in your helmet (\"Box, box\"), and your calls are spoken to them. Voice too.") },
+        { icon: Receipt, label: tr("Track Day Receipts"), text: tr("Sessions print on blue stock in History, with lap traces, racing lines, corner scores and CSV/GPX export.") },
       ],
     },
     {
       id: 'blacktop-world',
-      title: 'Blacktop World',
-      subtitle: 'Your Crew Hub On A Globe',
-      description: 'Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade, the Speedshop and, down on the South Pole, the Blacktank — with an anonymous glow showing where riders are active.',
+      title: tr("Blacktop World"),
+      subtitle: tr("Your Crew Hub On A Globe"),
+      description: tr("Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade, the Speedshop and, down on the South Pole, the Blacktank — with an anonymous glow showing where riders are active."),
       icon: Globe2,
       color: 'accent',
       mockup: <BlacktopWorldMockup />,
       cards: [
-        { icon: Users, label: 'Crew Convoys', text: 'A live list of your crew\'s open rides — tap for leader and riders.' },
-        { icon: Trophy, label: 'Crew Leaderboards', text: 'Named rankings for distance, top speed, lean, rides and arcade, updated after every ride. Get a heads-up when a mate passes you.' },
-        { icon: Folder, label: 'Crew QR & Cards', text: 'Scan a mate\'s QR to join their crew, or their card to collect it.' },
-        { icon: Flag, label: 'Challenges', text: 'Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year. Notifications for targets hit, results and a 5-days-left nudge.' },
-        { icon: Gamepad2, label: 'Arcade', text: 'Hit Heavy, Petrol Head and Derez Legacy — personal bests and win tallies saved locally.' },
-        { icon: Fuel, label: 'Blacktank', text: 'On the South Pole: your crew\'s shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.' },
-        { icon: ShoppingBag, label: 'Speedshop', text: 'Printed cards, receipts, hoodies, keychains and logbooks, previewed with your own stuff. Opening soon, so vote on what it should stock.' },
+        { icon: Users, label: tr("Crew Convoys"), text: tr("A live list of your crew's open rides — tap for leader and riders.") },
+        { icon: Trophy, label: tr("Crew Leaderboards"), text: tr("Named rankings for distance, top speed, lean, rides and arcade, updated after every ride. Get a heads-up when a mate passes you.") },
+        { icon: Folder, label: tr("Crew QR & Cards"), text: tr("Scan a mate's QR to join their crew, or their card to collect it.") },
+        { icon: Flag, label: tr("Challenges"), text: tr("Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year. Notifications for targets hit, results and a 5-days-left nudge.") },
+        { icon: Gamepad2, label: tr("Arcade"), text: tr("Hit Heavy, Petrol Head and Derez Legacy — personal bests and win tallies saved locally.") },
+        { icon: Fuel, label: tr("Blacktank"), text: tr("On the South Pole: your crew's shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.") },
+        { icon: ShoppingBag, label: tr("Speedshop"), text: tr("Printed cards, receipts, hoodies, keychains and logbooks, previewed with your own stuff. Opening soon, so vote on what it should stock.") },
       ],
     },
     {
       id: 'speedshop',
-      title: 'Speedshop',
-      subtitle: 'Help Stock The Shelves',
-      description: 'A landmark on the Blacktop World globe. Step into the garage and flick through what\'s coming, each piece shown with your own card, ride and logbook. Nothing\'s for sale yet: tell us what you\'d buy and what you\'d pay.',
+      title: tr("Speedshop"),
+      subtitle: tr("Help Stock The Shelves"),
+      description: tr("A landmark on the Blacktop World globe. Step into the garage and flick through what's coming, each piece shown with your own card, ride and logbook. Nothing's for sale yet: tell us what you'd buy and what you'd pay."),
       icon: ShoppingBag,
       color: 'accent',
       mockup: <SpeedshopMockup />,
       cards: [
-        { icon: IdCard, label: 'Your Stuff', text: 'Printed vehicle card, ride receipt, crew hoodie, card keychain and a bound logbook, previewed with your own data.' },
-        { icon: ChevronRight, label: 'Flick Through', text: 'Arrows under the garage floor, or swipe, to move between items.' },
-        { icon: Check, label: 'Vote', text: 'I\'d buy it, Maybe or Not for me, then what you\'d pay. See how other riders voted.' },
-        { icon: MessageSquare, label: 'Suggest', text: 'Something missing? The last slot takes your ideas.' },
+        { icon: IdCard, label: tr("Your Stuff"), text: tr("Printed vehicle card, ride receipt, crew hoodie, card keychain and a bound logbook, previewed with your own data.") },
+        { icon: ChevronRight, label: tr("Flick Through"), text: tr("Arrows under the garage floor, or swipe, to move between items.") },
+        { icon: Check, label: tr("Vote"), text: tr("I'd buy it, Maybe or Not for me, then what you'd pay. See how other riders voted.") },
+        { icon: MessageSquare, label: tr("Suggest"), text: tr("Something missing? The last slot takes your ideas.") },
       ],
     },
     {
       id: 'legacy-derez',
-      title: 'Derez Legacy',
-      subtitle: 'Tron-Style Light-Bike Arena',
-      description: 'Two or more riders draw a live arena on the map, ready up, then ride inside it. Your GPS trail becomes a glowing wall in your accent colour — crash into someone else\'s line and you\'re out.',
+      title: tr("Derez Legacy"),
+      subtitle: tr("Tron-Style Light-Bike Arena"),
+      description: tr("Two or more riders draw a live arena on the map, ready up, then ride inside it. Your GPS trail becomes a glowing wall in your accent colour — crash into someone else's line and you're out."),
       icon: Gamepad2,
       color: 'accent',
       mockup: <DerezMockup />,
       cards: [
-        { icon: MapIcon, label: 'Draw The Grid', text: 'The lobby leader freehands the game space on a map — a car park, a lot, any closed loop.' },
-        { icon: Users, label: 'Ready Up', text: 'Everyone joins by code or QR, picks an accent colour, then taps Ready.' },
-        { icon: Zap, label: 'Live Trails', text: 'High-frequency GPS paints a wall behind every rider in their own colour.' },
-        { icon: Skull, label: 'Crash Out', text: 'Hit another wall or leave the arena for 5 seconds and you lose a life.' },
-        { icon: Trophy, label: 'Last Rider Wins', text: 'Winner gets the round, wins are banked to the Arcade tile.' },
+        { icon: MapIcon, label: tr("Draw The Grid"), text: tr("The lobby leader freehands the game space on a map — a car park, a lot, any closed loop.") },
+        { icon: Users, label: tr("Ready Up"), text: tr("Everyone joins by code or QR, picks an accent colour, then taps Ready.") },
+        { icon: Zap, label: tr("Live Trails"), text: tr("High-frequency GPS paints a wall behind every rider in their own colour.") },
+        { icon: Skull, label: tr("Crash Out"), text: tr("Hit another wall or leave the arena for 5 seconds and you lose a life.") },
+        { icon: Trophy, label: tr("Last Rider Wins"), text: tr("Winner gets the round, wins are banked to the Arcade tile.") },
       ],
     },
     {
       id: 'radio',
-      title: 'Blacktop Radio',
-      subtitle: 'Your Music, GTA-Style Dial',
-      description: 'Build stations from the audio files already on your device, then spin a radio dial mid-ride without ever leaving the screen. Nothing is uploaded and no streaming account is needed.',
+      title: tr("Blacktop Radio"),
+      subtitle: tr("Your Music, GTA-Style Dial"),
+      description: tr("Build stations from the audio files already on your device, then spin a radio dial mid-ride without ever leaving the screen. Nothing is uploaded and no streaming account is needed."),
       icon: Radio,
       color: 'accent',
       mockup: <RadioMockup />,
       cards: [
-        { icon: FolderOpen, label: 'Your Files', text: 'Pick tracks or a whole folder from your phone — they never leave it.' },
-        { icon: Palette, label: 'Name & Colour', text: 'Each station gets a name, an icon and one of the eight accent colours.' },
-        { icon: Radio, label: 'Spin The Dial', text: 'Hold the radio button on a ride or the map to open the wheel and switch instantly.' },
-        { icon: ListMusic, label: 'Lock Screen', text: 'Shuffled playback with play, skip and track name on your lock screen.' },
+        { icon: FolderOpen, label: tr("Your Files"), text: tr("Pick tracks or a whole folder from your phone — they never leave it.") },
+        { icon: Palette, label: tr("Name & Colour"), text: tr("Each station gets a name, an icon and one of the eight accent colours.") },
+        { icon: Radio, label: tr("Spin The Dial"), text: tr("Hold the radio button on a ride or the map to open the wheel and switch instantly.") },
+        { icon: ListMusic, label: tr("Lock Screen"), text: tr("Shuffled playback with play, skip and track name on your lock screen.") },
       ],
     },
     {
       id: 'pay-up',
-      title: 'Pay Up',
-      subtitle: 'Support The Developer Or Send Fuel Money',
-      description: 'No ads, no subscription. Chip into Blacktank, your crew’s shared fuel pot, or flip between Receive to show your own wallet QR and Send to scan someone else’s, then hand off to Nimiq Pay. Everything stays local — no backend wallet or accounts.',
+      title: tr("Pay Up"),
+      subtitle: tr("Support The Developer Or Send Fuel Money"),
+      description: tr("No ads, no subscription. Chip into Blacktank, your crew’s shared fuel pot, or flip between Receive to show your own wallet QR and Send to scan someone else’s, then hand off to Nimiq Pay. Everything stays local — no backend wallet or accounts."),
       icon: Heart,
       color: 'accent',
       mockup: <PayUpMockup />,
       cards: [
-        { icon: Fuel, label: 'Blacktank', text: 'Your crew’s shared fuel pot — chip in NIM or USDT, and every withdrawal needs a unanimous crew vote.' },
-        { icon: QrCode, label: 'Your Own QR', text: 'Save your wallet once and show your code with the address underneath.' },
-        { icon: Users, label: 'Send Or Receive', text: 'One toggle swaps between your code and the scanner for theirs.' },
-        { icon: Wallet, label: 'NIM Or USDT', text: 'Pay with Nimiq or Polygon USDT — Nimiq Pay handles the transaction.' },
-        { icon: Heart, label: 'No Fees To Us', text: '100% of the tip goes to the payee. Blacktop never takes a cut.' },
+        { icon: Fuel, label: tr("Blacktank"), text: tr("Your crew’s shared fuel pot — chip in NIM or USDT, and every withdrawal needs a unanimous crew vote.") },
+        { icon: QrCode, label: tr("Your Own QR"), text: tr("Save your wallet once and show your code with the address underneath.") },
+        { icon: Users, label: tr("Send Or Receive"), text: tr("One toggle swaps between your code and the scanner for theirs.") },
+        { icon: Wallet, label: tr("NIM Or USDT"), text: tr("Pay with Nimiq or Polygon USDT — Nimiq Pay handles the transaction.") },
+        { icon: Heart, label: tr("No Fees To Us"), text: tr("100% of the tip goes to the payee. Blacktop never takes a cut.") },
       ],
 
     },
     {
       id: 'make-it-yours',
-      title: 'Make It Yours',
-      subtitle: 'Settings, Display & Support',
-      description: 'Eight accent colours, your units, your speed alert thresholds — plus a car-display layout for wired mirroring and an install-to-home-screen build.',
+      title: tr("Make It Yours"),
+      subtitle: tr("Settings, Display & Support"),
+      description: tr("Eight accent colours, your units, your speed alert thresholds — plus a car-display layout for wired mirroring and an install-to-home-screen build."),
       icon: Settings,
       color: 'accent',
       mockup: <PersonaliseMockup />,
       cards: [
-        { icon: Palette, label: 'Accent Colours', text: 'Eight themes that recolour speed, dots and gauges app-wide.' },
-        { icon: Ruler, label: 'Units & Alerts', text: 'MPH or KPH, miles or km, plus amber and red speed thresholds.' },
-        { icon: MonitorSmartphone, label: 'Car Display', text: 'Oversized landscape layout for wired Android head-unit mirroring.' },
-        { icon: Download, label: 'Install App', text: 'Add Blacktop to your home screen for a full-screen, offline-ready ride.' },
-        { icon: Bell, label: 'Notifications', text: 'One switch per alert type, plus a test you can send with the app closed.' },
-        { icon: Globe2, label: 'Your Language', text: 'Tap the BT logo in Settings to switch the whole app to your language.' },
-        { icon: Play, label: 'Demo Data', text: 'Hold the logo in settings to preview the app with sample stats.' },
-        { icon: Sparkles, label: 'Living Backdrop', text: 'The BLACKTOP wordmark drifts behind every screen, surges when you tap, follows your scrolling and speeds up with you on the ride. Pull down from the top to refresh.' },
-        { icon: Heart, label: 'Tip Jar', text: 'No ads, no subscription — support the app only if you want to.' },
+        { icon: Palette, label: tr("Accent Colours"), text: tr("Eight themes that recolour speed, dots and gauges app-wide.") },
+        { icon: Ruler, label: tr("Units & Alerts"), text: tr("MPH or KPH, miles or km, plus amber and red speed thresholds.") },
+        { icon: MonitorSmartphone, label: tr("Car Display"), text: tr("Oversized landscape layout for wired Android head-unit mirroring.") },
+        { icon: Download, label: tr("Install App"), text: tr("Add Blacktop to your home screen for a full-screen, offline-ready ride.") },
+        { icon: Bell, label: tr("Notifications"), text: tr("One switch per alert type, plus a test you can send with the app closed.") },
+        { icon: Globe2, label: tr("Your Language"), text: tr("Tap the BT logo in Settings to switch the whole app to your language.") },
+        { icon: Play, label: tr("Demo Data"), text: tr("Hold the logo in settings to preview the app with sample stats.") },
+        { icon: Sparkles, label: tr("Living Backdrop"), text: tr("The BLACKTOP wordmark drifts behind every screen, surges when you tap, follows your scrolling and speeds up with you on the ride. Pull down from the top to refresh.") },
+        { icon: Heart, label: tr("Tip Jar"), text: tr("No ads, no subscription — support the app only if you want to.") },
       ],
     },
     {
       id: 'privacy',
-      title: 'Burn Button',
-      subtitle: 'Your Data, Your Control',
-      description: 'Everything lives on your device by default. Burn permanently deletes all of it, on your phone and on our servers: rides, tracks, cards, saved places, reports, photos, settings, all of it. Burning the demo account just takes you back to yours.',
+      title: tr("Burn Button"),
+      subtitle: tr("Your Data, Your Control"),
+      description: tr("Everything lives on your device by default. Burn permanently deletes all of it, on your phone and on our servers: rides, tracks, cards, saved places, reports, photos, settings, all of it. Burning the demo account just takes you back to yours."),
       icon: Flame,
       color: 'burn',
       mockup: <BurnMockup />
     },
     {
       id: 'complete',
-      title: 'Ready to Ride?',
-      subtitle: 'Start Your First Convoy',
-      description: 'Everything you need for group rides. No signup, no tracking, no ads. Just you and the road.',
+      title: tr("Ready to Ride?"),
+      subtitle: tr("Start Your First Convoy"),
+      description: tr("Everything you need for group rides. No signup, no tracking, no ads. Just you and the road."),
       icon: Play,
       color: 'accent',
       mockup: <CompleteMockup />
@@ -490,7 +491,7 @@ export default function DemoShowcase() {
             isFirstSlide ? "opacity-0 pointer-events-none" : "opacity-70 hover:opacity-100"
           )}
         >
-          Back
+          {tr("Back")}
         </button>
         <div className="flex items-center gap-1.5">
           {features.map((_, i) => (
@@ -511,7 +512,7 @@ export default function DemoShowcase() {
           onClick={exitDemo}
           className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity"
         >
-          Skip
+          {tr("Skip")}
         </button>
       </header>
 
@@ -529,7 +530,7 @@ export default function DemoShowcase() {
             haptics.light();
             setCurrentIndex(next);
           }}
-          aria-label="Jump to slide"
+          aria-label={tr("Jump to slide")}
           className="demo-scrubber w-full"
         />
       </div>
@@ -625,14 +626,14 @@ export default function DemoShowcase() {
             onClick={startApp}
             className="w-full h-14 text-lg font-semibold rounded-2xl bg-accent hover:bg-accent/90 text-accent-foreground"
           >
-            Get Started
+            {tr("Get Started")}
           </Button>
         ) : (
           <Button 
             onClick={goNext}
             className="w-full h-14 text-lg font-semibold rounded-2xl bg-accent hover:bg-accent/90 text-accent-foreground group"
           >
-            <span>Continue</span>
+            <span>{tr("Continue")}</span>
             <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
           </Button>
         )}
@@ -645,12 +646,12 @@ export default function DemoShowcase() {
 
 function IntroMockup() {
   const features = [
-    { icon: Users, label: 'Convoy' },
-    { icon: Mic, label: 'Voice' },
-    { icon: Route, label: 'Routes' },
-    { icon: Gauge, label: 'Tracking' },
-    { icon: Trophy, label: 'Badges' },
-    { icon: Shield, label: 'Privacy' },
+    { icon: Users, label: tr("Convoy") },
+    { icon: Mic, label: tr("Voice") },
+    { icon: Route, label: tr("Routes") },
+    { icon: Gauge, label: tr("Tracking") },
+    { icon: Trophy, label: tr("Badges") },
+    { icon: Shield, label: tr("Privacy") },
   ];
 
   return (
@@ -668,7 +669,7 @@ function IntroMockup() {
         ))}
       </div>
       <div className="mt-4 p-3 bg-accent/10 rounded-xl border border-accent/20 animate-slide-up delay-500">
-        <p className="text-xs text-center text-accent">🔒 No sign-up required</p>
+        <p className="text-xs text-center text-accent">{tr("🔒 No sign-up required")}</p>
       </div>
     </div>
   );
@@ -686,13 +687,13 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
       {/* Code Card */}
       <div className="frost rounded-2xl border border-border/30 p-5 animate-slide-up">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center mb-3">
-          Convoy Code
+          {tr("Convoy Code")}
         </p>
         <button 
           onClick={onCopy}
           className="w-full flex items-center justify-center gap-3"
         >
-          <span className="font-mono text-3xl font-semibold tracking-[0.15em]">XK7M9P</span>
+          <span className="font-mono text-3xl font-semibold tracking-[0.15em]">{tr("XK7M9P")}</span>
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
             copied ? "bg-accent" : "bg-secondary"
@@ -709,9 +710,9 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
       {/* Lobby tools */}
       <div className="grid grid-cols-3 gap-2 animate-slide-up delay-100">
         {[
-          { icon: QrCode, label: 'QR Join' },
-          { icon: MessageSquare, label: 'Lobby Chat' },
-          { icon: Lock, label: 'Crew Listed' },
+          { icon: QrCode, label: tr("QR Join") },
+          { icon: MessageSquare, label: tr("Lobby Chat") },
+          { icon: Lock, label: tr("Crew Listed") },
         ].map(({ icon: Icon, label }) => (
           <div key={label} className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl frost border border-border/30">
             <Icon className="w-4 h-4 text-accent" />
@@ -723,7 +724,7 @@ function ConvoyMockup({ copied, onCopy }: { copied: boolean; onCopy: () => void 
       {/* Members Preview */}
       <div className="space-y-2 animate-slide-up delay-200">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-          Members (4/8)
+          {tr("Members (4/8)")}
         </p>
         {[
           { name: 'You', isLeader: true, color: 'bg-orange-500' },
@@ -865,9 +866,9 @@ function MapsMockup() {
           <div className="min-w-0">
             <p className="text-[12px] font-black leading-none tabular-nums">
               {Math.max(50, 450 - ((tick * 10) % 400))}
-              <span className="text-[8px] text-muted-foreground ml-0.5">ft</span>
+              <span className="text-[8px] text-muted-foreground ml-0.5">{tr("ft")}</span>
             </p>
-            <p className="text-[9px] font-semibold truncate">Turn right onto Ridge Road</p>
+            <p className="text-[9px] font-semibold truncate">{tr("Turn right onto Ridge Road")}</p>
           </div>
         </div>
 
@@ -927,13 +928,13 @@ function MapsMockup() {
         {/* Speed badge */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-xl bg-card/95 border border-border/40 flex items-baseline gap-1 animate-slide-up delay-200">
           <span className="font-mono font-bold text-sm transition-all duration-300">{speed}</span>
-          <span className="text-[8px] text-muted-foreground">MPH</span>
+          <span className="text-[8px] text-muted-foreground">{tr("MPH")}</span>
         </div>
 
       </div>
 
       <div className="p-3 bg-accent/10 rounded-xl border border-accent/20 animate-fade-in delay-300">
-        <p className="text-xs text-center text-accent">Glows in their color when a rider talks · camera eyes warn you ahead</p>
+        <p className="text-xs text-center text-accent">{tr("Glows in their color when a rider talks · camera eyes warn you ahead")}</p>
       </div>
     </div>
   );
@@ -990,9 +991,9 @@ function TrackingMockup() {
       {/* Lean & G gauges */}
       <div className="flex justify-center gap-3 animate-slide-up delay-100">
         <div className="frost rounded-xl px-4 py-2 border border-border/30">
-          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Lean</p>
+          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{tr("Lean")}</p>
           <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
-            {Math.abs(lean)}°{lean < 0 ? ' L' : ' R'} <span className="text-[9px] text-muted-foreground">max {maxLean}°</span>
+            {Math.abs(lean)}°{lean < 0 ? tr(" L") : tr(" R")} <span className="text-[9px] text-muted-foreground">{tr("max")}{" "}{maxLean}°</span>
           </p>
           <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden relative">
             <div
@@ -1002,9 +1003,9 @@ function TrackingMockup() {
           </div>
         </div>
         <div className="frost rounded-xl px-4 py-2 border border-border/30">
-          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">G-Force</p>
+          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{tr("G-Force")}</p>
           <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
-            {gForce.toFixed(2)}G <span className="text-[9px] text-muted-foreground">max {maxG.toFixed(1)}G</span>
+            {gForce.toFixed(2)}{tr("G")}{" "}<span className="text-[9px] text-muted-foreground">{tr("max")}{" "}{maxG.toFixed(1)}{tr("G")}</span>
           </p>
           <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden">
             <div
@@ -1018,16 +1019,16 @@ function TrackingMockup() {
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-3 animate-slide-up delay-200">
         <div className="frost rounded-xl p-3 border border-border/30">
-          <p className="text-xs text-muted-foreground mb-1">Distance</p>
+          <p className="text-xs text-muted-foreground mb-1">{tr("Distance")}</p>
           <p className="font-mono text-lg font-semibold">{formatDistance(distance, settings.distanceUnit)}</p>
           <p className="text-[10px] text-muted-foreground">{dLabel}</p>
         </div>
         <div className="frost rounded-xl p-3 border border-border/30">
-          <p className="text-xs text-muted-foreground mb-1">Time</p>
+          <p className="text-xs text-muted-foreground mb-1">{tr("Time")}</p>
           <p className="font-mono text-lg font-semibold">{mmss}</p>
         </div>
         <div className="frost rounded-xl p-3 border border-border/30">
-          <p className="text-xs text-muted-foreground mb-1">Max</p>
+          <p className="text-xs text-muted-foreground mb-1">{tr("Max")}</p>
           <p className="font-mono text-lg font-semibold">{formatSpeed(maxSpeed, settings.speedUnit)}</p>
           <p className="text-[10px] text-muted-foreground">{sLabel}</p>
         </div>
@@ -1060,21 +1061,21 @@ function RescueMockup() {
         <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 animate-scale-in">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-semibold text-white">J</span>
+              <span className="text-sm font-semibold text-white">{tr("J")}</span>
             </div>
             <div className="flex-1">
-              <p className="font-medium text-destructive">Jake needs rescue!</p>
+              <p className="font-medium text-destructive">{tr("Jake needs rescue!")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Location shared • 2.4 mi away
+                {tr("Location shared • 2.4 mi away")}
               </p>
             </div>
           </div>
           <div className="flex gap-2 mt-4">
             <div className="flex-1 py-2 bg-destructive/20 rounded-xl text-center">
-              <span className="text-xs font-medium text-destructive">Add Waypoint</span>
+              <span className="text-xs font-medium text-destructive">{tr("Add Waypoint")}</span>
             </div>
             <div className="flex-1 py-2 bg-secondary/50 rounded-xl text-center">
-              <span className="text-xs font-medium text-muted-foreground">Dismiss</span>
+              <span className="text-xs font-medium text-muted-foreground">{tr("Dismiss")}</span>
             </div>
           </div>
         </div>
@@ -1082,10 +1083,10 @@ function RescueMockup() {
 
       <div className="text-center animate-fade-in delay-500 space-y-1">
         <p className="text-xs text-muted-foreground">
-          Rescue alerts reach the whole convoy
+          {tr("Rescue alerts reach the whole convoy")}
         </p>
         <p className="text-[10px] text-muted-foreground/70">
-          Lives in the map control row — never next to End Ride
+          {tr("Lives in the map control row — never next to End Ride")}
         </p>
       </div>
     </div>
@@ -1115,9 +1116,9 @@ function MiniReceipt({ timeAttack }: { timeAttack?: boolean }) {
       <div className={cn('receipt-edge-top', timeAttack && 'receipt-edge-timeattack')} />
       <div className={cn('receipt px-4 py-3 font-receipt text-[--ink]', timeAttack && 'receipt-timeattack')}>
         <div className="text-center">
-          <div className="text-xl font-bold tracking-[0.15em]">BLACKTOP STORE</div>
+          <div className="text-xl font-bold tracking-[0.15em]">{tr("BLACKTOP STORE")}</div>
           <div className="text-[10px] tracking-[0.28em] opacity-70 mt-0.5">
-            {timeAttack ? '— TIME ATTACK RECEIPT —' : '— RIDE RECEIPT —'}
+            {timeAttack ? tr("— TIME ATTACK RECEIPT —") : tr("— RIDE RECEIPT —")}
           </div>
         </div>
         <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
@@ -1133,14 +1134,14 @@ function MiniReceipt({ timeAttack }: { timeAttack?: boolean }) {
         <div className="my-2 border-t-2 border-dashed border-[--ink] opacity-60" />
         {timeAttack ? (
           <div className="text-center">
-            <div className="text-sm tracking-[0.2em] font-bold">WON · SPECTRE UNLOCKED</div>
-            <div className="text-[10px] opacity-70 mt-0.5">RICO&rsquo;S PANIGALE · GOLD</div>
-            <div className="text-[10px] opacity-70">3x SPEED DEMON</div>
+            <div className="text-sm tracking-[0.2em] font-bold">{tr("WON · SPECTRE UNLOCKED")}</div>
+            <div className="text-[10px] opacity-70 mt-0.5">{tr("RICO&rsquo;S PANIGALE · GOLD")}</div>
+            <div className="text-[10px] opacity-70">{tr("3x SPEED DEMON")}</div>
           </div>
         ) : (
           <div className="text-center">
-            <div className="text-sm tracking-[0.2em]">THANK YOU FOR THE RIDE</div>
-            <div className="text-[10px] opacity-60 tracking-widest mt-0.5">ORDER #4C1A9F</div>
+            <div className="text-sm tracking-[0.2em]">{tr("THANK YOU FOR THE RIDE")}</div>
+            <div className="text-[10px] opacity-60 tracking-widest mt-0.5">{tr("ORDER #4C1A9F")}</div>
           </div>
         )}
         <div className="receipt-barcode mt-2" aria-hidden />
@@ -1197,7 +1198,7 @@ function HistoryMockup() {
       </div>
       <div className="flex items-center justify-center gap-2 animate-fade-in delay-400">
         <Video className="w-4 h-4 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground">Swipe: rides, receipt & pink time-attack receipt</p>
+        <p className="text-xs text-muted-foreground">{tr("Swipe: rides, receipt & pink time-attack receipt")}</p>
       </div>
     </div>
   );
@@ -1206,12 +1207,12 @@ function HistoryMockup() {
 
 function BlacktopWorldMockup() {
   const landmarks = [
-    { label: 'Crew Convoys', top: '18%', left: '12%' },
-    { label: 'Crew Leaderboards', top: '12%', right: '8%' },
-    { label: 'Join Crew', bottom: '26%', left: '8%' },
-    { label: 'Crew QR', bottom: '20%', right: '10%' },
-    { label: 'Speedshop', top: '34%', right: '4%' },
-    { label: 'Blacktank', bottom: '5%', left: '36%' },
+    { label: tr("Crew Convoys"), top: '18%', left: '12%' },
+    { label: tr("Crew Leaderboards"), top: '12%', right: '8%' },
+    { label: tr("Join Crew"), bottom: '26%', left: '8%' },
+    { label: tr("Crew QR"), bottom: '20%', right: '10%' },
+    { label: tr("Speedshop"), top: '34%', right: '4%' },
+    { label: tr("Blacktank"), bottom: '5%', left: '36%' },
   ];
   return (
     <div className="w-full max-w-xs space-y-3">
@@ -1227,7 +1228,7 @@ function BlacktopWorldMockup() {
         </div>
         <div className="absolute top-2 left-2 right-2 flex justify-center pointer-events-none">
           <div className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm border border-white/[0.06]">
-            <span className="text-[8px] tracking-[0.2em] uppercase text-white/60">crew hub</span>
+            <span className="text-[8px] tracking-[0.2em] uppercase text-white/60">{tr("crew hub")}</span>
           </div>
         </div>
         {/* Crew landmarks — beacon dot + label chip, like the real globe */}
@@ -1245,7 +1246,7 @@ function BlacktopWorldMockup() {
         ))}
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        Tap a landmark to jump in — long-press the home globe to launch
+        {tr("Tap a landmark to jump in — long-press the home globe to launch")}
       </p>
     </div>
   );
@@ -1318,7 +1319,7 @@ function DerezMockup() {
               <g key={`death-${i}`}>
                 <circle cx={p.x} cy={p.y} r={4 + burst * 12} fill="none" stroke={r.color} strokeWidth={2 * fade} opacity={fade} />
                 <circle cx={p.x} cy={p.y} r={2.5} fill="#fff" opacity={fade} />
-                <text x={p.x} y={p.y - 7} textAnchor="middle" fontSize="5.5" fill={r.color} opacity={fade} fontWeight="700">DEREZ!</text>
+                <text x={p.x} y={p.y - 7} textAnchor="middle" fontSize="5.5" fill={r.color} opacity={fade} fontWeight="700">{tr("DEREZ!")}</text>
               </g>
             );
           })}
@@ -1330,7 +1331,7 @@ function DerezMockup() {
             return (
               <g>
                 <circle cx={pt.x} cy={pt.y} r={pulse + 3} fill="none" stroke={winner.color} strokeWidth="1" opacity="0.7" />
-                <text x={pt.x} y={pt.y - 8} textAnchor="middle" fontSize="6" fill={winner.color} fontWeight="800">WINNER!</text>
+                <text x={pt.x} y={pt.y - 8} textAnchor="middle" fontSize="6" fill={winner.color} fontWeight="800">{tr("WINNER!")}</text>
               </g>
             );
           })()}
@@ -1353,11 +1354,11 @@ function DerezMockup() {
 
         {/* Status chip */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-accent/30 text-[10px] font-semibold text-accent">
-          {t < 0.6 ? '3 riders live' : t < 0.68 ? 'Pink derezzed!' : t < 0.78 ? '2 riders live' : t < 0.86 ? 'Orange derezzed!' : 'Blue wins!'}
+          {t < 0.6 ? tr("3 riders live") : t < 0.68 ? tr("Pink derezzed!") : t < 0.78 ? tr("2 riders live") : t < 0.86 ? tr("Orange derezzed!") : tr("Blue wins!")}
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        Leader draws the arena · riders leave coloured walls · hit a wall and you derez
+        {tr("Leader draws the arena · riders leave coloured walls · hit a wall and you derez")}
       </p>
     </div>
   );
@@ -1440,24 +1441,24 @@ function BurnMockup() {
           "py-2 px-4 rounded-xl text-sm transition-all duration-500",
           burned ? "bg-[hsl(var(--burn))]/10 text-[hsl(var(--burn))]" : "bg-secondary text-muted-foreground"
         )}>
-          {burned ? '✓ All data deleted' : 'Ride history'}
+          {burned ? tr("✓ All data deleted") : tr("Ride history")}
         </div>
         <div className={cn(
           "py-2 px-4 rounded-xl text-sm transition-all duration-500 delay-100",
           burned ? "bg-[hsl(var(--burn))]/10 text-[hsl(var(--burn))]" : "bg-secondary text-muted-foreground"
         )}>
-          {burned ? '✓ All data deleted' : 'Statistics'}
+          {burned ? tr("✓ All data deleted") : tr("Statistics")}
         </div>
         <div className={cn(
           "py-2 px-4 rounded-xl text-sm transition-all duration-500 delay-200",
           burned ? "bg-[hsl(var(--burn))]/10 text-[hsl(var(--burn))]" : "bg-secondary text-muted-foreground"
         )}>
-          {burned ? '✓ All data deleted' : 'Convoy data'}
+          {burned ? tr("✓ All data deleted") : tr("Convoy data")}
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground animate-fade-in delay-500">
-        Irreversible
+        {tr("Irreversible")}
       </p>
     </div>
   );
@@ -1473,15 +1474,15 @@ function CompleteMockup() {
       <div className="space-y-4 animate-slide-up delay-200">
         <div className="flex items-center justify-center gap-3">
           <Shield className="w-5 h-5 text-accent" />
-          <span className="text-sm">No signup required</span>
+          <span className="text-sm">{tr("No signup required")}</span>
         </div>
         <div className="flex items-center justify-center gap-3">
           <Eye className="w-5 h-5 text-accent" />
-          <span className="text-sm">No tracking or ads</span>
+          <span className="text-sm">{tr("No tracking or ads")}</span>
         </div>
         <div className="flex items-center justify-center gap-3">
           <Phone className="w-5 h-5 text-accent" />
-          <span className="text-sm">Data stays on device</span>
+          <span className="text-sm">{tr("Data stays on device")}</span>
         </div>
       </div>
     </div>
@@ -1499,11 +1500,11 @@ function GarageMockup() {
     <div className="w-full max-w-xs space-y-3">
       {/* Mecha-Nick's garage diorama */}
       <div className="relative h-32 rounded-2xl overflow-hidden border border-border/30 animate-slide-up">
-        <img src={shopAsset.url} alt="Mecha-Nick's garage" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={shopAsset.url} alt={tr("Mecha-Nick's garage")} className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/25" />
-        <img src={demoBikeAsset.url} alt="Red pixel-art bike" className="absolute bottom-1 left-1/2 -translate-x-1/2 h-24 object-contain" />
+        <img src={demoBikeAsset.url} alt={tr("Red pixel-art bike")} className="absolute bottom-1 left-1/2 -translate-x-1/2 h-24 object-contain" />
         <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm border border-white/10">
-          <span className="text-[8px] uppercase tracking-[0.2em] text-white/70">Mecha-Nick's</span>
+          <span className="text-[8px] uppercase tracking-[0.2em] text-white/70">{tr("Mecha-Nick's")}</span>
         </div>
       </div>
 
@@ -1526,7 +1527,7 @@ function GarageMockup() {
               <div className="flex items-center gap-2">
                 <p className="font-semibold truncate">{bike.name}</p>
                 {bike.active && (
-                  <span className="text-[10px] uppercase tracking-wide text-accent font-medium">Active</span>
+                  <span className="text-[10px] uppercase tracking-wide text-accent font-medium">{tr("Active")}</span>
                 )}
               </div>
               <p className="text-xs text-muted-foreground truncate">{bike.model}</p>
@@ -1534,7 +1535,7 @@ function GarageMockup() {
           </div>
           <div className="mt-3 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Odometer</span>
+              <span className="text-muted-foreground">{tr("Odometer")}</span>
               <span className="font-mono font-semibold">
                 {formatDistance(bike.km, settings.distanceUnit)} {getDistanceLabel(settings.distanceUnit)}
               </span>
@@ -1544,7 +1545,7 @@ function GarageMockup() {
               <div className="h-1.5 flex-1 rounded-full bg-secondary overflow-hidden">
                 <div className={cn("h-full", bike.active ? "bg-destructive" : "bg-accent")} style={{ width: bike.active ? '86%' : '34%' }} />
               </div>
-              <span className="text-[9px] text-muted-foreground">Chain</span>
+              <span className="text-[9px] text-muted-foreground">{tr("Chain")}</span>
             </div>
           </div>
         </div>
@@ -1572,8 +1573,8 @@ function NearbyMockup() {
       </div>
       <div className="mt-2 rounded-xl border border-border bg-card/95 divide-y divide-border/60">
         {[
-          { name: 'Ben', sub: '400 ft', cta: 'Invite', Icon: UserRound },
-          { name: "Eve's convoy", sub: '0.6 mi · 3 riders', cta: 'Merge', Icon: Users },
+          { name: 'Ben', sub: tr("400 ft"), cta: tr("Invite"), Icon: UserRound },
+          { name: "Eve's convoy", sub: tr("0.6 mi · 3 riders"), cta: tr("Merge"), Icon: Users },
         ].map(({ name, sub, cta, Icon }) => (
           <div key={name} className="flex items-center gap-2 px-2.5 py-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
@@ -1588,10 +1589,10 @@ function NearbyMockup() {
         ))}
       </div>
       <div className="mt-2 rounded-xl border border-accent/60 bg-card/95 px-2.5 py-2">
-        <p className="text-[11px] font-semibold">Ana wants to ride together</p>
+        <p className="text-[11px] font-semibold">{tr("Ana wants to ride together")}</p>
         <div className="mt-1.5 flex gap-1.5">
-          <span className="flex-1 text-center py-1 rounded-md bg-foreground text-background text-[10px] font-semibold">Accept</span>
-          <span className="flex-1 text-center py-1 rounded-md bg-secondary text-[10px] font-semibold">Decline</span>
+          <span className="flex-1 text-center py-1 rounded-md bg-foreground text-background text-[10px] font-semibold">{tr("Accept")}</span>
+          <span className="flex-1 text-center py-1 rounded-md bg-secondary text-[10px] font-semibold">{tr("Decline")}</span>
         </div>
       </div>
     </div>
@@ -1603,19 +1604,19 @@ function PillionMockup() {
     <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden">
       <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-background border border-border">
         <span className="h-7 rounded-md flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-          <Bike className="w-3 h-3" /> Operator
+          <Bike className="w-3 h-3" />{" "}{tr("Operator")}
         </span>
         <span className="h-7 rounded-md flex items-center justify-center gap-1 text-[10px] font-semibold bg-accent text-accent-foreground">
-          <UserRound className="w-3 h-3" /> Passenger
+          <UserRound className="w-3 h-3" />{" "}{tr("Passenger")}
         </span>
       </div>
       <div className="flex flex-col items-center gap-1.5 py-3">
         <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-accent/60 flex items-center justify-center">
           <MicOff className="w-7 h-7 text-accent" />
         </div>
-        <p className="text-[10px] text-muted-foreground">Muted · tap to talk</p>
+        <p className="text-[10px] text-muted-foreground">{tr("Muted · tap to talk")}</p>
       </div>
-      <div className="rounded-lg bg-foreground text-background text-center py-1.5 text-xs font-semibold">👋 Wave</div>
+      <div className="rounded-lg bg-foreground text-background text-center py-1.5 text-xs font-semibold">{tr("👋 Wave")}</div>
       <div className="mt-1.5 grid grid-cols-4 gap-1.5">
         {['👍', '🔥', '🛑', '⛽'].map((e) => (
           <div key={e} className="aspect-square rounded-lg bg-background border border-border flex items-center justify-center text-lg">
@@ -1624,7 +1625,7 @@ function PillionMockup() {
         ))}
       </div>
       <div className="mt-2 rounded-lg border-2 border-destructive/60 text-destructive text-center py-1.5 text-[11px] font-semibold flex items-center justify-center gap-1.5">
-        <AlertTriangle className="w-3.5 h-3.5" /> Request rescue
+        <AlertTriangle className="w-3.5 h-3.5" />{" "}{tr("Request rescue")}
       </div>
     </div>
   );
@@ -1635,14 +1636,14 @@ function TrackPackMockup() {
   return (
     <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden space-y-2">
       <div className="rounded-2xl border-2 border-accent bg-background py-2 text-center">
-        <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">Lap 6</p>
+        <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground">{tr("Lap 6")}</p>
         <p className="font-mono font-black tabular-nums text-3xl leading-none">1:32.418</p>
         <p className="font-mono font-black tabular-nums text-lg text-[hsl(142_71%_45%)]">−0.214</p>
       </div>
       <div className="grid grid-cols-3 gap-1.5">
         {sectors.map(([t, c], i) => (
           <div key={i} className={`rounded-lg border text-center py-1 ${c}`}>
-            <p className="text-[8px] font-bold uppercase tracking-widest opacity-80">S{i + 1}</p>
+            <p className="text-[8px] font-bold uppercase tracking-widest opacity-80">{tr("S")}{i + 1}</p>
             <p className="font-mono font-bold tabular-nums text-xs">{t}</p>
           </div>
         ))}
@@ -1655,8 +1656,8 @@ function TrackPackMockup() {
           <circle cx="108" cy="34" r="4" fill="hsl(var(--accent))" stroke="#000" />
         </svg>
         <div className="flex-1 rounded-lg bg-black border-2 border-accent text-center py-2">
-          <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-accent">Pit board</p>
-          <p className="text-xl font-black text-white">PUSH</p>
+          <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-accent">{tr("Pit board")}</p>
+          <p className="text-xl font-black text-white">{tr("PUSH")}</p>
         </div>
       </div>
     </div>
@@ -1677,10 +1678,10 @@ function HazardMockup() {
     <div className="w-full max-w-xs space-y-3">
       <div className="grid grid-cols-2 gap-2 animate-scale-in">
         {[
-          { label: 'Road surface', color: '#f59e0b', Icon: Route },
-          { label: 'Conditions', color: '#38bdf8', Icon: CloudRain },
-          { label: 'Traffic', color: '#ef4444', Icon: TrafficCone },
-          { label: 'Other', color: '#a78bfa', Icon: AlertTriangle },
+          { label: tr("Road surface"), color: '#f59e0b', Icon: Route },
+          { label: tr("Conditions"), color: '#38bdf8', Icon: CloudRain },
+          { label: tr("Traffic"), color: '#ef4444', Icon: TrafficCone },
+          { label: tr("Other"), color: '#a78bfa', Icon: AlertTriangle },
         ].map(({ label, color, Icon }) => (
           <div key={label} className="h-16 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 text-[11px] font-semibold" style={{ borderColor: `${color}99`, background: `${color}1f` }}>
             <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: color }}>
@@ -1696,17 +1697,17 @@ function HazardMockup() {
             <Droplets className="w-5 h-5 text-white" />
           </span>
           <span>
-            <span className="block font-bold text-sm">Oil / diesel spill</span>
-            <span className="block text-xs text-muted-foreground">300 m ahead</span>
+            <span className="block font-bold text-sm">{tr("Oil / diesel spill")}</span>
+            <span className="block text-xs text-muted-foreground">{tr("300 m ahead")}</span>
           </span>
         </div>
       )}
       {stage >= 2 && (
         <div className="rounded-2xl border border-border bg-card/95 p-3 animate-slide-up">
-          <p className="text-xs font-semibold text-center">Oil / diesel spill: still there?</p>
+          <p className="text-xs font-semibold text-center">{tr("Oil / diesel spill: still there?")}</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="h-9 rounded-xl bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">Yes</div>
-            <div className="h-9 rounded-xl border-2 border-border flex items-center justify-center text-xs font-bold">Gone</div>
+            <div className="h-9 rounded-xl bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">{tr("Yes")}</div>
+            <div className="h-9 rounded-xl border-2 border-border flex items-center justify-center text-xs font-bold">{tr("Gone")}</div>
           </div>
         </div>
       )}
@@ -1716,19 +1717,19 @@ function HazardMockup() {
 
 function NotificationsMockup() {
   const items = [
-    { icon: AlertTriangle, tint: 'text-destructive', title: '🚨 Rico needs rescue', body: 'Tap to see where they are.', when: 'now' },
-    { icon: CloudLightning, tint: 'text-sky-300', title: '⛈️ Thunderstorms heading your way', body: 'Expected in about 2 hours around your last location.', when: '4m' },
-    { icon: Ghost, tint: 'text-accent', title: '⏱️ Your time attack was beaten', body: 'Rico beat your V4 Ducati time: 3:41 vs your 3:58.', when: '1h' },
-    { icon: Wrench, tint: 'text-warning', title: '🔧 Chain lube due soon', body: 'V4 Ducati: due in 150 mi.', when: '3h' },
+    { icon: AlertTriangle, tint: 'text-destructive', title: tr("🚨 Rico needs rescue"), body: tr("Tap to see where they are."), when: 'now' },
+    { icon: CloudLightning, tint: 'text-sky-300', title: tr("⛈️ Thunderstorms heading your way"), body: tr("Expected in about 2 hours around your last location."), when: '4m' },
+    { icon: Ghost, tint: 'text-accent', title: tr("⏱️ Your time attack was beaten"), body: tr("Rico beat your V4 Ducati time: 3:41 vs your 3:58."), when: '1h' },
+    { icon: Wrench, tint: 'text-warning', title: tr("🔧 Chain lube due soon"), body: tr("V4 Ducati: due in 150 mi."), when: '3h' },
   ];
   return (
     <div className="w-full max-w-xs rounded-[28px] border border-border/60 bg-gradient-to-b from-[hsl(230_30%_14%)] to-black p-3 space-y-2">
       <p className="text-center font-mono text-3xl font-light text-white/90 pt-1">9:41</p>
-      <p className="text-center text-[10px] text-white/50 -mt-1 mb-1">Sunday</p>
+      <p className="text-center text-[10px] text-white/50 -mt-1 mb-1">{tr("Sunday")}</p>
       {items.map((n, i) => (
         <div key={n.title} className="rounded-2xl bg-white/10 backdrop-blur-md px-3 py-2 animate-slide-up" style={{ animationDelay: `${150 + i * 120}ms` }}>
           <div className="flex items-center gap-1.5 text-[9px] text-white/60">
-            <n.icon className={cn('w-3 h-3', n.tint)} /> BLACKTOP <span className="ml-auto">{n.when}</span>
+            <n.icon className={cn('w-3 h-3', n.tint)} />{" "}{tr("BLACKTOP")}{" "}<span className="ml-auto">{n.when}</span>
           </div>
           <p className="text-[11px] font-semibold text-white leading-tight mt-0.5">{n.title}</p>
           <p className="text-[10px] text-white/70 leading-snug">{n.body}</p>
@@ -1746,9 +1747,9 @@ function SpeedshopMockup() {
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 60%, transparent 35%, rgba(0,0,0,0.65) 100%)' }} />
         <div className="absolute top-2 left-2 rounded-lg bg-black/75 border border-white/10 px-2 py-1">
           <p className="text-[7px] uppercase tracking-[0.25em] text-accent">1 / 6</p>
-          <p className="text-[10px] font-bold">Printed Vehicle Card</p>
+          <p className="text-[10px] font-bold">{tr("Printed Vehicle Card")}</p>
         </div>
-        <span className="absolute top-2 right-2 rounded bg-accent text-accent-foreground text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rotate-3">Coming soon</span>
+        <span className="absolute top-2 right-2 rounded bg-accent text-accent-foreground text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rotate-3">{tr("Coming soon")}</span>
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-16 aspect-[5/7] rounded-md bg-gradient-to-br from-yellow-300 via-amber-500 to-yellow-700 border border-yellow-200/60 shadow-[0_10px_14px_rgba(0,0,0,0.8)] p-1">
           <div className="h-1/2 rounded-sm bg-black/25" />
           <div className="mt-1 grid grid-cols-2 gap-0.5">
@@ -1764,9 +1765,9 @@ function SpeedshopMockup() {
         <span className="h-8 w-10 rounded-xl border-2 border-accent/60 flex items-center justify-center"><ChevronRight className="w-4 h-4" /></span>
       </div>
       <div className="grid grid-cols-3 gap-1.5 text-[10px] font-semibold text-center">
-        <span className="rounded-xl bg-accent text-accent-foreground py-1.5">I'd buy it</span>
-        <span className="rounded-xl border border-border py-1.5 text-muted-foreground">Maybe</span>
-        <span className="rounded-xl border border-border py-1.5 text-muted-foreground">Not for me</span>
+        <span className="rounded-xl bg-accent text-accent-foreground py-1.5">{tr("I'd buy it")}</span>
+        <span className="rounded-xl border border-border py-1.5 text-muted-foreground">{tr("Maybe")}</span>
+        <span className="rounded-xl border border-border py-1.5 text-muted-foreground">{tr("Not for me")}</span>
       </div>
       <div className="grid grid-cols-4 gap-1.5 text-[10px] font-bold text-center">
         {['£5', '£10', '£15', '£20+'].map((p) => <span key={p} className={cn('rounded-lg border py-1', p === '£10' ? 'bg-accent text-accent-foreground border-accent' : 'border-border text-muted-foreground')}>{p}</span>)}
@@ -1800,17 +1801,17 @@ function CardChallengeMockup() {
           <circle cx="24" cy="122" r="5" fill="hsl(var(--accent))" />
           <circle cx="206" cy="30" r="5" fill="hsl(142 71% 45%)" />
         </svg>
-        <span className="absolute left-2 bottom-2 text-[9px] font-bold uppercase tracking-widest text-accent">Start · card</span>
-        <span className="absolute right-2 top-2 text-[9px] font-bold uppercase tracking-widest text-[hsl(142_71%_45%)]">Finish</span>
+        <span className="absolute left-2 bottom-2 text-[9px] font-bold uppercase tracking-widest text-accent">{tr("Start · card")}</span>
+        <span className="absolute right-2 top-2 text-[9px] font-bold uppercase tracking-widest text-[hsl(142_71%_45%)]">{tr("Finish")}</span>
         <div className="absolute left-1/2 -translate-x-1/2 top-3 rounded-lg bg-card/95 border border-accent px-3 py-1 text-center">
-          <p className="text-[8px] uppercase tracking-widest text-muted-foreground">Time attack</p>
+          <p className="text-[8px] uppercase tracking-widest text-muted-foreground">{tr("Time attack")}</p>
           <p className="text-base font-black tabular-nums leading-tight">3:41</p>
-          <p className="text-[9px] font-bold text-[hsl(142_71%_45%)] tabular-nums">Target 3:58 · -0:17</p>
+          <p className="text-[9px] font-bold text-[hsl(142_71%_45%)] tabular-nums">{tr("Target 3:58 · -0:17")}</p>
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between rounded-lg bg-secondary/50 px-2.5 py-1.5">
-        <span className="text-[10px] font-semibold">Challenge beaten</span>
-        <span className="text-[10px] font-bold text-[hsl(142_71%_45%)]">3x Speed Demon + Spectre</span>
+        <span className="text-[10px] font-semibold">{tr("Challenge beaten")}</span>
+        <span className="text-[10px] font-bold text-[hsl(142_71%_45%)]">{tr("3x Speed Demon + Spectre")}</span>
       </div>
     </div>
   );
@@ -1846,7 +1847,7 @@ function TradingCardsMockup() {
                 <div className="relative flex-1 flex flex-col p-2 gap-1.5">
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-[9px] font-bold tracking-wider text-white drop-shadow truncate">
-                      VEHICLE
+                      {tr("VEHICLE")}
                     </span>
                     <span className={cn(
                       'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-semibold uppercase tracking-wider',
@@ -1863,7 +1864,7 @@ function TradingCardsMockup() {
                       {locked ? (
                         <Lock className="w-5 h-5 text-white/60" />
                       ) : (
-                        <div className="text-[10px] text-white/50 font-mono">PHOTO</div>
+                        <div className="text-[10px] text-white/50 font-mono">{tr("PHOTO")}</div>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-1 shrink-0">
@@ -1878,7 +1879,7 @@ function TradingCardsMockup() {
                     </div>
                   </div>
                   <div className="shrink-0 text-center text-[8px] font-semibold tracking-widest text-white/85 drop-shadow">
-                    {t.label.toUpperCase()} · {t.minRides === 0 ? '0 RIDES' : `${t.minRides}+ RIDES`}
+                    {t.label.toUpperCase()} · {t.minRides === 0 ? tr("0 RIDES") : tr("{0}+ RIDES", [t.minRides])}
                   </div>
 
                 </div>
@@ -1888,7 +1889,7 @@ function TradingCardsMockup() {
         </div>
       </div>
       <p className="text-[10px] text-muted-foreground text-center animate-fade-in delay-300">
-        ← swipe to see every tier from Bronze to Orion →
+        {tr("← swipe to see every tier from Bronze to Orion →")}
       </p>
     </div>
   );
@@ -1904,7 +1905,7 @@ function PersonaliseMockup() {
   return (
     <div className="w-full max-w-xs space-y-3">
       <div className="rounded-2xl border border-border/30 frost p-4 animate-slide-up">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">Accent Colour</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">{tr("Accent Colour")}</p>
         <div className="grid grid-cols-8 gap-2">
           {swatches.map((c, i) => (
             <div
@@ -1920,10 +1921,10 @@ function PersonaliseMockup() {
       </div>
       <div className="rounded-2xl border border-border/30 frost p-4 space-y-3 animate-slide-up delay-200">
         {[
-          { icon: Gauge, label: 'Ride metrics', value: 'Lean · G · Flyover' },
-          { icon: AlertTriangle, label: 'Safety', value: 'Alerts · Auto-rescue' },
-          { icon: Play, label: 'Demo', value: 'Replay tour' },
-          { icon: MonitorSmartphone, label: 'Car display', value: 'Landscape' },
+          { icon: Gauge, label: tr("Ride metrics"), value: 'Lean · G · Flyover' },
+          { icon: AlertTriangle, label: tr("Safety"), value: 'Alerts · Auto-rescue' },
+          { icon: Play, label: tr("Demo"), value: 'Replay tour' },
+          { icon: MonitorSmartphone, label: tr("Car display"), value: 'Landscape' },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3">
             <Icon className="w-4 h-4 text-accent flex-shrink-0" />
@@ -1987,7 +1988,7 @@ function RadioMockup() {
             })}
           </div>
           <div className="absolute inset-[50px] rounded-full bg-card border border-border flex flex-col items-center justify-center">
-            <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Station</span>
+            <span className="text-[8px] uppercase tracking-widest text-muted-foreground">{tr("Station")}</span>
             <span className="text-[11px] font-bold text-center px-1 leading-tight">{current.name}</span>
           </div>
         </div>
@@ -1995,7 +1996,7 @@ function RadioMockup() {
       </div>
 
       <div className="rounded-2xl border border-border/30 frost p-4 space-y-2 animate-slide-up delay-200">
-        <p className="text-xs font-semibold text-center truncate">Midnight Run — Track 04</p>
+        <p className="text-xs font-semibold text-center truncate">{tr("Midnight Run — Track 04")}</p>
         <div className="h-1 rounded-full bg-secondary overflow-hidden">
           <div className="h-full bg-accent animate-pulse" style={{ width: '42%' }} />
         </div>
@@ -2020,32 +2021,32 @@ function PayUpMockup() {
       <div className="rounded-2xl border border-border/40 frost p-4 animate-slide-up">
         <div className="flex items-center gap-2 mb-2">
           <Fuel className="w-4 h-4 text-accent" />
-          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Blacktank</p>
-          <span className="ml-auto text-[10px] font-semibold text-foreground">4 riders · 12.5 USDT</span>
+          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Blacktank")}</p>
+          <span className="ml-auto text-[10px] font-semibold text-foreground">{tr("4 riders · 12.5 USDT")}</span>
         </div>
         <p className="text-xs text-muted-foreground mb-2">
-          Your crew’s shared fuel pot. Withdrawals need a unanimous crew vote.
+          {tr("Your crew’s shared fuel pot. Withdrawals need a unanimous crew vote.")}
         </p>
         <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
           <div className="h-full bg-accent animate-pulse" style={{ width: '62%' }} />
         </div>
         <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
-          <span>Chip in</span>
-          <span>Request withdrawal · 4/4 votes to release</span>
+          <span>{tr("Chip in")}</span>
+          <span>{tr("Request withdrawal · 4/4 votes to release")}</span>
         </div>
       </div>
 
       <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 animate-slide-up delay-100">
         <div className="flex items-center gap-2 mb-3">
           <Heart className="w-4 h-4 text-accent" />
-          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">Pay up</p>
+          <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Pay up")}</p>
         </div>
         <p className="text-xs text-muted-foreground mb-3">
-          Support the developer or send a friend fuel money.
+          {tr("Support the developer or send a friend fuel money.")}
         </p>
 
         <div className="rounded-xl border border-border/40 frost p-2 flex items-center justify-between mb-3">
-          <span className="text-xs font-medium truncate">Developer</span>
+          <span className="text-xs font-medium truncate">{tr("Developer")}</span>
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </div>
 
@@ -2068,22 +2069,22 @@ function PayUpMockup() {
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ''))}
             inputMode="decimal"
-            placeholder="Amount"
+            placeholder={tr("Amount")}
             className="flex-1 h-10 rounded-xl text-center font-semibold"
           />
         </div>
 
         <Button className="w-full h-10 mt-3 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl touch-target">
           <Heart className="w-4 h-4 mr-2" />
-          Pay up
+          {tr("Pay up")}
         </Button>
       </div>
 
       <div className="rounded-2xl border border-border/30 frost p-4 space-y-2 animate-slide-up delay-200">
         {[
-          { icon: QrCode, label: 'Scan friend QR' },
-          { icon: Wallet, label: 'NIM / Polygon USDT' },
-          { icon: Users, label: 'Saved payees' },
+          { icon: QrCode, label: tr("Scan friend QR") },
+          { icon: Wallet, label: tr("NIM / Polygon USDT") },
+          { icon: Users, label: tr("Saved payees") },
         ].map(({ icon: Icon, label }) => (
           <div key={label} className="flex items-center gap-3">
             <Icon className="w-4 h-4 text-accent flex-shrink-0" />

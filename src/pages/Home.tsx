@@ -17,6 +17,7 @@ import { useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 
+import { tr } from '@/lib/i18n';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -65,12 +66,12 @@ export default function Home() {
   // Home adapts to the rider's setup: solo-only riders never see convoy tiles,
   // group-only riders never see solo, and the vehicle picks icons + wording.
   const SoloIcon = exp.VehicleIcon;
-  const convoyTile = { key: 'convoy', icon: Users, label: exp.rideMode === 'group' ? 'Start Convoy' : 'Convoy', sub: `Group ${exp.terms.ride}`, onClick: () => navigate('/create-convoy') };
+  const convoyTile = { key: 'convoy', icon: Users, label: exp.rideMode === 'group' ? tr("Start Convoy") : tr("Convoy"), sub: tr("Group {0}", [exp.terms.ride]), onClick: () => navigate('/create-convoy') };
   const soloTile = {
     key: 'solo',
     icon: SoloIcon,
-    label: exp.rideMode === 'solo' ? `Start ${exp.terms.Ride}` : 'Solo',
-    sub: exp.rideMode === 'solo' ? (settings.autoRescueEnabled ? 'Tracking, stats and rescue' : 'Tracking and stats') : `${exp.terms.Ride} alone`,
+    label: exp.rideMode === 'solo' ? tr("Start {0}", [exp.terms.Ride]) : tr("Solo"),
+    sub: exp.rideMode === 'solo' ? (settings.autoRescueEnabled ? tr("Tracking, stats and rescue") : tr("Tracking and stats")) : tr("{0} alone", [exp.terms.Ride]),
     onClick: () => navigate('/solo-lobby'),
   };
   const primaryTiles = [...(exp.showGroup ? [convoyTile] : []), ...(exp.showSolo ? [soloTile] : [])];
@@ -100,13 +101,13 @@ export default function Home() {
   const trackRoleToggle = (compact: boolean) => (
     <div
       role="radiogroup"
-      aria-label="Track role"
+      aria-label={tr("Track role")}
       onClick={(e) => e.stopPropagation()}
       className={cn('flex rounded-xl border border-accent/40 bg-background/60 p-0.5', compact ? 'text-[10px]' : 'text-[11px]')}
     >
       {([
-        { id: 'racer', label: 'Racer', Icon: QrCode },
-        { id: 'pit', label: 'Pit crew', Icon: ScanLine },
+        { id: 'racer', label: tr("Racer"), Icon: QrCode },
+        { id: 'pit', label: tr("Pit crew"), Icon: ScanLine },
       ] as const).map(({ id, label, Icon }) => (
         <span
           key={id}
@@ -129,24 +130,24 @@ export default function Home() {
   );
 
   const secondaryTile = exp.showGroup
-    ? { icon: UserPlus, label: 'Join Convoy', sub: 'Enter a convoy code', onClick: () => navigate('/join-convoy') }
-    : { icon: Route, label: 'Plan a Route', sub: exp.motorised ? 'Weather, cameras and loops' : 'Weather and loop routes', onClick: () => openBlacktopMap() };
+    ? { icon: UserPlus, label: tr("Join Convoy"), sub: tr("Enter a convoy code"), onClick: () => navigate('/join-convoy') }
+    : { icon: Route, label: tr("Plan a Route"), sub: exp.motorised ? tr("Weather, cameras and loops") : tr("Weather and loop routes"), onClick: () => openBlacktopMap() };
 
   // Speed only makes the cut for riders who said they care about it.
   const quickStats = [
     { label: exp.terms.Rides, value: formatCompactCount(stats.totalRides), unit: null },
-    { label: 'Distance', value: formatCompactDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
+    { label: tr("Distance"), value: formatCompactDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
     ...(settings.speedFocusEnabled
-      ? [{ label: 'Top Speed', value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) }]
+      ? [{ label: tr("Top Speed"), value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) }]
       : []),
-    { label: 'Time', value: formatCompactDuration(stats.totalDuration), unit: null },
+    { label: tr("Time"), value: formatCompactDuration(stats.totalDuration), unit: null },
   ];
 
   const navItems = [
-    ...(settings.garageEnabled ? [{ icon: Wrench, label: 'Garage', onClick: () => navigate('/garage') }] : []),
-    { icon: History, label: 'History', onClick: () => navigate('/history') },
-    { icon: BarChart3, label: 'Stats', onClick: () => navigate('/stats') },
-    { icon: Settings, label: 'Settings', onClick: () => navigate('/settings') },
+    ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage"), onClick: () => navigate('/garage') }] : []),
+    { icon: History, label: tr("History"), onClick: () => navigate('/history') },
+    { icon: BarChart3, label: tr("Stats"), onClick: () => navigate('/stats') },
+    { icon: Settings, label: tr("Settings"), onClick: () => navigate('/settings') },
   ];
 
   // Canvas can't resolve `hsl(var(--accent))`, so look up the literal HSL for
@@ -326,7 +327,7 @@ export default function Home() {
       <header className="flex items-center gap-3 mb-4 landscape:mb-2 animate-fade-in">
         <div className="min-w-0 max-w-[45%] shrink-0">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
-            Welcome back
+            {tr("Welcome back")}
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
         </div>
@@ -424,7 +425,7 @@ export default function Home() {
                   <Zap className="w-4 h-4 text-accent" />
                 </div>
                 <div className="flex flex-col items-start gap-1">
-                  <span className="text-base font-semibold tracking-tight text-foreground">Track</span>
+                  <span className="text-base font-semibold tracking-tight text-foreground">{tr("Track")}</span>
                   {trackRoleToggle(true)}
                 </div>
               </div>
@@ -443,7 +444,7 @@ export default function Home() {
               <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-accent" />
               </div>
-              <span className="flex-1 text-base font-semibold tracking-tight text-foreground">Track Pack</span>
+              <span className="flex-1 text-base font-semibold tracking-tight text-foreground">{tr("Track Pack")}</span>
               {trackRoleToggle(false)}
             </div>
           )}
@@ -467,7 +468,7 @@ export default function Home() {
             }}
             tabIndex={0}
             className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={settings.blacktopWorldEnabled ? 'Open map — hold for Blacktop World' : 'Open map'}
+            aria-label={settings.blacktopWorldEnabled ? tr("Open map — hold for Blacktop World") : tr("Open map")}
             role="button"
           >
             <HomeGlobe accentColor={accentColor} className="w-full h-full" />

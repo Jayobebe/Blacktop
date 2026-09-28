@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
+import { tr } from '@/lib/i18n';
 
 interface CollapsibleSectionProps {
   icon?: LucideIcon;
@@ -82,7 +83,7 @@ export function CollapsibleSection({
                 'absolute -top-0.5 -right-1 w-[7px] h-[7px] rounded-full ring-2 ring-card',
                 status ? 'bg-emerald-400' : 'bg-muted-foreground/50',
               )}
-              aria-label={typeof status === 'string' && status ? status : 'Off'}
+              aria-label={typeof status === 'string' && status ? status : tr("Off")}
             />
           )}
         </span>
@@ -143,7 +144,7 @@ export function CollapsibleSection({
             'border-accent/30',
             expanded ? 'opacity-100' : 'opacity-0',
           )}
-          aria-label={`${label} settings`}
+          aria-label={tr("{0} settings", [label])}
         >
           {body}
         </section>

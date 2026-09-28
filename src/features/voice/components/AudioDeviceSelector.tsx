@@ -2,6 +2,7 @@ import { RefreshCw, Mic, Volume2, Bluetooth } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAudioDevices, AudioDevice } from '../hooks/useAudioDevices';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface AudioDeviceSelectorProps {
   className?: string;
@@ -86,7 +87,7 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
           className="w-full h-8"
         >
           <RefreshCw className="w-3 h-3 mr-2" />
-          Retry
+          {tr("Retry")}
         </Button>
       </div>
     );
@@ -97,7 +98,7 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
       {/* Microphone Selection */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Microphone</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{tr("Microphone")}</p>
           <Button
             onClick={refreshDevices}
             variant="ghost"
@@ -110,7 +111,7 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
         </div>
         <div className="space-y-1.5">
           {audioInputs.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-1">No microphones found</p>
+            <p className="text-xs text-muted-foreground py-1">{tr("No microphones found")}</p>
           ) : (
             audioInputs.map(device => (
               <DeviceButton
@@ -128,10 +129,10 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
       {/* Speaker Selection - only show if browser supports it */}
       {supportsOutputSelection ? (
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">Speaker</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">{tr("Speaker")}</p>
           <div className="space-y-1.5">
             {audioOutputs.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-1">No speakers found</p>
+              <p className="text-xs text-muted-foreground py-1">{tr("No speakers found")}</p>
             ) : (
               audioOutputs.map(device => (
                 <DeviceButton
@@ -147,18 +148,18 @@ export function AudioDeviceSelector({ className, compact = false }: AudioDeviceS
         </div>
       ) : (
         <div className="bg-muted/50 rounded-xl p-3 border border-border/30">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Speaker</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{tr("Speaker")}</p>
           <p className="text-xs text-muted-foreground">
-            Your browser doesn't support speaker selection. Audio will play through your phone's current output device.
+            {tr("Your browser doesn't support speaker selection. Audio will play through your phone's current output device.")}
           </p>
           <p className="text-[10px] text-muted-foreground/70 mt-1">
-            Tip: Set your Bluetooth as system audio in phone settings.
+            {tr("Tip: Set your Bluetooth as system audio in phone settings.")}
           </p>
         </div>
       )}
 
       <p className="text-[10px] text-muted-foreground">
-        Connect Bluetooth first, then tap refresh.
+        {tr("Connect Bluetooth first, then tap refresh.")}
       </p>
     </div>
   );

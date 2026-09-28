@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Download, Share, Plus, Check, ChevronLeft, Smartphone } from 'lucide-react';
+import { tr } from '@/lib/i18n';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -63,12 +64,12 @@ export default function Install() {
           <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Check className="w-10 h-10 text-accent" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Already Installed</h1>
+          <h1 className="text-2xl font-bold mb-2">{tr("Already Installed")}</h1>
           <p className="text-muted-foreground mb-8">
-            Blacktop is running as an installed app.
+            {tr("Blacktop is running as an installed app.")}
           </p>
           <Button onClick={() => navigate('/')} className="w-full max-w-xs">
-            Open App
+            {tr("Open App")}
           </Button>
         </div>
       </div>
@@ -84,11 +85,11 @@ export default function Install() {
           size="icon" 
           onClick={() => navigate(-1)}
           className="rounded-full"
-          aria-label="Go back"
+          aria-label={tr("Go back")}
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-semibold">Install Blacktop</h1>
+        <h1 className="text-xl font-semibold">{tr("Install Blacktop")}</h1>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
@@ -96,16 +97,16 @@ export default function Install() {
         <div className="mb-8 animate-fade-in">
           <img 
             src="/pwa-512x512.png" 
-            alt="Blacktop" 
+            alt={tr("Blacktop")} 
             className="w-24 h-24 rounded-2xl shadow-lg"
           />
         </div>
 
         {/* Title */}
         <div className="text-center mb-8 animate-slide-up">
-          <h2 className="text-2xl font-bold mb-2">Install Blacktop</h2>
+          <h2 className="text-2xl font-bold mb-2">{tr("Install Blacktop")}</h2>
           <p className="text-muted-foreground">
-            Add to your home screen for the best experience
+            {tr("Add to your home screen for the best experience")}
           </p>
         </div>
 
@@ -117,8 +118,8 @@ export default function Install() {
                 <Smartphone className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <p className="font-medium">Works Offline</p>
-                <p className="text-sm text-muted-foreground">Access your ride history anytime</p>
+                <p className="font-medium">{tr("Works Offline")}</p>
+                <p className="text-sm text-muted-foreground">{tr("Access your ride history anytime")}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -126,8 +127,8 @@ export default function Install() {
                 <Download className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <p className="font-medium">Quick Launch</p>
-                <p className="text-sm text-muted-foreground">Open directly from your home screen</p>
+                <p className="font-medium">{tr("Quick Launch")}</p>
+                <p className="text-sm text-muted-foreground">{tr("Open directly from your home screen")}</p>
               </div>
             </div>
           </CardContent>
@@ -140,32 +141,32 @@ export default function Install() {
               <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check className="w-8 h-8 text-accent" />
               </div>
-              <p className="text-lg font-medium mb-4">Successfully Installed!</p>
+              <p className="text-lg font-medium mb-4">{tr("Successfully Installed!")}</p>
               <Button onClick={() => navigate('/')} className="w-full">
-                Open App
+                {tr("Open App")}
               </Button>
             </div>
           ) : deferredPrompt ? (
             <Button onClick={handleInstall} className="w-full h-14 text-lg">
               <Download className="w-5 h-5 mr-2" />
-              Install App
+              {tr("Install App")}
             </Button>
           ) : isIOS ? (
             <Card className="bg-secondary/50">
               <CardContent className="p-4">
-                <p className="font-medium mb-3 text-center">Install on iOS</p>
+                <p className="font-medium mb-3 text-center">{tr("Install on iOS")}</p>
                 <ol className="space-y-3 text-sm text-muted-foreground">
                   <li className="flex items-center gap-3">
                     <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent font-medium text-xs">1</span>
-                    <span>Tap the <Share className="w-4 h-4 inline mx-1" /> Share button</span>
+                    <span>{tr("Tap the")}{" "}<Share className="w-4 h-4 inline mx-1" />{" "}{tr("Share button")}</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent font-medium text-xs">2</span>
-                    <span>Scroll and tap "Add to Home Screen"</span>
+                    <span>{tr("Scroll and tap \"Add to Home Screen\"")}</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent font-medium text-xs">3</span>
-                    <span>Tap <Plus className="w-4 h-4 inline mx-1" /> Add</span>
+                    <span>{tr("Tap")}{" "}<Plus className="w-4 h-4 inline mx-1" />{" "}{tr("Add")}</span>
                   </li>
                 </ol>
               </CardContent>
@@ -173,19 +174,19 @@ export default function Install() {
           ) : (
             <Card className="bg-secondary/50">
               <CardContent className="p-4">
-                <p className="font-medium mb-3 text-center">Install on Android</p>
+                <p className="font-medium mb-3 text-center">{tr("Install on Android")}</p>
                 <ol className="space-y-3 text-sm text-muted-foreground">
                   <li className="flex items-center gap-3">
                     <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent font-medium text-xs">1</span>
-                    <span>Tap the menu icon (⋮) in your browser</span>
+                    <span>{tr("Tap the menu icon (⋮) in your browser")}</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent font-medium text-xs">2</span>
-                    <span>Tap "Install app" or "Add to Home screen"</span>
+                    <span>{tr("Tap \"Install app\" or \"Add to Home screen\"")}</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent font-medium text-xs">3</span>
-                    <span>Confirm the installation</span>
+                    <span>{tr("Confirm the installation")}</span>
                   </li>
                 </ol>
               </CardContent>
@@ -197,7 +198,7 @@ export default function Install() {
             onClick={() => navigate('/')}
             className="w-full"
           >
-            Continue in Browser
+            {tr("Continue in Browser")}
           </Button>
         </div>
       </div>

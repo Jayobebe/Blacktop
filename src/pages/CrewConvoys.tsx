@@ -6,6 +6,7 @@ import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 interface CrewConvoyRow {
   id: string;
@@ -57,25 +58,25 @@ export default function CrewConvoys() {
   return (
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
       <PageHeader
-        title="Crew Convoys"
+        title={tr("Crew Convoys")}
         backTo="/world"
-        backLabel="Back to Blacktop World"
+        backLabel={tr("Back to Blacktop World")}
         right={
-          <HeaderButton onClick={() => refetch()} aria-label="Refresh crew convoys">
+          <HeaderButton onClick={() => refetch()} aria-label={tr("Refresh crew convoys")}>
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
           </HeaderButton>
         }
       />
 
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-        Crew {crew.code} · {convoys.length} open {convoys.length === 1 ? 'lobby' : 'lobbies'}
+        {tr("Crew")}{" "}{crew.code} · {convoys.length}{" "}{tr("open")}{" "}{convoys.length === 1 ? 'lobby' : 'lobbies'}
       </p>
 
       {isLoading ? (
         <ListSkeleton rows={4} />
       ) : convoys.length === 0 ? (
         <p className="text-sm text-muted-foreground/70 py-10 text-center">
-          No unlocked convoys in your crew right now. Unlock a lobby to list it here.
+          {tr("No unlocked convoys in your crew right now. Unlock a lobby to list it here.")}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -90,7 +91,7 @@ export default function CrewConvoys() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{c.name}</p>
                     <p className="text-[11px] text-muted-foreground truncate">
-                      {c.leader_name} · {c.destination_name || 'No destination set'}
+                      {c.leader_name} · {c.destination_name || tr("No destination set")}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -100,7 +101,7 @@ export default function CrewConvoys() {
                     <span
                       className={`flex items-center gap-1 text-[9px] uppercase tracking-widest ${c.is_riding ? 'text-accent' : 'text-muted-foreground/70'}`}
                     >
-                      <Radio className="w-3 h-3" />{c.is_riding ? 'Riding' : 'Lobby'}
+                      <Radio className="w-3 h-3" />{c.is_riding ? tr("Riding") : tr("Lobby")}
                     </span>
                   </div>
                 </div>
@@ -116,13 +117,13 @@ export default function CrewConvoys() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">{selected.name}</h2>
-                <p className="text-[11px] text-muted-foreground">Code {selected.code}</p>
+                <p className="text-[11px] text-muted-foreground">{tr("Code")}{" "}{selected.code}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
                 className="p-2 rounded-lg bg-secondary/60"
-                aria-label="Close convoy details"
+                aria-label={tr("Close convoy details")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -140,13 +141,13 @@ export default function CrewConvoys() {
 
             {leader && leader.lat != null && (
               <p className="text-[11px] text-muted-foreground">
-                Leader near {Number(leader.lat).toFixed(2)}, {Number(leader.lng).toFixed(2)}
+                {tr("Leader near")}{" "}{Number(leader.lat).toFixed(2)}, {Number(leader.lng).toFixed(2)}
               </p>
             )}
 
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                Riders ({detail.length})
+                {tr("Riders (")}{detail.length})
               </p>
               <ul className="space-y-1.5">
                 {detail.map((m, i) => (
@@ -156,7 +157,7 @@ export default function CrewConvoys() {
                       {m.member_name}
                     </span>
                     <span className="text-[11px] text-muted-foreground tabular-nums">
-                      {Math.round(Number(m.top_speed ?? 0))} top
+                      {Math.round(Number(m.top_speed ?? 0))}{" "}{tr("top")}
                     </span>
                   </li>
                 ))}
@@ -168,7 +169,7 @@ export default function CrewConvoys() {
               onClick={() => navigate('/join-convoy')}
               className="w-full py-3 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors"
             >
-              Join with code {selected.code}
+              {tr("Join with code")}{" "}{selected.code}
             </button>
           </div>
         </div>

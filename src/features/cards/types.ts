@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n';
 export type CardTier =
   | 'locked'
   | 'bronze'
@@ -18,16 +19,16 @@ export interface TierDef {
 
 /** Ride-count thresholds, ordered ascending. */
 export const TIER_LADDER: TierDef[] = [
-  { id: 'locked', label: 'Locked', minRides: 0 },
-  { id: 'bronze', label: 'Bronze', minRides: 10 },
-  { id: 'silver', label: 'Silver', minRides: 25 },
-  { id: 'gold', label: 'Gold', minRides: 50 },
-  { id: 'platinum', label: 'Platinum', minRides: 100 },
-  { id: 'diamond', label: 'Diamond', minRides: 200 },
-  { id: 'ruby', label: 'Ruby', minRides: 300 },
-  { id: 'obsidian', label: 'Obsidian', minRides: 400 },
-  { id: 'polyatomic', label: 'Polyatomic', minRides: 500 },
-  { id: 'orion', label: 'Orion', minRides: 1000 },
+  { id: 'locked', label: tr("Locked"), minRides: 0 },
+  { id: 'bronze', label: tr("Bronze"), minRides: 10 },
+  { id: 'silver', label: tr("Silver"), minRides: 25 },
+  { id: 'gold', label: tr("Gold"), minRides: 50 },
+  { id: 'platinum', label: tr("Platinum"), minRides: 100 },
+  { id: 'diamond', label: tr("Diamond"), minRides: 200 },
+  { id: 'ruby', label: tr("Ruby"), minRides: 300 },
+  { id: 'obsidian', label: tr("Obsidian"), minRides: 400 },
+  { id: 'polyatomic', label: tr("Polyatomic"), minRides: 500 },
+  { id: 'orion', label: tr("Orion"), minRides: 1000 },
 ];
 
 /**

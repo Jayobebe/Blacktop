@@ -6,6 +6,7 @@ import { showLocalNotification, syncPushReminders, usePush, type PushReminder } 
 import { useGarage } from '../hooks/useGarage';
 import { useBikeStats } from '../hooks/useBikeStats';
 import type { Bike } from '../types';
+import { tr } from '@/lib/i18n';
 
 /**
  * Maintenance notifications ("due soon" / "overdue"), mounted once:
@@ -71,8 +72,8 @@ export function MaintenanceNotifier() {
         if (warn.getTime() > now) {
           reminders.push({
             key: `${base}:warn`,
-            title: `🔧 ${item.name} due soon`,
-            body: `${bike.name}: its ${months} service is due in two weeks.`,
+            title: tr("🔧 {0} due soon", [item.name]),
+            body: tr("{0}: its {1} service is due in two weeks.", [bike.name, months]),
             url: '/garage',
             due_at: warn.toISOString(),
           });
@@ -80,8 +81,8 @@ export function MaintenanceNotifier() {
         if (due.getTime() > now) {
           reminders.push({
             key: `${base}:over`,
-            title: `🔧 ${item.name} is due`,
-            body: `${bike.name}: time for its ${months} service.`,
+            title: tr("🔧 {0} is due", [item.name]),
+            body: tr("{0}: time for its {1} service.", [bike.name, months]),
             url: '/garage',
             due_at: due.toISOString(),
           });
@@ -140,11 +141,11 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
       changed = true;
       if (silent) continue;
       void showLocalNotification('maintenance', {
-        title: tone === 'over' ? `🔧 ${item.name} is overdue` : `🔧 ${item.name} due soon`,
+        title: tone === 'over' ? tr("🔧 {0} is overdue", [item.name]) : tr("🔧 {0} due soon", [item.name]),
         body:
           tone === 'over'
-            ? `${bike.name}: overdue by ${fmt(-dueInKm)} ${unit}.`
-            : `${bike.name}: due in ${fmt(dueInKm)} ${unit}.`,
+            ? tr("{0}: overdue by {1} {2}.", [bike.name, fmt(-dueInKm), unit])
+            : tr("{0}: due in {1} {2}.", [bike.name, fmt(dueInKm), unit]),
         tag: `maint-${bike.id}-${item.id}`,
         url: '/garage',
       });

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface GForceGaugeProps {
   currentG: number; // total acceleration magnitude in g (includes gravity, ~1.0 at rest)
@@ -68,11 +69,11 @@ export const GForceGauge = memo(function GForceGauge({ currentG, maxG, className
           >
             {currentG.toFixed(1)}
           </span>
-          <span className="text-[8px] text-muted-foreground uppercase">G</span>
+          <span className="text-[8px] text-muted-foreground uppercase">{tr("G")}</span>
         </div>
       </div>
       <div className="text-[10px] text-muted-foreground mt-0.5">
-        MAX {maxG > 0 ? maxG.toFixed(1) : '0.0'}G
+        {tr("MAX")}{" "}{maxG > 0 ? maxG.toFixed(1) : '0.0'}{tr("G")}
       </div>
     </div>
   );

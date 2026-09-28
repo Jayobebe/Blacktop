@@ -1,6 +1,7 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { isDemoModeActive, DEMO_RECENT_LOCATIONS } from '@/lib/demoMode';
 import { supabase } from '@/integrations/supabase/client';
+import { tr } from '@/lib/i18n';
 
 export interface MapSearchResult {
   id: string;
@@ -43,10 +44,10 @@ interface OverpassElement {
 }
 
 export const QUICK_CATEGORIES: QuickCategory[] = [
-  { id: 'gas', label: 'Gas', query: 'fuel' },
-  { id: 'food', label: 'Food', query: 'restaurant|fast_food|cafe' },
-  { id: 'store', label: 'Store', query: 'supermarket|convenience' },
-  { id: 'cards', label: 'Cards', query: 'cards' },
+  { id: 'gas', label: tr("Gas"), query: 'fuel' },
+  { id: 'food', label: tr("Food"), query: 'restaurant|fast_food|cafe' },
+  { id: 'store', label: tr("Store"), query: 'supermarket|convenience' },
+  { id: 'cards', label: tr("Cards"), query: 'cards' },
 ];
 
 const RECENT_LOCATIONS_KEY = 'blacktop_maps_recent_locations';

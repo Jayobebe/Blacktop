@@ -22,6 +22,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { tr } from '@/lib/i18n';
 
 // Read at call time inside realtime handlers so wording never forces a resubscribe.
 const liveTerms = () => termsFor(getExperience().vehicles);
@@ -72,10 +73,10 @@ export default function Lobby() {
       .eq('id', convoy.id);
     if (error) {
       setIsListed(!next);
-      toast.error('Could not update crew listing');
+      toast.error(tr("Could not update crew listing"));
       return;
     }
-    toast.success(next ? `Listed in crew ${crew.code}` : 'Convoy locked');
+    toast.success(next ? tr("Listed in crew {0}", [crew.code]) : tr("Convoy locked"));
     if (next) nudgePush(); // the crew hears about the open convoy
   };
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -216,7 +217,7 @@ export default function Lobby() {
       if (age > 30000) return;
       hasStartedRide.current = true;
       console.log('[Lobby] Received start-ride broadcast');
-      toast.success(`Leader started the ${liveTerms().ride}`);
+      toast.success(tr("Leader started the {0}", [liveTerms().ride]));
       const success = beginRide();
       if (success) {
         navigateRef.current(rideRoute());
@@ -227,7 +228,7 @@ export default function Lobby() {
     channel.on('broadcast', { event: 'leadership-changed' }, async (payload: any) => {
       console.log('[Lobby] Leadership changed:', payload);
       await refreshConvoyStateRef.current();
-      toast.info('Leadership has been transferred');
+      toast.info(tr("Leadership has been transferred"));
     });
 
     channel.subscribe((status) => {
@@ -288,7 +289,7 @@ export default function Lobby() {
             }
             console.log('[Lobby] Detected ride_started_at via DB fallback');
             hasStartedRide.current = true;
-            toast.success(`Leader started the ${liveTerms().ride}`);
+            toast.success(tr("Leader started the {0}", [liveTerms().ride]));
             const success = beginRide();
             if (success) {
               navigateRef.current(rideRoute());
@@ -340,7 +341,7 @@ export default function Lobby() {
     if (readyToStart && !prevReadyToStart.current && !hasStartedRide.current) {
       hasStartedRide.current = true;
       console.log('[Lobby] All members ready, starting ride!');
-      toast.success(`Everyone's ready. Starting the ${liveTerms().ride}!`);
+      toast.success(tr("Everyone's ready. Starting the {0}!", [liveTerms().ride]));
       const success = beginRide();
       if (success) {
         navigate(rideRoute());
@@ -480,10 +481,10 @@ export default function Lobby() {
     try {
       await navigator.clipboard.writeText(convoy.code);
       setCopied(true);
-      toast.success('Code copied');
+      toast.success(tr("Code copied"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy');
+      toast.error(tr("Failed to copy"));
     }
   };
 
@@ -552,7 +553,7 @@ export default function Lobby() {
       <header className="mb-3 landscape:mb-2 md:mb-4 animate-fade-in flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">Convoy Code</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">{tr("Convoy Code")}</p>
             <button
               onClick={handleCopyCode}
               className="flex items-center gap-3 bg-card/50 border border-border/30 rounded-2xl px-4 py-2 hover:bg-secondary transition-colors"
@@ -582,8 +583,8 @@ export default function Lobby() {
                   ? 'bg-accent/10 border-accent/60 text-accent'
                   : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary',
               )}
-              title={isListed ? 'Listed in Crew Convoys — tap to lock' : 'Locked — tap to list in Crew Convoys'}
-              aria-label={isListed ? 'Lock convoy from crew list' : 'Unlock convoy to crew list'}
+              title={isListed ? tr("Listed in Crew Convoys — tap to lock") : tr("Locked — tap to list in Crew Convoys")}
+              aria-label={isListed ? tr("Lock convoy from crew list") : tr("Unlock convoy to crew list")}
             >
               {isListed ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
             </button>
@@ -596,7 +597,7 @@ export default function Lobby() {
           <button
             onClick={() => setShowAudioDevices(true)}
             className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors"
-            title="Select audio device"
+            title={tr("Select audio device")}
           >
             <Headphones className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -611,16 +612,16 @@ export default function Lobby() {
                 if (!isConnected) {
                   const result = await connect();
                   if (!result.success) {
-                    toast.error('Failed to join voice', { description: result.error || 'Check microphone permission' });
+                    toast.error(tr("Failed to join voice"), { description: result.error || tr("Check microphone permission") });
                     return;
                   }
-                  toast.success('Joined voice channel', { description: 'Tap again to unmute' });
+                  toast.success(tr("Joined voice channel"), { description: tr("Tap again to unmute") });
                   return;
                 }
                 toggleMute();
               } catch (e) {
                 console.error('[Lobby] Voice toggle error', e);
-                toast.error('Voice action failed');
+                toast.error(tr("Voice action failed"));
               }
             }}
             className={cn(
@@ -656,7 +657,7 @@ export default function Lobby() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Headphones className="w-4 h-4 text-accent" />
-                <h3 className="font-semibold text-sm">Voice Chat Audio</h3>
+                <h3 className="font-semibold text-sm">{tr("Voice Chat Audio")}</h3>
               </div>
               <button
                 onClick={() => setShowAudioDevices(false)}
@@ -671,7 +672,7 @@ export default function Lobby() {
               className="w-full mt-4"
               size="sm"
             >
-              Done
+              {tr("Done")}
             </Button>
           </div>
         </div>
@@ -714,7 +715,7 @@ export default function Lobby() {
           {showAddWaypoint ? (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Add Stop</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{tr("Add Stop")}</p>
                 <button
                   onClick={() => setShowAddWaypoint(false)}
                   className="text-muted-foreground hover:text-foreground"
@@ -744,7 +745,7 @@ export default function Lobby() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                  {nextWaypoint ? 'Next Stop' : 'Destination'}
+                  {nextWaypoint ? tr("Next Stop") : tr("Destination")}
                 </p>
                 {convoy.isLeader && (() => {
                   const incompleteCount = waypoints.filter(w => !w.isCompleted).length;
@@ -756,10 +757,10 @@ export default function Lobby() {
                       className={atCap
                         ? 'flex items-center gap-1 text-[10px] text-muted-foreground cursor-not-allowed'
                         : 'flex items-center gap-1 text-[10px] text-accent hover:text-accent/80'}
-                      title={atCap ? 'Maximum 5 stops reached' : 'Add a stop'}
+                      title={atCap ? tr("Maximum 5 stops reached") : tr("Add a stop")}
                     >
                       <Plus className="w-3 h-3" />
-                      {atCap ? 'Max stops' : 'Add Stop'}
+                      {atCap ? tr("Max stops") : tr("Add Stop")}
                     </button>
                   );
                 })()}
@@ -815,8 +816,8 @@ export default function Lobby() {
             <div className="mt-2 animate-fade-in">
               <p className="text-xs text-muted-foreground">
                 {allMembersNavigated 
-                  ? 'All members ready!'
-                  : `Waiting (${convoy.members.filter(m => m.hasNavigated).length}/${convoy.members.length})`
+                  ? tr("All members ready!")
+                  : tr("Waiting ({0}/{1})", [convoy.members.filter(m => m.hasNavigated).length, convoy.members.length])
                 }
               </p>
             </div>
@@ -839,7 +840,7 @@ export default function Lobby() {
         <div className="landscape:w-52 md:landscape:w-60 animate-slide-up delay-100 relative z-0 flex flex-col min-h-0 max-h-[35vh] landscape:max-h-none">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Members ({convoy.members.length}/{MAX_CONVOY_MEMBERS})
+              {tr("Members (")}{convoy.members.length}/{MAX_CONVOY_MEMBERS})
             </h2>
           </div>
           
@@ -895,7 +896,7 @@ export default function Lobby() {
                   {isTransferring && (
                     <div className="flex items-center gap-0.5">
                       <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px]" onClick={() => handleTransferLeadership(member.userId)}>
-                        OK
+                        {tr("OK")}
                       </Button>
                       <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-muted-foreground" onClick={() => setTransferTarget(null)}>
                         ✕
@@ -911,7 +912,7 @@ export default function Lobby() {
                       </span>
                     ) : (
                       <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded flex-shrink-0">
-                        Wait
+                        {tr("Wait")}
                       </span>
                     )
                   )}
@@ -927,7 +928,7 @@ export default function Lobby() {
         {/* Leave button / Leader selection */}
         {showLeaderSelect ? (
           <div className="flex flex-col gap-2 w-full max-w-xs">
-            <p className="text-xs text-muted-foreground">Select new leader before leaving:</p>
+            <p className="text-xs text-muted-foreground">{tr("Select new leader before leaving:")}</p>
             <div className="flex flex-wrap gap-2">
               {convoy.members.filter(m => !m.isLeader).map(member => {
                 const colorStyles = getMemberColorStyles(member.accentColor);
@@ -951,7 +952,7 @@ export default function Lobby() {
                 className="h-8 px-3 text-xs text-muted-foreground"
                 onClick={() => setShowLeaderSelect(false)}
               >
-                Cancel
+                {tr("Cancel")}
               </Button>
             </div>
           </div>
@@ -963,7 +964,7 @@ export default function Lobby() {
             className="h-9 px-4 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
             <LogOut className="w-3.5 h-3.5 mr-1.5" />
-            Leave
+            {tr("Leave")}
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -972,7 +973,7 @@ export default function Lobby() {
               size="sm"
               className="h-9 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              Confirm
+              {tr("Confirm")}
             </Button>
             <Button
               onClick={() => setShowLeaveConfirm(false)}
@@ -980,7 +981,7 @@ export default function Lobby() {
               size="sm"
               className="h-9"
             >
-              Cancel
+              {tr("Cancel")}
             </Button>
           </div>
         )}
@@ -993,7 +994,7 @@ export default function Lobby() {
             className="h-9 px-4 bg-accent hover:bg-accent/90 text-accent-foreground"
           >
             <Navigation className="w-3.5 h-3.5 mr-1.5" />
-            {isPillion ? 'Ready' : 'Navigate'}
+            {isPillion ? tr("Ready") : tr("Navigate")}
           </Button>
         )}
 
@@ -1028,11 +1029,11 @@ export default function Lobby() {
               hasStartedRide.current = true;
               const success = beginRide();
               if (success) {
-                toast.success(`Starting the ${terms.ride} for everyone`);
+                toast.success(tr("Starting the {0} for everyone", [terms.ride]));
 
                 const sent = await sendStartRideBroadcast();
                 if (!sent) {
-                  toast.error('Could not signal other members', { description: `They can still tap Start ${terms.Ride}.` });
+                  toast.error(tr("Could not signal other members"), { description: tr("They can still tap Start {0}.", [terms.Ride]) });
                 }
 
                 // Give followers a moment to receive before we leave the lobby
@@ -1055,11 +1056,11 @@ export default function Lobby() {
 
                 const success = beginRide();
                 if (success) {
-                  toast.success(`Starting the ${terms.ride} for everyone`);
+                  toast.success(tr("Starting the {0} for everyone", [terms.ride]));
 
                   const sent = await sendStartRideBroadcast();
                   if (!sent) {
-                    toast.error('Could not signal other members', { description: `They can still tap Start ${terms.Ride}.` });
+                    toast.error(tr("Could not signal other members"), { description: tr("They can still tap Start {0}.", [terms.Ride]) });
                   }
 
                   // Give followers a moment to receive before we leave the lobby
@@ -1083,10 +1084,10 @@ export default function Lobby() {
             }}
             size="sm"
             className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-            title={rideState.isActive ? 'Return to your active ride' : convoy.isLeader ? 'Tap to start your ride, hold to start for all' : 'Start your ride'}
+            title={rideState.isActive ? tr("Return to your active ride") : convoy.isLeader ? tr("Tap to start your ride, hold to start for all") : tr("Start your ride")}
           >
             <Play className="w-3.5 h-3.5 mr-1.5" />
-            {rideState.isActive ? `Return to ${terms.Ride}` : `Start ${terms.Ride}`}
+            {rideState.isActive ? tr("Return to {0}", [terms.Ride]) : tr("Start {0}", [terms.Ride])}
           </Button>
         )}
       </div>

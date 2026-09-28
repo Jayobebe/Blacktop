@@ -12,6 +12,7 @@ import { formatDistance, formatDuration, formatSpeed, getSpeedLabel } from '@/li
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import type { RideSession } from '@/types/blacktop';
 import { buildFlyoverFrames, memberPositionAt, MemberTrack, FlyoverFrame } from '../lib/flyover';
+import { tr } from '@/lib/i18n';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 // Free, key-less global DEM (Terrarium encoding) hosted by AWS Open Data.
@@ -443,12 +444,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       recorderRef.current = null;
       setPlaying(false);
       if (!blob || blob.size === 0) {
-        toast.error('Could not record the flyover');
+        toast.error(tr("Could not record the flyover"));
         return;
       }
 
       setConvertProgress(0);
-      toast.info('Converting flyover to MP4...');
+      toast.info(tr("Converting flyover to MP4..."));
       const mp4 = await convertWebmToMp4(blob, p => setConvertProgress(p));
 
       const base = (ride.name || 'ride').replace(/[/\\?%*:|"<>]/g, '-').trim();
@@ -461,10 +462,10 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success('3D overview downloaded');
+      toast.success(tr("3D overview downloaded"));
     } catch (e) {
       console.error('[Flyover] download failed', e);
-      toast.error('Failed to render the 3D overview');
+      toast.error(tr("Failed to render the 3D overview"));
     } finally {
       setConvertProgress(null);
       setRecording(false);
@@ -492,8 +493,8 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       />
 
       <div className="flex items-center justify-between px-4 py-3 relative z-10">
-        <h2 className="text-sm font-semibold">3D Ride Overview</h2>
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close 3D overview">
+        <h2 className="text-sm font-semibold">{tr("3D Ride Overview")}</h2>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr("Close 3D overview")}>
           <X className="w-5 h-5" />
         </Button>
       </div>
@@ -509,13 +510,13 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
             />
             {!ready && (
               <div className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading terrain…
+                <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Loading terrain…")}
               </div>
             )}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center px-6">
-            This ride doesn't have enough GPS data to build a 3D overview.
+            {tr("This ride doesn't have enough GPS data to build a 3D overview.")}
           </p>
         )}
       </div>
@@ -534,7 +535,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
                   : 'border-border text-muted-foreground hover:text-foreground',
               )}
             >
-              {d}s
+              {d}{tr("s")}
             </button>
           ))}
         </div>
@@ -547,7 +548,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
             disabled={!ready || !hasRoute || recording}
           >
             {playing ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-            {playing ? 'Pause' : 'Play'}
+            {playing ? tr("Pause") : tr("Play")}
           </Button>
           <Button
             className="flex-1"
@@ -560,10 +561,10 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
               <Download className="w-4 h-4 mr-2" />
             )}
             {convertProgress !== null
-              ? `Converting ${convertProgress}%`
+              ? tr("Converting {0}%", [convertProgress])
               : recording
-                ? 'Recording…'
-                : 'Download MP4'}
+                ? tr("Recording…")
+                : tr("Download MP4")}
           </Button>
         </div>
       </div>

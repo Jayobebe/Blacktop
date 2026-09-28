@@ -8,6 +8,7 @@ import { LogbookCover } from '@/features/logbook';
 import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
 import type { PreviewKind } from '../lib/catalogue';
+import { tr } from '@/lib/i18n';
 
 /**
  * What each Speedshop item would look like, using the rider's own stuff where
@@ -38,7 +39,7 @@ function CardPreview() {
   if (!card) {
     return (
       <div className="w-28 aspect-[5/7] rounded-xl border-2 border-dashed border-white/40 bg-black/40 flex items-center justify-center text-[10px] text-white/70 text-center px-2">
-        Add a vehicle in the Garage to see your card here
+        {tr("Add a vehicle in the Garage to see your card here")}
       </div>
     );
   }
@@ -131,7 +132,7 @@ function Fabric({ id }: { id: string }) {
     <defs>
       <pattern id={`${id}-type`} width="34" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
         <rect width="34" height="9" fill="#0b0b0c" />
-        <text x="0" y="7.5" fontSize="8.6" fontWeight={900} letterSpacing="-0.4" fill="#161618">BLACKTOP</text>
+        <text x="0" y="7.5" fontSize="8.6" fontWeight={900} letterSpacing="-0.4" fill="#161618">{tr("BLACKTOP")}</text>
       </pattern>
       <radialGradient id={`${id}-shade`} cx="50%" cy="40%" r="70%">
         <stop offset="0%" stopColor="#fff" stopOpacity="0.06" />
@@ -182,17 +183,17 @@ function HoodiePreview() {
     <div className="drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]">
     <div className="shop-spin relative w-44 h-44" style={{ transformStyle: 'preserve-3d' }}>
       {/* Front */}
-      <svg viewBox="0 0 120 120" className={face} role="img" aria-label="Hoodie front">
+      <svg viewBox="0 0 120 120" className={face} role="img" aria-label={tr("Hoodie front")}>
         <Fabric id="hf" />
         <HoodieShell id="hf">
           <g filter="url(#hf-emb)">
             <text x={78} y={46} textAnchor="middle" fontSize={3.6} fontWeight={900} letterSpacing={0.4} fill="#f4f4f4" stroke="#bdbdbd" strokeWidth={0.12}>{name}</text>
-            <text x={78} y={50.5} textAnchor="middle" fontSize={2.4} fontWeight={800} letterSpacing={0.5} fill={burn} stroke={burn} strokeWidth={0.1}>BURN IT ALL</text>
+            <text x={78} y={50.5} textAnchor="middle" fontSize={2.4} fontWeight={800} letterSpacing={0.5} fill={burn} stroke={burn} strokeWidth={0.1}>{tr("BURN IT ALL")}</text>
           </g>
         </HoodieShell>
       </svg>
       {/* Back */}
-      <svg viewBox="0 0 120 120" className={face} style={{ transform: 'rotateY(180deg)' }} role="img" aria-label="Hoodie back">
+      <svg viewBox="0 0 120 120" className={face} style={{ transform: 'rotateY(180deg)' }} role="img" aria-label={tr("Hoodie back")}>
         <Fabric id="hb" />
         <HoodieShell id="hb" back>
           <defs>
@@ -200,7 +201,7 @@ function HoodiePreview() {
           </defs>
           <g filter="url(#hb-emb)">
             <text fontSize={6.6} fontWeight={900} letterSpacing={1.4} fill="#f4f4f4" stroke="#c4c4c4" strokeWidth={0.25} {...STITCH}>
-              <textPath href="#hb-arc" startOffset="50%" textAnchor="middle">BLACKTOP WORLD</textPath>
+              <textPath href="#hb-arc" startOffset="50%" textAnchor="middle">{tr("BLACKTOP WORLD")}</textPath>
             </text>
             {/* Globe like the home screen's: dark sphere, accent coastlines and rim, stitched */}
             <circle cx={60} cy={66} r={22} fill="#050506" />
@@ -219,7 +220,7 @@ function KeychainPreview() {
   const crew = useCrew();
   const accent = 'hsl(var(--accent))';
   return (
-    <svg viewBox="0 0 120 140" className="w-32 drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]" role="img" aria-label="Rubber keychain tag">
+    <svg viewBox="0 0 120 140" className="w-32 drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]" role="img" aria-label={tr("Rubber keychain tag")}>
       <defs>
         <linearGradient id="kt-shine" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#fff" stopOpacity="0.28" />
@@ -239,8 +240,8 @@ function KeychainPreview() {
       <rect x={33} y={50} width={52} height={72} rx={11} fill="none" stroke="#000" strokeOpacity={0.25} strokeWidth={2} />
       {/* BT logo, debossed */}
       <rect x={42} y={58} width={34} height={30} rx={7} fill="#0b0b0b" />
-      <text x={59} y={79} textAnchor="middle" fontSize={17} fontWeight={900} fill={accent} letterSpacing={-1}>BT</text>
-      <text x={59} y={101} textAnchor="middle" fontSize={7} fontWeight={900} letterSpacing={1.5} fill="#0b0b0b">CREW</text>
+      <text x={59} y={79} textAnchor="middle" fontSize={17} fontWeight={900} fill={accent} letterSpacing={-1}>{tr("BT")}</text>
+      <text x={59} y={101} textAnchor="middle" fontSize={7} fontWeight={900} letterSpacing={1.5} fill="#0b0b0b">{tr("CREW")}</text>
       <text x={59} y={113} textAnchor="middle" fontSize={9} fontWeight={900} letterSpacing={1} fill="#0b0b0b">{crew.code || '----'}</text>
     </svg>
   );

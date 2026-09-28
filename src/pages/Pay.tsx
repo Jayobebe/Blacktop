@@ -4,6 +4,7 @@ import { Loader2, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { Button } from '@/components/ui/button';
 import { getEvmProvider, getNimiqProvider, polygonscanTxUrl, sendUsdtViaWallet } from '@/features/tips/lib/walletBridge';
+import { tr } from '@/lib/i18n';
 
 type Status = 'idle' | 'pending' | 'success' | 'error' | 'no-wallet';
 
@@ -94,17 +95,17 @@ export default function Pay() {
 
       {status === 'pending' && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin" /> Confirm the payment in your wallet…
+          <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Confirm the payment in your wallet…")}
         </p>
       )}
 
       {status === 'success' && (
         <div className="flex flex-col items-center gap-2">
           <CheckCircle2 className="w-8 h-8 text-accent" />
-          <p className="text-sm font-semibold">Payment sent</p>
+          <p className="text-sm font-semibold">{tr("Payment sent")}</p>
           {tx && currency === 'USDT' && (
             <a href={polygonscanTxUrl(tx)} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent underline break-all">
-              View on Polygonscan
+              {tr("View on Polygonscan")}
             </a>
           )}
           {tx && currency === 'NIM' && (
@@ -124,14 +125,14 @@ export default function Pay() {
         <div className="flex flex-col items-center gap-2">
           <AlertTriangle className="w-8 h-8 text-warning" />
           <p className="text-sm text-muted-foreground max-w-xs">
-            No wallet found here. Open this payment from the Nimiq Pay app to complete it.
+            {tr("No wallet found here. Open this payment from the Nimiq Pay app to complete it.")}
           </p>
         </div>
       )}
 
       <Button asChild variant="outline" className="rounded-xl h-10 mt-2">
         <Link to="/">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Blacktop
+          <ArrowLeft className="w-4 h-4 mr-2" />{" "}{tr("Back to Blacktop")}
         </Link>
       </Button>
     </main>

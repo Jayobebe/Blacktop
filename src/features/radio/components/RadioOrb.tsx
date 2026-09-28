@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
@@ -20,8 +21,8 @@ export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
     <button
       ref={ref}
       type="button"
-      aria-label="Blacktop Radio (hold and drag to move)"
-      title="Blacktop Radio — hold and drag to move"
+      aria-label={tr("Blacktop Radio (hold and drag to move)")}
+      title={tr("Blacktop Radio — hold and drag to move")}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
         'relative flex items-center justify-center rounded-lg border touch-none select-none transition-all',
@@ -39,8 +40,8 @@ export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
           nearHome ? 'text-accent/70 drop-shadow-[0_0_6px_hsl(var(--accent)/0.65)]' : 'text-accent/25',
         )}
       >
-        <span className="-mr-[0.1em]">B</span>
-        <span className="-ml-[0.1em]">T</span>
+        <span className="-mr-[0.1em]">{tr("B")}</span>
+        <span className="-ml-[0.1em]">{tr("T")}</span>
       </span>
       <Radio className={cn('relative w-5 h-5 text-accent', active && 'animate-pulse')} />
     </button>

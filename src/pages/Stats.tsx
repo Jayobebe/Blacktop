@@ -7,6 +7,7 @@ import { VehicleCardCarousel } from '@/features/cards';
 import { BadgeWalletPanel } from '@/features/ride';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { tr } from '@/lib/i18n';
 
 export default function Stats() {
   const navigate = useNavigate();
@@ -18,43 +19,43 @@ export default function Stats() {
   const statCards = [
     {
       icon: Hash,
-      label: `Total ${terms.Rides}`,
+      label: tr("Total {0}", [terms.Rides]),
       value: stats.totalRides.toString(),
       unit: terms.rides,
     },
     {
       icon: Route,
-      label: 'Total Distance',
+      label: tr("Total Distance"),
       value: formatDistance(stats.totalDistance, settings.distanceUnit),
       unit: getDistanceLabel(settings.distanceUnit),
     },
     {
       icon: Ruler,
-      label: `Average ${terms.Ride}`,
+      label: tr("Average {0}", [terms.Ride]),
       value: stats.totalRides > 0 ? formatDistance(stats.averageRideLength, settings.distanceUnit) : '—',
       unit: stats.totalRides > 0 ? getDistanceLabel(settings.distanceUnit) : '',
     },
     {
       icon: Clock,
-      label: 'Time on the Road',
+      label: tr("Time on the Road"),
       value: formatDuration(stats.totalDuration),
       unit: '',
     },
     settings.speedFocusEnabled && {
       icon: TrendingUp,
-      label: 'Top Speed',
+      label: tr("Top Speed"),
       value: formatSpeed(stats.personalTopSpeed, settings.speedUnit).toString(),
       unit: getSpeedLabel(settings.speedUnit),
     },
     showGroup && {
       icon: Users,
-      label: `Convoy ${terms.Rides}`,
+      label: tr("Convoy {0}", [terms.Rides]),
       value: stats.convoyRides.toString(),
       unit: 'convoys',
     },
     settings.gForceEnabled && {
       icon: Zap,
-      label: 'Max G-Force',
+      label: tr("Max G-Force"),
       value: stats.personalMaxGForce > 0 ? stats.personalMaxGForce.toFixed(1) : '—',
       unit: stats.personalMaxGForce > 0 ? 'G' : '',
     },
@@ -63,7 +64,7 @@ export default function Stats() {
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
       {/* Header */}
-      <PageHeader title="Statistics" subtitle="Your journey" backTo="/" />
+      <PageHeader title={tr("Statistics")} subtitle={tr("Your journey")} backTo="/" />
 
       {/* Main content */}
       <div className="flex flex-col landscape:flex-row gap-4 landscape:gap-3 landscape:flex-1 landscape:min-h-0">
@@ -111,8 +112,8 @@ export default function Stats() {
           {/* Disclaimer */}
           <p className="text-[10px] text-muted-foreground text-center mt-4 px-4 landscape:mt-3">
             {settings.blacktopWorldEnabled
-              ? 'Stored on your device. Crew leaderboards only see the totals you publish.'
-              : 'All statistics stored locally on your device'}
+              ? tr("Stored on your device. Crew leaderboards only see the totals you publish.")
+              : tr("All statistics stored locally on your device")}
           </p>
 
           {/* Vehicle trading cards — minted from garage vehicles, so they need both */}

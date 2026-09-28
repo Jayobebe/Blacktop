@@ -1,5 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 /**
  * Layout-matched loading placeholders. Each mirrors the real screen's
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 /** Home-shaped skeleton shown while the profile/session check runs at boot. */
 export function AppBootSkeleton() {
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6" aria-busy="true" aria-label="Loading">
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6" aria-busy="true" aria-label={tr("Loading")}>
       <div className="flex items-center justify-between mb-4">
         <div className="space-y-2">
           <Skeleton className="h-2.5 w-20" />
@@ -45,7 +46,7 @@ export function AppBootSkeleton() {
 /** Stack of list rows (avatar/icon + two text lines + trailing value). */
 export function ListSkeleton({ rows = 5, className }: { rows?: number; className?: string }) {
   return (
-    <div className={cn('space-y-2', className)} aria-busy="true" aria-label="Loading">
+    <div className={cn('space-y-2', className)} aria-busy="true" aria-label={tr("Loading")}>
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-card/40 border border-border/30" style={{ opacity: 1 - i * 0.12 }}>
           <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
@@ -63,7 +64,7 @@ export function ListSkeleton({ rows = 5, className }: { rows?: number; className
 /** Full-bleed panel placeholder (maps, charts, media). */
 export function PanelSkeleton({ className, label }: { className?: string; label?: string }) {
   return (
-    <div className={cn('relative', className)} aria-busy="true" aria-label={label ?? 'Loading'}>
+    <div className={cn('relative', className)} aria-busy="true" aria-label={label ?? tr("Loading")}>
       <Skeleton className="absolute inset-0 rounded-none" />
       {label && (
         <div className="absolute inset-0 flex items-center justify-center">

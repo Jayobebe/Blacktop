@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import nickAsset from '@/assets/mecha-nick.png.asset.json';
+import { tr } from '@/lib/i18n';
 
 interface MechaNickProps {
   /** Highest-priority message — always shown first when present. */
@@ -81,7 +82,7 @@ export function MechaNick({ tip, lines, className }: MechaNickProps) {
         <div className="pointer-events-none absolute bottom-full right-0 mb-4 z-10 w-max max-w-[190px] animate-scale-in">
           <div className="relative rounded-2xl bg-white px-3 py-2 text-xs leading-snug text-neutral-900 shadow-lg">
             <span className="block text-[10px] uppercase tracking-widest text-neutral-500 mb-0.5">
-              Mecha-Nick
+              {tr("Mecha-Nick")}
             </span>
             {message}
             {/* Bubble tail pointing down at Nick */}
@@ -93,11 +94,11 @@ export function MechaNick({ tip, lines, className }: MechaNickProps) {
         type="button"
         onClick={speakNow}
         className="relative h-[260px] w-32 sm:h-[300px] sm:w-36 select-none focus:outline-none"
-        aria-label="Talk to Mecha-Nick"
+        aria-label={tr("Talk to Mecha-Nick")}
       >
         <img
           src={nickAsset.url}
-          alt="Mecha-Nick the mechanic"
+          alt={tr("Mecha-Nick the mechanic")}
           draggable={false}
           className={`absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)] ${message ? 'animate-nick-bob' : ''}`}
         />

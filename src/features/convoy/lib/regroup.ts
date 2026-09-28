@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { haptics } from '@/lib/haptics';
+import { tr } from '@/lib/i18n';
 
 /**
  * Regroup call: a convoy-wide "riders are behind, ease off and regroup"
@@ -33,17 +34,17 @@ export function describeRegroup(behindNames: string[], withAdvice = true): strin
 
 export async function sendRegroup(call: Omit<RegroupCall, 'sentAt'>): Promise<boolean> {
   if (!channel) {
-    toast.error('Not connected to the convoy');
+    toast.error(tr("Not connected to the convoy"));
     return false;
   }
   const now = Date.now();
   if (now - lastSentAt < REGROUP_COOLDOWN_MS) {
-    toast.error(`Regroup already sent. Try again in ${Math.ceil((REGROUP_COOLDOWN_MS - (now - lastSentAt)) / 1000)}s`);
+    toast.error(tr("Regroup already sent. Try again in {0}s", [Math.ceil((REGROUP_COOLDOWN_MS - (now - lastSentAt)) / 1000)]));
     return false;
   }
   lastSentAt = now;
   await channel.send({ type: 'broadcast', event: 'regroup', payload: { ...call, sentAt: now } });
-  toast.success('Regroup sent to convoy');
+  toast.success(tr("Regroup sent to convoy"));
   return true;
 }
 
@@ -68,7 +69,7 @@ export function useRegroupListener(convoyId: string | null, userId: string | nul
 
       const names = Array.isArray(call.behindNames) ? call.behindNames.map(String).slice(0, 8) : [];
       haptics.heavy();
-      toast.warning(`Regroup: ${String(call.fromName || 'Convoy').slice(0, 30)}`, {
+      toast.warning(tr("Regroup: {0}", [String(call.fromName || 'Convoy').slice(0, 30)]), {
         description: describeRegroup(names),
         duration: 12000,
       });

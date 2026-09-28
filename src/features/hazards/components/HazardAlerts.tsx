@@ -10,6 +10,7 @@ import { HAZARD_BY_KIND, hazardColor, type Hazard } from '../types';
 import { boundsAround, fetchHazards, getHazards, voteHazard, HazardError } from '../lib/hazardStore';
 import { onHazardFix, setLastHazardPosition, type HazardFix } from '../lib/position';
 import { setHazardWarning, useHazardWarning, type HazardWarning } from '../lib/bannerStore';
+import { tr } from '@/lib/i18n';
 
 /**
  * Hazard warnings, app-wide (mounted once in App): as the rider moves, any
@@ -132,9 +133,9 @@ export function HazardAlerts() {
     haptics.light();
     try {
       await voteHazard(h.id, stillThere);
-      toast(stillThere ? 'Thanks, others will be warned' : 'Thanks, noted as gone', { duration: 2000 });
+      toast(stillThere ? tr("Thanks, others will be warned") : tr("Thanks, noted as gone"), { duration: 2000 });
     } catch (e) {
-      if (e instanceof HazardError && e.reason === 'rate-limited') toast('Slow down on the votes a little');
+      if (e instanceof HazardError && e.reason === 'rate-limited') toast(tr("Slow down on the votes a little"));
     }
   };
 
@@ -152,19 +153,19 @@ export function HazardAlerts() {
       {prompt && promptType && (
         <div className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+6rem)] z-[1300] mx-auto max-w-sm animate-slide-up">
           <div className="rounded-2xl border border-border bg-card/95 backdrop-blur p-3 shadow-2xl">
-            <p className="text-sm font-semibold text-center">{promptType.label}: still there?</p>
+            <p className="text-sm font-semibold text-center">{promptType.label}{tr(": still there?")}</p>
             <div className="mt-2.5 grid grid-cols-2 gap-2">
               <button
                 onClick={() => vote(prompt, true)}
                 className={cn('h-14 rounded-xl flex items-center justify-center gap-2 font-bold text-base bg-accent text-accent-foreground active:scale-95 transition-transform')}
               >
-                <ThumbsUp className="w-5 h-5" /> Yes
+                <ThumbsUp className="w-5 h-5" />{" "}{tr("Yes")}
               </button>
               <button
                 onClick={() => vote(prompt, false)}
                 className="h-14 rounded-xl flex items-center justify-center gap-2 font-bold text-base border-2 border-border active:scale-95 transition-transform"
               >
-                <ThumbsDown className="w-5 h-5" /> Gone
+                <ThumbsDown className="w-5 h-5" />{" "}{tr("Gone")}
               </button>
             </div>
           </div>
@@ -187,9 +188,9 @@ export function HazardBanner({ warning, className }: { warning: HazardWarning; c
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-bold leading-tight truncate">{type.label}</span>
-          <span className="block text-xs text-muted-foreground">{shownDistance(warning.distance, settings.distanceUnit)} ahead</span>
+          <span className="block text-xs text-muted-foreground">{shownDistance(warning.distance, settings.distanceUnit)}{" "}{tr("ahead")}</span>
         </span>
-        <button onClick={() => setHazardWarning(null)} className="p-1.5 text-muted-foreground" aria-label="Dismiss">
+        <button onClick={() => setHazardWarning(null)} className="p-1.5 text-muted-foreground" aria-label={tr("Dismiss")}>
           <X className="w-4 h-4" />
         </button>
       </div>
