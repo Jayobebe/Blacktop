@@ -83,12 +83,29 @@ function ReceiptPreview() {
   );
 }
 
+/** The garage logbook given real depth (back cover + page edges) so it turns like a book. */
 function LogbookPreview() {
   const { activeBike, bikes } = useGarage();
   const bike = activeBike ?? bikes[0];
+  const depth = 14;
   return (
-    <div className="w-32 drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
-      <LogbookCover vehicleName={bike?.name ?? 'Your vehicle'} onOpen={() => {}} />
+    <div className="relative w-40 h-56 scale-[0.8] origin-bottom pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+      {/* back cover */}
+      <div className="absolute left-0 top-[14%] bottom-0 right-[4%] rounded-l-md rounded-r-xl border-[3px] border-black/85 bg-[#4a230e]" style={{ transform: `translateZ(-${depth}px)` }} />
+      {/* page edges (right side) */}
+      <div
+        className="absolute top-[15%] bottom-[1%] right-[4%] border-y-2 border-black/70 bg-[#efe3c4] [background-image:repeating-linear-gradient(90deg,transparent_0,transparent_2px,rgba(0,0,0,0.15)_2px,rgba(0,0,0,0.15)_3px)]"
+        style={{ width: depth * 2, transformOrigin: 'right center', transform: `translateZ(-${depth}px) rotateY(90deg)` }}
+      />
+      {/* spine (left side) */}
+      <div
+        className="absolute left-0 top-[14%] bottom-0 bg-[#3b1b09] border-y-[3px] border-black/85"
+        style={{ width: depth * 2, transformOrigin: 'left center', transform: `translateZ(-${depth}px) rotateY(-90deg)` }}
+      />
+      {/* front */}
+      <div className="absolute inset-0" style={{ transform: `translateZ(${depth}px)` }}>
+        <LogbookCover vehicleName={bike?.name ?? 'Your vehicle'} onOpen={() => {}} className="m-0 [&>div:last-child]:shadow-none" />
+      </div>
     </div>
   );
 }
