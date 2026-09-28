@@ -1,9 +1,8 @@
 import { useGarage } from '@/features/garage';
-import { useRideHistory } from '@/features/ride';
+import { useRideHistory, RideSummary } from '@/features/ride';
 import { useVehicleCards, VehicleCard } from '@/features/cards';
 import { LogbookCover } from '@/features/logbook';
 import { useCrew } from '@/features/crew/useCrew';
-import { formatDuration } from '@/lib/format';
 import type { PreviewKind } from '../lib/catalogue';
 
 /**
@@ -12,6 +11,10 @@ import type { PreviewKind } from '../lib/catalogue';
  * and crew code.
  */
 export function ItemPreview({ kind }: { kind: PreviewKind }) {
+  return <div className="shop-turn origin-bottom">{renderItem(kind)}</div>;
+}
+
+function renderItem(kind: PreviewKind) {
   switch (kind) {
     case 'card':
       return <CardPreview />;
@@ -35,46 +38,47 @@ function CardPreview() {
       </div>
     );
   }
+  // The rider's actual card, scaled down.
   return (
-    <div className="w-[300px] origin-bottom scale-[0.44] -mb-[4%] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)]">
+    <div className="w-[300px] h-[420px] -mt-[235px] -mx-[84px] origin-bottom scale-[0.44] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
       <VehicleCard card={card} />
     </div>
   );
 }
 
-function useLatestRide() {
-  const { rides } = useRideHistory();
-  return rides.find((r) => r.endedAt) ?? null;
-}
-
+/** The rider's latest real receipt (same component as Ride History), scaled down. */
 function ReceiptPreview() {
-  const ride = useLatestRide();
-  const rows: [string, string][] = ride
-    ? [
-        ['DIST', `${ride.distance.toFixed(1)} MI`],
-        ['TIME', formatDuration(ride.duration)],
-        ['TOP', `${Math.round(ride.maxSpeed)} MPH`],
-      ]
-    : [
-        ['DIST', '42.0 MI'],
-        ['TIME', '1:12:00'],
-        ['TOP', '78 MPH'],
-      ];
+  const { rides } = useRideHistory();
+  const { bikes } = useGarage();
+  const ride = rides.find((r) => r.endedAt) ?? null;
+  const bike = ride ? bikes.find((b) => b.id === ride.bikeId) : bikes[0];
+  const stats = ride
+    ? {
+        duration: ride.duration,
+        distance: ride.distance,
+        maxSpeed: ride.maxSpeed,
+        averageSpeed: ride.averageSpeed,
+        maxLean: Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0),
+        maxGForce: ride.maxGForce,
+      }
+    : { duration: 4320, distance: 42, maxSpeed: 78, averageSpeed: 35, maxLean: 38, maxGForce: 1.1 };
   return (
-    <div className="w-32 -rotate-3 drop-shadow-[0_14px_12px_rgba(0,0,0,0.85)]">
-      <div className="receipt-edge-top" />
-      <div className="receipt px-3 py-2 font-receipt text-[--ink]">
-        <p className="text-center text-[11px] font-bold tracking-[0.2em]">BLACKTOP</p>
-        <p className="text-center text-[7px] tracking-[0.2em] opacity-70 mb-1">— RIDE RECEIPT —</p>
-        {rows.map(([k, v]) => (
-          <p key={k} className="flex justify-between text-[9px] leading-tight">
-            <span>{k}</span>
-            <span>{v}</span>
-          </p>
-        ))}
-        <div className="receipt-barcode mt-1.5 h-4" aria-hidden />
-      </div>
-      <div className="receipt-edge-bottom" />
+    <div className="w-[360px] origin-bottom scale-[0.3] -mx-[126px] -mt-[70%] -rotate-3 drop-shadow-[0_24px_18px_rgba(0,0,0,0.85)] pointer-events-none">
+      <RideSummary
+        variant="embedded"
+        hideActions
+        members={[]}
+        rideStats={stats}
+        bikeName={bike?.name ?? null}
+        bikePhoto={bike?.photos?.hero ?? null}
+        gForceSamples={ride?.gForceSamples}
+        earnedBadges={ride?.earnedBadges}
+        printedAt={ride ? ride.endedAt ?? ride.startedAt : undefined}
+        orderId={ride ? `#${ride.id.slice(0, 6).toUpperCase()}` : '#SAMPLE'}
+        timeAttack={!!ride?.challenge}
+        trackDay={!!ride?.track}
+        track={ride?.track ?? null}
+      />
     </div>
   );
 }
