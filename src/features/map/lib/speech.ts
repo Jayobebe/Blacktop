@@ -3,6 +3,7 @@
 // from a tap, so the first tap anywhere in the app unlocks it. Whether prompts
 // are spoken at all is the Spoken Directions setting (useTurnByTurn checks it).
 import { setAudioDucked } from '@/lib/audioDuck';
+import { getLanguage } from '@/lib/i18n';
 
 export function speechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
@@ -10,17 +11,25 @@ export function speechSupported(): boolean {
 
 let voice: SpeechSynthesisVoice | null = null;
 
+/** The prompts are in the app's language: the phone's own locale when that matches, else a sensible default. */
+function speechLang(): string {
+  const app = getLanguage();
+  const phone = navigator.language || '';
+  if (phone.toLowerCase().split(/[-_]/)[0] === app) return phone;
+  return app === 'en' ? 'en-GB' : app;
+}
+
 function pickVoice() {
   if (!speechSupported()) return;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return;
-  const lang = (navigator.language || 'en-GB').toLowerCase();
+  const lang = speechLang().toLowerCase();
   const base = lang.split('-')[0];
   const exact = voices.filter((v) => v.lang.toLowerCase().replace('_', '-') === lang);
-  const sameBase = voices.filter((v) => v.lang.toLowerCase().startsWith(base));
-  // The prompts are written in English, so fall back to any English voice.
-  const english = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
-  const pool = base === 'en' ? (exact.length ? exact : sameBase) : english;
+  // Norwegian voices come as nb, no or nn.
+  const bases = base === 'nb' ? ['nb', 'no', 'nn'] : [base];
+  const sameBase = voices.filter((v) => bases.some((b) => v.lang.toLowerCase().startsWith(b)));
+  const pool = exact.length ? exact : sameBase;
   voice = pool.find((v) => v.localService) ?? pool[0] ?? null;
 }
 
@@ -58,7 +67,7 @@ export function speak(text: string, opts: { interrupt?: boolean } = {}) {
     u.voice = voice;
     u.lang = voice.lang;
   } else {
-    u.lang = navigator.language?.startsWith('en') ? navigator.language : 'en-GB';
+    u.lang = speechLang();
   }
   u.rate = 1;
   u.pitch = 1;

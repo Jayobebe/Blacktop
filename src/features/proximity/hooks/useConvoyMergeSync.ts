@@ -65,9 +65,9 @@ export function useConvoyMergeSync({
       // Only my own leader can move me.
       const { data } = await supabase.from('convoys').select('leader_id').eq('id', c.id).maybeSingle();
       if (!data || data.leader_id !== msg.fromId) return;
-      setProximityState({ busy: `Merging with ${msg.record.hostName}'s convoy…`, merge: { ...msg.record, role: 'guest' } });
+      setProximityState({ busy: tr("Merging with {0}'s convoy…", [msg.record.hostName]), merge: { ...msg.record, role: 'guest' } });
       try {
-        await moveTo(msg.hostCode, `Merged with ${msg.record.hostName}'s convoy`);
+        await moveTo(msg.hostCode, tr("Merged with {0}'s convoy", [msg.record.hostName]));
       } finally {
         setProximityState({ busy: null });
       }
@@ -84,9 +84,9 @@ export function useConvoyMergeSync({
         toast(tr("{0}'s convoy split off", [record.homeName]));
         return;
       }
-      setProximityState({ busy: `Returning to ${record.homeName}'s convoy…` });
+      setProximityState({ busy: tr("Returning to {0}'s convoy…", [record.homeName]) });
       try {
-        await moveTo(record.homeCode, `Back with ${record.homeName}'s convoy`);
+        await moveTo(record.homeCode, tr("Back with {0}'s convoy", [record.homeName]));
       } finally {
         setProximityState({ busy: null, merge: null });
       }
@@ -132,7 +132,7 @@ export function useConvoyMergeSync({
         }
         setProximityState({ busy: 'Unmerging…' });
         try {
-          await moveTo(record.homeCode, `Unmerged. Back leading your convoy`);
+          await moveTo(record.homeCode, tr("Unmerged. Back leading your convoy"));
         } finally {
           setProximityState({ busy: null, merge: null });
         }

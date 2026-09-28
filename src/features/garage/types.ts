@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n';
 export interface BikePhotos {
   /** Pixelated front-right quarter view, used as the diorama hero. */
   hero: string; // data URL
@@ -68,39 +69,39 @@ export interface GarageState {
 export const GARAGE_STORAGE_KEY = 'bt.garage.v1';
 
 export const DEFAULT_MAINT_TEMPLATES: { key: MaintPartKey; name: string; intervalKm: number }[] = [
-  { key: 'chain-lube', name: 'Chain lube', intervalKm: 500 },
-  { key: 'engine-oil', name: 'Engine oil', intervalKm: 5000 },
-  { key: 'brake-pads', name: 'Brake pads', intervalKm: 10000 },
-  { key: 'air-filter', name: 'Air filter', intervalKm: 12000 },
-  { key: 'chain-replace', name: 'Chain & sprockets', intervalKm: 15000 },
-  { key: 'tyres', name: 'Tyres', intervalKm: 8000 },
+  { key: 'chain-lube', name: tr("Chain lube"), intervalKm: 500 },
+  { key: 'engine-oil', name: tr("Engine oil"), intervalKm: 5000 },
+  { key: 'brake-pads', name: tr("Brake pads"), intervalKm: 10000 },
+  { key: 'air-filter', name: tr("Air filter"), intervalKm: 12000 },
+  { key: 'chain-replace', name: tr("Chain & sprockets"), intervalKm: 15000 },
+  { key: 'tyres', name: tr("Tyres"), intervalKm: 8000 },
 ];
 
 /** Car-appropriate presets — no chain, longer intervals. */
 export const CAR_MAINT_TEMPLATES: { key: MaintPartKey; name: string; intervalKm: number }[] = [
-  { key: 'engine-oil', name: 'Engine oil', intervalKm: 15000 },
-  { key: 'tyres', name: 'Tyres', intervalKm: 40000 },
-  { key: 'brake-pads', name: 'Brake pads', intervalKm: 40000 },
-  { key: 'air-filter', name: 'Air filter', intervalKm: 30000 },
-  { key: 'cabin-filter', name: 'Cabin filter', intervalKm: 20000 },
-  { key: 'coolant', name: 'Coolant', intervalKm: 60000 },
-  { key: 'wipers', name: 'Wiper blades', intervalKm: 20000 },
+  { key: 'engine-oil', name: tr("Engine oil"), intervalKm: 15000 },
+  { key: 'tyres', name: tr("Tyres"), intervalKm: 40000 },
+  { key: 'brake-pads', name: tr("Brake pads"), intervalKm: 40000 },
+  { key: 'air-filter', name: tr("Air filter"), intervalKm: 30000 },
+  { key: 'cabin-filter', name: tr("Cabin filter"), intervalKm: 20000 },
+  { key: 'coolant', name: tr("Coolant"), intervalKm: 60000 },
+  { key: 'wipers', name: tr("Wiper blades"), intervalKm: 20000 },
 ];
 
 /** Bicycle / e-bike presets — short intervals, no engine. */
 export const CYCLE_MAINT_TEMPLATES: { key: MaintPartKey; name: string; intervalKm: number }[] = [
-  { key: 'chain-lube', name: 'Chain clean & lube', intervalKm: 300 },
-  { key: 'tyres', name: 'Tyres', intervalKm: 4000 },
-  { key: 'brake-pads', name: 'Brake pads', intervalKm: 2000 },
-  { key: 'gear-cables', name: 'Gear cables', intervalKm: 5000 },
-  { key: 'tubeless-sealant', name: 'Tubeless sealant', intervalKm: 1500 },
-  { key: 'chain-replace', name: 'Chain', intervalKm: 3000 },
+  { key: 'chain-lube', name: tr("Chain clean & lube"), intervalKm: 300 },
+  { key: 'tyres', name: tr("Tyres"), intervalKm: 4000 },
+  { key: 'brake-pads', name: tr("Brake pads"), intervalKm: 2000 },
+  { key: 'gear-cables', name: tr("Gear cables"), intervalKm: 5000 },
+  { key: 'tubeless-sealant', name: tr("Tubeless sealant"), intervalKm: 1500 },
+  { key: 'chain-replace', name: tr("Chain"), intervalKm: 3000 },
 ];
 
 /** E-scooter presets. */
 export const SCOOTER_MAINT_TEMPLATES: { key: MaintPartKey; name: string; intervalKm: number }[] = [
-  { key: 'tyres', name: 'Tyres', intervalKm: 2000 },
-  { key: 'brake-pads', name: 'Brakes', intervalKm: 1500 },
-  { key: 'bolt-check', name: 'Folding joint & bolts', intervalKm: 500 },
-  { key: 'battery-check', name: 'Battery health check', intervalKm: 3000 },
+  { key: 'tyres', name: tr("Tyres"), intervalKm: 2000 },
+  { key: 'brake-pads', name: tr("Brakes"), intervalKm: 1500 },
+  { key: 'bolt-check', name: tr("Folding joint & bolts"), intervalKm: 500 },
+  { key: 'battery-check', name: tr("Battery health check"), intervalKm: 3000 },
 ];

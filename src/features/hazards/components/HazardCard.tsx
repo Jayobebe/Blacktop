@@ -8,10 +8,10 @@ import { tr } from '@/lib/i18n';
 
 function ago(t: number) {
   const m = Math.max(0, Math.round((Date.now() - t) / 60_000));
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m} min ago`;
+  if (m < 1) return tr("just now");
+  if (m < 60) return tr("{0} min ago", [m]);
   const h = Math.round(m / 60);
-  return h < 48 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
+  return h < 48 ? tr("{0} h ago", [h]) : tr("{0} days ago", [Math.round(h / 24)]);
 }
 
 /** A tapped hazard pin: what it is, how fresh, and still there / gone (or remove, if it's yours). */
@@ -59,7 +59,7 @@ export function HazardCard({ hazard, onClose, className }: { hazard: Hazard; onC
             <Trash2 className="w-3.5 h-3.5" />{" "}{tr("Remove my report")}
           </Button>
         ) : hazard.myVote !== null ? (
-          <p className="flex-1 text-xs text-muted-foreground text-center py-1.5">{tr("You said it's")}{" "}{hazard.myVote ? tr("still there") : 'gone'}{tr(". Thanks.")}</p>
+          <p className="flex-1 text-xs text-muted-foreground text-center py-1.5">{hazard.myVote ? tr("You said it's still there. Thanks.") : tr("You said it's gone. Thanks.")}</p>
         ) : (
           <>
             <Button size="sm" className="flex-1 gap-1" onClick={() => void vote(true)}>

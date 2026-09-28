@@ -358,7 +358,7 @@ export default function Lobby() {
     // The leader's twisty pick becomes a real convoy waypoint so every rider
     // follows the same line; it leads the list so it's ridden first.
     if (convoy.isLeader && routeMode === 'twisty' && twistyVia && waypoints.length < 5) {
-      const added = await addWaypoint({ name: 'Twisty leg', address: '', lat: twistyVia.lat, lng: twistyVia.lng });
+      const added = await addWaypoint({ name: tr("Twisty leg"), address: '', lat: twistyVia.lat, lng: twistyVia.lng });
       if (added !== false && waypoints.length > 0) {
         await reorderWaypoints(waypoints.length, 0);
       }

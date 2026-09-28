@@ -103,11 +103,11 @@ function weekNumber(key: string): number {
  */
 export function specialForWeek(key = weekKey()): SpecialEvent | null {
   const w = weekNumber(key);
-  if (w === 1) return { name: 'New Year, New Roads', blurb: tr("Special event week — boosted targets, boosted glory.") };
-  if (w === 13) return { name: 'Spring Shakedown', blurb: tr("Special event week — blow the winter cobwebs out.") };
-  if (w === 26) return { name: 'Solstice Send', blurb: tr("Special event week — longest days, longest rides.") };
-  if (w === 39) return { name: 'Autumn Attack', blurb: tr("Special event week — last of the warm tarmac.") };
-  if (w === 52) return { name: 'Last Blast', blurb: tr("Special event week — end the year on the throttle.") };
+  if (w === 1) return { name: tr("New Year, New Roads"), blurb: tr("Special event week — boosted targets, boosted glory.") };
+  if (w === 13) return { name: tr("Spring Shakedown"), blurb: tr("Special event week — blow the winter cobwebs out.") };
+  if (w === 26) return { name: tr("Solstice Send"), blurb: tr("Special event week — longest days, longest rides.") };
+  if (w === 39) return { name: tr("Autumn Attack"), blurb: tr("Special event week — last of the warm tarmac.") };
+  if (w === 52) return { name: tr("Last Blast"), blurb: tr("Special event week — end the year on the throttle.") };
   return null;
 }
 

@@ -77,7 +77,7 @@ export function useAudioDevices() {
       console.log('[AudioDevices] Found inputs:', inputs.length, 'outputs:', outputs.length);
     } catch (err) {
       console.error('[AudioDevices] Error enumerating devices:', err);
-      setError('Could not access audio devices');
+      setError(tr("Could not access audio devices"));
     } finally {
       setIsLoading(false);
     }

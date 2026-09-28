@@ -464,7 +464,7 @@ export function DestinationSearch({
       const q = searchQuery.toLowerCase();
       const matchingPOIs: SearchResult[] = savedPOIs
         .filter(p => p.name.toLowerCase().includes(q))
-        .map(p => ({ id: `poi:${p.id}`, name: p.name, address: 'Saved location', lat: p.lat, lng: p.lng }));
+        .map(p => ({ id: `poi:${p.id}`, name: p.name, address: tr("Saved location"), lat: p.lat, lng: p.lng }));
       const poiIds = new Set(matchingPOIs.map(r => r.id));
       const merged = [...matchingPOIs, ...searchResults.filter(r => !poiIds.has(r.id))];
 
@@ -490,7 +490,7 @@ export function DestinationSearch({
       cardDrops.map((d) => ({
         id: `card-${d.id}`,
         name: `${d.vehicleName}${d.collected ? ' ✓' : ''}`,
-        address: `Card drop · ${d.ownerName}`,
+        address: tr("Card drop · {0}", [d.ownerName]),
         lat: d.lat,
         lng: d.lng,
         type: 'card',
@@ -564,7 +564,7 @@ export function DestinationSearch({
         cardDrops.map((d) => ({
           id: `card-${d.id}`,
           name: `${d.vehicleName}${d.collected ? ' ✓' : ''}`,
-          address: `Card drop · ${d.ownerName}`,
+          address: tr("Card drop · {0}", [d.ownerName]),
           lat: d.lat,
           lng: d.lng,
           type: 'card',
@@ -791,7 +791,7 @@ export function DestinationSearch({
               {savedPOIs.map((poi, index) => (
                 <button
                   key={poi.id}
-                  onClick={() => handleSelectResult({ id: `poi:${poi.id}`, name: poi.name, address: 'Saved location', lat: poi.lat, lng: poi.lng })}
+                  onClick={() => handleSelectResult({ id: `poi:${poi.id}`, name: poi.name, address: tr("Saved location"), lat: poi.lat, lng: poi.lng })}
                   className={cn(
                     "w-full flex items-center gap-3 p-4 text-left",
                     "hover:bg-accent/10 active:bg-accent/20 transition-colors",

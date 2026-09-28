@@ -377,7 +377,7 @@ export default function Settings() {
           <CollapsibleSection icon={Sparkles} label={tr("Your Blacktop")} index={1} delayClass="delay-75">
             <div className="space-y-5">
               <div>
-                <p className="text-xs text-muted-foreground mb-2">{tr("What you")}{" "}{exp.terms.ride} <span className="opacity-60">{tr("(first is your main)")}</span></p>
+                <p className="text-xs text-muted-foreground mb-2">{exp.terms.car ? tr("What you drive") : tr("What you ride")} <span className="opacity-60">{tr("(first is your main)")}</span></p>
                 <div className="flex flex-wrap gap-1.5">
                   {VEHICLE_ORDER.map((v) => {
                     const info = VEHICLES[v];
@@ -404,7 +404,7 @@ export default function Settings() {
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-2">{tr("Who you")}{" "}{exp.terms.ride}{" "}{tr("with")}</p>
+                <p className="text-xs text-muted-foreground mb-2">{exp.terms.car ? tr("Who you drive with") : tr("Who you ride with")}</p>
                 <SegmentedChoice<RideMode>
                   value={exp.rideMode}
                   onChange={exp.setRideMode}
@@ -416,7 +416,7 @@ export default function Settings() {
                 />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-2">{tr("Typical")}{" "}{exp.terms.ride}</p>
+                <p className="text-xs text-muted-foreground mb-2">{tr("Typical {0}", [exp.terms.ride])}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {RIDE_STYLES.map((st) => (
                     <button
@@ -623,10 +623,10 @@ export default function Settings() {
               <div className="space-y-3">
                 {(
                   [
-                    ['rescueToConvoy', 'Your convoy', 'Everyone you’re riding with: an alert card, your location and a route to you.'],
-                    ['rescueToCrew', 'Your crew', 'A push to your crew mates’ phones, even with the app closed.'],
-                    ['rescueToDiscord', 'Discord', 'A post in your connected Discord channel.'],
-                    ['rescueToNearby', 'Riders nearby', 'Other Blacktop riders close by who’ve opted in to help (Notifications → Riders near me who need help).'],
+                    ['rescueToConvoy', tr("Your convoy"), tr("Everyone you’re riding with: an alert card, your location and a route to you.")],
+                    ['rescueToCrew', tr("Your crew"), tr("A push to your crew mates’ phones, even with the app closed.")],
+                    ['rescueToDiscord', 'Discord', tr("A post in your connected Discord channel.")],
+                    ['rescueToNearby', tr("Riders nearby"), tr("Other Blacktop riders close by who’ve opted in to help (Notifications → Riders near me who need help).")],
                   ] as const
                 ).map(([key, title, desc]) => (
                   <div key={key} className="flex items-center justify-between gap-3">
@@ -922,7 +922,7 @@ export default function Settings() {
                       }}
                       className="mt-1.5 text-[11px] text-accent hover:underline"
                     >
-                      {blockedRiders}{" "}{tr("blocked")}{" "}{blockedRiders === 1 ? 'rider' : 'riders'}{" "}{tr("· Clear")}
+                      {blockedRiders === 1 ? tr("1 blocked rider") : tr("{0} blocked riders", [blockedRiders])}{" "}{tr("· Clear")}
                     </button>
                   )}
                 </div>

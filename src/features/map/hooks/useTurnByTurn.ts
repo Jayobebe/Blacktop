@@ -12,6 +12,7 @@ import {
   type NavProgress,
   type NavRoute,
 } from '../lib/navigation';
+import { tr } from '@/lib/i18n';
 import { speak, stopSpeaking } from '../lib/speech';
 
 /** Metres off the line before the rider counts as off route. */
@@ -164,29 +165,29 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, un
       if (d <= ARRIVE_M + 10 && stage < 2) {
         stagesRef.current.set(m.index, 2);
         const where = stopsRef.current[m.leg];
-        say(m.leg === nav.legEnds.length - 1 ? `You have arrived${where ? ` at ${where}` : ''}` : `You've reached ${where ?? 'your stop'}`, {
+        say(m.leg === nav.legEnds.length - 1 ? (where ? tr("You have arrived at {0}", [where]) : tr("You have arrived")) : where ? tr("You've reached {0}", [where]) : tr("You've reached your stop"), {
           interrupt: true,
         });
       } else if (d <= far && d > near && stage < 1) {
         stagesRef.current.set(m.index, 1);
-        say(`In ${spokenDistance(d, unit)}, ${lowerFirst(text)}`);
+        say(tr("In {0}, {1}", [spokenDistance(d, unit), lowerFirst(text)]));
       }
     } else if (d <= near && stage < 2) {
       stagesRef.current.set(m.index, 2);
       let line = text;
       if (p.then) {
         stagesRef.current.set(p.then.index, 1);
-        line += `, then ${lowerFirst(describe(p.then, true))}`;
+        line = tr("{0}, then {1}", [line, lowerFirst(describe(p.then, true))]);
       }
       say(line, { interrupt: true });
     } else if (d <= far && d > near + 30 && stage < 1) {
       stagesRef.current.set(m.index, 1);
-      say(`In ${spokenDistance(d, unit)}, ${lowerFirst(text)}`);
+      say(tr("In {0}, {1}", [spokenDistance(d, unit), lowerFirst(text)]));
     } else if (m.index !== lastNextRef.current && d > 3000) {
       // A long way to the next turn: say so once, so silence doesn't read as lost.
       const prev = nav.maneuvers[m.index - 1];
       const road = prev?.name || '';
-      say(`Continue${road ? ` on ${road}` : ''} for ${spokenDistance(d, unit)}`);
+      say(road ? tr("Continue on {0} for {1}", [road, spokenDistance(d, unit)]) : tr("Continue for {0}", [spokenDistance(d, unit)]));
     }
     lastNextRef.current = m.index;
     // Keyed on the coordinates, not the object, so a fresh object with the

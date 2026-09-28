@@ -1,6 +1,7 @@
 import type { MapSearchResult } from './placeSearch';
 import { isDemoModeActive, DEMO_SAVED_POIS } from '@/lib/demoMode';
 
+import { tr } from '@/lib/i18n';
 export interface SavedPOI {
   id: string;
   name: string;
@@ -49,7 +50,7 @@ export function poiToSearchResult(poi: SavedPOI): MapSearchResult {
   return {
     id: `poi:${poi.id}`,
     name: poi.name,
-    address: 'Saved location',
+    address: tr("Saved location"),
     lat: poi.lat,
     lng: poi.lng,
   };

@@ -1,22 +1,23 @@
 import { z } from 'zod';
 
+import { tr } from '@/lib/i18n';
 export const displayNameSchema = z
   .string()
   .trim()
-  .min(1, 'Name required')
-  .max(50, 'Name must be 50 characters or fewer');
+  .min(1, tr("Name required"))
+  .max(50, tr("Name must be 50 characters or fewer"));
 
 export const convoyNameSchema = z
   .string()
   .trim()
-  .min(1, 'Convoy name required')
-  .max(100, 'Convoy name must be 100 characters or fewer');
+  .min(1, tr("Convoy name required"))
+  .max(100, tr("Convoy name must be 100 characters or fewer"));
 
 export const chatMessageSchema = z
   .string()
   .trim()
-  .min(1, 'Message cannot be empty')
-  .max(500, 'Message must be 500 characters or fewer');
+  .min(1, tr("Message cannot be empty"))
+  .max(500, tr("Message must be 500 characters or fewer"));
 
 export const coordinateSchema = z.object({
   lat: z.number().min(-90).max(90),

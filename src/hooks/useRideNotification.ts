@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 
+import { tr } from '@/lib/i18n';
 interface UseRideNotificationOptions {
   isActive: boolean;
   title?: string;
@@ -8,8 +9,8 @@ interface UseRideNotificationOptions {
 
 export function useRideNotification({ 
   isActive, 
-  title = 'Blacktop Active',
-  body = 'Return to Blacktop' 
+  title = tr("Blacktop Active"),
+  body = tr("Return to Blacktop") 
 }: UseRideNotificationOptions) {
   const notificationRef = useRef<Notification | null>(null);
   const permissionGranted = useRef(false);

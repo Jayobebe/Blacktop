@@ -22,7 +22,7 @@ export function stationHsl(color: AccentColor): string {
 }
 
 export function trackTitle(name: string | null): string {
-  if (!name) return 'No track';
+  if (!name) return tr("No track");
   return name.replace(/\.[a-z0-9]+$/i, '').replace(/_/g, ' ');
 }
 

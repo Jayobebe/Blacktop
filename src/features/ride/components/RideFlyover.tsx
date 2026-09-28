@@ -269,7 +269,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.textAlign = 'left';
       ctx.fillStyle = 'rgba(255,255,255,0.55)';
       ctx.font = '13px system-ui';
-      ctx.fillText('RIDE OVERVIEW', 44, 34);
+      ctx.fillText(tr("RIDE OVERVIEW"), 44, 34);
       ctx.fillStyle = 'white';
       ctx.font = 'bold 20px system-ui';
       ctx.fillText(ride.name || formatDuration(ride.duration), 44, 52);

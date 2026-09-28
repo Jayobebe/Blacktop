@@ -99,6 +99,15 @@ Onboarding (`pages/Onboarding.tsx`: welcome → consent → setup flow → name)
 - Screens read these to change shape: Home tiles, stats and nav, the active ride's hero number (speed vs distance), receipts and share cards, Stats, History, badges, garage presets and mechanic lines, map quick searches (`lib/places.ts`). New UI should respect them: don't show speed without `speedFocusEnabled`, lean without `canLean && leanAngleEnabled`, garage/vehicle content without `garageEnabled`, badges/cards without `collectiblesEnabled`, and use `terms` for ride/drive wording.
 - Existing users without a stored profile default to the full app (motorcycle, both modes, everything on).
 
+### Translations (`src/lib/i18n`)
+
+18 languages (English + `LANGUAGES` in `lib/i18n/index.ts`); the picker is on the BT logo in Settings. The English text is the key: `tr("Join Convoy")`, with `{0}`, `{1}` filled from params (`tr("{0} rides", [n])`). Dictionaries are `lib/i18n/locales/<code>.json`, loaded before the app is imported (so module-level data can call `tr()`), each its own lazy chunk; a missing entry falls back to English. Changing language saves `blacktop_language` and reloads.
+
+- Every user-facing string goes through `tr()`, including toasts, aria labels, errors, spoken prompts (`map/lib/navigation.ts`, `lib/speech.ts` picks a voice for the app language) and module-level copy. Never wrap classNames, colours, ids or anything sent over the network: pit board presets travel as English ids and are shown/said per phone (`track/lib/pitCalls.ts` `pitLabel`).
+- Whole sentences, never fragments: no `tr("Start your")` + word, no English `'s'`/`'rider' : 'riders'` suffixes; use one key per case (`tr("1 rider")` / `tr("{0} riders", [n])`). `terms` (ride/drive, rider, vehicle nouns) are translated nouns; where ride/drive is a verb, pick between two whole sentences on `terms.car`. `lowerName()` lower-cases a name mid-sentence (not in German).
+- Keep product and badge names in English (Blacktop, Track Pack, Blacktank, Speed Demon…); "Hi-vis" is never translated as police.
+- Workflow: `npm run i18n:check` re-extracts `scripts/i18n/keys.json` and lists what each language is missing (`--missing de` as JSON). Translation work files are `<dir>/<lang>/*.txt` lines `N<TAB>text` (N = index in keys.json) merged with `node scripts/i18n/merge.mjs <dir>`, which rejects lines whose placeholders don't match. Re-extracting shifts the indices, so merge before changing code.
+
 ### Native device integration
 
 Capacitor plugins (`@capacitor/geolocation`, `@capacitor/filesystem`) and browser device APIs are wrapped in small hooks rather than called ad hoc: `useWakeLock` (re-takes the lock after the browser drops it, until released; held by the ride, pillion, lobby and solo lobby screens and by the map overlay during a ride or from a lobby), `useOrientationLock`, `useLeanAngle` (device orientation → lean angle), `useBackgroundAudio`, `usePictureInPicture`, `useLiveOverlayRecorder` (records a live ride overlay video, with `convertToMp4`/ffmpeg.wasm for conversion). New native-device features should follow this hook-wrapper pattern.

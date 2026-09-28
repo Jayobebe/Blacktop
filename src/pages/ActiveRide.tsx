@@ -57,29 +57,29 @@ function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
   // Determine signal quality
   let SignalIcon = Signal;
   let signalColor = 'text-muted-foreground/50';
-  let title = 'Waiting for GPS...';
+  let title = tr("Waiting for GPS...");
   
   if (gpsStatus.source !== 'none' && !isStale) {
     if (accuracy !== null && accuracy <= 10) {
       SignalIcon = SignalHigh;
       signalColor = 'text-emerald-400';
-      title = `GPS: Excellent (±${Math.round(accuracy)}m)`;
+      title = tr("GPS: Excellent (±{0}m)", [Math.round(accuracy)]);
     } else if (accuracy !== null && accuracy <= 30) {
       SignalIcon = SignalMedium;
       signalColor = 'text-accent';
-      title = `GPS: Good (±${Math.round(accuracy)}m)`;
+      title = tr("GPS: Good (±{0}m)", [Math.round(accuracy)]);
     } else if (accuracy !== null && accuracy <= 100) {
       SignalIcon = SignalLow;
       signalColor = 'text-yellow-400';
-      title = `GPS: Fair (±${Math.round(accuracy)}m)`;
+      title = tr("GPS: Fair (±{0}m)", [Math.round(accuracy)]);
     } else {
       SignalIcon = SignalLow;
       signalColor = 'text-orange-400';
-      title = accuracy ? `GPS: Weak (±${Math.round(accuracy)}m)` : 'GPS: Active';
+      title = accuracy ? tr("GPS: Weak (±{0}m)", [Math.round(accuracy)]) : tr("GPS: Active");
     }
   } else if (isStale) {
     signalColor = 'text-destructive/70';
-    title = 'GPS signal lost';
+    title = tr("GPS signal lost");
   }
   
   return (
@@ -824,7 +824,7 @@ export default function ActiveRide() {
             size="sm"
             className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
-            {tr("END")}{" "}{terms.Ride.toUpperCase()}
+            {tr("END {0}", [terms.Ride.toUpperCase()])}
           </Button>
           <Button
             onClick={() => setShowEndConfirm(false)}
@@ -864,7 +864,7 @@ export default function ActiveRide() {
           <p className="text-xs text-foreground/85 mt-0.5">
             {rescueResponders.length === 0
               ? tr("Waiting for your convoy to respond…")
-              : tr("{0} {1} on the way", [rescueResponders.join(', '), rescueResponders.length === 1 ? 'is' : 'are'])}
+              : rescueResponders.length === 1 ? tr("{0} is on the way", [rescueResponders[0]]) : tr("{0} are on the way", [rescueResponders.join(', ')])}
           </p>
         </div>
       )}

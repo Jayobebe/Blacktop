@@ -156,7 +156,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
           <Row
             icon={MapPin}
             title={tr("Location")}
-            desc="Track speed, distance and convoy position during rides"
+            desc={tr("Track speed, distance and convoy position during rides")}
             status={perms.location}
             onRequest={requestLocation}
             busyHere={busy === 'location'}
@@ -164,7 +164,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
           <Row
             icon={Mic}
             title={tr("Microphone")}
-            desc="Voice chat with your convoy"
+            desc={tr("Voice chat with your convoy")}
             status={perms.mic}
             onRequest={requestMic}
             busyHere={busy === 'mic'}
@@ -172,7 +172,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
           <Row
             icon={Camera}
             title={tr("Camera")}
-            desc="Scan QR codes to join convoys"
+            desc={tr("Scan QR codes to join convoys")}
             status={perms.camera}
             onRequest={requestCamera}
             busyHere={busy === 'camera'}
@@ -183,8 +183,8 @@ export function PermissionsPrompt({ onComplete }: Props) {
               title={tr("Notifications")}
               desc={
                 push.support === 'supported'
-                  ? 'Alerts from Blacktop, even when the app is closed'
-                  : 'On iPhone, add Blacktop to your Home Screen first, then turn them on in Settings'
+                  ? tr("Alerts from Blacktop, even when the app is closed")
+                  : tr("On iPhone, add Blacktop to your Home Screen first, then turn them on in Settings")
               }
               status={perms.notifications}
               onRequest={push.support === 'supported' ? requestNotifications : undefined}

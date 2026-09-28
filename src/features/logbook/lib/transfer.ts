@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { LogbookPackage } from '../types';
 
+import { tr } from '@/lib/i18n';
 /**
  * Logbook hand-over, phone to phone, over a one-off realtime channel whose
  * name is a random key carried only in the QR (nothing is stored on a
@@ -159,7 +160,7 @@ export function receiveLogbook(token: string, myName: string, cb: ReceiveCallbac
       }
     } catch (e) {
       console.warn('[Logbook] receive failed', e);
-      cb.onFailed("That logbook didn't come through. Ask them to try again.");
+      cb.onFailed(tr("That logbook didn't come through. Ask them to try again."));
     } finally {
       clearInterval(tick);
       void supabase.removeChannel(ch);
@@ -189,7 +190,7 @@ export function receiveLogbook(token: string, myName: string, cb: ReceiveCallbac
       // Keep knocking until the sender answers (their QR is only live ~10 s).
       if (++helloTries > 8) {
         stop();
-        cb.onFailed('No answer. The code may have expired, ask them to show it again.');
+        cb.onFailed(tr("No answer. The code may have expired, ask them to show it again."));
         return;
       }
       void ch.send({ type: 'broadcast', event: 'hello', payload: { name: myName } });
@@ -198,7 +199,7 @@ export function receiveLogbook(token: string, myName: string, cb: ReceiveCallbac
     if (Date.now() - lastChunkAt > 2500 && parts.size < total) {
       if (++resendRounds > 6) {
         stop();
-        cb.onFailed('The transfer stalled. Nothing was deleted on their phone.');
+        cb.onFailed(tr("The transfer stalled. Nothing was deleted on their phone."));
         return;
       }
       const missing = [...Array(total).keys()].filter((i) => !parts.has(i));

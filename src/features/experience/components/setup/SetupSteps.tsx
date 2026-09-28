@@ -9,11 +9,11 @@ import { ChoiceCard, IconTile, RadioDot } from './ChoiceCard';
 import { tr } from '@/lib/i18n';
 
 const VEHICLE_BLURB: Record<VehicleType, string> = {
-  motorcycle: 'Lean angle, chain care',
-  car: 'Big-screen layout, G-force',
-  bicycle: 'Pedal power, no fuss',
-  ebike: 'Assisted and quick',
-  escooter: 'Short hops around town',
+  motorcycle: tr("Lean angle, chain care"),
+  car: tr("Big-screen layout, G-force"),
+  bicycle: tr("Pedal power, no fuss"),
+  ebike: tr("Assisted and quick"),
+  escooter: tr("Short hops around town"),
 };
 
 /** Multi-select list. First pick becomes the main vehicle (icons, speed alerts, garage presets). */
@@ -63,21 +63,21 @@ export function ModeStep({ value, terms, onChange }: { value: RideMode | null; t
       id: 'solo',
       title: tr("Just me"),
       subtitle: tr("Solo {0}. No groups, no convoy screens.", [terms.rides]),
-      perks: [`One-tap ${terms.ride}`, 'Route planning up front', 'Rescue alerts to your Discord'],
+      perks: [tr("One-tap {0}", [terms.ride]), tr("Route planning up front"), tr("Rescue alerts to your Discord")],
       icon: User,
     },
     {
       id: 'group',
       title: tr("My crew"),
       subtitle: tr("Group {0}. Convoys and voice chat come first.", [terms.rides]),
-      perks: ['Start or join a convoy from Home', 'Voice chat', 'Rescue alerts go to the whole convoy'],
+      perks: [tr("Start or join a convoy from Home"), tr("Voice chat"), tr("Rescue alerts go to the whole convoy")],
       icon: Users,
     },
     {
       id: 'both',
       title: tr("A bit of both"),
       subtitle: tr("Solo {0} and convoys, side by side.", [terms.rides]),
-      perks: ['Solo and convoy on Home'],
+      perks: [tr("Solo and convoy on Home")],
       icon: Sparkles,
     },
   ];

@@ -630,7 +630,7 @@ function startRideWatchdog() {
 
     // Hard ceiling - nothing legitimate runs past this.
     if (rideStartedAtMs && now - rideStartedAtMs >= MAX_RIDE_DURATION_MS) {
-      finishAbandonedRide('Ride ended automatically', 'Reached the 12-hour maximum ride length.');
+      finishAbandonedRide(tr("Ride ended automatically"), tr("Reached the 12-hour maximum ride length."));
       return;
     }
 
@@ -647,7 +647,7 @@ function startRideWatchdog() {
     // Already paused by the inactivity guard - end and save after the grace
     // window so the session doesn't sit open indefinitely.
     if (rideState.inactivityTimedOut && pausedAtMs && now - pausedAtMs >= AUTO_END_AFTER_PAUSE_MS) {
-      finishAbandonedRide('Ride ended automatically', 'No movement for 30 minutes — your ride was saved.');
+      finishAbandonedRide(tr("Ride ended automatically"), tr("No movement for 30 minutes — your ride was saved."));
     }
   }, WATCHDOG_INTERVAL_MS);
 }

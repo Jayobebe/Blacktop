@@ -150,7 +150,7 @@ export function BadgeWalletPanel() {
           {BADGES_PER_COPY}{" "}{tr("badge points buys one spare copy of your trading card to plant on the Blacktop map. Fallback costs you a point. Every card of yours that another rider collects earns you a kickback point. Traded copies never count against the monthly copy cap.")}
         </p>
         {w.kickbacks > 0 && (
-          <p className="text-[11px] text-accent mt-1.5">🔁 {w.kickbacks}{" "}{tr("kickback pt")}{w.kickbacks === 1 ? '' : 's'}{" "}{tr("from collected drops")}</p>
+          <p className="text-[11px] text-accent mt-1.5">🔁 {w.kickbacks === 1 ? tr("1 kickback pt from collected drops") : tr("{0} kickback pts from collected drops", [w.kickbacks])}</p>
         )}
         <div className="h-1.5 rounded-full bg-secondary/60 overflow-hidden mt-3">
           <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />

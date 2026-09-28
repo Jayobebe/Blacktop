@@ -11,6 +11,7 @@ import { resampleLoop, smoothLoop } from './centerline';
 import { speakPitBoard } from './pitCalls';
 import { metres } from './geometry';
 
+import { tr } from '@/lib/i18n';
 /**
  * Racer-side Track Pack. Phases:
  *   idle     — pairing QR up, choosing a track (crew can already join)
@@ -141,7 +142,7 @@ function broadcastState() {
 function onLinkMessage(m: LinkMessage) {
   if (m.type === 'hello') {
     if (!state.crew.some((c) => c.id === m.crewId)) {
-      set({ crew: [...state.crew, { id: m.crewId, name: String(m.name || 'Pit crew').slice(0, 30) }] });
+      set({ crew: [...state.crew, { id: m.crewId, name: String(m.name || tr("Pit crew")).slice(0, 30) }] });
       haptics.light();
     }
     broadcastState();

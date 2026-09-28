@@ -16,6 +16,7 @@ import { useGForce } from '@/hooks/useGForce';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { TrackDef, TrackSession } from '../types';
 import { RIDER_CALLS } from '../types';
+import { pitLabel } from '../lib/pitCalls';
 import { deleteTrack, markTrackUsed, saveTrack, toggleStar, trackLength, useTrackStore } from '../lib/trackStore';
 import { loadCircuit, type LibraryCircuit, type LibraryLayout } from '../lib/circuitLibrary';
 import { TRACK_QR_PREFIX } from '../lib/link';
@@ -316,7 +317,7 @@ export function RacerView() {
         <div className="grid grid-cols-3 gap-2">
           {RIDER_CALLS.map((c) => (
             <Button key={c} variant="secondary" className="h-11 text-xs" onClick={() => sendRiderCall(c)} disabled={racer.crew.length === 0}>
-              {c}
+              {pitLabel(c)}
             </Button>
           ))}
         </div>
@@ -328,7 +329,7 @@ export function RacerView() {
           <button onClick={dismissPit} className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black">
             <div className="absolute inset-3 rounded-3xl border-[6px] border-accent animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-[0.4em] text-accent">{tr("Pit board")}</span>
-            <span className="mt-2 text-8xl font-black tracking-tight text-center px-4 leading-none text-white">{racer.pit.text}</span>
+            <span className="mt-2 text-8xl font-black tracking-tight text-center px-4 leading-none text-white">{pitLabel(racer.pit.text)}</span>
             <span className="mt-6 text-xs text-white/60">{tr("Tap to dismiss")}</span>
           </button>
         )}

@@ -35,7 +35,7 @@ import { useExperience } from '@/features/experience';
 import { HeaderButton } from '@/components/PageHeader';
 
 
-import { tr } from '@/lib/i18n';
+import { tr, lowerName } from '@/lib/i18n';
 
 export default function Garage() {
   const navigate = useNavigate();
@@ -65,16 +65,16 @@ export default function Garage() {
   const stats = useBikeStats(activeBike);
 
   const tip = useMemo(() => {
-    if (!activeBike) return 'Add your first vehicle, partner.';
+    if (!activeBike) return tr("Add your first vehicle, partner.");
     const over = activeBike.maintenance.find(
       (m) => stats.odometerKm >= m.lastServiceKm + m.intervalKm,
     );
-    if (over) return `Hey — your ${over.name.toLowerCase()} is overdue. Knock it out.`;
+    if (over) return tr("Hey — your {0} is overdue. Knock it out.", [lowerName(over.name)]);
     const due = activeBike.maintenance
       .map((m) => ({ m, dueIn: m.lastServiceKm + m.intervalKm - stats.odometerKm }))
       .filter((x) => x.dueIn > 0 && x.dueIn <= 200)
       .sort((a, b) => a.dueIn - b.dueIn)[0];
-    if (due) return `Heads up — ${due.m.name.toLowerCase()} due in ${Math.round(due.dueIn)} km.`;
+    if (due) return tr("Heads up — {0} due in {1} km.", [lowerName(due.m.name), Math.round(due.dueIn)]);
     return null;
   }, [activeBike, stats.odometerKm]);
 

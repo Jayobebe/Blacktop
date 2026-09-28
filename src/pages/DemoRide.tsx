@@ -39,35 +39,35 @@ type DemoStep =
   | 'complete';
 
 const STEP_TITLES: Record<DemoStep, string> = {
-  'welcome': 'Welcome to Blacktop',
-  'onboarding': 'Privacy-First Profile',
-  'home': 'Home Dashboard',
-  'create-convoy': 'Start a Convoy',
-  'lobby-empty': 'Convoy Lobby',
-  'lobby-members': 'Voice Communication',
-  'lobby-waypoints': 'Multi-Waypoint Routes',
-  'lobby-reorder': 'Drag to Reorder',
-  'active-ride': 'Live Ride Tracking',
-  'action-cam': 'Action Cam Overlay',
-  'active-rescue': 'Rescue Feature',
-  'rescue-response': 'Leader Response',
-  'ride-end': 'Ending the Ride',
-  'badge-summary': 'Badge Awards',
-  'history': 'Ride History',
-  'history-photos': 'Ride Photos',
-  'stats': 'Your Statistics',
-  'settings': 'Settings & Privacy',
-  'complete': 'Demo Complete',
+  'welcome': tr("Welcome to Blacktop"),
+  'onboarding': tr("Privacy-First Profile"),
+  'home': tr("Home Dashboard"),
+  'create-convoy': tr("Start a Convoy"),
+  'lobby-empty': tr("Convoy Lobby"),
+  'lobby-members': tr("Voice Communication"),
+  'lobby-waypoints': tr("Multi-Waypoint Routes"),
+  'lobby-reorder': tr("Drag to Reorder"),
+  'active-ride': tr("Live Ride Tracking"),
+  'action-cam': tr("Action Cam Overlay"),
+  'active-rescue': tr("Rescue Feature"),
+  'rescue-response': tr("Leader Response"),
+  'ride-end': tr("Ending the Ride"),
+  'badge-summary': tr("Badge Awards"),
+  'history': tr("Ride History"),
+  'history-photos': tr("Ride Photos"),
+  'stats': tr("Your Statistics"),
+  'settings': tr("Settings & Privacy"),
+  'complete': tr("Demo Complete"),
 };
 
 const STEP_INTERACTIONS: Partial<Record<DemoStep, string>> = {
-  'onboarding': 'Type your name to continue',
-  'lobby-members': 'Tap the mic button to unmute',
-  'lobby-reorder': 'Drag a waypoint to reorder',
-  'active-ride': 'Tap the mic to toggle voice',
-  'active-rescue': 'Tap the RESCUE button',
-  'rescue-response': 'Tap Add Waypoint to help',
-  'settings': 'Try changing a setting',
+  'onboarding': tr("Type your name to continue"),
+  'lobby-members': tr("Tap the mic button to unmute"),
+  'lobby-reorder': tr("Drag a waypoint to reorder"),
+  'active-ride': tr("Tap the mic to toggle voice"),
+  'active-rescue': tr("Tap the RESCUE button"),
+  'rescue-response': tr("Tap Add Waypoint to help"),
+  'settings': tr("Try changing a setting"),
 };
 
 export default function DemoRide() {
@@ -1187,7 +1187,7 @@ export default function DemoRide() {
             </p>
             
             <div className="grid grid-cols-2 gap-2 text-xs max-w-xs w-full mb-8">
-              {['Convoy Mode', 'Voice Chat', 'Multi-Waypoints', 'Rescue System', 'Live Tracking', 'Badge Awards', 'Ride Photos', 'Burn Button'].map((feature, i) => (
+              {[tr("Convoy Mode"), tr("Voice Chat"), 'Multi-Waypoints', tr("Rescue System"), tr("Live Tracking"), tr("Badge Awards"), tr("Ride Photos"), tr("Burn Button")].map((feature, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-muted-foreground">
                   <Check className="w-3 h-3 text-accent" />
                   <span>{feature}</span>

@@ -1098,18 +1098,18 @@ function RescueMockup() {
 function MiniReceipt({ timeAttack }: { timeAttack?: boolean }) {
   const rows = timeAttack
     ? [
-        ['Max Spd', '118 MPH'],
+        [tr("Max Spd"), '118 MPH'],
         ['Distance', '29.5 MI'],
         ['Duration', '3:41'],
         ['Target', '3:58'],
         ['Delta', '-0:17'],
       ]
     : [
-        ['Max Spd', '104 MPH'],
-        ['Max Lean', '44°'],
+        [tr("Max Spd"), '104 MPH'],
+        [tr("Max Lean"), '44°'],
         ['Distance', '45.2 MI'],
         ['Duration', '1:23:45'],
-        ['Avg Spd', '32 MPH'],
+        [tr("Avg Spd"), '32 MPH'],
       ];
   return (
     <div className="w-full">
@@ -1153,7 +1153,7 @@ function MiniReceipt({ timeAttack }: { timeAttack?: boolean }) {
 
 function HistoryMockup() {
   const rides = [
-    { date: 'Today', distance: '29.5 mi', time: '3:41', badge: '⏱️', tag: 'Time attack' },
+    { date: 'Today', distance: '29.5 mi', time: '3:41', badge: '⏱️', tag: tr("Time attack") },
     { date: 'Yesterday', distance: '28.7 mi', time: '0:52:18', badge: '🛣️', tag: null },
     { date: 'Dec 14', distance: '62.1 mi', time: '2:05:33', badge: null, tag: null },
   ];
@@ -1574,7 +1574,7 @@ function NearbyMockup() {
       <div className="mt-2 rounded-xl border border-border bg-card/95 divide-y divide-border/60">
         {[
           { name: 'Ben', sub: tr("400 ft"), cta: tr("Invite"), Icon: UserRound },
-          { name: "Eve's convoy", sub: tr("0.6 mi · 3 riders"), cta: tr("Merge"), Icon: Users },
+          { name: tr("Eve's convoy"), sub: tr("0.6 mi · 3 riders"), cta: tr("Merge"), Icon: Users },
         ].map(({ name, sub, cta, Icon }) => (
           <div key={name} className="flex items-center gap-2 px-2.5 py-2">
             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
@@ -1921,9 +1921,9 @@ function PersonaliseMockup() {
       </div>
       <div className="rounded-2xl border border-border/30 frost p-4 space-y-3 animate-slide-up delay-200">
         {[
-          { icon: Gauge, label: tr("Ride metrics"), value: 'Lean · G · Flyover' },
-          { icon: AlertTriangle, label: tr("Safety"), value: 'Alerts · Auto-rescue' },
-          { icon: Play, label: tr("Demo"), value: 'Replay tour' },
+          { icon: Gauge, label: tr("Ride metrics"), value: tr("Lean · G · Flyover") },
+          { icon: AlertTriangle, label: tr("Safety"), value: tr("Alerts · Auto-rescue") },
+          { icon: Play, label: tr("Demo"), value: tr("Replay tour") },
           { icon: MonitorSmartphone, label: tr("Car display"), value: 'Landscape' },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3">
@@ -1939,7 +1939,7 @@ function PersonaliseMockup() {
 
 function RadioMockup() {
   const stations = [
-    { name: 'Night Ride', hsl: '38 95% 55%' },
+    { name: tr("Night Ride"), hsl: '38 95% 55%' },
     { name: 'Backroads', hsl: '186 94% 50%' },
     { name: 'Redline', hsl: '0 84% 60%' },
     { name: 'Cruise', hsl: '262 83% 58%' },

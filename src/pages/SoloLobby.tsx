@@ -98,7 +98,7 @@ export default function SoloLobby() {
     }
     // A twisty pick rides through an extra via point before the rider's stops.
     const via = routeMode === 'twisty' && twistyVia
-      ? [{ lat: twistyVia.lat, lng: twistyVia.lng, name: 'Twisty leg', address: '' }]
+      ? [{ lat: twistyVia.lat, lng: twistyVia.lng, name: tr("Twisty leg"), address: '' }]
       : [];
     setSoloRoute({
       destination: { lat: dest.lat, lng: dest.lng, name: dest.name, address: dest.address },
@@ -180,7 +180,7 @@ export default function SoloLobby() {
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
       {/* Header */}
       <PageHeader
-        title={`${showGroup ? 'Solo' : 'New'} ${terms.Ride}`}
+        title={showGroup ? tr("Solo {0}", [terms.Ride]) : tr("New {0}", [terms.Ride])}
         subtitle={isUnlocked ? tr("Open to crew {0}", [crew.code]) : tr("Set a destination and hit the road")}
         backTo="/"
         right={

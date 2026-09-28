@@ -81,7 +81,7 @@ export function ConvoyStatusBar({
         {behindCount > 0 && (
           <span className="ml-auto flex items-center gap-1 font-semibold text-warning whitespace-nowrap">
             <AlertTriangle className="w-3.5 h-3.5" />
-            {behindCount} {behindCount === 1 ? 'rider' : 'riders'}{" "}{tr("behind")}
+            {behindCount === 1 ? tr("1 rider behind") : tr("{0} riders behind", [behindCount])}
           </span>
         )}
       </div>

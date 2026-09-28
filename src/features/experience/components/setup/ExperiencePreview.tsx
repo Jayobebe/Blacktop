@@ -76,10 +76,10 @@ export function ExperiencePreview({ profile }: { profile: ExperienceProfile }) {
           <Fact
             i={2}
             label={tr("Home")}
-            value={profile.rideMode === 'solo' ? `Solo ${terms.rides}` : profile.rideMode === 'group' ? 'Convoys' : 'Solo + convoys'}
+            value={profile.rideMode === 'solo' ? tr("Solo {0}", [terms.rides]) : profile.rideMode === 'group' ? tr("Convoys") : tr("Solo + convoys")}
           />
-          <Fact i={3} label={tr("Big number")} value={settings.speedFocusEnabled ? 'Live speed' : 'Distance'} />
-          {exp.hasCar && <Fact i={4} label={tr("Layout")} value="Car display" />}
+          <Fact i={3} label={tr("Big number")} value={settings.speedFocusEnabled ? tr("Live speed") : tr("Distance")} />
+          {exp.hasCar && <Fact i={4} label={tr("Layout")} value={tr("Car display")} />}
         </div>
       </div>
 

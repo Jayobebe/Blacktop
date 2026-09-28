@@ -146,7 +146,7 @@ export default function PillionRide() {
 
       <PageHeader
         title={tr("Pillion")}
-        subtitle={`${leader ? `${leader.name}'s convoy` : 'Convoy'} · ${convoy.members.length} ${convoy.members.length === 1 ? 'rider' : 'riders'}`}
+        subtitle={`${leader ? tr("{0}'s convoy", [leader.name]) : tr("Convoy")} · ${convoy.members.length === 1 ? tr("1 rider") : tr("{0} riders", [convoy.members.length])}`}
         backTo={false}
         right={
           <HeaderButton onClick={() => setShowAudio(true)} aria-label={tr("Audio device")}>

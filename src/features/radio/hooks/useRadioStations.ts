@@ -4,6 +4,7 @@ import type { RadioIcon, RadioStation, RadioTrack } from '../types';
 import { loadStations, saveStation, deleteStationRecord, clearStations } from '../lib/stationDb';
 import { forgetFile } from '../lib/audioFiles';
 
+import { tr } from '@/lib/i18n';
 /**
  * Module-level singleton store (the established cross-cutting state pattern in
  * this codebase) backed by IndexedDB, so File System Access handles survive.
@@ -62,7 +63,7 @@ export async function createStation(input: {
 }): Promise<RadioStation> {
   const station: RadioStation = {
     id: `stn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
-    name: input.name.trim() || 'Untitled Station',
+    name: input.name.trim() || tr("Untitled Station"),
     color: input.color,
     icon: input.icon,
     tracks: input.tracks,

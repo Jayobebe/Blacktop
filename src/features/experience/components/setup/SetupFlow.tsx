@@ -37,7 +37,7 @@ interface SetupFlowProps {
 export function SetupFlow({
   onExit,
   onDone,
-  doneLabel = 'Looks good',
+  doneLabel = tr("Looks good"),
   progressOffset = 0,
   progressTotal = SETUP_STEPS.length,
   initialDirection = 'forward',

@@ -104,3 +104,8 @@ export function tr(text: string, params?: unknown[]): string {
   const s = dict[text] || text;
   return params ? s.replace(/\{(\d+)\}/g, (_, i) => String(params[+i] ?? '')) : s;
 }
+
+/** A name used mid-sentence ("your engine oil"): lower-cased, except in German, where nouns keep their capital. */
+export function lowerName(name: string): string {
+  return current === 'de' ? name : name.toLowerCase();
+}

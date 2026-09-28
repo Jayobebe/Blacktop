@@ -130,18 +130,18 @@ export function HandshakeButton({
       inv.kind === 'pair'
         ? `${inv.fromName} wants to ride together`
         : inv.kind === 'merge'
-          ? `${inv.fromName}'s convoy wants to merge`
+          ? tr("{0}'s convoy wants to merge", [inv.fromName])
           : inConvoy
             ? `${inv.fromName} wants to join your convoy`
             : `${inv.fromName} invites you to their convoy`;
     const detail =
       inv.kind === 'pair'
-        ? "You'll both join a new convoy with voice."
+        ? tr("You'll both join a new convoy with voice.")
         : inv.kind === 'merge'
-          ? `${inv.fromMemberCount} + ${myCount} riders as one convoy. Either leader can unmerge any time.`
+          ? tr("{0} + {1} riders as one convoy. Either leader can unmerge any time.", [inv.fromMemberCount, myCount])
           : inConvoy
-            ? 'They join your convoy and voice.'
-            : `${inv.fromMemberCount} ${inv.fromMemberCount === 1 ? 'rider' : 'riders'}. You'll join their convoy and voice.`;
+            ? tr("They join your convoy and voice.")
+            : inv.fromMemberCount === 1 ? tr("1 rider. You'll join their convoy and voice.") : tr("{0} riders. You'll join their convoy and voice.", [inv.fromMemberCount]);
     panel = (
       <div className="w-72 rounded-2xl border border-accent/60 bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
         <div className="flex items-start gap-3">
@@ -206,7 +206,7 @@ export function HandshakeButton({
             const full = myCount + p.memberCount > MAX_MERGED_RIDERS;
             const leaderMissing = isConvoy && !p.contact;
             const label = isMerge ? 'Merge' : isConvoy ? 'Join' : 'Invite';
-            const disabledReason = !canAct ? null : leaderMissing ? 'Leader out of range' : full ? 'Too many riders' : null;
+            const disabledReason = !canAct ? null : leaderMissing ? tr("Leader out of range") : full ? tr("Too many riders") : null;
             return (
               <div key={p.key} className="flex items-center gap-3 px-4 py-2.5 border-b border-border/40 last:border-0">
                 <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">

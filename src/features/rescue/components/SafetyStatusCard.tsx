@@ -41,14 +41,14 @@ const LEVELS: Record<SafetyLevel, { icon: typeof ShieldCheck; title: string; hin
 /** Home-screen strip showing whether crash rescue would work right now. Tap opens the quick safety panel. */
 /** `compact`: fits beside the name in the Home header (shorter title, tighter padding). */
 const COMPACT_TITLES: Record<SafetyLevel, string> = {
-  active: 'Rescue on',
-  off: 'Rescue off',
-  permissions: 'Rescue paused',
+  active: tr("Rescue on"),
+  off: tr("Rescue off"),
+  permissions: tr("Rescue paused"),
 };
 const COMPACT_HINTS: Record<SafetyLevel, string> = {
-  active: 'Tap for details',
-  off: 'Tap to turn on',
-  permissions: 'Needs location',
+  active: tr("Tap for details"),
+  off: tr("Tap to turn on"),
+  permissions: tr("Needs location"),
 };
 
 export function SafetyStatusCard({ className, compact = false }: { className?: string; compact?: boolean }) {
@@ -59,8 +59,8 @@ export function SafetyStatusCard({ className, compact = false }: { className?: s
   const hint =
     status.level === 'active'
       ? showGroup
-        ? 'Alerts your whole convoy, or Discord on solo rides'
-        : 'Alerts your Discord server if you crash'
+        ? tr("Alerts your whole convoy, or Discord on solo rides")
+        : tr("Alerts your Discord server if you crash")
       : LEVELS[status.level].hint;
 
   return (
@@ -172,7 +172,7 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
           <div className="flex items-center gap-3">
             <Users className="w-4 h-4 text-muted-foreground shrink-0" />
             <p className="text-sm flex-1">{tr("Everyone in the convoy")}</p>
-            <span className="text-[11px] text-muted-foreground">{tr("On group")}{" "}{terms.rides}</span>
+            <span className="text-[11px] text-muted-foreground">{tr("On group {0}", [terms.rides])}</span>
           </div>
         )}
         <div className="flex items-center gap-3">

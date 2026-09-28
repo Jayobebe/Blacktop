@@ -30,7 +30,7 @@ export default function Pay() {
 
     if (!recipient || !(amount > 0)) {
       setStatus('error');
-      setError('This payment link is missing a recipient or amount.');
+      setError(tr("This payment link is missing a recipient or amount."));
       return;
     }
 
@@ -70,7 +70,7 @@ export default function Pay() {
           return;
         }
         setStatus('error');
-        setError(/reject|denied|cancel/i.test(message) ? 'Payment cancelled.' : 'The wallet could not send that payment.');
+        setError(/reject|denied|cancel/i.test(message) ? tr("Payment cancelled.") : tr("The wallet could not send that payment."));
       }
     };
 

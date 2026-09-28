@@ -212,7 +212,7 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
   /** Host side: make sure there's a convoy, then tell the guest to join it. */
   const runHost = async (kind: InviteKind, inviteId: string, guestId: string, guestName: string) => {
     const { actions: a, convoy: c, name: myName } = live.current;
-    setProximityState({ busy: `Setting up with ${guestName}…` });
+    setProximityState({ busy: tr("Setting up with {0}…", [guestName]) });
     try {
       let code = c.code;
       let convoyId = c.id;

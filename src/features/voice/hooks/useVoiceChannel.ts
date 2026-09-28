@@ -1029,7 +1029,7 @@ export function useVoiceChannel(convoyId?: string) {
   const connect = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     if (!convoyId) {
       console.error('[Voice] No convoy ID provided');
-      return { success: false, error: 'No convoy ID' };
+      return { success: false, error: tr("No convoy ID") };
     }
 
     // Guard against multiple simultaneous connection attempts
@@ -1066,7 +1066,7 @@ export function useVoiceChannel(convoyId?: string) {
       if (!user) {
         console.error('[Voice] No authenticated user');
         isConnectingRef.current = false;
-        return { success: false, error: 'Not authenticated' };
+        return { success: false, error: tr("Not authenticated") };
       }
       userIdRef.current = user.id;
       await iceReady;
@@ -1106,7 +1106,7 @@ export function useVoiceChannel(convoyId?: string) {
             } catch (bareError: any) {
               console.error('[Voice] Bare audio:true also failed:', bareError);
               isConnectingRef.current = false;
-              return { success: false, error: 'Failed to access microphone. Please try again.' };
+              return { success: false, error: tr("Failed to access microphone. Please try again.") };
             }
           }
         } else {
@@ -1119,21 +1119,21 @@ export function useVoiceChannel(convoyId?: string) {
             if (isIOS) {
               return {
                 success: false,
-                error: 'Microphone access denied. On iOS, go to Settings → Safari → Microphone, then enable access for this site.'
+                error: tr("Microphone access denied. On iOS, go to Settings → Safari → Microphone, then enable access for this site.")
               };
             }
             return {
               success: false,
-              error: 'Microphone access denied. Please enable it in your browser or device settings.'
+              error: tr("Microphone access denied. Please enable it in your browser or device settings.")
             };
           }
           if (mediaError.name === 'NotFoundError') {
-            return { success: false, error: 'No microphone found. Please connect a microphone and try again.' };
+            return { success: false, error: tr("No microphone found. Please connect a microphone and try again.") };
           }
           if (mediaError.name === 'NotReadableError' || mediaError.name === 'AbortError') {
-            return { success: false, error: 'Microphone is in use by another app. Please close other apps using the microphone.' };
+            return { success: false, error: tr("Microphone is in use by another app. Please close other apps using the microphone.") };
           }
-          return { success: false, error: 'Failed to access microphone. Please try again.' };
+          return { success: false, error: tr("Failed to access microphone. Please try again.") };
         }
       }
 
@@ -1245,7 +1245,7 @@ export function useVoiceChannel(convoyId?: string) {
       console.error('[Voice] Failed to connect:', error);
       isConnectingRef.current = false;
       cleanup();
-      return { success: false, error: 'Failed to connect to voice channel' };
+      return { success: false, error: tr("Failed to connect to voice channel") };
     }
   }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission]);
 

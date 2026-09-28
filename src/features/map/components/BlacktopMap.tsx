@@ -912,10 +912,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
       el.title =
         cam.type === "speed"
-          ? `Speed camera${cam.maxspeed ? ` (${cam.maxspeed})` : ""}`
+          ? (cam.maxspeed ? tr("Speed camera ({0})", [cam.maxspeed]) : tr("Speed camera"))
           : cam.type === "alpr"
-            ? "ANPR camera"
-            : "Traffic surveillance";
+            ? tr("ANPR camera")
+            : tr("Traffic surveillance");
 
       const marker = new maplibregl.Marker({ element: el }).setLngLat([cam.lng, cam.lat]).addTo(map);
       cameraMarkersRef.current.push(marker);
@@ -2267,7 +2267,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 ? drops.map((d) => ({
                     id: `card:${d.id}`,
                     name: `${d.ownerName}'s ${d.vehicleName}`,
-                    address: d.collected ? "Card · collected" : "Trading card drop",
+                    address: d.collected ? tr("Card · collected") : tr("Trading card drop"),
                     lat: d.lat,
                     lng: d.lng,
                   }))
@@ -2635,13 +2635,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             const vias = loop.stops.slice(0, 5).map((s, i) => ({
               lat: s.lat,
               lng: s.lng,
-              name: `Loop point ${i + 1}`,
+              name: tr("Loop point {0}", [i + 1]),
             }));
             setSoloRoute({
-              destination: { lat: userLocation.lat, lng: userLocation.lng, name: "Loop finish" },
+              destination: { lat: userLocation.lat, lng: userLocation.lng, name: tr("Loop finish") },
               stops: vias,
             });
-            setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: "Loop finish" });
+            setDestination({ lat: userLocation.lat, lng: userLocation.lng, name: tr("Loop finish") });
             setShowLoopPlanner(false);
             toast.success(
               tr("Loop ready · {0} · {1}", [formatDistance(metersToMiles(loop.distanceMeters), settings.distanceUnit), formatDuration(Math.round(loop.durationSeconds))]),
@@ -3088,7 +3088,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
                 setDestination({
                   lat: selectedStack[0].lat,
                   lng: selectedStack[0].lng,
-                  name: "Card hot-spot",
+                  name: tr("Card hot-spot"),
                 });
                 setSelectedStack(null);
               }}

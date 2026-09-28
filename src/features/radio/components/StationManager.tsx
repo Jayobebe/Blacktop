@@ -55,7 +55,7 @@ export function StationManager({ onClose }: Props) {
 
   const save = async () => {
     if (!tracks.length) { toast.error(tr("Pick at least one audio file")); return; }
-    const station = await createStation({ name: name || 'New Station', color, icon, tracks });
+    const station = await createStation({ name: name || tr("New Station"), color, icon, tracks });
     resetDraft();
     setCreating(false);
     toast.success(tr("{0} is on air", [station.name]));
@@ -102,7 +102,7 @@ export function StationManager({ onClose }: Props) {
                     <p className="text-sm font-semibold truncate">{station.name}</p>
                   )}
                   <p className="text-[11px] text-muted-foreground">
-                    {station.tracks.length}{" "}{tr("track")}{station.tracks.length === 1 ? '' : 's'}
+                    {station.tracks.length === 1 ? tr("1 track") : tr("{0} tracks", [station.tracks.length])}
                     {missing > 0 && tr(" · {0} need reselecting", [missing])}
                   </p>
                 </div>
@@ -244,7 +244,7 @@ export function StationManager({ onClose }: Props) {
             </div>
 
             {tracks.length > 0 && (
-              <p className="text-[11px] text-muted-foreground">{tracks.length}{" "}{tr("track")}{tracks.length === 1 ? '' : 's'}{" "}{tr("queued")}</p>
+              <p className="text-[11px] text-muted-foreground">{tracks.length === 1 ? tr("1 track queued") : tr("{0} tracks queued", [tracks.length])}</p>
             )}
 
             <div className="flex gap-2">

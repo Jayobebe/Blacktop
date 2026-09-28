@@ -13,7 +13,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { Lap, TrackDef } from '../types';
 import { PIT_PRESETS } from '../types';
-import { speakRiderCall } from '../lib/pitCalls';
+import { speakRiderCall, pitLabel } from '../lib/pitCalls';
 import { TrackLink, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
 import { shareFile } from '../lib/export';
 import { DeltaReadout, LapTable, SectorBoxes } from './TimingParts';
@@ -124,7 +124,7 @@ export function PitView() {
       } else if (m.type === 'pit' && m.msg.from === 'rider') {
         haptics.heavy();
         speakRiderCall(m.msg.text);
-        toast.warning(tr("Rider: {0}", [String(m.msg.text).slice(0, 40)]), { duration: 10000 });
+        toast.warning(tr("Rider: {0}", [pitLabel(String(m.msg.text).slice(0, 40))]), { duration: 10000 });
       } else if (m.type === 'ended') {
         setEnded(true);
         toast(tr("Session ended by the rider"));
@@ -259,7 +259,7 @@ export function PitView() {
         <div className="grid grid-cols-4 gap-1.5">
           {PIT_PRESETS.map((p) => (
             <Button key={p} variant="secondary" className="h-10 text-xs font-bold" onClick={() => sendPit(p)} disabled={!snap}>
-              {p}
+              {pitLabel(p)}
             </Button>
           ))}
         </div>
@@ -322,18 +322,18 @@ function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean
   const track = snap?.track ?? null;
   const Icon = phase === 'walking' ? Footprints : phase === 'armed' ? Flag : Hourglass;
   const title = !snap
-    ? 'Connecting to the racer…'
+    ? tr("Connecting to the racer…")
     : phase === 'walking'
       ? walk?.closed
-        ? 'Lap recorded. Racer is placing the timing lines'
-        : `Recording a new track · ${Math.round(walk?.travelled ?? 0)} m`
+        ? tr("Lap recorded. Racer is placing the timing lines")
+        : tr("Recording a new track · {0} m", [Math.round(walk?.travelled ?? 0)])
       : phase === 'armed'
-        ? 'Racer is ready on the grid. Timing starts at launch'
+        ? tr("Racer is ready on the grid. Timing starts at launch")
         : ended
-          ? 'Session over. Waiting for the next run'
+          ? tr("Session over. Waiting for the next run")
           : track
-            ? `${track.name} selected. Waiting for the racer to ready up`
-            : 'Waiting for the racer to pick a track';
+            ? tr("{0} selected. Waiting for the racer to ready up", [track.name])
+            : tr("Waiting for the racer to pick a track");
   return (
     <div className="flex flex-col gap-2">
       <div className={cn('rounded-2xl border px-3 py-2 flex items-center gap-2', phase === 'armed' ? 'border-accent bg-accent/10 animate-pulse' : 'border-border bg-card/50')}>

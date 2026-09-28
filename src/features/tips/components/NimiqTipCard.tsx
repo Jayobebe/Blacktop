@@ -90,13 +90,13 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
   const handlePay = async () => {
     setPayError('');
     if (!selected || !address || !supported) {
-      setPayError(`Choose a payee with a ${currency} address.`);
+      setPayError(tr("Choose a payee with a {0} address.", [currency]));
       return;
     }
 
     if (inMiniApp) {
       if (!(numericAmount > 0)) {
-        setPayError('Enter an amount greater than zero.');
+        setPayError(tr("Enter an amount greater than zero."));
         return;
       }
       setPaying(true);
@@ -110,8 +110,8 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
         const message = (err as { message?: string })?.message ?? '';
         setPayError(
           /reject|denied|cancel/i.test(message)
-            ? 'Payment cancelled.'
-            : 'Nimiq Pay could not send that payment.'
+            ? tr("Payment cancelled.")
+            : tr("Nimiq Pay could not send that payment.")
         );
       } finally {
         setPaying(false);
@@ -139,7 +139,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
 
   const handleSaveScanned = () => {
     if (!scanned) return;
-    const label = scannedLabel.trim() || 'Scanned payee';
+    const label = scannedLabel.trim() || tr("Scanned payee");
     const entry = addPayee({ label, nimAddress: scanned.nim, usdtAddress: scanned.usdt });
     setSelectedId(entry.id);
     setCurrency(scanned.usdt ? 'USDT' : 'NIM');

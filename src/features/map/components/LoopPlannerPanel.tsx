@@ -43,7 +43,7 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
     const loop = await generateLoopRoute(userLocation, km, vibe);
     setBusy(false);
     if (!loop || loop.stops.length === 0) {
-      setError('No loop found from here — try a different length.');
+      setError(tr("No loop found from here — try a different length."));
       return;
     }
     onApply({

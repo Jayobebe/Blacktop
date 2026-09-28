@@ -12,9 +12,9 @@ interface MechaNickProps {
 }
 
 const FALLBACK_LINES = [
-  'Ride safe, ride often.',
-  'Tank\'s not gonna fill itself.',
-  'Keep the shiny side up.',
+  tr("Ride safe, ride often."),
+  tr("Tank's not gonna fill itself."),
+  tr("Keep the shiny side up."),
 ];
 
 /** Time a message stays on screen, and the quiet gap between messages. */

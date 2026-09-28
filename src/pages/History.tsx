@@ -24,8 +24,8 @@ import { tr } from '@/lib/i18n';
 
 const BURN_LABELS: Record<BurnTripsInterval, string> = {
   off: 'Off',
-  week: 'Every week',
-  month: 'Every month',
+  week: tr("Every week"),
+  month: tr("Every month"),
 };
 
 export default function History() {
@@ -85,7 +85,7 @@ export default function History() {
       {/* Header */}
       <PageHeader
         title={tr("{0} History", [terms.Ride])}
-        subtitle={tr("{0} {1} recorded", [rides.length, rides.length === 1 ? terms.ride : terms.rides])}
+        subtitle={tr("{0} recorded", [`${rides.length} ${rides.length === 1 ? terms.ride : terms.rides}`])}
         backTo="/"
         right={
           <DropdownMenu>
@@ -105,7 +105,7 @@ export default function History() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                {tr("Unstarred")}{" "}{terms.rides}{" "}{tr("are wiped to save storage. Totals and stats stay.")}
+                {tr("Unstarred {0} are wiped to save storage. Totals and stats stay.", [terms.rides])}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuRadioGroup value={settings.burnTripsInterval} onValueChange={handleBurnChange}>
@@ -126,8 +126,8 @@ export default function History() {
             <div className="w-16 h-16 rounded-2xl bg-card/50 border border-border/30 flex items-center justify-center mb-4">
               <Route className="w-8 h-8 text-muted-foreground/50" />
             </div>
-            <p className="text-muted-foreground font-medium">{tr("No")}{" "}{terms.rides}{" "}{tr("yet")}</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">{tr("Start your first")}{" "}{terms.ride}{" "}{tr("to see it here")}</p>
+            <p className="text-muted-foreground font-medium">{tr("No {0} yet", [terms.rides])}</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">{tr("Start your first {0} to see it here", [terms.ride])}</p>
           </div>
         ) : (
           rides.map((ride, index) => {

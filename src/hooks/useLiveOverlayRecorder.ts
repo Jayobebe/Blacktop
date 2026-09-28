@@ -3,6 +3,7 @@ import { formatDuration, formatDistance } from '@/lib/format';
 import { buildGForcePoints, pointsToAreaPath, pointsToLinePath } from '@/lib/gForceGraph';
 import { drawMiniMap } from '@/lib/overlayMiniMap';
 
+import { tr } from '@/lib/i18n';
 interface OverlayStats {
   speed: number;
   maxSpeed: number;
@@ -124,7 +125,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.font = '14px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText('MAX SPEED', 55, 45);
+    ctx.fillText(tr("MAX SPEED"), 55, 45);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 32px monospace';
     ctx.fillText(`${Math.round(stats.maxSpeed)}`, 55, 65);
@@ -137,7 +138,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '14px system-ui';
       ctx.textAlign = 'right';
-      ctx.fillText('MAX LEAN', width - 55, 45);
+      ctx.fillText(tr("MAX LEAN"), width - 55, 45);
       ctx.fillStyle = 'white';
       ctx.font = 'bold 32px monospace';
       ctx.fillText(`${Math.round(stats.maxLean)}°`, width - 55, 65);

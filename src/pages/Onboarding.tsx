@@ -82,7 +82,7 @@ export default function Onboarding() {
         direction={direction}
         progress={{ current: 1, total: TOTAL_STEPS }}
         onBack={() => go('landing', 'back')}
-        eyebrow="Before we start"
+        eyebrow={tr("Before we start")}
         title={tr("The ground rules.")}
         subtitle={tr("Short version: your data stays yours, and the road comes first.")}
         footer={
@@ -148,7 +148,7 @@ export default function Onboarding() {
         startAtEnd={direction === 'back'}
         onExit={() => go('consent', 'back')}
         onDone={() => go('profile')}
-        doneLabel="Looks good"
+        doneLabel={tr("Looks good")}
       />
     );
   }
@@ -162,7 +162,7 @@ export default function Onboarding() {
       direction={direction}
       progress={{ current: TOTAL_STEPS, total: TOTAL_STEPS }}
       onBack={() => go('setup', 'back')}
-      eyebrow="Last thing"
+      eyebrow={tr("Last thing")}
       title={showGroup ? tr("What should your crew call you?") : tr("What should we call you?")}
       subtitle={showGroup ? tr("Other {0} see this name in convoys and voice chat.", [terms.riders]) : tr("Only you will see this, unless you join a convoy later.")}
       footer={
@@ -179,7 +179,7 @@ export default function Onboarding() {
             </>
           ) : (
             <>
-              {tr("Let's")}{" "}{terms.ride}
+              {terms.car ? tr("Let's drive") : tr("Let's ride")}
               <ChevronRight className="w-5 h-5 ml-1" />
             </>
           )}

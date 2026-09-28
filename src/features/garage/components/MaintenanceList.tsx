@@ -33,7 +33,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
       : DEFAULT_MAINT_TEMPLATES
     )
     .filter((t, i, all) => all.findIndex((o) => o.name === t.name) === i);
-  const partExample = vehicles[0] === 'car' ? 'Timing belt' : vehicles[0] === 'escooter' ? 'Stem clamp' : 'Chain';
+  const partExample = vehicles[0] === 'car' ? tr("Timing belt") : vehicles[0] === 'escooter' ? tr("Stem clamp") : tr("Chain");
   const isMiles = settings.distanceUnit === 'miles';
   const unitLabel = getDistanceLabel(settings.distanceUnit);
 

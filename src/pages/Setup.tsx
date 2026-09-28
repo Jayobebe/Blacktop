@@ -13,7 +13,7 @@ export default function Setup() {
         toast.success(tr("Your Blacktop is updated"));
         navigate('/', { replace: true });
       }}
-      doneLabel="Save and go home"
+      doneLabel={tr("Save and go home")}
     />
   );
 }

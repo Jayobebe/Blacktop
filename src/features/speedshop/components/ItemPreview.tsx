@@ -109,7 +109,7 @@ function LogbookPreview() {
       />
       {/* front */}
       <div className="absolute inset-0" style={{ transform: `translateZ(${depth}px)` }}>
-        <LogbookCover vehicleName={bike?.name ?? 'Your vehicle'} onOpen={() => {}} className="shop-flat m-0 [&>div:last-child]:shadow-none" />
+        <LogbookCover vehicleName={bike?.name ?? tr("Your vehicle")} onOpen={() => {}} className="shop-flat m-0 [&>div:last-child]:shadow-none" />
       </div>
     </div>
   );

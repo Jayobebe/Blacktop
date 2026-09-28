@@ -176,8 +176,8 @@ export function BlacktankPanel({ onClose }: { onClose?: () => void }) {
           {formatAmount(Number(pot?.balance ?? 0), currency)}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          {pot?.member_count ?? 0} {(pot?.member_count ?? 0) === 1 ? 'rider' : 'riders'}{" "}{tr("· you're in for")}{' '}
-          {formatAmount(Number(pot?.my_pledged ?? 0), currency)}
+          {(pot?.member_count ?? 0) === 1 ? tr("1 rider") : tr("{0} riders", [pot?.member_count ?? 0])}{" "}
+          {tr("· you're in for {0}", [formatAmount(Number(pot?.my_pledged ?? 0), currency)])}
         </p>
       </div>
 
@@ -297,7 +297,7 @@ export function BlacktankPanel({ onClose }: { onClose?: () => void }) {
 
             {r.status === 'open' && !r.is_mine && r.my_vote !== null && (
               <p className="text-[11px] text-muted-foreground">
-                {tr("You")}{" "}{r.my_vote ? 'approved' : 'blocked'}{" "}{tr("this.")}
+                {r.my_vote ? tr("You approved this.") : tr("You blocked this.")}
               </p>
             )}
 

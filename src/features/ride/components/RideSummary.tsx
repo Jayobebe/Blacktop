@@ -351,7 +351,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {/* Footer */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
           <div className="text-center space-y-2">
-            <div className="text-base tracking-[0.25em]">{tr("THANK YOU FOR THE")}{" "}{terms.Ride.toUpperCase()}</div>
+            <div className="text-base tracking-[0.25em]">{tr("THANK YOU FOR THE {0}", [terms.Ride.toUpperCase()])}</div>
             <div className="text-xs opacity-60 tracking-widest">{tr("ORDER")}{" "}{orderId}</div>
             <div className="receipt-barcode mt-3" aria-hidden />
             <div className="text-[10px] tracking-[0.4em] opacity-70 mt-1">{tr("BLACKTOP ·")}{" "}{dateStr}</div>

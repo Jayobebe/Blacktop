@@ -422,7 +422,7 @@ export default function RideDetail() {
                   <Box className="w-5 h-5 text-accent" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-sm">{tr("3D")}{" "}{terms.Ride}{" "}{tr("Overview")}</h3>
+                  <h3 className="font-semibold text-sm">{tr("3D {0} Overview", [terms.Ride])}</h3>
                   <p className="text-xs text-muted-foreground">{tr("Flyover of your route, downloadable as MP4")}</p>
                 </div>
               </div>
@@ -527,7 +527,7 @@ export default function RideDetail() {
             className="w-full h-10 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground touch-target"
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            {tr("Delete")}{" "}{terms.Ride}
+            {tr("Delete {0}", [terms.Ride])}
           </Button>
         ) : (
           <div className="flex gap-2">

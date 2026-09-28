@@ -3,6 +3,7 @@
 // are shown in the turn banner and spoken aloud. Pure functions, no React.
 import type { RouteResult, RouteStep } from './routing';
 
+import { tr } from '@/lib/i18n';
 type LngLat = [number, number];
 
 export interface NavManeuver extends RouteStep {
@@ -214,7 +215,9 @@ export function remainingLine(nav: NavRoute, along: number): LngLat[] {
 
 // ── Wording ─────────────────────────────────────────────────────────────────
 
-const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+// Whole phrases per case (not English fragments glued together) so every
+// language can word them its own way.
+const ORDINALS = [tr("first"), tr("second"), tr("third"), tr("fourth"), tr("fifth"), tr("sixth"), tr("seventh"), tr("eighth"), tr("ninth"), tr("tenth")];
 
 function roadOf(m: RouteStep): string {
   if (m.name && m.ref) return `${m.name} (${m.ref})`;
@@ -226,24 +229,47 @@ function spokenRoadOf(m: RouteStep): string {
   return m.name || (m.ref ? m.ref.split(';')[0] : '');
 }
 
+/** Mid-sentence: "At the roundabout, turn left". */
 function direction(modifier: string | null): string {
   switch (modifier) {
     case 'uturn':
-      return 'make a U-turn';
+      return tr("make a U-turn");
     case 'sharp left':
-      return 'turn sharp left';
+      return tr("turn sharp left");
     case 'sharp right':
-      return 'turn sharp right';
+      return tr("turn sharp right");
     case 'slight left':
-      return 'bear left';
+      return tr("bear left");
     case 'slight right':
-      return 'bear right';
+      return tr("bear right");
     case 'left':
-      return 'turn left';
+      return tr("turn left");
     case 'right':
-      return 'turn right';
+      return tr("turn right");
     default:
-      return 'go straight on';
+      return tr("go straight on");
+  }
+}
+
+/** Start of a sentence: "Turn left". */
+function Direction(modifier: string | null): string {
+  switch (modifier) {
+    case 'uturn':
+      return tr("Make a U-turn");
+    case 'sharp left':
+      return tr("Turn sharp left");
+    case 'sharp right':
+      return tr("Turn sharp right");
+    case 'slight left':
+      return tr("Bear left");
+    case 'slight right':
+      return tr("Bear right");
+    case 'left':
+      return tr("Turn left");
+    case 'right':
+      return tr("Turn right");
+    default:
+      return tr("Go straight on");
   }
 }
 
@@ -254,8 +280,6 @@ function side(modifier: string | null): 'left' | 'right' | null {
   return null;
 }
 
-const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
-
 /**
  * The instruction for a manoeuvre. `stopName` names the stop an "arrive"
  * manoeuvre ends at; `finalStop` says whether it's the destination.
@@ -265,46 +289,48 @@ export function maneuverText(
   opts: { spoken?: boolean; stopName?: string | null; finalStop?: boolean } = {},
 ): string {
   const road = opts.spoken ? spokenRoadOf(m) : roadOf(m);
-  const onto = road ? ` onto ${road}` : '';
-  const towards = m.destinations ? ` towards ${m.destinations.split(',')[0]}` : '';
+  const onto = road ? tr(" onto {0}", [road]) : '';
+  const towards = m.destinations ? tr(" towards {0}", [m.destinations.split(',')[0]]) : '';
   const s = side(m.modifier);
+  const bySide = (left: string, right: string, none: string) => (s === 'left' ? left : s === 'right' ? right : none);
 
   switch (m.type) {
     case 'depart':
-      return road ? `Head off on ${road}` : 'Head off along the route';
+      return road ? tr("Head off on {0}", [road]) : tr("Head off along the route");
     case 'arrive': {
-      const where = opts.stopName ? opts.stopName : opts.finalStop ? 'your destination' : 'your next stop';
-      return `Arrive at ${where}${s ? `, on the ${s}` : ''}`;
+      const where = opts.stopName ? opts.stopName : opts.finalStop ? tr("your destination") : tr("your next stop");
+      return bySide(tr("Arrive at {0}, on the left", [where]), tr("Arrive at {0}, on the right", [where]), tr("Arrive at {0}", [where]));
     }
     case 'roundabout':
     case 'rotary': {
-      const what = m.type === 'rotary' && m.rotary ? m.rotary : 'the roundabout';
-      if (m.exit && m.exit >= 1 && m.exit <= ORDINALS.length) return `At ${what}, take the ${ORDINALS[m.exit - 1]} exit${onto}`;
-      return `At ${what}, ${direction(m.modifier)}${onto}`;
+      const what = m.type === 'rotary' && m.rotary ? m.rotary : tr("the roundabout");
+      if (m.exit && m.exit >= 1 && m.exit <= ORDINALS.length) return tr("At {0}, take the {1} exit", [what, ORDINALS[m.exit - 1]]) + onto;
+      return tr("At {0}, {1}", [what, direction(m.modifier)]) + onto;
     }
     case 'roundabout turn':
-      return `At the roundabout, ${direction(m.modifier)}${onto}`;
+      return tr("At the roundabout, {0}", [direction(m.modifier)]) + onto;
     case 'exit roundabout':
     case 'exit rotary':
-      return `Exit the roundabout${onto}`;
+      return tr("Exit the roundabout") + onto;
     case 'end of road':
-      return `At the end of the road, ${direction(m.modifier)}${onto}`;
+      return tr("At the end of the road, {0}", [direction(m.modifier)]) + onto;
     case 'fork':
-      return `Keep ${s ?? 'straight'} at the fork${onto || towards}`;
+      return bySide(tr("Keep left at the fork"), tr("Keep right at the fork"), tr("Keep straight at the fork")) + (onto || towards);
     case 'merge':
-      return `Merge${s ? ` ${s}` : ''}${onto}`;
+      return bySide(tr("Merge left"), tr("Merge right"), tr("Merge")) + onto;
     case 'on ramp':
-      return `Take the ramp${s ? ` on the ${s}` : ''}${onto || towards}`;
+      return bySide(tr("Take the ramp on the left"), tr("Take the ramp on the right"), tr("Take the ramp")) + (onto || towards);
     case 'off ramp':
-      return `Take the exit${s ? ` on the ${s}` : ''}${towards || onto}`;
+      return bySide(tr("Take the exit on the left"), tr("Take the exit on the right"), tr("Take the exit")) + (towards || onto);
     case 'continue':
-      if (m.modifier === 'uturn') return `Make a U-turn${onto}`;
-      return s ? `Keep ${s}${onto}` : `Continue${road ? ` on ${road}` : ''}`;
+      if (m.modifier === 'uturn') return tr("Make a U-turn") + onto;
+      if (s) return bySide(tr("Keep left"), tr("Keep right"), '') + onto;
+      return road ? tr("Continue on {0}", [road]) : tr("Continue");
     case 'new name':
-      return `Continue${onto}`;
+      return tr("Continue") + onto;
     default:
-      if (m.modifier === 'straight') return `Go straight on${road ? ` along ${road}` : ''}`;
-      return `${cap(direction(m.modifier))}${onto}`;
+      if (m.modifier === 'straight') return road ? tr("Go straight on along {0}", [road]) : tr("Go straight on");
+      return Direction(m.modifier) + onto;
   }
 }
 
@@ -327,20 +353,20 @@ export function shortDistance(meters: number, unit: DistanceUnit): { value: stri
 export function spokenDistance(meters: number, unit: DistanceUnit): string {
   if (unit === 'miles') {
     const feet = meters * 3.28084;
-    if (feet < 1000) return `${Math.max(100, Math.round(feet / 100) * 100)} feet`;
+    if (feet < 1000) return tr("{0} feet", [Math.max(100, Math.round(feet / 100) * 100)]);
     const mi = meters / 1609.34;
-    if (mi < 0.35) return 'a quarter of a mile';
-    if (mi < 0.65) return 'half a mile';
-    if (mi < 0.9) return 'three quarters of a mile';
-    if (mi < 1.25) return '1 mile';
+    if (mi < 0.35) return tr("a quarter of a mile");
+    if (mi < 0.65) return tr("half a mile");
+    if (mi < 0.9) return tr("three quarters of a mile");
+    if (mi < 1.25) return tr("1 mile");
     const r = mi < 10 ? Math.round(mi * 2) / 2 : Math.round(mi);
-    return `${r} miles`;
+    return tr("{0} miles", [r]);
   }
-  if (meters < 1000) return `${Math.max(50, Math.round(meters / 50) * 50)} metres`;
+  if (meters < 1000) return tr("{0} metres", [Math.max(50, Math.round(meters / 50) * 50)]);
   const km = meters / 1000;
-  if (km < 1.25) return '1 kilometre';
+  if (km < 1.25) return tr("1 kilometre");
   const r = km < 10 ? Math.round(km * 2) / 2 : Math.round(km);
-  return `${r} kilometres`;
+  return tr("{0} kilometres", [r]);
 }
 
 /** Lower-cases the first letter so an instruction can follow "In 500 feet, ". */

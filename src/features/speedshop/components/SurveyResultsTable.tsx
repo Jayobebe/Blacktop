@@ -110,7 +110,7 @@ export function SurveyResultsTable() {
             </table>
           </div>
           <p className="text-[10px] text-muted-foreground mt-1.5">
-            {tr("Keen = buy + maybe. Up to")}{" "}{voters}{" "}{tr("rider")}{voters === 1 ? '' : 's'}{" "}{tr("per item so far.")}
+            {voters === 1 ? tr("Keen = buy + maybe. Up to 1 rider per item so far.") : tr("Keen = buy + maybe. Up to {0} riders per item so far.", [voters])}
           </p>
 
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-3 mb-1.5">{tr("Suggestions (")}{suggestions.length})</p>

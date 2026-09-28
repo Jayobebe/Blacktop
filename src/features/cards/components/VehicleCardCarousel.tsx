@@ -33,7 +33,7 @@ export function VehicleCardCarousel() {
         bike: {
           id: 'total-rides-vehicle-card',
           name: 'Vehicle',
-          makeModel: 'All logged rides',
+          makeModel: tr("All logged rides"),
           photos: { hero: '' },
           baseOdometerKm: 0,
           createdAt: 0,

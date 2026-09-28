@@ -25,8 +25,8 @@ let channel: ReturnType<typeof supabase.channel> | null = null;
 let lastSentAt = 0;
 
 export function describeRegroup(behindNames: string[], withAdvice = true): string {
-  const advice = withAdvice ? ' Ease off and regroup.' : '';
-  if (behindNames.length === 0) return 'Ease off and regroup.';
+  const advice = withAdvice ? tr(" Ease off and regroup.") : '';
+  if (behindNames.length === 0) return tr("Ease off and regroup.");
   if (behindNames.length === 1) return `${behindNames[0]} is behind.${advice}`;
   if (behindNames.length === 2) return `${behindNames[0]} and ${behindNames[1]} are behind.${advice}`;
   return `${behindNames.length} riders are behind.${advice}`;

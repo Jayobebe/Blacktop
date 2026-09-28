@@ -3,6 +3,7 @@ import { Briefcase, HeartPulse, Sun, Flame, PartyPopper } from 'lucide-react';
 import type { ExperienceTerms } from './terms';
 import type { RideStyle } from './profile';
 
+import { tr } from '@/lib/i18n';
 export interface StyleInfo {
   id: RideStyle;
   icon: LucideIcon;
@@ -16,37 +17,37 @@ export interface StyleInfo {
 export const RIDE_STYLES: StyleInfo[] = [
   {
     id: 'commute',
-    crowd: () => 'commuters',
+    crowd: () => tr("commuters"),
     icon: Briefcase,
-    title: () => 'Getting from A to B',
-    subtitle: (t) => `Commutes and errands. You want the ${t.ride} to be easy and safe.`,
+    title: () => tr("Getting from A to B"),
+    subtitle: (t) => tr("Commutes and errands. You want the {0} to be easy and safe.", [t.ride]),
   },
   {
     id: 'fitness',
-    crowd: () => 'fitness riders',
+    crowd: () => tr("fitness riders"),
     icon: HeartPulse,
-    title: () => 'Staying fit',
-    subtitle: () => 'Distance, time and progress over the weeks.',
+    title: () => tr("Staying fit"),
+    subtitle: () => tr("Distance, time and progress over the weeks."),
   },
   {
     id: 'leisure',
-    crowd: (t) => `weekend ${t.riders}`,
+    crowd: (t) => tr("weekend {0}", [t.riders]),
     icon: Sun,
-    title: (t) => `Weekend ${t.rides} and trips`,
-    subtitle: () => 'Scenic routes, good weather, nowhere to be.',
+    title: (t) => tr("Weekend {0} and trips", [t.rides]),
+    subtitle: () => tr("Scenic routes, good weather, nowhere to be."),
   },
   {
     id: 'performance',
-    crowd: (t) => `fast ${t.riders}`,
+    crowd: (t) => tr("fast {0}", [t.riders]),
     icon: Flame,
-    title: () => 'Pushing the limits',
-    subtitle: () => 'Track days, twisties and every number that comes with them.',
+    title: () => tr("Pushing the limits"),
+    subtitle: () => tr("Track days, twisties and every number that comes with them."),
   },
   {
     id: 'social',
-    crowd: () => 'crews',
+    crowd: () => tr("crews"),
     icon: PartyPopper,
-    title: (t) => `${t.Rides} with mates`,
-    subtitle: () => 'Meet-ups, crews and bragging rights.',
+    title: (t) => tr("{0} with mates", [t.Rides]),
+    subtitle: () => tr("Meet-ups, crews and bragging rights."),
   },
 ];

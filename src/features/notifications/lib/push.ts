@@ -230,7 +230,7 @@ async function ensureSession() {
   const { data } = await supabase.auth.getSession();
   if (data.session) return;
   const { error } = await supabase.auth.signInAnonymously();
-  if (error) throw new PushSetupError(`Couldn't sign in to Blacktop (${error.message}). Check your connection and try again.`);
+  if (error) throw new PushSetupError(tr("Couldn't sign in to Blacktop ({0}). Check your connection and try again.", [error.message]));
 }
 
 async function serverPublicKey(): Promise<string> {
@@ -239,11 +239,11 @@ async function serverPublicKey(): Promise<string> {
     const ctx = (error as { context?: unknown } | null)?.context;
     const status = ctx instanceof Response ? ctx.status : undefined;
     if (status === 503 || status === 404) {
-      throw new PushSetupError("Notifications aren't switched on for Blacktop's server yet.");
+      throw new PushSetupError(tr("Notifications aren't switched on for Blacktop's server yet."));
     }
     // Say what failed, so a screenshot is enough to diagnose it.
     const detail = status ? `error ${status}` : error ? error.name || 'network error' : 'no key returned';
-    throw new PushSetupError(`Couldn't reach Blacktop's notification server (${detail}). Check your connection and try again.`);
+    throw new PushSetupError(tr("Couldn't reach Blacktop's notification server ({0}). Check your connection and try again.", [detail]));
   }
   return String(data.publicKey);
 }
@@ -273,11 +273,11 @@ async function subscribeAndRegister(reg: ServiceWorkerRegistration) {
     _lat: loc?.lat ?? null,
     _lng: loc?.lng ?? null,
   } as never);
-  if (error) throw new PushSetupError(`Couldn't register this device (${error.code || error.message}). Try again in a moment.`);
+  if (error) throw new PushSetupError(tr("Couldn't register this device ({0}). Try again in a moment.", [error.code || error.message]));
 }
 
 function message(err: unknown) {
-  return err instanceof PushSetupError ? err.message : 'Something went wrong turning notifications on.';
+  return err instanceof PushSetupError ? err.message : tr("Something went wrong turning notifications on.");
 }
 
 // ── actions ─────────────────────────────────────────────────────────────────
