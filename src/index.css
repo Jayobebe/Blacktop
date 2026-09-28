@@ -1279,5 +1279,5 @@
 }
 .shop-turn { animation: shop-turn 7s ease-in-out infinite; transform-style: preserve-3d; will-change: transform; }
 /* Flatten the card's own flip layers so its face can't slice through at an angle. */
-.shop-turn .shop-flat, .shop-turn .shop-flat * { transform-style: flat !important; backface-visibility: visible !important; }
+.shop-turn .shop-flat, .shop-turn .shop-flat * { transform-style: flat !important; }
 @media (prefers-reduced-motion: reduce) { .shop-turn { animation: none; transform: perspective(900px) rotateY(-18deg); } }
