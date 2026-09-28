@@ -123,11 +123,64 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
+type PhotonHit = { id: string; lat: number; lon: number; tags: Record<string, string> };
+
+/** Photon (komoot) OSM search: fast, tolerant of cloud servers, supports a bbox and tag filters. */
+async function photonSearch(opts: {
+  q: string;
+  center?: { lat: number; lon: number } | null;
+  bbox?: [number, number, number, number] | null;
+  osmTags?: string[];
+  limit?: number;
+}): Promise<PhotonHit[]> {
+  if (!opts.q) return [];
+  const url = new URL("https://photon.komoot.io/api/");
+  url.searchParams.set("q", opts.q.slice(0, 100));
+  url.searchParams.set("limit", String(opts.limit ?? 20));
+  if (opts.center) {
+    url.searchParams.set("lat", String(opts.center.lat));
+    url.searchParams.set("lon", String(opts.center.lon));
+  }
+  if (opts.bbox) url.searchParams.set("bbox", opts.bbox.join(","));
+  for (const t of opts.osmTags ?? []) url.searchParams.append("osm_tag", t);
+  const res = await fetchWithTimeout(url.toString(), {
+    headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "*/*" },
+  }, 7000);
+  if (!res.ok) throw new Error(`Photon ${res.status}`);
+  const data = await res.json();
+  return (Array.isArray(data?.features) ? data.features : [])
+    .filter((f: any) => Array.isArray(f?.geometry?.coordinates))
+    .map((f: any) => {
+      const p = f.properties ?? {};
+      return {
+        id: `ph${p.osm_type ?? ""}${p.osm_id ?? Math.random()}`,
+        lon: f.geometry.coordinates[0],
+        lat: f.geometry.coordinates[1],
+        tags: {
+          ...(p.name ? { name: p.name } : {}),
+          ...(p.street ? { "addr:street": [p.housenumber, p.street].filter(Boolean).join(" ") } : {}),
+          ...(p.city || p.district ? { "addr:city": p.city ?? p.district } : {}),
+          ...(p.postcode ? { "addr:postcode": p.postcode } : {}),
+          ...(p.country ? { country: p.country } : {}),
+          ...(p.osm_key ? { [p.osm_key]: p.osm_value } : {}),
+        },
+      };
+    });
+}
+
+function boxAround(lat: number, lon: number, radiusM: number): [number, number, number, number] {
+  const dLat = radiusM / 110540;
+  const dLon = radiusM / (111320 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+  return [lon - dLon, lat - dLat, lon + dLon, lat + dLat];
+}
+
 async function fetchOverpass(query: string, timeoutMs = 9000) {
+  // overpass-api.de answers 406 to "Accept: application/json" and wants a
+  // contactable User-Agent; kumi.systems was timing out, so it goes last.
   const endpoints = [
-    "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
-    "https://overpass.openstreetmap.ru/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
   ];
 
   let lastError: unknown = null;
@@ -138,8 +191,8 @@ async function fetchOverpass(query: string, timeoutMs = 9000) {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json",
-          "User-Agent": "Blacktop-App/1.0",
+          "Accept": "*/*",
+          "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)",
         },
         body: `data=${encodeURIComponent(query)}`,
       }, timeoutMs);
@@ -230,7 +283,7 @@ serve(async (req) => {
         url.searchParams.set("alternatives", "false");
         url.searchParams.set("steps", "false");
         const res = await fetchWithTimeout(url.toString(), {
-          headers: { "User-Agent": "Blacktop-App/1.0", "Accept": "application/json" },
+          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
         }, 9000);
         if (!res.ok) throw new Error(`OSRM ${res.status}`);
         const json = await res.json();
@@ -394,7 +447,7 @@ serve(async (req) => {
         url.searchParams.set("alternatives", "false");
         url.searchParams.set("steps", "false");
         const res = await fetchWithTimeout(url.toString(), {
-          headers: { "User-Agent": "Blacktop-App/1.0", "Accept": "application/json" },
+          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
         }, 9000);
         const text = await res.text();
         if (!res.ok) throw new Error(`OSRM ${res.status}: ${text.slice(0, 200)}`);
@@ -625,7 +678,7 @@ serve(async (req) => {
       let osrm: any;
       try {
         const res = await fetchWithTimeout(routeUrl.toString(), {
-          headers: { "User-Agent": "Blacktop-App/1.0", "Accept": "application/json" },
+          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
         }, 9000);
         const text = await res.text();
         if (!res.ok) throw new Error(`OSRM ${res.status}: ${text.slice(0, 200)}`);
@@ -735,13 +788,17 @@ serve(async (req) => {
           out center ${limit};
         `;
       } else {
-        const regex = amenities.map(escapeRegexPart).join("|");
-        // Store categories (supermarket, convenience) are shop=*, not amenity=*.
+        // Exact tag matches only: regex tag filters time out (504) on public Overpass.
+        const SHOP_VALUES = new Set(["supermarket", "convenience", "bakery", "motorcycle", "car_repair", "tyres"]);
+        const clauses = amenities
+          .map((a) => a.replace(/[^a-z0-9_]/gi, ""))
+          .filter(Boolean)
+          .map((a) => `nwr["${SHOP_VALUES.has(a) ? "shop" : "amenity"}"="${a}"]${around};`)
+          .join("\n            ");
         query = `
           [out:json][timeout:10];
           (
-            nwr["amenity"~"^(${regex})$"]${around};
-            nwr["shop"~"^(${regex})$"]${around};
+            ${clauses}
           );
           out center ${limit};
         `;
@@ -749,11 +806,37 @@ serve(async (req) => {
 
       let data: any;
       try {
-        data = await fetchOverpass(query);
+        // Short budget: Photon below is the quick fallback.
+        // Name search goes straight to Photon (Overpass name regex is too slow).
+        if (nameQ.length >= 2) throw new Error("name search via Photon");
+        data = await fetchOverpass(query, 9000);
       } catch (e) {
-        console.warn("[PLACE-SEARCH] Overpass unavailable, returning empty:", e instanceof Error ? e.message : e);
-        return new Response(JSON.stringify([]), {
-          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "overpass_unavailable" },
+        console.warn("[PLACE-SEARCH] Overpass unavailable, using Photon:", e instanceof Error ? e.message : e);
+        const bbox = boxAround(body.lat, body.lon, radius);
+        const center = { lat: body.lat, lon: body.lon };
+        let hits: PhotonHit[] = [];
+        try {
+          if (nameQ.length >= 2) {
+            hits = await photonSearch({ q: nameQ, center, bbox, limit });
+          } else if (filter24h) {
+            hits = await photonSearch({ q: "24 hour", center, bbox, osmTags: ["shop", "amenity:fuel"], limit });
+          } else {
+            // Photon matches names, not categories, so fuel also searches the big brands.
+            const words: Record<string, string[]> = {
+              fuel: ["petrol station", "Shell", "BP", "Esso", "Texaco", "TotalEnergies"],
+              restaurant: ["restaurant"], fast_food: ["fast food"], cafe: ["cafe"],
+              supermarket: ["supermarket"], convenience: ["convenience store"],
+            };
+            const jobs = amenities.slice(0, 4).flatMap((a) =>
+              (words[a] ?? [a.replace(/_/g, " ")]).map((w) =>
+                photonSearch({ q: w, center, bbox, osmTags: [`amenity:${a}`, `shop:${a}`], limit: 15 })
+                  .catch(() => [] as PhotonHit[])));
+            const seenIds = new Set<string>();
+            hits = (await Promise.all(jobs)).flat().filter((h) => !seenIds.has(h.id) && !!seenIds.add(h.id));
+          }
+        } catch { /* empty */ }
+        return new Response(JSON.stringify(hits.slice(0, limit)), {
+          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "photon" },
           status: 200,
         });
       }
@@ -841,12 +924,39 @@ serve(async (req) => {
 
     const upstream = await fetch(url.toString(), {
       headers: {
-        "User-Agent": "Blacktop-App/1.0",
+        "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)",
         "Accept": "application/json",
       },
     });
 
     const text = await upstream.text();
+
+    // Nominatim often refuses cloud servers: answer from Photon (same OSM
+    // data) in Nominatim's shape so the app doesn't notice.
+    if (!upstream.ok && body.kind === "search") {
+      console.warn("[PLACE-SEARCH] Nominatim", upstream.status, "- using Photon");
+      const vb = (body.viewbox ?? "").split(",").map(Number);
+      const hasBox = vb.length === 4 && vb.every(Number.isFinite);
+      const bounded = asBounded(body.bounded) === "1";
+      const center = hasBox ? { lat: (vb[1] + vb[3]) / 2, lon: (vb[0] + vb[2]) / 2 } : null;
+      const hits = await photonSearch({
+        q: String(body.q ?? "").trim(),
+        center,
+        bbox: hasBox && bounded ? [Math.min(vb[0], vb[2]), Math.min(vb[1], vb[3]), Math.max(vb[0], vb[2]), Math.max(vb[1], vb[3])] : null,
+        limit: Math.max(1, Math.min(30, Number(body.limit) || 10)),
+      }).catch(() => []);
+      const shaped = hits.map((h) => ({
+        place_id: h.id,
+        lat: String(h.lat),
+        lon: String(h.lon),
+        name: h.tags.name ?? "",
+        display_name: [h.tags.name, h.tags["addr:street"], h.tags["addr:city"], h.tags["addr:postcode"], h.tags.country].filter(Boolean).join(", "),
+      }));
+      return new Response(JSON.stringify(shaped), {
+        headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "photon" },
+        status: 200,
+      });
+    }
 
     if (!upstream.ok) {
       const rateLimited = upstream.status === 429 || upstream.status >= 500;
