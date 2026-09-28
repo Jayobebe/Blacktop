@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +17,8 @@ import { OrientationProvider } from "@/hooks/useOrientationLock";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { AppBootSkeleton, PanelSkeleton } from "@/components/skeletons";
 import { AppBackdrop } from "@/components/AppBackdrop";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { surgeBackdrop } from "@/lib/backdropMotion";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import CreateConvoy from "./pages/CreateConvoy";
@@ -77,10 +79,40 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Global backdrop; blobs pause during an active ride and while the map covers everything. */
+/**
+ * Global backdrop; blobs and belts pause during an active ride and while the map
+ * covers everything. Tapping anything interactive nudges the wordmark belts;
+ * arriving on a new page surges them, then they coast back to cruising speed.
+ * Pull-to-refresh lives here too since it drives the same backdrop.
+ */
 function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
   const { pathname } = useLocation();
-  return <AppBackdrop paused={mapOpen || pathname === "/ride"} />;
+
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (target?.closest?.('a, button, [role="button"], [role="tab"], [role="menuitem"], .pressable')) surgeBackdrop(4);
+    };
+    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+    return () => window.removeEventListener('pointerdown', onPointerDown);
+  }, []);
+
+  const firstPath = useRef(true);
+  useEffect(() => {
+    if (firstPath.current) {
+      firstPath.current = false;
+      return;
+    }
+    surgeBackdrop(30);
+  }, [pathname]);
+
+  const paused = mapOpen || pathname === "/ride";
+  return (
+    <>
+      <AppBackdrop paused={paused} />
+      <PullToRefresh disabled={paused} />
+    </>
+  );
 }
 
 function AppRoutes() {

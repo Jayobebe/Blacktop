@@ -76,6 +76,8 @@
   }
 
   html {
+    /* No browser pull-to-reload: the app has its own (components/PullToRefresh). */
+    overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
   }
@@ -1113,33 +1115,48 @@
 }
 .lava-paused .lava-blob { animation-play-state: paused; }
 
-/* Charcoal wordmark: tight rows, alternate rows offset like brickwork, softened
-   slightly so it reads as printed behind misted glass. Static → cached layer. */
+/* Charcoal wordmark: tight rows, each a slow conveyor belt (alternate rows run
+   the other way), softened slightly so it reads as printed behind misted glass.
+   Rows are absolutely placed slots; backdropMotion stacks them into an endless
+   vertical loop that follows scrolling. */
 .backdrop-wordmark {
   /* Exactly the viewport, so the fish-eye lens (sized to the viewport) lines up. */
   position: absolute;
   inset: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   font-size: 11px;
-  line-height: 1.05;
   letter-spacing: 0.02em;
   word-spacing: 0.2em;
   /* Exactly the background colour: invisible in the dark; only a blob's light,
      shining through the gaps between letters, reveals the words as silhouettes. */
   color: hsl(var(--background));
-  white-space: nowrap;
   user-select: none;
 }
-.backdrop-wordmark-row { flex-shrink: 0; }
-.backdrop-wordmark-row-offset { transform: translateX(-2.6em); }
-
-
+/* Height = ROW_HEIGHT in AppBackdrop.tsx. */
+.backdrop-belt-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 11.5px;
+  line-height: 11.5px;
+}
+/* Two identical halves scrolled by exactly one half = a seamless loop.
+   `pre` keeps each half's trailing space so the seam matches the word gaps. */
+.backdrop-belt {
+  display: flex;
+  width: max-content;
+  white-space: pre;
+  will-change: transform;
+  animation-name: belt-left;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.backdrop-belt-reverse { animation-name: belt-right; }
+@keyframes belt-left  { from { transform: translate3d(0, 0, 0); }    to { transform: translate3d(-50%, 0, 0); } }
+@keyframes belt-right { from { transform: translate3d(-50%, 0, 0); } to { transform: translate3d(0, 0, 0); } }
+.lava-paused .backdrop-belt { animation-play-state: paused; }
 
 /* Mist: fine grain + a faint cool haze and vignette, so the whole thing reads as frosted glass. */
 .backdrop-mist {
@@ -1170,7 +1187,7 @@
 .frost-accent svg { color: hsl(var(--accent)); }
 
 @media (prefers-reduced-motion: reduce) {
-  .lava-blob { animation: none !important; }
+  .lava-blob, .backdrop-belt { animation: none !important; }
 }
 
 /* ===== Spectre cards: ghostly grey, drifting fog, cold shimmer, near-translucent ===== */
