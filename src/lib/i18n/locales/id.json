@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Kode itu tidak valid atau sudah kedaluwarsa.",
  "That isn't a Blacktop Enterprise code": "Itu bukan kode Blacktop Bisnis",
  "The complete, unrestricted Blacktop master suite.": "Paket induk Blacktop yang lengkap tanpa batas.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Paket-paket di bawah segera hadir. Dapat kode dari organisasimu? Pindai di sini. Mau untuk organisasimu? Hubungi kami.",
  "This workspace is ready. Your organisation's tools will appear here.": "Ruang kerja ini sudah siap. Alat dari organisasimu akan muncul di sini.",
  "Too many tries. Wait a while and try again.": "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.",
  "Tour Leader Master Broadcast": "Siaran utama pemimpin tur",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Riwayat servis otomatis",
  "Awaiting approval": "Menunggu persetujuan",
  "Blacktop Workshop": "Blacktop Bengkel",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop untuk sekolah mengemudi, dealer, bengkel, operator tur, dan tim balap.",
  "Chain adjusted": "Rantai disetel",
  "Checked in": "Diterima",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Diterima, menunggu persetujuan, dikerjakan, selesai: pengendara memantau langsung dan menerima notifikasi serta email begitu pekerjaan selesai.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Konsol penyelenggara",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Penyelenggara balap, pembalap, kru pit, dan penonton: dari balap klub dan track day hingga pelatihan di paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Jalankan seluruh balapan di satu platform: pencatatan waktu, kontrol balap, dinding pit, dan liputan langsung untuk penonton.",
- "Spectator Live Timing": "Waktu langsung untuk penonton"
+ "Spectator Live Timing": "Waktu langsung untuk penonton",
+ "Enterprise": "Bisnis"
 }

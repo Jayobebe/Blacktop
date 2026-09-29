@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "该代码无效或已过期。",
  "That isn't a Blacktop Enterprise code": "这不是 Blacktop 企业版代码",
  "The complete, unrestricted Blacktop master suite.": "完整、无限制的 Blacktop 全能套件。",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "下方套餐即将推出。收到了组织给你的代码？在这里扫描。想为你的组织引入？联系我们。",
  "This workspace is ready. Your organisation's tools will appear here.": "此工作区已就绪。你所在组织的工具将显示在这里。",
  "Too many tries. Wait a while and try again.": "尝试次数过多。请稍候再试。",
  "Tour Leader Master Broadcast": "领队全员广播",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "自动保养记录",
  "Awaiting approval": "等待确认",
  "Blacktop Workshop": "Blacktop 维修车间",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "为驾校、经销商、维修店、旅游运营商和车队打造的 Blacktop。",
  "Chain adjusted": "链条已调整",
  "Checked in": "已接车",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "已接车、等待确认、施工中、已完工：骑手可实时跟进，完工后立即收到通知和电子邮件。",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "赛事组织者控制台",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "面向赛事组织者、车手、维修区团队和观众：从俱乐部比赛、赛道日到围场教练。",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "在一个平台上运营整场比赛：计时、赛事控制、维修墙以及面向观众的实时直播。",
- "Spectator Live Timing": "观众实时计时"
+ "Spectator Live Timing": "观众实时计时",
+ "Enterprise": "企业版"
 }

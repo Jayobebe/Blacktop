@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Ce code n'est pas valide ou a expiré.",
  "That isn't a Blacktop Enterprise code": "Ce n'est pas un code Blacktop Entreprise",
  "The complete, unrestricted Blacktop master suite.": "La suite Blacktop complète, sans aucune limite.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Les offres ci-dessous arrivent bientôt. Ton organisation t'a donné un code ? Scanne-le ici. Tu le veux pour la tienne ? Écris-nous.",
  "This workspace is ready. Your organisation's tools will appear here.": "Cet espace de travail est prêt. Les outils de ton organisation apparaîtront ici.",
  "Too many tries. Wait a while and try again.": "Trop de tentatives. Attends un peu et réessaie.",
  "Tour Leader Master Broadcast": "Diffusion maître du chef de balade",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Historique d'entretien automatique",
  "Awaiting approval": "En attente de validation",
  "Blacktop Workshop": "Blacktop Atelier",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop pour les écoles, les concessions, les ateliers, les organisateurs de balades et les écuries.",
  "Chain adjusted": "Chaîne réglée",
  "Checked in": "Prise en charge",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Prise en charge, en attente de validation, en cours, prête : le motard suit tout en direct et reçoit une notification et un e-mail dès que c'est fini.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Console de l'organisateur",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Organisateurs, pilotes, équipes de stand et spectateurs : des courses de club aux roulages, jusqu'au coaching au paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Gérez toute une course sur une seule plateforme : chronométrage, direction de course, muret des stands et suivi en direct pour le public.",
- "Spectator Live Timing": "Chrono en direct pour les spectateurs"
+ "Spectator Live Timing": "Chrono en direct pour les spectateurs",
+ "Enterprise": "Entreprise"
 }

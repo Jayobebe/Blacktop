@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Bu kod geçersiz ya da süresi dolmuş.",
  "That isn't a Blacktop Enterprise code": "Bu bir Blacktop Kurumsal kodu değil",
  "The complete, unrestricted Blacktop master suite.": "Eksiksiz, sınırsız Blacktop ana paketi.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Aşağıdaki paketler yolda. Kurumundan bir kod mu aldın? Burada tara. Kendi kurumun için mi istiyorsun? Bize yaz.",
  "This workspace is ready. Your organisation's tools will appear here.": "Bu çalışma alanı hazır. Kurumunun araçları burada görünecek.",
  "Too many tries. Wait a while and try again.": "Çok fazla deneme. Biraz bekleyip tekrar dene.",
  "Tour Leader Master Broadcast": "Tur liderinin ana yayını",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Otomatik servis geçmişi",
  "Awaiting approval": "Onay bekleniyor",
  "Blacktop Workshop": "Blacktop Servis",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Sürücü kursları, bayiler, servisler, tur operatörleri ve yarış takımları için Blacktop.",
  "Chain adjusted": "Zincir ayarlandı",
  "Checked in": "Teslim alındı",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Teslim alındı, onay bekleniyor, işlemde, hazır: sürücü her şeyi canlı takip eder, iş biter bitmez bildirim ve e-posta alır.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Organizatör konsolu",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Yarış organizatörleri, sürücüler, pit ekipleri ve seyirciler: kulüp yarışlarından pist günlerine ve padok koçluğuna.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Bir yarışın tamamını tek platformda yürüt: zamanlama, yarış kontrolü, pit duvarı ve seyirciler için canlı takip.",
- "Spectator Live Timing": "Seyirciler için canlı zamanlama"
+ "Spectator Live Timing": "Seyirciler için canlı zamanlama",
+ "Enterprise": "Kurumsal"
 }

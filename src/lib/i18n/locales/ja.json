@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "そのコードは無効か、期限切れです。",
  "That isn't a Blacktop Enterprise code": "Blacktop エンタープライズのコードではありません",
  "The complete, unrestricted Blacktop master suite.": "制限なしの、完全な Blacktop マスタースイート。",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "下のパッケージは準備中です。組織からコードを受け取りましたか？ここでスキャンしてください。自分の組織で使いたい方はご連絡ください。",
  "This workspace is ready. Your organisation's tools will appear here.": "このワークスペースの準備ができました。組織のツールはここに表示されます。",
  "Too many tries. Wait a while and try again.": "試行回数が多すぎます。しばらく待ってから再度お試しください。",
  "Tour Leader Master Broadcast": "ツアーリーダーの一斉放送",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "整備履歴の自動記録",
  "Awaiting approval": "承認待ち",
  "Blacktop Workshop": "Blacktop ワークショップ",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "教習所、販売店、整備工場、ツアー運営者、レースチームのための Blacktop。",
  "Chain adjusted": "チェーン調整",
  "Checked in": "受付済み",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "受付済み、承認待ち、作業中、完了。ライダーは進捗をライブで確認でき、完了と同時に通知とメールが届きます。",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "主催者コンソール",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "レース主催者、ライダー、ピットクルー、観客のために。クラブレースや走行会からパドックでのコーチングまで。",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "計時、レースコントロール、ピットウォール、観客向けライブ中継まで、レース全体をひとつのプラットフォームで。",
- "Spectator Live Timing": "観客向けライブタイミング"
+ "Spectator Live Timing": "観客向けライブタイミング",
+ "Enterprise": "エンタープライズ"
 }

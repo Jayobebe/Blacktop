@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Ten kod jest nieprawidłowy lub wygasł.",
  "That isn't a Blacktop Enterprise code": "To nie jest kod Blacktop Biznes",
  "The complete, unrestricted Blacktop master suite.": "Kompletny, nieograniczony pakiet Blacktop.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Pakiety poniżej są w drodze. Masz kod od swojej organizacji? Zeskanuj go tutaj. Chcesz tego dla swojej? Napisz do nas.",
  "This workspace is ready. Your organisation's tools will appear here.": "Ta przestrzeń robocza jest gotowa. Tu pojawią się narzędzia Twojej organizacji.",
  "Too many tries. Wait a while and try again.": "Za dużo prób. Odczekaj chwilę i spróbuj ponownie.",
  "Tour Leader Master Broadcast": "Główny komunikat lidera wyprawy",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Automatyczna historia serwisowa",
  "Awaiting approval": "Czeka na akceptację",
  "Blacktop Workshop": "Blacktop Warsztat",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop dla szkół jazdy, dealerów, warsztatów, organizatorów wypraw i zespołów wyścigowych.",
  "Chain adjusted": "Łańcuch wyregulowany",
  "Checked in": "Przyjęto",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Przyjęto, czeka na akceptację, w trakcie, gotowe: motocyklista śledzi wszystko na żywo i dostaje powiadomienie oraz e-mail, gdy tylko praca jest skończona.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Konsola organizatora",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Organizatorzy wyścigów, zawodnicy, ekipy w boksach i kibice: od klubowych wyścigów i dni na torze po coaching w padoku.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Przeprowadź cały wyścig na jednej platformie: pomiar czasu, kierownictwo wyścigu, ściana boksów i relacja na żywo dla kibiców.",
- "Spectator Live Timing": "Pomiar czasu na żywo dla kibiców"
+ "Spectator Live Timing": "Pomiar czasu na żywo dla kibiców",
+ "Enterprise": "Biznes"
 }

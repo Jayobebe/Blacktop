@@ -12,6 +12,7 @@ import { mountWorkspace } from '../lib/enterpriseStore';
 import { ENTERPRISE_CONTACT_EMAIL, enquiryMailto, tierName } from '../lib/tiers';
 import { enterpriseTiers, type EnterpriseTier, type GuestSessionPayload } from '../types';
 import { TierShowcase } from './TierShowcase';
+import { EnterpriseTitle } from './EnterpriseTitle';
 
 // The camera scanner (html5-qrcode) only loads when the rider opens it.
 const EnterpriseQrScanner = lazy(() => import('./EnterpriseQrScanner'));
@@ -88,27 +89,15 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
 
   return (
     <div className={cn('h-full overflow-y-auto overscroll-contain flex flex-col gap-3 [&>*]:shrink-0 -mx-3 px-3 -mt-3 pt-3', className)}>
-      {/* Coming soon, stamped like the Speedshop's items, with the organisation
-          login it will have. The login is a preview: its fields are read-only
-          (nothing typed is kept, passwords included) and any attempt to use
-          it just pops the stamp. */}
+      {/* BLACKTOP / ENTERPRISE, with the Coming soon stamp beside BLACKTOP */}
+      <EnterpriseTitle ref={stampRef} />
+
+      {/* The organisation login it will have. A preview: the fields are
+          read-only (nothing typed is kept, passwords included) and any
+          attempt to use it just pops the Coming soon stamp. */}
       <div className="relative bg-card/50 rounded-3xl border border-accent/40 p-4">
-        <span
-          ref={stampRef}
-          className="absolute top-3 right-3 rounded-md bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest px-2 py-1 rotate-3 shadow"
-          style={{ transformOrigin: '80% 50%' }}
-        >
-          {tr("Coming soon")}
-        </span>
-        <div className="pr-24">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-accent">{tr("Blacktop Enterprise")}</p>
-          <p className="text-sm font-semibold text-foreground mt-1">{tr("Blacktop for schools, dealers, workshops, tour operators and race teams.")}</p>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {tr("The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.")}
-        </p>
         <form
-          className="mt-3 flex flex-col gap-2"
+          className="flex flex-col gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             pulseSoon();

@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "유효하지 않거나 만료된 코드입니다.",
  "That isn't a Blacktop Enterprise code": "Blacktop 엔터프라이즈 코드가 아닙니다",
  "The complete, unrestricted Blacktop master suite.": "제한 없는 완전한 Blacktop 마스터 스위트.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "아래 패키지는 곧 출시됩니다. 조직에서 코드를 받으셨나요? 여기에서 스캔하세요. 우리 조직에도 도입하고 싶다면 연락 주세요.",
  "This workspace is ready. Your organisation's tools will appear here.": "이 워크스페이스가 준비되었습니다. 조직의 도구가 여기에 표시됩니다.",
  "Too many tries. Wait a while and try again.": "시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.",
  "Tour Leader Master Broadcast": "투어 리더 전체 방송",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "자동 정비 이력",
  "Awaiting approval": "승인 대기",
  "Blacktop Workshop": "Blacktop 워크숍",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "운전학원, 딜러, 정비소, 투어 운영사, 레이싱 팀을 위한 Blacktop.",
  "Chain adjusted": "체인 조정",
  "Checked in": "입고 완료",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "입고 완료, 승인 대기, 작업 중, 완료: 라이더는 실시간으로 진행 상황을 확인하고, 작업이 끝나는 즉시 알림과 이메일을 받습니다.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "주최자 콘솔",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "레이스 주최자, 라이더, 피트 크루, 관중을 위해: 클럽 레이스와 트랙데이부터 패독 코칭까지.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "계측, 레이스 컨트롤, 피트 월, 관중용 실시간 중계까지 레이스 전체를 하나의 플랫폼에서.",
- "Spectator Live Timing": "관중용 실시간 타이밍"
+ "Spectator Live Timing": "관중용 실시간 타이밍",
+ "Enterprise": "엔터프라이즈"
 }

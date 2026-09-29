@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "यह कोड मान्य नहीं है या इसकी अवधि खत्म हो गई है।",
  "That isn't a Blacktop Enterprise code": "यह Blacktop एंटरप्राइज़ कोड नहीं है",
  "The complete, unrestricted Blacktop master suite.": "पूरा, बिना किसी रोक-टोक वाला Blacktop मास्टर सुइट।",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "नीचे दिए पैकेज जल्द आ रहे हैं। आपके संगठन ने कोड दिया है? यहाँ स्कैन करें। अपने संगठन के लिए चाहिए? हमसे संपर्क करें।",
  "This workspace is ready. Your organisation's tools will appear here.": "यह वर्कस्पेस तैयार है। आपके संगठन के टूल यहाँ दिखेंगे।",
  "Too many tries. Wait a while and try again.": "बहुत ज़्यादा कोशिशें। थोड़ी देर रुककर फिर कोशिश करें।",
  "Tour Leader Master Broadcast": "टूर लीडर मास्टर प्रसारण",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "स्वचालित सर्विस इतिहास",
  "Awaiting approval": "मंज़ूरी का इंतज़ार",
  "Blacktop Workshop": "Blacktop वर्कशॉप",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "ड्राइविंग स्कूलों, डीलरों, वर्कशॉप, टूर ऑपरेटरों और रेस टीमों के लिए Blacktop।",
  "Chain adjusted": "चेन एडजस्ट की गई",
  "Checked in": "जमा हुई",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "जमा हुई, मंज़ूरी का इंतज़ार, काम जारी, तैयार: राइडर सब कुछ लाइव देखता है और काम पूरा होते ही नोटिफ़िकेशन और ईमेल पाता है।",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "रेस आयोजक कंसोल",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "रेस आयोजक, रेसर, पिट क्रू और दर्शक: क्लब रेस और ट्रैक डे से लेकर पैडॉक कोचिंग तक।",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "पूरी रेस एक ही प्लेटफ़ॉर्म पर चलाएँ: टाइमिंग, रेस कंट्रोल, पिट वॉल और दर्शकों के लिए लाइव कवरेज।",
- "Spectator Live Timing": "दर्शकों के लिए लाइव टाइमिंग"
+ "Spectator Live Timing": "दर्शकों के लिए लाइव टाइमिंग",
+ "Enterprise": "एंटरप्राइज़"
 }

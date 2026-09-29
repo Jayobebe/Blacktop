@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Deze code is ongeldig of verlopen.",
  "That isn't a Blacktop Enterprise code": "Dit is geen Blacktop Zakelijk-code",
  "The complete, unrestricted Blacktop master suite.": "De complete, onbeperkte Blacktop-suite.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "De pakketten hieronder komen eraan. Heb je een code van je organisatie? Scan hem hier. Wil je het voor die van jou? Neem contact op.",
  "This workspace is ready. Your organisation's tools will appear here.": "Deze werkruimte is klaar. De tools van je organisatie verschijnen hier.",
  "Too many tries. Wait a while and try again.": "Te veel pogingen. Wacht even en probeer het opnieuw.",
  "Tour Leader Master Broadcast": "Masteroproep van de tourleider",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Automatische onderhoudshistorie",
  "Awaiting approval": "Wacht op akkoord",
  "Blacktop Workshop": "Blacktop Werkplaats",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop voor rijscholen, dealers, werkplaatsen, touroperators en raceteams.",
  "Chain adjusted": "Ketting afgesteld",
  "Checked in": "Ingecheckt",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Ingecheckt, wacht op akkoord, bezig, klaar: de rijder volgt alles live en krijgt een melding en een e-mail zodra het klaar is.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Console voor organisatoren",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Raceorganisatoren, coureurs, pitcrews en toeschouwers: van clubraces en circuitdagen tot coaching in de paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Draai een hele race op één platform: tijdwaarneming, wedstrijdleiding, de pitmuur en live verslag voor toeschouwers.",
- "Spectator Live Timing": "Live tijden voor toeschouwers"
+ "Spectator Live Timing": "Live tijden voor toeschouwers",
+ "Enterprise": "Zakelijk"
 }

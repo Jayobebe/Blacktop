@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Koden er ugyldig eller udløbet.",
  "That isn't a Blacktop Enterprise code": "Det er ikke en Blacktop Erhverv-kode",
  "The complete, unrestricted Blacktop master suite.": "Hele Blacktop-pakken, uden begrænsninger.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Pakkerne nedenfor er på vej. Har du fået en kode fra din organisation? Scan den her. Vil du have det til din? Skriv til os.",
  "This workspace is ready. Your organisation's tools will appear here.": "Dette arbejdsområde er klar. Organisationens værktøjer dukker op her.",
  "Too many tries. Wait a while and try again.": "For mange forsøg. Vent lidt, og prøv igen.",
  "Tour Leader Master Broadcast": "Turlederens hovedudsendelse",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Automatisk servicehistorik",
  "Awaiting approval": "Afventer godkendelse",
  "Blacktop Workshop": "Blacktop Værksted",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop til køreskoler, forhandlere, værksteder, turarrangører og racerteams.",
  "Chain adjusted": "Kæde justeret",
  "Checked in": "Indleveret",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Indleveret, afventer godkendelse, i gang, klar: køreren følger med live og får en notifikation og en mail, så snart den er færdig.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Arrangørkonsol",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Løbsarrangører, kørere, pitteams og tilskuere: fra klubløb og banedage til coaching i depotet.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Afvikl et helt løb på én platform: tidtagning, løbsledelse, pitmuren og livedækning for tilskuere.",
- "Spectator Live Timing": "Livetider for tilskuere"
+ "Spectator Live Timing": "Livetider for tilskuere",
+ "Enterprise": "Erhverv"
 }

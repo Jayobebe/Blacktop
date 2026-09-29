@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Цей код недійсний або термін його дії минув.",
  "That isn't a Blacktop Enterprise code": "Це не код Blacktop Бізнес",
  "The complete, unrestricted Blacktop master suite.": "Повний набір Blacktop без обмежень.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Пакети нижче вже на підході. Отримав код від своєї організації? Відскануй його тут. Хочеш для своєї? Напиши нам.",
  "This workspace is ready. Your organisation's tools will appear here.": "Цей робочий простір готовий. Тут з'являться інструменти твоєї організації.",
  "Too many tries. Wait a while and try again.": "Забагато спроб. Зачекай трохи й спробуй ще раз.",
  "Tour Leader Master Broadcast": "Головна трансляція лідера туру",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Автоматична сервісна історія",
  "Awaiting approval": "Очікує погодження",
  "Blacktop Workshop": "Blacktop Майстерня",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop для автошкіл, дилерів, майстерень, туроператорів і гоночних команд.",
  "Chain adjusted": "Ланцюг відрегульовано",
  "Checked in": "Прийнято",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Прийнято, очікує погодження, у роботі, готово: мотоцикліст стежить за всім наживо й отримує сповіщення та email, щойно роботу завершено.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Консоль організатора",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Організатори змагань, гонщики, команди боксів і глядачі: від клубних гонок і трек-днів до коучингу в паддоку.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Проводьте цілу гонку на одній платформі: хронометраж, керування гонкою, стіна боксів і трансляція для глядачів.",
- "Spectator Live Timing": "Хронометраж наживо для глядачів"
+ "Spectator Live Timing": "Хронометраж наживо для глядачів",
+ "Enterprise": "Бізнес"
 }

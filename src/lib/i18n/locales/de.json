@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Dieser Code ist ungültig oder abgelaufen.",
  "That isn't a Blacktop Enterprise code": "Das ist kein Blacktop-Business-Code",
  "The complete, unrestricted Blacktop master suite.": "Die komplette, uneingeschränkte Blacktop-Gesamtlösung.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Die Pakete unten sind in Arbeit. Hast du einen Code von deiner Organisation? Scanne ihn hier. Willst du es für deine? Melde dich.",
  "This workspace is ready. Your organisation's tools will appear here.": "Dieser Arbeitsbereich ist bereit. Hier erscheinen die Werkzeuge deiner Organisation.",
  "Too many tries. Wait a while and try again.": "Zu viele Versuche. Warte eine Weile und versuche es erneut.",
  "Tour Leader Master Broadcast": "Master-Durchsage des Tourleiters",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Automatisches Serviceheft",
  "Awaiting approval": "Wartet auf Freigabe",
  "Blacktop Workshop": "Blacktop Werkstatt",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop für Fahrschulen, Händler, Werkstätten, Tourveranstalter und Rennteams.",
  "Chain adjusted": "Kette eingestellt",
  "Checked in": "Angenommen",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Angenommen, wartet auf Freigabe, in Arbeit, fertig: Der Fahrer verfolgt alles live und bekommt eine Benachrichtigung und eine E-Mail, sobald alles erledigt ist.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Veranstalter-Konsole",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Rennveranstalter, Fahrer, Boxencrews und Zuschauer: von Club-Rennen und Trackdays bis zum Coaching im Fahrerlager.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Ein ganzes Rennen auf einer Plattform: Zeitnahme, Rennleitung, Boxenmauer und Live-Verfolgung für Zuschauer.",
- "Spectator Live Timing": "Live-Zeitnahme für Zuschauer"
+ "Spectator Live Timing": "Live-Zeitnahme für Zuschauer",
+ "Enterprise": "Business"
 }

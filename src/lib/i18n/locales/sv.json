@@ -3024,7 +3024,6 @@
  "That code isn't valid or has expired.": "Koden är ogiltig eller har gått ut.",
  "That isn't a Blacktop Enterprise code": "Det där är ingen Blacktop Företag-kod",
  "The complete, unrestricted Blacktop master suite.": "Hela Blacktop-sviten, utan begränsningar.",
- "The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.": "Paketen nedan är på väg. Har du fått en kod från din organisation? Skanna den här. Vill du ha det för din? Hör av dig.",
  "This workspace is ready. Your organisation's tools will appear here.": "Den här arbetsytan är klar. Organisationens verktyg dyker upp här.",
  "Too many tries. Wait a while and try again.": "För många försök. Vänta en stund och försök igen.",
  "Tour Leader Master Broadcast": "Turledarens huvudsändning",
@@ -3058,7 +3057,6 @@
  "Automatic Service History": "Automatisk servicehistorik",
  "Awaiting approval": "Väntar på godkännande",
  "Blacktop Workshop": "Blacktop Verkstad",
- "Blacktop for schools, dealers, workshops, tour operators and race teams.": "Blacktop för trafikskolor, handlare, verkstäder, turarrangörer och racingteam.",
  "Chain adjusted": "Kedjan justerad",
  "Checked in": "Incheckad",
  "Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.": "Incheckad, väntar på godkännande, pågår, klar: föraren följer allt live och får en notis och ett mejl så fort den är klar.",
@@ -3085,5 +3083,6 @@
  "Race Organiser Console": "Arrangörskonsol",
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Tävlingsarrangörer, förare, depåteam och åskådare: från klubbtävlingar och bandagar till coachning i depån.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Kör en hel tävling på en plattform: tidtagning, tävlingsledning, depåmuren och livebevakning för åskådare.",
- "Spectator Live Timing": "Livetider för åskådare"
+ "Spectator Live Timing": "Livetider för åskådare",
+ "Enterprise": "Företag"
 }
