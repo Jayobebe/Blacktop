@@ -67,6 +67,58 @@ const isNative = Capacitor.isNativePlatform();
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
+// ── Persistence ──────────────────────────────────────────────────────────────
+// The ride is saved so a reload or a killed tab can pick it back up. It used to
+// be written on every state change (every GPS fix and ~20 sensor updates a
+// second), each time re-serialising every point and sample of the ride: an hour
+// in, that was megabytes of JSON dozens of times a second, the biggest battery
+// drain in the app. Now it's written at most every PERSIST_INTERVAL_MS, straight
+// away when the ride starts, pauses, resumes or ends, and whenever the app goes
+// to the background. The 10Hz sensor samples are stored compactly (flat number
+// arrays, timestamps as deltas) so long rides fit in storage.
+
+const PERSIST_INTERVAL_MS = 10_000;
+let lastPersistAt = 0;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let persistedFlags = '';
+
+type CompactSamples = { t0: number; data: number[] };
+
+/** [{value, timestamp}] -> one flat array of (ms since previous, value) pairs. */
+function packSamples<T>(samples: T[], value: (s: T) => number, time: (s: T) => number, decimals: number): CompactSamples {
+  const data: number[] = [];
+  const f = 10 ** decimals;
+  const t0 = samples.length ? time(samples[0]) : 0;
+  let prev = t0;
+  for (const s of samples) {
+    const t = time(s);
+    data.push(t - prev, Math.round(value(s) * f) / f);
+    prev = t;
+  }
+  return { t0, data };
+}
+
+function unpackSamples<T>(packed: CompactSamples | undefined, make: (value: number, timestamp: number) => T): T[] {
+  if (!packed || !Array.isArray(packed.data)) return [];
+  const out: T[] = [];
+  let t = packed.t0;
+  for (let i = 0; i + 1 < packed.data.length; i += 2) {
+    t += packed.data[i];
+    out.push(make(packed.data[i + 1], t));
+  }
+  return out;
+}
+
+function serialiseRide(state: ActiveRideState): string {
+  const { leanSamples, gForceSamples, ...rest } = state;
+  return JSON.stringify({
+    ...rest,
+    v: 2,
+    leanPacked: packSamples(leanSamples, (s) => s.angle, (s) => s.timestamp, 1),
+    gForcePacked: packSamples(gForceSamples, (s) => s.g, (s) => s.timestamp, 2),
+  });
+}
+
 // Try to restore ride state from localStorage
 function loadPersistedState(): ActiveRideState | null {
   try {
@@ -76,8 +128,12 @@ function loadPersistedState(): ActiveRideState | null {
       // Validate it's still an active ride
       if (parsed && parsed.isActive && parsed.startedAt) {
         console.log('[Ride] Restored persisted ride state');
+        const { v, leanPacked, gForcePacked, ...rest } = parsed;
         return {
-          ...parsed,
+          ...rest,
+          // v2 stores the sensor samples packed; older saves have the plain arrays.
+          leanSamples: v === 2 ? unpackSamples(leanPacked, (angle, timestamp) => ({ angle, timestamp })) : (parsed.leanSamples ?? []),
+          gForceSamples: v === 2 ? unpackSamples(gForcePacked, (g, timestamp) => ({ g, timestamp })) : (parsed.gForceSamples ?? []),
           isPaused: Boolean(parsed.isPaused),
         } as ActiveRideState;
       }
@@ -88,16 +144,49 @@ function loadPersistedState(): ActiveRideState | null {
   return null;
 }
 
-function persistState(state: ActiveRideState) {
+function writeRideState(state: ActiveRideState) {
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  lastPersistAt = Date.now();
+  persistedFlags = `${state.isActive}|${state.isPaused}|${state.isConvoyMode}`;
   try {
     if (state.isActive) {
-      localStorage.setItem(RIDE_STATE_KEY, JSON.stringify(state));
+      localStorage.setItem(RIDE_STATE_KEY, serialiseRide(state));
     } else {
       localStorage.removeItem(RIDE_STATE_KEY);
     }
   } catch (e) {
     console.warn('[Ride] Failed to persist state:', e);
   }
+}
+
+/** Throttled save; start / pause / resume / end are written straight away. */
+function persistState(state: ActiveRideState) {
+  const flags = `${state.isActive}|${state.isPaused}|${state.isConvoyMode}`;
+  if (!state.isActive || flags !== persistedFlags || Date.now() - lastPersistAt >= PERSIST_INTERVAL_MS) {
+    writeRideState(state);
+    return;
+  }
+  if (!persistTimer) {
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
+      writeRideState(rideState);
+    }, PERSIST_INTERVAL_MS - (Date.now() - lastPersistAt));
+  }
+}
+
+/** Save now if a write is pending (the app is going to the background or closing). */
+function flushRideState() {
+  if (persistTimer) writeRideState(rideState);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', flushRideState);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushRideState();
+  });
 }
 
 const restoredState = loadPersistedState();
@@ -156,6 +245,8 @@ let lastLeanSampleTime = 0; // Track last lean sample time for 10Hz recording
 const LEAN_SAMPLE_INTERVAL = 100; // 100ms = 10Hz
 let lastGForceSampleTime = 0; // Track last G-force sample time for 10Hz recording
 const GFORCE_SAMPLE_INTERVAL = 100; // 100ms = 10Hz
+/** Updates arrive every ~100ms, so allow for timer jitter or every other sample would be dropped. */
+const SAMPLE_JITTER_MS = 15;
 
 function getSnapshot(): ActiveRideState {
   return rideState;
@@ -787,6 +878,7 @@ export function useActiveRide(convoyId?: string | null) {
           const totalElapsed = Date.now() - rideStartedAtMs;
           const activeTime = totalElapsed - totalPausedTime;
           const seconds = Math.max(0, Math.floor(activeTime / 1000));
+          if (seconds === rideState.duration) return; // ticks twice a second; only re-render when it changes
           setRideState(prev => ({
             ...prev,
             duration: seconds,
@@ -873,6 +965,7 @@ export function useActiveRide(convoyId?: string | null) {
       const totalElapsed = Date.now() - rideStartedAtMs;
       const activeTime = totalElapsed - totalPausedTime;
       const seconds = Math.max(0, Math.floor(activeTime / 1000));
+      if (seconds === rideState.duration) return; // ticks twice a second; only re-render when it changes
       setRideState(prev => ({
         ...prev,
         duration: seconds,
@@ -1055,7 +1148,7 @@ export function useActiveRide(convoyId?: string | null) {
     
     // Record lean sample at 10Hz
     const now = Date.now();
-    const shouldSample = now - lastLeanSampleTime >= LEAN_SAMPLE_INTERVAL;
+    const shouldSample = now - lastLeanSampleTime >= LEAN_SAMPLE_INTERVAL - SAMPLE_JITTER_MS;
     
     setRideState(prev => {
       const newState = {
@@ -1068,7 +1161,9 @@ export function useActiveRide(convoyId?: string | null) {
       // Add lean sample at 10Hz rate
       if (shouldSample) {
         lastLeanSampleTime = now;
-        newState.leanSamples = [...prev.leanSamples, { angle: currentLean, timestamp: now }];
+        // Appended in place: only the receipt and history read the samples, at the end of the
+        // ride, and copying a 10Hz array that grows all ride long on every sample adds up.
+        prev.leanSamples.push({ angle: currentLean, timestamp: now });
       }
       
       return newState;
@@ -1081,7 +1176,7 @@ export function useActiveRide(convoyId?: string | null) {
 
     // Record G-force sample at 10Hz
     const now = Date.now();
-    const shouldSample = now - lastGForceSampleTime >= GFORCE_SAMPLE_INTERVAL;
+    const shouldSample = now - lastGForceSampleTime >= GFORCE_SAMPLE_INTERVAL - SAMPLE_JITTER_MS;
 
     setRideState(prev => {
       const newState = {
@@ -1092,7 +1187,7 @@ export function useActiveRide(convoyId?: string | null) {
       // Add G-force sample at 10Hz rate
       if (shouldSample) {
         lastGForceSampleTime = now;
-        newState.gForceSamples = [...prev.gForceSamples, { g: currentG, timestamp: now }];
+        prev.gForceSamples.push({ g: currentG, timestamp: now }); // in place, as for lean above
       }
 
       return newState;

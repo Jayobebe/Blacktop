@@ -7,12 +7,32 @@ interface GForceState {
   permissionGranted: boolean;
 }
 
+interface GForceOptions {
+  /**
+   * Keep `currentG` / `maxG` React state live (for a gauge on screen). Off when
+   * nothing shows the value: then the sensor causes no re-renders at all, and
+   * consumers like crash detection read it through `onSample`. Default on.
+   */
+  display?: boolean;
+  /** Minimum ms between display updates. Default 50 (≈20Hz). */
+  displayIntervalMs?: number;
+  /** Peak of each ~50ms window, outside React (crash detection). */
+  onSample?: (g: number) => void;
+}
+
 /**
  * Single source of truth for live G-force: one devicemotion listener shared by
- * the G-force gauge and useCrashDetection (which consumes `currentG` instead of
+ * the G-force gauge and crash detection (fed through `onSample` rather than
  * reading the sensor itself), so the value is computed in exactly one place.
  */
-export function useGForce(isActive: boolean = false) {
+export function useGForce(isActive: boolean = false, options: GForceOptions = {}) {
+  const { display = true, displayIntervalMs = 50 } = options;
+  const displayRef = useRef(display);
+  displayRef.current = display;
+  const displayIntervalRef = useRef(displayIntervalMs);
+  displayIntervalRef.current = displayIntervalMs;
+  const onSampleRef = useRef(options.onSample);
+  onSampleRef.current = options.onSample;
   const [state, setState] = useState<GForceState>({
     currentG: 0,
     maxG: 0,
@@ -52,10 +72,12 @@ export function useGForce(isActive: boolean = false) {
 
     setState(prev => ({ ...prev, isSupported: true }));
 
-    // Every sample is read, but the screen/crash detector gets the peak of each
-    // ~50ms window (≈20Hz) so spikes are never lost and re-renders drop ~3x.
+    // Every sample is read; crash detection gets the peak of each ~50ms window
+    // (≈20Hz) so spikes are never lost, and the gauge (if shown) re-renders at
+    // most every displayIntervalMs.
     let windowPeak = 0;
     let lastEmit = 0;
+    let lastDisplay = 0;
     const handler = (e: DeviceMotionEvent) => {
       const a = e.accelerationIncludingGravity || e.acceleration;
       if (!a) return;
@@ -70,7 +92,10 @@ export function useGForce(isActive: boolean = false) {
       lastEmit = now;
       const currentG = windowPeak;
       windowPeak = 0;
+      onSampleRef.current?.(currentG);
 
+      if (!displayRef.current || now - lastDisplay < displayIntervalRef.current) return;
+      lastDisplay = now;
       setState(prev => ({
         ...prev,
         currentG,

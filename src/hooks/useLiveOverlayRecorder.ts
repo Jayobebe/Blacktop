@@ -302,12 +302,15 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
   }, [speedLabel, distLabel, distanceUnit]);
 
-  // Animation loop to continuously draw frames
-  const animate = useCallback(() => {
+  // Animation loop to continuously draw frames, no faster than the 30fps the
+  // stream captures (rAF runs at 60Hz+, and every extra 1080p frame is wasted).
+  const lastDrawRef = useRef(0);
+  const animate = useCallback((now: number = performance.now()) => {
     if (!isRecordingRef.current || !canvasRef.current) return;
 
-    const ctx = canvasRef.current.getContext('2d');
+    const ctx = now - lastDrawRef.current >= 1000 / 31 ? canvasRef.current.getContext('2d') : null;
     if (ctx) {
+      lastDrawRef.current = now;
       drawFrame(
         ctx,
         canvasRef.current.width,

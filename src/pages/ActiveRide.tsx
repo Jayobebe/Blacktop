@@ -168,11 +168,19 @@ export default function ActiveRide() {
   useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
   
   // Lean angle sensor
-  const leanAngle = useLeanAngle(leanOn && rideState.isActive);
+  // 10Hz is enough for the gauge and matches the 10Hz lean recording; each update re-renders this screen.
+  const leanAngle = useLeanAngle(leanOn && rideState.isActive, 100);
 
   // G-force sensor - shared by the live gauge AND auto-rescue crash detection,
   // so there's a single devicemotion listener regardless of which feature(s) need it.
-  const gForce = useGForce(rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled));
+  // React state only updates while the G gauge is on (≈10Hz is plenty for a gauge); crash
+  // detection reads each sample directly, so with only auto-rescue on the sensor never re-renders the screen.
+  const crashSampleRef = useRef<(g: number) => void>(() => {});
+  const gForce = useGForce(rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled), {
+    display: settings.gForceEnabled,
+    displayIntervalMs: 100,
+    onSample: useCallback((g: number) => crashSampleRef.current(g), []),
+  });
 
   // Check if ride has lean / G-force data for overlay
   const hasLeanData = leanOn && leanAngle.isSupported;
@@ -342,15 +350,17 @@ export default function ActiveRide() {
     }
   }, [rideState.isActive, settings.gForceEnabled, gForce.isSupported, gForce.currentG, gForce.maxG, updateGForce]);
 
-  // Start overlay recording when ride starts
+  // Start overlay recording when ride starts, only when the rider uses overlay videos
+  // (Settings / "Film & share"): it draws and encodes 1080p video for the whole ride,
+  // and used to run on every ride even though nothing could download it.
   const overlayStartedRef = useRef(false);
   useEffect(() => {
-    if (rideState.isActive && !rideState.isPaused && !overlayStartedRef.current) {
+    if (settings.rideOverlayEnabled && rideState.isActive && !rideState.isPaused && !overlayStartedRef.current) {
       console.log('[ActiveRide] Starting overlay recording');
       overlayRecorderRef.current.startRecording();
       overlayStartedRef.current = true;
     }
-  }, [rideState.isActive, rideState.isPaused]);
+  }, [settings.rideOverlayEnabled, rideState.isActive, rideState.isPaused]);
 
   // Update overlay stats during ride
   useEffect(() => {
@@ -758,10 +768,9 @@ export default function ActiveRide() {
     }
   }, [rideState.gpsPoints, rideState.isConvoyMode, sendRescueRequest, sendSoloRescue]);
 
-  useCrashDetection({
+  crashSampleRef.current = useCrashDetection({
     enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen && !autoRescueFiredRef.current,
     currentSpeed: rideState.currentSpeed,
-    currentG: gForce.currentG,
     gThreshold: settings.autoRescueGThreshold,
     stopWindowSec: settings.autoRescueStopWindowSec,
     onPossibleCrash: useCallback(() => {

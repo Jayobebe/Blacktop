@@ -30,7 +30,10 @@ function getScreenOrientationAngle(): number {
   return angle;
 }
 
-export function useLeanAngle(isActive: boolean = false) {
+/** `displayIntervalMs`: minimum ms between React updates (sampling itself stays at the sensor's full rate). */
+export function useLeanAngle(isActive: boolean = false, displayIntervalMs: number = 50) {
+  const displayIntervalRef = useRef(displayIntervalMs);
+  displayIntervalRef.current = displayIntervalMs;
   const [state, setState] = useState<LeanAngleState>({
     currentLean: 0,
     rawLean: 0,
@@ -225,9 +228,9 @@ export function useLeanAngle(isActive: boolean = false) {
         }
       }
 
-      // Sampling stays at full rate (smoothing + max); screen updates capped ~20Hz to save battery.
+      // Sampling stays at full rate (smoothing + max); screen updates capped by displayIntervalMs to save battery.
       const now = performance.now();
-      if (now - lastEmitRef.current < 50) return;
+      if (now - lastEmitRef.current < displayIntervalRef.current) return;
       lastEmitRef.current = now;
       setState(prev => (
         prev.currentLean === currentLean && prev.maxLeanLeft === maxLeanLeftRef.current &&

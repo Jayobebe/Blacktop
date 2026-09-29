@@ -145,6 +145,16 @@ function announcedStopName(name: string | null | undefined): string | null {
   return n || "your stop";
 }
 
+/** Metres between two points (short distances). */
+function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 function safeBearing(heading: number | null, map: MapLibreMap): number {
   return heading != null && Number.isFinite(heading) ? heading : map.getBearing();
 }
@@ -606,9 +616,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     return () => clearTimeout(t);
   }, [isVisible]);
 
+  // Turn-by-turn guidance on (declared up here for the GPS watch below).
+  const [guiding, setGuiding] = useState(false);
+
   // ── Geolocation watch ──────────────────────────────────────────────────────
+  // Only while the map is on screen, or while it's guiding (spoken directions
+  // carry on with the map closed). The overlay stays mounted (hidden) after its
+  // first open, and this watch used to keep GPS, re-renders and camera
+  // animations going for the rest of the session. A ride tracks itself.
   useEffect(() => {
-    if (!("geolocation" in navigator)) return;
+    if ((!isVisible && !guiding) || !("geolocation" in navigator)) return;
 
     let countryResolved = false;
     const watchId = navigator.geolocation.watchPosition(
@@ -639,7 +656,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         }
 
         const map = mapRef.current;
-        if (!map) return;
+        if (!map || !isVisible) return; // hidden (guiding only): no camera work
         if (orbitingRef.current) return; // looking round a pin: don't yank the camera away
 
         const hasDestination = !!destinationRef.current;
@@ -659,6 +676,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
           // Re-snap to a tight follow zoom whenever we resume after the rider
           // stopped panning; only nudge zoom up (never yank them out).
           const currentZoom = map.getZoom();
+          // Stopped (lights, a break): leave the camera alone so the map can idle
+          // instead of animating a near-identical frame every second.
+          const centre = map.getCenter();
+          const bearingNow = safeBearing(headingRef.current, map);
+          const movedM = haversineM(centre.lat, centre.lng, loc.lat, loc.lng);
+          const turned = Math.abs(((bearingNow - map.getBearing() + 540) % 360) - 180);
+          if (movedM < 3 && turned < 3 && currentZoom >= followZoom) return;
           map.easeTo({
             center: [loc.lng, loc.lat],
             zoom: currentZoom < followZoom ? followZoom : currentZoom,
@@ -675,7 +699,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
     return () => navigator.geolocation.clearWatch(watchId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isVisible, guiding]);
 
   // ── Inactivity auto-follow resume ─────────────────────────────────────────
   // Re-centres/re-orients on the rider LOCATE_RESUME_DELAY_MS after the last
@@ -1780,7 +1804,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // Navigate, a convoy stop), on the home map or in a ride: the turn banner
   // takes the top slot and shows "Finding route…" until the route arrives. It
   // stays up until the destination is cleared or the rider closes it.
-  const [guiding, setGuiding] = useState(false);
   // The rider closed the banner: no guidance for this destination until they
   // tap Go again (a new destination starts fresh).
   const [navDismissed, setNavDismissed] = useState(false);
