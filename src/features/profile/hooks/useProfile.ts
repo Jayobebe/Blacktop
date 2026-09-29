@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { NavigationApp, UserProfile } from '@/types/blacktop';
 import { supabase } from '@/integrations/supabase/client';
 import { burnLocalDevice } from '@/lib/burnLocal';
@@ -11,10 +11,10 @@ import { demoBlocked } from '@/lib/demoGuard';
 
 const PROFILE_KEY = 'blacktop_profile';
 
-// Module-level (not component state) so the cooldown survives the Burn
-// button's own page navigation/remount - the only way to defeat a
-// component-state guard would be to script around it, which is exactly what
-// this is meant to prevent for the destructive burn-account routine.
+// Module-level so the cooldown survives the Burn button's own page
+// navigation/remount - the only way to defeat a component-state guard would
+// be to script around it, which is exactly what this is meant to prevent for
+// the destructive burn-account routine.
 const IDENTITY_RESET_COOLDOWN_MS = 3000;
 let lastIdentityResetAt = 0;
 
@@ -51,134 +51,130 @@ function writeLocalProfile(profile: UserProfile) {
   window.localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
 }
 
-export function useProfile() {
-  const [profile, setProfile] = useState<UserProfile>(() => readLocalProfile());
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isValidSession, setIsValidSession] = useState(false);
+// ── Store ────────────────────────────────────────────────────────────────
+//
+// One copy of the profile and auth state for the whole app. App.tsx gates
+// onboarding vs. the app on it, so every screen has to see the same thing the
+// moment it changes (a per-component copy left the gate on onboarding after
+// the name step, because only the onboarding screen's copy learned about it).
 
-  // Initialize auth state and validate session
-  useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        
-        // If session exists, verify profile exists in database
-        if (session?.user) {
-          setTimeout(() => {
-            validateProfile(session.user.id);
-          }, 0);
-        } else {
-          setIsValidSession(false);
-          setIsLoading(false);
-        }
-      }
-    );
+interface ProfileState {
+  profile: UserProfile;
+  user: User | null;
+  isLoading: boolean;
+  /** The signed-in user has a profile row (or we're offline and trust the device). */
+  isValidSession: boolean;
+}
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        validateProfile(session.user.id);
-      } else {
-        setIsValidSession(false);
-        setIsLoading(false);
-      }
-    });
+let state: ProfileState = {
+  profile: readLocalProfile(),
+  user: null,
+  isLoading: true,
+  isValidSession: false,
+};
+const listeners = new Set<() => void>();
 
-    return () => subscription.unsubscribe();
-  }, []);
+function setState(patch: Partial<ProfileState>) {
+  state = { ...state, ...patch };
+  listeners.forEach(l => l());
+}
 
-  // Validate that the user has a profile in the database
-  const validateProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', userId)
-        .maybeSingle();
+/** While createProfile runs, its own sign-in mustn't be judged before the row is written. */
+let creating = false;
+let validateSeq = 0;
+let started = false;
 
-      if (error || !data?.display_name) {
-        // No valid profile in database - clear local storage and require onboarding
-        window.localStorage.removeItem(PROFILE_KEY);
-        setProfile(defaultProfile);
-        setIsValidSession(false);
-      } else {
-        // Valid profile exists - sync local state
-        const localProfile = readLocalProfile();
-        if (localProfile.name !== data.display_name) {
-          const updated = { ...localProfile, name: data.display_name };
-          writeLocalProfile(updated);
-          setProfile(updated);
-        }
-        setIsValidSession(true);
-      }
-    } catch (e) {
-      console.error('Failed to validate profile:', e);
-      setIsValidSession(false);
-    }
-    setIsLoading(false);
-  };
+async function validateProfile(userId: string) {
+  const seq = ++validateSeq;
+  let data: { display_name: string | null } | null = null;
+  let failed = false;
+  try {
+    const res = await supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle();
+    data = res.data;
+    failed = !!res.error;
+    if (res.error) console.warn('[Profile] Could not check the profile:', res.error.message);
+  } catch (e) {
+    failed = true;
+    console.warn('[Profile] Could not check the profile:', e);
+  }
+  // A newer check (or a profile being created) owns the result.
+  if (seq !== validateSeq || creating) return;
 
-  const resetIdentity = useCallback(async () => {
-    // A demo session must never burn the real account behind it.
-    if (demoBlocked()) return false;
-    const now = Date.now();
-    if (now - lastIdentityResetAt < IDENTITY_RESET_COOLDOWN_MS) {
-      console.warn('[Profile] resetIdentity throttled (cooldown active)');
-      return;
-    }
-    lastIdentityResetAt = now;
-
-    setIsLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { error } = await supabase.functions.invoke('burn-account');
-        if (error) console.error('Server-side account deletion failed:', error);
-      }
-    } catch (e) {
-      console.error('Server-side account deletion failed:', e);
-    }
-
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // ignore
-    }
-
-    // Everything else Blacktop kept on this device (saved places, crew,
-    // settings, map position, offline maps, overlays…).
-    await burnLocalDevice();
+  if (failed) {
+    // Offline launch or a server blip: don't throw a rider back to onboarding.
+    const local = readLocalProfile();
+    setState({ profile: local, isValidSession: local.name.trim().length > 0, isLoading: false });
+    return;
+  }
+  if (!data?.display_name) {
+    // Signed in but no profile row: onboarding.
     window.localStorage.removeItem(PROFILE_KEY);
-    setProfile(defaultProfile);
-    setUser(null);
-    setIsValidSession(false);
-    setIsLoading(false);
-  }, []);
+    setState({ profile: defaultProfile, isValidSession: false, isLoading: false });
+    return;
+  }
+  const local = readLocalProfile();
+  const profile = local.name !== data.display_name ? { ...local, name: data.display_name } : local;
+  if (profile !== local) writeLocalProfile(profile);
+  setState({ profile, isValidSession: true, isLoading: false });
+}
 
-  // Sync local profile with state
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === PROFILE_KEY) {
-        setProfile(readLocalProfile());
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+function start() {
+  if (started) return;
+  started = true;
 
-  const createProfile = useCallback(async (name: string): Promise<boolean> => {
-    const parsed = displayNameSchema.safeParse(name);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));
-      return false;
+  supabase.auth.onAuthStateChange((event, session) => {
+    const user = session?.user ?? null;
+    if (user?.id !== state.user?.id) setState({ user });
+    if (creating) return;
+    if (!user) {
+      validateSeq++;
+      setState({ isValidSession: false, isLoading: false });
+    } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || !state.isValidSession) {
+      // Token refreshes for a rider we've already checked don't need another round trip.
+      setTimeout(() => void validateProfile(user.id), 0);
     }
-    const trimmedName = parsed.data;
+  });
 
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    const user = session?.user ?? null;
+    if (creating) return;
+    setState({ user });
+    if (user) void validateProfile(user.id);
+    else setState({ isValidSession: false, isLoading: false });
+  });
+
+  // Another tab changed the profile.
+  window.addEventListener('storage', (e) => {
+    if (e.key === PROFILE_KEY) setState({ profile: readLocalProfile() });
+  });
+}
+
+function subscribe(cb: () => void) {
+  start();
+  listeners.add(cb);
+  return () => { listeners.delete(cb); };
+}
+
+const getSnapshot = () => state;
+
+// ── Actions ──────────────────────────────────────────────────────────────
+
+async function createProfile(name: string): Promise<boolean> {
+  const parsed = displayNameSchema.safeParse(name);
+  if (!parsed.success) {
+    toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));
+    return false;
+  }
+  const trimmedName = parsed.data;
+
+  creating = true;
+  try {
     // Sign in anonymously if not already authenticated
-    let currentUser = user;
+    let currentUser = state.user;
+    if (!currentUser) {
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUser = session?.user ?? null;
+    }
     if (!currentUser) {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
@@ -187,7 +183,6 @@ export function useProfile() {
         return false;
       }
       currentUser = data.user;
-      setUser(currentUser);
     }
 
     if (!currentUser) {
@@ -206,68 +201,110 @@ export function useProfile() {
     if (profileError) {
       console.error('Failed to create profile:', profileError);
       toast.error(tr("Couldn't save your profile — try again."));
+      setState({ user: currentUser });
       return false;
     }
 
-    // Save locally
+    // Save locally, and let every screen (including the onboarding gate) know.
     const next: UserProfile = {
       name: trimmedName,
       createdAt: new Date().toISOString(),
-      preferredNavApp: profile.preferredNavApp,
+      preferredNavApp: state.profile.preferredNavApp,
     };
     writeLocalProfile(next);
-    setProfile(next);
-    setIsValidSession(true);
+    validateSeq++; // anything still in flight is stale now
+    setState({ profile: next, user: currentUser, isValidSession: true, isLoading: false });
     return true;
-  }, [user, profile.preferredNavApp]);
+  } finally {
+    creating = false;
+  }
+}
 
-  const updateNavApp = useCallback((app: NavigationApp) => {
-    const next: UserProfile = { ...profile, preferredNavApp: app };
-    writeLocalProfile(next);
-    setProfile(next);
-  }, [profile]);
+function updateNavApp(app: NavigationApp) {
+  const next: UserProfile = { ...state.profile, preferredNavApp: app };
+  writeLocalProfile(next);
+  setState({ profile: next });
+}
 
-  const updateName = useCallback(async (name: string) => {
-    if (demoBlocked()) return false;
-    const parsed = displayNameSchema.safeParse(name);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));
-      return;
+async function updateName(name: string) {
+  if (demoBlocked()) return false;
+  const parsed = displayNameSchema.safeParse(name);
+  if (!parsed.success) {
+    toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));
+    return;
+  }
+  const trimmedName = parsed.data;
+  if (trimmedName === state.profile.name) return;
+
+  // Update in database if authenticated
+  if (state.user) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: trimmedName })
+      .eq('id', state.user.id);
+
+    if (error) {
+      console.error('Failed to update profile name:', error);
     }
-    const trimmedName = parsed.data;
-    if (trimmedName === profile.name) return;
+  }
 
-    // Update in database if authenticated
-    if (user) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ display_name: trimmedName })
-        .eq('id', user.id);
+  // Update locally
+  const next: UserProfile = { ...state.profile, name: trimmedName };
+  writeLocalProfile(next);
+  setState({ profile: next });
+}
 
-      if (error) {
-        console.error('Failed to update profile name:', error);
-      }
+async function resetIdentity() {
+  // A demo session must never burn the real account behind it.
+  if (demoBlocked()) return false;
+  const now = Date.now();
+  if (now - lastIdentityResetAt < IDENTITY_RESET_COOLDOWN_MS) {
+    console.warn('[Profile] resetIdentity throttled (cooldown active)');
+    return;
+  }
+  lastIdentityResetAt = now;
+
+  setState({ isLoading: true });
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { error } = await supabase.functions.invoke('burn-account');
+      if (error) console.error('Server-side account deletion failed:', error);
     }
+  } catch (e) {
+    console.error('Server-side account deletion failed:', e);
+  }
 
-    // Update locally
-    const next: UserProfile = { ...profile, name: trimmedName };
-    writeLocalProfile(next);
-    setProfile(next);
-  }, [user, profile]);
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // ignore
+  }
+
+  // Everything else Blacktop kept on this device (saved places, crew,
+  // settings, map position, offline maps, overlays…).
+  await burnLocalDevice();
+  window.localStorage.removeItem(PROFILE_KEY);
+  validateSeq++;
+  setState({ profile: defaultProfile, user: null, isValidSession: false, isLoading: false });
+}
+
+export function useProfile() {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   // hasProfile requires both local profile AND valid database session
-  const hasProfile = profile.name.trim().length > 0 && isValidSession;
+  const hasProfile = s.profile.name.trim().length > 0 && s.isValidSession;
 
   const { enabled: demoEnabled } = useDemoMode();
   const effectiveProfile: UserProfile = demoEnabled
-    ? { ...profile, name: DEMO_NAME }
-    : profile;
+    ? { ...s.profile, name: DEMO_NAME }
+    : s.profile;
 
   return {
     profile: effectiveProfile,
     hasProfile,
-    isLoading,
-    user,
+    isLoading: s.isLoading,
+    user: s.user,
     createProfile,
     updateNavApp,
     updateName,
