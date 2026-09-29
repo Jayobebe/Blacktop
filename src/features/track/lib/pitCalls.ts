@@ -43,11 +43,11 @@ export function pitLabel(text: string): string {
 export function speakPitBoard(text: string) {
   const t = String(text).trim().slice(0, 40);
   if (!t) return;
-  speak(SAY[t.toUpperCase()] ?? tr("Pit board: {0}.", [t]), { interrupt: true });
+  speak(SAY[t.toUpperCase()] ?? tr("Pit board: {0}.", [t]), { interrupt: true, radio: true });
 }
 
 /** Rider → crew. */
 export function speakRiderCall(text: string) {
   const t = String(text).trim().slice(0, 40);
-  if (t) speak(tr("Rider: {0}.", [pitLabel(t)]), { interrupt: true });
+  if (t) speak(tr("Rider: {0}.", [pitLabel(t)]), { interrupt: true, radio: true });
 }

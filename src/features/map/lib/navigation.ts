@@ -288,7 +288,9 @@ export function maneuverText(
   m: NavManeuver,
   opts: { spoken?: boolean; stopName?: string | null; finalStop?: boolean } = {},
 ): string {
-  const road = opts.spoken ? spokenRoadOf(m) : roadOf(m);
+  // Spoken prompts leave road names out: the turn banner shows them.
+  const road = opts.spoken ? '' : roadOf(m);
+  if (opts.spoken && m.destinations) m = { ...m, destinations: undefined };
   const onto = road ? tr(" onto {0}", [road]) : '';
   const towards = m.destinations ? tr(" towards {0}", [m.destinations.split(',')[0]]) : '';
   const s = side(m.modifier);

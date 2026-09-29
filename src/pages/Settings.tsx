@@ -856,6 +856,39 @@ export default function Settings() {
                 />
               </div>
 
+              {settings.navVoiceEnabled && (
+                <div>
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold mb-2">{tr("Voice Style")}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      ['standard', tr("Standard")],
+                      ['cockpit', tr("Cockpit")],
+                      ['rally', tr("Rally")],
+                    ] as const).map(([id, name]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => updateSetting('navVoiceStyle', id)}
+                        className={`rounded-lg py-2 text-xs font-semibold border transition-colors ${
+                          (settings.navVoiceStyle ?? 'standard') === id
+                            ? 'bg-accent text-accent-foreground border-accent'
+                            : 'border-border/50 text-muted-foreground'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {(settings.navVoiceStyle ?? 'standard') === 'rally'
+                      ? tr("Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.")
+                      : (settings.navVoiceStyle ?? 'standard') === 'cockpit'
+                        ? tr("Short, clipped prompts with a radio click before and after.")
+                        : tr("Your phone's normal voice.")}
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-3">
                 <div className="pr-2">
                   <div className="flex items-center gap-2 mb-1">

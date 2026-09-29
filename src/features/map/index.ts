@@ -12,5 +12,6 @@ export type { RouteMode } from './components/RouteOptions';
 export { whenStyleReady } from './lib/whenStyleReady';
 export { searchPlaces } from './lib/placeSearch';
 export type { MapSearchResult } from './lib/placeSearch';
-export { speak, stopSpeaking, speechSupported } from './lib/speech';
+export { speak, stopSpeaking, speechSupported, setVoiceStyle, playSquelch } from './lib/speech';
+export type { VoiceStyle } from './lib/speech';
 export { loadDarkMapStyle } from './lib/darkStyle';

@@ -13,7 +13,8 @@ import {
   type NavRoute,
 } from '../lib/navigation';
 import { tr } from '@/lib/i18n';
-import { speak, stopSpeaking } from '../lib/speech';
+import { speak, stopSpeaking, setVoiceStyle, type VoiceStyle } from '../lib/speech';
+import { buildPacenotes } from '../lib/pacenotes';
 
 /** Metres off the line before the rider counts as off route. */
 const OFF_ROUTE_M = 45;
@@ -32,6 +33,8 @@ interface Options {
   active: boolean;
   /** Read the prompts aloud (Spoken Directions setting). */
   voice: boolean;
+  /** Standard, radio (cockpit), or radio plus rally corner calls. */
+  voiceStyle?: VoiceStyle;
   unit: DistanceUnit;
   /**
    * One entry per leg end: the stop's name, or null for a via point
@@ -51,12 +54,19 @@ export interface TurnByTurn {
   describe: (m: NavManeuver) => string;
 }
 
-export function useTurnByTurn({ route, userLocation, speedMph, active, voice, unit, stops, onOffRoute, onStopReached }: Options): TurnByTurn {
+export function useTurnByTurn({ route, userLocation, speedMph, active, voice, voiceStyle = 'standard', unit, stops, onOffRoute, onStopReached }: Options): TurnByTurn {
   const viaKey = stops.map((s) => (s == null ? '1' : '0')).join('');
   const nav = useMemo(
     () => (route ? buildNavRoute(route, viaKey.split('').map((c) => c === '1')) : null),
     [route, viaKey],
   );
+  const pacenotes = useMemo(() => buildPacenotes(nav), [nav]);
+  const styleRef = useRef(voiceStyle);
+  useEffect(() => {
+    styleRef.current = voiceStyle;
+    setVoiceStyle(voiceStyle);
+  }, [voiceStyle]);
+  const noteIdxRef = useRef(0);
   const [progress, setProgress] = useState<NavProgress | null>(null);
   const [arrived, setArrived] = useState(false);
 
@@ -89,6 +99,7 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, un
     lastNextRef.current = -1;
     stopsDoneRef.current = new Set();
     arrivedRef.current = false;
+    noteIdxRef.current = 0;
     setArrived(false);
     setProgress(null);
   }, [nav]);
@@ -152,10 +163,27 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, un
     }
 
     // ── Voice prompts ──
-    if (!activeRef.current || !p.next) return;
+    if (!activeRef.current) return;
+    const v = Math.max(0, speedMph) * 0.44704;
+
+    // Rally corner calls: each bend once, ~5 s ahead, skipped near a junction
+    // (the turn prompt covers it) and when a call was missed well behind.
+    if (styleRef.current === 'rally' && pacenotes.length) {
+      const lead = Math.min(250, Math.max(70, v * 5));
+      let k = noteIdxRef.current;
+      while (k < pacenotes.length && pacenotes[k].along < along - 10) k++;
+      if (k < pacenotes.length && pacenotes[k].along - along <= lead) {
+        const note = pacenotes[k];
+        const nearTurn = p.next && p.next.type !== 'arrive' && Math.abs(p.next.along - note.along) < 50;
+        if (!nearTurn) say(note.text);
+        k++;
+      }
+      noteIdxRef.current = k;
+    }
+
+    if (!p.next) return;
     const m = p.next;
     const d = p.distanceToNext;
-    const v = Math.max(0, speedMph) * 0.44704;
     const far = Math.min(2000, Math.max(300, v * 30));
     const near = Math.min(200, Math.max(40, v * 7));
     const stage = stagesRef.current.get(m.index) ?? 0;
@@ -185,9 +213,7 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, un
       say(tr("In {0}, {1}", [spokenDistance(d, unit), lowerFirst(text)]));
     } else if (m.index !== lastNextRef.current && d > 3000) {
       // A long way to the next turn: say so once, so silence doesn't read as lost.
-      const prev = nav.maneuvers[m.index - 1];
-      const road = prev?.name || '';
-      say(road ? tr("Continue on {0} for {1}", [road, spokenDistance(d, unit)]) : tr("Continue for {0}", [spokenDistance(d, unit)]));
+      say(tr("Continue for {0}", [spokenDistance(d, unit)]));
     }
     lastNextRef.current = m.index;
     // Keyed on the coordinates, not the object, so a fresh object with the
