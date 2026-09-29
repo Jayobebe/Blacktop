@@ -2912,5 +2912,18 @@
  "LEFT": "왼쪽",
  "RIGHT": "오른쪽",
  "CERTIFIED": "인증",
- "Certified by Mecha-Nick": "Mecha-Nick 인증"
+ "Certified by Mecha-Nick": "Mecha-Nick 인증",
+ "Standard": "표준",
+ "Cockpit": "콕핏",
+ "Rally": "랠리",
+ "Voice Style": "음성 스타일",
+ "Your phone's normal voice.": "휴대폰의 기본 음성.",
+ "Short, clipped prompts with a radio click before and after.": "앞뒤로 무전 클릭음이 들어가는 짧고 간결한 안내.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "무전 음성에 경로 코너를 랠리식으로 안내: 1이 가장 급하고 6은 거의 직선.",
+ "Hairpin left": "왼쪽 헤어핀",
+ "Hairpin right": "오른쪽 헤어핀",
+ "Left {0}": "왼쪽 {0}",
+ "Right {0}": "오른쪽 {0}",
+ "{0} into {1}": "{0} 이어서 {1}",
+ "{0} ahead, {1}.": "전방에 {0}, {1}."
 }

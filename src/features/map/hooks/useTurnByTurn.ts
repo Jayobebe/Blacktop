@@ -118,8 +118,9 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
   }, [voice]);
   // Prompts still advance while muted, so switching the voice back on doesn't
   // replay turns already passed.
+  // Directions follow the rider's voice style (plain for Standard); lib/speech.
   const say = (text: string, opts?: { interrupt?: boolean }) => {
-    if (voiceRef.current) speak(text, opts);
+    if (voiceRef.current) speak(text, { ...opts, kind: 'nav' });
   };
 
   useEffect(() => {

@@ -2912,5 +2912,18 @@
  "LEFT": "VÄNSTER",
  "RIGHT": "HÖGER",
  "CERTIFIED": "GODKÄND",
- "Certified by Mecha-Nick": "Godkänd av Mecha-Nick"
+ "Certified by Mecha-Nick": "Godkänd av Mecha-Nick",
+ "Standard": "Standard",
+ "Cockpit": "Cockpit",
+ "Rally": "Rally",
+ "Voice Style": "Röststil",
+ "Your phone's normal voice.": "Telefonens vanliga röst.",
+ "Short, clipped prompts with a radio click before and after.": "Korta, raka meddelanden med ett radioklick före och efter.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Radioröst plus rallyanteckningar för ruttens kurvor: 1 den snävaste, 6 nästan rak.",
+ "Hairpin left": "Hårnål vänster",
+ "Hairpin right": "Hårnål höger",
+ "Left {0}": "Vänster {0}",
+ "Right {0}": "Höger {0}",
+ "{0} into {1}": "{0} in i {1}",
+ "{0} ahead, {1}.": "{0} framför, {1}."
 }

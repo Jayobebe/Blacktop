@@ -2912,5 +2912,18 @@
  "LEFT": "左",
  "RIGHT": "右",
  "CERTIFIED": "認定",
- "Certified by Mecha-Nick": "Mecha-Nick 認定"
+ "Certified by Mecha-Nick": "Mecha-Nick 認定",
+ "Standard": "標準",
+ "Cockpit": "コックピット",
+ "Rally": "ラリー",
+ "Voice Style": "音声スタイル",
+ "Your phone's normal voice.": "スマホの通常の音声。",
+ "Short, clipped prompts with a radio click before and after.": "前後に無線のクリック音が入る、短く簡潔な案内。",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "無線音声に加え、ルートのコーナーをラリー式に読み上げ：1 が最もきつく、6 はほぼ直線。",
+ "Hairpin left": "左ヘアピン",
+ "Hairpin right": "右ヘアピン",
+ "Left {0}": "左 {0}",
+ "Right {0}": "右 {0}",
+ "{0} into {1}": "{0} から {1}",
+ "{0} ahead, {1}.": "前方に{0}、{1}。"
 }

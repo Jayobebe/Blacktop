@@ -2912,5 +2912,18 @@
  "LEFT": "KIRI",
  "RIGHT": "KANAN",
  "CERTIFIED": "TERSERTIFIKASI",
- "Certified by Mecha-Nick": "Disertifikasi oleh Mecha-Nick"
+ "Certified by Mecha-Nick": "Disertifikasi oleh Mecha-Nick",
+ "Standard": "Standar",
+ "Cockpit": "Kokpit",
+ "Rally": "Reli",
+ "Voice Style": "Gaya suara",
+ "Your phone's normal voice.": "Suara normal ponselmu.",
+ "Short, clipped prompts with a radio click before and after.": "Arahan singkat dan tegas dengan klik radio sebelum dan sesudahnya.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Suara radio plus catatan reli untuk tikungan rute: 1 paling tajam, 6 hampir lurus.",
+ "Hairpin left": "Hairpin kiri",
+ "Hairpin right": "Hairpin kanan",
+ "Left {0}": "Kiri {0}",
+ "Right {0}": "Kanan {0}",
+ "{0} into {1}": "{0} lalu {1}",
+ "{0} ahead, {1}.": "{0} di depan, {1}."
 }

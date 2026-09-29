@@ -2912,5 +2912,18 @@
  "LEFT": "左",
  "RIGHT": "右",
  "CERTIFIED": "认证",
- "Certified by Mecha-Nick": "Mecha-Nick 认证"
+ "Certified by Mecha-Nick": "Mecha-Nick 认证",
+ "Standard": "标准",
+ "Cockpit": "座舱",
+ "Rally": "拉力",
+ "Voice Style": "语音风格",
+ "Your phone's normal voice.": "手机的普通语音。",
+ "Short, clipped prompts with a radio click before and after.": "简短干脆的提示，前后带无线电咔嗒声。",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "无线电语音，外加按拉力赛方式播报路线弯道：1 最急，6 接近直线。",
+ "Hairpin left": "左发夹弯",
+ "Hairpin right": "右发夹弯",
+ "Left {0}": "左 {0}",
+ "Right {0}": "右 {0}",
+ "{0} into {1}": "{0} 接 {1}",
+ "{0} ahead, {1}.": "前方{0}，{1}。"
 }

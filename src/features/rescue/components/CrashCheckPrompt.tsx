@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { warningTone } from '@/lib/radioFx';
 import { AlertTriangle, ShieldCheck, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
@@ -43,18 +44,10 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
   // Repeating haptic + chime while open
   useEffect(() => {
     haptics.heavy();
+    // The master-caution warble (lib/radioFx), on the app's one shared audio
+    // context rather than a new one per beep.
     const beep = () => {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.value = 880;
-        g.gain.value = 0.15;
-        o.connect(g).connect(ctx.destination);
-        o.start();
-        setTimeout(() => { o.stop(); ctx.close(); }, 250);
-      } catch { /* noop */ }
+      warningTone('caution');
       haptics.medium();
     };
     beep();

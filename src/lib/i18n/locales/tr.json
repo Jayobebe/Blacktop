@@ -2912,5 +2912,18 @@
  "LEFT": "SOL",
  "RIGHT": "SAĞ",
  "CERTIFIED": "ONAYLI",
- "Certified by Mecha-Nick": "Mecha-Nick onaylı"
+ "Certified by Mecha-Nick": "Mecha-Nick onaylı",
+ "Standard": "Standart",
+ "Cockpit": "Kokpit",
+ "Rally": "Ralli",
+ "Voice Style": "Ses stili",
+ "Your phone's normal voice.": "Telefonunun normal sesi.",
+ "Short, clipped prompts with a radio click before and after.": "Önünde ve arkasında telsiz tıkırtısı olan kısa, net anonslar.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Telsiz sesi artı rotadaki virajlar için ralli notları: 1 en keskin, 6 neredeyse düz.",
+ "Hairpin left": "Sola firkete",
+ "Hairpin right": "Sağa firkete",
+ "Left {0}": "Sol {0}",
+ "Right {0}": "Sağ {0}",
+ "{0} into {1}": "{0}, ardından {1}",
+ "{0} ahead, {1}.": "{0} ileride, {1}."
 }

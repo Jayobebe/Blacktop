@@ -93,7 +93,7 @@ export function HazardAlerts() {
           const type = HAZARD_BY_KIND[h.kind];
           setHazardWarning({ hazard: h, distance: d });
           haptics.medium();
-          if (settingsRef.current.hazardVoiceEnabled) speak(`${type.spoken} ahead, ${spokenDistance(d, unit)}.`, { interrupt: true });
+          if (settingsRef.current.hazardVoiceEnabled) speak(tr("{0} ahead, {1}.", [type.spoken, spokenDistance(d, unit)]), { interrupt: true });
         }
         if (alerted.has(h.id) && d <= PASSED_M) passed.add(h.id);
         if (passed.has(h.id) && d >= PROMPT_AFTER_M && !prompted.has(h.id)) {

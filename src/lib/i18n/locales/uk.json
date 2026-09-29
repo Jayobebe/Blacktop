@@ -2912,5 +2912,18 @@
  "LEFT": "ЛІВО",
  "RIGHT": "ПРАВО",
  "CERTIFIED": "ПЕРЕВІРЕНО",
- "Certified by Mecha-Nick": "Перевірено Mecha-Nick"
+ "Certified by Mecha-Nick": "Перевірено Mecha-Nick",
+ "Standard": "Стандарт",
+ "Cockpit": "Кокпіт",
+ "Rally": "Ралі",
+ "Voice Style": "Стиль голосу",
+ "Your phone's normal voice.": "Звичайний голос твого телефона.",
+ "Short, clipped prompts with a radio click before and after.": "Короткі, чіткі підказки з клацанням рації до і після.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Голос рації плюс ралійна стенограма поворотів маршруту: 1 найкрутіший, 6 майже прямий.",
+ "Hairpin left": "Шпилька ліворуч",
+ "Hairpin right": "Шпилька праворуч",
+ "Left {0}": "Лівий {0}",
+ "Right {0}": "Правий {0}",
+ "{0} into {1}": "{0} у {1}",
+ "{0} ahead, {1}.": "{0} попереду, {1}."
 }

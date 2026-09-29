@@ -2912,5 +2912,18 @@
  "LEFT": "GAUCHE",
  "RIGHT": "DROITE",
  "CERTIFIED": "CERTIFIÉ",
- "Certified by Mecha-Nick": "Certifié par Mecha-Nick"
+ "Certified by Mecha-Nick": "Certifié par Mecha-Nick",
+ "Standard": "Standard",
+ "Cockpit": "Cockpit",
+ "Rally": "Rallye",
+ "Voice Style": "Style de voix",
+ "Your phone's normal voice.": "La voix normale de ton téléphone.",
+ "Short, clipped prompts with a radio click before and after.": "Annonces courtes et sèches, avec un clic radio avant et après.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Voix radio et notes de rallye pour les virages de l’itinéraire : 1 le plus serré, 6 presque droit.",
+ "Hairpin left": "Épingle gauche",
+ "Hairpin right": "Épingle droite",
+ "Left {0}": "Gauche {0}",
+ "Right {0}": "Droite {0}",
+ "{0} into {1}": "{0} dans {1}",
+ "{0} ahead, {1}.": "{0} devant, {1}."
 }

@@ -2912,5 +2912,18 @@
  "LEFT": "LINKS",
  "RIGHT": "RECHTS",
  "CERTIFIED": "GOEDGEKEURD",
- "Certified by Mecha-Nick": "Goedgekeurd door Mecha-Nick"
+ "Certified by Mecha-Nick": "Goedgekeurd door Mecha-Nick",
+ "Standard": "Standaard",
+ "Cockpit": "Cockpit",
+ "Rally": "Rally",
+ "Voice Style": "Stemstijl",
+ "Your phone's normal voice.": "De gewone stem van je telefoon.",
+ "Short, clipped prompts with a radio click before and after.": "Korte, kordate meldingen met een radioklik ervoor en erna.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Radiostem plus rallynotities voor de bochten op de route: 1 de krapste, 6 bijna recht.",
+ "Hairpin left": "Haarspeld links",
+ "Hairpin right": "Haarspeld rechts",
+ "Left {0}": "Links {0}",
+ "Right {0}": "Rechts {0}",
+ "{0} into {1}": "{0} in {1}",
+ "{0} ahead, {1}.": "{0} vooruit, {1}."
 }

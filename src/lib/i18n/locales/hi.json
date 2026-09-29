@@ -2912,5 +2912,18 @@
  "LEFT": "बाएँ",
  "RIGHT": "दाएँ",
  "CERTIFIED": "प्रमाणित",
- "Certified by Mecha-Nick": "Mecha-Nick द्वारा प्रमाणित"
+ "Certified by Mecha-Nick": "Mecha-Nick द्वारा प्रमाणित",
+ "Standard": "मानक",
+ "Cockpit": "कॉकपिट",
+ "Rally": "रैली",
+ "Voice Style": "आवाज़ की शैली",
+ "Your phone's normal voice.": "आपके फ़ोन की सामान्य आवाज़।",
+ "Short, clipped prompts with a radio click before and after.": "पहले और बाद में रेडियो क्लिक के साथ छोटे, सटीक संकेत।",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "रेडियो आवाज़ के साथ रूट के मोड़ों की रैली शैली में घोषणा: 1 सबसे तीखा, 6 लगभग सीधा।",
+ "Hairpin left": "बाएँ हेयरपिन",
+ "Hairpin right": "दाएँ हेयरपिन",
+ "Left {0}": "बाएँ {0}",
+ "Right {0}": "दाएँ {0}",
+ "{0} into {1}": "{0} फिर {1}",
+ "{0} ahead, {1}.": "आगे {0}, {1}।"
 }

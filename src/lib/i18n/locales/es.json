@@ -2922,5 +2922,18 @@
  "LEFT": "IZQ.",
  "RIGHT": "DCHA.",
  "CERTIFIED": "CERTIFICADO",
- "Certified by Mecha-Nick": "Certificado por Mecha-Nick"
+ "Certified by Mecha-Nick": "Certificado por Mecha-Nick",
+ "Standard": "Estándar",
+ "Cockpit": "Cabina",
+ "Rally": "Rally",
+ "Voice Style": "Estilo de voz",
+ "Your phone's normal voice.": "La voz normal de tu teléfono.",
+ "Short, clipped prompts with a radio click before and after.": "Avisos cortos y secos con un clic de radio antes y después.",
+ "Radio voice plus rally corner calls from the route: 1 is the tightest bend, 6 nearly flat.": "Voz de radio y notas de rally de las curvas de la ruta: 1 la más cerrada, 6 casi recta.",
+ "Hairpin left": "Horquilla izquierda",
+ "Hairpin right": "Horquilla derecha",
+ "Left {0}": "Izquierda {0}",
+ "Right {0}": "Derecha {0}",
+ "{0} into {1}": "{0} a {1}",
+ "{0} ahead, {1}.": "{0} delante, {1}."
 }
