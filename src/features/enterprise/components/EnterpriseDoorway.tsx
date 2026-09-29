@@ -28,11 +28,13 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   // The package the rider opened below: the Inquire email names it.
   const [openTier, setOpenTier] = useState<EnterpriseTier | null>(null);
 
-  // The login isn't open yet: trying it pops the Coming soon stamp instead.
+  // The login and the camera scanner aren't open yet: trying either pops the
+  // Coming soon stamp instead (scrolled into view first if it's off screen).
   const stampRef = useRef<HTMLSpanElement>(null);
   const pulseSoon = () => {
     haptics.light();
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    stampRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
     // Only the stamp moves: a big pop with a wiggle and an accent glow.
     const glow = 'hsl(var(--accent) / 0.8)';
     const off = `0 0 0 0 hsl(var(--accent) / 0)`;
@@ -202,7 +204,9 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
               </Button>
             </div>
           ) : (
-            <Button className="w-full h-12 rounded-xl" disabled={busy} onClick={() => setScanning(true)}>
+            // Scanning isn't open yet: the button pops the Coming soon stamp.
+            // (When it opens, this goes back to setScanning(true); the scanner is ready.)
+            <Button className="w-full h-12 rounded-xl" disabled={busy} onClick={pulseSoon}>
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Camera className="w-4 h-4 mr-2" />}
               {busy ? tr("Checking…") : tr("Open camera")}
             </Button>
