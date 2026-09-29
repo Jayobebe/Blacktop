@@ -1507,7 +1507,6 @@
  "PAUSED": "일시정지",
  "PEAK": "최고",
  "PEAK {0}G": "최고 {0}G",
- "PHOTO": "사진",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "허공을 쳐라 · 전력을 다해",
  "PUSH": "밀어",
  "Pacing a new track · Pit crew": "새 트랙 페이스 잡기 · 피트 크루",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "{0}시간 {1}분 남음",
  "{0} is already open": "{0}이(가) 이미 열려 있습니다",
  "{0} min left": "{0}분 남음",
- "Chequered flag": "체커기",
  "Guide ping sent": "가이드 호출 전송됨",
  "Leader broadcast": "리더 방송",
  "Left the test area": "시승 구역을 벗어남",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "레이스 주최자, 라이더, 피트 크루, 관중을 위해: 클럽 레이스와 트랙데이부터 패독 코칭까지.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "계측, 레이스 컨트롤, 피트 월, 관중용 실시간 중계까지 레이스 전체를 하나의 플랫폼에서.",
  "Spectator Live Timing": "관중용 실시간 타이밍",
- "Enterprise": "엔터프라이즈"
+ "Enterprise": "엔터프라이즈",
+ "Avoid ferries": "페리 피하기",
+ "Avoid motorways": "고속도로 피하기",
+ "Avoid toll roads": "유료도로 피하기",
+ "Avoid unpaved roads": "비포장도로 피하기",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "데모 워크스페이스: 숨기려면 설정에서 데모 모드를 끄세요.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "다른 길이 있으면 길안내, 와인딩 경로, 순환 경로가 이를 피하도록 합니다.",
+ "Not available in demo mode": "데모 모드에서는 사용할 수 없습니다",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "데모 모드에서는 아무것도 저장되지 않습니다. 실제로 하려면 설정에서 끄세요.",
+ "Route Preferences": "경로 설정",
+ "Target 3:58": "목표 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "당신의 V4는 2번 베이에 있습니다. 준비되는 즉시 알려 드릴게요."
 }

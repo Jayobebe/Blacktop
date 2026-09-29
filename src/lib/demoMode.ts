@@ -7,6 +7,7 @@ import type { RideChallenge } from '@/lib/challengeRun';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 import { demoTrackData } from '@/lib/demoTrack';
 import { tr } from '@/lib/i18n';
+import { ENVELOPE_BINS } from '@/lib/gForceVector';
 
 /** Local mirrors of CollectedCard / SpectreCard so demoMode stays leaf-level (no cycle). */
 type CollectedCard = SharedCardPayload & { collectedAt: number; key: string; img?: string };
@@ -28,6 +29,9 @@ type SpectreCard = {
  *  - garage (demo bike), ride history (incl. starred rides and time-attack
  *    receipts) and the card vault (collected + Spectre cards)
  *  - "active riders" count on the World globe (fluctuates 12-47)
+ *  - a friction-circle G trace on every demo ride
+ *  - hazard reports around wherever the map looks (hazardStore)
+ *  - an Enterprise workspace in Home's deck (enterprise/useEnterprise)
  *
  * Real user data is never written or overwritten — toggling off restores
  * personal data exactly as it was.
@@ -55,6 +59,33 @@ export const DEMO_STATS: RideStats = {
  *
  * No GPS / lean / G samples — RideDetail tolerates empty arrays.
  */
+
+/**
+ * A plausible friction-circle trace for a demo ride: cornering G from the
+ * ride's lean (tan of the lean angle, as the live meter does for bikes), hard
+ * braking up top, softer drive out of corners below, with trail-braking
+ * rounding the shape between them.
+ */
+function demoGTrace(i: number, leanLeft: number, leanRight: number) {
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const max = {
+    left: r2(Math.tan((leanLeft * Math.PI) / 180)),
+    right: r2(Math.tan((leanRight * Math.PI) / 180)),
+    brake: r2(0.72 + 0.34 * Math.abs(Math.sin(i * 1.7))),
+    accel: r2(0.36 + 0.2 * Math.abs(Math.cos(i * 0.9))),
+  };
+  const envelope = Array.from({ length: ENVELOPE_BINS }, (_, b) => {
+    const th = (b / ENVELOPE_BINS) * Math.PI * 2; // 0 = braking (up), clockwise
+    const lat = Math.sin(th) >= 0 ? max.right : max.left;
+    const lon = Math.cos(th) >= 0 ? max.brake : max.accel;
+    const p = 1.7;
+    const r = 1 / Math.pow(Math.pow(Math.abs(Math.sin(th)) / lat, p) + Math.pow(Math.abs(Math.cos(th)) / lon, p), 1 / p);
+    const jitter = 0.94 + 0.06 * Math.sin(b * 2.3 + i);
+    return r2(r * jitter);
+  });
+  return { gEnvelope: envelope, gMax: max };
+}
+
 function buildDemoRides(): RideSession[] {
   const COUNT = 47;
   const TARGET_DISTANCE = 1234;
@@ -122,9 +153,10 @@ function buildDemoRides(): RideSession[] {
       maxGForce,
       gpsPoints: [],
       earnedBadges: isConvoyRide ? ridesBadges[i] : undefined,
+      ...demoGTrace(i, Math.round(20 + 25 * Math.abs(Math.sin(i * 1.1))), Math.round(20 + 25 * Math.abs(Math.cos(i * 1.1)))),
     });
   }
-  // A Track Pack day (prints on blue stock and opens the demo session).
+  // A Track Day session (prints on blue stock and opens the demo session).
   // Rides 0-3 carry the time attacks; 9 is a solo ride nothing else claims.
   const { session, receipt } = demoTrackData();
   const lapDistance = session.laps.reduce((a, l) => a + l.distance, 0) / 1609.344;

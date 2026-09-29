@@ -1507,7 +1507,6 @@
  "PAUSED": "PAUSADO",
  "PEAK": "PICO",
  "PEAK {0}G": "PICO {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "SOQUE O AR · DÊ O SEU MELHOR",
  "PUSH": "EMPURRE",
  "Pacing a new track · Pit crew": "Reconhecendo um circuito novo · Equipe de box",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "Faltam {0} h {1} min",
  "{0} is already open": "{0} já está aberto",
  "{0} min left": "Faltam {0} min",
- "Chequered flag": "Bandeira de xadrez",
  "Guide ping sent": "Chamada ao guia enviada",
  "Leader broadcast": "Mensagem do líder",
  "Left the test area": "Saiu da área de teste",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Organizadores, pilotos, equipas das boxes e espectadores: de provas de clube e track days a coaching no paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Gira uma corrida inteira numa só plataforma: cronometragem, direção de prova, muro das boxes e acompanhamento em direto para o público.",
  "Spectator Live Timing": "Cronometragem em direto para espectadores",
- "Enterprise": "Empresas"
+ "Enterprise": "Empresas",
+ "Avoid ferries": "Evitar ferries",
+ "Avoid motorways": "Evitar autoestradas",
+ "Avoid toll roads": "Evitar portagens",
+ "Avoid unpaved roads": "Evitar estradas de terra",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Espaço de demonstração: desliga o modo demo nas Definições para o esconder.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Mantém as indicações, as rotas com curvas e os circuitos longe destes sempre que houver alternativa.",
+ "Not available in demo mode": "Indisponível no modo demo",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "Nada é guardado com o modo demo ligado. Desliga-o nas Definições para o fazer a sério.",
+ "Route Preferences": "Preferências de rota",
+ "Target 3:58": "Objetivo 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "A tua V4 está na box 2. Avisamos-te assim que estiver pronta."
 }

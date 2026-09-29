@@ -1507,7 +1507,6 @@
  "PAUSED": "PAUSE",
  "PEAK": "TOPP",
  "PEAK {0}G": "TOPP {0}G",
- "PHOTO": "BILDE",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "SLÅ I LUFTA · GI ALT",
  "PUSH": "DYTT",
  "Pacing a new track · Pit crew": "Rekogniserer ny bane · Pit-crew",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "{0} t {1} min igjen",
  "{0} is already open": "{0} er allerede åpen",
  "{0} min left": "{0} min igjen",
- "Chequered flag": "Rutete flagg",
  "Guide ping sent": "Guideanrop sendt",
  "Leader broadcast": "Lederens utrop",
  "Left the test area": "Forlot testområdet",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Løpsarrangører, førere, pitmannskap og tilskuere: fra klubbløp og banedager til coaching i depotet.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Kjør et helt løp på én plattform: tidtaking, løpsledelse, pitmuren og livedekning for tilskuere.",
  "Spectator Live Timing": "Livetider for tilskuere",
- "Enterprise": "Bedrift"
+ "Enterprise": "Bedrift",
+ "Avoid ferries": "Unngå ferjer",
+ "Avoid motorways": "Unngå motorveier",
+ "Avoid toll roads": "Unngå bomveier",
+ "Avoid unpaved roads": "Unngå grusveier",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Demoarbeidsområde: slå av demomodus i Innstillinger for å skjule det.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Holder veiledning, svingete ruter og runder unna disse der det finnes en annen vei.",
+ "Not available in demo mode": "Ikke tilgjengelig i demomodus",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "Ingenting lagres mens demomodus er på. Slå den av i Innstillinger for å gjøre dette på ekte.",
+ "Route Preferences": "Rutepreferanser",
+ "Target 3:58": "Mål 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "V4-en din står på plass 2. Vi gir beskjed så snart hun er klar."
 }

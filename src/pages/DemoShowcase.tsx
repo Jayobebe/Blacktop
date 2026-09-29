@@ -1786,42 +1786,126 @@ function SpeedshopMockup() {
   );
 }
 
+/** Seconds since mount on a loop, ~30 fps; still under reduced motion. */
+function useLoopClock(period: number, still = period * 0.8): number {
+  const [t, setT] = useState(still);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    let last = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (now - last < 33) return;
+      last = now;
+      setT(((now - start) / 1000) % period);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [period]);
+  return t;
+}
+
+const CHALLENGE_PATH = 'M24 122 C 60 118, 72 78, 108 72 S 176 60, 206 30';
+const CHALLENGE_CYCLE = 10;
+const RUN_START = 1.2;
+const RUN_END = 6.2;
+const TARGET_S = 238; // 3:58
+const RUN_S = 221; // 3:41
+
+function fmtClock(s: number) {
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+}
+
+/**
+ * Time attack on a dropped card: a countdown, the run along the setter's line
+ * with the clock and live delta, then the finish — beaten — and the setter's
+ * Spectre card rises out of the fog.
+ */
 function CardChallengeMockup() {
+  const t = useLoopClock(CHALLENGE_CYCLE, 8);
+  const pathRef = useRef<SVGPathElement>(null);
+  const [pt, setPt] = useState<{ x: number; y: number }>({ x: 24, y: 122 });
+  const run = Math.min(1, Math.max(0, (t - RUN_START) / (RUN_END - RUN_START)));
+  // Ease the ride a touch: quick off the line, steady through the middle.
+  const prog = 1 - Math.pow(1 - run, 1.35);
+  useEffect(() => {
+    const p = pathRef.current;
+    if (!p) return;
+    const L = p.getTotalLength();
+    const q = p.getPointAtLength(L * prog);
+    setPt({ x: q.x, y: q.y });
+  }, [prog]);
+  const clock = RUN_S * run;
+  const pace = TARGET_S * run;
+  const delta = clock - pace; // negative = ahead
+  const countdown = t < RUN_START ? Math.max(1, Math.ceil((RUN_START - t) / 0.4)) : 0;
+  const finished = t >= RUN_END;
+  const spectre = Math.min(1, Math.max(0, (t - 6.7) / 0.6));
+  const spectreOut = Math.min(1, Math.max(0, (t - 9.4) / 0.5));
+  const ease = (x: number) => 1 - Math.pow(1 - x, 3);
+
   return (
     <div className="w-full max-w-xs rounded-2xl border border-accent/50 bg-card/80 p-3 overflow-hidden">
       <div className="relative h-40 rounded-xl bg-[#0b0b0d] border border-border overflow-hidden">
         <svg viewBox="0 0 240 150" className="absolute inset-0 w-full h-full">
-          <path
-            d="M24 122 C 60 118, 72 78, 108 72 S 176 60, 206 30"
-            fill="none"
-            stroke="hsl(var(--accent))"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray="6 5"
-            opacity="0.45"
-          />
-          <path
-            d="M24 122 C 60 118, 72 78, 108 72 S 176 60, 206 30"
-            fill="none"
-            stroke="hsl(var(--accent))"
-            strokeWidth="3"
-            strokeLinecap="round"
-            className="animate-demo-trail"
-          />
+          <path d={CHALLENGE_PATH} fill="none" stroke="hsl(var(--accent))" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 5" opacity="0.35" />
+          <path ref={pathRef} d={CHALLENGE_PATH} pathLength={1} strokeDasharray={`${prog} 1`} fill="none" stroke="hsl(var(--accent))" strokeWidth="3" strokeLinecap="round" />
           <circle cx="24" cy="122" r="5" fill="hsl(var(--accent))" />
-          <circle cx="206" cy="30" r="5" fill="hsl(142 71% 45%)" />
+          <circle cx="206" cy="30" r={finished ? 5 + Math.max(0, 1 - (t - RUN_END) * 2) * 4 : 5} fill="hsl(142 71% 45%)" />
+          {finished && t - RUN_END < 0.6 && (
+            <circle cx="206" cy="30" r={5 + (t - RUN_END) * 40} fill="none" stroke="hsl(142 71% 45%)" strokeWidth="1.5" opacity={1 - (t - RUN_END) / 0.6} />
+          )}
+          {run > 0 && !finished && <circle cx={pt.x} cy={pt.y} r="4.2" fill="white" stroke="hsl(var(--accent))" strokeWidth="2" />}
         </svg>
         <span className="absolute left-2 bottom-2 text-[9px] font-bold uppercase tracking-widest text-accent">{tr("Start · card")}</span>
         <span className="absolute right-2 top-2 text-[9px] font-bold uppercase tracking-widest text-[hsl(142_71%_45%)]">{tr("Finish")}</span>
-        <div className="absolute left-1/2 -translate-x-1/2 top-3 rounded-lg bg-card/95 border border-accent px-3 py-1 text-center">
-          <p className="text-[8px] uppercase tracking-widest text-muted-foreground">{tr("Time attack")}</p>
-          <p className="text-base font-black tabular-nums leading-tight">3:41</p>
-          <p className="text-[9px] font-bold text-[hsl(142_71%_45%)] tabular-nums">{tr("Target 3:58 · -0:17")}</p>
-        </div>
+
+        {countdown > 0 ? (
+          <div key={countdown} className="absolute inset-0 flex items-center justify-center animate-scale-in">
+            <span className="text-5xl font-black tabular-nums text-accent drop-shadow-[0_0_12px_hsl(var(--accent)/0.6)]">{countdown}</span>
+          </div>
+        ) : (
+          <div className="absolute left-1/2 -translate-x-1/2 top-3 rounded-lg bg-card/95 border border-accent px-3 py-1 text-center">
+            <p className="text-[8px] uppercase tracking-widest text-muted-foreground">{tr("Time attack")}</p>
+            <p className="text-base font-black tabular-nums leading-tight">{fmtClock(clock)}</p>
+            <p className={cn('text-[9px] font-bold tabular-nums', delta <= 0 ? 'text-[hsl(142_71%_45%)]' : 'text-destructive')}>
+              {finished ? tr("Target 3:58 · -0:17") : `${delta <= 0 ? '−' : '+'}${Math.abs(delta).toFixed(1)}`}
+            </p>
+          </div>
+        )}
+
+        {/* Beaten: the setter's Spectre card rises out of the fog */}
+        {spectre > 0 && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-black/55"
+            style={{ opacity: spectre * (1 - spectreOut) }}
+          >
+            <div
+              className="relative w-[82px] aspect-[5/7] rounded-lg border-2 overflow-hidden spectre-card flex flex-col p-1.5 gap-1"
+              style={{ transform: `translateY(${(1 - ease(spectre)) * 24}px) scale(${0.7 + 0.3 * ease(spectre)}) rotate(${(1 - ease(spectre)) * -8}deg)` }}
+            >
+              <div className="spectre-metal" />
+              <div className="spectre-fog" />
+              <div className="spectre-fog alt" />
+              <div className="spectre-shimmer" />
+              <span className="relative self-start inline-flex items-center gap-0.5 px-1 py-px rounded-full text-[6px] font-bold uppercase tracking-widest bg-white/10 text-slate-100 border border-white/30 spectre-text">
+                <Ghost className="w-2 h-2" />
+                {tr("Spectre")}
+              </span>
+              <div className="relative flex-1 rounded border border-white/10 overflow-hidden">
+                <img src={demoBikeAsset.url} alt="" className="absolute inset-0 w-full h-full object-contain spectre-photo" draggable={false} />
+              </div>
+              <p className="relative text-center font-mono text-[9px] font-bold text-slate-50 spectre-text">-0:17</p>
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-2 flex items-center justify-between rounded-lg bg-secondary/50 px-2.5 py-1.5">
-        <span className="text-[10px] font-semibold">{tr("Challenge beaten")}</span>
-        <span className="text-[10px] font-bold text-[hsl(142_71%_45%)]">{tr("3x Speed Demon + Spectre")}</span>
+        <span className="text-[10px] font-semibold">{finished ? tr("Challenge beaten") : tr("Time attack")}</span>
+        <span className={cn('text-[10px] font-bold', finished ? 'text-[hsl(142_71%_45%)]' : 'text-muted-foreground tabular-nums')}>
+          {finished ? tr("3x Speed Demon + Spectre") : tr("Target 3:58")}
+        </span>
       </div>
     </div>
   );
@@ -1868,13 +1952,20 @@ function TradingCardsMockup() {
                     </span>
                   </div>
                   {/* Card body is intentionally blurred — the tier finish and
-                      title stay crisp so the progression reads clearly. */}
+                      title stay crisp so the progression reads clearly. The
+                      demo bike sits in the photo slot, as a rider's own would. */}
                   <div className="flex-1 min-h-0 flex flex-col gap-1.5 blur-[2px] select-none">
-                    <div className="relative flex-1 min-h-0 rounded-md bg-black/30 border border-white/10 flex items-center justify-center">
-                      {locked ? (
-                        <Lock className="w-5 h-5 text-white/60" />
-                      ) : (
-                        <div className="text-[10px] text-white/50 font-mono">{tr("PHOTO")}</div>
+                    <div className="relative flex-1 min-h-0 rounded-md bg-black/30 border border-white/10 overflow-hidden">
+                      <img
+                        src={demoBikeAsset.url}
+                        alt=""
+                        draggable={false}
+                        className={cn('absolute inset-0 w-full h-full object-contain scale-[1.35]', locked && 'brightness-0 opacity-50')}
+                      />
+                      {locked && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-white/70" />
+                        </div>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-1 shrink-0">

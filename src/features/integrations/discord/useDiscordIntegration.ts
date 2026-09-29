@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
+import { demoBlocked } from '@/lib/demoGuard';
 
 export interface DiscordIntegration {
   webhook_url: string;
@@ -51,6 +52,7 @@ export function useDiscordIntegration() {
   useEffect(() => { refresh(); }, [refresh]);
 
   const save = useCallback(async (payload: Partial<DiscordIntegration> & { webhook_url: string }) => {
+    if (demoBlocked()) return false;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       // Anonymous sign in if needed

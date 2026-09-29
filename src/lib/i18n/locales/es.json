@@ -1517,7 +1517,6 @@
  "PAUSED": "EN PAUSA",
  "PEAK": "PICO",
  "PEAK {0}G": "PICO {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "GOLPEA EL AIRE · DALO TODO",
  "PUSH": "EMPUJA",
  "Pacing a new track · Pit crew": "Marcando ritmo en un circuito nuevo · Equipo de boxes",
@@ -3049,7 +3048,6 @@
  "{0} h {1} min left": "Quedan {0} h {1} min",
  "{0} is already open": "{0} ya está abierto",
  "{0} min left": "Quedan {0} min",
- "Chequered flag": "Bandera a cuadros",
  "Guide ping sent": "Aviso al guía enviado",
  "Leader broadcast": "Mensaje del líder",
  "Left the test area": "Ha salido de la zona de prueba",
@@ -3094,5 +3092,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Organizadores, pilotos, equipos de boxes y espectadores: desde carreras de club y tandas hasta coaching en el paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Gestiona una carrera entera en una sola plataforma: cronometraje, dirección de carrera, muro de boxes y seguimiento en directo para el público.",
  "Spectator Live Timing": "Cronometraje en directo para espectadores",
- "Enterprise": "Empresas"
+ "Enterprise": "Empresas",
+ "Avoid ferries": "Evitar ferris",
+ "Avoid motorways": "Evitar autopistas",
+ "Avoid toll roads": "Evitar peajes",
+ "Avoid unpaved roads": "Evitar caminos sin asfaltar",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Espacio de demostración: desactiva el modo demo en Ajustes para ocultarlo.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Mantiene las indicaciones, las rutas con curvas y los circuitos lejos de estos siempre que haya otra opción.",
+ "Not available in demo mode": "No disponible en modo demo",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "No se guarda nada mientras el modo demo está activado. Desactívalo en Ajustes para hacerlo de verdad.",
+ "Route Preferences": "Preferencias de ruta",
+ "Target 3:58": "Objetivo 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "Tu V4 está en el box 2. Te avisaremos en cuanto esté lista."
 }

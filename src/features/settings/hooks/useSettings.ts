@@ -46,6 +46,11 @@ export interface AppSettings {
   weatherOverlayEnabled: boolean;
   /** Warn about heavy rain on the planned route and offer a drier line. */
   weatherRoutingEnabled: boolean;
+  /** Route preferences (like Waze's): steer routes off these where there's another way. */
+  navAvoidMotorways: boolean;
+  navAvoidTolls: boolean;
+  navAvoidFerries: boolean;
+  navAvoidUnpaved: boolean;
   /** Read turn-by-turn directions aloud (the turn banner shows either way). */
   navVoiceEnabled: boolean;
   /** How spoken directions sound: plain, radio (cockpit), or radio plus rally corner calls. */
@@ -121,6 +126,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   trafficCamerasEnabled: false,
   weatherOverlayEnabled: false,
   weatherRoutingEnabled: false,
+  navAvoidMotorways: false,
+  navAvoidTolls: false,
+  navAvoidFerries: false,
+  navAvoidUnpaved: false,
   navVoiceEnabled: true,
   navVoiceStyle: 'standard',
   hazardVoiceEnabled: true,

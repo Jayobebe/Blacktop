@@ -1507,7 +1507,6 @@
  "PAUSED": "PAUSAD",
  "PEAK": "TOPP",
  "PEAK {0}G": "TOPP {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "SLÅ I LUFTEN · GE ALLT",
  "PUSH": "TRYCK",
  "Pacing a new track · Pit crew": "Rekar en ny bana · Depåteam",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "{0} h {1} min kvar",
  "{0} is already open": "{0} är redan öppen",
  "{0} min left": "{0} min kvar",
- "Chequered flag": "Rutig flagga",
  "Guide ping sent": "Guideanrop skickat",
  "Leader broadcast": "Ledarens utrop",
  "Left the test area": "Lämnade testområdet",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Tävlingsarrangörer, förare, depåteam och åskådare: från klubbtävlingar och bandagar till coachning i depån.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Kör en hel tävling på en plattform: tidtagning, tävlingsledning, depåmuren och livebevakning för åskådare.",
  "Spectator Live Timing": "Livetider för åskådare",
- "Enterprise": "Företag"
+ "Enterprise": "Företag",
+ "Avoid ferries": "Undvik färjor",
+ "Avoid motorways": "Undvik motorvägar",
+ "Avoid toll roads": "Undvik vägtullar",
+ "Avoid unpaved roads": "Undvik grusvägar",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Demoarbetsyta: stäng av demoläget i Inställningar för att dölja den.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Håller vägvisning, kurviga rutter och slingor borta från dessa när det finns en annan väg.",
+ "Not available in demo mode": "Inte tillgängligt i demoläge",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "Inget sparas medan demoläget är på. Stäng av det i Inställningar för att göra det på riktigt.",
+ "Route Preferences": "Ruttinställningar",
+ "Target 3:58": "Mål 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "Din V4 står i plats 2. Vi hör av oss så fort hon är klar."
 }

@@ -1507,7 +1507,6 @@
  "PAUSED": "已暂停",
  "PEAK": "峰值",
  "PEAK {0}G": "峰值 {0}G",
- "PHOTO": "照片",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "朝空中出拳 · 全力一击",
  "PUSH": "用力",
  "Pacing a new track · Pit crew": "新赛道热身 · 维修团队",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "剩余 {0} 小时 {1} 分钟",
  "{0} is already open": "{0} 已经打开",
  "{0} min left": "剩余 {0} 分钟",
- "Chequered flag": "方格旗",
  "Guide ping sent": "已呼叫领队",
  "Leader broadcast": "领队广播",
  "Left the test area": "已离开试驾区域",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "面向赛事组织者、车手、维修区团队和观众：从俱乐部比赛、赛道日到围场教练。",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "在一个平台上运营整场比赛：计时、赛事控制、维修墙以及面向观众的实时直播。",
  "Spectator Live Timing": "观众实时计时",
- "Enterprise": "企业版"
+ "Enterprise": "企业版",
+ "Avoid ferries": "避开轮渡",
+ "Avoid motorways": "避开高速公路",
+ "Avoid toll roads": "避开收费道路",
+ "Avoid unpaved roads": "避开未铺装道路",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "演示工作区：在设置中关闭演示模式即可隐藏。",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "只要有其他路可走，导航、弯道路线和环线都会避开这些道路。",
+ "Not available in demo mode": "演示模式下不可用",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "演示模式开启时不会保存任何内容。如需实际操作，请在设置中关闭演示模式。",
+ "Route Preferences": "路线偏好",
+ "Target 3:58": "目标 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "你的 V4 在 2 号工位。一准备好我们就通知你。"
 }

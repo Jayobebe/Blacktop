@@ -15,8 +15,8 @@ interface Props {
   destination: { lat: number; lng: number };
   mode: RouteMode;
   onModeChange: (mode: RouteMode) => void;
-  /** Via point of the chosen twisty line, so the caller can ride it. */
-  onTwistyVia: (via: { lat: number; lng: number } | null) => void;
+  /** Via points of the chosen twisty line (one, or two for an S), so the caller can ride it. */
+  onTwistyVia: (vias: { lat: number; lng: number }[] | null) => void;
 }
 
 function formatDuration(seconds: number) {
@@ -51,7 +51,7 @@ export function RouteOptions({ start, stops, destination, mode, onModeChange, on
         onModeChange('direct');
         onTwistyVia(null);
       } else if (mode === 'twisty') {
-        onTwistyVia(result.twisty.via ?? null);
+        onTwistyVia(result.twisty.vias ?? null);
       }
     });
     return () => {
@@ -71,7 +71,7 @@ export function RouteOptions({ start, stops, destination, mode, onModeChange, on
   const select = (id: RouteMode) => {
     if (id === 'twisty' && !plan?.twisty) return;
     onModeChange(id);
-    onTwistyVia(id === 'twisty' ? plan?.twisty?.via ?? null : null);
+    onTwistyVia(id === 'twisty' ? plan?.twisty?.vias ?? null : null);
   };
 
   return (

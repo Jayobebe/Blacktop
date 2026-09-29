@@ -36,7 +36,7 @@ export default function SoloLobby() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [routeMode, setRouteMode] = useState<RouteMode>('direct');
-  const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number } | null>(null);
+  const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number }[] | null>(null);
 
   // Screen stays on while planning (including on the map) and gearing up.
   const wakeLock = useWakeLock();
@@ -96,9 +96,9 @@ export default function SoloLobby() {
       clearSoloRoute();
       return;
     }
-    // A twisty pick rides through an extra via point before the rider's stops.
+    // A twisty pick rides through its via points (one bend, or two for an S) before the rider's stops.
     const via = routeMode === 'twisty' && twistyVia
-      ? [{ lat: twistyVia.lat, lng: twistyVia.lng, name: tr("Twisty leg"), address: '' }]
+      ? twistyVia.map((v) => ({ lat: v.lat, lng: v.lng, name: tr("Twisty leg"), address: '' }))
       : [];
     setSoloRoute({
       destination: { lat: dest.lat, lng: dest.lng, name: dest.name, address: dest.address },

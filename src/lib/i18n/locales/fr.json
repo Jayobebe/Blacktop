@@ -1507,7 +1507,6 @@
  "PAUSED": "EN PAUSE",
  "PEAK": "PIC",
  "PEAK {0}G": "PIC {0}G",
- "PHOTO": "PHOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "FRAPPEZ DANS LE VIDE · DONNEZ TOUT",
  "PUSH": "POUSSEZ",
  "Pacing a new track · Pit crew": "Reconnaissance d'un nouveau circuit · Équipe de stand",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "{0} h {1} min restantes",
  "{0} is already open": "{0} est déjà ouvert",
  "{0} min left": "{0} min restantes",
- "Chequered flag": "Drapeau à damier",
  "Guide ping sent": "Appel au guide envoyé",
  "Leader broadcast": "Message du leader",
  "Left the test area": "Hors de la zone d'essai",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Organisateurs, pilotes, équipes de stand et spectateurs : des courses de club aux roulages, jusqu'au coaching au paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Gérez toute une course sur une seule plateforme : chronométrage, direction de course, muret des stands et suivi en direct pour le public.",
  "Spectator Live Timing": "Chrono en direct pour les spectateurs",
- "Enterprise": "Entreprise"
+ "Enterprise": "Entreprise",
+ "Avoid ferries": "Éviter les ferries",
+ "Avoid motorways": "Éviter les autoroutes",
+ "Avoid toll roads": "Éviter les péages",
+ "Avoid unpaved roads": "Éviter les routes non goudronnées",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Espace de démo : désactive le mode démo dans les Réglages pour le masquer.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Garde les indications, les routes sinueuses et les boucles à l'écart de ceux-ci dès qu'il y a une autre option.",
+ "Not available in demo mode": "Indisponible en mode démo",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "Rien n'est enregistré tant que le mode démo est activé. Désactive-le dans les Réglages pour le faire pour de vrai.",
+ "Route Preferences": "Préférences d'itinéraire",
+ "Target 3:58": "Objectif 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "Ta V4 est au poste 2. On te prévient dès qu'elle est prête."
 }

@@ -1507,7 +1507,6 @@
  "PAUSED": "IN PAUSA",
  "PEAK": "PICCO",
  "PEAK {0}G": "PICCO {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "COLPISCI L'ARIA · DAI IL MASSIMO",
  "PUSH": "SPINGI",
  "Pacing a new track · Pit crew": "Ritmo su un circuito nuovo · Team box",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "Mancano {0} h {1} min",
  "{0} is already open": "{0} è già aperto",
  "{0} min left": "Mancano {0} min",
- "Chequered flag": "Bandiera a scacchi",
  "Guide ping sent": "Chiamata alla guida inviata",
  "Leader broadcast": "Messaggio del capogita",
  "Left the test area": "Uscito dall'area di prova",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Organizzatori, piloti, team ai box e spettatori: dalle gare di club ai track day fino al coaching nel paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Gestisci un'intera gara su un'unica piattaforma: cronometraggio, direzione gara, muretto box e diretta per il pubblico.",
  "Spectator Live Timing": "Cronometraggio live per gli spettatori",
- "Enterprise": "Aziende"
+ "Enterprise": "Aziende",
+ "Avoid ferries": "Evita traghetti",
+ "Avoid motorways": "Evita autostrade",
+ "Avoid toll roads": "Evita pedaggi",
+ "Avoid unpaved roads": "Evita strade sterrate",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Spazio demo: disattiva la modalità demo nelle Impostazioni per nasconderlo.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Tiene indicazioni, percorsi tortuosi e giri lontani da questi ogni volta che c'è un'alternativa.",
+ "Not available in demo mode": "Non disponibile in modalità demo",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "In modalità demo non viene salvato nulla. Disattivala nelle Impostazioni per farlo davvero.",
+ "Route Preferences": "Preferenze di percorso",
+ "Target 3:58": "Obiettivo 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "La tua V4 è nel box 2. Ti avvisiamo appena è pronta."
 }

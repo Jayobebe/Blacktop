@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { ACCENT_COLORS } from '@/features/settings';
 import type { DerezArena, DerezLobby, DerezPlayer, DerezState } from '../types';
 import { tr } from '@/lib/i18n';
+import { demoBlocked } from '@/lib/demoGuard';
 
 const LS_LOBBY_KEY = 'blacktop_derez_lobby_id';
 
@@ -93,6 +94,7 @@ export function useDerezLobby() {
   }, []);
 
   const createLobby = useCallback(async (displayName: string, accentColor: string) => {
+    if (demoBlocked()) return null;
     setBusy(true);
     try {
       const { data: auth } = await supabase.auth.getUser();
@@ -122,6 +124,7 @@ export function useDerezLobby() {
   }, [refresh]);
 
   const joinLobby = useCallback(async (code: string, displayName: string, accentColor: string) => {
+    if (demoBlocked()) return null;
     setBusy(true);
     try {
       const { data: auth } = await supabase.auth.getUser();

@@ -7,6 +7,7 @@ import { displayNameSchema } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useDemoMode, DEMO_NAME } from '@/lib/demoMode';
 import { tr } from '@/lib/i18n';
+import { demoBlocked } from '@/lib/demoGuard';
 
 const PROFILE_KEY = 'blacktop_profile';
 
@@ -121,6 +122,8 @@ export function useProfile() {
   };
 
   const resetIdentity = useCallback(async () => {
+    // A demo session must never burn the real account behind it.
+    if (demoBlocked()) return false;
     const now = Date.now();
     if (now - lastIdentityResetAt < IDENTITY_RESET_COOLDOWN_MS) {
       console.warn('[Profile] resetIdentity throttled (cooldown active)');
@@ -225,6 +228,7 @@ export function useProfile() {
   }, [profile]);
 
   const updateName = useCallback(async (name: string) => {
+    if (demoBlocked()) return false;
     const parsed = displayNameSchema.safeParse(name);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? tr("Invalid name"));

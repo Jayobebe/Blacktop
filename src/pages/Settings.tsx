@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -938,6 +938,29 @@ export default function Settings() {
                   checked={settings.weatherRoutingEnabled}
                   onCheckedChange={(v) => updateSetting('weatherRoutingEnabled', v)}
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Route className="w-4 h-4 text-accent" />
+                  <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Route Preferences")}</p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {tr("Keeps directions, twisty routes and loops off these wherever there's another way.")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    ['navAvoidMotorways', tr("Avoid motorways")],
+                    ['navAvoidTolls', tr("Avoid toll roads")],
+                    ['navAvoidFerries', tr("Avoid ferries")],
+                    ['navAvoidUnpaved', tr("Avoid unpaved roads")],
+                  ] as const).map(([key, label]) => (
+                    <label key={key} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 px-2.5 py-2 cursor-pointer">
+                      <span className="text-xs">{label}</span>
+                      <Switch checked={settings[key]} onCheckedChange={(v) => updateSetting(key, v)} />
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="flex items-center justify-between gap-3">

@@ -31,6 +31,10 @@ import Lobby from "./pages/Lobby";
 import SoloLobby from "./pages/SoloLobby";
 import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
+import { installDemoGuard } from '@/lib/demoGuard';
+
+// Demo mode never writes to the server (lib/demoGuard).
+installDemoGuard();
 
 
 const queryClient = new QueryClient();

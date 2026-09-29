@@ -1507,7 +1507,6 @@
  "PAUSED": "PAUSE",
  "PEAK": "TOP",
  "PEAK {0}G": "TOP {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "SLÅ I LUFTEN · GIV DET ALT",
  "PUSH": "SKUB",
  "Pacing a new track · Pit crew": "Rekognoscerer ny bane · Pitcrew",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "{0} t {1} min tilbage",
  "{0} is already open": "{0} er allerede åben",
  "{0} min left": "{0} min tilbage",
- "Chequered flag": "Ternet flag",
  "Guide ping sent": "Guidekald sendt",
  "Leader broadcast": "Lederens udkald",
  "Left the test area": "Forlod testområdet",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Løbsarrangører, kørere, pitteams og tilskuere: fra klubløb og banedage til coaching i depotet.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Afvikl et helt løb på én platform: tidtagning, løbsledelse, pitmuren og livedækning for tilskuere.",
  "Spectator Live Timing": "Livetider for tilskuere",
- "Enterprise": "Erhverv"
+ "Enterprise": "Erhverv",
+ "Avoid ferries": "Undgå færger",
+ "Avoid motorways": "Undgå motorveje",
+ "Avoid toll roads": "Undgå betalingsveje",
+ "Avoid unpaved roads": "Undgå grusveje",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Demoarbejdsområde: slå demotilstand fra i Indstillinger for at skjule det.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Holder rutevejledning, snoede ruter og ture væk fra disse, når der er en anden vej.",
+ "Not available in demo mode": "Ikke tilgængelig i demotilstand",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "Intet gemmes, mens demotilstand er slået til. Slå den fra i Indstillinger for at gøre det for alvor.",
+ "Route Preferences": "Rutepræferencer",
+ "Target 3:58": "Mål 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "Din V4 står på plads 2. Vi siger til, så snart hun er klar."
 }

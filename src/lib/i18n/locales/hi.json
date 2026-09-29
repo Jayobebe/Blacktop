@@ -1507,7 +1507,6 @@
  "PAUSED": "रुका हुआ",
  "PEAK": "शिखर",
  "PEAK {0}G": "शिखर {0}G",
- "PHOTO": "फ़ोटो",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "हवा में मुक्का मारो · पूरा ज़ोर लगाओ",
  "PUSH": "ज़ोर लगाओ",
  "Pacing a new track · Pit crew": "नए ट्रैक पर रफ़्तार · पिट क्रू",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "{0} घं {1} मि बाकी",
  "{0} is already open": "{0} पहले से खुला है",
  "{0} min left": "{0} मि बाकी",
- "Chequered flag": "चेकर्ड फ़्लैग",
  "Guide ping sent": "गाइड को कॉल भेजी गई",
  "Leader broadcast": "लीडर प्रसारण",
  "Left the test area": "टेस्ट क्षेत्र से बाहर",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "रेस आयोजक, रेसर, पिट क्रू और दर्शक: क्लब रेस और ट्रैक डे से लेकर पैडॉक कोचिंग तक।",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "पूरी रेस एक ही प्लेटफ़ॉर्म पर चलाएँ: टाइमिंग, रेस कंट्रोल, पिट वॉल और दर्शकों के लिए लाइव कवरेज।",
  "Spectator Live Timing": "दर्शकों के लिए लाइव टाइमिंग",
- "Enterprise": "एंटरप्राइज़"
+ "Enterprise": "एंटरप्राइज़",
+ "Avoid ferries": "फ़ेरी से बचें",
+ "Avoid motorways": "मोटरवे से बचें",
+ "Avoid toll roads": "टोल सड़कों से बचें",
+ "Avoid unpaved roads": "कच्ची सड़कों से बचें",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "डेमो वर्कस्पेस: इसे छिपाने के लिए सेटिंग्स में डेमो मोड बंद करें।",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "जब भी दूसरा रास्ता हो, दिशा-निर्देश, घुमावदार रूट और लूप इनसे दूर रहते हैं।",
+ "Not available in demo mode": "डेमो मोड में उपलब्ध नहीं",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "डेमो मोड चालू रहते कुछ भी सेव नहीं होता। असल में करने के लिए सेटिंग्स में इसे बंद करें।",
+ "Route Preferences": "रूट प्राथमिकताएँ",
+ "Target 3:58": "लक्ष्य 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "आपकी V4 बे 2 में है। तैयार होते ही हम आपको बताएँगे।"
 }

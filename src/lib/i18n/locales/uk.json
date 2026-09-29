@@ -1507,7 +1507,6 @@
  "PAUSED": "ПАУЗА",
  "PEAK": "ПІК",
  "PEAK {0}G": "ПІК {0}G",
- "PHOTO": "ФОТО",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "БИЙ ПОВІТРЯ · ВИКЛАДИСЯ НА ВСІ",
  "PUSH": "ТИСНИ",
  "Pacing a new track · Pit crew": "Розвідка нової траси · Піт-команда",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "Залишилось {0} год {1} хв",
  "{0} is already open": "{0} уже відкрито",
  "{0} min left": "Залишилось {0} хв",
- "Chequered flag": "Картатий прапор",
  "Guide ping sent": "Виклик гіда надіслано",
  "Leader broadcast": "Звернення ведучого",
  "Left the test area": "Виїхав із тестової зони",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Організатори змагань, гонщики, команди боксів і глядачі: від клубних гонок і трек-днів до коучингу в паддоку.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Проводьте цілу гонку на одній платформі: хронометраж, керування гонкою, стіна боксів і трансляція для глядачів.",
  "Spectator Live Timing": "Хронометраж наживо для глядачів",
- "Enterprise": "Бізнес"
+ "Enterprise": "Бізнес",
+ "Avoid ferries": "Уникати поромів",
+ "Avoid motorways": "Уникати автомагістралей",
+ "Avoid toll roads": "Уникати платних доріг",
+ "Avoid unpaved roads": "Уникати ґрунтових доріг",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Демо-простір: вимкни демо-режим у Налаштуваннях, щоб приховати його.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Тримає навігацію, звивисті маршрути й кільця подалі від них, коли є інший шлях.",
+ "Not available in demo mode": "Недоступно в демо-режимі",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "У демо-режимі нічого не зберігається. Вимкни його в Налаштуваннях, щоб зробити це насправді.",
+ "Route Preferences": "Налаштування маршруту",
+ "Target 3:58": "Ціль 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "Твоя V4 у боксі 2. Ми повідомимо, щойно вона буде готова."
 }

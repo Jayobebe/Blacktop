@@ -1507,7 +1507,6 @@
  "PAUSED": "GEPAUZEERD",
  "PEAK": "PIEK",
  "PEAK {0}G": "PIEK {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "SLA IN DE LUCHT · GEEF ALLES",
  "PUSH": "DUWEN",
  "Pacing a new track · Pit crew": "Nieuw circuit verkennen · Pitcrew",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "Nog {0} u {1} min",
  "{0} is already open": "{0} is al open",
  "{0} min left": "Nog {0} min",
- "Chequered flag": "Geblokte vlag",
  "Guide ping sent": "Oproep aan gids verstuurd",
  "Leader broadcast": "Oproep van de leider",
  "Left the test area": "Testgebied verlaten",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Raceorganisatoren, coureurs, pitcrews en toeschouwers: van clubraces en circuitdagen tot coaching in de paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Draai een hele race op één platform: tijdwaarneming, wedstrijdleiding, de pitmuur en live verslag voor toeschouwers.",
  "Spectator Live Timing": "Live tijden voor toeschouwers",
- "Enterprise": "Zakelijk"
+ "Enterprise": "Zakelijk",
+ "Avoid ferries": "Veerponten vermijden",
+ "Avoid motorways": "Snelwegen vermijden",
+ "Avoid toll roads": "Tolwegen vermijden",
+ "Avoid unpaved roads": "Onverharde wegen vermijden",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Demowerkruimte: zet de demomodus uit in Instellingen om hem te verbergen.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Houdt routebegeleiding, bochtige routes en rondritten hier weg waar er een andere weg is.",
+ "Not available in demo mode": "Niet beschikbaar in demomodus",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "In demomodus wordt niets opgeslagen. Zet hem uit in Instellingen om dit echt te doen.",
+ "Route Preferences": "Routevoorkeuren",
+ "Target 3:58": "Doel 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "Je V4 staat in werkplek 2. We laten het je weten zodra ze klaar is."
 }

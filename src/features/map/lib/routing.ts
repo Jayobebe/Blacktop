@@ -1,4 +1,34 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getExperience } from '@/features/experience';
+
+/**
+ * The rider's route preferences (Settings → Navigation) and what they ride,
+ * sent with every routing request. With any avoid-preference on, or on a
+ * bicycle, the server routes with Valhalla (which honours them and has a
+ * proper bike profile); otherwise with OSRM.
+ */
+function routePrefs(): { avoid?: Record<string, boolean>; vehicle: 'motorcycle' | 'car' | 'bicycle' } {
+  let s: Record<string, unknown> = {};
+  try {
+    s = JSON.parse(localStorage.getItem('blacktop-settings') ?? '{}') ?? {};
+  } catch {
+    /* defaults */
+  }
+  const avoid = {
+    motorways: s.navAvoidMotorways === true,
+    tolls: s.navAvoidTolls === true,
+    ferries: s.navAvoidFerries === true,
+    unpaved: s.navAvoidUnpaved === true,
+  };
+  const primary = getExperience().vehicles[0];
+  const vehicle = primary === 'car' ? 'car' : primary === 'bicycle' || primary === 'ebike' || primary === 'escooter' ? 'bicycle' : 'motorcycle';
+  return { ...(Object.values(avoid).some(Boolean) ? { avoid } : {}), vehicle };
+}
+
+/** Changes whenever the preferences that shape a route do (for callers that cache routes). */
+export function routePrefsKey(): string {
+  return JSON.stringify(routePrefs());
+}
 
 export interface RouteLineString {
   type: 'LineString';
@@ -61,6 +91,7 @@ export async function fetchRouteThroughStops(
         kind: 'route',
         coordinates: stops.map(s => [s.lng, s.lat]),
         ...(opts.steps ? { steps: true } : {}),
+        ...routePrefs(),
       },
     });
     if (error) throw error;
@@ -84,10 +115,12 @@ export async function fetchRouteThroughStops(
 export type LoopVibe = 'curvy' | 'scenic' | 'relaxed';
 
 export interface LoopRouteResult extends RouteResult {
-  /** Generated via points, in ride order (start/end is the rider's location). */
-  stops: { lat: number; lng: number }[];
-  /** Degrees of heading change per km — higher means twistier. */
+  /** Generated via points, in ride order (start/end is the rider's location). Scenic loops name the viewpoints they go through. */
+  stops: { lat: number; lng: number; name?: string }[];
+  /** Degrees of bend per km on open roads (junction turns barely count) — higher is twistier. */
   curviness: number;
+  /** Share of the loop on motorways / fast dual carriageways, 0-100. */
+  motorwayPct: number;
   vibe: LoopVibe;
 }
 
@@ -101,7 +134,7 @@ export async function generateLoopRoute(
 ): Promise<LoopRouteResult | null> {
   try {
     const { data, error } = await supabase.functions.invoke('place-search', {
-      body: { kind: 'loop', lat: start.lat, lng: start.lng, distanceKm, vibe },
+      body: { kind: 'loop', lat: start.lat, lng: start.lng, distanceKm, vibe, ...routePrefs() },
     });
     if (error) throw error;
     const geometry = data?.geometry as RouteLineString | undefined;
@@ -112,6 +145,7 @@ export async function generateLoopRoute(
       durationSeconds: data.duration,
       stops: Array.isArray(data.stops) ? data.stops : [],
       curviness: typeof data.curviness === 'number' ? data.curviness : 0,
+      motorwayPct: typeof data.motorwayPct === 'number' ? data.motorwayPct : 0,
       vibe: data.vibe ?? vibe,
     };
   } catch (err) {
@@ -124,8 +158,8 @@ export interface RoutePlanOption {
   distanceMeters: number;
   durationSeconds: number;
   curviness: number;
-  /** Extra via point that makes the route twisty (direct routes have none). */
-  via?: { lat: number; lng: number };
+  /** Via points that make the route twisty: one bend, or two for an S (direct routes have none). */
+  vias?: { lat: number; lng: number }[];
 }
 
 export interface RoutePlan {
@@ -141,7 +175,7 @@ export async function planRouteOptions(
   if (stops.length < 2) return null;
   try {
     const { data, error } = await supabase.functions.invoke('place-search', {
-      body: { kind: 'twisty', coordinates: stops.map(s => [s.lng, s.lat]) },
+      body: { kind: 'twisty', coordinates: stops.map(s => [s.lng, s.lat]), ...routePrefs() },
     });
     if (error) throw error;
     if (!data?.direct || typeof data.direct.duration !== 'number') return null;
@@ -149,7 +183,7 @@ export async function planRouteOptions(
       distanceMeters: o.distance,
       durationSeconds: o.duration,
       curviness: o.curviness ?? 0,
-      via: o.via,
+      vias: Array.isArray(o.vias) && o.vias.length ? o.vias : o.via ? [o.via] : undefined,
     });
     return {
       direct: toOption(data.direct),

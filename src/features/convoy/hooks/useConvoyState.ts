@@ -5,6 +5,7 @@ import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
+import { demoBlocked } from '@/lib/demoGuard';
 
 export const MAX_CONVOY_MEMBERS = 8;
 const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
@@ -441,6 +442,7 @@ export function useConvoyState() {
   };
 
   const createConvoy = useCallback(async () => {
+    if (demoBlocked()) return null;
     // Block before ever touching Supabase if local state already shows this
     // user leading an open convoy - prevents a create-spam loop from ever
     // reaching the DB (the unconditional "deactivate stale convoys" cleanup
@@ -544,6 +546,7 @@ export function useConvoyState() {
   }, [profile.name, settings.accentColor]);
 
   const joinConvoy = useCallback(async (code: string) => {
+    if (demoBlocked()) return false;
     let { data: { user } } = await supabase.auth.getUser();
     
     // Auto sign in anonymously if not authenticated

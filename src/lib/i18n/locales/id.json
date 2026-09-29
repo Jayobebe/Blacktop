@@ -1507,7 +1507,6 @@
  "PAUSED": "DIJEDA",
  "PEAK": "PUNCAK",
  "PEAK {0}G": "PUNCAK {0}G",
- "PHOTO": "FOTO",
  "PUNCH THE AIR · GIVE IT YOUR BEST SHOT": "PUKUL UDARA · KERAHKAN SEMUANYA",
  "PUSH": "DORONG",
  "Pacing a new track · Pit crew": "Mencari ritme di lintasan baru · Kru pit",
@@ -3039,7 +3038,6 @@
  "{0} h {1} min left": "Sisa {0} jam {1} mnt",
  "{0} is already open": "{0} sudah terbuka",
  "{0} min left": "Sisa {0} mnt",
- "Chequered flag": "Bendera kotak-kotak",
  "Guide ping sent": "Panggilan pemandu terkirim",
  "Leader broadcast": "Siaran pemimpin",
  "Left the test area": "Keluar dari area test ride",
@@ -3084,5 +3082,16 @@
  "Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching.": "Penyelenggara balap, pembalap, kru pit, dan penonton: dari balap klub dan track day hingga pelatihan di paddock.",
  "Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators.": "Jalankan seluruh balapan di satu platform: pencatatan waktu, kontrol balap, dinding pit, dan liputan langsung untuk penonton.",
  "Spectator Live Timing": "Waktu langsung untuk penonton",
- "Enterprise": "Bisnis"
+ "Enterprise": "Bisnis",
+ "Avoid ferries": "Hindari feri",
+ "Avoid motorways": "Hindari jalan tol bebas hambatan",
+ "Avoid toll roads": "Hindari jalan berbayar",
+ "Avoid unpaved roads": "Hindari jalan tanpa aspal",
+ "Demo workspace: turn demo mode off in Settings to hide it.": "Ruang kerja demo: matikan mode demo di Pengaturan untuk menyembunyikannya.",
+ "Keeps directions, twisty routes and loops off these wherever there's another way.": "Menjauhkan navigasi, rute berkelok, dan rute putar dari jalan ini selama ada jalan lain.",
+ "Not available in demo mode": "Tidak tersedia di mode demo",
+ "Nothing is saved while demo mode is on. Turn it off in Settings to do this for real.": "Tidak ada yang disimpan selama mode demo aktif. Matikan di Pengaturan untuk melakukannya sungguhan.",
+ "Route Preferences": "Preferensi rute",
+ "Target 3:58": "Target 3:58",
+ "Your V4 is in bay 2. We'll let you know the moment she's ready.": "V4 kamu ada di bay 2. Kami kabari begitu siap."
 }

@@ -57,7 +57,13 @@ type RoadsBody = {
   north: number;
 };
 
-type RouteBody = {
+// The rider's route preferences (Settings → Navigation) and what they ride.
+type RoutePrefs = {
+  avoid?: { motorways?: boolean; tolls?: boolean; ferries?: boolean; unpaved?: boolean };
+  vehicle?: "motorcycle" | "car" | "bicycle";
+};
+
+type RouteBody = RoutePrefs & {
   kind: "route";
   // [lng, lat] pairs, in order from start to destination.
   coordinates: [number, number][];
@@ -65,7 +71,7 @@ type RouteBody = {
   steps?: boolean;
 };
 
-type LoopBody = {
+type LoopBody = RoutePrefs & {
   kind: "loop";
   lat: number;
   lng: number;
@@ -74,7 +80,7 @@ type LoopBody = {
   vibe?: "curvy" | "scenic" | "relaxed";
 };
 
-type TwistyBody = {
+type TwistyBody = RoutePrefs & {
   kind: "twisty";
   // [lng, lat] pairs, start → destination (intermediate stops allowed).
   coordinates: [number, number][];
@@ -211,6 +217,360 @@ async function fetchOverpass(query: string, timeoutMs = 9000) {
   throw lastError ?? new Error("Overpass failed");
 }
 
+// ---- Twisty routes and loops ---------------------------------------------------
+//
+// Both run on the public OSRM car profile, so what we score is exactly what the
+// app will route through the returned via points. The scoring is what makes
+// them good:
+//  - Bends, not junctions: the line is resampled every 25 m and turning is
+//    counted per step with a cap, so a 90° town junction or a roundabout adds
+//    little, while a run of sweepers adds a lot.
+//  - Rural roads only: each stretch is weighted by OSRM's speed for it, so
+//    30 mph streets and motorways count for (almost) nothing.
+//  - No spurs: riding back down the road you came in on, and U-turns at a via
+//    point, are penalised hard.
+//  - Loops land on the length asked for: a second round re-scales the ring
+//    from the first round's results.
+//  - Scenic loops go through real viewpoints, peaks and waterfalls nearby.
+
+type LngLat = [number, number];
+
+type Prefs = { avoid: { motorways: boolean; tolls: boolean; ferries: boolean; unpaved: boolean }; vehicle: "motorcycle" | "car" | "bicycle"; steps?: boolean };
+
+/** Only booleans and known vehicles get through. */
+function readPrefs(b: RoutePrefs | undefined): Prefs {
+  const a = (b?.avoid ?? {}) as Record<string, unknown>;
+  const v = b?.vehicle;
+  return {
+    avoid: { motorways: a.motorways === true, tolls: a.tolls === true, ferries: a.ferries === true, unpaved: a.unpaved === true },
+    vehicle: v === "car" || v === "bicycle" ? v : "motorcycle",
+  };
+}
+
+async function osrmRoute(stops: LngLat[], steps = false, timeoutMs = 9000): Promise<any | null> {
+  const path = stops.map(([lo, la]) => `${lo.toFixed(6)},${la.toFixed(6)}`).join(";");
+  const url = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
+  url.searchParams.set("overview", "full");
+  url.searchParams.set("geometries", "geojson");
+  url.searchParams.set("alternatives", "false");
+  url.searchParams.set("steps", steps ? "true" : "false");
+  url.searchParams.set("annotations", "speed");
+  const res = await fetchWithTimeout(url.toString(), {
+    headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
+  }, timeoutMs);
+  if (!res.ok) throw new Error(`OSRM ${res.status}`);
+  const json = await res.json();
+  return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+}
+
+/** Valhalla (FOSSGIS public server) in OSRM's response format, honouring avoid-preferences and bike routing. */
+async function valhallaRoute(stops: LngLat[], p: Prefs, timeoutMs = 9000): Promise<any | null> {
+  const costing = p.vehicle === "bicycle" ? "bicycle" : p.vehicle === "car" ? "auto" : "motorcycle";
+  const opts: Record<string, unknown> = {};
+  if (costing === "bicycle") {
+    if (p.avoid.ferries) opts.use_ferry = 0;
+    if (p.avoid.unpaved) opts.avoid_bad_surfaces = 1;
+  } else {
+    // Soft avoidance, like Waze: kept off them unless there's no other way.
+    if (p.avoid.motorways) opts.use_highways = 0;
+    if (p.avoid.tolls) opts.use_tolls = 0;
+    if (p.avoid.ferries) opts.use_ferry = 0;
+    if (p.avoid.unpaved) opts.exclude_unpaved = true;
+  }
+  const res = await fetchWithTimeout("https://valhalla1.openstreetmap.de/route", {
+    method: "POST",
+    headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify({
+      locations: stops.map(([lo, la]) => ({ lat: la, lon: lo })),
+      costing,
+      costing_options: { [costing]: opts },
+      format: "osrm",
+      shape_format: "geojson",
+      units: "kilometers",
+    }),
+  }, timeoutMs);
+  if (!res.ok) throw new Error(`Valhalla ${res.status}`);
+  const json = await res.json();
+  return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+}
+
+/** Routes with the rider's preferences: Valhalla when they need it, OSRM otherwise (and as the fallback). */
+async function routeFor(stops: LngLat[], p: Prefs): Promise<any | null> {
+  const needsValhalla = p.vehicle === "bicycle" || p.avoid.motorways || p.avoid.tolls || p.avoid.ferries || p.avoid.unpaved;
+  if (needsValhalla) {
+    try {
+      const r = await valhallaRoute(stops, p);
+      if (r?.geometry) return r;
+    } catch (e) {
+      console.warn("[PLACE-SEARCH] Valhalla failed, using OSRM:", e instanceof Error ? e.message : e);
+    }
+  }
+  return osrmRoute(stops, p.steps === true);
+}
+
+interface RouteAnalysis {
+  /** Degrees of bend per km on rural roads (junction turns capped). */
+  twist: number;
+  /** Share of distance on fast dual carriageway / motorway. */
+  motorway: number;
+  /** Share of distance on slow town streets. */
+  urban: number;
+  /** Share of the line that rides back over road already ridden. */
+  retrace: number;
+  /** Near-reversals (U-turns at via points and the like). */
+  uturns: number;
+  km: number;
+}
+
+const toMeters = (a: LngLat, b: LngLat) => {
+  const lat = ((a[1] + b[1]) / 2) * Math.PI / 180;
+  return [(b[0] - a[0]) * 111320 * Math.cos(lat), (b[1] - a[1]) * 110540] as const;
+};
+
+function analyseRoute(route: any): RouteAnalysis {
+  const coords: LngLat[] = route?.geometry?.coordinates ?? [];
+  const km = (route?.distance ?? 0) / 1000;
+  if (coords.length < 3 || km <= 0) return { twist: 0, motorway: 0, urban: 0, retrace: 0, uturns: 0, km };
+
+  // Per-segment speed (km/h) from OSRM, aligned with the full geometry. Valhalla
+  // doesn't send it: then every stretch is taken as an open road and the
+  // motorway / town shares aren't counted.
+  const segSpeeds: number[] = (route.legs ?? []).flatMap((l: any) => (l?.annotation?.speed ?? []) as number[]);
+  const known = segSpeeds.length === coords.length - 1;
+  const speedAt = (i: number) => {
+    const v = known ? segSpeeds[i] * 3.6 : 60;
+    return Number.isFinite(v) ? v : 60;
+  };
+
+  // Resample every 25 m, carrying the speed of the segment each sample sits on.
+  const STEP = 25;
+  const pts: { x: number; y: number; kmh: number }[] = [];
+  let x = 0;
+  let y = 0;
+  let carry = 0;
+  pts.push({ x, y, kmh: speedAt(0) });
+  for (let i = 1; i < coords.length; i++) {
+    const [dx, dy] = toMeters(coords[i - 1], coords[i]);
+    const seg = Math.hypot(dx, dy);
+    if (seg === 0) continue;
+    let along = STEP - carry;
+    while (along <= seg) {
+      pts.push({ x: x + (dx * along) / seg, y: y + (dy * along) / seg, kmh: speedAt(i - 1) });
+      along += STEP;
+    }
+    carry = seg - (along - STEP);
+    x += dx;
+    y += dy;
+  }
+  if (pts.length < 4) return { twist: 0, motorway: 0, urban: 0, retrace: 0, uturns: 0, km };
+
+  const heading: number[] = [];
+  for (let i = 1; i < pts.length; i++) heading.push(Math.atan2(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y) * 180 / Math.PI);
+  const turn = (a: number, b: number) => {
+    const d = Math.abs(b - a) % 360;
+    return d > 180 ? 360 - d : d;
+  };
+
+  let bend = 0;
+  let motorwayM = 0;
+  let urbanM = 0;
+  let uturns = 0;
+  for (let i = 1; i < heading.length; i++) {
+    const kmh = pts[i].kmh;
+    // OSRM's car speeds: residential / unclassified ~25, tertiary ~40,
+    // secondary ~55, primary ~65, trunk ~85, motorway ~90 km/h. Bends count
+    // fully from secondary roads, well on tertiary B-roads, little on estates
+    // and lanes, and hardly at all on dual carriageways.
+    const rural = Math.max(0, Math.min(1, (kmh - 22) / 30)) * (kmh >= 82 ? 0.15 : 1);
+    bend += Math.min(turn(heading[i - 1], heading[i]), 32) * rural;
+    if (known && kmh >= 82) motorwayM += STEP;
+    if (known && kmh < 30) urbanM += STEP;
+    // A reversal within ~75 m.
+    if (i >= 3 && turn(heading[i - 3], heading[i]) > 150) uturns++;
+  }
+
+  // Retrace: a sample landing in a 40 m cell already visited ≥ 500 m earlier.
+  const seen = new Map<string, number>();
+  let retraced = 0;
+  pts.forEach((p, i) => {
+    const key = `${Math.round(p.x / 40)}:${Math.round(p.y / 40)}`;
+    const first = seen.get(key);
+    if (first === undefined) seen.set(key, i);
+    else if (i - first > 20) retraced++;
+  });
+
+  const totalM = pts.length * STEP;
+  return {
+    twist: bend / Math.max(0.5, km),
+    motorway: motorwayM / totalM,
+    urban: urbanM / totalM,
+    retrace: retraced / pts.length,
+    uturns: Math.floor(uturns / 3),
+    km,
+  };
+}
+
+type Vibe = "curvy" | "scenic" | "relaxed";
+
+/** Higher is better. `distErr` is the relative miss on a requested length (0 for A→B). */
+function scoreRoute(a: RouteAnalysis, vibe: Vibe, distErr: number, scenicHits = 0): number {
+  const spur = a.retrace * 160 + a.uturns * 10;
+  const len = distErr * 90;
+  if (vibe === "curvy") return a.twist - a.motorway * 80 - a.urban * 50 - spur - len;
+  if (vibe === "scenic") {
+    // Backroads through the good stuff; a steady ride rather than a knee-down one.
+    const flow = -Math.abs(a.twist - 55) * 0.5;
+    return 40 + flow + scenicHits * 18 - a.motorway * 90 - a.urban * 60 - spur - len;
+  }
+  // Relaxed: flowing, gently bending, quiet roads; no motorway, few towns, no fuss.
+  return 40 - Math.abs(a.twist - 28) * 0.8 - a.motorway * 100 - a.urban * 70 - spur - len;
+}
+
+function destPoint(lat: number, lng: number, bearingDeg: number, distKm: number): LngLat {
+  const R = 6371;
+  const br = (bearingDeg * Math.PI) / 180;
+  const lat1 = (lat * Math.PI) / 180;
+  const lng1 = (lng * Math.PI) / 180;
+  const dr = distKm / R;
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dr) + Math.cos(lat1) * Math.sin(dr) * Math.cos(br));
+  const lng2 = lng1 + Math.atan2(Math.sin(br) * Math.sin(dr) * Math.cos(lat1), Math.cos(dr) - Math.sin(lat1) * Math.sin(lat2));
+  return [((lng2 * 180) / Math.PI + 540) % 360 - 180, (lat2 * 180) / Math.PI];
+}
+
+function kmBetween(a: LngLat, b: LngLat) {
+  const [dx, dy] = toMeters(a, b);
+  return Math.hypot(dx, dy) / 1000;
+}
+
+/** Viewpoints, peaks and waterfalls round a point (scenic loops), best-effort. */
+async function scenicSpots(lat: number, lng: number, radiusKm: number): Promise<{ at: LngLat; name: string }[]> {
+  const r = Math.round(Math.min(60, radiusKm) * 1000);
+  const q = `[out:json][timeout:8];(node(around:${r},${lat},${lng})[tourism=viewpoint];node(around:${r},${lat},${lng})[natural=peak][name];node(around:${r},${lat},${lng})[waterway=waterfall];node(around:${r},${lat},${lng})[mountain_pass=yes];);out 120;`;
+  try {
+    const json = await fetchOverpass(q, 8000);
+    return (json?.elements ?? [])
+      .filter((e: any) => typeof e.lat === "number" && typeof e.lon === "number")
+      .map((e: any) => ({ at: [e.lon, e.lat] as LngLat, name: String(e.tags?.name ?? e.tags?.["name:en"] ?? "") }));
+  } catch {
+    return [];
+  }
+}
+
+async function buildLoop(lat: number, lng: number, distanceKm: number, vibe: Vibe, prefs: Prefs) {
+  const home: LngLat = [lng, lat];
+  // A road loop runs ~1.3x the ring through its via points.
+  let radiusKm = distanceKm / 1.3 / (2 * Math.PI) * 1.55;
+  const spots = vibe === "scenic" ? await scenicSpots(lat, lng, radiusKm * 1.6) : [];
+
+  type Cand = { score: number; a: RouteAnalysis; route: any; stops: { lat: number; lng: number; name?: string }[]; distErr: number };
+  const all: Cand[] = [];
+
+  const shape = (b0: number, n: number, scale: number) => {
+    const vias: { at: LngLat; name?: string }[] = [];
+    for (let k = 0; k < n; k++) {
+      const bearing = (b0 + (k * 360) / n + (Math.random() - 0.5) * 24) % 360;
+      let at = destPoint(lat, lng, bearing, radiusKm * scale * (0.85 + Math.random() * 0.3));
+      let name: string | undefined;
+      if (spots.length) {
+        // Swap the ring point for the nearest scenic spot close to it.
+        let best: { at: LngLat; name: string } | null = null;
+        let bestD = radiusKm * 0.45;
+        for (const s of spots) {
+          const d = kmBetween(at, s.at);
+          if (d < bestD) {
+            bestD = d;
+            best = s;
+          }
+        }
+        if (best) {
+          at = best.at;
+          name = best.name || undefined;
+        }
+      }
+      vias.push({ at, name });
+    }
+    return vias;
+  };
+
+  const tryCandidates = async (shapes: { at: LngLat; name?: string }[][]) => {
+    const results = await Promise.allSettled(shapes.map((vias) => routeFor([home, ...vias.map((v) => v.at), home], prefs)));
+    results.forEach((r, i) => {
+      if (r.status !== "fulfilled" || !r.value?.geometry?.coordinates?.length) return;
+      const a = analyseRoute(r.value);
+      const distErr = Math.abs(a.km - distanceKm) / distanceKm;
+      const hits = shapes[i].filter((v) => v.name !== undefined || spots.some((s) => s.at === v.at)).length;
+      all.push({
+        score: scoreRoute(a, vibe, distErr, hits),
+        a,
+        route: r.value,
+        stops: shapes[i].map((v) => ({ lat: v.at[1], lng: v.at[0], ...(v.name ? { name: v.name } : {}) })),
+        distErr,
+      });
+    });
+  };
+
+  // Round one: triangles and quads at random rotations.
+  const r0 = Math.random() * 360;
+  await tryCandidates([shape(r0, 3, 1), shape(r0 + 60, 3, 1), shape(r0 + 30, 4, 0.9), shape(r0 + 75, 4, 0.9)]);
+  // Round two: re-scale the ring from how long round one came out, and try again.
+  const best1 = [...all].sort((x, y) => y.score - x.score)[0];
+  if (all.length && (!best1 || best1.distErr > 0.12)) {
+    const ratios = all.map((c) => c.a.km / distanceKm).sort((x, y) => x - y);
+    const median = ratios[Math.floor(ratios.length / 2)];
+    if (median > 0.2) radiusKm /= median;
+    const r1 = Math.random() * 360;
+    await tryCandidates([shape(r1, 3, 1), shape(r1 + 45, 4, 0.9), shape(r1 + 90, 3, 1)]);
+  } else if (!all.length) {
+    await tryCandidates([shape(r0 + 180, 3, 0.8), shape(r0 + 240, 4, 0.75)]);
+  }
+  all.sort((x, y) => y.score - x.score);
+  return all[0] ?? null;
+}
+
+async function buildTwisty(coords: LngLat[], prefs: Prefs) {
+  const direct = await routeFor(coords, prefs);
+  if (!direct?.geometry) return { direct: null, twisty: null };
+  const d = analyseRoute(direct);
+
+  const [sx, sy] = coords[0];
+  const [ex, ey] = coords[coords.length - 1];
+  const my = (sy + ey) / 2;
+  const cosLat = Math.cos((my * Math.PI) / 180) || 1;
+  const dx = (ex - sx) * cosLat;
+  const dy = ey - sy;
+  const len = Math.hypot(dx, dy) || 1e-6;
+  const perp: [number, number] = [-dy / len, dx / len];
+  const spanKm = len * 111;
+  const at = (f: number, offKm: number): LngLat => {
+    const bx = sx + (ex - sx) * f;
+    const by = sy + (ey - sy) * f;
+    return [bx + (perp[0] * offKm) / (111 * cosLat), by + (perp[1] * offKm) / 111];
+  };
+  const off = (f: number) => Math.min(30, Math.max(3, spanKm * f));
+
+  // Single bends either side at three depths, plus S-curves through two points.
+  const shapes: LngLat[][] = [];
+  for (const f of [0.16, 0.28, 0.42]) for (const s of [1, -1]) shapes.push([at(0.5, s * off(f))]);
+  for (const s of [1, -1]) shapes.push([at(0.33, s * off(0.24)), at(0.67, -s * off(0.24))]);
+
+  const cands: { vias: LngLat[]; route: any; a: RouteAnalysis; score: number }[] = [];
+  for (let i = 0; i < shapes.length; i += 4) {
+    const batch = shapes.slice(i, i + 4);
+    const res = await Promise.allSettled(batch.map((vias) => routeFor([coords[0], ...vias, ...coords.slice(1)], prefs)));
+    res.forEach((r, k) => {
+      if (r.status !== "fulfilled" || !r.value?.geometry) return;
+      // Worth it only up to ~60% longer than the direct ride.
+      if (r.value.duration > direct.duration * 1.6) return;
+      const a = analyseRoute(r.value);
+      cands.push({ vias: batch[k], route: r.value, a, score: scoreRoute(a, "curvy", 0) });
+    });
+  }
+  cands.sort((x, y) => y.score - x.score);
+  const best = cands[0];
+  const worth = best && best.a.twist >= d.twist * 1.25 && best.a.twist - d.twist >= 8 && best.a.retrace < 0.08;
+  return { direct: { route: direct, a: d }, twisty: worth ? best : null };
+}
+
 serve(async (req) => {
   const cors = getCorsHeaders(req.headers.get("origin") ?? "");
   if (req.method === "OPTIONS") {
@@ -274,107 +634,38 @@ serve(async (req) => {
           status: 400,
         });
       }
-
-      const osrmRoute = async (stops: [number, number][]) => {
-        const path = stops.map(([lo, la]) => `${lo},${la}`).join(";");
-        const url = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
-        url.searchParams.set("overview", "full");
-        url.searchParams.set("geometries", "geojson");
-        url.searchParams.set("alternatives", "false");
-        url.searchParams.set("steps", "false");
-        const res = await fetchWithTimeout(url.toString(), {
-          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
-        }, 9000);
-        if (!res.ok) throw new Error(`OSRM ${res.status}`);
-        const json = await res.json();
-        return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
-      };
-
-      // Total absolute heading change per km — twistier roads score higher.
-      const twistOf = (line: [number, number][], distMeters: number) => {
-        if (line.length < 3 || distMeters <= 0) return 0;
-        let turned = 0;
-        let prev: number | null = null;
-        for (let i = 1; i < line.length; i++) {
-          const [x1, y1] = line[i - 1];
-          const [x2, y2] = line[i];
-          const dx = (x2 - x1) * Math.cos((y1 * Math.PI) / 180);
-          const dy = y2 - y1;
-          if (dx === 0 && dy === 0) continue;
-          const b = (Math.atan2(dx, dy) * 180) / Math.PI;
-          if (prev !== null) {
-            let d = Math.abs(b - prev) % 360;
-            if (d > 180) d = 360 - d;
-            turned += d;
-          }
-          prev = b;
-        }
-        return turned / (distMeters / 1000);
-      };
-
-      let direct: any = null;
+      let plan: Awaited<ReturnType<typeof buildTwisty>>;
       try {
-        direct = await osrmRoute(coords);
+        plan = await buildTwisty(coords as LngLat[], readPrefs(body));
       } catch (e) {
-        console.warn("[PLACE-SEARCH] Twisty direct leg failed:", e instanceof Error ? e.message : e);
+        console.warn("[PLACE-SEARCH] Twisty planning failed:", e instanceof Error ? e.message : e);
+        plan = { direct: null, twisty: null };
       }
-      if (!direct?.geometry) {
+      if (!plan.direct) {
         return new Response(JSON.stringify({ error: "Routing unavailable" }), {
           headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
           status: 200,
         });
       }
-
-      // Probe via points offset perpendicular to the straight line between the
-      // first and last stop; the twistiest candidate that isn't absurdly long wins.
-      const [sx, sy] = coords[0];
-      const [ex, ey] = coords[coords.length - 1];
-      const mx = (sx + ex) / 2;
-      const my = (sy + ey) / 2;
-      const dx = (ex - sx) * Math.cos((my * Math.PI) / 180);
-      const dy = ey - sy;
-      const len = Math.hypot(dx, dy) || 1e-6;
-      const perp = [-dy / len, dx / len] as [number, number];
-      const spanKm = len * 111;
-      const offsets = [0.18, 0.32, 0.5].map((f) => Math.min(35, Math.max(4, spanKm * f)));
-
-      const directTwist = twistOf(direct.geometry.coordinates, direct.distance);
-      let best: { route: any; via: [number, number]; twist: number } | null = null;
-
-      for (const km of offsets) {
-        for (const sign of [1, -1]) {
-          const dLat = (perp[1] * km * sign) / 111;
-          const dLng = (perp[0] * km * sign) / (111 * Math.cos((my * Math.PI) / 180) || 1);
-          const via: [number, number] = [mx + dLng, my + dLat];
-          if (!isLngLat(via)) continue;
-          try {
-            const r = await osrmRoute([coords[0], via, ...coords.slice(1)]);
-            if (!r?.geometry) continue;
-            // Reject detours that more than double the trip.
-            if (r.duration > direct.duration * 2.1) continue;
-            const t = twistOf(r.geometry.coordinates, r.distance);
-            if (!best || t > best.twist) best = { route: r, via, twist: t };
-          } catch { /* try the next candidate */ }
-        }
-      }
-
-      const useTwisty = best && best.twist > directTwist * 1.15;
-
+      const t = plan.twisty;
       return new Response(
         JSON.stringify({
           direct: {
-            geometry: direct.geometry,
-            distance: direct.distance,
-            duration: direct.duration,
-            curviness: Math.round(directTwist),
+            geometry: plan.direct.route.geometry,
+            distance: plan.direct.route.distance,
+            duration: plan.direct.route.duration,
+            curviness: Math.round(plan.direct.a.twist),
           },
-          twisty: useTwisty
+          twisty: t
             ? {
-              geometry: best!.route.geometry,
-              distance: best!.route.distance,
-              duration: best!.route.duration,
-              curviness: Math.round(best!.twist),
-              via: { lat: best!.via[1], lng: best!.via[0] },
+              geometry: t.route.geometry,
+              distance: t.route.distance,
+              duration: t.route.duration,
+              curviness: Math.round(t.a.twist),
+              // `via` for older apps; `vias` is the whole shape (one bend or an S).
+              via: { lat: t.vias[0][1], lng: t.vias[0][0] },
+              vias: t.vias.map(([lo, la]) => ({ lat: la, lng: lo })),
+              motorwayPct: Math.round(t.a.motorway * 100),
             }
             : null,
         }),
@@ -385,7 +676,7 @@ serve(async (req) => {
     if (body.kind === "loop") {
       const { lat, lng } = body;
       const distanceKm = Number(body.distanceKm);
-      const vibe = body.vibe === "relaxed" || body.vibe === "scenic" ? body.vibe : "curvy";
+      const vibe: Vibe = body.vibe === "relaxed" || body.vibe === "scenic" ? body.vibe : "curvy";
       const valid =
         typeof lat === "number" && typeof lng === "number" &&
         lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 &&
@@ -396,109 +687,26 @@ serve(async (req) => {
           status: 400,
         });
       }
-
-      // A road loop is roughly 1.25x longer than the polygon through its via
-      // points, so shrink the ring radius to land near the requested length.
-      const ringKm = distanceKm / 1.25;
-      const radiusKm = ringKm / (2 * Math.PI) * 1.6;
-
-      const destPoint = (bearingDeg: number, distKm: number) => {
-        const R = 6371;
-        const br = (bearingDeg * Math.PI) / 180;
-        const lat1 = (lat * Math.PI) / 180;
-        const lng1 = (lng * Math.PI) / 180;
-        const dr = distKm / R;
-        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dr) + Math.cos(lat1) * Math.sin(dr) * Math.cos(br));
-        const lng2 = lng1 + Math.atan2(
-          Math.sin(br) * Math.sin(dr) * Math.cos(lat1),
-          Math.cos(dr) - Math.sin(lat1) * Math.sin(lat2),
-        );
-        return [((lng2 * 180) / Math.PI + 540) % 360 - 180, (lat2 * 180) / Math.PI] as [number, number];
-      };
-
-      // Total absolute heading change per km — the curviness proxy used to
-      // rank candidate loops (higher = twistier backroads, lower = motorway).
-      const curviness = (coords: [number, number][], distMeters: number) => {
-        if (coords.length < 3 || distMeters <= 0) return 0;
-        let turned = 0;
-        let prevBearing: number | null = null;
-        for (let i = 1; i < coords.length; i++) {
-          const [x1, y1] = coords[i - 1];
-          const [x2, y2] = coords[i];
-          const dx = (x2 - x1) * Math.cos((y1 * Math.PI) / 180);
-          const dy = y2 - y1;
-          if (dx === 0 && dy === 0) continue;
-          const bearing = (Math.atan2(dx, dy) * 180) / Math.PI;
-          if (prevBearing !== null) {
-            let d = Math.abs(bearing - prevBearing) % 360;
-            if (d > 180) d = 360 - d;
-            turned += d;
-          }
-          prevBearing = bearing;
-        }
-        return turned / (distMeters / 1000);
-      };
-
-      const routeThrough = async (stops: [number, number][]) => {
-        const path = stops.map(([lo, la]) => `${lo},${la}`).join(";");
-        const url = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
-        url.searchParams.set("overview", "full");
-        url.searchParams.set("geometries", "geojson");
-        url.searchParams.set("alternatives", "false");
-        url.searchParams.set("steps", "false");
-        const res = await fetchWithTimeout(url.toString(), {
-          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
-        }, 9000);
-        const text = await res.text();
-        if (!res.ok) throw new Error(`OSRM ${res.status}: ${text.slice(0, 200)}`);
-        const json = JSON.parse(text);
-        return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
-      };
-
-      // Three candidate triangles rotated around the rider, each scored
-      // against the requested vibe and target distance.
-      const startBearings = [Math.random() * 360, Math.random() * 360, Math.random() * 360];
-      const candidates: any[] = [];
-
-      for (const b0 of startBearings) {
-        const vias: [number, number][] = [0, 120, 240].map((off) =>
-          destPoint((b0 + off) % 360, radiusKm * (0.85 + Math.random() * 0.3)),
-        );
-        try {
-          const route = await routeThrough([[lng, lat], ...vias, [lng, lat]]);
-          if (!route?.geometry?.coordinates?.length) continue;
-          const coords = route.geometry.coordinates as [number, number][];
-          const twist = curviness(coords, route.distance);
-          const distErr = Math.abs(route.distance / 1000 - distanceKm) / distanceKm;
-          const twistScore = vibe === "relaxed" ? -twist : vibe === "scenic" ? twist * 0.6 : twist;
-          candidates.push({
-            score: twistScore / 40 - distErr * 2,
-            twist,
-            route,
-            stops: vias.map(([lo, la]) => ({ lat: la, lng: lo })),
-          });
-        } catch (e) {
-          console.warn("[PLACE-SEARCH] Loop candidate failed:", e instanceof Error ? e.message : e);
-        }
+      let best: Awaited<ReturnType<typeof buildLoop>> = null;
+      try {
+        best = await buildLoop(lat, lng, distanceKm, vibe, readPrefs(body));
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Loop planning failed:", e instanceof Error ? e.message : e);
       }
-
-      if (candidates.length === 0) {
+      if (!best) {
         return new Response(JSON.stringify({ error: "Could not build a loop from here" }), {
           headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "routing_unavailable" },
           status: 200,
         });
       }
-
-      candidates.sort((a, b) => b.score - a.score);
-      const best = candidates[0];
-
       return new Response(
         JSON.stringify({
           geometry: best.route.geometry,
           distance: best.route.distance,
           duration: best.route.duration,
           stops: best.stops,
-          curviness: Math.round(best.twist),
+          curviness: Math.round(best.a.twist),
+          motorwayPct: Math.round(best.a.motorway * 100),
           vibe,
         }),
         { headers: { ...cors, "Content-Type": "application/json" }, status: 200 },
@@ -668,21 +876,9 @@ serve(async (req) => {
         });
       }
 
-      const path = coords.map(([lng, lat]) => `${lng},${lat}`).join(";");
-      const routeUrl = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
-      routeUrl.searchParams.set("overview", "full");
-      routeUrl.searchParams.set("geometries", "geojson");
-      routeUrl.searchParams.set("alternatives", "false");
-      routeUrl.searchParams.set("steps", body.steps === true ? "true" : "false");
-
-      let osrm: any;
+      let route: any = null;
       try {
-        const res = await fetchWithTimeout(routeUrl.toString(), {
-          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
-        }, 9000);
-        const text = await res.text();
-        if (!res.ok) throw new Error(`OSRM ${res.status}: ${text.slice(0, 200)}`);
-        osrm = JSON.parse(text);
+        route = await routeFor(coords as LngLat[], { ...readPrefs(body), steps: body.steps === true });
       } catch (e) {
         console.warn("[PLACE-SEARCH] Routing unavailable:", e instanceof Error ? e.message : e);
         return new Response(JSON.stringify({ error: "Routing unavailable" }), {
@@ -690,8 +886,6 @@ serve(async (req) => {
           status: 200,
         });
       }
-
-      const route = osrm?.code === "Ok" ? osrm?.routes?.[0] : null;
       if (!route?.geometry) {
         return new Response(JSON.stringify({ error: "No route found" }), {
           headers: { ...cors, "Content-Type": "application/json" },

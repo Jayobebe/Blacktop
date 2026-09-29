@@ -35,7 +35,7 @@ interface UserLocation {
 export default function Lobby() {
   const navigate = useNavigate();
   const [routeMode, setRouteMode] = useState<RouteMode>('direct');
-  const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number } | null>(null);
+  const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number }[] | null>(null);
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
   const { startRide, rideState } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
@@ -357,10 +357,15 @@ export default function Lobby() {
   const handleNavigate = async () => {
     // The leader's twisty pick becomes a real convoy waypoint so every rider
     // follows the same line; it leads the list so it's ridden first.
-    if (convoy.isLeader && routeMode === 'twisty' && twistyVia && waypoints.length < 5) {
-      const added = await addWaypoint({ name: tr("Twisty leg"), address: '', lat: twistyVia.lat, lng: twistyVia.lng });
-      if (added !== false && waypoints.length > 0) {
-        await reorderWaypoints(waypoints.length, 0);
+    if (convoy.isLeader && routeMode === 'twisty' && twistyVia?.length) {
+      const room = Math.max(0, 5 - waypoints.length);
+      const vias = twistyVia.slice(0, room);
+      for (let i = 0; i < vias.length; i++) {
+        const added = await addWaypoint({ name: tr("Twisty leg"), address: '', lat: vias[i].lat, lng: vias[i].lng });
+        // Move it up to sit after the twisty legs already placed, ahead of the rest.
+        if (added !== false && waypoints.length > 0) {
+          await reorderWaypoints(waypoints.length + i, i);
+        }
       }
       setTwistyVia(null);
     }

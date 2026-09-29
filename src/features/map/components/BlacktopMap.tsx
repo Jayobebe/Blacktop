@@ -349,12 +349,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // During an active ride use rideState speed; on the home map use raw geolocation speed.
   const displaySpeed = rideState.isActive ? rideState.currentSpeed : geoSpeed;
+  // Same amber / red glow as the ride screen's speed hero.
   const speedColorClass =
     displaySpeed >= settings.redSpeedThreshold
-      ? "text-destructive"
+      ? "text-destructive animate-speed-glow-red border-destructive/60"
       : displaySpeed >= settings.amberSpeedThreshold
-        ? "text-warning"
-        : "text-foreground";
+        ? "text-warning animate-speed-glow border-warning/50"
+        : "text-foreground border-border";
 
   useRadarOverlay(map, displaySpeed, settings.weatherOverlayEnabled);
 
@@ -1061,6 +1062,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const [droppingCard, setDroppingCard] = useState(false);
   const [pendingDrop, setPendingDrop] = useState<{ lat: number; lng: number } | null>(null);
   const cardMarkersRef = useRef<Marker[]>([]);
+  // Where each card marker sits, for showing it only near the rider or zoomed in.
+  const cardMarkerAtRef = useRef<{ lat: number; lng: number }[]>([]);
 
   // Copy 0 is the one locked in the vault; planted copies number upward from 1.
   const placedCount = myDrops.length;
@@ -1086,6 +1089,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   useEffect(() => {
     cardMarkersRef.current.forEach((m) => m.remove());
     cardMarkersRef.current = [];
+    cardMarkerAtRef.current = [];
     if (!map || !cardsEnabled || rideState.isActive) return;
 
     cardStacks.forEach((stack) => {
@@ -1133,13 +1137,48 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
         e.stopPropagation();
         setSelectedStack(stack);
       });
+      el.style.transition = "opacity 220ms ease";
 
       const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([head.lng, head.lat])
         .addTo(map);
       cardMarkersRef.current.push(marker);
+      cardMarkerAtRef.current.push({ lat: head.lat, lng: head.lng });
     });
+    applyCardVisibilityRef.current();
   }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
+
+  // Card drops aren't sprinkled across the whole map: each shows only when the
+  // rider is within CARD_NEAR_M of it, or the map is zoomed in to street level
+  // (CARD_ZOOM) where it sits. They fade in and out as the zoom crosses over.
+  const CARD_NEAR_M = 1500;
+  const CARD_ZOOM = 14;
+  const applyCardVisibilityRef = useRef<() => void>(() => {});
+  applyCardVisibilityRef.current = () => {
+    if (!map) return;
+    const zoomedIn = map.getZoom() >= CARD_ZOOM;
+    cardMarkersRef.current.forEach((m, i) => {
+      const at = cardMarkerAtRef.current[i];
+      const near = !!userLocation && !!at && haversineM(userLocation.lat, userLocation.lng, at.lat, at.lng) <= CARD_NEAR_M;
+      const show = zoomedIn || near;
+      const el = m.getElement();
+      el.style.opacity = show ? "1" : "0";
+      el.style.pointerEvents = show ? "auto" : "none";
+    });
+  };
+  useEffect(() => {
+    if (!map) return;
+    const apply = () => applyCardVisibilityRef.current();
+    apply();
+    map.on("zoom", apply);
+    return () => {
+      map.off("zoom", apply);
+    };
+  }, [map]);
+  // Riding up to a card shows it.
+  useEffect(() => {
+    applyCardVisibilityRef.current();
+  }, [userLocation]);
 
 
 
@@ -2904,7 +2943,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
             {(rideState.isActive || geoSpeed > 0) && (
               <div
                 className={cn(
-                  "flex items-baseline gap-1.5 px-5 py-3 short:px-4 short:py-2 rounded-2xl bg-card/95 border border-border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors",
+                  "flex items-baseline gap-1.5 px-5 py-3 short:px-4 short:py-2 rounded-2xl bg-card/95 border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors",
                   speedColorClass,
                 )}
               >

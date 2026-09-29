@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Hazard, HazardKind } from '../types';
+import { isDemoModeActive } from '@/lib/demoMode';
 
 /**
  * Live hazard reports near the rider (module store, like the rest of the app).
@@ -8,6 +9,9 @@ import type { Hazard, HazardKind } from '../types';
  * reports stay anonymous. After a report or vote a broadcast on
  * `hazards:live` tells other riders looking at that area to refetch; the
  * broadcast carries a position only, never who sent it.
+ *
+ * Demo mode never touches the database: a few sample reports appear around
+ * wherever the map looks, and reports, votes and removals stay on the phone.
  */
 
 export interface Bounds {
@@ -90,9 +94,40 @@ function clampBounds(b: Bounds): Bounds {
   return { south: cLat - hLat, north: cLat + hLat, west: cLng - hLng, east: cLng + hLng };
 }
 
+
+/** Sample reports scattered round the middle of an area, stable for that spot. */
+const DEMO_KINDS: HazardKind[] = ['pothole', 'roadworks', 'hivis', 'oil', 'gravel', 'animal'];
+function demoHazards(b: Bounds): Hazard[] {
+  const cLat = Math.round(((b.south + b.north) / 2) * 50) / 50;
+  const cLng = Math.round(((b.west + b.east) / 2) * 50) / 50;
+  const now = Date.now();
+  const r = (n: number) => {
+    const x = Math.sin(n * 12.9898 + cLat * 78.233 + cLng * 37.719) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return Array.from({ length: 5 }, (_, i) => ({
+    id: `demo-hz-${cLat}-${cLng}-${i}`,
+    kind: DEMO_KINDS[Math.floor(r(i) * DEMO_KINDS.length)],
+    lat: cLat + (r(i + 10) - 0.5) * 0.03,
+    lng: cLng + (r(i + 20) - 0.5) * 0.045,
+    heading: null,
+    createdAt: now - Math.floor(r(i + 30) * 40) * 60_000,
+    expiresAt: now + (30 + Math.floor(r(i + 40) * 90)) * 60_000,
+    confirmations: Math.floor(r(i + 50) * 6),
+    denials: 0,
+    mine: false,
+    myVote: null,
+  }));
+}
+
 /** Loads the live reports in an area, replacing what we had there. */
 export async function fetchHazards(area: Bounds): Promise<void> {
   const b = clampBounds(area);
+  if (isDemoModeActive()) {
+    for (const h of demoHazards(b)) if (!hazards.has(h.id)) hazards.set(h.id, h);
+    emit();
+    return;
+  }
   const { data, error } = await rpc<Row[]>('hazards_in_bbox', { _west: b.west, _south: b.south, _east: b.east, _north: b.north });
   if (error || !data) return;
   for (const [id, h] of hazards) if (inside(b, h)) hazards.delete(id);
@@ -117,6 +152,7 @@ function ensureLive() {
 }
 
 function nudge(at: { lat: number; lng: number }) {
+  if (isDemoModeActive()) return;
   ensureLive();
   // Rounded: other riders only need to know roughly where to look.
   void live?.send({ type: 'broadcast', event: 'changed', payload: { lat: +at.lat.toFixed(3), lng: +at.lng.toFixed(3) } });
@@ -130,6 +166,13 @@ export class HazardError extends Error {
 
 /** Reports a hazard here. Returns its id (an existing one when it merged with a nearby report). */
 export async function reportHazard(kind: HazardKind, at: { lat: number; lng: number }, heading: number | null): Promise<string> {
+  if (isDemoModeActive()) {
+    const id = `demo-mine-${Date.now()}`;
+    const now = Date.now();
+    hazards.set(id, { id, kind, lat: at.lat, lng: at.lng, heading, createdAt: now, expiresAt: now + 60 * 60_000, confirmations: 0, denials: 0, mine: true, myVote: null });
+    emit();
+    return id;
+  }
   const { data, error } = await rpc<string>('report_hazard', {
     _kind: kind,
     _lat: at.lat,
@@ -166,6 +209,7 @@ export async function voteHazard(id: string, stillThere: boolean): Promise<void>
     hazards.set(id, { ...h, myVote: stillThere });
     emit();
   }
+  if (isDemoModeActive()) return;
   const { error } = await rpc<null>('vote_hazard', { _id: id, _still_there: stillThere });
   if (error) throw new HazardError(/rate limited/i.test(error.message) ? 'rate-limited' : 'failed');
   if (h) nudge(h);
@@ -175,6 +219,7 @@ export async function removeMyHazard(id: string): Promise<void> {
   const h = hazards.get(id);
   hazards.delete(id);
   emit();
+  if (isDemoModeActive()) return;
   const { error } = await rpc<null>('remove_my_hazard', { _id: id });
   if (error) throw new HazardError('failed');
   if (h) nudge(h);

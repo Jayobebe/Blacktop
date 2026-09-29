@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { LogbookPackage } from '../types';
 
 import { tr } from '@/lib/i18n';
+import { demoBlocked } from '@/lib/demoGuard';
 /**
  * Logbook hand-over, phone to phone, over a one-off realtime channel whose
  * name is a random key carried only in the QR (nothing is stored on a
@@ -49,6 +50,7 @@ export interface HandoverCallbacks {
 }
 
 export function startHandover(pkg: LogbookPackage, cb: HandoverCallbacks): { qr: string; cancel: () => void } {
+  if (demoBlocked()) return { qr: '', cancel: () => {} };
   const token = crypto.randomUUID().replace(/-/g, '');
   const data = JSON.stringify(pkg);
   const chunks: string[] = [];

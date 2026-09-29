@@ -96,17 +96,21 @@ export function EnterpriseWorkspaceCard({ session, className }: { session: Enter
           {tr("This workspace is ready. Your organisation's tools will appear here.")}
         </p>
 
-        <Button
-          variant="outline"
-          className="w-full h-11 rounded-xl"
-          onClick={() => {
-            haptics.light();
-            setConfirm(true);
-          }}
-        >
-          {guest ? <LogOut className="w-4 h-4 mr-2" /> : <Unplug className="w-4 h-4 mr-2" />}
-          {guest ? tr("Sign out") : tr("Disconnect")}
-        </Button>
+        {session.demo ? (
+          <p className="text-[10px] text-center text-muted-foreground">{tr("Demo workspace: turn demo mode off in Settings to hide it.")}</p>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full h-11 rounded-xl"
+            onClick={() => {
+              haptics.light();
+              setConfirm(true);
+            }}
+          >
+            {guest ? <LogOut className="w-4 h-4 mr-2" /> : <Unplug className="w-4 h-4 mr-2" />}
+            {guest ? tr("Sign out") : tr("Disconnect")}
+          </Button>
+        )}
       </div>
 
       <AlertDialog open={confirm} onOpenChange={setConfirm}>

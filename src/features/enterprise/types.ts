@@ -37,6 +37,8 @@ export interface EnterpriseSession {
   /** Guests only: the token, to re-check the session. */
   token: string | null;
   mountedAt: string;
+  /** Demo mode's sample workspace: shown, never stored, can't be signed out of. */
+  demo?: boolean;
 }
 
 /** What a scanned QR or deep link carries. */
