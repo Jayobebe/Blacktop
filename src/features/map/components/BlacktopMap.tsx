@@ -34,6 +34,7 @@ import { deletePOI, getSavedPOIs, savePOI } from "../lib/poiStore";
 import { loadDarkMapStyle } from "../lib/darkStyle";
 import { getLastView, saveLastView } from "../lib/lastView";
 import { addPinLayers, setMyPins, setPinsVisible, type PinInfo } from "../lib/mapPins";
+import { applyWaterWordmark } from "../lib/waterWordmark";
 import {
   addHazardLayer,
   fetchHazards,
@@ -1632,6 +1633,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       window.removeEventListener("blacktop-recent-saved", refreshMine);
     };
   }, [map]);
+  // Water drawn as the BLACKTOP wordmark, tinted with the accent.
+  useEffect(() => {
+    if (!map) return;
+    return whenStyleReady(map, () => {
+      try {
+        applyWaterWordmark(map, accentColor);
+      } catch (err) {
+        if (/not done loading/i.test(String((err as Error)?.message ?? err))) throw err;
+        console.warn("[BlacktopMap] Water wordmark unavailable:", err);
+      }
+    });
+  }, [map, accentColor]);
+
   // Out of the way while riding, like the search bar.
   useEffect(() => {
     if (!map) return;

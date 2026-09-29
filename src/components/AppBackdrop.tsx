@@ -166,7 +166,13 @@ function useScrollFollow(enabled: boolean) {
   }, [enabled]);
 }
 
-export const AppBackdrop = memo(function AppBackdrop({ paused = false, front = false }: { paused?: boolean; front?: boolean }) {
+/**
+ * `flat`: no fish-eye lens. The lens is an SVG filter over the whole screen that
+ * has to be recomputed on the CPU every frame while the rows move; without it
+ * the belts and blobs are plain GPU transforms. Used on the ride screens, where
+ * the screen stays on for the whole ride.
+ */
+export const AppBackdrop = memo(function AppBackdrop({ paused = false, front = false, flat = false }: { paused?: boolean; front?: boolean; flat?: boolean }) {
   const lens = useLensMap();
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<SVGFEDisplacementMapElement>(null);
@@ -228,7 +234,7 @@ export const AppBackdrop = memo(function AppBackdrop({ paused = false, front = f
           </filter>
         </svg>
       )}
-      <div ref={wordmarkRef} className="backdrop-wordmark" style={lens ? { filter: `url(#${FILTER_ID})` } : undefined}>
+      <div ref={wordmarkRef} className="backdrop-wordmark" style={lens && !flat ? { filter: `url(#${FILTER_ID})` } : undefined}>
         {rows.map((b, r) => (
           <div key={r} className="backdrop-belt-slot">
             <div

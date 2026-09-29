@@ -2904,5 +2904,6 @@
  "🔧 {0} is due": "🔧 {0} の時期です",
  "🔧 {0} is overdue": "🔧 {0} が期限切れ",
  "🚨 Rico needs rescue": "🚨 Rico が救助を求めています",
- "Track Pack": "サーキットパック"
+ "Track Pack": "サーキットパック",
+ "Missing a place? Add it to OpenStreetMap": "場所が見つからない？ OpenStreetMap に追加"
 }

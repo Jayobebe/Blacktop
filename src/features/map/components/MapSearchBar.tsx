@@ -419,6 +419,19 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             ) : displayResults.length === 0 ? (
               <div className="p-5 text-center text-muted-foreground text-sm">
                 {cardsMode ? tr("No cards dropped nearby") : tr("No results found")}
+                {!cardsMode && (() => {
+                  // Places come from OpenStreetMap: a missing one can be reported there
+                  // (an OSM note needs no account) and shows up once a mapper adds it.
+                  const at = map?.getCenter() ?? userLocation;
+                  const href = at
+                    ? `https://www.openstreetmap.org/note/new#map=18/${at.lat.toFixed(5)}/${at.lng.toFixed(5)}`
+                    : "https://www.openstreetmap.org/note/new";
+                  return (
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="block mt-2 text-xs text-accent underline">
+                      {tr("Missing a place? Add it to OpenStreetMap")}
+                    </a>
+                  );
+                })()}
               </div>
             ) : (
               displayResults.map((result, index) => {

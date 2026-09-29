@@ -9,7 +9,7 @@ import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
 import { MaintenanceNotifier } from "@/features/garage";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
-import { burnExpiredTrips } from "@/features/ride";
+import { burnExpiredTrips, useRideSpeed } from "@/features/ride";
 import { useMapOverlay, useMapPresenceTracker } from "@/features/map";
 import { RadioOverlay, PlayerProvider, FloatingRadioLayer } from "@/features/radio";
 
@@ -100,17 +100,22 @@ function PageTransition({ children }: { children: React.ReactNode }) {
  * Global backdrop. Tapping anything interactive nudges the wordmark belts;
  * arriving on a new page surges them, then they coast back to cruising speed.
  * While the map loads, the backdrop is the loading screen (in front of the
- * page, belts running fast) and pauses once the map has drawn. It's frozen on
- * the ride and pillion screens: the screen stays on for the whole ride, and a
- * full-screen filtered animation behind it was a steady battery drain.
+ * page, belts running fast) and pauses once the map has drawn. On the ride and
+ * pillion screens it runs without the fish-eye lens (the lens is a CPU filter
+ * redrawn every frame, too costly with the screen on all ride), and the belts
+ * cruise faster past the amber speed threshold and faster again past red.
  * Pull-to-refresh lives here too since it drives the same backdrop.
  */
 const CRUISE_MAP_LOADING = 6;
+const CRUISE_AMBER = 3.5;
+const CRUISE_RED = 7;
 const RIDE_SCREENS = new Set(["/ride", "/pillion"]);
 
 function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
   const { pathname } = useLocation();
   const { ready: mapReady } = useMapOverlay();
+  const rideState = useRideSpeed();
+  const { settings } = useSettings();
   const mapLoading = mapOpen && !mapReady;
 
   useEffect(() => {
@@ -136,13 +141,22 @@ function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
     if (mapOpen) surgeBackdrop(30);
   }, [mapOpen]);
 
-  const cruise = mapLoading ? CRUISE_MAP_LOADING : 1;
+  const rideScreen = RIDE_SCREENS.has(pathname);
+  const onRide = pathname === "/ride" && rideState.isActive && settings.speedFocusEnabled;
+  const speed = rideState.currentSpeed;
+  const cruise = mapLoading
+    ? CRUISE_MAP_LOADING
+    : onRide && speed >= settings.redSpeedThreshold
+      ? CRUISE_RED
+      : onRide && speed >= settings.amberSpeedThreshold
+        ? CRUISE_AMBER
+        : 1;
   useEffect(() => setBackdropCruise(cruise), [cruise]);
 
-  const paused = (mapOpen && mapReady) || (RIDE_SCREENS.has(pathname) && !mapLoading);
+  const paused = mapOpen && mapReady;
   return (
     <>
-      <AppBackdrop paused={paused} front={mapLoading} />
+      <AppBackdrop paused={paused} front={mapLoading} flat={rideScreen && !mapLoading} />
       <PullToRefresh disabled={mapOpen || pathname === "/ride"} />
     </>
   );
