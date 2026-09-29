@@ -2910,5 +2910,7 @@
  "BRAKE": "BREMSE",
  "G-force": "G-Kraft",
  "LEFT": "LINKS",
- "RIGHT": "RECHTS"
+ "RIGHT": "RECHTS",
+ "CERTIFIED": "GEPRÜFT",
+ "Certified by Mecha-Nick": "Geprüft von Mecha-Nick"
 }

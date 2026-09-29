@@ -6,6 +6,9 @@ import { buildGForcePoints, pointsToAreaPath, pointsToLinePath } from '@/lib/gFo
 import { drawMiniMap } from '@/lib/overlayMiniMap';
 
 import { tr } from '@/lib/i18n';
+/** Mini-map dial diameter in video pixels. */
+const MINI_MAP_SIZE = 300;
+
 interface OverlayStats {
   speed: number;
   maxSpeed: number;
@@ -79,6 +82,10 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   // Rider trail for the mini-map polyline. Down-sampled from live GPS points
   // to a bounded ring so a multi-hour ride doesn't grow unbounded memory.
   const routeRef = useRef<Array<{ lat: number; lng: number }>>([]);
+  // The real-map mini map (lib/overlayMiniMapGL), created on the first fix of a
+  // recording; the old tile renderer draws until it has a frame.
+  const glMiniMapRef = useRef<import('@/lib/overlayMiniMapGL').OverlayMiniMapGL | null>(null);
+  const glMiniMapPendingRef = useRef(false);
 
   // Use refs for these so the animation loop always has the latest value
   const hasLeanDataRef = useRef(hasLeanData);
@@ -154,7 +161,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     const showLeftMiniMap = showMiniMap && stats.lat != null && stats.lng != null;
     if (showLeftMiniMap) {
       const mmWidth = 360;
-      const mmHeight = 300;
+      const mmHeight = MINI_MAP_SIZE;
       const mmX = 40;
       const mmY = height - mmHeight - 40;
 
@@ -169,15 +176,20 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       const distWidth = ctx.measureText(distText).width;
       ctx.fillText(distLabel, mmX + distWidth + 90, mmY - 28);
 
-      drawMiniMap({
-        ctx,
-        region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
-        center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
-        route,
-        members: stats.members,
-        opacity: 1,
-        accent,
-      });
+      const gl = glMiniMapRef.current;
+      if (gl?.hasFrame) {
+        gl.draw(ctx, mmX + mmHeight / 2, mmY + mmHeight / 2, mmHeight, stats.heading);
+      } else {
+        drawMiniMap({
+          ctx,
+          region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
+          center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
+          route,
+          members: stats.members,
+          opacity: 1,
+          accent,
+        });
+      }
     } else {
       ctx.fillStyle = 'white';
       ctx.font = 'bold 28px monospace';
@@ -385,6 +397,24 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         trail.push({ lat: stats.lat, lng: stats.lng });
         if (trail.length > 2000) trail.splice(0, trail.length - 2000);
       }
+      const gl = glMiniMapRef.current;
+      if (gl) {
+        gl.update({ lat: stats.lat, lng: stats.lng, heading: stats.heading }, trail, stats.members);
+      } else if (isRecordingRef.current && !glMiniMapPendingRef.current) {
+        // MapLibre loads only now, for riders recording with the mini map on.
+        glMiniMapPendingRef.current = true;
+        const at = { lat: stats.lat, lng: stats.lng };
+        import('@/lib/overlayMiniMapGL')
+          .then(({ OverlayMiniMapGL }) => OverlayMiniMapGL.create(MINI_MAP_SIZE, accentColorRef.current, at))
+          .then((mm) => {
+            if (isRecordingRef.current) glMiniMapRef.current = mm;
+            else mm.destroy();
+          })
+          .catch((e) => console.warn('[OverlayRecorder] Map mini map unavailable, using tiles:', e))
+          .finally(() => {
+            glMiniMapPendingRef.current = false;
+          });
+      }
     }
   }, []);
 
@@ -398,6 +428,8 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       }
 
       isRecordingRef.current = false;
+      glMiniMapRef.current?.destroy();
+      glMiniMapRef.current = null;
 
       // Stop animation loop
       if (animationFrameRef.current) {
@@ -434,6 +466,8 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      glMiniMapRef.current?.destroy();
+      glMiniMapRef.current = null;
       if (isRecordingRef.current) {
         isRecordingRef.current = false;
         if (animationFrameRef.current) {

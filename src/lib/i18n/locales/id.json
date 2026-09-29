@@ -2910,5 +2910,7 @@
  "BRAKE": "REM",
  "G-force": "Gaya G",
  "LEFT": "KIRI",
- "RIGHT": "KANAN"
+ "RIGHT": "KANAN",
+ "CERTIFIED": "TERSERTIFIKASI",
+ "Certified by Mecha-Nick": "Disertifikasi oleh Mecha-Nick"
 }

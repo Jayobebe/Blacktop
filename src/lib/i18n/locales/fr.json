@@ -2910,5 +2910,7 @@
  "BRAKE": "FREIN",
  "G-force": "Force G",
  "LEFT": "GAUCHE",
- "RIGHT": "DROITE"
+ "RIGHT": "DROITE",
+ "CERTIFIED": "CERTIFIÉ",
+ "Certified by Mecha-Nick": "Certifié par Mecha-Nick"
 }

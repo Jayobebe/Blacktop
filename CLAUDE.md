@@ -74,7 +74,8 @@ The screen stays on for a whole ride, so anything that runs per frame, per senso
 
 - Ride state (`useActiveRide`) is saved at most every 10 s, straight away on start/pause/resume/end and when the app goes to the background; lean/G-force samples are stored packed and appended in place. Never go back to serialising the whole ride on every change.
 - Sensors: `useLeanAngle(active, displayIntervalMs)` and `useGForce(active, { display, displayIntervalMs, onSample })` sample at full rate but only re-render at the display interval, and G-force not at all unless the gauge is shown; crash detection is fed through `onSample` and runs its stop-window check on its own timer.
-- The live overlay recorder (1080p canvas + MediaRecorder) only runs when `rideOverlayEnabled` is on, and draws at 30 fps.
+- The live overlay recorder (1080p canvas + MediaRecorder) only runs when `rideOverlayEnabled` is on, and draws at 30 fps. Its mini map (`lib/overlayMiniMapGL`) is a hidden MapLibre map in the Blacktop dark style copied into a circular heading-up dial, loaded on demand on the first fix of a recording (the old OSM-tile renderer in `lib/overlayMiniMap` draws until it has a frame).
+- The nearby-riders ring on the map is a faint dashed outline, shown only while stopped and not guiding (no fill, no pulse).
 - The ride screens' backdrop has no lens (see UI layer).
 - The map overlay stays mounted after its first open: `BlacktopMap` only watches GPS while visible or guiding, does no camera work while hidden, and skips the follow animation when the rider hasn't moved or turned.
 
@@ -112,6 +113,7 @@ Onboarding (`pages/Onboarding.tsx`: welcome → consent → setup flow → name)
 - The care answers are not stored separately: each question (`lib/questions.ts`) owns `AppSettings` feature flags (`speedFocusEnabled`, `garageEnabled`, `collectiblesEnabled`, `blacktopWorldEnabled`, lean/G, weather, overlay/flyover, radio, auto-rescue) and counts as "yes" when any of them is on. Settings → Your Blacktop edits the same flags.
 - Screens read these to change shape: Home tiles, stats and nav, the active ride's hero number (speed vs distance), receipts and share cards, Stats, History, badges, garage presets and mechanic lines, map quick searches (`lib/places.ts`). New UI should respect them: don't show speed without `speedFocusEnabled`, lean without `canLean && leanAngleEnabled`, garage/vehicle content without `garageEnabled`, badges/cards without `collectiblesEnabled`, and use `terms` for ride/drive wording.
 - Existing users without a stored profile default to the full app (motorcycle, both modes, everything on).
+- Pared-back Home (solo only, no Track Pack: Start, Plan a Route and the globe): Start begins the ride straight away (`/ride`, free ride), Plan a Route opens the solo lobby, the globe opens the map.
 
 ### Translations (`src/lib/i18n`)
 

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
-import { useRideHistory, useActiveRide } from '@/features/ride';
+import { useRideHistory, useActiveRide, clearSoloRoute } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { clearRideRole } from '@/features/pillion';
 import { getRacerState } from '@/features/track';
@@ -23,7 +23,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { stats } = useRideHistory();
-  const { rideState } = useActiveRide();
+  const { rideState, startRide } = useActiveRide();
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
   const exp = useExperience();
@@ -72,12 +72,24 @@ export default function Home() {
     icon: SoloIcon,
     label: exp.rideMode === 'solo' ? tr("Start {0}", [exp.terms.Ride]) : tr("Solo"),
     sub: exp.rideMode === 'solo' ? (settings.autoRescueEnabled ? tr("Tracking, stats and rescue") : tr("Tracking and stats")) : tr("{0} alone", [exp.terms.Ride]),
-    onClick: () => navigate('/solo-lobby'),
+    onClick: () => (quickStart ? startRideNow() : navigate('/solo-lobby')),
   };
   const primaryTiles = [...(exp.showGroup ? [convoyTile] : []), ...(exp.showSolo ? [soloTile] : [])];
   const singleTop = primaryTiles.length === 1;
   // Track Pack: racer shows the pairing QR, pit crew scans it. Remembered per device.
   const showTrack = settings.trackPackEnabled;
+  // Pared-back Home (solo only, no Track Pack: just Start, Plan a Route and the
+  // globe): no lobby in the way. Start begins tracking straight away, Plan a
+  // Route opens the lobby (destination, route options), the globe the map.
+  const quickStart = !exp.showGroup && !showTrack;
+  const startRideNow = () => {
+    if (rideState.isActive) {
+      navigate('/ride');
+      return;
+    }
+    clearSoloRoute(); // a free ride: no leftover destination from an earlier plan
+    if (startRide(false)) navigate('/ride');
+  };
   const [trackRole, setTrackRoleState] = useState<'racer' | 'pit'>(() => {
     try {
       return localStorage.getItem('bt.track_role') === 'pit' ? 'pit' : 'racer';
@@ -131,7 +143,7 @@ export default function Home() {
 
   const secondaryTile = exp.showGroup
     ? { icon: UserPlus, label: tr("Join Convoy"), sub: tr("Enter a convoy code"), onClick: () => navigate('/join-convoy') }
-    : { icon: Route, label: tr("Plan a Route"), sub: exp.motorised ? tr("Weather, cameras and loops") : tr("Weather and loop routes"), onClick: () => openBlacktopMap() };
+    : { icon: Route, label: tr("Plan a Route"), sub: exp.motorised ? tr("Weather, cameras and loops") : tr("Weather and loop routes"), onClick: () => (quickStart ? navigate('/solo-lobby') : openBlacktopMap()) };
 
   // Speed only makes the cut for riders who said they care about it.
   const quickStats = [

@@ -2910,5 +2910,7 @@
  "BRAKE": "ГАЛЬМО",
  "G-force": "Перевантаження",
  "LEFT": "ЛІВО",
- "RIGHT": "ПРАВО"
+ "RIGHT": "ПРАВО",
+ "CERTIFIED": "ПЕРЕВІРЕНО",
+ "Certified by Mecha-Nick": "Перевірено Mecha-Nick"
 }

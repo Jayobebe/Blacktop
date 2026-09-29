@@ -2910,5 +2910,7 @@
  "BRAKE": "BROMS",
  "G-force": "G-kraft",
  "LEFT": "VÄNSTER",
- "RIGHT": "HÖGER"
+ "RIGHT": "HÖGER",
+ "CERTIFIED": "GODKÄND",
+ "Certified by Mecha-Nick": "Godkänd av Mecha-Nick"
 }

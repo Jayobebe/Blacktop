@@ -1366,15 +1366,22 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [challengeRun, userLocation, challengeNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Rider moving (drives pin visibility and the nearby-riders ring; set further down).
+  const [moving, setMoving] = useState(false);
+
   // ── Nearby riders (opt-in): voice-range ring + faint rider dots ─────────
   const proximity = useProximityState();
   const proxMarkersRef = useRef<Map<string, Marker>>(new Map());
 
   // Ring = the radius other riders need to be within to be offered a join-up.
+  // A faint dashed outline only, and only while stopped and not following
+  // directions: filled and pulsing it covered most of a navigation-zoom screen
+  // (and the pulse kept the map redrawing all ride).
+  const showProxRing = proximity.active && !moving && !guiding;
   useEffect(() => {
     if (!map) return;
     const SRC = "prox-range";
-    const center = proximity.active ? userLocation : null;
+    const center = showProxRing ? userLocation : null;
     const ring: [number, number][] = [];
     if (center) {
       const dLat = ALERT_RADIUS_M / 111_320;
@@ -1398,28 +1405,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       }
       if (!ring.length) return;
       map.addSource(SRC, { type: "geojson", data });
-      map.addLayer({ id: `${SRC}-fill`, type: "fill", source: SRC, paint: { "fill-color": accentColor, "fill-opacity": 0.06 } });
       map.addLayer({
         id: `${SRC}-line`,
         type: "line",
         source: SRC,
-        paint: { "line-color": accentColor, "line-width": 1.5, "line-opacity": 0.5, "line-dasharray": [2, 2] },
+        paint: { "line-color": accentColor, "line-width": 1, "line-opacity": 0.35, "line-dasharray": [2, 3] },
       });
     };
     return whenStyleReady(map, apply);
-  }, [map, proximity.active, userLocation, accentColor]);
-
-  // Gentle pulse on the ring while it's showing.
-  useEffect(() => {
-    if (!map || !proximity.active) return;
-    const started = Date.now();
-    const id = window.setInterval(() => {
-      if (!map.getLayer("prox-range-fill")) return;
-      const t = (Date.now() - started) / 1000;
-      map.setPaintProperty("prox-range-fill", "fill-opacity", 0.04 + 0.05 * (0.5 + 0.5 * Math.sin(t * 2)));
-    }, 150);
-    return () => window.clearInterval(id);
-  }, [map, proximity.active]);
+  }, [map, showProxRing, userLocation, accentColor]);
 
   useEffect(() => {
     if (!map) return;
@@ -1590,7 +1584,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // Moving: the search bar gets out of the way so the toolbar (and, in a
   // convoy, the status strip) can take its place. Comes back once slow or
   // stopped. Hysteresis + delays so it doesn't flap at junctions/lights.
-  const [moving, setMoving] = useState(false);
   useEffect(() => {
     const MOVING_MPH = 12;
     const STOPPED_MPH = 5;

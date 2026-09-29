@@ -75,40 +75,43 @@ export function SurveyResultsTable() {
         <p className="text-xs text-muted-foreground">{tr("Loading…")}</p>
       ) : (
         <>
-          <div className="rounded-xl border border-border overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="text-left font-medium px-2 py-1.5">{tr("Item")}</th>
-                  <th className="text-right font-medium px-1.5 py-1.5" title={tr("I'd buy it")}>{tr("Buy")}</th>
-                  <th className="text-right font-medium px-1.5 py-1.5">{tr("Maybe")}</th>
-                  <th className="text-right font-medium px-1.5 py-1.5">{tr("No")}</th>
-                  <th className="text-right font-medium px-2 py-1.5">{tr("Keen")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordered.map(({ id, name, prices, row }) => {
-                  const total = row ? row.yes + row.maybe + row.no : 0;
-                  const keen = total ? Math.round(((row!.yes + row!.maybe) / total) * 100) : null;
-                  const picks = prices.filter((p) => row?.prices?.[p]).map((p) => `${p} ×${row!.prices[p]}`);
-                  return (
-                    <tr key={id} className="border-t border-border/60">
-                      <td className="px-2 py-1.5">
-                        <p className="font-medium">{name}</p>
-                        {picks.length > 0 && <p className="text-[10px] text-muted-foreground">{tr("Would pay")}{" "}{picks.join(' · ')}</p>}
-                      </td>
-                      <td className="px-1.5 py-1.5 text-right tabular-nums">{row?.yes ?? 0}</td>
-                      <td className="px-1.5 py-1.5 text-right tabular-nums">{row?.maybe ?? 0}</td>
-                      <td className="px-1.5 py-1.5 text-right tabular-nums">{row?.no ?? 0}</td>
-                      <td className={cn('px-2 py-1.5 text-right tabular-nums font-semibold', keen !== null && keen >= 50 && 'text-accent')}>
-                        {keen === null ? '—' : `${keen}%`}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          {/* A stacked list rather than a five-column table: it reads at any
+              phone width and in any language (long translated column headings
+              used to push the table off the side of the card). */}
+          <ul className="rounded-xl border border-border divide-y divide-border/60">
+            {ordered.map(({ id, name, prices, row }) => {
+              const yes = row?.yes ?? 0;
+              const maybe = row?.maybe ?? 0;
+              const no = row?.no ?? 0;
+              const total = yes + maybe + no;
+              const keen = total ? Math.round(((yes + maybe) / total) * 100) : null;
+              const picks = prices.filter((p) => row?.prices?.[p]).map((p) => `${p} ×${row!.prices[p]}`);
+              const pct = (n: number) => `${total ? (n / total) * 100 : 0}%`;
+              return (
+                <li key={id} className="px-3 py-2.5">
+                  <div className="flex items-baseline gap-2">
+                    <p className="flex-1 min-w-0 text-xs font-medium break-words">{name}</p>
+                    <p className={cn('text-xs font-semibold tabular-nums', keen !== null && keen >= 50 ? 'text-accent' : 'text-muted-foreground')}>
+                      {keen === null ? '—' : `${keen}%`}
+                    </p>
+                  </div>
+                  {total > 0 && (
+                    <div className="mt-1.5 flex h-1.5 rounded-full overflow-hidden bg-muted/40" aria-hidden>
+                      <span className="bg-accent" style={{ width: pct(yes) }} />
+                      <span className="bg-accent/45" style={{ width: pct(maybe) }} />
+                      <span className="bg-muted-foreground/30" style={{ width: pct(no) }} />
+                    </div>
+                  )}
+                  <p className="mt-1 text-[10px] text-muted-foreground tabular-nums">
+                    {tr("Buy")} {yes} · {tr("Maybe")} {maybe} · {tr("No")} {no}
+                  </p>
+                  {picks.length > 0 && (
+                    <p className="text-[10px] text-muted-foreground break-words">{tr("Would pay")}{" "}{picks.join(' · ')}</p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
           <p className="text-[10px] text-muted-foreground mt-1.5">
             {voters === 1 ? tr("Keen = buy + maybe. Up to 1 rider per item so far.") : tr("Keen = buy + maybe. Up to {0} riders per item so far.", [voters])}
           </p>

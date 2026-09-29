@@ -15,6 +15,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { GForceCircle } from '@/components/GForceCircle';
+import { MechaNickStamp } from './MechaNickStamp';
 import type { GMax } from '@/lib/gForceVector';
 
 interface RideStats {
@@ -276,8 +277,11 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
 
           {showG && rideStats?.gEnvelope && rideStats.gMax && rideStats.gEnvelope.some((v) => v > 0) && (<>
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
-          <div className="flex justify-center py-1" style={{ color: 'var(--ink)' }}>
-            <GForceCircle ink envelope={rideStats.gEnvelope} max={rideStats.gMax} className="w-48" />
+          {/* The G meter, with Mecha-Nick's stamp beside it for riders who use the
+              garage (he's the garage's mechanic) */}
+          <div className="flex items-center justify-center gap-1 py-1" style={{ color: 'var(--ink)' }}>
+            <GForceCircle ink envelope={rideStats.gEnvelope} max={rideStats.gMax} className={showVehicle ? 'w-44 shrink-0' : 'w-48'} />
+            {showVehicle && <MechaNickStamp date={printedAt} className="w-[6.5rem] shrink-0 -ml-1 mt-8" />}
           </div>
           </>)}
 

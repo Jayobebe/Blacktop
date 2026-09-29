@@ -2910,5 +2910,7 @@
  "BRAKE": "FREN",
  "G-force": "G kuvveti",
  "LEFT": "SOL",
- "RIGHT": "SAĞ"
+ "RIGHT": "SAĞ",
+ "CERTIFIED": "ONAYLI",
+ "Certified by Mecha-Nick": "Mecha-Nick onaylı"
 }

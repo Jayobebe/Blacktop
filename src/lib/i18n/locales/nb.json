@@ -2910,5 +2910,7 @@
  "BRAKE": "BREMS",
  "G-force": "G-kraft",
  "LEFT": "VENSTRE",
- "RIGHT": "HØYRE"
+ "RIGHT": "HØYRE",
+ "CERTIFIED": "GODKJENT",
+ "Certified by Mecha-Nick": "Godkjent av Mecha-Nick"
 }

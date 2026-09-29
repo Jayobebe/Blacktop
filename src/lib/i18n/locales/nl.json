@@ -2910,5 +2910,7 @@
  "BRAKE": "REMMEN",
  "G-force": "G-kracht",
  "LEFT": "LINKS",
- "RIGHT": "RECHTS"
+ "RIGHT": "RECHTS",
+ "CERTIFIED": "GOEDGEKEURD",
+ "Certified by Mecha-Nick": "Goedgekeurd door Mecha-Nick"
 }
