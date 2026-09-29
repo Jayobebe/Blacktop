@@ -691,6 +691,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           });
         } else {
           if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
+          if (freePanRef.current && !destinationRef.current) return; // free panning: stay put
           // Re-snap to a tight follow zoom whenever we resume after the rider
           // stopped panning; only nudge zoom up (never yank them out).
           const currentZoom = map.getZoom();
@@ -742,7 +743,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         return;
       }
       if (resumed) return;
+      if (freePanRef.current && !destinationRef.current) return;
       resumed = true;
+      freePanRef.current = false;
 
       const loc = userLocationRef.current;
       if (!loc) return;
@@ -1763,6 +1766,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     const loc = userLocationRef.current;
     if (!map || !loc) return false;
     lastInteractionAtRef.current = 0;
+    freePanRef.current = false;
     map.stop();
     map.easeTo({
       center: [loc.lng, loc.lat],
