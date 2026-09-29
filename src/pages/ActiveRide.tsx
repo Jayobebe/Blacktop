@@ -28,7 +28,7 @@ import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
 import { saveRideOverlayBlob } from '@/lib/overlayStore';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
-import { GForceGauge } from '@/components/GForceGauge';
+import { GForceCircle } from '@/components/GForceCircle';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
@@ -169,7 +169,11 @@ export default function ActiveRide() {
   
   // Lean angle sensor
   // 10Hz is enough for the gauge and matches the 10Hz lean recording; each update re-renders this screen.
-  const leanAngle = useLeanAngle(leanOn && rideState.isActive, 100);
+  // Also runs for the G meter on bikes (cornering G comes from the lean), even with the lean gauge off.
+  const leanSensorOn = canLean && (settings.leanAngleEnabled || settings.gForceEnabled);
+  const leanAngle = useLeanAngle(leanSensorOn && rideState.isActive, 100);
+  const leanForGRef = useRef<number | null>(null);
+  leanForGRef.current = canLean && leanAngle.isSupported && leanAngle.permissionGranted ? leanAngle.currentLean : null;
 
   // G-force sensor - shared by the live gauge AND auto-rescue crash detection,
   // so there's a single devicemotion listener regardless of which feature(s) need it.
@@ -179,6 +183,7 @@ export default function ActiveRide() {
   const gForce = useGForce(rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled), {
     display: settings.gForceEnabled,
     displayIntervalMs: 100,
+    leanRef: leanForGRef,
     onSample: useCallback((g: number) => crashSampleRef.current(g), []),
   });
 
@@ -222,7 +227,7 @@ export default function ActiveRide() {
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
   const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
-  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number; maxGForce?: number; gForceSamples?: GForceSample[] } | null>(null);
+  const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number; maxGForce?: number; gForceSamples?: GForceSample[]; gEnvelope?: number[]; gMax?: { left: number; right: number; brake: number; accel: number } } | null>(null);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
   const { integration: discordIntegration } = useDiscordIntegration();
@@ -319,12 +324,12 @@ export default function ActiveRide() {
 
   // Request lean angle permission when ride starts (iOS requires user gesture)
   useEffect(() => {
-    if (rideState.isActive && leanOn && !leanAngle.permissionGranted) {
+    if (rideState.isActive && leanSensorOn && !leanAngle.permissionGranted) {
       leanAngle.requestPermission();
     }
     // Lists the fields it reads; the hook's return object is new every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rideState.isActive, leanOn, leanAngle.permissionGranted, leanAngle.requestPermission]);
+  }, [rideState.isActive, leanSensorOn, leanAngle.permissionGranted, leanAngle.requestPermission]);
 
   // Sync lean angle to ride state for recording
   useEffect(() => {
@@ -346,8 +351,10 @@ export default function ActiveRide() {
   // Persist max G-force to ride state for recording (only when the gauge feature is enabled)
   useEffect(() => {
     if (rideState.isActive && settings.gForceEnabled && gForce.isSupported) {
-      updateGForce(gForce.currentG, gForce.maxG);
+      updateGForce(gForce.currentG, gForce.maxG, { envelope: gForce.envelope, max: gForce.gMax });
     }
+    // gForce.envelope / gMax change together with currentG (same state update).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rideState.isActive, settings.gForceEnabled, gForce.isSupported, gForce.currentG, gForce.maxG, updateGForce]);
 
   // Start overlay recording when ride starts, only when the rider uses overlay videos
@@ -389,6 +396,7 @@ export default function ActiveRide() {
         leanAngle: rideState.currentLean,
         maxLean: Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
         gForce: gForce.currentG,
+        gVector: settings.gForceEnabled ? { lateral: gForce.lateralG, longitudinal: gForce.longitudinalG, envelope: rideState.gEnvelope ?? gForce.envelope, max: rideState.gMax ?? gForce.gMax } : undefined,
         maxGForce: rideState.maxGForce,
         lat: last?.lat ?? null,
         lng: last?.lng ?? null,
@@ -463,6 +471,8 @@ export default function ActiveRide() {
         averageSpeed: avgSpeed,
         maxLean: Math.max(currentRideState.maxLeanLeft || 0, currentRideState.maxLeanRight || 0),
         maxGForce: currentRideState.maxGForce || undefined,
+        gEnvelope: currentRideState.gEnvelope,
+        gMax: currentRideState.gMax,
         gForceSamples: currentRideState.gForceSamples,
       });
       
@@ -586,6 +596,8 @@ export default function ActiveRide() {
         averageSpeed: avgSpeed,
         maxLean: Math.max(rideState.maxLeanLeft || 0, rideState.maxLeanRight || 0),
         maxGForce: rideState.maxGForce || undefined,
+        gEnvelope: rideState.gEnvelope,
+        gMax: rideState.gMax,
         gForceSamples: rideState.gForceSamples,
       });
 
@@ -1004,7 +1016,7 @@ export default function ActiveRide() {
 
                   {settings.gForceEnabled && gForce.isSupported && (
                     <div className="mt-2 flex justify-center">
-                      <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+                      <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-52 landscape:w-44" />
                     </div>
                   )}
                 </div>
@@ -1069,7 +1081,7 @@ export default function ActiveRide() {
         {/* Landscape: G-Force between speed and buttons */}
         {settings.gForceEnabled && gForce.isSupported && (
           <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">
-            <GForceGauge currentG={gForce.currentG} maxG={rideState.maxGForce} />
+            <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-52 landscape:w-44" />
           </div>
         )}
 

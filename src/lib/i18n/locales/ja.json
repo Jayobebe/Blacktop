@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} が期限切れ",
  "🚨 Rico needs rescue": "🚨 Rico が救助を求めています",
  "Track Pack": "サーキットパック",
- "Missing a place? Add it to OpenStreetMap": "場所が見つからない？ OpenStreetMap に追加"
+ "Missing a place? Add it to OpenStreetMap": "場所が見つからない？ OpenStreetMap に追加",
+ "ACCEL": "加速",
+ "BRAKE": "ブレーキ",
+ "G-force": "Gフォース",
+ "LEFT": "左",
+ "RIGHT": "右"
 }

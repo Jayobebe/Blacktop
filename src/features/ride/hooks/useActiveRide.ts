@@ -1,4 +1,5 @@
 import { takePendingTrackReceipt } from '@/lib/trackReceipt';
+import { mergeGVector, type GMax } from '@/lib/gForceVector';
 import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { takePendingChallengeReceipt } from '@/lib/challengeRun';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
@@ -932,6 +933,8 @@ export function useActiveRide(convoyId?: string | null) {
       maxLeanLeft: 0,
       maxLeanRight: 0,
       maxGForce: 0,
+      gEnvelope: undefined,
+      gMax: undefined,
       distance: 0,
       duration: 0,
       gpsPoints: [],
@@ -1054,6 +1057,8 @@ export function useActiveRide(convoyId?: string | null) {
         gpsPoints: currentState.gpsPoints,
         leanSamples: currentState.leanSamples,
         gForceSamples: currentState.gForceSamples,
+        gEnvelope: currentState.gEnvelope?.some((v) => v > 0) ? currentState.gEnvelope : undefined,
+        gMax: currentState.gMax,
         bikeId,
         challenge: takePendingChallengeReceipt(),
         track: takePendingTrackReceipt(),
@@ -1097,6 +1102,8 @@ export function useActiveRide(convoyId?: string | null) {
       maxLeanLeft: 0,
       maxLeanRight: 0,
       maxGForce: 0,
+      gEnvelope: undefined,
+      gMax: undefined,
       distance: 0,
       duration: 0,
       gpsPoints: [],
@@ -1171,7 +1178,7 @@ export function useActiveRide(convoyId?: string | null) {
   }, []);
 
   // Update G-force during ride (called from components using useGForce)
-  const updateGForce = useCallback((currentG: number, maxG: number) => {
+  const updateGForce = useCallback((currentG: number, maxG: number, vector?: { envelope: number[]; max: GMax }) => {
     if (!rideState.isActive || isPaused) return;
 
     // Record G-force sample at 10Hz
@@ -1183,6 +1190,13 @@ export function useActiveRide(convoyId?: string | null) {
         ...prev,
         maxGForce: Math.max(prev.maxGForce, maxG),
       };
+      // Friction circle: merged, so a restored ride (the sensor starting from zero
+      // again) keeps what it had before.
+      if (vector) {
+        const merged = prev.gEnvelope && prev.gMax ? mergeGVector({ envelope: prev.gEnvelope, max: prev.gMax }, vector) : vector;
+        newState.gEnvelope = merged.envelope;
+        newState.gMax = merged.max;
+      }
 
       // Add G-force sample at 10Hz rate
       if (shouldSample) {

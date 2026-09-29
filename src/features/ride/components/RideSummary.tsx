@@ -14,6 +14,8 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
+import { GForceCircle } from '@/components/GForceCircle';
+import type { GMax } from '@/lib/gForceVector';
 
 interface RideStats {
   duration: number;
@@ -22,6 +24,9 @@ interface RideStats {
   averageSpeed: number;
   maxLean?: number;
   maxGForce?: number;
+  /** Friction-circle peaks (lib/gForceVector), when the ride recorded them. */
+  gEnvelope?: number[];
+  gMax?: GMax;
 }
 
 interface RideSummaryProps {
@@ -268,6 +273,13 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               )}
             </div>
           )}
+
+          {showG && rideStats?.gEnvelope && rideStats.gMax && rideStats.gEnvelope.some((v) => v > 0) && (<>
+          <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
+          <div className="flex justify-center py-1" style={{ color: 'var(--ink)' }}>
+            <GForceCircle ink envelope={rideStats.gEnvelope} max={rideStats.gMax} className="w-48" />
+          </div>
+          </>)}
 
           {(showVehicle || (showG && gForceSamples && gForceSamples.length > 1)) && (<>
           {/* Divider */}

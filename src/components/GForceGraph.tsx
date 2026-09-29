@@ -15,7 +15,7 @@ interface GForceGraphProps {
 /**
  * Low-opacity line+area trace of G-force over a ride. Meant to sit as a
  * subtle background layer (e.g. behind the receipt's vehicle photo) rather
- * than as a standalone readable chart - see GForceGauge for the live value.
+ * than as a standalone readable chart - see GForceCircle for the live meter.
  */
 export function GForceGraph({ samples, className, width = 320, height = 80, color = 'hsl(var(--accent))' }: GForceGraphProps) {
   const points = useMemo(

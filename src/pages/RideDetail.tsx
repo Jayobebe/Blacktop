@@ -163,6 +163,8 @@ export default function RideDetail() {
               averageSpeed: ride.averageSpeed,
               maxLean: Math.max(ride.maxLeanLeft || 0, ride.maxLeanRight || 0),
               maxGForce: ride.maxGForce,
+              gEnvelope: ride.gEnvelope,
+              gMax: ride.gMax,
             }}
             bikeName={rideBike?.name ?? null}
             bikePhoto={rideBike?.photos?.hero ?? null}

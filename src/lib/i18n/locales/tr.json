@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} gecikti",
  "🚨 Rico needs rescue": "🚨 Rico kurtarılmaya ihtiyaç duyuyor",
  "Track Pack": "Pist Paketi",
- "Missing a place? Add it to OpenStreetMap": "Bir yer mi eksik? OpenStreetMap’e ekle"
+ "Missing a place? Add it to OpenStreetMap": "Bir yer mi eksik? OpenStreetMap’e ekle",
+ "ACCEL": "GAZ",
+ "BRAKE": "FREN",
+ "G-force": "G kuvveti",
+ "LEFT": "SOL",
+ "RIGHT": "SAĞ"
 }

@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 Прострочено: {0}",
  "🚨 Rico needs rescue": "🚨 Rico потребує порятунку",
  "Track Pack": "Трековий пакет",
- "Missing a place? Add it to OpenStreetMap": "Бракує місця? Додай його в OpenStreetMap"
+ "Missing a place? Add it to OpenStreetMap": "Бракує місця? Додай його в OpenStreetMap",
+ "ACCEL": "ГАЗ",
+ "BRAKE": "ГАЛЬМО",
+ "G-force": "Перевантаження",
+ "LEFT": "ЛІВО",
+ "RIGHT": "ПРАВО"
 }

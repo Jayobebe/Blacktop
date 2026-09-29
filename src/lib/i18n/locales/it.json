@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} scaduto",
  "🚨 Rico needs rescue": "🚨 Rico ha bisogno di soccorso",
  "Track Pack": "Pacchetto Pista",
- "Missing a place? Add it to OpenStreetMap": "Manca un luogo? Aggiungilo su OpenStreetMap"
+ "Missing a place? Add it to OpenStreetMap": "Manca un luogo? Aggiungilo su OpenStreetMap",
+ "ACCEL": "ACCEL.",
+ "BRAKE": "FRENO",
+ "G-force": "Forza G",
+ "LEFT": "SINISTRA",
+ "RIGHT": "DESTRA"
 }

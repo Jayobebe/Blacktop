@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} बकाया है",
  "🚨 Rico needs rescue": "🚨 Rico को रेस्क्यू चाहिए",
  "Track Pack": "ट्रैक पैक",
- "Missing a place? Add it to OpenStreetMap": "कोई जगह नहीं मिली? उसे OpenStreetMap में जोड़ें"
+ "Missing a place? Add it to OpenStreetMap": "कोई जगह नहीं मिली? उसे OpenStreetMap में जोड़ें",
+ "ACCEL": "एक्सेल",
+ "BRAKE": "ब्रेक",
+ "G-force": "G-फ़ोर्स",
+ "LEFT": "बाएँ",
+ "RIGHT": "दाएँ"
 }

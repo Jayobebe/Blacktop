@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} er over tid",
  "🚨 Rico needs rescue": "🚨 Rico har brug for undsætning",
  "Track Pack": "Banepakke",
- "Missing a place? Add it to OpenStreetMap": "Mangler et sted? Tilføj det i OpenStreetMap"
+ "Missing a place? Add it to OpenStreetMap": "Mangler et sted? Tilføj det i OpenStreetMap",
+ "ACCEL": "GAS",
+ "BRAKE": "BREMS",
+ "G-force": "G-kraft",
+ "LEFT": "VENSTRE",
+ "RIGHT": "HØJRE"
 }

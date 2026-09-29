@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Zap, Flag, Trash2, Pencil, QrCode, Users, Satellite, X, Footprints, Map as MapIcon, Check, Timer, History, Star } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +12,8 @@ import { useActiveRide } from '@/features/ride';
 import { getActiveBikeIdSnapshot } from '@/features/garage';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
+import { useExperience } from '@/features/experience';
+import { GForceCircle } from '@/components/GForceCircle';
 import { useGForce } from '@/hooks/useGForce';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { TrackDef, TrackSession } from '../types';
@@ -66,7 +68,13 @@ export function RacerView() {
   const { phase } = racer;
   const sensorsOn = phase === 'armed' || phase === 'running';
   const lean = useLeanAngle(sensorsOn);
-  const gForce = useGForce(sensorsOn);
+  const { canLean } = useExperience();
+  // Cornering G for a leaning bike comes from the lean (see lib/gForceVector).
+  const leanForGRef = useRef<number | null>(null);
+  leanForGRef.current = canLean && lean.isSupported && lean.permissionGranted ? lean.currentLean : null;
+  const gForce = useGForce(sensorsOn, { leanRef: leanForGRef });
+  // Gravity-free G (the friction circle's), for the timer, the pit crew and the traces.
+  const dynamicG = Math.hypot(gForce.lateralG, gForce.longitudinalG);
   const wakeLock = useWakeLock();
 
   // The pairing link opens on entry so the crew can join at any point.
@@ -88,11 +96,13 @@ export function RacerView() {
   // Feed lean / G into the timer (and the ride, so its stats have them too).
   useEffect(() => {
     if (!sensorsOn) return;
-    updateSensors(lean.currentLean, gForce.currentG);
+    updateSensors(lean.currentLean, dynamicG);
     if (phase === 'running') {
       if (lean.isSupported) updateLeanAngle(lean.currentLean, lean.maxLeanLeft, lean.maxLeanRight);
-      if (gForce.isSupported) updateGForce(gForce.currentG, gForce.maxG);
+      if (gForce.isSupported) updateGForce(gForce.currentG, gForce.maxG, { envelope: gForce.envelope, max: gForce.gMax });
     }
+    // The G vector fields change together with currentG (same state update).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sensorsOn, phase, lean.currentLean, lean.maxLeanLeft, lean.maxLeanRight, lean.isSupported, gForce.currentG, gForce.maxG, gForce.isSupported, updateLeanAngle, updateGForce]);
 
   useEffect(() => {
@@ -312,6 +322,11 @@ export function RacerView() {
               <Stat label={tr("Lean")} value={lean.isSupported ? `${Math.round(Math.abs(racer.lean))}°` : '—'} />
               <Stat label={tr("G")} value={gForce.isSupported ? racer.g.toFixed(2) : '—'} />
             </div>
+            {gForce.isSupported && (
+              <div className="flex justify-center pt-1">
+                <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={gForce.envelope} max={gForce.gMax} className="w-44 landscape:w-36" />
+              </div>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2">

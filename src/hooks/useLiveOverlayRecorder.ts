@@ -1,5 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { formatDuration, formatDistance } from '@/lib/format';
+import { drawGForceCircle } from '@/lib/gForceCircleCanvas';
+import type { GMax } from '@/lib/gForceVector';
 import { buildGForcePoints, pointsToAreaPath, pointsToLinePath } from '@/lib/gForceGraph';
 import { drawMiniMap } from '@/lib/overlayMiniMap';
 
@@ -13,6 +15,8 @@ interface OverlayStats {
   maxLean: number;
   gForce: number;
   maxGForce: number;
+  /** Friction circle (lib/gForceVector); drawn instead of the old dial when present. */
+  gVector?: { lateral: number; longitudinal: number; envelope: number[]; max: GMax };
   // Live rider position + heading so the mini-map (when enabled) can centre
   // the map on the rider and rotate to their direction of travel.
   lat: number | null;
@@ -234,64 +238,14 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.fillText(`${Math.abs(Math.round(stats.leanAngle))}°`, centerX, leanTextY);
     }
 
-    // Bottom Right — G-force gauge, styled to match the in-app GForceGauge:
-    // 270° sweep dial starting bottom-left → bottom-right, colored by threshold.
-    if (showGForce) {
-      const GAUGE_MAX_G = 3;
-      const WARN_G = 1.8;
-      const DANGER_G = 2.4;
-      const currentG = Math.max(0, stats.gForce || 0);
-      const maxG = Math.max(0, stats.maxGForce || 0);
-      const clamped = Math.min(GAUGE_MAX_G, currentG);
-      const fraction = clamped / GAUGE_MAX_G;
-
-      const gaugeRadius = 60;
-      const strokeW = 12;
-      const cxG = width - 40 - gaugeRadius - 4;
-      const cyG = height - 130 - gaugeRadius;
-
-      const startAngle = (-225 * Math.PI) / 180;
-      const endAngle = startAngle + (270 * Math.PI) / 180;
-      const valueEndAngle = startAngle + fraction * (270 * Math.PI) / 180;
-
-      const isDanger = currentG >= DANGER_G;
-      const isWarn = !isDanger && currentG >= WARN_G;
-      const activeColor = isDanger ? '#ef4444' : isWarn ? '#f59e0b' : accent;
-      const textColor = isDanger ? '#ef4444' : isWarn ? '#f59e0b' : 'white';
-
-      // Track
-      ctx.beginPath();
-      ctx.arc(cxG, cyG, gaugeRadius, startAngle, endAngle);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-      ctx.lineWidth = strokeW;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      // Value arc
-      if (fraction > 0) {
-        ctx.beginPath();
-        ctx.arc(cxG, cyG, gaugeRadius, startAngle, valueEndAngle);
-        ctx.strokeStyle = activeColor;
-        ctx.lineWidth = strokeW;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-      }
-
-      // Center value
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = textColor;
-      ctx.font = 'bold 28px monospace';
-      ctx.fillText(currentG.toFixed(1), cxG, cyG - 6);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.font = '12px system-ui';
-      ctx.fillText('G', cxG, cyG + 16);
-
-      // MAX label below the gauge
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.font = '13px system-ui';
-      ctx.fillText(`MAX ${maxG > 0 ? maxG.toFixed(1) : '0.0'}G`, cxG, cyG + gaugeRadius + 14);
-
+    // Bottom Right — the friction-circle G meter, same design as the in-app one.
+    if (showGForce && stats.gVector) {
+      drawGForceCircle(ctx, width - 220, height - 280, 300, stats.gVector, accent, {
+        left: tr("LEFT"),
+        right: tr("RIGHT"),
+        brake: tr("BRAKE"),
+        accel: tr("ACCEL"),
+      });
       ctx.textBaseline = 'top';
     }
 

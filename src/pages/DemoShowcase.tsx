@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { GForceCircle } from '@/components/GForceCircle';
+import { emptyGVector, envelopeBin } from '@/lib/gForceVector';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -949,8 +951,8 @@ function TrackingMockup() {
   const [maxSpeed, setMaxSpeed] = useState(74);
   const [lean, setLean] = useState(18);
   const [maxLean, setMaxLean] = useState(24);
-  const [gForce, setGForce] = useState(0.8);
-  const [maxG, setMaxG] = useState(1.1);
+  // Simulated friction circle: cornering from the lean (a leaning bike's tan(lean)), braking / drive random.
+  const [gVec, setGVec] = useState(() => ({ lateral: 0, longitudinal: 0, ...emptyGVector() }));
   const [seconds, setSeconds] = useState(754);
 
   useEffect(() => {
@@ -967,10 +969,25 @@ function TrackingMockup() {
         setMaxLean(m => Math.max(m, Math.abs(next)));
         return next;
       });
-      setGForce(() => {
-        const next = Math.round((0.4 + Math.random() * 1.1) * 100) / 100;
-        setMaxG(m => Math.max(m, next));
-        return next;
+      setGVec((prev) => {
+        const leanNow = (Math.random() * 2 - 1) * 42;
+        const lateral = Math.tan((leanNow * Math.PI) / 180) * 0.85;
+        const longitudinal = Math.random() < 0.5 ? Math.random() * 0.75 : -Math.random() * 0.4;
+        const envelope = prev.envelope.slice();
+        const mag = Math.hypot(lateral, longitudinal);
+        const bin = envelopeBin(lateral, longitudinal);
+        envelope[bin] = Math.max(envelope[bin], mag);
+        return {
+          lateral,
+          longitudinal,
+          envelope,
+          max: {
+            left: Math.max(prev.max.left, -lateral),
+            right: Math.max(prev.max.right, lateral),
+            brake: Math.max(prev.max.brake, longitudinal),
+            accel: Math.max(prev.max.accel, -longitudinal),
+          },
+        };
       });
     }, 700);
     return () => clearInterval(interval);
@@ -1002,18 +1019,11 @@ function TrackingMockup() {
             />
           </div>
         </div>
-        <div className="frost rounded-xl px-4 py-2 border border-border/30">
-          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{tr("G-Force")}</p>
-          <p className="font-mono text-base font-semibold text-accent transition-all duration-500">
-            {gForce.toFixed(2)}{tr("G")}{" "}<span className="text-[9px] text-muted-foreground">{tr("max")}{" "}{maxG.toFixed(1)}{tr("G")}</span>
-          </p>
-          <div className="mt-1 h-1 w-24 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-500"
-              style={{ width: `${Math.min(100, (gForce / 1.6) * 100)}%` }}
-            />
-          </div>
-        </div>
+      </div>
+
+      {/* G meter */}
+      <div className="flex justify-center animate-slide-up delay-100">
+        <GForceCircle lateral={gVec.lateral} longitudinal={gVec.longitudinal} envelope={gVec.envelope} max={gVec.max} className="w-52" />
       </div>
 
       {/* Stats Row */}

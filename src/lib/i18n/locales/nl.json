@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} is over tijd",
  "🚨 Rico needs rescue": "🚨 Rico heeft redding nodig",
  "Track Pack": "Circuitpakket",
- "Missing a place? Add it to OpenStreetMap": "Mist er een plek? Voeg hem toe aan OpenStreetMap"
+ "Missing a place? Add it to OpenStreetMap": "Mist er een plek? Voeg hem toe aan OpenStreetMap",
+ "ACCEL": "GAS",
+ "BRAKE": "REMMEN",
+ "G-force": "G-kracht",
+ "LEFT": "LINKS",
+ "RIGHT": "RECHTS"
 }

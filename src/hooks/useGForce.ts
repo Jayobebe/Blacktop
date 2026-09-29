@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { GVectorTracker, emptyGVector, type GMax } from '@/lib/gForceVector';
 
 interface GForceState {
   currentG: number; // total acceleration magnitude in g, including gravity (~1.0 at rest)
   maxG: number;
+  /** Friction-circle values (see lib/gForceVector): cornering (+ right) and braking (+) in g, gravity removed. */
+  lateralG: number;
+  longitudinalG: number;
+  /** Peak G per direction (lib/gForceVector ENVELOPE_BINS). */
+  envelope: number[];
+  gMax: GMax;
   isSupported: boolean;
   permissionGranted: boolean;
 }
@@ -18,6 +25,12 @@ interface GForceOptions {
   displayIntervalMs?: number;
   /** Peak of each ~50ms window, outside React (crash detection). */
   onSample?: (g: number) => void;
+  /**
+   * Current lean in degrees (+ right) for vehicles that lean, read on every
+   * sample: cornering G then comes from tan(lean), since a leaning bike's
+   * phone barely feels sideways force. Leave null for cars.
+   */
+  leanRef?: { current: number | null };
 }
 
 /**
@@ -33,12 +46,13 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
   displayIntervalRef.current = displayIntervalMs;
   const onSampleRef = useRef(options.onSample);
   onSampleRef.current = options.onSample;
-  const [state, setState] = useState<GForceState>({
-    currentG: 0,
-    maxG: 0,
-    isSupported: false,
-    permissionGranted: false,
+  const [state, setState] = useState<GForceState>(() => {
+    const v = emptyGVector();
+    return { currentG: 0, maxG: 0, lateralG: 0, longitudinalG: 0, envelope: v.envelope, gMax: v.max, isSupported: false, permissionGranted: false };
   });
+  const trackerRef = useRef(new GVectorTracker());
+  const leanRef = useRef(options.leanRef);
+  leanRef.current = options.leanRef;
 
   const maxGRef = useRef(0);
 
@@ -63,7 +77,9 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
 
   const resetMax = useCallback(() => {
     maxGRef.current = 0;
-    setState(prev => ({ ...prev, maxG: 0 }));
+    trackerRef.current.reset();
+    const v = emptyGVector();
+    setState(prev => ({ ...prev, maxG: 0, lateralG: 0, longitudinalG: 0, envelope: v.envelope, gMax: v.max }));
   }, []);
 
   useEffect(() => {
@@ -84,6 +100,20 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
       const x = a.x ?? 0, y = a.y ?? 0, z = a.z ?? 0;
       const g = Math.sqrt(x * x + y * y + z * z) / 9.81;
 
+      // Friction-circle vector (cheap; runs every sample so peaks aren't missed).
+      if (e.accelerationIncludingGravity) {
+        const lin = e.acceleration;
+        const hasLin = lin && lin.x != null && lin.y != null && lin.z != null;
+        const angle = window.screen?.orientation?.angle ?? (typeof window.orientation === 'number' ? window.orientation : 0);
+        trackerRef.current.update(
+          [x, y, z],
+          hasLin ? [lin!.x!, lin!.y!, lin!.z!] : null,
+          angle,
+          leanRef.current?.current ?? null,
+          e.timeStamp || performance.now(),
+        );
+      }
+
       if (g > maxGRef.current) maxGRef.current = g;
       if (g > windowPeak) windowPeak = g;
 
@@ -96,10 +126,15 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
 
       if (!displayRef.current || now - lastDisplay < displayIntervalRef.current) return;
       lastDisplay = now;
+      const v = trackerRef.current.state;
       setState(prev => ({
         ...prev,
         currentG,
         maxG: maxGRef.current,
+        lateralG: v.lateral,
+        longitudinalG: v.longitudinal,
+        envelope: v.envelope.slice(),
+        gMax: { ...v.max },
         permissionGranted: true,
       }));
     };

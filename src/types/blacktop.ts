@@ -57,6 +57,9 @@ export interface RideSession {
   gpsPoints: GpsPoint[];
   leanSamples?: LeanSample[]; // High-frequency lean data (10Hz)
   gForceSamples?: GForceSample[]; // High-frequency G-force data (10Hz)
+  /** Friction-circle peaks (lib/gForceVector): envelope per direction and peak per axis. Absent on older rides. */
+  gEnvelope?: number[];
+  gMax?: { left: number; right: number; brake: number; accel: number };
   earnedBadges?: BadgeType[]; // Badges earned in this ride (convoy only)
   photos?: RidePhoto[]; // Local-only photos
   recording?: RideRecording; // Video recording from live stream
@@ -108,6 +111,9 @@ export interface ActiveRideState {
   gpsPoints: GpsPoint[];
   leanSamples: LeanSample[]; // High-frequency lean data (10Hz)
   gForceSamples: GForceSample[]; // High-frequency G-force data (10Hz)
+  /** Friction-circle peaks so far this ride (lib/gForceVector). */
+  gEnvelope?: number[];
+  gMax?: { left: number; right: number; brake: number; accel: number };
   gpsStatus: GpsStatus;
   inactivityTimedOut: boolean; // true once the inactivity guard has paused tracking
 }

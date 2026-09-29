@@ -2905,5 +2905,10 @@
  "🔧 {0} is overdue": "🔧 {0} terlambat",
  "🚨 Rico needs rescue": "🚨 Rico butuh pertolongan",
  "Track Pack": "Paket Sirkuit",
- "Missing a place? Add it to OpenStreetMap": "Ada tempat yang hilang? Tambahkan ke OpenStreetMap"
+ "Missing a place? Add it to OpenStreetMap": "Ada tempat yang hilang? Tambahkan ke OpenStreetMap",
+ "ACCEL": "GAS",
+ "BRAKE": "REM",
+ "G-force": "Gaya G",
+ "LEFT": "KIRI",
+ "RIGHT": "KANAN"
 }
