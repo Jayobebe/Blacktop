@@ -4,6 +4,7 @@
 import type { RouteResult, RouteStep } from './routing';
 
 import { tr } from '@/lib/i18n';
+import { getVoiceStyle } from './speech';
 type LngLat = [number, number];
 
 export interface NavManeuver extends RouteStep {
@@ -288,9 +289,11 @@ export function maneuverText(
   m: NavManeuver,
   opts: { spoken?: boolean; stopName?: string | null; finalStop?: boolean } = {},
 ): string {
-  // Spoken prompts leave road names out: the turn banner shows them.
-  const road = opts.spoken ? '' : roadOf(m);
-  if (opts.spoken && m.destinations) m = { ...m, destinations: undefined };
+  // Cockpit/Rally prompts leave road names out (the turn banner shows them);
+  // the standard voice keeps them.
+  const radio = opts.spoken && getVoiceStyle() !== 'standard';
+  const road = radio ? '' : opts.spoken ? spokenRoadOf(m) : roadOf(m);
+  if (radio && m.destinations) m = { ...m, destinations: undefined };
   const onto = road ? tr(" onto {0}", [road]) : '';
   const towards = m.destinations ? tr(" towards {0}", [m.destinations.split(',')[0]]) : '';
   const s = side(m.modifier);

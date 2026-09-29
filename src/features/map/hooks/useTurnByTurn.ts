@@ -213,7 +213,8 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
       say(tr("In {0}, {1}", [spokenDistance(d, unit), lowerFirst(text)]));
     } else if (m.index !== lastNextRef.current && d > 3000) {
       // A long way to the next turn: say so once, so silence doesn't read as lost.
-      say(tr("Continue for {0}", [spokenDistance(d, unit)]));
+      const road = styleRef.current === 'standard' ? nav.maneuvers[m.index - 1]?.name || '' : '';
+      say(road ? tr("Continue on {0} for {1}", [road, spokenDistance(d, unit)]) : tr("Continue for {0}", [spokenDistance(d, unit)]));
     }
     lastNextRef.current = m.index;
     // Keyed on the coordinates, not the object, so a fresh object with the
