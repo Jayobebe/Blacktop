@@ -34,6 +34,7 @@ import { deletePOI, getSavedPOIs, savePOI } from "../lib/poiStore";
 import { loadDarkMapStyle } from "../lib/darkStyle";
 import { getLastView, saveLastView } from "../lib/lastView";
 import { addPinLayers, setMyPins, setPinsVisible, type PinInfo } from "../lib/mapPins";
+import { addCardDropLayer, setCardDropData, type CardPin } from "../lib/cardDropLayer";
 import { applyWaterWordmark } from "../lib/waterWordmark";
 import {
   addHazardLayer,
@@ -213,6 +214,8 @@ interface BlacktopMapProps {
   initialDestination?: MapDestination | null;
   onContextLost?: () => void;
   isVisible?: boolean;
+  /** Bumped by the overlay when the home map closes: end the route and guidance. */
+  resetSeq?: number;
 }
 
 registerTileCacheProtocol();
@@ -285,7 +288,7 @@ function getBasemapStyle(): Promise<StyleSpecification> {
   return basemapStylePromise;
 }
 
-export function BlacktopMap({ initialDestination, onContextLost, isVisible }: BlacktopMapProps) {
+export function BlacktopMap({ initialDestination, onContextLost, isVisible, resetSeq = 0 }: BlacktopMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -1061,9 +1064,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   const selectedDrop = selectedStack?.length === 1 ? selectedStack[0] : null;
   const [droppingCard, setDroppingCard] = useState(false);
   const [pendingDrop, setPendingDrop] = useState<{ lat: number; lng: number } | null>(null);
-  const cardMarkersRef = useRef<Marker[]>([]);
-  // Where each card marker sits, for showing it only near the rider or zoomed in.
-  const cardMarkerAtRef = useRef<{ lat: number; lng: number }[]>([]);
 
   // Copy 0 is the one locked in the vault; planted copies number upward from 1.
   const placedCount = myDrops.length;
@@ -1085,112 +1085,68 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     return Array.from(buckets.values());
   }, [drops]);
 
-  // Landmark-style card markers — home map only, so ride navigation stays clean.
+  // Card drops, drawn by the map like hazard pins (same zoom rule) — home map
+  // only, so ride navigation stays clean.
+  const cardStacksRef = useRef<Map<string, CardDrop[]>>(new Map());
   useEffect(() => {
-    cardMarkersRef.current.forEach((m) => m.remove());
-    cardMarkersRef.current = [];
-    cardMarkerAtRef.current = [];
-    if (!map || !cardsEnabled || rideState.isActive) return;
-
-    cardStacks.forEach((stack) => {
-      const head = stack[0];
-      const count = stack.length;
-      const allCollected = stack.every((d) => d.collected || d.isOwn);
-      // Hot-spot heat: more cards stacked here, hotter the landmark reads.
-      const heat = count >= 5 ? 3 : count >= 3 ? 2 : count >= 2 ? 1 : 0;
-      const heatColor = ["", "hsl(45 93% 58%)", "hsl(25 95% 55%)", "hsl(0 84% 60%)"][heat];
-      const edge = allCollected ? "hsl(142 71% 45%)" : heat ? heatColor : accentColor;
-      const el = document.createElement("div");
-      el.style.position = "relative";
-      el.style.width = count > 1 ? "34px" : "30px";
-      el.style.height = count > 1 ? "42px" : "38px";
-      el.style.borderRadius = "6px";
-      el.style.cursor = "pointer";
-      el.style.display = "flex";
-      el.style.alignItems = "center";
-      el.style.justifyContent = "center";
-      el.style.background = "linear-gradient(145deg, rgba(30,30,32,0.96), rgba(10,10,12,0.96))";
-      el.style.border = `1.5px solid ${edge}`;
-      el.style.boxShadow = allCollected
-        ? "0 0 8px hsl(142 71% 45% / 0.6)"
-        : heat
-          ? `0 0 ${6 + heat * 4}px ${heatColor}`
-          : "0 2px 8px rgba(0,0,0,0.7)";
-      el.setAttribute("role", "button");
-      el.setAttribute(
-        "aria-label",
-        count > 1 ? `Card hot-spot · ${count} cards` : `${head.ownerName}'s ${head.vehicleName} card`,
-      );
-      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${edge}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h.01M11 15h2"/><circle cx="9" cy="10" r="2"/></svg>`;
-      const badge = document.createElement("span");
-      badge.textContent = allCollected ? "✓" : String(count);
-      badge.style.cssText = `position:absolute;top:-6px;right:-6px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:${allCollected ? "hsl(142 71% 45%)" : heat ? heatColor : accentColor};color:#04140a;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;`;
-      if (allCollected || count > 1) el.appendChild(badge);
-      // Cards carrying a time attack get a stopwatch pip.
-      if (stack.some((d) => d.challenge)) {
-        const chip = document.createElement("span");
-        chip.textContent = "⏱";
-        chip.style.cssText = `position:absolute;bottom:-6px;left:-6px;width:16px;height:16px;border-radius:8px;background:${accentColor};color:#04140a;font-size:9px;display:flex;align-items:center;justify-content:center;`;
-        el.appendChild(chip);
+    if (!map) return;
+    let remove: (() => void) | null = null;
+    const cancel = whenStyleReady(map, () => {
+      try {
+        remove = addCardDropLayer(map, (key) => {
+          const stack = cardStacksRef.current.get(key);
+          if (!stack) return;
+          lastInteractionAtRef.current = Date.now();
+          setPin(null);
+          setSelectedStack(stack);
+        });
+      } catch (err) {
+        if (/not done loading/i.test(String((err as Error)?.message ?? err))) throw err;
+        console.warn("[BlacktopMap] Card drops unavailable:", err);
       }
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        setSelectedStack(stack);
-      });
-      el.style.transition = "opacity 220ms ease";
-
-      const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
-        .setLngLat([head.lng, head.lat])
-        .addTo(map);
-      cardMarkersRef.current.push(marker);
-      cardMarkerAtRef.current.push({ lat: head.lat, lng: head.lng });
     });
-    applyCardVisibilityRef.current();
-  }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
-
-  // Card drops aren't sprinkled across the whole map: each shows only when the
-  // rider is within CARD_NEAR_M of it, or the map is zoomed in to street level
-  // (CARD_ZOOM) where it sits. They fade in and out as the zoom crosses over.
-  const CARD_NEAR_M = 1500;
-  const CARD_ZOOM = 14;
-  const applyCardVisibilityRef = useRef<() => void>(() => {});
-  applyCardVisibilityRef.current = () => {
-    if (!map) return;
-    const zoomedIn = map.getZoom() >= CARD_ZOOM;
-    cardMarkersRef.current.forEach((m, i) => {
-      const at = cardMarkerAtRef.current[i];
-      const near = !!userLocation && !!at && haversineM(userLocation.lat, userLocation.lng, at.lat, at.lng) <= CARD_NEAR_M;
-      const show = zoomedIn || near;
-      const el = m.getElement();
-      el.style.opacity = show ? "1" : "0";
-      el.style.pointerEvents = show ? "auto" : "none";
-    });
-  };
-  useEffect(() => {
-    if (!map) return;
-    const apply = () => applyCardVisibilityRef.current();
-    apply();
-    map.on("zoom", apply);
     return () => {
-      map.off("zoom", apply);
+      cancel();
+      remove?.();
     };
   }, [map]);
-  // Riding up to a card shows it.
   useEffect(() => {
-    applyCardVisibilityRef.current();
-  }, [userLocation]);
-
-
-
-
-
-  useEffect(() => {
-    const markers = cardMarkersRef.current;
-    return () => {
-      markers.forEach((m) => m.remove());
-      markers.length = 0;
-    };
-  }, []);
+    if (!map) return;
+    return whenStyleReady(map, () => {
+      const byKey = new Map<string, CardDrop[]>();
+      const pins: CardPin[] = [];
+      if (cardsEnabled && !rideState.isActive) {
+        cardStacks.forEach((stack) => {
+          const head = stack[0];
+          const count = stack.length;
+          const allCollected = stack.every((d) => d.collected || d.isOwn);
+          // Hot-spot heat: more cards stacked here, hotter the landmark reads.
+          const heat = count >= 5 ? 3 : count >= 3 ? 2 : count >= 2 ? 1 : 0;
+          const heatColor = ["", "hsl(45, 93%, 58%)", "hsl(25, 95%, 55%)", "hsl(0, 84%, 60%)"][heat];
+          const green = "hsl(142, 71%, 45%)";
+          const edge = allCollected ? green : heat ? heatColor : accentColor;
+          const key = `${head.lat.toFixed(5)}:${head.lng.toFixed(5)}`;
+          byKey.set(key, stack);
+          pins.push({
+            key,
+            lat: head.lat,
+            lng: head.lng,
+            look: {
+              edge,
+              glow: allCollected ? { color: "hsla(142, 71%, 45%, 0.6)", size: 8 } : heat ? { color: heatColor, size: 6 + heat * 4 } : null,
+              badge: allCollected ? "✓" : count > 1 ? String(count) : null,
+              badgeBg: allCollected ? green : heat ? heatColor : accentColor,
+              // Cards carrying a time attack get a stopwatch pip.
+              challenge: stack.some((d) => d.challenge),
+              big: count > 1,
+            },
+          });
+        });
+      }
+      cardStacksRef.current = byKey;
+      setCardDropData(map, pins);
+    });
+  }, [map, cardStacks, cardsEnabled, rideState.isActive, accentColor]);
 
   // Plant a card: the drop lands exactly where the rider is standing.
   useEffect(() => {
@@ -1741,7 +1697,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   // Tapped pin: fly in, tilt to a third-person view and slowly circle it.
   // Touching the map stops the circling; Back / Navigate end the orbit.
   useEffect(() => {
-    if (!map || !pin) return;
+    if (!map || !pin || !isVisible) return; // hidden: no circling in the background
     if (!preOrbitCameraRef.current) {
       const c = map.getCenter();
       preOrbitCameraRef.current = { center: [c.lng, c.lat], zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
@@ -1751,6 +1707,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     let raf = 0;
     let last = 0;
     const spin = (now: number) => {
+      // Back / Navigate end the orbit before React tears this down: a late
+      // frame here would cancel the camera move they just started.
+      if (!orbitingRef.current) return;
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
       last = now;
       map.setBearing((map.getBearing() + dt * ORBIT_DEG_PER_S) % 360);
@@ -1770,18 +1729,43 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       cancelAnimationFrame(raf);
       events.forEach((ev) => map.off(ev, stopSpin));
     };
-  }, [map, pin]);
+  }, [map, pin, isVisible]);
 
-  /** Leave the orbit: Back returns the camera to where it was; Navigate hands it to the route. */
+  /**
+   * Leave the orbit. Back returns the camera to where it was; Navigate goes
+   * straight to the rider in the follow view, ready to guide (one camera move:
+   * an overview first and a follow later fought each other and bounced).
+   */
   const exitOrbit = (restore: boolean) => {
     const saved = preOrbitCameraRef.current;
     preOrbitCameraRef.current = null;
     orbitingRef.current = false;
     setPin(null);
-    lastInteractionAtRef.current = Date.now();
     if (!map) return;
-    if (restore && saved) map.easeTo({ ...saved, duration: 900, essential: true });
-    else map.easeTo({ pitch: threeDRef.current ? THREE_D_PITCH : 0, bearing: 0, duration: 600, essential: true });
+    if (restore) {
+      lastInteractionAtRef.current = Date.now();
+      if (saved) map.easeTo({ ...saved, duration: 900, essential: true });
+      else map.easeTo({ pitch: threeDRef.current ? THREE_D_PITCH : 0, bearing: 0, duration: 600, essential: true });
+      return;
+    }
+    followRider();
+  };
+
+  /** Hand the camera to GPS follow now, centred on the rider at the guiding zoom. */
+  const followRider = () => {
+    const loc = userLocationRef.current;
+    if (!map || !loc) return false;
+    lastInteractionAtRef.current = 0;
+    map.stop();
+    map.easeTo({
+      center: [loc.lng, loc.lat],
+      zoom: FOLLOW_ZOOM_WITH_DESTINATION,
+      bearing: safeBearing(headingRef.current, map),
+      pitch: threeDRef.current ? THREE_D_PITCH : 0,
+      duration: 1100,
+      essential: true,
+    });
+    return true;
   };
 
   // ── Route ──────────────────────────────────────────────────────────────────
@@ -1872,6 +1856,33 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
   }, [destination, navDismissed]);
   const guidingRef = useRef(false);
   guidingRef.current = guiding;
+
+  // Closing the home map ends its route and navigation (the overlay bumps
+  // resetSeq; it never does during a ride or from a lobby). This component
+  // stays mounted while hidden, so without it directions carried on behind
+  // the home screen.
+  const resetSeqRef = useRef(resetSeq);
+  useEffect(() => {
+    if (resetSeq === resetSeqRef.current) return;
+    resetSeqRef.current = resetSeq;
+    if (rideActiveRef.current) return;
+    const hadRoute = !!destinationRef.current;
+    stopSpeaking();
+    setGuiding(false);
+    setDestination(null);
+    setRoute(null);
+    setWeatherVia(null);
+    setNavDismissed(false);
+    setAddingWaypoint(false);
+    setShowLoopPlanner(false);
+    // Stops planned for this route go with it (a lobby's plan is left alone
+    // when the home map was only looked at).
+    if (hadRoute && isSolo) clearSoloRoute();
+    preOrbitCameraRef.current = null;
+    orbitingRef.current = false;
+    setPin(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSeq]);
 
   const finalStopName = destination ? announcedStopName(destination.name) : null;
   const navStops = useMemo(
@@ -2029,14 +2040,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       }
 
       const recentlyInteracted = Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS;
-      if (userLocation && !recentlyInteracted) {
-        map.flyTo({
-          center: [userLocation.lng, userLocation.lat],
+      const centre = map.getCenter();
+      const alreadyFollowing =
+        !!userLocation && haversineM(centre.lat, centre.lng, userLocation.lat, userLocation.lng) < 120 && map.getZoom() >= 15.5;
+      if (userLocation && !recentlyInteracted && !alreadyFollowing) {
+        const camera = {
+          center: [userLocation.lng, userLocation.lat] as [number, number],
           zoom: 17,
           bearing: safeBearing(headingRef.current, map),
           pitch: threeDRef.current ? THREE_D_PITCH : 0,
           essential: true,
-        });
+        };
+        // Close by (usually already on the way): a glide, not a fly-out-and-back.
+        if (haversineM(centre.lat, centre.lng, userLocation.lat, userLocation.lng) < 3000) map.easeTo({ ...camera, duration: 900 });
+        else map.flyTo(camera);
       }
     };
 
@@ -2199,7 +2216,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     }
   }, [map, rescueTarget]);
 
-  const handleSearchSelect = (result: MapSearchResult) => {
+  const handleSearchSelect = (result: MapSearchResult, opts: { follow?: boolean } = {}) => {
     if (addingWaypoint) {
       if (isSolo) {
         addSoloStop({ name: result.name, address: result.address, lat: result.lat, lng: result.lng });
@@ -2210,6 +2227,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       return;
     }
     setDestination({ lat: result.lat, lng: result.lng, name: result.name, address: result.address });
+    // Navigate from a pin: the camera is already on its way to the rider.
+    if (opts.follow && userLocationRef.current) return;
     lastInteractionAtRef.current = Date.now();
 
     if (map) {
@@ -3022,7 +3041,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
               onClick={() => {
                 const target = pin;
                 exitOrbit(false);
-                handleSearchSelect({ id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng });
+                handleSearchSelect(
+                  { id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng },
+                  { follow: true },
+                );
               }}
             >
               <Navigation className="w-3.5 h-3.5" />{" "}{tr("Navigate")}

@@ -6,6 +6,8 @@ interface MapOverlayState {
   destination: MapDestination | null;
   /** The map has drawn its first full view (style + tiles). Until then the app backdrop shows through. */
   ready: boolean;
+  /** Bumped when the home map closes: BlacktopMap ends its route and guidance. */
+  resetSeq: number;
 }
 
 type Listener = () => void;
@@ -15,6 +17,7 @@ let overlayState: MapOverlayState = {
   isOpen: false,
   destination: null,
   ready: false,
+  resetSeq: 0,
 };
 
 function getSnapshot(): MapOverlayState {
@@ -51,6 +54,16 @@ export function closeBlacktopMap() {
 // doesn't bleed into a completely different session.
 export function clearMapDestination() {
   overlayState = { ...overlayState, destination: null };
+  emitChange();
+}
+
+/**
+ * The home map (opened from Home, not a ride or a lobby) was closed: drop the
+ * destination and tell the still-mounted map to end its route and guidance, so
+ * directions don't carry on behind the home screen.
+ */
+export function resetBlacktopMap() {
+  overlayState = { ...overlayState, destination: null, resetSeq: overlayState.resetSeq + 1 };
   emitChange();
 }
 

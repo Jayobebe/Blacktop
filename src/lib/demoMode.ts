@@ -500,6 +500,13 @@ export const DEMO_SCORES: ArcadeScores = {
   'legacy-derez': 6,  // wins
 };
 
+/** Demo bests for the arcade's extra modes. */
+export const DEMO_MODE_BESTS = {
+  'hit-heavy-flurry': 41,      // punches in 10 s
+  'hit-heavy-precision': 436,  // points out of 500
+  'petrol-head-misses': 27,    // near misses in one run
+};
+
 const ACTIVE_MIN = 12;
 const ACTIVE_MAX = 47; // strictly < 50
 
@@ -589,4 +596,16 @@ export function useDemoMode() {
 /** Non-reactive read for callers that don't need to re-render on toggle. */
 export function isDemoModeActive(): boolean {
   return state.enabled;
+}
+
+/** Called whenever demo mode is switched on or off (for module stores that cache data). */
+export function onDemoModeChange(cb: (enabled: boolean) => void): () => void {
+  let last = state.enabled;
+  const l = () => {
+    if (state.enabled === last) return;
+    last = state.enabled;
+    cb(last);
+  };
+  listeners.add(l);
+  return () => { listeners.delete(l); };
 }

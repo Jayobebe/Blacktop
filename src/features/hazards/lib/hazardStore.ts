@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Hazard, HazardKind } from '../types';
-import { isDemoModeActive } from '@/lib/demoMode';
+import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
 
 /**
  * Live hazard reports near the rider (module store, like the rest of the app).
@@ -27,11 +27,25 @@ const listeners = new Set<() => void>();
 /** Areas we've fetched recently: a nudge inside any of them triggers a refetch. */
 const watched: { bounds: Bounds; at: number }[] = [];
 
+const isDemoHazard = (id: string) => id.startsWith('demo-');
+
 function emit() {
   const now = Date.now();
-  snapshot = [...hazards.values()].filter((h) => h.expiresAt > now);
+  const demo = isDemoModeActive();
+  // Demo reports never show outside demo mode, and real ones never inside it.
+  snapshot = [...hazards.values()].filter((h) => h.expiresAt > now && isDemoHazard(h.id) === demo);
   listeners.forEach((l) => l());
 }
+
+// Switching demo mode swaps the whole picture: drop what we had and reload the
+// areas we were showing from the right source.
+onDemoModeChange(() => {
+  const areas = watched.map((w) => w.bounds);
+  hazards.clear();
+  watched.length = 0;
+  emit();
+  for (const b of areas.slice(-2)) void fetchHazards(b);
+});
 
 export function useHazards(): Hazard[] {
   return useSyncExternalStore(
@@ -125,12 +139,14 @@ export async function fetchHazards(area: Bounds): Promise<void> {
   const b = clampBounds(area);
   if (isDemoModeActive()) {
     for (const h of demoHazards(b)) if (!hazards.has(h.id)) hazards.set(h.id, h);
+    watched.push({ bounds: b, at: Date.now() });
+    while (watched.length > 6) watched.shift();
     emit();
     return;
   }
   const { data, error } = await rpc<Row[]>('hazards_in_bbox', { _west: b.west, _south: b.south, _east: b.east, _north: b.north });
-  if (error || !data) return;
-  for (const [id, h] of hazards) if (inside(b, h)) hazards.delete(id);
+  if (error || !data || isDemoModeActive()) return;
+  for (const [id, h] of hazards) if (inside(b, h) || isDemoHazard(id)) hazards.delete(id);
   for (const r of data) hazards.set(r.id, toHazard(r));
   watched.push({ bounds: b, at: Date.now() });
   while (watched.length > 6) watched.shift();

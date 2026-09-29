@@ -1,7 +1,5 @@
-import { createElement } from 'react';
-import { flushSync } from 'react-dom';
-import { createRoot } from 'react-dom/client';
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
+import { lucideImage } from '@/lib/iconImage';
 import { HAZARD_TYPES, hazardColor, type Hazard, type HazardKind } from '../types';
 
 /**
@@ -14,21 +12,6 @@ const SOURCE = 'bt-hazards';
 const PR = 2;
 const W = 30 * PR;
 const H = 38 * PR;
-
-/** A lucide icon as an image (rendered once, off-screen). */
-function iconImage(icon: (typeof HAZARD_TYPES)[number]['icon']): Promise<HTMLImageElement> {
-  const host = document.createElement('div');
-  const root = createRoot(host);
-  flushSync(() => root.render(createElement(icon, { size: 24, color: '#ffffff', strokeWidth: 2.4 })));
-  const svg = host.innerHTML;
-  root.unmount();
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-  });
-}
 
 /** Map-pin shape: rounded square with a point, category colour, black edge, icon in the middle. */
 function drawPin(color: string, icon: HTMLImageElement | null): ImageData {
@@ -65,17 +48,21 @@ function drawPin(color: string, icon: HTMLImageElement | null): ImageData {
 let images: Promise<Map<HazardKind, ImageData>> | null = null;
 function pinImages() {
   if (!images) {
+    let missing = false;
     images = Promise.all(
       HAZARD_TYPES.map(async (t) => {
         let icon: HTMLImageElement | null = null;
         try {
-          icon = await iconImage(t.icon);
+          icon = await lucideImage(t.icon, { color: '#ffffff', strokeWidth: 2.4 });
         } catch {
-          /* plain pin */
+          missing = true; // plain pin for now; drawn again next time
         }
         return [t.kind, drawPin(hazardColor(t.kind), icon)] as const;
       }),
-    ).then((pairs) => new Map(pairs));
+    ).then((pairs) => {
+      if (missing) images = null;
+      return new Map(pairs);
+    });
   }
   return images;
 }
@@ -89,7 +76,8 @@ export function addHazardLayer(map: MapLibreMap, onPick: (id: string) => void): 
     if (cancelled) return;
     for (const [kind, data] of imgs) {
       const id = `bthaz-${kind}`;
-      if (!map.hasImage(id)) map.addImage(id, data, { pixelRatio: PR });
+      if (map.hasImage(id)) map.updateImage(id, data);
+      else map.addImage(id, data, { pixelRatio: PR });
     }
     if (!map.getLayer(HAZARD_LAYER)) {
       map.addLayer({

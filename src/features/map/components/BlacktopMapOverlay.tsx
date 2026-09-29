@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useActiveRide } from '@/features/ride';
-import { useMapOverlay, closeBlacktopMap, clearMapDestination } from '../hooks/useMapOverlay';
+import { useMapOverlay, closeBlacktopMap, resetBlacktopMap } from '../hooks/useMapOverlay';
 import { BlacktopMap } from './BlacktopMap';
 import { cn } from '@/lib/utils';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -10,7 +10,7 @@ import { MapLoading } from '@/components/MapLoading';
 import { tr } from '@/lib/i18n';
 
 export function BlacktopMapOverlay() {
-  const { isOpen, destination, ready } = useMapOverlay();
+  const { isOpen, destination, ready, resetSeq } = useMapOverlay();
   const { rideState } = useActiveRide();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,13 +36,18 @@ export function BlacktopMapOverlay() {
   // instance, route geometry, and cached tiles across open/close cycles.
   const handleExit = () => {
     closeBlacktopMap();
-    if (rideState.isActive) {
-      navigate('/ride');
-    } else if (!inLobby) {
-      // Generic/home map close — burn the cached route so the next open starts fresh.
-      clearMapDestination();
-    }
+    if (rideState.isActive) navigate('/ride');
   };
+
+  // Leaving the home map (the X, or the inactivity auto-close) ends its route
+  // and navigation. A ride's map keeps its route until the ride ends, and a
+  // lobby's map keeps the plan the lobby is building.
+  const wasOpen = useRef(isOpen);
+  useEffect(() => {
+    if (wasOpen.current && !isOpen && !rideState.isActive && !inLobby) resetBlacktopMap();
+    wasOpen.current = isOpen;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return (
     <div className={cn(
@@ -58,6 +63,7 @@ export function BlacktopMapOverlay() {
           initialDestination={destination}
           onContextLost={() => setMountKey((k) => k + 1)}
           isVisible={isOpen}
+          resetSeq={resetSeq}
         />
       </div>
       {isOpen && !ready && <MapLoading />}
