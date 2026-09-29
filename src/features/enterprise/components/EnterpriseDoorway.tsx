@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from 'react';
-import { Building2, Camera, KeyRound, Loader2, Mail, ArrowRight, ChevronDown, Check } from 'lucide-react';
+import { lazy, Suspense, useRef, useState } from 'react';
+import { Building2, Camera, KeyRound, Loader2, Mail, ArrowRight, ChevronDown, Check, Lock, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,35 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false);
   // The package the rider opened below: the Inquire email names it.
   const [openTier, setOpenTier] = useState<EnterpriseTier | null>(null);
+
+  // The login isn't open yet: trying it pulses the coming-soon card instead.
+  const soonRef = useRef<HTMLDivElement>(null);
+  const stampRef = useRef<HTMLSpanElement>(null);
+  const pulseSoon = () => {
+    haptics.light();
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const glow = 'hsl(var(--accent) / 0.55)';
+    soonRef.current?.animate(
+      reduce
+        ? [{ boxShadow: `0 0 0 0 ${glow}` }, { boxShadow: `0 0 0 3px ${glow}` }, { boxShadow: `0 0 0 0 ${glow}` }]
+        : [
+            { transform: 'scale(1)', boxShadow: `0 0 0 0 ${glow}` },
+            { transform: 'scale(1.025)', boxShadow: `0 0 24px 4px ${glow}`, offset: 0.35 },
+            { transform: 'scale(1)', boxShadow: `0 0 0 0 ${glow}` },
+          ],
+      { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    );
+    if (!reduce) {
+      stampRef.current?.animate(
+        [
+          { transform: 'rotate(3deg) scale(1)' },
+          { transform: 'rotate(-4deg) scale(1.18)', offset: 0.4 },
+          { transform: 'rotate(3deg) scale(1)' },
+        ],
+        { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      );
+    }
+  };
 
   const connect = async (payload: GuestSessionPayload | null) => {
     if (!payload) {
@@ -63,16 +92,60 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
 
   return (
     <div className={cn('h-full overflow-y-auto overscroll-contain flex flex-col gap-3 [&>*]:shrink-0', className)}>
-      {/* Coming soon, stamped like the Speedshop's items */}
-      <div className="relative bg-card/50 rounded-3xl border border-accent/40 p-4 pr-24 overflow-hidden">
-        <span className="absolute top-3 right-3 rounded-md bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest px-2 py-1 rotate-3 shadow">
+      {/* Coming soon, stamped like the Speedshop's items, with the organisation
+          login it will have. The login is a preview: its fields are read-only
+          (nothing typed is kept, passwords included) and any attempt to use
+          it just pulses the card. */}
+      <div ref={soonRef} className="relative bg-card/50 rounded-3xl border border-accent/40 p-4 overflow-hidden">
+        <span
+          ref={stampRef}
+          className="absolute top-3 right-3 rounded-md bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest px-2 py-1 rotate-3 shadow"
+        >
           {tr("Coming soon")}
         </span>
-        <p className="text-[10px] uppercase tracking-[0.25em] text-accent">{tr("Blacktop Enterprise")}</p>
-        <p className="text-sm font-semibold text-foreground mt-1">{tr("Blacktop for schools, dealers, tour operators and race teams.")}</p>
+        <div className="pr-24">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-accent">{tr("Blacktop Enterprise")}</p>
+          <p className="text-sm font-semibold text-foreground mt-1">{tr("Blacktop for schools, dealers, tour operators and race teams.")}</p>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">
           {tr("The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.")}
         </p>
+        <form
+          className="mt-3 flex flex-col gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            pulseSoon();
+          }}
+        >
+          {([
+            { type: 'email', label: tr("Email"), Icon: Mail },
+            { type: 'password', label: tr("Password"), Icon: Lock },
+          ] as const).map(({ type, label, Icon }) => (
+            <div key={type} className="relative">
+              <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-accent/70 pointer-events-none" />
+              <Input
+                type={type}
+                readOnly
+                value=""
+                placeholder={label}
+                aria-label={label}
+                autoComplete="off"
+                onClick={pulseSoon}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Tab') {
+                    e.preventDefault();
+                    pulseSoon();
+                  }
+                }}
+                className="h-11 rounded-xl pl-9 cursor-pointer"
+              />
+            </div>
+          ))}
+          <Button type="submit" className="h-11 rounded-xl">
+            <LogIn className="w-4 h-4 mr-2" />
+            {tr("Log in")}
+          </Button>
+        </form>
       </div>
 
       <div className="bg-card/50 rounded-3xl border-2 border-accent/60 p-4 flex flex-col gap-3">
