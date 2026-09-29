@@ -115,7 +115,7 @@ export async function downloadPilotVoice(): Promise<void> {
         set({ progress: Math.min(0.999, (done + Math.min(got, f.bytes)) / total) });
       }
       const type = res.headers.get('Content-Type') ?? 'application/octet-stream';
-      await cache.put(f.url, new Response(new Blob(chunks, { type }), { headers: { 'Content-Type': type } }));
+      await cache.put(f.url, new Response(new Blob(chunks as BlobPart[], { type }), { headers: { 'Content-Type': type } }));
       done += f.bytes;
     }
     // Voices for other languages aren't needed any more.
