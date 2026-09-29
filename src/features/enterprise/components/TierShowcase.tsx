@@ -67,7 +67,9 @@ function useSceneTime(from = 0): number {
       raf = requestAnimationFrame(loop);
       if (now - last < 33) return;
       last = now;
-      setT((now - start) / 1000);
+      // A frame's timestamp can be a touch earlier than when this effect
+      // started the clock: never let time run backwards past the start.
+      setT(Math.max(from, (now - start) / 1000));
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
@@ -1124,7 +1126,7 @@ function BillionScene() {
   const hue = (32 + t * 16) % 360;
   const brand = `hsl(${hue} 88% 60%)`;
   const brandA = (o: number) => `hsl(${hue} 88% 60% / ${o})`;
-  const active = Math.floor(t / 1.8) % ORBIT.length;
+  const active = ((Math.floor(t / 1.8) % ORBIT.length) + ORBIT.length) % ORBIT.length;
   const sig = frac(t / 1.8);
   const nodes = ORBIT.map((m, i) => {
     const a = spin + (i * Math.PI * 2) / ORBIT.length;
