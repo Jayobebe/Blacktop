@@ -14,6 +14,8 @@ import {
 } from '../../../lib/derezGeo';
 import { tr } from '@/lib/i18n';
 
+const NO_RING: NonNullable<DerezLobby['arena']>['ring'] = [];
+
 const DARK_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 const ARENA_SRC = 'derez-arena';
 const TRAIL_SRC = 'derez-trails';
@@ -52,7 +54,8 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
   useEffect(() => { requestWakeLock(); return () => { releaseWakeLock(); }; }, [requestWakeLock, releaseWakeLock]);
 
-  const arenaRing = lobby.arena?.ring ?? [];
+  // A fresh [] every render would restart the GPS watch below on each render.
+  const arenaRing = lobby.arena?.ring ?? NO_RING;
 
   // ---- Map -------------------------------------------------------------
   useEffect(() => {

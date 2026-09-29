@@ -526,6 +526,8 @@ export function DestinationSearch({
 
     const currentSearchId = ++searchIdRef.current;
     performSearch(query, currentSearchId);
+    // quickCategories is rebuilt every render (only read to look up the active one); listing it would re-run the search each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation, query, activeCategory, countryCode, performSearch]);
 
   const handleSearch = useCallback((searchQuery: string) => {

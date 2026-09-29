@@ -37,7 +37,7 @@ export interface VehicleCardData {
 }
 
 export function useVehicleCards() {
-  const { bikes, activeBikeId } = useGarage();
+  const { bikes } = useGarage();
   const { rides, burnedTotals } = useRideHistory();
   const logs = useInheritedLogs();
   const [snapshots, setSnapshots] = useLocalStorage<CardSnapshots>(CARDS_STORAGE_KEY, {});
@@ -101,7 +101,7 @@ export function useVehicleCards() {
         } as VehicleCardData;
       })
       .sort((a, b) => b.stats.totalRides - a.stats.totalRides);
-  }, [activeBikeId, bikes, rides, burnedTotals, logs, snapshots]);
+  }, [bikes, rides, burnedTotals, logs, snapshots]);
 
   /** Mark a vehicle's current tier + stats as "seen" so arrows/pulse don't repeat. */
   const markTierSeen = useCallback(

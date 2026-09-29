@@ -70,6 +70,13 @@ const STEP_INTERACTIONS: Partial<Record<DemoStep, string>> = {
   'settings': tr("Try changing a setting"),
 };
 
+const STEPS: DemoStep[] = [
+  'welcome', 'onboarding', 'home', 'create-convoy', 'lobby-empty', 
+  'lobby-members', 'lobby-waypoints', 'lobby-reorder', 'active-ride',
+  'action-cam', 'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
+  'history', 'history-photos', 'stats', 'settings', 'complete'
+];
+
 export default function DemoRide() {
   const navigate = useNavigate();
   const wakeLock = useWakeLock();
@@ -112,6 +119,8 @@ export default function DemoRide() {
         wakeLock.release();
       }
     };
+    // useWakeLock returns a new object each render; depending on it would release and re-take the lock every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActiveRideStep]);
 
   // Simulate ride when on active-ride or action-cam step
@@ -144,18 +153,12 @@ export default function DemoRide() {
     setShowSuccess(false);
   }, [step]);
 
-  const steps: DemoStep[] = [
-    'welcome', 'onboarding', 'home', 'create-convoy', 'lobby-empty', 
-    'lobby-members', 'lobby-waypoints', 'lobby-reorder', 'active-ride',
-    'action-cam', 'active-rescue', 'rescue-response', 'ride-end', 'badge-summary',
-    'history', 'history-photos', 'stats', 'settings', 'complete'
-  ];
 
   const nextStep = useCallback(() => {
     setStep(currentStep => {
-      const currentIndex = steps.indexOf(currentStep);
-      if (currentIndex < steps.length - 1) {
-        return steps[currentIndex + 1];
+      const currentIndex = STEPS.indexOf(currentStep);
+      if (currentIndex < STEPS.length - 1) {
+        return STEPS[currentIndex + 1];
       }
       return currentStep;
     });
@@ -211,7 +214,7 @@ export default function DemoRide() {
 
   const exitDemo = () => navigate('/');
 
-  const progress = ((steps.indexOf(step) + 1) / steps.length) * 100;
+  const progress = ((STEPS.indexOf(step) + 1) / STEPS.length) * 100;
 
   const waypoints = [
     { name: 'Gas Station', address: '1234 Highway 1', completed: false },
@@ -247,7 +250,7 @@ export default function DemoRide() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{STEP_TITLES[step]}</p>
             <p className="text-[10px] text-muted-foreground truncate">
-              {STEP_INTERACTIONS[step] || tr("Step {0} of {1}", [steps.indexOf(step) + 1, steps.length])}
+              {STEP_INTERACTIONS[step] || tr("Step {0} of {1}", [STEPS.indexOf(step) + 1, STEPS.length])}
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={exitDemo} className="text-muted-foreground hover:text-foreground flex-shrink-0">

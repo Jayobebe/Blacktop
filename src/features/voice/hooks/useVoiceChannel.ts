@@ -315,7 +315,7 @@ export function useVoiceChannel(convoyId?: string) {
     }, delay);
 
     reconnectTimersRef.current.set(remoteUserId, timer);
-  }, []);
+  }, [readRecordConsent]);
 
   // Start audio level monitoring for speaking detection
   const startAudioLevelMonitoring = useCallback(() => {
@@ -771,7 +771,7 @@ export function useVoiceChannel(convoyId?: string) {
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId, createdAt: Date.now() });
     return pc;
-  }, [clearReconnectSchedule, scheduleReconnect]);
+  }, [clearReconnectSchedule, scheduleReconnect, setPeerLink]);
 
   // Handle signaling messages
   const handleSignaling = useCallback(async (payload: any) => {
@@ -998,7 +998,7 @@ export function useVoiceChannel(convoyId?: string) {
         break;
       }
     }
-  }, [createPeerConnection, clearReconnectSchedule]);
+  }, [createPeerConnection, clearReconnectSchedule, readRecordConsent, setPeerLink]);
 
   // Check and request microphone permission
   // Note: iOS Safari doesn't reliably support permissions.query for microphone
@@ -1247,7 +1247,7 @@ export function useVoiceChannel(convoyId?: string) {
       cleanup();
       return { success: false, error: tr("Failed to connect to voice channel") };
     }
-  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission]);
+  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission, readRecordConsent]);
 
   // Disconnect from voice channel
   // Disconnect from voice channel
@@ -1381,7 +1381,7 @@ export function useVoiceChannel(convoyId?: string) {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [state.isConnected]);
+  }, [state.isConnected, readRecordConsent]);
 
   // Auto-reconnect voice if returning from nav app with persisted state
   useEffect(() => {

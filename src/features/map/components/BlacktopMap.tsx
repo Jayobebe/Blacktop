@@ -1970,6 +1970,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
       cancelReady();
       removeRouteLayers();
     };
+    // Redraw only when the route changes, not on every GPS fix; the fly-to uses the fix current at that moment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, route, accentColor]);
 
   // While guiding, trim the line behind the rider so only the road ahead shows.

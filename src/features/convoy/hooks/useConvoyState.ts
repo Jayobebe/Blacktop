@@ -541,7 +541,7 @@ export function useConvoyState() {
     rememberActiveConvoy(convoy.id);
 
     return { id: convoy.id, code: convoy.code };
-  }, [profile.name]);
+  }, [profile.name, settings.accentColor]);
 
   const joinConvoy = useCallback(async (code: string) => {
     let { data: { user } } = await supabase.auth.getUser();
@@ -660,7 +660,7 @@ export function useConvoyState() {
     rememberActiveConvoy(convoy.id);
 
     return true;
-  }, []);
+  }, [profile.name, settings.accentColor]);
 
   const leaveConvoy = useCallback(async (skipDeactivation = false) => {
     const convoyId = state.id;

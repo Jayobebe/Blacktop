@@ -77,9 +77,10 @@ export default function ArcadeDerezLegacy() {
     }
   }, [lobby?.state, lobby?.winnerId, lobby?.id, lobby?.roundSeq, userId, winRecorded]);
 
+  const arena = lobby?.arena;
   const arenaArea = useMemo(
-    () => (lobby?.arena?.ring?.length ?? 0) > 2 ? Math.round(polygonAreaM2(lobby!.arena!.ring)) : 0,
-    [lobby?.arena],
+    () => (arena?.ring?.length ?? 0) > 2 ? Math.round(polygonAreaM2(arena!.ring)) : 0,
+    [arena],
   );
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);

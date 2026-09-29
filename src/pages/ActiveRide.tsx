@@ -286,6 +286,8 @@ export default function ActiveRide() {
     return () => {
       wakeLock.release();
     };
+    // useWakeLock returns a new object each render; depending on it would release and re-take the lock every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rideState.isActive]);
 
   // Inactivity checkout guard: once useActiveRide flags 15 stationary minutes,
@@ -303,6 +305,8 @@ export default function ActiveRide() {
         wakeLock.request();
       }
     }
+    // As above for wakeLock; setConvoyRealtimeSuspended is a stable module function.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rideState.inactivityTimedOut, rideState.isActive]);
 
   // Request lean angle permission when ride starts (iOS requires user gesture)
@@ -310,6 +314,8 @@ export default function ActiveRide() {
     if (rideState.isActive && leanOn && !leanAngle.permissionGranted) {
       leanAngle.requestPermission();
     }
+    // Lists the fields it reads; the hook's return object is new every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rideState.isActive, leanOn, leanAngle.permissionGranted, leanAngle.requestPermission]);
 
   // Sync lean angle to ride state for recording
@@ -325,6 +331,8 @@ export default function ActiveRide() {
     if (rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled) && !gForce.permissionGranted) {
       gForce.requestPermission();
     }
+    // Lists the fields it reads; the hook's return object is new every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rideState.isActive, settings.gForceEnabled, settings.autoRescueEnabled, gForce.permissionGranted, gForce.requestPermission]);
 
   // Persist max G-force to ride state for recording (only when the gauge feature is enabled)
