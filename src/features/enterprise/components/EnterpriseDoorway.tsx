@@ -28,33 +28,27 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   // The package the rider opened below: the Inquire email names it.
   const [openTier, setOpenTier] = useState<EnterpriseTier | null>(null);
 
-  // The login isn't open yet: trying it pulses the coming-soon card instead.
-  const soonRef = useRef<HTMLDivElement>(null);
+  // The login isn't open yet: trying it pops the Coming soon stamp instead.
   const stampRef = useRef<HTMLSpanElement>(null);
   const pulseSoon = () => {
     haptics.light();
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const glow = 'hsl(var(--accent) / 0.55)';
-    soonRef.current?.animate(
+    // Only the stamp moves: a big pop with a wiggle and an accent glow.
+    const glow = 'hsl(var(--accent) / 0.8)';
+    const off = `0 0 0 0 hsl(var(--accent) / 0)`;
+    stampRef.current?.animate(
       reduce
-        ? [{ boxShadow: `0 0 0 0 ${glow}` }, { boxShadow: `0 0 0 3px ${glow}` }, { boxShadow: `0 0 0 0 ${glow}` }]
+        ? [{ boxShadow: off }, { boxShadow: `0 0 18px 6px ${glow}` }, { boxShadow: off }]
         : [
-            { transform: 'scale(1)', boxShadow: `0 0 0 0 ${glow}` },
-            { transform: 'scale(1.025)', boxShadow: `0 0 24px 4px ${glow}`, offset: 0.35 },
-            { transform: 'scale(1)', boxShadow: `0 0 0 0 ${glow}` },
+            { transform: 'rotate(3deg) scale(1)', boxShadow: off },
+            { transform: 'rotate(-7deg) scale(1.45)', boxShadow: `0 0 22px 8px ${glow}`, offset: 0.22 },
+            { transform: 'rotate(6deg) scale(1.38)', boxShadow: `0 0 20px 7px ${glow}`, offset: 0.4 },
+            { transform: 'rotate(-4deg) scale(1.3)', boxShadow: `0 0 16px 5px ${glow}`, offset: 0.56 },
+            { transform: 'rotate(2deg) scale(1.15)', boxShadow: `0 0 10px 3px ${glow}`, offset: 0.72 },
+            { transform: 'rotate(3deg) scale(1)', boxShadow: off },
           ],
-      { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      { duration: 700, easing: 'ease-out' },
     );
-    if (!reduce) {
-      stampRef.current?.animate(
-        [
-          { transform: 'rotate(3deg) scale(1)' },
-          { transform: 'rotate(-4deg) scale(1.18)', offset: 0.4 },
-          { transform: 'rotate(3deg) scale(1)' },
-        ],
-        { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
-      );
-    }
   };
 
   const connect = async (payload: GuestSessionPayload | null) => {
@@ -91,15 +85,16 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn('h-full overflow-y-auto overscroll-contain flex flex-col gap-3 [&>*]:shrink-0', className)}>
+    <div className={cn('h-full overflow-y-auto overscroll-contain flex flex-col gap-3 [&>*]:shrink-0 -mx-3 px-3 -mt-3 pt-3', className)}>
       {/* Coming soon, stamped like the Speedshop's items, with the organisation
           login it will have. The login is a preview: its fields are read-only
           (nothing typed is kept, passwords included) and any attempt to use
-          it just pulses the card. */}
-      <div ref={soonRef} className="relative bg-card/50 rounded-3xl border border-accent/40 p-4 overflow-hidden">
+          it just pops the stamp. */}
+      <div className="relative bg-card/50 rounded-3xl border border-accent/40 p-4">
         <span
           ref={stampRef}
           className="absolute top-3 right-3 rounded-md bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest px-2 py-1 rotate-3 shadow"
+          style={{ transformOrigin: '80% 50%' }}
         >
           {tr("Coming soon")}
         </span>
