@@ -48,6 +48,8 @@ export interface AppSettings {
   weatherRoutingEnabled: boolean;
   /** Read turn-by-turn directions aloud (the turn banner shows either way). */
   navVoiceEnabled: boolean;
+  /** How spoken directions sound: plain, radio (cockpit), or radio plus rally corner calls. */
+  navVoiceStyle: 'standard' | 'cockpit' | 'rally';
   /** Speak hazard warnings when riding up to a report (the banner shows either way). One switch for every hazard type. */
   hazardVoiceEnabled: boolean;
   /**
@@ -120,6 +122,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   weatherOverlayEnabled: false,
   weatherRoutingEnabled: false,
   navVoiceEnabled: true,
+  navVoiceStyle: 'standard',
   hazardVoiceEnabled: true,
   rescueToConvoy: true,
   rescueToCrew: true,

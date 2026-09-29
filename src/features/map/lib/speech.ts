@@ -54,14 +54,78 @@ if (speechSupported()) {
 
 let speaking = 0;
 
+export type VoiceStyle = 'standard' | 'cockpit' | 'rally';
+let style: VoiceStyle = 'standard';
+export function setVoiceStyle(s: VoiceStyle) {
+  style = s;
+}
+export function getVoiceStyle(): VoiceStyle {
+  return style;
+}
+
+// Radio squelch: a short burst of band-passed static plus a keying chirp,
+// made on the fly with Web Audio (no sound files, nothing downloaded).
+let ctx: AudioContext | null = null;
+function audioCtx(): AudioContext | null {
+  try {
+    if (!ctx) {
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+    }
+    if (ctx.state === 'suspended') void ctx.resume();
+    return ctx;
+  } catch {
+    return null;
+  }
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', () => audioCtx(), { capture: true, once: true });
+}
+
+/** Plays a squelch; `key` is the opening chirp, otherwise the closing one. */
+export function playSquelch(key: boolean) {
+  const c = audioCtx();
+  if (!c) return;
+  const t = c.currentTime;
+  const dur = key ? 0.09 : 0.16;
+  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const noise = c.createBufferSource();
+  noise.buffer = buf;
+  const band = c.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 1800;
+  band.Q.value = 0.9;
+  const ng = c.createGain();
+  ng.gain.setValueAtTime(0.18, t);
+  ng.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  noise.connect(band).connect(ng).connect(c.destination);
+  noise.start(t);
+  const osc = c.createOscillator();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(key ? 1400 : 1000, t);
+  osc.frequency.linearRampToValueAtTime(key ? 2000 : 700, t + 0.05);
+  const og = c.createGain();
+  og.gain.setValueAtTime(0.06, t);
+  og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  osc.connect(og).connect(c.destination);
+  osc.start(t);
+  osc.stop(t + 0.07);
+}
+
 /**
  * Says a prompt. `interrupt` cuts off anything still being said (used for
  * "turn now" prompts, which matter more than a stale earlier one).
+ * `radio` forces the radio treatment (pit calls); otherwise it follows the
+ * rider's voice style.
  */
-export function speak(text: string, opts: { interrupt?: boolean } = {}) {
+export function speak(text: string, opts: { interrupt?: boolean; radio?: boolean } = {}) {
   if (!speechSupported() || !text) return;
   const synth = window.speechSynthesis;
   if (opts.interrupt) synth.cancel();
+  const radio = opts.radio ?? style !== 'standard';
   const u = new SpeechSynthesisUtterance(text);
   if (voice) {
     u.voice = voice;
@@ -69,12 +133,14 @@ export function speak(text: string, opts: { interrupt?: boolean } = {}) {
   } else {
     u.lang = speechLang();
   }
-  u.rate = 1;
-  u.pitch = 1;
+  // Clipped, quick radio delivery.
+  u.rate = radio ? 1.15 : 1;
+  u.pitch = radio ? 0.85 : 1;
   let started = false;
   const done = () => {
     if (!started) return;
     started = false;
+    if (radio) playSquelch(false);
     speaking = Math.max(0, speaking - 1);
     if (speaking === 0) setAudioDucked(false);
   };
@@ -87,7 +153,12 @@ export function speak(text: string, opts: { interrupt?: boolean } = {}) {
   u.onerror = done;
   // Chrome can sit paused after the tab was hidden; resume before speaking.
   if (synth.paused) synth.resume();
-  synth.speak(u);
+  if (radio) {
+    playSquelch(true);
+    setTimeout(() => synth.speak(u), 110);
+  } else {
+    synth.speak(u);
+  }
 }
 
 export function stopSpeaking() {

@@ -1855,6 +1855,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
     speedMph: displaySpeed,
     active: guiding,
     voice: settings.navVoiceEnabled,
+    voiceStyle: settings.navVoiceStyle ?? 'standard',
     unit: settings.distanceUnit,
     stops: navStops,
     onOffRoute: () => setRerouteTick((t) => t + 1),
