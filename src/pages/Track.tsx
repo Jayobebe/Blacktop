@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { RacerView, PitView, SessionDetail, useTrackStore } from '@/features/track';
+import { SessionDetail, useTrackStore } from '@/features/track';
+import { RacerView, PitView } from '@/features/track/views';
 
 /**
  * Track Pack: racer (timing + pairing QR) or pit crew (scanner + live timing).

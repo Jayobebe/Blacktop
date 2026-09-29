@@ -1,5 +1,3 @@
-export { RacerView } from './components/RacerView';
-export { PitView } from './components/PitView';
 export { SessionDetail } from './components/SessionDetail';
 export { TrackMinimap } from './components/TrackMinimap';
 export { LapTable, SectorBoxes, DeltaReadout } from './components/TimingParts';

@@ -31,39 +31,53 @@ import Lobby from "./pages/Lobby";
 import SoloLobby from "./pages/SoloLobby";
 import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
-import Track from "./pages/Track";
-import DemoShowcase from "./pages/DemoShowcase";
-import History from "./pages/History";
-import RideDetail from "./pages/RideDetail";
-import Garage from "./pages/Garage";
 
-import Stats from "./pages/Stats";
-import Settings from "./pages/Settings";
-import RescueLocation from "./pages/RescueLocation";
-import Speedshop from "./pages/Speedshop";
-import Install from "./pages/Install";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Terms from "./pages/Terms";
-import NotFound from "./pages/NotFound";
-import Pay from "./pages/Pay";
-import Setup from "./pages/Setup";
 
 const queryClient = new QueryClient();
 
-// Lazy-loaded: MapLibre is heavy, so it's only fetched once the map is opened.
-const BlacktopMapOverlay = lazy(() =>
+// Screens off the ride-critical path load on demand, then get prefetched once
+// the app is idle so they still open instantly (and offline) later.
+const pageLoaders: Array<() => Promise<unknown>> = [];
+function lazyPage<T extends React.ComponentType>(load: () => Promise<{ default: T }>) {
+  pageLoaders.push(load);
+  return lazy(load);
+}
+function prefetchPages() {
+  const run = () => pageLoaders.forEach((load) => void load().catch(() => {}));
+  if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 5000 });
+  else setTimeout(run, 2000);
+}
+const Track = lazyPage(() => import("./pages/Track"));
+const DemoShowcase = lazyPage(() => import("./pages/DemoShowcase"));
+const History = lazyPage(() => import("./pages/History"));
+const RideDetail = lazyPage(() => import("./pages/RideDetail"));
+const Garage = lazyPage(() => import("./pages/Garage"));
+const Stats = lazyPage(() => import("./pages/Stats"));
+const Settings = lazyPage(() => import("./pages/Settings"));
+const RescueLocation = lazyPage(() => import("./pages/RescueLocation"));
+const Speedshop = lazyPage(() => import("./pages/Speedshop"));
+const Install = lazyPage(() => import("./pages/Install"));
+const PrivacyPolicy = lazyPage(() => import("./pages/PrivacyPolicy"));
+const Terms = lazyPage(() => import("./pages/Terms"));
+const NotFound = lazyPage(() => import("./pages/NotFound"));
+const Pay = lazyPage(() => import("./pages/Pay"));
+const Setup = lazyPage(() => import("./pages/Setup"));
+const World = lazyPage(() => import("./pages/World"));
+const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
+const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));
+const CrewJoin = lazyPage(() => import("./pages/CrewJoin"));
+const CrewChallenges = lazyPage(() => import("./pages/CrewChallenges"));
+const Arcade = lazyPage(() => import("./pages/Arcade"));
+const ArcadeHitHeavy = lazyPage(() => import("./pages/ArcadeHitHeavy"));
+const ArcadePetrolHead = lazyPage(() => import("./pages/ArcadePetrolHead"));
+const ArcadeDerezLegacy = lazyPage(() => import("./pages/ArcadeDerezLegacy"));
+
+// Lazy-loaded: MapLibre is heavy, so it isn't part of the first load.
+// Prefetched at idle like the pages, so the map still opens with no signal.
+const BlacktopMapOverlay = lazyPage(() =>
   import("@/features/map/components/BlacktopMapOverlay").then((m) => ({ default: m.BlacktopMapOverlay }))
 );
 
-import World from "./pages/World";
-import CrewConvoys from "./pages/CrewConvoys";
-import CrewLeaderboard from "./pages/CrewLeaderboard";
-import CrewJoin from "./pages/CrewJoin";
-import CrewChallenges from "./pages/CrewChallenges";
-import Arcade from "./pages/Arcade";
-import ArcadeHitHeavy from "./pages/ArcadeHitHeavy";
-import ArcadePetrolHead from "./pages/ArcadePetrolHead";
-import ArcadeDerezLegacy from "./pages/ArcadeDerezLegacy";
 
 
 /**
@@ -152,6 +166,7 @@ function AppRoutes() {
 
   // Burn trips: drop unstarred rides past the chosen window (no-op when off).
   useEffect(() => { burnExpiredTrips(); }, []);
+  useEffect(() => { if (!isLoading) prefetchPages(); }, [isLoading]);
 
   // Skeleton of Home while checking auth/profile status
   if (isLoading) {
@@ -161,6 +176,7 @@ function AppRoutes() {
   if (!hasProfile) {
     return (
       <PageTransition>
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
         <Route path="/pay" element={<Pay />} />
@@ -168,6 +184,7 @@ function AppRoutes() {
         <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
+      </Suspense>
       </PageTransition>
     );
   }
@@ -178,6 +195,7 @@ function AppRoutes() {
     <CrewStatsPublisher />
     <MaintenanceNotifier />
     <PageTransition>
+    <Suspense fallback={null}>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/create-convoy" element={<CreateConvoy />} />
@@ -213,6 +231,7 @@ function AppRoutes() {
       <Route path="/setup" element={<Setup />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
     </PageTransition>
     </>
   );
