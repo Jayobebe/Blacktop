@@ -193,7 +193,8 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
  * swiper: the Doorway already sits in Home's swipe deck).
  */
 function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null; onToggle: (t: EnterpriseTier) => void }) {
-  const tiers = enterpriseTiers();
+  // Longest package name first (in the rider's language); equal lengths keep their order.
+  const tiers = enterpriseTiers().sort((a, b) => tierName(b.id).length - tierName(a.id).length);
   return (
     <div className="flex flex-col gap-2">
       <p className="text-[10px] text-accent uppercase tracking-widest font-semibold px-1">{tr("Packages")}</p>
