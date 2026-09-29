@@ -3046,5 +3046,17 @@
  "{0} days left": "{0} dagar kvar",
  "{0} h {1} min left": "{0} h {1} min kvar",
  "{0} is already open": "{0} är redan öppen",
- "{0} min left": "{0} min kvar"
+ "{0} min left": "{0} min kvar",
+ "Chequered flag": "Rutig flagga",
+ "Guide ping sent": "Guideanrop skickat",
+ "Leader broadcast": "Ledarens utrop",
+ "Left the test area": "Lämnade testområdet",
+ "PASS": "GODKÄND",
+ "Peak lean": "Max lutning",
+ "Priority": "Prioritet",
+ "Ride summary": "Tursammanfattning",
+ "TOO SLOW": "FÖR LÅNGSAM",
+ "Tail rider {0}": "Sista förare {0}",
+ "Test ride": "Provkörning",
+ "Yellow flag": "Gul flagga"
 }

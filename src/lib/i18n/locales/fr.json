@@ -3046,5 +3046,17 @@
  "{0} days left": "{0} jours restants",
  "{0} h {1} min left": "{0} h {1} min restantes",
  "{0} is already open": "{0} est déjà ouvert",
- "{0} min left": "{0} min restantes"
+ "{0} min left": "{0} min restantes",
+ "Chequered flag": "Drapeau à damier",
+ "Guide ping sent": "Appel au guide envoyé",
+ "Leader broadcast": "Message du leader",
+ "Left the test area": "Hors de la zone d'essai",
+ "PASS": "VALIDÉ",
+ "Peak lean": "Inclinaison max",
+ "Priority": "Prioritaire",
+ "Ride summary": "Résumé de la sortie",
+ "TOO SLOW": "TROP LENT",
+ "Tail rider {0}": "Dernier motard {0}",
+ "Test ride": "Essai",
+ "Yellow flag": "Drapeau jaune"
 }

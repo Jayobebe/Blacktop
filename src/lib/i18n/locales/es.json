@@ -3056,5 +3056,17 @@
  "{0} days left": "Quedan {0} días",
  "{0} h {1} min left": "Quedan {0} h {1} min",
  "{0} is already open": "{0} ya está abierto",
- "{0} min left": "Quedan {0} min"
+ "{0} min left": "Quedan {0} min",
+ "Chequered flag": "Bandera a cuadros",
+ "Guide ping sent": "Aviso al guía enviado",
+ "Leader broadcast": "Mensaje del líder",
+ "Left the test area": "Ha salido de la zona de prueba",
+ "PASS": "APTO",
+ "Peak lean": "Inclinación máx.",
+ "Priority": "Prioridad",
+ "Ride summary": "Resumen de la ruta",
+ "TOO SLOW": "DEMASIADO LENTO",
+ "Tail rider {0}": "Último motorista {0}",
+ "Test ride": "Prueba",
+ "Yellow flag": "Bandera amarilla"
 }

@@ -3046,5 +3046,17 @@
  "{0} days left": "{0} gün kaldı",
  "{0} h {1} min left": "{0} sa {1} dk kaldı",
  "{0} is already open": "{0} zaten açık",
- "{0} min left": "{0} dk kaldı"
+ "{0} min left": "{0} dk kaldı",
+ "Chequered flag": "Damalı bayrak",
+ "Guide ping sent": "Rehber çağrısı gönderildi",
+ "Leader broadcast": "Lider anonsu",
+ "Left the test area": "Test alanından çıktı",
+ "PASS": "GEÇTİ",
+ "Peak lean": "En yüksek yatış",
+ "Priority": "Öncelik",
+ "Ride summary": "Sürüş özeti",
+ "TOO SLOW": "ÇOK YAVAŞ",
+ "Tail rider {0}": "Son sürücü {0}",
+ "Test ride": "Test sürüşü",
+ "Yellow flag": "Sarı bayrak"
 }

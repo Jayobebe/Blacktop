@@ -3046,5 +3046,17 @@
  "{0} days left": "Zostało dni: {0}",
  "{0} h {1} min left": "Zostało {0} h {1} min",
  "{0} is already open": "{0} jest już otwarte",
- "{0} min left": "Zostało {0} min"
+ "{0} min left": "Zostało {0} min",
+ "Chequered flag": "Flaga w szachownicę",
+ "Guide ping sent": "Wezwanie przewodnika wysłane",
+ "Leader broadcast": "Komunikat prowadzącego",
+ "Left the test area": "Opuścił strefę jazdy próbnej",
+ "PASS": "ZALICZONE",
+ "Peak lean": "Maks. złożenie",
+ "Priority": "Priorytet",
+ "Ride summary": "Podsumowanie jazdy",
+ "TOO SLOW": "ZA WOLNO",
+ "Tail rider {0}": "Zamykający {0}",
+ "Test ride": "Jazda próbna",
+ "Yellow flag": "Żółta flaga"
 }

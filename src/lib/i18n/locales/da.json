@@ -3046,5 +3046,17 @@
  "{0} days left": "{0} dage tilbage",
  "{0} h {1} min left": "{0} t {1} min tilbage",
  "{0} is already open": "{0} er allerede åben",
- "{0} min left": "{0} min tilbage"
+ "{0} min left": "{0} min tilbage",
+ "Chequered flag": "Ternet flag",
+ "Guide ping sent": "Guidekald sendt",
+ "Leader broadcast": "Lederens udkald",
+ "Left the test area": "Forlod testområdet",
+ "PASS": "BESTÅET",
+ "Peak lean": "Maks. lænevinkel",
+ "Priority": "Prioritet",
+ "Ride summary": "Turoversigt",
+ "TOO SLOW": "FOR LANGSOM",
+ "Tail rider {0}": "Sidste kører {0}",
+ "Test ride": "Prøvetur",
+ "Yellow flag": "Gult flag"
 }

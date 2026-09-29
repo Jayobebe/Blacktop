@@ -11,6 +11,7 @@ import { verifyEnterpriseCode } from '../lib/enterpriseApi';
 import { mountWorkspace } from '../lib/enterpriseStore';
 import { ENTERPRISE_CONTACT_EMAIL, enquiryMailto, tierName } from '../lib/tiers';
 import { enterpriseTiers, type EnterpriseTier, type GuestSessionPayload } from '../types';
+import { TierShowcase } from './TierShowcase';
 
 // The camera scanner (html5-qrcode) only loads when the rider opens it.
 const EnterpriseQrScanner = lazy(() => import('./EnterpriseQrScanner'));
@@ -219,13 +220,19 @@ function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null
             </button>
             {open && (
               <div className="px-3 pb-3 flex flex-col gap-3">
-                <div>
+                {/* The package's features playing out live, like the demo slides */}
+                <TierShowcase tier={t.id} />
+                <div className="animate-fade-in delay-100">
                   <h3 className="text-sm font-semibold text-foreground">{t.name}</h3>
                   <p className="text-xs text-muted-foreground">{t.target}</p>
                 </div>
                 <ul className="flex flex-col gap-2">
-                  {t.features.map((f) => (
-                    <li key={f.title} className="flex gap-2">
+                  {t.features.map((f, i) => (
+                    <li
+                      key={f.title}
+                      className="flex gap-2 animate-slide-up"
+                      style={{ animationDelay: `${200 + i * 80}ms`, animationFillMode: 'backwards' }}
+                    >
                       <Check className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                       <span className="text-xs">
                         <span className="font-semibold text-foreground">{f.title}</span>
@@ -234,7 +241,11 @@ function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null
                     </li>
                   ))}
                 </ul>
-                <Button asChild className="w-full h-11 rounded-xl">
+                <Button
+                  asChild
+                  className="w-full h-11 rounded-xl animate-slide-up"
+                  style={{ animationDelay: `${200 + t.features.length * 80}ms`, animationFillMode: 'backwards' }}
+                >
                   <a href={enquiryMailto(t.id)} onClick={() => haptics.light()}>
                     <Mail className="w-4 h-4 mr-2" />
                     {tr("Contact sales about {0}", [t.name])}

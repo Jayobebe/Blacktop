@@ -3046,5 +3046,17 @@
  "{0} days left": "Sisa {0} hari",
  "{0} h {1} min left": "Sisa {0} jam {1} mnt",
  "{0} is already open": "{0} sudah terbuka",
- "{0} min left": "Sisa {0} mnt"
+ "{0} min left": "Sisa {0} mnt",
+ "Chequered flag": "Bendera kotak-kotak",
+ "Guide ping sent": "Panggilan pemandu terkirim",
+ "Leader broadcast": "Siaran pemimpin",
+ "Left the test area": "Keluar dari area test ride",
+ "PASS": "LULUS",
+ "Peak lean": "Rebah maks.",
+ "Priority": "Prioritas",
+ "Ride summary": "Ringkasan perjalanan",
+ "TOO SLOW": "TERLALU LAMBAT",
+ "Tail rider {0}": "Pengendara terakhir {0}",
+ "Test ride": "Test ride",
+ "Yellow flag": "Bendera kuning"
 }

@@ -3046,5 +3046,17 @@
  "{0} days left": "Nog {0} dagen",
  "{0} h {1} min left": "Nog {0} u {1} min",
  "{0} is already open": "{0} is al open",
- "{0} min left": "Nog {0} min"
+ "{0} min left": "Nog {0} min",
+ "Chequered flag": "Geblokte vlag",
+ "Guide ping sent": "Oproep aan gids verstuurd",
+ "Leader broadcast": "Oproep van de leider",
+ "Left the test area": "Testgebied verlaten",
+ "PASS": "GESLAAGD",
+ "Peak lean": "Max. hellingshoek",
+ "Priority": "Voorrang",
+ "Ride summary": "Ritoverzicht",
+ "TOO SLOW": "TE LANGZAAM",
+ "Tail rider {0}": "Laatste rijder {0}",
+ "Test ride": "Proefrit",
+ "Yellow flag": "Gele vlag"
 }

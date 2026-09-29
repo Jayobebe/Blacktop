@@ -367,7 +367,6 @@ export default function Home() {
       count={deckKeys.length}
       index={deckIndex}
       onSelect={goToDeck}
-      lastIsAdd
       labels={[tr("Home"), ...enterprise.workspaces.map((w) => w.org.name), tr("Blacktop Enterprise")]}
     />
   );

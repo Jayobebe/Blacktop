@@ -3046,5 +3046,17 @@
  "{0} days left": "剩余 {0} 天",
  "{0} h {1} min left": "剩余 {0} 小时 {1} 分钟",
  "{0} is already open": "{0} 已经打开",
- "{0} min left": "剩余 {0} 分钟"
+ "{0} min left": "剩余 {0} 分钟",
+ "Chequered flag": "方格旗",
+ "Guide ping sent": "已呼叫领队",
+ "Leader broadcast": "领队广播",
+ "Left the test area": "已离开试驾区域",
+ "PASS": "通过",
+ "Peak lean": "最大压弯",
+ "Priority": "优先",
+ "Ride summary": "骑行摘要",
+ "TOO SLOW": "太慢",
+ "Tail rider {0}": "队尾 {0}",
+ "Test ride": "试驾",
+ "Yellow flag": "黄旗"
 }

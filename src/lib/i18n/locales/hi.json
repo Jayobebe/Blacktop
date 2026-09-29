@@ -3046,5 +3046,17 @@
  "{0} days left": "{0} दिन बाकी",
  "{0} h {1} min left": "{0} घं {1} मि बाकी",
  "{0} is already open": "{0} पहले से खुला है",
- "{0} min left": "{0} मि बाकी"
+ "{0} min left": "{0} मि बाकी",
+ "Chequered flag": "चेकर्ड फ़्लैग",
+ "Guide ping sent": "गाइड को कॉल भेजी गई",
+ "Leader broadcast": "लीडर प्रसारण",
+ "Left the test area": "टेस्ट क्षेत्र से बाहर",
+ "PASS": "पास",
+ "Peak lean": "अधिकतम झुकाव",
+ "Priority": "प्राथमिकता",
+ "Ride summary": "राइड सारांश",
+ "TOO SLOW": "बहुत धीमा",
+ "Tail rider {0}": "सबसे पीछे वाला {0}",
+ "Test ride": "टेस्ट राइड",
+ "Yellow flag": "पीला फ़्लैग"
 }

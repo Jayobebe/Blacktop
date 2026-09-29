@@ -130,19 +130,17 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
   );
 }
 
-/** Pagination pips for a SwipeDeck; the last one can be drawn as a "+" (the Doorway). */
+/** Pagination pips for a SwipeDeck: a dot per card, the current one stretched into a pill. */
 export function SwipeDeckPips({
   count,
   index,
   onSelect,
-  lastIsAdd = false,
   labels,
   className,
 }: {
   count: number;
   index: number;
   onSelect: (i: number) => void;
-  lastIsAdd?: boolean;
   labels?: string[];
   className?: string;
 }) {
@@ -151,7 +149,6 @@ export function SwipeDeckPips({
     <div className={cn('flex items-center justify-center gap-1.5', className)} role="tablist">
       {Array.from({ length: count }, (_, i) => {
         const active = i === index;
-        const add = lastIsAdd && i === count - 1;
         return (
           <button
             key={i}
@@ -162,23 +159,12 @@ export function SwipeDeckPips({
             onClick={() => onSelect(i)}
             className="p-1.5 -m-0.5"
           >
-            {add ? (
-              <span
-                className={cn(
-                  'block w-2.5 h-2.5 leading-[0.55rem] text-[11px] font-bold text-center transition-colors',
-                  active ? 'text-accent' : 'text-muted-foreground/60',
-                )}
-              >
-                +
-              </span>
-            ) : (
-              <span
-                className={cn(
-                  'block h-1.5 rounded-full transition-all duration-300',
-                  active ? 'w-4 bg-accent' : 'w-1.5 bg-muted-foreground/40',
-                )}
-              />
-            )}
+            <span
+              className={cn(
+                'block h-1.5 rounded-full transition-all duration-300',
+                active ? 'w-4 bg-accent' : 'w-1.5 bg-muted-foreground/40',
+              )}
+            />
           </button>
         );
       })}

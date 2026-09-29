@@ -3046,5 +3046,17 @@
  "{0} days left": "Mancano {0} giorni",
  "{0} h {1} min left": "Mancano {0} h {1} min",
  "{0} is already open": "{0} è già aperto",
- "{0} min left": "Mancano {0} min"
+ "{0} min left": "Mancano {0} min",
+ "Chequered flag": "Bandiera a scacchi",
+ "Guide ping sent": "Chiamata alla guida inviata",
+ "Leader broadcast": "Messaggio del capogita",
+ "Left the test area": "Uscito dall'area di prova",
+ "PASS": "SUPERATO",
+ "Peak lean": "Piega massima",
+ "Priority": "Priorità",
+ "Ride summary": "Riepilogo del giro",
+ "TOO SLOW": "TROPPO LENTO",
+ "Tail rider {0}": "Ultimo motociclista {0}",
+ "Test ride": "Prova",
+ "Yellow flag": "Bandiera gialla"
 }

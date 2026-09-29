@@ -3046,5 +3046,17 @@
  "{0} days left": "Noch {0} Tage",
  "{0} h {1} min left": "Noch {0} Std. {1} Min.",
  "{0} is already open": "{0} ist schon offen",
- "{0} min left": "Noch {0} Min."
+ "{0} min left": "Noch {0} Min.",
+ "Chequered flag": "Zielflagge",
+ "Guide ping sent": "Guide-Ruf gesendet",
+ "Leader broadcast": "Durchsage des Tourleiters",
+ "Left the test area": "Testgebiet verlassen",
+ "PASS": "BESTANDEN",
+ "Peak lean": "Max. Schräglage",
+ "Priority": "Vorrang",
+ "Ride summary": "Fahrtübersicht",
+ "TOO SLOW": "ZU LANGSAM",
+ "Tail rider {0}": "Letzter Fahrer {0}",
+ "Test ride": "Probefahrt",
+ "Yellow flag": "Gelbe Flagge"
 }

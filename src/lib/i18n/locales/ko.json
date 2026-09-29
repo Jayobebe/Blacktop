@@ -3046,5 +3046,17 @@
  "{0} days left": "{0}일 남음",
  "{0} h {1} min left": "{0}시간 {1}분 남음",
  "{0} is already open": "{0}이(가) 이미 열려 있습니다",
- "{0} min left": "{0}분 남음"
+ "{0} min left": "{0}분 남음",
+ "Chequered flag": "체커기",
+ "Guide ping sent": "가이드 호출 전송됨",
+ "Leader broadcast": "리더 방송",
+ "Left the test area": "시승 구역을 벗어남",
+ "PASS": "합격",
+ "Peak lean": "최대 뱅킹",
+ "Priority": "우선",
+ "Ride summary": "주행 요약",
+ "TOO SLOW": "너무 느림",
+ "Tail rider {0}": "맨 뒤 라이더 {0}",
+ "Test ride": "시승",
+ "Yellow flag": "황색기"
 }

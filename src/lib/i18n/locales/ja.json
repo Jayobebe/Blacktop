@@ -3046,5 +3046,17 @@
  "{0} days left": "残り{0}日",
  "{0} h {1} min left": "残り{0}時間{1}分",
  "{0} is already open": "{0}はすでに開いています",
- "{0} min left": "残り{0}分"
+ "{0} min left": "残り{0}分",
+ "Chequered flag": "チェッカーフラッグ",
+ "Guide ping sent": "ガイドを呼びました",
+ "Leader broadcast": "リーダーの一斉放送",
+ "Left the test area": "試乗エリア外に出ました",
+ "PASS": "合格",
+ "Peak lean": "最大バンク角",
+ "Priority": "優先",
+ "Ride summary": "走行サマリー",
+ "TOO SLOW": "遅すぎ",
+ "Tail rider {0}": "最後尾 {0}",
+ "Test ride": "試乗",
+ "Yellow flag": "黄旗"
 }
