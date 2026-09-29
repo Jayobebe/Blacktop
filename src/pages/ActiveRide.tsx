@@ -1019,7 +1019,7 @@ export default function ActiveRide() {
 
                   {settings.gForceEnabled && gForce.isSupported && (
                     <div className="mt-2 flex justify-center">
-                      <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-52 landscape:w-44" />
+                      <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-40 landscape:w-36" />
                     </div>
                   )}
                 </div>
@@ -1084,7 +1084,7 @@ export default function ActiveRide() {
         {/* Landscape: G-Force between speed and buttons */}
         {settings.gForceEnabled && gForce.isSupported && (
           <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">
-            <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-52 landscape:w-44" />
+            <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-40 landscape:w-36" />
           </div>
         )}
 

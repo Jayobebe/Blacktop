@@ -1023,7 +1023,7 @@ function TrackingMockup() {
 
       {/* G meter */}
       <div className="flex justify-center animate-slide-up delay-100">
-        <GForceCircle lateral={gVec.lateral} longitudinal={gVec.longitudinal} envelope={gVec.envelope} max={gVec.max} className="w-52" />
+        <GForceCircle lateral={gVec.lateral} longitudinal={gVec.longitudinal} envelope={gVec.envelope} max={gVec.max} className="w-40" />
       </div>
 
       {/* Stats Row */}

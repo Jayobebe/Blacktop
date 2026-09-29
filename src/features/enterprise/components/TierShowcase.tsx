@@ -1,29 +1,68 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Mic, WifiOff, Radio, LifeBuoy, Flag, Timer, GraduationCap, Store, Mountain, Gauge, Infinity as InfinityIcon, Palette, Wrench, ScanLine, Camera, Bell, Mail, Check, BookOpen, BadgeCheck, Crown } from 'lucide-react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
+import {
+  Mic,
+  WifiOff,
+  Radio,
+  LifeBuoy,
+  Flag,
+  Timer,
+  GraduationCap,
+  Store,
+  Mountain,
+  Wrench,
+  Bell,
+  Mail,
+  Check,
+  BookOpen,
+  Crown,
+  Palette,
+  Infinity as InfinityIcon,
+  Share2,
+  Camera,
+  type LucideIcon,
+} from 'lucide-react';
 import { tr } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import bikeAsset from '@/assets/demo-bike.png.asset.json';
 import type { EnterpriseTier } from '../types';
 import { tierName } from '../lib/tiers';
 
 /**
- * Animated scenes for the Enterprise page's packages, in the style of the demo
- * slides (pages/DemoShowcase): a small dark map or console where the package's
- * headline features play out live. Only the open package's scene runs, it
- * redraws at ~30 fps, and with reduced motion it holds a still frame.
+ * Animated scenes for the Enterprise page's packages: a small live map or
+ * console where the package's headline features play out. Each scene is one
+ * SVG on a fixed 320×200 canvas (so nothing stretches), everything moves on
+ * smoothed paths with eased timing, and the loops are seamless. Only the open
+ * package's scene runs (~30 fps); with reduced motion it holds a still frame.
  */
 
 type Pt = [number, number];
-const W = 160;
-const H = 100;
+type Icon = LucideIcon;
 
-/** Seconds since mount, ticking at ~30 fps; frozen under reduced motion. */
-function useSceneTime(): number {
-  const [t, setT] = useState(3.2);
+const VW = 320;
+const VH = 200;
+const A = 'hsl(var(--accent))';
+const aa = (o: number) => `hsl(var(--accent) / ${o})`;
+const BG = '#0b0b0e';
+const INK = '#EDEAE3';
+const MUTED = '#8E8980';
+const PANEL = 'rgba(15,15,19,0.94)';
+const LINE = 'rgba(255,255,255,0.09)';
+const ROAD = '#1d1d23';
+const ROAD_EDGE = '#29292f';
+const RED = '#ef4444';
+const AMBER = '#f59e0b';
+const GREEN = '#22c55e';
+const SKY = '#38bdf8';
+
+// ---- Time and easing ---------------------------------------------------------
+
+/** Seconds since mount (starting at `from`), ~30 fps; frozen under reduced motion. */
+function useSceneTime(from = 0): number {
+  const [t, setT] = useState(from);
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     let raf = 0;
     let last = 0;
-    const start = performance.now() - 3200;
+    const start = performance.now() - from * 1000;
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       if (now - last < 33) return;
@@ -32,29 +71,84 @@ function useSceneTime(): number {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [from]);
   return t;
 }
 
-function lengths(pts: Pt[]) {
-  const segs = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
-  return { segs, total: segs.reduce((a, b) => a + b, 0) };
-}
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const frac = (x: number) => x - Math.floor(x);
+const easeInOut = (x: number) => {
+  const v = clamp01(x);
+  return v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2;
+};
+const easeOut = (x: number) => 1 - Math.pow(1 - clamp01(x), 3);
+/** 0 → 1 → 0: rises over `fade` from `a`, falls over `fade` to `b`. */
+const win = (t: number, a: number, b: number, fade = 0.35) => easeOut((t - a) / fade) * (1 - easeOut((t - (b - fade)) / fade));
+const rnd = (n: number) => frac(Math.sin(n * 127.1 + 311.7) * 43758.5453);
+const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
+const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-function along(pts: Pt[], f: number): Pt {
-  const { segs, total } = lengths(pts);
-  let d = Math.max(0, Math.min(1, f)) * total;
-  for (let i = 0; i < segs.length; i++) {
-    if (d <= segs[i]) {
-      const r = segs[i] ? d / segs[i] : 0;
-      return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * r, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * r];
+// ---- Smooth routes -----------------------------------------------------------
+
+function catmull(ctrl: Pt[], closed: boolean, per: number): Pt[] {
+  const n = ctrl.length;
+  const get = (i: number) => (closed ? ctrl[(i + n) % n] : ctrl[Math.max(0, Math.min(n - 1, i))]);
+  const out: Pt[] = [];
+  const segs = closed ? n : n - 1;
+  for (let i = 0; i < segs; i++) {
+    const [p0, p1, p2, p3] = [get(i - 1), get(i), get(i + 1), get(i + 2)];
+    for (let k = 0; k < per; k++) {
+      const t = k / per;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const c = (a: number, b: number, cc: number, d: number) =>
+        0.5 * (2 * b + (-a + cc) * t + (2 * a - 5 * b + 4 * cc - d) * t2 + (-a + 3 * b - 3 * cc + d) * t3);
+      out.push([c(p0[0], p1[0], p2[0], p3[0]), c(p0[1], p1[1], p2[1], p3[1])]);
     }
-    d -= segs[i];
   }
-  return pts[pts.length - 1];
+  out.push(closed ? out[0] : ctrl[n - 1]);
+  return out;
 }
 
-const path = (pts: Pt[], close = false) => `M${pts.map((p) => p.join(' ')).join(' L')}${close ? ' Z' : ''}`;
+/** A smoothed route with arc-length lookup: `at(f)` for f in 0..1 (wraps if closed). */
+class Route {
+  pts: Pt[];
+  cum: number[];
+  total: number;
+  closed: boolean;
+  d: string;
+  constructor(ctrl: Pt[], closed: boolean, per = 14) {
+    this.closed = closed;
+    this.pts = catmull(ctrl, closed, per);
+    this.cum = [0];
+    for (let i = 1; i < this.pts.length; i++) {
+      this.cum.push(this.cum[i - 1] + Math.hypot(this.pts[i][0] - this.pts[i - 1][0], this.pts[i][1] - this.pts[i - 1][1]));
+    }
+    this.total = this.cum[this.cum.length - 1];
+    this.d = `M${this.pts.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' L')}${closed ? ' Z' : ''}`;
+  }
+  at(f: number): { p: Pt; a: number } {
+    const g = this.closed ? frac(f) : clamp01(f);
+    const d = g * this.total;
+    let lo = 0;
+    let hi = this.cum.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (this.cum[mid] <= d) lo = mid;
+      else hi = mid;
+    }
+    const seg = this.cum[hi] - this.cum[lo] || 1;
+    const r = (d - this.cum[lo]) / seg;
+    const [a, b] = [this.pts[lo], this.pts[hi]];
+    return { p: [lerp(a[0], b[0], r), lerp(a[1], b[1], r)], a: (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI };
+  }
+  /** Path along the route from f0 to f1 (f1 may exceed f0 + wrap on closed routes). */
+  slice(f0: number, f1: number, n = 28): string {
+    const pts = Array.from({ length: n + 1 }, (_, i) => this.at(lerp(f0, f1, i / n)).p);
+    return `M${pts.map((p) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' L')}`;
+  }
+}
 
 function inside(p: Pt, poly: Pt[]): boolean {
   let hit = false;
@@ -66,548 +160,1050 @@ function inside(p: Pt, poly: Pt[]): boolean {
   return hit;
 }
 
-/** Position helper for HTML markers over the SVG (viewBox 160×100). */
-const at = ([x, y]: Pt) => ({ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` });
+// ---- Drawing kit ---------------------------------------------------------------
 
-function Frame({ children, className }: { children: ReactNode; className?: string }) {
+function Frame({ children }: { children: ReactNode }) {
   return (
-    <div className={cn('relative w-full aspect-[16/10] rounded-2xl border border-border/30 bg-[#0d0d10] overflow-hidden animate-scale-in no-frost', className)}>
-      {children}
+    <div className="relative w-full aspect-[16/10] rounded-2xl border border-border/30 bg-[#0b0b0e] overflow-hidden animate-scale-in no-frost">
+      <svg viewBox={`0 0 ${VW} ${VH}`} className="absolute inset-0 w-full h-full" style={{ fontFamily: 'inherit' }} aria-hidden>
+        {children}
+      </svg>
     </div>
   );
 }
 
-function Streets({ roads }: { roads: Pt[][] }) {
+/** Ids for this scene instance's gradients and filters. */
+function useIds() {
+  const base = useId().replace(/:/g, '');
+  return (name: string) => `${base}-${name}`;
+}
+
+function Defs({ id }: { id: (n: string) => string }) {
   return (
-    <svg className="absolute inset-0 w-full h-full opacity-25 text-muted-foreground" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-      {roads.map((r, i) => (
-        <path key={i} d={path(r)} stroke="currentColor" strokeWidth={1.6} fill="none" strokeLinejoin="round" strokeLinecap="round" />
-      ))}
-    </svg>
+    <defs>
+      <filter id={id('glow')} x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="2.4" result="b" />
+        <feMerge>
+          <feMergeNode in="b" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      <filter id={id('soft')} x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="6" />
+      </filter>
+      <radialGradient id={id('vignette')} cx="50%" cy="50%" r="75%">
+        <stop offset="60%" stopColor="#000" stopOpacity="0" />
+        <stop offset="100%" stopColor="#000" stopOpacity="0.55" />
+      </radialGradient>
+      <pattern id={id('grid')} width="16" height="16" patternUnits="userSpaceOnUse">
+        <path d="M16 0H0V16" fill="none" stroke="white" strokeOpacity="0.035" strokeWidth="0.6" />
+      </pattern>
+    </defs>
   );
 }
 
-function Marker({ p, label, className, style }: { p: Pt; label: string; className?: string; style?: React.CSSProperties }) {
+function Base({ id }: { id: (n: string) => string }) {
   return (
-    <div
-      className={cn(
-        'absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 flex items-center justify-center text-[8px] font-bold text-white transition-[transform,box-shadow] duration-300',
-        className,
-      )}
-      style={{ ...at(p), ...style }}
+    <>
+      <rect width={VW} height={VH} fill={BG} />
+      <rect width={VW} height={VH} fill={`url(#${id('grid')})`} />
+    </>
+  );
+}
+
+function Vignette({ id }: { id: (n: string) => string }) {
+  return <rect width={VW} height={VH} fill={`url(#${id('vignette')})`} pointerEvents="none" />;
+}
+
+function Road({ d, w = 6 }: { d: string; w?: number }) {
+  return (
+    <>
+      <path d={d} fill="none" stroke={ROAD_EDGE} strokeWidth={w + 1.6} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke={ROAD} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  );
+}
+
+function T({
+  x,
+  y,
+  children,
+  size = 7.5,
+  weight = 600,
+  color = INK,
+  anchor = 'start',
+  mono = false,
+  spacing,
+  opacity,
+}: {
+  x: number;
+  y: number;
+  children: ReactNode;
+  size?: number;
+  weight?: number;
+  color?: string;
+  anchor?: 'start' | 'middle' | 'end';
+  mono?: boolean;
+  spacing?: number;
+  opacity?: number;
+}) {
+  return (
+    <text
+      x={x}
+      y={y}
+      fontSize={size}
+      fontWeight={weight}
+      textAnchor={anchor}
+      opacity={opacity}
+      letterSpacing={spacing}
+      style={{ fill: color, fontVariantNumeric: mono ? 'tabular-nums' : undefined }}
     >
-      {label}
-    </div>
-  );
-}
-
-function Chip({ children, className, style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) {
-  return (
-    <div className={cn('absolute flex items-center gap-1.5 rounded-lg bg-card/95 border border-border/40 px-2 py-1 text-[9px] font-semibold no-frost', className)} style={style}>
       {children}
-    </div>
+    </text>
   );
 }
 
-function MicBars({ on }: { on: boolean }) {
+function Ico({ I, x, y, s = 9, color = A, sw = 2.2 }: { I: Icon; x: number; y: number; s?: number; color?: string; sw?: number }) {
+  return <I x={x} y={y} width={s} height={s} strokeWidth={sw} style={{ color }} />;
+}
+
+/** Rough text width for sizing HUD chips around translated labels. */
+const textW = (s: string, size = 7.5) => s.length * size * 0.56;
+
+/** A HUD chip: icon + label, sized to its text. `right` anchors it by its right edge. */
+function Chip({
+  x,
+  y,
+  label,
+  I,
+  color = A,
+  tone,
+  right = false,
+  extra = 0,
+  children,
+  opacity = 1,
+  dy = 0,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  I?: Icon;
+  color?: string;
+  tone?: string;
+  right?: boolean;
+  extra?: number;
+  children?: ReactNode;
+  opacity?: number;
+  dy?: number;
+}) {
+  const w = (I ? 20 : 10) + textW(label) + extra;
+  const x0 = right ? x - w : x;
   return (
-    <span className="flex items-end gap-[2px] h-2.5">
-      {[0, 1, 2, 3].map((b) => (
-        <span
-          key={b}
-          className={cn('w-0.5 rounded-full bg-accent', on ? 'animate-pulse' : 'opacity-30')}
-          style={{ height: `${4 + ((b * 3) % 7)}px`, animationDelay: `${b * 120}ms` }}
-        />
-      ))}
-    </span>
+    <g transform={`translate(${x0} ${y + dy})`} opacity={opacity}>
+      <rect width={w} height={17} rx={5} fill={PANEL} stroke={tone ?? LINE} strokeWidth={0.8} />
+      {I && <Ico I={I} x={6} y={4} s={9} color={color} />}
+      <T x={I ? 19 : 6} y={11.4}>{label}</T>
+      {children && <g transform={`translate(${w - extra - 4} 0)`}>{children}</g>}
+    </g>
   );
 }
 
-// ---- Academy: tether radar, priority comms, Mod 1 speed trap -----------------
-
-const ACADEMY_ROAD: Pt[] = [[6, 84], [30, 74], [52, 76], [72, 60], [94, 46], [120, 42], [154, 22]];
-const ACADEMY_STREETS: Pt[][] = [ACADEMY_ROAD, [[40, 0], [52, 76], [60, 100]], [[94, 46], [104, 0]], [[120, 42], [150, 100]]];
-
-function AcademyScene() {
-  const t = useSceneTime();
-  const cycle = (t * 0.045) % 1;
-  const lead = 0.32 + 0.68 * cycle;
-  const fade = Math.min(1, cycle * 12, (1 - cycle) * 12);
-  const lagGap = 0.17 + 0.1 * (0.5 + 0.5 * Math.sin(t * 0.8));
-  const metres = Math.round(lagGap * 1100);
-  const tether = metres > 240 ? 'red' : metres > 150 ? 'amber' : 'ok';
-  const instr = along(ACADEMY_ROAD, lead);
-  const lagger = along(ACADEMY_ROAD, lead - lagGap);
-  const talking = t % 7 < 3.2;
-  const trap = Math.floor(t / 4) % 2 === 0;
-  const trapSpeed = Math.round((trap ? 51 : 46) * Math.min(1, (t % 4) / 0.9));
-  const tetherColor = tether === 'red' ? '#ef4444' : tether === 'amber' ? '#f59e0b' : 'hsl(var(--accent))';
-
+function Wave({ on, t, color = A, n = 5 }: { on: number; t: number; color?: string; n?: number }) {
   return (
-    <Frame>
-      <Streets roads={ACADEMY_STREETS} />
-      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-        <path d={path(ACADEMY_ROAD)} stroke="hsl(var(--accent))" strokeOpacity={0.5} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        {/* The tether: an arc above the road from instructor to the trailing student */}
-        <path
-          d={`M${instr[0]} ${instr[1]} Q${(instr[0] + lagger[0]) / 2} ${Math.min(instr[1], lagger[1]) - 18} ${lagger[0]} ${lagger[1]}`}
-          stroke={tetherColor}
-          strokeWidth={1.3}
-          strokeDasharray="3 2"
-          fill="none"
-          opacity={fade}
-          className="transition-[stroke] duration-300"
-        />
-      </svg>
-      <div style={{ opacity: fade }}>
-        <Marker p={along(ACADEMY_ROAD, lead - 0.06)} label="S" className="bg-sky-500" />
-        <Marker p={along(ACADEMY_ROAD, lead - 0.11)} label="S" className="bg-violet-500" />
-        <Marker p={lagger} label="S" className={cn('bg-pink-500', tether !== 'ok' && 'scale-110')} style={tether === 'red' ? { boxShadow: '0 0 10px 3px rgba(239,68,68,0.6)' } : undefined} />
-        <Marker p={instr} label="I" className={cn('bg-accent', talking && 'scale-125 shadow-[0_0_10px_3px_hsl(var(--accent)/0.6)]')} />
-      </div>
-
-      <Chip className="top-2 left-2 animate-fade-in">
-        <Mic className={cn('w-3 h-3', talking ? 'text-accent' : 'text-muted-foreground')} />
-        <span>{tr("Instructor")}</span>
-        <span className={cn('rounded px-1 text-[8px] uppercase tracking-wider', talking ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground')}>{tr("Priority")}</span>
-        <MicBars on={talking} />
-      </Chip>
-
-      <Chip
-        className="top-2 right-2 animate-fade-in delay-100"
-        style={{ borderColor: tether === 'ok' ? undefined : tetherColor }}
-      >
-        <span className="w-1.5 h-1.5 rounded-full" style={{ background: tetherColor }} />
-        <span className="font-mono tabular-nums">{metres} m</span>
-      </Chip>
-
-      <Chip className="bottom-2 right-2 animate-slide-up delay-200">
-        <Timer className="w-3 h-3 text-accent" />
-        <span className="font-mono tabular-nums">{trapSpeed} km/h</span>
-        <span
-          className={cn(
-            'rounded px-1.5 py-0.5 text-[8px] font-black tracking-wider transition-colors duration-300',
-            (t % 4) < 0.9 ? 'bg-muted text-muted-foreground' : trap ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white',
-          )}
-        >
-          {(t % 4) < 0.9 ? '…' : trap ? tr("PASS") : tr("TOO SLOW")}
-        </span>
-      </Chip>
-    </Frame>
+    <g>
+      {Array.from({ length: n }, (_, i) => {
+        const h = 1.6 + on * 6.5 * Math.abs(Math.sin(t * 9 + i * 1.7));
+        return <rect key={i} x={i * 2.6} y={8.5 - h / 2} width={1.5} height={h} rx={0.75} style={{ fill: color }} opacity={0.35 + 0.65 * on} />;
+      })}
+    </g>
   );
 }
 
-// ---- Showroom: timed test ride, geofence alert, ride summary ------------------
-
-const FENCE: Pt[] = [[18, 16], [118, 10], [136, 56], [92, 90], [22, 82]];
-const TEST_ROUTE: Pt[] = [[42, 70], [30, 44], [58, 26], [100, 22], [124, 34], [150, 48], [128, 62], [96, 76], [60, 80], [42, 70]];
-const SHOWROOM_STREETS: Pt[][] = [TEST_ROUTE, [[0, 50], [30, 44]], [[100, 22], [110, 0]], [[96, 76], [104, 100]]];
-
-function ShowroomScene() {
-  const t = useSceneTime();
-  const cycle = (t * 0.06) % 1;
-  const bike = along(TEST_ROUTE, cycle);
-  const out = !inside(bike, FENCE);
-  const left = Math.max(0, 45 * 60 - Math.floor(t * 9) % (45 * 60));
-  const mm = String(Math.floor(left / 60)).padStart(2, '0');
-  const ss = String(left % 60).padStart(2, '0');
-  const summary = cycle > 0.82;
-
+function Dot({ p, color, r = 4, halo = 0, haloColor }: { p: Pt; color: string; r?: number; halo?: number; haloColor?: string }) {
   return (
-    <Frame>
-      <Streets roads={SHOWROOM_STREETS} />
-      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-        <path d={path(FENCE, true)} fill="hsl(var(--accent))" fillOpacity={out ? 0.04 : 0.08} stroke={out ? '#ef4444' : 'hsl(var(--accent))'} strokeWidth={1} strokeDasharray="4 3" className="transition-colors duration-300" />
-        <path d={path(TEST_ROUTE)} stroke="hsl(var(--accent))" strokeOpacity={0.55} strokeWidth={2} fill="none" strokeLinejoin="round" />
-      </svg>
-      <Marker p={bike} label="C" className={cn('bg-sky-500', out && 'bg-red-500 scale-125')} style={out ? { boxShadow: '0 0 12px 4px rgba(239,68,68,0.55)' } : undefined} />
-
-      <Chip className="top-2 left-2 animate-fade-in">
-        <Gauge className="w-3 h-3 text-accent" />
-        <span>{tr("Test ride")}</span>
-        <span className="font-mono tabular-nums text-accent">{mm}:{ss}</span>
-      </Chip>
-
-      <Chip
-        className={cn('top-2 right-2 border-red-500/70 text-red-400 transition-all duration-300', out ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2')}
-      >
-        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-        {tr("Left the test area")}
-      </Chip>
-
-      <div
-        className={cn(
-          'absolute bottom-2 right-2 w-28 rounded-xl bg-card/95 border border-accent/60 p-2 transition-all duration-500 no-frost',
-          summary ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
-        )}
-      >
-        <p className="text-[8px] uppercase tracking-widest text-accent font-semibold">{tr("Ride summary")}</p>
-        <div className="flex items-end justify-between mt-1">
-          <div>
-            <p className="text-[8px] text-muted-foreground">{tr("Peak lean")}</p>
-            <p className="font-mono font-bold text-sm leading-none">41°</p>
-          </div>
-          <svg viewBox="0 0 40 20" className="w-10 h-5" aria-hidden>
-            <path d="M2 16 C 8 4, 14 18, 20 8 S 32 2, 38 12" stroke="hsl(var(--accent))" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-          </svg>
-        </div>
-      </div>
-    </Frame>
+    <g transform={`translate(${p[0].toFixed(1)} ${p[1].toFixed(1)})`}>
+      {halo > 0 && <circle r={r + 4 + halo * 3} style={{ fill: haloColor ?? color }} opacity={0.22 * halo} />}
+      <circle r={r + 1.5} fill={BG} opacity={0.9} />
+      <circle r={r} style={{ fill: color }} />
+      <circle r={r} fill="none" stroke="white" strokeOpacity={0.9} strokeWidth={1.1} />
+    </g>
   );
 }
 
-// ---- Touring: offline switchbacks, leader broadcast, sweep radar, guide ping --
-
-const PASS_ROAD: Pt[] = [[8, 92], [70, 82], [22, 66], [92, 56], [34, 40], [110, 30], [70, 16], [156, 8]];
-
-function TouringScene() {
-  const t = useSceneTime();
-  const cycle = (t * 0.035) % 1;
-  const lead = 0.36 + 0.64 * cycle;
-  const fade = Math.min(1, cycle * 12, (1 - cycle) * 12);
-  const riders = [0.07, 0.14, 0.21].map((g) => along(PASS_ROAD, lead - g));
-  const sweepGap = 0.3 + 0.04 * Math.sin(t * 0.7);
-  const sweep = along(PASS_ROAD, lead - sweepGap);
-  const tailMetres = Math.round((sweepGap - 0.21) * 3600);
-  const broadcasting = t % 6 < 2.6;
-  const ping = t % 9 > 6.2;
-
+/** A heading arrow for the vehicle the scene follows. */
+function Arrow({ p, a, color, glow, s = 1 }: { p: Pt; a: number; color: string; glow?: string; s?: number }) {
   return (
-    <Frame>
-      {/* Contour lines: it's a mountain */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-        {[18, 30, 42, 54].map((r) => (
-          <ellipse key={r} cx={96} cy={30} rx={r * 1.6} ry={r} fill="none" stroke="white" strokeWidth={0.6} />
-        ))}
-      </svg>
-      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-        <path d={path(PASS_ROAD)} stroke="hsl(var(--accent))" strokeOpacity={0.55} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />
-      </svg>
-      <div style={{ opacity: fade }}>
-        <div className="absolute -translate-x-1/2 -translate-y-1/2" style={at(along(PASS_ROAD, lead))}>
-          {broadcasting && <span className="absolute inset-0 -m-3 rounded-full border border-accent/70 animate-ping" />}
-        </div>
-        <Marker p={sweep} label="S" className="bg-sky-500" />
-        {riders.map((p, i) => (
-          <Marker
-            key={i}
-            p={p}
-            label={String(i + 1)}
-            className={cn('bg-zinc-500', i === 1 && ping && 'bg-red-500 scale-125')}
-            style={i === 1 && ping ? { boxShadow: '0 0 12px 4px rgba(239,68,68,0.55)' } : undefined}
-          />
-        ))}
-        <Marker p={along(PASS_ROAD, lead)} label="L" className={cn('bg-accent', broadcasting && 'scale-110')} />
-      </div>
-
-      <Chip className="top-2 left-2 animate-fade-in">
-        <WifiOff className="w-3 h-3 text-muted-foreground" />
-        <span>{tr("Offline maps")}</span>
-      </Chip>
-
-      <Chip className={cn('top-2 right-2 transition-all duration-300', broadcasting ? 'opacity-100 border-accent/70' : 'opacity-40')}>
-        <Radio className="w-3 h-3 text-accent" />
-        <span>{tr("Leader broadcast")}</span>
-        <MicBars on={broadcasting} />
-      </Chip>
-
-      <Chip className="bottom-2 left-2 animate-slide-up delay-100">
-        <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
-        <span className="font-mono tabular-nums">{tr("Tail rider {0}", [`${tailMetres} m`])}</span>
-      </Chip>
-
-      <Chip className={cn('bottom-2 right-2 border-red-500/70 text-red-400 transition-all duration-300', ping ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
-        <LifeBuoy className="w-3 h-3" />
-        {tr("Guide ping sent")}
-      </Chip>
-    </Frame>
+    <g transform={`translate(${p[0].toFixed(1)} ${p[1].toFixed(1)}) rotate(${(a + 90).toFixed(1)}) scale(${s})`} filter={glow ? `url(#${glow})` : undefined}>
+      <circle r={8.5} fill={BG} opacity={0.75} />
+      <path d="M0 -6.8 L5 5.2 L0 2.6 L-5 5.2 Z" style={{ fill: color }} stroke="white" strokeWidth={1.1} strokeLinejoin="round" />
+    </g>
   );
 }
 
-// ---- Track Pack Pro: pit board, helmet calls, flags ---------------------------
+/** Expanding rings (0..1 phase) for pings and broadcasts. */
+function Rings({ p, phase, color, max = 26, count = 2 }: { p: Pt; phase: number; color: string; max?: number; count?: number }) {
+  return (
+    <g transform={`translate(${p[0]} ${p[1]})`}>
+      {Array.from({ length: count }, (_, i) => {
+        const k = frac(phase + i / count);
+        return <circle key={i} r={6 + k * max} fill="none" stroke={color} strokeWidth={1.2} opacity={(1 - k) * 0.8} />;
+      })}
+    </g>
+  );
+}
 
-const CIRCUIT: Pt[] = [[24, 24], [96, 18], [120, 26], [128, 44], [104, 52], [70, 50], [58, 62], [84, 72], [120, 70], [132, 82], [108, 92], [30, 90], [14, 70], [14, 40], [24, 24]];
+// =============================================================================
+// TrackPack: a whole race — circuit, live timing tower, race control, pit calls
+// =============================================================================
+
+const CIRCUIT = new Route(
+  [[40, 42], [96, 26], [150, 30], [180, 52], [170, 82], [130, 90], [106, 106], [118, 128], [162, 134], [184, 158], [162, 182], [90, 184], [42, 170], [22, 132], [24, 86]],
+  true,
+  18,
+);
+const LAP_S = 8.5;
+const RACERS = [
+  { code: 'VEL', color: '#f4f4f5', off: 0.0, w: 0.83, ph: 0.2, me: false },
+  { code: '#7', color: A, off: -0.028, w: 0.61, ph: 2.1, me: true },
+  { code: 'KOR', color: '#c9c9d1', off: -0.058, w: 0.97, ph: 4.0, me: false },
+  { code: 'DUN', color: '#a1a1aa', off: -0.092, w: 0.74, ph: 1.3, me: false },
+  { code: 'ARI', color: '#7c7c86', off: -0.13, w: 0.88, ph: 5.2, me: false },
+];
+// Best overall (accent), personal best (white), slower (grey)
+const SECTOR_COLORS = [A, '#f4f4f5', '#4b4b53'];
 
 function TrackScene() {
-  const t = useSceneTime();
-  const lapLen = 7;
-  const lap = Math.floor(t / lapLen) + 4;
-  const f = (t % lapLen) / lapLen;
-  const bike = along(CIRCUIT, f);
-  // A made-up but steady pit board: each lap's time and delta come from its number.
-  const lastTime = 102 + ((lap * 37) % 17) / 10;
-  const delta = (((lap * 53) % 13) - 6) / 10;
-  const call = lap % 3 === 0 ? tr("BOX") : lap % 3 === 1 ? tr("PUSH") : null;
-  const showCall = call && f > 0.15 && f < 0.6;
-  const flag = lap % 4 === 2 && f > 0.4 && f < 0.75 ? 'yellow' : f > 0.93 ? 'chequered' : null;
-  const trailStart = Math.max(0, f - 0.18);
-  const trail: Pt[] = Array.from({ length: 12 }, (_, i) => along(CIRCUIT, trailStart + ((f - trailStart) * i) / 11));
+  const id = useIds();
+  const t = useSceneTime(6);
+  const s = RACERS.map((r) => r.off + t / LAP_S + 0.017 * Math.sin(t * r.w + r.ph) + 0.006 * Math.sin(t * r.w * 2.3 + r.ph * 3));
+  const lead = Math.max(...s);
+  const rank = s.map((si, i) => s.reduce((acc, sj, j) => (j === i ? acc : acc + sigmoid((sj - si) / 0.004)), 0));
+  const me = RACERS.findIndex((r) => r.me);
+  const meS = s[me];
+  const meF = frac(meS);
+  const mePos = CIRCUIT.at(meF);
+  const lapNo = (Math.floor(lead) % 12) + 1;
+
+  const cyc = t % 18;
+  const yellow = win(cyc, 5.5, 9.5, 0.5);
+  const pit = win(cyc, 12, 15.6, 0.4);
+  const sf = CIRCUIT.at(0);
+
+  // Mini sectors for #7: each done sector this lap gets a colour from its lap and number.
+  const meLap = Math.floor(meS);
+  const meSector = Math.floor(meF * 3);
+  const delta = ((((meLap * 53) % 13) - 6) / 10).toFixed(1);
+
+  const TX = 204;
+  const ROW0 = 36;
+  const ROW_H = 21;
 
   return (
     <Frame>
-      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-        <path d={path(CIRCUIT)} stroke="white" strokeOpacity={0.14} strokeWidth={5} fill="none" strokeLinejoin="round" />
-        <path d={path(CIRCUIT)} stroke="white" strokeOpacity={0.3} strokeWidth={1} fill="none" strokeLinejoin="round" strokeDasharray="2 3" />
-        <path d={path(trail)} stroke="hsl(var(--accent))" strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <line x1={24} y1={20} x2={24} y2={29} stroke="white" strokeWidth={1.4} />
-      </svg>
-      <Marker p={bike} label="7" className="bg-accent" />
+      <Defs id={id} />
+      <Base id={id} />
+      {/* Circuit */}
+      <path d={CIRCUIT.d} fill="none" stroke="#34343c" strokeWidth={12} strokeLinejoin="round" />
+      <path d={CIRCUIT.d} fill="none" stroke="#1a1a1f" strokeWidth={9.5} strokeLinejoin="round" />
+      <path d={CIRCUIT.d} fill="none" stroke="white" strokeOpacity={0.08} strokeWidth={0.7} strokeDasharray="3 4" />
+      {/* Yellow flag: sector 2 lights up */}
+      <path d={CIRCUIT.slice(1 / 3, 2 / 3, 40)} fill="none" stroke="#facc15" strokeWidth={9.5} strokeLinecap="round" opacity={0.42 * yellow} />
+      {/* Sector ticks and start/finish */}
+      {[1 / 3, 2 / 3].map((f) => {
+        const { p, a } = CIRCUIT.at(f);
+        return <line key={f} x1={-7} x2={7} transform={`translate(${p[0]} ${p[1]}) rotate(${a + 90})`} stroke="white" strokeOpacity={0.35} strokeWidth={1} />;
+      })}
+      <g transform={`translate(${sf.p[0]} ${sf.p[1]}) rotate(${sf.a + 90})`}>
+        {Array.from({ length: 8 }, (_, i) => (
+          <rect key={i} x={-6 + (i % 4) * 3} y={-2 + Math.floor(i / 4) * 2} width={3} height={2} fill={(i + Math.floor(i / 4)) % 2 ? '#111' : '#eee'} />
+        ))}
+      </g>
+      {/* #7's trail */}
+      {Array.from({ length: 6 }, (_, i) => (
+        <path key={i} d={CIRCUIT.slice(meF - 0.07 + i * 0.0117, meF - 0.07 + (i + 1) * 0.0117, 4)} fill="none" style={{ stroke: A }} strokeWidth={3} strokeLinecap="round" opacity={0.12 + i * 0.13} />
+      ))}
+      {/* Riders (back to front) */}
+      {RACERS.map((r, i) => (r.me ? null : <Dot key={r.code} p={CIRCUIT.at(frac(s[i])).p} color={r.color} r={3.6} />))}
+      <Arrow p={mePos.p} a={mePos.a} color={A} glow={id('glow')} s={0.95} />
 
-      {/* Pit board */}
-      <div className="absolute top-2 right-2 w-[38%] rounded-lg bg-black/85 border border-white/15 px-2 py-1.5 font-mono tabular-nums animate-fade-in no-frost">
-        <p className="text-[8px] uppercase tracking-widest text-muted-foreground">{tr("Lap {0}", [lap])}</p>
-        <p className="text-sm font-bold leading-tight text-white">
-          {Math.floor(lastTime / 60)}:{(lastTime % 60).toFixed(1).padStart(4, '0')}
-        </p>
-        <p className={cn('text-xs font-bold', delta <= 0 ? 'text-emerald-400' : 'text-red-400')}>
-          Δ {delta > 0 ? '+' : ''}
-          {delta.toFixed(1)}
-        </p>
-      </div>
+      {/* Race control */}
+      <g opacity={yellow} transform={`translate(0 ${lerp(-8, 0, yellow)})`}>
+        <rect x={8} y={8} width={textW(tr("Yellow flag")) + 44} height={17} rx={5} fill="#facc15" />
+        <Ico I={Flag} x={14} y={12} s={9} color="#111" />
+        <T x={27} y={19.4} color="#111" weight={800}>{`${tr("Yellow flag").toUpperCase()} · S2`}</T>
+      </g>
+      {/* Pit wall → helmet */}
+      <g opacity={pit} transform={`translate(0 ${lerp(8, 0, pit)})`}>
+        <rect x={8} y={175} width={textW(tr("PUSH")) + 70} height={17} rx={5} fill={PANEL} style={{ stroke: A }} strokeWidth={0.9} />
+        <Ico I={Radio} x={14} y={179} s={9} />
+        <T x={27} y={186.4} color={MUTED}>PIT → #7</T>
+        <T x={62} y={186.4} color={A} weight={800} spacing={0.6}>{tr("PUSH")}</T>
+      </g>
+      {pit > 0.05 && <Rings p={mePos.p} phase={t * 1.4} color={A} max={16} />}
 
-      {/* Helmet call */}
-      <Chip className={cn('left-2 top-2 border-accent/70 transition-all duration-300', showCall ? 'opacity-100 scale-100' : 'opacity-0 scale-90')}>
-        <Mic className="w-3 h-3 text-accent" />
-        <span className="text-accent tracking-widest">{call}</span>
-      </Chip>
-
-      {/* Race control flag */}
-      <div
-        className={cn(
-          'absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[9px] font-black uppercase tracking-widest transition-all duration-300',
-          flag ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3',
-          flag === 'yellow' ? 'bg-yellow-400 text-black' : 'text-black',
-        )}
-        style={flag === 'chequered' ? { background: 'repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 8px 8px' } : undefined}
-      >
-        <Flag className="w-3 h-3" />
-        <span className={flag === 'chequered' ? 'bg-white px-1 rounded' : ''}>
-          {flag === 'chequered' ? tr("Chequered flag") : tr("Yellow flag")}
-        </span>
-      </div>
+      {/* Live timing tower */}
+      <rect x={TX} y={8} width={108} height={184} rx={7} fill={PANEL} stroke={LINE} strokeWidth={0.8} />
+      <circle cx={TX + 11} cy={20} r={2.6} fill={RED} opacity={0.55 + 0.45 * Math.abs(Math.sin(t * 3))} />
+      <T x={TX + 18} y={22.6} weight={800} spacing={0.8}>{tr("Live").toUpperCase()}</T>
+      <T x={TX + 100} y={22.6} anchor="end" color={MUTED} mono>{tr("Lap {0}", [`${lapNo}/12`])}</T>
+      <line x1={TX + 6} x2={TX + 102} y1={29} y2={29} stroke={LINE} />
+      {RACERS.map((r, i) => {
+        const y = ROW0 + rank[i] * ROW_H;
+        const pos = Math.round(rank[i]) + 1;
+        const gap = s[i] === lead ? `${Math.floor((LAP_S * 12 + (lapNo * 7) % 9) / 60)}:${(((LAP_S * 12 + (lapNo * 7) % 9) % 60) + 0.3).toFixed(1).padStart(4, '0')}` : `+${((lead - s[i]) * LAP_S * 12).toFixed(1)}`;
+        return (
+          <g key={r.code} transform={`translate(${TX + 5} ${y.toFixed(2)})`}>
+            {r.me && <rect x={0} y={-1} width={98} height={ROW_H - 3} rx={4} style={{ fill: aa(0.14) }} />}
+            <T x={8} y={11.8} anchor="middle" mono weight={800} color={r.me ? A : INK}>{pos}</T>
+            <rect x={16} y={3} width={2} height={11} rx={1} style={{ fill: r.color }} />
+            <T x={23} y={11.8} weight={700}>{r.code}</T>
+            <T x={94} y={11.8} anchor="end" mono color={pos === 1 ? INK : MUTED}>{gap}</T>
+          </g>
+        );
+      })}
+      {/* #7 mini sectors and delta */}
+      <line x1={TX + 6} x2={TX + 102} y1={146} y2={146} stroke={LINE} />
+      <T x={TX + 8} y={158} color={MUTED} size={6.5} weight={700} spacing={0.6}>#7</T>
+      {[0, 1, 2].map((k) => {
+        const done = k < meSector;
+        const col = SECTOR_COLORS[Math.floor(rnd(meLap * 3 + k) * 3)];
+        return (
+          <g key={k} transform={`translate(${TX + 24 + k * 26} 152)`}>
+            <rect width={23} height={7} rx={2} style={{ fill: done ? col : 'rgba(255,255,255,0.06)' }} stroke={k === meSector ? INK : 'none'} strokeOpacity={0.5 + 0.5 * Math.sin(t * 6)} strokeWidth={0.8} />
+            <T x={11.5} y={170} anchor="middle" size={6} color={MUTED} weight={600}>{`S${k + 1}`}</T>
+          </g>
+        );
+      })}
+      <T x={TX + 8} y={186} color={MUTED} size={6.5}>Δ</T>
+      <T x={TX + 18} y={186.5} mono weight={800} size={9} color={Number(delta) <= 0 ? GREEN : RED}>{`${Number(delta) > 0 ? '+' : ''}${delta}`}</T>
+      <Vignette id={id} />
     </Frame>
   );
 }
 
-// ---- Workshop: one service ticket, from scan-in to the logbook ---------------
+// =============================================================================
+// Showroom: a timed test ride inside a geofence, then the ride summary
+// =============================================================================
 
-const WORKSHOP_CYCLE = 12;
-const STAGE_AT = [0, 2.6, 5.4, 8.4];
+const SHOW_STREETS: string[] = [
+  'M0 34 L320 34',
+  'M0 104 L320 104',
+  'M0 174 L320 174',
+  'M56 0 L56 200',
+  'M138 0 L138 200',
+  'M214 0 L214 200',
+  'M292 0 L292 200',
+];
+const TEST = new Route([[70, 172], [52, 138], [56, 100], [92, 70], [134, 46], [188, 38], [238, 50], [294, 88], [288, 140], [250, 168], [190, 174], [128, 172]], true, 16);
+const FENCE = new Route([[26, 18], [150, 12], [252, 22], [264, 86], [258, 150], [236, 190], [120, 193], [32, 188], [16, 110]], true, 10);
+const SHOW_CYCLE = 15;
+const driveAt = (c: number) => easeInOut((c - 0.8) / 10.4);
 
-/** A small fixed QR pattern (not a real code). */
-const QR_CELLS = Array.from({ length: 49 }, (_, i) => ((i * 37 + (i >> 2) * 11) % 7) < 3 || [0, 1, 7, 8, 5, 6, 12, 13, 35, 36, 42, 43].includes(i));
+function ShowroomScene() {
+  const id = useIds();
+  const t = useSceneTime(3);
+  const cyc = t % SHOW_CYCLE;
+  const f = driveAt(cyc);
+  const car = TEST.at(f);
+  const reset = 1 - easeOut((cyc - 14.4) / 0.5);
+  // How far outside the fence, smoothed over the last moment.
+  const out = [0, 1, 2, 3, 4].reduce((acc, k) => acc + (inside(TEST.at(driveAt(cyc - k * 0.09)).p, FENCE.pts) ? 0 : 1), 0) / 5;
+  const left = 45 * 60 - f * 38 * 60;
+  const summary = win(cyc, 11.4, 14.7, 0.5);
+  const dealer = TEST.at(0).p;
+  const gaugeLen = 2 * Math.PI * 8;
+
+  return (
+    <Frame>
+      <Defs id={id} />
+      <Base id={id} />
+      {/* City blocks: a park and the streets */}
+      <rect x={146} y={112} width={60} height={54} rx={4} fill="#131317" />
+      {SHOW_STREETS.map((d) => (
+        <Road key={d} d={d} w={5} />
+      ))}
+      {/* Geofence */}
+      <path d={FENCE.d} style={{ fill: aa(0.05) }} />
+      <path d={FENCE.d} fill="none" style={{ stroke: A }} strokeWidth={1.1} strokeDasharray="4 3" opacity={0.75 * (1 - out)} strokeDashoffset={-t * 6} />
+      <path d={FENCE.d} fill="none" stroke={RED} strokeWidth={1.4} strokeDasharray="4 3" opacity={out} strokeDashoffset={-t * 6} />
+      {/* Route: planned, then driven */}
+      <path d={TEST.d} fill="none" style={{ stroke: aa(0.22) }} strokeWidth={3} strokeLinejoin="round" />
+      <path d={TEST.d} pathLength={1} strokeDasharray={`${f} 1`} fill="none" style={{ stroke: A }} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" filter={`url(#${id('glow')})`} opacity={reset} />
+      {/* Dealership */}
+      <g transform={`translate(${dealer[0] - 9} ${dealer[1] - 9})`}>
+        <rect width={18} height={18} rx={5} style={{ fill: A }} />
+        <Ico I={Store} x={4} y={4} s={10} color="#111" />
+      </g>
+      {/* The customer's bike */}
+      {f > 0.001 && f < 0.999 && <Arrow p={car.p} a={car.a} color={out > 0.5 ? RED : '#f4f4f5'} glow={id('glow')} />}
+
+      {/* Test-ride timer */}
+      <g transform="translate(8 8)">
+        <rect width={Math.max(84, textW(tr("Test ride"), 6.5) + 40)} height={30} rx={6} fill={PANEL} stroke={LINE} strokeWidth={0.8} />
+        <circle cx={15} cy={15} r={8} fill="none" stroke="#2c2c33" strokeWidth={2.2} />
+        <circle cx={15} cy={15} r={8} fill="none" style={{ stroke: A }} strokeWidth={2.2} strokeDasharray={`${(left / 2700) * gaugeLen} ${gaugeLen}`} transform="rotate(-90 15 15)" strokeLinecap="round" />
+        <Ico I={Timer} x={11} y={11} s={8} />
+        <T x={29} y={12.5} size={6.5} color={MUTED} weight={600}>{tr("Test ride")}</T>
+        <T x={29} y={24} size={9.5} weight={800} mono>{mmss(left)}</T>
+      </g>
+
+      {/* Geofence alert */}
+      <Chip x={VW / 2 - (20 + textW(tr("Left the test area"))) / 2} y={8} label={tr("Left the test area")} I={LifeBuoy} color={RED} tone={RED} opacity={out} dy={lerp(-10, 0, out)} />
+
+      {/* Ride summary */}
+      <g transform={`translate(${lerp(330, 190, easeOut(summary * 1.2))} 44)`} opacity={summary}>
+        <rect width={122} height={112} rx={8} fill={PANEL} style={{ stroke: aa(0.6) }} strokeWidth={0.9} />
+        <T x={10} y={16} size={6.5} weight={800} color={A} spacing={0.8}>{tr("Ride summary").toUpperCase()}</T>
+        <Ico I={Share2} x={104} y={9} s={9} color={MUTED} />
+        <T x={10} y={33} size={6.5} color={MUTED}>{tr("Peak lean")}</T>
+        <T x={10} y={52} size={20} weight={800} mono>41°</T>
+        {/* Lean gauge */}
+        <g transform="translate(88 50)">
+          <path d="M-18 0 A18 18 0 0 1 18 0" fill="none" stroke="#2c2c33" strokeWidth={3} strokeLinecap="round" />
+          <path d="M-18 0 A18 18 0 0 1 18 0" pathLength={1} strokeDasharray={`${0.68 * easeOut((cyc - 11.8) / 0.8)} 1`} fill="none" style={{ stroke: A }} strokeWidth={3} strokeLinecap="round" />
+        </g>
+        {/* Route thumbnail */}
+        <rect x={10} y={62} width={102} height={40} rx={5} fill="#131318" />
+        <g transform="translate(14 64) scale(0.3 0.19)">
+          <path d={TEST.d} fill="none" style={{ stroke: A }} strokeWidth={9} strokeLinejoin="round" />
+        </g>
+      </g>
+      <Vignette id={id} />
+    </Frame>
+  );
+}
+
+// =============================================================================
+// Workshop: one service visit — ticket on the left, the bay on the right
+// =============================================================================
+
+const WS_CYCLE = 16;
+const WS_STAGES = [0, 3, 6, 11];
+const QR = Array.from({ length: 81 }, (_, i) => {
+  const [r, c] = [Math.floor(i / 9), i % 9];
+  const finder = (rr: number, cc: number) => rr < 3 && cc < 3;
+  if (finder(r, c) || finder(r, 8 - c) || finder(8 - r, c)) return !(r % 8 === 1 && c % 8 === 1) && !(r === 1 && c === 7) && !(r === 7 && c === 1);
+  return rnd(i * 3.7) > 0.52;
+});
+
+// Bay geometry. The bike stands in for the rider's own vehicle photo (the only
+// photo in the scene); everything else is drawn, in the app's own style.
+const BAY = { x: 158, y: 8, w: 154, h: 184, floor: 176 };
+const BIKE = { w: 104, h: (104 * 1094) / 704, bottom: 0.763 };
 
 function WorkshopScene() {
-  const t = useSceneTime();
-  const phase = t % WORKSHOP_CYCLE;
-  const stage = STAGE_AT.filter((s) => phase >= s).length - 1;
+  const id = useIds();
+  const t = useSceneTime(0.2);
+  const c = t % WS_CYCLE;
+  const stage = WS_STAGES.filter((s) => c >= s).length - 1;
+  // Continuous stepper position (eases between stages)
+  const step = WS_STAGES.reduce((acc, s, i) => (i === 0 ? acc : acc + easeInOut((c - s) / 0.6)), 0);
   const labels = [tr("Checked in"), tr("Awaiting approval"), tr("In progress"), tr("Ready to collect")];
-  const jobs = [tr("Oil and filter"), tr("Chain adjusted"), tr("Brake pads")];
-  const approved = phase > 4.4;
-  const work = Math.min(1, Math.max(0, (phase - 5.4) / 2.8));
+
+  // Bay choreography
+  const rollIn = easeOut((c - 0.2) / 1.5);
+  const rollOut = easeInOut((c - 15.1) / 0.9);
+  const bikeX = lerp(330, 196, rollIn) + lerp(0, 150, rollOut);
+  const bikeY = BAY.floor - BIKE.h * BIKE.bottom + Math.sin(c * 20) * 0.6 * (rollIn < 1 ? 1 - rollIn : 0);
+  const screen = easeInOut((c - 6.2) / 0.8) * (1 - easeInOut((c - 11) / 0.7));
+  const screenMoving = Math.sin(Math.PI * clamp01((c - 6.2) / 0.8)) + Math.sin(Math.PI * clamp01((c - 11) / 0.7));
+  const weld = win(c, 7.3, 9.0, 0.2);
+  const wrench = win(c, 9.0, 10.7, 0.2);
+  const flicker = weld * (0.55 + 0.45 * rnd(Math.floor(c * 24)));
+  // Mecha-Nick, seen only as a shadow on the screen: torch held at the engine,
+  // then the wrench going.
+  const mechX = bikeX - 12;
+  const armAngle = weld > 0.01 ? 18 + Math.sin(c * 2.2) * 3 : -8 + wrench * Math.sin(c * 14) * 26;
+  const mechLean = wrench * Math.sin(c * 14 + 0.6) * 2.2;
+  const weldPt: Pt = [bikeX + 44, bikeY + BIKE.h * 0.56];
+  const viewfinder = win(c, 3.2, 4.3, 0.3);
+  const flash = win(c, 3.95, 4.3, 0.08);
+  const photoFly = easeInOut((c - 4.2) / 0.8);
+  const approved = c > 5.3;
+  const shine = clamp01((c - 11.8) / 0.9);
+  const notify = win(c, 11.3, 13.8, 0.4);
+  const progress = clamp01((c - 6) / 5);
+  const stamp = easeOut((c - 13.8) / 0.25);
+  const tagDrop = easeOut((c - 1.7) / 0.5);
+  const tagSwing = Math.sin(c * 5) * 14 * Math.exp(-Math.max(0, c - 2.2) * 1.6);
+
+  // Clank marks while wrenching (on each downstroke), at the wrench
+  const clank = wrench * Math.max(0, Math.sin(c * 14));
+  const armRad = (armAngle * Math.PI) / 180;
+  const hand: Pt = [mechX + 6 + Math.cos(armRad) * 40, BAY.floor - 58 + Math.sin(armRad) * 40];
+
+  const panelX = 8;
+  const panelW = 142;
 
   return (
-    <Frame className="p-2.5 flex gap-2">
-      {/* The ticket */}
-      <div className="flex-1 min-w-0 rounded-xl bg-card/70 border border-border/40 p-2 flex flex-col gap-2 no-frost">
-        <div className="flex items-center gap-1.5 text-[9px] font-semibold">
-          <Wrench className="w-3 h-3 text-accent" />
-          <span className="truncate">{tr("Service ticket")}</span>
-          <span className="ml-auto font-mono text-muted-foreground">#2041</span>
-        </div>
+    <Frame>
+      <Defs id={id} />
+      <defs>
+        <linearGradient id={id('wall')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#141418" />
+          <stop offset="1" stopColor="#0d0d10" />
+        </linearGradient>
+        <linearGradient id={id('floor')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#17171c" />
+          <stop offset="1" stopColor="#0c0c0f" />
+        </linearGradient>
+        <radialGradient id={id('lamp')} cx="50%" cy="0%" r="95%">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.09" />
+          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={id('weld')} cx="50%" cy="50%" r="50%">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="0.22" stopColor="#e2e8f0" stopOpacity="0.65" />
+          <stop offset="1" stopColor="#94a3b8" stopOpacity="0" />
+        </radialGradient>
+        <pattern id={id('slats')} width="7" height="10" patternUnits="userSpaceOnUse">
+          <rect x="6" width="1" height="10" fill="white" opacity="0.045" />
+        </pattern>
+        <filter id={id('shadow')} x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="1.4" />
+        </filter>
+        <clipPath id={id('bay')}>
+          <rect x={BAY.x} y={BAY.y} width={BAY.w} height={BAY.h} rx={7} />
+        </clipPath>
+        <clipPath id={id('photo')}>
+          <rect x={0} y={0} width={46} height={34} rx={2} />
+        </clipPath>
+        <mask id={id('bikeMask')} style={{ maskType: 'alpha' }}>
+          <image href={bikeAsset.url} x={bikeX} y={bikeY} width={BIKE.w} height={BIKE.h} />
+        </mask>
+        <linearGradient id={id('shine')} x1="0" y1="0" x2="1" y2="0.4">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <rect width={VW} height={VH} fill={BG} />
 
-        {/* Stepper */}
-        <div className="relative flex items-center justify-between px-1">
-          <div className="absolute left-2 right-2 top-1/2 h-0.5 -translate-y-1/2 bg-border/60" />
-          <div
-            className="absolute left-2 top-1/2 h-0.5 -translate-y-1/2 bg-accent transition-[width] duration-500"
-            style={{ width: `calc((100% - 16px) * ${stage / 3})` }}
-          />
-          {[ScanLine, Camera, Wrench, Bell].map((Icon, i) => (
-            <div key={i} className="relative">
-              {i === stage && <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />}
-              <div
-                className={cn(
-                  'relative w-5 h-5 rounded-full flex items-center justify-center border transition-colors duration-300',
-                  i <= stage ? 'bg-accent border-accent text-accent-foreground' : 'bg-card border-border/60 text-muted-foreground',
-                )}
-              >
-                <Icon className="w-2.5 h-2.5" />
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* ---- The bay ---- */}
+      <g clipPath={`url(#${id('bay')})`}>
+        <rect x={BAY.x} y={BAY.y} width={BAY.w} height={BAY.floor - BAY.y} fill={`url(#${id('wall')})`} />
+        <rect x={BAY.x} y={BAY.floor} width={BAY.w} height={BAY.y + BAY.h - BAY.floor} fill={`url(#${id('floor')})`} />
+        <line x1={BAY.x} x2={BAY.x + BAY.w} y1={BAY.floor} y2={BAY.floor} stroke="white" strokeOpacity={0.07} />
+        {/* Light bar and its wash */}
+        <path d={`M${BAY.x + 44} ${BAY.y} L${BAY.x + 110} ${BAY.y} L${BAY.x + 154} ${BAY.floor} L${BAY.x} ${BAY.floor} Z`} fill={`url(#${id('lamp')})`} />
+        <rect x={BAY.x + 57} y={BAY.y + 1} width={40} height={2} rx={1} style={{ fill: A }} opacity={0.8} />
+        <rect x={BAY.x + 57} y={BAY.y + 1} width={40} height={2} rx={1} style={{ fill: A }} filter={`url(#${id('glow')})`} opacity={0.5} />
 
-        <p key={stage} className="text-[9px] font-semibold text-accent animate-fade-in">{labels[stage]}</p>
-
-        {/* What's happening now */}
-        <div key={`v${stage}`} className="flex-1 min-h-0 rounded-lg bg-background/60 border border-border/30 flex items-center justify-center gap-2 animate-scale-in overflow-hidden">
-          {stage === 0 && (
-            <div className="relative w-10 h-10 rounded-md bg-white p-1 grid grid-cols-7 gap-px">
-              {QR_CELLS.map((on, i) => (
-                <span key={i} className={on ? 'bg-black' : 'bg-white'} />
-              ))}
-              <span
-                className="absolute left-0 right-0 h-0.5 bg-accent shadow-[0_0_6px_2px_hsl(var(--accent)/0.7)]"
-                style={{ top: `${Math.min(1, phase / 2.2) * 100}%` }}
+        {/* The bike on the floor */}
+        <ellipse cx={bikeX + BIKE.w / 2} cy={BAY.floor + 2} rx={BIKE.w * 0.42} ry={3} fill="black" opacity={0.55} />
+        <image href={bikeAsset.url} x={bikeX} y={bikeY} width={BIKE.w} height={BIKE.h} />
+        {/* Ready: a shine across the bike, and a few glints */}
+        {shine > 0 && shine < 1 && (
+          <g mask={`url(#${id('bikeMask')})`}>
+            <rect x={lerp(bikeX - 60, bikeX + BIKE.w + 20, shine)} y={bikeY} width={40} height={BIKE.h} fill={`url(#${id('shine')})`} />
+          </g>
+        )}
+        {stage === 3 &&
+          [
+            [0.3, 0.42, 0],
+            [0.78, 0.36, 0.4],
+            [0.58, 0.58, 0.8],
+          ].map(([fx, fy, d], i) => {
+            const k = win(c, 12.2 + d, 13.4 + d, 0.3);
+            return (
+              <path
+                key={i}
+                d="M0 -5 L1 -1 L5 0 L1 1 L0 5 L-1 1 L-5 0 L-1 -1 Z"
+                fill="white"
+                opacity={k}
+                transform={`translate(${bikeX + BIKE.w * fx} ${bikeY + BIKE.h * fy}) scale(${0.6 + k * 0.6}) rotate(${c * 90})`}
               />
-            </div>
-          )}
-          {stage === 1 && (
-            <>
-              <div className="w-10 h-8 rounded-md bg-[radial-gradient(circle_at_30%_40%,#5b5b66,#1d1d22)] flex items-center justify-center">
-                <Camera className="w-3.5 h-3.5 text-white/70" />
-              </div>
-              <span
-                className={cn(
-                  'rounded-md px-2 py-1 text-[8px] font-bold transition-all duration-300',
-                  approved ? 'bg-emerald-500 text-white scale-100' : 'bg-accent text-accent-foreground animate-pulse',
-                )}
-              >
-                {approved ? <Check className="w-3 h-3" /> : tr("Approve")}
-              </span>
-            </>
-          )}
-          {stage === 2 && (
-            <div className="flex flex-col items-center gap-1.5 w-3/4">
-              <Wrench className="w-5 h-5 text-accent" style={{ transform: `rotate(${Math.sin(t * 6) * 28}deg)` }} />
-              <div className="w-full h-1 rounded-full bg-border/60 overflow-hidden">
-                <div className="h-full bg-accent" style={{ width: `${work * 100}%` }} />
-              </div>
-            </div>
-          )}
-          {stage === 3 && (
-            <>
-              <Bell className="w-5 h-5 text-accent" style={{ transform: `rotate(${Math.sin(t * 14) * (phase < 9.6 ? 18 : 0)}deg)` }} />
-              <Mail className="w-4 h-4 text-muted-foreground animate-slide-up" />
-            </>
-          )}
-        </div>
-      </div>
+            );
+          })}
+        {/* Ticket tag on the handlebar */}
+        <g
+          transform={`translate(${bikeX + BIKE.w * 0.66} ${bikeY + BIKE.h * 0.32}) rotate(${tagSwing.toFixed(1)})`}
+          opacity={tagDrop * (1 - rollOut) * (1 - screen)}
+        >
+          <line x1={0} y1={-8 + (1 - tagDrop) * -10} x2={0} y2={0} stroke="white" strokeOpacity={0.6} strokeWidth={0.6} />
+          <rect x={-11} y={0} width={22} height={11} rx={2} style={{ fill: stage === 3 ? GREEN : A }} />
+          <T x={0} y={8} anchor="middle" size={6} weight={800} color="#111" mono>#2041</T>
+        </g>
+        {/* Quote: the worn part, framed and photographed */}
+        <g opacity={viewfinder}>
+          {[
+            [0, 0, 1, 1],
+            [1, 0, -1, 1],
+            [0, 1, 1, -1],
+            [1, 1, -1, -1],
+          ].map(([cx, cy, sx, sy], i) => {
+            const bx = bikeX + 22 + cx * 50;
+            const by = bikeY + BIKE.h * 0.44 + cy * 36;
+            return <path key={i} d={`M${bx} ${by + sy * 8} L${bx} ${by} L${bx + sx * 8} ${by}`} fill="none" style={{ stroke: A }} strokeWidth={1.4} />;
+          })}
+        </g>
+        <rect x={BAY.x} y={BAY.y} width={BAY.w} height={BAY.h} fill="white" opacity={flash * 0.85} />
 
-      {/* The rider's logbook fills itself in */}
-      <div className="w-[42%] rounded-xl bg-card/70 border border-border/40 p-2 flex flex-col gap-1.5 no-frost">
-        <div className="flex items-center gap-1.5 text-[9px] font-semibold">
-          <BookOpen className="w-3 h-3 text-accent" />
-          <span className="truncate">{tr("Logbook")}</span>
-        </div>
-        {jobs.map((job, i) => {
-          const shown = stage === 3 && phase > 8.8 + i * 0.55;
+        {/* In progress: Mecha-Nick works behind a frosted screen. He's only a
+            shadow on it: torch at the engine, then the wrench going. */}
+        {screen > 0.001 && (
+          <g>
+            {/* The screen, lit from behind by the bay lights */}
+            <rect x={BAY.x} y={BAY.y + 6} width={BAY.w * screen} height={BAY.floor - BAY.y - 4} fill="rgba(52,52,60,0.8)" />
+            {/* Mecha-Nick's shadow on it */}
+            <clipPath id={id('screenClip')}>
+              <rect x={BAY.x} y={BAY.y + 6} width={BAY.w * screen} height={BAY.floor - BAY.y - 4} />
+            </clipPath>
+            <g clipPath={`url(#${id('screenClip')})`}>
+              <g opacity={0.72} filter={`url(#${id('shadow')})`} transform={`rotate(${mechLean.toFixed(2)} ${mechX} ${BAY.floor})`}>
+                <rect x={mechX - 8} y={BAY.floor - 34} width={6} height={34} rx={2.5} fill="#050507" />
+                <rect x={mechX + 2} y={BAY.floor - 34} width={6} height={34} rx={2.5} fill="#050507" transform={`rotate(-6 ${mechX + 5} ${BAY.floor - 34})`} />
+                <rect x={mechX - 10} y={BAY.floor - 66} width={20} height={36} rx={7} fill="#050507" />
+                <circle cx={mechX + 1} cy={BAY.floor - 75} r={7.5} fill="#050507" />
+                <g transform={`rotate(${armAngle.toFixed(2)} ${mechX + 6} ${BAY.floor - 58})`}>
+                  <rect x={mechX + 4} y={BAY.floor - 61} width={30} height={5.5} rx={2.7} fill="#050507" />
+                  {weld > 0.01 ? (
+                    <rect x={mechX + 32} y={BAY.floor - 60} width={12} height={2.4} rx={1.2} fill="#050507" />
+                  ) : (
+                    <path d={`M${mechX + 32} ${BAY.floor - 58.2} l9 0 m0 0 l3 -3 m-3 3 l3 3`} stroke="#050507" strokeWidth={2.4} strokeLinecap="round" fill="none" />
+                  )}
+                </g>
+              </g>
+            </g>
+            <rect x={BAY.x} y={BAY.y + 6} width={BAY.w * screen} height={BAY.floor - BAY.y - 4} fill={`url(#${id('slats')})`} />
+            <line
+              x1={BAY.x + BAY.w * screen}
+              x2={BAY.x + BAY.w * screen}
+              y1={BAY.y + 6}
+              y2={BAY.floor + 2}
+              style={{ stroke: A }}
+              strokeWidth={1.4}
+              opacity={0.35 + 0.65 * clamp01(screenMoving)}
+              filter={`url(#${id('glow')})`}
+            />
+            <line x1={BAY.x} x2={BAY.x + BAY.w} y1={BAY.y + 6} y2={BAY.y + 6} stroke="white" strokeOpacity={0.12} />
+          </g>
+        )}
+        {/* Weld light through the screen, sparks from under it */}
+        {weld > 0 && (
+          <>
+            <circle cx={weldPt[0]} cy={weldPt[1]} r={42} fill={`url(#${id('weld')})`} opacity={flicker * 0.85} style={{ mixBlendMode: 'screen' }} />
+            {Array.from({ length: 16 }, (_, i) => {
+              const P = 0.7;
+              const age = (c + (i * P) / 16) % P;
+              const gen = Math.floor((c + (i * P) / 16) / P);
+              const seed = i * 13.1 + gen * 7.7;
+              const vx = (rnd(seed) - 0.5) * 90;
+              const vy = -(25 + rnd(seed + 1) * 45);
+              const ox = bikeX + 30 + rnd(seed + 2) * 30;
+              const oy = BAY.floor - 2;
+              const x = ox + vx * age;
+              const y = Math.min(BAY.floor + 6, oy + vy * age + 0.5 * 260 * age * age);
+              const tx = x - vx * 0.02;
+              const ty = y - (vy + 260 * age) * 0.02;
+              return <line key={i} x1={tx} y1={ty} x2={x} y2={y} stroke={rnd(seed + 3) > 0.5 ? '#fde68a' : '#fdba74'} strokeWidth={1} strokeLinecap="round" opacity={weld * (1 - age / P)} />;
+            })}
+          </>
+        )}
+        {/* Clank marks at the wrench on each downstroke */}
+        {clank > 0.6 && (
+          <g transform={`translate(${hand[0]} ${hand[1] - 8})`} opacity={(clank - 0.6) / 0.4}>
+            {[-35, 0, 35].map((a) => (
+              <line key={a} x1={0} y1={-3} x2={0} y2={-8} stroke="white" strokeWidth={1.1} strokeLinecap="round" transform={`rotate(${a})`} />
+            ))}
+          </g>
+        )}
+      </g>
+      <rect x={BAY.x} y={BAY.y} width={BAY.w} height={BAY.h} rx={7} fill="none" stroke={LINE} />
+
+      {/* ---- The ticket ---- */}
+      <rect x={panelX} y={8} width={panelW} height={184} rx={7} fill={PANEL} stroke={LINE} strokeWidth={0.8} />
+      <Ico I={Wrench} x={panelX + 9} y={16} s={9} />
+      <T x={panelX + 22} y={23.5} weight={700}>{tr("Service ticket")}</T>
+      <T x={panelX + panelW - 9} y={23.5} anchor="end" color={MUTED} mono>#2041</T>
+      <line x1={panelX + 8} x2={panelX + panelW - 8} y1={32} y2={32} stroke={LINE} />
+      {/* Stepper */}
+      <line x1={panelX + 20} x2={panelX + panelW - 20} y1={46} y2={46} stroke="#2c2c33" strokeWidth={2} strokeLinecap="round" />
+      <line x1={panelX + 20} x2={panelX + 20 + ((panelW - 40) * step) / 3} y1={46} y2={46} style={{ stroke: A }} strokeWidth={2} strokeLinecap="round" />
+      {[0, 1, 2, 3].map((i) => {
+        const x = panelX + 20 + ((panelW - 40) * i) / 3;
+        const on = step >= i - 0.02;
+        return (
+          <g key={i}>
+            {i === stage && <circle cx={x} cy={46} r={6 + 4 * frac(t * 0.9)} fill="none" style={{ stroke: A }} opacity={1 - frac(t * 0.9)} />}
+            <circle cx={x} cy={46} r={5.5} style={{ fill: on ? A : '#1c1c22' }} stroke={on ? 'none' : '#3a3a42'} />
+            {on && <path d={`M${x - 2.4} ${46} l1.7 1.8 l3.2 -3.6`} fill="none" stroke="#111" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />}
+          </g>
+        );
+      })}
+      <T x={panelX + 12} y={68} color={A} weight={800} size={8}>{labels[stage]}</T>
+
+      {/* Stage detail */}
+      <g opacity={win(c, 0, 3, 0.3)}>
+        <g transform={`translate(${panelX + 12} 78)`}>
+          <rect width={52} height={52} rx={4} fill="#f4f4f5" />
+          {QR.map((on, i) => (on ? <rect key={i} x={4 + (i % 9) * 4.9} y={4 + Math.floor(i / 9) * 4.9} width={4.6} height={4.6} fill="#111" /> : null))}
+          <rect x={2} y={lerp(4, 46, easeInOut((c - 0.4) / 1.8))} width={48} height={1.6} style={{ fill: A }} opacity={c < 2.4 ? 1 : 0} filter={`url(#${id('glow')})`} />
+        </g>
+        <T x={panelX + 72} y={92} size={6.5} color={MUTED}>#2041</T>
+        <g opacity={easeOut((c - 2.4) / 0.3)}>
+          <circle cx={panelX + 79} cy={106} r={6} fill={GREEN} />
+          <path d={`M${panelX + 76.3} 106 l1.9 2 l3.4 -3.8`} fill="none" stroke="#fff" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      </g>
+      <g opacity={win(c, 3, 6, 0.3)}>
+        {/* The photo flies from the bay onto the ticket */}
+        <g transform={`translate(${lerp(bikeX + 20, panelX + 12, photoFly)} ${lerp(bikeY + BIKE.h * 0.44, 80, photoFly)}) rotate(${lerp(8, -4, photoFly)})`} opacity={photoFly > 0 ? 1 : 0}>
+          <rect x={-3} y={-3} width={52} height={46} rx={2} fill="#f4f4f5" />
+          <g clipPath={`url(#${id('photo')})`}>
+            <rect width={46} height={34} fill="#222" />
+            <image href={bikeAsset.url} x={-36} y={-110} width={BIKE.w * 1.4} height={BIKE.h * 1.4} />
+          </g>
+        </g>
+        <g transform={`translate(${panelX + 72} 92)`}>
+          <Ico I={Camera} x={0} y={-7} s={8} color={MUTED} />
+          <rect x={0} y={8} width={56} height={17} rx={5} style={{ fill: approved ? GREEN : A }} opacity={approved ? 1 : 0.75 + 0.25 * Math.sin(t * 6)} />
+          {approved ? (
+            <path d="M22.5 16.5 l3 3 l6 -6.5" fill="none" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          ) : (
+            <T x={28} y={19.3} anchor="middle" size={7} weight={800} color="#111">{tr("Approve")}</T>
+          )}
+        </g>
+      </g>
+      <g opacity={win(c, 6, 11, 0.3)}>
+        <g transform={`translate(${panelX + 12} 84)`}>
+          <g transform={`rotate(${Math.sin(c * 14) * 18 * wrench} 9 9)`}>
+            <Ico I={Wrench} x={0} y={0} s={18} />
+          </g>
+          <T x={28} y={15} size={16} weight={800} mono>{`${Math.round(progress * 100)}%`}</T>
+          <rect x={0} y={30} width={panelW - 24} height={4} rx={2} fill="#2c2c33" />
+          <rect x={0} y={30} width={(panelW - 24) * progress} height={4} rx={2} style={{ fill: A }} />
+        </g>
+      </g>
+      <g opacity={win(c, 11, WS_CYCLE, 0.3)}>
+        <Ico I={BookOpen} x={panelX + 12} y={76} s={9} />
+        <T x={panelX + 25} y={83.5} weight={700}>{tr("Logbook")}</T>
+        {[tr("Oil and filter"), tr("Chain adjusted"), tr("Brake pads")].map((job, i) => {
+          const k = easeOut((c - 12.2 - i * 0.5) / 0.4);
           return (
-            <div
-              key={job}
-              className={cn(
-                'flex items-center gap-1 rounded-md px-1.5 py-1 text-[8px] transition-all duration-500',
-                shown ? 'opacity-100 translate-x-0 bg-accent/10' : 'opacity-0 translate-x-3',
-              )}
-            >
-              <Check className="w-2.5 h-2.5 text-accent shrink-0" />
-              <span className="truncate flex-1">{job}</span>
-              <BadgeCheck className="w-3 h-3 text-accent shrink-0" />
-            </div>
+            <g key={job} transform={`translate(${panelX + 12 + (1 - k) * 12} ${92 + i * 17})`} opacity={k}>
+              <rect width={panelW - 24} height={14} rx={3.5} style={{ fill: aa(0.1) }} />
+              <path d="M5 7 l2 2 l4 -4.4" fill="none" style={{ stroke: A }} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
+              <T x={16} y={9.8} size={7}>{job}</T>
+            </g>
           );
         })}
-        {stage < 3 && <div className="flex-1 rounded-md border border-dashed border-border/40" />}
-      </div>
+        {/* Mecha-Nick's stamp lands on the entry */}
+        <g transform={`translate(${panelX + panelW - 30} 164) rotate(-12) scale(${lerp(1.8, 1, stamp)})`} opacity={stamp}>
+          <circle r={15} fill="none" style={{ stroke: A }} strokeWidth={1.6} />
+          <circle r={11.5} fill="none" style={{ stroke: A }} strokeWidth={0.7} />
+          <T x={0} y={-2} anchor="middle" size={5.5} weight={800} color={A}>M. NICK</T>
+          <T x={0} y={5.5} anchor="middle" size={4.2} weight={700} color={A} spacing={0.4}>{tr("CERTIFIED")}</T>
+        </g>
+      </g>
+
+      {/* Ready: the rider's phone lights up */}
+      <g transform={`translate(${VW / 2 - 90} ${lerp(-40, 8, easeOut(notify * 1.3))})`} opacity={notify}>
+        <rect width={180} height={30} rx={8} fill="rgba(28,28,33,0.97)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.8} />
+        <rect x={7} y={7} width={16} height={16} rx={4} style={{ fill: A }} />
+        <Ico I={Bell} x={10.5} y={10.5} s={9} color="#111" />
+        <T x={30} y={14} size={6.5} color={MUTED} weight={700}>Blacktop</T>
+        <T x={30} y={24} size={7.5} weight={700}>{tr("Ready to collect")}</T>
+        <Ico I={Mail} x={162} y={11} s={9} color={MUTED} />
+      </g>
     </Frame>
   );
 }
 
-// ---- Billion: every module orbiting one core, in your colours ----------------
+// =============================================================================
+// Academy: tether radar, priority comms, Mod 1 speed trap
+// =============================================================================
 
-const ORBIT: { tier: EnterpriseTier; Icon: typeof Flag }[] = [
-  { tier: 'track_pro', Icon: Flag },
-  { tier: 'showroom', Icon: Store },
-  { tier: 'workshop', Icon: Wrench },
-  { tier: 'academy', Icon: GraduationCap },
-  { tier: 'touring', Icon: Mountain },
-];
-const CX = 80;
-const CY = 50;
-const RX = 56;
-const RY = 28;
+// Kept clear of the speed-trap inset (bottom right).
+const ACAD = new Route([[40, 150], [66, 112], [108, 94], [150, 70], [200, 52], [252, 46], [292, 62], [300, 90], [262, 104], [214, 106], [180, 130], [140, 160], [90, 180], [52, 176]], true, 16);
+const ACAD_M = 2400; // route length in metres, for the tether readout
+const FIELDS: string[] = ['M0 0 L120 0 L96 70 L0 92 Z', 'M150 0 L320 0 L320 50 L200 44 Z', 'M180 160 L320 150 L320 200 L170 200 Z'];
 
-function BillionScene() {
-  const t = useSceneTime();
-  const spin = t * 0.32;
-  const active = Math.floor(t / 1.6) % ORBIT.length;
-  const signal = (t % 1.6) / 1.6;
-  // Custom branding: the core drifts through brand colours.
-  const hue = (32 + t * 22) % 360;
-  const brand = `hsl(${hue} 90% 60%)`;
-  const nodes = ORBIT.map((m, i) => {
-    const a = spin + (i * Math.PI * 2) / ORBIT.length;
-    const depth = (Math.sin(a) + 1) / 2; // 0 back, 1 front
-    return { ...m, i, p: [CX + RX * Math.cos(a), CY + RY * Math.sin(a)] as Pt, depth };
-  });
-  const act = nodes[active];
-  const pulse: Pt = [act.p[0] + (CX - act.p[0]) * signal, act.p[1] + (CY - act.p[1]) * signal];
+function AcademyScene() {
+  const id = useIds();
+  const t = useSceneTime(2);
+  const f = t / 34;
+  const lag = 0.085 * Math.pow(Math.sin(Math.PI * frac(t / 13)), 2);
+  const studentsF = [f - 0.034, f - 0.068, f - 0.102 - lag];
+  const gapM = Math.round((0.034 + lag) * ACAD_M);
+  const state = gapM > 240 ? 2 : gapM > 150 ? 1 : 0;
+  const tetherColor = state === 2 ? RED : state === 1 ? AMBER : A;
+  const I = ACAD.at(f);
+  const lagger = ACAD.at(studentsF[2]).p;
+  const talk = win(t % 9, 1, 5, 0.3);
+  const mx = (I.p[0] + lagger[0]) / 2;
+  const my = Math.min(I.p[1], lagger[1]) - 22;
+  // Quadratic midpoint for the label
+  const lx = 0.25 * I.p[0] + 0.5 * mx + 0.25 * lagger[0];
+  const ly = 0.25 * I.p[1] + 0.5 * my + 0.25 * lagger[1];
+
+  // Speed trap run: accelerate to the gate, then the emergency stop
+  const run = t % 4.6;
+  const pass = Math.floor(t / 4.6) % 2 === 0;
+  const vGate = pass ? 50.8 : 47.2;
+  const xGate = 262;
+  const bx = run < 2.2 ? lerp(218, xGate, Math.pow(run / 2.2, 1.6)) : lerp(xGate, pass ? 294 : 290, easeOut((run - 2.2) / 1.2));
+  const shown = run < 2.2 ? (vGate * Math.min(1, Math.pow(run / 2.2, 0.6))).toFixed(1) : vGate.toFixed(1);
+  const verdict = easeOut((run - 2.3) / 0.3) * (1 - easeOut((run - 4.3) / 0.3));
 
   return (
     <Frame>
-      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-        <defs>
-          <radialGradient id="bt-billion-core" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={brand} stopOpacity={0.55} />
-            <stop offset="100%" stopColor={brand} stopOpacity={0} />
-          </radialGradient>
-        </defs>
-        <ellipse cx={CX} cy={CY} rx={34} ry={22} fill="url(#bt-billion-core)" />
-        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill="none" stroke="white" strokeOpacity={0.12} strokeWidth={0.6} strokeDasharray="1.5 2.5" />
-        <ellipse cx={CX} cy={CY} rx={RX * 0.62} ry={RY * 0.62} fill="none" stroke="white" strokeOpacity={0.06} strokeWidth={0.5} />
-        {nodes.map((n) => (
-          <line
-            key={n.tier}
-            x1={CX}
-            y1={CY}
-            x2={n.p[0]}
-            y2={n.p[1]}
-            stroke="hsl(var(--accent))"
-            strokeOpacity={n.i === active ? 0.75 : 0.12 + 0.1 * n.depth}
-            strokeWidth={n.i === active ? 0.9 : 0.5}
-          />
-        ))}
-        <circle cx={pulse[0]} cy={pulse[1]} r={1.6} fill="hsl(var(--accent))" />
-      </svg>
-
-      {/* Modules, back ones smaller and dimmer */}
-      {[...nodes].sort((a, b) => a.depth - b.depth).map((n) => (
-        <div
-          key={n.tier}
-          className={cn(
-            'absolute -translate-x-1/2 -translate-y-1/2 rounded-full border flex items-center justify-center',
-            n.i === active ? 'bg-accent border-accent shadow-[0_0_12px_3px_hsl(var(--accent)/0.55)]' : 'bg-card border-border/60',
-          )}
-          style={{ ...at(n.p), width: 22, height: 22, transform: `translate(-50%, -50%) scale(${0.72 + 0.4 * n.depth})`, opacity: 0.55 + 0.45 * n.depth }}
-        >
-          <n.Icon className={cn('w-3 h-3', n.i === active ? 'text-accent-foreground' : 'text-muted-foreground')} />
-        </div>
+      <Defs id={id} />
+      <Base id={id} />
+      {FIELDS.map((d) => (
+        <path key={d} d={d} fill="#131317" opacity={0.9} />
       ))}
+      <Road d="M0 120 L320 108" w={4} />
+      <Road d="M210 0 L200 200" w={4} />
+      <Road d={ACAD.d} w={6} />
+      <path d={ACAD.d} fill="none" style={{ stroke: aa(0.35) }} strokeWidth={1.4} strokeDasharray="1 5" strokeLinecap="round" />
+
+      {/* Tether */}
+      <path d={`M${I.p[0]} ${I.p[1]} Q${mx} ${my} ${lagger[0]} ${lagger[1]}`} fill="none" stroke={tetherColor} strokeWidth={1.4} strokeDasharray="3 3" strokeDashoffset={-t * 12} />
+      {/* Students, then the instructor */}
+      {studentsF.map((sf, i) => (
+        <Dot key={i} p={ACAD.at(sf).p} color={i === 2 && state ? tetherColor : ['#f4f4f5', '#c9c9d1', '#a1a1aa'][i]} halo={i === 2 ? state / 2 : 0} haloColor={tetherColor} />
+      ))}
+      {talk > 0.05 && <Rings p={I.p} phase={t * 1.3} color={A} max={18} />}
+      <Arrow p={I.p} a={I.a} color={A} glow={id('glow')} />
+      {/* Tether readout, over the markers */}
+      <g transform={`translate(${lx - 17} ${ly - 7})`}>
+        <rect width={34} height={14} rx={7} fill={PANEL} stroke={tetherColor} strokeWidth={0.9} />
+        <T x={17} y={9.8} anchor="middle" size={7} weight={800} mono color={state ? tetherColor : INK}>{`${gapM} m`}</T>
+      </g>
+
+      {/* Priority comms */}
+      <g transform="translate(8 8)">
+        <rect width={textW(tr("Instructor")) + textW(tr("Priority"), 6) + 58} height={17} rx={5} fill={PANEL} stroke={talk > 0.5 ? aa(0.7) : LINE} strokeWidth={0.8} />
+        <Ico I={Mic} x={6} y={4} s={9} color={talk > 0.3 ? A : MUTED} />
+        <T x={19} y={11.4}>{tr("Instructor")}</T>
+        <g transform={`translate(${23 + textW(tr("Instructor"))} 3.5)`}>
+          <rect width={textW(tr("Priority"), 6) + 8} height={10} rx={3} style={{ fill: talk > 0.3 ? A : '#2a2a30' }} />
+          <T x={4} y={7.4} size={6} weight={800} color={talk > 0.3 ? '#111' : MUTED}>{tr("Priority").toUpperCase()}</T>
+        </g>
+        <g transform={`translate(${textW(tr("Instructor")) + textW(tr("Priority"), 6) + 36} 0)`}>
+          <Wave on={talk} t={t} />
+        </g>
+      </g>
+
+      {/* Mod 1 speed trap */}
+      <g transform="translate(206 118)">
+        <rect width={106} height={74} rx={7} fill={PANEL} stroke={LINE} strokeWidth={0.8} />
+        <Ico I={Timer} x={8} y={7} s={9} />
+        <T x={21} y={14.5} weight={700}>Mod 1</T>
+        <T x={98} y={14.8} anchor="end" mono weight={800} size={9}>{`${shown} km/h`}</T>
+      </g>
+      <rect x={214} y={146} width={90} height={16} rx={2} fill="#17171c" />
+      {Array.from({ length: 9 }, (_, i) => (
+        <g key={i}>
+          <circle cx={218 + i * 10.5} cy={146} r={1.1} fill="#5a5a63" />
+          <circle cx={218 + i * 10.5} cy={162} r={1.1} fill="#5a5a63" />
+        </g>
+      ))}
+      <line x1={xGate} x2={xGate} y1={144} y2={164} style={{ stroke: A }} strokeWidth={1.2} strokeDasharray="2 1.5" />
+      <rect x={278} y={147} width={24} height={14} fill="white" opacity={0.04} />
+      <circle cx={bx} cy={154} r={3.4} style={{ fill: A }} stroke="white" strokeWidth={1} />
+      <g opacity={verdict} transform={`translate(${259 - (textW(pass ? tr("PASS") : tr("TOO SLOW"), 7) + 12) / 2} ${170 + (1 - verdict) * 4})`}>
+        <rect width={textW(pass ? tr("PASS") : tr("TOO SLOW"), 7) + 12} height={14} rx={4} fill={pass ? GREEN : RED} />
+        <T x={6} y={9.8} size={7} weight={800} color="#fff" spacing={0.5}>{pass ? tr("PASS") : tr("TOO SLOW")}</T>
+      </g>
+      <Vignette id={id} />
+    </Frame>
+  );
+}
+
+// =============================================================================
+// Touring: a mountain loop in no signal — broadcast, sweep radar, guide ping
+// =============================================================================
+
+const PASS = new Route(
+  [[36, 186], [104, 178], [58, 160], [122, 146], [72, 128], [134, 112], [100, 92], [150, 70], [194, 62], [232, 80], [196, 100], [258, 116], [206, 134], [268, 150], [214, 168], [286, 184], [160, 192]],
+  true,
+  16,
+);
+const RIDER_GAP = 0.03;
+
+function TouringScene() {
+  const id = useIds();
+  const t = useSceneTime(1);
+  const lf = t / 46;
+  const L = PASS.at(lf);
+  const riders = [1, 2, 3, 4].map((k) => PASS.at(lf - k * RIDER_GAP).p);
+  const sweepGap = RIDER_GAP * 5 + 0.012 * Math.sin(t * 0.5);
+  const S = PASS.at(lf - sweepGap);
+  const tailM = Math.round((sweepGap - RIDER_GAP * 4) * 5200);
+
+  const bc = t % 8;
+  const broadcast = win(bc, 0.4, 3.6, 0.3);
+  const ringR = [0, 0.45, 0.9].map((d) => clamp01((bc - 0.5 - d) / 1.8) * 90);
+  const heard = (p: Pt) => ringR.some((r) => r > 0 && Math.abs(Math.hypot(p[0] - L.p[0], p[1] - L.p[1]) - r) < 7);
+
+  const pc = t % 11;
+  const ping = win(pc, 6, 9.6, 0.3);
+  const pinger = riders[1];
+
+  return (
+    <Frame>
+      <Defs id={id} />
+      <defs>
+        <linearGradient id={id('ridge1')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#23232b" />
+          <stop offset="1" stopColor="#141418" />
+        </linearGradient>
+        <linearGradient id={id('ridge2')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1b1b21" />
+          <stop offset="1" stopColor="#0f0f13" />
+        </linearGradient>
+      </defs>
+      <rect width={VW} height={VH} fill="#0a0a0d" />
+      {/* Ridges behind the pass */}
+      <path d="M0 120 L40 92 L80 104 L130 58 L172 40 L214 62 L256 50 L300 84 L320 76 L320 200 L0 200 Z" fill={`url(#${id('ridge1')})`} />
+      <path d="M130 58 L172 40 L214 62 L200 64 L172 50 L150 62 Z" fill="white" opacity={0.08} />
+      <path d="M0 150 L60 128 L110 140 L170 118 L230 132 L290 116 L320 124 L320 200 L0 200 Z" fill={`url(#${id('ridge2')})`} opacity={0.8} />
+      <Road d={PASS.d} w={5} />
+      <path d={PASS.d} fill="none" style={{ stroke: aa(0.3) }} strokeWidth={1.2} strokeDasharray="1 5" strokeLinecap="round" />
+
+      {/* Broadcast rings from the leader */}
+      {ringR.map((r, i) =>
+        r > 0 && r < 90 ? <circle key={i} cx={L.p[0]} cy={L.p[1]} r={r} fill="none" style={{ stroke: A }} strokeWidth={1.2} opacity={broadcast * (1 - r / 90) * 0.8} /> : null,
+      )}
+      {/* Sweep to the tail */}
+      <path d={PASS.slice(lf - sweepGap, lf - RIDER_GAP * 4, 18)} fill="none" stroke="white" strokeWidth={1.1} strokeDasharray="2 3" opacity={0.45} />
+      {/* Guide ping: lines to the leader and the sweep */}
+      {ping > 0.02 && (
+        <>
+          <line x1={pinger[0]} y1={pinger[1]} x2={L.p[0]} y2={L.p[1]} stroke={RED} strokeWidth={1.1} strokeDasharray="3 3" strokeDashoffset={t * 14} opacity={ping} />
+          <line x1={pinger[0]} y1={pinger[1]} x2={S.p[0]} y2={S.p[1]} stroke={RED} strokeWidth={1.1} strokeDasharray="3 3" strokeDashoffset={t * 14} opacity={ping} />
+          <Rings p={pinger} phase={t * 1.6} color={RED} max={20} />
+        </>
+      )}
+      {riders.map((p, i) => (
+        <Dot key={i} p={p} color={i === 1 && ping > 0.3 ? RED : '#d4d4d8'} r={3.4} halo={heard(p) ? 1 : 0} haloColor={A} />
+      ))}
+      <Arrow p={S.p} a={S.a} color="#f4f4f5" s={0.85} />
+      <Arrow p={L.p} a={L.a} color={A} glow={id('glow')} />
+
+      <Chip x={8} y={8} label={tr("Offline maps")} I={WifiOff} color={MUTED} extra={12}>
+        <circle cx={4} cy={8.5} r={3.4} fill={GREEN} />
+        <path d="M2.4 8.5 l1.1 1.2 l2 -2.3" fill="none" stroke="#fff" strokeWidth={1} strokeLinecap="round" />
+      </Chip>
+      <Chip x={VW - 8} y={8} right label={tr("Leader broadcast")} I={Radio} tone={broadcast > 0.5 ? aa(0.7) : LINE} extra={16}>
+        <g transform="translate(0 0)">
+          <Wave on={broadcast} t={t} n={4} />
+        </g>
+      </Chip>
+      {/* Stacked under the top chips: the loop's bottom straight runs along the foot of the frame */}
+      <Chip x={8} y={29} label={tr("Tail rider {0}", [`${tailM} m`])} I={Mountain} />
+      <Chip x={VW - 8} y={29} right label={tr("Guide ping sent")} I={LifeBuoy} color={RED} tone={RED} opacity={ping} dy={lerp(-6, 0, ping)} />
+      <Vignette id={id} />
+    </Frame>
+  );
+}
+
+// =============================================================================
+// Billion: every module in orbit round one core, in your colours
+// =============================================================================
+
+const ORBIT: { tier: EnterpriseTier; I: Icon }[] = [
+  { tier: 'track_pro', I: Flag },
+  { tier: 'showroom', I: Store },
+  { tier: 'workshop', I: Wrench },
+  { tier: 'academy', I: GraduationCap },
+  { tier: 'touring', I: Mountain },
+];
+const STARS = Array.from({ length: 46 }, (_, i) => [rnd(i) * VW, rnd(i + 99) * VH, 0.3 + rnd(i + 7) * 0.9] as const);
+const SWATCHES = [32, 200, 330, 150];
+
+function BillionScene() {
+  const id = useIds();
+  const t = useSceneTime(0);
+  const C: Pt = [160, 92];
+  const RX = 112;
+  const RY = 40;
+  const spin = t * 0.28;
+  const hue = (32 + t * 16) % 360;
+  const brand = `hsl(${hue} 88% 60%)`;
+  const brandA = (o: number) => `hsl(${hue} 88% 60% / ${o})`;
+  const active = Math.floor(t / 1.8) % ORBIT.length;
+  const sig = frac(t / 1.8);
+  const nodes = ORBIT.map((m, i) => {
+    const a = spin + (i * Math.PI * 2) / ORBIT.length;
+    const depth = (Math.sin(a) + 1) / 2;
+    return { ...m, i, p: [C[0] + RX * Math.cos(a), C[1] + RY * Math.sin(a)] as Pt, depth };
+  });
+  const act = nodes[active];
+  const pulse: Pt = [lerp(act.p[0], C[0], easeInOut(sig)), lerp(act.p[1], C[1], easeInOut(sig))];
+  const swatch = SWATCHES.reduce((best, h, i) => (Math.abs(((hue - h + 540) % 360) - 180) < Math.abs(((hue - SWATCHES[best] + 540) % 360) - 180) ? i : best), 0);
+  const label = tierName(act.tier);
+
+  const orbitBack = `M${C[0] - RX} ${C[1]} A${RX} ${RY} 0 0 1 ${C[0] + RX} ${C[1]}`;
+  const orbitFront = `M${C[0] + RX} ${C[1]} A${RX} ${RY} 0 0 1 ${C[0] - RX} ${C[1]}`;
+
+  const back = nodes.filter((n) => n.depth < 0.5);
+  const front = nodes.filter((n) => n.depth >= 0.5);
+  const drawNode = (n: (typeof nodes)[number]) => {
+    const on = n.i === active;
+    const s = 0.72 + 0.42 * n.depth;
+    return (
+      <g key={n.tier} transform={`translate(${n.p[0].toFixed(1)} ${n.p[1].toFixed(1)}) scale(${s.toFixed(3)})`} opacity={0.5 + 0.5 * n.depth}>
+        {on && <circle r={17} style={{ fill: aa(0.25) }} filter={`url(#${id('soft')})`} />}
+        <circle r={12} style={{ fill: on ? A : '#18181d' }} stroke={on ? 'none' : 'rgba(255,255,255,0.14)'} />
+        <Ico I={n.I} x={-6} y={-6} s={12} color={on ? '#111' : MUTED} sw={2} />
+      </g>
+    );
+  };
+
+  return (
+    <Frame>
+      <Defs id={id} />
+      <defs>
+        <radialGradient id={id('core')} cx="50%" cy="50%" r="50%">
+          <stop offset="0" stopColor={brand} stopOpacity="0.45" />
+          <stop offset="1" stopColor={brand} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width={VW} height={VH} fill="#08080b" />
+      {STARS.map(([x, y, r], i) => (
+        <circle key={i} cx={x} cy={y} r={r} fill="white" opacity={0.08 + 0.12 * Math.abs(Math.sin(t * 0.8 + i))} />
+      ))}
+      <ellipse cx={C[0]} cy={C[1]} rx={70} ry={48} fill={`url(#${id('core')})`} />
+
+      {/* Back half of the orbit, back modules, spokes */}
+      <path d={orbitBack} fill="none" stroke="white" strokeOpacity={0.12} strokeWidth={0.8} strokeDasharray="2 3" />
+      <ellipse cx={C[0]} cy={C[1]} rx={RX * 0.6} ry={RY * 0.6} fill="none" stroke="white" strokeOpacity={0.05} />
+      {nodes.map((n) => (
+        <line key={n.tier} x1={C[0]} y1={C[1]} x2={n.p[0]} y2={n.p[1]} style={{ stroke: A }} strokeOpacity={n.i === active ? 0.7 : 0.08 + 0.08 * n.depth} strokeWidth={n.i === active ? 1 : 0.6} />
+      ))}
+      {back.map(drawNode)}
 
       {/* The core */}
-      <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full border-2 flex items-center justify-center bg-[#0d0d10]"
-        style={{ ...at([CX, CY]), borderColor: brand, boxShadow: `0 0 18px 4px ${brand.replace('60%)', '60% / 0.45)')}` }}
-      >
-        <Crown className="w-5 h-5" style={{ color: brand }} />
-      </div>
+      <circle cx={C[0]} cy={C[1]} r={24 + Math.sin(t * 2) * 1.2} fill="none" stroke={brandA(0.35)} strokeWidth={1} />
+      <circle cx={C[0]} cy={C[1]} r={20} fill="#0d0d11" stroke={brand} strokeWidth={2} />
+      <Ico I={Crown} x={C[0] - 9} y={C[1] - 10} s={18} color={brand} sw={1.8} />
+      <circle cx={pulse[0]} cy={pulse[1]} r={2.2} style={{ fill: A }} filter={`url(#${id('glow')})`} opacity={1 - sig * 0.3} />
 
-      <Chip className="top-2 left-2 animate-fade-in">
-        <Palette className="w-3 h-3" style={{ color: brand }} />
-        <span>{tr("Custom branding")}</span>
-      </Chip>
-      <Chip className="top-2 right-2 animate-fade-in delay-100">
-        <Radio className="w-3 h-3 text-accent" />
-        <span>{tr("Priority comms relay")}</span>
-      </Chip>
-      <Chip key={active} className="bottom-2 left-2 animate-fade-in border-accent/60">
-        <act.Icon className="w-3 h-3 text-accent" />
-        <span>{tierName(act.tier)}</span>
-      </Chip>
-      <Chip className="bottom-2 right-2 animate-slide-up delay-200">
-        <InfinityIcon className="w-3 h-3 text-accent" />
-        <span>{tr("Unlimited seats")}</span>
-      </Chip>
+      {/* Front half */}
+      <path d={orbitFront} fill="none" stroke="white" strokeOpacity={0.2} strokeWidth={0.8} strokeDasharray="2 3" />
+      {front.map(drawNode)}
+
+      {/* The module on air */}
+      <g transform={`translate(${C[0]} 158)`}>
+        <T x={0} y={0} anchor="middle" size={6} color={MUTED} weight={700} spacing={1}>{`${active + 1} / ${ORBIT.length}`}</T>
+        <T x={0} y={13} anchor="middle" size={10} weight={800}>{label}</T>
+      </g>
+
+      {/* Custom branding: swatches, the live one ringed */}
+      <g transform="translate(8 8)">
+        <rect width={textW(tr("Custom branding")) + 64} height={17} rx={5} fill={PANEL} stroke={LINE} strokeWidth={0.8} />
+        <Ico I={Palette} x={6} y={4} s={9} color={brand} />
+        <T x={19} y={11.4}>{tr("Custom branding")}</T>
+        {SWATCHES.map((h, i) => (
+          <circle key={h} cx={textW(tr("Custom branding")) + 27 + i * 9} cy={8.5} r={3} fill={`hsl(${h} 88% 60%)`} stroke={i === swatch ? '#fff' : 'none'} strokeWidth={1} />
+        ))}
+      </g>
+      <Chip x={VW - 8} y={8} right label={tr("Priority comms relay")} I={Radio} />
+      <Chip x={8} y={175} label={tr("Unlimited seats")} I={InfinityIcon} />
+      <Chip x={VW - 8} y={175} right label={tierName('billion')} I={Crown} color={brand} tone={brandA(0.6)} />
     </Frame>
   );
 }
@@ -628,3 +1224,4 @@ export function TierShowcase({ tier }: { tier: EnterpriseTier }) {
       return <BillionScene />;
   }
 }
+

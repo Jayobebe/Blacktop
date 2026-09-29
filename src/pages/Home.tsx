@@ -372,7 +372,18 @@ export default function Home() {
   );
 
   return (
-    <div className={`h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}>
+    <div
+      className={`h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}
+      // Home never scrolls; if focusing a field inside the deck makes the
+      // browser scroll it anyway, snap it back so the padding stays put.
+      onScroll={(e) => {
+        const el = e.currentTarget;
+        if (el.scrollTop || el.scrollLeft) {
+          el.scrollTop = 0;
+          el.scrollLeft = 0;
+        }
+      }}
+    >
       {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
 
       {/* Swipe deck: the consumer home (with its header and nav), then each

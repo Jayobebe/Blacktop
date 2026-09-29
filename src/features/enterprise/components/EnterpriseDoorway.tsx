@@ -29,13 +29,25 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   // The package the rider opened below: the Inquire email names it.
   const [openTier, setOpenTier] = useState<EnterpriseTier | null>(null);
 
-  // The login and the camera scanner aren't open yet: trying either pops the
+  // The login, camera and codes aren't open yet: trying any of them pops the
   // Coming soon stamp instead (scrolled into view first if it's off screen).
   const stampRef = useRef<HTMLSpanElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const pulseSoon = () => {
     haptics.light();
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    stampRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    // Bring the stamp into view by scrolling this page only. (scrollIntoView
+    // would also scroll Home's deck and page, which hide their overflow but
+    // still move, nudging the whole layout on every tap.)
+    const stamp = stampRef.current;
+    const scroller = scrollerRef.current;
+    if (stamp && scroller) {
+      const s = stamp.getBoundingClientRect();
+      const box = scroller.getBoundingClientRect();
+      if (s.top < box.top || s.bottom > box.bottom) {
+        scroller.scrollTo({ top: Math.max(0, scroller.scrollTop + s.top - box.top - 16), behavior: reduce ? 'auto' : 'smooth' });
+      }
+    }
     // Only the stamp moves: a big pop with a wiggle and an accent glow.
     const glow = 'hsl(var(--accent) / 0.8)';
     const off = `0 0 0 0 hsl(var(--accent) / 0)`;
@@ -88,7 +100,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn('h-full overflow-y-auto overscroll-contain flex flex-col gap-3 [&>*]:shrink-0 -mx-3 px-3 -mt-3 pt-3', className)}>
+    <div ref={scrollerRef} className={cn('h-full overflow-y-auto overflow-x-hidden overscroll-contain flex flex-col gap-3 [&>*]:shrink-0 -mx-3 px-3 -mt-3 pt-3', className)}>
       {/* BLACKTOP / ENTERPRISE, with the Coming soon stamp beside BLACKTOP */}
       <EnterpriseTitle ref={stampRef} />
 

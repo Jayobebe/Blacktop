@@ -106,6 +106,16 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
       onPointerMove={onPointerMove}
       onPointerUp={(e) => end(e, false)}
       onPointerCancel={(e) => end(e, true)}
+      // The deck never scrolls itself (cards slide by transform). If anything
+      // scrolls it from code (focus, scrollIntoView), put it straight back so
+      // the cards can't drift out of line.
+      onScroll={(e) => {
+        const el = e.currentTarget;
+        if (el.scrollLeft || el.scrollTop) {
+          el.scrollLeft = 0;
+          el.scrollTop = 0;
+        }
+      }}
       onClickCapture={(e) => {
         if (suppressClick.current) {
           e.preventDefault();

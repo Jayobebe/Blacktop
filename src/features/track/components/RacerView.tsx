@@ -324,7 +324,7 @@ export function RacerView() {
             </div>
             {gForce.isSupported && (
               <div className="flex justify-center pt-1">
-                <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={gForce.envelope} max={gForce.gMax} className="w-44 landscape:w-36" />
+                <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={gForce.envelope} max={gForce.gMax} className="w-36 landscape:w-32" />
               </div>
             )}
           </div>
