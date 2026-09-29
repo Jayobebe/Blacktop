@@ -1891,6 +1891,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     if (hadRoute && isSolo) clearSoloRoute();
     preOrbitCameraRef.current = null;
     orbitingRef.current = false;
+    freePanRef.current = false; // the next open follows the rider again
     setPin(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSeq]);
