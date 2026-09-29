@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import maplibregl, { type GeoJSONSource, type Map as MapLibreMap } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import '@/lib/maplibreWorker';
+import { type GeoJSONSource, type Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { ArrowLeft, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Flag, Minus, Pause, Play, Plus, Rewind, Save, Split, X } from 'lucide-react';
 import { toast } from 'sonner';

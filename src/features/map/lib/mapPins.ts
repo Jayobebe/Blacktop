@@ -1,4 +1,4 @@
-import type { GeoJSONSource, Map as MapLibreMap, MapStyleImageMissingEvent } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
 import type { SavedPOI } from './poiStore';
 import type { MapSearchResult } from './placeSearch';
 import { tr } from '@/lib/i18n';
@@ -163,11 +163,12 @@ export function addPinLayers(map: MapLibreMap, accent: string, onPick: (pin: Pin
   const style = map.getStyle();
   // Same message MapLibre uses, so whenStyleReady retries once the style is in.
   if (!style) throw new Error('Style is not done loading');
-  const onMissing = (e: MapStyleImageMissingEvent) => {
-    if (!e.id.startsWith(PIN_PREFIX) || map.hasImage(e.id)) return;
-    map.addImage(e.id, drawPoiPin(e.id.slice(PIN_PREFIX.length)), { pixelRatio: PR });
-  };
-  map.on('styleimagemissing', onMissing);
+  // MapLibre 6: only the resolver can supply an image mid-request (a
+  // `styleimagemissing` listener is notify-only).
+  map.setMissingStyleImageResolver((id) => {
+    if (!id.startsWith(PIN_PREFIX) || map.hasImage(id)) return;
+    map.addImage(id, drawPoiPin(id.slice(PIN_PREFIX.length)), { pixelRatio: PR });
+  });
   const spriteUrl = typeof style.sprite === 'string' ? style.sprite : null;
   if (spriteUrl) {
     // Pins drawn before the icons arrive get redrawn with them.
@@ -265,7 +266,7 @@ export function addPinLayers(map: MapLibreMap, accent: string, onPick: (pin: Pin
     map.on('mouseleave', id, leave);
   }
   return () => {
-    map.off('styleimagemissing', onMissing);
+    map.setMissingStyleImageResolver(null);
     for (const id of [POI_LAYER, MINE_LAYER]) {
       map.off('click', id, click as never);
       map.off('mouseenter', id, enter);
