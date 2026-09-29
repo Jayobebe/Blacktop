@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "re
 import { PushBridge } from "@/features/notifications";
 import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
 import { MaintenanceNotifier } from "@/features/garage";
+import { EnterpriseSync } from "@/features/enterprise";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { burnExpiredTrips, useRideSpeed } from "@/features/ride";
@@ -61,6 +62,7 @@ const Terms = lazyPage(() => import("./pages/Terms"));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
 const Pay = lazyPage(() => import("./pages/Pay"));
 const Setup = lazyPage(() => import("./pages/Setup"));
+const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
 const World = lazyPage(() => import("./pages/World"));
 const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
 const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));
@@ -196,6 +198,7 @@ function AppRoutes() {
     {/* Background helpers for signed-in riders (render nothing). */}
     <CrewStatsPublisher />
     <MaintenanceNotifier />
+    <EnterpriseSync />
     <PageTransition>
     <Suspense fallback={null}>
     <Routes>
@@ -231,6 +234,7 @@ function AppRoutes() {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/setup" element={<Setup />} />
+      <Route path="/enterprise" element={<EnterpriseLink />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>

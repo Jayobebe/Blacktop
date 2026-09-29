@@ -30,7 +30,7 @@ Vite env vars required at build time (see local `.env`): `VITE_SUPABASE_URL`, `V
 
 ### Feature-based organization
 
-Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `speedshop`, `map`, `crew`, `blacktank`, `arcade`, `radio`, `experience`, `tips`, `hazards`, `integrations/discord`.
+Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `speedshop`, `map`, `crew`, `blacktank`, `arcade`, `radio`, `experience`, `tips`, `hazards`, `enterprise`, `integrations/discord`.
 
 `src/pages/*` are route-level screens composed from features; routing lives in `src/App.tsx`. Home, onboarding, the lobbies, the ride and pillion screens load eagerly; every other screen (and the map overlay) is a `lazyPage()` that's prefetched once the app is idle, so it still opens offline. Keep heavy dependencies (MapLibre, ffmpeg) out of anything the eager screens import: a barrel that re-exports a heavy component drags it into the first load, which is why the Track Pack screens live in `@/features/track/views`, not `@/features/track`.
 
@@ -109,6 +109,15 @@ Burn must remove everything. Server: `burn-account` deletes the auth user (every
 - All notification text is written in `send-push/events.ts`, never taken from a caller. `send-push/crew.ts` mirrors `src/features/crew/challenges.ts`; keep them in sync.
 - Mileage-based maintenance is checked on the phone (`MaintenanceNotifier`) and shown as a local notification.
 
+### Blacktop Enterprise (`src/features/enterprise`)
+
+Phase 1 (foundations; the packages are "coming soon"). Organisations (schools, dealers, tour operators, race teams) mount a workspace on a rider's phone from a QR code or typed code. Schema: migration `20261002000000_enterprise_core.sql`: `organizations`, `organization_members` (cascades from `auth.users`), `organization_invites`, `enterprise_guest_sessions`; RLS through `enterprise_role(org)`, anon gets nothing, only the service role creates organisations, invites and guest passes. Riders join through `verify_enterprise_token(token_code)` (rate-limited; a guest token returns a timed pass, an invite code adds a membership; only public org fields come back).
+
+- Tiers `academy | showroom | touring | track_pro | billion` and roles mirror the migration's CHECKs (`types.ts`); `enterpriseTiers()` holds the package copy. Enterprise text is translated in full except the word Blacktop (package and module names included; Track Pro uses the local Track Pack name).
+- Client state: `lib/enterpriseStore.ts` (module store, `blacktop_enterprise_workspaces`): mounting the same org again never duplicates, it bumps `focusTick` so Home's deck scrolls to it; expired guest passes drop on launch, by timer and on return to the app. `EnterpriseSync` (in `App.tsx`) also drops member workspaces the server no longer returns (never when offline). `/enterprise?token=…` is the deep link a phone camera opens.
+- Home is a `components/SwipeDeck`: the consumer home (with its header and nav) first, then one full-screen `EnterpriseWorkspaceCard` per workspace, then the `EnterpriseDoorway` (coming-soon card, scan/enter code, package accordion, Inquire mailto to `ENTERPRISE_CONTACT_EMAIL` in `lib/tiers.ts`, a placeholder address). It loops, and is locked while riding or guided (`useGuidanceActive` from the map). The QR scanner loads only when opened (keeps html5-qrcode out of Home's first load).
+- Privacy: only the code is sent; nothing from the rider's rides, garage or profile goes to an organisation.
+
 ### Personalisation (`src/features/experience`)
 
 Onboarding (`pages/Onboarding.tsx`: welcome → consent → setup flow → name) and `/setup` (redo from Settings) run `SetupFlow`: vehicles (multi-select, first is the main one), ride mode (solo / group / both), ride style, then a swipeable "Do you care about…" deck (`CareDeck`), then a live preview.
@@ -125,7 +134,7 @@ Onboarding (`pages/Onboarding.tsx`: welcome → consent → setup flow → name)
 
 - Every user-facing string goes through `tr()`, including toasts, aria labels, errors, spoken prompts (`map/lib/navigation.ts`, `lib/speech.ts` picks a voice for the app language) and module-level copy. Never wrap classNames, colours, ids or anything sent over the network: pit board presets travel as English ids and are shown/said per phone (`track/lib/pitCalls.ts` `pitLabel`).
 - Whole sentences, never fragments: no `tr("Start your")` + word, no English `'s'`/`'rider' : 'riders'` suffixes; use one key per case (`tr("1 rider")` / `tr("{0} riders", [n])`). `terms` (ride/drive, rider, vehicle nouns) are translated nouns; where ride/drive is a verb, pick between two whole sentences on `terms.car`. `lowerName()` lower-cases a name mid-sentence (not in German).
-- Keep product and badge names in English (Blacktop, Blacktank, Speed Demon…), except Track Pack, which has a local name per language (keep it consistent in every string that mentions it); "Hi-vis" is never translated as police.
+- Keep product and badge names in English (Blacktop, Blacktank, Speed Demon…), except Track Pack, which has a local name per language, and Blacktop Enterprise, where everything but the word Blacktop is translated (keep it consistent in every string that mentions it); "Hi-vis" is never translated as police.
 - Workflow: `npm run i18n:check` re-extracts `scripts/i18n/keys.json` and lists what each language is missing (`--missing de` as JSON). Translation work files are `<dir>/<lang>/*.txt` lines `N<TAB>text` (N = index in keys.json) merged with `node scripts/i18n/merge.mjs <dir>`, which rejects lines whose placeholders don't match. Re-extracting shifts the indices, so merge before changing code.
 
 ### Native device integration

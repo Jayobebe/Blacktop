@@ -115,6 +115,7 @@ import {
 } from "@/lib/challengeRun";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
+import { setGuidanceActive } from '../lib/guidanceState';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -619,6 +620,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible }: Bl
 
   // Turn-by-turn guidance on (declared up here for the GPS watch below).
   const [guiding, setGuiding] = useState(false);
+  // Shared with other screens (Home locks its swipe deck while guiding).
+  useEffect(() => {
+    setGuidanceActive(guiding);
+    return () => setGuidanceActive(false);
+  }, [guiding]);
 
   // ── Geolocation watch ──────────────────────────────────────────────────────
   // Only while the map is on screen, or while it's guiding (spoken directions

@@ -15,3 +15,4 @@ export type { MapSearchResult } from './lib/placeSearch';
 export { speak, stopSpeaking, speechSupported, setVoiceStyle, playSquelch } from './lib/speech';
 export type { VoiceStyle } from './lib/speech';
 export { loadDarkMapStyle } from './lib/darkStyle';
+export { useGuidanceActive, isGuidanceActive } from './lib/guidanceState';

@@ -11,11 +11,13 @@ import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
-import { openBlacktopMap, clearMapDestination } from '@/features/map';
+import { openBlacktopMap, clearMapDestination, useGuidanceActive } from '@/features/map';
 import { SafetyStatusCard } from '@/features/rescue';
 import { useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
+import { useEnterprise, EnterpriseDoorway, EnterpriseWorkspaceCard } from '@/features/enterprise';
 
 import { tr } from '@/lib/i18n';
 
@@ -29,6 +31,35 @@ export default function Home() {
   const exp = useExperience();
   const [isExploding, setIsExploding] = useState(false);
   const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
+
+  // The deck: the consumer home, then each mounted enterprise workspace, then
+  // the Doorway (scan / enter a code). Tracked by key so mounting or removing a
+  // workspace never lands the rider on the wrong card.
+  const enterprise = useEnterprise();
+  const guiding = useGuidanceActive();
+  const deckLocked = rideState.isActive || guiding;
+  const deckKeys = ['home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
+  const [deckKey, setDeckKey] = useState<string>(() =>
+    enterprise.activeWorkspaceId ? `ws:${enterprise.activeWorkspaceId}` : 'home',
+  );
+  const deckIndex = Math.max(0, deckKeys.indexOf(deckKey));
+  const goToDeck = (i: number) => {
+    const key = deckKeys[i] ?? 'home';
+    setDeckKey(key);
+    haptics.tick();
+    enterprise.switchWorkspace(key.startsWith('ws:') ? key.slice(3) : null);
+  };
+  // A scan or code (new or already mounted) asks the deck to show that workspace.
+  useEffect(() => {
+    if (enterprise.focusTick === 0) return;
+    setDeckKey(enterprise.activeWorkspaceId ? `ws:${enterprise.activeWorkspaceId}` : 'home');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enterprise.focusTick]);
+  // The card on screen was disconnected (or its guest pass ran out): back home.
+  useEffect(() => {
+    if (!deckKeys.includes(deckKey)) setDeckKey('home');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deckKeys.join('|')]);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
   const pressStart = useRef<{ x: number; y: number } | null>(null);
@@ -330,183 +361,228 @@ export default function Home() {
     else clearRideRole();
   }, [convoy.isActive, convoy.isRestoring, navigate]);
 
+  const deckPips = deckLocked ? null : (
+    <SwipeDeckPips
+      className="mt-2 flex-none"
+      count={deckKeys.length}
+      index={deckIndex}
+      onSelect={goToDeck}
+      lastIsAdd
+      labels={[tr("Home"), ...enterprise.workspaces.map((w) => w.org.name), tr("Blacktop Enterprise")]}
+    />
+  );
+
   return (
     <div className={`h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}>
       {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
 
-      {/* Header */}
-      {/* Header: name · crash rescue status (fills the gap; full span without radio) · radio */}
-      <header className="flex items-center gap-3 mb-4 landscape:mb-2 animate-fade-in">
-        <div className="min-w-0 max-w-[45%] shrink-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
-            {tr("Welcome back")}
-          </p>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
-        </div>
-        {/* Riders who said no to crash rescue in setup aren't nagged about it. */}
-        <div className="flex-1 min-w-0 flex justify-end">
-          {(settings.autoRescueEnabled || !exp.configured) && <SafetyStatusCard compact />}
-        </div>
-        <HomeRadioDock />
-      </header>
+      {/* Swipe deck: the consumer home (with its header and nav), then each
+          enterprise workspace and the Doorway, which fill the whole screen.
+          Locked while riding or guided. */}
+      <SwipeDeck
+        className="flex-1 min-h-0"
+        index={deckIndex}
+        onIndexChange={goToDeck}
+        locked={deckLocked}
+        slides={[
+          {
+            key: 'home',
+            node: (
+              <>
+                {/* Header */}
+                {/* Header: name · crash rescue status (fills the gap; full span without radio) · radio */}
+                <header className="flex items-center gap-3 mb-4 landscape:mb-2 animate-fade-in">
+                  <div className="min-w-0 max-w-[45%] shrink-0">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
+                      {tr("Welcome back")}
+                    </p>
+                    <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
+                  </div>
+                  {/* Riders who said no to crash rescue in setup aren't nagged about it. */}
+                  <div className="flex-1 min-w-0 flex justify-end">
+                    {(settings.autoRescueEnabled || !exp.configured) && <SafetyStatusCard compact />}
+                  </div>
+                  <HomeRadioDock />
+                </header>
+                  <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
+                    {/* Quick Stats */}
+                    <div
+                      className="grid grid-cols-[repeat(var(--stat-cols),minmax(0,1fr))] landscape:grid-cols-2 landscape:[&>*:last-child:nth-child(odd)]:col-span-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start"
+                      style={{ ['--stat-cols' as string]: quickStats.length }}
+                    >
+                      {quickStats.map((stat, i) => (
+                        <div 
+                          key={stat.label}
+                          className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
+                          style={{ animationDelay: `${i * 80}ms` }}
+                        >
+                          <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
+                          <p className="text-base md:text-lg font-mono font-bold tracking-tighter leading-tight">
+                            {stat.value}
+                            {stat.unit && <span className="text-[10px] md:text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
-        {/* Quick Stats */}
-        <div
-          className="grid grid-cols-[repeat(var(--stat-cols),minmax(0,1fr))] landscape:grid-cols-2 landscape:[&>*:last-child:nth-child(odd)]:col-span-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start"
-          style={{ ['--stat-cols' as string]: quickStats.length }}
-        >
-          {quickStats.map((stat, i) => (
-            <div 
-              key={stat.label}
-              className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
-              <p className="text-base md:text-lg font-mono font-bold tracking-tighter leading-tight">
-                {stat.value}
-                {stat.unit && <span className="text-[10px] md:text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
-              </p>
-            </div>
-          ))}
-        </div>
+                    {/* Ride Buttons */}
+                    <div ref={tileColumnRef} className="relative flex-1 flex flex-col gap-3 animate-slide-up delay-200">
+                      {/* Start Buttons Row — one or two primary tiles depending on ride mode */}
+                      <div className="flex gap-3 flex-1">
+                        {primaryTiles.map((tile, i) => (
+                          <button
+                            key={tile.key}
+                            ref={i === 0 ? topATileRef : topBTileRef}
+                            onClick={() => {
+                              haptics.light();
+                              tile.onClick();
+                            }}
+                            className={cn(
+                              'pressable flex-1 bg-card/50 border-2 border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
+                              // One wide tile: in landscape the globe sits dead centre, so push the label left of it.
+                              singleTop && 'landscape:justify-start landscape:pl-8'
+                            )}
+                          >
+                            <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                              <tile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
+                            </div>
+                            <div className="text-left">
+                              <span className="text-base font-semibold tracking-tight block text-foreground">{tile.label}</span>
+                              <span className="text-xs text-muted-foreground landscape:hidden">{tile.sub}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
 
-        {/* Ride Buttons */}
-        <div ref={tileColumnRef} className="relative flex-1 flex flex-col gap-3 animate-slide-up delay-200">
-          {/* Start Buttons Row — one or two primary tiles depending on ride mode */}
-          <div className="flex gap-3 flex-1">
-            {primaryTiles.map((tile, i) => (
-              <button
-                key={tile.key}
-                ref={i === 0 ? topATileRef : topBTileRef}
-                onClick={() => {
-                  haptics.light();
-                  tile.onClick();
-                }}
-                className={cn(
-                  'pressable flex-1 bg-card/50 border-2 border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
-                  // One wide tile: in landscape the globe sits dead centre, so push the label left of it.
-                  singleTop && 'landscape:justify-start landscape:pl-8'
-                )}
-              >
-                <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <tile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
-                </div>
-                <div className="text-left">
-                  <span className="text-base font-semibold tracking-tight block text-foreground">{tile.label}</span>
-                  <span className="text-xs text-muted-foreground landscape:hidden">{tile.sub}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+                      {/* Bottom row: Join (plus Track in landscape, making four tiles around the globe) */}
+                      <div className="flex gap-3 flex-1">
+                        <button
+                          ref={bottomTileRef}
+                          onClick={() => {
+                            haptics.light();
+                            secondaryTile.onClick();
+                          }}
+                          className={cn(
+                            'pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
+                            // The globe sits over this tile's centre in landscape, so the label moves right of it;
+                            // with Track beside it the globe is on its right corner, so the label goes left.
+                            showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
+                          )}
+                        >
+                          <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
+                          </div>
+                          <div className="text-left">
+                            <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
+                            <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
+                          </div>
+                        </button>
+                        {showTrack && (
+                          <div
+                            ref={trackTileRef}
+                            role="button"
+                            tabIndex={0}
+                            onClick={openTrack}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
+                            className="pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 touch-target-lg cursor-pointer"
+                          >
+                            <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                              <Zap className="w-4 h-4 text-accent" />
+                            </div>
+                            <div className="flex flex-col items-start gap-1">
+                              <span className="text-base font-semibold tracking-tight text-foreground">{tr("Track")}</span>
+                              {trackRoleToggle(true)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-          {/* Bottom row: Join (plus Track in landscape, making four tiles around the globe) */}
-          <div className="flex gap-3 flex-1">
-            <button
-              ref={bottomTileRef}
-              onClick={() => {
-                haptics.light();
-                secondaryTile.onClick();
-              }}
-              className={cn(
-                'pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
-                // The globe sits over this tile's centre in landscape, so the label moves right of it;
-                // with Track beside it the globe is on its right corner, so the label goes left.
-                showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
-              )}
-            >
-              <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
-              </div>
-              <div className="text-left">
-                <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
-                <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
-              </div>
-            </button>
-            {showTrack && (
-              <div
-                ref={trackTileRef}
-                role="button"
-                tabIndex={0}
-                onClick={openTrack}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                className="pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 touch-target-lg cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-accent" />
-                </div>
-                <div className="flex flex-col items-start gap-1">
-                  <span className="text-base font-semibold tracking-tight text-foreground">{tr("Track")}</span>
-                  {trackRoleToggle(true)}
-                </div>
-              </div>
-            )}
-          </div>
+                      {/* Track Pack (portrait): trims the bottom off Join, sits above the nav bar */}
+                      {showTrack && (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={openTrack}
+                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
+                          className="pressable landscape:hidden flex-none h-16 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
+                        >
+                          <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-accent" />
+                          </div>
+                          <span className="flex-1 text-base font-semibold tracking-tight text-foreground">{tr("Track Pack")}</span>
+                          {trackRoleToggle(false)}
+                        </div>
+                      )}
 
-          {/* Track Pack (portrait): trims the bottom off Join, sits above the nav bar */}
-          {showTrack && (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={openTrack}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-              className="pressable landscape:hidden flex-none h-16 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-accent" />
-              </div>
-              <span className="flex-1 text-base font-semibold tracking-tight text-foreground">{tr("Track Pack")}</span>
-              {trackRoleToggle(false)}
-            </div>
-          )}
-
-          {/* Rotating globe — tapping opens the map. Sits above the tiles (z-20)
-              so pointer events land here first; the canvas fills the div exactly. */}
-          <div
-            ref={globeRef}
-            onClick={handleGlobeClick}
-            onPointerDown={handleGlobePointerDown}
-            onPointerUp={cancelLongPress}
-            onPointerCancel={cancelLongPress}
-            onPointerLeave={cancelLongPress}
-            onPointerMove={handleGlobePointerMove}
-            onContextMenu={(e) => e.preventDefault()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleGlobeClick();
-              }
-            }}
-            tabIndex={0}
-            className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={settings.blacktopWorldEnabled ? tr("Open map — hold for Blacktop World") : tr("Open map")}
-            role="button"
-          >
-            <HomeGlobe accentColor={accentColor} className="w-full h-full" />
-          </div>
-          {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
-              tiles that the CSS mask clips away, keeping the accent outline continuous. */}
-          <svg ref={arcOverlayRef} className="pointer-events-none absolute inset-0 z-30 overflow-visible" aria-hidden="true" />
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <nav className="flex justify-around mt-4 pt-3 border-t border-border/30 animate-slide-up delay-300">
-        {navItems.map(({ icon: Icon, label, onClick }) => (
-          <button
-            key={label}
-            onClick={() => {
-              haptics.tick();
-              onClick();
-            }}
-            className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target hover:bg-accent/10"
-          >
-            <Icon className="w-5 h-5 text-accent" />
-            <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
-          </button>
-        ))}
-      </nav>
+                      {/* Rotating globe — tapping opens the map. Sits above the tiles (z-20)
+                          so pointer events land here first; the canvas fills the div exactly. */}
+                      <div
+                        ref={globeRef}
+                        onClick={handleGlobeClick}
+                        onPointerDown={handleGlobePointerDown}
+                        onPointerUp={cancelLongPress}
+                        onPointerCancel={cancelLongPress}
+                        onPointerLeave={cancelLongPress}
+                        onPointerMove={handleGlobePointerMove}
+                        onContextMenu={(e) => e.preventDefault()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleGlobeClick();
+                          }
+                        }}
+                        tabIndex={0}
+                        className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        aria-label={settings.blacktopWorldEnabled ? tr("Open map — hold for Blacktop World") : tr("Open map")}
+                        role="button"
+                      >
+                        <HomeGlobe accentColor={accentColor} className="w-full h-full" />
+                      </div>
+                      {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
+                          tiles that the CSS mask clips away, keeping the accent outline continuous. */}
+                      <svg ref={arcOverlayRef} className="pointer-events-none absolute inset-0 z-30 overflow-visible" aria-hidden="true" />
+                    </div>
+                  </div>
+                {deckPips}
+                {/* Bottom Navigation */}
+                <nav className="flex justify-around mt-2 pt-3 border-t border-border/30 animate-slide-up delay-300">
+                  {navItems.map(({ icon: Icon, label, onClick }) => (
+                    <button
+                      key={label}
+                      onClick={() => {
+                        haptics.tick();
+                        onClick();
+                      }}
+                      className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target hover:bg-accent/10"
+                    >
+                      <Icon className="w-5 h-5 text-accent" />
+                      <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+                    </button>
+                  ))}
+                </nav>
+              </>
+            ),
+          },
+          ...enterprise.workspaces.map((w) => ({
+            key: `ws:${w.org.id}`,
+            node: (
+              <>
+                <EnterpriseWorkspaceCard session={w} className="flex-1 min-h-0" />
+                {deckPips}
+              </>
+            ),
+          })),
+          {
+            key: 'doorway',
+            node: (
+              <>
+                <EnterpriseDoorway className="flex-1 min-h-0" />
+                {deckPips}
+              </>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
