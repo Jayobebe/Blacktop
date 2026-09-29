@@ -30,6 +30,7 @@ import { warmPilotVoice } from '@/lib/pilotVoice';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { GForceCircle } from '@/components/GForceCircle';
+import { AlarmButton, startRescueSiren } from '@/features/alarm';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
@@ -911,6 +912,8 @@ export default function ActiveRide() {
           }}
           onSendNow={async () => {
             setCrashPromptOpen(false);
+            // Auto-rescue (never the manual rescue button) sounds the siren so people nearby notice.
+            startRescueSiren();
             await fireAutoRescue();
           }}
           onTimeout={async () => {
@@ -921,6 +924,7 @@ export default function ActiveRide() {
             if (autoRescueFiredRef.current) return;
             autoRescueFiredRef.current = true;
             setCrashPromptOpen(false);
+            startRescueSiren();
             await fireAutoRescue();
             toast.error(tr("Auto-rescue sent - ending ride"), {
               description: tr("No response detected, so a rescue alert was sent and your ride was ended."),
@@ -934,8 +938,10 @@ export default function ActiveRide() {
           Landscape: equal flex-1 flanks (stats left / g-force+buttons right) so the
           speed cluster sits dead-centre. */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center">
-        {/* Landscape Left: Big Stats List */}
-        <div className="hidden landscape:flex flex-col justify-center items-start gap-7 flex-1 min-w-0 pl-2">
+        {/* Landscape Left: Big Stats List, then the anti-theft lock beside the live speed
+            (mirroring the G meter on the right). */}
+        <div className="hidden landscape:flex flex-row items-center gap-8 flex-1 min-w-0 pl-2">
+        <div className="flex flex-col justify-center items-start gap-7 min-w-0">
           {speedHero && (
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">{tr("Distance")}</p>
@@ -958,6 +964,8 @@ export default function ActiveRide() {
             </p>
           </div>
           )}
+        </div>
+        <AlarmButton variant="ride" className="ml-auto" />
         </div>
 
         {/* Speed and Stats - centre column in landscape (auto width, centred by equal flanks) */}
@@ -1087,6 +1095,12 @@ export default function ActiveRide() {
             <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-40 landscape:w-36" />
           </div>
         )}
+
+        {/* Portrait: the anti-theft lock on its own row, below the stats and just above
+            the control buttons (landscape has it beside the live speed). */}
+        <div className="flex landscape:hidden justify-center mt-4 [@media(max-height:820px)]:mt-2">
+          <AlarmButton variant="ride" />
+        </div>
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex flex-wrap landscape:flex-col landscape:flex-wrap-reverse items-center justify-center content-center gap-6 landscape:gap-3 [@media(max-height:420px)]:gap-2 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:max-h-full landscape:py-1">

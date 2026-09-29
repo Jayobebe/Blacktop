@@ -615,6 +615,9 @@ export default function Settings() {
                   <p className="text-[10px] text-muted-foreground">
                     {tr("Acknowledge timeout:")}{" "}<span className="font-mono">5:00</span>
                   </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {tr("When auto-rescue sends, the phone sounds a siren so people nearby notice. Anyone can stop it.")}
+                  </p>
                 </div>
               )}
             </div>

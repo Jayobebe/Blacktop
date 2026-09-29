@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Lock } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Lock, Siren } from 'lucide-react';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -7,9 +8,9 @@ import { haptics } from '@/lib/haptics';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useSettings } from '@/features/settings';
 import { getActiveRideStatus } from '@/features/ride';
-import { alarmChirp, alarmSiren } from '@/lib/radioFx';
 import { Button } from '@/components/ui/button';
 import { getAlarm, noteNudge, setAlarmPhase, useAlarm } from '../lib/alarmStore';
+import { playAlarmChirp as alarmChirp, startAlarmSiren } from '../lib/alarmSound';
 import { disarmAlarm } from '../lib/arm';
 import { checkAlarmPattern, MIN_PATTERN_DOTS, saveAlarmPattern } from '../lib/pattern';
 import { TamperDetector, type TamperEvent } from '../lib/detector';
@@ -27,11 +28,75 @@ const MAX_TRIES = 3;
  * The anti-theft lock: mounted once in App.tsx, shown over everything (the map
  * included) while the alarm is on. A big red lock on one half (top in
  * portrait, left in landscape), the pattern pad on the other.
+ *
+ * It goes on <body>, not in #root: #root is its own stacking context (its view
+ * transition), so whatever else is portaled to body (dialogs, sheets, the radio
+ * bubble, the logbook hand-over) would otherwise sit on top of it, and be tappable.
  */
 export function AlarmOverlay() {
   const alarm = useAlarm();
   if (alarm.phase === 'off') return null;
-  return <AlarmScreen />;
+  return createPortal(alarm.phase === 'rescue' ? <RescueSirenScreen /> : <AlarmScreen />, document.body);
+}
+
+/** The siren and a buzz until stopped (the anti-theft alarm, and auto-rescue). */
+function useSiren(on: boolean) {
+  useEffect(() => {
+    if (!on) return;
+    const stop = startAlarmSiren();
+    const buzz = () => navigator.vibrate?.([500, 250, 500, 250]);
+    buzz();
+    const id = setInterval(buzz, 1500);
+    return () => {
+      stop();
+      clearInterval(id);
+      navigator.vibrate?.(0);
+    };
+  }, [on]);
+}
+
+/** Keeps the screen on while mounted (sensors and the siren stop with the screen). */
+function useScreenOn() {
+  const wake = useWakeLock();
+  useEffect(() => {
+    void wake.request();
+    return () => {
+      void wake.release();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
+
+/**
+ * After a crash, once auto-rescue has gone out: the siren so people nearby
+ * notice, and a screen that says why to whoever picks the phone up. Anyone can
+ * stop it.
+ */
+function RescueSirenScreen() {
+  useScreenOn();
+  useSiren(true);
+  return (
+    <div
+      data-no-pull
+      role="alertdialog"
+      aria-modal="true"
+      aria-label={tr("Crash detected")}
+      className="fixed inset-0 z-[10000] pointer-events-auto flex flex-col items-center justify-center gap-4 px-8 bg-black text-center text-foreground select-none animate-fade-in safe-top safe-bottom"
+      style={{ touchAction: 'none' }}
+    >
+      <div className="absolute inset-0 bg-destructive/30 alarm-flash pointer-events-none" />
+      <Siren
+        className="relative w-24 h-24 text-destructive animate-pulse"
+        strokeWidth={1.8}
+        style={{ filter: 'drop-shadow(0 0 34px hsl(var(--destructive) / 0.8))' }}
+      />
+      <h2 className="relative text-4xl font-semibold tracking-tight text-destructive">{tr("Crash detected")}</h2>
+      <p className="relative text-base max-w-xs leading-snug">{tr("Someone here may need help. The siren is sounding so people nearby notice.")}</p>
+      <Button size="xl" variant="destructive" className="relative mt-4 w-full max-w-xs" onClick={() => disarmAlarm()}>
+        {tr("Stop siren")}
+      </Button>
+    </div>
+  );
 }
 
 function AlarmScreen() {
@@ -45,14 +110,7 @@ function AlarmScreen() {
   }, []);
 
   // The screen stays on while the lock is up (sensors stop with the screen).
-  const wake = useWakeLock();
-  useEffect(() => {
-    void wake.request();
-    return () => {
-      void wake.release();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useScreenOn();
 
   // ── Watching ──
   const detector = useRef<TamperDetector | null>(null);
@@ -84,6 +142,7 @@ function AlarmScreen() {
   );
 
   // ── Timing, beeps and the siren ──
+  useSiren(phase === 'alarm');
   useEffect(() => {
     if (phase === 'arming') {
       const id = setTimeout(() => {
@@ -100,17 +159,6 @@ function AlarmScreen() {
       return () => {
         clearInterval(beep);
         clearTimeout(id);
-      };
-    }
-    if (phase === 'alarm') {
-      const stop = alarmSiren();
-      const buzz = () => navigator.vibrate?.([500, 250, 500, 250]);
-      buzz();
-      const id = setInterval(buzz, 1500);
-      return () => {
-        stop();
-        clearInterval(id);
-        navigator.vibrate?.(0);
       };
     }
   }, [phase]);
@@ -215,7 +263,7 @@ function AlarmScreen() {
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-[5000] flex flex-col landscape:flex-row bg-black text-foreground select-none animate-fade-in"
+      className="fixed inset-0 z-[10000] pointer-events-auto flex flex-col landscape:flex-row bg-black text-foreground select-none animate-fade-in"
       style={{ touchAction: 'none' }}
     >
       {phase === 'alarm' && <div className="absolute inset-0 bg-destructive/30 alarm-flash pointer-events-none" />}

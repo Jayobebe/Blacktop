@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- a kit of scene helpers, not a page */
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import bikeAsset from '@/assets/demo-bike.png.asset.json';
 
 /**
  * The scene kit behind Blacktop's animated showcases (the Enterprise package
@@ -246,8 +247,15 @@ export function Ico({ I, x, y, s = 9, color = A, sw = 2.2 }: { I: Icon; x: numbe
   return <I x={x} y={y} width={s} height={s} strokeWidth={sw} style={{ color }} />;
 }
 
-/** Rough text width for sizing HUD chips around translated labels. */
-export const textW = (s: string, size = 7.5) => s.length * size * 0.56;
+/** CJK, kana and hangul glyphs: about a full em wide. */
+const WIDE = /[ᄀ-ᇿ⺀-꓏가-힯豈-﫿＀-￯]/;
+
+/** Rough text width for sizing HUD chips around translated labels (capitals, digits and CJK run wider). */
+export const textW = (s: string, size = 7.5) => {
+  let em = 0;
+  for (const ch of s) em += WIDE.test(ch) ? 1 : /[A-Z0-9]/.test(ch) ? 0.66 : 0.56;
+  return em * size;
+};
 
 /** A HUD chip: icon + label, sized to its text. `right` anchors it by its right edge. */
 export function Chip({
@@ -394,3 +402,26 @@ export function Bar({ x, y, w, h = 3, f, color = A, bg = 'rgba(255,255,255,0.08)
 
 /** Scale-about-a-point transform for popping things in: `pop(p, k)`. */
 export const popAt = (p: Pt, k: number) => `translate(${p[0].toFixed(1)} ${p[1].toFixed(1)}) scale(${Math.max(0.001, k).toFixed(3)}) translate(${(-p[0]).toFixed(1)} ${(-p[1]).toFixed(1)})`;
+
+// ---- The demo bike ---------------------------------------------------------------
+
+// The demo bike image: 704×1094 with the bike between x 40–665 and y 270–840.
+const IMG = { w: 704, h: 1094, top: 270, bottom: 840, left: 40, right: 665 };
+
+export type BikePlacement = { cx: number; floor: number; height: number };
+
+/** The demo bike scaled so the bike itself is `height` tall, its wheels resting at (cx, floor). */
+export function BikePhoto({ cx, floor, height, filter, opacity }: BikePlacement & { filter?: string; opacity?: number }) {
+  const s = height / (IMG.bottom - IMG.top);
+  const w = IMG.w * s;
+  const h = IMG.h * s;
+  const x = cx - ((IMG.left + IMG.right) / 2) * s;
+  const y = floor - IMG.bottom * s;
+  return <image href={bikeAsset.url} x={x} y={y} width={w} height={h} filter={filter} opacity={opacity} preserveAspectRatio="xMidYMid meet" />;
+}
+
+/** Where a point of the bike photo (image pixels) lands in the scene, for a bike placed at `b`. */
+export const bikeAt = (b: BikePlacement, ix: number, iy: number): Pt => {
+  const s = b.height / (IMG.bottom - IMG.top);
+  return [b.cx + (ix - (IMG.left + IMG.right) / 2) * s, b.floor - (IMG.bottom - iy) * s];
+};

@@ -10,8 +10,10 @@ import { useSyncExternalStore } from 'react';
  * armed   → watching lean and G
  * entry   → something moved it: a few seconds of beeps to unlock quietly
  * alarm   → the siren, until the pattern is drawn
+ * rescue  → auto-rescue fired after a crash: the siren, so people nearby
+ *           notice, until anyone taps Stop siren (no pattern)
  */
-export type AlarmPhase = 'off' | 'setup' | 'arming' | 'armed' | 'entry' | 'alarm';
+export type AlarmPhase = 'off' | 'setup' | 'arming' | 'armed' | 'entry' | 'alarm' | 'rescue';
 
 export interface AlarmState {
   phase: AlarmPhase;
@@ -19,7 +21,7 @@ export interface AlarmState {
   since: number;
   /** Last small movement warning (ms), for the "Movement detected" flash. */
   nudgeAt: number;
-  cause: 'tilt' | 'impact' | 'attempts' | null;
+  cause: 'tilt' | 'impact' | 'attempts' | 'crash' | null;
 }
 
 let state: AlarmState = { phase: 'off', since: 0, nudgeAt: 0, cause: null };

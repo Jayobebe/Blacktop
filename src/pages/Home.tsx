@@ -13,6 +13,7 @@ import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, forma
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap, clearMapDestination, useGuidanceActive } from '@/features/map';
 import { SafetyStatusCard } from '@/features/rescue';
+import { AlarmButton } from '@/features/alarm';
 import { useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
@@ -408,9 +409,15 @@ export default function Home() {
                     </p>
                     <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
                   </div>
-                  {/* Riders who said no to crash rescue in setup aren't nagged about it. */}
-                  <div className="flex-1 min-w-0 flex justify-end">
-                    {(settings.autoRescueEnabled || !exp.configured) && <SafetyStatusCard compact />}
+                  {/* The anti-theft lock, then crash rescue filling the rest of the row.
+                      Riders who said no to crash rescue in setup aren't nagged about it. */}
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <AlarmButton variant="home" />
+                    {(settings.autoRescueEnabled || !exp.configured) && (
+                      <div className="flex-1 min-w-0">
+                        <SafetyStatusCard compact />
+                      </div>
+                    )}
                   </div>
                   <HomeRadioDock />
                 </header>

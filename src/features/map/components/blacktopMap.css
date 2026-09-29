@@ -43,6 +43,14 @@
   z-index: 20;
 }
 
+/* The anti-theft alarm's lock (AlarmControl): red, like the lock screen. */
+.blacktop-maplibre .bt-alarm-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--destructive));
+}
+
 /* Make control buttons large enough to tap comfortably on mobile. */
 .blacktop-maplibre .maplibregl-ctrl-group button {
   width: 42px;

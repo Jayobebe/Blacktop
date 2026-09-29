@@ -20,7 +20,6 @@ import { tr } from '@/lib/i18n';
 import { useSettings } from '@/features/settings';
 import { TIER_LADDER } from '@/features/cards/types';
 import { formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import bikeAsset from '@/assets/demo-bike.png.asset.json';
 import {
   A,
   AMBER,
@@ -28,6 +27,7 @@ import {
   BG,
   Bar,
   Base,
+  BikePhoto,
   Chip,
   Defs,
   Frame,
@@ -66,9 +66,12 @@ import {
  */
 
 const loopFade = (t: number, period: number) => clamp01(t / 0.4) * (1 - clamp01((t - (period - 0.45)) / 0.45));
-const PAPER = '#EDEAE3';
-const PINK = '#F6C7DB';
-const INKDARK = '#1c1a17';
+/** The receipt stocks, as the app prints them (index.css: .receipt, .receipt-timeattack, .receipt-track). */
+const STOCK = {
+  ride: { paper: '#f4f1e8', ink: '#1a1614' },
+  attack: { paper: '#ffe3f0', ink: '#7a1247' },
+  track: { paper: '#e1edfc', ink: '#123f7a' },
+};
 const PURPLE = '#a855f7';
 
 function useUnits() {
@@ -84,19 +87,6 @@ function useUnits() {
   };
 }
 
-// The demo bike image: 704×1094 with the bike between x 40–665 and y 270–840.
-const IMG = { w: 704, h: 1094, top: 270, bottom: 840, left: 40, right: 665 };
-
-/** The demo bike scaled so the bike itself is `height` tall, its wheels resting at (cx, floor). */
-function BikePhoto({ cx, floor, height, filter, opacity }: { cx: number; floor: number; height: number; filter?: string; opacity?: number }) {
-  const s = height / (IMG.bottom - IMG.top);
-  const w = IMG.w * s;
-  const h = IMG.h * s;
-  const x = cx - ((IMG.left + IMG.right) / 2) * s;
-  const y = floor - IMG.bottom * s;
-  return <image href={bikeAsset.url} x={x} y={y} width={w} height={h} filter={filter} opacity={opacity} preserveAspectRatio="xMidYMid meet" />;
-}
-
 /** A receipt printing out of a slot: `f` = how much has printed (0..1). */
 function Receipt({
   x,
@@ -105,6 +95,7 @@ function Receipt({
   h,
   f,
   paper,
+  ink,
   title,
   rows,
   footer,
@@ -117,6 +108,7 @@ function Receipt({
   h: number;
   f: number;
   paper: string;
+  ink: string;
   title: string;
   sub: string;
   rows: [string, string][];
@@ -141,22 +133,22 @@ function Receipt({
       <g clipPath={`url(#${clip})`}>
         <path d={`M${x} ${y} H${x + w} V${(y + shown).toFixed(1)}${edge} Z`} fill={paper} />
         <g transform={`translate(${x} ${y})`}>
-          <T x={w / 2} y={15} anchor="middle" size={8.5} weight={800} color={INKDARK} spacing={1.2}>{title}</T>
-          <T x={w / 2} y={24} anchor="middle" size={5} color={INKDARK} opacity={0.7} spacing={1.2}>{sub}</T>
-          <line x1={8} x2={w - 8} y1={30} y2={30} stroke={INKDARK} strokeOpacity={0.5} strokeDasharray="2 2" />
+          <T x={w / 2} y={15} anchor="middle" size={8.5} weight={800} color={ink} spacing={1.2}>{title}</T>
+          <T x={w / 2} y={24} anchor="middle" size={5} color={ink} opacity={0.7} spacing={1.2}>{sub}</T>
+          <line x1={8} x2={w - 8} y1={30} y2={30} stroke={ink} strokeOpacity={0.5} strokeDasharray="2 2" />
           {rows.map(([k, v], i) => (
             <g key={k} transform={`translate(0 ${40 + i * 11})`}>
-              <T x={8} y={0} size={5.8} color={INKDARK} weight={600}>{k.toUpperCase()}</T>
-              <T x={w - 8} y={0} anchor="end" size={5.8} color={INKDARK} weight={800} mono>{v}</T>
+              <T x={8} y={0} size={5.8} color={ink} weight={600}>{k.toUpperCase()}</T>
+              <T x={w - 8} y={0} anchor="end" size={5.8} color={ink} weight={800} mono>{v}</T>
             </g>
           ))}
-          <line x1={8} x2={w - 8} y1={40 + rows.length * 11 - 5} y2={40 + rows.length * 11 - 5} stroke={INKDARK} strokeOpacity={0.5} strokeDasharray="2 2" />
+          <line x1={8} x2={w - 8} y1={40 + rows.length * 11 - 5} y2={40 + rows.length * 11 - 5} stroke={ink} strokeOpacity={0.5} strokeDasharray="2 2" />
           {footer.map((line, i) => (
-            <T key={i} x={w / 2} y={40 + rows.length * 11 + 5 + i * 8} anchor="middle" size={i ? 5 : 6} color={INKDARK} weight={i ? 500 : 800} opacity={i ? 0.7 : 1} spacing={0.8}>{line}</T>
+            <T key={i} x={w / 2} y={40 + rows.length * 11 + 5 + i * 8} anchor="middle" size={i ? 5 : 6} color={ink} weight={i ? 500 : 800} opacity={i ? 0.7 : 1} spacing={0.8}>{line}</T>
           ))}
           <g transform={`translate(${w / 2 - 34} ${h - 16})`}>
             {Array.from({ length: 28 }, (_, i) => (
-              <rect key={i} x={i * 2.45} width={i % 3 === 0 ? 1.6 : 0.8} height={10} fill={INKDARK} />
+              <rect key={i} x={i * 2.45} width={i % 3 === 0 ? 1.6 : 0.8} height={10} fill={ink} />
             ))}
           </g>
         </g>
@@ -167,19 +159,63 @@ function Receipt({
 
 // =============================================================================
 // After the ride: the receipt prints, the ride lands in History with its
-// corner grade and badges; a time-attack ride prints on pink stock
+// corner grade and badges; a time attack prints on pink stock and a Track
+// Day session on blue
 // =============================================================================
 
-const AR_P = 14;
+const AR_P = 18;
+/** Each receipt's turn: it prints, sits, then slides off for the next (the last one stays). */
+const AR_SLOT = 6;
 const AR_TRACE = new Route([[160, 76], [172, 58], [190, 64], [204, 44], [226, 52], [238, 70], [256, 60], [276, 72], [290, 56]], false, 10);
 
 export function AfterRideScene() {
   const id = useIds();
   const u = useUnits();
   const t = loopT(useSceneTime(0), AR_P);
-  const first = t < 7.2;
-  const f = first ? easeInOut((t - 0.6) / 2.6) : easeInOut((t - 7.6) / 2.4);
-  const slide = first ? easeInOut((t - 6.6) / 0.6) : 0;
+  const which = Math.min(2, Math.floor(t / AR_SLOT));
+  const local = t - which * AR_SLOT;
+  const f = easeInOut((local - 0.6) / 2.5);
+  const slide = which < 2 ? easeInOut((local - 5.4) / 0.6) : 0;
+  const receipts: { stock: { paper: string; ink: string }; sub: string; rows: [string, string][]; footer: string[] }[] = [
+    {
+      stock: STOCK.ride,
+      sub: tr("— RIDE RECEIPT —"),
+      rows: [
+        [tr("Max Spd"), `${u.speed(104)} ${u.speedLabel}`],
+        [tr("Max Lean"), '44°'],
+        [tr("Distance"), `${u.miles1(45.2)} ${u.distLabel.toUpperCase()}`],
+        [tr("Duration"), '1:23:45'],
+        [tr("Avg Spd"), `${u.speed(32)} ${u.speedLabel}`],
+        [tr("Corners"), '64'],
+      ],
+      footer: [tr("THANK YOU FOR THE RIDE"), tr("ORDER #4C1A9F")],
+    },
+    {
+      stock: STOCK.attack,
+      sub: tr("— TIME ATTACK RECEIPT —"),
+      rows: [
+        [tr("Max Spd"), `${u.speed(118)} ${u.speedLabel}`],
+        [tr("Distance"), `${u.miles1(29.5)} ${u.distLabel.toUpperCase()}`],
+        [tr("Duration"), '3:41'],
+        [tr("Target"), '3:58'],
+        [tr("Delta"), '-0:17'],
+      ],
+      footer: [tr("WON · SPECTRE UNLOCKED"), tr("3x SPEED DEMON")],
+    },
+    {
+      stock: STOCK.track,
+      sub: tr("— TRACK DAY RECEIPT —"),
+      rows: [
+        [tr("Track"), 'Brands Hatch Indy'],
+        [tr("Best Lap"), '0:49.312'],
+        [tr("Laps"), '14'],
+        [tr("Max Spd"), `${u.speed(121)} ${u.speedLabel}`],
+        [tr("Max Lean"), '53°'],
+      ],
+      footer: [tr("THANK YOU FOR THE RIDE"), `${tr("ORDER")} #7F20C4`],
+    },
+  ];
+  const r = receipts[which];
   const trace = easeInOut((t - 1.2) / 2);
   const corners = [0.92, 0.84, 0.97, 0.78, 0.88];
   const badges: { I: Icon; name: string; at: number }[] = [
@@ -198,48 +234,21 @@ export function AfterRideScene() {
         <rect x={14} y={8} width={120} height={10} rx={4} fill="#26262c" stroke={LINE} />
         <rect x={20} y={14} width={108} height={1.4} fill="#050506" />
         <g transform={`translate(${-slide * 40} ${-slide * 20})`} opacity={1 - slide}>
-          {first ? (
-            <Receipt
-              clip={id('r1')}
-              x={20}
-              y={15}
-              w={108}
-              h={168}
-              f={f}
-              paper={PAPER}
-              title={tr("BLACKTOP STORE")}
-              sub={tr("— RIDE RECEIPT —")}
-              rows={[
-                [tr("Max Spd"), `${u.speed(104)} ${u.speedLabel}`],
-                [tr("Max Lean"), '44°'],
-                [tr("Distance"), `${u.miles1(45.2)} ${u.distLabel.toUpperCase()}`],
-                [tr("Duration"), '1:23:45'],
-                [tr("Avg Spd"), `${u.speed(32)} ${u.speedLabel}`],
-                [tr("Corners"), '64'],
-              ]}
-              footer={[tr("THANK YOU FOR THE RIDE"), tr("ORDER #4C1A9F")]}
-            />
-          ) : (
-            <Receipt
-              clip={id('r2')}
-              x={20}
-              y={15}
-              w={108}
-              h={168}
-              f={f}
-              paper={PINK}
-              title={tr("BLACKTOP STORE")}
-              sub={tr("— TIME ATTACK RECEIPT —")}
-              rows={[
-                [tr("Max Spd"), `${u.speed(118)} ${u.speedLabel}`],
-                [tr("Distance"), `${u.miles1(29.5)} ${u.distLabel.toUpperCase()}`],
-                [tr("Duration"), '3:41'],
-                [tr("Target"), '3:58'],
-                [tr("Delta"), '-0:17'],
-              ]}
-              footer={[tr("WON · SPECTRE UNLOCKED"), tr("3x SPEED DEMON")]}
-            />
-          )}
+          <Receipt
+            key={which}
+            clip={id(`r${which}`)}
+            x={20}
+            y={15}
+            w={108}
+            h={168}
+            f={f}
+            paper={r.stock.paper}
+            ink={r.stock.ink}
+            title={tr("BLACKTOP STORE")}
+            sub={r.sub}
+            rows={r.rows}
+            footer={r.footer}
+          />
         </g>
 
         {/* History: the ride, its line and its corners */}

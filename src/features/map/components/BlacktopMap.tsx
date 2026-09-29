@@ -35,6 +35,7 @@ import { loadDarkMapStyle } from "../lib/darkStyle";
 import { getLastView, saveLastView } from "../lib/lastView";
 import { addPinLayers, setMyPins, setPinsVisible, type PinInfo } from "../lib/mapPins";
 import { addCardDropLayer, setCardDropData, type CardPin } from "../lib/cardDropLayer";
+import { AlarmControl } from "../lib/alarmControl";
 import { applyWaterWordmark } from "../lib/waterWordmark";
 import {
   addHazardLayer,
@@ -467,6 +468,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       // Compass only turns with the bearing: with visualizePitch it also squashed in 3D as
       // the map tilted (orbiting a pin, 3D mode), which looked broken. Tilt has its own button.
       instance.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
+      // The anti-theft alarm's lock, straight under the compass.
+      instance.addControl(new AlarmControl(), "top-right");
       const geolocate = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,

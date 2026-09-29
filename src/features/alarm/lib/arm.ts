@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { getActiveRideStatus, setActiveRidePaused } from '@/features/ride';
 import { holdAudio } from '@/lib/radioFx';
-import { isAlarmOn, setAlarmPhase, stopAlarm } from './alarmStore';
+import { getAlarm, isAlarmOn, setAlarmPhase, stopAlarm } from './alarmStore';
 import { hasAlarmPattern } from './pattern';
 import { requestTamperPermission } from '../hooks/useTamperSensors';
 
@@ -36,7 +36,19 @@ export async function armAlarm(): Promise<void> {
   setAlarmPhase(hasAlarmPattern() ? 'arming' : 'setup', { cause: null, nudgeAt: 0 });
 }
 
-/** Turn it all off (the right pattern, or Cancel before it's armed). The ride stays paused. */
+/**
+ * Auto-rescue has gone out after a crash: sound the siren so people nearby
+ * notice (never for the manual rescue button). Takes over from the anti-theft
+ * lock if that was up; anyone can stop it, no pattern.
+ */
+export function startRescueSiren() {
+  if (getAlarm().phase === 'rescue') return;
+  releaseAudio?.();
+  releaseAudio = holdAudio();
+  setAlarmPhase('rescue', { cause: 'crash', nudgeAt: 0 });
+}
+
+/** Turn it all off (the right pattern, Cancel before it's armed, or Stop siren). The ride stays paused. */
 export function disarmAlarm() {
   stopAlarm();
   releaseAudio?.();

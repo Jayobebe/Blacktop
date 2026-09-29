@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeAudioRoutePlugin.class);
+        registerPlugin(AlarmSoundPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

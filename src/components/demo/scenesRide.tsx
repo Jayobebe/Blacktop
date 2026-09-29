@@ -18,18 +18,24 @@ import {
   Hand,
   Handshake,
   Lock,
+  LockOpen,
   MapPin,
   Megaphone,
   MessageSquare,
   Mic,
   MicOff,
+  Navigation,
   OctagonX,
+  Pause,
+  Play,
   Route as RouteIcon,
   Shield,
+  Siren,
   ThumbsUp,
   Trophy,
   UserRound,
   Users,
+  Vibrate,
   Wrench,
 } from 'lucide-react';
 import { tr } from '@/lib/i18n';
@@ -43,6 +49,7 @@ import {
   BG,
   BURN,
   Base,
+  BikePhoto,
   Chip,
   Defs,
   Dot,
@@ -65,6 +72,7 @@ import {
   Vignette,
   Wave,
   aa,
+  bikeAt,
   clamp01,
   cycle,
   easeInOut,
@@ -759,18 +767,33 @@ export function LiveDataScene() {
 }
 
 // =============================================================================
-// Safety net: an impact and a stop, the check-in times out, rescue goes to
-// everyone the rider chose, and a mate routes to them
+// Safety net, in two acts. First an impact and a stop: the check-in times out,
+// rescue goes to everyone the rider chose, and a mate routes to them. Then,
+// parked up, the anti-theft alarm: the first tap on the lock sets the pattern,
+// it arms, a nudge warns, a push counts down to the siren, and only the pattern
+// stops it (the ride stays paused until play).
 // =============================================================================
 
 const SF_P = 14;
+const AL_P = 12;
 const SF_ROAD = new Route([[-10, 60], [60, 70], [120, 58], [170, 80], [214, 74], [260, 52], [330, 60]], false, 14);
 const SF_IMPACT_F = 0.62;
 const SF_HELP = new Route([[40, 196], [52, 164], [90, 150], [140, 132], [182, 110], [206, 84], [SF_ROAD.at(SF_IMPACT_F).p[0], SF_ROAD.at(SF_IMPACT_F).p[1] + 4]], false, 12);
 
 export function SafetyScene() {
   const id = useIds();
-  const t = loopT(useSceneTime(0), SF_P);
+  const t = loopT(useSceneTime(0), SF_P + AL_P);
+  return (
+    <Frame>
+      <Defs id={id} />
+      <Base id={id} />
+      {t < SF_P ? <RescueAct t={t} id={id} /> : <AlarmAct t={t - SF_P} id={id} />}
+      <Vignette id={id} />
+    </Frame>
+  );
+}
+
+function RescueAct({ t, id }: { t: number; id: (n: string) => string }) {
   const fJake = Math.min(SF_IMPACT_F, 0.1 + 0.52 * easeOut(t / 3));
   const jake = SF_ROAD.at(fJake);
   const impact = t > 3;
@@ -794,72 +817,303 @@ export function SafetyScene() {
   });
 
   return (
-    <Frame>
-      <Defs id={id} />
-      <Base id={id} />
-      <g opacity={loopFade(t, SF_P)}>
-        <Road d="M40 210 L52 164 L90 150 L140 132 L182 110 L206 84" w={4} />
-        <Road d={SF_ROAD.d} w={7} />
-        {coming && <path d={SF_HELP.slice(fHelp, 1, 40)} fill="none" style={{ stroke: BURN }} strokeWidth={3} strokeLinecap="round" />}
-        {sent &&
-          reach.map((r, i) => {
-            const k = easeOutBack((t - r.k) / 0.4);
-            return (
-              <g key={i} opacity={clamp01(k) * (1 - card * 0.6)}>
-                <line x1={jake.p[0]} y1={jake.p[1]} x2={r.at[0]} y2={r.at[1]} stroke={RED} strokeOpacity={0.35} strokeDasharray="2 3" />
-                <g transform={popAt(r.at, k)}>
-                  <circle cx={r.at[0]} cy={r.at[1]} r={10} fill={PANEL} stroke={RED} strokeWidth={1} />
-                  <Ico I={r.I} x={r.at[0] - 5} y={r.at[1] - 5} s={10} color={RED} />
-                  <T x={r.at[0]} y={r.at[1] + 19} anchor="middle" size={6} color={MUTED}>{r.label}</T>
-                </g>
+    <g opacity={loopFade(t, SF_P)}>
+      <Road d="M40 210 L52 164 L90 150 L140 132 L182 110 L206 84" w={4} />
+      <Road d={SF_ROAD.d} w={7} />
+      {coming && <path d={SF_HELP.slice(fHelp, 1, 40)} fill="none" style={{ stroke: BURN }} strokeWidth={3} strokeLinecap="round" />}
+      {sent &&
+        reach.map((r, i) => {
+          const k = easeOutBack((t - r.k) / 0.4);
+          return (
+            <g key={i} opacity={clamp01(k) * (1 - card * 0.6)}>
+              <line x1={jake.p[0]} y1={jake.p[1]} x2={r.at[0]} y2={r.at[1]} stroke={RED} strokeOpacity={0.35} strokeDasharray="2 3" />
+              <g transform={popAt(r.at, k)}>
+                <circle cx={r.at[0]} cy={r.at[1]} r={10} fill={PANEL} stroke={RED} strokeWidth={1} />
+                <Ico I={r.I} x={r.at[0] - 5} y={r.at[1] - 5} s={10} color={RED} />
+                <T x={r.at[0]} y={r.at[1] + 19} anchor="middle" size={6} color={MUTED}>{r.label}</T>
               </g>
-            );
-          })}
-        {sent && <Rings p={jake.p} phase={frac(t * 0.9)} color={RED} max={34} count={3} />}
-        {flash > 0 && <circle cx={jake.p[0]} cy={jake.p[1]} r={8 + flash * 16} fill={RED} opacity={0.35 * flash} />}
-        <Arrow p={jake.p} a={jake.a} color={impact ? RED : INK} />
-        {coming && <Arrow p={helper.p} a={helper.a} color={A} glow={id('glow')} />}
+            </g>
+          );
+        })}
+      {sent && <Rings p={jake.p} phase={frac(t * 0.9)} color={RED} max={34} count={3} />}
+      {flash > 0 && <circle cx={jake.p[0]} cy={jake.p[1]} r={8 + flash * 16} fill={RED} opacity={0.35 * flash} />}
+      <Arrow p={jake.p} a={jake.a} color={impact ? RED : INK} />
+      {coming && <Arrow p={helper.p} a={helper.a} color={A} glow={id('glow')} />}
 
-        {/* G trace: the hit */}
-        <Panel x={8} y={8} w={92} h={34} r={6}>
-          <T x={6} y={10} size={5.8} color={MUTED}>{tr("G-force")}</T>
-          <polyline
-            points={gHist.map((g, i) => `${(6 + i * 2.05).toFixed(1)},${(29 - Math.min(g, 4.4) * 4).toFixed(1)}`).join(' ')}
-            fill="none"
-            stroke={impact ? RED : GREY}
-            strokeWidth={1.1}
-            strokeLinejoin="round"
-          />
-        </Panel>
+      {/* G trace: the hit */}
+      <Panel x={8} y={8} w={92} h={34} r={6}>
+        <T x={6} y={10} size={5.8} color={MUTED}>{tr("G-force")}</T>
+        <polyline
+          points={gHist.map((g, i) => `${(6 + i * 2.05).toFixed(1)},${(29 - Math.min(g, 4.4) * 4).toFixed(1)}`).join(' ')}
+          fill="none"
+          stroke={impact ? RED : GREY}
+          strokeWidth={1.1}
+          strokeLinejoin="round"
+        />
+      </Panel>
 
-        {/* Are you OK? */}
-        <Panel x={84} y={60} w={152} h={62} opacity={check} r={9} stroke={RED}>
-          <g transform="translate(22 24)">
-            <circle r={13} fill="none" stroke="white" strokeOpacity={0.12} strokeWidth={3} />
-            <circle r={13} fill="none" stroke={RED} strokeWidth={3} strokeDasharray={`${81.7 * (countdown / 300)} 82`} transform="rotate(-90)" />
-            <T x={0} y={2.8} anchor="middle" size={7} weight={800} mono>{`${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`}</T>
-          </g>
-          <T x={42} y={17} weight={800}>{tr("Crash detected")}</T>
-          <T x={42} y={27} size={6.5} color={MUTED}>{tr("Are you OK?")}</T>
-          <rect x={42} y={36} width={48} height={16} rx={5} fill={INK} />
-          <T x={66} y={46.5} anchor="middle" size={7} color="#111" weight={700}>{tr("I'm OK")}</T>
-          <rect x={96} y={36} width={48} height={16} rx={5} fill={RED} />
-          <T x={120} y={46.5} anchor="middle" size={7} color="#fff" weight={700}>{tr("Send rescue")}</T>
-        </Panel>
-        <Chip x={VW - 8} y={8} right label={tr("Rescue sent")} I={AlertTriangle} color={RED} tone={RED} opacity={win(t, 6.7, 8.8, 0.3)} />
+      {/* Are you OK? */}
+      <Panel x={84} y={60} w={152} h={62} opacity={check} r={9} stroke={RED}>
+        <g transform="translate(22 24)">
+          <circle r={13} fill="none" stroke="white" strokeOpacity={0.12} strokeWidth={3} />
+          <circle r={13} fill="none" stroke={RED} strokeWidth={3} strokeDasharray={`${81.7 * (countdown / 300)} 82`} transform="rotate(-90)" />
+          <T x={0} y={2.8} anchor="middle" size={7} weight={800} mono>{`${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`}</T>
+        </g>
+        <T x={42} y={17} weight={800}>{tr("Crash detected")}</T>
+        <T x={42} y={27} size={6.5} color={MUTED}>{tr("Are you OK?")}</T>
+        <rect x={42} y={36} width={48} height={16} rx={5} fill={INK} />
+        <T x={66} y={46.5} anchor="middle" size={7} color="#111" weight={700}>{tr("I'm OK")}</T>
+        <rect x={96} y={36} width={48} height={16} rx={5} fill={RED} />
+        <T x={120} y={46.5} anchor="middle" size={7} color="#fff" weight={700}>{tr("Send rescue")}</T>
+      </Panel>
+      <Chip x={VW - 8} y={8} right label={tr("Rescue sent")} I={AlertTriangle} color={RED} tone={RED} opacity={win(t, 6.7, 8.8, 0.3)} />
 
-        {/* A mate gets the call */}
-        <Panel x={176} y={146} w={136} h={46} opacity={card} r={9} stroke={RED}>
-          <circle cx={16} cy={16} r={9} fill={DIM} />
-          <T x={16} y={19} anchor="middle" size={8} weight={800}>J</T>
-          <T x={30} y={14} weight={800} color={RED}>{tr("Jake needs rescue!")}</T>
-          <T x={30} y={23} size={6.2} color={MUTED}>{tr("Location shared • 2.4 mi away")}</T>
-          <rect x={8} y={29} width={120} height={12} rx={4} fill={coming ? BURN : '#1f1f25'} />
-          <T x={68} y={37.6} anchor="middle" size={6.5} weight={700} color={coming ? '#111' : INK}>{tr("I'm on my way")}</T>
-        </Panel>
+      {/* A mate gets the call */}
+      <Panel x={176} y={146} w={136} h={46} opacity={card} r={9} stroke={RED}>
+        <circle cx={16} cy={16} r={9} fill={DIM} />
+        <T x={16} y={19} anchor="middle" size={8} weight={800}>J</T>
+        <T x={30} y={14} weight={800} color={RED}>{tr("Jake needs rescue!")}</T>
+        <T x={30} y={23} size={6.2} color={MUTED}>{tr("Location shared • 2.4 mi away")}</T>
+        <rect x={8} y={29} width={120} height={12} rx={4} fill={coming ? BURN : '#1f1f25'} />
+        <T x={68} y={37.6} anchor="middle" size={6.5} weight={700} color={coming ? '#111' : INK}>{tr("I'm on my way")}</T>
+      </Panel>
+    </g>
+  );
+}
+
+// ---- Act two: the anti-theft alarm --------------------------------------------
+
+/** The phone on the bars, shown big beside the bike. */
+const AL_PHONE = { x: 204, y: 8, w: 100, h: 184 };
+const AL_SCREEN = { x: AL_PHONE.x + 4, y: AL_PHONE.y + 4, w: AL_PHONE.w - 8, h: AL_PHONE.h - 8 };
+const AL_CX = AL_PHONE.x + AL_PHONE.w / 2;
+const AL_LOCK: Pt = [AL_CX, 52];
+/** The ride screen's lock: below the stats, above the row of controls. */
+const AL_BTN: Pt = [AL_CX, 130];
+/** The pattern pad's dots, row by row. */
+const alDot = (i: number): Pt => [AL_CX + ((i % 3) - 1) * 24, 144 + (Math.floor(i / 3) - 1) * 24];
+/** The rider's pattern: along the top, then down the right. */
+const AL_PATTERN = [0, 1, 2, 5, 8];
+const AL_BIKE = { cx: 88, floor: 176, height: 100 };
+/** The rear tyre on the ground (the bike pivots on it when pushed) and the phone on the bars. */
+const AL_PIVOT = bikeAt(AL_BIKE, 158, 840);
+const AL_BAR = bikeAt(AL_BIKE, 498, 352);
+/** Pattern draws: twice to set it the first time, then once to stop the siren. */
+const AL_DRAWS = [
+  { from: 1.1, dur: 0.75, until: 2 },
+  { from: 2.15, dur: 0.6, until: 2.95 },
+  { from: 8.3, dur: 0.8, until: 9.5 },
+];
+
+/** A finger drawing `pattern` at f (0..1): where it is, the line so far and the dots it has joined. */
+function traceAt(pattern: number[], f: number) {
+  const pts = pattern.map(alDot);
+  const x = clamp01(f) * (pts.length - 1);
+  const k = Math.min(pts.length - 2, Math.floor(x));
+  const r = x - k;
+  const tip: Pt = [lerp(pts[k][0], pts[k + 1][0], r), lerp(pts[k][1], pts[k + 1][1], r)];
+  return { tip, line: [...pts.slice(0, k + 1), tip], joined: pattern.slice(0, k + 1 + (r > 0.8 ? 1 : 0)) };
+}
+
+function AlarmAct({ t, id }: { t: number; id: (n: string) => string }) {
+  const u = useUnits();
+
+  // The bike: a nudge wobbles it, a push lifts the front and rolls it on, let go at the siren.
+  const nudgeK = t > 4.6 && t < 5.6 ? 1 - (t - 4.6) : 0;
+  const wobble = Math.sin((t - 4.6) * Math.PI * 6) * nudgeK * 1.3;
+  const push = easeInOut((t - 6.1) / 0.6) * (1 - easeInOut((t - 7.4) / 0.7));
+  const tilt = wobble - push * 3;
+  const roll = push * 6;
+  const moved = (p: Pt): Pt => {
+    const a = (tilt * Math.PI) / 180;
+    const dx = p[0] - AL_PIVOT[0];
+    const dy = p[1] - AL_PIVOT[1];
+    return [AL_PIVOT[0] + dx * Math.cos(a) - dy * Math.sin(a) + roll, AL_PIVOT[1] + dx * Math.sin(a) + dy * Math.cos(a)];
+  };
+  const bar = moved(AL_BAR);
+  // What the phone feels.
+  const tiltRead = Math.abs(wobble) * 3.2 + push * 12;
+  const gRead = 1 + 0.01 * Math.sin(t * 7) + Math.abs(wobble) * 0.12 + push * (0.25 + 0.2 * Math.abs(Math.sin(t * 13)));
+
+  // What the phone shows.
+  const phase = t < 0.95 ? 'ride' : t < 2.95 ? 'setup' : t < 3.95 ? 'arming' : t < 6.1 ? 'armed' : t < 7.3 ? 'entry' : t < 9.5 ? 'alarm' : 'ride';
+  const paused = t >= 9.5;
+  const nudging = t >= 4.6 && t < 6;
+  const siren = t >= 7.3 && t < 9.1;
+  const matched = (t >= 2.75 && t < 2.95) || (t >= 9.1 && t < 9.5);
+  const draw = AL_DRAWS.find((d) => t >= d.from && t < d.until);
+  const trace = draw ? traceAt(AL_PATTERN, (t - draw.from) / draw.dur) : null;
+  const ink = matched ? GREEN : 'white';
+  const ring = phase === 'arming' ? 1 - clamp01((t - 2.95) / 1) : phase === 'entry' ? 1 - clamp01((t - 6.1) / 1.2) : null;
+  let finger: { p: Pt; o: number } | null = t >= 0.4 && t < 1 ? { p: AL_BTN, o: win(t, 0.4, 1, 0.15) } : null;
+  for (const d of AL_DRAWS) {
+    const end = d.from + d.dur;
+    if (t >= d.from - 0.15 && t < end + 0.12) finger = { p: traceAt(AL_PATTERN, (t - d.from) / d.dur).tip, o: win(t, d.from - 0.15, end + 0.12, 0.12) };
+  }
+  let title = '';
+  let sub = '';
+  let subColor = MUTED;
+  if (phase === 'setup') {
+    title = tr("Set your unlock pattern");
+    sub = t < 2 ? tr("Join at least 4 dots") : tr("Draw it again to confirm");
+  } else if (phase === 'arming') {
+    title = tr("Arming…");
+  } else if (phase === 'armed') {
+    title = tr("Alarm armed");
+    sub = nudging ? tr("Movement detected") : tr("Draw your pattern to unlock");
+    if (nudging) subColor = AMBER;
+  } else if (phase === 'entry') {
+    title = tr("Movement detected");
+  } else if (phase === 'alarm') {
+    title = tr("ALARM");
+    sub = tr("Draw your pattern to stop it");
+    subColor = AMBER;
+  }
+  const loud = phase === 'entry' || phase === 'alarm';
+  const toast = tr("Alarm off");
+  const toastW = 20 + textW(toast, 6);
+  const spot = 'M52 0 L124 0 L168 176 L8 176 Z';
+
+  return (
+    <g opacity={loopFade(t, AL_P)}>
+      <defs>
+        <linearGradient id={id('al-floor')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#15151a" />
+          <stop offset="1" stopColor="#0a0a0c" />
+        </linearGradient>
+        <radialGradient id={id('al-spot')} cx="50%" cy="0%" r="90%">
+          <stop offset="0" stopColor="white" stopOpacity="0.1" />
+          <stop offset="1" stopColor="white" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id={id('al-screen')}>
+          <rect x={AL_SCREEN.x} y={AL_SCREEN.y} width={AL_SCREEN.w} height={AL_SCREEN.h} rx={11} />
+        </clipPath>
+      </defs>
+
+      {/* Parked in a pool of light */}
+      <rect x={0} y={AL_BIKE.floor} width={198} height={VH - AL_BIKE.floor} fill={`url(#${id('al-floor')})`} />
+      <line x1={0} y1={AL_BIKE.floor} x2={198} y2={AL_BIKE.floor} stroke="white" strokeOpacity={0.08} />
+      <path d={spot} fill={`url(#${id('al-spot')})`} />
+      {siren && <path d={spot} fill={RED} opacity={0.06 + 0.05 * Math.sin(t * 14)} />}
+      <ellipse cx={AL_BIKE.cx + roll} cy={AL_BIKE.floor + 2} rx={54} ry={4} fill="black" opacity={0.6} />
+      <g transform={`translate(${roll.toFixed(2)} 0) rotate(${tilt.toFixed(2)} ${AL_PIVOT[0].toFixed(1)} ${AL_PIVOT[1].toFixed(1)})`}>
+        <BikePhoto {...AL_BIKE} />
+        <rect x={AL_BAR[0] - 2.4} y={AL_BAR[1] - 8} width={4.8} height={8} rx={1} fill="#0b0b0e" stroke="#3a3a42" strokeWidth={0.6} />
       </g>
-      <Vignette id={id} />
-    </Frame>
+      {(nudgeK > 0 || push > 0.05) && (
+        <g stroke={push > 0.05 ? AMBER : 'white'} strokeOpacity={0.55 * Math.max(nudgeK, push)} strokeWidth={1} strokeLinecap="round" fill="none">
+          <path d={`M${AL_BIKE.cx - 58} 128 q -5 8 0 16`} />
+          <path d={`M${AL_BIKE.cx - 64} 124 q -7 12 0 24`} />
+          <path d={`M${AL_BIKE.cx + 60} 128 q 5 8 0 16`} />
+          <path d={`M${AL_BIKE.cx + 66} 124 q 7 12 0 24`} />
+        </g>
+      )}
+
+      {/* The siren, from the phone */}
+      {siren && <Rings p={[bar[0], bar[1] - 4]} phase={frac(t * 1.6)} color={RED} max={36} count={3} />}
+      {siren && <Rings p={AL_LOCK} phase={frac(t * 1.6 + 0.3)} color={RED} max={78} count={3} />}
+
+      {/* The phone on the bars, up close */}
+      <line x1={bar[0] + 2.4} y1={bar[1] - 8} x2={AL_PHONE.x} y2={AL_PHONE.y + 16} stroke="white" strokeOpacity={0.1} />
+      <line x1={bar[0] + 2.4} y1={bar[1]} x2={AL_PHONE.x} y2={AL_PHONE.y + AL_PHONE.h - 16} stroke="white" strokeOpacity={0.1} />
+      <rect x={AL_PHONE.x} y={AL_PHONE.y} width={AL_PHONE.w} height={AL_PHONE.h} rx={15} fill="#121216" stroke="#2c2c33" strokeWidth={1} />
+      <g clipPath={`url(#${id('al-screen')})`}>
+        <rect x={AL_SCREEN.x} y={AL_SCREEN.y} width={AL_SCREEN.w} height={AL_SCREEN.h} fill={phase === 'ride' ? BG : '#000'} />
+        {phase === 'ride' ? (
+          <g>
+            {paused && (
+              <g>
+                <rect x={AL_CX - 18} y={34} width={36} height={10} rx={3} fill={AMBER} fillOpacity={0.14} />
+                <T x={AL_CX} y={41.2} anchor="middle" size={5.2} weight={700} color={AMBER} spacing={0.4}>{tr("PAUSED")}</T>
+              </g>
+            )}
+            <T x={AL_CX} y={76} anchor="middle" size={34} weight={800} mono>{u.speed(0)}</T>
+            <T x={AL_CX} y={86} anchor="middle" size={5.5} weight={700} color={MUTED} spacing={0.8}>{u.speedLabel}</T>
+            {[
+              { label: tr("Distance"), value: u.dist(12.4) },
+              { label: tr("Time"), value: '0:48' },
+              { label: tr("Max"), value: u.speed(71) },
+            ].map((s, i) => (
+              <g key={i}>
+                <T x={AL_CX + (i - 1) * 29} y={100} anchor="middle" size={fit(s.label, 27, 4.4)} color={MUTED}>{s.label}</T>
+                <T x={AL_CX + (i - 1) * 29} y={109} anchor="middle" size={7} weight={800} mono>{s.value}</T>
+              </g>
+            ))}
+            <circle cx={AL_BTN[0]} cy={AL_BTN[1]} r={9} fill="#1c1c22" />
+            <Ico I={Lock} x={AL_BTN[0] - 4.5} y={AL_BTN[1] - 4.5} s={9} color={RED} />
+            {[
+              { I: paused ? Play : Pause, color: A, fill: paused ? aa(0.2) : '#1c1c22' },
+              { I: AlertTriangle, color: AMBER, fill: '#1c1c22' },
+              { I: Navigation, color: GREY, fill: '#1c1c22' },
+            ].map((b, i) => (
+              <g key={i}>
+                <circle cx={AL_CX + (i - 1) * 26} cy={160} r={9.5} fill={b.fill} />
+                <Ico I={b.I} x={AL_CX + (i - 1) * 26 - 4.5} y={155.5} s={9} color={b.color} />
+              </g>
+            ))}
+            {t < 1.3 && t > 0.8 && (
+              <circle cx={AL_BTN[0]} cy={AL_BTN[1]} r={9 + ((t - 0.8) / 0.5) * 16} fill="none" stroke={RED} strokeWidth={1.2} opacity={0.7 * (1 - (t - 0.8) / 0.5)} />
+            )}
+            {paused && (
+              <g opacity={win(t, 9.55, 11.5, 0.25)}>
+                <rect x={AL_CX - toastW / 2} y={14} width={toastW} height={15} rx={5} fill={PANEL} stroke={LINE} strokeWidth={0.8} />
+                <Ico I={Check} x={AL_CX - toastW / 2 + 5} y={17.5} s={8} color={GREEN} />
+                <T x={AL_CX - toastW / 2 + 16} y={24.2} size={6}>{toast}</T>
+              </g>
+            )}
+          </g>
+        ) : (
+          <g>
+            {siren && <rect x={AL_SCREEN.x} y={AL_SCREEN.y} width={AL_SCREEN.w} height={AL_SCREEN.h} fill={RED} opacity={0.2 + 0.14 * Math.sin(t * 14)} />}
+            {ring != null && (
+              <g transform={`rotate(-90 ${AL_LOCK[0]} ${AL_LOCK[1]})`}>
+                <circle cx={AL_LOCK[0]} cy={AL_LOCK[1]} r={20} fill="none" stroke="white" strokeOpacity={0.1} strokeWidth={2} />
+                <circle cx={AL_LOCK[0]} cy={AL_LOCK[1]} r={20} fill="none" stroke={RED} strokeWidth={2} strokeLinecap="round" strokeDasharray={`${(125.7 * ring).toFixed(1)} 126`} />
+              </g>
+            )}
+            <g filter={`url(#${id('glow')})`} opacity={loud ? 0.75 + 0.25 * Math.sin(t * 9) : 1}>
+              <Ico I={Lock} x={AL_LOCK[0] - 13} y={AL_LOCK[1] - 13} s={26} color={RED} sw={1.8} />
+            </g>
+            <T x={AL_CX} y={88} anchor="middle" size={fit(title, AL_SCREEN.w - 12, phase === 'alarm' ? 13 : 8)} weight={800} color={phase === 'alarm' ? RED : INK}>{title}</T>
+            {sub && <T x={AL_CX} y={98} anchor="middle" size={fit(sub, AL_SCREEN.w - 12, 5.8)} color={subColor}>{sub}</T>}
+            {trace && (
+              <polyline points={trace.line.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')} fill="none" stroke={ink} strokeOpacity={0.75} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+            )}
+            {Array.from({ length: 9 }, (_, i) => {
+              const p = alDot(i);
+              const on = !!trace && trace.joined.includes(i);
+              return (
+                <g key={i}>
+                  {on && <circle cx={p[0]} cy={p[1]} r={5.8} fill={ink} fillOpacity={0.14} />}
+                  <circle cx={p[0]} cy={p[1]} r={on ? 2.4 : 1.7} fill={on ? ink : 'white'} fillOpacity={on ? 1 : 0.55} />
+                </g>
+              );
+            })}
+          </g>
+        )}
+      </g>
+      {finger && (
+        <g opacity={finger.o}>
+          <circle cx={finger.p[0]} cy={finger.p[1]} r={6} fill="white" fillOpacity={0.16} stroke="white" strokeOpacity={0.55} strokeWidth={0.8} />
+        </g>
+      )}
+
+      {/* What the phone feels, and what it does about it */}
+      <Panel x={8} y={8} w={100} h={30} r={6} opacity={win(t, 2.95, 9.4, 0.3)}>
+        <T x={8} y={11} size={5.6} color={MUTED}>{tr("Tilt")}</T>
+        <T x={8} y={24} size={10} weight={800} color={tiltRead > 8 ? RED : tiltRead > 3 ? AMBER : INK} mono>{`${tiltRead.toFixed(1)}°`}</T>
+        <T x={54} y={11} size={5.6} color={MUTED}>{tr("G-force")}</T>
+        <T x={54} y={24} size={10} weight={800} color={gRead - 1 > 0.3 ? RED : gRead - 1 > 0.08 ? AMBER : INK} mono>{gRead.toFixed(2)}</T>
+      </Panel>
+      <Chip x={8} y={46} label={tr("Alarm armed")} I={Lock} color={RED} extra={5} opacity={win(t, 3.95, 4.62, 0.2)} />
+      <Chip x={8} y={46} label={tr("Movement detected")} I={Vibrate} color={AMBER} tone={AMBER} extra={5} opacity={win(t, 4.6, 7.32, 0.2)} />
+      <Chip x={8} y={46} label={tr("ALARM")} I={Siren} color={RED} tone={RED} extra={19} opacity={win(t, 7.3, 9.12, 0.2)}>
+        <g transform="translate(9 0)">
+          <Wave on={siren ? 1 : 0} t={t} color={RED} n={4} />
+        </g>
+      </Chip>
+      <Chip x={8} y={46} label={toast} I={LockOpen} color={GREEN} tone={GREEN} extra={5} opacity={win(t, 9.1, 11.5, 0.3)} />
+    </g>
   );
 }
 
