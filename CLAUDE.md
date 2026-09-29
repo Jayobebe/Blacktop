@@ -32,7 +32,7 @@ Vite env vars required at build time (see local `.env`): `VITE_SUPABASE_URL`, `V
 
 Code is split between generic `src/components`, `src/hooks`, `src/lib`, `src/pages` and domain features under `src/features/<feature>/`, each with its own `components/`, `hooks/`, `lib/`, `types.ts`, and a barrel `index.ts` that defines the feature's public surface. Other features and pages should import from a feature's `index.ts`, not reach into its internals. Current features: `convoy`, `ride`, `voice`, `rescue`, `waypoints`, `garage`, `cards`, `profile`, `settings`, `permissions`, `proximity`, `pillion`, `logbook`, `track`, `notifications`, `speedshop`, `map`, `crew`, `blacktank`, `arcade`, `radio`, `experience`, `tips`, `hazards`, `integrations/discord`.
 
-`src/pages/*` are route-level screens composed from features; routing lives in `src/App.tsx`.
+`src/pages/*` are route-level screens composed from features; routing lives in `src/App.tsx`. Home, onboarding, the lobbies, the ride and pillion screens load eagerly; every other screen (and the map overlay) is a `lazyPage()` that's prefetched once the app is idle, so it still opens offline. Keep heavy dependencies (MapLibre, ffmpeg) out of anything the eager screens import: a barrel that re-exports a heavy component drags it into the first load, which is why the Track Pack screens live in `@/features/track/views`, not `@/features/track`.
 
 ### Global client state via module-level stores, not Context
 
