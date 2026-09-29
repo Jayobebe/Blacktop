@@ -95,58 +95,68 @@ function noiseBuffer(c: AudioContext, seconds: number): AudioBuffer {
   return buf;
 }
 
-/** Key-up: a quick chirp and a burst of static, like a transmit button pressed. */
+/** Hard-clipped, band-limited noise: the harsh "kssh" of a radio squelch. */
+function squawk(c: AudioContext, at: number, dur: number, gain: number, centre: number) {
+  if (!chain) return;
+  const t = c.currentTime + at;
+  const noise = c.createBufferSource();
+  noise.buffer = noiseBuffer(c, dur + 0.02);
+  const band = c.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = centre;
+  band.Q.value = 1.4;
+  const clip = c.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < curve.length; i++) {
+    const x = (i / (curve.length - 1)) * 2 - 1;
+    curve[i] = Math.max(-0.6, Math.min(0.6, x * 6)); // hard clip: gritty, not hissy
+  }
+  clip.curve = curve;
+  const g = c.createGain();
+  g.gain.setValueAtTime(gain, t);
+  g.gain.setValueAtTime(gain, t + dur * 0.55);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  noise.connect(clip).connect(band).connect(g).connect(chain);
+  noise.start(t);
+  noise.stop(t + dur + 0.02);
+}
+
+/** A click: a single sharp pop, as the transmit relay closes. */
+function pop(c: AudioContext, at: number, gain: number) {
+  if (!chain) return;
+  const t = c.currentTime + at;
+  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * 0.012), c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (i < 6 ? 1 : Math.random() * 2 - 1) * Math.exp(-i / 60);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const g = c.createGain();
+  g.gain.value = gain;
+  src.connect(g).connect(chain);
+  src.start(t);
+}
+
+/** Key-up: the transmit click and a short squawk, like the button being pressed. */
 export function squelchOpen() {
   const c = acquire();
   if (!c || !chain) return;
-  const t = c.currentTime;
-  const noise = c.createBufferSource();
-  noise.buffer = noiseBuffer(c, 0.08);
-  const ng = c.createGain();
-  ng.gain.setValueAtTime(0.35, t);
-  ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-  noise.connect(ng).connect(chain);
-  noise.start(t);
-  const osc = c.createOscillator();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(1500, t);
-  osc.frequency.linearRampToValueAtTime(2100, t + 0.045);
-  const og = c.createGain();
-  og.gain.setValueAtTime(0.12, t);
-  og.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-  osc.connect(og).connect(chain);
-  osc.start(t);
-  osc.stop(t + 0.06);
+  pop(c, 0, 0.9);
+  squawk(c, 0.005, 0.07, 0.55, 1600);
   release(150);
 }
 
-/** Release: the longer "kssht" tail when the transmission ends. */
+/**
+ * End of transmission: the two-tone roger beep, then the squawk tail as the
+ * squelch closes.
+ */
 export function squelchClose() {
   const c = acquire();
   if (!c || !chain) return;
-  const t = c.currentTime;
-  const noise = c.createBufferSource();
-  noise.buffer = noiseBuffer(c, 0.2);
-  const band = c.createBiquadFilter();
-  band.type = 'bandpass';
-  band.frequency.value = 1900;
-  band.Q.value = 0.7;
-  const ng = c.createGain();
-  ng.gain.setValueAtTime(0.45, t);
-  ng.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-  noise.connect(band).connect(ng).connect(chain);
-  noise.start(t);
-  const osc = c.createOscillator();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(1000, t);
-  osc.frequency.linearRampToValueAtTime(650, t + 0.05);
-  const og = c.createGain();
-  og.gain.setValueAtTime(0.08, t);
-  og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  osc.connect(og).connect(chain);
-  osc.start(t);
-  osc.stop(t + 0.07);
-  release(300);
+  tone(c, 0, 1250, 0.07, 0.24);
+  tone(c, 0.075, 1900, 0.09, 0.24);
+  squawk(c, 0.19, 0.22, 0.6, 1400);
+  pop(c, 0.4, 0.5);
+  release(550);
 }
 
 /** A faint static hiss under a spoken prompt. Call the returned stop() when it ends. */
@@ -162,7 +172,7 @@ export function staticBed(): () => void {
   band.Q.value = 0.5;
   const g = c.createGain();
   g.gain.setValueAtTime(0.0001, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.035, c.currentTime + 0.05);
+  g.gain.exponentialRampToValueAtTime(0.05, c.currentTime + 0.05);
   src.connect(band).connect(g).connect(chain);
   src.start();
   let stopped = false;
