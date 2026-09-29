@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { geoOrthographic, geoPath, type GeoPermissibleObjects } from 'd3-geo';
 import { feature } from 'topojson-client';
 import landTopo from 'world-atlas/land-110m.json';
+import { cn } from '@/lib/utils';
 
 // Pre-extract the world land outline once at module load. Stroking these
 // polygons (no fill) draws thin coastlines; the 110m resolution keeps the
@@ -25,14 +26,25 @@ interface HomeGlobeProps {
   className?: string;
 }
 
+/** The same glass as the ride tiles (the global bg-card frost rule). */
+const LAND_FROST: CSSProperties = {
+  backgroundColor: 'hsl(var(--card) / 0.5)',
+  backdropFilter: 'blur(18px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(150%)',
+  clipPath: 'inset(50%)', // nothing until the first frame cuts the land out
+};
+
 /**
- * A slowly rotating orthographic-projection globe rendered to a 2D canvas:
- * faint sphere fill, thin accent coastlines conforming to the curvature, and
- * an accent rim outline. Self-sizes to its container (square, DPR-aware), so
- * the parent only has to position/size the wrapper.
+ * A slowly rotating orthographic-projection globe: faint sphere fill for the
+ * oceans, land in the ride tiles' frosted glass (a real backdrop blur, clipped
+ * to the land's outline each frame, since a canvas can't blur what's behind
+ * it), thin accent coastlines conforming to the curvature, and an accent rim.
+ * Self-sizes to its container (square, DPR-aware), so the parent only has to
+ * position/size the wrapper.
  */
 export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const frostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,6 +56,10 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
     let size = 0; // CSS px (square edge)
     const projection = geoOrthographic().clipAngle(90); // cull the back hemisphere
     const path = geoPath(projection, ctx);
+    // The same land as an SVG path string (CSS px), for the frost's clip.
+    const outline = geoPath(projection).digits(1);
+    const frost = frostRef.current;
+    let frame = 0;
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -72,6 +88,15 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
       projection.rotate([rotation, -AXIS_TILT_DEG]);
 
       if (size > 0) {
+        // Frosted land. Every third frame is plenty at this spin speed (the
+        // clip moves well under a pixel between updates, under the coastline).
+        if (frost && frame++ % 3 === 0) {
+          const d = outline(land);
+          const clip = d ? `path('${d}')` : 'inset(50%)';
+          frost.style.clipPath = clip;
+          frost.style.setProperty('-webkit-clip-path', clip);
+        }
+
         ctx.clearRect(0, 0, size, size);
 
         // Faint sphere body so the rotating coastlines sit on a subtle disc.
@@ -107,5 +132,10 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
     };
   }, [accentColor]);
 
-  return <canvas ref={canvasRef} className={className} />;
+  return (
+    <div className={cn('relative', className)}>
+      <div ref={frostRef} aria-hidden className="absolute inset-0 pointer-events-none" style={LAND_FROST} />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    </div>
+  );
 }
