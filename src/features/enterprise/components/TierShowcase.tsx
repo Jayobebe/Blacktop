@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Mic, WifiOff, Radio, LifeBuoy, Flag, Timer, GraduationCap, Store, Mountain, Gauge, Infinity as InfinityIcon, Palette } from 'lucide-react';
+import { Mic, WifiOff, Radio, LifeBuoy, Flag, Timer, GraduationCap, Store, Mountain, Gauge, Infinity as InfinityIcon, Palette, Wrench, ScanLine, Camera, Bell, Mail, Check, BookOpen, BadgeCheck, Crown } from 'lucide-react';
 import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { EnterpriseTier } from '../types';
@@ -389,50 +389,225 @@ function TrackScene() {
   );
 }
 
-// ---- Billion: every module, your branding, no limits --------------------------
+// ---- Workshop: one service ticket, from scan-in to the logbook ---------------
 
-const BRAND_HUES = [32, 200, 330, 150];
+const WORKSHOP_CYCLE = 12;
+const STAGE_AT = [0, 2.6, 5.4, 8.4];
+
+/** A small fixed QR pattern (not a real code). */
+const QR_CELLS = Array.from({ length: 49 }, (_, i) => ((i * 37 + (i >> 2) * 11) % 7) < 3 || [0, 1, 7, 8, 5, 6, 12, 13, 35, 36, 42, 43].includes(i));
+
+function WorkshopScene() {
+  const t = useSceneTime();
+  const phase = t % WORKSHOP_CYCLE;
+  const stage = STAGE_AT.filter((s) => phase >= s).length - 1;
+  const labels = [tr("Checked in"), tr("Awaiting approval"), tr("In progress"), tr("Ready to collect")];
+  const jobs = [tr("Oil and filter"), tr("Chain adjusted"), tr("Brake pads")];
+  const approved = phase > 4.4;
+  const work = Math.min(1, Math.max(0, (phase - 5.4) / 2.8));
+
+  return (
+    <Frame className="p-2.5 flex gap-2">
+      {/* The ticket */}
+      <div className="flex-1 min-w-0 rounded-xl bg-card/70 border border-border/40 p-2 flex flex-col gap-2 no-frost">
+        <div className="flex items-center gap-1.5 text-[9px] font-semibold">
+          <Wrench className="w-3 h-3 text-accent" />
+          <span className="truncate">{tr("Service ticket")}</span>
+          <span className="ml-auto font-mono text-muted-foreground">#2041</span>
+        </div>
+
+        {/* Stepper */}
+        <div className="relative flex items-center justify-between px-1">
+          <div className="absolute left-2 right-2 top-1/2 h-0.5 -translate-y-1/2 bg-border/60" />
+          <div
+            className="absolute left-2 top-1/2 h-0.5 -translate-y-1/2 bg-accent transition-[width] duration-500"
+            style={{ width: `calc((100% - 16px) * ${stage / 3})` }}
+          />
+          {[ScanLine, Camera, Wrench, Bell].map((Icon, i) => (
+            <div key={i} className="relative">
+              {i === stage && <span className="absolute inset-0 rounded-full bg-accent/40 animate-ping" />}
+              <div
+                className={cn(
+                  'relative w-5 h-5 rounded-full flex items-center justify-center border transition-colors duration-300',
+                  i <= stage ? 'bg-accent border-accent text-accent-foreground' : 'bg-card border-border/60 text-muted-foreground',
+                )}
+              >
+                <Icon className="w-2.5 h-2.5" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p key={stage} className="text-[9px] font-semibold text-accent animate-fade-in">{labels[stage]}</p>
+
+        {/* What's happening now */}
+        <div key={`v${stage}`} className="flex-1 min-h-0 rounded-lg bg-background/60 border border-border/30 flex items-center justify-center gap-2 animate-scale-in overflow-hidden">
+          {stage === 0 && (
+            <div className="relative w-10 h-10 rounded-md bg-white p-1 grid grid-cols-7 gap-px">
+              {QR_CELLS.map((on, i) => (
+                <span key={i} className={on ? 'bg-black' : 'bg-white'} />
+              ))}
+              <span
+                className="absolute left-0 right-0 h-0.5 bg-accent shadow-[0_0_6px_2px_hsl(var(--accent)/0.7)]"
+                style={{ top: `${Math.min(1, phase / 2.2) * 100}%` }}
+              />
+            </div>
+          )}
+          {stage === 1 && (
+            <>
+              <div className="w-10 h-8 rounded-md bg-[radial-gradient(circle_at_30%_40%,#5b5b66,#1d1d22)] flex items-center justify-center">
+                <Camera className="w-3.5 h-3.5 text-white/70" />
+              </div>
+              <span
+                className={cn(
+                  'rounded-md px-2 py-1 text-[8px] font-bold transition-all duration-300',
+                  approved ? 'bg-emerald-500 text-white scale-100' : 'bg-accent text-accent-foreground animate-pulse',
+                )}
+              >
+                {approved ? <Check className="w-3 h-3" /> : tr("Approve")}
+              </span>
+            </>
+          )}
+          {stage === 2 && (
+            <div className="flex flex-col items-center gap-1.5 w-3/4">
+              <Wrench className="w-5 h-5 text-accent" style={{ transform: `rotate(${Math.sin(t * 6) * 28}deg)` }} />
+              <div className="w-full h-1 rounded-full bg-border/60 overflow-hidden">
+                <div className="h-full bg-accent" style={{ width: `${work * 100}%` }} />
+              </div>
+            </div>
+          )}
+          {stage === 3 && (
+            <>
+              <Bell className="w-5 h-5 text-accent" style={{ transform: `rotate(${Math.sin(t * 14) * (phase < 9.6 ? 18 : 0)}deg)` }} />
+              <Mail className="w-4 h-4 text-muted-foreground animate-slide-up" />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* The rider's logbook fills itself in */}
+      <div className="w-[42%] rounded-xl bg-card/70 border border-border/40 p-2 flex flex-col gap-1.5 no-frost">
+        <div className="flex items-center gap-1.5 text-[9px] font-semibold">
+          <BookOpen className="w-3 h-3 text-accent" />
+          <span className="truncate">{tr("Logbook")}</span>
+        </div>
+        {jobs.map((job, i) => {
+          const shown = stage === 3 && phase > 8.8 + i * 0.55;
+          return (
+            <div
+              key={job}
+              className={cn(
+                'flex items-center gap-1 rounded-md px-1.5 py-1 text-[8px] transition-all duration-500',
+                shown ? 'opacity-100 translate-x-0 bg-accent/10' : 'opacity-0 translate-x-3',
+              )}
+            >
+              <Check className="w-2.5 h-2.5 text-accent shrink-0" />
+              <span className="truncate flex-1">{job}</span>
+              <BadgeCheck className="w-3 h-3 text-accent shrink-0" />
+            </div>
+          );
+        })}
+        {stage < 3 && <div className="flex-1 rounded-md border border-dashed border-border/40" />}
+      </div>
+    </Frame>
+  );
+}
+
+// ---- Billion: every module orbiting one core, in your colours ----------------
+
+const ORBIT: { tier: EnterpriseTier; Icon: typeof Flag }[] = [
+  { tier: 'track_pro', Icon: Flag },
+  { tier: 'showroom', Icon: Store },
+  { tier: 'workshop', Icon: Wrench },
+  { tier: 'academy', Icon: GraduationCap },
+  { tier: 'touring', Icon: Mountain },
+];
+const CX = 80;
+const CY = 50;
+const RX = 56;
+const RY = 28;
 
 function BillionScene() {
   const t = useSceneTime();
-  const lit = Math.floor(t / 1.1) % 4;
-  const hue = BRAND_HUES[Math.floor(t / 2.2) % BRAND_HUES.length];
-  const brand = `hsl(${hue} 90% 58%)`;
-  const modules: { tier: EnterpriseTier; Icon: typeof GraduationCap }[] = [
-    { tier: 'track_pro', Icon: Flag },
-    { tier: 'showroom', Icon: Store },
-    { tier: 'academy', Icon: GraduationCap },
-    { tier: 'touring', Icon: Mountain },
-  ];
+  const spin = t * 0.32;
+  const active = Math.floor(t / 1.6) % ORBIT.length;
+  const signal = (t % 1.6) / 1.6;
+  // Custom branding: the core drifts through brand colours.
+  const hue = (32 + t * 22) % 360;
+  const brand = `hsl(${hue} 90% 60%)`;
+  const nodes = ORBIT.map((m, i) => {
+    const a = spin + (i * Math.PI * 2) / ORBIT.length;
+    const depth = (Math.sin(a) + 1) / 2; // 0 back, 1 front
+    return { ...m, i, p: [CX + RX * Math.cos(a), CY + RY * Math.sin(a)] as Pt, depth };
+  });
+  const act = nodes[active];
+  const pulse: Pt = [act.p[0] + (CX - act.p[0]) * signal, act.p[1] + (CY - act.p[1]) * signal];
 
   return (
-    <Frame className="p-3 flex gap-3">
-      <div className="flex-1 grid grid-cols-2 gap-2">
-        {modules.map(({ tier, Icon }, i) => (
-          <div
-            key={tier}
-            className={cn(
-              'rounded-xl border flex flex-col items-center justify-center gap-1 transition-all duration-500 animate-scale-in no-frost',
-              lit === i ? 'bg-accent/15 border-accent scale-[1.03] shadow-[0_0_14px_hsl(var(--accent)/0.35)]' : 'bg-card/60 border-border/40',
-            )}
-            style={{ animationDelay: `${i * 90}ms` }}
-          >
-            <Icon className={cn('w-4 h-4 transition-colors', lit === i ? 'text-accent' : 'text-muted-foreground')} />
-            <span className="text-[8px] font-semibold text-center leading-tight px-1">{tierName(tier)}</span>
-          </div>
+    <Frame>
+      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
+        <defs>
+          <radialGradient id="bt-billion-core" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={brand} stopOpacity={0.55} />
+            <stop offset="100%" stopColor={brand} stopOpacity={0} />
+          </radialGradient>
+        </defs>
+        <ellipse cx={CX} cy={CY} rx={34} ry={22} fill="url(#bt-billion-core)" />
+        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill="none" stroke="white" strokeOpacity={0.12} strokeWidth={0.6} strokeDasharray="1.5 2.5" />
+        <ellipse cx={CX} cy={CY} rx={RX * 0.62} ry={RY * 0.62} fill="none" stroke="white" strokeOpacity={0.06} strokeWidth={0.5} />
+        {nodes.map((n) => (
+          <line
+            key={n.tier}
+            x1={CX}
+            y1={CY}
+            x2={n.p[0]}
+            y2={n.p[1]}
+            stroke="hsl(var(--accent))"
+            strokeOpacity={n.i === active ? 0.75 : 0.12 + 0.1 * n.depth}
+            strokeWidth={n.i === active ? 0.9 : 0.5}
+          />
         ))}
-      </div>
-      <div className="w-[34%] flex flex-col gap-2">
-        {/* A phone in the organisation's colours, cycling through brands */}
-        <div className="flex-1 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-colors duration-700 animate-fade-in no-frost" style={{ borderColor: brand, background: `hsl(${hue} 60% 12%)` }}>
-          <Palette className="w-4 h-4 transition-colors duration-700" style={{ color: brand }} />
-          <span className="text-[8px] font-semibold text-center px-1 transition-colors duration-700" style={{ color: brand }}>{tr("Custom branding")}</span>
+        <circle cx={pulse[0]} cy={pulse[1]} r={1.6} fill="hsl(var(--accent))" />
+      </svg>
+
+      {/* Modules, back ones smaller and dimmer */}
+      {[...nodes].sort((a, b) => a.depth - b.depth).map((n) => (
+        <div
+          key={n.tier}
+          className={cn(
+            'absolute -translate-x-1/2 -translate-y-1/2 rounded-full border flex items-center justify-center',
+            n.i === active ? 'bg-accent border-accent shadow-[0_0_12px_3px_hsl(var(--accent)/0.55)]' : 'bg-card border-border/60',
+          )}
+          style={{ ...at(n.p), width: 22, height: 22, transform: `translate(-50%, -50%) scale(${0.72 + 0.4 * n.depth})`, opacity: 0.55 + 0.45 * n.depth }}
+        >
+          <n.Icon className={cn('w-3 h-3', n.i === active ? 'text-accent-foreground' : 'text-muted-foreground')} />
         </div>
-        <div className="rounded-xl bg-card/80 border border-border/40 flex items-center justify-center gap-1 py-1.5 animate-slide-up delay-200 no-frost">
-          <InfinityIcon className="w-4 h-4 text-accent" />
-          <span className="text-[8px] font-semibold">{tr("Unlimited seats")}</span>
-        </div>
+      ))}
+
+      {/* The core */}
+      <div
+        className="absolute -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full border-2 flex items-center justify-center bg-[#0d0d10]"
+        style={{ ...at([CX, CY]), borderColor: brand, boxShadow: `0 0 18px 4px ${brand.replace('60%)', '60% / 0.45)')}` }}
+      >
+        <Crown className="w-5 h-5" style={{ color: brand }} />
       </div>
+
+      <Chip className="top-2 left-2 animate-fade-in">
+        <Palette className="w-3 h-3" style={{ color: brand }} />
+        <span>{tr("Custom branding")}</span>
+      </Chip>
+      <Chip className="top-2 right-2 animate-fade-in delay-100">
+        <Radio className="w-3 h-3 text-accent" />
+        <span>{tr("Priority comms relay")}</span>
+      </Chip>
+      <Chip key={active} className="bottom-2 left-2 animate-fade-in border-accent/60">
+        <act.Icon className="w-3 h-3 text-accent" />
+        <span>{tierName(act.tier)}</span>
+      </Chip>
+      <Chip className="bottom-2 right-2 animate-slide-up delay-200">
+        <InfinityIcon className="w-3 h-3 text-accent" />
+        <span>{tr("Unlimited seats")}</span>
+      </Chip>
     </Frame>
   );
 }
@@ -443,6 +618,8 @@ export function TierShowcase({ tier }: { tier: EnterpriseTier }) {
       return <AcademyScene />;
     case 'showroom':
       return <ShowroomScene />;
+    case 'workshop':
+      return <WorkshopScene />;
     case 'touring':
       return <TouringScene />;
     case 'track_pro':

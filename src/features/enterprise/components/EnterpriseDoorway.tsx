@@ -102,7 +102,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
         </span>
         <div className="pr-24">
           <p className="text-[10px] uppercase tracking-[0.25em] text-accent">{tr("Blacktop Enterprise")}</p>
-          <p className="text-sm font-semibold text-foreground mt-1">{tr("Blacktop for schools, dealers, tour operators and race teams.")}</p>
+          <p className="text-sm font-semibold text-foreground mt-1">{tr("Blacktop for schools, dealers, workshops, tour operators and race teams.")}</p>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
           {tr("The packages below are on their way. Got a code from your organisation? Scan it here. Want it for yours? Get in touch.")}
@@ -153,7 +153,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
           <div className="min-w-0">
             <h2 className="text-base font-semibold tracking-tight text-foreground">{tr("Blacktop Enterprise")}</h2>
             <p className="text-xs text-muted-foreground">
-              {tr("Scan your school, team, dealer or tour operator's code, or type it in, to open their workspace.")}
+              {tr("Scan your school, team, dealer, workshop or tour operator's code, or type it in, to open their workspace.")}
             </p>
           </div>
         </div>
@@ -243,7 +243,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
 
       {/* For organisations: the way in */}
       <div className="bg-card/50 rounded-3xl border border-border/40 p-4 flex items-center gap-3">
-        <p className="flex-1 text-sm text-foreground">{tr("Running a training school, race team, dealership, or tour fleet?")}</p>
+        <p className="flex-1 text-sm text-foreground">{tr("Running a training school, race team, dealership, workshop or tour fleet?")}</p>
         <Button asChild variant="outline" size="sm" className="shrink-0 rounded-xl">
           <a href={enquiryMailto(openTier)} onClick={() => haptics.light()}>
             <Mail className="w-4 h-4 mr-1.5" />

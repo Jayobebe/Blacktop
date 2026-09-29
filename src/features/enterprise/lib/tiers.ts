@@ -11,6 +11,8 @@ export function tierName(tier: EnterpriseTier): string {
       return tr("Academy");
     case 'showroom':
       return tr("Showroom");
+    case 'workshop':
+      return tr("Workshop");
     case 'touring':
       return tr("Touring");
     case 'track_pro':

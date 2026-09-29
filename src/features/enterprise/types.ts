@@ -1,9 +1,9 @@
 import { tr } from '@/lib/i18n';
 
 // Blacktop Enterprise. Tiers and roles mirror the CHECK constraints in
-// supabase/migrations/20261002000000_enterprise_core.sql: keep them in sync.
+// supabase/migrations/20261002000000_enterprise_core.sql (tiers: 20261003090000_enterprise_workshop.sql): keep them in sync.
 
-export type EnterpriseTier = 'academy' | 'showroom' | 'touring' | 'track_pro' | 'billion';
+export type EnterpriseTier = 'academy' | 'showroom' | 'workshop' | 'touring' | 'track_pro' | 'billion';
 
 /** Account members (organization_members). */
 export type EnterpriseMemberRole = 'owner' | 'admin' | 'staff' | 'instructor' | 'driver';
@@ -49,7 +49,7 @@ export interface GuestSessionPayload {
   role: EnterpriseRole | null;
 }
 
-export const ENTERPRISE_TIERS: EnterpriseTier[] = ['academy', 'showroom', 'touring', 'track_pro', 'billion'];
+export const ENTERPRISE_TIERS: EnterpriseTier[] = ['academy', 'showroom', 'workshop', 'touring', 'track_pro', 'billion'];
 export const ENTERPRISE_ROLES: EnterpriseRole[] = ['owner', 'admin', 'staff', 'instructor', 'driver', 'student', 'guest_rider', 'customer'];
 
 // ---- Packages -------------------------------------------------------------------
@@ -102,6 +102,19 @@ export function enterpriseTiers(): EnterpriseTierInfo[] {
       ],
     },
     {
+      id: 'workshop',
+      name: tr("Blacktop Workshop"),
+      target: tr("Motorcycle and car workshops, dealership service departments, tyre and MOT centres, mobile mechanics."),
+      tagline: tr("Service tickets by QR, live job updates, and service history written straight to the rider's garage."),
+      features: [
+        { title: tr("Scan-In Service Tickets"), detail: tr("The rider says what needs doing and scans the shop's QR code: a ticket opens for both sides, linked to that bike in their garage.") },
+        { title: tr("Photo Quotes & Approvals"), detail: tr("Found more work? Send photos and a price; the rider approves or declines in the app, and the answer is kept on the ticket.") },
+        { title: tr("Live Job Status & Alerts"), detail: tr("Checked in, awaiting approval, in progress, ready: the rider follows along and gets a notification and an email the moment it's done.") },
+        { title: tr("Automatic Service History"), detail: tr("The work the shop records goes straight into the rider's maintenance log and logbook, stamped by the shop for a trusted service history.") },
+        { title: tr("Service Reminders & Rebooking"), detail: tr("The shop sets the next service by date or mileage; Blacktop reminds the rider and rebooks in one tap.") },
+      ],
+    },
+    {
       id: 'touring',
       name: tr("Blacktop Touring"),
       target: tr("Guided tour operators, motorcycle expedition organisers, rally organisers (Alps, Pyrenees, NC500)."),
@@ -131,7 +144,7 @@ export function enterpriseTiers(): EnterpriseTierInfo[] {
       target: tr("Premier multi-discipline teams, factory racing divisions and global mobility brands."),
       tagline: tr("The complete, unrestricted Blacktop master suite."),
       features: [
-        { title: tr("Every module"), detail: tr("Unrestricted access to every enterprise module (Academy, Showroom, Touring and Track Pack Pro).") },
+        { title: tr("Every module"), detail: tr("Unrestricted access to every enterprise module (Track Pack Pro, Showroom, Workshop, Academy and Touring).") },
         { title: tr("Custom branding"), detail: tr("Custom map accents, tailored splash screens and bespoke audio chimes.") },
         { title: tr("Unlimited seats"), detail: tr("Unlimited staff seats, fleet vehicles and guest QR codes.") },
         { title: tr("Priority comms relay"), detail: tr("Dedicated high-priority TURN relay allocation for comms.") },
