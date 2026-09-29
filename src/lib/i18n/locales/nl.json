@@ -2925,5 +2925,16 @@
  "Left {0}": "Links {0}",
  "Right {0}": "Rechts {0}",
  "{0} into {1}": "{0} in {1}",
- "{0} ahead, {1}.": "{0} vooruit, {1}."
+ "{0} ahead, {1}.": "{0} vooruit, {1}.",
+ "Pilot Voice": "Pilotenstem",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "Er is nog geen pilotenstem voor jouw taal, dus radio-oproepen gebruiken de stem van je telefoon.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "Een mannelijke pilotenstem voor radio-oproepen (Cockpit- en Rally-aanwijzingen, meldingen van gevaren en flitsers), gemaakt op je telefoon zodat hij offline werkt. Zonder deze stem gebruiken radio-oproepen de stem van je telefoon.",
+ "Download ({0})": "Downloaden ({0})",
+ "Download failed. Check your connection and try again.": "Downloaden mislukt. Controleer je verbinding en probeer het opnieuw.",
+ "Best on Wi-Fi.": "Het liefst via wifi.",
+ "Downloaded ({0})": "Gedownload ({0})",
+ "Radio check": "Radiocheck",
+ "Radio check. Blacktop, reading you loud and clear.": "Radiocheck. Blacktop, ik ontvang je luid en duidelijk.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— de download van de pilotenstem, alleen als je die in Instellingen downloadt (zij zien je IP-adres). Daarna draait de stem op je telefoon: niets wat hij zegt wordt ergens naartoe gestuurd."
 }

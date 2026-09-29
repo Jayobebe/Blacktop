@@ -2925,5 +2925,16 @@
  "Left {0}": "Venstre {0}",
  "Right {0}": "Høyre {0}",
  "{0} into {1}": "{0} inn i {1}",
- "{0} ahead, {1}.": "{0} foran, {1}."
+ "{0} ahead, {1}.": "{0} foran, {1}.",
+ "Pilot Voice": "Pilotstemme",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "Det finnes ingen pilotstemme for språket ditt ennå, så radiomeldinger bruker telefonens stemme.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "En mannlig pilotstemme for radiomeldinger (Cockpit- og Rally-veiledning, varsler om farer og fotobokser), laget på telefonen så den virker uten nett. Uten den bruker radiomeldinger telefonens stemme.",
+ "Download ({0})": "Last ned ({0})",
+ "Download failed. Check your connection and try again.": "Nedlastingen mislyktes. Sjekk tilkoblingen og prøv igjen.",
+ "Best on Wi-Fi.": "Helst på wifi.",
+ "Downloaded ({0})": "Lastet ned ({0})",
+ "Radio check": "Radiosjekk",
+ "Radio check. Blacktop, reading you loud and clear.": "Radiosjekk. Blacktop, hører deg høyt og tydelig.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— nedlastingen av pilotstemmen, bare hvis du laster den ned i Innstillinger (de ser IP-adressen din). Deretter kjører stemmen på telefonen: ingenting den sier, sendes noe sted."
 }

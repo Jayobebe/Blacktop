@@ -2925,5 +2925,16 @@
  "Left {0}": "左 {0}",
  "Right {0}": "右 {0}",
  "{0} into {1}": "{0} から {1}",
- "{0} ahead, {1}.": "前方に{0}、{1}。"
+ "{0} ahead, {1}.": "前方に{0}、{1}。",
+ "Pilot Voice": "パイロットボイス",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "お使いの言語にはまだパイロットボイスがないため、無線コールはスマートフォンの音声を使います。",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "無線コール（Cockpit・Rally の案内、危険やカメラの通知）用の男性パイロットボイス。スマートフォン上で生成するのでオフラインでも使えます。ない場合、無線コールはスマートフォンの音声を使います。",
+ "Download ({0})": "ダウンロード（{0}）",
+ "Download failed. Check your connection and try again.": "ダウンロードに失敗しました。接続を確認してもう一度お試しください。",
+ "Best on Wi-Fi.": "Wi-Fi でのダウンロードがおすすめです。",
+ "Downloaded ({0})": "ダウンロード済み（{0}）",
+ "Radio check": "無線チェック",
+ "Radio check. Blacktop, reading you loud and clear.": "無線チェック。Blacktop、感度良好。",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— パイロットボイスのダウンロード（設定でダウンロードした場合のみ。IP アドレスが相手に見えます）。その後、音声はスマートフォン上で動作し、話す内容はどこにも送信されません。"
 }

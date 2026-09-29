@@ -226,3 +226,104 @@ export function warningTone(kind: 'camera' | 'notice' | 'caution') {
   }
   release(length * 1000 + 100);
 }
+
+/** Decode a spoken call (WAV from the pilot voice) for playRadioVoice. */
+export async function decodeRadio(wav: ArrayBuffer): Promise<AudioBuffer | null> {
+  const c = create();
+  if (!c) return null;
+  try {
+    return await c.decodeAudioData(wav);
+  } catch {
+    return null;
+  }
+}
+
+let voiceIn: AudioNode | null = null;
+
+/**
+ * The voice's own stage before the shared chain: a narrow headset-mic band
+ * with a honky mid boost, driven hard, like a pilot's boom mic over UHF.
+ */
+function voiceChain(c: AudioContext): AudioNode | null {
+  if (voiceIn) return voiceIn;
+  if (!chain) return null;
+  const hp1 = c.createBiquadFilter();
+  hp1.type = 'highpass';
+  hp1.frequency.value = 480;
+  const hp2 = c.createBiquadFilter();
+  hp2.type = 'highpass';
+  hp2.frequency.value = 480;
+  const mid = c.createBiquadFilter();
+  mid.type = 'peaking';
+  mid.frequency.value = 1500;
+  mid.Q.value = 1.1;
+  mid.gain.value = 8;
+  const lp1 = c.createBiquadFilter();
+  lp1.type = 'lowpass';
+  lp1.frequency.value = 2700;
+  const lp2 = c.createBiquadFilter();
+  lp2.type = 'lowpass';
+  lp2.frequency.value = 2700;
+  const pre = c.createGain();
+  pre.gain.value = 2.2;
+  const drive = c.createWaveShaper();
+  const curve = new Float32Array(2048);
+  for (let i = 0; i < curve.length; i++) {
+    const x = (i / (curve.length - 1)) * 2 - 1;
+    // Soft clip, then a little quantising grit.
+    curve[i] = Math.round(Math.tanh(3.2 * x) * 48) / 48;
+  }
+  drive.curve = curve;
+  drive.oversample = '2x';
+  const post = c.createGain();
+  post.gain.value = 0.55;
+  hp1.connect(hp2).connect(mid).connect(lp1).connect(lp2).connect(pre).connect(drive).connect(post).connect(chain);
+  voiceIn = hp1;
+  return voiceIn;
+}
+
+/**
+ * Transmit a spoken call: key-up squelch, the voice through the radio with a
+ * static bed under it, then the roger beep and squelch tail. `stop()` cuts it
+ * short (still ending with the release); `done` resolves once it's over.
+ */
+export function playRadioVoice(buf: AudioBuffer): { stop: () => void; done: Promise<void> } {
+  const c = acquire();
+  const input = c ? voiceChain(c) : null;
+  if (!c || !input) {
+    if (c) release(0);
+    return { stop: () => {}, done: Promise.resolve() };
+  }
+  squelchOpen();
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.connect(input);
+  const startAt = c.currentTime + 0.1;
+  let stopStatic: (() => void) | null = null;
+  const staticTimer = setTimeout(() => (stopStatic = staticBed()), 90);
+  let finished = false;
+  let resolve: () => void = () => {};
+  const done = new Promise<void>((r) => (resolve = r));
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(staticTimer);
+    stopStatic?.();
+    squelchClose();
+    release(0);
+    resolve();
+  };
+  src.onended = finish;
+  src.start(startAt);
+  return {
+    stop: () => {
+      if (finished) return;
+      try {
+        src.stop();
+      } catch {
+        finish();
+      }
+    },
+    done,
+  };
+}

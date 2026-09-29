@@ -2925,5 +2925,16 @@
  "Left {0}": "Sol {0}",
  "Right {0}": "Sağ {0}",
  "{0} into {1}": "{0}, ardından {1}",
- "{0} ahead, {1}.": "{0} ileride, {1}."
+ "{0} ahead, {1}.": "{0} ileride, {1}.",
+ "Pilot Voice": "Pilot sesi",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "Dilin için henüz pilot sesi yok, bu yüzden telsiz anonsları telefonunun sesini kullanır.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "Telsiz anonsları için erkek pilot sesi (Cockpit ve Rally yol tarifleri, tehlike ve radar uyarıları); çevrimdışı çalışması için telefonunda üretilir. Olmadan, telsiz anonsları telefonunun sesini kullanır.",
+ "Download ({0})": "İndir ({0})",
+ "Download failed. Check your connection and try again.": "İndirme başarısız. Bağlantını kontrol edip tekrar dene.",
+ "Best on Wi-Fi.": "Wi-Fi'da indirmen önerilir.",
+ "Downloaded ({0})": "İndirildi ({0})",
+ "Radio check": "Telsiz kontrolü",
+ "Radio check. Blacktop, reading you loud and clear.": "Telsiz kontrolü. Blacktop, seni yüksek ve net duyuyorum.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— pilot sesinin indirilmesi, yalnızca Ayarlar'dan indirirsen (IP adresini görürler). Sonrasında ses telefonunda çalışır: söylediği hiçbir şey bir yere gönderilmez."
 }

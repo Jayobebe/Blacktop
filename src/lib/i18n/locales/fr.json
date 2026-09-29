@@ -2925,5 +2925,16 @@
  "Left {0}": "Gauche {0}",
  "Right {0}": "Droite {0}",
  "{0} into {1}": "{0} dans {1}",
- "{0} ahead, {1}.": "{0} devant, {1}."
+ "{0} ahead, {1}.": "{0} devant, {1}.",
+ "Pilot Voice": "Voix de pilote",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "Il n'y a pas encore de voix de pilote pour ta langue, les messages radio utilisent donc la voix de ton téléphone.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "Une voix masculine de pilote pour les messages radio (indications Cockpit et Rallye, alertes danger et radars), générée sur ton téléphone pour fonctionner hors ligne. Sans elle, les messages radio utilisent la voix de ton téléphone.",
+ "Download ({0})": "Télécharger ({0})",
+ "Download failed. Check your connection and try again.": "Échec du téléchargement. Vérifie ta connexion et réessaie.",
+ "Best on Wi-Fi.": "De préférence en Wi-Fi.",
+ "Downloaded ({0})": "Téléchargée ({0})",
+ "Radio check": "Essai radio",
+ "Radio check. Blacktop, reading you loud and clear.": "Essai radio. Blacktop, je vous reçois fort et clair.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— le téléchargement de la voix de pilote, seulement si tu la télécharges dans les Réglages (ils voient ton adresse IP). Ensuite, la voix tourne sur ton téléphone : rien de ce qu'elle dit n'est envoyé nulle part."
 }

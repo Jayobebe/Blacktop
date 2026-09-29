@@ -2925,5 +2925,16 @@
  "Left {0}": "Kiri {0}",
  "Right {0}": "Kanan {0}",
  "{0} into {1}": "{0} lalu {1}",
- "{0} ahead, {1}.": "{0} di depan, {1}."
+ "{0} ahead, {1}.": "{0} di depan, {1}.",
+ "Pilot Voice": "Suara pilot",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "Belum ada suara pilot untuk bahasamu, jadi panggilan radio memakai suara ponselmu.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "Suara pilot pria untuk panggilan radio (arahan Cockpit dan Rally, peringatan bahaya dan kamera), dibuat di ponselmu sehingga bisa offline. Tanpanya, panggilan radio memakai suara ponselmu.",
+ "Download ({0})": "Unduh ({0})",
+ "Download failed. Check your connection and try again.": "Unduhan gagal. Periksa koneksimu dan coba lagi.",
+ "Best on Wi-Fi.": "Sebaiknya lewat Wi-Fi.",
+ "Downloaded ({0})": "Sudah diunduh ({0})",
+ "Radio check": "Cek radio",
+ "Radio check. Blacktop, reading you loud and clear.": "Cek radio. Blacktop, terdengar keras dan jelas.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— unduhan suara pilot, hanya jika kamu mengunduhnya di Pengaturan (mereka melihat alamat IP-mu). Setelah itu suara berjalan di ponselmu: tidak ada yang diucapkannya dikirim ke mana pun."
 }

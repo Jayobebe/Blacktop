@@ -2925,5 +2925,16 @@
  "Left {0}": "左 {0}",
  "Right {0}": "右 {0}",
  "{0} into {1}": "{0} 接 {1}",
- "{0} ahead, {1}.": "前方{0}，{1}。"
+ "{0} ahead, {1}.": "前方{0}，{1}。",
+ "Pilot Voice": "飞行员语音",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "你的语言暂时还没有飞行员语音，所以无线电播报会使用手机自带的语音。",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "用于无线电播报（Cockpit 和 Rally 导航、危险和测速提醒）的男性飞行员语音，在手机上生成，离线也能用。没有它时，无线电播报使用手机自带的语音。",
+ "Download ({0})": "下载（{0}）",
+ "Download failed. Check your connection and try again.": "下载失败。请检查网络连接后重试。",
+ "Best on Wi-Fi.": "建议在 Wi-Fi 下下载。",
+ "Downloaded ({0})": "已下载（{0}）",
+ "Radio check": "无线电检查",
+ "Radio check. Blacktop, reading you loud and clear.": "无线电检查。Blacktop，信号清晰响亮。",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— 飞行员语音的下载，仅在你于设置中下载时发生（它们会看到你的 IP 地址）。之后语音在手机上运行：它说的任何内容都不会发送到任何地方。"
 }

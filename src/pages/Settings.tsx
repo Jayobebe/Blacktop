@@ -11,6 +11,7 @@ import {
   AUTO_RESCUE_MAX_G_THRESHOLD,
   AUTO_RESCUE_MIN_STOP_WINDOW_SEC,
   AUTO_RESCUE_MAX_STOP_WINDOW_SEC,
+  PilotVoiceSetting,
 } from '@/features/settings';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -888,6 +889,8 @@ export default function Settings() {
                   </p>
                 </div>
               )}
+
+              <PilotVoiceSetting />
 
               <div className="flex items-center justify-between gap-3">
                 <div className="pr-2">

@@ -2925,5 +2925,16 @@
  "Left {0}": "Links {0}",
  "Right {0}": "Rechts {0}",
  "{0} into {1}": "{0} in {1}",
- "{0} ahead, {1}.": "{0} voraus, {1}."
+ "{0} ahead, {1}.": "{0} voraus, {1}.",
+ "Pilot Voice": "Pilotenstimme",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "Für deine Sprache gibt es noch keine Pilotenstimme, deshalb nutzen Funksprüche die Stimme deines Handys.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "Eine männliche Pilotenstimme für Funksprüche (Cockpit- und Rallye-Ansagen, Gefahren- und Blitzerwarnungen), direkt auf deinem Handy erzeugt, damit sie offline funktioniert. Ohne sie nutzen Funksprüche die Stimme deines Handys.",
+ "Download ({0})": "Herunterladen ({0})",
+ "Download failed. Check your connection and try again.": "Download fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
+ "Best on Wi-Fi.": "Am besten im WLAN.",
+ "Downloaded ({0})": "Heruntergeladen ({0})",
+ "Radio check": "Funkcheck",
+ "Radio check. Blacktop, reading you loud and clear.": "Funkcheck. Blacktop, höre dich laut und klar.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— der Download der Pilotenstimme, nur wenn du sie in den Einstellungen herunterlädst (sie sehen deine IP-Adresse). Danach läuft die Stimme auf deinem Handy: Nichts, was sie sagt, wird irgendwohin gesendet."
 }

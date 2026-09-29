@@ -26,6 +26,7 @@ import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { useGForce } from '@/hooks/useGForce';
 import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
 import { saveRideOverlayBlob } from '@/lib/overlayStore';
+import { warmPilotVoice } from '@/lib/pilotVoice';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { GForceCircle } from '@/components/GForceCircle';
@@ -149,6 +150,8 @@ export default function ActiveRide() {
   });
   useConvoyMergeSync({ convoy, userId: user?.id ?? null, actions: proximityActions });
   const wakeLock = useWakeLock();
+  // Hazard and camera calls go out in the pilot voice; start it with the ride.
+  useEffect(() => warmPilotVoice(), []);
   const { addWaypoint } = useWaypoints(convoy.id, convoy.isLeader);
   const nextWaypoint = useNextWaypoint();
   const soloRoute = useSoloRoute();

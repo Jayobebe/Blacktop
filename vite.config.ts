@@ -21,6 +21,10 @@ export default defineConfig(({ mode }) => {
       react(),
       mode === "development" && componentTagger(),
     ].filter(Boolean),
+    // Module workers (MapLibre's, the pilot voice's): they load code on demand.
+    worker: {
+      format: "es",
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

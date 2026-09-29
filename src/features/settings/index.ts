@@ -11,3 +11,4 @@ export {
   type AppSettings,
 } from './hooks/useSettings';
 export { AccentColorPicker } from './components/AccentColorPicker';
+export { PilotVoiceSetting } from './components/PilotVoiceSetting';

@@ -15,6 +15,7 @@ import {
 import { tr } from '@/lib/i18n';
 import { speak, stopSpeaking, setVoiceStyle, type VoiceStyle } from '../lib/speech';
 import { buildPacenotes } from '../lib/pacenotes';
+import { warmPilotVoice } from '@/lib/pilotVoice';
 
 /** Metres off the line before the rider counts as off route. */
 const OFF_ROUTE_M = 45;
@@ -116,6 +117,10 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
     voiceRef.current = voice;
     if (!voice) stopSpeaking();
   }, [voice]);
+  // Radio-style directions: start the pilot voice before the first turn.
+  useEffect(() => {
+    if (active && voice && voiceStyle !== 'standard') warmPilotVoice();
+  }, [active, voice, voiceStyle]);
   // Prompts still advance while muted, so switching the voice back on doesn't
   // replay turns already passed.
   // Directions follow the rider's voice style (plain for Standard); lib/speech.

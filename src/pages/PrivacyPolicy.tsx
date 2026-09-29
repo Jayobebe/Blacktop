@@ -186,6 +186,7 @@ export default function PrivacyPolicy() {
             <li><span className="text-foreground">{tr("OpenStreetMap / Nominatim / Overpass / Photon (komoot)")}</span>{" "}{tr("— location search, the roads for building tracks, and the circuit library (© OpenStreetMap contributors, ODbL)")}</li>
             <li><span className="text-foreground">{tr("OpenFreeMap, Esri World Imagery, AWS Open Data terrain")}</span>{" "}{tr("— map, satellite and elevation tiles (they see which map areas you load)")}</li>
             <li><span className="text-foreground">{tr("RainViewer / Open-Meteo")}</span>{" "}{tr("— rain radar and route weather, only if you turn those on")}</li>
+            <li><span className="text-foreground">{tr("Hugging Face, cdnjs, jsDelivr")}</span>{" "}{tr("— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.")}</li>
             <li><span className="text-foreground">{tr("Google and Cloudflare STUN")}</span>{" "}{tr("— help two phones find each other for voice chat (they see your IP address)")}</li>
             <li><span className="text-foreground">{tr("Cloudflare TURN")}</span>{" "}{tr("— relays encrypted voice audio when phones can't connect directly (typical on mobile data)")}</li>
             <li><span className="text-foreground">{tr("Discord")}</span>{" "}{tr("— only if you opt in by adding a webhook in your account")}</li>

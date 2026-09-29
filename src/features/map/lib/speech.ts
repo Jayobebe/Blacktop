@@ -5,6 +5,7 @@
 import { setAudioDucked } from '@/lib/audioDuck';
 import { getLanguage } from '@/lib/i18n';
 import { squelchOpen, squelchClose, staticBed } from '@/lib/radioFx';
+import { pilotSay, pilotVoiceReady, stopPilotVoice } from '@/lib/pilotVoice';
 
 export function speechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
@@ -17,7 +18,7 @@ let radioVoice: SpeechSynthesisVoice | null = null;
 // Browsers don't expose a voice's gender, only its name. These are the male
 // system voices on iOS / macOS, Windows, Chrome and common Android engines.
 const MALE_VOICE =
-  /(male|man)|daniel|arthur|oliver|aaron|fred|alex|gordon|rishi|reed|rocko|ralph|albert|bruce|junior|eddy|grandpa|thomas|jacques|henri|nicolas|yannick|markus|hans|conrad|stefan|martin|luca|cosimo|diego|jorge|juan|carlos|pablo|enrique|joão|felipe|ricardo|xander|frank|maged|yuri|dmitri|ostap|otoya|hattori|ichiro|keita|daichi|minsu|injoon|yunxi|yunyang|kangkang|liang|ardi|hemant|madhur|ryan|guy|george|james|brian|david|mark|richard|william|liam|noah|elliot|christopher|eric|roger|steffan|thomas|tom/i;
+  /\b(male|man)\b|daniel|arthur|oliver|aaron|fred|alex|gordon|rishi|reed|rocko|ralph|albert|bruce|junior|eddy|grandpa|thomas|jacques|henri|nicolas|yannick|markus|hans|conrad|stefan|martin|luca|cosimo|diego|jorge|juan|carlos|pablo|enrique|joão|felipe|ricardo|xander|frank|maged|yuri|dmitri|ostap|otoya|hattori|ichiro|keita|daichi|minsu|injoon|yunxi|yunyang|kangkang|liang|ardi|hemant|madhur|ryan|guy|george|james|brian|david|mark|richard|william|liam|noah|elliot|christopher|eric|roger|steffan|thomas|tom\b/i;
 const FEMALE_VOICE =
   /female|woman|samantha|victoria|karen|moira|tessa|serena|fiona|kate|susan|zira|hazel|libby|sonia|amelie|anna|helena|paulina|alice|monica|paula|luciana|joana|ellen|sara|nora|zuzana|yelda|milena|mei-?jia|ting-?ting|sin-?ji|yuna|kyoko|lekha|damayanti|catherine|allison|ava|nicky|siri female|jenny|aria|emma|olivia|natasha|clara|marie/i;
 
@@ -91,10 +92,33 @@ export function playSquelch(key: boolean) {
  * standard style keeps the phone's plain voice. `radio` forces either way.
  */
 export function speak(text: string, opts: { interrupt?: boolean; radio?: boolean; kind?: 'nav' | 'callout' } = {}) {
-  if (!speechSupported() || !text) return;
-  const synth = window.speechSynthesis;
-  if (opts.interrupt) synth.cancel();
+  if (!text) return;
   const radio = opts.radio ?? (opts.kind === 'nav' ? style !== 'standard' : true);
+  // Radio calls go out in the pilot voice when it's downloaded (lib/pilotVoice);
+  // the phone's voice takes over if it isn't, or can't make the call in time.
+  if (radio && pilotVoiceReady()) {
+    if (opts.interrupt && speechSupported()) window.speechSynthesis.cancel();
+    const onStart = () => {
+      speaking += 1;
+      setAudioDucked(true);
+    };
+    const onEnd = () => {
+      speaking = Math.max(0, speaking - 1);
+      if (speaking === 0) setAudioDucked(false);
+    };
+    void pilotSay(text, { interrupt: opts.interrupt, onStart, onEnd }).then((ok) => {
+      if (!ok) systemSpeak(text, radio, opts.interrupt);
+    });
+    return;
+  }
+  if (opts.interrupt) stopPilotVoice();
+  systemSpeak(text, radio, opts.interrupt);
+}
+
+function systemSpeak(text: string, radio: boolean, interrupt?: boolean) {
+  if (!speechSupported()) return;
+  const synth = window.speechSynthesis;
+  if (interrupt) synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
   const chosen = radio ? radioVoice ?? voice : voice;
   if (chosen) {
@@ -137,6 +161,7 @@ export function speak(text: string, opts: { interrupt?: boolean; radio?: boolean
 }
 
 export function stopSpeaking() {
+  stopPilotVoice();
   if (!speechSupported()) return;
   window.speechSynthesis.cancel();
   speaking = 0;

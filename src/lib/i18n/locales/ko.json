@@ -2925,5 +2925,16 @@
  "Left {0}": "왼쪽 {0}",
  "Right {0}": "오른쪽 {0}",
  "{0} into {1}": "{0} 이어서 {1}",
- "{0} ahead, {1}.": "전방에 {0}, {1}."
+ "{0} ahead, {1}.": "전방에 {0}, {1}.",
+ "Pilot Voice": "파일럿 음성",
+ "There's no pilot voice for your language yet, so radio calls use your phone's voice.": "아직 사용 중인 언어의 파일럿 음성이 없어 무전 안내는 휴대폰 음성을 사용합니다.",
+ "A male pilot voice for radio calls (Cockpit and Rally directions, hazard and camera calls), made on your phone so it works offline. Without it, radio calls use your phone's voice.": "무전 안내(Cockpit·Rally 길안내, 위험 및 카메라 알림)용 남성 파일럿 음성으로, 휴대폰에서 생성되어 오프라인에서도 작동합니다. 없으면 무전 안내는 휴대폰 음성을 사용합니다.",
+ "Download ({0})": "다운로드 ({0})",
+ "Download failed. Check your connection and try again.": "다운로드에 실패했습니다. 연결을 확인하고 다시 시도하세요.",
+ "Best on Wi-Fi.": "Wi-Fi에서 받는 것을 권장합니다.",
+ "Downloaded ({0})": "다운로드됨 ({0})",
+ "Radio check": "무전 점검",
+ "Radio check. Blacktop, reading you loud and clear.": "무전 점검. Blacktop, 크고 선명하게 들린다.",
+ "Hugging Face, cdnjs, jsDelivr": "Hugging Face, cdnjs, jsDelivr",
+ "— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.": "— 파일럿 음성 다운로드, 설정에서 다운로드할 때만 해당합니다(IP 주소가 전달됩니다). 이후 음성은 휴대폰에서 실행되며, 말하는 내용은 어디에도 전송되지 않습니다."
 }
