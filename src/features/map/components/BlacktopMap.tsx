@@ -369,6 +369,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const threeDRef = useRef(false);
   const hasFollowedUserRef = useRef(false);
   const lastInteractionAtRef = useRef(Date.now());
+  // Rider panned the map with no route set: don't snap back until they tap locate.
+  const freePanRef = useRef(false);
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
     userLocationRef.current = userLocation;
@@ -465,19 +467,24 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       // Compass only turns with the bearing: with visualizePitch it also squashed in 3D as
       // the map tilted (orbiting a pin, 3D mode), which looked broken. Tilt has its own button.
       instance.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
-      instance.addControl(
-        new maplibregl.GeolocateControl({
-          positionOptions: { enableHighAccuracy: true },
-          trackUserLocation: true,
-          // Blacktop draws the rider's own marker; MapLibre's blue dot sat on top of it for good.
-          showUserLocation: false,
-          showAccuracyCircle: false,
-        }),
-        "top-right",
-      );
+      const geolocate = new maplibregl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        // Blacktop draws the rider's own marker; MapLibre's blue dot sat on top of it for good.
+        showUserLocation: false,
+        showAccuracyCircle: false,
+      });
+      instance.addControl(geolocate, "top-right");
+      // The locate button hands the camera back to GPS follow after free panning.
+      const resumeFollow = () => { freePanRef.current = false; };
+      geolocate.on("geolocate", resumeFollow);
+      geolocate.on("trackuserlocationstart", resumeFollow);
 
       const markInteraction = (e: { originalEvent?: unknown }) => {
-        if (e.originalEvent) lastInteractionAtRef.current = Date.now();
+        if (!e.originalEvent) return;
+        lastInteractionAtRef.current = Date.now();
+        // No route: free panning stays put (no auto snap-back); the locate button re-centres.
+        if (!destinationRef.current) freePanRef.current = true;
       };
       instance.on("dragstart", markInteraction);
       instance.on("zoomstart", markInteraction);
