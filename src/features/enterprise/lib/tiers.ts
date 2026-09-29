@@ -1,11 +1,8 @@
 import { tr } from '@/lib/i18n';
 import { enterpriseTiers, type EnterpriseRole, type EnterpriseTier, type EnterpriseTierInfo } from '../types';
 
-/**
- * Where enterprise enquiries go. Placeholder until the real inbox exists:
- * change it here only (the Doorway and the package deck both use it).
- */
-export const ENTERPRISE_CONTACT_EMAIL = 'enterprise@blacktoplive.com';
+/** Where enterprise enquiries go (the Doorway's Inquire emails). Change it here only. */
+export const ENTERPRISE_CONTACT_EMAIL = 'blacktopliveenterprise@gmail.com';
 
 /** Short badge name (translated; only the word Blacktop stays as it is). */
 export function tierName(tier: EnterpriseTier): string {
