@@ -894,6 +894,16 @@
   50%       { transform: scale(1.3); opacity: 1; }
 }
 
+/* Anti-theft alarm: the red wash that flashes while the siren sounds. */
+@keyframes alarm-flash {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.2; }
+}
+.alarm-flash { animation: alarm-flash 0.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .alarm-flash { animation: none; }
+}
+
 /* ------------------------------------------------------------------
    Car Display mode — wired Android phone mirroring to a head unit.
    Landscape-only: scales the ride HUD up and strips secondary chrome

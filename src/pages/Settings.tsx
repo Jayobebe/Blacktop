@@ -17,8 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock
 } from 'lucide-react';
+import { clearAlarmPattern, hasAlarmPattern } from '@/features/alarm';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,7 @@ export default function Settings() {
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const [blockedRiders, setBlockedRiders] = useState(() => getBlocked().length);
+  const [alarmPattern, setAlarmPattern] = useState(() => hasAlarmPattern());
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const exp = useExperience();
@@ -657,6 +659,56 @@ export default function Settings() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Anti-theft alarm */}
+            <div className="pt-4 border-t border-border/30">
+              <div className="flex items-center gap-2 mb-1">
+                <Lock className="w-4 h-4 text-accent" />
+                <p className="text-xs text-muted-foreground">{tr("Anti-theft alarm")}</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground/80 mb-3">
+                {tr("Lock the screen with a pattern while you're parked. If the vehicle is moved or knocked it warns you, then sounds a siren until the pattern is drawn. A running ride is paused.")}
+              </p>
+              <p className="text-sm font-medium mb-1.5">{tr("Sensitivity")}</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  ['low', tr("Low")],
+                  ['normal', tr("Normal")],
+                  ['high', tr("High")],
+                ] as const).map(([level, label]) => (
+                  <button
+                    key={level}
+                    onClick={() => updateSetting('alarmSensitivity', level)}
+                    className={cn(
+                      'h-9 rounded-lg border text-xs font-semibold',
+                      settings.alarmSensitivity === level ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-3 mt-3">
+                <div className="pr-2">
+                  <p className="text-sm font-medium">{tr("Unlock pattern")}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {alarmPattern ? tr("Set. Reset it to draw a new one the next time you arm.") : tr("You'll draw one the first time you arm the alarm.")}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!alarmPattern}
+                  onClick={() => {
+                    clearAlarmPattern();
+                    setAlarmPattern(false);
+                    toast(tr("Unlock pattern reset"));
+                  }}
+                >
+                  {tr("Reset")}
+                </Button>
               </div>
             </div>
           </div>

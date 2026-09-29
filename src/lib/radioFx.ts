@@ -327,3 +327,108 @@ export function playRadioVoice(buf: AudioBuffer): { stop: () => void; done: Prom
     done,
   };
 }
+
+// ---- Anti-theft alarm --------------------------------------------------------
+
+/**
+ * Keep the context awake while the alarm is armed: the siren has to be able to
+ * start with nobody touching the screen (iOS won't start audio without a
+ * gesture). Returns the release.
+ */
+export function holdAudio(): () => void {
+  const c = acquire();
+  if (!c) return () => {};
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    release(0);
+  };
+}
+
+/** Alarm chirps, through the radio chain like every other beep. */
+export function alarmChirp(kind: 'arm' | 'disarm' | 'nudge' | 'entry') {
+  const c = acquire();
+  if (!c) return;
+  let length = 0.3;
+  if (kind === 'arm') {
+    tone(c, 0, 880, 0.09, 0.22);
+    tone(c, 0.13, 1320, 0.12, 0.22);
+    length = 0.3;
+  } else if (kind === 'disarm') {
+    tone(c, 0, 1320, 0.09, 0.2);
+    tone(c, 0.13, 880, 0.14, 0.2);
+  } else if (kind === 'nudge') {
+    tone(c, 0, 1500, 0.07, 0.24);
+    length = 0.12;
+  } else {
+    tone(c, 0, 1800, 0.06, 0.28);
+    tone(c, 0.1, 1800, 0.06, 0.28);
+    length = 0.2;
+  }
+  release(length * 1000 + 100);
+}
+
+/**
+ * The siren: a loud rising-and-falling two-oscillator wail straight to the
+ * speaker (not through the narrow comms band, it needs every decibel), behind
+ * a limiter so it doesn't clip. Runs until the returned stop is called.
+ */
+export function alarmSiren(): () => void {
+  const c = acquire();
+  if (!c) return () => {};
+  const t = c.currentTime;
+  const out = c.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.9, t + 0.08);
+  const limiter = c.createDynamicsCompressor();
+  limiter.threshold.value = -4;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.002;
+  limiter.release.value = 0.1;
+  out.connect(limiter).connect(c.destination);
+
+  const a = c.createOscillator();
+  a.type = 'sawtooth';
+  a.frequency.value = 1050;
+  const b = c.createOscillator();
+  b.type = 'square';
+  b.frequency.value = 1060;
+  const mixA = c.createGain();
+  mixA.gain.value = 0.55;
+  const mixB = c.createGain();
+  mixB.gain.value = 0.35;
+  a.connect(mixA).connect(out);
+  b.connect(mixB).connect(out);
+  // The wail: both sweep ±450 Hz about once a second.
+  const lfo = c.createOscillator();
+  lfo.type = 'triangle';
+  lfo.frequency.value = 0.95;
+  const depth = c.createGain();
+  depth.gain.value = 450;
+  lfo.connect(depth);
+  depth.connect(a.frequency);
+  depth.connect(b.frequency);
+  a.start(t);
+  b.start(t);
+  lfo.start(t);
+
+  let stopped = false;
+  return () => {
+    if (stopped) return;
+    stopped = true;
+    const now = c.currentTime;
+    out.gain.cancelScheduledValues(now);
+    out.gain.setValueAtTime(out.gain.value, now);
+    out.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    for (const o of [a, b, lfo]) {
+      try {
+        o.stop(now + 0.15);
+      } catch {
+        /* already stopped */
+      }
+    }
+    release(200);
+  };
+}

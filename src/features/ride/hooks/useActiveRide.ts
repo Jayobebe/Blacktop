@@ -842,6 +842,41 @@ export function attachRideToConvoy(convoyId: string | null) {
 }
 
 /**
+ * Pause or resume the running ride from outside the ride screen (the
+ * anti-theft alarm pauses it while the vehicle is parked and locked). Same as
+ * the ride screen's pause button.
+ */
+export function setActiveRidePaused(paused: boolean) {
+  if (paused && !isPaused) {
+    pauseRideTracking(false);
+  } else if (!paused && isPaused) {
+    // Resuming from pause - restart GPS (and convoy sync, if the
+    // inactivity guard had stopped it)
+    if (pausedAtMs) {
+      totalPausedTime += Date.now() - pausedAtMs;
+    }
+    isPaused = false;
+    pausedAtMs = null;
+    stationaryCount = 0; // Reset throttle counter
+    resetInactivityTracking();
+    lastMovementAtMs = Date.now();
+    startRideWatchdog();
+    startGpsWatch();
+    if (!convoySyncTimeout && currentConvoyId && rideState.isConvoyMode) {
+      startConvoySync();
+    }
+    if (!worldSyncTimeout) startWorldSync();
+    setRideState(prev => ({ ...prev, isPaused: false, inactivityTimedOut: false }));
+    console.log('[Ride] Resumed - GPS restarted, total paused time:', totalPausedTime);
+  }
+}
+
+/** Whether a ride is running and paused, without useActiveRide's side effects. */
+export function getActiveRideStatus(): { isActive: boolean; isPaused: boolean; currentSpeed: number } {
+  return { isActive: rideState.isActive, isPaused, currentSpeed: rideState.currentSpeed };
+}
+
+/**
  * Read-only: whether a ride is on and its current speed, without the side
  * effects useActiveRide runs (it resumes GPS / convoy sync for a restored ride).
  * For app-wide listeners like the backdrop.
@@ -1121,30 +1156,7 @@ export function useActiveRide(convoyId?: string | null) {
 
 
 
-  const setRidePaused = useCallback((paused: boolean) => {
-    if (paused && !isPaused) {
-      pauseRideTracking(false);
-    } else if (!paused && isPaused) {
-      // Resuming from pause - restart GPS (and convoy sync, if the
-      // inactivity guard had stopped it)
-      if (pausedAtMs) {
-        totalPausedTime += Date.now() - pausedAtMs;
-      }
-      isPaused = false;
-      pausedAtMs = null;
-      stationaryCount = 0; // Reset throttle counter
-      resetInactivityTracking();
-      lastMovementAtMs = Date.now();
-      startRideWatchdog();
-      startGpsWatch();
-      if (!convoySyncTimeout && currentConvoyId && rideState.isConvoyMode) {
-        startConvoySync();
-      }
-      if (!worldSyncTimeout) startWorldSync();
-      setRideState(prev => ({ ...prev, isPaused: false, inactivityTimedOut: false }));
-      console.log('[Ride] Resumed - GPS restarted, total paused time:', totalPausedTime);
-    }
-  }, []);
+  const setRidePaused = useCallback((paused: boolean) => setActiveRidePaused(paused), []);
 
   // Update lean angle during ride (called from components using useLeanAngle)
   const updateLeanAngle = useCallback((currentLean: number, maxLeanLeft: number, maxLeanRight: number) => {

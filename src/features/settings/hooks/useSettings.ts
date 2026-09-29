@@ -57,6 +57,8 @@ export interface AppSettings {
   navVoiceStyle: 'standard' | 'cockpit' | 'rally';
   /** Speak hazard warnings when riding up to a report (the banner shows either way). One switch for every hazard type. */
   hazardVoiceEnabled: boolean;
+  /** Anti-theft alarm: how much movement of the parked vehicle it takes. */
+  alarmSensitivity: 'low' | 'normal' | 'high';
   /**
    * Who a rescue call reaches (the rescue button, and auto-rescue after a crash):
    * the convoy you're riding with, your crew, your Discord, and opted-in riders
@@ -133,6 +135,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   navVoiceEnabled: true,
   navVoiceStyle: 'standard',
   hazardVoiceEnabled: true,
+  alarmSensitivity: 'normal',
   rescueToConvoy: true,
   rescueToCrew: true,
   rescueToDiscord: true,
@@ -163,6 +166,8 @@ export function useSettings() {
     ...DEFAULT_SETTINGS,
     ...storedSettings,
   };
+
+  if (!['low', 'normal', 'high'].includes(settings.alarmSensitivity)) settings.alarmSensitivity = 'normal';
 
   // Re-clamp on every read regardless of how the value got persisted.
   settings.autoRescueGThreshold = clamp(

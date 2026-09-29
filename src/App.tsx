@@ -22,6 +22,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { setBackdropCruise, surgeBackdrop } from "@/lib/backdropMotion";
 import { MapLoading } from "@/components/MapLoading";
 import { HazardAlerts } from "@/features/hazards";
+import { AlarmOverlay } from "@/features/alarm";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
@@ -280,6 +281,8 @@ const App = () => {
                 )}
                 <RadioOverlay />
                 <FloatingRadioLayer />
+                {/* Anti-theft lock: over everything, the map included, while armed. */}
+                <AlarmOverlay />
 
               </BrowserRouter>
             </TooltipProvider>
