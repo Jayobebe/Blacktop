@@ -175,10 +175,10 @@ export function PitView() {
   if (!token) {
     return (
       <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
-        <PageHeader title={tr("Track Pack")} subtitle={tr("Pit crew")} backTo="/" />
+        <PageHeader title={tr("Track Day")} subtitle={tr("Pit crew")} backTo="/" />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
           <ScanLine className="w-12 h-12 text-accent" />
-          <p className="text-sm text-muted-foreground max-w-xs">{tr("Scan the QR on your racer's Track Pack screen to get their live timing and a pit board.")}</p>
+          <p className="text-sm text-muted-foreground max-w-xs">{tr("Scan the QR on your racer's Track Day screen to get their live timing and a pit board.")}</p>
           <Button onClick={scan} className="h-12 px-6 gap-2">
             <ScanLine className="w-5 h-5" />{" "}{tr("Scan racer QR")}
           </Button>

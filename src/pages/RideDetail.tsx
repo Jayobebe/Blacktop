@@ -185,7 +185,7 @@ export default function RideDetail() {
           >
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-[#3987e5]" />
-              <p className="text-sm font-bold flex-1">{tr("Track Pack ·")}{" "}{ride.track.trackName}</p>
+              <p className="text-sm font-bold flex-1">{tr("Track Day ·")}{" "}{ride.track.trackName}</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3">

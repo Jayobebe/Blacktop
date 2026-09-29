@@ -286,7 +286,7 @@ export default function DemoShowcase() {
     },
     {
       id: 'track-pack',
-      title: tr("Track Pack"),
+      title: tr("Track Day"),
       subtitle: tr("Lap Timing With Your Pit Crew"),
       description: tr("Pick a circuit from the library, build your own from the map or with a GPS lap, place the start/finish and sectors with a chase cam, then ready up: the timer starts itself at launch. Your pit crew scans your QR for live timing and a pit board."),
       icon: Zap,

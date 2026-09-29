@@ -64,7 +64,7 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   },
   {
     icon: Timer,
-    title: tr("Track Pack"),
+    title: tr("Track Day"),
     body: tr("Lap timing for track days: walk or draw the track, set start/finish and sector lines, and time every lap. A pit crew phone links by QR for live timing, a track map and a pit board. Afterwards, compare laps with speed, lean and G traces and racing lines, then export as CSV or GPX."),
   },
   {

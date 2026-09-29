@@ -96,7 +96,7 @@ export default function Terms() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold">{tr("Track Pack")}</h2>
+          <h2 className="text-base font-semibold">{tr("Track Day")}</h2>
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li>{tr("Only use lap timing on a closed circuit or private ground with the owner's permission, never on public roads.")}</li>
             <li>{tr("Lap and sector times come from your phone's GPS. They are approximate and not official timing.")}</li>

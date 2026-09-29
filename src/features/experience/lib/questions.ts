@@ -164,12 +164,12 @@ export const CARE_QUESTIONS: CareQuestion[] = [
   {
     id: 'track',
     icon: Zap,
-    label: tr("Track Pack"),
+    label: tr("Track Day"),
     question: () => tr("Do you do track days?"),
     pitch: () =>
       tr("Lap and sector timing from your phone, live timing and a pit board for your pit crew on their phone, and lap-by-lap traces after every session."),
     gets: () => [tr("Lap & sector timing"), tr("Pit crew link"), tr("Pit board messages"), tr("Lap traces & export")],
-    hides: () => tr("No Track Pack button on Home"),
+    hides: () => tr("No Track Day button on Home"),
     features: ['trackPackEnabled'],
     applies: (c) => c.motorised,
     recommendedFor: ['performance'],

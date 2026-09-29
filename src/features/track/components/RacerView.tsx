@@ -369,7 +369,7 @@ export function RacerView() {
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
       <PageHeader
-        title={tr("Track Pack")}
+        title={tr("Track Day")}
         subtitle={tr("Racer")}
         backTo="/"
         right={

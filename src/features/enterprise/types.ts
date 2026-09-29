@@ -61,7 +61,7 @@ export interface EnterpriseTierFeature {
 
 export interface EnterpriseTierInfo {
   id: EnterpriseTier;
-  /** Package name: translated, except the word Blacktop. */
+  /** Package name: translated, except the words Blacktop and TrackPack. */
   name: string;
   /** Who it's for. */
   target: string;
@@ -128,13 +128,16 @@ export function enterpriseTiers(): EnterpriseTierInfo[] {
     },
     {
       id: 'track_pro',
-      name: tr("Track Pack Pro"),
-      target: tr("Club race teams, track day organisers, paddock coaching."),
-      tagline: tr("Live pit-wall console, direct helmet pit calls, and digital flagging."),
+      // A product name like Blacktop: one word, not translated.
+      name: 'TrackPack',
+      target: tr("Race organisers, racers, pit crews and spectators: from club race meetings and track days to paddock coaching."),
+      tagline: tr("Run an entire race on one platform: timing, race control, the pit wall and live coverage for spectators."),
       features: [
+        { title: tr("Race Organiser Console"), detail: tr("Entry lists, grid, sessions, the start and results in one place: a whole race meeting can be run on TrackPack.") },
         { title: tr("Live Pit-Wall Telemetry"), detail: tr("Real-time sector times, live delta, lean angle and friction-circle G-force streamed to pit crew screens.") },
         { title: tr("Cockpit Pit Board Calls"), detail: tr("Audio calls (\"Box box\", \"Push now\", \"Delta -0.4\") spoken straight into the rider's helmet.") },
         { title: tr("Virtual Race Control & Flagging"), detail: tr("Instant digital yellow, red and chequered flags on every active cockpit.") },
+        { title: tr("Spectator Live Timing"), detail: tr("Live positions on the circuit map, lap times and the running order on any spectator's phone.") },
         { title: tr("Team Ghost & Sector Analysis"), detail: tr("Compare telemetry against teammates or benchmark laps.") },
       ],
     },
@@ -144,7 +147,7 @@ export function enterpriseTiers(): EnterpriseTierInfo[] {
       target: tr("Premier multi-discipline teams, factory racing divisions and global mobility brands."),
       tagline: tr("The complete, unrestricted Blacktop master suite."),
       features: [
-        { title: tr("Every module"), detail: tr("Unrestricted access to every enterprise module (Track Pack Pro, Showroom, Workshop, Academy and Touring).") },
+        { title: tr("Every module"), detail: tr("Unrestricted access to every enterprise module (TrackPack, Showroom, Workshop, Academy and Touring).") },
         { title: tr("Custom branding"), detail: tr("Custom map accents, tailored splash screens and bespoke audio chimes.") },
         { title: tr("Unlimited seats"), detail: tr("Unlimited staff seats, fleet vehicles and guest QR codes.") },
         { title: tr("Priority comms relay"), detail: tr("Dedicated high-priority TURN relay allocation for comms.") },

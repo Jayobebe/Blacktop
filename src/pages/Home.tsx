@@ -508,7 +508,7 @@ export default function Home() {
                           <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <Zap className="w-5 h-5 text-accent" />
                           </div>
-                          <span className="flex-1 text-base font-semibold tracking-tight text-foreground">{tr("Track Pack")}</span>
+                          <span className="flex-1 text-base font-semibold tracking-tight text-foreground">{tr("Track Day")}</span>
                           {trackRoleToggle(false)}
                         </div>
                       )}

@@ -4,7 +4,7 @@ import { enterpriseTiers, type EnterpriseRole, type EnterpriseTier, type Enterpr
 /** Where enterprise enquiries go (the Doorway's Inquire emails). Change it here only. */
 export const ENTERPRISE_CONTACT_EMAIL = 'blacktopliveenterprise@gmail.com';
 
-/** Short badge name (translated; only the word Blacktop stays as it is). */
+/** Short badge name (translated; only the words Blacktop and TrackPack stay as they are). */
 export function tierName(tier: EnterpriseTier): string {
   switch (tier) {
     case 'academy':
@@ -16,7 +16,7 @@ export function tierName(tier: EnterpriseTier): string {
     case 'touring':
       return tr("Touring");
     case 'track_pro':
-      return tr("Track Pack Pro");
+      return 'TrackPack';
     case 'billion':
       return tr("Billion");
   }

@@ -217,7 +217,9 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              void connect(parseEnterpriseCode(code));
+              // Codes aren't open yet: nothing is sent, the Coming soon stamp pops.
+              // (When they open, this goes back to connect(parseEnterpriseCode(code)).)
+              pulseSoon();
             }}
           >
             <Input
@@ -230,7 +232,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
               className="h-12 rounded-xl font-mono tracking-widest uppercase"
               aria-label={tr("Enterprise code")}
             />
-            <Button type="submit" className="h-12 rounded-xl px-4" disabled={busy || code.trim().length < 6} aria-label={tr("Connect")}>
+            <Button type="submit" className="h-12 rounded-xl px-4" disabled={busy} aria-label={tr("Connect")}>
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
             </Button>
           </form>
