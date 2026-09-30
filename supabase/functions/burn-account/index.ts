@@ -38,14 +38,33 @@ Deno.serve(async (req) => {
     // Always deletes the caller's own account only — userId comes from the
     // verified JWT, never from request input.
     //
-    // Database rows go with the user (every table's user column cascades from
-    // auth.users: profiles, convoys, cards, crews, push, hazard reports and
-    // votes…). Two things don't cascade, so they go first:
+    // Database rows go with the user (almost every table's user column cascades
+    // from auth.users: profiles, cards, crews, push, hazard reports and
+    // votes…). What doesn't cascade goes first:
     //   - files in storage (card photos live under `<userId>/`);
     //   - rate-limit counters (keyed by user id, no foreign key).
     await burnStorageFolder(admin, 'card-photos', userId)
     const { error: rlErr } = await admin.from('edge_rate_limits').delete().eq('user_id', userId)
     if (rlErr) console.warn('[BURN] Rate-limit rows not removed', rlErr)
+
+    // Locations that would outlive the account, removed while we can still tell
+    // they're this rider's (the account delete would only blank the link):
+    //   - a crew's Blacktank meeting spot this rider placed (set_by is SET NULL);
+    //   - convoys they lead (leader_id is SET NULL, the destination would stay);
+    //     deleting one cascades to its members, waypoints and messages;
+    //   - world_locations also cascades from auth.users, but goes here too.
+    // Any failure stops the burn so it can be retried, never half-done.
+    for (const [table, column] of [
+      ['blacktank_places', 'set_by'],
+      ['convoys', 'leader_id'],
+      ['world_locations', 'user_id'],
+    ] as const) {
+      const { error } = await admin.from(table).delete().eq(column, userId)
+      if (error) {
+        console.error(`[BURN] ${table} rows not removed`, error)
+        return json({ error: 'Deletion failed' }, 500)
+      }
+    }
 
     const { error: deleteErr } = await admin.auth.admin.deleteUser(userId)
     if (deleteErr) {

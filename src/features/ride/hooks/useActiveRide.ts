@@ -8,6 +8,7 @@ import { App } from '@capacitor/app';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { useRideHistory } from './useRideHistory';
+import { keepPeakTelemetry } from '../lib/telemetryPrivacy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
@@ -577,7 +578,8 @@ async function syncConvoyStats() {
     .from('convoy_members')
     .update({
       current_speed: Math.round(rideState.currentSpeed),
-      top_speed: Math.round(rideState.maxSpeed),
+      // Public Road Privacy: the peak stays on the phone (0 for the convoy, so no Speed Demon from it).
+      top_speed: keepPeakTelemetry(false) ? Math.round(rideState.maxSpeed) : 0,
       distance_driven: Number(rideState.distance.toFixed(2)),
       current_lat: lastPosition?.lat,
       current_lng: lastPosition?.lng,

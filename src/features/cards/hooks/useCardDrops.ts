@@ -6,6 +6,7 @@ import { useCrew } from '@/features/crew/useCrew';
 import { nudgePush } from '@/features/notifications';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
+import { keepPeakTelemetry } from '@/features/ride';
 import type { VehicleCardData } from './useVehicleCards';
 import type { SharedCardPayload } from '../lib/cardCodec';
 import { grantCollectCopy } from '../lib/dropEconomy';
@@ -201,7 +202,11 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
     }) => {
       if (!user?.id) throw new Error('Not signed in');
       const pl = args.card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
-      const s = args.card.stats;
+      // Public Road Privacy: peaks never leave the phone while it's on, so a
+      // planted card carries zeros for them (as shared cards do, cardCodec.ts).
+      const s = keepPeakTelemetry(false)
+        ? args.card.stats
+        : { ...args.card.stats, topSpeedMph: 0, maxLean: 0, maxGForce: 0 };
       const { data, error } = await supabase.from('card_drops').insert({
         owner_id: user.id,
         owner_name: profile?.name || 'Rider',
