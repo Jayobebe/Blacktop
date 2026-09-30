@@ -12,10 +12,11 @@ export interface LogRide {
   distance: number; // miles
   duration: number; // seconds
   averageSpeed: number;
-  maxSpeed: number;
-  maxLeanLeft: number;
-  maxLeanRight: number;
-  maxGForce?: number;
+  /** Peaks are null on rides a previous owner handed over with Public Road Privacy on: shown as "--". */
+  maxSpeed: number | null;
+  maxLeanLeft: number | null;
+  maxLeanRight: number | null;
+  maxGForce?: number | null;
   earnedBadges?: BadgeType[];
   /** Time-attack result, if the ride was one. */
   challenge?: { vehicleName: string; ownerName: string; role: 'set' | 'attempt'; timeSec: number; targetSec: number | null; result?: string };

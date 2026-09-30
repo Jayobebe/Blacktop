@@ -11,15 +11,16 @@ const MINI_MAP_SIZE = 300;
 
 interface OverlayStats {
   speed: number;
-  maxSpeed: number;
+  /** Peaks are null while Public Road Privacy is on: drawn as "--". */
+  maxSpeed: number | null;
   distance: number;
   duration: number;
   leanAngle: number;
-  maxLean: number;
+  maxLean: number | null;
   gForce: number;
-  maxGForce: number;
+  maxGForce: number | null;
   /** Friction circle (lib/gForceVector); drawn instead of the old dial when present. */
-  gVector?: { lateral: number; longitudinal: number; envelope: number[]; max: GMax };
+  gVector?: { lateral: number; longitudinal: number; envelope: number[]; max: GMax; hidePeaks?: boolean };
   // Live rider position + heading so the mini-map (when enabled) can centre
   // the map on the rider and rotate to their direction of travel.
   lat: number | null;
@@ -139,10 +140,13 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     ctx.fillText(tr("MAX SPEED"), 55, 45);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 32px monospace';
-    ctx.fillText(`${Math.round(stats.maxSpeed)}`, 55, 65);
-    ctx.font = '16px system-ui';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillText(speedLabel, 130, 72);
+    // "--" (PEAK_HIDDEN) while Public Road Privacy is on.
+    ctx.fillText(stats.maxSpeed == null ? '--' : `${Math.round(stats.maxSpeed)}`, 55, 65);
+    if (stats.maxSpeed != null) {
+      ctx.font = '16px system-ui';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.fillText(speedLabel, 130, 72);
+    }
 
     // Top Right - Max Lean (only if ride has lean data)
     if (showLean) {
@@ -152,7 +156,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       ctx.fillText(tr("MAX LEAN"), width - 55, 45);
       ctx.fillStyle = 'white';
       ctx.font = 'bold 32px monospace';
-      ctx.fillText(`${Math.round(stats.maxLean)}°`, width - 55, 65);
+      ctx.fillText(stats.maxLean == null ? '--' : `${Math.round(stats.maxLean)}°`, width - 55, 65);
       ctx.textAlign = 'left';
     }
 

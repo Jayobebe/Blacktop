@@ -10,10 +10,12 @@ import { weekKey, weekStart } from './challenges';
  * told when they're passed on the board or a challenge is decided.
  */
 
+// Peaks (top speed, lean, and the corner score, which comes from lean) are null
+// while Public Road Privacy is on: the boards show "--" and don't rank them.
 export interface CrewTotals {
   total_distance: number;
-  top_speed: number;
-  max_lean: number;
+  top_speed: number | null;
+  max_lean: number | null;
   ride_count: number;
   hit_heavy: number;
   petrol_head: number;
@@ -22,9 +24,9 @@ export interface CrewTotals {
 export type WeekStats = {
   distance: number;
   ride_count: number;
-  max_lean: number;
-  corner_score: number;
-  top_speed: number;
+  max_lean: number | null;
+  corner_score: number | null;
+  top_speed: number | null;
   night_rides: number;
   longest_ride: number;
 };
@@ -45,8 +47,8 @@ export function crewTotals(
   const peaks = keepPeakTelemetry(false);
   return {
     total_distance: rides.reduce((s, r) => s + (r.distance || 0), burned.distance),
-    top_speed: peaks ? rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), burned.maxSpeed) : 0,
-    max_lean: peaks ? rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), Math.max(burned.maxLeanLeft, burned.maxLeanRight)) : 0,
+    top_speed: peaks ? rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), burned.maxSpeed) : null,
+    max_lean: peaks ? rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), Math.max(burned.maxLeanLeft, burned.maxLeanRight)) : null,
     ride_count: rides.length + burned.rides,
     hit_heavy: scores['hit-heavy'] ?? 0,
     petrol_head: scores['petrol-head'] ?? 0,
@@ -62,9 +64,9 @@ export function weekStats(rides: RideSession[], now = new Date()): WeekStats {
   return {
     distance: Number(week.reduce((s, r) => s + (r.distance || 0), 0).toFixed(2)),
     ride_count: week.length,
-    max_lean: peaks ? Math.round(Math.max(0, ...week.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)))) : 0,
-    corner_score: cornerScores.length ? Math.round(cornerScores.reduce((s, v) => s + v, 0) / cornerScores.length) : 0,
-    top_speed: peaks ? Math.round(Math.max(0, ...week.map((r) => r.maxSpeed || 0))) : 0,
+    max_lean: peaks ? Math.round(Math.max(0, ...week.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)))) : null,
+    corner_score: !peaks ? null : cornerScores.length ? Math.round(cornerScores.reduce((s, v) => s + v, 0) / cornerScores.length) : 0,
+    top_speed: peaks ? Math.round(Math.max(0, ...week.map((r) => r.maxSpeed || 0))) : null,
     night_rides: week.filter((r) => isNightRide(r.startedAt)).length,
     longest_ride: Number(Math.max(0, ...week.map((r) => r.distance || 0)).toFixed(2)),
   };

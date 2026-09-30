@@ -27,7 +27,8 @@ export function drawGForceCircle(
   cx: number,
   cy: number,
   size: number,
-  g: { lateral: number; longitudinal: number; envelope: number[]; max: GMax },
+  /** hidePeaks (Public Road Privacy): the four peak figures read "--", as in GForceCircle. */
+  g: { lateral: number; longitudinal: number; envelope: number[]; max: GMax; hidePeaks?: boolean },
   accent: string,
   labels: { left: string; right: string; brake: string; accel: string },
 ) {
@@ -87,7 +88,7 @@ export function drawGForceCircle(
   ctx.fill();
 
   // Figures and captions
-  const fmt = (v: number) => (Math.max(0, v) + 1e-9).toFixed(1);
+  const fmt = (v: number) => (g.hidePeaks ? '--' : (Math.max(0, v) + 1e-9).toFixed(1));
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = 'white';
   ctx.font = `600 ${22 * u}px monospace`;

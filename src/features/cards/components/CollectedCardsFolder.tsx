@@ -466,7 +466,8 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
       </div>
 
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
-        <Stat icon={Gauge} label={tr("Top speed")} value={peaksHidden ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden ? '' : getSpeedLabel(settings.speedUnit)} />
+        {/* "--" when this rider hides peaks, or the card's owner kept them private (null). */}
+        <Stat icon={Gauge} label={tr("Top speed")} value={peaksHidden || card.s.topSpeedMph == null ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden || card.s.topSpeedMph == null ? '' : getSpeedLabel(settings.speedUnit)} />
         <Stat icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
         <Stat icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
         <Stat icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />

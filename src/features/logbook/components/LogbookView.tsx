@@ -29,8 +29,8 @@ import { addLogNote, getInheritedLog, setInheritedLog, toLogRide, useInheritedLo
 import { SCAN_WINDOW_MS, startHandover } from '../lib/transfer';
 import type { LogNote, LogRide, LogbookPackage } from '../types';
 import { passportFor } from '../lib/passport';
-import { tr } from '@/lib/i18n';
-import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
+import { tr } from '@/lib/i18n';
+import { keepPeakTelemetry, PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 const RIDES_PER_PAGE = 7;
 /** Rough line budget of a page, used to flow notes onto as many pages as they need. */
@@ -126,7 +126,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     return acc;
   }, {});
   const longest = allRides.reduce<LogRide | null>((m, r) => (!m || r.distance > m.distance ? r : m), null);
-  const fastest = allRides.reduce<LogRide | null>((m, r) => (!m || r.maxSpeed > m.maxSpeed ? r : m), null);
+  const fastest = allRides.reduce<LogRide | null>((m, r) => (r.maxSpeed != null && (!m || r.maxSpeed > m.maxSpeed) ? r : m), null);
 
   // ── pages ────────────────────────────────────────────────────────────────
   const pages: ((n: number, side: 'l' | 'r') => React.ReactNode)[] = [];
@@ -178,9 +178,10 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <Row label={tr("Rides")} value={stats.totalRides} />
       <Row label={tr("Distance")} value={dist(stats.totalDistanceMi)} />
       <Row label={tr("Riding time")} value={formatDuration(stats.totalDurationSec)} />
-      <Row label={tr("Top speed")} value={spd(stats.topSpeedMph)} />
-      <Row label={tr("Lean L / R")} value={peaksHidden ? PEAK_HIDDEN : `${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
-      <Row label={tr("Peak G")} value={stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : '—'} />
+      {/* "--" while Public Road Privacy is on, and where no owner shared the peak (0 over real rides). */}
+      <Row label={tr("Top speed")} value={peaksHidden || !stats.topSpeedMph ? PEAK_HIDDEN : spd(stats.topSpeedMph)} />
+      <Row label={tr("Lean L / R")} value={peaksHidden || !(stats.maxLeanLeft || stats.maxLeanRight) ? PEAK_HIDDEN : `${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
+      <Row label={tr("Peak G")} value={peaksHidden ? PEAK_HIDDEN : stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : '—'} />
       <Row label={tr("Longest ride")} value={dist(stats.longestRideMi)} />
       <Row label={tr("Convoy rides")} value={allRides.filter((r) => r.isConvoyRide).length} />
     </Page>
@@ -275,7 +276,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
                 <div className="flex justify-between gap-1 font-mono text-[8px] text-[#2b2118]/65">
                   <span className="truncate">{r.name ? fmtDate(r.startedAt) : r.owner}{r.isConvoyRide ? tr(" · convoy") : ''}</span>
                   {/* No max speed on rides kept under Public Road Privacy. */}
-                  <span>{formatDuration(r.duration)} · {peaksHidden ? PEAK_HIDDEN : spd(r.maxSpeed)}</span>
+                  <span>{formatDuration(r.duration)} · {peaksHidden || r.maxSpeed == null ? PEAK_HIDDEN : spd(r.maxSpeed)}</span>
                 </div>
               </div>
             ))}
@@ -409,7 +410,14 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   const beginHandover = () => {
     const prev = getInheritedLog(bike.id);
-    const myEntries = rides.filter((r) => r.bikeId === bike.id && r.endedAt).map((r) => toLogRide(r, myName));
+    // Public Road Privacy: peaks don't leave the phone, not even to the next owner (they read "--").
+    const sharePeaks = keepPeakTelemetry(false);
+    const myEntries = rides
+      .filter((r) => r.bikeId === bike.id && r.endedAt)
+      .map((r) => toLogRide(r, myName))
+      .map((r) => (sharePeaks ? r : { ...r, maxSpeed: null, maxLeanLeft: null, maxLeanRight: null, maxGForce: null }));
+    const burned = burnedAggregate(burnedTotals, bike.id);
+    const myArchived = sharePeaks ? burned : { ...burned, maxSpeed: 0, maxLeanLeft: 0, maxLeanRight: 0, maxGForce: 0 };
     const pkg: LogbookPackage = {
       v: 1,
       bike: {
@@ -423,7 +431,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       log: {
         owners: [...(prev?.owners ?? []), { name: myName, from: bike.createdAt, to: Date.now() }],
         rides: [...(prev?.rides ?? []), ...myEntries],
-        archived: mergeAggregates(prev?.archived ?? emptyAggregate(), burnedAggregate(burnedTotals, bike.id)),
+        archived: mergeAggregates(prev?.archived ?? emptyAggregate(), myArchived),
         passport: prev?.passport ?? passportFor(bike.id),
         notes: prev?.notes ?? [],
       },

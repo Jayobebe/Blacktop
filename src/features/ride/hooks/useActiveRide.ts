@@ -578,8 +578,8 @@ async function syncConvoyStats() {
     .from('convoy_members')
     .update({
       current_speed: Math.round(rideState.currentSpeed),
-      // Public Road Privacy: the peak stays on the phone (0 for the convoy, so no Speed Demon from it).
-      top_speed: keepPeakTelemetry(false) ? Math.round(rideState.maxSpeed) : 0,
+      // Public Road Privacy: the peak stays on the phone (null: convoy mates see "--", no Speed Demon from it).
+      top_speed: keepPeakTelemetry(false) ? Math.round(rideState.maxSpeed) : null,
       distance_driven: Number(rideState.distance.toFixed(2)),
       current_lat: lastPosition?.lat,
       current_lng: lastPosition?.lng,

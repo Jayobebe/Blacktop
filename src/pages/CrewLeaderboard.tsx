@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
 import { nudgePush } from '@/features/notifications';
-import { useRideHistory } from '@/features/ride';
+import { PEAK_HIDDEN, useRideHistory } from '@/features/ride';
 import { crewTotals, publishCrewTotals } from '@/features/crew/stats';
 import { useArcadeScores } from '@/features/arcade';
 import { useProfile } from '@/features/profile';
@@ -16,8 +16,9 @@ import { tr } from '@/lib/i18n';
 interface CrewRow {
   display_name: string;
   total_distance: number;
-  top_speed: number;
-  max_lean: number;
+  /** null: that rider keeps peaks private (Public Road Privacy). Shown as "--", ranked last. */
+  top_speed: number | null;
+  max_lean: number | null;
   ride_count: number;
   hit_heavy: number;
   petrol_head: number;
@@ -57,8 +58,11 @@ export default function CrewLeaderboard() {
   });
 
   const active = METRICS.find((m) => m.id === metric)!;
+  // Private peaks (null) go last, unranked.
+  const hidden = (row: CrewRow) => row[metric] == null;
   const sorted = useMemo(
-    () => [...rows].sort((a, b) => Number(b[metric] ?? 0) - Number(a[metric] ?? 0)),
+    () => [...rows].sort((a, b) => Number(hidden(a)) - Number(hidden(b)) || Number(b[metric] ?? 0) - Number(a[metric] ?? 0)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [rows, metric],
   );
 
@@ -113,10 +117,10 @@ export default function CrewLeaderboard() {
                   isMe ? 'border-accent/60 bg-accent/5' : 'border-border/30 bg-card/40'
                 }`}
               >
-                <span className="w-6 text-sm font-bold tabular-nums text-muted-foreground">{i + 1}</span>
+                <span className="w-6 text-sm font-bold tabular-nums text-muted-foreground">{hidden(row) ? '' : i + 1}</span>
                 <span className="flex-1 text-sm truncate">{row.display_name}</span>
                 <span className="text-sm font-bold tabular-nums">
-                  {active.format(Number(row[metric] ?? 0))}
+                  {hidden(row) ? PEAK_HIDDEN : active.format(Number(row[metric]))}
                 </span>
               </li>
             );

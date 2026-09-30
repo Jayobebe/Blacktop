@@ -107,7 +107,8 @@ function toMemberInfo(m: MemberRow, leaderId: string | null | undefined, withSta
     accentColor: m.accent_color || 'orange',
     ...(withStats && {
       currentSpeed: m.current_speed || 0,
-      topSpeed: m.top_speed || 0,
+      // null: that rider keeps peaks private (Public Road Privacy), shown as "--".
+      topSpeed: m.top_speed == null ? null : m.top_speed,
       distanceDriven: m.distance_driven || 0,
       stationaryTime: m.stationary_time || 0,
     }),

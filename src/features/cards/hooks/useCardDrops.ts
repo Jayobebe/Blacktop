@@ -32,9 +32,10 @@ export interface CardDrop {
     totalRides: number;
     totalDistanceMi: number;
     totalDurationSec: number;
-    topSpeedMph: number;
-    maxLean: number;
-    maxGForce: number;
+    /** Peaks are null when the owner keeps them private: shown as "--". */
+    topSpeedMph: number | null;
+    maxLean: number | null;
+    maxGForce: number | null;
   };
   /** Already scanned by this rider (green tick + border). */
   collected: boolean;
@@ -70,9 +71,9 @@ type DropRow = {
   total_rides: number;
   total_distance_mi: number;
   total_duration_sec: number;
-  top_speed_mph: number;
-  max_lean: number;
-  max_g_force: number;
+  top_speed_mph: number | null;
+  max_lean: number | null;
+  max_g_force: number | null;
   collected?: boolean;
   is_own?: boolean;
   challenge_route?: unknown;
@@ -102,9 +103,10 @@ function toDrop(r: DropRow): CardDrop {
       totalRides: Number(r.total_rides) || 0,
       totalDistanceMi: Number(r.total_distance_mi) || 0,
       totalDurationSec: Number(r.total_duration_sec) || 0,
-      topSpeedMph: Number(r.top_speed_mph) || 0,
-      maxLean: Number(r.max_lean) || 0,
-      maxGForce: Number(r.max_g_force) || 0,
+      // null: the owner keeps it private (shown as "--").
+      topSpeedMph: r.top_speed_mph == null ? null : Number(r.top_speed_mph) || 0,
+      maxLean: r.max_lean == null ? null : Number(r.max_lean) || 0,
+      maxGForce: r.max_g_force == null ? null : Number(r.max_g_force) || 0,
     },
     collected: !!r.collected,
     isOwn: !!r.is_own,
@@ -203,10 +205,10 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       if (!user?.id) throw new Error('Not signed in');
       const pl = args.card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
       // Public Road Privacy: peaks never leave the phone while it's on, so a
-      // planted card carries zeros for them (as shared cards do, cardCodec.ts).
+      // planted card stores none (null, read as "--"), as shared cards do (cardCodec.ts).
       const s = keepPeakTelemetry(false)
         ? args.card.stats
-        : { ...args.card.stats, topSpeedMph: 0, maxLean: 0, maxGForce: 0 };
+        : { ...args.card.stats, topSpeedMph: null, maxLean: null, maxGForce: null };
       const { data, error } = await supabase.from('card_drops').insert({
         owner_id: user.id,
         owner_name: profile?.name || 'Rider',

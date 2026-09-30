@@ -22,9 +22,10 @@ export interface SharedCardPayload {
     totalRides: number;
     totalDistanceMi: number;
     totalDurationSec: number;
-    topSpeedMph: number;
-    maxLean: number;
-    maxGForce: number;
+    /** Peaks are null when the owner keeps them private (Public Road Privacy): shown as "--". */
+    topSpeedMph: number | null;
+    maxLean: number | null;
+    maxGForce: number | null;
   };
   /** Capture timestamp (when QR was generated). */
   ts: number;
@@ -64,14 +65,23 @@ function num(n: number | undefined, dp = 1): string {
   return String(Math.round(v * 10 ** dp) / 10 ** dp);
 }
 
+/** A peak in the QR: "-" when it's private (Public Road Privacy), so the card reads "--", not 0. */
+const HIDDEN = '-';
+function peak(n: number | null | undefined, dp = 1): string {
+  return n == null ? HIDDEN : num(n, dp);
+}
+function readPeak(f: string | undefined): number | null {
+  return f === HIDDEN ? null : Number(f) || 0;
+}
+
 export function encodeCard(
   card: VehicleCardData,
   owner?: string,
   photoPath?: string,
   zoom?: number,
 ): string {
-  // Public Road Privacy: a shared card carries no peaks.
-  const s = keepPeakTelemetry(false) ? card.stats : { ...card.stats, topSpeedMph: 0, maxLean: 0, maxGForce: 0 };
+  // Public Road Privacy: a shared card carries no peaks (they read "--").
+  const s = keepPeakTelemetry(false) ? card.stats : { ...card.stats, topSpeedMph: null, maxLean: null, maxGForce: null };
   const pl = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
   const fields = [
     esc(card.bike.id).replace(/-/g, ''),
@@ -82,9 +92,9 @@ export function encodeCard(
     num(s.totalRides, 0),
     num(s.totalDistanceMi),
     num(s.totalDurationSec, 0),
-    num(s.topSpeedMph),
-    num(s.maxLean),
-    num(s.maxGForce, 2),
+    peak(s.topSpeedMph),
+    peak(s.maxLean),
+    peak(s.maxGForce, 2),
     String(Math.round(Date.now() / 1000)),
     esc(photoPath || ''),
     num(pl.xPct),
@@ -116,9 +126,9 @@ export function decodeCard(raw: string): SharedCardPayload | null {
           totalRides: Number(rides) || 0,
           totalDistanceMi: Number(dist) || 0,
           totalDurationSec: Number(dur) || 0,
-          topSpeedMph: Number(top) || 0,
-          maxLean: Number(lean) || 0,
-          maxGForce: Number(g) || 0,
+          topSpeedMph: readPeak(top),
+          maxLean: readPeak(lean),
+          maxGForce: readPeak(g),
         },
         ts: (Number(ts) || 0) * 1000,
         p: photo || undefined,
@@ -160,9 +170,9 @@ export function encodePayload(p: SharedCardPayload): string {
     num(p.s.totalRides, 0),
     num(p.s.totalDistanceMi),
     num(p.s.totalDurationSec, 0),
-    num(p.s.topSpeedMph),
-    num(p.s.maxLean),
-    num(p.s.maxGForce, 2),
+    peak(p.s.topSpeedMph),
+    peak(p.s.maxLean),
+    peak(p.s.maxGForce, 2),
     String(Math.round((p.ts || Date.now()) / 1000)),
     esc(p.p || ''),
     num(pl.xPct),

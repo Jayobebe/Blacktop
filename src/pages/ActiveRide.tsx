@@ -412,17 +412,17 @@ export default function ActiveRide() {
       }
       overlayRecorderRef.current.updateStats({
         speed: rideState.currentSpeed,
-        // Public Road Privacy: the video carries no maxima either.
-        maxSpeed: peaksHidden ? 0 : rideState.maxSpeed,
+        // Public Road Privacy: the video carries no maxima either ("--").
+        maxSpeed: peaksHidden ? null : rideState.maxSpeed,
         distance: rideState.distance,
         duration: rideState.duration,
         leanAngle: rideState.currentLean,
-        maxLean: peaksHidden ? 0 : Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
+        maxLean: peaksHidden ? null : Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
         gForce: gForce.currentG,
         gVector: settings.gForceEnabled
-          ? { lateral: gForce.lateralG, longitudinal: gForce.longitudinalG, envelope: peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope, max: peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax }
+          ? { lateral: gForce.lateralG, longitudinal: gForce.longitudinalG, envelope: peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope, max: peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax, hidePeaks: peaksHidden }
           : undefined,
-        maxGForce: peaksHidden ? 0 : rideState.maxGForce,
+        maxGForce: peaksHidden ? null : rideState.maxGForce,
         lat: last?.lat ?? null,
         lng: last?.lng ?? null,
         heading,
@@ -858,7 +858,7 @@ export default function ActiveRide() {
 
   // Sort members by top speed (highest first) if rankings enabled, otherwise by join time
   const sortedMembers = (settings.showSpeedRankings && settings.speedFocusEnabled) 
-    ? [...convoy.members].sort((a, b) => (b.topSpeed || 0) - (a.topSpeed || 0))
+    ? [...convoy.members].sort((a, b) => (b.topSpeed ?? -1) - (a.topSpeed ?? -1)) // private (null) last
     : convoy.members;
 
   const endRideButton = (
@@ -1414,7 +1414,7 @@ export default function ActiveRide() {
                       {(settings.showSpeedRankings && settings.speedFocusEnabled) && (
                         <div className="text-right flex-shrink-0">
                           <p className="font-mono text-xs font-bold" style={{ color: colorStyles.text }}>
-                            {formatSpeed(member.topSpeed || 0, settings.speedUnit)}
+                            {member.topSpeed == null ? PEAK_HIDDEN : formatSpeed(member.topSpeed, settings.speedUnit)}
                           </p>
                         </div>
                       )}

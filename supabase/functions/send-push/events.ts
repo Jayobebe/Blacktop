@@ -485,6 +485,14 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
 }
 
 function weekLine(c: Challenge, me: Row, rows: Row[], solo: boolean): { line: string; won: boolean } {
+  // A peak this rider keeps private (Public Road Privacy) is null: it reads "--" and can't win.
+  if (me[c.metric] == null) {
+    if (solo) return { line: `${c.title}: --`, won: false }
+    const leader = [...rows].filter((r) => r[c.metric] != null).sort((a, b) => num(b[c.metric]) - num(a[c.metric]))[0]
+    return leader && num(leader[c.metric]) > 0
+      ? { line: `${c.title}: ${clip(str(leader.display_name, 'a crew mate'), 20)} took it (${formatScore(num(leader[c.metric]), c.unit)}), you --`, won: false }
+      : { line: `${c.title}: nobody scored`, won: false }
+  }
   const mine = num(me[c.metric])
   if (solo) {
     const hit = mine >= c.target

@@ -14,9 +14,10 @@ export interface VehicleCardStats {
   totalDistanceMi: number;
   totalDistanceKm: number;
   totalDurationSec: number;
-  topSpeedMph: number;
-  maxLean: number;
-  maxGForce: number;
+  /** null on another rider's card when they keep peaks private (Public Road Privacy): shown as "--". */
+  topSpeedMph: number | null;
+  maxLean: number | null;
+  maxGForce: number | null;
 }
 
 export interface VehicleCardData {

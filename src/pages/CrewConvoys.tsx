@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN } from '@/features/ride';
 
 interface CrewConvoyRow {
   id: string;
@@ -157,7 +158,8 @@ export default function CrewConvoys() {
                       {m.member_name}
                     </span>
                     <span className="text-[11px] text-muted-foreground tabular-nums">
-                      {Math.round(Number(m.top_speed ?? 0))}{" "}{tr("top")}
+                      {/* null: that rider keeps peaks private (Public Road Privacy). */}
+                      {m.top_speed == null ? PEAK_HIDDEN : <>{Math.round(Number(m.top_speed))}{" "}{tr("top")}</>}
                     </span>
                   </li>
                 ))}

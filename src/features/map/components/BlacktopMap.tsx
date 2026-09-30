@@ -1307,7 +1307,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             o: run.ownerName,
             t: (run.tier ?? "bronze") as CardDrop["tier"],
             tl: TIER_LADDER.find((t) => t.id === run.tier)?.label ?? "Bronze",
-            s: { totalRides: 0, totalDistanceMi: 0, totalDurationSec: 0, topSpeedMph: 0, maxLean: 0, maxGForce: 0 },
+            s: { totalRides: 0, totalDistanceMi: 0, totalDurationSec: 0, topSpeedMph: null, maxLean: null, maxGForce: null },
             ts: Date.now(),
           };
       const img = card.p ? await fetchCardPhoto(card.p) : null;

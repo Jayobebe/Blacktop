@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Flag, Sparkles, Timer, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useRideHistory } from '@/features/ride';
+import { PEAK_HIDDEN, useRideHistory } from '@/features/ride';
 import { weekStats, publishWeekStats, type WeekStats } from '@/features/crew/stats';
 import { nudgePush } from '@/features/notifications';
 import { useProfile } from '@/features/profile';
@@ -27,9 +27,10 @@ interface ChallengeRow {
   display_name: string;
   distance: number;
   ride_count: number;
-  max_lean: number;
-  corner_score: number;
-  top_speed: number;
+  /** null: that rider keeps peaks private (Public Road Privacy). Shown as "--", ranked last. */
+  max_lean: number | null;
+  corner_score: number | null;
+  top_speed: number | null;
   night_rides: number;
   longest_ride: number;
 }
@@ -42,18 +43,28 @@ function ChallengeCard({
 }: {
   challenge: Challenge;
   rows: ChallengeRow[];
-  myValue: number;
+  /** null when this rider keeps peaks private. */
+  myValue: number | null;
   myName: string;
 }) {
+  // Private peaks (null) go last, unranked.
+  const hidden = (v: unknown) => v == null;
   const sorted = useMemo(
-    () => [...rows].sort((a, b) => Number(b[challenge.metric] ?? 0) - Number(a[challenge.metric] ?? 0)),
+    () =>
+      [...rows].sort(
+        (a, b) =>
+          Number(hidden(a[challenge.metric])) - Number(hidden(b[challenge.metric])) ||
+          Number(b[challenge.metric] ?? 0) - Number(a[challenge.metric] ?? 0),
+      ),
     [rows, challenge.metric],
   );
-  const pct = Math.min(100, (myValue / challenge.target) * 100);
-  const fmt = (v: number) =>
-    challenge.metric === 'distance' || challenge.metric === 'longest_ride'
-      ? `${Number(v).toFixed(1)} ${challenge.unit}`
-      : `${Math.round(Number(v))} ${challenge.unit}`;
+  const pct = hidden(myValue) ? 0 : Math.min(100, (myValue / challenge.target) * 100);
+  const fmt = (v: number | null) =>
+    hidden(v)
+      ? PEAK_HIDDEN
+      : challenge.metric === 'distance' || challenge.metric === 'longest_ride'
+        ? `${Number(v).toFixed(1)} ${challenge.unit}`
+        : `${Math.round(Number(v))} ${challenge.unit}`;
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-4">
@@ -84,9 +95,9 @@ function ChallengeCard({
                   isMe ? 'border-accent/60 bg-accent/5' : 'border-border/30 bg-card/40'
                 }`}
               >
-                <span className="w-4 font-bold tabular-nums text-muted-foreground">{i + 1}</span>
+                <span className="w-4 font-bold tabular-nums text-muted-foreground">{hidden(row[challenge.metric]) ? '' : i + 1}</span>
                 <span className="flex-1 truncate">{row.display_name}</span>
-                <span className="font-bold tabular-nums">{fmt(Number(row[challenge.metric] ?? 0))}</span>
+                <span className="font-bold tabular-nums">{fmt(row[challenge.metric] as number | null)}</span>
               </li>
             );
           })}
@@ -149,7 +160,8 @@ export default function CrewChallenges() {
   // Hitting a weekly target earns a spare copy of your card to drop on the map.
   useEffect(() => {
     for (const c of [challengeA, challengeB]) {
-      if (mine[c.metric] < c.target) continue;
+      const v = mine[c.metric];
+      if (v == null || v < c.target) continue;
       const result = grantChallengeCopy(`${key}:${c.id}`);
       if (result === 'granted') {
         toast.success(tr("{0} complete", [c.title]), { description: tr("Spare card copy earned — drop it on the map.") });
