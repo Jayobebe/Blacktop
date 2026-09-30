@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "आपके मैप एक्सेंट, स्प्लैश स्क्रीन और अलर्ट ध्वनियाँ, टीम के हर फ़ोन पर।",
  "Your own rides": "आपकी अपनी राइड",
  "Your position": "आपकी लोकेशन",
- "Your report": "आपकी रिपोर्ट"
+ "Your report": "आपकी रिपोर्ट",
+ "Couldn't find that what3words address": "वह what3words पता नहीं मिला",
+ "Give these three words to the emergency services: they pinpoint this spot.": "ये तीन शब्द आपातकालीन सेवाओं को बताएँ: ये इस जगह को सटीक बताते हैं।",
+ "near {0}": "{0} के पास",
+ "what3words address copied": "what3words पता कॉपी हुआ",
+ "what3words address {0}. Tap to copy.": "what3words पता {0}। कॉपी करने के लिए टैप करें।"
 }

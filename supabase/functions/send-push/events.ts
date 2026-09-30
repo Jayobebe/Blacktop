@@ -11,6 +11,7 @@ import {
 } from './crew.ts'
 import { findAlert, weatherMessage, type HourlyForecast } from './weather.ts'
 import { fetchWithTimeout, upstreamHeaders, viaGeo } from '../_shared/upstream.ts'
+import { wordsAt } from '../_shared/w3w.ts'
 
 /** The forecast model our own geo server syncs (infra/geo/.env WEATHER_MODEL). */
 const OWN_WEATHER_MODEL = 'ecmwf_ifs025'
@@ -100,13 +101,18 @@ async function rescueRecipients(ctx: Ctx, userId: string, convoyId?: string | nu
 }
 
 export async function rescue(ctx: Ctx, input: RescueInput) {
-  const name = await displayName(ctx, input.userId)
-  const recipients = await rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode)
+  // The what3words square is looked up alongside (null without a what3words key).
+  const [name, recipients, w3w] = await Promise.all([
+    displayName(ctx, input.userId),
+    rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode),
+    wordsAt(input.lat, input.lng).catch(() => null),
+  ])
+  const where = w3w ? ` ///${w3w.words}` : ''
   const url = `/rescue?lat=${input.lat.toFixed(5)}&lng=${input.lng.toFixed(5)}&name=${encodeURIComponent(name)}&at=${Date.now()}`
   const opts = { ttl: 1800, urgency: 'high' as const, topic: `rescue-${input.userId.slice(0, 20)}` }
   const known = await deliver(ctx, { userIds: recipients }, 'rescue', {
     title: `🚨 ${name} needs rescue`,
-    body: input.auto ? 'Automatic crash alert: they may have come off. Tap to see where they are.' : 'Tap to see where they are.',
+    body: (input.auto ? 'Automatic crash alert: they may have come off. Tap to see where they are.' : 'Tap to see where they are.') + where,
     tag: `rescue-${input.userId}`,
     url,
     urgent: true,
@@ -115,7 +121,7 @@ export async function rescue(ctx: Ctx, input: RescueInput) {
   // Riders nearby who opted in to help (not the convoy / crew, who already have it).
   const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', {
     title: `🚨 A rider near you needs help`,
-    body: `${name} called for rescue within about ${input.nearbyKm} km of you. Tap to see where they are.`,
+    body: `${name} called for rescue within about ${input.nearbyKm} km of you. Tap to see where they are.${where}`,
     tag: `rescue-${input.userId}`,
     url,
     urgent: true,

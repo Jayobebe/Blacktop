@@ -30,7 +30,8 @@ import { warmPilotVoice } from '@/lib/pilotVoice';
 
 import { LeanAngleBar } from '@/components/LeanAngleBar';
 import { GForceCircle } from '@/components/GForceCircle';
-import { AlarmButton, startRescueSiren } from '@/features/alarm';
+import { AlarmButton, setRescuePosition, startRescueSiren } from '@/features/alarm';
+import { W3WAddress } from '@/components/W3WAddress';
 import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
@@ -172,7 +173,19 @@ export default function ActiveRide() {
     dismissRescue,
     cancelRescueRequest 
   } = useRescue(convoy.id, convoy.isLeader, user?.id || null, profile.name || null);
-  
+  // Where a rescue call went from, fixed when it's sent (for its what3words on the banner).
+  const [rescueSpot, setRescueSpot] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    if (!hasPendingRescue) {
+      setRescueSpot(null);
+      return;
+    }
+    const last = rideState.gpsPoints[rideState.gpsPoints.length - 1];
+    if (last) setRescueSpot((s) => s ?? { lat: last.lat, lng: last.lng });
+    // Only when a call goes out or ends, not on every fix.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPendingRescue]);
+
   // Keep audio session alive in background only when in convoy with other members
   useBackgroundAudio(rideState.isConvoyMode && isConnected && convoy.members.length > 1);
   
@@ -769,6 +782,8 @@ export default function ActiveRide() {
   const fireAutoRescue = useCallback(async () => {
     const gpsPoints = rideState.gpsPoints;
     const fire = async (lat: number, lng: number) => {
+      // The crash screen shows this spot's what3words (when Blacktop has what3words).
+      setRescuePosition({ lat, lng });
       if (rideState.isConvoyMode) {
         // Convoy: broadcast to every member (useRescue also pings Discord and pushes to the crew)
         await sendRescueRequest(lat, lng, { auto: true });
@@ -907,6 +922,8 @@ export default function ActiveRide() {
               ? tr("Waiting for your convoy to respond…")
               : rescueResponders.length === 1 ? tr("{0} is on the way", [rescueResponders[0]]) : tr("{0} are on the way", [rescueResponders.join(', ')])}
           </p>
+          {/* Where the call went from, in three words, to read out if you call the emergency services. */}
+          {rescueSpot && <W3WAddress lat={rescueSpot.lat} lng={rescueSpot.lng} className="mt-1.5 text-sm items-start text-left" />}
         </div>
       )}
 

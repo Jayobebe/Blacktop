@@ -13,6 +13,7 @@ import { useCardDrops } from '@/features/cards';
 import { useExperience, refuelCategory, REFUEL_NOMINATIM } from '@/features/experience';
 
 import { tr } from '@/lib/i18n';
+import { resolveWhat3WordsResult, what3wordsResults } from '@/lib/what3words';
 
 interface SearchResult {
   id: string;
@@ -263,6 +264,11 @@ async function searchPlaces(
   countryCode: string | null
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
+
+  // A what3words address: its suggestions (none without a what3words key, and
+  // then the text is searched like any other).
+  const w3w = await what3wordsResults(query, userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null);
+  if (w3w.length) return w3w;
 
   const isPostal = containsPostalCode(query, countryCode);
   const preferNearby = !!userLocation && !isPostal;
@@ -612,7 +618,13 @@ export function DestinationSearch({
     setShowResults(true);
   };
 
-  const handleSelectResult = (result: SearchResult) => {
+  const handleSelectResult = async (picked: SearchResult) => {
+    // A what3words suggestion has no position until it's picked.
+    const result = await resolveWhat3WordsResult(picked);
+    if (!result) {
+      toast.error(tr("Couldn't find that what3words address"));
+      return;
+    }
     saveRecentLocation(result);
     setRecentLocations(getRecentLocations());
     

@@ -2,6 +2,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { isDemoModeActive, DEMO_RECENT_LOCATIONS } from '@/lib/demoMode';
 import { supabase } from '@/integrations/supabase/client';
 import { tr } from '@/lib/i18n';
+import { what3wordsResults } from '@/lib/what3words';
 
 export interface MapSearchResult {
   id: string;
@@ -203,6 +204,11 @@ export async function searchPlaces(
     ? `${anchor.lng - NEAR_DEG},${anchor.lat + NEAR_DEG},${anchor.lng + NEAR_DEG},${anchor.lat - NEAR_DEG}`
     : null;
   const mapViewbox = bias ? `${bias.west},${bias.north},${bias.east},${bias.south}` : null;
+
+  // A what3words address: its suggestions (none without a what3words key, and
+  // then the text is searched like any other).
+  const w3w = await what3wordsResults(q, anchor);
+  if (w3w.length) return w3w;
 
   const toResult = (id: string, name: string, address: string, lat: number, lng: number): MapSearchResult => ({
     id, name, address, lat, lng,

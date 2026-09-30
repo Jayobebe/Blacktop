@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "你的地图强调色、启动画面和提示音，出现在团队的每一部手机上。",
  "Your own rides": "你自己的骑行",
  "Your position": "你的位置",
- "Your report": "你的报告"
+ "Your report": "你的报告",
+ "Couldn't find that what3words address": "找不到该 what3words 地址",
+ "Give these three words to the emergency services: they pinpoint this spot.": "把这三个词告诉急救服务：它们能精确定位这里。",
+ "near {0}": "{0} 附近",
+ "what3words address copied": "已复制 what3words 地址",
+ "what3words address {0}. Tap to copy.": "what3words 地址 {0}。点按即可复制。"
 }

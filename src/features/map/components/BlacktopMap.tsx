@@ -120,6 +120,8 @@ import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
 import { setGuidanceActive } from '../lib/guidanceState';
 import { etaSpread, spreadDuration } from '../lib/eta';
+import { W3WAddress } from '@/components/W3WAddress';
+import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -2252,6 +2254,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   }, [map, rescueTarget]);
 
   const handleSearchSelect = (result: MapSearchResult, opts: { follow?: boolean } = {}) => {
+    // A what3words suggestion: find where it is first.
+    if (result.id.startsWith(W3W_RESULT_PREFIX)) {
+      void resolveWhat3WordsResult(result).then((found) =>
+        found ? handleSearchSelect(found, opts) : toast.error(tr("Couldn't find that what3words address")),
+      );
+      return;
+    }
     if (addingWaypoint) {
       if (isSolo) {
         addSoloStop({ name: result.name, address: result.address, lat: result.lat, lng: result.lng });
@@ -3050,6 +3059,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                 {pin.category}
                 {userLocation ? tr(" · {0} {1} away", [formatDistance(metersToMiles(calculateDistance(userLocation.lat, userLocation.lng, pin.lat, pin.lng) * 1000), settings.distanceUnit), getDistanceLabel(settings.distanceUnit)]) : ""}
               </p>
+              {/* The place's what3words (when Blacktop has what3words). */}
+              <W3WAddress lat={pin.lat} lng={pin.lng} className="mt-0.5 text-xs items-start text-left" />
             </div>
             {pin.kind === "saved" ? (
               <button

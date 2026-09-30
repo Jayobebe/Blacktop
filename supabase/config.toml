@@ -9,6 +9,9 @@ verify_jwt = true
 [functions.place-search]
 verify_jwt = true
 
+[functions.what3words]
+verify_jwt = true
+
 [functions.discord-announce-convoy]
 verify_jwt = true
 

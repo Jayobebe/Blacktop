@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "地図のアクセント、スプラッシュ画面、通知音を、チーム全員のスマホに。",
  "Your own rides": "あなたのライド",
  "Your position": "あなたの位置",
- "Your report": "あなたのレポート"
+ "Your report": "あなたのレポート",
+ "Couldn't find that what3words address": "その what3words アドレスは見つかりませんでした",
+ "Give these three words to the emergency services: they pinpoint this spot.": "この3つの単語を緊急通報先に伝えてください。この場所をピンポイントで示します。",
+ "near {0}": "{0} 付近",
+ "what3words address copied": "what3words アドレスをコピーしました",
+ "what3words address {0}. Tap to copy.": "what3words アドレス {0}。タップしてコピー。"
 }

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { RescueRequest } from '@/features/rescue';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { W3WAddress } from '@/components/W3WAddress';
 
 interface RescueAlertProps {
   requests: RescueRequest[];
@@ -44,6 +45,8 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDi
                     : tr("Their location is marked on the map. Let them know you’re coming.")}
                 </p>
               </div>
+              {/* Their what3words square, to pass on to emergency services (when Blacktop has what3words). */}
+              <W3WAddress lat={request.lat} lng={request.lng} showNearest className="text-base" />
               
               <div className="flex gap-3 mt-2 w-full">
                 {isLeader ? (

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { setRescueTarget } from '@/features/rescue';
 import { openBlacktopMap } from '@/features/map';
 import { tr } from '@/lib/i18n';
+import { W3WAddress } from '@/components/W3WAddress';
 
 function ago(ms: number) {
   const min = Math.max(0, Math.round((Date.now() - ms) / 60000));
@@ -52,6 +53,8 @@ export default function RescueLocation() {
               tr("Their phone couldn't get a location. Try calling them.")
             )}
           </p>
+          {/* The same spot in three words, for the emergency services (when Blacktop has what3words). */}
+          {known && <W3WAddress lat={lat} lng={lng} showNearest className="mt-2 text-lg items-start text-left" />}
         </div>
       </div>
 

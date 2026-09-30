@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { getActiveRideStatus, setActiveRidePaused } from '@/features/ride';
@@ -48,8 +49,30 @@ export function startRescueSiren() {
   setAlarmPhase('rescue', { cause: 'crash', nudgeAt: 0 });
 }
 
+// Where the crash happened, for the crash screen (its what3words, to read out to emergency services).
+let rescueAt: { lat: number; lng: number } | null = null;
+const rescueListeners = new Set<() => void>();
+
+/** The ride screen sets this when auto-rescue fires (it has the position; the siren may start first). */
+export function setRescuePosition(at: { lat: number; lng: number } | null) {
+  rescueAt = at;
+  rescueListeners.forEach((l) => l());
+}
+
+export function useRescuePosition() {
+  return useSyncExternalStore(
+    (l) => {
+      rescueListeners.add(l);
+      return () => rescueListeners.delete(l);
+    },
+    () => rescueAt,
+    () => null,
+  );
+}
+
 /** Turn it all off (the right pattern, Cancel before it's armed, or Stop siren). The ride stays paused. */
 export function disarmAlarm() {
+  setRescuePosition(null);
   stopAlarm();
   releaseAudio?.();
   releaseAudio = null;

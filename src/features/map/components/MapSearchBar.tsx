@@ -22,6 +22,8 @@ import { useSettings } from '@/features/settings';
 import { useExperience, refuelCategory } from '@/features/experience';
 import { formatDistance, getDistanceLabel } from '@/lib/format';
 import { tr } from '@/lib/i18n';
+import { toast } from 'sonner';
+import { resolveWhat3WordsResult } from '@/lib/what3words';
 
 // km → miles for formatDistance (which expects miles input).
 const KM_TO_MILES = 0.621371;
@@ -70,7 +72,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     (c) => c.id !== 'cards' || (settings.blacktopWorldEnabled && settings.collectiblesEnabled)
   );
   const distanceText = (lat: number, lng: number): string | null => {
-    if (!userLocation) return null;
+    // what3words suggestions have no position until picked.
+    if (!userLocation || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     const km = calculateDistance(userLocation.lat, userLocation.lng, lat, lng);
     const miles = km * KM_TO_MILES;
     return `${formatDistance(miles, settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`;
@@ -220,7 +223,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     }
   };
 
-  const handleSelect = (result: MapSearchResult) => {
+  const handleSelect = async (picked: MapSearchResult) => {
+    // A what3words suggestion has no position until it's picked.
+    const result = await resolveWhat3WordsResult(picked);
+    if (!result) {
+      toast.error(tr("Couldn't find that what3words address"));
+      return;
+    }
     saveRecentLocation(result);
     setRecentLocations(getRecentLocations());
     setQuery('');

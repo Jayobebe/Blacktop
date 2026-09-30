@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "Dine kartfarger, din startskjerm og dine lydsignaler, på hver telefon i laget.",
  "Your own rides": "Dine egne turer",
  "Your position": "Din posisjon",
- "Your report": "Din rapport"
+ "Your report": "Din rapport",
+ "Couldn't find that what3words address": "Fant ikke den what3words-adressen",
+ "Give these three words to the emergency services: they pinpoint this spot.": "Gi disse tre ordene til nødetatene: de peker ut akkurat dette stedet.",
+ "near {0}": "nær {0}",
+ "what3words address copied": "what3words-adresse kopiert",
+ "what3words address {0}. Tap to copy.": "what3words-adresse {0}. Trykk for å kopiere."
 }

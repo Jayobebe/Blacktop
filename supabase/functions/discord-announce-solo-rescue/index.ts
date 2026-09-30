@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { wordsAt } from '../_shared/w3w.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -69,10 +70,14 @@ Deno.serve(async (req) => {
       ? `<@&${integration.role_to_ping}> `
       : ''
     const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`
+    // The what3words square too, when Blacktop has a what3words key: the
+    // easiest location to read out to emergency services.
+    const w3w = await wordsAt(lat, lng).catch(() => null)
+    const w3wLine = w3w ? ` · ///${w3w.words} https://w3w.co/${w3w.words}` : ''
     const safeName = sanitizeText(riderName, 64)
 
     const payload = {
-      content: `${rolePrefix}🚨 ${safeName} needs rescue, ${mapsUrl}`,
+      content: `${rolePrefix}🚨 ${safeName} needs rescue, ${mapsUrl}${w3wLine}`,
       allowed_mentions: integration.role_to_ping
         ? { roles: [integration.role_to_ping] }
         : { parse: [] },

@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "Ваші кольори карти, заставка й звукові сигнали на кожному телефоні команди.",
  "Your own rides": "Ваші власні поїздки",
  "Your position": "Ваша позиція",
- "Your report": "Ваш звіт"
+ "Your report": "Ваш звіт",
+ "Couldn't find that what3words address": "Не вдалося знайти цю адресу what3words",
+ "Give these three words to the emergency services: they pinpoint this spot.": "Назвіть ці три слова екстреним службам: вони точно вказують це місце.",
+ "near {0}": "біля {0}",
+ "what3words address copied": "Адресу what3words скопійовано",
+ "what3words address {0}. Tap to copy.": "Адреса what3words {0}. Торкніться, щоб скопіювати."
 }

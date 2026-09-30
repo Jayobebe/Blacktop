@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "Harita vurgularınız, açılış ekranınız ve uyarı sesleriniz, ekipteki her telefonda.",
  "Your own rides": "Kendi sürüşleriniz",
  "Your position": "Konumunuz",
- "Your report": "Raporunuz"
+ "Your report": "Raporunuz",
+ "Couldn't find that what3words address": "Bu what3words adresi bulunamadı",
+ "Give these three words to the emergency services: they pinpoint this spot.": "Bu üç kelimeyi acil servislere verin: bu noktayı tam olarak gösterir.",
+ "near {0}": "{0} yakını",
+ "what3words address copied": "what3words adresi kopyalandı",
+ "what3words address {0}. Tap to copy.": "what3words adresi {0}. Kopyalamak için dokunun."
 }

@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "Aksen peta, layar pembuka, dan nada peringatan Anda, di setiap ponsel tim.",
  "Your own rides": "Perjalanan Anda sendiri",
  "Your position": "Posisi Anda",
- "Your report": "Rapor Anda"
+ "Your report": "Rapor Anda",
+ "Couldn't find that what3words address": "Alamat what3words itu tidak ditemukan",
+ "Give these three words to the emergency services: they pinpoint this spot.": "Berikan tiga kata ini ke layanan darurat: kata-kata ini menunjuk titik ini dengan tepat.",
+ "near {0}": "dekat {0}",
+ "what3words address copied": "Alamat what3words disalin",
+ "what3words address {0}. Tap to copy.": "Alamat what3words {0}. Ketuk untuk menyalin."
 }

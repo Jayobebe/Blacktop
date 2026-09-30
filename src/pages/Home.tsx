@@ -6,7 +6,7 @@ import { useConvoyState } from '@/features/convoy';
 import { clearRideRole } from '@/features/pillion';
 import { getRacerState } from '@/features/track';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
-import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route, Zap, QrCode, ScanLine } from 'lucide-react';
+import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route, Zap, QrCode, ScanLine, Bike, UserRound } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
 import { HomeGlobe } from '@/components/HomeGlobe';
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
@@ -187,8 +187,56 @@ export default function Home() {
     </div>
   );
 
+  // Join Convoy: riding the bike, or on the back of it. Remembered per device,
+  // like the Track Day role; the join page reads it from the link.
+  const [joinRole, setJoinRoleState] = useState<'operator' | 'pillion'>(() => {
+    try {
+      return localStorage.getItem('bt.join_role') === 'pillion' ? 'pillion' : 'operator';
+    } catch {
+      return 'operator';
+    }
+  });
+  const setJoinRole = (r: 'operator' | 'pillion') => {
+    haptics.tick();
+    setJoinRoleState(r);
+    try {
+      localStorage.setItem('bt.join_role', r);
+    } catch {
+      /* per-session is fine */
+    }
+  };
+  const joinRoleToggle = (
+    <div
+      role="radiogroup"
+      aria-label={tr("Joining as")}
+      onClick={(e) => e.stopPropagation()}
+      className="flex rounded-xl border border-accent/40 bg-background/60 p-0.5 text-[10px] landscape:text-[10px]"
+    >
+      {([
+        { id: 'operator', label: tr("Operator"), Icon: Bike },
+        { id: 'pillion', label: tr("Passenger"), Icon: UserRound },
+      ] as const).map(({ id, label, Icon }) => (
+        <span
+          key={id}
+          role="radio"
+          aria-checked={joinRole === id}
+          tabIndex={0}
+          onClick={() => setJoinRole(id)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setJoinRole(id)}
+          className={cn(
+            'flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors px-1.5 py-1',
+            joinRole === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
+          )}
+        >
+          <Icon className="w-3 h-3" />
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+
   const secondaryTile = exp.showGroup
-    ? { icon: UserPlus, label: tr("Join Convoy"), sub: tr("Enter a convoy code"), onClick: () => navigate('/join-convoy') }
+    ? { icon: UserPlus, label: tr("Join Convoy"), sub: tr("Enter a convoy code"), onClick: () => navigate(joinRole === 'pillion' ? '/join-convoy?role=pillion' : '/join-convoy') }
     : { icon: Route, label: tr("Plan a Route"), sub: exp.motorised ? tr("Weather, cameras and loops") : tr("Weather and loop routes"), onClick: () => (quickStart ? navigate('/solo-lobby') : openBlacktopMap()) };
 
   // Speed only makes the cut for riders who said they care about it.
@@ -220,7 +268,7 @@ export default function Home() {
   const tileColumnRef = useRef<HTMLDivElement>(null);
   const topATileRef = useRef<HTMLButtonElement>(null);
   const topBTileRef = useRef<HTMLButtonElement>(null);
-  const bottomTileRef = useRef<HTMLButtonElement>(null);
+  const bottomTileRef = useRef<HTMLDivElement>(null);
   const trackTileRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<HTMLDivElement>(null);
   const arcOverlayRef = useRef<SVGSVGElement>(null);
@@ -491,14 +539,21 @@ export default function Home() {
 
                       {/* Bottom row: Join (plus Track in landscape, making four tiles around the globe) */}
                       <div className="flex gap-3 flex-1">
-                        <button
+                        <div
                           ref={bottomTileRef}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => {
                             haptics.light();
                             secondaryTile.onClick();
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key !== 'Enter' && e.key !== ' ') return;
+                            e.preventDefault();
+                            secondaryTile.onClick();
+                          }}
                           className={cn(
-                            'pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg',
+                            'pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
                             // The globe sits over this tile's centre in landscape, so the label moves right of it;
                             // with Track beside it the globe is on its right corner, so the label goes left.
                             showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
@@ -507,11 +562,12 @@ export default function Home() {
                           <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
                           </div>
-                          <div className="text-left">
+                          <div className="text-left flex flex-col items-start gap-1">
                             <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
-                            <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
+                            {/* Join Convoy: operator or passenger, like Track Day's racer / pit crew. */}
+                            {exp.showGroup ? joinRoleToggle : <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>}
                           </div>
-                        </button>
+                        </div>
                         {showTrack && (
                           <div
                             ref={trackTileRef}

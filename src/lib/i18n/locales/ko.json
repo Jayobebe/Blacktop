@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "지도 강조색, 스플래시 화면, 알림음을 팀의 모든 휴대폰에.",
  "Your own rides": "나의 라이딩",
  "Your position": "내 위치",
- "Your report": "내 리포트"
+ "Your report": "내 리포트",
+ "Couldn't find that what3words address": "해당 what3words 주소를 찾을 수 없습니다",
+ "Give these three words to the emergency services: they pinpoint this spot.": "이 세 단어를 응급 서비스에 알려 주세요. 이 지점을 정확히 가리킵니다.",
+ "near {0}": "{0} 근처",
+ "what3words address copied": "what3words 주소를 복사했습니다",
+ "what3words address {0}. Tap to copy.": "what3words 주소 {0}. 탭하여 복사."
 }

@@ -11,7 +11,8 @@ import { getActiveRideStatus } from '@/features/ride';
 import { Button } from '@/components/ui/button';
 import { getAlarm, noteNudge, setAlarmPhase, useAlarm } from '../lib/alarmStore';
 import { pinForAlarm, playAlarmChirp as alarmChirp, startAlarmSiren } from '../lib/alarmSound';
-import { disarmAlarm } from '../lib/arm';
+import { disarmAlarm, useRescuePosition } from '../lib/arm';
+import { W3WAddress } from '@/components/W3WAddress';
 import { checkAlarmPattern, MIN_PATTERN_DOTS, saveAlarmPattern } from '../lib/pattern';
 import { TamperDetector, type TamperEvent } from '../lib/detector';
 import { useTamperSensors } from '../hooks/useTamperSensors';
@@ -75,6 +76,7 @@ function useScreenOn() {
 function RescueSirenScreen() {
   useScreenOn();
   useSiren(true);
+  const at = useRescuePosition();
   return (
     <div
       data-no-pull
@@ -93,6 +95,13 @@ function RescueSirenScreen() {
       />
       <h2 className="relative text-4xl font-semibold tracking-tight text-destructive">{tr("Crash detected")}</h2>
       <p className="relative text-base max-w-xs leading-snug">{tr("Someone here may need help. The siren is sounding so people nearby notice.")}</p>
+      {/* This spot's what3words, for whoever calls the emergency services (when Blacktop has what3words). */}
+      {at && (
+        <div className="relative flex flex-col items-center gap-1">
+          <W3WAddress lat={at.lat} lng={at.lng} showNearest className="text-2xl" />
+          <p className="text-xs text-muted-foreground max-w-xs">{tr("Give these three words to the emergency services: they pinpoint this spot.")}</p>
+        </div>
+      )}
       <Button size="xl" variant="destructive" className="relative mt-4 w-full max-w-xs" onClick={() => disarmAlarm()}>
         {tr("Stop siren")}
       </Button>

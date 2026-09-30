@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "I tuoi colori della mappa, la tua schermata iniziale e i tuoi suoni, su ogni telefono del team.",
  "Your own rides": "Le tue uscite",
  "Your position": "La tua posizione",
- "Your report": "Il tuo resoconto"
+ "Your report": "Il tuo resoconto",
+ "Couldn't find that what3words address": "Indirizzo what3words non trovato",
+ "Give these three words to the emergency services: they pinpoint this spot.": "Comunica queste tre parole ai soccorsi: individuano esattamente questo punto.",
+ "near {0}": "vicino a {0}",
+ "what3words address copied": "Indirizzo what3words copiato",
+ "what3words address {0}. Tap to copy.": "Indirizzo what3words {0}. Tocca per copiare."
 }

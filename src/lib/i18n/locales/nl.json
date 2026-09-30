@@ -3478,5 +3478,10 @@
  "Your map accents, splash screen and audio chimes, on every phone in the team.": "Jouw kaartaccenten, startscherm en meldingsgeluiden, op elke telefoon in het team.",
  "Your own rides": "Je eigen ritten",
  "Your position": "Je positie",
- "Your report": "Je rapport"
+ "Your report": "Je rapport",
+ "Couldn't find that what3words address": "Dat what3words-adres is niet gevonden",
+ "Give these three words to the emergency services: they pinpoint this spot.": "Geef deze drie woorden aan de hulpdiensten: ze wijzen precies deze plek aan.",
+ "near {0}": "bij {0}",
+ "what3words address copied": "what3words-adres gekopieerd",
+ "what3words address {0}. Tap to copy.": "what3words-adres {0}. Tik om te kopiëren."
 }
