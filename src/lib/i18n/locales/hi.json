@@ -3125,8 +3125,6 @@
  "Mute sound": "आवाज़ बंद करें",
  "Play sound": "आवाज़ चालू करें",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "तेज़ टक्कर के बाद रुकने पर 5 मिनट की जाँच शुरू होती है। मदद भेजे जाने पर फ़ोन सायरन बजाता है ताकि आस-पास के लोगों का ध्यान जाए।",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} m²",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "ऐप की आवाज़ें",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "क्लिक, टॉगल, स्लाइडर और पुष्टि। ख़तरे, कैमरे, दुर्घटना जाँच, अलार्म और दिशा-निर्देश जैसे अलर्ट हमेशा बजते हैं।"
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "क्लिक, टॉगल, स्लाइडर और पुष्टि। ख़तरे, कैमरे, दुर्घटना जाँच, अलार्म और दिशा-निर्देश जैसे अलर्ट हमेशा बजते हैं।",
+ "“{0}”": "“{0}”"
 }

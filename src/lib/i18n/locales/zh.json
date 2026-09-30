@@ -3125,8 +3125,6 @@
  "Mute sound": "静音",
  "Play sound": "开启声音",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "剧烈撞击后停车会触发 5 分钟的安全确认。求助发出后，手机会鸣响警笛，好让附近的人注意到。",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} 平方米",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "应用音效",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "点击、开关、滑块和确认音。危险、测速摄像头、事故确认、警报和导航等提醒始终会响。"
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "点击、开关、滑块和确认音。危险、测速摄像头、事故确认、警报和导航等提醒始终会响。",
+ "“{0}”": "“{0}”"
 }

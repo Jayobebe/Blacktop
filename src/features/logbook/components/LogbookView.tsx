@@ -309,7 +309,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         <div className="space-y-1.5">
           {pageNotes.map((note) => (
             <div key={note.id} className="leading-tight">
-              <p className="font-serif italic text-[10px] text-[#1f2a5a] break-words">{tr("&ldquo;")}{note.text}{tr("&rdquo;")}</p>
+              <p className="font-serif italic text-[10px] text-[#1f2a5a] break-words">{tr("“{0}”", [note.text])}</p>
               <p className="font-mono text-[7.5px] text-[#2b2118]/60 mt-0.5">
                 {note.author} · {fmtDate(note.at)}
               </p>

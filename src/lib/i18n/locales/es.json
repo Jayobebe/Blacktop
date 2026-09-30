@@ -3135,8 +3135,6 @@
  "Mute sound": "Silenciar",
  "Play sound": "Activar sonido",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "Un impacto fuerte seguido de una parada activa una comprobación de 5 minutos. Si se pide ayuda, el teléfono hace sonar una sirena para que la gente cercana se dé cuenta.",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} m²",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Sonidos de la app",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Clics, interruptores, deslizadores y confirmaciones. Los avisos como peligros, radares, comprobaciones de caída, la alarma y las indicaciones siempre suenan."
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Clics, interruptores, deslizadores y confirmaciones. Los avisos como peligros, radares, comprobaciones de caída, la alarma y las indicaciones siempre suenan.",
+ "“{0}”": "«{0}»"
 }

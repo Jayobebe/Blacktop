@@ -3125,8 +3125,6 @@
  "Mute sound": "Bisukan suara",
  "Play sound": "Nyalakan suara",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "Benturan G tinggi disertai berhenti memicu pengecekan 5 menit. Jika bantuan dikirim, ponsel membunyikan sirene agar orang di sekitar menyadarinya.",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} m²",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Suara aplikasi",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klik, sakelar, penggeser, dan konfirmasi. Peringatan seperti bahaya, kamera, cek kecelakaan, alarm, dan arahan selalu berbunyi."
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klik, sakelar, penggeser, dan konfirmasi. Peringatan seperti bahaya, kamera, cek kecelakaan, alarm, dan arahan selalu berbunyi.",
+ "“{0}”": "“{0}”"
 }

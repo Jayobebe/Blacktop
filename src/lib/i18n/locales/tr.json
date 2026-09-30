@@ -3125,8 +3125,6 @@
  "Mute sound": "Sesi kapat",
  "Play sound": "Sesi aç",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "Sert bir darbenin ardından durma, 5 dakikalık bir kontrol başlatır. Yardım çağrısı giderse telefon, yakındakiler fark etsin diye siren çalar.",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} m²",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Uygulama sesleri",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Tıklamalar, anahtarlar, kaydırıcılar ve onaylar. Tehlike, kamera, kaza kontrolü, alarm ve yol tarifi gibi uyarılar her zaman çalar."
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Tıklamalar, anahtarlar, kaydırıcılar ve onaylar. Tehlike, kamera, kaza kontrolü, alarm ve yol tarifi gibi uyarılar her zaman çalar.",
+ "“{0}”": "“{0}”"
 }

@@ -3125,8 +3125,6 @@
  "Mute sound": "소리 끄기",
  "Play sound": "소리 켜기",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "강한 충격 후 정지하면 5분간 안부 확인이 시작됩니다. 구조 요청이 전송되면 주변 사람들이 알아차리도록 휴대폰에서 사이렌이 울립니다.",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} m²",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "앱 소리",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "클릭, 토글, 슬라이더, 확인음. 위험 요소, 카메라, 사고 확인, 경보, 길 안내 같은 알림은 항상 울립니다."
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "클릭, 토글, 슬라이더, 확인음. 위험 요소, 카메라, 사고 확인, 경보, 길 안내 같은 알림은 항상 울립니다.",
+ "“{0}”": "“{0}”"
 }

@@ -3125,8 +3125,6 @@
  "Mute sound": "Вимкнути звук",
  "Play sound": "Увімкнути звук",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "Сильний удар із подальшою зупинкою запускає 5-хвилинну перевірку. Якщо виклик допомоги надіслано, телефон вмикає сирену, щоб люди поруч звернули увагу.",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} м²",
  "{0} vs {1}{2}": "{0} проти {1}{2}",
  "App sounds": "Звуки застосунку",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Клацання, перемикачі, повзунки й підтвердження. Попередження про небезпеки, камери, перевірку після аварії, сигналізацію та підказки звучать завжди."
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Клацання, перемикачі, повзунки й підтвердження. Попередження про небезпеки, камери, перевірку після аварії, сигналізацію та підказки звучать завжди.",
+ "“{0}”": "«{0}»"
 }

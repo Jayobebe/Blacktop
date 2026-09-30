@@ -3125,8 +3125,6 @@
  "Mute sound": "Slå av lyd",
  "Play sound": "Slå på lyd",
  "High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.": "Et hardt støt fulgt av stillstand utløser en 5-minutters sjekk. Går et nødrop ut, spiller telefonen en sirene så folk i nærheten legger merke til det.",
- "&ldquo;": "&ldquo;",
- "&rdquo;": "&rdquo;",
  "1234 Highway 1": "1234 Highway 1",
  "A": "A",
  "ABC123": "ABC123",
@@ -3188,5 +3186,6 @@
  "{0} m²": "{0} m²",
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Applyder",
- "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klikk, brytere, glidebrytere og bekreftelser. Varsler som farer, kameraer, veltsjekk, alarmen og veiledning høres alltid."
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klikk, brytere, glidebrytere og bekreftelser. Varsler som farer, kameraer, veltsjekk, alarmen og veiledning høres alltid.",
+ "“{0}”": "«{0}»"
 }
