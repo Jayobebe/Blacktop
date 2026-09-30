@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, ScanLine, X } from 'lucide-react';
-import { Html5Qrcode } from 'html5-qrcode';
+import type { Html5Qrcode } from 'html5-qrcode';
+import { loadQrScanner } from '@/lib/qrScanner';
 import { useCrew, joinCrew, leaveCrew, parseCrewQr } from '@/features/crew/useCrew';
 import { toast } from 'sonner';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
@@ -28,7 +29,7 @@ export default function CrewJoin() {
     setScanning(true);
     await new Promise((r) => setTimeout(r, 100));
     try {
-      const scanner = new Html5Qrcode(containerId);
+      const scanner = new (await loadQrScanner())(containerId);
       scannerRef.current = scanner;
       await scanner.start(
         { facingMode: 'environment' },

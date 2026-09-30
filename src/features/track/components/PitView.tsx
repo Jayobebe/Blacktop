@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import type { Html5Qrcode } from 'html5-qrcode';
+import { loadQrScanner } from '@/lib/qrScanner';
 import { ScanLine, Send, Wifi, WifiOff, Download, Footprints, Flag, Hourglass } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,7 @@ export function PitView() {
     setScanning(true);
     await new Promise((r) => setTimeout(r, 100));
     try {
-      const qr = new Html5Qrcode(SCANNER_ID);
+      const qr = new (await loadQrScanner())(SCANNER_ID);
       scannerRef.current = qr;
       const edge = Math.min(window.innerWidth, window.innerHeight);
       const box = Math.max(180, Math.round(Math.min(edge * 0.7, 280)));

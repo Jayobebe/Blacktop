@@ -415,7 +415,7 @@ export default function ActiveRide() {
           })),
       });
     }
-  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, rideState.maxGForce, rideState.gpsPoints, convoy.members, user?.id]);
+  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, gForce.lateralG, gForce.longitudinalG, gForce.envelope, gForce.gMax, rideState.gEnvelope, rideState.gMax, settings.gForceEnabled, rideState.maxGForce, rideState.gpsPoints, convoy.members, user?.id]);
 
   // Track convoy members
   useEffect(() => {

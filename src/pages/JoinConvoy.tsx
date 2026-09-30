@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UserPlus, ScanLine, X, Bike, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
-import { Html5Qrcode } from 'html5-qrcode';
+import type { Html5Qrcode } from 'html5-qrcode';
+import { loadQrScanner } from '@/lib/qrScanner';
 import { PageHeader } from '@/components/PageHeader';
 import { setRideRole, type RideRole } from '@/features/pillion';
 import { cn } from '@/lib/utils';
@@ -55,7 +56,7 @@ export default function JoinConvoy() {
     await new Promise(resolve => setTimeout(resolve, 100));
     
     try {
-      const html5QrCode = new Html5Qrcode(scannerContainerId);
+      const html5QrCode = new (await loadQrScanner())(scannerContainerId);
       scannerRef.current = html5QrCode;
       
       await html5QrCode.start(

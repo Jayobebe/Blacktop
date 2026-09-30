@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import type { Html5Qrcode } from 'html5-qrcode';
+import { loadQrScanner } from '@/lib/qrScanner';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -30,7 +31,7 @@ export function QrScanner({ id, onResult, onCancel }: QrScannerProps) {
 
     const start = async () => {
       try {
-        const scanner = new Html5Qrcode(id);
+        const scanner = new (await loadQrScanner())(id);
         scannerRef.current = scanner;
         await scanner.start(
           { facingMode: 'environment' },

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import type { Html5Qrcode } from 'html5-qrcode';
+import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
 import { parseEnterpriseCode } from '../lib/qrParser';
 import type { GuestSessionPayload } from '../types';
@@ -41,7 +42,7 @@ export default function EnterpriseQrScanner({
     };
     (async () => {
       try {
-        const s = new Html5Qrcode(id);
+        const s = new (await loadQrScanner())(id);
         scannerRef.current = s;
         await s.start(
           { facingMode: 'environment' },

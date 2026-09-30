@@ -1553,7 +1553,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     const targets = stack.filter((d) => !d.collected && !d.isOwn);
     let got = 0;
     for (const drop of targets) {
-      // eslint-disable-next-line no-await-in-loop
+      // One at a time: each collect writes the wallet and the drop.
       if (await handleCollectDrop(drop, true)) got += 1;
     }
     setSelectedStack(null);
