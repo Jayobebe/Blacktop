@@ -2,7 +2,7 @@ import AVFoundation
 import Capacitor
 
 /**
- * iOS twin of android/.../AlarmSoundPlugin.java (see ios-setup.md to add it).
+ * iOS twin of android/.../AlarmSoundPlugin.java, registered in MainViewController.
  * The anti-theft alarm's siren and chirps, and the auto-rescue siren, played
  * natively on the phone's own loudspeaker: while one sounds the audio session
  * is switched to play-and-record without Bluetooth routes and overridden to
@@ -152,8 +152,8 @@ public class AlarmSoundPlugin: CAPPlugin, CAPBridgedPlugin {
         engine = nil
         let session = AVAudioSession.sharedInstance()
         try? session.overrideOutputAudioPort(.none)
-        if let (category, mode, options) = saved {
-            try? session.setCategory(category, mode: mode, options: options)
+        if let previous = saved {
+            try? session.setCategory(previous.0, mode: previous.1, options: previous.2)
         }
         saved = nil
     }

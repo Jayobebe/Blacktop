@@ -14,8 +14,8 @@ interface AlarmSoundPlugin {
 const AlarmSound = registerPlugin<AlarmSoundPlugin>('AlarmSound');
 
 /**
- * The apps make the alarm's sounds natively (AlarmSoundPlugin: Android in
- * android/, iOS in native/ios once added, see ios-setup.md), on the phone's own
+ * The apps make the alarm's sounds natively (AlarmSoundPlugin in android/ and
+ * ios/App/App), on the phone's own
  * loudspeaker even with a Bluetooth headset or intercom connected (voice chat
  * and turn-by-turn keep using it). Builds without the plugin and the browser
  * fall back to Web Audio, which goes wherever the phone sends sound.

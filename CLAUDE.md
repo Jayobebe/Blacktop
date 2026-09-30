@@ -18,7 +18,7 @@ npm run lint        # eslint .
 
 There is no test suite and no `tsc --noEmit`-style typecheck script configured — `npm run lint` and `npm run build` are the main correctness checks. TypeScript is configured non-strict (`strictNullChecks`, `noImplicitAny`, `noUnusedLocals` etc. are off in `tsconfig.json`), so don't assume strict-null guarantees.
 
-Mobile shells (Capacitor) are not built/run from this repo's npm scripts; `capacitor.config.ts` points the native shells at the deployed web app (`https://convoy-comms.lovable.app`), not a local dev server.
+The native shells live in `android/` and `ios/` (Capacitor 8; iOS uses Swift Package Manager, no CocoaPods; building iOS needs a Mac, see `ios-setup.md`). `capacitor.config.ts` points both at the deployed web app (`server.url`), not a local dev server, so only native changes need a new app build. Sync with `npm run cap:sync`, never bare `npx cap sync`: on Windows the CLI writes the iOS `Package.swift` plugin paths with backslashes, and `scripts/fix-ios-spm.mjs` puts them right.
 
 Supabase Edge Functions live in `supabase/functions/*` and are deployed via the Supabase CLI, not via npm scripts. Every function has an entry in `supabase/config.toml`; all use `verify_jwt = true` except `send-push` (called by the database; rider actions check the session in code). Add a config entry when you add a function.
 
@@ -104,7 +104,7 @@ A pattern lock and motion alarm for a parked vehicle. `armAlarm()` runs from a t
 
 - Arm buttons (`AlarmButton`, map `AlarmControl`): Home header beside the rescue card; ride screen left of the live speed in landscape, its own row above the controls in portrait; the map's right-hand controls under the compass. The first tap sets the pattern.
 - The overlay is portaled to `<body>` at z-10000: `#root` is its own stacking context (view transition), so anything else portaled to body (dialogs, the radio bubble) would sit on top.
-- Sounds go through `lib/alarmSound.ts`: in the Android app the native `AlarmSound` plugin (`AlarmSoundPlugin.java`) plays the siren and chirps on the built-in speaker (never a Bluetooth headset or intercom), with the alarm volume at full and out of call mode while the siren sounds, and pins the screen (`startLockTask`) from arming until unlocked. The iOS twin is `native/ios/AlarmSoundPlugin.swift` (added in Xcode, see `ios-setup.md`); builds without the plugin and the browser fall back to Web Audio.
+- Sounds go through `lib/alarmSound.ts`: in the Android app the native `AlarmSound` plugin (`AlarmSoundPlugin.java`) plays the siren and chirps on the built-in speaker (never a Bluetooth headset or intercom), with the alarm volume at full and out of call mode while the siren sounds, and pins the screen (`startLockTask`) from arming until unlocked. The iOS twin is `ios/App/App/AlarmSoundPlugin.swift`, registered in `MainViewController.swift` (iOS has no pinning); builds without the plugin and the browser fall back to Web Audio.
 - Auto-rescue (crash check timeout or its Send rescue, never the manual rescue button) calls `startRescueSiren()`: phase `rescue`, the siren and a "Crash detected" screen anyone can stop.
 
 ### Burn

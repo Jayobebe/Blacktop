@@ -1,110 +1,43 @@
-# iOS Native Setup (requires macOS)
+# iOS app
 
-Run these commands on a Mac from the project root:
+The Xcode project lives in `ios/` (Capacitor 8, Swift Package Manager: no CocoaPods).
+Like the Android app, the native shell loads the deployed site (`server.url` in
+`capacitor.config.ts`), so web changes reach phones without an App Store update; only
+native changes (Swift, Info.plist, plugins) need a new build.
 
-```bash
-npm install
-npx cap add ios
-npx cap sync ios
-```
+Already set up in the repo:
 
-Then open Xcode:
-```bash
-npx cap open ios
-```
+- `ios/App/App/Info.plist`: location (when in use and always), microphone, camera,
+  motion and photo-library prompts, and background modes (location, fetch, audio).
+- `ios/App/App/AlarmSoundPlugin.swift`: the anti-theft and auto-rescue sirens and chirps
+  on the phone's own loudspeaker (the twin of `android/.../AlarmSoundPlugin.java`).
+- `ios/App/App/MainViewController.swift`: registers the app's own plugins; it's the
+  Bridge View Controller's class in `Main.storyboard`.
+- Bundle id `com.blacktoplive.app`, iOS 15+, iPhone and iPad.
 
----
+## Building (needs a Mac with Xcode 16 or later)
 
-## Required Info.plist entries
+1. Clone the repo and install: `git clone …`, then `cd convoy-comms` and `npm install`.
+2. `npm run build`, then `npm run cap:sync` (copies the web build and plugin list into `ios/`).
+3. `npx cap open ios` opens `ios/App/App.xcodeproj` in Xcode. Wait for "Resolving
+   package graph" to finish in the top bar (the first time downloads Capacitor).
+4. Select the **App** target → **Signing & Capabilities**:
+   - Team: your Apple Developer team (a free personal team works for your own phone).
+   - "Automatically manage signing" on. If the bundle id is taken on a personal team,
+     change it to something unique for testing, e.g. `com.yourname.blacktop`.
+   - **+ Capability → Background Modes**, tick Location updates, Background fetch and
+     Audio, AirPlay, and Picture in Picture (they're in Info.plist already; the
+     capability makes Xcode show and sign them).
+5. Plug in the iPhone, pick it as the run destination, press **Run** (⌘R). The first time,
+   on the phone: Settings → General → VPN & Device Management → trust your developer
+   profile, and Settings → Privacy & Security → Developer Mode on (then restart).
 
-Add the following keys inside the `<dict>` of `ios/App/App/Info.plist`.
-Xcode will show a permission dialog for each one the first time it is triggered.
+## Windows note
 
-```xml
-<!-- Location — GPS during rides and convoy sync -->
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>Blacktop uses your location during rides to track distance, speed, and your position within the convoy. Your location is never shared outside an active ride.</string>
+`npx cap sync` on Windows writes the Swift package's plugin paths with backslashes, which
+Xcode can't read. Always use `npm run cap:sync` (it fixes them straight after).
 
-<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>Blacktop can continue tracking your ride in the background so distance and speed stay accurate even when the app is minimised.</string>
+## App Store
 
-<key>NSLocationAlwaysUsageDescription</key>
-<string>Blacktop can continue tracking your ride in the background so distance and speed stay accurate even when the app is minimised.</string>
-
-<!-- Microphone — convoy voice chat (WebRTC, peer-to-peer) -->
-<key>NSMicrophoneUsageDescription</key>
-<string>Blacktop uses the microphone for push-to-talk voice chat within your convoy. Audio is never recorded or stored.</string>
-
-<!-- Camera — QR code scanning for convoy join and card collection -->
-<key>NSCameraUsageDescription</key>
-<string>Blacktop uses the camera to scan QR codes when joining a convoy or collecting another rider's card.</string>
-
-<!-- Motion — lean angle visualisation and crash detection -->
-<key>NSMotionUsageDescription</key>
-<string>Blacktop uses motion sensors to measure lean angle during rides and to detect a potential crash so it can alert your emergency contact.</string>
-
-<!-- Photo library — attaching photos to ride history entries -->
-<key>NSPhotoLibraryUsageDescription</key>
-<string>Blacktop can attach a photo from your library to a ride entry in your history. Photos are stored locally on your device.</string>
-
-<!-- Background modes — keep GPS running while minimised -->
-<key>UIBackgroundModes</key>
-<array>
-    <string>location</string>
-    <string>fetch</string>
-    <string>audio</string>
-</array>
-
-<!-- Disable zoom / bounce scroll so the app feels native -->
-<key>UIWebViewBounce</key>
-<false/>
-<key>KeyboardDisplayRequiresUserAction</key>
-<false/>
-```
-
----
-
-## Xcode project settings
-
-| Setting | Value |
-|---|---|
-| Bundle Identifier | `com.blacktoplive.app` |
-| Display Name | `Blacktop` |
-| Deployment Target | iOS 14.0+ |
-| Device | iPhone + iPad |
-| Signing Team | Your Apple Developer team |
-
----
-
-## App Store submission checklist
-
-- [ ] Add app icon set (1024×1024 PNG, no alpha) in `ios/App/App/Assets.xcassets/AppIcon.appiconset/`
-- [ ] Add launch screen / splash in Xcode (or use Capacitor's splash screen plugin)
-- [ ] Enable **Background Modes** capability in Xcode: Location updates, Background fetch, Audio
-- [ ] Enable **Push Notifications** capability if local crash alerts are added
-- [ ] Set correct signing certificate and provisioning profile
-- [ ] Archive → Distribute via TestFlight before submitting to review
-
----
-
-## Alarm sounds on the loudspeaker (AlarmSound plugin)
-
-The anti-theft alarm and the auto-rescue siren play natively so they always come out of
-the phone's own speaker, even with a helmet intercom connected (Android has this built in:
-`android/app/src/main/java/com/blacktoplive/app/AlarmSoundPlugin.java`). On iOS:
-
-1. In Xcode, drag `native/ios/AlarmSoundPlugin.swift` into the `App` target (tick "Copy items if needed" off so it stays in the repo; "Add to targets: App" on).
-2. Register it: add `App/App/MainViewController.swift`
-
-   ```swift
-   import Capacitor
-
-   class MainViewController: CAPBridgeViewController {
-       override open func capacitorDidLoad() {
-           bridge?.registerPluginInstance(AlarmSoundPlugin())
-       }
-   }
-   ```
-
-   then in `Main.storyboard` select the Bridge View Controller and set its Custom Class to `MainViewController` (module `App`).
-3. Build. Until this is in, iOS plays the alarm through Web Audio, which follows whatever output the phone is using.
+- App icon: a 1024×1024 PNG with no transparency in `ios/App/App/Assets.xcassets/AppIcon.appiconset/`.
+- Product → Archive, then Distribute App → App Store Connect → TestFlight before review.
