@@ -73,7 +73,7 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
   const demo = useMemo(() => tierDemo(tier, units), [tier, units]);
 
   const [side, setSide] = useState<'business' | 'customer'>('business');
-  const flow = demo[side];
+  const flow = (side === 'customer' && demo.customer) || demo.business;
   const [step, setStep] = useState(0);
   // Plays on its own unless the rider asked for less motion (or thermal mode).
   const [playing, setPlaying] = useState(
@@ -115,8 +115,8 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
           </div>
         </section>
 
-        {/* Whose side of the story */}
-        <div role="tablist" aria-label={tr("Walkthrough")} className="grid grid-cols-2 gap-2">
+        {/* Whose side of the story (packages with one) */}
+        {demo.customer && (<div role="tablist" aria-label={tr("Walkthrough")} className="grid grid-cols-2 gap-2">
           {([
             { id: 'business', label: tr("For the business"), Icon: Building2 },
             { id: 'customer', label: tr("For customers"), Icon: Users },
@@ -143,7 +143,7 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
               <span className="block text-[11px] text-muted-foreground truncate">{demo[id].who}</span>
             </button>
           ))}
-        </div>
+        </div>)}
 
         <section className="grid gap-5 md:grid-cols-[minmax(0,300px)_1fr] md:items-start">
           {/* The phone, showing the current step */}

@@ -85,7 +85,8 @@ export interface DemoFlow {
 export interface TierDemo {
   org: string;
   business: DemoFlow;
-  customer: DemoFlow;
+  /** Left out where the package is one offer, not a two-sided flow (Billion). */
+  customer?: DemoFlow;
 }
 
 /** Figures in the rider's own units. */
@@ -744,50 +745,6 @@ export function tierDemo(tier: EnterpriseTier, u: DemoUnits): TierDemo {
                   { icon: Radio, label: tr("Relay"), value: tr("Dedicated") },
                   { icon: Signal, label: tr("Link quality"), value: tr("Excellent"), tone: 'ok' },
                   { icon: Users, label: tr("On the net"), value: '38' },
-                ],
-              },
-            },
-          ],
-        },
-        customer: {
-          who: tr("Your riders and customers"),
-          steps: [
-            {
-              title: tr("One workspace for everything"),
-              body: tr("A customer can test-ride on Saturday, book a service on Monday and join a tour in June, all in the same branded workspace."),
-              screen: {
-                title: 'Vanta Factory Racing',
-                status: { label: tr("Member"), tone: 'accent' },
-                rows: [
-                  { icon: Store, label: tr("Test ride"), value: tr("Saturday") },
-                  { icon: Wrench, label: tr("Service"), value: tr("Monday") },
-                  { icon: Mountain, label: tr("Tour"), value: tr("June") },
-                ],
-              },
-            },
-            {
-              title: tr("Your brand all the way"),
-              body: tr("Everything they see carries your colours and sounds, from the splash screen to the chimes."),
-              screen: {
-                title: tr("Welcome"),
-                status: { label: tr("Your brand"), tone: 'accent' },
-                rows: [
-                  { icon: Palette, label: tr("Colours"), value: tr("Yours") },
-                  { icon: Bell, label: tr("Sounds"), value: tr("Yours") },
-                  { icon: Shield, label: tr("Their own rides"), value: tr("Stay private") },
-                ],
-              },
-            },
-            {
-              title: tr("Nothing to buy"),
-              body: tr("Customers join from a QR code with no account and no payment, and your seats never run out."),
-              screen: {
-                title: tr("Guest pass"),
-                status: { label: tr("Joined"), tone: 'ok' },
-                rows: [
-                  { icon: QrCode, label: tr("Scan"), value: tr("Done"), tone: 'ok' },
-                  { icon: User, label: tr("Account needed"), value: tr("No") },
-                  { icon: Clock, label: tr("Access"), value: tr("Set by you") },
                 ],
               },
             },
