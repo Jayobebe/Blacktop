@@ -9,7 +9,6 @@ import { useExperience, badgeVisible } from '@/features/experience';
 import { BTLogo } from '@/components/BTLogo';
 import { GForceGraph } from '@/components/GForceGraph';
 import { GForceSample } from '@/types/blacktop';
-import { toPng } from 'html-to-image';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { toast } from 'sonner';
@@ -149,6 +148,8 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
     if (!receiptRef.current || saving) return;
     setSaving(true);
     try {
+      // Loaded when saving, not with the app (it's only needed here).
+      const { toPng } = await import('html-to-image');
       const dataUrl = await toPng(receiptRef.current, {
         pixelRatio: 3,
         cacheBust: true,

@@ -1,34 +1,30 @@
-import { z } from 'zod';
-
 import { tr } from '@/lib/i18n';
-export const displayNameSchema = z
-  .string()
-  .trim()
-  .min(1, tr("Name required"))
-  .max(50, tr("Name must be 50 characters or fewer"));
 
-export const convoyNameSchema = z
-  .string()
-  .trim()
-  .min(1, tr("Convoy name required"))
-  .max(100, tr("Convoy name must be 100 characters or fewer"));
+/**
+ * Text checks for user input, with the same `safeParse` result shape as zod
+ * (which this replaced: ~150 kB in the first load for three string lengths).
+ */
+/** One flat shape (the project isn't strict, so a union wouldn't narrow on `success`). */
+interface Parsed {
+  success: boolean;
+  data: string;
+  error: { issues: { message: string }[] };
+}
 
-export const chatMessageSchema = z
-  .string()
-  .trim()
-  .min(1, tr("Message cannot be empty"))
-  .max(500, tr("Message must be 500 characters or fewer"));
+function textRule(min: number, max: number, tooShort: () => string, tooLong: () => string) {
+  return {
+    safeParse(value: unknown): Parsed {
+      const text = typeof value === 'string' ? value.trim() : '';
+      const fail = (message: string): Parsed => ({ success: false, data: text, error: { issues: [{ message }] } });
+      if (text.length < min) return fail(tooShort());
+      if (text.length > max) return fail(tooLong());
+      return { success: true, data: text, error: { issues: [] } };
+    },
+  };
+}
 
-export const coordinateSchema = z.object({
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-});
+export const displayNameSchema = textRule(1, 50, () => tr("Name required"), () => tr("Name must be 50 characters or fewer"));
 
-export const destinationSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  address: z.string().trim().max(500).optional().nullable(),
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-});
+export const convoyNameSchema = textRule(1, 100, () => tr("Convoy name required"), () => tr("Convoy name must be 100 characters or fewer"));
 
-export type ValidatedDestination = z.infer<typeof destinationSchema>;
+export const chatMessageSchema = textRule(1, 500, () => tr("Message cannot be empty"), () => tr("Message must be 500 characters or fewer"));
