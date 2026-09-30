@@ -76,8 +76,7 @@ export function weekStats(rides: RideSession[], now = new Date()): WeekStats {
 export async function publishCrewTotals(crewCode: string, name: string, totals: CrewTotals): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await supabase.from('crew_scores' as any).upsert({
+  const row = {
     user_id: user.id,
     crew_code: crewCode,
     display_name: name || 'Rider',
@@ -88,8 +87,14 @@ export async function publishCrewTotals(crewCode: string, name: string, totals: 
     hit_heavy: totals.hit_heavy,
     petrol_head: Math.round(totals.petrol_head),
     updated_at: new Date().toISOString(),
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let { error } = await supabase.from('crew_scores' as any).upsert(row as any);
+  // Until migration 20261004020000 allows null peaks (23502): 0, never the real figure.
+  if (error?.code === '23502') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
+    ({ error } = await supabase.from('crew_scores' as any).upsert({ ...row, top_speed: row.top_speed ?? 0, max_lean: row.max_lean ?? 0 } as any));
+  }
   if (error) console.error('Failed to publish crew scores:', error);
   return !error;
 }
@@ -98,16 +103,24 @@ export async function publishCrewTotals(crewCode: string, name: string, totals: 
 export async function publishWeekStats(crewCode: string, name: string, stats: WeekStats, key = weekKey()): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await supabase.from('crew_weekly_scores' as any).upsert({
+  const row = {
     user_id: user.id,
     week_key: key,
     crew_code: crewCode,
     display_name: name || 'Rider',
     ...stats,
     updated_at: new Date().toISOString(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let { error } = await supabase.from('crew_weekly_scores' as any).upsert(row as any);
+  // Until migration 20261004020000 allows null peaks (23502): 0, never the real figure.
+  if (error?.code === '23502') {
+    ({ error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from('crew_weekly_scores' as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .upsert({ ...row, top_speed: row.top_speed ?? 0, max_lean: row.max_lean ?? 0, corner_score: row.corner_score ?? 0 } as any));
+  }
   if (error) console.error('Failed to publish weekly crew stats:', error);
   return !error;
 }

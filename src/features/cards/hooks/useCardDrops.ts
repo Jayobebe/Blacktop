@@ -209,7 +209,7 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
       const s = keepPeakTelemetry(false)
         ? args.card.stats
         : { ...args.card.stats, topSpeedMph: null, maxLean: null, maxGForce: null };
-      const { data, error } = await supabase.from('card_drops').insert({
+      const row = {
         owner_id: user.id,
         owner_name: profile?.name || 'Rider',
         copy_index: args.copyIndex,
@@ -231,7 +231,17 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
         max_g_force: s.maxGForce,
         lat: args.lat,
         lng: args.lng,
-      }).select('id').single();
+      };
+      let { data, error } = await supabase.from('card_drops').insert(row).select('id').single();
+      // Until migration 20261004020000 lets these columns hold null, the
+      // database refuses it (23502): store 0 instead, never the real figure.
+      if (error?.code === '23502') {
+        ({ data, error } = await supabase
+          .from('card_drops')
+          .insert({ ...row, top_speed_mph: row.top_speed_mph ?? 0, max_lean: row.max_lean ?? 0, max_g_force: row.max_g_force ?? 0 })
+          .select('id')
+          .single());
+      }
       if (error) throw error;
       return data.id as string;
     },
