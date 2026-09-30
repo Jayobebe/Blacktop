@@ -70,7 +70,7 @@ export default function CrewConvoys() {
       />
 
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-        {tr("Crew")}{" "}{crew.code} · {convoys.length === 1 ? tr("1 open lobby") : tr("{0} open lobbies", [convoys.length])}
+        {crew.name} · {convoys.length === 1 ? tr("1 open lobby") : tr("{0} open lobbies", [convoys.length])}
       </p>
 
       {isLoading ? (

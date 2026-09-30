@@ -209,7 +209,7 @@ export default function CrewChallenges() {
         <div className="mt-4">
           <div className="flex items-baseline justify-between mb-1.5">
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              {tr("Crew")}{" "}{crew.code} · {monthTotals?.members ?? 0}{" "}{tr("riding")}
+              {crew.name} · {monthTotals?.members ?? 0}{" "}{tr("riding")}
             </span>
             <span className="text-sm font-bold tabular-nums">
               {goalFmt(monthValue)} / {goalFmt(goal.target)}
@@ -249,7 +249,7 @@ export default function CrewChallenges() {
       </div>
 
       <p className="text-[10px] text-muted-foreground/60 text-center mt-4">
-        {tr("Crew")}{" "}{crew.code}{" "}{tr("· week")}{" "}{key}
+        {crew.name}{" "}{tr("· week")}{" "}{key}
       </p>
     </div>
   );

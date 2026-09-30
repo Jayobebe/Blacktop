@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "ये तीन शब्द आपातकालीन सेवाओं को बताएँ: ये इस जगह को सटीक बताते हैं।",
  "near {0}": "{0} के पास",
  "what3words address copied": "what3words पता कॉपी हुआ",
- "what3words address {0}. Tap to copy.": "what3words पता {0}। कॉपी करने के लिए टैप करें।"
+ "what3words address {0}. Tap to copy.": "what3words पता {0}। कॉपी करने के लिए टैप करें।",
+ "All crew slots full": "सभी क्रू स्लॉट भरे हुए हैं",
+ "All crew slots full. Leave a crew to join another.": "सभी क्रू स्लॉट भरे हुए हैं। दूसरे में जुड़ने के लिए कोई क्रू छोड़ें।",
+ "Crew name": "क्रू का नाम",
+ "Crew {0}": "क्रू {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "दूसरे में जुड़ने के लिए Blacktop World में क्रू QR से कोई क्रू छोड़ें।",
+ "Leave {0}": "{0} छोड़ें",
+ "Leave {0}?": "{0} छोड़ें?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "दोस्त इसे क्रू में जुड़ें से स्कैन करके इस क्रू में राइड करते हैं। उसका QR साझा करने के लिए नीचे कोई दूसरा क्रू चुनें।",
+ "Rename {0}": "{0} का नाम बदलें",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Blacktop World में क्रू QR से अपने क्रू का नाम बदलें, बदलें या छोड़ें।",
+ "Save name": "नाम सहेजें",
+ "Switched to crew {0}": "क्रू {0} पर स्विच किया",
+ "Switched to {0}": "{0} पर स्विच किया",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "आप उसके बोर्ड से हट जाएँगे और उसकी सूचनाएँ नहीं मिलेंगी। उसका QR स्कैन करके आप फिर से जुड़ सकते हैं।",
+ "Your crews": "आपके क्रू",
+ "{0} of {1} crew slots used": "{1} में से {0} क्रू स्लॉट इस्तेमाल"
 }

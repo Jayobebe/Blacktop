@@ -16,6 +16,7 @@ import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
 import { X } from 'lucide-react';
 import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
+import { CrewList } from '@/features/crew/CrewList';
 import { BlacktankPanel } from '@/features/blacktank';
 
 import { tr } from '@/lib/i18n';
@@ -305,8 +306,8 @@ export default function World() {
       {/* Crew QR — mates scan this to join your crew */}
 
       {showCrewQr && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6 safe-top safe-bottom overflow-y-auto">
+          <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4 my-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold uppercase tracking-[0.2em]">{tr("Crew QR")}</h2>
               <button
@@ -321,10 +322,15 @@ export default function World() {
             <div className="bg-white p-4 rounded-xl inline-block">
               <QRCodeSVG value={`${CREW_QR_PREFIX}${crew.code}`} size={190} />
             </div>
-            <p className="text-2xl font-bold tracking-[0.2em]">{crew.code}</p>
+            <div>
+              <p className="text-lg font-bold break-words">{crew.name}</p>
+              <p className="text-sm font-bold tracking-[0.2em] text-muted-foreground">{crew.code}</p>
+            </div>
             <p className="text-[11px] text-muted-foreground">
-              {tr("Mates scan this from Join Crew to ride in your crew.")}
+              {tr("Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.")}
             </p>
+            {/* Every crew this rider is in: switch, rename, leave (up to four). */}
+            <CrewList />
           </div>
         </div>
       )}

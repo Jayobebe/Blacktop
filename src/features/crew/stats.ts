@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { analyseCorners, burnedAggregate, keepPeakTelemetry, type BurnedTotals } from '@/features/ride';
 import type { RideSession } from '@/types/blacktop';
 import { weekKey, weekStart } from './challenges';
+import { getCrewCode } from './useCrew';
 
 /**
  * What a rider shares with their crew: all-time totals for the crew board and
@@ -72,7 +73,12 @@ export function weekStats(rides: RideSession[], now = new Date()): WeekStats {
   };
 }
 
-/** Publishes this rider's own crew-board row. Returns false when it couldn't. */
+/**
+ * Publishes this rider's own row on one crew's board (one row per crew they're
+ * in). Returns false when it couldn't. A database from before several crews
+ * keeps one row per rider (42P10 on this upsert): there only the active crew
+ * gets it, as before.
+ */
 export async function publishCrewTotals(crewCode: string, name: string, totals: CrewTotals): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
@@ -89,11 +95,17 @@ export async function publishCrewTotals(crewCode: string, name: string, totals: 
     updated_at: new Date().toISOString(),
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let { error } = await supabase.from('crew_scores' as any).upsert(row as any);
+  const upsert = (r: typeof row, onConflict?: string) => supabase.from('crew_scores' as any).upsert(r as any, onConflict ? { onConflict } : undefined);
+  let conflict: string | undefined = 'user_id,crew_code';
+  let { error } = await upsert(row, conflict);
+  if (error?.code === '42P10') {
+    if (crewCode !== getCrewCode()) return true;
+    conflict = undefined;
+    ({ error } = await upsert(row));
+  }
   // Until migration 20261004020000 allows null peaks (23502): 0, never the real figure.
   if (error?.code === '23502') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ({ error } = await supabase.from('crew_scores' as any).upsert({ ...row, top_speed: row.top_speed ?? 0, max_lean: row.max_lean ?? 0 } as any));
+    ({ error } = await upsert({ ...row, top_speed: row.top_speed ?? 0, max_lean: row.max_lean ?? 0 }, conflict));
   }
   if (error) console.error('Failed to publish crew scores:', error);
   return !error;

@@ -53,14 +53,15 @@ export function RadioOverlay() {
 
 
   return createPortal(
-    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-top safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
-      <div className="flex items-center justify-between px-4 pt-4 landscape:pt-2 landscape:px-6 shrink-0">
+    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
+      {/* Clear of the notch / Dynamic Island, and the side notch in landscape (env() on the header itself). */}
+      <div className="flex items-center justify-between shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Blacktop Radio")}</p>
         <button
           type="button"
           onClick={closeRadioOverlay}
           aria-label={tr("Close radio")}
-          className="w-9 h-9 landscape:w-8 landscape:h-8 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
+          className="glove-hit w-9 h-9 landscape:w-8 landscape:h-8 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
         >
           <X className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
         </button>

@@ -2,11 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { useSettings } from '@/features/settings';
+import { locationWasGranted, noteLocationGranted } from '@/lib/locationGrant';
 
 export type LocationPermission = 'granted' | 'prompt' | 'denied' | 'unknown';
 export type SafetyLevel = 'active' | 'off' | 'permissions';
 
 const isNative = Capacitor.isNativePlatform();
+
+// Once location has been allowed on this phone, iOS's "prompt" after a relaunch doesn't pause rescue.
+const rememberGranted = (p: LocationPermission) => {
+  if (p === 'granted') noteLocationGranted();
+};
 
 async function readLocationPermission(): Promise<LocationPermission> {
   try {
@@ -33,7 +39,9 @@ export function useSafetyStatus() {
   const [location, setLocation] = useState<LocationPermission>('unknown');
 
   const refresh = useCallback(async () => {
-    setLocation(await readLocationPermission());
+    const p = await readLocationPermission();
+    rememberGranted(p);
+    setLocation(p);
   }, []);
 
   useEffect(() => {
@@ -46,7 +54,10 @@ export function useSafetyStatus() {
         .query({ name: 'geolocation' as PermissionName })
         .then((s) => {
           status = s;
-          s.onchange = () => setLocation(s.state);
+          s.onchange = () => {
+            rememberGranted(s.state);
+            setLocation(s.state);
+          };
         })
         .catch(() => {});
     }
@@ -71,6 +82,8 @@ export function useSafetyStatus() {
         await new Promise<GeolocationPosition>((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 })
         );
+        // Got a fix, so it's allowed (iOS may still report "prompt" afterwards).
+        rememberGranted('granted');
       }
     } catch {
       // Denied or timed out — the re-read below reflects it.
@@ -80,7 +93,7 @@ export function useSafetyStatus() {
 
   const level: SafetyLevel = !settings.autoRescueEnabled
     ? 'off'
-    : location === 'denied' || location === 'prompt'
+    : location === 'denied' || (location === 'prompt' && !locationWasGranted())
     ? 'permissions'
     : 'active';
 

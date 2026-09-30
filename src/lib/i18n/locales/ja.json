@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "この3つの単語を緊急通報先に伝えてください。この場所をピンポイントで示します。",
  "near {0}": "{0} 付近",
  "what3words address copied": "what3words アドレスをコピーしました",
- "what3words address {0}. Tap to copy.": "what3words アドレス {0}。タップしてコピー。"
+ "what3words address {0}. Tap to copy.": "what3words アドレス {0}。タップしてコピー。",
+ "All crew slots full": "クルー枠がすべて埋まっています",
+ "All crew slots full. Leave a crew to join another.": "クルー枠がすべて埋まっています。別のクルーに参加するには、どれかを退出してください。",
+ "Crew name": "クルー名",
+ "Crew {0}": "クルー {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "別のクルーに参加するには、Blacktop World のクルー QR からクルーを退出してください。",
+ "Leave {0}": "{0} を退出",
+ "Leave {0}?": "{0} を退出しますか？",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "仲間が「クルーに参加」からこれをスキャンすると、このクルーで走れます。下で別のクルーを選ぶと、その QR を共有できます。",
+ "Rename {0}": "{0} の名前を変更",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Blacktop World のクルー QR で、クルーの名前変更・切り替え・退出ができます。",
+ "Save name": "名前を保存",
+ "Switched to crew {0}": "クルー {0} に切り替えました",
+ "Switched to {0}": "{0} に切り替えました",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "そのクルーのランキングから外れ、通知も届かなくなります。QR をスキャンすればまた参加できます。",
+ "Your crews": "あなたのクルー",
+ "{0} of {1} crew slots used": "クルー枠 {1} 件中 {0} 件使用"
 }

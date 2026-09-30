@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "Giv de tre ord til alarmcentralen: de udpeger præcis dette sted.",
  "near {0}": "nær {0}",
  "what3words address copied": "what3words-adresse kopieret",
- "what3words address {0}. Tap to copy.": "what3words-adresse {0}. Tryk for at kopiere."
+ "what3words address {0}. Tap to copy.": "what3words-adresse {0}. Tryk for at kopiere.",
+ "All crew slots full": "Alle crew-pladser er fyldt",
+ "All crew slots full. Leave a crew to join another.": "Alle crew-pladser er fyldt. Forlad et crew for at deltage i et andet.",
+ "Crew name": "Crew-navn",
+ "Crew {0}": "Crew {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "Forlad et crew under Crew-QR i Blacktop World for at deltage i et andet.",
+ "Leave {0}": "Forlad {0}",
+ "Leave {0}?": "Forlad {0}?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "Venner scanner denne fra Deltag i crew for at køre i dette crew. Vælg et andet crew nedenfor for at dele dets QR.",
+ "Rename {0}": "Omdøb {0}",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Omdøb, skift eller forlad dine crews under Crew-QR i Blacktop World.",
+ "Save name": "Gem navn",
+ "Switched to crew {0}": "Skiftede til crew {0}",
+ "Switched to {0}": "Skiftede til {0}",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Du forsvinder fra dets tavler og får ikke længere dets notifikationer. Du kan deltage igen ved at scanne dets QR.",
+ "Your crews": "Dine crews",
+ "{0} of {1} crew slots used": "{0} af {1} crew-pladser brugt"
 }

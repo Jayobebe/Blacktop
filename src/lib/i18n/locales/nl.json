@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "Geef deze drie woorden aan de hulpdiensten: ze wijzen precies deze plek aan.",
  "near {0}": "bij {0}",
  "what3words address copied": "what3words-adres gekopieerd",
- "what3words address {0}. Tap to copy.": "what3words-adres {0}. Tik om te kopiëren."
+ "what3words address {0}. Tap to copy.": "what3words-adres {0}. Tik om te kopiëren.",
+ "All crew slots full": "Alle crewplekken zijn vol",
+ "All crew slots full. Leave a crew to join another.": "Alle crewplekken zijn vol. Verlaat een crew om een andere te joinen.",
+ "Crew name": "Crewnaam",
+ "Crew {0}": "Crew {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "Verlaat een crew via Crew-QR in Blacktop World om een andere te joinen.",
+ "Leave {0}": "{0} verlaten",
+ "Leave {0}?": "{0} verlaten?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "Maten scannen dit via Crew joinen om in deze crew te rijden. Kies hieronder een andere crew om die QR te delen.",
+ "Rename {0}": "{0} hernoemen",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Hernoem, wissel of verlaat je crews via Crew-QR in Blacktop World.",
+ "Save name": "Naam opslaan",
+ "Switched to crew {0}": "Gewisseld naar crew {0}",
+ "Switched to {0}": "Gewisseld naar {0}",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Je verdwijnt van de ranglijsten en krijgt geen meldingen meer. Je kunt opnieuw joinen door de QR te scannen.",
+ "Your crews": "Jouw crews",
+ "{0} of {1} crew slots used": "{0} van {1} crewplekken gebruikt"
 }

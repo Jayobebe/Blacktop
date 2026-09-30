@@ -1,3 +1,4 @@
+import { noteMotionGranted } from '@/lib/motionPermission';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface LeanAngleState {
@@ -62,6 +63,7 @@ export function useLeanAngle(isActive: boolean = false, displayIntervalMs: numbe
       try {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
         if (permission === 'granted') {
+          noteMotionGranted();
           setState(prev => ({ ...prev, permissionGranted: true, isSupported: true }));
           return true;
         }

@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "Bu üç kelimeyi acil servislere verin: bu noktayı tam olarak gösterir.",
  "near {0}": "{0} yakını",
  "what3words address copied": "what3words adresi kopyalandı",
- "what3words address {0}. Tap to copy.": "what3words adresi {0}. Kopyalamak için dokunun."
+ "what3words address {0}. Tap to copy.": "what3words adresi {0}. Kopyalamak için dokunun.",
+ "All crew slots full": "Tüm ekip yuvaları dolu",
+ "All crew slots full. Leave a crew to join another.": "Tüm ekip yuvaları dolu. Başka birine katılmak için bir ekipten ayrılın.",
+ "Crew name": "Ekip adı",
+ "Crew {0}": "Ekip {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "Başka birine katılmak için Blacktop World'deki Ekip QR'dan bir ekipten ayrılın.",
+ "Leave {0}": "{0} ekibinden ayrıl",
+ "Leave {0}?": "{0} ekibinden ayrılınsın mı?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "Arkadaşlar bunu Ekibe katıl'dan tarayıp bu ekipte sürer. QR'ını paylaşmak için aşağıdan başka bir ekip seçin.",
+ "Rename {0}": "{0} adını değiştir",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Ekiplerinizin adını Blacktop World'deki Ekip QR'dan değiştirin, aralarında geçin veya ayrılın.",
+ "Save name": "Adı kaydet",
+ "Switched to crew {0}": "{0} ekibine geçildi",
+ "Switched to {0}": "{0} ekibine geçildi",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Sıralamalarından çıkarsınız ve bildirimlerini artık almazsınız. QR'ını tarayarak yeniden katılabilirsiniz.",
+ "Your crews": "Ekipleriniz",
+ "{0} of {1} crew slots used": "{1} ekip yuvasından {0} tanesi kullanılıyor"
 }

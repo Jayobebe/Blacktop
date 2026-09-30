@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { noteMotionGranted } from '@/lib/motionPermission';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { RESCUE_RADIUS_OPTIONS_KM } from '@/features/rescue';
@@ -575,6 +576,7 @@ export default function Settings() {
                             toast.error(tr("Motion sensor permission denied"));
                             return;
                           }
+                          noteMotionGranted();
                         } catch {
                           toast.error(tr("Could not enable motion sensor"));
                           return;
@@ -798,6 +800,7 @@ export default function Settings() {
                           toast.error(tr("Motion sensor permission denied"));
                           return;
                         }
+                        noteMotionGranted();
                       } catch {
                         toast.error(tr("Could not enable motion sensor"));
                         return;

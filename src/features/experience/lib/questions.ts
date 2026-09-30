@@ -1,3 +1,4 @@
+import { requestMotionAccess } from '@/lib/motionPermission';
 import type { LucideIcon } from 'lucide-react';
 import { ShieldCheck, Gauge, Activity, CloudRain, Video, Globe2, Radio, Wrench, Sparkles, Zap } from 'lucide-react';
 import type { AppSettings } from '@/features/settings';
@@ -226,13 +227,5 @@ export function orderedQuestions(c: CareContext, style: RideStyle | null): CareQ
 
 /** Resolves true when motion sensors are usable. Must be called from a user gesture on iOS. */
 export async function requestMotionPermission(): Promise<boolean> {
-  const anyMotion = (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent;
-  if (anyMotion && typeof anyMotion.requestPermission === 'function') {
-    try {
-      return (await anyMotion.requestPermission()) === 'granted';
-    } catch {
-      return false;
-    }
-  }
-  return true;
+  return requestMotionAccess();
 }

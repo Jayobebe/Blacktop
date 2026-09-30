@@ -12,9 +12,10 @@ const PUBLISHED_KEY = 'bt.crew.published_ride.v1';
 
 /**
  * After every ride (with Blacktop World on), publishes the rider's crew-board
- * totals and this week's challenge stats — the same rows the crew screens
- * publish — so crew mates can be notified when they're passed or a challenge
- * is decided without anyone having to open those screens first.
+ * totals and this week's challenge stats to every crew they're in (the same
+ * rows the crew screens publish), so crew mates can be notified when they're
+ * passed or a challenge is decided without anyone having to open those
+ * screens first.
  */
 export function CrewStatsPublisher() {
   const { rides, burnedTotals } = useRideHistory();
@@ -36,19 +37,22 @@ export function CrewStatsPublisher() {
     } catch {
       /* treat as unpublished */
     }
-    if (published === `${crew.code}:${latestRideId}`) return;
+    const codes = crew.crews.map((c) => c.code);
+    const stamp = `${codes.join(',')}:${latestRideId}`;
+    if (published === stamp) return;
 
     let cancelled = false;
     (async () => {
       const { rides: r, burnedTotals: b, scores: s } = latest.current;
       const name = profile.name || 'Rider';
-      const [a, w] = await Promise.all([
-        publishCrewTotals(crew.code, name, crewTotals(r, b, s)),
-        publishWeekStats(crew.code, name, weekStats(r)),
-      ]);
-      if (cancelled || !(a && w)) return;
+      const totals = crewTotals(r, b, s);
+      const week = weekStats(r);
+      const results = await Promise.all(
+        codes.flatMap((code) => [publishCrewTotals(code, name, totals), publishWeekStats(code, name, week)]),
+      );
+      if (cancelled || !results.every(Boolean)) return;
       try {
-        localStorage.setItem(PUBLISHED_KEY, `${crew.code}:${latestRideId}`);
+        localStorage.setItem(PUBLISHED_KEY, stamp);
       } catch {
         /* publishes again next time: harmless */
       }
@@ -57,7 +61,7 @@ export function CrewStatsPublisher() {
     return () => {
       cancelled = true;
     };
-  }, [demo, settings.blacktopWorldEnabled, latestRideId, crew.code, profile.name]);
+  }, [demo, settings.blacktopWorldEnabled, latestRideId, crew.crews, profile.name]);
 
   return null;
 }

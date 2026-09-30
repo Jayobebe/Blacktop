@@ -10,6 +10,7 @@ import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { useRideHistory } from './useRideHistory';
 import { keepPeakTelemetry } from '../lib/telemetryPrivacy';
 import { supabase } from '@/integrations/supabase/client';
+import { noteLocationGranted } from '@/lib/locationGrant';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 
@@ -548,8 +549,12 @@ async function startGpsWatch() {
       maximumAge: 0,
     };
 
-    navigator.geolocation.getCurrentPosition(handleWebPosition, handlePositionError, geoOptions);
-    watchId = navigator.geolocation.watchPosition(handleWebPosition, handlePositionError, geoOptions);
+    const onWebFix = (position: GeolocationPosition) => {
+      noteLocationGranted();
+      handleWebPosition(position);
+    };
+    navigator.geolocation.getCurrentPosition(onWebFix, handlePositionError, geoOptions);
+    watchId = navigator.geolocation.watchPosition(onWebFix, handlePositionError, geoOptions);
     console.log('[GPS] Web watch started, id:', watchId);
   }
 }

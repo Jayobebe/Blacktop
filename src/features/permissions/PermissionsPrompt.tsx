@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { enablePush, getPushState, usePush } from '@/features/notifications';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { noteLocationGranted } from '@/lib/locationGrant';
 
 type Status = 'pending' | 'granted' | 'denied';
 const STORAGE_KEY = 'blacktop_permissions_prompted_v1';
@@ -36,6 +37,7 @@ export function PermissionsPrompt({ onComplete }: Props) {
       await new Promise<GeolocationPosition>((res, rej) =>
         navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 })
       );
+      noteLocationGranted();
       setPerms(p => ({ ...p, location: 'granted' }));
     } catch {
       setPerms(p => ({ ...p, location: 'denied' }));

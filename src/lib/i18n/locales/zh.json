@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "把这三个词告诉急救服务：它们能精确定位这里。",
  "near {0}": "{0} 附近",
  "what3words address copied": "已复制 what3words 地址",
- "what3words address {0}. Tap to copy.": "what3words 地址 {0}。点按即可复制。"
+ "what3words address {0}. Tap to copy.": "what3words 地址 {0}。点按即可复制。",
+ "All crew slots full": "团队名额已满",
+ "All crew slots full. Leave a crew to join another.": "团队名额已满。退出一个团队才能加入新的团队。",
+ "Crew name": "团队名称",
+ "Crew {0}": "团队 {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "请在 Blacktop World 的团队二维码中退出一个团队，才能加入新的团队。",
+ "Leave {0}": "退出 {0}",
+ "Leave {0}?": "退出 {0}？",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "好友在“加入团队”中扫描此码即可加入这个团队一起骑行。在下方选择其他团队可分享它的二维码。",
+ "Rename {0}": "重命名 {0}",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "在 Blacktop World 的团队二维码中重命名、切换或退出你的团队。",
+ "Save name": "保存名称",
+ "Switched to crew {0}": "已切换到团队 {0}",
+ "Switched to {0}": "已切换到 {0}",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "你将从它的排行榜中移除，也不会再收到它的通知。扫描它的二维码即可重新加入。",
+ "Your crews": "你的团队",
+ "{0} of {1} crew slots used": "已使用 {0}/{1} 个团队名额"
 }

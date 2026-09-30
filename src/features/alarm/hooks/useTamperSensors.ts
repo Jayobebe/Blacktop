@@ -1,23 +1,9 @@
 import { useEffect, useRef } from 'react';
 
-type PermissionCapable = { requestPermission?: () => Promise<string> };
+import { requestMotionAccess } from '@/lib/motionPermission';
 
-/** Motion and orientation access (iOS asks once, and only from a tap). */
-export async function requestTamperPermission(): Promise<boolean> {
-  const asks: Promise<boolean>[] = [];
-  for (const E of [
-    typeof DeviceMotionEvent !== 'undefined' ? (DeviceMotionEvent as unknown as PermissionCapable) : null,
-    typeof DeviceOrientationEvent !== 'undefined' ? (DeviceOrientationEvent as unknown as PermissionCapable) : null,
-  ]) {
-    if (!E || typeof E.requestPermission !== 'function') continue;
-    asks.push(
-      E.requestPermission()
-        .then((r) => r === 'granted')
-        .catch(() => false),
-    );
-  }
-  return (await Promise.all(asks)).every(Boolean);
-}
+/** Motion and orientation access (iOS asks only from a tap; remembered for the next launch). */
+export const requestTamperPermission = requestMotionAccess;
 
 /**
  * The alarm's own sensor wrapper: tilt (orientation beta / gamma, any way up,

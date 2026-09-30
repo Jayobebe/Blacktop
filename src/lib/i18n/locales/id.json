@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "Berikan tiga kata ini ke layanan darurat: kata-kata ini menunjuk titik ini dengan tepat.",
  "near {0}": "dekat {0}",
  "what3words address copied": "Alamat what3words disalin",
- "what3words address {0}. Tap to copy.": "Alamat what3words {0}. Ketuk untuk menyalin."
+ "what3words address {0}. Tap to copy.": "Alamat what3words {0}. Ketuk untuk menyalin.",
+ "All crew slots full": "Semua slot kru penuh",
+ "All crew slots full. Leave a crew to join another.": "Semua slot kru penuh. Keluar dari satu kru untuk bergabung ke kru lain.",
+ "Crew name": "Nama kru",
+ "Crew {0}": "Kru {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "Keluar dari satu kru lewat QR kru di Blacktop World untuk bergabung ke kru lain.",
+ "Leave {0}": "Keluar dari {0}",
+ "Leave {0}?": "Keluar dari {0}?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "Teman memindai ini dari Gabung kru untuk berkendara di kru ini. Pilih kru lain di bawah untuk membagikan QR-nya.",
+ "Rename {0}": "Ganti nama {0}",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Ganti nama, pindah, atau keluar dari kru Anda lewat QR kru di Blacktop World.",
+ "Save name": "Simpan nama",
+ "Switched to crew {0}": "Pindah ke kru {0}",
+ "Switched to {0}": "Pindah ke {0}",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Anda akan hilang dari papan peringkatnya dan tidak lagi menerima notifikasinya. Anda bisa bergabung lagi dengan memindai QR-nya.",
+ "Your crews": "Kru Anda",
+ "{0} of {1} crew slots used": "{0} dari {1} slot kru terpakai"
 }

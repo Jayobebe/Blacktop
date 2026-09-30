@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "Donnez ces trois mots aux secours : ils désignent cet endroit précis.",
  "near {0}": "près de {0}",
  "what3words address copied": "Adresse what3words copiée",
- "what3words address {0}. Tap to copy.": "Adresse what3words {0}. Touchez pour copier."
+ "what3words address {0}. Tap to copy.": "Adresse what3words {0}. Touchez pour copier.",
+ "All crew slots full": "Tous les emplacements de crew sont pris",
+ "All crew slots full. Leave a crew to join another.": "Tous les emplacements de crew sont pris. Quittez un crew pour en rejoindre un autre.",
+ "Crew name": "Nom du crew",
+ "Crew {0}": "Crew {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "Quittez un crew depuis QR du crew dans Blacktop World pour en rejoindre un autre.",
+ "Leave {0}": "Quitter {0}",
+ "Leave {0}?": "Quitter {0} ?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "Vos potes le scannent depuis Rejoindre un crew pour rouler dans ce crew. Choisissez un autre crew ci-dessous pour partager son QR.",
+ "Rename {0}": "Renommer {0}",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Renommez, changez ou quittez vos crews depuis QR du crew dans Blacktop World.",
+ "Save name": "Enregistrer le nom",
+ "Switched to crew {0}": "Passé au crew {0}",
+ "Switched to {0}": "Passé à {0}",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Vous disparaîtrez de ses classements et ne recevrez plus ses notifications. Vous pourrez le rejoindre à nouveau en scannant son QR.",
+ "Your crews": "Vos crews",
+ "{0} of {1} crew slots used": "{0} emplacements de crew sur {1} utilisés"
 }

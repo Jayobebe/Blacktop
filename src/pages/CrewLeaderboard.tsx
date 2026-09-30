@@ -78,7 +78,7 @@ export default function CrewLeaderboard() {
       <div className="flex items-center gap-2 mb-3">
         <Trophy className="w-4 h-4 text-accent" />
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          {tr("Crew")}{" "}{crew.code}
+          {crew.name}
         </p>
       </div>
 

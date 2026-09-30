@@ -1,3 +1,4 @@
+import { installMotionRegrant } from '@/lib/motionPermission';
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -38,6 +39,8 @@ import { installDemoGuard } from '@/lib/demoGuard';
 
 // Demo mode never writes to the server (lib/demoGuard).
 installDemoGuard();
+// iOS forgets motion access when the app closes: the first tap re-grants it.
+installMotionRegrant();
 
 
 const queryClient = new QueryClient();

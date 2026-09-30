@@ -3483,5 +3483,21 @@
  "Give these three words to the emergency services: they pinpoint this spot.": "Назвіть ці три слова екстреним службам: вони точно вказують це місце.",
  "near {0}": "біля {0}",
  "what3words address copied": "Адресу what3words скопійовано",
- "what3words address {0}. Tap to copy.": "Адреса what3words {0}. Торкніться, щоб скопіювати."
+ "what3words address {0}. Tap to copy.": "Адреса what3words {0}. Торкніться, щоб скопіювати.",
+ "All crew slots full": "Усі місця в командах зайняті",
+ "All crew slots full. Leave a crew to join another.": "Усі місця в командах зайняті. Вийдіть з однієї команди, щоб приєднатися до іншої.",
+ "Crew name": "Назва команди",
+ "Crew {0}": "Команда {0}",
+ "Leave a crew from Crew QR on Blacktop World to join another.": "Вийдіть з команди в QR команди в Blacktop World, щоб приєднатися до іншої.",
+ "Leave {0}": "Вийти з {0}",
+ "Leave {0}?": "Вийти з {0}?",
+ "Mates scan this from Join Crew to ride in this crew. Pick another crew below to share its QR.": "Друзі сканують це в «Приєднатися до команди», щоб їздити в цій команді. Виберіть нижче іншу команду, щоб поділитися її QR.",
+ "Rename {0}": "Перейменувати {0}",
+ "Rename, switch or leave your crews from Crew QR on Blacktop World.": "Перейменовуйте, перемикайте або залишайте свої команди в QR команди в Blacktop World.",
+ "Save name": "Зберегти назву",
+ "Switched to crew {0}": "Перемкнуто на команду {0}",
+ "Switched to {0}": "Перемкнуто на {0}",
+ "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Ви зникнете з її рейтингів і більше не отримуватимете її сповіщень. Можна приєднатися знову, відсканувавши її QR.",
+ "Your crews": "Ваші команди",
+ "{0} of {1} crew slots used": "Використано {0} з {1} місць у командах"
 }

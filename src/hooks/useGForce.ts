@@ -1,3 +1,4 @@
+import { noteMotionGranted } from '@/lib/motionPermission';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GVectorTracker, emptyGVector, type GMax } from '@/lib/gForceVector';
 
@@ -62,6 +63,7 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
       try {
         const res = await anyMotion.requestPermission();
         if (res === 'granted') {
+          noteMotionGranted();
           setState(prev => ({ ...prev, permissionGranted: true, isSupported: true }));
           return true;
         }

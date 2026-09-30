@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
-import { getCrewCode } from '@/features/crew/useCrew';
+import { getCrewCode, getCrews } from '@/features/crew/useCrew';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -263,7 +263,7 @@ async function subscribeAndRegister(reg: ServiceWorkerRegistration) {
   const json = sub.toJSON();
   // Rough area (rounded server-side to ~11 km) for weather alerts and for helping nearby riders.
   const loc = state.categories.includes('weather') || state.categories.includes('rescue_nearby') ? await weatherLocation() : null;
-  const { error } = await supabase.rpc('register_push_subscription' as never, {
+  const base = {
     _endpoint: sub.endpoint,
     _p256dh: json.keys?.p256dh ?? '',
     _auth: json.keys?.auth ?? '',
@@ -272,7 +272,18 @@ async function subscribeAndRegister(reg: ServiceWorkerRegistration) {
     _crew_code: getCrewCode(),
     _lat: loc?.lat ?? null,
     _lng: loc?.lng ?? null,
+  };
+  // Every crew this rider is in, and their own name for each (crew
+  // notifications start with it). A server from before several crews doesn't
+  // know these parameters (PGRST202): then just the active crew, as before.
+  const crews = getCrews();
+  let { error } = await supabase.rpc('register_push_subscription' as never, {
+    ...base,
+    _crew_codes: crews.map((c) => c.code),
+    // Only names the rider chose; the server says "Crew CODE" for the rest.
+    _crew_names: Object.fromEntries(crews.filter((c) => c.custom).map((c) => [c.code, c.name])),
   } as never);
+  if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, base as never));
   if (error) throw new PushSetupError(tr("Couldn't register this device ({0}). Try again in a moment.", [error.code || error.message]));
 }
 
@@ -401,7 +412,7 @@ export function wantsPush(id: PushCategory) {
 
 export interface RescueNotice {
   convoyId?: string | null;
-  /** Crew to tell: left out = this device's crew; null = don't tell the crew. */
+  /** Crew to tell: left out = all this rider's crews; null = don't tell the crews. */
   crewCode?: string | null;
   lat: number;
   lng: number;
@@ -412,6 +423,8 @@ export interface RescueNotice {
 }
 
 const crewFor = (code: string | null | undefined) => (code === undefined ? getCrewCode() : code);
+/** Every crew to tell (a server from before several crews reads only `crewCode`, the active one). */
+const crewsFor = (code: string | null | undefined) => (code === undefined ? getCrews().map((c) => c.code) : code ? [code] : []);
 
 /** Tells this rider's convoy and crew they need rescue. Works even with notifications off here. */
 export async function notifyRescue(n: RescueNotice): Promise<{ sent: number }> {
@@ -419,7 +432,7 @@ export async function notifyRescue(n: RescueNotice): Promise<{ sent: number }> {
   try {
     await ensureSession();
     const { data, error } = await supabase.functions.invoke('send-push', {
-      body: { action: 'rescue', convoyId: n.convoyId ?? null, crewCode: crewFor(n.crewCode), lat: n.lat, lng: n.lng, auto: !!n.auto, nearbyKm: n.nearbyKm ?? null },
+      body: { action: 'rescue', convoyId: n.convoyId ?? null, crewCode: crewFor(n.crewCode), crewCodes: crewsFor(n.crewCode), lat: n.lat, lng: n.lng, auto: !!n.auto, nearbyKm: n.nearbyKm ?? null },
     });
     return { sent: error ? 0 : Number(data?.sent) || 0 };
   } catch {
@@ -431,7 +444,7 @@ export async function notifyRescueCancel(n: Omit<RescueNotice, 'lat' | 'lng' | '
   if (isDemoModeActive()) return;
   try {
     await supabase.functions.invoke('send-push', {
-      body: { action: 'rescue_cancel', convoyId: n.convoyId ?? null, crewCode: crewFor(n.crewCode), nearbyKm: n.nearbyKm ?? null, lat: n.lat ?? null, lng: n.lng ?? null },
+      body: { action: 'rescue_cancel', convoyId: n.convoyId ?? null, crewCode: crewFor(n.crewCode), crewCodes: crewsFor(n.crewCode), nearbyKm: n.nearbyKm ?? null, lat: n.lat ?? null, lng: n.lng ?? null },
     });
   } catch {
     /* best effort */

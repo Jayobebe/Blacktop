@@ -46,7 +46,11 @@ async function displayName(ctx: Ctx, userId: string): Promise<string> {
 }
 
 async function crewDeviceUsers(ctx: Ctx, crew: string): Promise<string[]> {
-  const { data, error } = await ctx.admin.from('push_subscriptions').select('user_id').eq('crew_code', crew).limit(2000)
+  // Devices in this crew among several (crew_codes), or registered to it alone
+  // (crew_code; all a database from before several crews has).
+  let { data, error } = await ctx.admin
+    .from('push_subscriptions').select('user_id').or(`crew_code.eq.${crew},crew_codes.cs.{${crew}}`).limit(2000)
+  if (error && error.code === '42703') ({ data, error } = await ctx.admin.from('push_subscriptions').select('user_id').eq('crew_code', crew).limit(2000))
   if (error) throw error
   return [...new Set((data ?? []).map((r) => r.user_id as string))]
 }
@@ -62,6 +66,8 @@ export interface RescueInput {
   userId: string
   convoyId?: string | null
   crewCode?: string | null
+  /** Every crew the rider is in (newer apps); crewCode alone from older ones. */
+  crewCodes?: string[] | null
   lat: number
   lng: number
   auto?: boolean
@@ -84,7 +90,7 @@ function addResults(a: { sent: number; failed: number; devices: number }, b: { s
 }
 
 /** Everyone who should hear about this rider's rescue: their convoy and their crew. */
-async function rescueRecipients(ctx: Ctx, userId: string, convoyId?: string | null, crewCode?: string | null) {
+async function rescueRecipients(ctx: Ctx, userId: string, convoyId?: string | null, crewCode?: string | null, crewCodes?: string[] | null) {
   const users = new Set<string>()
   if (convoyId) {
     const { data: member } = await ctx.admin
@@ -94,8 +100,8 @@ async function rescueRecipients(ctx: Ctx, userId: string, convoyId?: string | nu
       for (const r of data ?? []) users.add(r.user_id as string)
     }
   }
-  const crew = normaliseCrew(crewCode)
-  if (crew) for (const u of await crewDeviceUsers(ctx, crew)) users.add(u)
+  const crews = new Set([crewCode, ...(crewCodes ?? [])].map(normaliseCrew).filter((c): c is string => !!c))
+  for (const crew of [...crews].slice(0, 4)) for (const u of await crewDeviceUsers(ctx, crew)) users.add(u)
   users.delete(userId)
   return [...users]
 }
@@ -104,7 +110,7 @@ export async function rescue(ctx: Ctx, input: RescueInput) {
   // The what3words square is looked up alongside (null without a what3words key).
   const [name, recipients, w3w] = await Promise.all([
     displayName(ctx, input.userId),
-    rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode),
+    rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode, input.crewCodes),
     wordsAt(input.lat, input.lng).catch(() => null),
   ])
   const where = w3w ? ` ///${w3w.words}` : ''
@@ -131,7 +137,7 @@ export async function rescue(ctx: Ctx, input: RescueInput) {
 
 export async function rescueCancel(ctx: Ctx, input: Omit<RescueInput, 'lat' | 'lng' | 'auto'> & { lat?: number | null; lng?: number | null }) {
   const name = await displayName(ctx, input.userId)
-  const recipients = await rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode)
+  const recipients = await rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode, input.crewCodes)
   const message = {
     title: `✅ ${name} is OK`,
     body: 'They cancelled their rescue call.',
@@ -225,7 +231,7 @@ async function tankRequest(ctx: Ctx, id: string) {
   const r = await one(ctx, 'blacktank_requests', id)
   if (!r || !(await markOnce(ctx, `tank_request:${id}`))) return
   const members = await tankMembers(ctx, str(r.crew_code))
-  await deliver(ctx, { userIds: members, exclude: [str(r.requester_id)] }, 'blacktank', {
+  await deliver(ctx, { userIds: members, exclude: [str(r.requester_id)], crewLabel: str(r.crew_code) }, 'blacktank', {
     title: `⛽ ${clip(str(r.requester_name, 'A rider'), 30)} asked the Blacktank`,
     body: `${amount(r.amount, r.currency)} for ${clip(str(r.reason, 'the crew'), 80)}. Tap to vote.`,
     tag: `tank-${id}`,
@@ -239,14 +245,14 @@ async function tankStatus(ctx: Ctx, id: string, status: string, actor: string) {
   const requester = str(r.requester_id)
   const what = `${amount(r.amount, r.currency)} for ${clip(str(r.reason, 'the crew'), 80)}`
   const toRequester = (title: string, body: string) =>
-    deliver(ctx, { userIds: [requester] }, 'blacktank', { title, body, tag: `tank-${id}`, url: TANK_URL })
+    deliver(ctx, { userIds: [requester], crewLabel: str(r.crew_code) }, 'blacktank', { title, body, tag: `tank-${id}`, url: TANK_URL })
 
   if (status === 'approved') {
     await toRequester('✅ Your Blacktank request was approved', `The crew approved ${what}. Shares are on their way.`)
     const members = await tankMembers(ctx, str(r.crew_code))
     const others = members.filter((m) => m !== requester)
     const share = num(r.amount) / Math.max(1, others.length)
-    await deliver(ctx, { userIds: others }, 'blacktank', {
+    await deliver(ctx, { userIds: others, crewLabel: str(r.crew_code) }, 'blacktank', {
       title: `💸 Pay your share to ${clip(str(r.requester_name, 'the rider'), 30)}`,
       body: `${amount(share, r.currency)} towards ${clip(str(r.reason, 'the request'), 80)}. Tap to settle up.`,
       tag: `tank-${id}`,
@@ -265,7 +271,7 @@ async function tankPledge(ctx: Ctx, id: string) {
   const p = await one(ctx, 'blacktank_pledges', id)
   if (!p || !(await markOnce(ctx, `tank_pledge:${id}`))) return
   const members = await tankMembers(ctx, str(p.crew_code))
-  await deliver(ctx, { userIds: members, exclude: [str(p.user_id)] }, 'blacktank', {
+  await deliver(ctx, { userIds: members, exclude: [str(p.user_id)], crewLabel: str(p.crew_code) }, 'blacktank', {
     title: `⛽ ${clip(str(p.display_name, 'A rider'), 30)} chipped in ${amount(p.amount, p.currency)}`,
     body: 'The crew Blacktank just grew.',
     tag: `tank-pledge-${str(p.crew_code)}`,
@@ -278,7 +284,7 @@ async function tankSettlement(ctx: Ctx, id: string) {
   if (!s || !(await markOnce(ctx, `tank_settlement:${id}`))) return
   const r = await one(ctx, 'blacktank_requests', str(s.request_id))
   if (!r) return
-  await deliver(ctx, { userIds: [str(r.requester_id)] }, 'blacktank', {
+  await deliver(ctx, { userIds: [str(r.requester_id)], crewLabel: str(r.crew_code) }, 'blacktank', {
     title: `💸 ${clip(str(s.payer_name, 'A rider'), 30)} paid their share`,
     body: `${amount(s.amount, s.currency)} towards ${clip(str(r.reason, 'your request'), 80)}.`,
     tag: `tank-settle-${str(s.request_id)}`,
@@ -302,10 +308,10 @@ async function crewOvertake(ctx: Ctx, p: Row) {
   // Once per rider pair every 3 hours, so a back-and-forth doesn't spam.
   if (!(await markOnce(ctx, `overtake:${by}:${victim}`, 3 * 3600))) return
   const metrics = (Array.isArray(p.metrics) ? p.metrics : []).map((m) => METRIC_LABELS[String(m)]).filter(Boolean)
-  await deliver(ctx, { userIds: [victim] }, 'leaderboard', {
+  await deliver(ctx, { userIds: [victim], crewLabel: str(p.crew) }, 'leaderboard', {
     title: `📉 ${clip(str(p.by_name, 'A crew mate'), 30)} passed you on the crew board`,
     body: `They're now ahead of you on ${listJoin(metrics) || 'the board'}.`,
-    tag: `overtake-${by}`,
+    tag: `overtake-${by}-${str(p.crew)}`,
     url: '/crew/leaderboard',
   })
 }
@@ -339,10 +345,10 @@ async function crewWeek(ctx: Ctx, userId: string, crew: string, week: string) {
     for (const c of challengesForWeek(week)) {
       const value = num((row as Row)[c.metric])
       if (value < c.target || !(await markOnce(ctx, `wk_target:${userId}:${week}:${c.id}`))) continue
-      await deliver(ctx, { userIds: [userId] }, 'challenges', {
+      await deliver(ctx, { userIds: [userId], crewLabel: crew }, 'challenges', {
         title: `🏁 ${c.title}: target hit`,
         body: `${formatScore(value, c.unit)} this week (target ${formatScore(c.target, c.unit)}). See where you stand in Crew Challenges.`,
-        tag: `wk-${week}-${c.id}`,
+        tag: `wk-${week}-${c.id}-${crew}`,
         url: '/crew/challenges',
       })
     }
@@ -356,7 +362,7 @@ async function crewWeek(ctx: Ctx, userId: string, crew: string, week: string) {
     await deliver(ctx, { crew }, 'challenges', {
       title: `🏆 ${goal.title} smashed`,
       body: `Your crew hit ${formatScore(goal.target, goal.unit)} this month. Nice riding.`,
-      tag: `month-${month}`,
+      tag: `month-${month}-${crew}`,
       url: '/crew/challenges',
     })
   }
@@ -534,10 +540,10 @@ async function weekResults(ctx: Ctx, now: Date) {
           : wins === 1
             ? '🏆 Weekly results: you took one'
             : '🏁 Weekly challenge results'
-      await deliver(ctx, { userIds: [str(me.user_id)] }, 'challenges', {
+      await deliver(ctx, { userIds: [str(me.user_id)], crewLabel: crew }, 'challenges', {
         title,
         body: `${lines.map((l) => l.line).join('. ')}. New challenges are live.`,
-        tag: `week-${week}`,
+        tag: `week-${week}-${crew}`,
         url: '/crew/challenges',
       })
     }
@@ -567,7 +573,7 @@ async function monthResults(ctx: Ctx, now: Date) {
     await deliver(ctx, { crew }, 'challenges', {
       title: `😤 ${goal.title} missed`,
       body: `Your crew reached ${formatOf(totals[goal.metric], goal.target, goal.unit)}. This month: ${next.title}.`,
-      tag: `month-${prev}`,
+      tag: `month-${prev}-${crew}`,
       url: '/crew/challenges',
     })
   }
@@ -578,10 +584,18 @@ async function monthReminder(ctx: Ctx, now: Date) {
   if (daysInMonthUTC(now) - now.getUTCDate() + 1 !== 5 || now.getUTCHours() < 17) return
   const month = monthKeyUTC(now)
   const goal = monthlyGoalFor(month)
-  const { data, error } = await ctx.admin
-    .from('push_subscriptions').select('crew_code').contains('categories', ['challenges']).not('crew_code', 'is', null).limit(5000)
+  // Every crew a device with challenges on is in (crew_codes), or its one
+  // crew on a database from before several crews.
+  let { data, error } = await ctx.admin
+    .from('push_subscriptions').select('crew_code, crew_codes').contains('categories', ['challenges']).limit(5000)
+  if (error && error.code === '42703') {
+    ;({ data, error } = await ctx.admin
+      .from('push_subscriptions').select('crew_code').contains('categories', ['challenges']).not('crew_code', 'is', null).limit(5000))
+  }
   if (error) throw error
-  const crews = [...new Set((data ?? []).map((r) => str(r.crew_code)).filter(Boolean))]
+  const crews = [...new Set(
+    (data ?? []).flatMap((r) => [str(r.crew_code), ...((r as Row).crew_codes as string[] | undefined ?? [])]).map((c) => str(c).toUpperCase()).filter(Boolean),
+  )]
   for (const crew of crews) {
     if (!(await markOnce(ctx, `month_reminder:${crew}:${month}`))) continue
     const totals = await monthTotals(ctx, crew, month)
@@ -589,7 +603,7 @@ async function monthReminder(ctx: Ctx, now: Date) {
     await deliver(ctx, { crew }, 'challenges', {
       title: `⏳ 5 days left: ${goal.title}`,
       body: `Your crew is at ${formatOf(totals[goal.metric], goal.target, goal.unit)}. Get out there.`,
-      tag: `month-${month}`,
+      tag: `month-${month}-${crew}`,
       url: '/crew/challenges',
     })
   }

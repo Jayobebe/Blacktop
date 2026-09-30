@@ -64,12 +64,13 @@ export function StationManager({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[95] bg-background/95 backdrop-blur-xl flex flex-col animate-fade-in">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+      {/* Clear of the notch / Dynamic Island, and the side notch in landscape. */}
+      <div className="flex items-center justify-between pb-3 border-b border-border/50" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
         <div>
           <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Stations")}</p>
           <p className="text-xs text-muted-foreground">{tr("Your own files. Nothing leaves the phone.")}</p>
         </div>
-        <button type="button" onClick={onClose} aria-label={tr("Close station manager")} className="w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+        <button type="button" onClick={onClose} aria-label={tr("Close station manager")} className="glove-hit w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
           <X className="w-4 h-4" />
         </button>
       </div>
