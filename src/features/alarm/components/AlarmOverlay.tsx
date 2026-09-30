@@ -29,9 +29,9 @@ const MAX_TRIES = 3;
  * included) while the alarm is on. A big red lock on one half (top in
  * portrait, left in landscape), the pattern pad on the other.
  *
- * It goes on <body>, not in #root: #root is its own stacking context (its view
- * transition), so whatever else is portaled to body (dialogs, sheets, the radio
- * bubble, the logbook hand-over) would otherwise sit on top of it, and be tappable.
+ * It goes on <body> at z-10000, above everything else portaled there (dialogs,
+ * sheets, the radio bubble, the logbook hand-over), which would otherwise be
+ * able to sit on top of it, and be tappable.
  */
 export function AlarmOverlay() {
   const alarm = useAlarm();

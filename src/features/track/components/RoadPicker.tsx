@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
-import '@/lib/maplibreWorker';
+import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { type GeoJSONSource, type Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { ArrowRight, Crosshair, Loader2, RefreshCcw, RotateCcw, ScanSearch, Search, Undo2, X } from 'lucide-react';
@@ -60,6 +60,7 @@ export function RoadPicker({ center, onLoop, onCancel }: { center?: LatLng; onLo
   useEffect(() => {
     if (!mapElRef.current) return;
     const map = new maplibregl.Map({
+      pixelRatio: MAP_PIXEL_RATIO,
       container: mapElRef.current,
       style: SATELLITE_STYLE,
       center: center ? [center.lng, center.lat] : [-1.26, 52.07],

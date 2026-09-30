@@ -115,17 +115,6 @@
     letter-spacing: -0.02em;
   }
 
-  /* Smooth page transitions */
-  #root {
-    view-transition-name: root;
-  }
-
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0.25s;
-    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
 }
 
 @layer components {
@@ -1252,3 +1241,30 @@
 @keyframes shop-spin { from { transform: perspective(1600px) rotateY(0deg); } to { transform: perspective(1600px) rotateY(360deg); } }
 .shop-spin { animation: shop-spin 10s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .shop-spin { animation: none; } }
+
+/* Over the map: no backdrop blur. Re-blurring a moving WebGL map every frame
+   is one of the most expensive things a phone can do; slightly more opaque
+   panels read the same over the dark map. */
+.map-shell [class*="bg-card"]:not(.no-frost) {
+  background-color: hsl(var(--card) / 0.86) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.map-shell .frost-accent {
+  background: hsl(var(--card) / 0.84);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Home's ride tiles notched around the globe (Home.tsx): pressing brightens them
+   rather than scaling (a scaled tile's notch slid off the globe and its border),
+   and a long press never selects the label or opens the callout menu. */
+.globe-tile {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.globe-tile.pressable:active:not(:disabled) {
+  transform: none;
+  filter: brightness(1.35);
+}

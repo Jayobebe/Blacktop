@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
-import '@/lib/maplibreWorker';
+import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { Map as MapLibreMap, Marker } from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -457,6 +457,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       if (cancelled || !containerRef.current || mapRef.current) return;
 
       instance = new maplibregl.Map({
+      pixelRatio: MAP_PIXEL_RATIO,
         container: containerRef.current,
         style,
         center: center as [number, number],

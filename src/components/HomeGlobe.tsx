@@ -65,7 +65,7 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
       const rect = canvas.getBoundingClientRect();
       size = Math.min(rect.width, rect.height);
       if (size <= 0) return;
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(2, window.devicePixelRatio || 1); // 3x only costs at this size
       canvas.width = Math.round(size * dpr);
       canvas.height = Math.round(size * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS px, render at device res
@@ -80,17 +80,36 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
 
     let rotation = 0;
     let last = performance.now();
+    // Only while on screen (Home's deck can be on an Enterprise card), at ~30 fps:
+    // at 6°/s the spin is under a pixel a frame, and each frame re-projects every coastline.
+    let visible = true;
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(draw);
+      }
+    });
+    io.observe(canvas);
 
     const draw = (now: number) => {
+      if (!visible) {
+        raf = 0;
+        return;
+      }
+      if (now - last < 32) {
+        raf = requestAnimationFrame(draw);
+        return;
+      }
       const dt = Math.min((now - last) / 1000, 0.1); // clamp after tab throttling
       last = now;
       rotation = (rotation + ROTATION_DEG_PER_SEC * dt) % 360;
       projection.rotate([rotation, -AXIS_TILT_DEG]);
 
       if (size > 0) {
-        // Frosted land. Every third frame is plenty at this spin speed (the
+        // Frosted land. Every other frame (~15 a second) is plenty at this spin speed (the
         // clip moves well under a pixel between updates, under the coastline).
-        if (frost && frame++ % 3 === 0) {
+        if (frost && frame++ % 2 === 0) {
           const d = outline(land);
           const clip = d ? `path('${d}')` : 'inset(50%)';
           frost.style.clipPath = clip;
@@ -128,6 +147,8 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
 
     return () => {
       cancelAnimationFrame(raf);
+      raf = 0;
+      io.disconnect();
       ro.disconnect();
     };
   }, [accentColor]);

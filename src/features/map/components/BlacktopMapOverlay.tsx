@@ -51,7 +51,7 @@ export function BlacktopMapOverlay() {
 
   return (
     <div className={cn(
-      'fixed inset-0 z-[1000]',
+      'map-shell fixed inset-0 z-[1000]',
       // Until the map has drawn, the app backdrop (brought in front of the
       // page, belts sped up) is the loading screen; then the map fades in.
       ready ? 'bg-background' : 'bg-transparent',

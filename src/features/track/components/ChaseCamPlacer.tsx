@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
-import '@/lib/maplibreWorker';
+import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { type GeoJSONSource, type Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { ArrowLeft, ArrowLeftRight, Check, ChevronLeft, ChevronRight, Flag, Minus, Pause, Play, Plus, Rewind, Save, Split, X } from 'lucide-react';
@@ -115,6 +115,7 @@ export function ChaseCamPlacer({
     if (!mapElRef.current) return;
     const start = lineRef.current.pointAt(posRef.current);
     const map = new maplibregl.Map({
+      pixelRatio: MAP_PIXEL_RATIO,
       container: mapElRef.current,
       style: SATELLITE_STYLE,
       center: [start.lng, start.lat],

@@ -16,6 +16,7 @@ import { SafetyStatusCard } from '@/features/rescue';
 import { AlarmButton } from '@/features/alarm';
 import { useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
+import { sceneCue, uiCue } from '@/lib/radioFx';
 import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { useEnterprise, EnterpriseDoorway, EnterpriseWorkspaceCard } from '@/features/enterprise';
@@ -71,6 +72,11 @@ export default function Home() {
     pressStart.current = { x: e.clientX, y: e.clientY };
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true;
+      // Into Blacktop World: a click as it catches, then the whoosh as the globe bursts.
+      if (settings.uiSoundsEnabled !== false) {
+        uiCue('tap');
+        setTimeout(() => sceneCue('whoosh'), 70);
+      }
       setIsExploding(true);
       setTimeout(() => navigate('/world'), 320);
     }, 600);
@@ -228,6 +234,7 @@ export default function Home() {
     const clearMask = (el: HTMLElement) => {
       el.style.webkitMaskImage = '';
       el.style.maskImage = '';
+      el.classList.remove('globe-tile');
     };
 
     const apply = () => {
@@ -274,6 +281,9 @@ export default function Home() {
         // intrinsic size, shifting the notch by a pixel).
         el.style.webkitMaskSize = '100% 100%';
         el.style.maskSize = '100% 100%';
+        // Pressed, these brighten instead of shrinking: a scaled tile's notch slid off the
+        // globe and away from its redrawn border (see .globe-tile in index.css).
+        el.classList.add('globe-tile');
       });
 
       // Carry the accent border around the circular cut on Convoy + Solo tiles.

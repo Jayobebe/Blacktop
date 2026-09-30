@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
-import '@/lib/maplibreWorker';
+import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,6 +61,7 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
+      pixelRatio: MAP_PIXEL_RATIO,
       container: containerRef.current,
       style: DARK_STYLE,
       center: arenaRing.length ? [arenaRing[0].lng, arenaRing[0].lat] : [0, 51],

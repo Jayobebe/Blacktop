@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
-import '@/lib/maplibreWorker';
+import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { X, Play, Pause, Download, Loader2 } from 'lucide-react';
@@ -88,6 +88,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     void loadDarkMapStyle().catch(() => STYLE_URL).then((style) => {
     if (cancelled || !mapContainerRef.current) return;
     const map = new maplibregl.Map({
+      pixelRatio: MAP_PIXEL_RATIO,
       container: mapContainerRef.current,
       style,
       center: routeCoords[0],
