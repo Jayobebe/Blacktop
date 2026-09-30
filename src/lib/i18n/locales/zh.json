@@ -3189,5 +3189,21 @@
  "“{0}”": "“{0}”",
  "1 card collected": "已收集 1 张卡",
  "{0} cards collected": "已收集 {0} 张卡",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "在 iPhone 上，锁定画面可以被滑走。为防止这种情况，请开启“引导式访问”（设置 → 辅助功能 → 引导式访问），并在布防后连按三次侧边按钮。"
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "在 iPhone 上，锁定画面可以被滑走。为防止这种情况，请开启“引导式访问”（设置 → 辅助功能 → 引导式访问），并在布防后连按三次侧边按钮。",
+ "Before you turn on crash detection": "开启事故检测之前",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop 不是紧急监护服务，也不会联系紧急服务（999/911/112）。事故检测和救援警报依赖设备传感器和可用的移动数据，无法保证送达。",
+ "Draw your unlock pattern": "绘制你的解锁图案",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "我了解 Blacktop 不是紧急服务，也无法保证警报送达。",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "剧烈撞击并停下后，它会询问你是否安好；如果你没有回应，会通知你在“设置 → 安全”中选定的人。只要可以，请始终自己拨打紧急电话。",
+ "Log Peak Speed & Gs": "记录最高速度和 G 值",
+ "Offline — following GPS track": "离线 — 正在按 GPS 轨迹行进",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "公共道路隐私：峰值数据在各处显示为 --，且不会分享。数据仍会记录；用你的解锁图案可再次显示。",
+ "Rerouting": "正在重新规划路线",
+ "Too many tries. Wait 30 seconds.": "尝试次数过多。请等待 30 秒。",
+ "Top speed, peak G and max lean show across the app.": "最高速度、峰值 G 和最大压弯角度会在整个应用中显示。",
+ "Turn on crash detection": "开启事故检测",
+ "Unlock pattern changed": "解锁图案已更改",
+ "You'll draw it to show your peak figures again.": "你需要绘制它才能再次显示峰值数据。",
+ "Only your current pattern can change it.": "只有你当前的图案才能更改它。",
+ "Your pattern shows your peak speed, lean and G again.": "你的图案会再次显示最高速度、压弯角度和 G 值。"
 }

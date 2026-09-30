@@ -1,6 +1,7 @@
 import { TIER_LADDER, type CardTier } from '../types';
 import type { VehicleCardData } from '../hooks/useVehicleCards';
-import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
+import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
+import { keepPeakTelemetry } from '@/features/ride';
 
 /** Compact, serializable shape that fits comfortably in a QR code. */
 export interface SharedCardPayload {
@@ -69,7 +70,8 @@ export function encodeCard(
   photoPath?: string,
   zoom?: number,
 ): string {
-  const s = card.stats;
+  // Public Road Privacy: a shared card carries no peaks.
+  const s = keepPeakTelemetry(false) ? card.stats : { ...card.stats, topSpeedMph: 0, maxLean: 0, maxGForce: 0 };
   const pl = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
   const fields = [
     esc(card.bike.id).replace(/-/g, ''),

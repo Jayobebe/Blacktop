@@ -3189,5 +3189,21 @@
  "“{0}”": "”{0}”",
  "1 card collected": "1 kort insamlat",
  "{0} cards collected": "{0} kort insamlade",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "På iPhone kan låset svepas bort. Slå på Guidad åtkomst (Inställningar → Hjälpmedel → Guidad åtkomst) och tryck tre gånger på sidoknappen när larmet är aktiverat."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "På iPhone kan låset svepas bort. Slå på Guidad åtkomst (Inställningar → Hjälpmedel → Guidad åtkomst) och tryck tre gånger på sidoknappen när larmet är aktiverat.",
+ "Before you turn on crash detection": "Innan du slår på kraschdetektering",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop är ingen larmövervakningstjänst och kontaktar inte räddningstjänsten (999/911/112). Kraschdetektering och hjälplarm är beroende av telefonens sensorer och aktiv mobildata och kan inte garantera att de når fram.",
+ "Draw your unlock pattern": "Rita ditt upplåsningsmönster",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Jag förstår att Blacktop inte är en larmtjänst och inte kan garantera att ett larm når fram.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "Den frågar om du är okej efter en hård smäll och stillastående, och larmar dem du valt under Inställningar → Säkerhet om du inte svarar. Ring alltid larmnumret själv när du kan.",
+ "Log Peak Speed & Gs": "Spara toppfart och G-krafter",
+ "Offline — following GPS track": "Offline — följer GPS-spåret",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "Integritet på allmän väg: toppvärden visas som -- överallt och delas inte. De registreras fortfarande; ditt upplåsningsmönster visar dem igen.",
+ "Rerouting": "Beräknar ny rutt",
+ "Too many tries. Wait 30 seconds.": "För många försök. Vänta 30 sekunder.",
+ "Top speed, peak G and max lean show across the app.": "Toppfart, max-G och max lutning visas i hela appen.",
+ "Turn on crash detection": "Slå på kraschdetektering",
+ "Unlock pattern changed": "Upplåsningsmönstret ändrat",
+ "You'll draw it to show your peak figures again.": "Du ritar det för att visa dina toppvärden igen.",
+ "Only your current pattern can change it.": "Bara ditt nuvarande mönster kan ändra det.",
+ "Your pattern shows your peak speed, lean and G again.": "Ditt mönster visar din toppfart, lutning och G igen."
 }

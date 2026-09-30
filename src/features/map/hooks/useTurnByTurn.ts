@@ -146,7 +146,7 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
       if (now - offSinceRef.current >= OFF_ROUTE_MS && now - lastRerouteAtRef.current >= REROUTE_GAP_MS) {
         lastRerouteAtRef.current = now;
         offSinceRef.current = null;
-        if (activeRef.current && nav.maneuvers.length) say('Rerouting', { interrupt: true });
+        if (activeRef.current && nav.maneuvers.length) say(tr("Rerouting"), { interrupt: true });
         cbRef.current.onOffRoute();
         return;
       }

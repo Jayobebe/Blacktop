@@ -61,6 +61,14 @@ export interface AppSettings {
   alarmSensitivity: 'low' | 'normal' | 'high';
   /** Interface sounds: taps, toggles, sliders, dialogs and confirmations. Alerts (hazards, cameras, crash check, alarm, directions) sound regardless. */
   uiSoundsEnabled: boolean;
+  /** When the rider accepted the crash detection disclaimer (ms), or null: auto-rescue can't be on without it. */
+  autoRescueAcknowledgedAt: number | null;
+  /**
+   * Keep peak speed, G-force and lean on finished rides (receipts, history, logbook, boards).
+   * Off ("Public Road Privacy"): rides keep only duration, distance, the route and average
+   * speed. Track Day sessions always record everything.
+   */
+  logPeakTelemetry: boolean;
   /**
    * Who a rescue call reaches (the rescue button, and auto-rescue after a crash):
    * the convoy you're riding with, your crew, your Discord, and opted-in riders
@@ -139,6 +147,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   hazardVoiceEnabled: true,
   alarmSensitivity: 'normal',
   uiSoundsEnabled: true,
+  autoRescueAcknowledgedAt: null,
+  logPeakTelemetry: true,
   rescueToConvoy: true,
   rescueToCrew: true,
   rescueToDiscord: true,

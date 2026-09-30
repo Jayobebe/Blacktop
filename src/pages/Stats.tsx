@@ -7,9 +7,11 @@ import { VehicleCardCarousel } from '@/features/cards';
 import { BadgeWalletPanel } from '@/features/ride';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 export default function Stats() {
+  const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { stats } = useRideHistory();
   const { settings } = useSettings();
@@ -44,8 +46,8 @@ export default function Stats() {
     settings.speedFocusEnabled && {
       icon: TrendingUp,
       label: tr("Top Speed"),
-      value: formatSpeed(stats.personalTopSpeed, settings.speedUnit).toString(),
-      unit: getSpeedLabel(settings.speedUnit),
+      value: peaksHidden ? PEAK_HIDDEN : formatSpeed(stats.personalTopSpeed, settings.speedUnit).toString(),
+      unit: peaksHidden ? '' : getSpeedLabel(settings.speedUnit),
     },
     showGroup && {
       icon: Users,
@@ -56,8 +58,8 @@ export default function Stats() {
     settings.gForceEnabled && {
       icon: Zap,
       label: tr("Max G-Force"),
-      value: stats.personalMaxGForce > 0 ? stats.personalMaxGForce.toFixed(1) : '—',
-      unit: stats.personalMaxGForce > 0 ? 'G' : '',
+      value: peaksHidden ? PEAK_HIDDEN : stats.personalMaxGForce > 0 ? stats.personalMaxGForce.toFixed(1) : '—',
+      unit: !peaksHidden && stats.personalMaxGForce > 0 ? 'G' : '',
     },
   ].filter(Boolean) as { icon: typeof Hash; label: string; value: string; unit: string }[];
 

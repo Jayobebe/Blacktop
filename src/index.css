@@ -261,9 +261,25 @@
   }
 
   /* Touch targets */
+  /* 48px: Android's minimum, and what a gloved thumb can hit reliably. */
   .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Glove hit area: an invisible 48x48 (at least) target centred on a control
+     whose visible size has to stay small (banner close buttons, chips). */
+  .glove-hit:not(.absolute):not(.fixed) {
+    position: relative;
+  }
+  .glove-hit::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 48px);
+    height: max(100%, 48px);
+    transform: translate(-50%, -50%);
   }
 
   .touch-target-lg {

@@ -88,7 +88,7 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
       <button
         type="button"
         onClick={onStop}
-        className="absolute top-1.5 right-1.5 w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        className="glove-hit absolute top-1.5 right-1.5 w-10 h-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         aria-label={tr("Stop navigating")}
         title={tr("Stop navigating")}
       >
@@ -148,7 +148,7 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
             <button
               type="button"
               onClick={onSkip}
-              className="px-2 py-0.5 rounded-md bg-muted hover:bg-secondary text-[11px] font-semibold text-muted-foreground transition-colors flex-shrink-0"
+              className="glove-hit px-3 py-1.5 rounded-md bg-muted hover:bg-secondary text-[11px] font-semibold text-muted-foreground transition-colors flex-shrink-0"
               title={tr("Skip this stop and head for the next")}
             >
               {tr("Skip")}

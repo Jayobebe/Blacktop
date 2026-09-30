@@ -3189,5 +3189,21 @@
  "“{0}”": "“{0}”",
  "1 card collected": "1 kaart verzameld",
  "{0} cards collected": "{0} kaarten verzameld",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Op een iPhone kun je het slot wegvegen. Zet Begeleide toegang aan (Instellingen → Toegankelijkheid → Begeleide toegang) en druk na het inschakelen drie keer op de zijknop."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Op een iPhone kun je het slot wegvegen. Zet Begeleide toegang aan (Instellingen → Toegankelijkheid → Begeleide toegang) en druk na het inschakelen drie keer op de zijknop.",
+ "Before you turn on crash detection": "Voordat je crashdetectie aanzet",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop is geen noodmeldingsdienst en neemt geen contact op met hulpdiensten (999/911/112). Crashdetectie en hulpmeldingen zijn afhankelijk van de sensoren van het apparaat en actieve mobiele data, en kunnen aankomst niet garanderen.",
+ "Draw your unlock pattern": "Teken je ontgrendelpatroon",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Ik begrijp dat Blacktop geen hulpdienst is en niet kan garanderen dat een melding aankomt.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "Na een harde klap en stilstand vraagt de app of het gaat, en waarschuwt de mensen die je bij Instellingen → Veiligheid koos als je niet reageert. Bel altijd zelf de hulpdiensten als dat kan.",
+ "Log Peak Speed & Gs": "Topsnelheid en G's vastleggen",
+ "Offline — following GPS track": "Offline — volgt het GPS-spoor",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "Privacy op de openbare weg: piekwaarden tonen overal -- en worden niet gedeeld. Ze worden nog wel vastgelegd; je ontgrendelpatroon toont ze weer.",
+ "Rerouting": "Route wordt herberekend",
+ "Too many tries. Wait 30 seconds.": "Te veel pogingen. Wacht 30 seconden.",
+ "Top speed, peak G and max lean show across the app.": "Topsnelheid, piek-G en maximale hellingshoek zijn overal in de app te zien.",
+ "Turn on crash detection": "Crashdetectie aanzetten",
+ "Unlock pattern changed": "Ontgrendelpatroon gewijzigd",
+ "You'll draw it to show your peak figures again.": "Je tekent het om je piekwaarden weer te tonen.",
+ "Only your current pattern can change it.": "Alleen je huidige patroon kan het wijzigen.",
+ "Your pattern shows your peak speed, lean and G again.": "Je patroon toont je topsnelheid, hellingshoek en G's weer."
 }

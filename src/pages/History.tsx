@@ -20,7 +20,8 @@ import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLab
 import { cn } from '@/lib/utils';
 import { useExperience } from '@/features/experience';
 import { PageHeader } from '@/components/PageHeader';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 const BURN_LABELS: Record<BurnTripsInterval, string> = {
   off: 'Off',
@@ -29,6 +30,7 @@ const BURN_LABELS: Record<BurnTripsInterval, string> = {
 };
 
 export default function History() {
+  const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { rides, updateRideName, updateRideBike, toggleRideStarred } = useRideHistory();
   const { settings, updateSetting } = useSettings();
@@ -251,7 +253,10 @@ export default function History() {
                 {settings.speedFocusEnabled && (
                   <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border/30">
                     <span>{tr("Avg:")}{" "}{formatSpeed(ride.averageSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
-                    <span>{tr("Max:")}{" "}{formatSpeed(ride.maxSpeed, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}</span>
+                    <span>
+                      {tr("Max:")}{" "}
+                      {peaksHidden ? PEAK_HIDDEN : `${formatSpeed(ride.maxSpeed, settings.speedUnit)} ${getSpeedLabel(settings.speedUnit)}`}
+                    </span>
                   </div>
                 )}
               </button>

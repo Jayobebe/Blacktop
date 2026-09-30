@@ -3189,5 +3189,21 @@
  "“{0}”": "“{0}”",
  "1 card collected": "1 kartu terkumpul",
  "{0} cards collected": "{0} kartu terkumpul",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Di iPhone, kunci bisa diusap pergi. Untuk mencegahnya, nyalakan Akses Terpandu (Pengaturan → Aksesibilitas → Akses Terpandu), lalu klik tombol samping tiga kali setelah mengaktifkan alarm."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Di iPhone, kunci bisa diusap pergi. Untuk mencegahnya, nyalakan Akses Terpandu (Pengaturan → Aksesibilitas → Akses Terpandu), lalu klik tombol samping tiga kali setelah mengaktifkan alarm.",
+ "Before you turn on crash detection": "Sebelum Anda menyalakan deteksi kecelakaan",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop bukan layanan pemantauan darurat dan tidak menghubungi layanan darurat (999/911/112). Deteksi kecelakaan dan peringatan pertolongan bergantung pada sensor perangkat dan data seluler aktif, dan tidak dapat menjamin terkirim.",
+ "Draw your unlock pattern": "Gambar pola buka kunci Anda",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Saya mengerti Blacktop bukan layanan darurat dan tidak dapat menjamin peringatan terkirim.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "Aplikasi menanyakan apakah Anda baik-baik saja setelah benturan keras dan berhenti, lalu memperingatkan orang yang Anda pilih di Pengaturan → Keselamatan jika Anda tidak menjawab. Selalu hubungi layanan darurat sendiri jika bisa.",
+ "Log Peak Speed & Gs": "Catat kecepatan & G puncak",
+ "Offline — following GPS track": "Offline — mengikuti jejak GPS",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "Privasi jalan umum: angka puncak tampil sebagai -- di mana-mana dan tidak dibagikan. Angka tetap tercatat; pola buka kunci Anda menampilkannya lagi.",
+ "Rerouting": "Menghitung ulang rute",
+ "Too many tries. Wait 30 seconds.": "Terlalu banyak percobaan. Tunggu 30 detik.",
+ "Top speed, peak G and max lean show across the app.": "Kecepatan tertinggi, G puncak, dan rebah maksimal tampil di seluruh aplikasi.",
+ "Turn on crash detection": "Nyalakan deteksi kecelakaan",
+ "Unlock pattern changed": "Pola buka kunci diubah",
+ "You'll draw it to show your peak figures again.": "Anda akan menggambarnya untuk menampilkan angka puncak Anda lagi.",
+ "Only your current pattern can change it.": "Hanya pola Anda saat ini yang dapat mengubahnya.",
+ "Your pattern shows your peak speed, lean and G again.": "Pola Anda menampilkan kecepatan, rebah, dan G puncak Anda lagi."
 }

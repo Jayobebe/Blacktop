@@ -23,3 +23,8 @@ export function takePendingTrackReceipt(): TrackReceipt | undefined {
   pending = null;
   return r;
 }
+
+/** Whether a Track Day session is waiting to be stapled to the ride being ended. */
+export function hasPendingTrackReceipt(): boolean {
+  return pending !== null;
+}

@@ -6,6 +6,10 @@ const ALLOWED_ORIGINS = new Set([
   "https://convoy-comms.lovable.app",
   "https://8006f12b-bc88-412a-bd3c-677561cc727f.lovableproject.com",
   "https://id-preview--8006f12b-bc88-412a-bd3c-677561cc727f.lovable.app",
+  // The native apps serve their bundled web app from these origins (Android / iOS).
+  "https://localhost",
+  "capacitor://localhost",
+  "http://localhost",
   // Local dev servers (callers still need a valid session + rate limit).
   "http://localhost:8080",
   "http://localhost:5173",

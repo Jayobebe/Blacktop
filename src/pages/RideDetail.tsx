@@ -18,9 +18,11 @@ import { shareRecapCard } from '@/features/ride/lib/recapCard';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { formatLap } from '@/features/track';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { usePeaksHidden } from '@/features/ride';
 
 export default function RideDetail() {
+  const peaksHidden = usePeaksHidden();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
@@ -371,7 +373,7 @@ export default function RideDetail() {
         )}
 
         {/* Corner Report — scored from this ride's own GPS/lean trace */}
-        {(settings.leanAngleEnabled || settings.gForceEnabled) && <CornerReportCard ride={ride} />}
+        {(settings.leanAngleEnabled || settings.gForceEnabled) && !peaksHidden && <CornerReportCard ride={ride} />}
 
         {/* Shareable recap card */}
         <button

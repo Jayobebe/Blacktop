@@ -16,6 +16,8 @@ interface GForceCircleProps {
   max: GMax;
   /** Printed look for the paper receipt: everything in the surrounding text colour (the receipt's ink). */
   ink?: boolean;
+  /** Public Road Privacy: the peak figures read "--" (and pass an empty envelope). */
+  hidePeaks?: boolean;
   className?: string;
 }
 
@@ -44,7 +46,8 @@ function fillEnvelope(env: number[]): number[] | null {
   });
 }
 
-export const GForceCircle = memo(function GForceCircle({ lateral, longitudinal, envelope, max, ink = false, className }: GForceCircleProps) {
+export const GForceCircle = memo(function GForceCircle({ lateral, longitudinal, envelope, max, ink = false, hidePeaks = false, className }: GForceCircleProps) {
+  const show = (v: number) => (hidePeaks ? '--' : fmt(v));
   // Screen colours, or the receipt's ink (currentColor) at matching strengths.
   const k = ink
     ? { bezel: 'stroke-current opacity-15', ring: 'stroke-current opacity-35', cross: 'stroke-current opacity-70', trace: 'stroke-current', dot: 'fill-current', text: 'fill-current', caption: 'fill-current opacity-70', accentCaption: 'fill-current' }
@@ -99,10 +102,10 @@ export const GForceCircle = memo(function GForceCircle({ lateral, longitudinal, 
         {!dot && <circle cx={C} cy={C} r="3" className={cn(k.dot, "opacity-60")} />}
 
         {/* Peak figures on each axis */}
-        <text x={C} y={C - R - 24} textAnchor="middle" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{fmt(max.brake)}</text>
-        <text x={C} y={C + R + 40} textAnchor="middle" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{fmt(max.accel)}</text>
-        <text x={C - R - 18} y={C + 8} textAnchor="end" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{fmt(max.left)}</text>
-        <text x={C + R + 18} y={C + 8} textAnchor="start" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{fmt(max.right)}</text>
+        <text x={C} y={C - R - 24} textAnchor="middle" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{show(max.brake)}</text>
+        <text x={C} y={C + R + 40} textAnchor="middle" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{show(max.accel)}</text>
+        <text x={C - R - 18} y={C + 8} textAnchor="end" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{show(max.left)}</text>
+        <text x={C + R + 18} y={C + 8} textAnchor="start" className={cn(k.text, "font-mono")} fontSize="22" fontWeight="600">{show(max.right)}</text>
 
         {/* Axis names, on the diagonals like the reference meters */}
         <text x={C - 66} y={C - 66} textAnchor="middle" transform={`rotate(-45 ${C - 66} ${C - 66})`} className={k.caption} fontSize="11" fontWeight="600" letterSpacing="1">{tr("LEFT")}</text>

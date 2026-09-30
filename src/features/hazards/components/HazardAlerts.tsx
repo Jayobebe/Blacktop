@@ -190,7 +190,7 @@ export function HazardBanner({ warning, className }: { warning: HazardWarning; c
           <span className="block font-bold leading-tight truncate">{type.label}</span>
           <span className="block text-xs text-muted-foreground">{shownDistance(warning.distance, settings.distanceUnit)}{" "}{tr("ahead")}</span>
         </span>
-        <button onClick={() => setHazardWarning(null)} className="p-1.5 text-muted-foreground" aria-label={tr("Dismiss")}>
+        <button onClick={() => setHazardWarning(null)} className="glove-hit p-1.5 text-muted-foreground" aria-label={tr("Dismiss")}>
           <X className="w-4 h-4" />
         </button>
       </div>

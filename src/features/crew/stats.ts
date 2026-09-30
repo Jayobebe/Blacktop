@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { analyseCorners, burnedAggregate, type BurnedTotals } from '@/features/ride';
+import { analyseCorners, burnedAggregate, keepPeakTelemetry, type BurnedTotals } from '@/features/ride';
 import type { RideSession } from '@/types/blacktop';
 import { weekKey, weekStart } from './challenges';
 
@@ -41,10 +41,12 @@ export function crewTotals(
 ): CrewTotals {
   // Rides burned from history still count toward crew totals.
   const burned = burnedAggregate(burnedTotals);
+  // Public Road Privacy: no peaks go to the boards while it's on.
+  const peaks = keepPeakTelemetry(false);
   return {
     total_distance: rides.reduce((s, r) => s + (r.distance || 0), burned.distance),
-    top_speed: rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), burned.maxSpeed),
-    max_lean: rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), Math.max(burned.maxLeanLeft, burned.maxLeanRight)),
+    top_speed: peaks ? rides.reduce((s, r) => Math.max(s, r.maxSpeed || 0), burned.maxSpeed) : 0,
+    max_lean: peaks ? rides.reduce((s, r) => Math.max(s, r.maxLeanLeft || 0, r.maxLeanRight || 0), Math.max(burned.maxLeanLeft, burned.maxLeanRight)) : 0,
     ride_count: rides.length + burned.rides,
     hit_heavy: scores['hit-heavy'] ?? 0,
     petrol_head: scores['petrol-head'] ?? 0,
@@ -55,13 +57,14 @@ export function crewTotals(
 export function weekStats(rides: RideSession[], now = new Date()): WeekStats {
   const from = weekStart(now).getTime();
   const week = rides.filter((r) => new Date(r.startedAt).getTime() >= from);
-  const cornerScores = week.map((r) => analyseCorners(r).averageScore).filter((s) => s > 0);
+  const peaks = keepPeakTelemetry(false);
+  const cornerScores = peaks ? week.map((r) => analyseCorners(r).averageScore).filter((s) => s > 0) : [];
   return {
     distance: Number(week.reduce((s, r) => s + (r.distance || 0), 0).toFixed(2)),
     ride_count: week.length,
-    max_lean: Math.round(Math.max(0, ...week.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)))),
+    max_lean: peaks ? Math.round(Math.max(0, ...week.map((r) => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)))) : 0,
     corner_score: cornerScores.length ? Math.round(cornerScores.reduce((s, v) => s + v, 0) / cornerScores.length) : 0,
-    top_speed: Math.round(Math.max(0, ...week.map((r) => r.maxSpeed || 0))),
+    top_speed: peaks ? Math.round(Math.max(0, ...week.map((r) => r.maxSpeed || 0))) : 0,
     night_rides: week.filter((r) => isNightRide(r.startedAt)).length,
     longest_ride: Number(Math.max(0, ...week.map((r) => r.distance || 0)).toFixed(2)),
   };

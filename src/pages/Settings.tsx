@@ -19,7 +19,8 @@ import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
 import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock
 } from 'lucide-react';
-import { clearAlarmPattern, hasAlarmPattern } from '@/features/alarm';
+import { clearAlarmPattern, hasAlarmPattern, requestPattern } from '@/features/alarm';
+import { RescueDisclaimer, requestAutoRescueConsent } from '@/features/rescue';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -573,10 +574,14 @@ export default function Settings() {
                         }
                       }
                     }
+                    // Crash detection only goes on once the rider accepts the disclaimer.
+                    if (v && !(await requestAutoRescueConsent())) return;
                     updateSetting('autoRescueEnabled', v);
                   }}
                 />
               </div>
+
+              <RescueDisclaimer className="mb-3" />
 
               {settings.autoRescueEnabled && (
                 <div className="pt-3 border-t border-border/30 space-y-4">
@@ -716,7 +721,14 @@ export default function Settings() {
                   variant="outline"
                   size="sm"
                   disabled={!alarmPattern}
-                  onClick={() => {
+                  onClick={async () => {
+                    // While peaks are hidden, only the pattern's owner can change it, straight to a new
+                    // one (with none set the figures could never be shown again).
+                    if (settings.logPeakTelemetry === false) {
+                      if (!(await requestPattern('check', tr("Draw your unlock pattern"), tr("Only your current pattern can change it.")))) return;
+                      if (await requestPattern('set', tr("Set your unlock pattern"), tr("You'll draw it to show your peak figures again."))) toast(tr("Unlock pattern changed"));
+                      return;
+                    }
                     clearAlarmPattern();
                     setAlarmPattern(false);
                     toast(tr("Unlock pattern reset"));
@@ -1160,6 +1172,29 @@ export default function Settings() {
             {settings.blacktopWorldEnabled && <li>{tr("• Blacktop World shows you as an anonymous glow (to about 110 km) while you ride, and crew boards see totals you publish")}</li>}
             <li>{tr("• Live convoy data is server-burned the moment a ride ends")}</li>
           </ul>
+          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-border/30">
+            <div>
+              <p className="text-sm font-medium">{tr("Log Peak Speed & Gs")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {settings.logPeakTelemetry !== false
+                  ? tr("Top speed, peak G and max lean show across the app.")
+                  : tr("Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.")}
+              </p>
+            </div>
+            <Switch
+              checked={settings.logPeakTelemetry !== false}
+              onCheckedChange={async (v) => {
+                if (!v) {
+                  // Hiding them needs a pattern to exist, or they could never be shown again.
+                  if (!hasAlarmPattern() && !(await requestPattern('set', tr("Set your unlock pattern"), tr("You'll draw it to show your peak figures again.")))) return;
+                  setAlarmPattern(true);
+                  updateSetting('logPeakTelemetry', false);
+                  return;
+                }
+                if (await requestPattern('check', tr("Draw your unlock pattern"), tr("Your pattern shows your peak speed, lean and G again."))) updateSetting('logPeakTelemetry', true);
+              }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
             <Button
               variant="outline"

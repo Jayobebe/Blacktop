@@ -3189,5 +3189,21 @@
  "“{0}”": "“{0}”",
  "1 card collected": "카드 1장 획득",
  "{0} cards collected": "카드 {0}장 획득",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone에서는 잠금 화면을 쓸어 넘겨 닫을 수 있습니다. 이를 막으려면 사용법 유도 접근을 켜고(설정 → 손쉬운 사용 → 사용법 유도 접근), 경보를 켠 뒤 측면 버튼을 세 번 누르세요."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone에서는 잠금 화면을 쓸어 넘겨 닫을 수 있습니다. 이를 막으려면 사용법 유도 접근을 켜고(설정 → 손쉬운 사용 → 사용법 유도 접근), 경보를 켠 뒤 측면 버튼을 세 번 누르세요.",
+ "Before you turn on crash detection": "사고 감지를 켜기 전에",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop은 긴급 모니터링 서비스가 아니며 긴급 서비스(999/911/112)에 연락하지 않습니다. 사고 감지와 구조 알림은 기기 센서와 활성 모바일 데이터에 의존하며 전달을 보장할 수 없습니다.",
+ "Draw your unlock pattern": "잠금 해제 패턴을 그리세요",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Blacktop이 긴급 서비스가 아니며 알림 전달을 보장할 수 없다는 것을 이해합니다.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "강한 충격 후 정지하면 괜찮은지 묻고, 응답이 없으면 설정 → 안전에서 선택한 사람들에게 알립니다. 가능하면 언제나 직접 긴급 서비스에 전화하세요.",
+ "Log Peak Speed & Gs": "최고 속도와 G 기록",
+ "Offline — following GPS track": "오프라인 — GPS 경로를 따르는 중",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "공공도로 개인정보 보호: 최대 수치가 어디서나 --로 표시되고 공유되지 않습니다. 기록은 계속되며 잠금 해제 패턴으로 다시 볼 수 있습니다.",
+ "Rerouting": "경로 재탐색 중",
+ "Too many tries. Wait 30 seconds.": "시도가 너무 많습니다. 30초 기다리세요.",
+ "Top speed, peak G and max lean show across the app.": "최고 속도, 최대 G, 최대 뱅킹 각도가 앱 전체에 표시됩니다.",
+ "Turn on crash detection": "사고 감지 켜기",
+ "Unlock pattern changed": "잠금 해제 패턴이 변경되었습니다",
+ "You'll draw it to show your peak figures again.": "최대 수치를 다시 보려면 이 패턴을 그리게 됩니다.",
+ "Only your current pattern can change it.": "현재 패턴으로만 변경할 수 있습니다.",
+ "Your pattern shows your peak speed, lean and G again.": "패턴을 그리면 최고 속도, 뱅킹, G가 다시 표시됩니다."
 }

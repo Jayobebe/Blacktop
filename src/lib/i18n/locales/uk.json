@@ -3189,5 +3189,21 @@
  "“{0}”": "«{0}»",
  "1 card collected": "Зібрано 1 картку",
  "{0} cards collected": "Зібрано карток: {0}",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "На iPhone блокування можна змахнути. Щоб цьому запобігти, увімкніть Керований доступ (Параметри → Доступність → Керований доступ) і після ввімкнення тричі натисніть бічну кнопку."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "На iPhone блокування можна змахнути. Щоб цьому запобігти, увімкніть Керований доступ (Параметри → Доступність → Керований доступ) і після ввімкнення тричі натисніть бічну кнопку.",
+ "Before you turn on crash detection": "Перш ніж увімкнути виявлення аварій",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop не є службою екстреного моніторингу й не зв'язується з екстреними службами (999/911/112). Виявлення аварій і сигнали допомоги залежать від датчиків пристрою та активного мобільного інтернету й не гарантують доставку.",
+ "Draw your unlock pattern": "Намалюйте свій графічний ключ",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Я розумію, що Blacktop не є екстреною службою й не гарантує, що сигнал буде доставлено.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "Після сильного удару й зупинки застосунок питає, чи все гаразд, і сповіщає людей, вибраних у Налаштування → Безпека, якщо ви не відповідаєте. Коли можете, завжди самі телефонуйте в екстрені служби.",
+ "Log Peak Speed & Gs": "Записувати пікову швидкість і G",
+ "Offline — following GPS track": "Офлайн — відстеження за GPS",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "Приватність на дорогах загального користування: пікові значення всюди показано як -- і не передаються. Вони й далі записуються; ваш графічний ключ показує їх знову.",
+ "Rerouting": "Перебудова маршруту",
+ "Too many tries. Wait 30 seconds.": "Забагато спроб. Зачекайте 30 секунд.",
+ "Top speed, peak G and max lean show across the app.": "Максимальна швидкість, пікове G і максимальний нахил видно в усьому застосунку.",
+ "Turn on crash detection": "Увімкнути виявлення аварій",
+ "Unlock pattern changed": "Графічний ключ змінено",
+ "You'll draw it to show your peak figures again.": "Ви намалюєте його, щоб знову побачити пікові значення.",
+ "Only your current pattern can change it.": "Змінити його може лише ваш поточний ключ.",
+ "Your pattern shows your peak speed, lean and G again.": "Ваш ключ знову показує пікову швидкість, нахил і G."
 }

@@ -18,6 +18,7 @@ import {
 } from "../lib/cameraStore";
 import { pingSpeedCamera, pingAnprCamera } from "../lib/cameraPing";
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from "../lib/routing";
+import { isRoutingOffline, useRoutingOffline } from "../lib/routingStatus";
 import { checkRouteWeather, findDryRoute, HEAVY_MM } from "../lib/weatherRoute";
 import { RadioButton } from "@/features/radio";
 import { useNextWaypoint } from "@/features/waypoints";
@@ -50,7 +51,7 @@ import {
 } from "@/features/hazards";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookmarkPlus, Trash2 } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, Trash2, WifiOff } from "lucide-react";
 import { useMapPresentUserIds } from "../hooks/useMapPresence";
 import { ACCENT_COLORS, useSettings } from "@/features/settings";
 import { useProfile } from "@/features/profile";
@@ -1804,6 +1805,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       : null;
   const routeKeyRef = useRef<string | null>(null);
   const routeRequestRef = useRef(0);
+  // Failed requests back off (15 s, 30 s, 1 min, then every 2 min) rather than
+  // hammering a router the phone can't reach; back online, it tries at once.
+  const routeFailuresRef = useRef(0);
+  const routingOffline = useRoutingOffline();
+  useEffect(() => {
+    const onOnline = () => {
+      if (!isRoutingOffline()) return;
+      routeFailuresRef.current = 0;
+      setRerouteTick((t) => t + 1);
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, []);
   useEffect(() => {
     if (!routeKey || !destination) {
       routeRequestRef.current += 1;
@@ -1830,11 +1844,15 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       .then((result) => {
         if (routeRequestRef.current !== requestId) return;
         if (result) {
+          routeFailuresRef.current = 0;
           routeKeyRef.current = routeKey;
           setRoute(result);
         } else {
+          // Keep whatever line is on screen; the rider follows their GPS meanwhile.
           if (!isReroute) setRoute(null);
-          retry = window.setTimeout(() => setRerouteTick((t) => t + 1), 15000);
+          const wait = Math.min(120_000, 15_000 * 2 ** routeFailuresRef.current);
+          routeFailuresRef.current += 1;
+          retry = window.setTimeout(() => setRerouteTick((t) => t + 1), wait);
         }
       })
       .finally(() => {
@@ -2367,6 +2385,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                   : undefined
               }
             />
+            {/* Router out of reach: calm and non-blocking; the line stays and retries back off. */}
+            {routingOffline && (
+              <div role="status" className="mt-1.5 mx-auto w-fit flex items-center gap-1.5 rounded-full frost-accent px-3 py-1.5 text-xs font-medium">
+                <WifiOff className="w-3.5 h-3.5" aria-hidden />
+                {tr("Offline — following GPS track")}
+              </div>
+            )}
           </div>
         )}
 

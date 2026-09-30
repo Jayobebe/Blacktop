@@ -1,7 +1,8 @@
 import { useSettings } from '@/features/settings';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { BikeStats } from '../hooks/useBikeStats';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 interface Props {
   stats: BikeStats;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function StatsPanel({ stats, baseOdometerKm }: Props) {
+  const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
 
   const items = [
@@ -19,20 +21,20 @@ export function StatsPanel({ stats, baseOdometerKm }: Props) {
     },
     {
       label: tr("Top Speed"),
-      value: formatSpeed(stats.topSpeedMph, settings.speedUnit),
-      unit: getSpeedLabel(settings.speedUnit),
+      value: peaksHidden ? PEAK_HIDDEN : formatSpeed(stats.topSpeedMph, settings.speedUnit),
+      unit: peaksHidden ? null : getSpeedLabel(settings.speedUnit),
     },
     {
       label: tr("Max Lean"),
-      value: Math.round(Math.max(stats.maxLeanLeft, stats.maxLeanRight)),
-      unit: '°',
+      value: peaksHidden ? PEAK_HIDDEN : Math.round(Math.max(stats.maxLeanLeft, stats.maxLeanRight)),
+      unit: peaksHidden ? null : '°',
     },
     { label: tr("Rides"), value: stats.totalRides, unit: null },
     { label: tr("Time"), value: formatDuration(stats.totalDurationSec), unit: null },
     {
       label: tr("Max G"),
-      value: stats.maxGForce > 0 ? stats.maxGForce.toFixed(1) : '—',
-      unit: stats.maxGForce > 0 ? 'G' : null,
+      value: peaksHidden ? PEAK_HIDDEN : stats.maxGForce > 0 ? stats.maxGForce.toFixed(1) : '—',
+      unit: !peaksHidden && stats.maxGForce > 0 ? 'G' : null,
     },
   ];
 

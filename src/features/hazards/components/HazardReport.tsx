@@ -29,7 +29,7 @@ export function HazardReport({ getPosition, className }: { getPosition?: () => R
           setOpen(true);
         }}
         className={cn(
-          'pointer-events-auto flex items-center gap-1.5 h-11 pl-3 pr-3.5 rounded-full frost-accent shadow-lg text-sm font-semibold active:scale-95 transition-transform',
+          'pointer-events-auto flex items-center gap-1.5 h-12 pl-3.5 pr-4 rounded-full frost-accent shadow-lg text-sm font-semibold active:scale-95 transition-transform',
           className,
         )}
         aria-label={tr("Report a hazard")}
@@ -92,14 +92,14 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
       >
         <div className="flex items-center gap-2 px-1 pb-3">
           {cat ? (
-            <button onClick={() => setCategory(null)} className="p-2 -ml-1 rounded-xl hover:bg-muted" aria-label={tr("Back to categories")}>
+            <button onClick={() => setCategory(null)} className="glove-hit p-2 -ml-1 rounded-xl hover:bg-muted" aria-label={tr("Back to categories")}>
               <ArrowLeft className="w-5 h-5" />
             </button>
           ) : (
             <Megaphone className="w-5 h-5 text-accent ml-1" />
           )}
           <p className="flex-1 font-bold">{cat ? cat.label : tr("Report a hazard")}</p>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted" aria-label={tr("Close")}>
+          <button onClick={onClose} className="glove-hit p-2 rounded-xl hover:bg-muted" aria-label={tr("Close")}>
             <X className="w-5 h-5" />
           </button>
         </div>

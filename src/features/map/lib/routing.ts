@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { setRoutingOffline } from './routingStatus';
 import { getExperience } from '@/features/experience';
 
 /**
@@ -80,6 +81,9 @@ export function metersToMiles(meters: number): number {
 // that's this request or the Realtime broadcast that triggers it. Returns
 // null on any failure so the map can drop a marker without a line rather
 // than erroring.
+/** Give up on a route request after this (then the map backs off and retries). */
+const ROUTE_TIMEOUT_MS = 15000;
+
 export async function fetchRouteThroughStops(
   stops: { lat: number; lng: number }[],
   opts: { steps?: boolean } = {},
@@ -93,8 +97,11 @@ export async function fetchRouteThroughStops(
         ...(opts.steps ? { steps: true } : {}),
         ...routePrefs(),
       },
+      // A dead zone shouldn't hang the request until the phone gives up.
+      timeout: ROUTE_TIMEOUT_MS,
     });
     if (error) throw error;
+    setRoutingOffline(false);
 
     const geometry = data?.geometry as RouteLineString | undefined;
     if (!geometry?.coordinates?.length || typeof data.distance !== 'number') return null;
@@ -107,7 +114,9 @@ export async function fetchRouteThroughStops(
       ...(Array.isArray(data.legs) ? { legs: data.legs as RouteLeg[] } : {}),
     };
   } catch (err) {
-    console.error('Map routing failed:', err);
+    // No signal, a timeout or the router down: the map follows GPS until it's back.
+    console.warn('Map routing failed:', err);
+    setRoutingOffline(true);
     return null;
   }
 }

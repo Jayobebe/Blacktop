@@ -4,13 +4,15 @@ import { tr } from '@/lib/i18n';
 interface LeanAngleBarProps {
   currentLean: number; // -90 to 90 degrees
   maxLean: number; // Maximum recorded lean
+  /** Public Road Privacy: the max reads "--". */
+  hideMax?: boolean;
   threshold: number; // Warning threshold in degrees
   onReset?: () => void; // Called when bar is tapped to zero
   vertical?: boolean; // Force stacked (portrait-style) layout even in landscape
   className?: string;
 }
 
-export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, vertical, className }: LeanAngleBarProps) {
+export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, vertical, className, hideMax = false }: LeanAngleBarProps) {
   const absLean = Math.abs(currentLean);
   const isOverThreshold = absLean >= threshold;
   
@@ -118,7 +120,7 @@ export function LeanAngleBar({ currentLean, maxLean, threshold, onReset, vertica
           </span>
         </span>
         <span className={cn("text-muted-foreground text-[10px]", !vertical && "landscape:text-[9px]")}>
-          {tr("max")}{" "}{maxLean}°
+          {tr("max")}{" "}{hideMax ? '--' : `${maxLean}°`}
         </span>
       </div>
     </button>

@@ -15,7 +15,8 @@ import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { GForceCircle } from '@/components/GForceCircle';
 import { MechaNickStamp } from './MechaNickStamp';
-import type { GMax } from '@/lib/gForceVector';
+import type { GMax } from '@/lib/gForceVector';
+import { PEAK_HIDDEN, usePeaksHidden } from '../lib/telemetryPrivacy';
 
 interface RideStats {
   duration: number;
@@ -80,6 +81,9 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
   // Each receipt section follows the rider's setup answers.
   const showVehicle = settings.garageEnabled;
   const showSpeed = settings.speedFocusEnabled;
+  // Public Road Privacy: peaks read "--" (a Track Day receipt always shows its numbers).
+  const privacy = usePeaksHidden();
+  const peaksHidden = privacy && !trackDay;
   const showLean = canLean && settings.leanAngleEnabled;
   const showG = settings.gForceEnabled;
   const showBadges = settings.collectiblesEnabled;
@@ -239,14 +243,14 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               {showSpeed && (
                 <ReceiptRow
                   label={tr("Max Spd")}
-                  value={`${formatSpeed(rideStats.maxSpeed, settings.speedUnit)} ${speedUnit}`}
+                  value={peaksHidden ? PEAK_HIDDEN : `${formatSpeed(rideStats.maxSpeed, settings.speedUnit)} ${speedUnit}`}
                 />
               )}
               {showLean && (
                 <ReceiptRow
                   label={tr("Max Lean")}
                   value={
-                    typeof rideStats.maxLean === 'number' && rideStats.maxLean > 0
+                    peaksHidden ? PEAK_HIDDEN : typeof rideStats.maxLean === 'number' && rideStats.maxLean > 0
                       ? `${Math.round(rideStats.maxLean)}°`
                       : '—'
                   }
@@ -256,7 +260,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 <ReceiptRow
                   label={tr("Max G")}
                   value={
-                    typeof rideStats.maxGForce === 'number' && rideStats.maxGForce > 0
+                    peaksHidden ? PEAK_HIDDEN : typeof rideStats.maxGForce === 'number' && rideStats.maxGForce > 0
                       ? `${rideStats.maxGForce.toFixed(1)}G`
                       : '—'
                   }

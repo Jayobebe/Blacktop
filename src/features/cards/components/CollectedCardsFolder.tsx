@@ -28,7 +28,8 @@ import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCard
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
 import { useVehicleCards } from '../hooks/useVehicleCards';
 import { formatChallengeTime, formatDelta } from '../lib/challenge';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
@@ -385,6 +386,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
 }
 
 function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
+  const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
   return (
@@ -464,7 +466,7 @@ function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
       </div>
 
       <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
-        <Stat icon={Gauge} label={tr("Top speed")} value={`${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={getSpeedLabel(settings.speedUnit)} />
+        <Stat icon={Gauge} label={tr("Top speed")} value={peaksHidden ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden ? '' : getSpeedLabel(settings.speedUnit)} />
         <Stat icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
         <Stat icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
         <Stat icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />

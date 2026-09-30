@@ -3189,5 +3189,21 @@
  "“{0}”": "“{0}”",
  "1 card collected": "1 कार्ड इकट्ठा हुआ",
  "{0} cards collected": "{0} कार्ड इकट्ठा हुए",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone पर लॉक को स्वाइप करके हटाया जा सकता है। इसे रोकने के लिए गाइडेड एक्सेस चालू करें (सेटिंग्स → एक्सेसिबिलिटी → गाइडेड एक्सेस), फिर अलार्म चालू करने के बाद साइड बटन तीन बार दबाएँ।"
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone पर लॉक को स्वाइप करके हटाया जा सकता है। इसे रोकने के लिए गाइडेड एक्सेस चालू करें (सेटिंग्स → एक्सेसिबिलिटी → गाइडेड एक्सेस), फिर अलार्म चालू करने के बाद साइड बटन तीन बार दबाएँ।",
+ "Before you turn on crash detection": "दुर्घटना पहचान चालू करने से पहले",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop कोई आपातकालीन निगरानी सेवा नहीं है और आपातकालीन सेवाओं (999/911/112) से संपर्क नहीं करता। दुर्घटना पहचान और रेस्क्यू अलर्ट डिवाइस के सेंसर और सक्रिय मोबाइल डेटा पर निर्भर हैं, और पहुँचने की गारंटी नहीं दे सकते।",
+ "Draw your unlock pattern": "अपना अनलॉक पैटर्न बनाएँ",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "मैं समझता/समझती हूँ कि Blacktop आपातकालीन सेवा नहीं है और अलर्ट पहुँचने की गारंटी नहीं दे सकता।",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "तेज़ टक्कर और रुकने के बाद यह पूछता है कि आप ठीक हैं या नहीं, और जवाब न मिलने पर सेटिंग्स → सुरक्षा में चुने गए लोगों को अलर्ट करता है। जब भी हो सके, आपातकालीन सेवाओं को खुद कॉल करें।",
+ "Log Peak Speed & Gs": "अधिकतम गति और G दर्ज करें",
+ "Offline — following GPS track": "ऑफ़लाइन — GPS ट्रैक का पालन",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "सार्वजनिक सड़क गोपनीयता: अधिकतम आँकड़े हर जगह -- दिखते हैं और साझा नहीं होते। वे अब भी दर्ज होते हैं; आपका अनलॉक पैटर्न उन्हें फिर दिखाता है।",
+ "Rerouting": "नया रास्ता बनाया जा रहा है",
+ "Too many tries. Wait 30 seconds.": "बहुत ज़्यादा प्रयास। 30 सेकंड रुकें।",
+ "Top speed, peak G and max lean show across the app.": "अधिकतम गति, पीक G और अधिकतम झुकाव पूरे ऐप में दिखते हैं।",
+ "Turn on crash detection": "दुर्घटना पहचान चालू करें",
+ "Unlock pattern changed": "अनलॉक पैटर्न बदल गया",
+ "You'll draw it to show your peak figures again.": "अपने अधिकतम आँकड़े फिर देखने के लिए आप इसे बनाएँगे।",
+ "Only your current pattern can change it.": "केवल आपका मौजूदा पैटर्न इसे बदल सकता है।",
+ "Your pattern shows your peak speed, lean and G again.": "आपका पैटर्न आपकी अधिकतम गति, झुकाव और G फिर दिखाता है।"
 }

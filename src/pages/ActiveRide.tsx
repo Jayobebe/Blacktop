@@ -15,7 +15,7 @@ import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton, usePlayer } from '@/features/radio';
 import { useRescue, RescueAlert, CrashCheckPrompt, rescueReach } from '@/features/rescue';
-import { useCrashDetection } from '@/features/ride';
+import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -96,7 +96,12 @@ const getMemberStyles = (member: ConvoyMemberInfo) => {
   return getMemberColorStyles(member.accentColor);
 };
 
+
+/** Public Road Privacy: the G circle shows only the live dot. */
+const NO_G_ENVELOPE: number[] = [];
+const NO_G_MAX = { left: 0, right: 0, brake: 0, accel: 0 };
 export default function ActiveRide() {
+  const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused, updateLeanAngle, updateGForce } = useActiveRide();
   const { stop: stopRadio } = usePlayer();
@@ -394,14 +399,17 @@ export default function ActiveRide() {
       }
       overlayRecorderRef.current.updateStats({
         speed: rideState.currentSpeed,
-        maxSpeed: rideState.maxSpeed,
+        // Public Road Privacy: the video carries no maxima either.
+        maxSpeed: peaksHidden ? 0 : rideState.maxSpeed,
         distance: rideState.distance,
         duration: rideState.duration,
         leanAngle: rideState.currentLean,
-        maxLean: Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
+        maxLean: peaksHidden ? 0 : Math.max(rideState.maxLeanLeft, rideState.maxLeanRight),
         gForce: gForce.currentG,
-        gVector: settings.gForceEnabled ? { lateral: gForce.lateralG, longitudinal: gForce.longitudinalG, envelope: rideState.gEnvelope ?? gForce.envelope, max: rideState.gMax ?? gForce.gMax } : undefined,
-        maxGForce: rideState.maxGForce,
+        gVector: settings.gForceEnabled
+          ? { lateral: gForce.lateralG, longitudinal: gForce.longitudinalG, envelope: peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope, max: peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax }
+          : undefined,
+        maxGForce: peaksHidden ? 0 : rideState.maxGForce,
         lat: last?.lat ?? null,
         lng: last?.lng ?? null,
         heading,
@@ -415,7 +423,7 @@ export default function ActiveRide() {
           })),
       });
     }
-  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, gForce.lateralG, gForce.longitudinalG, gForce.envelope, gForce.gMax, rideState.gEnvelope, rideState.gMax, settings.gForceEnabled, rideState.maxGForce, rideState.gpsPoints, convoy.members, user?.id]);
+  }, [rideState.isActive, rideState.isPaused, rideState.currentSpeed, rideState.maxSpeed, rideState.distance, rideState.duration, rideState.currentLean, rideState.maxLeanLeft, rideState.maxLeanRight, gForce.currentG, gForce.lateralG, gForce.longitudinalG, gForce.envelope, gForce.gMax, rideState.gEnvelope, rideState.gMax, settings.gForceEnabled, peaksHidden, rideState.maxGForce, rideState.gpsPoints, convoy.members, user?.id]);
 
   // Track convoy members
   useEffect(() => {
@@ -845,7 +853,7 @@ export default function ActiveRide() {
           onClick={() => setShowEndConfirm(true)}
           variant="outline"
           size="sm"
-          className="h-9 md:h-10 px-4 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          className="h-12 px-5 text-sm font-semibold border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           <Square className="w-3.5 h-3.5 mr-1.5" />
           {rideState.isConvoyMode && convoy.isLeader ? tr("END CONVOY") : tr("END {0}", [terms.Ride.toUpperCase()])}
@@ -855,7 +863,7 @@ export default function ActiveRide() {
           <Button
             onClick={handleEndRide}
             size="sm"
-            className="h-9 md:h-10 px-4 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            className="h-12 px-5 text-sm font-semibold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
             {tr("END {0}", [terms.Ride.toUpperCase()])}
           </Button>
@@ -863,7 +871,7 @@ export default function ActiveRide() {
             onClick={() => setShowEndConfirm(false)}
             variant="ghost"
             size="sm"
-            className="h-9 md:h-10"
+            className="h-12 px-5"
           >
             {tr("Cancel")}
           </Button>
@@ -959,8 +967,8 @@ export default function ActiveRide() {
           <div className="text-left">
             <p className="text-muted-foreground text-sm uppercase tracking-wide mb-1">{tr("Max")}</p>
             <p data-ride-stat-value className="font-mono text-4xl lg:text-5xl font-bold truncate">
-              {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
-              <span className="text-lg text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
+              {peaksHidden ? PEAK_HIDDEN : formatSpeed(rideState.maxSpeed, settings.speedUnit)}
+              {!peaksHidden && <span className="text-lg text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>}
             </p>
           </div>
           )}
@@ -1013,6 +1021,7 @@ export default function ActiveRide() {
                       <LeanAngleBar 
                         currentLean={leanAngle.currentLean}
                         maxLean={leanAngle.maxLean}
+                        hideMax={peaksHidden}
                         threshold={settings.leanAngleThreshold}
                         onReset={() => {
                           leanAngle.calibrate();
@@ -1027,7 +1036,7 @@ export default function ActiveRide() {
 
                   {settings.gForceEnabled && gForce.isSupported && (
                     <div className="mt-2 flex justify-center">
-                      <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-40 landscape:w-36" />
+                      <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope} max={peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax} hidePeaks={peaksHidden} className="w-40 landscape:w-36" />
                     </div>
                   )}
                 </div>
@@ -1042,6 +1051,7 @@ export default function ActiveRide() {
                 vertical
                 currentLean={leanAngle.currentLean}
                 maxLean={leanAngle.maxLean}
+                        hideMax={peaksHidden}
                 threshold={settings.leanAngleThreshold}
                 onReset={() => {
                   leanAngle.calibrate();
@@ -1073,8 +1083,8 @@ export default function ActiveRide() {
             <div className="text-center min-w-0">
               <p className="text-muted-foreground text-xs uppercase tracking-wide mb-1">{tr("Max")}</p>
               <p className="font-mono text-2xl [@media(max-height:820px)]:text-lg md:text-4xl font-bold truncate">
-                {formatSpeed(rideState.maxSpeed, settings.speedUnit)}
-                <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>
+                {peaksHidden ? PEAK_HIDDEN : formatSpeed(rideState.maxSpeed, settings.speedUnit)}
+                {!peaksHidden && <span className="text-sm text-muted-foreground ml-1">{getSpeedLabel(settings.speedUnit)}</span>}
               </p>
             </div>
             )}
@@ -1092,7 +1102,7 @@ export default function ActiveRide() {
         {/* Landscape: G-Force between speed and buttons */}
         {settings.gForceEnabled && gForce.isSupported && (
           <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">
-            <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={rideState.gEnvelope ?? gForce.envelope} max={rideState.gMax ?? gForce.gMax} className="w-40 landscape:w-36" />
+            <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope} max={peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax} hidePeaks={peaksHidden} className="w-40 landscape:w-36" />
           </div>
         )}
 
@@ -1246,7 +1256,7 @@ export default function ActiveRide() {
                   }
                 }}
                 className={cn(
-                  "w-12 h-12 landscape:w-16 landscape:h-16 [@media(max-height:420px)]:w-11 [@media(max-height:420px)]:h-11 rounded-full flex items-center justify-center transition-all touch-target",
+                  "w-12 h-12 landscape:w-16 landscape:h-16 [@media(max-height:420px)]:w-12 [@media(max-height:420px)]:h-12 rounded-full flex items-center justify-center transition-all touch-target",
                   isConnected
                     ? "bg-destructive/20 hover:bg-destructive/30 text-destructive"
                     : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
@@ -1319,7 +1329,7 @@ export default function ActiveRide() {
                 {tr("Convoy (")}{convoy.members.length})
                 <button
                   onClick={() => setShowMembers(false)}
-                  className="ml-auto text-muted-foreground hover:text-foreground px-1"
+                  className="glove-hit ml-auto text-muted-foreground hover:text-foreground px-1"
                   aria-label={tr("Close convoy members")}
                 >
                   ✕

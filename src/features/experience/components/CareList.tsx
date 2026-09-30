@@ -6,6 +6,7 @@ import { haptics } from '@/lib/haptics';
 import { CARE_QUESTIONS, isCareOn, carePatch, requestMotionPermission, type CareQuestion } from '../lib/questions';
 import { useExperience } from '../hooks/useExperience';
 import { tr } from '@/lib/i18n';
+import { requestAutoRescueConsent } from '@/features/rescue';
 
 /** Settings view of the "Do you care about…" answers, as switches. */
 export function CareList({ className }: { className?: string }) {
@@ -17,6 +18,7 @@ export function CareList({ className }: { className?: string }) {
       toast.error(tr("Motion sensor permission denied"));
       return;
     }
+    if (on && q.features.includes('autoRescueEnabled') && !(await requestAutoRescueConsent())) return;
     haptics.tick();
     updateSettings(carePatch(q, on, care));
   };

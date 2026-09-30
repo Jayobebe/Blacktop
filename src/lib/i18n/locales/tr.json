@@ -3189,5 +3189,21 @@
  "“{0}”": "“{0}”",
  "1 card collected": "1 kart toplandı",
  "{0} cards collected": "{0} kart toplandı",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone'da kilit ekranı kaydırılarak kapatılabilir. Bunu önlemek için Rehberli Erişim'i açın (Ayarlar → Erişilebilirlik → Rehberli Erişim) ve alarmı kurduktan sonra yan düğmeye üç kez basın."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone'da kilit ekranı kaydırılarak kapatılabilir. Bunu önlemek için Rehberli Erişim'i açın (Ayarlar → Erişilebilirlik → Rehberli Erişim) ve alarmı kurduktan sonra yan düğmeye üç kez basın.",
+ "Before you turn on crash detection": "Kaza algılamayı açmadan önce",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop bir acil durum izleme hizmeti değildir ve acil servisleri (999/911/112) aramaz. Kaza algılama ve kurtarma uyarıları cihazın sensörlerine ve etkin mobil veriye bağlıdır ve iletileceğini garanti edemez.",
+ "Draw your unlock pattern": "Kilit açma deseninizi çizin",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Blacktop'un acil servis olmadığını ve bir uyarının iletileceğini garanti edemeyeceğini anlıyorum.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "Sert bir darbe ve duruşun ardından iyi olup olmadığınızı sorar; yanıt vermezseniz Ayarlar → Güvenlik'te seçtiğiniz kişileri uyarır. Mümkün olduğunda acil servisleri her zaman kendiniz arayın.",
+ "Log Peak Speed & Gs": "En yüksek hız ve G'yi kaydet",
+ "Offline — following GPS track": "Çevrimdışı — GPS izini takip ediyor",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "Kamu yolu gizliliği: en yüksek değerler her yerde -- olarak görünür ve paylaşılmaz. Kaydedilmeye devam eder; kilit açma deseniniz onları yeniden gösterir.",
+ "Rerouting": "Yeni rota hesaplanıyor",
+ "Too many tries. Wait 30 seconds.": "Çok fazla deneme. 30 saniye bekleyin.",
+ "Top speed, peak G and max lean show across the app.": "En yüksek hız, en yüksek G ve en yüksek yatış tüm uygulamada görünür.",
+ "Turn on crash detection": "Kaza algılamayı aç",
+ "Unlock pattern changed": "Kilit açma deseni değiştirildi",
+ "You'll draw it to show your peak figures again.": "En yüksek değerlerinizi yeniden görmek için çizeceksiniz.",
+ "Only your current pattern can change it.": "Yalnızca mevcut deseniniz onu değiştirebilir.",
+ "Your pattern shows your peak speed, lean and G again.": "Deseniniz en yüksek hızınızı, yatışınızı ve G'nizi yeniden gösterir."
 }

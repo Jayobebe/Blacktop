@@ -3189,5 +3189,21 @@
  "“{0}”": "«{0}»",
  "1 card collected": "1 carta raccolta",
  "{0} cards collected": "{0} carte raccolte",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Su iPhone il blocco si può chiudere con uno scorrimento. Per evitarlo, attiva Accesso Guidato (Impostazioni → Accessibilità → Accesso Guidato) e premi tre volte il tasto laterale dopo aver inserito l'allarme."
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Su iPhone il blocco si può chiudere con uno scorrimento. Per evitarlo, attiva Accesso Guidato (Impostazioni → Accessibilità → Accesso Guidato) e premi tre volte il tasto laterale dopo aver inserito l'allarme.",
+ "Before you turn on crash detection": "Prima di attivare il rilevamento cadute",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktop non è un servizio di monitoraggio delle emergenze e non contatta i servizi di emergenza (999/911/112). Il rilevamento cadute e gli avvisi di soccorso dipendono dai sensori del dispositivo e dai dati mobili attivi, e non possono garantire la consegna.",
+ "Draw your unlock pattern": "Disegna la tua sequenza di sblocco",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Capisco che Blacktop non è un servizio di emergenza e non può garantire che un avviso venga ricevuto.",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "Ti chiede se stai bene dopo un urto forte seguito da uno stop, e avvisa le persone scelte in Impostazioni → Sicurezza se non rispondi. Chiama sempre tu i servizi di emergenza quando puoi.",
+ "Log Peak Speed & Gs": "Registra velocità e G massime",
+ "Offline — following GPS track": "Offline — segue la traccia GPS",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "Privacy su strada pubblica: i valori di picco appaiono come -- ovunque e non vengono condivisi. Vengono comunque registrati; la tua sequenza di sblocco li mostra di nuovo.",
+ "Rerouting": "Ricalcolo del percorso",
+ "Too many tries. Wait 30 seconds.": "Troppi tentativi. Attendi 30 secondi.",
+ "Top speed, peak G and max lean show across the app.": "Velocità massima, G di picco e piega massima appaiono in tutta l'app.",
+ "Turn on crash detection": "Attiva il rilevamento cadute",
+ "Unlock pattern changed": "Sequenza di sblocco cambiata",
+ "You'll draw it to show your peak figures again.": "La disegnerai per mostrare di nuovo i tuoi valori di picco.",
+ "Only your current pattern can change it.": "Solo la tua sequenza attuale può cambiarla.",
+ "Your pattern shows your peak speed, lean and G again.": "La tua sequenza mostra di nuovo velocità, piega e G di picco."
 }

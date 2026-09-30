@@ -3189,5 +3189,21 @@
  "“{0}”": "「{0}」",
  "1 card collected": "カードを1枚獲得",
  "{0} cards collected": "カードを{0}枚獲得",
- "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhoneではロック画面をスワイプで閉じられます。防ぐには「アクセスガイド」をオンにし（設定 → アクセシビリティ → アクセスガイド）、作動後にサイドボタンをトリプルクリックしてください。"
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhoneではロック画面をスワイプで閉じられます。防ぐには「アクセスガイド」をオンにし（設定 → アクセシビリティ → アクセスガイド）、作動後にサイドボタンをトリプルクリックしてください。",
+ "Before you turn on crash detection": "事故検知をオンにする前に",
+ "Blacktop is not an emergency monitoring service and does not contact emergency services (999/911/112). Crash detection and rescue alerts rely on device sensors and active mobile data, and cannot guarantee delivery.": "Blacktopは緊急監視サービスではなく、緊急通報（999/911/112）は行いません。事故検知と救助アラートはデバイスのセンサーとモバイルデータ通信に依存しており、確実に届くことは保証できません。",
+ "Draw your unlock pattern": "解除パターンを描いてください",
+ "I understand Blacktop is not an emergency service and can't guarantee an alert is delivered.": "Blacktopが緊急サービスではなく、アラートが届くことを保証できないことを理解しました。",
+ "It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.": "強い衝撃の後に停止すると大丈夫か確認し、応答がなければ設定 → 安全で選んだ相手に知らせます。可能なときは必ず自分で緊急通報してください。",
+ "Log Peak Speed & Gs": "最高速度とGを記録",
+ "Offline — following GPS track": "オフライン — GPSの軌跡に沿って表示中",
+ "Public Road Privacy: peak figures read -- everywhere and aren't shared. They're still recorded; your unlock pattern shows them again.": "公道プライバシー：最大値はどこでも -- と表示され、共有されません。記録は続き、解除パターンで再び表示できます。",
+ "Rerouting": "ルートを再計算中",
+ "Too many tries. Wait 30 seconds.": "試行回数が多すぎます。30秒お待ちください。",
+ "Top speed, peak G and max lean show across the app.": "最高速度、最大G、最大バンク角がアプリ全体に表示されます。",
+ "Turn on crash detection": "事故検知をオンにする",
+ "Unlock pattern changed": "解除パターンを変更しました",
+ "You'll draw it to show your peak figures again.": "最大値を再び表示するときに描きます。",
+ "Only your current pattern can change it.": "変更できるのは現在のパターンだけです。",
+ "Your pattern shows your peak speed, lean and G again.": "パターンで最高速度、バンク角、Gを再び表示します。"
 }

@@ -1,6 +1,7 @@
 export { useActiveRide, useRideSpeed, attachRideToConvoy, subscribeRawFixes, setGpsHighRate, setActiveRidePaused, getActiveRideStatus } from './hooks/useActiveRide';
 export type { RawFix } from './hooks/useActiveRide';
 export { useRideHistory } from './hooks/useRideHistory';
+export { keepPeakTelemetry, usePeaksHidden, PEAK_HIDDEN } from './lib/telemetryPrivacy';
 export { burnExpiredTrips, burnedAggregate, NO_BIKE, aggregateRides, mergeAggregates, emptyAggregate, BURNED_TOTALS_KEY } from './lib/tripBurner';
 export type { BurnTripsInterval, BurnedAggregate, BurnedTotals } from './lib/tripBurner';
 export { useCrashDetection } from './hooks/useCrashDetection';

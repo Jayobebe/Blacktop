@@ -21,9 +21,11 @@ import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { useEnterprise, EnterpriseDoorway, EnterpriseWorkspaceCard } from '@/features/enterprise';
 
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 export default function Home() {
+  const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { stats } = useRideHistory();
@@ -188,7 +190,7 @@ export default function Home() {
     { label: exp.terms.Rides, value: formatCompactCount(stats.totalRides), unit: null },
     { label: tr("Distance"), value: formatCompactDistance(stats.totalDistance, settings.distanceUnit), unit: getDistanceLabel(settings.distanceUnit) },
     ...(settings.speedFocusEnabled
-      ? [{ label: tr("Top Speed"), value: formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: getSpeedLabel(settings.speedUnit) }]
+      ? [{ label: tr("Top Speed"), value: peaksHidden ? PEAK_HIDDEN : formatSpeed(stats.personalTopSpeed, settings.speedUnit), unit: peaksHidden ? null : getSpeedLabel(settings.speedUnit) }]
       : []),
     { label: tr("Time"), value: formatCompactDuration(stats.totalDuration), unit: null },
   ];

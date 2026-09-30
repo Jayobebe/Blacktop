@@ -1077,6 +1077,7 @@ export function useActiveRide(convoyId?: string | null) {
     if (isValidRide) {
       const rideId = crypto.randomUUID();
       const bikeId = getActiveBikeIdSnapshot() ?? undefined;
+      const track = takePendingTrackReceipt();
       const ride: RideSession = {
         id: rideId,
         startedAt: currentState.startedAt!,
@@ -1096,7 +1097,7 @@ export function useActiveRide(convoyId?: string | null) {
         gMax: currentState.gMax,
         bikeId,
         challenge: takePendingChallengeReceipt(),
-        track: takePendingTrackReceipt(),
+        track,
       };
       const didSaveRide = addRideRef.current(ride);
       if (didSaveRide) {

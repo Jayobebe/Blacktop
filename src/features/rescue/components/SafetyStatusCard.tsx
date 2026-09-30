@@ -13,6 +13,7 @@ import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { useSafetyStatus, type SafetyLevel } from '../hooks/useSafetyStatus';
 import { tr } from '@/lib/i18n';
+import { requestAutoRescueConsent } from '../lib/rescueConsent';
 
 const LEVELS: Record<SafetyLevel, { icon: typeof ShieldCheck; title: string; hint: string; tone: string; bg: string }> = {
   active: {
@@ -111,6 +112,7 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
       toast.error(tr("Motion sensor permission denied"));
       return;
     }
+    if (on && !(await requestAutoRescueConsent())) return;
     updateSetting('autoRescueEnabled', on);
   };
 

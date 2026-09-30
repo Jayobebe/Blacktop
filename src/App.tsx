@@ -22,8 +22,9 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { setBackdropCruise, surgeBackdrop } from "@/lib/backdropMotion";
 import { MapLoading } from "@/components/MapLoading";
 import { HazardAlerts } from "@/features/hazards";
-import { AlarmOverlay } from "@/features/alarm";
+import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
+import { AutoRescueConsentDialog } from "@/features/rescue";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
@@ -268,6 +269,8 @@ const App = () => {
               <Toaster />
               <Sonner />
               <UiSounds />
+              <AutoRescueConsentDialog />
+              <PatternGateDialog />
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />
                 <PushBridge />

@@ -19,7 +19,8 @@ import { uploadCardPhoto } from '../lib/cardPhoto';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 interface Props {
   card: VehicleCardData;
@@ -27,6 +28,7 @@ interface Props {
 
 export function VehicleCard({ card }: Props) {
   const { settings } = useSettings();
+  const peaksHidden = usePeaksHidden();
   const { profile } = useProfile();
   const style = TIER_STYLES[card.tier];
   const locked = card.tier === 'locked';
@@ -304,8 +306,8 @@ export function VehicleCard({ card }: Props) {
                   key: 'speed',
                   icon: Gauge,
                   label: tr("Top speed"),
-                  value: `${formatSpeed(card.stats.topSpeedMph, settings.speedUnit)}`,
-                  unit: getSpeedLabel(settings.speedUnit),
+                  value: peaksHidden ? PEAK_HIDDEN : `${formatSpeed(card.stats.topSpeedMph, settings.speedUnit)}`,
+                  unit: peaksHidden ? '' : getSpeedLabel(settings.speedUnit),
                   improved: card.improved.topSpeed,
                 },
                 {
@@ -338,8 +340,8 @@ export function VehicleCard({ card }: Props) {
                 cells.push({
                   key: 'lean',
                   label: tr("Max lean"),
-                  value: `${Math.round(card.stats.maxLean)}`,
-                  unit: '°',
+                  value: peaksHidden ? PEAK_HIDDEN : `${Math.round(card.stats.maxLean)}`,
+                  unit: peaksHidden ? '' : '°',
                   improved: card.improved.maxLean,
                 });
               }
@@ -348,8 +350,8 @@ export function VehicleCard({ card }: Props) {
                   key: 'gforce',
                   icon: Zap,
                   label: tr("Max G"),
-                  value: card.stats.maxGForce > 0 ? card.stats.maxGForce.toFixed(1) : '—',
-                  unit: card.stats.maxGForce > 0 ? 'G' : '',
+                  value: peaksHidden ? PEAK_HIDDEN : card.stats.maxGForce > 0 ? card.stats.maxGForce.toFixed(1) : '—',
+                  unit: !peaksHidden && card.stats.maxGForce > 0 ? 'G' : '',
                   improved: card.improved.maxGForce,
                 });
               }

@@ -40,7 +40,7 @@ export function HazardCard({ hazard, onClose, className }: { hazard: Hazard; onC
             {hazard.confirmations > 0 ? tr(" · {0} confirmed", [hazard.confirmations]) : ''}
           </p>
         </div>
-        <button className="p-1.5 -m-1 rounded-lg hover:bg-secondary" onClick={onClose} aria-label={tr("Close")}>
+        <button className="glove-hit p-1.5 -m-1 rounded-lg hover:bg-secondary" onClick={onClose} aria-label={tr("Close")}>
           <X className="w-4 h-4" />
         </button>
       </div>

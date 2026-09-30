@@ -8,6 +8,7 @@ import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shi
 import { SetupFlow, SetupShell, WelcomeScreen, useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
+import { RescueDisclaimer } from '@/features/rescue';
 
 // consent → vehicles → mode → style → care deck → preview → name
 const TOTAL_STEPS = 7;
@@ -115,6 +116,7 @@ export default function Onboarding() {
             <p className="text-xs text-muted-foreground">
               {tr("Set up before you ride. Don't touch the app while moving. Speed and lean data are for information only. Obey local laws.")}
             </p>
+            <RescueDisclaimer />
           </div>
 
           {items.map((item, i) => (

@@ -29,7 +29,8 @@ import { addLogNote, getInheritedLog, setInheritedLog, toLogRide, useInheritedLo
 import { SCAN_WINDOW_MS, startHandover } from '../lib/transfer';
 import type { LogNote, LogRide, LogbookPackage } from '../types';
 import { passportFor } from '../lib/passport';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 const RIDES_PER_PAGE = 7;
 /** Rough line budget of a page, used to flow notes onto as many pages as they need. */
@@ -75,6 +76,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 /* ── the book ───────────────────────────────────────────────────────────── */
 
 export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }) {
+  const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const { profile } = useProfile();
   const { enabled: demoEnabled } = useDemoMode();
@@ -177,7 +179,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <Row label={tr("Distance")} value={dist(stats.totalDistanceMi)} />
       <Row label={tr("Riding time")} value={formatDuration(stats.totalDurationSec)} />
       <Row label={tr("Top speed")} value={spd(stats.topSpeedMph)} />
-      <Row label={tr("Lean L / R")} value={`${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
+      <Row label={tr("Lean L / R")} value={peaksHidden ? PEAK_HIDDEN : `${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
       <Row label={tr("Peak G")} value={stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : '—'} />
       <Row label={tr("Longest ride")} value={dist(stats.longestRideMi)} />
       <Row label={tr("Convoy rides")} value={allRides.filter((r) => r.isConvoyRide).length} />
@@ -224,7 +226,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <PageTitle>{tr("Highlights")}</PageTitle>
       <Row label={tr("Longest")} value={longest ? dist(longest.distance) : '—'} />
       {longest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(longest.startedAt)} · {longest.owner}</p>}
-      <Row label={tr("Fastest")} value={fastest ? spd(fastest.maxSpeed) : '—'} />
+      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastest && fastest.maxSpeed > 0 ? spd(fastest.maxSpeed) : '—'} />
       {fastest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
       <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Badges")}</p>
       {Object.keys(badgeCounts).length === 0 ? (
@@ -272,7 +274,8 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
                 </div>
                 <div className="flex justify-between gap-1 font-mono text-[8px] text-[#2b2118]/65">
                   <span className="truncate">{r.name ? fmtDate(r.startedAt) : r.owner}{r.isConvoyRide ? tr(" · convoy") : ''}</span>
-                  <span>{formatDuration(r.duration)} · {spd(r.maxSpeed)}</span>
+                  {/* No max speed on rides kept under Public Road Privacy. */}
+                  <span>{formatDuration(r.duration)} · {peaksHidden ? PEAK_HIDDEN : spd(r.maxSpeed)}</span>
                 </div>
               </div>
             ))}

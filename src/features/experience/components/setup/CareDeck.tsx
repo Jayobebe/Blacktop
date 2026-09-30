@@ -8,6 +8,7 @@ import { carePatch, isCareOn, requestMotionPermission, type CareContext, type Ca
 import type { RideStyle } from '../../lib/profile';
 import { RIDE_STYLES } from '../../lib/styles';
 import { tr } from '@/lib/i18n';
+import { requestAutoRescueConsent } from '@/features/rescue';
 
 const SWIPE_COMMIT_PX = 90;
 const EXIT_MS = 260;
@@ -49,6 +50,10 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
     if (exiting) return;
     if (yes && q.needsMotion && !(await requestMotionPermission())) {
       toast.error(tr("Motion sensor permission denied"), { description: tr("You can turn this on later in Settings.") });
+      setDx(0);
+      return;
+    }
+    if (yes && q.features.includes('autoRescueEnabled') && !(await requestAutoRescueConsent())) {
       setDx(0);
       return;
     }
