@@ -119,6 +119,7 @@ import {
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
 import { setGuidanceActive } from '../lib/guidanceState';
+import { etaSpread, spreadDuration } from '../lib/eta';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -2375,6 +2376,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               rerouting={rerouting}
               finding={!route}
               destinationName={destination?.name}
+              spread={etaSpread(route)}
               onStop={handleStopNavigating}
               onSkip={
                 canSkipWaypoint
@@ -2447,6 +2449,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               myLocation={userLocation}
               destination={destination}
               routeSeconds={navProgressNow ? navProgressNow.remainingSeconds : route ? route.durationSeconds : null}
+              etaSpread={etaSpread(route)}
               speedUnit={settings.speedUnit}
             />
           </div>
@@ -2904,8 +2907,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                   )}{" "}
                   {getDistanceLabel(settings.distanceUnit)}
                   {" · "}
-                  {formatDuration(
-                    Math.round(guiding && navProgressNow ? navProgressNow.remainingSeconds : route.durationSeconds),
+                  {spreadDuration(
+                    guiding && navProgressNow ? navProgressNow.remainingSeconds : route.durationSeconds,
+                    etaSpread(route),
+                    (s) => formatDuration(Math.round(s)),
                   )}
                 </p>
               ) : null}

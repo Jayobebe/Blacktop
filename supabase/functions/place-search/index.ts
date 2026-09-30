@@ -1,5 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { fetchWithTimeout, hasOwnGeoServer, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
+import {
+  buildLoop,
+  buildTwisty,
+  type LngLat,
+  osrmRoute,
+  type PlanOptions,
+  type Prefs,
+  readPrefs,
+  routeFor,
+  type RoutePrefs,
+  type ScenicSpot,
+  type Vibe,
+} from "./routing.ts";
 
 const ALLOWED_ORIGINS = new Set([
   "https://blacktoplive.com",
@@ -61,12 +75,6 @@ type RoadsBody = {
   north: number;
 };
 
-// The rider's route preferences (Settings → Navigation) and what they ride.
-type RoutePrefs = {
-  avoid?: { motorways?: boolean; tolls?: boolean; ferries?: boolean; unpaved?: boolean };
-  vehicle?: "motorcycle" | "car" | "bicycle";
-};
-
 type RouteBody = RoutePrefs & {
   kind: "route";
   // [lng, lat] pairs, in order from start to destination.
@@ -123,54 +131,18 @@ function escapeRegexPart(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(t);
-  }
-}
+type PhotonHit = {
+  id: string;
+  lat: number;
+  lon: number;
+  tags: Record<string, string>;
+  /** OSM key / value of the place (e.g. amenity / fuel), and its country code (lower case). */
+  key: string;
+  value: string;
+  country: string;
+};
 
-// ---- Routers ------------------------------------------------------------------
-//
-// Blacktop's own routing server (infra/routing: OSRM + Valhalla behind Caddy)
-// when the ROUTING_* secrets are set, the public OSM demo servers otherwise.
-// If ours fails, the call falls back to the public one and ours is skipped for
-// a minute, so an outage or a weekly data rebuild costs one slow request, not
-// one per twisty candidate.
-const envUrl = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/\/+$/, "");
-const OWN_OSRM = envUrl("ROUTING_OSRM_URL");
-const OWN_VALHALLA = envUrl("ROUTING_VALHALLA_URL");
-const ROUTING_TOKEN = (Deno.env.get("ROUTING_TOKEN") ?? "").trim();
-const PUBLIC_OSRM = "https://router.project-osrm.org";
-const PUBLIC_VALHALLA = "https://valhalla1.openstreetmap.de";
-const OWN_ROUTER_REST_MS = 60_000;
-const ownRouterDownUntil: Record<string, number> = {};
-
-function routerHeaders(own: boolean, extra: Record<string, string>): Record<string, string> {
-  return {
-    "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)",
-    ...extra,
-    ...(own && ROUTING_TOKEN ? { Authorization: `Bearer ${ROUTING_TOKEN}` } : {}),
-  };
-}
-
-/** Runs a router call on our server first (unless it's resting), then on the public one. A null answer (no route) is an answer, not a failure. */
-async function viaRouter<T>(own: string, pub: string, call: (base: string, own: boolean) => Promise<T>): Promise<T> {
-  if (own && (ownRouterDownUntil[own] ?? 0) < Date.now()) {
-    try {
-      return await call(own, true);
-    } catch (e) {
-      ownRouterDownUntil[own] = Date.now() + OWN_ROUTER_REST_MS;
-      console.warn("[PLACE-SEARCH] own router failed, using the public one:", e instanceof Error ? e.message : e);
-    }
-  }
-  return call(pub, false);
-}
-
-type PhotonHit = { id: string; lat: number; lon: number; tags: Record<string, string> };
+const PUBLIC_PHOTON = ["https://photon.komoot.io"];
 
 /** Photon (komoot) OSM search: fast, tolerant of cloud servers, supports a bbox and tag filters. */
 async function photonSearch(opts: {
@@ -181,20 +153,20 @@ async function photonSearch(opts: {
   limit?: number;
 }): Promise<PhotonHit[]> {
   if (!opts.q) return [];
-  const url = new URL("https://photon.komoot.io/api/");
-  url.searchParams.set("q", opts.q.slice(0, 100));
-  url.searchParams.set("limit", String(opts.limit ?? 20));
-  if (opts.center) {
-    url.searchParams.set("lat", String(opts.center.lat));
-    url.searchParams.set("lon", String(opts.center.lon));
-  }
-  if (opts.bbox) url.searchParams.set("bbox", opts.bbox.join(","));
-  for (const t of opts.osmTags ?? []) url.searchParams.append("osm_tag", t);
-  const res = await fetchWithTimeout(url.toString(), {
-    headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "*/*" },
-  }, 7000);
-  if (!res.ok) throw new Error(`Photon ${res.status}`);
-  const data = await res.json();
+  const data = await viaGeo("photon", PUBLIC_PHOTON, async (base, own) => {
+    const url = new URL(`${base}/api/`);
+    url.searchParams.set("q", opts.q.slice(0, 100));
+    url.searchParams.set("limit", String(opts.limit ?? 20));
+    if (opts.center) {
+      url.searchParams.set("lat", String(opts.center.lat));
+      url.searchParams.set("lon", String(opts.center.lon));
+    }
+    if (opts.bbox) url.searchParams.set("bbox", opts.bbox.join(","));
+    for (const t of opts.osmTags ?? []) url.searchParams.append("osm_tag", t);
+    const res = await fetchWithTimeout(url.toString(), { headers: upstreamHeaders(own, { "Accept": "*/*" }) }, 7000);
+    if (!res.ok) throw new Error(`Photon ${res.status}`);
+    return res.json();
+  });
   return (Array.isArray(data?.features) ? data.features : [])
     .filter((f: any) => Array.isArray(f?.geometry?.coordinates))
     .map((f: any) => {
@@ -211,8 +183,62 @@ async function photonSearch(opts: {
           ...(p.country ? { country: p.country } : {}),
           ...(p.osm_key ? { [p.osm_key]: p.osm_value } : {}),
         },
+        key: String(p.osm_key ?? ""),
+        value: String(p.osm_value ?? ""),
+        country: typeof p.countrycode === "string" ? p.countrycode.toLowerCase() : "",
       };
     });
+}
+
+/** A Photon hit in the shape the app reads from Nominatim's search results. */
+function photonAsNominatim(h: PhotonHit) {
+  return {
+    place_id: h.id,
+    lat: String(h.lat),
+    lon: String(h.lon),
+    name: h.tags.name ?? "",
+    display_name: [h.tags.name, h.tags["addr:street"], h.tags["addr:city"], h.tags["addr:postcode"], h.tags.country].filter(Boolean).join(", "),
+    class: h.key,
+    type: h.value,
+  };
+}
+
+/** Reverse lookup from Photon, in the shape the app reads from Nominatim's (it uses the country). */
+async function photonReverse(lat: number, lon: number) {
+  const j = await viaGeo("photon", PUBLIC_PHOTON, async (base, own) => {
+    const res = await fetchWithTimeout(`${base}/reverse?lat=${lat}&lon=${lon}`, { headers: upstreamHeaders(own, { "Accept": "*/*" }) }, 6000);
+    if (!res.ok) throw new Error(`Photon ${res.status}`);
+    return res.json();
+  });
+  const pr = j?.features?.[0]?.properties ?? {};
+  return {
+    display_name: [pr.name, pr.street, pr.city, pr.state, pr.country].filter(Boolean).join(", "),
+    address: {
+      country_code: typeof pr.countrycode === "string" ? pr.countrycode.toLowerCase() : undefined,
+      country: pr.country, state: pr.state, city: pr.city, road: pr.street, postcode: pr.postcode,
+    },
+  };
+}
+
+/** Photon search from a Nominatim-style request (viewbox, bounded, country codes, limit). */
+async function photonForSearch(body: SearchBody) {
+  const vb = (body.viewbox ?? "").split(",").map(Number);
+  const hasBox = vb.length === 4 && vb.every(Number.isFinite);
+  const bounded = asBounded(body.bounded) === "1";
+  const center = hasBox ? { lat: (vb[1] + vb[3]) / 2, lon: (vb[0] + vb[2]) / 2 } : null;
+  const countries = String(body.countryCode ?? "").toLowerCase().split(",").map((c) => c.trim()).filter(Boolean);
+  const limit = Math.max(1, Math.min(30, Number(body.limit) || 10));
+  const hits = await photonSearch({
+    q: String(body.q ?? "").trim(),
+    center,
+    bbox: hasBox && bounded ? [Math.min(vb[0], vb[2]), Math.min(vb[1], vb[3]), Math.max(vb[0], vb[2]), Math.max(vb[1], vb[3])] : null,
+    // Ask for extra when filtering by country afterwards (Photon has no country filter).
+    limit: countries.length ? Math.min(50, limit * 3) : limit,
+  });
+  return hits
+    .filter((h) => !countries.length || !h.country || countries.includes(h.country))
+    .slice(0, limit)
+    .map(photonAsNominatim);
 }
 
 function boxAround(lat: number, lon: number, radiusM: number): [number, number, number, number] {
@@ -221,279 +247,32 @@ function boxAround(lat: number, lon: number, radiusM: number): [number, number, 
   return [lon - dLon, lat - dLat, lon + dLon, lat + dLat];
 }
 
+// overpass-api.de answers 406 to "Accept: application/json" and wants a
+// contactable User-Agent; kumi.systems was timing out, so it goes last.
+const PUBLIC_OVERPASS = [
+  "https://overpass-api.de",
+  "https://overpass.private.coffee",
+  "https://overpass.kumi.systems",
+];
+
+/** Overpass: our own server first (when set up), then the public mirrors in turn. */
 async function fetchOverpass(query: string, timeoutMs = 9000) {
-  // overpass-api.de answers 406 to "Accept: application/json" and wants a
-  // contactable User-Agent; kumi.systems was timing out, so it goes last.
-  const endpoints = [
-    "https://overpass-api.de/api/interpreter",
-    "https://overpass.private.coffee/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
-  ];
-
-  let lastError: unknown = null;
-
-  for (const endpoint of endpoints) {
-    try {
-      const res = await fetchWithTimeout(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "*/*",
-          "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)",
-        },
-        body: `data=${encodeURIComponent(query)}`,
-      }, timeoutMs);
-
-      const text = await res.text();
-      if (!res.ok) {
-        throw new Error(`Overpass ${res.status}: ${text.slice(0, 200)}`);
-      }
-
-      return JSON.parse(text);
-    } catch (e) {
-      lastError = e;
-    }
-  }
-
-  throw lastError ?? new Error("Overpass failed");
-}
-
-// ---- Twisty routes and loops ---------------------------------------------------
-//
-// Both run on the public OSRM car profile, so what we score is exactly what the
-// app will route through the returned via points. The scoring is what makes
-// them good:
-//  - Bends, not junctions: the line is resampled every 25 m and turning is
-//    counted per step with a cap, so a 90° town junction or a roundabout adds
-//    little, while a run of sweepers adds a lot.
-//  - Rural roads only: each stretch is weighted by OSRM's speed for it, so
-//    30 mph streets and motorways count for (almost) nothing.
-//  - No spurs: riding back down the road you came in on, and U-turns at a via
-//    point, are penalised hard.
-//  - Loops land on the length asked for: a second round re-scales the ring
-//    from the first round's results.
-//  - Scenic loops go through real viewpoints, peaks and waterfalls nearby.
-
-type LngLat = [number, number];
-
-type Prefs = { avoid: { motorways: boolean; tolls: boolean; ferries: boolean; unpaved: boolean }; vehicle: "motorcycle" | "car" | "bicycle"; steps?: boolean };
-
-/** Only booleans and known vehicles get through. */
-function readPrefs(b: RoutePrefs | undefined): Prefs {
-  const a = (b?.avoid ?? {}) as Record<string, unknown>;
-  const v = b?.vehicle;
-  return {
-    avoid: { motorways: a.motorways === true, tolls: a.tolls === true, ferries: a.ferries === true, unpaved: a.unpaved === true },
-    vehicle: v === "car" || v === "bicycle" ? v : "motorcycle",
-  };
-}
-
-async function osrmRoute(stops: LngLat[], steps = false, timeoutMs = 9000): Promise<any | null> {
-  const path = stops.map(([lo, la]) => `${lo.toFixed(6)},${la.toFixed(6)}`).join(";");
-  return viaRouter(OWN_OSRM, PUBLIC_OSRM, async (base, own) => {
-    const url = new URL(`${base}/route/v1/driving/${path}`);
-    url.searchParams.set("overview", "full");
-    url.searchParams.set("geometries", "geojson");
-    url.searchParams.set("alternatives", "false");
-    url.searchParams.set("steps", steps ? "true" : "false");
-    url.searchParams.set("annotations", "speed");
-    const res = await fetchWithTimeout(url.toString(), {
-      headers: routerHeaders(own, { "Accept": "application/json" }),
-    }, timeoutMs);
-    // OSRM answers 400 NoRoute / NoSegment for points it can't route: an answer, not an outage.
-    if (res.status === 400) return null;
-    if (!res.ok) throw new Error(`OSRM ${res.status}`);
-    const json = await res.json();
-    return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
-  });
-}
-
-/** Valhalla (ours, or the FOSSGIS public server) in OSRM's response format, honouring avoid-preferences and bike routing. */
-async function valhallaRoute(stops: LngLat[], p: Prefs, timeoutMs = 9000): Promise<any | null> {
-  const costing = p.vehicle === "bicycle" ? "bicycle" : p.vehicle === "car" ? "auto" : "motorcycle";
-  const opts: Record<string, unknown> = {};
-  if (costing === "bicycle") {
-    if (p.avoid.ferries) opts.use_ferry = 0;
-    if (p.avoid.unpaved) opts.avoid_bad_surfaces = 1;
-  } else {
-    // Soft avoidance, like Waze: kept off them unless there's no other way.
-    if (p.avoid.motorways) opts.use_highways = 0;
-    if (p.avoid.tolls) opts.use_tolls = 0;
-    if (p.avoid.ferries) opts.use_ferry = 0;
-    if (p.avoid.unpaved) opts.exclude_unpaved = true;
-  }
-  const body = JSON.stringify({
-    locations: stops.map(([lo, la]) => ({ lat: la, lon: lo })),
-    costing,
-    costing_options: { [costing]: opts },
-    format: "osrm",
-    shape_format: "geojson",
-    units: "kilometers",
-  });
-  return viaRouter(OWN_VALHALLA, PUBLIC_VALHALLA, async (base, own) => {
-    const res = await fetchWithTimeout(`${base}/route`, {
+  return viaGeo("overpass", PUBLIC_OVERPASS, async (base, own) => {
+    const res = await fetchWithTimeout(`${base}/api/interpreter`, {
       method: "POST",
-      headers: routerHeaders(own, { "Content-Type": "application/json", "Accept": "application/json" }),
-      body,
+      headers: upstreamHeaders(own, { "Content-Type": "application/x-www-form-urlencoded", "Accept": "*/*" }),
+      body: `data=${encodeURIComponent(query)}`,
     }, timeoutMs);
-    // Valhalla answers 400 when there's no route between the points: an answer, not an outage.
-    if (res.status === 400) return null;
-    if (!res.ok) throw new Error(`Valhalla ${res.status}`);
-    const json = await res.json();
-    return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
-  });
-}
-
-/** Routes with the rider's preferences: Valhalla when they need it, OSRM otherwise (and as the fallback). */
-async function routeFor(stops: LngLat[], p: Prefs): Promise<any | null> {
-  const needsValhalla = p.vehicle === "bicycle" || p.avoid.motorways || p.avoid.tolls || p.avoid.ferries || p.avoid.unpaved;
-  if (needsValhalla) {
-    try {
-      const r = await valhallaRoute(stops, p);
-      if (r?.geometry) return r;
-    } catch (e) {
-      console.warn("[PLACE-SEARCH] Valhalla failed, using OSRM:", e instanceof Error ? e.message : e);
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Overpass ${res.status}: ${text.slice(0, 200)}`);
     }
-  }
-  return osrmRoute(stops, p.steps === true);
-}
-
-interface RouteAnalysis {
-  /** Degrees of bend per km on rural roads (junction turns capped). */
-  twist: number;
-  /** Share of distance on fast dual carriageway / motorway. */
-  motorway: number;
-  /** Share of distance on slow town streets. */
-  urban: number;
-  /** Share of the line that rides back over road already ridden. */
-  retrace: number;
-  /** Near-reversals (U-turns at via points and the like). */
-  uturns: number;
-  km: number;
-}
-
-const toMeters = (a: LngLat, b: LngLat) => {
-  const lat = ((a[1] + b[1]) / 2) * Math.PI / 180;
-  return [(b[0] - a[0]) * 111320 * Math.cos(lat), (b[1] - a[1]) * 110540] as const;
-};
-
-function analyseRoute(route: any): RouteAnalysis {
-  const coords: LngLat[] = route?.geometry?.coordinates ?? [];
-  const km = (route?.distance ?? 0) / 1000;
-  if (coords.length < 3 || km <= 0) return { twist: 0, motorway: 0, urban: 0, retrace: 0, uturns: 0, km };
-
-  // Per-segment speed (km/h) from OSRM, aligned with the full geometry. Valhalla
-  // doesn't send it: then every stretch is taken as an open road and the
-  // motorway / town shares aren't counted.
-  const segSpeeds: number[] = (route.legs ?? []).flatMap((l: any) => (l?.annotation?.speed ?? []) as number[]);
-  const known = segSpeeds.length === coords.length - 1;
-  const speedAt = (i: number) => {
-    const v = known ? segSpeeds[i] * 3.6 : 60;
-    return Number.isFinite(v) ? v : 60;
-  };
-
-  // Resample every 25 m, carrying the speed of the segment each sample sits on.
-  const STEP = 25;
-  const pts: { x: number; y: number; kmh: number }[] = [];
-  let x = 0;
-  let y = 0;
-  let carry = 0;
-  pts.push({ x, y, kmh: speedAt(0) });
-  for (let i = 1; i < coords.length; i++) {
-    const [dx, dy] = toMeters(coords[i - 1], coords[i]);
-    const seg = Math.hypot(dx, dy);
-    if (seg === 0) continue;
-    let along = STEP - carry;
-    while (along <= seg) {
-      pts.push({ x: x + (dx * along) / seg, y: y + (dy * along) / seg, kmh: speedAt(i - 1) });
-      along += STEP;
-    }
-    carry = seg - (along - STEP);
-    x += dx;
-    y += dy;
-  }
-  if (pts.length < 4) return { twist: 0, motorway: 0, urban: 0, retrace: 0, uturns: 0, km };
-
-  const heading: number[] = [];
-  for (let i = 1; i < pts.length; i++) heading.push(Math.atan2(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y) * 180 / Math.PI);
-  const turn = (a: number, b: number) => {
-    const d = Math.abs(b - a) % 360;
-    return d > 180 ? 360 - d : d;
-  };
-
-  let bend = 0;
-  let motorwayM = 0;
-  let urbanM = 0;
-  let uturns = 0;
-  for (let i = 1; i < heading.length; i++) {
-    const kmh = pts[i].kmh;
-    // OSRM's car speeds: residential / unclassified ~25, tertiary ~40,
-    // secondary ~55, primary ~65, trunk ~85, motorway ~90 km/h. Bends count
-    // fully from secondary roads, well on tertiary B-roads, little on estates
-    // and lanes, and hardly at all on dual carriageways.
-    const rural = Math.max(0, Math.min(1, (kmh - 22) / 30)) * (kmh >= 82 ? 0.15 : 1);
-    bend += Math.min(turn(heading[i - 1], heading[i]), 32) * rural;
-    if (known && kmh >= 82) motorwayM += STEP;
-    if (known && kmh < 30) urbanM += STEP;
-    // A reversal within ~75 m.
-    if (i >= 3 && turn(heading[i - 3], heading[i]) > 150) uturns++;
-  }
-
-  // Retrace: a sample landing in a 40 m cell already visited ≥ 500 m earlier.
-  const seen = new Map<string, number>();
-  let retraced = 0;
-  pts.forEach((p, i) => {
-    const key = `${Math.round(p.x / 40)}:${Math.round(p.y / 40)}`;
-    const first = seen.get(key);
-    if (first === undefined) seen.set(key, i);
-    else if (i - first > 20) retraced++;
+    return JSON.parse(text);
   });
-
-  const totalM = pts.length * STEP;
-  return {
-    twist: bend / Math.max(0.5, km),
-    motorway: motorwayM / totalM,
-    urban: urbanM / totalM,
-    retrace: retraced / pts.length,
-    uturns: Math.floor(uturns / 3),
-    km,
-  };
-}
-
-type Vibe = "curvy" | "scenic" | "relaxed";
-
-/** Higher is better. `distErr` is the relative miss on a requested length (0 for A→B). */
-function scoreRoute(a: RouteAnalysis, vibe: Vibe, distErr: number, scenicHits = 0): number {
-  const spur = a.retrace * 160 + a.uturns * 10;
-  const len = distErr * 90;
-  if (vibe === "curvy") return a.twist - a.motorway * 80 - a.urban * 50 - spur - len;
-  if (vibe === "scenic") {
-    // Backroads through the good stuff; a steady ride rather than a knee-down one.
-    const flow = -Math.abs(a.twist - 55) * 0.5;
-    return 40 + flow + scenicHits * 18 - a.motorway * 90 - a.urban * 60 - spur - len;
-  }
-  // Relaxed: flowing, gently bending, quiet roads; no motorway, few towns, no fuss.
-  return 40 - Math.abs(a.twist - 28) * 0.8 - a.motorway * 100 - a.urban * 70 - spur - len;
-}
-
-function destPoint(lat: number, lng: number, bearingDeg: number, distKm: number): LngLat {
-  const R = 6371;
-  const br = (bearingDeg * Math.PI) / 180;
-  const lat1 = (lat * Math.PI) / 180;
-  const lng1 = (lng * Math.PI) / 180;
-  const dr = distKm / R;
-  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dr) + Math.cos(lat1) * Math.sin(dr) * Math.cos(br));
-  const lng2 = lng1 + Math.atan2(Math.sin(br) * Math.sin(dr) * Math.cos(lat1), Math.cos(dr) - Math.sin(lat1) * Math.sin(lat2));
-  return [((lng2 * 180) / Math.PI + 540) % 360 - 180, (lat2 * 180) / Math.PI];
-}
-
-function kmBetween(a: LngLat, b: LngLat) {
-  const [dx, dy] = toMeters(a, b);
-  return Math.hypot(dx, dy) / 1000;
 }
 
 /** Viewpoints, peaks and waterfalls round a point (scenic loops), best-effort. */
-async function scenicSpots(lat: number, lng: number, radiusKm: number): Promise<{ at: LngLat; name: string }[]> {
+async function scenicSpots(lat: number, lng: number, radiusKm: number): Promise<ScenicSpot[]> {
   const r = Math.round(Math.min(60, radiusKm) * 1000);
   const q = `[out:json][timeout:8];(node(around:${r},${lat},${lng})[tourism=viewpoint];node(around:${r},${lat},${lng})[natural=peak][name];node(around:${r},${lat},${lng})[waterway=waterfall];node(around:${r},${lat},${lng})[mountain_pass=yes];);out 120;`;
   try {
@@ -506,119 +285,30 @@ async function scenicSpots(lat: number, lng: number, radiusKm: number): Promise<
   }
 }
 
-async function buildLoop(lat: number, lng: number, distanceKm: number, vibe: Vibe, prefs: Prefs) {
-  const home: LngLat = [lng, lat];
-  // A road loop runs ~1.3x the ring through its via points.
-  let radiusKm = distanceKm / 1.3 / (2 * Math.PI) * 1.55;
-  const spots = vibe === "scenic" ? await scenicSpots(lat, lng, radiusKm * 1.6) : [];
+/**
+ * Which engine plans routes. Until our own geo server is set up nothing
+ * changes: OSRM as before (Valhalla only for avoid-preferences and bikes).
+ * With it, Valhalla routes, and twisty / loop planning tries both engines and
+ * keeps the best on Valhalla's road data.
+ */
+const PLAN: PlanOptions = { engine: hasOwnGeoServer ? "both" : "osrm", scenicSpots };
 
-  type Cand = { score: number; a: RouteAnalysis; route: any; stops: { lat: number; lng: number; name?: string }[]; distErr: number };
-  const all: Cand[] = [];
-
-  const shape = (b0: number, n: number, scale: number) => {
-    const vias: { at: LngLat; name?: string }[] = [];
-    for (let k = 0; k < n; k++) {
-      const bearing = (b0 + (k * 360) / n + (Math.random() - 0.5) * 24) % 360;
-      let at = destPoint(lat, lng, bearing, radiusKm * scale * (0.85 + Math.random() * 0.3));
-      let name: string | undefined;
-      if (spots.length) {
-        // Swap the ring point for the nearest scenic spot close to it.
-        let best: { at: LngLat; name: string } | null = null;
-        let bestD = radiusKm * 0.45;
-        for (const s of spots) {
-          const d = kmBetween(at, s.at);
-          if (d < bestD) {
-            bestD = d;
-            best = s;
-          }
-        }
-        if (best) {
-          at = best.at;
-          name = best.name || undefined;
-        }
-      }
-      vias.push({ at, name });
-    }
-    return vias;
-  };
-
-  const tryCandidates = async (shapes: { at: LngLat; name?: string }[][]) => {
-    const results = await Promise.allSettled(shapes.map((vias) => routeFor([home, ...vias.map((v) => v.at), home], prefs)));
-    results.forEach((r, i) => {
-      if (r.status !== "fulfilled" || !r.value?.geometry?.coordinates?.length) return;
-      const a = analyseRoute(r.value);
-      const distErr = Math.abs(a.km - distanceKm) / distanceKm;
-      const hits = shapes[i].filter((v) => v.name !== undefined || spots.some((s) => s.at === v.at)).length;
-      all.push({
-        score: scoreRoute(a, vibe, distErr, hits),
-        a,
-        route: r.value,
-        stops: shapes[i].map((v) => ({ lat: v.at[1], lng: v.at[0], ...(v.name ? { name: v.name } : {}) })),
-        distErr,
-      });
-    });
-  };
-
-  // Round one: triangles and quads at random rotations.
-  const r0 = Math.random() * 360;
-  await tryCandidates([shape(r0, 3, 1), shape(r0 + 60, 3, 1), shape(r0 + 30, 4, 0.9), shape(r0 + 75, 4, 0.9)]);
-  // Round two: re-scale the ring from how long round one came out, and try again.
-  const best1 = [...all].sort((x, y) => y.score - x.score)[0];
-  if (all.length && (!best1 || best1.distErr > 0.12)) {
-    const ratios = all.map((c) => c.a.km / distanceKm).sort((x, y) => x - y);
-    const median = ratios[Math.floor(ratios.length / 2)];
-    if (median > 0.2) radiusKm /= median;
-    const r1 = Math.random() * 360;
-    await tryCandidates([shape(r1, 3, 1), shape(r1 + 45, 4, 0.9), shape(r1 + 90, 3, 1)]);
-  } else if (!all.length) {
-    await tryCandidates([shape(r0 + 180, 3, 0.8), shape(r0 + 240, 4, 0.75)]);
-  }
-  all.sort((x, y) => y.score - x.score);
-  return all[0] ?? null;
+/**
+ * With both engines on our own server, a route's ETA is given as a range: the
+ * two engines time the same trip differently, and a window is more honest than
+ * one precise, wrong time. OSRM's opinion only counts where it would ride the
+ * same roads: not for bikes or avoid-preferences (it can't do either), and not
+ * when its route comes out more than 15% longer or shorter.
+ */
+function secondOpinion(coords: LngLat[], p: Prefs): Promise<{ duration: number; distance: number } | null> {
+  if (PLAN.engine !== "both" || p.vehicle === "bicycle" || Object.values(p.avoid).some(Boolean)) return Promise.resolve(null);
+  return osrmRoute(coords).catch(() => null);
 }
 
-async function buildTwisty(coords: LngLat[], prefs: Prefs) {
-  const direct = await routeFor(coords, prefs);
-  if (!direct?.geometry) return { direct: null, twisty: null };
-  const d = analyseRoute(direct);
-
-  const [sx, sy] = coords[0];
-  const [ex, ey] = coords[coords.length - 1];
-  const my = (sy + ey) / 2;
-  const cosLat = Math.cos((my * Math.PI) / 180) || 1;
-  const dx = (ex - sx) * cosLat;
-  const dy = ey - sy;
-  const len = Math.hypot(dx, dy) || 1e-6;
-  const perp: [number, number] = [-dy / len, dx / len];
-  const spanKm = len * 111;
-  const at = (f: number, offKm: number): LngLat => {
-    const bx = sx + (ex - sx) * f;
-    const by = sy + (ey - sy) * f;
-    return [bx + (perp[0] * offKm) / (111 * cosLat), by + (perp[1] * offKm) / 111];
-  };
-  const off = (f: number) => Math.min(30, Math.max(3, spanKm * f));
-
-  // Single bends either side at three depths, plus S-curves through two points.
-  const shapes: LngLat[][] = [];
-  for (const f of [0.16, 0.28, 0.42]) for (const s of [1, -1]) shapes.push([at(0.5, s * off(f))]);
-  for (const s of [1, -1]) shapes.push([at(0.33, s * off(0.24)), at(0.67, -s * off(0.24))]);
-
-  const cands: { vias: LngLat[]; route: any; a: RouteAnalysis; score: number }[] = [];
-  for (let i = 0; i < shapes.length; i += 4) {
-    const batch = shapes.slice(i, i + 4);
-    const res = await Promise.allSettled(batch.map((vias) => routeFor([coords[0], ...vias, ...coords.slice(1)], prefs)));
-    res.forEach((r, k) => {
-      if (r.status !== "fulfilled" || !r.value?.geometry) return;
-      // Worth it only up to ~60% longer than the direct ride.
-      if (r.value.duration > direct.duration * 1.6) return;
-      const a = analyseRoute(r.value);
-      cands.push({ vias: batch[k], route: r.value, a, score: scoreRoute(a, "curvy", 0) });
-    });
-  }
-  cands.sort((x, y) => y.score - x.score);
-  const best = cands[0];
-  const worth = best && best.a.twist >= d.twist * 1.25 && best.a.twist - d.twist >= 8 && best.a.retrace < 0.08;
-  return { direct: { route: direct, a: d }, twisty: worth ? best : null };
+function etaRange(route: { duration: number; distance: number }, other: { duration: number; distance: number } | null): [number, number] | null {
+  if (!other || !(other.duration > 0) || !(route.duration > 0)) return null;
+  if (Math.abs(other.distance - route.distance) > route.distance * 0.15) return null;
+  return [Math.min(route.duration, other.duration), Math.max(route.duration, other.duration)];
 }
 
 serve(async (req) => {
@@ -686,7 +376,7 @@ serve(async (req) => {
       }
       let plan: Awaited<ReturnType<typeof buildTwisty>>;
       try {
-        plan = await buildTwisty(coords as LngLat[], readPrefs(body));
+        plan = await buildTwisty(coords as LngLat[], readPrefs(body), PLAN);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Twisty planning failed:", e instanceof Error ? e.message : e);
         plan = { direct: null, twisty: null };
@@ -739,7 +429,7 @@ serve(async (req) => {
       }
       let best: Awaited<ReturnType<typeof buildLoop>> = null;
       try {
-        best = await buildLoop(lat, lng, distanceKm, vibe, readPrefs(body));
+        best = await buildLoop(lat, lng, distanceKm, vibe, readPrefs(body), PLAN);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Loop planning failed:", e instanceof Error ? e.message : e);
       }
@@ -927,8 +617,11 @@ serve(async (req) => {
       }
 
       let route: any = null;
+      const prefs = { ...readPrefs(body), steps: body.steps === true };
+      // Asked at the same time as the route, for the ETA range (null without our own server).
+      const other = secondOpinion(coords as LngLat[], prefs);
       try {
-        route = await routeFor(coords as LngLat[], { ...readPrefs(body), steps: body.steps === true });
+        route = await routeFor(coords as LngLat[], prefs, PLAN.engine);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Routing unavailable:", e instanceof Error ? e.message : e);
         return new Response(JSON.stringify({ error: "Routing unavailable" }), {
@@ -965,12 +658,16 @@ serve(async (req) => {
         }))
         : undefined;
 
+      const range = etaRange(route, await other);
+
       return new Response(
         JSON.stringify({
           geometry: route.geometry,
           distance: route.distance,
           duration: route.duration,
           ...(legs ? { legs } : {}),
+          // [soonest, latest] seconds, only with our own server (see etaRange).
+          ...(range ? { durationRange: range } : {}),
         }),
         {
           headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
@@ -1105,6 +802,24 @@ serve(async (req) => {
       });
     }
 
+    // With our own geo server, search and reverse come from its Photon (no
+    // Nominatim: its public server allows one request a second in total, and a
+    // self-hosted one is far heavier to run). Without it, Nominatim as before.
+    if (hasOwnGeoServer && (body.kind === "search" || body.kind === "reverse")) {
+      const json = { ...cors, "Content-Type": "application/json" };
+      if (body.kind === "search") {
+        const q = body.q?.toString().trim();
+        const results = q ? await photonForSearch(body).catch(() => []) : [];
+        return new Response(JSON.stringify(results), { headers: { ...json, "Cache-Control": "public, max-age=30" }, status: 200 });
+      }
+      const { lat, lon } = body;
+      if (typeof lat !== "number" || typeof lon !== "number" || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        return new Response(JSON.stringify({ error: "Invalid lat/lon" }), { headers: json, status: 400 });
+      }
+      const place = await photonReverse(lat, lon).catch(() => ({}));
+      return new Response(JSON.stringify(place), { headers: json, status: 200 });
+    }
+
     let url: URL;
 
     if (body.kind === "search") {
@@ -1180,18 +895,7 @@ serve(async (req) => {
     if (!upstream.ok && body.kind === "reverse") {
       console.warn("[PLACE-SEARCH] Nominatim reverse", upstream.status, "- using Photon");
       try {
-        const r = await fetchWithTimeout(`https://photon.komoot.io/reverse?lat=${body.lat}&lon=${body.lon}`, {
-          headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "*/*" },
-        }, 6000);
-        const j = await r.json();
-        const pr = j?.features?.[0]?.properties ?? {};
-        const shaped = {
-          display_name: [pr.name, pr.street, pr.city, pr.state, pr.country].filter(Boolean).join(", "),
-          address: {
-            country_code: typeof pr.countrycode === "string" ? pr.countrycode.toLowerCase() : undefined,
-            country: pr.country, state: pr.state, city: pr.city, road: pr.street, postcode: pr.postcode,
-          },
-        };
+        const shaped = await photonReverse(body.lat, body.lon);
         return new Response(JSON.stringify(shaped), {
           headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "photon" }, status: 200,
         });

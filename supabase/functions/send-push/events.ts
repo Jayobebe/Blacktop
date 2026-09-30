@@ -10,6 +10,10 @@ import {
   type Challenge,
 } from './crew.ts'
 import { findAlert, weatherMessage, type HourlyForecast } from './weather.ts'
+import { fetchWithTimeout, upstreamHeaders, viaGeo } from '../_shared/upstream.ts'
+
+/** The forecast model our own geo server syncs (infra/geo/.env WEATHER_MODEL). */
+const OWN_WEATHER_MODEL = 'ecmwf_ifs025'
 
 /**
  * Every notification Blacktop sends, written here (never taken from a client).
@@ -432,19 +436,32 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
   const nowSec = Math.floor(now.getTime() / 1000)
   for (let i = 0; i < due.length; i += 50) {
     const batch = due.slice(i, i + 50)
-    const url = new URL('https://api.open-meteo.com/v1/forecast')
-    url.searchParams.set('latitude', batch.map((a) => a.lat.toFixed(1)).join(','))
-    url.searchParams.set('longitude', batch.map((a) => a.lng.toFixed(1)).join(','))
-    url.searchParams.set('hourly', 'precipitation,weather_code,wind_gusts_10m')
-    url.searchParams.set('forecast_hours', '4')
-    url.searchParams.set('timeformat', 'unixtime')
-    url.searchParams.set('timezone', 'GMT')
-    const res = await fetch(url.toString())
-    if (!res.ok) {
-      console.warn('[send-push] weather fetch', res.status)
+    // Our own geo server's Open-Meteo first (when set up; the public API is
+    // free for non-commercial use only, ~10,000 calls a day), then the public one.
+    let json: unknown
+    try {
+      json = await viaGeo('weather', ['https://api.open-meteo.com'], async (base, own) => {
+        const url = new URL(`${base}/v1/forecast`)
+        url.searchParams.set('latitude', batch.map((a) => a.lat.toFixed(1)).join(','))
+        url.searchParams.set('longitude', batch.map((a) => a.lng.toFixed(1)).join(','))
+        url.searchParams.set('hourly', 'precipitation,weather_code,wind_gusts_10m')
+        url.searchParams.set('forecast_hours', '4')
+        url.searchParams.set('timeformat', 'unixtime')
+        url.searchParams.set('timezone', 'GMT')
+        // Ours only holds the model it syncs (infra/geo), so name it.
+        if (own) url.searchParams.set('models', OWN_WEATHER_MODEL)
+        const res = await fetchWithTimeout(url.toString(), { headers: upstreamHeaders(own) }, 15000)
+        if (!res.ok) throw new Error(`weather ${res.status}`)
+        const body = await res.json()
+        const first = Array.isArray(body) ? body[0] : body
+        // An empty forecast from ours means its data isn't synced yet: try the public one.
+        if (own && !first?.hourly?.time?.length) throw new Error('weather: no data yet')
+        return body
+      })
+    } catch (e) {
+      console.warn('[send-push] weather fetch', e instanceof Error ? e.message : e)
       continue
     }
-    const json = await res.json()
     const series = Array.isArray(json) ? json : [json]
     for (let j = 0; j < batch.length; j++) {
       const hourly = series[j]?.hourly as HourlyForecast | undefined

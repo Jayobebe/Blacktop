@@ -17,11 +17,17 @@ interface ConvoyStatusBarProps {
   destination: { lat: number; lng: number } | null;
   /** This rider's routed time to the destination, in seconds. */
   routeSeconds: number | null;
+  /** ETA window from both routing engines (own geo server): soonest / latest as a share of routeSeconds. */
+  etaSpread?: readonly [number, number] | null;
   speedUnit: SpeedUnit;
 }
 
-function formatClock(secondsFromNow: number): string {
-  return new Date(Date.now() + secondsFromNow * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+function formatClock(secondsFromNow: number, spread: readonly [number, number] | null = null): string {
+  const clock = (s: number) => new Date(Date.now() + s * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (!spread) return clock(secondsFromNow);
+  const a = clock(secondsFromNow * spread[0]);
+  const b = clock(secondsFromNow * spread[1]);
+  return a === b ? a : `${a}–${b}`;
 }
 
 /**
@@ -38,6 +44,7 @@ export function ConvoyStatusBar({
   destination,
   routeSeconds,
   speedUnit,
+  etaSpread = null,
 }: ConvoyStatusBarProps) {
   const status = useMemo(
     () => computeConvoyStatus(members, { myUserId, myLocation, destination, routeSeconds }),
@@ -75,7 +82,7 @@ export function ConvoyStatusBar({
           <span className="flex items-center gap-1.5 font-mono tabular-nums">
             <Flag className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground font-sans">{tr("ETA")}</span>
-            {formatClock(status.groupEtaSeconds)}
+            {formatClock(status.groupEtaSeconds, etaSpread)}
           </span>
         )}
         {behindCount > 0 && (

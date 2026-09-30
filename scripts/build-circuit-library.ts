@@ -28,7 +28,12 @@ import type { LatLng } from '../src/features/track/types';
 const OUT = join(process.cwd(), 'public', 'circuits');
 /** Raw Overpass answers, so a re-run after a failure (Overpass is often busy) resumes where it stopped. */
 const CACHE = join(process.cwd(), 'node_modules', '.cache', 'circuit-library');
+// Our own geo server's Overpass first when GEO_SERVER_URL / GEO_SERVER_TOKEN
+// are set (infra/geo), then the public mirrors.
+const GEO_URL = (process.env.GEO_SERVER_URL ?? '').replace(/\/+$/, '');
+const GEO_TOKEN = process.env.GEO_SERVER_TOKEN ?? '';
 const ENDPOINTS = [
+  ...(GEO_URL ? [`${GEO_URL}/overpass/api/interpreter`] : []),
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass-api.de/api/interpreter',
@@ -45,7 +50,12 @@ async function overpass(query: string): Promise<any> {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': 'Blacktop-TrackPack/1.0 (circuit library build)' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+          'User-Agent': 'Blacktop-TrackPack/1.0 (circuit library build)',
+          ...(GEO_URL && url.startsWith(GEO_URL) && GEO_TOKEN ? { Authorization: `Bearer ${GEO_TOKEN}` } : {}),
+        },
         body: `data=${encodeURIComponent(query)}`,
         signal: AbortSignal.timeout(120_000),
       });

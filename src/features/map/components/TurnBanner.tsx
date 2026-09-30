@@ -16,11 +16,20 @@ import {
 import { cn } from '@/lib/utils';
 import { shortDistance, type DistanceUnit, type NavManeuver, type NavProgress } from '../lib/navigation';
 import { tr } from '@/lib/i18n';
+import { etaClock, spreadDuration, type EtaSpread } from '../lib/eta';
 
-function timeLeft(seconds: number): string {
-  const mins = Math.max(1, Math.round(seconds / 60));
-  if (mins < 60) return `${mins} min`;
-  return `${Math.floor(mins / 60)} h ${mins % 60} min`;
+function timeLeft(seconds: number, spread: EtaSpread): string {
+  const mins = (s: number) => Math.max(1, Math.round(s / 60));
+  // "25–31 min" rather than "25 min–31 min" when both ends are under an hour.
+  if (spread && mins(seconds * spread[1]) < 60) {
+    const a = mins(seconds * spread[0]);
+    const b = mins(seconds * spread[1]);
+    return a === b ? `${a} min` : `${a}–${b} min`;
+  }
+  return spreadDuration(seconds, spread, (s) => {
+    const m = mins(s);
+    return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+  });
 }
 
 function ManeuverIcon({ m, className }: { m: NavManeuver; className?: string }) {
@@ -63,6 +72,8 @@ interface Props {
   onStop: () => void;
   /** Convoy leader: skip the stop being navigated to. */
   onSkip?: () => void;
+  /** ETA window from both routing engines (own geo server), or null for one time. */
+  spread?: EtaSpread;
 }
 
 /**
@@ -71,14 +82,12 @@ interface Props {
  * in for the destination card: the next manoeuvre and how far to it, what
  * follows straight after, where you're headed and time/distance left.
  */
-export function TurnBanner({ progress, describe, unit, arrived, rerouting: reroutingNow, finding = false, destinationName, onStop, onSkip }: Props) {
+export function TurnBanner({ progress, describe, unit, arrived, rerouting: reroutingNow, finding = false, destinationName, onStop, onSkip, spread = null }: Props) {
   // Both show the spinner; only the label differs.
   const rerouting = reroutingNow || finding;
   const next = progress?.next ?? null;
 
-  const eta = progress
-    ? new Date(Date.now() + progress.remainingSeconds * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    : null;
+  const eta = progress ? etaClock(progress.remainingSeconds, spread) : null;
   const left = progress ? shortDistance(progress.remainingMeters, unit) : null;
   const toNext = next ? shortDistance(progress!.distanceToNext, unit) : null;
   const where = destinationName || 'Destination';
@@ -140,7 +149,7 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
           <span className="flex-1 min-w-0 truncate font-semibold">{where}</span>
           {left && progress && !rerouting && (
             <span className="font-mono tabular-nums text-muted-foreground whitespace-nowrap">
-              <span className="text-foreground font-semibold">{timeLeft(progress.remainingSeconds)}</span>
+              <span className="text-foreground font-semibold">{timeLeft(progress.remainingSeconds, spread)}</span>
               {' '}· {left.value} {left.unit} · {eta}
             </span>
           )}

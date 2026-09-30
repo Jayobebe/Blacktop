@@ -1,0 +1,102 @@
+# Blacktop's own geo server: everything the app would otherwise ask shared
+# public servers for, behind Caddy (HTTPS and a shared token). Only Blacktop's
+# Edge Functions talk to it. See README.md.
+#
+#   /valhalla  routing, and road data for twisty / loop scoring   (Valhalla)
+#   /osrm      a second routing engine: twisty / loop candidates, ETA ranges (OSRM)
+#   /photon    place search and reverse lookup                    (Photon)
+#   /overpass  speed cameras, places, scenic spots, Track Day roads (Overpass)
+#   /weather   forecasts for weather alerts                       (Open-Meteo)
+services:
+  valhalla:
+    image: ${VALHALLA_IMAGE:-ghcr.io/valhalla/valhalla-scripted:latest}
+    # Serves the tiles build-valhalla.sh made; never builds here (no PBF in the folder).
+    environment:
+      serve_tiles: "True"
+      use_tiles_ignore_pbf: "True"
+      force_rebuild: "False"
+      update_existing_config: "False"
+      server_threads: ${VALHALLA_THREADS:-8}
+    volumes:
+      - ./data/valhalla:/custom_files
+    expose:
+      - "8002"
+    restart: unless-stopped
+
+  osrm:
+    image: ${OSRM_IMAGE:-ghcr.io/project-osrm/osrm-backend:latest}
+    command: osrm-routed --algorithm mld /data/region.osrm
+    volumes:
+      - ./data/osrm:/data:ro
+    expose:
+      - "5000"
+    restart: unless-stopped
+
+  photon:
+    build: ./photon
+    environment:
+      JAVA_OPTS: ${PHOTON_JAVA_OPTS:--Xmx12g}
+    volumes:
+      - ./data/photon:/photon
+    expose:
+      - "2322"
+    restart: unless-stopped
+
+  overpass:
+    image: ${OVERPASS_IMAGE:-wiktorn/overpass-api:latest}
+    # First start downloads the database (see README), then applies OpenStreetMap
+    # changes every minute. No areas: Blacktop's queries don't use them.
+    environment:
+      OVERPASS_MODE: ${OVERPASS_MODE:-clone}
+      OVERPASS_META: ${OVERPASS_META:-no}
+      OVERPASS_PLANET_URL: ${OVERPASS_PLANET_URL:-}
+      OVERPASS_DIFF_URL: ${OVERPASS_DIFF_URL:-https://planet.openstreetmap.org/replication/minute/}
+      OVERPASS_USE_AREAS: "false"
+      OVERPASS_RULES_LOAD: "0"
+      OVERPASS_STOP_AFTER_INIT: "false"
+      OVERPASS_MAX_TIMEOUT: "60s"
+    volumes:
+      - ./data/overpass:/db
+    expose:
+      - "80"
+    restart: unless-stopped
+
+  weather:
+    image: ${OPENMETEO_IMAGE:-ghcr.io/open-meteo/open-meteo:latest}
+    volumes:
+      - ./data/open-meteo:/app/data
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  weather-sync:
+    image: ${OPENMETEO_IMAGE:-ghcr.io/open-meteo/open-meteo:latest}
+    # Keeps the forecast model fresh (checks for new runs every 10 minutes).
+    command: sync ${WEATHER_MODEL:-ecmwf_ifs025} ${WEATHER_VARIABLES:-precipitation,rain,showers,snowfall,cloud_cover,wind_gusts_10m,weather_code} --past-days 1 --repeat-interval 10
+    volumes:
+      - ./data/open-meteo:/app/data
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      GEO_DOMAIN: ${GEO_DOMAIN}
+      GEO_TOKEN: ${GEO_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - valhalla
+      - osrm
+      - photon
+      - overpass
+      - weather
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

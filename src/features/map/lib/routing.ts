@@ -67,6 +67,8 @@ export interface RouteResult {
   durationSeconds: number;
   /** One leg per stop-to-stop hop, present when turn-by-turn was asked for. */
   legs?: RouteLeg[];
+  /** [soonest, latest] seconds from both routing engines, with Blacktop's own geo server only (see lib/eta.ts). */
+  durationRangeSeconds?: [number, number];
 }
 
 const METERS_PER_MILE = 1609.34;
@@ -112,6 +114,9 @@ export async function fetchRouteThroughStops(
       durationSeconds: data.duration,
       // Older deployments of the function don't send legs; the route still draws.
       ...(Array.isArray(data.legs) ? { legs: data.legs as RouteLeg[] } : {}),
+      ...(Array.isArray(data.durationRange) && data.durationRange.length === 2 && data.durationRange.every((n: unknown) => typeof n === 'number')
+        ? { durationRangeSeconds: [data.durationRange[0], data.durationRange[1]] as [number, number] }
+        : {}),
     };
   } catch (err) {
     // No signal, a timeout or the router down: the map follows GPS until it's back.
