@@ -1,5 +1,6 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/features/settings';
 import { createBackdropRenderer, ROW_HEIGHT } from '@/lib/backdropGL';
 import {
   registerBackdropBelts,
@@ -129,7 +130,14 @@ function FallbackRows() {
   );
 }
 
-export const AppBackdrop = memo(function AppBackdrop({ paused = false, front = false, flat = false }: { paused?: boolean; front?: boolean; flat?: boolean }) {
+export const AppBackdrop = memo(function AppBackdrop(props: { paused?: boolean; front?: boolean; flat?: boolean }) {
+  const { settings } = useSettings();
+  // Thermal / High-Speed Mode: no WebGL, no blobs, no mist; plain black.
+  if (settings.thermalMode) return <div aria-hidden className={cn('pointer-events-none fixed inset-0 bg-black', props.front ? 'z-[999]' : '-z-10')} />;
+  return <LiveBackdrop {...props} />;
+});
+
+function LiveBackdrop({ paused = false, front = false, flat = false }: { paused?: boolean; front?: boolean; flat?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const probeRef = useRef<HTMLDivElement>(null);
   const gpu = useGpuWordmark(canvasRef, probeRef);
@@ -157,4 +165,4 @@ export const AppBackdrop = memo(function AppBackdrop({ paused = false, front = f
       <div className="backdrop-mist" />
     </div>
   );
-});
+}

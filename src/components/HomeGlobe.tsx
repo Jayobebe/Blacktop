@@ -3,6 +3,7 @@ import { geoOrthographic, geoPath, type GeoPermissibleObjects } from 'd3-geo';
 import { feature } from 'topojson-client';
 import landTopo from 'world-atlas/land-110m.json';
 import { cn } from '@/lib/utils';
+import { isThermal } from '@/lib/thermal';
 
 // Pre-extract the world land outline once at module load. Stroking these
 // polygons (no fill) draws thin coastlines; the 110m resolution keeps the
@@ -141,7 +142,8 @@ export function HomeGlobe({ accentColor, className }: HomeGlobeProps) {
         ctx.stroke();
       }
 
-      raf = requestAnimationFrame(draw);
+      // Thermal / High-Speed Mode: this one frame, then no more.
+      raf = isThermal() ? 0 : requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
 

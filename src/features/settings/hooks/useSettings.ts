@@ -69,6 +69,8 @@ export interface AppSettings {
    * speed. Track Day sessions always record everything.
    */
   logPeakTelemetry: boolean;
+  /** Thermal / High-Speed Mode: no animation, no WebGL backdrop, black-and-white outlines (lib/thermal). */
+  thermalMode: boolean;
   /**
    * Who a rescue call reaches (the rescue button, and auto-rescue after a crash):
    * the convoy you're riding with, your crew, your Discord, and opted-in riders
@@ -149,6 +151,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   uiSoundsEnabled: true,
   autoRescueAcknowledgedAt: null,
   logPeakTelemetry: true,
+  thermalMode: false,
   rescueToConvoy: true,
   rescueToCrew: true,
   rescueToDiscord: true,
@@ -196,7 +199,11 @@ export function useSettings() {
 
   // Apply accent color to CSS variables
   useEffect(() => {
-    const color = ACCENT_COLORS.find(c => c.id === settings.accentColor) || ACCENT_COLORS[0];
+    // Thermal / High-Speed Mode: the `thermal` class (index.css) and white for every accent.
+    const thermal = settings.thermalMode === true;
+    document.documentElement.classList.toggle('thermal', thermal);
+    const base = ACCENT_COLORS.find(c => c.id === settings.accentColor) || ACCENT_COLORS[0];
+    const color = thermal ? { ...base, hsl: '0 0% 100%', ring: '0 0% 100%' } : base;
     document.documentElement.style.setProperty('--accent', color.hsl);
     document.documentElement.style.setProperty('--ring', color.ring);
     const second = ACCENT_COLORS.find(c => c.id === settings.secondaryAccentColor);
@@ -209,7 +216,7 @@ export function useSettings() {
 
     document.documentElement.style.setProperty('--speed-active', color.hsl);
     document.documentElement.style.setProperty('--ptt-active', color.hsl);
-  }, [settings.accentColor, settings.secondaryAccentColor]);
+  }, [settings.accentColor, settings.secondaryAccentColor, settings.thermalMode]);
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => ({

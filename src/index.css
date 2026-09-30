@@ -1284,3 +1284,61 @@
   transform: none;
   filter: brightness(1.35);
 }
+
+
+/* ───────────────── Thermal / High-Speed Mode (lib/thermal.ts) ─────────────────
+   Survival over looks: no motion, no blur, no gradients or shadows, and the UI
+   drawn as white outlines on pure black. */
+html.thermal {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 0%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 0%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 0%;
+  --muted-foreground: 0 0% 82%;
+  --accent: 0 0% 100%;
+  --accent-foreground: 0 0% 0%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 0 0% 100%;
+  color-scheme: dark;
+}
+html.thermal *,
+html.thermal *::before,
+html.thermal *::after {
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  scroll-behavior: auto !important;
+}
+html.thermal body,
+html.thermal [class*="bg-card"]:not(.no-frost),
+html.thermal .frost,
+html.thermal .frost-accent,
+html.thermal [class*="bg-gradient"],
+html.thermal [class*="bg-secondary"],
+html.thermal [class*="bg-muted"] {
+  background: #000 !important;
+  background-image: none !important;
+}
+/* Surfaces as outlines. */
+html.thermal [class*="bg-card"]:not(.no-frost),
+html.thermal .frost,
+html.thermal .frost-accent,
+html.thermal [class*="rounded-2xl"][class*="border"],
+html.thermal button,
+html.thermal [role="button"] {
+  border: 1px solid #fff !important;
+}
+html.thermal .pressable:active:not(:disabled) {
+  transform: none;
+}

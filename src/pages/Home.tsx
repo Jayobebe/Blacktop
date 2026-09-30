@@ -117,11 +117,11 @@ export default function Home() {
   const primaryTiles = [...(exp.showGroup ? [convoyTile] : []), ...(exp.showSolo ? [soloTile] : [])];
   const singleTop = primaryTiles.length === 1;
   // Track Pack: racer shows the pairing QR, pit crew scans it. Remembered per device.
-  const showTrack = settings.trackPackEnabled;
-  // Pared-back Home (solo only, no Track Pack: just Start, Plan a Route and the
-  // globe): no lobby in the way. Start begins tracking straight away, Plan a
-  // Route opens the lobby (destination, route options), the globe the map.
-  const quickStart = !exp.showGroup && !showTrack;
+  // Pared-back Home (solo only, no Track Pack: Start, Plan a Route, Track Day
+  // and the globe): no lobby in the way. Start begins tracking straight away,
+  // Plan a Route opens the lobby (destination, route options), the globe the map.
+  const quickStart = !exp.showGroup && !settings.trackPackEnabled;
+  const showTrack = settings.trackPackEnabled || quickStart;
   const startRideNow = () => {
     if (rideState.isActive) {
       navigate('/ride');

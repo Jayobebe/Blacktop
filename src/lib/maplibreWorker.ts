@@ -1,5 +1,6 @@
 import { setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import { thermalSetting } from '@/lib/thermal';
 
 /**
  * MapLibre 6 finds its worker next to its own module file, which doesn't exist
@@ -12,6 +13,7 @@ setWorkerUrl(workerUrl);
 /**
  * Pass as every map's `pixelRatio`: at most 2x. Phones are 3x, which renders
  * 2.25x the pixels of 2x for detail nobody sees on a moving map; this is the
- * map's single biggest GPU cost.
+ * map's single biggest GPU cost. Thermal / High-Speed Mode: 1x (from the next
+ * app start, since maps are made once).
  */
-export const MAP_PIXEL_RATIO = Math.min(2, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+export const MAP_PIXEL_RATIO = thermalSetting() ? 1 : Math.min(2, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);

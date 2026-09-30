@@ -20,7 +20,7 @@ import { BTLogo } from '@/components/BTLogo';
 import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock
 } from 'lucide-react';
 import { clearAlarmPattern, hasAlarmPattern, requestPattern } from '@/features/alarm';
-import { RescueDisclaimer, requestAutoRescueConsent } from '@/features/rescue';
+import { requestAutoRescueConsent } from '@/features/rescue';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -456,6 +456,13 @@ export default function Settings() {
                 </div>
                 <Switch checked={settings.uiSoundsEnabled !== false} onCheckedChange={(v) => updateSetting('uiSoundsEnabled', v)} />
               </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{tr("Thermal / High-Speed Mode")}</p>
+                  <p className="text-[10px] text-muted-foreground">{tr("For heat, long rides and low battery: no animation, no moving backdrop, a plain black-and-white look. Maps go lighter from the next start.")}</p>
+                </div>
+                <Switch checked={settings.thermalMode === true} onCheckedChange={(v) => updateSetting('thermalMode', v)} />
+              </div>
               <Button variant="outline" className="w-full rounded-2xl" onClick={() => navigate('/setup')}>
                 <Repeat className="w-4 h-4" />
                 {tr("Redo full setup")}
@@ -580,8 +587,6 @@ export default function Settings() {
                   }}
                 />
               </div>
-
-              <RescueDisclaimer className="mb-3" />
 
               {settings.autoRescueEnabled && (
                 <div className="pt-3 border-t border-border/30 space-y-4">

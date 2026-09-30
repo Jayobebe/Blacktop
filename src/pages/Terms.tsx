@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
+import { rescueDisclaimer } from '@/features/rescue';
 
 export default function Terms() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function Terms() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          {tr("Last updated: September 28, 2026")}
+          {tr("Last updated: September 30, 2026")}
         </p>
 
         <section className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-2">
@@ -73,6 +74,27 @@ export default function Terms() {
           <h2 className="text-base font-semibold">{tr("Rescue & crash detection")}</h2>
           <p className="text-muted-foreground">
             {tr("The rescue ping and auto-rescue features are best-effort notifications to whoever you choose in Settings → Safety: your convoy, your crew, a Discord channel, and riders nearby who have opted in to help. They are")}{" "}<span className="text-foreground font-medium">{tr("not")}</span>{" "}{tr("emergency services, delivery isn't guaranteed, and riders who receive a call are volunteers with no obligation to respond. In a real emergency, call your local emergency number.")}
+          </p>
+          <p className="text-foreground font-medium">{rescueDisclaimer()}</p>
+          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
+            <li>{tr("Crash detection is off until you turn it on, and turning it on asks you to confirm that you understand this notice.")}</li>
+            <li>{tr("Your phone can miss a real crash (for example if it's thrown clear, switched off or has no signal) and can mistake a dropped phone or a hard jolt for one.")}</li>
+            <li>{tr("When crash detection sends a call by itself, your phone sounds a loud siren through its speaker so people nearby notice. The Stop siren button silences it.")}</li>
+            <li>{tr("Agree with the people you ride with how they should respond to a call, and don't rely on Blacktop to get you help.")}</li>
+          </ul>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">{tr("Anti-theft alarm")}</h2>
+          <p className="text-muted-foreground">
+            {tr("The anti-theft alarm is a deterrent, not a security system. It relies on your phone's motion sensors, battery and the app staying open; it can miss movement or go off by mistake, it doesn't contact anyone, and closing the app switches it off. Don't sound the siren where that would be unlawful or unsafe. We're not liable for the theft of, or damage to, anything it was guarding.")}
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">{tr("Public Road Privacy")}</h2>
+          <p className="text-muted-foreground">
+            {tr("Public Road Privacy hides your peak figures on screen and keeps them out of anything you share. It is a display setting: the figures are still recorded on your phone, and anyone who knows your unlock pattern can show them again. It doesn't change what you're responsible for on the road.")}
           </p>
         </section>
 

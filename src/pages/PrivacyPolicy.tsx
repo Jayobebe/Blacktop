@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          {tr("Last updated: September 28, 2026 · Maintained by the Blacktop team.")}
+          {tr("Last updated: September 30, 2026 · Maintained by the Blacktop team.")}
         </p>
 
         <section className="space-y-2">
@@ -37,6 +37,8 @@ export default function PrivacyPolicy() {
             <li>{tr("Your Track Day tracks, sessions and lap times")}</li>
             <li>{tr("Your saved places, recent destinations and where the map was last centred")}</li>
             <li>{tr("Offline map areas you download")}</li>
+            <li>{tr("Your unlock pattern for the anti-theft alarm and Public Road Privacy, kept only as a one-way hash (the pattern itself is never stored or sent)")}</li>
+            <li>{tr("When you accepted the crash detection notice")}</li>
           </ul>
           <p className="text-muted-foreground">
             {tr("Tap")}{" "}<span className="text-foreground font-medium">{tr("Burn All Data")}</span>{" "}{tr("in Settings at any time to permanently erase everything, on your device and on our servers (see Your rights).")}
@@ -159,6 +161,20 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
+          <h2 className="text-base font-semibold">{tr("Crash detection and the alarm")}</h2>
+          <p className="text-muted-foreground">
+            {tr("Crash detection and the anti-theft alarm read your phone's motion sensors on your phone only; sensor readings are never uploaded. A rescue call is only sent when crash detection decides you've crashed and you don't answer, or when you send one yourself, and it goes only to the people you chose in Settings → Safety. The alarm's siren and warnings are played by your phone and nothing about them leaves it.")}
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">{tr("Public Road Privacy")}</h2>
+          <p className="text-muted-foreground">
+            {tr("With Public Road Privacy on (Settings → Privacy), top speed, maximum lean and peak G read \"--\" across the app and are left out of what leaves your phone: shared cards, crew leaderboards and the stats overlay video. They are still recorded on your device, so turning the setting off with your unlock pattern shows them again. Track Day sessions keep their figures.")}
+          </p>
+        </section>
+
+        <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Stats overlay video")}</h2>
           <p className="text-muted-foreground">
             {tr("During each ride, the app draws your live stats (speed, distance, lean angle) onto a transparent video file generated locally on your device. It does not use your camera, microphone, or any cloud service — it's a file you can later layer over your own action-cam footage in a video editor. It lives in local storage and is erased by the Burn Button along with everything else.")}
@@ -170,7 +186,7 @@ export default function PrivacyPolicy() {
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li><span className="text-foreground">{tr("Location")}</span>{" "}{tr("— required, used only during active rides for tracking and convoy sync")}</li>
             <li><span className="text-foreground">{tr("Microphone")}</span>{" "}{tr("— optional, used only for live voice chat in convoys")}</li>
-            <li><span className="text-foreground">{tr("Motion sensors")}</span>{" "}{tr("— optional, for lean angle visualization and crash detection")}</li>
+            <li><span className="text-foreground">{tr("Motion sensors")}</span>{" "}{tr("— optional, for lean angle, G-force, crash detection and the anti-theft alarm")}</li>
             <li><span className="text-foreground">{tr("Photos / Files")}</span>{" "}{tr("— optional, only when you choose to attach a photo to a ride in your history. Photos stay on your device.")}</li>
             <li><span className="text-foreground">{tr("Camera")}</span>{" "}{tr("— optional, used only to scan QR codes for sharing and joining convoys. Images are processed locally on-device and never stored or uploaded.")}</li>
           </ul>

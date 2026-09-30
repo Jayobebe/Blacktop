@@ -4,6 +4,7 @@ import { Volume2, VolumeX, type LucideIcon } from 'lucide-react';
 import bikeAsset from '@/assets/demo-bike.png.asset.json';
 import { tr } from '@/lib/i18n';
 import { sceneCue, type SceneCueKind } from '@/lib/radioFx';
+import { isThermal } from '@/lib/thermal';
 
 /**
  * The scene kit behind Blacktop's animated showcases (the Enterprise package
@@ -40,6 +41,7 @@ export function useSceneTime(from = 0): number {
   const [t, setT] = useState(from);
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    if (isThermal()) return; // Thermal / High-Speed Mode: a still frame
     let raf = 0;
     let last = 0;
     const start = performance.now() - from * 1000;
