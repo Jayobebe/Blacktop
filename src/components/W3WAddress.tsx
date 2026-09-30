@@ -15,12 +15,15 @@ export function W3WAddress({
   lng,
   className,
   showNearest = false,
+  hint,
 }: {
   lat: number | null | undefined;
   lng: number | null | undefined;
   className?: string;
   /** Add the nearest place under the words ("near Bayswater, London"). */
   showNearest?: boolean;
+  /** A line under the address, shown only with it (so nothing mentions what3words while it's off). */
+  hint?: string;
 }) {
   const place = useWhat3Words(lat, lng);
   if (!place) return null;
@@ -44,6 +47,7 @@ export function W3WAddress({
         {place.words}
       </span>
       {showNearest && place.nearest && <span className="text-[0.75em] font-normal opacity-75">{tr("near {0}", [place.nearest])}</span>}
+      {hint && <span className="mt-1 text-xs font-normal text-muted-foreground max-w-xs">{hint}</span>}
     </button>
   );
 }

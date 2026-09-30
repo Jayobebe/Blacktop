@@ -9,7 +9,7 @@
 // shows no what3words anywhere.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { positionOf, suggest, w3wEnabled, wordsAt } from "../_shared/w3w.ts";
+import { positionOf, suggest, w3wEnabled, w3wReady, wordsAt } from "../_shared/w3w.ts";
 
 const ALLOWED_ORIGINS = new Set([
   "https://blacktoplive.com",
@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
     return reply({ error: "Unauthorized" }, 401);
   }
 
-  if (!w3wEnabled) return reply({ enabled: false });
+  // Off until a real lookup works (no key, or a plan that can't name squares).
+  if (!w3wEnabled || !(await w3wReady())) return reply({ enabled: false });
 
   let body: Record<string, unknown>;
   try {

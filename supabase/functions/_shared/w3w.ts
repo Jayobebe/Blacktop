@@ -19,6 +19,22 @@ const BASE = "https://api.what3words.com/v3";
 
 export const w3wEnabled = KEY !== "";
 
+// Live only when the key can actually name a square: a key on the free plan
+// (AutoSuggest only) would offer search suggestions that can't be opened, so
+// until a real lookup works, what3words stays off everywhere. Checked once and
+// re-checked every 10 minutes.
+let readyUntil = 0;
+let readyValue = false;
+export async function w3wReady(): Promise<boolean> {
+  if (!KEY) return false;
+  if (Date.now() < readyUntil) return readyValue;
+  const j = await call("convert-to-3wa", { coordinates: "51.520847,-0.195521", language: "en" }).catch(() => null);
+  readyValue = typeof j?.words === "string";
+  readyUntil = Date.now() + 10 * 60_000;
+  if (!readyValue) console.warn("[w3w] key set but can't convert positions (plan?): what3words stays off");
+  return readyValue;
+}
+
 /** Languages what3words names squares in that Blacktop is also translated into. */
 const LANGUAGES = new Set(["en", "da", "de", "es", "fr", "hi", "id", "it", "ja", "ko", "nl", "pl", "pt", "sv", "tr", "uk", "zh", "nb"]);
 /** what3words uses "no" for Norwegian. */

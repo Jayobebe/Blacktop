@@ -97,10 +97,13 @@ function RescueSirenScreen() {
       <p className="relative text-base max-w-xs leading-snug">{tr("Someone here may need help. The siren is sounding so people nearby notice.")}</p>
       {/* This spot's what3words, for whoever calls the emergency services (when Blacktop has what3words). */}
       {at && (
-        <div className="relative flex flex-col items-center gap-1">
-          <W3WAddress lat={at.lat} lng={at.lng} showNearest className="text-2xl" />
-          <p className="text-xs text-muted-foreground max-w-xs">{tr("Give these three words to the emergency services: they pinpoint this spot.")}</p>
-        </div>
+        <W3WAddress
+          lat={at.lat}
+          lng={at.lng}
+          showNearest
+          className="relative text-2xl"
+          hint={tr("Give these three words to the emergency services: they pinpoint this spot.")}
+        />
       )}
       <Button size="xl" variant="destructive" className="relative mt-4 w-full max-w-xs" onClick={() => disarmAlarm()}>
         {tr("Stop siren")}
