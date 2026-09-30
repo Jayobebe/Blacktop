@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "{0} ब्लॉक किए राइडर",
  "{0} burned now. Your totals and stats are kept.": "{0} अभी जलाई गईं। आपके कुल आँकड़े बने रहते हैं।",
  "{0} camera{1} on this route": "इस रूट पर {0} कैमरे",
- "{0} card{1} collected": "{0} कार्ड उठाए",
  "{0} complete": "{0} पूरा हुआ",
  "{0} cover": "{0} कवर",
  "{0} days ago": "{0} दिन पहले",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "ऐप की आवाज़ें",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "क्लिक, टॉगल, स्लाइडर और पुष्टि। ख़तरे, कैमरे, दुर्घटना जाँच, अलार्म और दिशा-निर्देश जैसे अलर्ट हमेशा बजते हैं।",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "1 कार्ड इकट्ठा हुआ",
+ "{0} cards collected": "{0} कार्ड इकट्ठा हुए"
 }

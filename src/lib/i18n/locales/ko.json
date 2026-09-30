@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "차단한 라이더 {0}명",
  "{0} burned now. Your totals and stats are kept.": "{0} 소각 완료. 합계와 스탯은 유지됩니다.",
  "{0} camera{1} on this route": "이 경로에 카메라 {0}대",
- "{0} card{1} collected": "카드 {0}장 회수",
  "{0} complete": "{0} 완료",
  "{0} cover": "{0} 커버",
  "{0} days ago": "{0}일 전",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "앱 소리",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "클릭, 토글, 슬라이더, 확인음. 위험 요소, 카메라, 사고 확인, 경보, 길 안내 같은 알림은 항상 울립니다.",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "카드 1장 획득",
+ "{0} cards collected": "카드 {0}장 획득"
 }

@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "{0} blockerade förare",
  "{0} burned now. Your totals and stats are kept.": "{0} brända nu. Dina totaler och din statistik finns kvar.",
  "{0} camera{1} on this route": "{0} kamera/or på den här rutten",
- "{0} card{1} collected": "{0} kort insamlade",
  "{0} complete": "{0} klar",
  "{0} cover": "{0}-omslag",
  "{0} days ago": "{0} dagar sedan",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Appljud",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klick, reglage, skjutreglage och bekräftelser. Varningar som faror, kameror, krasch-koll, larmet och vägledning hörs alltid.",
- "“{0}”": "”{0}”"
+ "“{0}”": "”{0}”",
+ "1 card collected": "1 kort insamlat",
+ "{0} cards collected": "{0} kort insamlade"
 }

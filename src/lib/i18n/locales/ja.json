@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "ブロック中のライダー{0}人",
  "{0} burned now. Your totals and stats are kept.": "{0} を焼却しました。合計とスタッツは残ります。",
  "{0} camera{1} on this route": "このルートにカメラ {0} 台",
- "{0} card{1} collected": "{0} 枚のカードを回収",
  "{0} complete": "{0} 達成",
  "{0} cover": "{0} のカバー",
  "{0} days ago": "{0}日前",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "アプリのサウンド",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "タップ、スイッチ、スライダー、確認音。危険箇所、カメラ、転倒チェック、アラーム、ナビ案内などの警告は常に鳴ります。",
- "“{0}”": "「{0}」"
+ "“{0}”": "「{0}」",
+ "1 card collected": "カードを1枚獲得",
+ "{0} cards collected": "カードを{0}枚獲得"
 }

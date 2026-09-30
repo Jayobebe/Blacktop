@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "{0} engellenen sürücü",
  "{0} burned now. Your totals and stats are kept.": "{0} şimdi yakıldı. Toplamların ve istatistiklerin korunur.",
  "{0} camera{1} on this route": "Bu rotada {0} kamera",
- "{0} card{1} collected": "{0} kart toplandı",
  "{0} complete": "{0} tamamlandı",
  "{0} cover": "{0} kapağı",
  "{0} days ago": "{0} gün önce",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Uygulama sesleri",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Tıklamalar, anahtarlar, kaydırıcılar ve onaylar. Tehlike, kamera, kaza kontrolü, alarm ve yol tarifi gibi uyarılar her zaman çalar.",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "1 kart toplandı",
+ "{0} cards collected": "{0} kart toplandı"
 }

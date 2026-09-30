@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
+import { eventSound } from '@/lib/appSound';
 
 export const MAX_CONVOY_MEMBERS = 8;
 const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
@@ -67,8 +68,23 @@ function emitChange() {
 }
 
 function setConvoyState(updater: (prev: ConvoyState) => ConvoyState) {
+  const prev = convoyState;
   convoyState = updater(convoyState);
+  soundMemberChanges(prev, convoyState);
   emitChange();
+}
+
+/**
+ * Riders coming on and dropping off the convoy, like a radio net: key-up when
+ * someone joins, the roger-and-squelch close when someone leaves. Only changes
+ * within the same convoy (not its first load, not switching convoys).
+ */
+function soundMemberChanges(prev: ConvoyState, next: ConvoyState) {
+  if (!prev.id || prev.id !== next.id || prev.members.length === 0 || prev.members === next.members) return;
+  const before = new Set(prev.members.map((m) => m.userId));
+  const after = new Set(next.members.map((m) => m.userId));
+  if ([...after].some((id) => !before.has(id))) eventSound('radioIn');
+  else if ([...before].some((id) => !after.has(id))) eventSound('radioOut');
 }
 
 function clearActiveConvoySession() {

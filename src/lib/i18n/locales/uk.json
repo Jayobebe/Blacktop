@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "Заблоковано райдерів: {0}",
  "{0} burned now. Your totals and stats are kept.": "{0} спалено. Твої підсумки й статистика збережені.",
  "{0} camera{1} on this route": "Камер на маршруті: {0}",
- "{0} card{1} collected": "Зібрано карток: {0}",
  "{0} complete": "{0} виконано",
  "{0} cover": "Обкладинка {0}",
  "{0} days ago": "{0} дн. тому",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} проти {1}{2}",
  "App sounds": "Звуки застосунку",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Клацання, перемикачі, повзунки й підтвердження. Попередження про небезпеки, камери, перевірку після аварії, сигналізацію та підказки звучать завжди.",
- "“{0}”": "«{0}»"
+ "“{0}”": "«{0}»",
+ "1 card collected": "Зібрано 1 картку",
+ "{0} cards collected": "Зібрано карток: {0}"
 }

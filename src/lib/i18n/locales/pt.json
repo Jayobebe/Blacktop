@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "{0} pilotos bloqueados",
  "{0} burned now. Your totals and stats are kept.": "{0} queimados agora. Os teus totais e estatísticas mantêm-se.",
  "{0} camera{1} on this route": "{0} radar{1} nesta rota",
- "{0} card{1} collected": "{0} carta{1} recolhida{1}",
  "{0} complete": "{0} concluído",
  "{0} cover": "Capa de {0}",
  "{0} days ago": "há {0} dias",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Sons do app",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Cliques, chaves, controles deslizantes e confirmações. Alertas como perigos, radares, verificação de queda, o alarme e as instruções sempre tocam.",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "1 carta coletada",
+ "{0} cards collected": "{0} cartas coletadas"
 }

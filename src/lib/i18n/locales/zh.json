@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "已屏蔽 {0} 位骑手",
  "{0} burned now. Your totals and stats are kept.": "已焚毁 {0}。你的总计和数据会保留。",
  "{0} camera{1} on this route": "此路线上有 {0} 个摄像头",
- "{0} card{1} collected": "已收集 {0} 张卡片",
  "{0} complete": "{0} 已完成",
  "{0} cover": "{0} 封面",
  "{0} days ago": "{0} 天前",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "应用音效",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "点击、开关、滑块和确认音。危险、测速摄像头、事故确认、警报和导航等提醒始终会响。",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "已收集 1 张卡",
+ "{0} cards collected": "已收集 {0} 张卡"
 }

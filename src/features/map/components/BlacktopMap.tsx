@@ -1559,7 +1559,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     }
     setSelectedStack(null);
     if (got > 0) {
-      toast.success(tr("{0} card{1} collected", [got, got > 1 ? "s" : ""]), {
+      toast.success(got === 1 ? tr("1 card collected") : tr("{0} cards collected", [got]), {
         description: tr("Added to your vault."),
       });
     } else {

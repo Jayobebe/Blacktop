@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "{0} geblokkeerde rijders",
  "{0} burned now. Your totals and stats are kept.": "{0} nu verbrand. Je totalen en statistieken blijven.",
  "{0} camera{1} on this route": "{0} flitspaal/palen op deze route",
- "{0} card{1} collected": "{0} kaart{1} opgepakt",
  "{0} complete": "{0} voltooid",
  "{0} cover": "{0}-hoes",
  "{0} days ago": "{0} dagen geleden",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "App-geluiden",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klikken, schakelaars, schuifregelaars en bevestigingen. Waarschuwingen zoals gevaren, flitsers, crashchecks, het alarm en aanwijzingen klinken altijd.",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "1 kaart verzameld",
+ "{0} cards collected": "{0} kaarten verzameld"
 }

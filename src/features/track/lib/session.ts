@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { setPendingTrackReceipt } from '@/lib/trackReceipt';
 import { haptics } from '@/lib/haptics';
+import { sceneCue } from '@/lib/radioFx';
 import type { Lap, LatLng, PitMessage, TelemetrySample, TrackDef, TrackSession } from '../types';
 import { LapTimer, liveDelta, type Fix } from './timing';
 import { TrackLink, newLinkToken, type LinkMessage, type RacerPhase, type RacerSnapshot, type WalkShape } from './link';
@@ -405,20 +406,26 @@ function onRaceFix(fix: Fix, common: Partial<RacerState>) {
   const patch: Partial<RacerState> = { ...common };
 
   for (const e of events) {
+    // Timing sounds are alerts (like the pit calls): they sound whatever the App sounds switch says.
     if (e.type === 'lapStart') {
       patch.lapStartT = e.t;
       patch.splits = [];
       haptics.tick();
+      sceneCue('beep');
     } else if (e.type === 'split') {
       patch.splits = [...(patch.splits ?? state.splits), { index: e.index, ms: e.ms, t: e.t }];
       link?.send({ type: 'split', index: e.index, ms: e.ms, t: e.t });
+      sceneCue('beep');
     } else if (e.type === 'lap') {
+      const bestBefore = state.bestLap;
       patch.laps = [...timer.laps];
       patch.bestLap = timer.bestLap();
       patch.bestSectors = timer.bestSectors();
       refreshBestSamples();
       link?.send({ type: 'lap', lap: e.lap });
       haptics.success();
+      // A personal best gets the flourish.
+      sceneCue(patch.bestLap && patch.bestLap.n === e.lap.n && patch.bestLap.n !== bestBefore?.n ? 'success' : 'beep');
     }
   }
 

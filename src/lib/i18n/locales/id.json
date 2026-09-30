@@ -2606,7 +2606,6 @@
  "{0} blocked riders": "{0} pengendara diblokir",
  "{0} burned now. Your totals and stats are kept.": "{0} dibakar sekarang. Total dan statistik Anda tetap disimpan.",
  "{0} camera{1} on this route": "{0} kamera di rute ini",
- "{0} card{1} collected": "{0} kartu dikumpulkan",
  "{0} complete": "{0} selesai",
  "{0} cover": "Sampul {0}",
  "{0} days ago": "{0} hari lalu",
@@ -3187,5 +3186,7 @@
  "{0} vs {1}{2}": "{0} vs {1}{2}",
  "App sounds": "Suara aplikasi",
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klik, sakelar, penggeser, dan konfirmasi. Peringatan seperti bahaya, kamera, cek kecelakaan, alarm, dan arahan selalu berbunyi.",
- "“{0}”": "“{0}”"
+ "“{0}”": "“{0}”",
+ "1 card collected": "1 kartu terkumpul",
+ "{0} cards collected": "{0} kartu terkumpul"
 }
