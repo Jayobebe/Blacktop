@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
 import { eventSound } from '@/lib/appSound';
+import type { Tables } from '@/integrations/supabase/types';
 
 export const MAX_CONVOY_MEMBERS = 8;
 const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
@@ -87,6 +88,34 @@ function soundMemberChanges(prev: ConvoyState, next: ConvoyState) {
   else if ([...before].some((id) => !after.has(id))) eventSound('radioOut');
 }
 
+/** A convoy_members row as the queries here select it (with the rider's display name). */
+type MemberRow = Pick<Tables<'convoy_members'>, 'id' | 'user_id' | 'joined_at' | 'has_navigated' | 'accent_color' | 'current_lat' | 'current_lng'> &
+  Partial<Pick<Tables<'convoy_members'>, 'current_speed' | 'top_speed' | 'distance_driven' | 'stationary_time'>> & {
+    profiles?: { display_name: string | null } | null;
+  };
+
+/** A member row as the app's ConvoyMemberInfo; `withStats` when the query selected the live stats. */
+function toMemberInfo(m: MemberRow, leaderId: string | null | undefined, withStats: boolean): ConvoyMemberInfo {
+  return {
+    id: m.id,
+    userId: m.user_id,
+    name: m.profiles?.display_name || 'Unknown',
+    isLeader: m.user_id === leaderId,
+    isReady: true,
+    hasNavigated: m.has_navigated || false,
+    joinedAt: m.joined_at,
+    accentColor: m.accent_color || 'orange',
+    ...(withStats && {
+      currentSpeed: m.current_speed || 0,
+      topSpeed: m.top_speed || 0,
+      distanceDriven: m.distance_driven || 0,
+      stationaryTime: m.stationary_time || 0,
+    }),
+    currentLat: m.current_lat,
+    currentLng: m.current_lng,
+  };
+}
+
 function clearActiveConvoySession() {
   rememberActiveConvoy(null);
   setConvoyState(() => ({
@@ -128,8 +157,8 @@ function acquireConvoyRealtimeSubscription(
           filter: `id=eq.${convoyId}`,
         },
         async (payload) => {
-          const convoy = payload.new as any;
-          const oldConvoy = payload.old as any;
+          const convoy = payload.new as Tables<'convoys'>;
+          const oldConvoy = payload.old as Partial<Tables<'convoys'>> | undefined;
 
           if (convoy.is_active === false || convoy.ride_ended_at) {
             console.log('[Convoy] Convoy ended, clearing local session');
@@ -286,7 +315,7 @@ export function useConvoyState() {
         return;
       }
 
-      const convoy = membership.convoys as any;
+      const convoy = membership.convoys as unknown as Tables<'convoys'>;
       if (convoy.ride_ended_at) {
         console.log('[Convoy] Ignoring ended convoy membership:', convoy.code);
         await supabase
@@ -320,22 +349,7 @@ export function useConvoyState() {
         `)
         .eq('convoy_id', convoy.id);
 
-      const members: ConvoyMemberInfo[] = (membersData || []).map((m: any) => ({
-        id: m.id,
-        userId: m.user_id,
-        name: m.profiles?.display_name || 'Unknown',
-        isLeader: m.user_id === convoy.leader_id,
-        isReady: true,
-        hasNavigated: m.has_navigated || false,
-        joinedAt: m.joined_at,
-        accentColor: m.accent_color || 'orange',
-        currentSpeed: m.current_speed || 0,
-        topSpeed: m.top_speed || 0,
-        distanceDriven: m.distance_driven || 0,
-        stationaryTime: m.stationary_time || 0,
-        currentLat: m.current_lat,
-        currentLng: m.current_lng,
-      }));
+      const members: ConvoyMemberInfo[] = (membersData || []).map((m) => toMemberInfo(m, convoy.leader_id, true));
 
       // Parse destination if set
       const destination = convoy.destination_name ? {
@@ -412,22 +426,7 @@ export function useConvoyState() {
       .maybeSingle();
 
     if (membersData) {
-      const members: ConvoyMemberInfo[] = membersData.map((m: any) => ({
-        id: m.id,
-        userId: m.user_id,
-        name: m.profiles?.display_name || 'Unknown',
-        isLeader: m.user_id === convoyData?.leader_id,
-        isReady: true,
-        hasNavigated: m.has_navigated || false,
-        joinedAt: m.joined_at,
-        accentColor: m.accent_color || 'orange',
-        currentSpeed: m.current_speed || 0,
-        topSpeed: m.top_speed || 0,
-        distanceDriven: m.distance_driven || 0,
-        stationaryTime: m.stationary_time || 0,
-        currentLat: m.current_lat,
-        currentLng: m.current_lng,
-      }));
+      const members: ConvoyMemberInfo[] = membersData.map((m) => toMemberInfo(m, convoyData?.leader_id, true));
 
       console.log('[Convoy] Refreshed members:', members.map(m => ({ name: m.name, hasNavigated: m.hasNavigated })));
 
@@ -643,18 +642,7 @@ export function useConvoyState() {
       `)
       .eq('convoy_id', convoy.id);
 
-    const members: ConvoyMemberInfo[] = (membersData || []).map((m: any) => ({
-      id: m.id,
-      userId: m.user_id,
-      name: m.profiles?.display_name || 'Unknown',
-      isLeader: m.user_id === convoy.leader_id,
-      isReady: true,
-      hasNavigated: m.has_navigated || false,
-      joinedAt: m.joined_at,
-      accentColor: m.accent_color || 'orange',
-      currentLat: m.current_lat,
-      currentLng: m.current_lng,
-    }));
+    const members: ConvoyMemberInfo[] = (membersData || []).map((m) => toMemberInfo(m, convoy.leader_id, false));
 
     // Parse destination if set
     const destination: ConvoyDestination | null = convoy.destination_name ? {

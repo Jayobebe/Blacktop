@@ -148,6 +148,21 @@ export const unlockIOSAudio = (): void => {
   })();
 };
 
+/** A WebRTC signalling message on the convoy's voice channel (Supabase Realtime broadcast). */
+interface SignalingMessage {
+  type: 'user-joined' | 'offer' | 'answer' | 'ice-candidate' | 'user-left';
+  from: string;
+  to?: string;
+  offer?: RTCSessionDescriptionInit;
+  answer?: RTCSessionDescriptionInit;
+  candidate?: RTCIceCandidateInit;
+  /** The sender's recording consent (mixing their voice into a ride overlay). */
+  consent?: boolean;
+}
+
+/** What a failed getUserMedia / play() rejects with (a DOMException, read loosely). */
+type MediaError = { name?: string; message?: string } | undefined;
+
 export function useVoiceChannel(convoyId?: string) {
   const [state, setState] = useState<VoiceChannelState>({
     isConnected: false,
@@ -426,10 +441,10 @@ export function useVoiceChannel(convoyId?: string) {
     audioElementsRef.current.forEach((audio) => {
       if (!('setSinkId' in audio)) return;
       // '' selects the system default sink.
-      (audio as any)
+      (audio as HTMLAudioElement & { setSinkId(id: string): Promise<void> })
         .setSinkId(saved === 'default' ? '' : saved)
         .then(() => console.log('[Voice] Audio output routed to', saved))
-        .catch((e: any) => console.warn('[Voice] Failed to set output device:', e));
+        .catch((e: unknown) => console.warn('[Voice] Failed to set output device:', e));
     });
   }, []);
 
@@ -730,7 +745,8 @@ export function useVoiceChannel(convoyId?: string) {
           // IMPORTANT: Do NOT touch currentTime for MediaStream-backed audio.
           await audio!.play();
           console.log(`[Voice] Audio playing successfully for ${remoteUserId}`);
-        } catch (err: any) {
+        } catch (caught) {
+          const err = caught as MediaError;
           console.warn(`[Voice] Audio play attempt ${attempt} failed for ${remoteUserId}:`, err?.name, err?.message);
 
           if (attempt < maxAttempts) {
@@ -774,7 +790,7 @@ export function useVoiceChannel(convoyId?: string) {
   }, [clearReconnectSchedule, scheduleReconnect, setPeerLink]);
 
   // Handle signaling messages
-  const handleSignaling = useCallback(async (payload: any) => {
+  const handleSignaling = useCallback(async (payload: SignalingMessage) => {
     const { type, from, to, offer, answer, candidate, consent } = payload;
     
     // Ignore messages not meant for us
@@ -1088,7 +1104,8 @@ export function useVoiceChannel(convoyId?: string) {
         stream = await navigator.mediaDevices.getUserMedia({
           audio: getAudioConstraints(),
         });
-      } catch (mediaError: any) {
+      } catch (caught) {
+        const mediaError = caught as MediaError;
         // OverconstrainedError → saved deviceId is no longer available.
         // Clear the stale preference and retry with default device.
         if (mediaError?.name === 'OverconstrainedError' || mediaError?.name === 'ConstraintNotSatisfiedError') {
@@ -1098,12 +1115,12 @@ export function useVoiceChannel(convoyId?: string) {
             stream = await navigator.mediaDevices.getUserMedia({
               audio: getAudioConstraints(),
             });
-          } catch (retryError: any) {
+          } catch (retryError) {
             console.error('[Voice] Retry without saved device failed:', retryError);
             // Last-ditch: bare audio:true
             try {
               stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (bareError: any) {
+            } catch (bareError) {
               console.error('[Voice] Bare audio:true also failed:', bareError);
               isConnectingRef.current = false;
               return { success: false, error: tr("Failed to access microphone. Please try again.") };
