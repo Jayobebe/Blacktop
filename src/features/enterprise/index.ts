@@ -27,5 +27,6 @@ export { verifyEnterpriseCode, refreshMemberWorkspaces } from './lib/enterpriseA
 export { parseEnterpriseCode } from './lib/qrParser';
 export { ENTERPRISE_CONTACT_EMAIL, enquiryMailto, tierName, tierInfo, roleName } from './lib/tiers';
 export { EnterpriseDoorway } from './components/EnterpriseDoorway';
+export { TierShowcase } from './components/TierShowcase';
 export { EnterpriseWorkspaceCard } from './components/EnterpriseWorkspaceCard';
 export { EnterpriseSync } from './components/EnterpriseSync';

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useRef, useState } from 'react';
-import { Building2, Camera, KeyRound, Loader2, Mail, ArrowRight, ChevronDown, Check, Lock, LogIn } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Building2, Camera, KeyRound, Loader2, Mail, ArrowRight, ChevronDown, Check, Lock, LogIn, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,8 +27,12 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
   const [scanning, setScanning] = useState(false);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  // The package the rider opened below: the Inquire email names it.
-  const [openTier, setOpenTier] = useState<EnterpriseTier | null>(null);
+  // The package the rider opened below: the Inquire email names it. Coming
+  // back from a package's demo page reopens that package.
+  const location = useLocation();
+  const [openTier, setOpenTier] = useState<EnterpriseTier | null>(
+    () => (location.state as { tier?: EnterpriseTier } | null)?.tier ?? null,
+  );
 
   // The login, camera and codes aren't open yet: trying any of them pops the
   // Coming soon stamp instead (scrolled into view first if it's off screen).
@@ -269,6 +274,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
  * swiper: the Doorway already sits in Home's swipe deck).
  */
 function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null; onToggle: (t: EnterpriseTier) => void }) {
+  const navigate = useNavigate();
   // Longest package name first (in the rider's language); equal lengths keep their order.
   const tiers = enterpriseTiers().sort((a, b) => tierName(b.id).length - tierName(a.id).length);
   return (
@@ -317,14 +323,17 @@ function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null
                   ))}
                 </ul>
                 <Button
-                  asChild
-                  className="w-full h-11 rounded-xl animate-slide-up"
+                  className="w-full h-12 rounded-xl animate-slide-up"
                   style={{ animationDelay: `${200 + t.features.length * 80}ms`, animationFillMode: 'backwards' }}
+                  onClick={() => {
+                    haptics.light();
+                    // Home's entry remembers the Doorway and this package, so Back lands here again.
+                    navigate('/', { replace: true, state: { deck: 'doorway', tier: t.id } });
+                    navigate(`/enterprise/demo/${t.id}`);
+                  }}
                 >
-                  <a href={enquiryMailto(t.id)} onClick={() => haptics.light()}>
-                    <Mail className="w-4 h-4 mr-2" />
-                    {tr("Contact sales about {0}", [t.name])}
-                  </a>
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  {tr("See the {0} demo", [t.name])}
                 </Button>
               </div>
             )}

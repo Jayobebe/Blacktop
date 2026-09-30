@@ -70,6 +70,7 @@ const NotFound = lazyPage(() => import("./pages/NotFound"));
 const Pay = lazyPage(() => import("./pages/Pay"));
 const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
+const EnterpriseDemo = lazyPage(() => import("./pages/EnterpriseDemo"));
 const World = lazyPage(() => import("./pages/World"));
 const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
 const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));
@@ -193,6 +194,7 @@ function AppRoutes() {
         <Route path="/pay" element={<Pay />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/enterprise/demo/:tier" element={<EnterpriseDemo />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
       </Suspense>
@@ -242,6 +244,7 @@ function AppRoutes() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/setup" element={<Setup />} />
       <Route path="/enterprise" element={<EnterpriseLink />} />
+      <Route path="/enterprise/demo/:tier" element={<EnterpriseDemo />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>

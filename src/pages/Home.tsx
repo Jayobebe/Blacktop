@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide, clearSoloRoute } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
@@ -43,8 +43,14 @@ export default function Home() {
   const guiding = useGuidanceActive();
   const deckLocked = rideState.isActive || guiding;
   const deckKeys = ['home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
+  // Back from a package demo page returns to the Doorway (history state).
+  const location = useLocation();
   const [deckKey, setDeckKey] = useState<string>(() =>
-    enterprise.activeWorkspaceId ? `ws:${enterprise.activeWorkspaceId}` : 'home',
+    (location.state as { deck?: string } | null)?.deck === 'doorway'
+      ? 'doorway'
+      : enterprise.activeWorkspaceId
+        ? `ws:${enterprise.activeWorkspaceId}`
+        : 'home',
   );
   const deckIndex = Math.max(0, deckKeys.indexOf(deckKey));
   const goToDeck = (i: number) => {
