@@ -80,7 +80,6 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
     () => !isThermal() && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   );
 
-  useEffect(() => setStep(0), [side]);
   useEffect(() => {
     if (!playing) return;
     const id = window.setTimeout(() => setStep((s) => (s + 1) % flow.steps.length), STEP_MS);
@@ -92,7 +91,8 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
     setPlaying(false);
     setStep((i + flow.steps.length) % flow.steps.length);
   };
-  const current = flow.steps[step];
+  // Clamped: the two sides have different numbers of steps.
+  const current = flow.steps[Math.min(step, flow.steps.length - 1)];
 
   return (
     <div className="min-h-dvh safe-top safe-bottom">
@@ -129,6 +129,7 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
               onClick={() => {
                 haptics.tick();
                 setSide(id);
+                setStep(0);
               }}
               className={cn(
                 'pressable touch-target rounded-2xl border-2 px-3 py-2 text-left transition-colors',
