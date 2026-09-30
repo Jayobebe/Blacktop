@@ -55,6 +55,7 @@ import {
   loopT,
   popAt,
   useIds,
+  textW,
   useSceneTime,
   win,
   type SceneCue,
@@ -423,6 +424,11 @@ export function TradingCardsScene() {
   const x0 = C[0] - W / 2;
   const y0 = C[1] - H / 2;
   const starry = tier.id === 'orion' || tier.id === 'obsidian';
+  // Bottom line: the tier's full name left, its ride count right; type shrinks rather than cuts.
+  const chipLabel = tier.label.toUpperCase();
+  const ridesLabel = tier.minRides === 0 ? tr("0 RIDES") : tr("{0}+ RIDES", [tier.minRides]);
+  const chipSize = Math.min(5.4, 40 / (textW(chipLabel, 1) * 1.08));
+  const ridesSize = 32 / (textW(ridesLabel, 1) * 1.05);
 
   return (
     <Frame sound={{ t: tp, cues: TC_CUES }}>
@@ -464,9 +470,9 @@ export function TradingCardsScene() {
           </g>
           <rect x={x0} y={y0} width={W} height={H} rx={8} fill="none" stroke={edge} strokeWidth={2} />
           <T x={x0 + 8} y={y0 + 14} size={6.5} weight={800} color="#fff" spacing={0.6}>V4 DUCATI</T>
-          <rect x={x0 + W - 8 - 30} y={y0 + 6} width={30} height={11} rx={5.5} fill="black" fillOpacity={0.35} />
-          <Ico I={locked ? Lock : Sparkles} x={x0 + W - 35} y={y0 + 8.5} s={6} color="#fff" />
-          <T x={x0 + W - 12} y={y0 + 14.5} anchor="end" size={4.6} weight={800} color="#fff">{tier.label.toUpperCase().slice(0, 7)}</T>
+          {/* Tier badge (the name sits on the bottom line, where it fits whole) */}
+          <circle cx={x0 + W - 13.5} cy={y0 + 11.5} r={5.5} fill="black" fillOpacity={0.35} />
+          <Ico I={locked ? Lock : Sparkles} x={x0 + W - 16.5} y={y0 + 8.5} s={6} color="#fff" />
           <rect x={x0 + 7} y={y0 + 22} width={W - 14} height={52} rx={4} fill="black" fillOpacity={0.35} stroke="white" strokeOpacity={0.12} />
           <g clipPath={`url(#${id('photo')})`}>
             <BikePhoto cx={C[0]} floor={y0 + 70} height={46} filter={locked ? `url(#${id('silhouette')})` : undefined} />
@@ -479,13 +485,14 @@ export function TradingCardsScene() {
               <T x={4} y={12.5} size={5.5} weight={800} color="#fff" mono>{locked ? '—' : ['142', '1.1k', '3d', String(Math.round(rides))][i]}</T>
             </g>
           ))}
-          <T x={C[0]} y={y0 + H - 7} anchor="middle" size={5} weight={700} color="rgba(255,255,255,0.85)" spacing={0.8}>
-            {tier.minRides === 0 ? tr("0 RIDES") : tr("{0}+ RIDES", [tier.minRides])}
+          <T x={x0 + 8} y={y0 + H - 7} size={chipSize} weight={800} color="#fff" spacing={0.4}>{chipLabel}</T>
+          <T x={x0 + W - 8} y={y0 + H - 7} anchor="end" size={Math.min(5, ridesSize)} weight={700} color="rgba(255,255,255,0.85)" spacing={0.4}>
+            {ridesLabel}
           </T>
         </g>
 
         {/* The ladder */}
-        <T x={172} y={34} size={16} weight={800}>{tier.label}</T>
+        <T x={172} y={34} size={Math.min(16, (VW - 8 - 172) / textW(tier.label, 1))} weight={800}>{tier.label}</T>
         <T x={172} y={46} size={7} color={MUTED}>{tier.minRides === 0 ? tr("Ride it to unlock the card") : tr("{0}+ rides", [tier.minRides])}</T>
         {TIER_LADDER.map((tt, i) => {
           const [l, d, e] = TIER_FINISH[tt.id] ?? TIER_FINISH.locked;
@@ -503,7 +510,7 @@ export function TradingCardsScene() {
               </defs>
               <rect width={20} height={27} rx={3} fill={`url(#${id(`t${i}`)})`} stroke={on ? A : e} strokeWidth={on ? 1.6 : 0.8} />
               {done && <Ico I={Check} x={6} y={9} s={8} color="#fff" />}
-              <T x={10} y={35} anchor="middle" size={4.3} color={on ? INK : MUTED}>{tt.label.slice(0, 8)}</T>
+              <T x={10} y={35} anchor="middle" size={Math.min(4.3, 25 / textW(tt.label, 1))} color={on ? INK : MUTED}>{tt.label}</T>
             </g>
           );
         })}
