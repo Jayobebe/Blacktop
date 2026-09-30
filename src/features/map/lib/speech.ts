@@ -96,7 +96,9 @@ export function speak(text: string, opts: { interrupt?: boolean; radio?: boolean
   const radio = opts.radio ?? (opts.kind === 'nav' ? style !== 'standard' : true);
   // Radio calls go out in the pilot voice when it's downloaded (lib/pilotVoice);
   // the phone's voice takes over if it isn't, or can't make the call in time.
-  if (radio && pilotVoiceReady()) {
+  // Where the browser has no speech of its own (e.g. Android's WebView, as in the
+  // Nimiq Pay mini app), the pilot voice says everything, plain directions too.
+  if ((radio || !speechSupported()) && pilotVoiceReady()) {
     if (opts.interrupt && speechSupported()) window.speechSynthesis.cancel();
     const onStart = () => {
       speaking += 1;
