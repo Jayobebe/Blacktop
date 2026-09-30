@@ -853,6 +853,44 @@ export type Database = {
         }
         Relationships: []
       }
+      enterprise_guest_sessions: {
+        Row: {
+          callsign: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          org_id: string
+          role: string
+          session_token: string
+        }
+        Insert: {
+          callsign?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          org_id: string
+          role?: string
+          session_token: string
+        }
+        Update: {
+          callsign?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          org_id?: string
+          role?: string
+          session_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enterprise_guest_sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hazard_votes: {
         Row: {
           created_at: string
@@ -918,6 +956,118 @@ export type Database = {
           lat?: number
           lng?: number
           reporter_id?: string
+        }
+        Relationships: []
+      }
+      organization_invites: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          org_id: string
+          role: string
+          uses: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          org_id: string
+          role?: string
+          uses?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          org_id?: string
+          role?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          callsign: string | null
+          created_at: string
+          id: string
+          org_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          callsign?: string | null
+          created_at?: string
+          id?: string
+          org_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          callsign?: string | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          branding: Json
+          contact_email: string | null
+          created_at: string
+          id: string
+          name: string
+          settings: Json
+          slug: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          branding?: Json
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          settings?: Json
+          slug: string
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          branding?: Json
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          settings?: Json
+          slug?: string
+          tier?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1333,6 +1483,7 @@ export type Database = {
           top_speed: number
         }[]
       }
+      enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
         Args: never
@@ -1590,6 +1741,7 @@ export type Database = {
         Args: { _endpoint: string }
         Returns: undefined
       }
+      verify_enterprise_token: { Args: { token_code: string }; Returns: Json }
       vote_hazard: {
         Args: { _id: string; _still_there: boolean }
         Returns: undefined
