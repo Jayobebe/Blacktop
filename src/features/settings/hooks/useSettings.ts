@@ -59,6 +59,8 @@ export interface AppSettings {
   hazardVoiceEnabled: boolean;
   /** Anti-theft alarm: how much movement of the parked vehicle it takes. */
   alarmSensitivity: 'low' | 'normal' | 'high';
+  /** Interface sounds: taps, toggles, sliders, dialogs and confirmations. Alerts (hazards, cameras, crash check, alarm, directions) sound regardless. */
+  uiSoundsEnabled: boolean;
   /**
    * Who a rescue call reaches (the rescue button, and auto-rescue after a crash):
    * the convoy you're riding with, your crew, your Discord, and opted-in riders
@@ -136,6 +138,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   navVoiceStyle: 'standard',
   hazardVoiceEnabled: true,
   alarmSensitivity: 'normal',
+  uiSoundsEnabled: true,
   rescueToConvoy: true,
   rescueToCrew: true,
   rescueToDiscord: true,

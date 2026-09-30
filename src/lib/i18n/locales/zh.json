@@ -3186,5 +3186,7 @@
  "{0} m": "{0} 米",
  "{0} mi": "{0} 英里",
  "{0} m²": "{0} 平方米",
- "{0} vs {1}{2}": "{0} vs {1}{2}"
+ "{0} vs {1}{2}": "{0} vs {1}{2}",
+ "App sounds": "应用音效",
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "点击、开关、滑块和确认音。危险、测速摄像头、事故确认、警报和导航等提醒始终会响。"
 }

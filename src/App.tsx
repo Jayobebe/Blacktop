@@ -23,6 +23,7 @@ import { setBackdropCruise, surgeBackdrop } from "@/lib/backdropMotion";
 import { MapLoading } from "@/components/MapLoading";
 import { HazardAlerts } from "@/features/hazards";
 import { AlarmOverlay } from "@/features/alarm";
+import { UiSounds } from "@/components/UiSounds";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
@@ -266,6 +267,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <UiSounds />
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />
                 <PushBridge />

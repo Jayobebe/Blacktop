@@ -443,6 +443,13 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground">{tr("What you care about")}</p>
                 <CareList />
               </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{tr("App sounds")}</p>
+                  <p className="text-[10px] text-muted-foreground">{tr("Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.")}</p>
+                </div>
+                <Switch checked={settings.uiSoundsEnabled !== false} onCheckedChange={(v) => updateSetting('uiSoundsEnabled', v)} />
+              </div>
               <Button variant="outline" className="w-full rounded-2xl" onClick={() => navigate('/setup')}>
                 <Repeat className="w-4 h-4" />
                 {tr("Redo full setup")}

@@ -3186,5 +3186,7 @@
  "{0} m": "{0} m",
  "{0} mi": "{0} mi",
  "{0} m²": "{0} m²",
- "{0} vs {1}{2}": "{0} vs {1}{2}"
+ "{0} vs {1}{2}": "{0} vs {1}{2}",
+ "App sounds": "Sonidos de la app",
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Clics, interruptores, deslizadores y confirmaciones. Los avisos como peligros, radares, comprobaciones de caída, la alarma y las indicaciones siempre suenan."
 }

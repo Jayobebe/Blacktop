@@ -78,6 +78,7 @@ function RescueSirenScreen() {
   return (
     <div
       data-no-pull
+      data-no-ui-sound
       role="alertdialog"
       aria-modal="true"
       aria-label={tr("Crash detected")}
@@ -267,6 +268,7 @@ function AlarmScreen() {
   return (
     <div
       data-no-pull
+      data-no-ui-sound
       role="dialog"
       aria-modal="true"
       aria-label={title}

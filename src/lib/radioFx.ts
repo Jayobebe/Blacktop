@@ -547,3 +547,65 @@ export function sceneCue(kind: SceneCueKind) {
   }
   release(length * 1000 + 100);
 }
+
+// ---- Interface sounds -----------------------------------------------------------
+
+export type UiCueKind = 'tap' | 'on' | 'off' | 'tick' | 'select' | 'open' | 'close' | 'success' | 'error' | 'warning';
+
+/**
+ * The app's interface sounds (buttons, switches, sliders, dialogs, toasts):
+ * very short and quiet, in the same radio voice. `level` (0..1) sets a slider
+ * tick's pitch. Alerts don't come through here; they have their own calls.
+ */
+export function uiCue(kind: UiCueKind, level = 0.5) {
+  const c = acquire();
+  if (!c || !chain) {
+    if (c) release(0);
+    return;
+  }
+  let length = 0.15;
+  switch (kind) {
+    case 'tap':
+      pop(c, 0, 0.32);
+      length = 0.04;
+      break;
+    case 'on':
+      tone(c, 0, 880, 0.045, 0.07, 'sine');
+      tone(c, 0.05, 1320, 0.06, 0.07, 'sine');
+      break;
+    case 'off':
+      tone(c, 0, 1100, 0.045, 0.06, 'sine');
+      tone(c, 0.05, 740, 0.06, 0.06, 'sine');
+      break;
+    case 'tick':
+      tone(c, 0, 600 + 900 * Math.max(0, Math.min(1, level)), 0.025, 0.045, 'sine');
+      length = 0.05;
+      break;
+    case 'select':
+      tone(c, 0, 1250, 0.05, 0.06, 'sine');
+      length = 0.08;
+      break;
+    case 'open':
+      sweep(c, 0, 0.18, 0.12, 900, 2400);
+      length = 0.22;
+      break;
+    case 'close':
+      sweep(c, 0, 0.16, 0.1, 2200, 800);
+      length = 0.2;
+      break;
+    case 'success':
+      tone(c, 0, 1047, 0.06, 0.07, 'triangle');
+      tone(c, 0.065, 1568, 0.09, 0.07, 'triangle');
+      length = 0.2;
+      break;
+    case 'error':
+      tone(c, 0, 392, 0.08, 0.09);
+      tone(c, 0.09, 330, 0.12, 0.09);
+      length = 0.25;
+      break;
+    case 'warning':
+      tone(c, 0, 740, 0.1, 0.08);
+      break;
+  }
+  release(length * 1000 + 100);
+}

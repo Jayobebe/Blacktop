@@ -3186,5 +3186,7 @@
  "{0} m": "{0} m",
  "{0} mi": "{0} mi",
  "{0} m²": "{0} m²",
- "{0} vs {1}{2}": "{0} vs {1}{2}"
+ "{0} vs {1}{2}": "{0} vs {1}{2}",
+ "App sounds": "ऐप की आवाज़ें",
+ "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "क्लिक, टॉगल, स्लाइडर और पुष्टि। ख़तरे, कैमरे, दुर्घटना जाँच, अलार्म और दिशा-निर्देश जैसे अलर्ट हमेशा बजते हैं।"
 }
