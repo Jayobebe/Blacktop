@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klikken, schakelaars, schuifregelaars en bevestigingen. Waarschuwingen zoals gevaren, flitsers, crashchecks, het alarm en aanwijzingen klinken altijd.",
  "“{0}”": "“{0}”",
  "1 card collected": "1 kaart verzameld",
- "{0} cards collected": "{0} kaarten verzameld"
+ "{0} cards collected": "{0} kaarten verzameld",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Op een iPhone kun je het slot wegvegen. Zet Begeleide toegang aan (Instellingen → Toegankelijkheid → Begeleide toegang) en druk na het inschakelen drie keer op de zijknop."
 }

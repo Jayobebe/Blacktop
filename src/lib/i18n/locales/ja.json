@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "タップ、スイッチ、スライダー、確認音。危険箇所、カメラ、転倒チェック、アラーム、ナビ案内などの警告は常に鳴ります。",
  "“{0}”": "「{0}」",
  "1 card collected": "カードを1枚獲得",
- "{0} cards collected": "カードを{0}枚獲得"
+ "{0} cards collected": "カードを{0}枚獲得",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhoneではロック画面をスワイプで閉じられます。防ぐには「アクセスガイド」をオンにし（設定 → アクセシビリティ → アクセスガイド）、作動後にサイドボタンをトリプルクリックしてください。"
 }

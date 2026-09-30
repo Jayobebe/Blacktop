@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Tıklamalar, anahtarlar, kaydırıcılar ve onaylar. Tehlike, kamera, kaza kontrolü, alarm ve yol tarifi gibi uyarılar her zaman çalar.",
  "“{0}”": "“{0}”",
  "1 card collected": "1 kart toplandı",
- "{0} cards collected": "{0} kart toplandı"
+ "{0} cards collected": "{0} kart toplandı",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone'da kilit ekranı kaydırılarak kapatılabilir. Bunu önlemek için Rehberli Erişim'i açın (Ayarlar → Erişilebilirlik → Rehberli Erişim) ve alarmı kurduktan sonra yan düğmeye üç kez basın."
 }

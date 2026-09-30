@@ -1596,6 +1596,7 @@
  "On group {0}",
  "On iPhone and iPad, notifications only work from the Blacktop app on your Home Screen (iOS 16.4 or newer). Add it there, open Blacktop from the new icon, then come back here.",
  "On iPhone, add Blacktop to your Home Screen first, then turn them on in Settings",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.",
  "On solo {0}, rescue pings only go to Discord. Connect a server so someone hears about it.",
  "On the South Pole: your crew's shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.",
  "On the back: voice, waves and rescue alerts. No map or stats.",

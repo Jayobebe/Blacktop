@@ -47,6 +47,11 @@ import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type Rid
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
 
+/** iPhone / iPad (iPadOS reports itself as a Mac with touch). */
+const IS_IOS =
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
 export default function Settings() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -720,6 +725,11 @@ export default function Settings() {
                   {tr("Reset")}
                 </Button>
               </div>
+              {IS_IOS && (
+                <p className="text-[11px] text-muted-foreground/80 mt-3">
+                  {tr("On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.")}
+                </p>
+              )}
             </div>
           </div>
         </CollapsibleSection>

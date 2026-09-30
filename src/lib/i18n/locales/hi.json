@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "क्लिक, टॉगल, स्लाइडर और पुष्टि। ख़तरे, कैमरे, दुर्घटना जाँच, अलार्म और दिशा-निर्देश जैसे अलर्ट हमेशा बजते हैं।",
  "“{0}”": "“{0}”",
  "1 card collected": "1 कार्ड इकट्ठा हुआ",
- "{0} cards collected": "{0} कार्ड इकट्ठा हुए"
+ "{0} cards collected": "{0} कार्ड इकट्ठा हुए",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone पर लॉक को स्वाइप करके हटाया जा सकता है। इसे रोकने के लिए गाइडेड एक्सेस चालू करें (सेटिंग्स → एक्सेसिबिलिटी → गाइडेड एक्सेस), फिर अलार्म चालू करने के बाद साइड बटन तीन बार दबाएँ।"
 }

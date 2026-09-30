@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Клацання, перемикачі, повзунки й підтвердження. Попередження про небезпеки, камери, перевірку після аварії, сигналізацію та підказки звучать завжди.",
  "“{0}”": "«{0}»",
  "1 card collected": "Зібрано 1 картку",
- "{0} cards collected": "Зібрано карток: {0}"
+ "{0} cards collected": "Зібрано карток: {0}",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "На iPhone блокування можна змахнути. Щоб цьому запобігти, увімкніть Керований доступ (Параметри → Доступність → Керований доступ) і після ввімкнення тричі натисніть бічну кнопку."
 }

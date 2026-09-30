@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klik, sakelar, penggeser, dan konfirmasi. Peringatan seperti bahaya, kamera, cek kecelakaan, alarm, dan arahan selalu berbunyi.",
  "“{0}”": "“{0}”",
  "1 card collected": "1 kartu terkumpul",
- "{0} cards collected": "{0} kartu terkumpul"
+ "{0} cards collected": "{0} kartu terkumpul",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Di iPhone, kunci bisa diusap pergi. Untuk mencegahnya, nyalakan Akses Terpandu (Pengaturan → Aksesibilitas → Akses Terpandu), lalu klik tombol samping tiga kali setelah mengaktifkan alarm."
 }

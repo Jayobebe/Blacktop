@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Klick, reglage, skjutreglage och bekräftelser. Varningar som faror, kameror, krasch-koll, larmet och vägledning hörs alltid.",
  "“{0}”": "”{0}”",
  "1 card collected": "1 kort insamlat",
- "{0} cards collected": "{0} kort insamlade"
+ "{0} cards collected": "{0} kort insamlade",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "På iPhone kan låset svepas bort. Slå på Guidad åtkomst (Inställningar → Hjälpmedel → Guidad åtkomst) och tryck tre gånger på sidoknappen när larmet är aktiverat."
 }

@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Clics, interrupteurs, curseurs et confirmations. Les alertes comme les dangers, les radars, les vérifications de chute, l'alarme et le guidage sonnent toujours.",
  "“{0}”": "« {0} »",
  "1 card collected": "1 carte récupérée",
- "{0} cards collected": "{0} cartes récupérées"
+ "{0} cards collected": "{0} cartes récupérées",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "Sur iPhone, le verrou peut être balayé. Pour l'éviter, activez l'Accès guidé (Réglages → Accessibilité → Accès guidé), puis appuyez trois fois sur le bouton latéral après l'activation."
 }

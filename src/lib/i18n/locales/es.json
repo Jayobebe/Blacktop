@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "Clics, interruptores, deslizadores y confirmaciones. Los avisos como peligros, radares, comprobaciones de caída, la alarma y las indicaciones siempre suenan.",
  "“{0}”": "«{0}»",
  "1 card collected": "1 carta recogida",
- "{0} cards collected": "{0} cartas recogidas"
+ "{0} cards collected": "{0} cartas recogidas",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "En iPhone, el bloqueo se puede cerrar deslizando. Para evitarlo, activa Acceso Guiado (Ajustes → Accesibilidad → Acceso Guiado) y pulsa tres veces el botón lateral después de activar la alarma."
 }

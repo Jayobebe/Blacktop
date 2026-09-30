@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "点击、开关、滑块和确认音。危险、测速摄像头、事故确认、警报和导航等提醒始终会响。",
  "“{0}”": "“{0}”",
  "1 card collected": "已收集 1 张卡",
- "{0} cards collected": "已收集 {0} 张卡"
+ "{0} cards collected": "已收集 {0} 张卡",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "在 iPhone 上，锁定画面可以被滑走。为防止这种情况，请开启“引导式访问”（设置 → 辅助功能 → 引导式访问），并在布防后连按三次侧边按钮。"
 }

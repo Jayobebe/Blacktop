@@ -3188,5 +3188,6 @@
  "Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.": "클릭, 토글, 슬라이더, 확인음. 위험 요소, 카메라, 사고 확인, 경보, 길 안내 같은 알림은 항상 울립니다.",
  "“{0}”": "“{0}”",
  "1 card collected": "카드 1장 획득",
- "{0} cards collected": "카드 {0}장 획득"
+ "{0} cards collected": "카드 {0}장 획득",
+ "On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.": "iPhone에서는 잠금 화면을 쓸어 넘겨 닫을 수 있습니다. 이를 막으려면 사용법 유도 접근을 켜고(설정 → 손쉬운 사용 → 사용법 유도 접근), 경보를 켠 뒤 측면 버튼을 세 번 누르세요."
 }
