@@ -71,6 +71,7 @@ const PrivacyPolicy = lazyPage(() => import("./pages/PrivacyPolicy"));
 const Terms = lazyPage(() => import("./pages/Terms"));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
 const Pay = lazyPage(() => import("./pages/Pay"));
+const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
 const EnterpriseDemo = lazyPage(() => import("./pages/EnterpriseDemo"));
@@ -195,6 +196,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
         <Route path="/pay" element={<Pay />} />
+        <Route path="/device-check" element={<DeviceCheck />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/enterprise/demo/:tier" element={<EnterpriseDemo />} />
@@ -226,6 +228,7 @@ function AppRoutes() {
       <Route path="/speedshop" element={<Speedshop />} />
       <Route path="/demo" element={<DemoShowcase />} />
       <Route path="/pay" element={<Pay />} />
+      <Route path="/device-check" element={<DeviceCheck />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
       

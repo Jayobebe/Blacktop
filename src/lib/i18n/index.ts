@@ -54,7 +54,7 @@ function supported(code: string | null | undefined): string | null {
   return LANGUAGES.some((l) => l.code === mapped) ? mapped : null;
 }
 
-/** Saved choice, else the phone's language when we have it, else English. */
+/** Saved choice, else Nimiq Pay's language inside its mini-app view, else the phone's, else English. */
 function detect(): string {
   try {
     const saved = supported(localStorage.getItem(STORAGE_KEY));
@@ -62,6 +62,9 @@ function detect(): string {
   } catch {
     /* storage blocked */
   }
+  // Nimiq Pay sets this before any page script runs (window.nimiqPay.language, ISO 639-1).
+  const host = supported((globalThis as { nimiqPay?: { language?: string } }).nimiqPay?.language);
+  if (host) return host;
   const langs = typeof navigator !== 'undefined' ? (navigator.languages?.length ? navigator.languages : [navigator.language]) : [];
   for (const l of langs) {
     const s = supported(l);

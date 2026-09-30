@@ -187,6 +187,10 @@ Onboarding (`pages/Onboarding.tsx`: welcome → consent → setup flow → name)
 - Keep product and badge names in English (Blacktop, Blacktank, Speed Demon…), except Track Day, which has a local name per language, and Blacktop Enterprise, where everything but the words Blacktop and TrackPack is translated (keep it consistent in every string that mentions it); "Hi-vis" is never translated as police.
 - Workflow: `npm run i18n:check` re-extracts `scripts/i18n/keys.json` and lists what each language is missing (`--missing de` as JSON). Translation work files are `<dir>/<lang>/*.txt` lines `N<TAB>text` (N = index in keys.json) merged with `node scripts/i18n/merge.mjs <dir>`, which rejects lines whose placeholders don't match. Re-extracting shifts the indices, so merge before changing code.
 
+### Nimiq Pay mini app
+
+Blacktop also runs as a Nimiq Pay mini app (a WebView inside the Nimiq Pay app; `@nimiq/mini-app-sdk`, `features/tips/lib/walletBridge.ts`: `isNimiqPayHost()`, NIM / USDT payments, `/pay`). Nimiq doesn't document what its WebView allows beyond the wallet providers, so `/device-check` (`pages/DeviceCheck.tsx`, a developer page, not linked or translated) tests every device feature the app uses (location, motion, mic, camera, wake lock, audio, speech, push, storage kept between opens) in whatever browser opens it, with a copyable report. With no saved language choice, the app follows Nimiq Pay's (`window.nimiqPay.language`, in `lib/i18n` `detect()`).
+
 ### Native device integration
 
 Capacitor plugins (`@capacitor/geolocation`, `@capacitor/filesystem`) and browser device APIs are wrapped in small hooks rather than called ad hoc: `useWakeLock` (re-takes the lock after the browser drops it, until released; held by the ride, pillion, lobby and solo lobby screens and by the map overlay during a ride or from a lobby), `useOrientationLock`, `useLeanAngle` (device orientation → lean angle), `useBackgroundAudio`, `usePictureInPicture`, `useLiveOverlayRecorder` (records a live ride overlay video, with `convertToMp4`/ffmpeg.wasm for conversion). New native-device features should follow this hook-wrapper pattern.
