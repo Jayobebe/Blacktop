@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components -- a kit of scene helpers, not a page */
-import { useEffect, useId, useState, type ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Volume2, VolumeX, type LucideIcon } from 'lucide-react';
 import bikeAsset from '@/assets/demo-bike.png.asset.json';
+import { tr } from '@/lib/i18n';
+import { sceneCue, type SceneCueKind } from '@/lib/radioFx';
 
 /**
  * The scene kit behind Blacktop's animated showcases (the Enterprise package
@@ -142,12 +144,120 @@ export function inside(p: Pt, poly: Pt[]): boolean {
 
 // ---- Drawing kit ---------------------------------------------------------------
 
-export function Frame({ children }: { children: ReactNode }) {
+// ---- Sound ---------------------------------------------------------------------
+
+/** A sound on a scene's clock: [seconds into the loop, which sound]. */
+export type SceneCue = [number, SceneCueKind];
+
+/** When a rising f(t) first reaches `v` in [lo, hi] (for cueing on eased motion), or null. */
+export function timeAt(f: (t: number) => number, v: number, lo: number, hi: number): number | null {
+  if (f(lo) >= v) return lo;
+  if (f(hi) < v) return null;
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (f(mid) >= v) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+/** Cues from optional times (drops the ones that never happen). */
+export const cues = (...list: [number | null, SceneCueKind][]): SceneCue[] => list.filter((c): c is SceneCue => c[0] != null);
+
+const SOUND_KEY = 'blacktop_scene_sound';
+let soundOn = (() => {
+  try {
+    return localStorage.getItem(SOUND_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+})();
+const soundListeners = new Set<() => void>();
+
+/** Whether scenes play their sounds (one switch for the demo tour and the Enterprise scenes). */
+export function useSceneSound(): [boolean, (on: boolean) => void] {
+  const on = useSyncExternalStore(
+    (l) => {
+      soundListeners.add(l);
+      return () => soundListeners.delete(l);
+    },
+    () => soundOn,
+    () => soundOn,
+  );
+  return [
+    on,
+    (next) => {
+      soundOn = next;
+      try {
+        localStorage.setItem(SOUND_KEY, next ? 'on' : 'off');
+      } catch {
+        /* private mode: this visit only */
+      }
+      soundListeners.forEach((l) => l());
+    },
+  ];
+}
+
+/** A scene's sounds on one of its clocks (a looping time). */
+export type SceneSound = { t: number; cues: SceneCue[] };
+
+/**
+ * Plays each track's cues as its clock passes them, only while the frame is
+ * on screen and the page is visible. A jump (scrubbing, a hidden tab catching
+ * up) plays nothing rather than a pile-up.
+ */
+function useCues(el: { current: HTMLDivElement | null }, sound?: SceneSound | SceneSound[]) {
+  const [on] = useSceneSound();
+  const visible = useRef(false);
+  const prev = useRef<(number | null)[]>([]);
+  useEffect(() => {
+    const node = el.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => (visible.current = e.isIntersecting && e.intersectionRatio >= 0.5), { threshold: [0, 0.5, 1] });
+    io.observe(node);
+    return () => io.disconnect();
+  }, [el]);
+  const tracks = !sound ? [] : Array.isArray(sound) ? sound : [sound];
+  const key = tracks.map((k) => k.t.toFixed(3)).join('|');
+  useEffect(() => {
+    const live = on && visible.current && document.visibilityState === 'visible';
+    tracks.forEach(({ t, cues }, i) => {
+      const last = prev.current[i] ?? null;
+      prev.current[i] = t;
+      if (last == null || !live) return;
+      const wrapped = t < last;
+      if (!wrapped && t - last > 1) return;
+      for (const [at, kind] of cues) {
+        if (wrapped ? at > last || at <= t : at > last && at <= t) sceneCue(kind);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, on]);
+}
+
+export function Frame({ children, sound }: { children: ReactNode; sound?: SceneSound | SceneSound[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [on, setOn] = useSceneSound();
+  useCues(ref, sound);
   return (
-    <div className="relative w-full aspect-[16/10] rounded-2xl border border-border/30 bg-[#0b0b0e] overflow-hidden animate-scale-in no-frost">
+    <div ref={ref} className="relative w-full aspect-[16/10] rounded-2xl border border-border/30 bg-[#0b0b0e] overflow-hidden animate-scale-in no-frost">
       <svg viewBox={`0 0 ${VW} ${VH}`} className="absolute inset-0 w-full h-full" style={{ fontFamily: 'inherit' }} aria-hidden>
         {children}
       </svg>
+      {sound && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOn(!on);
+          }}
+          aria-label={on ? tr("Mute sound") : tr("Play sound")}
+          aria-pressed={on}
+          className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center bg-black/55 border border-white/10 text-white/70 hover:text-white transition-colors"
+        >
+          {on ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+        </button>
+      )}
     </div>
   );
 }

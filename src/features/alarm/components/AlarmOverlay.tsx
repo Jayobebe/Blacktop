@@ -10,7 +10,7 @@ import { useSettings } from '@/features/settings';
 import { getActiveRideStatus } from '@/features/ride';
 import { Button } from '@/components/ui/button';
 import { getAlarm, noteNudge, setAlarmPhase, useAlarm } from '../lib/alarmStore';
-import { playAlarmChirp as alarmChirp, startAlarmSiren } from '../lib/alarmSound';
+import { pinForAlarm, playAlarmChirp as alarmChirp, startAlarmSiren } from '../lib/alarmSound';
 import { disarmAlarm } from '../lib/arm';
 import { checkAlarmPattern, MIN_PATTERN_DOTS, saveAlarmPattern } from '../lib/pattern';
 import { TamperDetector, type TamperEvent } from '../lib/detector';
@@ -111,6 +111,13 @@ function AlarmScreen() {
 
   // The screen stays on while the lock is up (sensors stop with the screen).
   useScreenOn();
+  // Android app: pinned from arming until it's unlocked (not while setting the pattern).
+  const pinned = phase !== 'setup';
+  useEffect(() => {
+    if (!pinned) return;
+    pinForAlarm(true);
+    return () => pinForAlarm(false);
+  }, [pinned]);
 
   // ── Watching ──
   const detector = useRef<TamperDetector | null>(null);

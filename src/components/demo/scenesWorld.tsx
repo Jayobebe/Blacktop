@@ -73,6 +73,7 @@ import {
   useIds,
   useSceneTime,
   win,
+  type SceneCue,
   type Icon,
   type Pt,
 } from '@/components/scene/kit';
@@ -102,6 +103,10 @@ const WORLD_MARKS: { I: Icon; name: () => string; at: [number, number] }[] = [
 ];
 const GLOW = Array.from({ length: 34 }, (_, i) => [rnd(i) * 300 - 150, rnd(i + 50) * 110 - 45] as [number, number]);
 
+/** The globe turns once every 22.5 s: a ping as each landmark comes round to the front. */
+const WD_TURN = 360 / 16;
+const WD_CUES: SceneCue[] = WORLD_MARKS.map((m): SceneCue => [loopT((m.at[0] + 10) / 16, WD_TURN), 'ping']);
+
 export function WorldScene() {
   const id = useIds();
   const t = useSceneTime(0);
@@ -120,7 +125,7 @@ export function WorldScene() {
   const facing = marks.reduce((b, m) => (m.d < b.d ? m : b), marks[0]);
 
   return (
-    <Frame>
+    <Frame sound={{ t: loopT(t, WD_TURN), cues: WD_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <defs>
@@ -173,6 +178,9 @@ export function WorldScene() {
 
 const SS_P = 13;
 
+/** Each item: flick in, the vote, then the price. */
+const SS_CUES: SceneCue[] = Array.from({ length: 5 }, (_, k) => k * (SS_P / 5)).flatMap((at): SceneCue[] => [[at + 0.05, 'whoosh'], [at + 1.1, 'tap'], [at + 1.7, 'coin']]);
+
 export function SpeedshopScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), SS_P);
@@ -190,7 +198,7 @@ export function SpeedshopScene() {
   const buyPct = [64, 48, 71, 39, 57][focus];
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: SS_CUES }}>
       <Defs id={id} />
       <defs>
         <radialGradient id={id('spot')} cx="50%" cy="0%" r="80%">
@@ -293,6 +301,9 @@ function polyUpTo(pts: Pt[], f: number): Pt[] {
   return out;
 }
 
+/** The grid lights up, riders derez, the last one standing wins. */
+const DZ_CUES: SceneCue[] = [[0.2, 'beep'], ...DZ_RIDERS.filter((r) => r.dies !== undefined).map((r): SceneCue => [(r.dies as number) * 7, 'impact']), [0.86 * 7, 'success']];
+
 export function DerezScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), DZ_P);
@@ -303,7 +314,7 @@ export function DerezScene() {
     u >= 0.86 ? tr("You win!") : lastDeath && u - (lastDeath.dies ?? 0) < 0.08 ? tr("{0} derezzed!", [lastDeath.name()]) : tr("{0} riders live", [alive]);
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: DZ_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, DZ_P)}>
@@ -355,6 +366,9 @@ const STATIONS: { name: () => string; hsl: string }[] = [
   { name: () => 'Cruise', hsl: '262 83% 58%' },
 ];
 
+/** The dial clicks round each station; a radio call ducks the music. */
+const RD_CUES: SceneCue[] = [[RD_STEP - 0.6, 'whoosh'], [2 * RD_STEP - 0.6, 'whoosh'], [3 * RD_STEP - 0.6, 'whoosh'], [RD_P - 0.6, 'whoosh'], [5.3, 'radioIn'], [8.2, 'radioOut']];
+
 export function RadioScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), RD_P);
@@ -370,7 +384,7 @@ export function RadioScene() {
   const C: Pt = [86, 100];
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: RD_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, RD_P)}>
@@ -441,6 +455,9 @@ const QR = Array.from({ length: 81 }, (_, i) => {
   return finder || rnd(i + 17) > 0.52;
 });
 
+/** Chip-ins land, the crew votes, the pot pays out, then a send. */
+const PU_CUES: SceneCue[] = [[1.8, 'coin'], [3.3, 'coin'], [4.8, 'coin'], [6.2, 'tap'], [6.8, 'tap'], [7.4, 'tap'], [8, 'tap'], [8.6, 'success'], [10.4, 'whoosh']];
+
 export function PayUpScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), PU_P);
@@ -457,7 +474,7 @@ export function PayUpScene() {
   const send = t > 10.4;
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: PU_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <defs>
@@ -535,6 +552,9 @@ export function PayUpScene() {
 
 const MY_STEP = 1.7;
 
+/** A tap as each accent colour takes over. */
+const MY_CUES: SceneCue[] = ACCENT_COLORS.map((_, i): SceneCue => [i * MY_STEP + 0.02, 'tap']);
+
 export function MakeItYoursScene() {
   const id = useIds();
   const t = useSceneTime(0);
@@ -550,7 +570,7 @@ export function MakeItYoursScene() {
   const pulse = easeOut((tp - idx * MY_STEP) / 0.5);
 
   return (
-    <Frame>
+    <Frame sound={{ t: tp, cues: MY_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       {/* A slice of the app in the chosen colour */}
@@ -620,6 +640,9 @@ export function MakeItYoursScene() {
 
 const BN_P = 10;
 
+/** Hold, the flames, everything gone, a fresh start. */
+const BN_CUES: SceneCue[] = [[0.8, 'beep'], [2.6, 'impact'], [2.7, 'whoosh'], [5.1, 'radioOut'], [7.4, 'ping']];
+
 export function BurnScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), BN_P);
@@ -638,7 +661,7 @@ export function BurnScene() {
   const fresh = easeOut((t - 7.4) / 0.6);
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: BN_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <defs>
@@ -706,6 +729,8 @@ export function BurnScene() {
 
 const RR_P = 8;
 
+const RR_CUES: SceneCue[] = [[0.3, 'whoosh']];
+
 export function ReadyScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), RR_P);
@@ -720,7 +745,7 @@ export function ReadyScene() {
   ];
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: RR_CUES }}>
       <Defs id={id} />
       <defs>
         <radialGradient id={id('dawn')} cx="50%" cy="100%" r="60%">

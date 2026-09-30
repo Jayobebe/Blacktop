@@ -84,3 +84,27 @@ Xcode will show a permission dialog for each one the first time it is triggered.
 - [ ] Enable **Push Notifications** capability if local crash alerts are added
 - [ ] Set correct signing certificate and provisioning profile
 - [ ] Archive → Distribute via TestFlight before submitting to review
+
+---
+
+## Alarm sounds on the loudspeaker (AlarmSound plugin)
+
+The anti-theft alarm and the auto-rescue siren play natively so they always come out of
+the phone's own speaker, even with a helmet intercom connected (Android has this built in:
+`android/app/src/main/java/com/blacktoplive/app/AlarmSoundPlugin.java`). On iOS:
+
+1. In Xcode, drag `native/ios/AlarmSoundPlugin.swift` into the `App` target (tick "Copy items if needed" off so it stays in the repo; "Add to targets: App" on).
+2. Register it: add `App/App/MainViewController.swift`
+
+   ```swift
+   import Capacitor
+
+   class MainViewController: CAPBridgeViewController {
+       override open func capacitorDidLoad() {
+           bridge?.registerPluginInstance(AlarmSoundPlugin())
+       }
+   }
+   ```
+
+   then in `Main.storyboard` select the Bridge View Controller and set its Custom Class to `MainViewController` (module `App`).
+3. Build. Until this is in, iOS plays the alarm through Web Audio, which follows whatever output the phone is using.

@@ -57,6 +57,7 @@ import {
   useIds,
   useSceneTime,
   win,
+  type SceneCue,
   type Icon,
   type Pt,
 } from '@/components/scene/kit';
@@ -168,6 +169,12 @@ const AR_P = 18;
 const AR_SLOT = 6;
 const AR_TRACE = new Route([[160, 76], [172, 58], [190, 64], [204, 44], [226, 52], [238, 70], [256, 60], [276, 72], [290, 56]], false, 10);
 
+/** Each receipt prints, the badges bank, and the receipt slides off for the next. */
+const AR_CUES: SceneCue[] = [
+  [0.6, 'print'], [3.6, 'tap'], [4.0, 'tap'], [4.4, 'tap'], [4.8, 'tap'], [5.4, 'whoosh'],
+  [6.6, 'print'], [11.4, 'whoosh'], [12.6, 'print'],
+];
+
 export function AfterRideScene() {
   const id = useIds();
   const u = useUnits();
@@ -226,7 +233,7 @@ export function AfterRideScene() {
   ];
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: AR_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, AR_P)}>
@@ -298,6 +305,8 @@ export function AfterRideScene() {
 
 const GA_P = 12;
 
+const GA_CUES: SceneCue[] = [[5.6, 'ping'], [8.2, 'success'], [8.6, 'tap']];
+
 export function GarageScene() {
   const id = useIds();
   const u = useUnits();
@@ -316,7 +325,7 @@ export function GarageScene() {
   ];
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: GA_CUES }}>
       <Defs id={id} />
       <defs>
         <linearGradient id={id('floor')} x1="0" y1="0" x2="0" y2="1">
@@ -390,6 +399,9 @@ const TIER_FINISH: Record<string, [string, string, string]> = {
   orion: ['#a78bfa', '#140a3f', '#e3d7ff'],
 };
 
+/** A flip for every tier up, a flourish on the last. */
+const TC_CUES: SceneCue[] = [...TIER_LADDER.slice(1).map((_, i): SceneCue => [(i + 1) * TC_STEP, 'whoosh']), [(TIER_LADDER.length - 1) * TC_STEP + 0.5, 'success']];
+
 export function TradingCardsScene() {
   const id = useIds();
   const t = useSceneTime(0);
@@ -413,7 +425,7 @@ export function TradingCardsScene() {
   const starry = tier.id === 'orion' || tier.id === 'obsidian';
 
   return (
-    <Frame>
+    <Frame sound={{ t: tp, cues: TC_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <defs>
@@ -516,6 +528,9 @@ const CC_RUN = [1.3, 6.3];
 const CC_TARGET = 238;
 const CC_TIME = 221;
 
+/** The countdown, the launch, the finish and the Spectre rising. */
+const CC_CUES: SceneCue[] = [[CC_RUN[0] - 1.26, 'beep'], [CC_RUN[0] - 0.84, 'beep'], [CC_RUN[0] - 0.42, 'beep'], [CC_RUN[0], 'whoosh'], [CC_RUN[1], 'success'], [6.8, 'whoosh']];
+
 export function CardChallengeScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), CC_P);
@@ -535,7 +550,7 @@ export function CardChallengeScene() {
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: CC_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <defs>
@@ -640,6 +655,11 @@ const TD_SECTORS = [
   { color: AMBER, time: '31.832' },
 ];
 
+/** Two laps: a beep at the line and each sector split, and the pit board called over the radio. */
+const TD_CUES: SceneCue[] = [0, TD_LAP].flatMap((lap): SceneCue[] => [
+  [lap + 0.05, 'beep'], [lap + TD_LAP / 3, 'beep'], [lap + (2 * TD_LAP) / 3, 'beep'], [lap + 0.4, 'radioIn'], [lap + 1.4, 'radioOut'],
+]);
+
 export function TrackDayScene() {
   const id = useIds();
   const t = useSceneTime(0);
@@ -653,7 +673,7 @@ export function TrackDayScene() {
   const sf = TD_CIRCUIT.at(0);
 
   return (
-    <Frame>
+    <Frame sound={{ t: loopT(t, TD_LAP * 2), cues: TD_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <Road d={TD_CIRCUIT.d} w={9} />

@@ -39,6 +39,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { tr } from '@/lib/i18n';
+import type { SceneCueKind } from '@/lib/radioFx';
 import { useSettings } from '@/features/settings';
 import { HAZARD_CATEGORIES, HAZARD_TYPES } from '@/features/hazards';
 import { formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
@@ -74,6 +75,9 @@ import {
   aa,
   bikeAt,
   clamp01,
+  cues,
+  timeAt,
+  type SceneCue,
   cycle,
   easeInOut,
   easeOut,
@@ -135,6 +139,9 @@ const INTRO_STOPS: { f: number; I: Icon; up: boolean }[] = [
   { f: 0.87, I: Shield, up: false },
 ];
 
+const introF = (t: number) => 0.02 + 0.96 * easeInOut(t / 8.4);
+const INTRO_CUES = cues([0.3, 'whoosh'], ...INTRO_STOPS.map((s): [number | null, SceneCueKind] => [timeAt(introF, s.f, 0, 8.4), 'tap']), [8.2, 'success']);
+
 export function IntroScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), INTRO_P);
@@ -143,7 +150,7 @@ export function IntroScene() {
   const labels = [tr("Convoy"), tr("Voice"), tr("Routes"), tr("Tracking"), tr("Badges"), tr("Privacy")];
   const underline = easeInOut((t - 0.3) / 1.2);
   return (
-    <Frame>
+    <Frame sound={{ t, cues: INTRO_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, INTRO_P)}>
@@ -194,6 +201,8 @@ const RT_QR = Array.from({ length: 49 }, (_, i) => {
   return finder || frac(Math.sin(i * 91.7 + 3.1) * 4375.5) > 0.5;
 });
 
+const RT_CUES: SceneCue[] = [[0.4, 'radioIn'], [1.3, 'tap'], [3.3, 'radioOut'], [6.3, 'ping'], [7.9, 'success']];
+
 export function RideTogetherScene() {
   const id = useIds();
   const u = useUnits();
@@ -214,7 +223,7 @@ export function RideTogetherScene() {
   const copied = t > 1.3 && t < 3.2;
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: RT_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, RT_P)}>
@@ -302,6 +311,8 @@ export function RideTogetherScene() {
 const NB_P = 12;
 const NB_ME: Pt = [118, 110];
 
+const NB_CUES: SceneCue[] = [[1.1, 'ping'], [4.2, 'ping'], [5.5, 'tap'], [5.7, 'success'], [6.5, 'radioIn'], [8.1, 'whoosh'], [8.7, 'success']];
+
 export function NearbyScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), NB_P);
@@ -321,7 +332,7 @@ export function NearbyScene() {
   const merge = win(t, 8.6, 11.6, 0.3);
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: NB_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, NB_P)}>
@@ -390,6 +401,8 @@ export function NearbyScene() {
 const PL_P = 12;
 const PL_ROAD = new Route([[172, 204], [186, 160], [214, 130], [240, 96], [268, 70], [292, 36], [316, 8]], false, 14);
 
+const PL_CUES: SceneCue[] = [[1.4, 'radioIn'], [4.3, 'radioOut'], [5.8, 'tap'], [5.9, 'ping'], [8.8, 'whoosh']];
+
 export function PillionScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), PL_P);
@@ -402,7 +415,7 @@ export function PillionScene() {
   const reactions: Icon[] = [ThumbsUp, Flame, OctagonX, Fuel];
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: PL_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, PL_P)}>
@@ -494,6 +507,16 @@ const NV_TURNS = [
 const NV_CAMERA_F = 0.3;
 const NV_STOPS = [0.62];
 
+const navF = (t: number) => 0.02 + 0.93 * easeInOut(t / 13.2);
+const NV_CUES = cues(
+  [timeAt(navF, NV_TURNS[0].f, 0, 13.2), 'beep'],
+  [timeAt(navF, NV_CAMERA_F - 0.08, 0, 13.2), 'camera'],
+  [timeAt(navF, NV_TURNS[1].f, 0, 13.2), 'beep'],
+  [6.8, 'ping'],
+  [timeAt(navF, NV_STOPS[0], 0, 13.2), 'tap'],
+  [13, 'success'],
+);
+
 export function NavigationScene() {
   const id = useIds();
   const u = useUnits();
@@ -509,7 +532,7 @@ export function NavigationScene() {
   const stopsLeft = NV_STOPS.filter((s) => s > f).length;
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: NV_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, NV_P)}>
@@ -570,6 +593,8 @@ const HZ_P = 14;
 const HZ_ROAD = new Route([[150, 214], [146, 170], [158, 130], [178, 96], [184, 60], [172, 20], [166, -16]], false, 16);
 const HZ_AT = 0.42;
 
+const HZ_CUES: SceneCue[] = [[1.1, 'tap'], [2.2, 'tap'], [3.8, 'tap'], [4.6, 'success'], [7, 'caution'], [11, 'ping'], [12.2, 'tap']];
+
 export function HazardScene() {
   const id = useIds();
   const u = useUnits();
@@ -593,7 +618,7 @@ export function HazardScene() {
   const said = t > 12.2;
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: HZ_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, HZ_P)}>
@@ -681,7 +706,10 @@ export function LiveDataScene() {
   const id = useIds();
   const u = useUnits();
   const t = loopT(useSceneTime(0), LD_P);
-  const mph = 62 + 30 * Math.sin((t / LD_P) * Math.PI * 2 - Math.PI / 2) + 4 * Math.sin(t * 3);
+  const mphAt = (s: number) => 62 + 30 * Math.sin((s / LD_P) * Math.PI * 2 - Math.PI / 2) + 4 * Math.sin(s * 3);
+  const mph = mphAt(t);
+  // A beep as the speed crosses the rider's amber and red thresholds (on the way up).
+  const ldCues = cues([timeAt(mphAt, u.amber, 0, LD_P / 2), 'beep'], [timeAt(mphAt, u.red, 0, LD_P / 2), 'camera']);
   const color = mph >= u.red ? RED : mph >= u.amber ? AMBER : INK;
   const lean = leanAt(t);
   // Everything up to now, for the peaks.
@@ -715,7 +743,7 @@ export function LiveDataScene() {
   const secs = 754 + Math.floor(t);
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: ldCues }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, LD_P)}>
@@ -780,11 +808,33 @@ const SF_ROAD = new Route([[-10, 60], [60, 70], [120, 58], [170, 80], [214, 74],
 const SF_IMPACT_F = 0.62;
 const SF_HELP = new Route([[40, 196], [52, 164], [90, 150], [140, 132], [182, 110], [206, 84], [SF_ROAD.at(SF_IMPACT_F).p[0], SF_ROAD.at(SF_IMPACT_F).p[1] + 4]], false, 12);
 
+/** Rescue: the hit, the check-in, rescue out with the siren, a mate on the way. Then the alarm act. */
+const SF_CUES: SceneCue[] = [
+  [3, 'impact'],
+  [3.4, 'caution'],
+  [6.7, 'radioIn'],
+  [6.9, 'siren'],
+  [8.4, 'siren'],
+  [9.8, 'ping'],
+  ...([
+    [0.8, 'tap'],
+    [1.1, 'tap'],
+    [2.15, 'tap'],
+    [2.75, 'success'],
+    [3.95, 'lock'],
+    [4.6, 'beep'],
+    [6.1, 'caution'],
+    [7.3, 'siren'],
+    [8.3, 'tap'],
+    [9.1, 'unlock'],
+  ] as SceneCue[]).map(([at, kind]): SceneCue => [SF_P + at, kind]),
+];
+
 export function SafetyScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), SF_P + AL_P);
   return (
-    <Frame>
+    <Frame sound={{ t, cues: SF_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       {t < SF_P ? <RescueAct t={t} id={id} /> : <AlarmAct t={t - SF_P} id={id} />}
@@ -867,6 +917,12 @@ function RescueAct({ t, id }: { t: number; id: (n: string) => string }) {
         <T x={120} y={46.5} anchor="middle" size={7} color="#fff" weight={700}>{tr("Send rescue")}</T>
       </Panel>
       <Chip x={VW - 8} y={8} right label={tr("Rescue sent")} I={AlertTriangle} color={RED} tone={RED} opacity={win(t, 6.7, 8.8, 0.3)} />
+      {/* Auto-rescue sounds the siren so people nearby notice */}
+      <Chip x={8} y={48} label={tr("Siren on")} I={Siren} color={RED} tone={RED} extra={19} opacity={win(t, 6.9, 13.4, 0.3)}>
+        <g transform="translate(9 0)">
+          <Wave on={1} t={t} color={RED} n={4} />
+        </g>
+      </Chip>
 
       {/* A mate gets the call */}
       <Panel x={176} y={146} w={136} h={46} opacity={card} r={9} stroke={RED}>
@@ -1129,6 +1185,8 @@ const NT_ITEMS: { I: Icon; color: string; title: () => string; body: () => strin
   { I: Wrench, color: AMBER, title: () => tr("Chain lube due soon"), body: () => tr("V4 Ducati: due in 150 mi."), when: () => tr("{0} h", [3]) },
 ];
 
+const NT_CUES: SceneCue[] = NT_ITEMS.map((_, i) => [0.6 + i * 2.2, 'ping']);
+
 export function NotificationsScene() {
   const id = useIds();
   const t = loopT(useSceneTime(0), NT_P);
@@ -1137,7 +1195,7 @@ export function NotificationsScene() {
   const order = NT_ITEMS.map((_, i) => i).filter((i) => arrived[i] > 0);
 
   return (
-    <Frame>
+    <Frame sound={{ t, cues: NT_CUES }}>
       <Defs id={id} />
       <defs>
         <linearGradient id={id('lock')} x1="0" y1="0" x2="0" y2="1">

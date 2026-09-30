@@ -183,6 +183,7 @@ export default function DemoShowcase() {
         { icon: Waves, label: tr("Direct or Twisty"), text: tr("Pick your line before you go — both ETAs shown side by side.") },
         { icon: Repeat, label: tr("Loop Planner"), text: tr("No destination? Generate a twisty round trip back to where you are.") },
         { icon: CloudRain, label: tr("Weather Routing"), text: tr("Warns when heavy rain sits on your route and offers a drier line.") },
+        { icon: Radio, label: tr("Cockpit & Rally Voice"), text: tr("Directions as fighter-pilot radio calls, or rally pacenotes that grade every bend ahead from 1 to 6 and name the hairpins. Voice chat and music duck while it talks.") },
       ],
     },
     {
@@ -221,7 +222,7 @@ export default function DemoShowcase() {
       cards: [
         { icon: AlertTriangle, label: tr("Rescue"), text: tr("Sends your live position to the whole convoy and your crew, straight to their lock screens.") },
         { icon: UserRound, label: tr("Solo Rescue"), text: tr("Riding alone? The same button alerts your crew, and Discord if you've connected it.") },
-        { icon: Shield, label: tr("Auto-Rescue"), text: tr("High-G impact plus a stop triggers a 5-minute check-in.") },
+        { icon: Shield, label: tr("Auto-Rescue"), text: tr("High-G impact plus a stop triggers a 5-minute check-in. If help goes out, the phone sounds a siren so people nearby notice.") },
         { icon: MessageSquare, label: tr("Discord"), text: tr("Webhook announces convoy starts and broadcasts rescue pings.") },
         { icon: MapPin, label: tr("Rescue Card"), text: tr("Tap the alert to see where they are and route to them on the Blacktop map or Google Maps. Cancel and everyone hears you're OK.") },
         { icon: Users, label: tr("You Choose Who Hears"), text: tr("Settings → Safety: your convoy, your crew, Discord, and riders nearby within 5 to 50 km who've opted in to help.") },

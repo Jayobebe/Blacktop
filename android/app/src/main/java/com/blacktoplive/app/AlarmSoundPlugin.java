@@ -68,6 +68,35 @@ public class AlarmSoundPlugin extends Plugin {
         call.resolve(new JSObject());
     }
 
+    /**
+     * Screen pinning while the anti-theft lock is up, so the home and recents
+     * gestures can't just leave the lock screen (unpinning takes the phone's own
+     * unlock when "Ask for PIN before unpinning" is on).
+     */
+    @PluginMethod
+    public void pinApp(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            try {
+                getActivity().startLockTask();
+            } catch (Exception ignored) {
+                // Pinning unavailable here: the lock screen still stands.
+            }
+        });
+        call.resolve(new JSObject());
+    }
+
+    @PluginMethod
+    public void unpinApp(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            try {
+                getActivity().stopLockTask();
+            } catch (Exception ignored) {
+                // Not pinned.
+            }
+        });
+        call.resolve(new JSObject());
+    }
+
     @Override
     protected void handleOnDestroy() {
         stopSirenNow();

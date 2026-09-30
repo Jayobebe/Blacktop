@@ -374,13 +374,13 @@ export function alarmChirp(kind: 'arm' | 'disarm' | 'nudge' | 'entry') {
  * speaker (not through the narrow comms band, it needs every decibel), behind
  * a limiter so it doesn't clip. Runs until the returned stop is called.
  */
-export function alarmSiren(): () => void {
+export function alarmSiren(level = 0.9): () => void {
   const c = acquire();
   if (!c) return () => {};
   const t = c.currentTime;
   const out = c.createGain();
   out.gain.setValueAtTime(0.0001, t);
-  out.gain.exponentialRampToValueAtTime(0.9, t + 0.08);
+  out.gain.exponentialRampToValueAtTime(level, t + 0.08);
   const limiter = c.createDynamicsCompressor();
   limiter.threshold.value = -4;
   limiter.knee.value = 0;
@@ -431,4 +431,119 @@ export function alarmSiren(): () => void {
     }
     release(200);
   };
+}
+
+// ---- Scene cues ---------------------------------------------------------------
+
+export type SceneCueKind =
+  | 'tap'
+  | 'ping'
+  | 'success'
+  | 'error'
+  | 'print'
+  | 'whoosh'
+  | 'radioIn'
+  | 'radioOut'
+  | 'lock'
+  | 'unlock'
+  | 'beep'
+  | 'camera'
+  | 'caution'
+  | 'siren'
+  | 'coin'
+  | 'impact';
+
+/** A band-passed noise sweep, for things flying past (a swipe, a card). */
+function sweep(c: AudioContext, at: number, dur: number, gain: number, from: number, to: number) {
+  if (!chain) return;
+  const t = c.currentTime + at;
+  const noise = c.createBufferSource();
+  noise.buffer = noiseBuffer(c, dur + 0.02);
+  const band = c.createBiquadFilter();
+  band.type = 'bandpass';
+  band.Q.value = 2;
+  band.frequency.setValueAtTime(from, t);
+  band.frequency.exponentialRampToValueAtTime(to, t + dur);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + dur * 0.4);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  noise.connect(band).connect(g).connect(chain);
+  noise.start(t);
+  noise.stop(t + dur + 0.02);
+}
+
+/**
+ * The demo slides' and Enterprise scenes' sound effects, kept quiet and in the
+ * same radio voice as the rest of the app. The siren is a short, low burst of
+ * the real one; the impact goes around the comms band so it keeps its thump.
+ */
+export function sceneCue(kind: SceneCueKind) {
+  if (kind === 'camera' || kind === 'caution') return warningTone(kind);
+  if (kind === 'lock' || kind === 'unlock') return alarmChirp(kind === 'lock' ? 'arm' : 'disarm');
+  if (kind === 'radioIn') return squelchOpen();
+  if (kind === 'radioOut') return squelchClose();
+  if (kind === 'siren') {
+    const stop = alarmSiren(0.14);
+    setTimeout(stop, 1400);
+    return;
+  }
+  const c = acquire();
+  if (!c || !chain) {
+    if (c) release(0);
+    return;
+  }
+  let length = 0.3;
+  switch (kind) {
+    case 'tap':
+      pop(c, 0, 0.5);
+      length = 0.05;
+      break;
+    case 'ping':
+      tone(c, 0, 1180, 0.08, 0.14, 'sine');
+      tone(c, 0.09, 1580, 0.12, 0.14, 'sine');
+      break;
+    case 'success':
+      [880, 1175, 1480].forEach((f, i) => tone(c, i * 0.08, f, 0.09, 0.12, 'triangle'));
+      length = 0.35;
+      break;
+    case 'error':
+      tone(c, 0, 330, 0.12, 0.16);
+      tone(c, 0.14, 260, 0.18, 0.16);
+      length = 0.35;
+      break;
+    case 'print':
+      for (let i = 0; i < 14; i++) squawk(c, i * 0.075, 0.05, 0.22, 2400);
+      length = 1.1;
+      break;
+    case 'whoosh':
+      sweep(c, 0, 0.35, 0.3, 700, 2600);
+      length = 0.4;
+      break;
+    case 'beep':
+      tone(c, 0, 1650, 0.1, 0.14, 'sine');
+      length = 0.15;
+      break;
+    case 'coin':
+      tone(c, 0, 1320, 0.07, 0.13, 'square');
+      tone(c, 0.07, 1980, 0.16, 0.13, 'square');
+      break;
+    case 'impact': {
+      const t = c.currentTime;
+      const osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.25);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      osc.connect(g).connect(c.destination);
+      osc.start(t);
+      osc.stop(t + 0.32);
+      squawk(c, 0, 0.12, 0.35, 900);
+      break;
+    }
+  }
+  release(length * 1000 + 100);
 }

@@ -61,6 +61,8 @@ import {
   Rings,
   type Pt,
   type Icon,
+  cues,
+  type SceneCue,
 } from '@/components/scene/kit';
 import bikeAsset from '@/assets/demo-bike.png.asset.json';
 import type { EnterpriseTier } from '../types';
@@ -94,6 +96,9 @@ const RACERS = [
 // Best overall (accent), personal best (white), slower (grey)
 const SECTOR_COLORS = [A, '#f4f4f5', '#4b4b53'];
 
+/** The 18 s race cycle: yellow flag, then the pit board called over the radio. */
+const TRACK_CUES: SceneCue[] = [[5.5, 'caution'], [12, 'radioIn'], [13.6, 'radioOut']];
+
 function TrackScene() {
   const id = useIds();
   const t = useSceneTime(6);
@@ -121,7 +126,7 @@ function TrackScene() {
   const ROW_H = 21;
 
   return (
-    <Frame>
+    <Frame sound={{ t: t % 18, cues: TRACK_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       {/* Circuit */}
@@ -221,6 +226,13 @@ const FENCE = new Route([[26, 18], [150, 12], [252, 22], [264, 86], [258, 150], 
 const SHOW_CYCLE = 15;
 const driveAt = (c: number) => easeInOut((c - 0.8) / 10.4);
 
+/** Off from the dealer, a warning if the test ride leaves the area, the summary. */
+const SHOW_OUT = (() => {
+  for (let c = 0; c < SHOW_CYCLE; c += 0.05) if (!inside(TEST.at(driveAt(c)).p, FENCE.pts)) return c;
+  return null;
+})();
+const SHOW_CUES = cues([0.8, 'tap'], [SHOW_OUT, 'caution'], [11.4, 'success']);
+
 function ShowroomScene() {
   const id = useIds();
   const t = useSceneTime(3);
@@ -236,7 +248,7 @@ function ShowroomScene() {
   const gaugeLen = 2 * Math.PI * 8;
 
   return (
-    <Frame>
+    <Frame sound={{ t: cyc, cues: SHOW_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       {/* City blocks: a park and the streets */}
@@ -313,6 +325,9 @@ const QR = Array.from({ length: 81 }, (_, i) => {
 const BAY = { x: 158, y: 8, w: 154, h: 184, floor: 176 };
 const BIKE = { w: 104, h: (104 * 1094) / 704, bottom: 0.763 };
 
+/** Rolled in, tagged, photographed, approved, welded and spannered, ready, stamped. */
+const WS_CUES: SceneCue[] = [[0.3, 'whoosh'], [1.7, 'tap'], [3.95, 'tap'], [5.3, 'success'], [7.3, 'print'], [9.1, 'tap'], [9.6, 'tap'], [10.1, 'tap'], [11.3, 'ping'], [13.8, 'impact'], [15.1, 'whoosh']];
+
 function WorkshopScene() {
   const id = useIds();
   const t = useSceneTime(0.2);
@@ -358,7 +373,7 @@ function WorkshopScene() {
   const panelW = 142;
 
   return (
-    <Frame>
+    <Frame sound={{ t: c, cues: WS_CUES }}>
       <Defs id={id} />
       <defs>
         <linearGradient id={id('wall')} x1="0" y1="0" x2="0" y2="1">
@@ -641,6 +656,10 @@ const ACAD = new Route([[40, 150], [66, 112], [108, 94], [150, 70], [200, 52], [
 const ACAD_M = 2400; // route length in metres, for the tether readout
 const FIELDS: string[] = ['M0 0 L120 0 L96 70 L0 92 Z', 'M150 0 L320 0 L320 50 L200 44 Z', 'M180 160 L320 150 L320 200 L170 200 Z'];
 
+/** The instructor's radio every 9 s; the speed gate passes one run and fails the next. */
+const ACAD_RADIO: SceneCue[] = [[1, 'radioIn'], [5, 'radioOut']];
+const ACAD_GATE: SceneCue[] = [[2.3, 'success'], [4.6 + 2.3, 'error']];
+
 function AcademyScene() {
   const id = useIds();
   const t = useSceneTime(2);
@@ -669,7 +688,7 @@ function AcademyScene() {
   const verdict = easeOut((run - 2.3) / 0.3) * (1 - easeOut((run - 4.3) / 0.3));
 
   return (
-    <Frame>
+    <Frame sound={[{ t: t % 9, cues: ACAD_RADIO }, { t: t % 9.2, cues: ACAD_GATE }]}>
       <Defs id={id} />
       <Base id={id} />
       {FIELDS.map((d) => (
@@ -745,6 +764,10 @@ const PASS = new Route(
 );
 const RIDER_GAP = 0.03;
 
+/** The leader's broadcast every 8 s; a rider's ping every 11 s. */
+const TOUR_CAST: SceneCue[] = [[0.4, 'radioIn'], [3.6, 'radioOut']];
+const TOUR_PING: SceneCue[] = [[6, 'ping']];
+
 function TouringScene() {
   const id = useIds();
   const t = useSceneTime(1);
@@ -765,7 +788,7 @@ function TouringScene() {
   const pinger = riders[1];
 
   return (
-    <Frame>
+    <Frame sound={[{ t: t % 8, cues: TOUR_CAST }, { t: t % 11, cues: TOUR_PING }]}>
       <Defs id={id} />
       <defs>
         <linearGradient id={id('ridge1')} x1="0" y1="0" x2="0" y2="1">
@@ -836,6 +859,8 @@ const ORBIT: { tier: EnterpriseTier; I: Icon }[] = [
 const STARS = Array.from({ length: 46 }, (_, i) => [rnd(i) * VW, rnd(i + 99) * VH, 0.3 + rnd(i + 7) * 0.9] as const);
 const SWATCHES = [32, 200, 330, 150];
 
+const BILLION_CUES: SceneCue[] = [[0.05, 'tap']];
+
 function BillionScene() {
   const id = useIds();
   const t = useSceneTime(0);
@@ -876,7 +901,7 @@ function BillionScene() {
   };
 
   return (
-    <Frame>
+    <Frame sound={{ t: t % 3.6, cues: BILLION_CUES }}>
       <Defs id={id} />
       <defs>
         <radialGradient id={id('core')} cx="50%" cy="50%" r="50%">
