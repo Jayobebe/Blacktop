@@ -1,0 +1,47 @@
+# Blacktop's own routing server: OSRM (twisty scoring, turn-by-turn) and
+# Valhalla (avoid-preferences, bicycles), behind Caddy for HTTPS and a shared
+# token. Only the place-search Edge Function talks to it. See README.md.
+services:
+  osrm:
+    image: ${OSRM_IMAGE:-ghcr.io/project-osrm/osrm-backend:latest}
+    command: osrm-routed --algorithm mld /data/region.osrm
+    volumes:
+      - ./data/osrm:/data:ro
+    expose:
+      - "5000"
+    restart: unless-stopped
+
+  valhalla:
+    image: ${VALHALLA_IMAGE:-ghcr.io/valhalla/valhalla-scripted:latest}
+    # Serves the tiles build.sh made; never builds here (no PBF in the folder).
+    environment:
+      serve_tiles: "True"
+      use_tiles_ignore_pbf: "True"
+      force_rebuild: "False"
+      server_threads: ${VALHALLA_THREADS:-8}
+    volumes:
+      - ./data/valhalla:/custom_files
+    expose:
+      - "8002"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ROUTING_DOMAIN: ${ROUTING_DOMAIN}
+      ROUTING_TOKEN: ${ROUTING_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - osrm
+      - valhalla
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

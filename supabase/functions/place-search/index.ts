@@ -133,6 +133,43 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
+// ---- Routers ------------------------------------------------------------------
+//
+// Blacktop's own routing server (infra/routing: OSRM + Valhalla behind Caddy)
+// when the ROUTING_* secrets are set, the public OSM demo servers otherwise.
+// If ours fails, the call falls back to the public one and ours is skipped for
+// a minute, so an outage or a weekly data rebuild costs one slow request, not
+// one per twisty candidate.
+const envUrl = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/\/+$/, "");
+const OWN_OSRM = envUrl("ROUTING_OSRM_URL");
+const OWN_VALHALLA = envUrl("ROUTING_VALHALLA_URL");
+const ROUTING_TOKEN = (Deno.env.get("ROUTING_TOKEN") ?? "").trim();
+const PUBLIC_OSRM = "https://router.project-osrm.org";
+const PUBLIC_VALHALLA = "https://valhalla1.openstreetmap.de";
+const OWN_ROUTER_REST_MS = 60_000;
+const ownRouterDownUntil: Record<string, number> = {};
+
+function routerHeaders(own: boolean, extra: Record<string, string>): Record<string, string> {
+  return {
+    "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)",
+    ...extra,
+    ...(own && ROUTING_TOKEN ? { Authorization: `Bearer ${ROUTING_TOKEN}` } : {}),
+  };
+}
+
+/** Runs a router call on our server first (unless it's resting), then on the public one. A null answer (no route) is an answer, not a failure. */
+async function viaRouter<T>(own: string, pub: string, call: (base: string, own: boolean) => Promise<T>): Promise<T> {
+  if (own && (ownRouterDownUntil[own] ?? 0) < Date.now()) {
+    try {
+      return await call(own, true);
+    } catch (e) {
+      ownRouterDownUntil[own] = Date.now() + OWN_ROUTER_REST_MS;
+      console.warn("[PLACE-SEARCH] own router failed, using the public one:", e instanceof Error ? e.message : e);
+    }
+  }
+  return call(pub, false);
+}
+
 type PhotonHit = { id: string; lat: number; lon: number; tags: Record<string, string> };
 
 /** Photon (komoot) OSM search: fast, tolerant of cloud servers, supports a bbox and tag filters. */
@@ -253,21 +290,25 @@ function readPrefs(b: RoutePrefs | undefined): Prefs {
 
 async function osrmRoute(stops: LngLat[], steps = false, timeoutMs = 9000): Promise<any | null> {
   const path = stops.map(([lo, la]) => `${lo.toFixed(6)},${la.toFixed(6)}`).join(";");
-  const url = new URL(`https://router.project-osrm.org/route/v1/driving/${path}`);
-  url.searchParams.set("overview", "full");
-  url.searchParams.set("geometries", "geojson");
-  url.searchParams.set("alternatives", "false");
-  url.searchParams.set("steps", steps ? "true" : "false");
-  url.searchParams.set("annotations", "speed");
-  const res = await fetchWithTimeout(url.toString(), {
-    headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Accept": "application/json" },
-  }, timeoutMs);
-  if (!res.ok) throw new Error(`OSRM ${res.status}`);
-  const json = await res.json();
-  return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+  return viaRouter(OWN_OSRM, PUBLIC_OSRM, async (base, own) => {
+    const url = new URL(`${base}/route/v1/driving/${path}`);
+    url.searchParams.set("overview", "full");
+    url.searchParams.set("geometries", "geojson");
+    url.searchParams.set("alternatives", "false");
+    url.searchParams.set("steps", steps ? "true" : "false");
+    url.searchParams.set("annotations", "speed");
+    const res = await fetchWithTimeout(url.toString(), {
+      headers: routerHeaders(own, { "Accept": "application/json" }),
+    }, timeoutMs);
+    // OSRM answers 400 NoRoute / NoSegment for points it can't route: an answer, not an outage.
+    if (res.status === 400) return null;
+    if (!res.ok) throw new Error(`OSRM ${res.status}`);
+    const json = await res.json();
+    return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+  });
 }
 
-/** Valhalla (FOSSGIS public server) in OSRM's response format, honouring avoid-preferences and bike routing. */
+/** Valhalla (ours, or the FOSSGIS public server) in OSRM's response format, honouring avoid-preferences and bike routing. */
 async function valhallaRoute(stops: LngLat[], p: Prefs, timeoutMs = 9000): Promise<any | null> {
   const costing = p.vehicle === "bicycle" ? "bicycle" : p.vehicle === "car" ? "auto" : "motorcycle";
   const opts: Record<string, unknown> = {};
@@ -281,21 +322,26 @@ async function valhallaRoute(stops: LngLat[], p: Prefs, timeoutMs = 9000): Promi
     if (p.avoid.ferries) opts.use_ferry = 0;
     if (p.avoid.unpaved) opts.exclude_unpaved = true;
   }
-  const res = await fetchWithTimeout("https://valhalla1.openstreetmap.de/route", {
-    method: "POST",
-    headers: { "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)", "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify({
-      locations: stops.map(([lo, la]) => ({ lat: la, lon: lo })),
-      costing,
-      costing_options: { [costing]: opts },
-      format: "osrm",
-      shape_format: "geojson",
-      units: "kilometers",
-    }),
-  }, timeoutMs);
-  if (!res.ok) throw new Error(`Valhalla ${res.status}`);
-  const json = await res.json();
-  return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+  const body = JSON.stringify({
+    locations: stops.map(([lo, la]) => ({ lat: la, lon: lo })),
+    costing,
+    costing_options: { [costing]: opts },
+    format: "osrm",
+    shape_format: "geojson",
+    units: "kilometers",
+  });
+  return viaRouter(OWN_VALHALLA, PUBLIC_VALHALLA, async (base, own) => {
+    const res = await fetchWithTimeout(`${base}/route`, {
+      method: "POST",
+      headers: routerHeaders(own, { "Content-Type": "application/json", "Accept": "application/json" }),
+      body,
+    }, timeoutMs);
+    // Valhalla answers 400 when there's no route between the points: an answer, not an outage.
+    if (res.status === 400) return null;
+    if (!res.ok) throw new Error(`Valhalla ${res.status}`);
+    const json = await res.json();
+    return json?.code === "Ok" ? json?.routes?.[0] ?? null : null;
+  });
 }
 
 /** Routes with the rider's preferences: Valhalla when they need it, OSRM otherwise (and as the fallback). */
