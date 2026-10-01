@@ -1,3 +1,5 @@
+import { useDemoMode } from '@/lib/demoMode';
+import { demoLeaderboard } from '@/features/crew/demo';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy } from 'lucide-react';
@@ -48,14 +50,22 @@ export default function CrewLeaderboard() {
     void publishCrewTotals(crew.code, profile.name, mine).then((ok) => ok && nudgePush());
   }, [crew.code, profile.name, mine]);
 
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ['crew-leaderboard', crew.code],
+  const { enabled: demo } = useDemoMode();
+  const { data: fetched = [], isLoading } = useQuery({
+    queryKey: ['crew-leaderboard', crew.code, demo],
     queryFn: async () => {
+      if (demo) return demoLeaderboard(crew.code) as CrewRow[];
       const { data } = await (supabase as any).rpc('list_crew_leaderboard', { _crew_code: crew.code });
       return (data ?? []) as CrewRow[];
     },
     refetchInterval: 30000,
   });
+
+  // Demo mode: the demo rider's row is their own (demo) rides, so it matches what they see elsewhere.
+  const rows = useMemo(
+    () => (demo ? fetched.map((r) => (r.display_name === (profile.name || 'Rider') ? { ...r, ...mine } : r)) : fetched),
+    [demo, fetched, mine, profile.name],
+  );
 
   const active = METRICS.find((m) => m.id === metric)!;
   // Private peaks (null) go last, unranked.

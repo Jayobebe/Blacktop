@@ -1,3 +1,5 @@
+import { useDemoMode } from '@/lib/demoMode';
+import { demoChallenge, demoMonth } from '@/features/crew/demo';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Flag, Sparkles, Timer, Users } from 'lucide-react';
@@ -129,9 +131,11 @@ export default function CrewChallenges() {
     void publishWeekStats(crew.code, myName, mine, key).then((ok) => ok && nudgePush());
   }, [crew.code, key, myName, mine]);
 
-  const { data: rows = [] } = useQuery({
-    queryKey: ['crew-challenge', crew.code, key],
+  const { enabled: demo } = useDemoMode();
+  const { data: fetched = [] } = useQuery({
+    queryKey: ['crew-challenge', crew.code, key, demo],
     queryFn: async () => {
+      if (demo) return demoChallenge(crew.code) as ChallengeRow[];
       const { data } = await (supabase as any).rpc('list_crew_challenge', {
         _crew_code: crew.code,
         _week_key: key,
@@ -143,8 +147,9 @@ export default function CrewChallenges() {
 
   // Monthly crew goal — combined totals across the crew for the month.
   const { data: monthTotals } = useQuery({
-    queryKey: ['crew-month', crew.code, mKey],
+    queryKey: ['crew-month', crew.code, mKey, demo],
     queryFn: async () => {
+      if (demo) return demoMonth(crew.code);
       const { data } = await (supabase as any).rpc('list_crew_month', {
         _crew_code: crew.code,
         _month_key: mKey,
@@ -153,6 +158,12 @@ export default function CrewChallenges() {
     },
     refetchInterval: 30000,
   });
+
+  // Demo mode: the demo rider's row is their own (demo) week, matching "You".
+  const rows = useMemo(
+    () => (demo ? fetched.map((r) => (r.display_name === myName ? { ...r, ...mine } : r)) : fetched),
+    [demo, fetched, mine, myName],
+  );
 
   const monthValue = Number(monthTotals?.[goal.metric] ?? 0);
   const monthPct = Math.min(100, (monthValue / goal.target) * 100);

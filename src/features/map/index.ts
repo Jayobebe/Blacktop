@@ -10,6 +10,7 @@ export { LoopPlannerPanel } from './components/LoopPlannerPanel';
 export { RouteOptions } from './components/RouteOptions';
 export type { RouteMode } from './components/RouteOptions';
 export { whenStyleReady } from './lib/whenStyleReady';
+export { openInNavApp, navAppLabel, type ExternalNavApp } from './lib/navHandoff';
 export { searchPlaces } from './lib/placeSearch';
 export type { MapSearchResult } from './lib/placeSearch';
 export { speak, stopSpeaking, speechSupported, setVoiceStyle, playSquelch } from './lib/speech';

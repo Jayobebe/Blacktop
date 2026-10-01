@@ -1,3 +1,5 @@
+import { useDemoMode } from '@/lib/demoMode';
+import { demoCrewConvoyDetail, demoCrewConvoys } from '@/features/crew/demo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Radio, Crown, Users, MapPin, X, RefreshCw } from 'lucide-react';
@@ -35,9 +37,11 @@ export default function CrewConvoys() {
   const crew = useCrew();
   const [selected, setSelected] = useState<CrewConvoyRow | null>(null);
 
+  const { enabled: demo } = useDemoMode();
   const { data: convoys = [], isFetching, isLoading, refetch } = useQuery({
-    queryKey: ['crew-convoys', crew.code],
+    queryKey: ['crew-convoys', crew.code, demo],
     queryFn: async () => {
+      if (demo) return demoCrewConvoys(crew.code) as CrewConvoyRow[];
       const { data } = await (supabase as any).rpc('list_crew_convoys', { _crew_code: crew.code });
       return (data ?? []) as CrewConvoyRow[];
     },
@@ -45,9 +49,10 @@ export default function CrewConvoys() {
   });
 
   const { data: detail = [] } = useQuery({
-    queryKey: ['crew-convoy-detail', selected?.id],
+    queryKey: ['crew-convoy-detail', selected?.id, demo],
     enabled: !!selected,
     queryFn: async () => {
+      if (demo) return demoCrewConvoyDetail(selected!.id) as DetailRow[];
       const { data } = await (supabase as any).rpc('crew_convoy_detail', { _convoy_id: selected!.id });
       return (data ?? []) as DetailRow[];
     },

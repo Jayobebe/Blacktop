@@ -4,12 +4,14 @@ import {
   ArrowUpRight,
   CornerUpLeft,
   CornerUpRight,
+  ExternalLink,
   Flag,
   GitFork,
   Loader2,
   Merge,
   RotateCcw,
   RotateCw,
+  Share2,
   Undo2,
   X,
 } from 'lucide-react';
@@ -74,6 +76,10 @@ interface Props {
   onSkip?: () => void;
   /** ETA window from both routing engines (own geo server), or null for one time. */
   spread?: EtaSpread;
+  /** Send where you're headed and your ETA to someone (share sheet). */
+  onShareEta?: () => void;
+  /** Open this destination in the rider's own nav app (Settings → Navigation). */
+  handOff?: { label: string; onOpen: () => void };
 }
 
 /**
@@ -82,7 +88,7 @@ interface Props {
  * in for the destination card: the next manoeuvre and how far to it, what
  * follows straight after, where you're headed and time/distance left.
  */
-export function TurnBanner({ progress, describe, unit, arrived, rerouting: reroutingNow, finding = false, destinationName, onStop, onSkip, spread = null }: Props) {
+export function TurnBanner({ progress, describe, unit, arrived, rerouting: reroutingNow, finding = false, destinationName, onStop, onSkip, spread = null, onShareEta, handOff }: Props) {
   // Both show the spinner; only the label differs.
   const rerouting = reroutingNow || finding;
   const next = progress?.next ?? null;
@@ -152,6 +158,28 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
               <span className="text-foreground font-semibold">{timeLeft(progress.remainingSeconds, spread)}</span>
               {' '}· {left.value} {left.unit} · {eta}
             </span>
+          )}
+          {onShareEta && progress && !rerouting && (
+            <button
+              type="button"
+              onClick={onShareEta}
+              className="glove-hit w-8 h-8 rounded-md flex items-center justify-center text-accent hover:bg-accent/10 transition-colors flex-shrink-0"
+              aria-label={tr("Share your ETA")}
+              title={tr("Share your ETA")}
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          )}
+          {handOff && (
+            <button
+              type="button"
+              onClick={handOff.onOpen}
+              className="glove-hit w-8 h-8 rounded-md flex items-center justify-center text-accent hover:bg-accent/10 transition-colors flex-shrink-0"
+              aria-label={tr("Open in {0}", [handOff.label])}
+              title={tr("Open in {0}", [handOff.label])}
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
           )}
           {onSkip && (
             <button

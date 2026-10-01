@@ -16,6 +16,7 @@
  * Tier-milestone copies are derived from ride history and are not capped.
  */
 import { TIER_LADDER } from '../types';
+import { isDemoModeActive } from '@/lib/demoMode';
 
 const CHALLENGE_KEY = 'bt.card_challenge_copies.v1';
 const COLLECT_KEY = 'bt.card_collect_copies.v1';
@@ -129,6 +130,8 @@ export function claimedChallengeWeeks(): string[] {
 
 /** Records a completed crew challenge as a card copy (idempotent per week). */
 export function grantChallengeCopy(week: string): GrantResult {
+  // Demo mode's rides and boards never earn real copies.
+  if (isDemoModeActive()) return 'already';
   const weeks = claimedChallengeWeeks();
   if (weeks.includes(week)) return 'already';
   if (!spendMonthlyGrant()) return 'capped';
@@ -149,6 +152,8 @@ export function claimedCollectMilestones(): number[] {
  * 4-collect threshold newly crossed. Returns the grant outcome.
  */
 export function grantCollectCopy(collectedCount: number): GrantResult {
+  // Demo mode's rides and boards never earn real copies.
+  if (isDemoModeActive()) return 'already';
   const claimed = claimedCollectMilestones();
   const due = Math.floor(collectedCount / COLLECT_COPY_EVERY) * COLLECT_COPY_EVERY;
   // Next multiple of 4 strictly above the highest claimed milestone, so
@@ -172,6 +177,8 @@ export function claimedStreaks(): string[] {
 
 /** Records a completed 3-day streak (idempotent per streak run). */
 export function grantStreakCopy(streakStartDay: string): GrantResult {
+  // Demo mode's rides and boards never earn real copies.
+  if (isDemoModeActive()) return 'already';
   const streaks = claimedStreaks();
   if (streaks.includes(streakStartDay)) return 'already';
   if (!spendMonthlyGrant()) return 'capped';

@@ -28,7 +28,10 @@ import { OfflinePacksPanel } from "./OfflinePacksPanel";
 import { TurnBanner } from "./TurnBanner";
 import { whenStyleReady } from "../lib/whenStyleReady";
 import { useTurnByTurn } from "../hooks/useTurnByTurn";
-import { remainingLine } from "../lib/navigation";
+import { remainingLine, shortDistance } from "../lib/navigation";
+import { navAppLabel, openInNavApp } from "../lib/navHandoff";
+import { shareText } from "../lib/shareText";
+import { useExperience } from "@/features/experience";
 import { stopSpeaking } from "../lib/speech";
 import { MapDestination } from "../types";
 import { deletePOI, getSavedPOIs, savePOI } from "../lib/poiStore";
@@ -119,7 +122,7 @@ import {
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
 import { setGuidanceActive } from '../lib/guidanceState';
-import { etaSpread, spreadDuration } from '../lib/eta';
+import { etaClock, etaSpread, spreadDuration } from '../lib/eta';
 import { W3WAddress } from '@/components/W3WAddress';
 import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
@@ -349,6 +352,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
   const { user, profile } = useProfile();
+  const { terms } = useExperience();
   const { rideState, startRide, endRide } = useActiveRide();
   // Read from the long-lived GPS callback (it's bound once).
   const rideActiveRef = useRef(rideState.isActive);
@@ -2431,6 +2435,29 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               destinationName={destination?.name}
               spread={etaSpread(route)}
               onStop={handleStopNavigating}
+              onShareEta={async () => {
+                if (!navProgressNow) return;
+                const left = shortDistance(navProgressNow.remainingMeters, settings.distanceUnit);
+                const away = `${left.value} ${left.unit}`;
+                const eta = etaClock(navProgressNow.remainingSeconds, etaSpread(route));
+                const where = destination?.name;
+                const text = !where
+                  ? tr("On my way. {0} to go, ETA {1}.", [away, eta])
+                  : terms.car
+                    ? tr("Driving to {0}. {1} to go, ETA {2}.", [where, away, eta])
+                    : tr("Riding to {0}. {1} to go, ETA {2}.", [where, away, eta]);
+                const r = await shareText(text);
+                if (r === 'copied') toast.success(tr("ETA copied. Paste it into a message."));
+                else if (r === 'failed') toast.error(tr("Couldn't share your ETA"));
+              }}
+              handOff={
+                destination && profile.preferredNavApp !== 'blacktop'
+                  ? {
+                      label: navAppLabel(profile.preferredNavApp),
+                      onOpen: () => openInNavApp(profile.preferredNavApp as Exclude<typeof profile.preferredNavApp, 'blacktop'>, destination.lat, destination.lng, destination.name),
+                    }
+                  : undefined
+              }
               onSkip={
                 canSkipWaypoint
                   ? async () => {

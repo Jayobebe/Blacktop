@@ -1,6 +1,9 @@
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { tr } from '@/lib/i18n';
+import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
+import { demoBlocked } from '@/lib/demoGuard';
+import { DEMO_ACTIVE_CREW, DEMO_CREW_LIST } from './demo';
 
 /**
  * Crew membership. Every rider owns a crew code (generated once, on device).
@@ -106,15 +109,29 @@ function readActive(list: CrewEntry[]): CrewEntry {
   return list.find((c) => c.code === active) ?? list[0];
 }
 
+/** Demo mode's crews (./demo): shown instead of the rider's own, never saved. */
+let demoActive = DEMO_ACTIVE_CREW;
+function demoList(): CrewEntry[] {
+  return DEMO_CREW_LIST.map(([code, name, daysAgo], i) => ({
+    code,
+    name: name ?? defaultCrewName(code),
+    custom: !!name,
+    own: i === 0,
+    joinedAt: daysAgo == null ? null : Date.now() - daysAgo * 86400000,
+  }));
+}
+
 function read(): CrewState {
-  const crews = readList();
-  const a = readActive(crews);
+  const demo = isDemoModeActive();
+  const crews = demo ? demoList() : readList();
+  const a = demo ? crews.find((c) => c.code === demoActive) ?? crews[0] : readActive(crews);
   return { code: a.code, name: a.name, isOwn: a.own, joinedAt: a.joinedAt, crews };
 }
 
 let snapshot: CrewState = read();
 
 function save(crews: CrewEntry[], active: string) {
+  if (isDemoModeActive()) return emit();
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(crews.map(({ code, name, custom, joinedAt }) => ({ code, ...(custom ? { name } : {}), joinedAt }))));
     localStorage.setItem(LS_ACTIVE_KEY, active);
@@ -129,6 +146,9 @@ function emit() {
   snapshot = read();
   listeners.forEach((cb) => cb());
 }
+
+// Demo mode on / off swaps between the demo crews and the rider's own.
+onDemoModeChange(() => emit());
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
@@ -152,6 +172,8 @@ export function parseCrewQr(text: string): string | null {
  * rider is already in it ('already'). 'full' when all crew slots are taken.
  */
 export function joinCrew(code: string, name?: string): 'joined' | 'already' | 'full' {
+  // Demo mode's crews fill every slot; joining waits for a real account.
+  if (demoBlocked()) return 'full';
   const clean = code.trim().toUpperCase();
   const crews = snapshot.crews;
   if (crews.some((c) => c.code === clean)) {
@@ -168,17 +190,20 @@ export function joinCrew(code: string, name?: string): 'joined' | 'already' | 'f
  * Leaves a crew (never the rider's own). If it was active, the rider's own
  * crew becomes active. Their rows on that crew's boards go too.
  */
-export function leaveCrew(code: string) {
+export function leaveCrew(code: string): boolean {
+  if (demoBlocked()) return false;
   const crews = snapshot.crews;
   const leaving = crews.find((c) => c.code === code);
-  if (!leaving || leaving.own) return;
+  if (!leaving || leaving.own) return false;
   const rest = crews.filter((c) => c.code !== code);
   save(rest, snapshot.code === code ? rest[0].code : snapshot.code);
   void removeFromCrewBoards(code);
+  return true;
 }
 
 /** Renames a crew on this phone (empty goes back to "Crew CODE"). */
 export function renameCrew(code: string, name: string) {
+  if (demoBlocked()) return;
   const clean = name.trim().slice(0, 30);
   save(
     snapshot.crews.map((c) => (c.code === code ? { ...c, name: clean || defaultCrewName(c.code), custom: !!clean } : c)),
@@ -188,7 +213,12 @@ export function renameCrew(code: string, name: string) {
 
 /** Makes one of the rider's crews the active one. */
 export function setActiveCrew(code: string) {
-  if (snapshot.crews.some((c) => c.code === code)) save(snapshot.crews, code);
+  if (!snapshot.crews.some((c) => c.code === code)) return;
+  if (isDemoModeActive()) {
+    demoActive = code;
+    return emit();
+  }
+  save(snapshot.crews, code);
 }
 
 /** Leaving a crew takes this rider off its boards (their own rows only; best effort). */

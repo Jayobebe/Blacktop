@@ -135,8 +135,7 @@ export function CrewList() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 if (!leaving) return;
-                leaveCrew(leaving.code);
-                toast.success(tr("Left {0}", [leaving.name]));
+                if (leaveCrew(leaving.code)) toast.success(tr("Left {0}", [leaving.name]));
                 setLeaving(null);
               }}
             >

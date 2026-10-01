@@ -1,3 +1,4 @@
+import { RescueDrillButton } from './RescueDrill';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, ShieldOff, ShieldAlert, ChevronRight, MapPin, Users, MessageSquare, Settings2 } from 'lucide-react';
@@ -198,6 +199,8 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
           </p>
         )}
       </div>
+
+      <RescueDrillButton />
 
       <Button variant="outline" className="w-full h-11 rounded-2xl" onClick={goToSettings}>
         <Settings2 className="w-4 h-4 mr-2" />
