@@ -83,6 +83,11 @@ CREATE TABLE IF NOT EXISTS public.track_records (
   vehicle_name text,
   /** The rider's card (shared-card shape), shown as the dog tag when beaten. */
   card jsonb,
+  /** GPS evidence for the lap: fixes in it and the longest gap between two. */
+  fixes integer,
+  max_gap_ms integer,
+  /** Far quicker than the board (under 90 % of its median): kept, but shown only to its rider and beats nobody. */
+  flagged boolean NOT NULL DEFAULT false,
   set_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, osm_id, direction, vehicle_class)
 );
@@ -110,7 +115,11 @@ REVOKE ALL ON public.track_record_beats FROM PUBLIC, anon, authenticated;
  * A rider's lap on a library layout (opted-in riders only; the app checks the
  * switch, this checks the lap). Keeps their best, and returns every rider whose
  * time it newly beats (their dog tags), telling each of them by push.
- * Rejects laps no vehicle could do: over 350 km/h average for the lap length.
+ * Rejects laps no vehicle could do (over 350 km/h average for the lap length),
+ * laps whose sectors don't add up to the lap, and laps without the GPS to back
+ * them (under 0.8 fixes a second on average, or a gap over 3 s). A lap far
+ * quicker than the board (under 90 % of its median, with 5 or more riders on
+ * it) is kept but flagged: only its rider sees it, and it beats nobody.
  */
 CREATE OR REPLACE FUNCTION public.submit_track_lap(
   _osm_id bigint,
@@ -122,7 +131,9 @@ CREATE OR REPLACE FUNCTION public.submit_track_lap(
   _track_name text,
   _display_name text,
   _vehicle_name text DEFAULT NULL,
-  _card jsonb DEFAULT NULL
+  _card jsonb DEFAULT NULL,
+  _fixes integer DEFAULT NULL,
+  _max_gap_ms integer DEFAULT NULL
 )
 RETURNS TABLE(display_name text, vehicle_name text, lap_ms integer, card jsonb)
 LANGUAGE plpgsql
@@ -133,6 +144,10 @@ AS $$
 DECLARE
   v_me uuid := auth.uid();
   v_name text := left(coalesce(nullif(btrim(_display_name), ''), 'Rider'), 30);
+  v_sum bigint;
+  v_positive boolean;
+  v_median numeric;
+  v_flagged boolean := false;
   rec record;
 BEGIN
   IF v_me IS NULL THEN RAISE EXCEPTION 'not signed in'; END IF;
@@ -146,13 +161,32 @@ BEGIN
   IF (_length_m::numeric / _lap_ms) * 3600 > 350 THEN
     RAISE EXCEPTION 'implausible lap';
   END IF;
+  -- The sectors are the lap, split: all there, all positive, adding up to it.
+  SELECT sum(x), bool_and(x > 0) INTO v_sum, v_positive FROM unnest(_sectors) AS x;
+  IF coalesce(array_length(_sectors, 1), 0) < 1 OR NOT coalesce(v_positive, false)
+     OR abs(v_sum - _lap_ms) > greatest(100, _lap_ms / 200) THEN
+    RAISE EXCEPTION 'implausible lap';
+  END IF;
+  -- The GPS behind it: ~1 fix a second at least, never 3 s without one.
+  IF _fixes IS NULL OR _max_gap_ms IS NULL OR _fixes < (_lap_ms / 1000.0) * 0.8 OR _max_gap_ms > 3000 THEN
+    RAISE EXCEPTION 'implausible lap';
+  END IF;
+  -- Far quicker than everyone else: held back from other riders.
+  SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY t.lap_ms) INTO v_median
+  FROM public.track_records t
+  WHERE t.osm_id = _osm_id AND t.direction = _direction AND t.vehicle_class = _vehicle_class
+    AND t.user_id <> v_me AND NOT t.flagged
+  HAVING count(*) >= 5;
+  IF v_median IS NOT NULL AND _lap_ms < v_median * 0.9 THEN
+    v_flagged := true;
+  END IF;
   IF _card IS NOT NULL AND (jsonb_typeof(_card) <> 'object' OR length(_card::text) > 4000) THEN
     _card := NULL;
   END IF;
 
   -- Keep the rider's best (or their first).
-  INSERT INTO public.track_records AS r (user_id, osm_id, direction, vehicle_class, lap_ms, sectors, track_name, display_name, vehicle_name, card, set_at)
-  VALUES (v_me, _osm_id, _direction, _vehicle_class, _lap_ms, coalesce(_sectors[1:30], '{}'), left(_track_name, 80), v_name, left(_vehicle_name, 40), _card, now())
+  INSERT INTO public.track_records AS r (user_id, osm_id, direction, vehicle_class, lap_ms, sectors, track_name, display_name, vehicle_name, card, fixes, max_gap_ms, flagged, set_at)
+  VALUES (v_me, _osm_id, _direction, _vehicle_class, _lap_ms, coalesce(_sectors[1:30], '{}'), left(_track_name, 80), v_name, left(_vehicle_name, 40), _card, _fixes, _max_gap_ms, v_flagged, now())
   ON CONFLICT (user_id, osm_id, direction, vehicle_class) DO UPDATE SET
     lap_ms = EXCLUDED.lap_ms,
     sectors = EXCLUDED.sectors,
@@ -160,8 +194,14 @@ BEGIN
     display_name = EXCLUDED.display_name,
     vehicle_name = EXCLUDED.vehicle_name,
     card = EXCLUDED.card,
+    fixes = EXCLUDED.fixes,
+    max_gap_ms = EXCLUDED.max_gap_ms,
+    flagged = EXCLUDED.flagged,
     set_at = now()
   WHERE r.lap_ms > EXCLUDED.lap_ms;
+
+  -- A held-back lap takes nobody's dog tag.
+  IF v_flagged THEN RETURN; END IF;
 
   -- Riders whose standing time this lap beats, and haven't been beaten by this
   -- rider at that time already (a new, faster time of theirs can be beaten again).
@@ -169,7 +209,7 @@ BEGIN
     SELECT t.user_id, t.display_name, t.vehicle_name, t.lap_ms, t.card
     FROM public.track_records t
     WHERE t.osm_id = _osm_id AND t.direction = _direction AND t.vehicle_class = _vehicle_class
-      AND t.user_id <> v_me AND t.lap_ms > _lap_ms
+      AND t.user_id <> v_me AND t.lap_ms > _lap_ms AND NOT t.flagged
       AND NOT EXISTS (
         SELECT 1 FROM public.track_record_beats b
         WHERE b.beater_id = v_me AND b.beaten_id = t.user_id AND b.osm_id = _osm_id
@@ -206,6 +246,7 @@ AS $$
          t.display_name, t.vehicle_name, t.lap_ms, t.sectors, t.set_at, t.user_id = auth.uid() AS is_me
   FROM public.track_records t
   WHERE auth.uid() IS NOT NULL
+    AND (NOT t.flagged OR t.user_id = auth.uid())
     AND t.osm_id = _osm_id AND t.direction = _direction AND t.vehicle_class = _vehicle_class
   ORDER BY t.lap_ms, t.set_at
   LIMIT greatest(1, least(coalesce(_limit, 20), 100));
@@ -221,9 +262,9 @@ AS $$
   DELETE FROM public.track_records WHERE user_id = auth.uid();
 $$;
 
-REVOKE ALL ON FUNCTION public.submit_track_lap(bigint, text, text, integer, integer[], integer, text, text, text, jsonb) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.submit_track_lap(bigint, text, text, integer, integer[], integer, text, text, text, jsonb, integer, integer) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.track_leaderboard(bigint, text, text, integer) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.leave_track_leaderboards() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.submit_track_lap(bigint, text, text, integer, integer[], integer, text, text, text, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.submit_track_lap(bigint, text, text, integer, integer[], integer, text, text, text, jsonb, integer, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.track_leaderboard(bigint, text, text, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.leave_track_leaderboards() TO authenticated;

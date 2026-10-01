@@ -48,9 +48,36 @@ export function lapDirection(outline: LatLng[] | undefined): Direction {
   return area > 0 ? 'ccw' : 'cw';
 }
 
-/** The lap a session puts on the board: its fastest clean flying lap (all sectors, no pits, good GPS). */
+/** The GPS behind a lap: fixes in it and the longest gap (the lap's ends count as fixes). */
+export function lapEvidence(session: TrackSession, lap: Lap): { fixes: number; maxGapMs: number } {
+  const times = session.samples.filter((x) => x.lap === lap.n && x.t >= lap.startT && x.t <= lap.endT).map((x) => x.t);
+  let maxGapMs = 0;
+  let prev = lap.startT;
+  for (const t of [...times, lap.endT]) {
+    maxGapMs = Math.max(maxGapMs, t - prev);
+    prev = t;
+  }
+  return { fixes: times.length, maxGapMs: Math.round(maxGapMs) };
+}
+
+/**
+ * Whether the server would take a lap (submit_track_lap's rules, so a lap it
+ * would refuse isn't sent): sectors adding up to it, ~1 fix a second, no gap
+ * over 3 s.
+ */
+function boardWorthy(session: TrackSession, lap: Lap): boolean {
+  if (!lap.sectors.length || lap.sectors.some((x) => !(x > 0))) return false;
+  const sum = lap.sectors.reduce((a, b) => a + Math.round(b), 0);
+  if (Math.abs(sum - Math.round(lap.ms)) > Math.max(100, lap.ms / 200)) return false;
+  const { fixes, maxGapMs } = lapEvidence(session, lap);
+  return fixes >= (lap.ms / 1000) * 0.8 && maxGapMs <= 3000;
+}
+
+/** The lap a session puts on the board: its fastest clean flying lap (all sectors, no pits, good GPS behind it). */
 export function recordLap(session: TrackSession): Lap | null {
-  return session.laps.filter((l) => l.valid && !l.pit && !l.lowConfidence).reduce<Lap | null>((b, l) => (!b || l.ms < b.ms ? l : b), null);
+  return session.laps
+    .filter((l) => l.valid && !l.pit && !l.lowConfidence && boardWorthy(session, l))
+    .reduce<Lap | null>((b, l) => (!b || l.ms < b.ms ? l : b), null);
 }
 
 /** Whether a track has a board at all (a circuit library layout). */
@@ -87,6 +114,7 @@ export async function submitRecord(args: {
   const length = Math.round(trackLength(track) ?? 0);
   if (length < 200) return null;
   const direction = lapDirection(track.outline);
+  const evidence = lapEvidence(session, lap);
   const res = await withTimeout(
     supabase.rpc('submit_track_lap' as never, {
       _osm_id: track.osmId,
@@ -99,6 +127,8 @@ export async function submitRecord(args: {
       _display_name: args.displayName,
       _vehicle_name: args.vehicleName,
       _card: args.card,
+      _fixes: evidence.fixes,
+      _max_gap_ms: evidence.maxGapMs,
     } as never),
     8000,
   );

@@ -125,7 +125,7 @@ export default function Terms() {
             <li>{tr("The circuit library is built from public OpenStreetMap data (© OpenStreetMap contributors, ODbL). Layouts, lengths and directions may be inaccurate. Blacktop isn't affiliated with any circuit; circuit names belong to their owners.")}</li>
             <li>{tr("Spoken pit board calls and the pit crew link are aids, not a replacement for circuit marshals, flags or official signals.")}</li>
             <li>{tr("Track leaderboards and dog tags are for circuits only. Blacktop has no timed challenges on public roads: never race, chase a time or try to beat anyone on a public road.")}</li>
-            <li>{tr("Leaderboard times are unofficial GPS times, checked only for plausibility. We may remove any time or rider from a board. A place on a board is not a record recognised by any circuit or governing body.")}</li>
+            <li>{tr("Leaderboard times are unofficial GPS times, checked only for plausibility. We may remove any time or rider from a board. A place on a board is not a record recognised by any circuit or governing body.")}{" "}{tr("Laps must have their sectors and enough GPS behind them to count, and a lap far quicker than the rest of its board is held back from other riders.")}</li>
             <li>{tr("You are solely responsible for your riding on track and for following the circuit's rules. The app owner and contributors accept")}<span className="text-foreground font-medium">{" "}{tr("no liability")}{" "}</span>{tr("for any collision, injury or damage arising from chasing a lap time or a leaderboard place.")}</li>
           </ul>
         </section>
