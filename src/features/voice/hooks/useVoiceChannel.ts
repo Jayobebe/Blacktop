@@ -16,6 +16,13 @@ import { tr } from '@/lib/i18n';
 
 // Warn once per app session, not on every reconnect.
 let relayWarningShown = false;
+/**
+ * Voice is a mesh: every phone sends its audio to every other, so upload and
+ * battery grow with the convoy. Past this many riders (you included) mobile
+ * data starts to drop people; riders are told once, nothing is cut off.
+ */
+export const VOICE_MESH_COMFORT = 8;
+let meshWarningShown = false;
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -786,6 +793,13 @@ export function useVoiceChannel(convoyId?: string) {
     };
 
     peersRef.current.set(remoteUserId, { pc, oderId: remoteUserId, createdAt: Date.now() });
+    if (peersRef.current.size + 1 > VOICE_MESH_COMFORT && !meshWarningShown) {
+      meshWarningShown = true;
+      toast.warning(tr("Big convoy for voice"), {
+        description: tr("Voice works best with up to {0} riders. With more, each phone sends to everyone, so on mobile data some riders may drop out. Muting when you're not talking helps.", [VOICE_MESH_COMFORT]),
+        duration: 10000,
+      });
+    }
     return pc;
   }, [clearReconnectSchedule, scheduleReconnect, setPeerLink]);
 
