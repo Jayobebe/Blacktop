@@ -38,11 +38,14 @@ import SoloLobby from "./pages/SoloLobby";
 import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
 import { installDemoGuard } from '@/lib/demoGuard';
+import { probeServerCaps } from '@/lib/serverCaps';
 
 // Demo mode never writes to the server (lib/demoGuard).
 installDemoGuard();
 // iOS forgets motion access when the app closes: the first tap re-grants it.
 installMotionRegrant();
+// Features shipped ahead of their migration stay hidden until the server has them.
+probeServerCaps();
 
 
 const queryClient = new QueryClient();

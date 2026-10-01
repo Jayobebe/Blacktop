@@ -10,6 +10,7 @@ import { tr } from '@/lib/i18n';
 import { requestAutoRescueConsent } from '@/features/rescue';
 import { leaveBoards } from '@/features/track/lib/trackRecords';
 import { demoBlocked } from '@/lib/demoGuard';
+import { useServerCap } from '@/lib/serverCaps';
 
 /** Settings view of the "Do you care about…" answers, as switches. */
 export function CareList({ className }: { className?: string }) {
@@ -26,6 +27,7 @@ export function CareList({ className }: { className?: string }) {
     updateSettings(carePatch(q, on, care));
   };
 
+  const boardsLive = useServerCap('trackRecords');
   const toggleBoards = async (on: boolean) => {
     if (demoBlocked()) return;
     haptics.tick();
@@ -53,7 +55,7 @@ export function CareList({ className }: { className?: string }) {
               </div>
               <Switch checked={on} onCheckedChange={(v) => toggle(q, v)} />
             </label>
-            {q.id === 'track' && on && (
+            {q.id === 'track' && on && boardsLive && (
               // Track Day leaderboards: opt-in, under Track Day.
               <label className="flex items-center gap-3 py-3 pl-11 cursor-pointer">
                 <div className="flex-1 min-w-0">

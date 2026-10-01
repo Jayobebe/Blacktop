@@ -11,6 +11,7 @@ import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { useActiveRide, useRideHistory } from '@/features/ride';
 import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
+import { hasServerCap } from '@/lib/serverCaps';
 import { saveRideOverlayBlob } from '@/lib/overlayStore';
 import { getActiveBikeIdSnapshot } from '@/features/garage';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -225,7 +226,7 @@ export function RacerView() {
     setConfirmEnd(false);
     // Opted-in riders on a library circuit: the record lap goes on its board
     // before the ride closes, so the receipt has the dog tags and the rank.
-    if (session && raced && settings.trackLeaderboardsEnabled && hasBoard(raced)) {
+    if (session && raced && settings.trackLeaderboardsEnabled && hasServerCap('trackRecords') && hasBoard(raced)) {
       const vehicleCard = vehicleCards.find((c) => c.bike.id === getActiveBikeIdSnapshot()) ?? vehicleCards[0];
       const result = await submitRecord({
         track: raced,

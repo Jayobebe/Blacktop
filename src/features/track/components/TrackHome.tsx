@@ -17,6 +17,7 @@ import { TrackMinimap } from './TrackMinimap';
 import { TrackQrScanner } from './TrackQrScanner';
 import { TrackBoard } from './TrackBoard';
 import { hasBoard } from '../lib/trackRecords';
+import { useServerCap } from '@/lib/serverCaps';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -57,6 +58,7 @@ export function TrackHome({
   const [loadingCircuit, setLoadingCircuit] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const locked = useDemoLocked();
+  const boardsLive = useServerCap('trackRecords');
 
   const pick = (t: TrackDef) => {
     haptics.light();
@@ -146,7 +148,7 @@ export function TrackHome({
           onClose={() => onSelect(null)}
         />
       )}
-      {current && hasBoard(current) && <TrackBoard track={current} />}
+      {current && hasBoard(current) && boardsLive && <TrackBoard track={current} />}
 
       <TrackShelf
         title={tr("Previous tracks")}
