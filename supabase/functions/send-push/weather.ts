@@ -1,4 +1,5 @@
 import type { PushMessage } from './deliver.ts'
+import type { Units } from './crew.ts'
 
 /**
  * "Heavy weather inbound": reads an Open-Meteo hourly forecast for the next
@@ -80,12 +81,22 @@ const BEFORE: Record<WeatherKind, string> = {
   wind: 'Strong winds',
 }
 
-export function weatherMessage(a: WeatherAlert, nowSec: number, areaKey: string): PushMessage {
+/** `u`: the device's units; without stored ones, gusts show in both as before. */
+export function weatherMessage(a: WeatherAlert, nowSec: number, areaKey: string, u?: Units): PushMessage {
   const minutes = (a.at - nowSec) / 60
   const when = minutes <= 45 ? 'within the hour' : minutes < 90 ? 'in about an hour' : `in about ${Math.round(minutes / 60)} hours`
   const extras: string[] = []
   if (a.before) extras.push(`${BEFORE[a.before]} before that.`)
-  if (a.maxGustKmh >= 50) extras.push(`Gusts up to ${a.maxGustKmh} km/h (${Math.round(a.maxGustKmh / 1.609)} mph).`)
+  if (a.maxGustKmh >= 50) {
+    const mph = Math.round(a.maxGustKmh / 1.609)
+    extras.push(
+      !u?.stored
+        ? `Gusts up to ${a.maxGustKmh} km/h (${mph} mph).`
+        : u.speed === 'kph'
+          ? `Gusts up to ${a.maxGustKmh} km/h.`
+          : `Gusts up to ${mph} mph.`,
+    )
+  }
   if (a.kind === 'heavy_rain' && a.maxMm >= HEAVY_RAIN_MM) extras.push(`Up to ${a.maxMm} mm an hour.`)
   return {
     title: TITLES[a.kind],

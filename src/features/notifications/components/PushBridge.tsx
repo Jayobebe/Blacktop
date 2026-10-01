@@ -2,7 +2,7 @@ import { onNativePushTap } from '../lib/nativePush';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { subscribeCrew } from '@/features/crew/useCrew';
-import { schedulePushResync, syncPush } from '../lib/push';
+import { pushUnits, schedulePushResync, syncPush } from '../lib/push';
 
 const RESYNC_EVERY_MS = 60 * 60 * 1000;
 
@@ -30,6 +30,20 @@ export function PushBridge() {
       unsubscribe();
       document.removeEventListener('visibilitychange', onVisible);
     };
+  }, []);
+
+  // Changing units in Settings re-registers, so crew scores and gusts arrive in them.
+  useEffect(() => {
+    let last = JSON.stringify(pushUnits());
+    const onChange = (e: Event) => {
+      if ((e as CustomEvent<{ key?: string }>).detail?.key !== 'blacktop-settings') return;
+      const now = JSON.stringify(pushUnits());
+      if (now === last) return;
+      last = now;
+      schedulePushResync();
+    };
+    window.addEventListener('bt-local-storage-change', onChange);
+    return () => window.removeEventListener('bt-local-storage-change', onChange);
   }, []);
 
   // The native app: taps arrive from the push plugin, not the service worker.

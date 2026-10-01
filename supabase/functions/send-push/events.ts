@@ -4,6 +4,9 @@ import {
   daysInMonthUTC,
   formatOf,
   formatScore,
+  formatTarget,
+  DEFAULT_UNITS,
+  type Units,
   monthKeyUTC,
   monthlyGoalFor,
   weekKeyUTC,
@@ -345,12 +348,12 @@ async function crewWeek(ctx: Ctx, userId: string, crew: string, week: string) {
     for (const c of challengesForWeek(week)) {
       const value = num((row as Row)[c.metric])
       if (value < c.target || !(await markOnce(ctx, `wk_target:${userId}:${week}:${c.id}`))) continue
-      await deliver(ctx, { userIds: [userId], crewLabel: crew }, 'challenges', {
+      await deliver(ctx, { userIds: [userId], crewLabel: crew }, 'challenges', (u) => ({
         title: `🏁 ${c.title}: target hit`,
-        body: `${formatScore(value, c.unit)} this week (target ${formatScore(c.target, c.unit)}). See where you stand in Crew Challenges.`,
+        body: `${formatScore(value, c.unit, u)} this week (target ${formatTarget(c.target, c.unit, u)}). See where you stand in Crew Challenges.`,
         tag: `wk-${week}-${c.id}-${crew}`,
         url: '/crew/challenges',
-      })
+      }))
     }
   }
 
@@ -359,12 +362,12 @@ async function crewWeek(ctx: Ctx, userId: string, crew: string, week: string) {
   const goal = monthlyGoalFor(month)
   const totals = await monthTotals(ctx, crew, month)
   if (totals[goal.metric] >= goal.target && (await markOnce(ctx, `month_goal:${crew}:${month}`))) {
-    await deliver(ctx, { crew }, 'challenges', {
+    await deliver(ctx, { crew }, 'challenges', (u) => ({
       title: `🏆 ${goal.title} smashed`,
-      body: `Your crew hit ${formatScore(goal.target, goal.unit)} this month. Nice riding.`,
+      body: `Your crew hit ${formatTarget(goal.target, goal.unit, u)} this month. Nice riding.`,
       tag: `month-${month}-${crew}`,
       url: '/crew/challenges',
-    })
+    }))
   }
 }
 
@@ -482,7 +485,7 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
       if (!alert) continue
       // One warning per area every 6 hours.
       if (!(await markOnce(ctx, `wxalert:${batch[j].key}`, 6 * 3600))) continue
-      await deliver(ctx, { area: { lat: batch[j].lat, lng: batch[j].lng } }, 'weather', weatherMessage(alert, nowSec, batch[j].key), {
+      await deliver(ctx, { area: { lat: batch[j].lat, lng: batch[j].lng } }, 'weather', (u) => weatherMessage(alert, nowSec, batch[j].key, u), {
         ttl: 3600,
         urgency: 'high',
       })
@@ -490,27 +493,27 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
   }
 }
 
-function weekLine(c: Challenge, me: Row, rows: Row[], solo: boolean): { line: string; won: boolean } {
+function weekLine(c: Challenge, me: Row, rows: Row[], solo: boolean, u: Units): { line: string; won: boolean } {
   // A peak this rider keeps private (Public Road Privacy) is null: it reads "--" and can't win.
   if (me[c.metric] == null) {
     if (solo) return { line: `${c.title}: --`, won: false }
     const leader = [...rows].filter((r) => r[c.metric] != null).sort((a, b) => num(b[c.metric]) - num(a[c.metric]))[0]
     return leader && num(leader[c.metric]) > 0
-      ? { line: `${c.title}: ${clip(str(leader.display_name, 'a crew mate'), 20)} took it (${formatScore(num(leader[c.metric]), c.unit)}), you --`, won: false }
+      ? { line: `${c.title}: ${clip(str(leader.display_name, 'a crew mate'), 20)} took it (${formatScore(num(leader[c.metric]), c.unit, u)}), you --`, won: false }
       : { line: `${c.title}: nobody scored`, won: false }
   }
   const mine = num(me[c.metric])
   if (solo) {
     const hit = mine >= c.target
-    return { line: `${c.title}: ${hit ? `${formatScore(mine, c.unit)} ✓` : formatOf(mine, c.target, c.unit)}`, won: hit }
+    return { line: `${c.title}: ${hit ? `${formatScore(mine, c.unit, u)} ✓` : formatOf(mine, c.target, c.unit, u)}`, won: hit }
   }
   const top = [...rows].sort((a, b) => num(b[c.metric]) - num(a[c.metric]))[0]
   if (!top || num(top[c.metric]) <= 0) return { line: `${c.title}: nobody scored`, won: false }
   if (top.user_id === me.user_id || num(top[c.metric]) === mine) {
-    return { line: `${c.title}: you won (${formatScore(mine, c.unit)})`, won: true }
+    return { line: `${c.title}: you won (${formatScore(mine, c.unit, u)})`, won: true }
   }
   return {
-    line: `${c.title}: ${clip(str(top.display_name, 'a crew mate'), 20)} took it (${formatScore(num(top[c.metric]), c.unit)}), you ${formatScore(mine, c.unit)}`,
+    line: `${c.title}: ${clip(str(top.display_name, 'a crew mate'), 20)} took it (${formatScore(num(top[c.metric]), c.unit, u)}), you ${formatScore(mine, c.unit, u)}`,
     won: false,
   }
 }
@@ -531,8 +534,8 @@ async function weekResults(ctx: Ctx, now: Date) {
     if (!(await markOnce(ctx, `week_result:${crew}:${week}`))) continue
     const solo = rows.length === 1
     for (const me of rows) {
-      const lines = challenges.map((c) => weekLine(c, me, rows, solo))
-      const wins = lines.filter((l) => l.won).length
+      const linesIn = (u: Units) => challenges.map((c) => weekLine(c, me, rows, solo, u))
+      const wins = linesIn(DEFAULT_UNITS).filter((l) => l.won).length
       const title = solo
         ? '🏁 Your weekly challenges are in'
         : wins === 2
@@ -540,12 +543,12 @@ async function weekResults(ctx: Ctx, now: Date) {
           : wins === 1
             ? '🏆 Weekly results: you took one'
             : '🏁 Weekly challenge results'
-      await deliver(ctx, { userIds: [str(me.user_id)], crewLabel: crew }, 'challenges', {
+      await deliver(ctx, { userIds: [str(me.user_id)], crewLabel: crew }, 'challenges', (u) => ({
         title,
-        body: `${lines.map((l) => l.line).join('. ')}. New challenges are live.`,
+        body: `${linesIn(u).map((l) => l.line).join('. ')}. New challenges are live.`,
         tag: `week-${week}-${crew}`,
         url: '/crew/challenges',
-      })
+      }))
     }
   }
 }
@@ -570,12 +573,12 @@ async function monthResults(ctx: Ctx, now: Date) {
     if (!(await markOnce(ctx, `month_result:${crew}:${prev}`))) continue
     const totals = await monthTotals(ctx, crew, prev)
     if (totals[goal.metric] >= goal.target) continue // already celebrated when it fell
-    await deliver(ctx, { crew }, 'challenges', {
+    await deliver(ctx, { crew }, 'challenges', (u) => ({
       title: `😤 ${goal.title} missed`,
-      body: `Your crew reached ${formatOf(totals[goal.metric], goal.target, goal.unit)}. This month: ${next.title}.`,
+      body: `Your crew reached ${formatOf(totals[goal.metric], goal.target, goal.unit, u)}. This month: ${next.title}.`,
       tag: `month-${prev}-${crew}`,
       url: '/crew/challenges',
-    })
+    }))
   }
 }
 
@@ -600,12 +603,12 @@ async function monthReminder(ctx: Ctx, now: Date) {
     if (!(await markOnce(ctx, `month_reminder:${crew}:${month}`))) continue
     const totals = await monthTotals(ctx, crew, month)
     if (totals[goal.metric] >= goal.target) continue
-    await deliver(ctx, { crew }, 'challenges', {
+    await deliver(ctx, { crew }, 'challenges', (u) => ({
       title: `⏳ 5 days left: ${goal.title}`,
-      body: `Your crew is at ${formatOf(totals[goal.metric], goal.target, goal.unit)}. Get out there.`,
+      body: `Your crew is at ${formatOf(totals[goal.metric], goal.target, goal.unit, u)}. Get out there.`,
       tag: `month-${month}-${crew}`,
       url: '/crew/challenges',
-    })
+    }))
   }
 }
 

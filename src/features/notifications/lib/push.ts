@@ -179,6 +179,18 @@ function sameKey(a: ArrayBuffer | null | undefined, b: Uint8Array) {
 
 class PushSetupError extends Error {}
 
+const SETTINGS_KEY = 'blacktop-settings';
+
+/** The rider's units from Settings (miles / mph when unset), sent with the registration. */
+export function pushUnits(): { distance: 'miles' | 'km'; speed: 'mph' | 'kph' } {
+  try {
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') as { distanceUnit?: string; speedUnit?: string };
+    return { distance: s.distanceUnit === 'km' ? 'km' : 'miles', speed: s.speedUnit === 'kph' ? 'kph' : 'mph' };
+  } catch {
+    return { distance: 'miles', speed: 'mph' };
+  }
+}
+
 // ── weather location ────────────────────────────────────────────────────────
 // Only ever sent rounded (the server keeps 0.1°, about 11 km). Comes from the
 // end of the last ride when there is one, otherwise a quick low-accuracy fix,
@@ -300,12 +312,17 @@ async function registerDevice(endpoint: string, p256dh: string, auth: string) {
   // notifications start with it). A server from before several crews doesn't
   // know these parameters (PGRST202): then just the active crew, as before.
   const crews = getCrews();
-  let { error } = await supabase.rpc('register_push_subscription' as never, {
+  const withCrews = {
     ...base,
     _crew_codes: crews.map((c) => c.code),
     // Only names the rider chose; the server says "Crew CODE" for the rest.
     _crew_names: Object.fromEntries(crews.filter((c) => c.custom).map((c) => [c.code, c.name])),
-  } as never);
+  };
+  // The rider's units, so crew scores and wind gusts arrive in them. A server
+  // without these parameters yet (PGRST202) gets the call without them.
+  const units = pushUnits();
+  let { error } = await supabase.rpc('register_push_subscription' as never, { ...withCrews, _distance_unit: units.distance, _speed_unit: units.speed } as never);
+  if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, withCrews as never));
   if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, base as never));
   if (error) throw new PushSetupError(tr("Couldn't register this device ({0}). Try again in a moment.", [error.code || error.message]));
 }

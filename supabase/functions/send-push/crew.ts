@@ -89,15 +89,48 @@ export function daysInMonthUTC(d: Date): number {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()
 }
 
-/** Score as shown in the app ("212 mi", "7 rides", "48°"). */
-export function formatScore(value: number, unit: string): string {
-  const v = unit === 'mi' ? Math.round(value) : Math.round(value * 10) / 10
-  const n = v.toLocaleString('en-GB')
-  return unit === '°' ? `${n}°` : `${n} ${unit}`
+/**
+ * A device's units (push_subscriptions.distance_unit / speed_unit). Null
+ * columns (an app from before units were sent) mean miles and mph, as before.
+ */
+export interface Units {
+  distance: 'miles' | 'km'
+  speed: 'mph' | 'kph'
+  /** False when the device sent none (the defaults stand in). */
+  stored?: boolean
+}
+export const DEFAULT_UNITS: Units = { distance: 'miles', speed: 'mph' }
+
+const KM_PER_MILE = 1.60934
+
+/** Boards store miles and mph: a value and its suffix in these units. */
+function inUnits(value: number, unit: string, u: Units): { v: number; unit: string } {
+  if (unit === 'mi' && u.distance === 'km') return { v: value * KM_PER_MILE, unit: 'km' }
+  if (unit === 'mph' && u.speed === 'kph') return { v: value * KM_PER_MILE, unit: 'kph' }
+  return { v: value, unit }
 }
 
-/** "10 of 100 rides", "40° of 55°". */
-export function formatOf(value: number, target: number, unit: string): string {
-  if (unit === '°') return `${formatScore(value, unit)} of ${formatScore(target, unit)}`
-  return `${formatScore(value, unit).replace(` ${unit}`, '')} of ${formatScore(target, unit)}`
+/** Score as shown in the app ("212 mi" / "341 km", "7 rides", "48°"). */
+export function formatScore(value: number, unit: string, u: Units = DEFAULT_UNITS): string {
+  const c = inUnits(value, unit, u)
+  // Distances and speeds whole, as the app shows them; lean and points to one place.
+  const v = ['mi', 'km', 'mph', 'kph'].includes(c.unit) ? Math.round(c.v) : Math.round(c.v * 10) / 10
+  const n = v.toLocaleString('en-GB')
+  return c.unit === '°' ? `${n}°` : `${n} ${c.unit}`
+}
+
+/** A target as the app shows it: a round figure in km ("560 km", "5,600 km"), otherwise as stored. */
+export function formatTarget(target: number, unit: string, u: Units = DEFAULT_UNITS): string {
+  const c = inUnits(target, unit, u)
+  if (c.unit !== 'km') return formatScore(target, unit, u)
+  const step = c.v >= 1000 ? 100 : 10
+  return `${(Math.round(c.v / step) * step).toLocaleString('en-GB')} km`
+}
+
+/** "10 of 100 rides", "40° of 55°", "212 of 560 km". */
+export function formatOf(value: number, target: number, unit: string, u: Units = DEFAULT_UNITS): string {
+  const t = formatTarget(target, unit, u)
+  if (unit === '°') return `${formatScore(value, unit, u)} of ${t}`
+  const suffix = ` ${inUnits(0, unit, u).unit}`
+  return `${formatScore(value, unit, u).replace(suffix, '')} of ${t}`
 }

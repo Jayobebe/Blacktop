@@ -1,6 +1,7 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { sendWebPush, type SendOptions, type VapidKeys } from './webpush.ts'
 import { isNativeEndpoint, nativeReady, sendNative } from './native.ts'
+import { DEFAULT_UNITS, type Units } from './crew.ts'
 
 /** What the service worker (public/push-sw.js) receives and shows. */
 export interface PushMessage {
@@ -61,13 +62,14 @@ const PUSH_HOST = /^https:\/\/(fcm\.googleapis\.com|updates\.push\.services\.moz
 /**
  * Sends one message to every matching device that has `category` switched on
  * (null = any device with notifications on, used by the test). Dead devices
- * are removed as they're found.
+ * are removed as they're found. A message with figures in it can be a
+ * function of the device's units (miles / km, mph / kph), built per device.
  */
 export async function deliver(
   ctx: Ctx,
   target: Target,
   category: Category | null,
-  message: PushMessage,
+  message: PushMessage | ((u: Units) => PushMessage),
   opts: SendOptions = {},
 ): Promise<DeliverResult> {
   if (target.userIds && target.userIds.length === 0) return { sent: 0, failed: 0, devices: 0 }
@@ -77,7 +79,8 @@ export async function deliver(
   // `several`: the columns for riders in several crews (crew_codes, crew_names).
   // A database from before them answers 42703 and gets the single-crew query.
   const query = (several: boolean) => {
-    let q = ctx.admin.from('push_subscriptions').select(`id, user_id, endpoint, p256dh, auth${several && label ? ', crew_names' : ''}`)
+    // Every column: the optional ones (crew_names, distance_unit, speed_unit) are simply absent on an older database.
+    let q = ctx.admin.from('push_subscriptions').select('*')
     if (category) q = q.contains('categories', [category])
     if (target.userIds) q = q.in('user_id', target.userIds)
     if (crew) q = several ? q.or(`crew_code.eq.${crew},crew_codes.cs.{${crew}}`) : q.eq('crew_code', crew)
@@ -98,9 +101,15 @@ export async function deliver(
     (s) => !exclude.has(s.user_id) && (PUSH_HOST.test(s.endpoint) || (isNativeEndpoint(s.endpoint) && nativeReady(s.endpoint))),
   )
   const messageFor = (s: Sub): PushMessage => {
-    if (!label) return message
+    const units: Units = {
+      distance: s.distance_unit === 'km' ? 'km' : DEFAULT_UNITS.distance,
+      speed: s.speed_unit === 'kph' ? 'kph' : DEFAULT_UNITS.speed,
+      stored: s.distance_unit != null || s.speed_unit != null,
+    }
+    const m = typeof message === 'function' ? message(units) : message
+    if (!label) return m
     const own = s.crew_names && typeof s.crew_names[label] === 'string' ? s.crew_names[label].trim().slice(0, 30) : ''
-    return { ...message, title: `${own || `Crew ${label}`} · ${message.title}` }
+    return { ...m, title: `${own || `Crew ${label}`} · ${m.title}` }
   }
 
   let sent = 0
@@ -137,7 +146,16 @@ export async function deliver(
   return { sent, failed, devices: subs.length }
 }
 
-type Sub = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string; crew_names?: Record<string, string> | null }
+type Sub = {
+  id: string
+  user_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  crew_names?: Record<string, string> | null
+  distance_unit?: string | null
+  speed_unit?: string | null
+}
 
 /** A crew code as stored (letters and digits, upper case), or null. Also keeps it safe inside a PostgREST filter. */
 function crewCode(code: string | undefined | null): string | null {
