@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Zap, Flag, Trash2, Pencil, QrCode, Users, Satellite, X, Footprints, Map as MapIcon, Check, Timer, History, Star } from 'lucide-react';
+import { Zap, Flag, Trash2, Pencil, QrCode, Users, Satellite, X, Footprints, Map as MapIcon, Check, Timer, History, Star, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
@@ -21,9 +21,13 @@ import { RIDER_CALLS } from '../types';
 import { pitLabel } from '../lib/pitCalls';
 import { deleteTrack, markTrackUsed, saveTrack, toggleStar, trackLength, useTrackStore } from '../lib/trackStore';
 import { loadCircuit, type LibraryCircuit, type LibraryLayout } from '../lib/circuitLibrary';
-import { TRACK_QR_PREFIX } from '../lib/link';
+import { TRACK_QR_PREFIX, parsePitQr } from '../lib/link';
+import { TrackQrScanner } from './TrackQrScanner';
+import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 import {
   armTrack,
+  confirmInPosition,
   cancelWalk,
   closeRacerLink,
   disarm,
@@ -31,6 +35,8 @@ import {
   endSession,
   finishLapNow,
   finishWalk,
+  joinPitLink,
+  setTrackFromCrewHandler,
   launchNow,
   openRacerLink,
   redoLap,
@@ -63,7 +69,18 @@ export function RacerView() {
   const [viewing, setViewing] = useState<TrackSession | null>(null);
   const [importing, setImporting] = useState<LibraryLayout | null>(null);
   const [loadingCircuit, setLoadingCircuit] = useState<number | null>(null);
+  const [scanningPit, setScanningPit] = useState(false);
+  const locked = useDemoLocked();
   const riderName = profile.name || 'Racer';
+
+  // The pit crew set the track (their QR): it arrives selected, ready to go to the grid.
+  useEffect(() => {
+    setTrackFromCrewHandler((t) => {
+      toast.success(tr("Your pit crew set {0}", [t.name]), { description: tr("Ready up when you're on the grid.") });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    return () => setTrackFromCrewHandler(null);
+  }, []);
 
   const { phase } = racer;
   const sensorsOn = phase === 'armed' || phase === 'running';
@@ -274,17 +291,34 @@ export function RacerView() {
         {statusBar}
         <TrackMinimap className="aspect-square max-h-[40dvh] mx-auto w-full" outline={track.outline} startFinish={track.startFinish} splits={track.splits} />
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
-          <div className="w-24 h-24 rounded-full border-4 border-accent flex items-center justify-center animate-pulse">
-            <Timer className="w-10 h-10 text-accent" />
+          <div className={cn('w-24 h-24 rounded-full border-4 flex items-center justify-center', racer.inPosition ? 'border-accent animate-pulse' : 'border-border')}>
+            <Timer className={cn('w-10 h-10', racer.inPosition ? 'text-accent' : 'text-muted-foreground')} />
           </div>
-          <p className="text-lg font-bold">{tr("Get into position")}</p>
-          <p className="text-xs text-muted-foreground max-w-xs">
-            {tr("Timing starts by itself the moment you launch. On the start/finish line, lap 1 starts with you; from behind it, at the line.")}
-          </p>
+          {racer.inPosition ? (
+            <>
+              <p className="text-lg font-bold">{tr("In position")}</p>
+              <p className="text-xs text-muted-foreground max-w-xs">
+                {tr("Timing starts by itself the moment you launch. On the start/finish line, lap 1 starts with you; from behind it, at the line.")}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-bold">{tr("Head to the grid")}</p>
+              <p className="text-xs text-muted-foreground max-w-xs">
+                {tr("Nothing is timed on the way, so riding out of the pits won't start the clock. Tap I'm in position once you're on the grid.")}
+              </p>
+            </>
+          )}
           <p className="text-[11px] font-mono text-muted-foreground">
             {tr("GPS")}{" "}{racer.gpsHz || '–'}{" "}{tr("Hz · ±")}{racer.gpsAccuracy != null ? Math.round(racer.gpsAccuracy) : '–'}{" "}{tr("m")}
           </p>
         </div>
+        {!racer.inPosition && (
+          <Button className="h-16 text-lg font-bold" onClick={confirmInPosition}>
+            <Flag className="w-5 h-5 mr-2" />
+            {tr("I'm in position")}
+          </Button>
+        )}
         <Button variant="secondary" onClick={launchNow}>
           {tr("Start timing now (rolling start)")}
         </Button>
@@ -392,6 +426,33 @@ export function RacerView() {
           <MapIcon className="w-5 h-5" />{" "}{tr("Pick on the map")}
         </Button>
       </div>
+
+      {/* The pit crew can set the track instead: scan their QR to get it. */}
+      <Button
+        variant="outline"
+        className="h-12 gap-2"
+        disabled={locked}
+        onClick={() => {
+          if (demoBlocked()) return;
+          setScanningPit(true);
+        }}
+      >
+        <ScanLine className="w-5 h-5" />{" "}{tr("Scan pit crew QR")}
+      </Button>
+      {locked && <DemoLockNote />}
+      {scanningPit && (
+        <TrackQrScanner
+          title={tr("Scan pit crew QR")}
+          hint={tr("Scan the QR on your pit crew's Track Day screen. They send you the track they set up.")}
+          read={(text) => {
+            const token = parsePitQr(text);
+            if (!token) return false;
+            if (joinPitLink(token)) toast.success(tr("Joined your pit crew"), { description: tr("Their track arrives in a moment.") });
+            return true;
+          }}
+          onClose={() => setScanningPit(false)}
+        />
+      )}
 
       {selected && (
         <SelectedTrack

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Library, Loader2, MapPin, Search, Star, X } from 'lucide-react';
+import { ChevronDown, Library, Loader2, MapPin, Search, Star, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { LatLng, TrackDef } from '../types';
-import { LIBRARY_ATTRIBUTION, loadCircuitIndex, nearbyCircuits, searchCircuits, type LibraryCircuit } from '../lib/circuitLibrary';
+import { LIBRARY_ATTRIBUTION, layoutLabel, loadCircuitIndex, nearbyVenues, searchVenues, type LibraryCircuit, type LibraryVenue } from '../lib/circuitLibrary';
 import { trackLength } from '../lib/trackStore';
 import { metres } from '../lib/geometry';
 import { tr } from '@/lib/i18n';
@@ -12,7 +12,9 @@ const km = (m: number | null | undefined) => (m == null ? '' : m >= 1000 ? `${(m
 
 /**
  * Track Pack's search bar: the rider's own tracks first, then the circuit
- * library. Empty and focused, it lists library circuits near the rider.
+ * library by venue. A venue with several layouts (Brands Hatch: Grand Prix,
+ * Indy) opens to pick one; laps never include the pit lane. Empty and
+ * focused, it lists circuits near the rider.
  */
 export function TrackSearch({
   tracks,
@@ -31,6 +33,8 @@ export function TrackSearch({
   const [index, setIndex] = useState<LibraryCircuit[] | null>(null);
   const [indexFailed, setIndexFailed] = useState(false);
   const [here, setHere] = useState<LatLng | null>(null);
+  /** The venue whose layouts are showing. */
+  const [openVenue, setOpenVenue] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,11 +69,10 @@ export function TrackSearch({
   const query = q.trim().toLowerCase();
   const mine = useMemo(() => (query ? tracks.filter((t) => t.name.toLowerCase().includes(query)).slice(0, 5) : []), [tracks, query]);
   const imported = useMemo(() => new Set(tracks.map((t) => t.osmId).filter(Boolean)), [tracks]);
-  const library = useMemo(() => {
+  const library = useMemo<LibraryVenue[]>(() => {
     if (!index) return [];
-    const list = query ? searchCircuits(index, query, here) : here ? nearbyCircuits(index, here) : [];
-    return list.filter((c) => !imported.has(c.id));
-  }, [index, query, here, imported]);
+    return query ? searchVenues(index, query, here) : here ? nearbyVenues(index, here) : [];
+  }, [index, query, here]);
 
   const pickCircuit = (c: LibraryCircuit) => {
     onPickCircuit(c);
@@ -104,7 +107,7 @@ export function TrackSearch({
                 <Row
                   key={t.id}
                   name={t.name}
-                  detail={[km(trackLength(t)), `${t.splits.length + 1} sectors`].filter(Boolean).join(' · ')}
+                  detail={[km(trackLength(t)), tr("{0} sectors", [t.splits.length + 1])].filter(Boolean).join(' · ')}
                   onClick={() => {
                     onPickTrack(t);
                     setOpen(false);
@@ -115,15 +118,44 @@ export function TrackSearch({
           )}
           {library.length > 0 && (
             <Section title={query ? tr("Circuit library") : tr("Circuits near you")} icon={query ? <Library className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}>
-              {library.map((c) => (
-                <Row
-                  key={c.id}
-                  name={c.name}
-                  detail={[km(c.length), here ? `${Math.round(metres(here, c) / 1000)} km away` : null].filter(Boolean).join(' · ')}
-                  busy={loadingId === c.id}
-                  onClick={() => pickCircuit(c)}
-                />
-              ))}
+              {library.map((v) => {
+                const away = here ? tr("{0} km away", [Math.round(metres(here, v) / 1000)]) : null;
+                const saved = (c: LibraryCircuit) => (imported.has(c.id) ? tr("Saved") : null);
+                if (v.layouts.length === 1) {
+                  const c = v.layouts[0];
+                  return (
+                    <Row
+                      key={c.id}
+                      name={c.name}
+                      detail={[km(c.length), away, saved(c)].filter(Boolean).join(' · ')}
+                      busy={loadingId === c.id}
+                      onClick={() => pickCircuit(c)}
+                    />
+                  );
+                }
+                const shown = openVenue === v.name;
+                return (
+                  <div key={`${v.name}:${v.layouts[0].id}`}>
+                    <Row
+                      name={v.name}
+                      detail={[tr("{0} layouts", [v.layouts.length]), away].filter(Boolean).join(' · ')}
+                      expanded={shown}
+                      onClick={() => setOpenVenue(shown ? null : v.name)}
+                    />
+                    {shown &&
+                      v.layouts.map((c) => (
+                        <Row
+                          key={c.id}
+                          name={layoutLabel(v, c)}
+                          detail={[km(c.length), saved(c)].filter(Boolean).join(' · ')}
+                          busy={loadingId === c.id}
+                          nested
+                          onClick={() => pickCircuit(c)}
+                        />
+                      ))}
+                  </div>
+                );
+              })}
             </Section>
           )}
           {query && !mine.length && !library.length && (
@@ -150,14 +182,36 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
   );
 }
 
-function Row({ name, detail, busy, onClick }: { name: string; detail: string; busy?: boolean; onClick: () => void }) {
+function Row({
+  name,
+  detail,
+  busy,
+  nested,
+  expanded,
+  onClick,
+}: {
+  name: string;
+  detail: string;
+  busy?: boolean;
+  /** A layout under its venue. */
+  nested?: boolean;
+  /** A venue: whether its layouts are showing (adds the chevron). */
+  expanded?: boolean;
+  onClick: () => void;
+}) {
   return (
-    <button onClick={onClick} disabled={busy} className={cn('w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-muted/40', busy && 'opacity-70')}>
+    <button
+      onClick={onClick}
+      disabled={busy}
+      aria-expanded={expanded}
+      className={cn('w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-muted/40 min-h-[48px]', nested && 'pl-7 border-l-2 border-accent/40 ml-3', busy && 'opacity-70')}
+    >
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium truncate">{name}</span>
         {detail && <span className="block text-[11px] text-muted-foreground">{detail}</span>}
       </span>
       {busy && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+      {expanded !== undefined && <ChevronDown className={cn('w-4 h-4 shrink-0 text-accent transition-transform', expanded && 'rotate-180')} />}
     </button>
   );
 }

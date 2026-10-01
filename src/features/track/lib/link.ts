@@ -3,10 +3,19 @@ import type { Gate, Lap, PitMessage, TrackDef } from '../types';
 
 /**
  * Racer ⇄ pit crew link over a realtime channel whose name is a random key
- * carried in the racer's QR. Anyone who scans it can watch (no account
- * needed beyond the app's anonymous session). Nothing is stored server-side.
+ * carried in a QR. Anyone who scans it can watch (no account needed beyond
+ * the app's anonymous session). Nothing is stored server-side.
+ *
+ * Either side can start it:
+ *   - the racer shows their QR (TRACK_QR_PREFIX) and the pit crew scans it;
+ *   - the pit crew picks or builds the track and shows theirs
+ *     (PIT_QR_PREFIX); the racer scans it, joins that channel and is sent the
+ *     track (`track`), ready to go to the grid.
+ * Older apps ignore the `track` message and can't read a pit QR, so they keep
+ * working the first way.
  */
 export const TRACK_QR_PREFIX = 'BTTRK1:';
+export const PIT_QR_PREFIX = 'BTTRKP1:';
 
 export interface Telemetry {
   t: number; // racer device fix time
@@ -44,6 +53,8 @@ export interface RacerSnapshot {
   currentSplits: number[];
   now: number;
   running: boolean;
+  /** Armed: on the grid (launch detection on); false while heading there. Missing from older apps. */
+  inPosition?: boolean;
   /** Rider's latest position (walking / on the grid). */
   pos?: { lat: number; lng: number } | null;
   gpsHz?: number;
@@ -56,9 +67,19 @@ export type LinkMessage =
   | { type: 'lap'; lap: Lap }
   | { type: 'split'; index: number; ms: number; t: number }
   | { type: 'pit'; msg: PitMessage }
+  /** Pit crew → racer: the track the crew set up (pit-hosted links). */
+  | { type: 'track'; track: TrackDef }
   | { type: 'ended' };
 
 type Channel = ReturnType<typeof supabase.channel>;
+
+/** A pit crew's QR (they set the track): the link key, or null. */
+export function parsePitQr(raw: string): string | null {
+  const t = raw.trim();
+  if (!t.startsWith(PIT_QR_PREFIX)) return null;
+  const token = t.slice(PIT_QR_PREFIX.length);
+  return /^[a-f0-9]{32}$/.test(token) ? token : null;
+}
 
 export function parseTrackQr(raw: string): string | null {
   const t = raw.trim();

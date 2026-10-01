@@ -17,7 +17,9 @@ import { tr } from '@/lib/i18n';
  * Racer-side Track Pack. Phases:
  *   idle     — pairing QR up, choosing a track (crew can already join)
  *   walking  — recording a lap with GPS to create a track (then placing its lines)
- *   armed    — on the grid; timing starts itself when a launch is detected
+ *   armed    — readied up: first heading to the grid (no launch detection, so
+ *              riding out of the pits can't start the clock), then "I'm in
+ *              position" and timing starts itself when a launch is detected
  *   running  — lap timing, live to the pit crew
  */
 export interface SplitMark {
@@ -53,9 +55,12 @@ export interface RacerState {
   pit: PitMessage | null;
   riderName: string;
   launchedAt: number | null;
+  /** Armed: the racer said they're on the grid, so a launch now starts timing. */
+  inPosition: boolean;
 }
 
 const INITIAL: RacerState = {
+  inPosition: false,
   phase: 'idle',
   track: null,
   token: null,
@@ -131,6 +136,7 @@ function snapshot(): RacerSnapshot {
     currentSplits: state.splits.map((s) => s.t),
     now: Date.now(),
     running: state.phase === 'running',
+    inPosition: state.inPosition,
     pos: recentFixes.length ? { lat: recentFixes[recentFixes.length - 1].lat, lng: recentFixes[recentFixes.length - 1].lng } : null,
     gpsHz: state.gpsHz,
   };
@@ -147,6 +153,16 @@ function onLinkMessage(m: LinkMessage) {
       haptics.light();
     }
     broadcastState();
+  } else if (m.type === 'track') {
+    // The pit crew set the track (a pit-hosted link): save it and select it,
+    // ready for the racer to go to the grid. Never mid-session.
+    const track = cleanTrack(m.track);
+    if (!track || state.phase !== 'idle' || state.track?.id === track.id) return;
+    saveTrack({ ...track, lastUsedAt: Date.now() });
+    set({ track });
+    broadcastState();
+    haptics.success();
+    onTrackFromCrew?.(track);
   } else if (m.type === 'pit' && m.msg?.from === 'crew') {
     set({ pit: { ...m.msg, text: String(m.msg.text).slice(0, 40), at: Date.now() } });
     speakPitBoard(m.msg.text);
@@ -169,6 +185,59 @@ export function openRacerLink(riderName: string) {
     set({ token });
   }
   set({ riderName });
+}
+
+/** Told when the pit crew sends a track (the racer screen shows a notice). */
+let onTrackFromCrew: ((t: TrackDef) => void) | null = null;
+export function setTrackFromCrewHandler(fn: ((t: TrackDef) => void) | null) {
+  onTrackFromCrew = fn;
+}
+
+/**
+ * The racer scanned a pit crew's QR: move this racer's link onto the crew's
+ * channel (they then send the track they set up). Only between sessions.
+ */
+export function joinPitLink(token: string): boolean {
+  if (state.phase !== 'idle' || !/^[a-f0-9]{32}$/.test(token)) return false;
+  if (token === state.token) return true;
+  link?.send({ type: 'ended' });
+  link?.close();
+  link = new TrackLink(token, onLinkMessage, (ok) => {
+    set({ linked: ok });
+    if (ok) broadcastState();
+  });
+  set({ token, crew: [] });
+  return true;
+}
+
+/** A track from another phone, checked before it's saved (null when it isn't a usable track). */
+function cleanTrack(t: unknown): TrackDef | null {
+  const x = t as Partial<TrackDef> | null;
+  const pt = (p: unknown) => {
+    const q = p as LatLng | null;
+    return q && Number.isFinite(q.lat) && Number.isFinite(q.lng) && Math.abs(q.lat) <= 90 && Math.abs(q.lng) <= 180 ? { lat: +q.lat, lng: +q.lng } : null;
+  };
+  const gate = (g: unknown) => {
+    const a = pt((g as { a?: unknown } | null)?.a);
+    const b = pt((g as { b?: unknown } | null)?.b);
+    return a && b ? { a, b } : null;
+  };
+  if (!x || typeof x.id !== 'string' || !/^[\w-]{1,64}$/.test(x.id) || typeof x.name !== 'string') return null;
+  const startFinish = gate(x.startFinish);
+  const splits = Array.isArray(x.splits) ? x.splits.slice(0, 30).map(gate) : [];
+  if (!startFinish || splits.some((g) => !g)) return null;
+  const outline = Array.isArray(x.outline) ? x.outline.slice(0, 6000).map(pt) : undefined;
+  if (outline?.some((p) => !p)) return null;
+  return {
+    id: x.id,
+    name: x.name.trim().slice(0, 80) || 'Track',
+    startFinish,
+    splits: splits as TrackDef['splits'],
+    createdAt: Number.isFinite(x.createdAt) ? Number(x.createdAt) : Date.now(),
+    outline: outline as LatLng[] | undefined,
+    source: x.source === 'library' || x.source === 'gps' || x.source === 'map' ? x.source : 'map',
+    osmId: Number.isInteger(x.osmId) ? x.osmId : undefined,
+  };
 }
 
 export function closeRacerLink() {
@@ -345,7 +414,8 @@ export function selectTrack(track: TrackDef | null) {
 export function armTrack(track: TrackDef, riderName: string, whenLaunched: (t: number) => void) {
   openRacerLink(riderName);
   timer = new LapTimer(track);
-  launch = new LaunchDetector();
+  // No launch detection until the racer says they're in position (confirmInPosition).
+  launch = null;
   onLaunch = (t) => {
     onLaunch = null;
     launch = null;
@@ -367,13 +437,22 @@ export function armTrack(track: TrackDef, riderName: string, whenLaunched: (t: n
   broadcastState();
 }
 
+/** The racer is on the grid: from now on a launch starts timing. */
+export function confirmInPosition() {
+  if (state.phase !== 'armed' || state.inPosition) return;
+  launch = new LaunchDetector();
+  set({ inPosition: true });
+  haptics.medium();
+  broadcastState();
+}
+
 export function disarm() {
   if (state.phase !== 'armed') return;
   timer = null;
   launch = null;
   onLaunch = null;
   stopGps();
-  set({ phase: 'idle' });
+  set({ phase: 'idle', inPosition: false });
   broadcastState();
 }
 

@@ -3,7 +3,8 @@ import { demoBlocked } from '@/lib/demoGuard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
-import { ScanLine, Send, Wifi, WifiOff, Download, Footprints, Flag, Hourglass } from 'lucide-react';
+import { ScanLine, Send, Wifi, WifiOff, Download, Footprints, Flag, Hourglass, Map as MapIcon, RefreshCw } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,9 @@ import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { Lap, TrackDef } from '../types';
 import { PIT_PRESETS } from '../types';
 import { speakRiderCall, pitLabel } from '../lib/pitCalls';
-import { TrackLink, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
+import { PIT_QR_PREFIX, TrackLink, newLinkToken, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
+import { markTrackUsed } from '../lib/trackStore';
+import { PitTrackPicker } from './PitTrackPicker';
 import { shareFile } from '../lib/export';
 import { DeltaReadout, LapTable, SectorBoxes } from './TimingParts';
 import { formatLap } from '../lib/timing';
@@ -29,9 +32,10 @@ import { tr } from '@/lib/i18n';
 const SCANNER_ID = 'track-pit-scanner';
 
 /**
- * Pit crew phone: scan the racer's QR and get live timing, a data strip, a
- * track map with the rider's dot, the lap list and a pit board to send
- * messages to the rider.
+ * Pit crew phone: scan the racer's QR, or set up the track and show the
+ * crew's own QR for the racer to scan (they're sent the track, then ride to
+ * the grid). Either way: live timing, a data strip, a track map with the
+ * rider's dot, the lap list and a pit board to send messages to the rider.
  */
 export function PitView() {
   const { settings } = useSettings();
@@ -39,6 +43,11 @@ export function PitView() {
   const wakeLock = useWakeLock();
   const [token, setToken] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  /** The crew set up this track (crew-hosted link): sent to the racer when they join. */
+  const [hostTrack, setHostTrack] = useState<TrackDef | null>(null);
+  const [choosing, setChoosing] = useState(false);
+  /** The racer has the crew's track (they may pick another after; it isn't pushed again). */
+  const delivered = useRef(false);
   const locked = useDemoLocked();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const linkRef = useRef<TrackLink | null>(null);
@@ -157,6 +166,33 @@ export function PitView() {
 
   useEffect(() => () => void stopScanner(), []);
 
+  // Crew-hosted: keep offering the track until the racer's state shows they have it.
+  useEffect(() => {
+    if (!token || !hostTrack) return;
+    delivered.current = false;
+    const offer = () => {
+      const s = snapRef.current;
+      if (s?.track?.id === hostTrack.id) delivered.current = true;
+      if (delivered.current || (s && s.phase !== 'idle')) return;
+      linkRef.current?.send({ type: 'track', track: hostTrack });
+    };
+    const id = setInterval(offer, 1500);
+    return () => clearInterval(id);
+  }, [token, hostTrack]);
+
+  const host = (t: TrackDef) => {
+    markTrackUsed(t.id);
+    setHostTrack(t);
+    setChoosing(false);
+    setToken(newLinkToken());
+  };
+  const changeTrack = () => {
+    setToken(null);
+    setHostTrack(null);
+    setSnap(null);
+    setChoosing(true);
+  };
+
   const sendPit = (text: string) => {
     const t = text.trim().slice(0, 40);
     if (!t || !linkRef.current) return;
@@ -177,6 +213,30 @@ export function PitView() {
   const live = now - lastSeen < 3000;
   const running = !!snap?.running && !ended;
 
+  if (!token && choosing) return <PitTrackPicker onChosen={host} onCancel={() => setChoosing(false)} />;
+
+  // Crew-hosted, before the racer joins: the crew's QR and the track it carries.
+  if (token && hostTrack && !snap) {
+    return (
+      <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
+        <PageHeader title={hostTrack.name} subtitle={tr("Pit crew")} onBack={() => setToken(null)} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+          <div className="rounded-2xl bg-white p-4">
+            <QRCodeSVG value={PIT_QR_PREFIX + token} size={220} />
+          </div>
+          <p className="text-sm font-semibold">{tr("Racer: scan this from Track Day")}</p>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            {tr("On their Track Day screen, Scan pit crew QR. They get {0}, then tap I'm in position once they're on the grid.", [hostTrack.name])}
+          </p>
+          <TrackMinimap className="w-40 h-40" outline={hostTrack.outline} startFinish={hostTrack.startFinish} splits={hostTrack.splits} />
+        </div>
+        <Button variant="outline" className="h-12 gap-2" onClick={changeTrack}>
+          <RefreshCw className="w-4 h-4" />{" "}{tr("Change track")}
+        </Button>
+      </div>
+    );
+  }
+
   if (!token) {
     return (
       <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
@@ -186,6 +246,18 @@ export function PitView() {
           <p className="text-sm text-muted-foreground max-w-xs">{tr("Scan the QR on your racer's Track Day screen to get their live timing and a pit board.")}</p>
           <Button onClick={scan} disabled={locked} className="h-12 px-6 gap-2">
             <ScanLine className="w-5 h-5" />{" "}{tr("Scan racer QR")}
+          </Button>
+          <p className="text-xs text-muted-foreground max-w-xs pt-2">{tr("Or set up the track yourself and show your racer a QR.")}</p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (demoBlocked()) return;
+              setChoosing(true);
+            }}
+            disabled={locked}
+            className="h-12 px-6 gap-2"
+          >
+            <MapIcon className="w-5 h-5" />{" "}{tr("Set up the track")}
           </Button>
           {locked && <DemoLockNote />}
         </div>
@@ -334,7 +406,9 @@ function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean
         ? tr("Lap recorded. Racer is placing the timing lines")
         : tr("Recording a new track · {0} m", [Math.round(walk?.travelled ?? 0)])
       : phase === 'armed'
-        ? tr("Racer is ready on the grid. Timing starts at launch")
+        ? snap.inPosition === false
+          ? tr("Racer is heading to the grid")
+          : tr("Racer is ready on the grid. Timing starts at launch")
         : ended
           ? tr("Session over. Waiting for the next run")
           : track
@@ -342,7 +416,7 @@ function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean
             : tr("Waiting for the racer to pick a track");
   return (
     <div className="flex flex-col gap-2">
-      <div className={cn('rounded-2xl border px-3 py-2 flex items-center gap-2', phase === 'armed' ? 'border-accent bg-accent/10 animate-pulse' : 'border-border bg-card/50')}>
+      <div className={cn('rounded-2xl border px-3 py-2 flex items-center gap-2', phase === 'armed' && snap?.inPosition !== false ? 'border-accent bg-accent/10 animate-pulse' : 'border-border bg-card/50')}>
         <Icon className="w-5 h-5 text-accent shrink-0" />
         <p className="text-sm font-semibold">{title}</p>
         {snap?.gpsHz ? <span className="ml-auto text-[10px] font-mono text-muted-foreground">{tr("GPS")}{" "}{snap.gpsHz}{" "}{tr("Hz")}</span> : null}

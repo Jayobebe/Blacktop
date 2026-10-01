@@ -52,8 +52,11 @@ export interface LoopAnalysis {
   components: string[][];
 }
 
-/** Pit lanes by name ("Pit Lane", "Pits", "Disused Pit Lane"), not corners like "Paddock Hill". */
-const PIT = /\bpit(s|[ -]?lane)?\b/i;
+/**
+ * Pit lanes by name ("Pit Lane", "Pits", "Pit Entry", "Disused Pit Lane"), not
+ * corners like "Paddock Hill" or racing straights like Bathurst's "Pit Straight".
+ */
+const PIT = /^\s*pits?\s*$|\bpit(s|[ -]?(lane|entry|exit|road|in|out))\b/i;
 
 function pathLength(coords: LatLng[]) {
   let d = 0;
