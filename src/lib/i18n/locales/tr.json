@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Pistleri birazdan gelir.",
  "Your pit crew set {0}": "Pit ekibin {0} seçti",
  "{0} km away": "{0} km uzakta",
- "{0} layouts": "{0} düzen"
+ "{0} layouts": "{0} düzen",
+ "Best {0}": "En iyi {0}",
+ "Check your connection, or record a lap with GPS instead.": "Bağlantını kontrol et ya da onun yerine GPS ile bir tur kaydet.",
+ "Show racer QR": "Yarışçıya QR göster",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Bu pist, pist çizgileri öncesinde kaydedildi, bu yüzden çizgileri taşınamaz. Süre ölçümü olduğu gibi çalışır. Değiştirmek için GPS ile bir tur kaydet ya da pist kütüphanesinden seç.",
+ "Tracks you build with a GPS lap show up here.": "GPS turuyla oluşturduğun pistler burada görünür.",
+ "Walk a lap (GPS)": "Yürüyerek bir tur (GPS)"
 }

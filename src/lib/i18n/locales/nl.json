@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Hun circuit komt zo binnen.",
  "Your pit crew set {0}": "Je pitcrew koos {0}",
  "{0} km away": "{0} km verderop",
- "{0} layouts": "{0} varianten"
+ "{0} layouts": "{0} varianten",
+ "Best {0}": "Beste {0}",
+ "Check your connection, or record a lap with GPS instead.": "Controleer je verbinding, of neem een ronde op met gps.",
+ "Show racer QR": "Coureur-QR tonen",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Dit circuit is opgeslagen voor er circuitomtrekken waren, dus de lijnen kunnen niet worden verplaatst. De tijdwaarneming werkt nog zoals het is. Om het te wijzigen, neem een ronde op met gps of kies het uit de circuitbibliotheek.",
+ "Tracks you build with a GPS lap show up here.": "Circuits die je met een gps-ronde bouwt, verschijnen hier.",
+ "Walk a lap (GPS)": "Ronde lopen (gps)"
 }

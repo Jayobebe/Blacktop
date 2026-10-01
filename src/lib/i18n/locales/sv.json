@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Deras bana kommer strax.",
  "Your pit crew set {0}": "Ditt depåteam valde {0}",
  "{0} km away": "{0} km bort",
- "{0} layouts": "{0} varianter"
+ "{0} layouts": "{0} varianter",
+ "Best {0}": "Bästa {0}",
+ "Check your connection, or record a lap with GPS instead.": "Kontrollera anslutningen, eller spela in ett varv med GPS i stället.",
+ "Show racer QR": "Visa förar-QR",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Den här banan sparades innan banomriss fanns, så dess linjer kan inte flyttas. Tidtagningen fungerar som den är. För att ändra den, spela in ett varv med GPS eller välj den i banbiblioteket.",
+ "Tracks you build with a GPS lap show up here.": "Banor du bygger med ett GPS-varv visas här.",
+ "Walk a lap (GPS)": "Gå ett varv (GPS)"
 }

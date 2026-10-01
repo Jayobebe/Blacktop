@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "곧 트랙이 도착합니다.",
  "Your pit crew set {0}": "피트 크루가 {0}을(를) 설정했습니다",
  "{0} km away": "{0} km 거리",
- "{0} layouts": "레이아웃 {0}개"
+ "{0} layouts": "레이아웃 {0}개",
+ "Best {0}": "베스트 {0}",
+ "Check your connection, or record a lap with GPS instead.": "연결을 확인하거나 대신 GPS로 한 바퀴를 기록하세요.",
+ "Show racer QR": "레이서에게 QR 보여주기",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "이 트랙은 트랙 윤곽 기능 이전에 저장되어 라인을 옮길 수 없습니다. 계측은 그대로 됩니다. 바꾸려면 GPS로 한 바퀴를 기록하거나 서킷 라이브러리에서 고르세요.",
+ "Tracks you build with a GPS lap show up here.": "GPS 한 바퀴로 만든 트랙이 여기에 표시됩니다.",
+ "Walk a lap (GPS)": "걸어서 한 바퀴 (GPS)"
 }

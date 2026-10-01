@@ -1,9 +1,5 @@
-import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
-import { demoBlocked } from '@/lib/demoGuard';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Html5Qrcode } from 'html5-qrcode';
-import { loadQrScanner } from '@/lib/qrScanner';
-import { ScanLine, Send, Wifi, WifiOff, Download, Footprints, Flag, Hourglass, Map as MapIcon, RefreshCw } from 'lucide-react';
+import { Send, Wifi, WifiOff, Download, Footprints, Flag, Hourglass, QrCode, RefreshCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,12 +11,15 @@ import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
-import type { Lap, TrackDef } from '../types';
+import type { Lap, TrackDef, TrackSession } from '../types';
 import { PIT_PRESETS } from '../types';
 import { speakRiderCall, pitLabel } from '../lib/pitCalls';
 import { PIT_QR_PREFIX, TrackLink, newLinkToken, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
 import { markTrackUsed } from '../lib/trackStore';
-import { PitTrackPicker } from './PitTrackPicker';
+import { TrackHome } from './TrackHome';
+import { WalkScreen } from './WalkScreen';
+import { SessionDetail } from './SessionDetail';
+import { closeRacerLink, startWalk, useRacer } from '../lib/session';
 import { shareFile } from '../lib/export';
 import { DeltaReadout, LapTable, SectorBoxes } from './TimingParts';
 import { formatLap } from '../lib/timing';
@@ -28,8 +27,6 @@ import { theoreticalBest } from '../lib/laps';
 import { TrackMinimap } from './TrackMinimap';
 import { TrackVoice } from './TrackVoice';
 import { tr } from '@/lib/i18n';
-
-const SCANNER_ID = 'track-pit-scanner';
 
 /**
  * Pit crew phone: scan the racer's QR, or set up the track and show the
@@ -42,14 +39,15 @@ export function PitView() {
   const { profile } = useProfile();
   const wakeLock = useWakeLock();
   const [token, setToken] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
   /** The crew set up this track (crew-hosted link): sent to the racer when they join. */
   const [hostTrack, setHostTrack] = useState<TrackDef | null>(null);
-  const [choosing, setChoosing] = useState(false);
+  /** The track picked on this phone's Track Day home. */
+  const [selected, setSelected] = useState<TrackDef | null>(null);
+  const [viewing, setViewing] = useState<TrackSession | null>(null);
+  // Building a track with a GPS lap uses the racer's recorder on this phone.
+  const walker = useRacer();
   /** The racer has the crew's track (they may pick another after; it isn't pushed again). */
   const delivered = useRef(false);
-  const locked = useDemoLocked();
-  const scannerRef = useRef<Html5Qrcode | null>(null);
   const linkRef = useRef<TrackLink | null>(null);
   const crewId = useMemo(() => crypto.randomUUID(), []);
 
@@ -70,40 +68,6 @@ export function PitView() {
     const id = setInterval(() => setNow(Date.now()), 47);
     return () => clearInterval(id);
   }, []);
-
-  const stopScanner = async () => {
-    const s = scannerRef.current;
-    scannerRef.current = null;
-    try {
-      if (s?.isScanning) await s.stop();
-      s?.clear();
-    } catch {
-      /* ignore */
-    }
-    setScanning(false);
-  };
-
-  const scan = async () => {
-    if (demoBlocked()) return;
-    setScanning(true);
-    await new Promise((r) => setTimeout(r, 100));
-    try {
-      const qr = new (await loadQrScanner())(SCANNER_ID);
-      scannerRef.current = qr;
-      const edge = Math.min(window.innerWidth, window.innerHeight);
-      const box = Math.max(180, Math.round(Math.min(edge * 0.7, 280)));
-      await qr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: box, height: box } }, (decoded) => {
-        const t = parseTrackQr(decoded);
-        if (!t) return;
-        void stopScanner();
-        haptics.success();
-        setToken(t);
-      }, () => {});
-    } catch {
-      toast.error(tr("Could not access camera"));
-      setScanning(false);
-    }
-  };
 
   // Connect once we have the racer's key.
   useEffect(() => {
@@ -164,7 +128,10 @@ export function PitView() {
   const snapRef = useRef(snap);
   snapRef.current = snap;
 
-  useEffect(() => () => void stopScanner(), []);
+  // A GPS lap recorded here opened the recorder's link: close it once done.
+  useEffect(() => {
+    if (walker.phase === 'idle' && walker.token) closeRacerLink();
+  }, [walker.phase, walker.token]);
 
   // Crew-hosted: keep offering the track until the racer's state shows they have it.
   useEffect(() => {
@@ -183,14 +150,13 @@ export function PitView() {
   const host = (t: TrackDef) => {
     markTrackUsed(t.id);
     setHostTrack(t);
-    setChoosing(false);
     setToken(newLinkToken());
   };
+  /** Back to the home screen with this track still selected. */
   const changeTrack = () => {
     setToken(null);
     setHostTrack(null);
     setSnap(null);
-    setChoosing(true);
   };
 
   const sendPit = (text: string) => {
@@ -213,7 +179,8 @@ export function PitView() {
   const live = now - lastSeen < 3000;
   const running = !!snap?.running && !ended;
 
-  if (!token && choosing) return <PitTrackPicker onChosen={host} onCancel={() => setChoosing(false)} />;
+  if (!token && walker.phase === 'walking') return <WalkScreen onSaved={setSelected} />;
+  if (!token && viewing) return <SessionDetail session={viewing} onBack={() => setViewing(null)} />;
 
   // Crew-hosted, before the racer joins: the crew's QR and the track it carries.
   if (token && hostTrack && !snap) {
@@ -237,42 +204,27 @@ export function PitView() {
     );
   }
 
+  // Track Day home, the same as the racer's: scan their QR, or pick a track and show them yours.
   if (!token) {
     return (
-      <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
-        <PageHeader title={tr("Track Day")} subtitle={tr("Pit crew")} backTo="/" />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
-          <ScanLine className="w-12 h-12 text-accent" />
-          <p className="text-sm text-muted-foreground max-w-xs">{tr("Scan the QR on your racer's Track Day screen to get their live timing and a pit board.")}</p>
-          <Button onClick={scan} disabled={locked} className="h-12 px-6 gap-2">
-            <ScanLine className="w-5 h-5" />{" "}{tr("Scan racer QR")}
-          </Button>
-          <p className="text-xs text-muted-foreground max-w-xs pt-2">{tr("Or set up the track yourself and show your racer a QR.")}</p>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (demoBlocked()) return;
-              setChoosing(true);
-            }}
-            disabled={locked}
-            className="h-12 px-6 gap-2"
-          >
-            <MapIcon className="w-5 h-5" />{" "}{tr("Set up the track")}
-          </Button>
-          {locked && <DemoLockNote />}
-        </div>
-        {scanning && (
-          <div className="fixed inset-0 z-[100] bg-background flex flex-col">
-            <div className="flex items-center justify-between p-4">
-              <p className="font-semibold">{tr("Scan racer QR")}</p>
-              <Button variant="ghost" onClick={() => void stopScanner()}>
-                {tr("Cancel")}
-              </Button>
-            </div>
-            <div id={SCANNER_ID} className="flex-1" />
-          </div>
-        )}
-      </div>
+      <TrackHome
+        role="pit"
+        selected={selected}
+        onSelect={setSelected}
+        onWalk={() => startWalk(profile.name || 'Pit crew')}
+        scan={{
+          label: tr("Scan racer QR"),
+          hint: tr("Scan the QR on your racer's Track Day screen to get their live timing and a pit board."),
+          read: (text) => {
+            const t = parseTrackQr(text);
+            if (!t) return false;
+            setToken(t);
+            return true;
+          },
+        }}
+        primary={{ label: tr("Show racer QR"), icon: <QrCode className="w-5 h-5" />, onClick: host }}
+        onViewSession={setViewing}
+      />
     );
   }
 

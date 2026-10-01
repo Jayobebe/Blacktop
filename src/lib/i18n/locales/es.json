@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Su circuito llega en un momento.",
  "Your pit crew set {0}": "Tu equipo de boxes eligió {0}",
  "{0} km away": "a {0} km",
- "{0} layouts": "{0} trazados"
+ "{0} layouts": "{0} trazados",
+ "Best {0}": "Mejor {0}",
+ "Check your connection, or record a lap with GPS instead.": "Comprueba tu conexión o graba una vuelta con GPS.",
+ "Show racer QR": "Mostrar QR al piloto",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Este circuito se guardó antes de los contornos, así que sus líneas no se pueden mover. Sigue cronometrando tal cual. Para cambiarlo, graba una vuelta con GPS o elígelo de la biblioteca de circuitos.",
+ "Tracks you build with a GPS lap show up here.": "Aquí aparecen los circuitos que crees con una vuelta GPS.",
+ "Walk a lap (GPS)": "Recorrer una vuelta a pie (GPS)"
 }

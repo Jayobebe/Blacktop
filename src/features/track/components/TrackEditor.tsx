@@ -1,22 +1,18 @@
-import { useState } from 'react';
 import type { LatLng, TrackDef } from '../types';
 import { isClosedLap } from '../lib/centerline';
-import { gateCentre } from '../lib/walker';
 import { LIBRARY_ATTRIBUTION, type LibraryLayout } from '../lib/circuitLibrary';
-import { RoadPicker } from './RoadPicker';
 import { ChaseCamPlacer } from './ChaseCamPlacer';
+import { Button } from '@/components/ui/button';
 import { tr } from '@/lib/i18n';
 
 /**
- * Creates or edits a track:
- *   - from the circuit library (`library`): straight to the chase cam, with
- *     the layout's name and (if mapped) start line;
- *   - from the map: frame the circuit, keep its roads (RoadPicker), then place
- *     the lines with the chase cam;
- *   - from a GPS lap (`loop`): straight to the chase cam;
- *   - editing a saved track: the chase cam on its outline, with "Change
- *     roads" to re-pick the lap. Older tracks drawn before outlines existed
- *     start at the road picker, centred on their start/finish.
+ * Creates or edits a track, always in the chase cam:
+ *   - from the circuit library (`library`), with the layout's name and (if
+ *     mapped) start line;
+ *   - from a GPS lap (`loop`);
+ *   - editing a saved track, on its outline. (Picking roads on the map was
+ *     dropped: the public map-data servers it needed were too unreliable.
+ *     Tracks saved before outlines existed can't be re-edited; they still race.)
  */
 export function TrackEditor({
   initial,
@@ -33,22 +29,15 @@ export function TrackEditor({
   onSave: (t: TrackDef) => void;
   onCancel: () => void;
 }) {
-  const [loop, setLoop] = useState<LatLng[] | null>(
-    () => recorded ?? library?.loop ?? (initial && isClosedLap(initial.outline) ? initial.outline : null),
-  );
-  const [picked, setPicked] = useState(false);
+  const loop = recorded ?? library?.loop ?? (initial && isClosedLap(initial.outline) ? initial.outline : null);
   const source: TrackDef['source'] = library ? 'library' : recorded ? 'gps' : 'map';
 
   if (!loop) {
     return (
-      <RoadPicker
-        center={initial ? gateCentre(initial.startFinish) : library ? library.loop[0] : undefined}
-        onLoop={(l) => {
-          setPicked(true);
-          setLoop(l);
-        }}
-        onCancel={onCancel}
-      />
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center gap-4 p-6 text-center safe-top safe-bottom">
+        <p className="text-sm max-w-xs">{tr("This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.")}</p>
+        <Button onClick={onCancel}>{tr("Back")}</Button>
+      </div>
     );
   }
   return (
@@ -57,11 +46,9 @@ export function TrackEditor({
       loop={loop}
       base={initial}
       name={library?.name}
-      startHint={library && !picked ? library.start : undefined}
-      meta={initial ? undefined : { source: picked ? 'map' : source, osmId: picked ? undefined : library?.id }}
-      attribution={library && !picked ? LIBRARY_ATTRIBUTION : undefined}
-      onBack={recorded ? undefined : () => setLoop(null)}
-      backLabel={tr("Roads")}
+      startHint={library?.start}
+      meta={initial ? undefined : { source, osmId: library?.id }}
+      attribution={library ? LIBRARY_ATTRIBUTION : undefined}
       onSave={onSave}
       onCancel={onCancel}
     />

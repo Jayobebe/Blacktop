@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Їхній трек незабаром надійде.",
  "Your pit crew set {0}": "Ваша піт-команда обрала {0}",
  "{0} km away": "{0} км звідси",
- "{0} layouts": "Конфігурацій: {0}"
+ "{0} layouts": "Конфігурацій: {0}",
+ "Best {0}": "Найкраще {0}",
+ "Check your connection, or record a lap with GPS instead.": "Перевірте з'єднання або запишіть коло за GPS.",
+ "Show racer QR": "Показати QR гонщику",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Цей трек збережено до появи обрисів треків, тож його лінії не можна пересунути. Хронометраж працює як є. Щоб змінити його, запишіть коло за GPS або виберіть його з бібліотеки трас.",
+ "Tracks you build with a GPS lap show up here.": "Тут з'являються треки, створені колом за GPS.",
+ "Walk a lap (GPS)": "Пройти коло пішки (GPS)"
 }

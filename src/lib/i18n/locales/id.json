@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Sirkuit mereka tiba sebentar lagi.",
  "Your pit crew set {0}": "Kru pit Anda memilih {0}",
  "{0} km away": "{0} km lagi",
- "{0} layouts": "{0} tata letak"
+ "{0} layouts": "{0} tata letak",
+ "Best {0}": "Terbaik {0}",
+ "Check your connection, or record a lap with GPS instead.": "Periksa koneksi Anda, atau rekam satu lap dengan GPS.",
+ "Show racer QR": "Tunjukkan QR ke pembalap",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Sirkuit ini disimpan sebelum ada garis sirkuit, jadi garisnya tidak bisa dipindah. Pencatatan waktu tetap berjalan. Untuk mengubahnya, rekam satu lap dengan GPS atau pilih dari pustaka sirkuit.",
+ "Tracks you build with a GPS lap show up here.": "Sirkuit yang Anda buat dengan lap GPS muncul di sini.",
+ "Walk a lap (GPS)": "Jalan kaki satu lap (GPS)"
 }

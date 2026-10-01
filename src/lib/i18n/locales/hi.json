@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "उनका ट्रैक थोड़ी देर में आएगा।",
  "Your pit crew set {0}": "आपके पिट क्रू ने {0} चुना",
  "{0} km away": "{0} किमी दूर",
- "{0} layouts": "{0} लेआउट"
+ "{0} layouts": "{0} लेआउट",
+ "Best {0}": "सर्वश्रेष्ठ {0}",
+ "Check your connection, or record a lap with GPS instead.": "अपना कनेक्शन जाँचें, या इसके बजाय GPS से एक लैप रिकॉर्ड करें।",
+ "Show racer QR": "रेसर को QR दिखाएँ",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "यह ट्रैक आउटलाइन से पहले सहेजा गया था, इसलिए इसकी लाइनें हिलाई नहीं जा सकतीं। यह अभी भी वैसे ही टाइम करता है। बदलने के लिए GPS से एक लैप रिकॉर्ड करें या सर्किट लाइब्रेरी से चुनें।",
+ "Tracks you build with a GPS lap show up here.": "GPS लैप से बनाए गए आपके ट्रैक यहाँ दिखते हैं।",
+ "Walk a lap (GPS)": "पैदल एक लैप (GPS)"
 }

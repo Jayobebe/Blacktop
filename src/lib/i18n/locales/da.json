@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "Deres bane kommer om et øjeblik.",
  "Your pit crew set {0}": "Dit pitcrew valgte {0}",
  "{0} km away": "{0} km væk",
- "{0} layouts": "{0} layouts"
+ "{0} layouts": "{0} layouts",
+ "Best {0}": "Bedst {0}",
+ "Check your connection, or record a lap with GPS instead.": "Tjek din forbindelse, eller optag en omgang med GPS i stedet.",
+ "Show racer QR": "Vis racer-QR",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "Denne bane blev gemt før baneomrids, så dens linjer kan ikke flyttes. Den tager stadig tid, som den er. For at ændre den skal du optage en omgang med GPS eller vælge den fra banebiblioteket.",
+ "Tracks you build with a GPS lap show up here.": "Baner, du bygger med en GPS-omgang, vises her.",
+ "Walk a lap (GPS)": "Gå en omgang (GPS)"
 }

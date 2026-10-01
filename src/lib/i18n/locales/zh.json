@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "他们的赛道马上就到。",
  "Your pit crew set {0}": "你的维修团队选择了 {0}",
  "{0} km away": "{0} 公里外",
- "{0} layouts": "{0} 种布局"
+ "{0} layouts": "{0} 种布局",
+ "Best {0}": "最佳 {0}",
+ "Check your connection, or record a lap with GPS instead.": "请检查网络连接，或改用 GPS 记录一圈。",
+ "Show racer QR": "向车手出示二维码",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "这条赛道保存于赛道轮廓功能之前，所以无法移动它的计时线。计时仍可照常使用。如需修改，请用 GPS 记录一圈，或从赛道库中选择。",
+ "Tracks you build with a GPS lap show up here.": "用 GPS 一圈创建的赛道会显示在这里。",
+ "Walk a lap (GPS)": "步行一圈（GPS）"
 }

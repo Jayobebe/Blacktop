@@ -3564,5 +3564,11 @@
  "Their track arrives in a moment.": "まもなくコースが届きます。",
  "Your pit crew set {0}": "ピットクルーが {0} を設定しました",
  "{0} km away": "{0} km 先",
- "{0} layouts": "{0} レイアウト"
+ "{0} layouts": "{0} レイアウト",
+ "Best {0}": "ベスト {0}",
+ "Check your connection, or record a lap with GPS instead.": "接続を確認するか、代わりに GPS で 1 周を記録してください。",
+ "Show racer QR": "レーサーに QR を表示",
+ "This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.": "このコースはコース形状の保存より前に作られたため、ラインを動かせません。計測はそのまま使えます。変更するには、GPS で 1 周を記録するか、サーキットライブラリから選んでください。",
+ "Tracks you build with a GPS lap show up here.": "GPS の 1 周で作ったコースがここに表示されます。",
+ "Walk a lap (GPS)": "歩いて 1 周（GPS）"
 }
