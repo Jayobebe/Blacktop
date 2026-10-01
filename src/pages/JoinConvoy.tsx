@@ -14,10 +14,11 @@ import { tr } from '@/lib/i18n';
 export default function JoinConvoy() {
   const navigate = useNavigate();
   const { joinConvoy } = useConvoyState();
-  const [code, setCode] = useState('');
-  const [isJoining, setIsJoining] = useState(false);
   // Operator or passenger is picked on Home's Join Convoy tile (?role=pillion).
   const [params] = useSearchParams();
+  // Shared join links (the Discord convoy announcement) carry the code: /join?code=ABC123.
+  const [code, setCode] = useState(() => (params.get('code') ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
+  const [isJoining, setIsJoining] = useState(false);
   const role: RideRole = params.get('role') === 'pillion' ? 'pillion' : 'operator';
   const [showScanner, setShowScanner] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);

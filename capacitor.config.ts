@@ -1,18 +1,25 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// Two ways to build the shells:
+// - `npm run cap:sync` (default): the shell loads the live site, so it always
+//   runs the deployed web build. For testing on a phone.
+// - `npm run cap:sync:store`: the app's own files are bundled in (CAP_BUNDLED=1),
+//   so a cold start works offline. This is the store build.
+const bundled = process.env.CAP_BUNDLED === '1';
+
 const config: CapacitorConfig = {
   appId: 'com.blacktoplive.app',
   appName: 'Blacktop',
   webDir: 'dist',
 
-  // Remote URL so the native shell always runs the deployed production build.
-  // When self-hosting is set up, swap this to your own domain and remove the
-  // cleartext flag. To ship fully bundled assets instead (no internet required
-  // to load the app), remove the entire `server` block and run `npx cap sync`.
-  server: {
-    url: 'https://blacktoplive.com',
-    cleartext: false,
-  },
+  ...(bundled
+    ? {}
+    : {
+        server: {
+          url: 'https://blacktoplive.com',
+          cleartext: false,
+        },
+      }),
 
   ios: {
     backgroundColor: '#0a0a0a',

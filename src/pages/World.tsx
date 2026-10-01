@@ -1,3 +1,4 @@
+import { paymentsAvailable } from '@/lib/platform';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -33,7 +34,8 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   { id: 'speedshop', lat: 28.6, lng: 77.2, label: tr("Speedshop"), kind: 'shop', route: '/speedshop' },
   // Bottom of the globe, on the Antarctic landmass (Enderby Land): comes into
   // view along the lower edge as the globe turns.
-  { id: 'blacktank', lat: -70, lng: 60, label: tr("Blacktank"), kind: 'tank' },
+  // Crypto fuel pot: not in the store apps (paymentsAvailable).
+  ...(paymentsAvailable() ? [{ id: 'blacktank', lat: -70, lng: 60, label: tr("Blacktank"), kind: 'tank' as const }] : []),
 
 ];
 
@@ -48,7 +50,7 @@ export default function World() {
   const [showCrewQr, setShowCrewQr] = useState(false);
   const [searchParams] = useSearchParams();
   // Blacktank notifications open the panel straight away (/world?tank=1).
-  const [showBlacktank, setShowBlacktank] = useState(() => searchParams.get('tank') === '1');
+  const [showBlacktank, setShowBlacktank] = useState(() => paymentsAvailable() && searchParams.get('tank') === '1');
 
   const crew = useCrew();
   const { settings } = useSettings();

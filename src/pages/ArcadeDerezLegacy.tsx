@@ -1,3 +1,4 @@
+import { shareOrigin } from '@/lib/platform';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
@@ -84,7 +85,7 @@ export default function ArcadeDerezLegacy() {
   );
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);
-  const joinUrl = lobby ? `${window.location.origin}/arcade/derez-legacy/${lobby.code}` : '';
+  const joinUrl = lobby ? `${shareOrigin()}/arcade/derez-legacy/${lobby.code}` : '';
 
   const exit = async () => { await leaveLobby(); navigate('/world'); };
 

@@ -34,24 +34,18 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Foreground service for background GPS during active rides -->
-        <service
-            android:name="com.capacitorjs.plugins.geolocation.GeolocationForegroundService"
-            android:foregroundServiceType="location"
-            android:exported="false" />
-
     </application>
 
     <!-- ── Network ─────────────────────────────────────────────────── -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- ── Location — fine + background for ride GPS tracking ──────── -->
+    <!-- ── Location — ride GPS tracking ──────────────────────────────
+         Tracking while the app is minimised comes from a location foreground
+         service started during a ride (with its notification), which needs
+         only these, not ACCESS_BACKGROUND_LOCATION (a Play policy review). -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- ACCESS_BACKGROUND_LOCATION required for tracking while app is minimised.
-         Android 10+ treats this as a separate runtime permission. -->
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 

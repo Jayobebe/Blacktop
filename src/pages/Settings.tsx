@@ -1,3 +1,4 @@
+import { paymentsAvailable } from '@/lib/platform';
 import { useState, useRef, useEffect } from 'react';
 import { noteMotionGranted } from '@/lib/motionPermission';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -1279,7 +1280,7 @@ export default function Settings() {
         </section>
 
         {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
-        <NimiqTipCard />
+        {paymentsAvailable() && <NimiqTipCard />}
 
         {/* Demo account: every rider's Speedshop survey answers */}
         {demoEnabled && <SurveyResultsTable />}

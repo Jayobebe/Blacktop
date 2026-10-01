@@ -1,3 +1,4 @@
+import { paymentsAvailable } from '@/lib/platform';
 import { Link } from 'react-router-dom';
 import {
   ChevronRight, ChevronDown, Play, Shield, BarChart2, Users, Mic, ShieldCheck, Map, Wrench, Globe2, Sparkles, Radio,
@@ -16,6 +17,7 @@ import { tr } from '@/lib/i18n';
  * actually does — every line here is backed by a shipped feature.
  */
 
+const PAY_UP = tr("Pay Up");
 const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: SlidersHorizontal,
@@ -109,7 +111,7 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   },
   {
     icon: Wallet,
-    title: tr("Pay Up"),
+    title: PAY_UP,
     body: tr("Send a mate fuel money or tip with Nimiq Pay (NIM or USDT) by QR code. Payments happen in your own wallet."),
   },
   {
@@ -190,7 +192,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {FEATURES.map(({ icon: Icon, title, body }) => (
+          {FEATURES.filter((f) => paymentsAvailable() || f.title !== PAY_UP).map(({ icon: Icon, title, body }) => (
             <article key={title} className="rounded-[20px] frost p-4">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <div className="rounded-lg bg-accent/10 p-1.5">

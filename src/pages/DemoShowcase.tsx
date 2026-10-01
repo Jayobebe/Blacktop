@@ -1,3 +1,4 @@
+import { paymentsAvailable } from '@/lib/platform';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -117,7 +118,7 @@ export default function DemoShowcase() {
   const [dir, setDir] = useState<'forward' | 'back'>('forward');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const slides: Slide[] = [
+  const slides: Slide[] = ([
     {
       id: 'intro',
       title: tr("BLACKTOP"),
@@ -432,7 +433,7 @@ export default function DemoShowcase() {
       tone: 'accent',
       scene: <ReadyScene />,
     },
-  ];
+  ] as Slide[]).filter((s) => paymentsAvailable() || s.id !== 'pay-up');
 
   const count = slides.length;
   const slide = slides[index];

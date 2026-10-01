@@ -1,10 +1,11 @@
+import { paymentsAvailable } from '@/lib/platform';
 import { installMotionRegrant } from '@/lib/motionPermission';
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { PushBridge } from "@/features/notifications";
 import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
 import { MaintenanceNotifier } from "@/features/garage";
@@ -71,6 +72,10 @@ const PrivacyPolicy = lazyPage(() => import("./pages/PrivacyPolicy"));
 const Terms = lazyPage(() => import("./pages/Terms"));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
 const Pay = lazyPage(() => import("./pages/Pay"));
+function JoinLink() {
+  const { search } = useLocation();
+  return <Navigate to={`/join-convoy${search}`} replace />;
+}
 const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
@@ -195,7 +200,7 @@ function AppRoutes() {
       <Suspense fallback={null}>
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
-        <Route path="/pay" element={<Pay />} />
+        <Route path="/pay" element={paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
         <Route path="/device-check" element={<DeviceCheck />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
@@ -219,6 +224,8 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/create-convoy" element={<CreateConvoy />} />
       <Route path="/join-convoy" element={<JoinConvoy />} />
+      {/* Shared join links: /join?code=ABC123 opens Join Convoy with the code in. */}
+      <Route path="/join" element={<JoinLink />} />
       <Route path="/lobby" element={<Lobby />} />
       <Route path="/solo-lobby" element={<SoloLobby />} />
       <Route path="/ride" element={<ActiveRide />} />
@@ -227,7 +234,7 @@ function AppRoutes() {
       <Route path="/rescue" element={<RescueLocation />} />
       <Route path="/speedshop" element={<Speedshop />} />
       <Route path="/demo" element={<DemoShowcase />} />
-      <Route path="/pay" element={<Pay />} />
+      <Route path="/pay" element={paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
       <Route path="/device-check" element={<DeviceCheck />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />

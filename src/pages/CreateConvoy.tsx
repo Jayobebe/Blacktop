@@ -1,3 +1,4 @@
+import { shareOrigin } from '@/lib/platform';
 import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
@@ -72,7 +73,7 @@ export default function CreateConvoy() {
       convoyCode: code,
       convoyName: `${profile.name}'s Convoy`,
       leaderName: profile.name,
-      joinUrl: `${window.location.origin}/join?code=${encodeURIComponent(code)}`,
+      joinUrl: `${shareOrigin()}/join?code=${encodeURIComponent(code)}`,
     });
     setPinging(false);
     if (ok) {
