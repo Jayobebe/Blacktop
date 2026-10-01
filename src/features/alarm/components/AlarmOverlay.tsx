@@ -13,6 +13,7 @@ import { getAlarm, noteNudge, setAlarmPhase, useAlarm } from '../lib/alarmStore'
 import { pinForAlarm, playAlarmChirp as alarmChirp, startAlarmSiren } from '../lib/alarmSound';
 import { disarmAlarm, useRescuePosition } from '../lib/arm';
 import { W3WAddress } from '@/components/W3WAddress';
+import { EmergencyTextButton } from '@/features/rescue/components/EmergencyText';
 import { checkAlarmPattern, MIN_PATTERN_DOTS, saveAlarmPattern } from '../lib/pattern';
 import { TamperDetector, type TamperEvent } from '../lib/detector';
 import { useTamperSensors } from '../hooks/useTamperSensors';
@@ -105,7 +106,9 @@ function RescueSirenScreen() {
           hint={tr("Give these three words to the emergency services: they pinpoint this spot.")}
         />
       )}
-      <Button size="xl" variant="destructive" className="relative mt-4 w-full max-w-xs" onClick={() => disarmAlarm()}>
+      {/* The rider's emergency contact, by plain SMS: works when nothing else reaches our server. */}
+      <EmergencyTextButton at={at} className="relative mt-2 w-full max-w-xs h-14 text-base" />
+      <Button size="xl" variant="destructive" className="relative mt-2 w-full max-w-xs" onClick={() => disarmAlarm()}>
         {tr("Stop siren")}
       </Button>
     </div>

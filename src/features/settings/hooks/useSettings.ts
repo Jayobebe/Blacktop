@@ -81,6 +81,13 @@ export interface AppSettings {
   rescueToDiscord: boolean;
   rescueToNearby: boolean;
   rescueNearbyKm: number;
+  /**
+   * Someone to text after a crash: an SMS with the position opens in the phone's
+   * own messages app (crash screen, rescue banner). Works without our server;
+   * the number never leaves the phone otherwise.
+   */
+  emergencyContactName: string;
+  emergencyContactPhone: string;
   // 3D flyover overview button on ride history details.
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
@@ -159,6 +166,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   rescueToDiscord: true,
   rescueToNearby: false,
   rescueNearbyKm: 10,
+  emergencyContactName: '',
+  emergencyContactPhone: '',
   flyoverEnabled: false,
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,

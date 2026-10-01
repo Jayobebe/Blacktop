@@ -2,6 +2,7 @@ export { useRescue, type RescueRequest } from './hooks/useRescue';
 export { RescueAlert } from './components/RescueAlert';
 export { CrashCheckPrompt } from './components/CrashCheckPrompt';
 export { RescueDrillButton } from './components/RescueDrill';
+export { EmergencyTextButton, EmergencyContactSettings, emergencyTextAction } from './components/EmergencyText';
 export { SafetyStatusCard } from './components/SafetyStatusCard';
 export { RescueDisclaimer } from './components/RescueDisclaimer';
 export { AutoRescueConsentDialog } from './components/AutoRescueConsentDialog';

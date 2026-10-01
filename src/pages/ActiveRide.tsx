@@ -14,7 +14,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton, usePlayer } from '@/features/radio';
-import { useRescue, RescueAlert, CrashCheckPrompt, rescueReach } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, rescueReach } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
@@ -924,6 +924,7 @@ export default function ActiveRide() {
           </p>
           {/* Where the call went from, in three words, to read out if you call the emergency services. */}
           {rescueSpot && <W3WAddress lat={rescueSpot.lat} lng={rescueSpot.lng} className="mt-1.5 text-sm items-start text-left" />}
+          <EmergencyTextButton at={rescueSpot} className="mt-2 w-full" />
         </div>
       )}
 
@@ -1185,17 +1186,25 @@ export default function ActiveRide() {
                       maximumAge: 5000,
                     });
                   });
-                  const told = await sendSoloRescue(pos.coords.latitude, pos.coords.longitude);
+                  const at = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                  const told = await sendSoloRescue(at.lat, at.lng);
+                  // The emergency contact by plain SMS, offered whatever the server managed.
+                  const text = emergencyTextAction(settings, profile.name || '', at);
                   if (told.length) {
-                    toast.success(tr("Rescue call sent to {0}", [told.join(' and ')]));
+                    toast.success(tr("Rescue call sent to {0}", [told.join(' and ')]), { action: text, duration: text ? 15000 : undefined });
                     setSoloRescueSent(true);
                     setTimeout(() => setSoloRescueSent(false), 30000);
                   } else {
-                    toast.error(tr("Nobody to alert yet"), { description: tr("Connect Discord in Settings, or ask your crew to turn on notifications.") });
+                    toast.error(tr("Nobody to alert yet"), {
+                      description: tr("Connect Discord in Settings, or ask your crew to turn on notifications."),
+                      action: text,
+                      duration: text ? 15000 : undefined,
+                    });
                   }
                 } catch (err) {
                   console.error('[SoloRescue]', err);
-                  toast.error(tr("Could not get your location"));
+                  const text = emergencyTextAction(settings, profile.name || '', null);
+                  toast.error(tr("Could not get your location"), { action: text, duration: text ? 15000 : undefined });
                 } finally {
                   setSoloRescueSending(false);
                 }

@@ -35,6 +35,7 @@ export default function PrivacyPolicy() {
             <li>{tr("Your ride history (distance, speed, route, photos)")}</li>
             <li>{tr("Your garage, settings, language and preferences")}</li>
             <li>{tr("Your Track Day tracks, sessions and lap times")}</li>
+            <li>{tr("Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)")}</li>
             <li>{tr("Your saved places, recent destinations and where the map was last centred")}</li>
             <li>{tr("Offline map areas you download")}</li>
             <li>{tr("Your unlock pattern for the anti-theft alarm and Public Road Privacy, kept only as a one-way hash (the pattern itself is never stored or sent)")}</li>

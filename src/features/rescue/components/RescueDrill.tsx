@@ -13,6 +13,7 @@ import { tr } from '@/lib/i18n';
 import { CrashCheckPrompt } from './CrashCheckPrompt';
 import { useSafetyStatus } from '../hooks/useSafetyStatus';
 import { rescueReach } from '../lib/reach';
+import { cleanPhone } from './EmergencyText';
 
 /** The drill's countdown (a real crash check waits 5 minutes). */
 const DRILL_SECONDS = 15;
@@ -100,6 +101,10 @@ export function RescueDrillButton({ className }: { className?: string }) {
   if (reach.crew) for (const c of crew.crews) who.push(c.name);
   if (reach.discord && integration) who.push(tr("Discord: {0}", [integration.server_name || tr("Connected")]));
   if (reach.nearbyKm) who.push(tr("Riders within {0} km who've opted in to help", [reach.nearbyKm]));
+  if (cleanPhone(settings.emergencyContactPhone ?? '')) {
+    const name = settings.emergencyContactName?.trim();
+    who.push(name ? tr("{0}, by a text you send from the crash screen", [name]) : tr("Your emergency contact, by a text you send from the crash screen"));
+  }
 
   return (
     <>

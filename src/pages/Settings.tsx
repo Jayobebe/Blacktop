@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { noteMotionGranted } from '@/lib/motionPermission';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
-import { RESCUE_RADIUS_OPTIONS_KM, RescueDrillButton } from '@/features/rescue';
+import { EmergencyContactSettings, RESCUE_RADIUS_OPTIONS_KM, RescueDrillButton } from '@/features/rescue';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
 import {
@@ -688,6 +688,11 @@ export default function Settings() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* A text from the phone itself, for when the server can't be reached. */}
+            <div className="pt-4 border-t border-border/30">
+              <EmergencyContactSettings />
             </div>
 
             {/* Practice run: the crash check, then what a real call depends on and reaches. */}
