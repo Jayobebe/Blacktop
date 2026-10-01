@@ -53,7 +53,13 @@ export function emptyAggregate(): BurnedAggregate {
 }
 
 /** The ride fields an aggregate needs (full RideSessions and logbook entries both fit). */
-export type AggregatableRide = Pick<RideSession, 'isConvoyRide' | 'distance' | 'duration' | 'maxSpeed' | 'maxGForce' | 'maxLeanLeft' | 'maxLeanRight' | 'earnedBadges'>;
+/** A ride's totals; peaks may be null (a handed-over logbook ride with Public Road Privacy on), counted as 0. */
+export type AggregatableRide = Pick<RideSession, 'isConvoyRide' | 'distance' | 'duration' | 'earnedBadges'> & {
+  maxSpeed: number | null;
+  maxGForce?: number | null;
+  maxLeanLeft: number | null;
+  maxLeanRight: number | null;
+};
 
 function addRide(agg: BurnedAggregate, ride: AggregatableRide): BurnedAggregate {
   const badges = { ...agg.badges };

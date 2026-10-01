@@ -162,8 +162,8 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
 
     // Bottom Left — Mini-map (when Blacktop Maps is enabled) with the
     // Distance readout sitting just above it. Otherwise just the Distance.
-    const showLeftMiniMap = showMiniMap && stats.lat != null && stats.lng != null;
-    if (showLeftMiniMap) {
+    const { lat: mmLat, lng: mmLng } = stats;
+    if (showMiniMap && mmLat != null && mmLng != null) {
       const mmWidth = 360;
       const mmHeight = MINI_MAP_SIZE;
       const mmX = 40;
@@ -187,7 +187,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         drawMiniMap({
           ctx,
           region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
-          center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
+          center: { lat: mmLat, lng: mmLng, heading: stats.heading },
           route,
           members: stats.members,
           opacity: 1,

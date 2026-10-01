@@ -15,14 +15,9 @@ interface VerifyResponse {
   session: { id: string; role: string; callsign: string | null; expires_at: string | null; token: string | null };
 }
 
-// One shape (not a union): this tsconfig has no strictNullChecks, so `ok` can't narrow a union.
-export interface VerifyOutcome {
-  ok: boolean;
-  /** Set when ok. */
-  session?: EnterpriseSession;
-  /** Set when not ok. */
-  reason?: 'invalid' | 'rate_limited' | 'offline' | 'signed_out';
-}
+export type VerifyOutcome =
+  | { ok: true; session: EnterpriseSession }
+  | { ok: false; reason: 'invalid' | 'rate_limited' | 'offline' | 'signed_out' };
 
 function toOrganization(o: VerifyResponse['org']): Organization {
   const b = o.branding ?? {};

@@ -49,7 +49,8 @@ export interface ConvoyMemberInfo {
   accentColor?: string; // User's selected accent color
   // Live stats
   currentSpeed?: number;
-  topSpeed?: number;
+  /** null: the rider keeps peaks private (Public Road Privacy), shown as "--". */
+  topSpeed?: number | null;
   distanceDriven?: number;
   stationaryTime?: number; // seconds at 0 speed
   currentLat?: number | null;

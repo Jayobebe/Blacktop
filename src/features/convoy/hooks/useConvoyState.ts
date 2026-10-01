@@ -103,7 +103,7 @@ function toMemberInfo(m: MemberRow, leaderId: string | null | undefined, withSta
     isLeader: m.user_id === leaderId,
     isReady: true,
     hasNavigated: m.has_navigated || false,
-    joinedAt: m.joined_at,
+    joinedAt: m.joined_at ?? '',
     accentColor: m.accent_color || 'orange',
     ...(withStats && {
       currentSpeed: m.current_speed || 0,
@@ -175,7 +175,7 @@ function acquireConvoyRealtimeSubscription(
           if (convoy.destination_name || convoy.destination_lat) {
             setConvoyState((prev) => ({
               ...prev,
-              destination: convoy.destination_name ? {
+              destination: convoy.destination_name && convoy.destination_lat != null && convoy.destination_lng != null ? {
                 name: convoy.destination_name,
                 address: convoy.destination_address || '',
                 lat: convoy.destination_lat,
@@ -353,7 +353,8 @@ export function useConvoyState() {
       const members: ConvoyMemberInfo[] = (membersData || []).map((m) => toMemberInfo(m, convoy.leader_id, true));
 
       // Parse destination if set
-      const destination = convoy.destination_name ? {
+      // A destination needs its coordinates (an ended convoy's is blanked).
+      const destination = convoy.destination_name && convoy.destination_lat != null && convoy.destination_lng != null ? {
         name: convoy.destination_name,
         address: convoy.destination_address || '',
         lat: convoy.destination_lat,

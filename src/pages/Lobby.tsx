@@ -38,7 +38,7 @@ export default function Lobby() {
   const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number }[] | null>(null);
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
   const { startRide, rideState } = useActiveRide(convoy.id);
-  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id);
+  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id ?? undefined);
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { settings } = useSettings();
   const { terms } = useExperience();
@@ -50,13 +50,14 @@ export default function Lobby() {
 
   // Load current crew-listing state for this convoy
   useEffect(() => {
-    if (!convoy.id) return;
+    const convoyId = convoy.id;
+    if (!convoyId) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from('convoys')
         .select('is_listed')
-        .eq('id', convoy.id)
+        .eq('id', convoyId)
         .maybeSingle();
       if (!cancelled && data) setIsListed(Boolean((data as any).is_listed));
     })();
@@ -185,7 +186,8 @@ export default function Lobby() {
 
   // Convoy control channel (e.g., leader start-for-all)
   useEffect(() => {
-    if (!convoy.id) return;
+    const convoyId = convoy.id;
+    if (!convoyId) return;
 
     // One-time promise we can await before sending broadcasts (prevents "send before subscribed")
     let settled = false;
@@ -210,7 +212,7 @@ export default function Lobby() {
       const { data } = await supabase
         .from('convoys')
         .select('ride_started_at')
-        .eq('id', convoy.id)
+        .eq('id', convoyId)
         .single();
       if (!data?.ride_started_at) return;
       const age = Date.now() - new Date(data.ride_started_at).getTime();
@@ -836,7 +838,7 @@ export default function Lobby() {
               convoyId={convoy.id}
               userId={user.id}
               userName={profile.name || 'Driver'}
-              members={convoy.members.map(m => ({ userId: m.userId, accentColor: m.accentColor }))}
+              members={convoy.members.map(m => ({ userId: m.userId, accentColor: m.accentColor ?? 'orange' }))}
             />
           </div>
         )}

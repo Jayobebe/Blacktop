@@ -140,7 +140,7 @@ function TierDemoPage({ tier }: { tier: EnterpriseTier }) {
                 <Icon className="w-4 h-4 text-accent shrink-0" />
                 {label}
               </span>
-              <span className="block text-[11px] text-muted-foreground truncate">{demo[id].who}</span>
+              <span className="block text-[11px] text-muted-foreground truncate">{demo[id]?.who}</span>
             </button>
           ))}
         </div>)}

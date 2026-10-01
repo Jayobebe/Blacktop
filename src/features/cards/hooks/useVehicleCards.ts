@@ -69,9 +69,9 @@ export function useVehicleCards() {
         const prevSeen: CardTier = snap?.lastSeenTier ?? 'locked';
         const improved = snap
           ? {
-              topSpeed: stats.topSpeedMph > snap.topSpeedMph,
-              maxLean: stats.maxLean > snap.maxLean,
-              maxGForce: stats.maxGForce > (snap.maxGForce ?? 0),
+              topSpeed: (stats.topSpeedMph ?? 0) > snap.topSpeedMph,
+              maxLean: (stats.maxLean ?? 0) > snap.maxLean,
+              maxGForce: (stats.maxGForce ?? 0) > (snap.maxGForce ?? 0),
               distance: stats.totalDistanceKm > snap.totalDistanceKm,
               duration: stats.totalDurationSec > snap.totalDurationSec,
               rides: stats.totalRides > snap.totalRides,
@@ -113,9 +113,9 @@ export function useVehicleCards() {
         const next: VehicleCardSnapshot = {
           lastTier: card.tier,
           lastSeenTier: card.tier,
-          topSpeedMph: card.stats.topSpeedMph,
-          maxLean: card.stats.maxLean,
-          maxGForce: card.stats.maxGForce,
+          topSpeedMph: card.stats.topSpeedMph ?? 0,
+          maxLean: card.stats.maxLean ?? 0,
+          maxGForce: card.stats.maxGForce ?? 0,
           totalDistanceKm: card.stats.totalDistanceKm,
           totalRides: card.stats.totalRides,
           totalDurationSec: card.stats.totalDurationSec,

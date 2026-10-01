@@ -125,7 +125,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     return acc;
   }, {});
   const longest = allRides.reduce<LogRide | null>((m, r) => (!m || r.distance > m.distance ? r : m), null);
-  const fastest = allRides.reduce<LogRide | null>((m, r) => (r.maxSpeed != null && (!m || r.maxSpeed > m.maxSpeed) ? r : m), null);
+  const fastest = allRides.reduce<LogRide | null>((m, r) => (r.maxSpeed != null && (!m || r.maxSpeed > (m.maxSpeed ?? -1)) ? r : m), null);
 
   // ── pages ────────────────────────────────────────────────────────────────
   const pages: ((n: number, side: 'l' | 'r') => React.ReactNode)[] = [];
@@ -226,7 +226,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <PageTitle>{tr("Highlights")}</PageTitle>
       <Row label={tr("Longest")} value={longest ? dist(longest.distance) : '—'} />
       {longest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(longest.startedAt)} · {longest.owner}</p>}
-      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastest && fastest.maxSpeed > 0 ? spd(fastest.maxSpeed) : '—'} />
+      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastest?.maxSpeed != null && fastest.maxSpeed > 0 ? spd(fastest.maxSpeed) : '—'} />
       {fastest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
       <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Badges")}</p>
       {Object.keys(badgeCounts).length === 0 ? (

@@ -18,7 +18,6 @@ export interface LogRide {
   maxLeanRight: number | null;
   maxGForce?: number | null;
   earnedBadges?: BadgeType[];
-  /** Time-attack result, if the ride was one. */
   /** Track Pack session, if the ride was one. */
   track?: { trackName: string; laps: number; bestLapMs: number | null };
   /** Rider who owned the vehicle at the time. */

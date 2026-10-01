@@ -13,7 +13,7 @@ import { tr } from '@/lib/i18n';
 import { CrashCheckPrompt } from './CrashCheckPrompt';
 import { useSafetyStatus } from '../hooks/useSafetyStatus';
 import { rescueReach } from '../lib/reach';
-import { cleanPhone } from './EmergencyText';
+import { cleanPhone } from '../lib/emergencyText';
 
 /** The drill's countdown (a real crash check waits 5 minutes). */
 const DRILL_SECONDS = 15;

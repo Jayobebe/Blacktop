@@ -234,7 +234,7 @@ export async function searchPlaces(
     const localResults = (local || [])
       .filter((el) => !!(el.tags?.name || el.tags?.brand))
       .map((el) => {
-        const name = el.tags?.name || el.tags?.brand;
+        const name = el.tags?.name || el.tags?.brand || '';
         const address = [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']].filter(Boolean).join(', ') || name;
         return toResult(`op:${el.id}`, name, address, el.lat, el.lon);
       });
@@ -288,7 +288,7 @@ export async function searchNearbyPOIs(
       .filter((el) => !!(el.tags?.name || el.tags?.brand || el.tags?.operator))
       .map((el) => {
         const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
-        const name = el.tags?.name || el.tags?.brand || el.tags?.operator;
+        const name = el.tags?.name || el.tags?.brand || el.tags?.operator || '';
         const address =
           [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']].filter(Boolean).join(', ') ||
           name;

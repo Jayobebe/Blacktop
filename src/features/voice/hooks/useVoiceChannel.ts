@@ -910,6 +910,7 @@ export function useVoiceChannel(convoyId?: string) {
             audioElementsRef.current.delete(from);
           }
 
+          if (!offer) return;
           const pc = canReuse ? existingPeer!.pc : createPeerConnection(from);
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
@@ -953,7 +954,7 @@ export function useVoiceChannel(convoyId?: string) {
         const peer = peersRef.current.get(from);
         if (peer) {
           try {
-            if (peer.pc.signalingState === 'have-local-offer') {
+            if (peer.pc.signalingState === 'have-local-offer' && answer) {
               await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
               console.log(`[Voice] Remote description set for ${from}`);
               
@@ -1119,7 +1120,7 @@ export function useVoiceChannel(convoyId?: string) {
           audio: getAudioConstraints(),
         });
       } catch (caught) {
-        const mediaError = caught as MediaError;
+        const mediaError = (caught ?? {}) as { name?: string };
         // OverconstrainedError → saved deviceId is no longer available.
         // Clear the stale preference and retry with default device.
         if (mediaError?.name === 'OverconstrainedError' || mediaError?.name === 'ConstraintNotSatisfiedError') {

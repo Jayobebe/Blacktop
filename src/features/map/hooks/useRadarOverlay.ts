@@ -76,7 +76,7 @@ async function fetchTimelineThrottled(): Promise<RadarTimeline | null> {
 //   each of those otherwise causes layers to fade in/out and MapLibre to
 //   request tiles for frames or viewports nobody is looking at.
 export function useRadarOverlay(
-  map: MapLibreMap | null,
+  mapOrNull: MapLibreMap | null,
   currentSpeedMph: number,
   enabled = true,
 ) {
@@ -87,7 +87,9 @@ export function useRadarOverlay(
   currentSpeedRef.current = currentSpeedMph;
 
   useEffect(() => {
-    if (!map || !enabled) return;
+    if (!mapOrNull || !enabled) return;
+    // Non-null for the functions below (TypeScript doesn't carry the check into them).
+    const map: MapLibreMap = mapOrNull;
 
     let cancelled = false;
     let refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -284,5 +286,5 @@ export function useRadarOverlay(
       map.off('moveend', handleMoveEnd);
       clearFrames();
     };
-  }, [map, enabled]);
+  }, [mapOrNull, enabled]);
 }

@@ -134,7 +134,7 @@ function Gauge({ e, center, caption, sub }: { e: Engine; center: React.ReactNode
   const liveFrac = Math.min(shown, scale) / scale;
   const peakFrac = Math.min(e.peak, scale) / scale;
   const target = e.mode === 'precision' && (e.phase === 'live' || e.phase === 'between') ? e.targets[e.round] : null;
-  const ticks = [];
+  const ticks: JSX.Element[] = [];
   for (let i = 0; i <= scale; i++) {
     const major = i % 2 === 0;
     const a = angleFor(i, scale);

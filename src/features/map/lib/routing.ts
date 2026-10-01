@@ -46,7 +46,7 @@ export interface RouteStep {
   location: [number, number] | null;
   name: string;
   ref: string;
-  destinations: string;
+  destinations?: string;
   rotary: string;
   /** Which side of the road traffic drives on here. */
   side?: 'left' | 'right';

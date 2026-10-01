@@ -302,15 +302,16 @@ export function VehicleCard({ card }: Props) {
               </div>
             ) : (() => {
               // "--" when this rider hides peaks, or the card's owner keeps them private (null).
-              const hideTop = peaksHidden || card.stats.topSpeedMph == null;
-              const hideLean = peaksHidden || card.stats.maxLean == null;
-              const hideG = peaksHidden || card.stats.maxGForce == null;
+              const { topSpeedMph: top, maxLean: lean, maxGForce: g } = card.stats;
+              const hideTop = peaksHidden || top == null;
+              const hideLean = peaksHidden || lean == null;
+              const hideG = peaksHidden || g == null;
               const cells: (StatCellProps & { key: string })[] = [
                 {
                   key: 'speed',
                   icon: Gauge,
                   label: tr("Top speed"),
-                  value: hideTop ? PEAK_HIDDEN : `${formatSpeed(card.stats.topSpeedMph, settings.speedUnit)}`,
+                  value: hideTop || top == null ? PEAK_HIDDEN : `${formatSpeed(top, settings.speedUnit)}`,
                   unit: hideTop ? '' : getSpeedLabel(settings.speedUnit),
                   improved: card.improved.topSpeed,
                 },
@@ -344,7 +345,7 @@ export function VehicleCard({ card }: Props) {
                 cells.push({
                   key: 'lean',
                   label: tr("Max lean"),
-                  value: hideLean ? PEAK_HIDDEN : `${Math.round(card.stats.maxLean)}`,
+                  value: hideLean || lean == null ? PEAK_HIDDEN : `${Math.round(lean)}`,
                   unit: hideLean ? '' : '°',
                   improved: card.improved.maxLean,
                 });
@@ -354,8 +355,8 @@ export function VehicleCard({ card }: Props) {
                   key: 'gforce',
                   icon: Zap,
                   label: tr("Max G"),
-                  value: hideG ? PEAK_HIDDEN : card.stats.maxGForce > 0 ? card.stats.maxGForce.toFixed(1) : '—',
-                  unit: !hideG && card.stats.maxGForce > 0 ? 'G' : '',
+                  value: hideG || g == null ? PEAK_HIDDEN : g > 0 ? g.toFixed(1) : '—',
+                  unit: !hideG && g != null && g > 0 ? 'G' : '',
                   improved: card.improved.maxGForce,
                 });
               }
