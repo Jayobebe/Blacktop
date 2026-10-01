@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "추가한 경우 비상 연락처의 이름과 번호 (사고 후 내 휴대폰에서 문자를 여는 데만 사용)",
  "Your emergency contact, by a text you send from the crash screen": "비상 연락처 (사고 화면에서 직접 보내는 문자로)",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0} (사고 화면에서 직접 보내는 문자로)"
+ "{0}, by a text you send from the crash screen": "{0} (사고 화면에서 직접 보내는 문자로)",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop은 전체 화면에서 가장 좋습니다: 지도와 주행 화면이 더 넓어집니다. Nimiq Pay 버튼이나 뒤로 가기로 언제든 나갈 수 있습니다.",
+ "Don't ask again": "다시 묻지 않기",
+ "Go full screen": "전체 화면",
+ "Go full screen?": "전체 화면으로 볼까요?",
+ "Not now": "나중에"
 }

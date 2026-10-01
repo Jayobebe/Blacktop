@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "Din nödkontakts namn och nummer, om du lägger till en (används bara för att öppna ett sms från din egen telefon efter en vurpa)",
  "Your emergency contact, by a text you send from the crash screen": "Din nödkontakt, via ett sms du skickar från vurpskärmen",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}, via ett sms du skickar från vurpskärmen"
+ "{0}, by a text you send from the crash screen": "{0}, via ett sms du skickar från vurpskärmen",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop fungerar bäst i helskärm: mer plats för kartan och körskärmen. Lämna när du vill med Nimiq Pays knapp eller Tillbaka.",
+ "Don't ask again": "Fråga inte igen",
+ "Go full screen": "Helskärm",
+ "Go full screen?": "Helskärm?",
+ "Not now": "Inte nu"
 }

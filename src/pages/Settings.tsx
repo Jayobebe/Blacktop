@@ -19,8 +19,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock,
+  Maximize,
 } from 'lucide-react';
+import { askNimiqFullscreen, canNimiqFullscreen, useNimiqFullscreen } from '@/lib/nimiqFullscreen';
 import { clearAlarmPattern, hasAlarmPattern, requestPattern } from '@/features/alarm';
 import { requestAutoRescueConsent } from '@/features/rescue';
 import {
@@ -65,6 +67,7 @@ export default function Settings() {
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const exp = useExperience();
+  const nimiqFull = useNimiqFullscreen();
   const { settings, toggleSpeedUnit, toggleDistanceUnit, updateSetting, updateSettings, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const { stations: radioStations } = useRadioStations();
   const [showStations, setShowStations] = useState(false);
@@ -465,6 +468,13 @@ export default function Settings() {
                 </div>
                 <Switch checked={settings.thermalMode === true} onCheckedChange={(v) => updateSetting('thermalMode', v)} />
               </div>
+              {/* Nimiq Pay mini app: full screen, asked for each time (Nimiq's rule). */}
+              {canNimiqFullscreen() && !nimiqFull && (
+                <Button variant="outline" className="w-full rounded-2xl" onClick={askNimiqFullscreen}>
+                  <Maximize className="w-4 h-4" />
+                  {tr("Go full screen")}
+                </Button>
+              )}
               <Button variant="outline" className="w-full rounded-2xl" onClick={() => navigate('/setup')}>
                 <Repeat className="w-4 h-4" />
                 {tr("Redo full setup")}

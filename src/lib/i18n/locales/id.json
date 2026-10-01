@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "Nama dan nomor kontak darurat Anda, jika Anda menambahkannya (hanya untuk membuka SMS dari ponsel Anda sendiri setelah jatuh)",
  "Your emergency contact, by a text you send from the crash screen": "Kontak darurat Anda, lewat SMS yang Anda kirim dari layar kecelakaan",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}, lewat SMS yang Anda kirim dari layar kecelakaan"
+ "{0}, by a text you send from the crash screen": "{0}, lewat SMS yang Anda kirim dari layar kecelakaan",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop paling enak di layar penuh: lebih banyak ruang untuk peta dan layar perjalanan. Keluar kapan saja dengan tombol Nimiq Pay atau Kembali.",
+ "Don't ask again": "Jangan tanya lagi",
+ "Go full screen": "Layar penuh",
+ "Go full screen?": "Layar penuh?",
+ "Not now": "Nanti saja"
 }

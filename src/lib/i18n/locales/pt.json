@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "O nome e o número do seu contato de emergência, se você adicionar um (usados só para abrir um SMS do seu próprio celular depois de uma queda)",
  "Your emergency contact, by a text you send from the crash screen": "Seu contato de emergência, por um SMS que você envia da tela de queda",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}, por um SMS que você envia da tela de queda"
+ "{0}, by a text you send from the crash screen": "{0}, por um SMS que você envia da tela de queda",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "O Blacktop fica melhor em tela cheia: mais espaço para o mapa e a tela de pilotagem. Saia quando quiser com o botão do Nimiq Pay ou Voltar.",
+ "Don't ask again": "Não perguntar de novo",
+ "Go full screen": "Tela cheia",
+ "Go full screen?": "Usar tela cheia?",
+ "Not now": "Agora não"
 }

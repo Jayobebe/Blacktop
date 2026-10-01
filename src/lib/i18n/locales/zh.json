@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "你的紧急联系人姓名和号码（如果你添加了；仅用于摔车后从你自己的手机打开短信）",
  "Your emergency contact, by a text you send from the crash screen": "你的紧急联系人，通过你在摔车界面发出的短信",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}，通过你在摔车界面发出的短信"
+ "{0}, by a text you send from the crash screen": "{0}，通过你在摔车界面发出的短信",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop 在全屏下体验最佳：地图和骑行界面空间更大。随时可用 Nimiq Pay 的按钮或返回键退出。",
+ "Don't ask again": "不再询问",
+ "Go full screen": "全屏",
+ "Go full screen?": "切换到全屏？",
+ "Not now": "以后再说"
 }

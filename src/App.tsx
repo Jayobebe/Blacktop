@@ -28,6 +28,7 @@ import { HazardAlerts } from "@/features/hazards";
 import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
 import { AutoRescueConsentDialog } from "@/features/rescue";
+import { NimiqFullscreenPrompt } from "@/components/NimiqFullscreenPrompt";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
@@ -291,6 +292,7 @@ const App = () => {
               <Sonner />
               <UiSounds />
               <AutoRescueConsentDialog />
+              <NimiqFullscreenPrompt />
               <PatternGateDialog />
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />

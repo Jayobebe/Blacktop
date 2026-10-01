@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "Ім'я та номер вашого екстреного контакту, якщо ви його додасте (лише щоб відкрити SMS з вашого телефона після падіння)",
  "Your emergency contact, by a text you send from the crash screen": "Ваш екстрений контакт, через SMS, яке ви надсилаєте з екрана падіння",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}, через SMS, яке ви надсилаєте з екрана падіння"
+ "{0}, by a text you send from the crash screen": "{0}, через SMS, яке ви надсилаєте з екрана падіння",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop найкраще працює на весь екран: більше місця для мапи й екрана поїздки. Вийти можна будь-коли кнопкою Nimiq Pay або Назад.",
+ "Don't ask again": "Більше не питати",
+ "Go full screen": "На весь екран",
+ "Go full screen?": "На весь екран?",
+ "Not now": "Не зараз"
 }

@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "緊急連絡先の名前と番号（追加した場合。転倒後に自分のスマホからメッセージを開くためだけに使います）",
  "Your emergency contact, by a text you send from the crash screen": "緊急連絡先（転倒画面からあなたが送るメッセージで）",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}（転倒画面からあなたが送るメッセージで）"
+ "{0}, by a text you send from the crash screen": "{0}（転倒画面からあなたが送るメッセージで）",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop は全画面がおすすめです：地図と走行画面が広く使えます。Nimiq Pay のボタンか戻るでいつでも終了できます。",
+ "Don't ask again": "今後表示しない",
+ "Go full screen": "全画面にする",
+ "Go full screen?": "全画面にしますか？",
+ "Not now": "あとで"
 }

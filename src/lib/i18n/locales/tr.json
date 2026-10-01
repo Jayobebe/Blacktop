@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "Acil durum kişinin adı ve numarası, eklersen (yalnızca kazadan sonra kendi telefonundan SMS açmak için)",
  "Your emergency contact, by a text you send from the crash screen": "Acil durum kişin, kaza ekranından gönderdiğin bir SMS ile",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}, kaza ekranından gönderdiğin bir SMS ile"
+ "{0}, by a text you send from the crash screen": "{0}, kaza ekranından gönderdiğin bir SMS ile",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop tam ekranda en iyi çalışır: harita ve sürüş ekranı için daha fazla yer. Nimiq Pay'in düğmesiyle veya Geri ile istediğin zaman çık.",
+ "Don't ask again": "Bir daha sorma",
+ "Go full screen": "Tam ekran",
+ "Go full screen?": "Tam ekran olsun mu?",
+ "Not now": "Şimdi değil"
 }

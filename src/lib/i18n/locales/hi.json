@@ -3702,5 +3702,10 @@
  "Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)": "आपके आपातकालीन संपर्क का नाम और नंबर, अगर आप जोड़ें (सिर्फ़ गिरने के बाद अपने फ़ोन से मैसेज खोलने के लिए)",
  "Your emergency contact, by a text you send from the crash screen": "आपका आपातकालीन संपर्क, क्रैश स्क्रीन से आपके भेजे मैसेज से",
  "what3words: ///{0}": "what3words: ///{0}",
- "{0}, by a text you send from the crash screen": "{0}, क्रैश स्क्रीन से आपके भेजे मैसेज से"
+ "{0}, by a text you send from the crash screen": "{0}, क्रैश स्क्रीन से आपके भेजे मैसेज से",
+ "Blacktop works best full screen: more room for the map and the ride screen. Leave any time with Nimiq Pay's button or Back.": "Blacktop फ़ुल स्क्रीन में सबसे अच्छा चलता है: मैप और राइड स्क्रीन के लिए ज़्यादा जगह। Nimiq Pay के बटन या बैक से कभी भी बाहर निकलें।",
+ "Don't ask again": "फिर न पूछें",
+ "Go full screen": "फ़ुल स्क्रीन करें",
+ "Go full screen?": "फ़ुल स्क्रीन करें?",
+ "Not now": "अभी नहीं"
 }
