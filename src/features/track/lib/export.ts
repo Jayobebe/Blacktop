@@ -1,3 +1,5 @@
+import { isNativeApp } from '@/lib/platform';
+import { shareFileNative } from '@/lib/nativeShare';
 import type { TrackSession } from '../types';
 
 /** CSV of every telemetry sample: opens in spreadsheets and track-data tools. */
@@ -54,6 +56,10 @@ ${pts}
 
 /** Share (mobile) or download (desktop) a text file. */
 export async function shareFile(name: string, text: string, mime: string) {
+  if (isNativeApp()) {
+    await shareFileNative(name, new Blob([text], { type: mime }));
+    return;
+  }
   const file = new File([text], name, { type: mime });
   try {
     const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };

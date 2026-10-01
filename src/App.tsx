@@ -1,4 +1,5 @@
 import { paymentsAvailable } from '@/lib/platform';
+import { NativeBackButton } from '@/components/NativeBackButton';
 import { installMotionRegrant } from '@/lib/motionPermission';
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -289,6 +290,7 @@ const App = () => {
               <PatternGateDialog />
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />
+                <NativeBackButton />
                 <PushBridge />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />

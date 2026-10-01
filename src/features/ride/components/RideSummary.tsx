@@ -1,3 +1,4 @@
+import { shareFileNative } from '@/lib/nativeShare';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConvoyMemberInfo, calculateBadges, BADGE_INFO, BADGE_ORDER, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,6 @@ import { BTLogo } from '@/components/BTLogo';
 import { GForceGraph } from '@/components/GForceGraph';
 import { GForceSample } from '@/types/blacktop';
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { GForceCircle } from '@/components/GForceCircle';
@@ -162,13 +162,8 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
       const filename = `blacktop-receipt-${Date.now()}.png`;
 
       if (Capacitor.isNativePlatform()) {
-        const base64 = dataUrl.split(',')[1];
-        await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: Directory.Documents,
-        });
-        toast.success(tr("Receipt saved to Documents"));
+        // The share sheet: save to Photos / Files or send it on.
+        await shareFileNative(filename, await (await fetch(dataUrl)).blob(), tr("Blacktop ride receipt"));
       } else {
         const a = document.createElement('a');
         a.href = dataUrl;

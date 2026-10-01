@@ -3499,5 +3499,10 @@
  "Switched to {0}": "Перемкнуто на {0}",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Ви зникнете з її рейтингів і більше не отримуватимете її сповіщень. Можна приєднатися знову, відсканувавши її QR.",
  "Your crews": "Ваші команди",
- "{0} of {1} crew slots used": "Використано {0} з {1} місць у командах"
+ "{0} of {1} crew slots used": "Використано {0} з {1} місць у командах",
+ "Allow location in your phone's settings to track rides.": "Дозвольте геолокацію в налаштуваннях телефона, щоб записувати поїздки.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop записує вашу поїздку. Завершіть або призупиніть поїздку, щоб зупинити.",
+ "Blacktop ride receipt": "Чек поїздки Blacktop",
+ "Location is off for Blacktop": "Геолокацію для Blacktop вимкнено",
+ "Ride in progress": "Поїздка триває"
 }

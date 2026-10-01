@@ -3499,5 +3499,10 @@
  "Switched to {0}": "Przełączono na {0}",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Znikniesz z jej rankingów i przestaniesz dostawać jej powiadomienia. Możesz dołączyć ponownie, skanując jej QR.",
  "Your crews": "Twoje ekipy",
- "{0} of {1} crew slots used": "Zajęte miejsca w ekipach: {0} z {1}"
+ "{0} of {1} crew slots used": "Zajęte miejsca w ekipach: {0} z {1}",
+ "Allow location in your phone's settings to track rides.": "Zezwól na lokalizację w ustawieniach telefonu, aby rejestrować przejazdy.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop rejestruje Twój przejazd. Zakończ lub wstrzymaj przejazd, aby przestać.",
+ "Blacktop ride receipt": "Paragon przejazdu Blacktop",
+ "Location is off for Blacktop": "Lokalizacja jest wyłączona dla Blacktop",
+ "Ride in progress": "Przejazd trwa"
 }

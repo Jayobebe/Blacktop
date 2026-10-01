@@ -1,6 +1,6 @@
+import { shareFileNative } from '@/lib/nativeShare';
 import type { RideSession } from '@/types/blacktop';
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import { analyseCorners } from './cornerScoring';
 import { tr } from '@/lib/i18n';
 
@@ -217,21 +217,10 @@ export async function shareRecapCard(ride: RideSession, opts: RecapOptions = {})
     .trim();
   const filename = `${base || 'ride'}-recap.png`;
 
-  // Native shells can't anchor-download; save to the Documents folder instead.
+  // The native app can't anchor-download: the share sheet saves or sends it.
   if (Capacitor.isNativePlatform()) {
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error('Failed to read recap'));
-      reader.readAsDataURL(blob);
-    });
-    await Filesystem.writeFile({
-      path: `Blacktop/${filename}`,
-      data: dataUrl.split(',')[1],
-      directory: Directory.Documents,
-      recursive: true,
-    });
-    return 'downloaded';
+    await shareFileNative(filename, blob, tr("Blacktop ride recap"));
+    return 'shared';
   }
 
   const file = new File([blob], filename, { type: 'image/png' });

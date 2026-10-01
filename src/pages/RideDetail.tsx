@@ -1,3 +1,5 @@
+import { isNativeApp } from '@/lib/platform';
+import { shareFileNative } from '@/lib/nativeShare';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
 import { useGarage } from '@/features/garage';
@@ -84,6 +86,15 @@ export default function RideDetail() {
         });
       }, 100);
       
+      // The native app hands it to the share sheet (save to Files / Photos).
+      if (isNativeApp()) {
+        clearInterval(progressInterval);
+        const shared = await shareFileNative(getRideFilename(), blob);
+        setSaveProgress(null);
+        if (shared) markRecordingSaved(ride.id);
+        return;
+      }
+
       // Create download link with ride name as filename
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -467,6 +478,17 @@ export default function RideDetail() {
                 const mp4Blob = await convertWebmToMp4(webmBlob, (progress) => {
                   setOverlayProgress(progress);
                 });
+
+                // Native app: the share sheet; the overlay is only cleared once it's been saved or sent.
+                if (isNativeApp()) {
+                  const shared = await shareFileNative(filename, mp4Blob);
+                  setOverlayProgress(null);
+                  if (shared) {
+                    await deleteRideOverlayBlob(ride.id);
+                    clearRideOverlay(ride.id);
+                  }
+                  return;
+                }
 
                 const url = URL.createObjectURL(mp4Blob);
                 const a = document.createElement('a');

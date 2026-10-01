@@ -29,6 +29,8 @@ function subscribe(cb: () => void) {
 
 function getSnapshot() { return isOpen; }
 
+export const isRadioOverlayOpen = () => isOpen;
+
 export function useRadioOverlay() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

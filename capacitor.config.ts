@@ -31,8 +31,9 @@ const config: CapacitorConfig = {
 
   android: {
     backgroundColor: '#0a0a0a',
-    // Keeps the splash screen dark to match the app theme
-    useLegacyBridge: false,
+    // The legacy bridge keeps ride GPS (background-geolocation) coming after
+    // 5 minutes in the background; the newer one lets Android throttle it.
+    useLegacyBridge: true,
   },
 
   plugins: {

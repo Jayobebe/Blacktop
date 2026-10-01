@@ -3499,5 +3499,10 @@
  "Switched to {0}": "Skiftede til {0}",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Du forsvinder fra dets tavler og får ikke længere dets notifikationer. Du kan deltage igen ved at scanne dets QR.",
  "Your crews": "Dine crews",
- "{0} of {1} crew slots used": "{0} af {1} crew-pladser brugt"
+ "{0} of {1} crew slots used": "{0} af {1} crew-pladser brugt",
+ "Allow location in your phone's settings to track rides.": "Tillad placering i telefonens indstillinger for at registrere ture.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop registrerer din tur. Afslut eller sæt turen på pause for at stoppe.",
+ "Blacktop ride receipt": "Blacktop-turkvittering",
+ "Location is off for Blacktop": "Placering er slået fra for Blacktop",
+ "Ride in progress": "Tur i gang"
 }

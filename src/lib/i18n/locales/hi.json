@@ -3499,5 +3499,10 @@
  "Switched to {0}": "{0} पर स्विच किया",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "आप उसके बोर्ड से हट जाएँगे और उसकी सूचनाएँ नहीं मिलेंगी। उसका QR स्कैन करके आप फिर से जुड़ सकते हैं।",
  "Your crews": "आपके क्रू",
- "{0} of {1} crew slots used": "{1} में से {0} क्रू स्लॉट इस्तेमाल"
+ "{0} of {1} crew slots used": "{1} में से {0} क्रू स्लॉट इस्तेमाल",
+ "Allow location in your phone's settings to track rides.": "राइड ट्रैक करने के लिए फ़ोन की सेटिंग में लोकेशन की अनुमति दें।",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop आपकी राइड ट्रैक कर रहा है। रोकने के लिए राइड खत्म करें या रोकें।",
+ "Blacktop ride receipt": "Blacktop राइड रसीद",
+ "Location is off for Blacktop": "Blacktop के लिए लोकेशन बंद है",
+ "Ride in progress": "राइड जारी है"
 }

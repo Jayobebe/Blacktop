@@ -3499,5 +3499,10 @@
  "Switched to {0}": "Gewisseld naar {0}",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Je verdwijnt van de ranglijsten en krijgt geen meldingen meer. Je kunt opnieuw joinen door de QR te scannen.",
  "Your crews": "Jouw crews",
- "{0} of {1} crew slots used": "{0} van {1} crewplekken gebruikt"
+ "{0} of {1} crew slots used": "{0} van {1} crewplekken gebruikt",
+ "Allow location in your phone's settings to track rides.": "Sta locatie toe in de instellingen van je telefoon om ritten vast te leggen.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop legt je rit vast. Beëindig of pauzeer de rit om te stoppen.",
+ "Blacktop ride receipt": "Blacktop-ritbon",
+ "Location is off for Blacktop": "Locatie staat uit voor Blacktop",
+ "Ride in progress": "Rit bezig"
 }

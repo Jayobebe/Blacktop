@@ -43,6 +43,8 @@ export function openBlacktopMap(destination?: MapDestination) {
   emitChange();
 }
 
+export const isBlacktopMapOpen = () => overlayState.isOpen;
+
 // Closes the map but intentionally keeps the destination so the next open
 // (e.g. returning from active ride) restores the same route automatically.
 export function closeBlacktopMap() {

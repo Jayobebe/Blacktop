@@ -3499,5 +3499,10 @@
  "Switched to {0}": "{0} ekibine geçildi",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Sıralamalarından çıkarsınız ve bildirimlerini artık almazsınız. QR'ını tarayarak yeniden katılabilirsiniz.",
  "Your crews": "Ekipleriniz",
- "{0} of {1} crew slots used": "{1} ekip yuvasından {0} tanesi kullanılıyor"
+ "{0} of {1} crew slots used": "{1} ekip yuvasından {0} tanesi kullanılıyor",
+ "Allow location in your phone's settings to track rides.": "Sürüşleri kaydetmek için telefonun ayarlarında konuma izin verin.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop sürüşünüzü kaydediyor. Durdurmak için sürüşü bitirin veya duraklatın.",
+ "Blacktop ride receipt": "Blacktop sürüş fişi",
+ "Location is off for Blacktop": "Blacktop için konum kapalı",
+ "Ride in progress": "Sürüş devam ediyor"
 }

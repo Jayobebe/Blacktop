@@ -1,3 +1,5 @@
+import { isNativeApp } from '@/lib/platform';
+import { shareFileNative } from '@/lib/nativeShare';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
@@ -456,6 +458,10 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       const mp4 = await convertWebmToMp4(blob, p => setConvertProgress(p));
 
       const base = (ride.name || 'ride').replace(/[/\\?%*:|"<>]/g, '-').trim();
+      if (isNativeApp()) {
+        await shareFileNative(`${base}-3d-overview.mp4`, mp4);
+        return;
+      }
       const url = URL.createObjectURL(mp4);
       const a = document.createElement('a');
       a.href = url;

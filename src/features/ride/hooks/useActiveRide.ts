@@ -4,6 +4,7 @@ import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { takePendingChallengeReceipt } from '@/lib/challengeRun';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
+import { backgroundGpsAvailable, startBackgroundGps, stopBackgroundGps } from '../lib/backgroundGps';
 import { App } from '@capacitor/app';
 import { ActiveRideState, RideSession, GpsPoint } from '@/types/blacktop';
 import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
@@ -215,6 +216,8 @@ let rideState: ActiveRideState = restoredState || {
 };
 
 let watchId: number | string | null = null;
+/** True when watchId is the native background watcher (lib/backgroundGps). */
+let watchIsBackground = false;
 let durationInterval: ReturnType<typeof setInterval> | null = null;
 let convoySyncTimeout: ReturnType<typeof setTimeout> | null = null;
 let convoySyncDelay: number = CONVOY_SYNC_FAST_INTERVAL;
@@ -520,6 +523,22 @@ function handlePositionError(error: GeolocationPositionError | unknown) {
 async function startGpsWatch() {
   console.log('[GPS] Starting watch, native:', isNative);
   
+  // Native app, normal rides: GPS that carries on with the screen locked. Track Pack's
+  // high rate stays on the plain plugin (it sets the platform's fastest interval).
+  if (backgroundGpsAvailable() && !gpsHighRate) {
+    try {
+      watchId = await startBackgroundGps(({ lat, lng, speed, accuracy, time }) => {
+        emitRawFix(lat, lng, speed, accuracy, time);
+        handlePositionUpdate(lat, lng, speed, accuracy, time);
+      });
+      watchIsBackground = true;
+      console.log('[GPS] Background watch started, id:', watchId);
+      return;
+    } catch (error) {
+      console.error('[GPS] Background watch failed, falling back:', error);
+    }
+  }
+
   if (isNative) {
     try {
       const permissions = await Geolocation.requestPermissions();
@@ -563,7 +582,10 @@ async function startGpsWatch() {
 async function stopGpsWatch() {
   if (watchId !== null) {
     console.log('[GPS] Stopping watch, id:', watchId);
-    if (isNative) {
+    if (watchIsBackground) {
+      await stopBackgroundGps(watchId as string);
+      watchIsBackground = false;
+    } else if (isNative) {
       await Geolocation.clearWatch({ id: watchId as string });
     } else {
       navigator.geolocation.clearWatch(watchId as number);

@@ -6,10 +6,18 @@ import { setAudioDucked } from '@/lib/audioDuck';
 import { getLanguage } from '@/lib/i18n';
 import { squelchOpen, squelchClose, staticBed } from '@/lib/radioFx';
 import { pilotSay, pilotVoiceReady, stopPilotVoice } from '@/lib/pilotVoice';
+import { Capacitor } from '@capacitor/core';
+import { TextToSpeech, QueueStrategy } from '@capacitor-community/text-to-speech';
 
 export function speechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 }
+
+/** The native app speaks through the phone's own text-to-speech engine (Android's WebView has no Web Speech). */
+const nativeTts = () => Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('TextToSpeech');
+
+/** Whether the phone's own voice can speak here (the browser's, or the native app's engine). */
+const plainVoiceAvailable = () => nativeTts() || speechSupported();
 
 let voice: SpeechSynthesisVoice | null = null;
 /** The radio-call voice: a male voice in the app's language where the phone names one. */
@@ -98,8 +106,8 @@ export function speak(text: string, opts: { interrupt?: boolean; radio?: boolean
   // the phone's voice takes over if it isn't, or can't make the call in time.
   // Where the browser has no speech of its own (e.g. Android's WebView, as in the
   // Nimiq Pay mini app), the pilot voice says everything, plain directions too.
-  if ((radio || !speechSupported()) && pilotVoiceReady()) {
-    if (opts.interrupt && speechSupported()) window.speechSynthesis.cancel();
+  if ((radio || !plainVoiceAvailable()) && pilotVoiceReady()) {
+    if (opts.interrupt) cancelPlainVoice();
     const onStart = () => {
       speaking += 1;
       setAudioDucked(true);
@@ -117,7 +125,45 @@ export function speak(text: string, opts: { interrupt?: boolean; radio?: boolean
   systemSpeak(text, radio, opts.interrupt);
 }
 
+function cancelPlainVoice() {
+  if (nativeTts()) void TextToSpeech.stop().catch(() => {});
+  else if (speechSupported()) window.speechSynthesis.cancel();
+}
+
+/** The native app's engine: same radio treatment and ducking as the browser's voice. */
+function nativeSpeak(text: string, radio: boolean, interrupt?: boolean) {
+  let stopStatic: (() => void) | null = null;
+  speaking += 1;
+  setAudioDucked(true);
+  const done = () => {
+    stopStatic?.();
+    stopStatic = null;
+    if (radio) squelchClose();
+    speaking = Math.max(0, speaking - 1);
+    if (speaking === 0) setAudioDucked(false);
+  };
+  const say = () => {
+    if (radio) stopStatic = staticBed();
+    TextToSpeech.speak({
+      text,
+      lang: speechLang(),
+      rate: radio ? 1.12 : 1,
+      pitch: radio ? 0.75 : 1,
+      queueStrategy: interrupt ? QueueStrategy.Flush : QueueStrategy.Add,
+    })
+      .catch(() => {})
+      .finally(done);
+  };
+  if (radio) {
+    squelchOpen();
+    setTimeout(say, 110);
+  } else {
+    say();
+  }
+}
+
 function systemSpeak(text: string, radio: boolean, interrupt?: boolean) {
+  if (nativeTts()) return nativeSpeak(text, radio, interrupt);
   if (!speechSupported()) return;
   const synth = window.speechSynthesis;
   if (interrupt) synth.cancel();
@@ -164,8 +210,8 @@ function systemSpeak(text: string, radio: boolean, interrupt?: boolean) {
 
 export function stopSpeaking() {
   stopPilotVoice();
-  if (!speechSupported()) return;
-  window.speechSynthesis.cancel();
+  if (!plainVoiceAvailable()) return;
+  cancelPlainVoice();
   speaking = 0;
   setAudioDucked(false);
 }

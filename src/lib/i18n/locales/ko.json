@@ -3499,5 +3499,10 @@
  "Switched to {0}": "{0}(으)로 전환했습니다",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "해당 크루 순위표에서 빠지고 알림도 더 이상 받지 않습니다. QR을 스캔하면 다시 참가할 수 있습니다.",
  "Your crews": "내 크루",
- "{0} of {1} crew slots used": "크루 슬롯 {1}개 중 {0}개 사용"
+ "{0} of {1} crew slots used": "크루 슬롯 {1}개 중 {0}개 사용",
+ "Allow location in your phone's settings to track rides.": "라이드를 기록하려면 휴대폰 설정에서 위치를 허용하세요.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop이 라이드를 기록하고 있습니다. 멈추려면 라이드를 종료하거나 일시정지하세요.",
+ "Blacktop ride receipt": "Blacktop 라이드 영수증",
+ "Location is off for Blacktop": "Blacktop의 위치가 꺼져 있습니다",
+ "Ride in progress": "라이드 중"
 }

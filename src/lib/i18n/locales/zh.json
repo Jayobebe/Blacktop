@@ -3499,5 +3499,10 @@
  "Switched to {0}": "已切换到 {0}",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "你将从它的排行榜中移除，也不会再收到它的通知。扫描它的二维码即可重新加入。",
  "Your crews": "你的团队",
- "{0} of {1} crew slots used": "已使用 {0}/{1} 个团队名额"
+ "{0} of {1} crew slots used": "已使用 {0}/{1} 个团队名额",
+ "Allow location in your phone's settings to track rides.": "请在手机设置中允许定位，以记录骑行。",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop 正在记录你的骑行。结束或暂停骑行即可停止。",
+ "Blacktop ride receipt": "Blacktop 骑行小票",
+ "Location is off for Blacktop": "Blacktop 的定位已关闭",
+ "Ride in progress": "骑行中"
 }

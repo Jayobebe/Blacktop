@@ -3499,5 +3499,10 @@
  "Switched to {0}": "Pindah ke {0}",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "Anda akan hilang dari papan peringkatnya dan tidak lagi menerima notifikasinya. Anda bisa bergabung lagi dengan memindai QR-nya.",
  "Your crews": "Kru Anda",
- "{0} of {1} crew slots used": "{0} dari {1} slot kru terpakai"
+ "{0} of {1} crew slots used": "{0} dari {1} slot kru terpakai",
+ "Allow location in your phone's settings to track rides.": "Izinkan lokasi di pengaturan ponsel untuk melacak perjalanan.",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop sedang melacak perjalanan Anda. Akhiri atau jeda perjalanan untuk berhenti.",
+ "Blacktop ride receipt": "Struk perjalanan Blacktop",
+ "Location is off for Blacktop": "Lokasi mati untuk Blacktop",
+ "Ride in progress": "Perjalanan berlangsung"
 }

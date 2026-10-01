@@ -3499,5 +3499,10 @@
  "Switched to {0}": "{0} に切り替えました",
  "You'll come off its boards and stop getting its notifications. You can join again by scanning its QR.": "そのクルーのランキングから外れ、通知も届かなくなります。QR をスキャンすればまた参加できます。",
  "Your crews": "あなたのクルー",
- "{0} of {1} crew slots used": "クルー枠 {1} 件中 {0} 件使用"
+ "{0} of {1} crew slots used": "クルー枠 {1} 件中 {0} 件使用",
+ "Allow location in your phone's settings to track rides.": "ライドを記録するには、スマホの設定で位置情報を許可してください。",
+ "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop がライドを記録しています。止めるにはライドを終了または一時停止してください。",
+ "Blacktop ride receipt": "Blacktop ライドレシート",
+ "Location is off for Blacktop": "Blacktop の位置情報がオフです",
+ "Ride in progress": "ライド中"
 }
