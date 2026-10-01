@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { nudgePush } from '@/features/notifications';
-import { ownCrewCode } from '@/features/crew/useCrew';
+import { getCrews } from '@/features/crew/useCrew';
 
 /**
  * Push an arcade high score straight to the crew board so crew mates see it
@@ -15,38 +15,17 @@ export async function publishArcadeScore(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Crew code / rider name come from local state (same source the board uses).
-    let crewCode = ownCrewCode();
-    try {
-      const raw = localStorage.getItem('blacktop_crew');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.code) crewCode = parsed.code;
-      }
-    } catch { /* fall back to own crew */ }
-
     let displayName = 'Rider';
     try {
       const raw = localStorage.getItem('blacktop_profile');
       if (raw) displayName = JSON.parse(raw)?.name || 'Rider';
     } catch { /* keep default */ }
 
-    const { data: existing } = await (supabase as any)
-      .from('crew_scores')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    const row = {
-      ...(existing ?? {}),
-      user_id: user.id,
-      crew_code: crewCode,
-      display_name: displayName,
-      [column]: value,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await (supabase as any).from('crew_scores').upsert(row);
+    // Onto every crew this rider is in (one board row per crew). Only the
+    // columns sent are updated, so ride stats on an existing row stay as they are.
+    const updated_at = new Date().toISOString();
+    const rows = getCrews().map((c) => ({ user_id: user.id, crew_code: c.code, display_name: displayName, [column]: value, updated_at }));
+    const { error } = await (supabase as any).from('crew_scores').upsert(rows, { onConflict: 'user_id,crew_code' });
     if (error) console.error('Failed to publish arcade score:', error);
     else nudgePush(); // crew mates passed on the board hear about it
   } catch (e) {
