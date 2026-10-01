@@ -2,7 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { analyseCorners, burnedAggregate, keepPeakTelemetry, type BurnedTotals } from '@/features/ride';
 import type { RideSession } from '@/types/blacktop';
 import { weekKey, weekStart } from './challenges';
-import { getCrewCode } from './useCrew';
 
 /**
  * What a rider shares with their crew: all-time totals for the crew board and
@@ -75,9 +74,7 @@ export function weekStats(rides: RideSession[], now = new Date()): WeekStats {
 
 /**
  * Publishes this rider's own row on one crew's board (one row per crew they're
- * in). Returns false when it couldn't. A database from before several crews
- * keeps one row per rider (42P10 on this upsert): there only the active crew
- * gets it, as before.
+ * in). Returns false when it couldn't. Hidden peaks go as null.
  */
 export async function publishCrewTotals(crewCode: string, name: string, totals: CrewTotals): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -95,18 +92,7 @@ export async function publishCrewTotals(crewCode: string, name: string, totals: 
     updated_at: new Date().toISOString(),
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const upsert = (r: typeof row, onConflict?: string) => supabase.from('crew_scores' as any).upsert(r as any, onConflict ? { onConflict } : undefined);
-  let conflict: string | undefined = 'user_id,crew_code';
-  let { error } = await upsert(row, conflict);
-  if (error?.code === '42P10') {
-    if (crewCode !== getCrewCode()) return true;
-    conflict = undefined;
-    ({ error } = await upsert(row));
-  }
-  // Until migration 20261004020000 allows null peaks (23502): 0, never the real figure.
-  if (error?.code === '23502') {
-    ({ error } = await upsert({ ...row, top_speed: row.top_speed ?? 0, max_lean: row.max_lean ?? 0 }, conflict));
-  }
+  const { error } = await supabase.from('crew_scores' as any).upsert(row as any, { onConflict: 'user_id,crew_code' });
   if (error) console.error('Failed to publish crew scores:', error);
   return !error;
 }
@@ -124,15 +110,7 @@ export async function publishWeekStats(crewCode: string, name: string, stats: We
     updated_at: new Date().toISOString(),
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let { error } = await supabase.from('crew_weekly_scores' as any).upsert(row as any);
-  // Until migration 20261004020000 allows null peaks (23502): 0, never the real figure.
-  if (error?.code === '23502') {
-    ({ error } = await supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .from('crew_weekly_scores' as any)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .upsert({ ...row, top_speed: row.top_speed ?? 0, max_lean: row.max_lean ?? 0, corner_score: row.corner_score ?? 0 } as any));
-  }
+  const { error } = await supabase.from('crew_weekly_scores' as any).upsert(row as any);
   if (error) console.error('Failed to publish weekly crew stats:', error);
   return !error;
 }
