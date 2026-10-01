@@ -23,7 +23,12 @@ export function TrackMinimap({
   splits = [],
   dot,
   className,
+  pitLane,
+  startFinishPits,
 }: {
+  /** The pit lane (dashed) and the start/finish carried across it (thin). */
+  pitLane?: LatLng[][];
+  startFinishPits?: Gate | null;
   outline?: LatLng[];
   lines?: MinimapLine[];
   startFinish?: Gate | null;
@@ -62,6 +67,16 @@ export function TrackMinimap({
         {outline && outline.length > 1 && (
           <path d={path(outline)} fill="none" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.35} strokeWidth={u * 2.2} strokeLinejoin="round" strokeLinecap="round" />
         )}
+        {pitLane?.map((l, i) =>
+          l.length > 1 ? (
+            <path key={`pit${i}`} d={path(l)} fill="none" stroke="hsl(var(--muted-foreground))" strokeOpacity={0.6} strokeWidth={u * 0.9} strokeDasharray={`${u * 1.6} ${u * 1.2}`} strokeLinecap="round" />
+          ) : null,
+        )}
+        {startFinishPits && (() => {
+          const a = P(startFinishPits.a);
+          const b = P(startFinishPits.b);
+          return <line x1={a.x} y1={-a.y} x2={b.x} y2={-b.y} stroke="#ffffff" strokeOpacity={0.55} strokeWidth={u * 0.6} strokeLinecap="round" />;
+        })()}
         {lines.map((l, i) =>
           l.points.length > 1 ? (
             <path

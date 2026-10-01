@@ -70,7 +70,11 @@ export function LapTable({ laps, sectors }: { laps: Lap[]; sectors: number }) {
           <span className="font-mono font-bold tabular-nums">
             {formatLap(l.ms)}
             {best?.n === l.n && <span className="ml-1 text-[#a78bfa]">★</span>}
-            {!l.valid && <span className="ml-1 text-[9px] font-sans text-muted-foreground">{tr("cut")}</span>}
+            {l.pit ? (
+              <span className="ml-1 text-[9px] font-sans font-bold text-accent">{l.pit === 'in' ? tr("IN") : l.pit === 'out' ? tr("OUT") : tr("PIT")}</span>
+            ) : (
+              !l.valid && <span className="ml-1 text-[9px] font-sans text-muted-foreground">{tr("cut")}</span>
+            )}
             {l.valid && l.lowConfidence && <span className="ml-1 text-[9px] font-sans text-warning" title={tr("GPS gap near a line")}>~</span>}
           </span>
           {Array.from({ length: sectors }, (_, i) => {

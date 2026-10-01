@@ -14,9 +14,10 @@ import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import type { Lap, TrackDef, TrackSession } from '../types';
 import { PIT_PRESETS } from '../types';
 import { speakRiderCall, pitLabel } from '../lib/pitCalls';
-import { PIT_QR_PREFIX, TrackLink, newLinkToken, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
-import { markTrackUsed } from '../lib/trackStore';
+import { PIT_QR_PREFIX, TrackLink, newLinkToken, parseCrewSession, parseTrackQr, type LinkMessage, type RacerSnapshot, type Telemetry } from '../lib/link';
+import { markTrackUsed, saveSession } from '../lib/trackStore';
 import { TrackHome } from './TrackHome';
+import { PitLaneCard, PitStopLine } from './PitLaneCard';
 import { WalkScreen } from './WalkScreen';
 import { SessionDetail } from './SessionDetail';
 import { closeRacerLink, startWalk, useRacer } from '../lib/session';
@@ -44,6 +45,9 @@ export function PitView() {
   /** The track picked on this phone's Track Day home. */
   const [selected, setSelected] = useState<TrackDef | null>(null);
   const [viewing, setViewing] = useState<TrackSession | null>(null);
+  /** The racer's session, sent at the end (results card and flyover). */
+  const [received, setReceived] = useState<TrackSession | null>(null);
+  const sessionParts = useRef<Record<string, string[]>>({});
   // Building a track with a GPS lap uses the racer's recorder on this phone.
   const walker = useRacer();
   /** The racer has the crew's track (they may pick another after; it isn't pushed again). */
@@ -103,6 +107,20 @@ export function PitView() {
         haptics.heavy();
         speakRiderCall(m.msg.text);
         toast.warning(tr("Rider: {0}", [pitLabel(String(m.msg.text).slice(0, 40))]), { duration: 10000 });
+      } else if (m.type === 'session') {
+        // The racer's whole session, in parts: kept on this phone once complete.
+        const parts = (sessionParts.current[m.id] ??= []);
+        if (typeof m.data === 'string' && m.part >= 0 && m.part < Math.min(m.parts, 200)) parts[m.part] = m.data;
+        if (parts.filter((x) => x !== undefined).length === m.parts) {
+          delete sessionParts.current[m.id];
+          const got = parseCrewSession(parts.join(''));
+          if (got) {
+            saveSession(got);
+            setReceived(got);
+            haptics.success();
+            toast.success(tr("Session results in"), { description: tr("Laps, pit stops and the 3D flyover are ready.") });
+          }
+        }
       } else if (m.type === 'ended') {
         setEnded(true);
         toast(tr("Session ended by the rider"));
@@ -180,7 +198,7 @@ export function PitView() {
   const running = !!snap?.running && !ended;
 
   if (!token && walker.phase === 'walking') return <WalkScreen onSaved={setSelected} />;
-  if (!token && viewing) return <SessionDetail session={viewing} onBack={() => setViewing(null)} />;
+  if (viewing) return <SessionDetail session={viewing} onBack={() => setViewing(null)} />;
 
   // Crew-hosted, before the racer joins: the crew's QR and the track it carries.
   if (token && hostTrack && !snap) {
@@ -195,7 +213,7 @@ export function PitView() {
           <p className="text-xs text-muted-foreground max-w-xs">
             {tr("On their Track Day screen, Scan pit crew QR. They get {0}, then tap I'm in position once they're on the grid.", [hostTrack.name])}
           </p>
-          <TrackMinimap className="w-40 h-40" outline={hostTrack.outline} startFinish={hostTrack.startFinish} splits={hostTrack.splits} />
+          <TrackMinimap className="w-40 h-40" outline={hostTrack.outline} startFinish={hostTrack.startFinish} splits={hostTrack.splits} pitLane={hostTrack.pitLane} startFinishPits={hostTrack.startFinishPits} />
         </div>
         <Button variant="outline" className="h-12 gap-2" onClick={changeTrack}>
           <RefreshCw className="w-4 h-4" />{" "}{tr("Change track")}
@@ -247,6 +265,27 @@ export function PitView() {
 
       {!running && (
         <IdlePanel snap={snap} ended={ended} />
+      )}
+      {!running && received && (
+        <Button className="h-14 text-base font-bold gap-2" onClick={() => setViewing(received)}>
+          <Flag className="w-5 h-5" />{" "}{tr("View results and 3D flyover")}
+        </Button>
+      )}
+
+      {/* Pit lane: live while the racer's in it, the limit the crew sets, and the stops so far. */}
+      {running && tele?.pit && <PitLaneCard live={tele.pit} speed={tele.v} limit={tele.pit.limit} now={now + offset} />}
+      {snap?.pitTiming && snap.pitLimit != null && (
+        <PitLimitControl
+          limit={snap.pitLimit}
+          onChange={(mps) => linkRef.current?.send({ type: 'pitLimit', mps })}
+        />
+      )}
+      {!!snap?.pitStops?.length && (
+        <div className="space-y-1.5">
+          {snap.pitStops.map((st) => (
+            <PitStopLine key={st.n} stop={st} />
+          ))}
+        </div>
       )}
 
       {running && (
@@ -346,6 +385,33 @@ function Box({ label, value, accent }: { label: string; value: string; accent?: 
  * track being paced out, the chosen track with the rider rolling to the grid,
  * or just "waiting".
  */
+/** The pit lane speed limit, set by the crew in their own units (steps of 5). */
+function PitLimitControl({ limit, onChange }: { limit: number; onChange: (mps: number) => void }) {
+  const { settings } = useSettings();
+  const kph = settings.speedUnit === 'kph';
+  const perUnit = kph ? 1 / 3.6 : 0.44704;
+  const shown = Math.round(limit / perUnit);
+  const set = (v: number) => {
+    const clamped = Math.min(kph ? 150 : 90, Math.max(kph ? 10 : 5, v));
+    onChange(clamped * perUnit);
+    haptics.light();
+  };
+  return (
+    <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/50 px-3 py-2">
+      <span className="text-xs font-semibold flex-1">{tr("Pit lane limit")}</span>
+      <Button variant="outline" size="sm" className="h-10 w-12" onClick={() => set(Math.round(shown / 5) * 5 - 5)} aria-label={tr("Lower the pit limit")}>
+        −5
+      </Button>
+      <span className="font-mono font-bold tabular-nums w-20 text-center">
+        {shown} {getSpeedLabel(settings.speedUnit)}
+      </span>
+      <Button variant="outline" size="sm" className="h-10 w-12" onClick={() => set(Math.round(shown / 5) * 5 + 5)} aria-label={tr("Raise the pit limit")}>
+        +5
+      </Button>
+    </div>
+  );
+}
+
 function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean }) {
   const phase = snap?.phase ?? 'idle';
   const walk = snap?.walk ?? null;
@@ -379,6 +445,8 @@ function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean
         lines={phase === 'walking' && walk ? [{ points: walk.trail, color: 'hsl(var(--accent))', width: 1.2 }] : []}
         startFinish={phase === 'walking' ? walk?.startFinish : track?.startFinish}
         splits={phase === 'walking' ? walk?.splits : track?.splits}
+        pitLane={phase === 'walking' ? undefined : track?.pitLane}
+        startFinishPits={phase === 'walking' ? undefined : track?.startFinishPits}
         dot={snap?.pos ?? null}
       />
     </div>

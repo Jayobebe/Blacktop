@@ -31,6 +31,8 @@ export interface LibraryLayout {
   loop: LatLng[];
   /** A start line position, when the map has one. */
   start?: LatLng;
+  /** Pit lane lines, when the map has them (pit lane timing). */
+  pits?: LatLng[][];
 }
 
 const base = () => `${import.meta.env.BASE_URL ?? '/'}circuits/`;
@@ -62,6 +64,9 @@ export async function loadCircuit(id: number): Promise<LibraryLayout> {
     length: Number(d.length) || 0,
     loop,
     start: d.start ? { lat: d.start.lat, lng: d.start.lng } : undefined,
+    pits: Array.isArray(d.pits)
+      ? (d.pits as [number, number][][]).map((l) => l.map(([lat, lng]) => ({ lat, lng }))).filter((l) => l.length >= 2)
+      : undefined,
   };
 }
 

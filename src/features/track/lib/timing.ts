@@ -1,4 +1,4 @@
-import type { Lap, TelemetrySample, TrackDef } from '../types';
+import type { Gate, Lap, TelemetrySample, TrackDef } from '../types';
 import { crossGate, crossingTime, metres, toLocal } from './geometry';
 
 /** A lap faster than this is a GPS glitch or a pit-lane cut, not a lap. */
@@ -67,10 +67,38 @@ export class LapTimer {
   private lapMaxSpeed = 0;
   private lapMaxLean = 0;
   private lapN = 0;
+  /** In the pit lane (lib/pits PitTracker tells the timer). */
+  private inPit = false;
+  /** The running lap went into / came out of the pits. */
+  private lapPit: Lap['pit'];
+  /**
+   * The start/finish line carried on across the pit lane, used while in it:
+   * like a circuit's timing loop, which spans the pit lane too, so a lap
+   * through the pits still counts.
+   */
+  private readonly sfAcrossPits: Gate;
   readonly laps: Lap[] = [];
   readonly samples: TelemetrySample[] = [];
 
-  constructor(private readonly track: TrackDef) {}
+  constructor(private readonly track: TrackDef) {
+    // The line drawn across the pit lane when the track was saved; tracks from
+    // before that get it stretched 200 m either way.
+    const { a, b } = track.startFinish;
+    const v = toLocal(b, a);
+    const len = Math.hypot(v.x, v.y) || 1;
+    const stretch = 200 / len;
+    const at = (f: number) => ({ lat: a.lat + (b.lat - a.lat) * f, lng: a.lng + (b.lng - a.lng) * f });
+    this.sfAcrossPits = track.startFinishPits ?? { a: at(-stretch), b: at(1 + stretch) };
+  }
+
+  /** Into the pit lane (true) or back out (false): flags the running lap 'in' / 'out'. */
+  setPit(inPit: boolean) {
+    if (inPit === this.inPit) return;
+    this.inPit = inPit;
+    if (this.lapStart === null) return;
+    const add = inPit ? 'in' : 'out';
+    this.lapPit = !this.lapPit || this.lapPit === add ? add : 'inout';
+  }
 
   get lapStartT() {
     return this.lapStart;
@@ -137,7 +165,7 @@ export class LapTimer {
         const hit = crossGate(prev, fix, this.track.splits[splitIdx]);
         if (hit) this.pending.push({ kind: 'split', index: splitIdx, frac: hit.frac, ...base });
       }
-      const sf = crossGate(prev, fix, this.track.startFinish);
+      const sf = crossGate(prev, fix, this.inPit ? this.sfAcrossPits : this.track.startFinish);
       if (sf && (this.dir === null || sf.dir === this.dir)) {
         if (this.dir === null) this.dir = sf.dir;
         this.pending.push({ kind: 'sf', index: -1, frac: sf.frac, ...base });
@@ -264,6 +292,8 @@ export class LapTimer {
     this.lowConf = false;
     this.lapMaxSpeed = 0;
     this.lapMaxLean = 0;
+    // A lap that starts in the pit lane comes out of it.
+    this.lapPit = this.inPit ? 'out' : undefined;
   }
 
   private closeLap(endT: number, shaky: boolean): Lap {
@@ -280,8 +310,10 @@ export class LapTimer {
       endT,
       ms: Math.round(endT - start),
       sectors,
-      // Missing a split means the lap didn't follow the circuit (cut / pit lane).
-      valid: allSplits,
+      // Missing a split means the lap didn't follow the circuit (a cut); in- and
+      // out-laps count in the total but are never a best or a delta reference.
+      valid: allSplits && !this.lapPit,
+      pit: this.lapPit,
       lowConfidence: this.lowConf || shaky,
       maxSpeed: this.lapMaxSpeed,
       maxLean: this.lapMaxLean || undefined,

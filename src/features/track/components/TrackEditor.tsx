@@ -2,6 +2,7 @@ import type { LatLng, TrackDef } from '../types';
 import { isClosedLap } from '../lib/centerline';
 import { LIBRARY_ATTRIBUTION, type LibraryLayout } from '../lib/circuitLibrary';
 import { ChaseCamPlacer } from './ChaseCamPlacer';
+import { pitLanesNear, withPits } from '../lib/pitLanes';
 import { Button } from '@/components/ui/button';
 import { tr } from '@/lib/i18n';
 
@@ -49,7 +50,12 @@ export function TrackEditor({
       startHint={library?.start}
       meta={initial ? undefined : { source, osmId: library?.id }}
       attribution={library ? LIBRARY_ATTRIBUTION : undefined}
-      onSave={onSave}
+      // Pit lane timing lines: the layout's pit lane, the track's own, or (a GPS lap
+      // at a real circuit) the nearest library venue's.
+      onSave={async (t) => {
+        const lines = library?.pits ?? initial?.pitLane ?? (await pitLanesNear(t));
+        onSave(withPits(t, lines));
+      }}
       onCancel={onCancel}
     />
   );

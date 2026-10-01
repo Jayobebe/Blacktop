@@ -315,7 +315,7 @@ export function SelectedTrack({
           <X className="w-5 h-5" />
         </button>
       </div>
-      <TrackMinimap className="aspect-[4/3] w-full" outline={track.outline} startFinish={track.startFinish} splits={track.splits} />
+      <TrackMinimap className="aspect-[4/3] w-full" outline={track.outline} startFinish={track.startFinish} splits={track.splits} pitLane={track.pitLane} startFinishPits={track.startFinishPits} />
       {linkLine && (
         <button onClick={linkLine.onClick} className="w-full flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-xs">
           <Users className="w-4 h-4 text-accent shrink-0" />
@@ -342,7 +342,7 @@ export function SelectedTrack({
   );
 }
 
-export function bestFor(sessions: TrackSession[], trackId: string): number | null {
+function bestFor(sessions: TrackSession[], trackId: string): number | null {
   let best: number | null = null;
   for (const s of sessions) {
     if (s.trackId !== trackId) continue;

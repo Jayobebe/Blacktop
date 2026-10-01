@@ -58,6 +58,9 @@ export interface LoopAnalysis {
  */
 const PIT = /^\s*pits?\s*$|\bpit(s|[ -]?(lane|entry|exit|road|in|out))\b/i;
 
+/** A way that's a pit lane by its name or raceway tag (the rule laps use to leave pit lanes out). */
+export const looksLikePit = (name?: string, raceway?: string) => PIT.test(name ?? '') || /pit/i.test(raceway ?? '');
+
 function pathLength(coords: LatLng[]) {
   let d = 0;
   for (let i = 1; i < coords.length; i++) d += metres(coords[i - 1], coords[i]);

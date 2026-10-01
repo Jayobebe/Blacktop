@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Download, FileText, Trash2 } from 'lucide-react';
+import { lazy, Suspense, useMemo, useState } from 'react';
+import { Download, FileText, Trash2, Video } from 'lucide-react';
+import type { RideSession } from '@/types/blacktop';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
@@ -13,9 +14,27 @@ import { theoreticalBest } from '../lib/laps';
 import { deleteSession, useTrackStore } from '../lib/trackStore';
 import { fileStem, lapsCsv, sessionCsv, sessionGpx, shareFile } from '../lib/export';
 import { LapTable } from './TimingParts';
+import { PitStopLine } from './PitLaneCard';
 import { TrackMinimap } from './TrackMinimap';
 import { LAP_A_COLOR, LAP_B_COLOR, LapTraces } from './LapTraces';
 import { tr } from '@/lib/i18n';
+
+// The 3D flyover is the ride one (MapLibre): loaded only when it's opened.
+const RideFlyover = lazy(() => import('@/features/ride/components/RideFlyover').then((m) => ({ default: m.RideFlyover })));
+
+/** A Track Day session as the ride flyover reads a ride (positions, speed in mph, lean and G). */
+function asRide(session: TrackSession): RideSession {
+  const samples = session.samples;
+  return {
+    id: session.id,
+    name: session.trackName,
+    startedAt: new Date(session.startedAt).toISOString(),
+    duration: Math.max(1, Math.round((session.endedAt - session.startedAt) / 1000)),
+    gpsPoints: samples.map((s) => ({ lat: s.lat, lng: s.lng, speed: s.v * 2.23694, timestamp: s.t, leanAngle: s.lean })),
+    leanSamples: samples.filter((s) => s.lean != null).map((s) => ({ angle: s.lean!, timestamp: s.t })),
+    gForceSamples: samples.filter((s) => s.g != null).map((s) => ({ g: s.g!, timestamp: s.t })),
+  } as unknown as RideSession;
+}
 
 /**
  * After a session: lap list, two laps compared (traces, racing lines, corner
@@ -30,6 +49,7 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
   const best = valid.reduce<(typeof valid)[number] | null>((b, l) => (!b || l.ms < b.ms ? l : b), null);
   const last = session.laps[session.laps.length - 1] ?? null;
   const [aN, setAN] = useState<number | null>(best?.n ?? last?.n ?? null);
+  const [flyover, setFlyover] = useState(false);
   const [bN, setBN] = useState<number | null>(last && best && last.n !== best.n ? last.n : null);
 
   const lapSamples = (n: number | null) => {
@@ -66,6 +86,17 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
         <Box label={tr("Laps")} value={String(session.laps.length)} />
         <Box label={tr("Top")} value={spd(topSpeed)} />
       </div>
+
+      {session.samples.length > 10 && (
+        <Button variant="outline" className="h-12 gap-2" onClick={() => setFlyover(true)}>
+          <Video className="w-4 h-4" />{" "}{tr("3D flyover")}
+        </Button>
+      )}
+      {flyover && (
+        <Suspense fallback={null}>
+          <RideFlyover ride={asRide(session)} onClose={() => setFlyover(false)} />
+        </Suspense>
+      )}
 
       {session.laps.length > 0 && (
         <>
@@ -130,6 +161,14 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
       )}
 
       <LapTable laps={session.laps} sectors={sectors} />
+      {!!session.pitStops?.length && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("Pit stops")}</p>
+          {session.pitStops.map((st) => (
+            <PitStopLine key={st.n} stop={st} />
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-2">
         <Button variant="secondary" className="gap-1 text-xs" onClick={() => shareFile(`${fileStem(session)}-laps.csv`, lapsCsv(session), 'text/csv')}>
@@ -195,7 +234,7 @@ function LapSelect({
         {allowNone && <option value="">{tr("None")}</option>}
         {laps.map((l) => (
           <option key={l.n} value={l.n} className="bg-background">
-            {tr("Lap")}{" "}{l.n} · {formatLap(l.ms)}{l.valid ? '' : tr(" (cut)")}
+            {tr("Lap")}{" "}{l.n} · {formatLap(l.ms)}{l.pit ? ` · ${l.pit === 'in' ? tr("IN") : l.pit === 'out' ? tr("OUT") : tr("PIT")}` : l.valid ? '' : tr(" (cut)")}
           </option>
         ))}
       </select>

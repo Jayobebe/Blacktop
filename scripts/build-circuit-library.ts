@@ -20,7 +20,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { analyseLoop, buildEdges, initialRemovals, lapOptions, removalsFor, type RoadPiece } from '../src/features/track/lib/roadLoop';
+import { analyseLoop, buildEdges, initialRemovals, lapOptions, looksLikePit, removalsFor, type RoadPiece } from '../src/features/track/lib/roadLoop';
 import { Centerline, resampleLoop, simplifyLine } from '../src/features/track/lib/centerline';
 import { toLocal } from '../src/features/track/lib/geometry';
 import type { LatLng } from '../src/features/track/types';
@@ -92,6 +92,8 @@ interface Layout {
   loop: LatLng[];
   start?: LatLng;
   direction: 'ways' | 'guess';
+  /** Pit lane lines (for pit lane timing in the app), never part of the lap. */
+  pits?: LatLng[][];
 }
 
 /** +1 if the lap runs the way the ways are drawn, -1 if against, weighted by length. */
@@ -197,6 +199,20 @@ function ownCoverage(loop: LatLng[], pieces: RoadPiece[], edges: ReturnType<type
   return total ? covered / total : 1;
 }
 
+/** A relation's pit lane ways (pit roles, or named / tagged as one), as lines. */
+function pitLinesOf(rel: any, ways: Map<number, any>): LatLng[][] {
+  const out: LatLng[][] = [];
+  for (const m of rel.members ?? []) {
+    if (m.type !== 'way') continue;
+    const w = ways.get(m.ref);
+    if (!w?.geometry) continue;
+    if (m.role === 'pit_lane' || m.role === 'pit' || looksLikePit(w.tags?.name, w.tags?.raceway)) {
+      out.push(w.geometry.map((g: any) => ({ lat: g.lat, lng: g.lon })));
+    }
+  }
+  return out;
+}
+
 /** Race-track ways of a relation (no pit roles), as road pieces. */
 function relationPieces(rel: any, ways: Map<number, any>): { pieces: RoadPiece[]; backward: Set<string> } {
   const pieces: RoadPiece[] = [];
@@ -222,6 +238,7 @@ function extraLayout(extra: (typeof EXTRAS)[number], data: any): Layout | string
   const lap = lapFrom(pieces, new Set(), initialRemovals(buildEdges(pieces)));
   if (typeof lap === 'string') return lap;
   const round = (p: LatLng) => ({ lat: Math.round(p.lat * 1e6) / 1e6, lng: Math.round(p.lng * 1e6) / 1e6 });
+  const pits = pieces.filter((p) => looksLikePit(p.name, p.raceway)).map((p) => simplifyLine(p.pts.map(([lat, lng]) => ({ lat, lng })), 0.8).map(round));
   return {
     id: extra.id,
     name: extra.name,
@@ -231,10 +248,11 @@ function extraLayout(extra: (typeof EXTRAS)[number], data: any): Layout | string
     length: lap.length,
     loop: simplifyLine(lap.loop, 0.6).map(round),
     direction: lap.direction,
+    pits: pits.length ? pits : undefined,
   };
 }
 
-function toLayout(rel: any, ways: Map<number, any>, nodes: Map<number, any>, venue: RoadPiece[] = []): Layout | string {
+function toLayout(rel: any, ways: Map<number, any>, nodes: Map<number, any>, venue: RoadPiece[] = [], venuePits: LatLng[][] = []): Layout | string {
   // English name first (Suzuka is mapped as 鈴鹿サーキット); the local name is kept for search.
   const local = String(rel.tags?.name ?? '').trim();
   const english = String(rel.tags?.['name:en'] ?? '').trim();
@@ -274,6 +292,12 @@ function toLayout(rel: any, ways: Map<number, any>, nodes: Map<number, any>, ven
     loop: simplifyLine(lap.loop, 0.6).map(round),
     start: start && round(start),
     direction: lap.direction,
+    // Its own pit lane, or the venue's when this layout's relation leaves it out.
+    pits: (() => {
+      const own = pitLinesOf(rel, ways);
+      const lines = own.length ? own : venuePits;
+      return lines.length ? lines.map((l) => simplifyLine(l, 0.8).map(round)) : undefined;
+    })(),
   };
 }
 
@@ -347,8 +371,10 @@ async function main() {
   const near = (a: any, b: any) =>
     a.center && b.center && Math.abs(a.center.lat - b.center.lat) < 0.036 && Math.abs(a.center.lon - b.center.lon) < 0.036 / Math.cos((a.center.lat * Math.PI) / 180);
   for (const rel of fetched) {
-    const venue = fetched.filter((o) => o.id !== rel.id && near(rel, o)).flatMap((o) => relationPieces(o, o.ways).pieces);
-    const result = toLayout(rel, rel.ways, allNodes, venue);
+    const others = fetched.filter((o) => o.id !== rel.id && near(rel, o));
+    const venue = others.flatMap((o) => relationPieces(o, o.ways).pieces);
+    const venuePits = others.flatMap((o) => pitLinesOf(o, o.ways));
+    const result = toLayout(rel, rel.ways, allNodes, venue, venuePits);
     if (typeof result === 'string') {
       skipped[result] = (skipped[result] ?? 0) + 1;
       continue;
@@ -384,10 +410,19 @@ async function main() {
   const keep = new Set([...layouts.map((l) => `${l.id}.json`), ...[...unfetched].map((id) => `${id}.json`), 'index.json']);
   for (const f of readdirSync(OUT)) if (f.endsWith('.json') && !keep.has(f)) rmSync(join(OUT, f));
   for (const l of layouts) {
-    const { id, name, length, loop, start, direction } = l;
+    const { id, name, length, loop, start, direction, pits } = l;
     writeFileSync(
       join(OUT, `${id}.json`),
-      JSON.stringify({ attribution: ATTRIBUTION, id, name, length, direction, start, loop: loop.map((p) => [p.lat, p.lng]) }),
+      JSON.stringify({
+        attribution: ATTRIBUTION,
+        id,
+        name,
+        length,
+        direction,
+        start,
+        loop: loop.map((p) => [p.lat, p.lng]),
+        pits: pits?.map((line) => line.map((p) => [p.lat, p.lng])),
+      }),
     );
   }
   writeFileSync(

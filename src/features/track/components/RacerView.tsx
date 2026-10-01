@@ -42,6 +42,7 @@ import { formatLap } from '../lib/timing';
 import { theoreticalBest } from '../lib/laps';
 import { TrackHome } from './TrackHome';
 import { WalkScreen } from './WalkScreen';
+import { PitLaneCard } from './PitLaneCard';
 import { TrackMinimap } from './TrackMinimap';
 import { SessionDetail } from './SessionDetail';
 import { TrackVoice } from './TrackVoice';
@@ -182,7 +183,7 @@ export function RacerView() {
     return (
       <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-3">
         {statusBar}
-        <TrackMinimap className="aspect-square max-h-[40dvh] mx-auto w-full" outline={track.outline} startFinish={track.startFinish} splits={track.splits} />
+        <TrackMinimap className="aspect-square max-h-[40dvh] mx-auto w-full" outline={track.outline} startFinish={track.startFinish} splits={track.splits} pitLane={track.pitLane} startFinishPits={track.startFinishPits} />
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
           <div className={cn('w-24 h-24 rounded-full border-4 flex items-center justify-center', racer.inPosition ? 'border-accent animate-pulse' : 'border-border')}>
             <Timer className={cn('w-10 h-10', racer.inPosition ? 'text-accent' : 'text-muted-foreground')} />
@@ -228,6 +229,7 @@ export function RacerView() {
     return (
       <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom gap-3 bg-background">
         {statusBar}
+        {racer.pitLane && <PitLaneCard live={racer.pitLane} speed={racer.speed} limit={racer.pitLimit} now={now} big />}
         <div className="flex-1 flex flex-col landscape:flex-row gap-3">
           <div className="flex-1 flex flex-col justify-center items-center rounded-3xl border-[3px] border-accent bg-card/50 py-4">
             <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">

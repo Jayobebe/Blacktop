@@ -2,7 +2,8 @@ import { useSyncExternalStore } from 'react';
 import { setPendingTrackReceipt } from '@/lib/trackReceipt';
 import { haptics } from '@/lib/haptics';
 import { sceneCue } from '@/lib/radioFx';
-import type { Lap, LatLng, PitMessage, TelemetrySample, TrackDef, TrackSession } from '../types';
+import type { Lap, LatLng, PitMessage, PitStop, TelemetrySample, TrackDef, TrackSession } from '../types';
+import { DEFAULT_PIT_LIMIT, PitTracker, onPitLane, type PitLive } from './pits';
 import { LapTimer, liveDelta, type Fix } from './timing';
 import { TrackLink, newLinkToken, type LinkMessage, type RacerPhase, type RacerSnapshot, type WalkShape } from './link';
 import { saveSession, saveTrack } from './trackStore';
@@ -57,10 +58,29 @@ export interface RacerState {
   launchedAt: number | null;
   /** Armed: the racer said they're on the grid, so a launch now starts timing. */
   inPosition: boolean;
+  /** In the pit lane right now (tracks with pit lane timing), else null. */
+  pitLane: PitLive | null;
+  /** Pit lane visits this session. */
+  pitStops: PitStop[];
+  /** Pit lane speed limit, m/s: the rider's units' usual figure until the pit crew sets one. */
+  pitLimit: number;
+}
+
+/** The usual pit limit in the rider's units (60 km/h or 40 mph). */
+function defaultPitLimit(): number {
+  try {
+    const s = JSON.parse(localStorage.getItem('blacktop-settings') || '{}') as { speedUnit?: string };
+    return s.speedUnit === 'kph' ? DEFAULT_PIT_LIMIT.kph : DEFAULT_PIT_LIMIT.mph;
+  } catch {
+    return DEFAULT_PIT_LIMIT.mph;
+  }
 }
 
 const INITIAL: RacerState = {
   inPosition: false,
+  pitLane: null,
+  pitStops: [],
+  pitLimit: defaultPitLimit(),
   phase: 'idle',
   track: null,
   token: null,
@@ -93,6 +113,8 @@ let timer: LapTimer | null = null;
 let link: TrackLink | null = null;
 let unsubGps: (() => void) | null = null;
 let launch: LaunchDetector | null = null;
+/** Pit lane timing for the armed / running track (null without pit lane lines). */
+let pits: PitTracker | null = null;
 let onLaunch: ((t: number) => void) | null = null;
 let startedAt = 0;
 let sensorLean = 0;
@@ -137,6 +159,9 @@ function snapshot(): RacerSnapshot {
     now: Date.now(),
     running: state.phase === 'running',
     inPosition: state.inPosition,
+    pitLimit: state.pitLimit,
+    pitStops: state.pitStops,
+    pitTiming: !!(state.track?.pitIn && state.track?.pitOut),
     pos: recentFixes.length ? { lat: recentFixes[recentFixes.length - 1].lat, lng: recentFixes[recentFixes.length - 1].lng } : null,
     gpsHz: state.gpsHz,
   };
@@ -152,6 +177,13 @@ function onLinkMessage(m: LinkMessage) {
       set({ crew: [...state.crew, { id: m.crewId, name: String(m.name || tr("Pit crew")).slice(0, 30) }] });
       haptics.light();
     }
+    broadcastState();
+  } else if (m.type === 'pitLimit') {
+    // The pit crew set the pit lane limit (sanity: 10-150 km/h).
+    const mps = Number(m.mps);
+    if (!Number.isFinite(mps) || mps < 2.7 || mps > 42) return;
+    set({ pitLimit: mps });
+    if (pits) pits.limit = mps;
     broadcastState();
   } else if (m.type === 'track') {
     // The pit crew set the track (a pit-hosted link): save it and select it,
@@ -237,6 +269,15 @@ function cleanTrack(t: unknown): TrackDef | null {
     outline: outline as LatLng[] | undefined,
     source: x.source === 'library' || x.source === 'gps' || x.source === 'map' ? x.source : 'map',
     osmId: Number.isInteger(x.osmId) ? x.osmId : undefined,
+    // Pit lane timing, when it's all there and well-formed.
+    ...(() => {
+      const pitIn = gate(x.pitIn);
+      const pitOut = gate(x.pitOut);
+      const lanes = Array.isArray(x.pitLane) ? x.pitLane.slice(0, 20).map((l) => (Array.isArray(l) ? l.slice(0, 2000).map(pt) : [])) : [];
+      if (!pitIn || !pitOut || !lanes.length || lanes.some((l) => !l.length || l.some((p) => !p))) return {};
+      const across = gate(x.startFinishPits);
+      return { pitIn, pitOut, pitLane: lanes as LatLng[][], ...(across ? { startFinishPits: across } : {}) };
+    })(),
   };
 }
 
@@ -265,6 +306,30 @@ function stopGps() {
 export function updateSensors(lean: number, g: number) {
   sensorLean = lean;
   sensorG = g;
+  // The pit lane stop / launch read the phone's motion many times a second.
+  if (pits && state.phase === 'running') handlePitEvents(pits.feedG(Date.now(), g));
+}
+
+/** Pit lane events: the timer learns where the rider is, the screen and the crew the visit. */
+function handlePitEvents(events: ReturnType<PitTracker['feedG']>) {
+  if (!pits) return;
+  for (const e of events) {
+    if (e.type === 'pitIn') {
+      timer?.setPit(true);
+      haptics.medium();
+    } else if (e.type === 'pitOut') {
+      timer?.setPit(false);
+      set({ pitStops: [...state.pitStops, e.stop] });
+      haptics.success();
+      broadcastState();
+    } else if (e.type === 'stopped') {
+      haptics.light();
+    } else if (e.type === 'moving') {
+      haptics.tick();
+    }
+  }
+  const live = pits.live;
+  if (live !== state.pitLane && (live || state.pitLane)) set({ pitLane: live });
 }
 
 export function dismissPit() {
@@ -414,6 +479,7 @@ export function selectTrack(track: TrackDef | null) {
 export function armTrack(track: TrackDef, riderName: string, whenLaunched: (t: number) => void) {
   openRacerLink(riderName);
   timer = new LapTimer(track);
+  pits = track.pitIn && track.pitOut ? new PitTracker(track, state.pitLimit) : null;
   // No launch detection until the racer says they're in position (confirmInPosition).
   launch = null;
   onLaunch = (t) => {
@@ -432,6 +498,7 @@ export function armTrack(track: TrackDef, riderName: string, whenLaunched: (t: n
     token: state.token,
     linked: state.linked,
     crew: state.crew,
+    pitLimit: state.pitLimit,
   });
   startGps();
   broadcastState();
@@ -463,8 +530,14 @@ export function launchNow() {
 
 function beginRunning(track: TrackDef, t: number) {
   startedAt = t;
-  // Launched on the line: lap 1 starts with the launch.
+  // Launched from the pit box: the session starts in the pit lane.
   const last = recentFixes[recentFixes.length - 1];
+  if (pits && last && onPitLane(track, last)) {
+    pits.startInPit(t);
+    timer?.setPit(true);
+    set({ pitLane: pits.live });
+  }
+  // Launched on the line: lap 1 starts with the launch.
   if (last && metres(gateCentre(track.startFinish), last) < 8) timer?.standingStart(t);
   set({ phase: 'running', launchedAt: t, lapStartT: timer?.lapStartT ?? null });
   haptics.success();
@@ -481,6 +554,12 @@ function refreshBestSamples() {
 
 function onRaceFix(fix: Fix, common: Partial<RacerState>) {
   if (!timer) return;
+  // Pit lane first, so the timer knows before this fix whether the start/finish runs across the pits.
+  if (pits) {
+    const prevSample = timer.samples[timer.samples.length - 1];
+    const v = fix.speed ?? (prevSample && fix.t > prevSample.t ? metres(prevSample, fix) / ((fix.t - prevSample.t) / 1000) : 0);
+    handlePitEvents(pits.feedFix({ t: fix.t, lat: fix.lat, lng: fix.lng, v }));
+  }
   const events = timer.feed({ ...fix, lean: sensorLean, g: sensorG });
   const patch: Partial<RacerState> = { ...common };
 
@@ -520,7 +599,20 @@ function onRaceFix(fix: Fix, common: Partial<RacerState>) {
     lastTeleSent = now;
     link.send({
       type: 'tele',
-      tele: { t: fix.t, now, lat: fix.lat, lng: fix.lng, v: last.v, lean: sensorLean, g: sensorG, lap: last.lap, d: last.d, lapStartT, delta },
+      tele: {
+        t: fix.t,
+        now,
+        lat: fix.lat,
+        lng: fix.lng,
+        v: last.v,
+        lean: sensorLean,
+        g: sensorG,
+        lap: last.lap,
+        d: last.d,
+        lapStartT,
+        delta,
+        pit: state.pitLane ? { ...state.pitLane, limit: state.pitLimit } : null,
+      },
     });
   }
 }
@@ -534,6 +626,10 @@ export function endSession(bikeId?: string): TrackSession | null {
   stopGps();
   const flushed = timer.flush();
   if (flushed.some((e) => e.type === 'lap')) refreshBestSamples();
+  // Ended in the pit lane: that visit closes here.
+  const lastStop = pits?.finish(Date.now());
+  const pitStops = lastStop ? [...state.pitStops, lastStop] : state.pitStops;
+  pits = null;
 
   const bestSectors = timer.bestSectors();
   const theoretical = bestSectors.length && bestSectors.every(Number.isFinite) ? bestSectors.reduce((a, b) => a + b, 0) : null;
@@ -548,6 +644,8 @@ export function endSession(bikeId?: string): TrackSession | null {
     splitsCount: state.track.splits.length,
     bikeId,
     riderName: state.riderName,
+    pitStops: pitStops.length ? pitStops : undefined,
+    pitLimit: state.track.pitIn ? state.pitLimit : undefined,
   };
   saveSession(session);
   setPendingTrackReceipt({
@@ -558,8 +656,27 @@ export function endSession(bikeId?: string): TrackSession | null {
     theoreticalMs: theoretical,
   });
   timer = null;
-  set({ phase: 'idle', laps: session.laps, bestLap: session.laps.filter((l) => l.valid).sort((a, b) => a.ms - b.ms)[0] ?? null });
+  set({ phase: 'idle', pitLane: null, pitStops, laps: session.laps, bestLap: session.laps.filter((l) => l.valid).sort((a, b) => a.ms - b.ms)[0] ?? null });
   link?.send({ type: 'ended' });
   broadcastState();
+  sendSessionToCrew(session);
   return session;
+}
+
+/**
+ * The pit crew gets the whole session at the end (their results card and 3D
+ * flyover): telemetry thinned to at most ~2,500 samples, as JSON in parts
+ * small enough for a realtime message, sent a beat apart.
+ */
+function sendSessionToCrew(session: TrackSession) {
+  const l = link;
+  if (!l || !state.crew.length) return;
+  const step = Math.max(1, Math.ceil(session.samples.length / 2500));
+  const compact = { ...session, samples: session.samples.filter((_, i) => i % step === 0) };
+  const json = JSON.stringify(compact);
+  const size = 48_000;
+  const parts = Math.ceil(json.length / size);
+  for (let i = 0; i < parts; i++) {
+    setTimeout(() => l.send({ type: 'session', id: session.id, part: i, parts, data: json.slice(i * size, (i + 1) * size) }), 250 * i + 400);
+  }
 }

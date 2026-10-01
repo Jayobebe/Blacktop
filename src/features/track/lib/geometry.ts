@@ -31,9 +31,9 @@ export interface GateHit {
 
 /**
  * Did the path prev→curr cross the gate? Standard segment intersection,
- * with the gate stretched by GATE_MARGIN_M at both ends.
+ * with the gate stretched by `margin` (m) at both ends.
  */
-export function crossGate(prev: LatLng, curr: LatLng, gate: Gate): GateHit | null {
+export function crossGate(prev: LatLng, curr: LatLng, gate: Gate, margin = GATE_MARGIN_M): GateHit | null {
   const ref = gate.a;
   const p = toLocal(prev, ref);
   const q = toLocal(curr, ref);
@@ -48,7 +48,7 @@ export function crossGate(prev: LatLng, curr: LatLng, gate: Gate): GateHit | nul
   const t = ((0 - p.x) * sy - (0 - p.y) * sx) / denom;
   const u = ((0 - p.x) * ry - (0 - p.y) * rx) / denom;
   const gateLen = Math.hypot(sx, sy) || 1;
-  const m = GATE_MARGIN_M / gateLen;
+  const m = margin / gateLen;
   if (t < 0 || t > 1 || u < -m || u > 1 + m) return null;
   return { frac: t, dir: denom > 0 ? 1 : -1 };
 }
