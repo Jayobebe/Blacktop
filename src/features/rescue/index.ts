@@ -1,7 +1,8 @@
 export { useRescue, type RescueRequest } from './hooks/useRescue';
 export { RescueAlert } from './components/RescueAlert';
 export { CrashCheckPrompt } from './components/CrashCheckPrompt';
-export { RescueDrillButton } from './components/RescueDrill';
+export { RescueDrillButton, RescueDrillHost } from './components/RescueDrill';
+export { openRescueDrill } from './lib/drillStore';
 export { EmergencyTextButton, EmergencyContactSettings } from './components/EmergencyText';
 export { emergencyTextAction } from './lib/emergencyText';
 export { SafetyStatusCard } from './components/SafetyStatusCard';

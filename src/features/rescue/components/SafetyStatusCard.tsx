@@ -200,7 +200,7 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
         )}
       </div>
 
-      <RescueDrillButton />
+      <RescueDrillButton onOpen={onClose} />
 
       <Button variant="outline" className="w-full h-11 rounded-2xl" onClick={goToSettings}>
         <Settings2 className="w-4 h-4 mr-2" />

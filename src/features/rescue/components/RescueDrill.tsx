@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, CircleAlert, Siren, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { CrashCheckPrompt } from './CrashCheckPrompt';
 import { useSafetyStatus } from '../hooks/useSafetyStatus';
 import { rescueReach } from '../lib/reach';
 import { cleanPhone } from '../lib/emergencyText';
+import { closeDrill, drillListeners, isDrillOpen, openRescueDrill } from '../lib/drillStore';
 
 /** The drill's countdown (a real crash check waits 5 minutes). */
 const DRILL_SECONDS = 15;
@@ -36,15 +37,48 @@ function motionWorks(): Promise<boolean> {
   });
 }
 
+/** Settings → Safety and the Home safety sheet (which closes itself via `onOpen`). */
+export function RescueDrillButton({ className, onOpen }: { className?: string; onOpen?: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      className={cn('w-full h-11 rounded-2xl', className)}
+      onClick={() => {
+        onOpen?.();
+        openRescueDrill();
+      }}
+    >
+      <Siren className="w-4 h-4 mr-2" />
+      {tr("Run a rescue drill")}
+    </Button>
+  );
+}
+
 /**
- * Settings → Safety and the Home safety sheet: a practice run of crash
- * detection. Plays the real "Are you okay?" screen on a short countdown
+ * A practice run of crash detection. Plays the real "Are you okay?" screen on a short countdown
  * (labelled as a drill), then checks what a real one depends on (crash
  * detection on, motion sensors and location working, notifications) and lists
  * who a real call would reach. Nothing is sent, nothing sounds the siren.
  */
-export function RescueDrillButton({ className }: { className?: string }) {
-  const [phase, setPhase] = useState<Phase | null>(null);
+export function RescueDrillHost() {
+  const open = useSyncExternalStore(
+    (l) => {
+      drillListeners.add(l);
+      return () => drillListeners.delete(l);
+    },
+    isDrillOpen,
+    () => false,
+  );
+  // Nothing runs (no Discord, push or crew reads) until a drill is opened.
+  return open ? <RescueDrillScreens onClose={closeDrill} /> : null;
+}
+
+function RescueDrillScreens({ onClose }: { onClose: () => void }) {
+  const [phase, setPhaseState] = useState<Phase>('intro');
+  const setPhase = (p: Phase | null) => {
+    if (p) setPhaseState(p);
+    else onClose();
+  };
   const [answered, setAnswered] = useState<'okay' | 'timeout' | null>(null);
   const [motion, setMotion] = useState<boolean | null>(null);
   const { settings } = useSettings();
@@ -56,11 +90,10 @@ export function RescueDrillButton({ className }: { className?: string }) {
 
   // Escape (and Android's back button, which sends it to open dialogs) ends the drill.
   useEffect(() => {
-    if (!phase) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPhase(null);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [phase]);
+  }, [onClose]);
 
   const start = async () => {
     // From the tap: iOS only grants motion access (and plays the caution tone) from one.
@@ -108,11 +141,6 @@ export function RescueDrillButton({ className }: { className?: string }) {
 
   return (
     <>
-      <Button variant="outline" className={cn('w-full h-11 rounded-2xl', className)} onClick={() => setPhase('intro')}>
-        <Siren className="w-4 h-4 mr-2" />
-        {tr("Run a rescue drill")}
-      </Button>
-
       {phase === 'check' &&
         createPortal(
           <>
