@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop registrerer din tur. Afslut eller sæt turen på pause for at stoppe.",
  "Blacktop ride receipt": "Blacktop-turkvittering",
  "Location is off for Blacktop": "Placering er slået fra for Blacktop",
- "Ride in progress": "Tur i gang"
+ "Ride in progress": "Tur i gang",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "Kunne ikke konfigurere notifikationer på denne telefon ({0}). Prøv igen om lidt."
 }

@@ -1,3 +1,4 @@
+import { onNativePushTap } from '../lib/nativePush';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { subscribeCrew } from '@/features/crew/useCrew';
@@ -30,6 +31,9 @@ export function PushBridge() {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
+
+  // The native app: taps arrive from the push plugin, not the service worker.
+  useEffect(() => onNativePushTap((path) => navigate(path)), [navigate]);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;

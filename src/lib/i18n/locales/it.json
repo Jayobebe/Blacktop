@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop sta registrando il tuo giro. Termina o metti in pausa il giro per fermarlo.",
  "Blacktop ride receipt": "Ricevuta del giro Blacktop",
  "Location is off for Blacktop": "La posizione è disattivata per Blacktop",
- "Ride in progress": "Giro in corso"
+ "Ride in progress": "Giro in corso",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "Impossibile configurare le notifiche su questo telefono ({0}). Riprova tra poco."
 }

@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop sedang melacak perjalanan Anda. Akhiri atau jeda perjalanan untuk berhenti.",
  "Blacktop ride receipt": "Struk perjalanan Blacktop",
  "Location is off for Blacktop": "Lokasi mati untuk Blacktop",
- "Ride in progress": "Perjalanan berlangsung"
+ "Ride in progress": "Perjalanan berlangsung",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "Tidak dapat menyiapkan notifikasi di ponsel ini ({0}). Coba lagi sebentar lagi."
 }

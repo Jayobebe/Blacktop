@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop записує вашу поїздку. Завершіть або призупиніть поїздку, щоб зупинити.",
  "Blacktop ride receipt": "Чек поїздки Blacktop",
  "Location is off for Blacktop": "Геолокацію для Blacktop вимкнено",
- "Ride in progress": "Поїздка триває"
+ "Ride in progress": "Поїздка триває",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "Не вдалося налаштувати сповіщення на цьому телефоні ({0}). Спробуйте ще раз за мить."
 }

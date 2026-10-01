@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop sürüşünüzü kaydediyor. Durdurmak için sürüşü bitirin veya duraklatın.",
  "Blacktop ride receipt": "Blacktop sürüş fişi",
  "Location is off for Blacktop": "Blacktop için konum kapalı",
- "Ride in progress": "Sürüş devam ediyor"
+ "Ride in progress": "Sürüş devam ediyor",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "Bu telefonda bildirimler ayarlanamadı ({0}). Birazdan tekrar deneyin."
 }

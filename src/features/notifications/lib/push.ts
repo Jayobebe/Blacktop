@@ -5,6 +5,7 @@ import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { getCrewCode, getCrews } from '@/features/crew/useCrew';
 import { tr } from '@/lib/i18n';
+import { nativePermission, nativePushAvailable, nativePushEndpoint, requestNativePermission, unregisterNativePush } from './nativePush';
 
 /**
  * Push notifications (Web Push) for the installed web app.
@@ -54,7 +55,7 @@ export type PushSupport =
   | 'supported'
   | 'needs-install' // iPhone / iPad: only works from the Home Screen app
   | 'in-frame' // an embedded preview can't ask for permission
-  | 'native-app' // the Capacitor shell needs native push instead
+  | 'native-app' // the native app, built without native push (lib/nativePush)
   | 'unsupported';
 
 export interface PushState {
@@ -90,7 +91,8 @@ function inFrame() {
 
 export function detectSupport(): PushSupport {
   if (typeof window === 'undefined') return 'unsupported';
-  if (Capacitor.isNativePlatform()) return 'native-app';
+  // The native app uses the phone's own push (lib/nativePush) when it's built in.
+  if (Capacitor.isNativePlatform()) return nativePushAvailable() ? 'supported' : 'native-app';
   if (inFrame()) return 'in-frame';
   const apis = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   if (isIOS() && !isStandalone()) return 'needs-install';
@@ -146,6 +148,10 @@ export function getPushState() {
 
 /** Re-reads the browser permission (e.g. after the rider changed it in phone settings). */
 export function refreshPushPermission() {
+  if (nativePushAvailable()) {
+    void nativePermission().then((permission) => permission !== state.permission && set({ permission })).catch(() => {});
+    return;
+  }
   if (typeof Notification === 'undefined') return;
   if (Notification.permission !== state.permission) set({ permission: Notification.permission });
 }
@@ -261,12 +267,29 @@ async function subscribeAndRegister(reg: ServiceWorkerRegistration) {
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
 
   const json = sub.toJSON();
+  await registerDevice(sub.endpoint, json.keys?.p256dh ?? '', json.keys?.auth ?? '');
+}
+
+/** The native app: the phone's push token stands in for the subscription (no keys). */
+async function registerNative() {
+  await ensureSession();
+  let endpoint: string;
+  try {
+    endpoint = await nativePushEndpoint();
+  } catch (e) {
+    throw new PushSetupError(tr("Couldn't set up notifications on this phone ({0}). Try again in a moment.", [String((e as Error)?.message ?? e)]));
+  }
+  await registerDevice(endpoint, 'native', 'native');
+}
+
+/** Stores this device server-side with its switches, crews and rough area. */
+async function registerDevice(endpoint: string, p256dh: string, auth: string) {
   // Rough area (rounded server-side to ~11 km) for weather alerts and for helping nearby riders.
   const loc = state.categories.includes('weather') || state.categories.includes('rescue_nearby') ? await weatherLocation() : null;
   const base = {
-    _endpoint: sub.endpoint,
-    _p256dh: json.keys?.p256dh ?? '',
-    _auth: json.keys?.auth ?? '',
+    _endpoint: endpoint,
+    _p256dh: p256dh,
+    _auth: auth,
     _categories: state.categories,
     _user_agent: navigator.userAgent,
     _crew_code: getCrewCode(),
@@ -297,6 +320,24 @@ function message(err: unknown) {
 export async function enablePush(): Promise<boolean> {
   if (state.support !== 'supported' || state.busy) return false;
   set({ busy: true, error: null });
+  if (nativePushAvailable()) {
+    try {
+      const permission = await requestNativePermission();
+      set({ permission });
+      if (permission !== 'granted') {
+        set({ busy: false, enabled: false });
+        return false;
+      }
+      writePref(true);
+      await registerNative();
+      set({ enabled: true, busy: false });
+      return true;
+    } catch (err) {
+      console.warn('[Push] native enable failed', err);
+      set({ busy: false, enabled: false, error: message(err) });
+      return false;
+    }
+  }
   try {
     // Ask first, before any other await, so the tap still counts as the gesture.
     const permission = await Notification.requestPermission();
@@ -324,7 +365,15 @@ export async function disablePush(): Promise<void> {
   writePref(false);
   set({ busy: true, error: null });
   try {
-    if ('serviceWorker' in navigator) {
+    if (nativePushAvailable()) {
+      const endpoint = await nativePushEndpoint().catch(() => null);
+      if (endpoint) {
+        await supabase.rpc('set_push_reminders' as never, { _category: 'maintenance', _reminders: [] } as never);
+        lastReminders = '';
+        await supabase.rpc('unregister_push_subscription' as never, { _endpoint: endpoint } as never);
+      }
+      await unregisterNativePush();
+    } else if ('serviceWorker' in navigator) {
       const reg = await navigator.serviceWorker.getRegistration('/');
       const sub = await reg?.pushManager?.getSubscription();
       if (sub) {
@@ -344,6 +393,23 @@ export async function disablePush(): Promise<void> {
 /** On launch: keep this device's subscription current if notifications are on. */
 export async function syncPush(): Promise<void> {
   const support = detectSupport();
+  if (nativePushAvailable()) {
+    const permission = await nativePermission().catch(() => 'default' as NotificationPermission);
+    set({ support, permission });
+    if (!readPref()) return;
+    if (permission !== 'granted') {
+      set({ enabled: false });
+      return;
+    }
+    try {
+      await registerNative();
+      set({ enabled: true, error: null });
+    } catch (err) {
+      console.warn('[Push] native sync failed', err);
+      set({ enabled: false });
+    }
+    return;
+  }
   const permission = typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
   set({ support, permission });
   if (!readPref() || support !== 'supported') return;

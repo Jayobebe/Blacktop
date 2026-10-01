@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop legt je rit vast. Beëindig of pauzeer de rit om te stoppen.",
  "Blacktop ride receipt": "Blacktop-ritbon",
  "Location is off for Blacktop": "Locatie staat uit voor Blacktop",
- "Ride in progress": "Rit bezig"
+ "Ride in progress": "Rit bezig",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "Kon meldingen op deze telefoon niet instellen ({0}). Probeer het zo opnieuw."
 }

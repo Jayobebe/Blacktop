@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop がライドを記録しています。止めるにはライドを終了または一時停止してください。",
  "Blacktop ride receipt": "Blacktop ライドレシート",
  "Location is off for Blacktop": "Blacktop の位置情報がオフです",
- "Ride in progress": "ライド中"
+ "Ride in progress": "ライド中",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "このスマホで通知を設定できませんでした（{0}）。しばらくしてからもう一度お試しください。"
 }

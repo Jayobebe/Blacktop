@@ -44,3 +44,27 @@ export function NativeBackButton() {
 
   return null;
 }
+
+/**
+ * blacktoplive.com links that open the installed app (Android App Links, iOS
+ * Universal Links: convoy and crew joins, Enterprise codes, rescue pages) go
+ * to that page in the app. Renders nothing; not used on the web.
+ */
+export function NativeLinks() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    const listener = App.addListener('appUrlOpen', ({ url }) => {
+      try {
+        const u = new URL(url);
+        if (u.hostname === 'blacktoplive.com' || u.hostname === 'www.blacktoplive.com') navigate(u.pathname + u.search + u.hash);
+      } catch {
+        /* not a link we handle */
+      }
+    });
+    return () => {
+      void listener.then((l) => l.remove());
+    };
+  }, [navigate]);
+  return null;
+}

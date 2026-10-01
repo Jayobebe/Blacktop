@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop이 라이드를 기록하고 있습니다. 멈추려면 라이드를 종료하거나 일시정지하세요.",
  "Blacktop ride receipt": "Blacktop 라이드 영수증",
  "Location is off for Blacktop": "Blacktop의 위치가 꺼져 있습니다",
- "Ride in progress": "라이드 중"
+ "Ride in progress": "라이드 중",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "이 휴대폰에서 알림을 설정할 수 없습니다({0}). 잠시 후 다시 시도하세요."
 }

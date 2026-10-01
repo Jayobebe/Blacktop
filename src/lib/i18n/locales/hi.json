@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop आपकी राइड ट्रैक कर रहा है। रोकने के लिए राइड खत्म करें या रोकें।",
  "Blacktop ride receipt": "Blacktop राइड रसीद",
  "Location is off for Blacktop": "Blacktop के लिए लोकेशन बंद है",
- "Ride in progress": "राइड जारी है"
+ "Ride in progress": "राइड जारी है",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "इस फ़ोन पर सूचनाएँ सेट नहीं हो सकीं ({0})। थोड़ी देर में फिर कोशिश करें।"
 }

@@ -3504,5 +3504,6 @@
  "Blacktop is tracking your ride. End or pause the ride to stop.": "Blacktop 正在记录你的骑行。结束或暂停骑行即可停止。",
  "Blacktop ride receipt": "Blacktop 骑行小票",
  "Location is off for Blacktop": "Blacktop 的定位已关闭",
- "Ride in progress": "骑行中"
+ "Ride in progress": "骑行中",
+ "Couldn't set up notifications on this phone ({0}). Try again in a moment.": "无法在此手机上设置通知（{0}）。请稍后再试。"
 }

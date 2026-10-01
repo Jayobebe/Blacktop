@@ -1,5 +1,6 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { sendWebPush, type SendOptions, type VapidKeys } from './webpush.ts'
+import { isNativeEndpoint, nativeReady, sendNative } from './native.ts'
 
 /** What the service worker (public/push-sw.js) receives and shows. */
 export interface PushMessage {
@@ -92,7 +93,10 @@ export async function deliver(
   if (error && error.code === '42703') ({ data, error } = await query(false))
   if (error) throw error
   const exclude = new Set(target.exclude ?? [])
-  const subs = ((data ?? []) as Sub[]).filter((s) => !exclude.has(s.user_id) && PUSH_HOST.test(s.endpoint))
+  // Web Push devices, and native app devices once their keys are set (native.ts).
+  const subs = ((data ?? []) as Sub[]).filter(
+    (s) => !exclude.has(s.user_id) && (PUSH_HOST.test(s.endpoint) || (isNativeEndpoint(s.endpoint) && nativeReady(s.endpoint))),
+  )
   const messageFor = (s: Sub): PushMessage => {
     if (!label) return message
     const own = s.crew_names && typeof s.crew_names[label] === 'string' ? s.crew_names[label].trim().slice(0, 30) : ''
@@ -108,7 +112,9 @@ export async function deliver(
     await Promise.all(
       subs.slice(i, i + 25).map(async (s) => {
         try {
-          const r = await sendWebPush(s, messageFor(s), ctx.vapid, opts)
+          const r = isNativeEndpoint(s.endpoint)
+            ? await sendNative(s.endpoint, messageFor(s), opts)
+            : await sendWebPush(s, messageFor(s), ctx.vapid, opts)
           if (r.ok) {
             sent++
             delivered.push(s.id)
