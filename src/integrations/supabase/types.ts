@@ -318,8 +318,8 @@ export type Database = {
           lat: number
           lng: number
           make_model: string | null
-          max_g_force: number
-          max_lean: number
+          max_g_force: number | null
+          max_lean: number | null
           owner_id: string
           owner_name: string
           photo_path: string | null
@@ -327,7 +327,7 @@ export type Database = {
           placement_x: number
           placement_y: number
           tier: string
-          top_speed_mph: number
+          top_speed_mph: number | null
           total_distance_mi: number
           total_duration_sec: number
           total_rides: number
@@ -351,8 +351,8 @@ export type Database = {
           lat: number
           lng: number
           make_model?: string | null
-          max_g_force?: number
-          max_lean?: number
+          max_g_force?: number | null
+          max_lean?: number | null
           owner_id: string
           owner_name?: string
           photo_path?: string | null
@@ -360,7 +360,7 @@ export type Database = {
           placement_x?: number
           placement_y?: number
           tier?: string
-          top_speed_mph?: number
+          top_speed_mph?: number | null
           total_distance_mi?: number
           total_duration_sec?: number
           total_rides?: number
@@ -384,8 +384,8 @@ export type Database = {
           lat?: number
           lng?: number
           make_model?: string | null
-          max_g_force?: number
-          max_lean?: number
+          max_g_force?: number | null
+          max_lean?: number | null
           owner_id?: string
           owner_name?: string
           photo_path?: string | null
@@ -393,7 +393,7 @@ export type Database = {
           placement_x?: number
           placement_y?: number
           tier?: string
-          top_speed_mph?: number
+          top_speed_mph?: number | null
           total_distance_mi?: number
           total_duration_sec?: number
           total_rides?: number
@@ -634,10 +634,10 @@ export type Database = {
           crew_code: string
           display_name: string
           hit_heavy: number
-          max_lean: number
+          max_lean: number | null
           petrol_head: number
           ride_count: number
-          top_speed: number
+          top_speed: number | null
           total_distance: number
           updated_at: string
           user_id: string
@@ -646,10 +646,10 @@ export type Database = {
           crew_code: string
           display_name?: string
           hit_heavy?: number
-          max_lean?: number
+          max_lean?: number | null
           petrol_head?: number
           ride_count?: number
-          top_speed?: number
+          top_speed?: number | null
           total_distance?: number
           updated_at?: string
           user_id: string
@@ -658,10 +658,10 @@ export type Database = {
           crew_code?: string
           display_name?: string
           hit_heavy?: number
-          max_lean?: number
+          max_lean?: number | null
           petrol_head?: number
           ride_count?: number
-          top_speed?: number
+          top_speed?: number | null
           total_distance?: number
           updated_at?: string
           user_id?: string
@@ -670,43 +670,43 @@ export type Database = {
       }
       crew_weekly_scores: {
         Row: {
-          corner_score: number
+          corner_score: number | null
           crew_code: string
           display_name: string
           distance: number
           longest_ride: number
-          max_lean: number
+          max_lean: number | null
           night_rides: number
           ride_count: number
-          top_speed: number
+          top_speed: number | null
           updated_at: string
           user_id: string
           week_key: string
         }
         Insert: {
-          corner_score?: number
+          corner_score?: number | null
           crew_code: string
           display_name?: string
           distance?: number
           longest_ride?: number
-          max_lean?: number
+          max_lean?: number | null
           night_rides?: number
           ride_count?: number
-          top_speed?: number
+          top_speed?: number | null
           updated_at?: string
           user_id: string
           week_key: string
         }
         Update: {
-          corner_score?: number
+          corner_score?: number | null
           crew_code?: string
           display_name?: string
           distance?: number
           longest_ride?: number
-          max_lean?: number
+          max_lean?: number | null
           night_rides?: number
           ride_count?: number
-          top_speed?: number
+          top_speed?: number | null
           updated_at?: string
           user_id?: string
           week_key?: string
@@ -1194,6 +1194,8 @@ export type Database = {
           categories: string[]
           created_at: string
           crew_code: string | null
+          crew_codes: string[]
+          crew_names: Json
           endpoint: string
           id: string
           last_sent_at: string | null
@@ -1210,6 +1212,8 @@ export type Database = {
           categories?: string[]
           created_at?: string
           crew_code?: string | null
+          crew_codes?: string[]
+          crew_names?: Json
           endpoint: string
           id?: string
           last_sent_at?: string | null
@@ -1226,6 +1230,8 @@ export type Database = {
           categories?: string[]
           created_at?: string
           crew_code?: string | null
+          crew_codes?: string[]
+          crew_names?: Json
           endpoint?: string
           id?: string
           last_sent_at?: string | null
@@ -1687,6 +1693,8 @@ export type Database = {
           _auth: string
           _categories?: string[]
           _crew_code?: string
+          _crew_codes?: string[]
+          _crew_names?: Json
           _endpoint: string
           _lat?: number
           _lng?: number
