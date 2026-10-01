@@ -1,14 +1,18 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide, clearSoloRoute } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { clearRideRole } from '@/features/pillion';
-import { getRacerState } from '@/features/track';
+import { isRacerRunning } from '@/features/track/lib/racerPhase';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { History, BarChart3, Settings, Users, UserPlus, Wrench, Route, Zap, QrCode, ScanLine, Bike, UserRound } from 'lucide-react';
 import { HomeRadioDock } from '@/features/radio';
-import { HomeGlobe } from '@/components/HomeGlobe';
+// The globe (d3-geo, topojson and the world's land) and the Enterprise cards load
+// after Home: they kept ~180 KB out of the first load.
+const HomeGlobe = lazy(() => import('@/components/HomeGlobe').then((m) => ({ default: m.HomeGlobe })));
+const EnterpriseWorkspaceCard = lazy(() => import('@/features/enterprise/components/EnterpriseWorkspaceCard').then((m) => ({ default: m.EnterpriseWorkspaceCard })));
+const EnterpriseDoorway = lazy(() => import('@/features/enterprise/components/EnterpriseDoorway').then((m) => ({ default: m.EnterpriseDoorway })));
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap, clearMapDestination, useGuidanceActive } from '@/features/map';
@@ -19,9 +23,9 @@ import { haptics } from '@/lib/haptics';
 import { sceneCue, uiCue } from '@/lib/radioFx';
 import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
-import { useEnterprise, EnterpriseDoorway, EnterpriseWorkspaceCard } from '@/features/enterprise';
+import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 export default function Home() {
@@ -416,7 +420,7 @@ export default function Home() {
   useEffect(() => {
     if (rideState.isActive) {
       // A Track Pack session runs on its own timing screen.
-      navigate(getRacerState().phase === 'running' ? '/track' : '/ride');
+      navigate(isRacerRunning() ? '/track' : '/ride');
     }
   }, [rideState.isActive, navigate]);
 
@@ -627,7 +631,9 @@ export default function Home() {
                         aria-label={settings.blacktopWorldEnabled ? tr("Open map — hold for Blacktop World") : tr("Open map")}
                         role="button"
                       >
-                        <HomeGlobe accentColor={accentColor} className="w-full h-full" />
+                        <Suspense fallback={null}>
+                          <HomeGlobe accentColor={accentColor} className="w-full h-full" />
+                        </Suspense>
                       </div>
                       {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
                           tiles that the CSS mask clips away, keeping the accent outline continuous. */}
@@ -658,7 +664,9 @@ export default function Home() {
             key: `ws:${w.org.id}`,
             node: (
               <>
-                <EnterpriseWorkspaceCard session={w} className="flex-1 min-h-0" />
+                <Suspense fallback={<div className="flex-1 min-h-0" />}>
+                  <EnterpriseWorkspaceCard session={w} className="flex-1 min-h-0" />
+                </Suspense>
                 {deckPips}
               </>
             ),
@@ -667,7 +675,9 @@ export default function Home() {
             key: 'doorway',
             node: (
               <>
-                <EnterpriseDoorway className="flex-1 min-h-0" />
+                <Suspense fallback={<div className="flex-1 min-h-0" />}>
+                  <EnterpriseDoorway className="flex-1 min-h-0" />
+                </Suspense>
                 {deckPips}
               </>
             ),

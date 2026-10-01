@@ -13,6 +13,7 @@ import { resampleLoop, smoothLoop } from './centerline';
 import { speakPitBoard } from './pitCalls';
 import { metres } from './geometry';
 import { cleanPostRace, samePostRace, type PostRace } from './postRace';
+import { setRacerRunning } from './racerPhase';
 
 import { tr } from '@/lib/i18n';
 /**
@@ -133,6 +134,7 @@ const fixGaps: number[] = [];
 
 function set(patch: Partial<RacerState>) {
   state = { ...state, ...patch };
+  setRacerRunning(state.phase === 'running');
   listeners.forEach((l) => l());
 }
 

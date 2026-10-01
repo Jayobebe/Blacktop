@@ -12,6 +12,11 @@
  * `npm run i18n:check` to list what each language is missing.
  */
 
+// Each language in two parts (scripts/i18n/vite-split.mjs): what the app shows
+// anywhere, loaded before it starts, and the text only the legal pages, the
+// demo tour and the Enterprise demos use, loaded when they open (or at idle).
+import { parts } from 'virtual:i18n-dicts';
+
 export interface Language {
   code: string;
   /** Its own name, as speakers write it. */
@@ -42,7 +47,6 @@ export const LANGUAGES: Language[] = [
 ];
 
 const STORAGE_KEY = 'blacktop_language';
-const loaders = import.meta.glob<{ default: Record<string, string> }>('./locales/*.json');
 
 let current = 'en';
 let dict: Record<string, string> = {};
@@ -77,15 +81,35 @@ function detect(): string {
 export async function initI18n(): Promise<void> {
   current = detect();
   if (current !== 'en') {
-    const load = loaders[`./locales/${current}.json`];
+    const load = parts[current]?.main;
     try {
-      dict = load ? (await load()).default : {};
+      dict = load ? { ...(await load()).default } : {};
     } catch (e) {
       console.warn('[i18n] dictionary failed to load, using English', e);
       dict = {};
     }
   }
   if (typeof document !== 'undefined') document.documentElement.lang = current;
+}
+
+let extra: Promise<void> | null = null;
+
+/**
+ * Loads the rest of the active language (legal pages, demo tour, Enterprise
+ * demos). Those pages wait for it; it's also fetched once the app is idle.
+ */
+export function loadLocaleExtra(): Promise<void> {
+  if (current === 'en') return Promise.resolve();
+  extra ??= (parts[current]?.extra() ?? Promise.resolve({ default: {} }))
+    .then((m) => {
+      dict = { ...dict, ...m.default };
+    })
+    .catch((e) => {
+      // A failed fetch can be tried again; those pages show English meanwhile.
+      console.warn('[i18n] extra text failed to load', e);
+      extra = null;
+    });
+  return extra;
 }
 
 export function getLanguage(): string {

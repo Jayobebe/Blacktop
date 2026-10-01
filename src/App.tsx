@@ -10,7 +10,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType 
 import { PushBridge } from "@/features/notifications";
 import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
 import { MaintenanceNotifier } from "@/features/garage";
-import { EnterpriseSync } from "@/features/enterprise";
+import { EnterpriseSync } from "@/features/enterprise/components/EnterpriseSync";
 import { useProfile } from "@/features/profile";
 import { useSettings } from "@/features/settings";
 import { burnExpiredTrips, useRideSpeed } from "@/features/ride";
@@ -39,6 +39,7 @@ import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
 import { installDemoGuard } from '@/lib/demoGuard';
 import { probeServerCaps } from '@/lib/serverCaps';
+import { loadLocaleExtra } from '@/lib/i18n';
 
 // Demo mode never writes to the server (lib/demoGuard).
 installDemoGuard();
@@ -63,7 +64,7 @@ function prefetchPages() {
   else setTimeout(run, 2000);
 }
 const Track = lazyPage(() => import("./pages/Track"));
-const DemoShowcase = lazyPage(() => import("./pages/DemoShowcase"));
+const DemoShowcase = lazyPage(() => loadLocaleExtra().then(() => import("./pages/DemoShowcase")));
 const History = lazyPage(() => import("./pages/History"));
 const RideDetail = lazyPage(() => import("./pages/RideDetail"));
 const Garage = lazyPage(() => import("./pages/Garage"));
@@ -72,8 +73,8 @@ const Settings = lazyPage(() => import("./pages/Settings"));
 const RescueLocation = lazyPage(() => import("./pages/RescueLocation"));
 const Speedshop = lazyPage(() => import("./pages/Speedshop"));
 const Install = lazyPage(() => import("./pages/Install"));
-const PrivacyPolicy = lazyPage(() => import("./pages/PrivacyPolicy"));
-const Terms = lazyPage(() => import("./pages/Terms"));
+const PrivacyPolicy = lazyPage(() => loadLocaleExtra().then(() => import("./pages/PrivacyPolicy")));
+const Terms = lazyPage(() => loadLocaleExtra().then(() => import("./pages/Terms")));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
 const Pay = lazyPage(() => import("./pages/Pay"));
 function JoinLink() {
@@ -83,7 +84,7 @@ function JoinLink() {
 const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
-const EnterpriseDemo = lazyPage(() => import("./pages/EnterpriseDemo"));
+const EnterpriseDemo = lazyPage(() => loadLocaleExtra().then(() => import("./pages/EnterpriseDemo")));
 const World = lazyPage(() => import("./pages/World"));
 const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
 const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));

@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { i18nSplit } from "./scripts/i18n/vite-split.mjs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -20,6 +21,8 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === "development" && componentTagger(),
+      // Each language ships as first-load text + the rest (legal, demo tour), see the plugin.
+      i18nSplit({ srcDir: path.resolve(__dirname, "./src"), localesDir: path.resolve(__dirname, "./src/lib/i18n/locales") }),
     ].filter(Boolean),
     // Module workers (MapLibre's, the pilot voice's): they load code on demand.
     worker: {
