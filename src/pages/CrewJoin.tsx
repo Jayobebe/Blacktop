@@ -1,3 +1,5 @@
+import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, ScanLine, X, AlertTriangle } from 'lucide-react';
@@ -12,6 +14,7 @@ export default function CrewJoin() {
   const navigate = useNavigate();
   const crew = useCrew();
   const full = crew.crews.length >= MAX_CREWS;
+  const locked = useDemoLocked();
   const [scanning, setScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerId = 'crew-qr-scanner';
@@ -27,6 +30,7 @@ export default function CrewJoin() {
   useEffect(() => () => { void stopScanner(); }, []);
 
   const startScanner = async () => {
+    if (demoBlocked()) return;
     setScanning(true);
     await new Promise((r) => setTimeout(r, 100));
     try {
@@ -90,7 +94,7 @@ export default function CrewJoin() {
             </p>
           </div>
 
-          {full && (
+          {full && !locked && (
             <div className="flex items-start gap-2 rounded-xl border border-warning/50 bg-warning/10 p-3 text-left">
               <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
               <div className="min-w-0">
@@ -107,15 +111,19 @@ export default function CrewJoin() {
           <button
             type="button"
             onClick={startScanner}
-            disabled={full}
+            disabled={full || locked}
             className="w-full py-4 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
           >
             <ScanLine className="w-5 h-5" />{" "}{tr("Scan crew QR")}
           </button>
 
-          <p className="text-[11px] text-muted-foreground text-center">
-            {tr("Rename, switch or leave your crews from Crew QR on Blacktop World.")}
-          </p>
+          {locked ? (
+            <DemoLockNote />
+          ) : (
+            <p className="text-[11px] text-muted-foreground text-center">
+              {tr("Rename, switch or leave your crews from Crew QR on Blacktop World.")}
+            </p>
+          )}
         </div>
       )}
     </div>

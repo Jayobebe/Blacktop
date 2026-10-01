@@ -1,3 +1,5 @@
+import { useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 import { useMemo, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -46,6 +48,7 @@ function addressUri(currency: TipCurrency, address: string): string {
 
 /** `bare`: render content only, for embedding inside a Settings section. */
 export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
+  const locked = useDemoLocked();
   const { payees, addPayee, removePayee } = usePayees();
   const { wallet, hasWallet, saveWallet } = useMyWallet();
 
@@ -232,7 +235,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => { setScanned(null); setScanning(true); }}>
+              <DropdownMenuItem disabled={locked} onClick={() => { if (demoBlocked()) return; setScanned(null); setScanning(true); }}>
                 <Plus className="w-3.5 h-3.5 mr-2" />
                 {tr("New payee — scan their QR")}
               </DropdownMenuItem>
@@ -390,7 +393,7 @@ export function NimiqTipCard({ bare = false }: { bare?: boolean } = {}) {
                   onCancel={() => setWalletScanning(false)}
                 />
               ) : (
-                <Button variant="outline" onClick={() => setWalletScanning(true)} className="w-full h-10 rounded-xl">
+                <Button variant="outline" disabled={locked} onClick={() => !demoBlocked() && setWalletScanning(true)} className="w-full h-10 rounded-xl">
                   <ScanLine className="w-4 h-4 mr-2" />{" "}{tr("Scan from my wallet app")}
                 </Button>
               )}

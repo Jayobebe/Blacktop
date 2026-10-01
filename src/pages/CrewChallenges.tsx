@@ -1,3 +1,4 @@
+import { useSettings } from '@/features/settings';
 import { useDemoMode } from '@/lib/demoMode';
 import { demoChallenge, demoMonth } from '@/features/crew/demo';
 import { useEffect, useMemo } from 'react';
@@ -12,6 +13,9 @@ import { useProfile } from '@/features/profile';
 import { useCrew } from '@/features/crew/useCrew';
 import {
   Challenge,
+  challengeScore,
+  targetDistance,
+  type CrewUnits,
   challengesForWeek,
   daysLeftInMonth,
   daysLeftInWeek,
@@ -42,8 +46,10 @@ function ChallengeCard({
   rows,
   myValue,
   myName,
+  units,
 }: {
   challenge: Challenge;
+  units: CrewUnits;
   rows: ChallengeRow[];
   /** null when this rider keeps peaks private. */
   myValue: number | null;
@@ -61,12 +67,7 @@ function ChallengeCard({
     [rows, challenge.metric],
   );
   const pct = hidden(myValue) ? 0 : Math.min(100, (myValue / challenge.target) * 100);
-  const fmt = (v: number | null) =>
-    hidden(v)
-      ? PEAK_HIDDEN
-      : challenge.metric === 'distance' || challenge.metric === 'longest_ride'
-        ? `${Number(v).toFixed(1)} ${challenge.unit}`
-        : `${Math.round(Number(v))} ${challenge.unit}`;
+  const fmt = (v: number | null) => (hidden(v) ? PEAK_HIDDEN : challengeScore(challenge.metric, Number(v), units));
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/60 p-4">
@@ -74,7 +75,7 @@ function ChallengeCard({
         <Flag className="w-4 h-4 text-accent" />
         <h3 className="font-display font-bold leading-none">{challenge.title}</h3>
       </div>
-      <p className="text-[11px] text-muted-foreground mb-3">{challenge.blurb}</p>
+      <p className="text-[11px] text-muted-foreground mb-3">{challenge.blurb(units)}</p>
 
       <div className="flex items-baseline justify-between mb-1.5">
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{tr("You")}</span>
@@ -123,6 +124,8 @@ export default function CrewChallenges() {
   const daysLeft = daysLeftInWeek();
   const monthDaysLeft = daysLeftInMonth();
   const myName = profile.name || 'Rider';
+  const { settings } = useSettings();
+  const units: CrewUnits = { distance: settings.distanceUnit, speed: settings.speedUnit };
 
   // This rider's stats for the current week only, published for the crew board.
   const mine: WeekStats = useMemo(() => weekStats(rides), [rides]);
@@ -194,8 +197,7 @@ export default function CrewChallenges() {
     }
   }, [monthTotals, monthValue, goal, mKey]);
 
-  const goalFmt = (v: number) =>
-    goal.metric === 'distance' ? `${Number(v).toFixed(0)} ${goal.unit}` : `${Math.round(Number(v))} ${goal.unit}`;
+  const goalFmt = (v: number) => challengeScore(goal.metric === 'distance' ? 'month_distance' : goal.metric, v, units);
 
   return (
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
@@ -209,7 +211,7 @@ export default function CrewChallenges() {
               <Users className="w-4 h-4 text-accent" />
               <h2 className="font-display font-bold text-lg leading-none">{goal.title}</h2>
             </div>
-            <p className="text-xs text-muted-foreground">{goal.blurb}</p>
+            <p className="text-xs text-muted-foreground">{goal.blurb(units)}</p>
           </div>
           <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">
             <Timer className="w-3.5 h-3.5" />
@@ -223,7 +225,7 @@ export default function CrewChallenges() {
               {crew.name} · {monthTotals?.members ?? 0}{" "}{tr("riding")}
             </span>
             <span className="text-sm font-bold tabular-nums">
-              {goalFmt(monthValue)} / {goalFmt(goal.target)}
+              {goalFmt(monthValue)} / {goal.metric === 'distance' ? targetDistance(goal.target, units) : goalFmt(goal.target)}
             </span>
           </div>
           <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
@@ -255,8 +257,8 @@ export default function CrewChallenges() {
       )}
 
       <div className="grid grid-cols-1 gap-3">
-        <ChallengeCard challenge={challengeA} rows={rows} myValue={mine[challengeA.metric]} myName={myName} />
-        <ChallengeCard challenge={challengeB} rows={rows} myValue={mine[challengeB.metric]} myName={myName} />
+        <ChallengeCard challenge={challengeA} rows={rows} myValue={mine[challengeA.metric]} myName={myName} units={units} />
+        <ChallengeCard challenge={challengeB} rows={rows} myValue={mine[challengeB.metric]} myName={myName} units={units} />
       </div>
 
       <p className="text-[10px] text-muted-foreground/60 text-center mt-4">

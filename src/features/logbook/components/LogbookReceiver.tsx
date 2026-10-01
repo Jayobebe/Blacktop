@@ -1,3 +1,4 @@
+import { demoBlocked } from '@/lib/demoGuard';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
@@ -6,7 +7,6 @@ import { ArrowLeft, BookOpen, Check, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
-import { useDemoMode } from '@/lib/demoMode';
 import { useProfile } from '@/features/profile';
 import { useGarage } from '@/features/garage';
 import { setInheritedLog } from '../lib/logbookStore';
@@ -23,7 +23,6 @@ const SCANNER_ID = 'logbook-qr-scanner';
 export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => React.ReactNode }) {
   const { profile } = useProfile();
   const { importBike } = useGarage();
-  const { enabled: demoEnabled } = useDemoMode();
   const [scanning, setScanning] = useState(false);
   const [state, setState] = useState<null | { phase: 'receiving' | 'done' | 'failed'; progress: number; vehicle?: string; msg?: string }>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -59,10 +58,8 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
   };
 
   const open = async () => {
-    if (demoEnabled) {
-      toast(tr("Receiving a logbook is off in demo mode"));
-      return;
-    }
+    // Demo mode: dead, like every scanner and code entry (components/DemoLock).
+    if (demoBlocked()) return;
     setScanning(true);
     await new Promise((r) => setTimeout(r, 100));
     try {

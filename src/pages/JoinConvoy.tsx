@@ -1,3 +1,5 @@
+import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useConvoyState } from '@/features/convoy';
@@ -12,6 +14,7 @@ import { setRideRole, type RideRole } from '@/features/pillion';
 import { tr } from '@/lib/i18n';
 
 export default function JoinConvoy() {
+  const locked = useDemoLocked();
   const navigate = useNavigate();
   const { joinConvoy } = useConvoyState();
   // Operator or passenger is picked on Home's Join Convoy tile (?role=pillion).
@@ -52,6 +55,7 @@ export default function JoinConvoy() {
   };
 
   const startScanner = async () => {
+    if (demoBlocked()) return;
     setShowScanner(true);
     
     // Wait for DOM to render
@@ -169,13 +173,14 @@ export default function JoinConvoy() {
             placeholder={tr("XXXXXX")}
             className="h-14 landscape:h-12 text-center font-mono text-3xl landscape:text-2xl tracking-widest uppercase bg-card border-2 focus:border-accent"
             maxLength={6}
-            autoFocus
+            autoFocus={!locked}
+            disabled={locked}
           />
           
           <div className="flex gap-2">
             <Button
               onClick={() => handleJoin()}
-              disabled={code.length !== 6 || isJoining}
+              disabled={code.length !== 6 || isJoining || locked}
               className="flex-1 h-12 landscape:h-10 text-base landscape:text-sm font-semibold touch-target"
             >
               {isJoining ? tr("Joining...") : tr("Join Convoy")}
@@ -184,11 +189,13 @@ export default function JoinConvoy() {
             <Button
               onClick={startScanner}
               variant="outline"
+              disabled={locked}
               className="h-12 landscape:h-10 px-4 touch-target"
             >
               <ScanLine className="w-5 h-5" />
             </Button>
           </div>
+          {locked && <DemoLockNote />}
         </div>
       </div>
     </div>

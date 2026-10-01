@@ -1,3 +1,4 @@
+import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
 import { shareOrigin } from '@/lib/platform';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -33,6 +34,7 @@ export default function ArcadeDerezLegacy() {
   } = useDerezLobby();
 
   const [joinCode, setJoinCode] = useState('');
+  const locked = useDemoLocked();
   const [drawing, setDrawing] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [autoJoined, setAutoJoined] = useState(false);
@@ -40,10 +42,10 @@ export default function ArcadeDerezLegacy() {
 
   // QR deep-link join
   useEffect(() => {
-    if (!codeParam || autoJoined || lobby) return;
+    if (!codeParam || autoJoined || lobby || locked) return;
     setAutoJoined(true);
     joinLobby(codeParam, profile.name, settings.accentColor);
-  }, [codeParam, autoJoined, lobby, joinLobby, profile.name, settings.accentColor]);
+  }, [codeParam, autoJoined, lobby, locked, joinLobby, profile.name, settings.accentColor]);
 
   // Countdown ticker
   useEffect(() => {
@@ -120,16 +122,18 @@ export default function ArcadeDerezLegacy() {
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               maxLength={6}
+              disabled={locked}
               placeholder={tr("ABC123")}
               className="w-full bg-secondary/50 border border-border/40 rounded-xl px-4 py-3 font-mono text-lg tracking-[0.3em] text-center text-white uppercase"
             />
             <button
               onClick={() => joinLobby(joinCode, profile.name, settings.accentColor)}
-              disabled={joinCode.length < 4 || busy}
+              disabled={joinCode.length < 4 || busy || locked}
               className="w-full py-3 rounded-xl bg-secondary/60 border border-border/40 font-semibold text-sm disabled:opacity-40"
             >
               {tr("Join")}
             </button>
+            {locked && <DemoLockNote />}
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-auto">

@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "Zie wat er na een val gebeurt, zonder dat er iets wordt verstuurd. De valcontrole telt af vanaf {0} seconden: antwoord, of laat hem aflopen.",
  "Share your ETA": "Deel je aankomsttijd",
  "Start drill": "Oefening starten",
- "You answered, so a real crash check would stop there.": "Je hebt geantwoord, dus een echte valcontrole zou hier stoppen."
+ "You answered, so a real crash check would stop there.": "Je hebt geantwoord, dus een echte valcontrole zou hier stoppen.",
+ "1 ride": "1 rit",
+ "A quick-hit distance dash. {0} takes it.": "Een snelle afstandssprint. {0} wint.",
+ "Most distance ridden this week.": "De meeste afstand deze week.",
+ "Rack up the big distance: {0} or bust.": "Maak flinke afstand: {0} of niks.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "Scannen en codes staan uit in de demomodus. Zet de demomodus uit in Instellingen om ze te gebruiken.",
+ "Your crew rides {0} combined this month.": "Je crew rijdt deze maand samen {0}.",
+ "{0} pts": "{0} ptn",
+ "{0} rides": "{0} ritten"
 }

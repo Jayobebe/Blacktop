@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "Lihat apa yang terjadi setelah kecelakaan, tanpa mengirim apa pun. Pemeriksaan kecelakaan menghitung mundur dari {0} detik: jawab, atau biarkan habis.",
  "Share your ETA": "Bagikan perkiraan tiba",
  "Start drill": "Mulai latihan",
- "You answered, so a real crash check would stop there.": "Anda menjawab, jadi pemeriksaan kecelakaan sungguhan akan berhenti di sini."
+ "You answered, so a real crash check would stop there.": "Anda menjawab, jadi pemeriksaan kecelakaan sungguhan akan berhenti di sini.",
+ "1 ride": "1 perjalanan",
+ "A quick-hit distance dash. {0} takes it.": "Sprint jarak singkat. {0} menang.",
+ "Most distance ridden this week.": "Jarak terjauh minggu ini.",
+ "Rack up the big distance: {0} or bust.": "Kumpulkan jarak jauh: {0} atau tidak sama sekali.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "Pemindaian dan kode mati di mode demo. Matikan mode demo di Pengaturan untuk memakainya.",
+ "Your crew rides {0} combined this month.": "Kru Anda menempuh {0} bersama bulan ini.",
+ "{0} pts": "{0} poin",
+ "{0} rides": "{0} perjalanan"
 }

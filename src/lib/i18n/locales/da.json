@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "Se hvad der sker efter et styrt, uden at noget bliver sendt. Styrttjekket tæller ned fra {0} sekunder: svar, eller lad det løbe ud.",
  "Share your ETA": "Del din ankomsttid",
  "Start drill": "Start øvelse",
- "You answered, so a real crash check would stop there.": "Du svarede, så et rigtigt styrttjek ville stoppe der."
+ "You answered, so a real crash check would stop there.": "Du svarede, så et rigtigt styrttjek ville stoppe der.",
+ "1 ride": "1 tur",
+ "A quick-hit distance dash. {0} takes it.": "En hurtig distancesprint. {0} vinder.",
+ "Most distance ridden this week.": "Længst kørt denne uge.",
+ "Rack up the big distance: {0} or bust.": "Saml de store distancer: {0} eller intet.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "Scanning og koder er slået fra i demotilstand. Slå demotilstand fra i Indstillinger for at bruge dem.",
+ "Your crew rides {0} combined this month.": "Dit crew kører {0} tilsammen denne måned.",
+ "{0} pts": "{0} point",
+ "{0} rides": "{0} ture"
 }

@@ -1,3 +1,5 @@
+import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
@@ -37,6 +39,7 @@ export function PitView() {
   const wakeLock = useWakeLock();
   const [token, setToken] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const locked = useDemoLocked();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const linkRef = useRef<TrackLink | null>(null);
   const crewId = useMemo(() => crypto.randomUUID(), []);
@@ -72,6 +75,7 @@ export function PitView() {
   };
 
   const scan = async () => {
+    if (demoBlocked()) return;
     setScanning(true);
     await new Promise((r) => setTimeout(r, 100));
     try {
@@ -180,9 +184,10 @@ export function PitView() {
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
           <ScanLine className="w-12 h-12 text-accent" />
           <p className="text-sm text-muted-foreground max-w-xs">{tr("Scan the QR on your racer's Track Day screen to get their live timing and a pit board.")}</p>
-          <Button onClick={scan} className="h-12 px-6 gap-2">
+          <Button onClick={scan} disabled={locked} className="h-12 px-6 gap-2">
             <ScanLine className="w-5 h-5" />{" "}{tr("Scan racer QR")}
           </Button>
+          {locked && <DemoLockNote />}
         </div>
         {scanning && (
           <div className="fixed inset-0 z-[100] bg-background flex flex-col">

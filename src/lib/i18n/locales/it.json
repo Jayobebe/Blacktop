@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "Guarda cosa succede dopo una caduta, senza inviare nulla. Il controllo caduta conta alla rovescia da {0} secondi: rispondi o lascialo scadere.",
  "Share your ETA": "Condividi l'orario di arrivo",
  "Start drill": "Inizia esercitazione",
- "You answered, so a real crash check would stop there.": "Hai risposto, quindi un vero controllo caduta finirebbe qui."
+ "You answered, so a real crash check would stop there.": "Hai risposto, quindi un vero controllo caduta finirebbe qui.",
+ "1 ride": "1 giro",
+ "A quick-hit distance dash. {0} takes it.": "Uno sprint di distanza veloce. {0} e vinci.",
+ "Most distance ridden this week.": "La distanza più lunga della settimana.",
+ "Rack up the big distance: {0} or bust.": "Macina distanza: {0} o niente.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "Scansione e codici sono disattivati in modalità demo. Disattiva la modalità demo nelle Impostazioni per usarli.",
+ "Your crew rides {0} combined this month.": "La tua crew percorre {0} in totale questo mese.",
+ "{0} pts": "{0} pt",
+ "{0} rides": "{0} giri"
 }

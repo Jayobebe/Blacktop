@@ -1,3 +1,5 @@
+import { useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
@@ -34,6 +36,7 @@ import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
 export function CollectedCardsFolder() {
+  const locked = useDemoLocked();
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const { spectres } = useSpectreCards();
   // The rider's own vehicle cards always lead the regular row.
@@ -61,7 +64,7 @@ export function CollectedCardsFolder() {
   }, [collected, rescanCard]);
 
   const startScanner = async (keyToRescan: string | null = null) => {
-    if (scannerRef.current || showScanner) return;
+    if (scannerRef.current || showScanner || demoBlocked()) return;
     haptics.light();
     setRescanKey(keyToRescan);
     setShowScanner(true);
@@ -157,7 +160,8 @@ export function CollectedCardsFolder() {
         <button
           type="button"
           onClick={() => startScanner(null)}
-          className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
+          disabled={locked}
+          className="disabled:opacity-40 disabled:pointer-events-none ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
           aria-label={tr("Scan a card")}
         >
           <ScanLine className="w-3.5 h-3.5" />
@@ -207,7 +211,8 @@ export function CollectedCardsFolder() {
               <button
                 type="button"
                 onClick={() => startScanner(card.key)}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-xs font-medium"
+                disabled={locked}
+                className="disabled:opacity-40 disabled:pointer-events-none flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-xs font-medium"
               >
                 <RefreshCw className="w-3.5 h-3.5" />{" "}{tr("Rescan")}
               </button>

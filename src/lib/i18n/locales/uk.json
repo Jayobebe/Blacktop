@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "Подивіться, що відбувається після аварії, нічого не надсилаючи. Перевірка аварії відлічує {0} секунд: дайте відповідь або дочекайтеся кінця.",
  "Share your ETA": "Поділитися часом прибуття",
  "Start drill": "Почати навчання",
- "You answered, so a real crash check would stop there.": "Ви відповіли, тож справжня перевірка аварії на цьому б завершилася."
+ "You answered, so a real crash check would stop there.": "Ви відповіли, тож справжня перевірка аварії на цьому б завершилася.",
+ "1 ride": "1 поїздка",
+ "A quick-hit distance dash. {0} takes it.": "Швидкий спринт на дистанцію. {0} — і перемога.",
+ "Most distance ridden this week.": "Найбільша відстань цього тижня.",
+ "Rack up the big distance: {0} or bust.": "Набирайте відстань: {0} або нічого.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "Сканування та коди вимкнено в демо-режимі. Вимкніть демо-режим у Налаштуваннях, щоб ними користуватися.",
+ "Your crew rides {0} combined this month.": "Ваша команда проїжджає разом {0} цього місяця.",
+ "{0} pts": "{0} балів",
+ "{0} rides": "Поїздок: {0}"
 }

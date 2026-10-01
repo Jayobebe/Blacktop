@@ -1,3 +1,5 @@
+import { useSettings } from '@/features/settings';
+import { challengeScore, type CrewUnits } from '@/features/crew/challenges';
 import { useDemoMode } from '@/lib/demoMode';
 import { demoCrewConvoyDetail, demoCrewConvoys } from '@/features/crew/demo';
 import { useState } from 'react';
@@ -36,6 +38,8 @@ export default function CrewConvoys() {
   const navigate = useNavigate();
   const crew = useCrew();
   const [selected, setSelected] = useState<CrewConvoyRow | null>(null);
+  const { settings } = useSettings();
+  const units: CrewUnits = { distance: settings.distanceUnit, speed: settings.speedUnit };
 
   const { enabled: demo } = useDemoMode();
   const { data: convoys = [], isFetching, isLoading, refetch } = useQuery({
@@ -164,7 +168,7 @@ export default function CrewConvoys() {
                     </span>
                     <span className="text-[11px] text-muted-foreground tabular-nums">
                       {/* null: that rider keeps peaks private (Public Road Privacy). */}
-                      {m.top_speed == null ? PEAK_HIDDEN : <>{Math.round(Number(m.top_speed))}{" "}{tr("top")}</>}
+                      {m.top_speed == null ? PEAK_HIDDEN : <>{challengeScore('top_speed', Number(m.top_speed), units)}{" "}{tr("top")}</>}
                     </span>
                   </li>
                 ))}

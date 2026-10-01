@@ -1,3 +1,5 @@
+import { useSettings } from '@/features/settings';
+import { challengeScore, type CrewUnits } from '@/features/crew/challenges';
 import { useDemoMode } from '@/lib/demoMode';
 import { demoLeaderboard } from '@/features/crew/demo';
 import { useEffect, useMemo, useState } from 'react';
@@ -26,9 +28,10 @@ interface CrewRow {
   petrol_head: number;
 }
 
-const METRICS: { id: keyof CrewRow; label: string; format: (v: number) => string }[] = [
-  { id: 'total_distance', label: tr("Distance"), format: (v) => `${v.toFixed(1)} mi` },
-  { id: 'top_speed', label: tr("Top speed"), format: (v) => `${Math.round(v)} mph` },
+// Boards store miles and mph; shown in the rider's units.
+const METRICS: { id: keyof CrewRow; label: string; format: (v: number, u: CrewUnits) => string }[] = [
+  { id: 'total_distance', label: tr("Distance"), format: (v, u) => challengeScore('distance', v, u) },
+  { id: 'top_speed', label: tr("Top speed"), format: (v, u) => challengeScore('top_speed', v, u) },
   { id: 'max_lean', label: tr("Lean"), format: (v) => `${Math.round(v)}°` },
   { id: 'ride_count', label: tr("Rides"), format: (v) => String(Math.round(v)) },
   { id: 'hit_heavy', label: tr("Hit Heavy"), format: (v) => `${Number(v).toFixed(2)}G` },
@@ -42,6 +45,8 @@ export default function CrewLeaderboard() {
   const { scores } = useArcadeScores();
   const { profile } = useProfile();
   const [metric, setMetric] = useState<keyof CrewRow>('total_distance');
+  const { settings } = useSettings();
+  const units: CrewUnits = { distance: settings.distanceUnit, speed: settings.speedUnit };
 
   const mine = useMemo(() => crewTotals(rides, burnedTotals, scores), [rides, burnedTotals, scores]);
 
@@ -130,7 +135,7 @@ export default function CrewLeaderboard() {
                 <span className="w-6 text-sm font-bold tabular-nums text-muted-foreground">{hidden(row) ? '' : i + 1}</span>
                 <span className="flex-1 text-sm truncate">{row.display_name}</span>
                 <span className="text-sm font-bold tabular-nums">
-                  {hidden(row) ? PEAK_HIDDEN : active.format(Number(row[metric]))}
+                  {hidden(row) ? PEAK_HIDDEN : active.format(Number(row[metric]), units)}
                 </span>
               </li>
             );

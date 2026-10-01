@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "何も送信せずに、転倒後に何が起きるかを確認します。クラッシュ確認は {0} 秒からカウントダウンします。応答するか、時間切れまで待ってください。",
  "Share your ETA": "到着予定を共有",
  "Start drill": "訓練を開始",
- "You answered, so a real crash check would stop there.": "応答したので、実際のクラッシュ確認はここで止まります。"
+ "You answered, so a real crash check would stop there.": "応答したので、実際のクラッシュ確認はここで止まります。",
+ "1 ride": "1 ライド",
+ "A quick-hit distance dash. {0} takes it.": "短距離スプリント。{0} 走れば勝ち。",
+ "Most distance ridden this week.": "今週いちばん長い距離。",
+ "Rack up the big distance: {0} or bust.": "距離を稼げ：{0} 走りきれ。",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "デモモードではスキャンとコードは使えません。使うには設定でデモモードをオフにしてください。",
+ "Your crew rides {0} combined this month.": "クルーで今月合計 {0} 走ります。",
+ "{0} pts": "{0} ポイント",
+ "{0} rides": "{0} ライド"
 }

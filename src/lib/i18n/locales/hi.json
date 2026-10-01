@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "देखें कि क्रैश के बाद क्या होता है, बिना कुछ भेजे। क्रैश जाँच {0} सेकंड से उलटी गिनती करती है: जवाब दें, या इसे खत्म होने दें।",
  "Share your ETA": "अपना पहुँचने का समय साझा करें",
  "Start drill": "ड्रिल शुरू करें",
- "You answered, so a real crash check would stop there.": "आपने जवाब दिया, इसलिए असली क्रैश जाँच यहीं रुक जाती।"
+ "You answered, so a real crash check would stop there.": "आपने जवाब दिया, इसलिए असली क्रैश जाँच यहीं रुक जाती।",
+ "1 ride": "1 राइड",
+ "A quick-hit distance dash. {0} takes it.": "एक तेज़ दूरी स्प्रिंट। {0} पूरा करो और जीतो।",
+ "Most distance ridden this week.": "इस हफ़्ते सबसे ज़्यादा दूरी।",
+ "Rack up the big distance: {0} or bust.": "बड़ी दूरी तय करो: {0} या कुछ नहीं।",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "डेमो मोड में स्कैनिंग और कोड बंद हैं। इन्हें इस्तेमाल करने के लिए सेटिंग्स में डेमो मोड बंद करें।",
+ "Your crew rides {0} combined this month.": "आपका क्रू इस महीने मिलकर {0} चलाता है।",
+ "{0} pts": "{0} अंक",
+ "{0} rides": "{0} राइड"
 }

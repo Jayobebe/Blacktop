@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "在不发送任何内容的情况下，看看撞车后会发生什么。碰撞确认会从 {0} 秒开始倒计时：回应它，或让它走完。",
  "Share your ETA": "分享到达时间",
  "Start drill": "开始演练",
- "You answered, so a real crash check would stop there.": "你已回应，真实的碰撞确认会在此停止。"
+ "You answered, so a real crash check would stop there.": "你已回应，真实的碰撞确认会在此停止。",
+ "1 ride": "1 次骑行",
+ "A quick-hit distance dash. {0} takes it.": "短途冲刺。{0} 就能拿下。",
+ "Most distance ridden this week.": "本周骑行距离最多。",
+ "Rack up the big distance: {0} or bust.": "狂刷里程：{0}，不达不休。",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "演示模式下无法扫码和输入代码。请在设置中关闭演示模式后使用。",
+ "Your crew rides {0} combined this month.": "你的团队本月合计骑行 {0}。",
+ "{0} pts": "{0} 分",
+ "{0} rides": "{0} 次骑行"
 }

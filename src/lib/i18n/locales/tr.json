@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "Hiçbir şey göndermeden bir kazadan sonra ne olduğunu gör. Kaza kontrolü {0} saniyeden geri sayar: yanıtla ya da süresinin dolmasına izin ver.",
  "Share your ETA": "Varış saatini paylaş",
  "Start drill": "Tatbikatı başlat",
- "You answered, so a real crash check would stop there.": "Yanıt verdin, yani gerçek bir kaza kontrolü burada biterdi."
+ "You answered, so a real crash check would stop there.": "Yanıt verdin, yani gerçek bir kaza kontrolü burada biterdi.",
+ "1 ride": "1 sürüş",
+ "A quick-hit distance dash. {0} takes it.": "Hızlı bir mesafe sprinti. {0} kazandırır.",
+ "Most distance ridden this week.": "Bu hafta en çok gidilen mesafe.",
+ "Rack up the big distance: {0} or bust.": "Uzun mesafe topla: {0} ya da hiç.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "Demo modunda tarama ve kodlar kapalı. Kullanmak için Ayarlar'dan demo modunu kapat.",
+ "Your crew rides {0} combined this month.": "Ekibin bu ay toplam {0} sürüyor.",
+ "{0} pts": "{0} puan",
+ "{0} rides": "{0} sürüş"
 }

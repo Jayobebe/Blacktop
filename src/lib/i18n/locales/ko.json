@@ -3537,5 +3537,13 @@
  "See what happens after a crash, without anything being sent. The crash check counts down from {0} seconds: answer it, or let it run out.": "아무것도 보내지 않고 사고 후에 무슨 일이 일어나는지 확인하세요. 충돌 확인이 {0}초부터 카운트다운합니다: 응답하거나 끝까지 기다리세요.",
  "Share your ETA": "도착 예정 시간 공유",
  "Start drill": "훈련 시작",
- "You answered, so a real crash check would stop there.": "응답했으므로 실제 충돌 확인은 여기서 멈춥니다."
+ "You answered, so a real crash check would stop there.": "응답했으므로 실제 충돌 확인은 여기서 멈춥니다.",
+ "1 ride": "라이드 1회",
+ "A quick-hit distance dash. {0} takes it.": "짧은 거리 스프린트. {0}이면 승리.",
+ "Most distance ridden this week.": "이번 주 가장 많이 달린 거리.",
+ "Rack up the big distance: {0} or bust.": "거리를 쌓아라: {0} 아니면 끝.",
+ "Scanning and codes are off in demo mode. Turn demo mode off in Settings to use them.": "데모 모드에서는 스캔과 코드를 쓸 수 없습니다. 사용하려면 설정에서 데모 모드를 끄세요.",
+ "Your crew rides {0} combined this month.": "이번 달 크루가 함께 {0}을(를) 달립니다.",
+ "{0} pts": "{0}점",
+ "{0} rides": "라이드 {0}회"
 }
