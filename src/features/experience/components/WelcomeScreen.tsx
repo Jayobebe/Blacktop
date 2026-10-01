@@ -87,17 +87,17 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: Sparkles,
     title: tr("Badges and trading cards"),
-    body: tr("Earn badges from your rides, collect trading cards of other riders’ vehicles and hunt card drops hidden on the map. Set time attacks on your cards for others to race."),
+    body: tr("Earn badges from your rides, collect trading cards of other riders’ vehicles and hunt card drops hidden on the map."),
   },
   {
     icon: Ghost,
     title: tr("Ghost Cards"),
-    body: tr("Beat someone’s time attack and you unlock a Spectre: a ghost edition of their card for your vault that can’t be traded."),
+    body: tr("Opt in to Track Day leaderboards and beat someone’s lap on a circuit to take their dog tag: a Spectre, a ghost edition of their card for your vault that can’t be traded."),
   },
   {
     icon: BellRing,
     title: tr("Notifications"),
-    body: tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups, time attacks and Blacktank votes."),
+    body: tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups, track records and Blacktank votes."),
   },
   {
     icon: Radio,

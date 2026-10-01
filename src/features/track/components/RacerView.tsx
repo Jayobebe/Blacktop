@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
-import { useSettings } from '@/features/settings';
+import { useNavigate } from 'react-router-dom';
+import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useProfile } from '@/features/profile';
-import { useActiveRide } from '@/features/ride';
+import { useActiveRide, useRideHistory } from '@/features/ride';
+import { useLiveOverlayRecorder } from '@/hooks/useLiveOverlayRecorder';
+import { saveRideOverlayBlob } from '@/lib/overlayStore';
 import { getActiveBikeIdSnapshot } from '@/features/garage';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
@@ -41,11 +44,16 @@ import {
 import { formatLap } from '../lib/timing';
 import { theoreticalBest } from '../lib/laps';
 import { TrackHome } from './TrackHome';
+import { hasBoard, lapClock, lapDirection, submitRecord } from '../lib/trackRecords';
+import { amendPendingTrackReceipt } from '@/lib/trackReceipt';
+import { decodeCard, encodeCard } from '@/features/cards/lib/cardCodec';
+import { useSpectreCards, useVehicleCards } from '@/features/cards';
 import { WalkScreen } from './WalkScreen';
 import { PitLaneCard } from './PitLaneCard';
 import { TrackMinimap } from './TrackMinimap';
 import { SessionDetail } from './SessionDetail';
 import { TrackVoice } from './TrackVoice';
+import { postRaceSummary } from './PostRacePicker';
 import { DeltaReadout, SectorBoxes } from './TimingParts';
 import { tr } from '@/lib/i18n';
 
@@ -54,9 +62,12 @@ export function RacerView() {
   const { profile } = useProfile();
   const { settings } = useSettings();
   const { rideState, startRide, endRide, updateLeanAngle, updateGForce } = useActiveRide();
+  const { setRideOverlayAvailable } = useRideHistory();
+  const navigate = useNavigate();
   const [showQr, setShowQr] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [viewing, setViewing] = useState<TrackSession | null>(null);
+  const [flyoverOnOpen, setFlyoverOnOpen] = useState(false);
   const riderName = profile.name || 'Racer';
 
   // The pit crew set the track (their QR): it arrives selected, ready to go to the grid.
@@ -71,7 +82,9 @@ export function RacerView() {
   const { phase } = racer;
   const sensorsOn = phase === 'armed' || phase === 'running';
   const lean = useLeanAngle(sensorsOn);
-  const { canLean } = useExperience();
+  const { canLean, vehicles } = useExperience();
+  const { cards: vehicleCards } = useVehicleCards();
+  const { earnSpectre } = useSpectreCards();
   // Cornering G for a leaning bike comes from the lean (see lib/gForceVector).
   const leanForGRef = useRef<number | null>(null);
   leanForGRef.current = canLean && lean.isSupported && lean.permissionGranted ? lean.currentLean : null;
@@ -114,6 +127,69 @@ export function RacerView() {
     return () => clearTimeout(t);
   }, [racer.pit]);
 
+  // ── Post-race: what the pit crew asked for, else the rider's own default ──
+  const postRace = racer.postRace ?? { results: true, flyover: false, overlay: !!settings.rideOverlayEnabled };
+  const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
+  const overlay = useLiveOverlayRecorder({
+    speedUnit: settings.speedUnit,
+    distanceUnit: settings.distanceUnit,
+    hasLeanData: canLean && lean.isSupported,
+    hasGForceData: gForce.isSupported,
+    accentColor: `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`,
+    blacktopMapEnabled: profile.preferredNavApp === 'blacktop',
+  });
+  const overlayRef = useRef(overlay);
+  overlayRef.current = overlay;
+  const recordingRef = useRef(false);
+  // The overlay video runs from the launch to the end of the session (Track
+  // Day figures always show: Public Road Privacy doesn't hide them here).
+  useEffect(() => {
+    if (phase === 'running' && postRace.overlay && !recordingRef.current) {
+      overlayRef.current.startRecording();
+      recordingRef.current = true;
+    }
+  }, [phase, postRace.overlay]);
+  const overlayFeed = useRef({ rideState, gForce });
+  overlayFeed.current = { rideState, gForce };
+  useEffect(() => {
+    if (phase !== 'running') return;
+    const id = setInterval(() => {
+      if (!recordingRef.current) return;
+      const { rideState: r, gForce: g } = overlayFeed.current;
+      const last = r.gpsPoints[r.gpsPoints.length - 1];
+      const prev = r.gpsPoints[r.gpsPoints.length - 2];
+      let heading: number | null = null;
+      if (last && prev) {
+        const rad = Math.PI / 180;
+        const y = Math.sin((last.lng - prev.lng) * rad) * Math.cos(last.lat * rad);
+        const x = Math.cos(prev.lat * rad) * Math.sin(last.lat * rad) - Math.sin(prev.lat * rad) * Math.cos(last.lat * rad) * Math.cos((last.lng - prev.lng) * rad);
+        heading = ((Math.atan2(y, x) / rad) + 360) % 360;
+      }
+      overlayRef.current.updateStats({
+        speed: r.currentSpeed,
+        maxSpeed: r.maxSpeed,
+        distance: r.distance,
+        duration: r.duration,
+        leanAngle: r.currentLean,
+        maxLean: Math.max(r.maxLeanLeft, r.maxLeanRight),
+        gForce: g.currentG,
+        gVector: g.isSupported ? { lateral: g.lateralG, longitudinal: g.longitudinalG, envelope: r.gEnvelope ?? g.envelope, max: r.gMax ?? g.gMax } : undefined,
+        maxGForce: r.maxGForce,
+        lat: last?.lat ?? null,
+        lng: last?.lng ?? null,
+        heading,
+      });
+    }, 200);
+    return () => clearInterval(id);
+  }, [phase]);
+  // Leaving Track Day mid-session drops the video.
+  useEffect(
+    () => () => {
+      if (recordingRef.current) void overlayRef.current.stopRecording();
+    },
+    [],
+  );
+
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (phase !== 'running') return;
@@ -141,11 +217,64 @@ export function RacerView() {
       setTimeout(() => setConfirmEnd(false), 3000);
       return;
     }
+    const raced = racer.track;
+    const wantFlyover = postRace.flyover;
+    const video = recordingRef.current ? overlayRef.current.stopRecording() : Promise.resolve(null);
+    recordingRef.current = false;
     const session = endSession(getActiveBikeIdSnapshot() ?? undefined);
-    await endRide();
     setConfirmEnd(false);
+    // Opted-in riders on a library circuit: the record lap goes on its board
+    // before the ride closes, so the receipt has the dog tags and the rank.
+    if (session && raced && settings.trackLeaderboardsEnabled && hasBoard(raced)) {
+      const vehicleCard = vehicleCards.find((c) => c.bike.id === getActiveBikeIdSnapshot()) ?? vehicleCards[0];
+      const result = await submitRecord({
+        track: raced,
+        session,
+        vehicleClass: vehicles[0] ?? 'motorcycle',
+        displayName: riderName,
+        vehicleName: vehicleCard?.bike.name ?? null,
+        card: vehicleCard ? decodeCard(encodeCard(vehicleCard, riderName)) : null,
+      }).catch(() => null);
+      if (result) {
+        for (const b of result.beaten) {
+          if (!b.card) continue;
+          earnSpectre({
+            key: `track-${raced.osmId}-${lapDirection(raced.outline)}-${vehicles[0] ?? 'motorcycle'}-${b.display_name}`,
+            card: b.card,
+            setterName: b.display_name,
+            track: raced.name,
+            timeSec: result.lap.ms / 1000,
+            targetSec: b.lap_ms / 1000,
+          });
+        }
+        const tags = result.beaten.length;
+        amendPendingTrackReceipt({ dogTags: tags, rank: result.rank, badges: Array.from({ length: tags * 3 }, () => 'speed-demon' as const) });
+        if (tags || result.rank) {
+          toast.success(
+            tags ? (tags === 1 ? tr("1 dog tag collected") : tr("{0} dog tags collected", [tags])) : tr("On the board"),
+            { description: result.rank ? tr("{0}: P{1} with {2}", [raced.name, result.rank, lapClock(result.lap.ms)]) : undefined },
+          );
+        }
+      }
+    }
+    const rideId = await endRide();
+    setFlyoverOnOpen(wantFlyover);
     setViewing(session);
     haptics.success();
+    const blob = await video.catch(() => null);
+    if (blob && rideId) {
+      try {
+        await saveRideOverlayBlob(rideId, blob);
+        setRideOverlayAvailable(rideId, true);
+        toast.success(tr("Overlay video ready"), {
+          description: tr("It's saved with this session's ride in History."),
+          duration: 15000,
+          action: { label: tr("Share"), onClick: () => navigate(`/ride/${rideId}`) },
+        });
+      } catch {
+        toast.error(tr("Failed to save overlay"));
+      }
+    }
   };
 
   const track = racer.track;
@@ -173,7 +302,7 @@ export function RacerView() {
   const qrOverlay = showQr && qrValue && <QrOverlay value={qrValue} crew={racer.crew} onClose={() => setShowQr(false)} />;
 
 
-  if (viewing) return <SessionDetail session={viewing} onBack={() => setViewing(null)} />;
+  if (viewing) return <SessionDetail session={viewing} autoFlyover={flyoverOnOpen} onBack={() => { setViewing(null); setFlyoverOnOpen(false); }} />;
 
   // ── Recording a lap to create a track (then placing its lines) ───────────
   if (phase === 'walking') return <WalkScreen header={statusBar} overlay={qrOverlay} />;
@@ -202,6 +331,11 @@ export function RacerView() {
                 {tr("Nothing is timed on the way, so riding out of the pits won't start the clock. Tap I'm in position once you're on the grid.")}
               </p>
             </>
+          )}
+          {(racer.postRace || postRace.overlay) && (
+            <p className="text-[11px] text-muted-foreground max-w-xs">
+              {racer.postRace ? tr("Your pit crew wants: {0}", [postRaceSummary(racer.postRace)]) : tr("Recording the overlay video from the launch")}
+            </p>
           )}
           <p className="text-[11px] font-mono text-muted-foreground">
             {tr("GPS")}{" "}{racer.gpsHz || '–'}{" "}{tr("Hz · ±")}{racer.gpsAccuracy != null ? Math.round(racer.gpsAccuracy) : '–'}{" "}{tr("m")}

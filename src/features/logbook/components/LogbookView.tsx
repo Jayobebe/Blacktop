@@ -104,7 +104,6 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
   const card = cards.find((c) => c.bike.id === bike.id);
   const passport = inherited?.passport ?? passportFor(bike.id);
   const owners = [...(inherited?.owners ?? []), { name: myName, from: bike.createdAt, to: 0 }];
-  const challenges = allRides.filter((r) => r.challenge);
   // Best lap per circuit across every keeper's track days.
   const trackBests = Object.values(
     allRides.reduce<Record<string, { name: string; best: number | null; days: number; owner: string; at: string }>>((acc, r) => {
@@ -234,18 +233,6 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
       ) : (
         Object.entries(badgeCounts).map(([b, c]) => <Row key={b} label={b.replace(/-/g, ' ')} value={`×${c}`} />)
-      )}
-      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Time attacks")}</p>
-      {challenges.length === 0 ? (
-        <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
-      ) : (
-        challenges.slice(0, 4).map((r) => (
-          <Row
-            key={r.id}
-            label={r.challenge!.role === 'set' ? tr("Set · {0}", [r.challenge!.vehicleName]) : `${r.challenge!.result ?? ''} · ${r.challenge!.ownerName}`}
-            value={`${Math.floor(r.challenge!.timeSec / 60)}:${String(Math.round(r.challenge!.timeSec % 60)).padStart(2, '0')}`}
-          />
-        ))
       )}
       {trackBests.length > 0 && (
         <>

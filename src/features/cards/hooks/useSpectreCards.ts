@@ -4,19 +4,23 @@ import { useDemoMode, DEMO_SPECTRE_CARDS } from '@/lib/demoMode';
 import type { SharedCardPayload } from '../lib/cardCodec';
 
 /**
- * Spectre cards: ghost versions of a rider's card, earned only by beating
- * their time attack. Unlike collected cards they can't be scanned, shared or
- * traded — there is no QR for them — and they live in their own vault row.
- * One per challenge (drop); beating it again keeps the best time.
+ * Spectre cards (dog tags): ghost versions of a rider's card, earned only by
+ * beating their Track Day record on a circuit (track_records). Unlike
+ * collected cards they can't be scanned, shared or traded — there is no QR for
+ * them — and they live in their own vault row. One per rider per board;
+ * beating them again after they've improved keeps the best time. Spectres
+ * from the old road time attacks stay in the vault.
  */
 export interface SpectreCard {
-  /** The challenge's card drop id. */
+  /** One per beaten rider and board (`track-<osm>-<dir>-<class>-<name>`), or the old road challenge's drop id. */
   key: string;
   card: SharedCardPayload;
   /** Locally cached vehicle photo (data URL). */
   img?: string;
-  /** Rider who set the challenge. */
+  /** Rider whose time was beaten. */
   setterName: string;
+  /** Where (the track layout); missing on Spectres from road time attacks. */
+  track?: string;
   /** Winning time and the time that was beaten, seconds. */
   timeSec: number;
   targetSec: number;

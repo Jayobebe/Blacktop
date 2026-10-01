@@ -12,6 +12,7 @@ import { LaunchDetector, LoopCloser, MIN_LAP_TRAVEL_M, gateCentre, simplify } fr
 import { resampleLoop, smoothLoop } from './centerline';
 import { speakPitBoard } from './pitCalls';
 import { metres } from './geometry';
+import { cleanPostRace, samePostRace, type PostRace } from './postRace';
 
 import { tr } from '@/lib/i18n';
 /**
@@ -64,6 +65,8 @@ export interface RacerState {
   pitStops: PitStop[];
   /** Pit lane speed limit, m/s: the rider's units' usual figure until the pit crew sets one. */
   pitLimit: number;
+  /** What the pit crew wants after the session (lib/postRace), or null until they say. */
+  postRace: PostRace | null;
 }
 
 /** The usual pit limit in the rider's units (60 km/h or 40 mph). */
@@ -81,6 +84,7 @@ const INITIAL: RacerState = {
   pitLane: null,
   pitStops: [],
   pitLimit: defaultPitLimit(),
+  postRace: null,
   phase: 'idle',
   track: null,
   token: null,
@@ -162,6 +166,7 @@ function snapshot(): RacerSnapshot {
     pitLimit: state.pitLimit,
     pitStops: state.pitStops,
     pitTiming: !!(state.track?.pitIn && state.track?.pitOut),
+    postRace: state.postRace,
     pos: recentFixes.length ? { lat: recentFixes[recentFixes.length - 1].lat, lng: recentFixes[recentFixes.length - 1].lng } : null,
     gpsHz: state.gpsHz,
   };
@@ -184,6 +189,13 @@ function onLinkMessage(m: LinkMessage) {
     if (!Number.isFinite(mps) || mps < 2.7 || mps > 42) return;
     set({ pitLimit: mps });
     if (pits) pits.limit = mps;
+    broadcastState();
+  } else if (m.type === 'postRace') {
+    // Only before timing starts: the overlay recorder starts with the launch.
+    const post = cleanPostRace(m.post);
+    if (!post || state.phase === 'running' || samePostRace(post, state.postRace)) return;
+    set({ postRace: post });
+    haptics.light();
     broadcastState();
   } else if (m.type === 'track') {
     // The pit crew set the track (a pit-hosted link): save it and select it,
@@ -499,6 +511,7 @@ export function armTrack(track: TrackDef, riderName: string, whenLaunched: (t: n
     linked: state.linked,
     crew: state.crew,
     pitLimit: state.pitLimit,
+    postRace: state.postRace,
   });
   startGps();
   broadcastState();
@@ -654,6 +667,8 @@ export function endSession(bikeId?: string): TrackSession | null {
     laps: session.laps.length,
     bestLapMs: timer.bestLap()?.ms ?? null,
     theoreticalMs: theoretical,
+    pitStops: pitStops.filter((p) => !p.fromStart).length || undefined,
+    fastestPitMs: pitStops.filter((p) => !p.fromStart && !p.unfinished).reduce<number | null>((b, p) => (b === null || p.laneMs < b ? p.laneMs : b), null),
   });
   timer = null;
   set({ phase: 'idle', pitLane: null, pitStops, laps: session.laps, bestLap: session.laps.filter((l) => l.valid).sort((a, b) => a.ms - b.ms)[0] ?? null });
@@ -671,6 +686,8 @@ export function endSession(bikeId?: string): TrackSession | null {
 function sendSessionToCrew(session: TrackSession) {
   const l = link;
   if (!l || !state.crew.length) return;
+  // The crew turned the results off.
+  if (state.postRace && !state.postRace.results) return;
   const step = Math.max(1, Math.ceil(session.samples.length / 2500));
   const compact = { ...session, samples: session.samples.filter((_, i) => i % step === 0) };
   const json = JSON.stringify(compact);

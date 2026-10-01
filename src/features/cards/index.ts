@@ -12,4 +12,4 @@ export * from './lib/dropEconomy';
 export * from './types';
 export * from './lib/tier';
 export * from './lib/cardCodec';
-export * from './lib/challenge';
+export * from './lib/spectre';

@@ -1181,7 +1181,7 @@ const NT_P = 12;
 const NT_ITEMS: { I: Icon; color: string; title: () => string; body: () => string; when: () => string }[] = [
   { I: AlertTriangle, color: RED, title: () => tr("Rico needs rescue"), body: () => tr("Tap to see where they are."), when: () => tr("now") },
   { I: CloudLightning, color: SKY, title: () => tr("Thunderstorms heading your way"), body: () => tr("Expected in about 2 hours around your last location."), when: () => tr("{0} min", [4]) },
-  { I: Ghost, color: A, title: () => tr("Your time attack was beaten"), body: () => tr("Rico beat your V4 Ducati time: 3:41 vs your 3:58."), when: () => tr("{0} h", [1]) },
+  { I: Flag, color: A, title: () => tr("Your {0} time was beaten", ['Brands Hatch Indy']), body: () => tr("Rico beat your V4 Ducati lap: 52.318 vs your 52.904."), when: () => tr("{0} h", [1]) },
   { I: Wrench, color: AMBER, title: () => tr("Chain lube due soon"), body: () => tr("V4 Ducati: due in 150 mi."), when: () => tr("{0} h", [3]) },
 ];
 

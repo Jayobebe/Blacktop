@@ -34,7 +34,6 @@ const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0)
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 const amount = (v: unknown, currency: unknown) =>
   `${num(v).toLocaleString('en-GB', { maximumFractionDigits: 4 })} ${str(currency)}`
-const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`
 const listJoin = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`)
 
 async function one(ctx: Ctx, table: string, id: string, columns = '*'): Promise<Row | null> {
@@ -158,8 +157,8 @@ export async function rescueCancel(ctx: Ctx, input: Omit<RescueInput, 'lat' | 'l
 
 export async function processEvent(ctx: Ctx, kind: string, p: Row): Promise<void> {
   switch (kind) {
-    case 'card_attempt':
-      return cardAttempt(ctx, str(p.id))
+    case 'track_beaten':
+      return trackBeaten(ctx, p)
     case 'card_collected':
       return cardCollected(ctx, str(p.id))
     case 'tank_request':
@@ -181,31 +180,28 @@ export async function processEvent(ctx: Ctx, kind: string, p: Row): Promise<void
   }
 }
 
-async function cardAttempt(ctx: Ctx, id: string) {
-  const a = await one(ctx, 'card_challenge_attempts', id)
-  if (!a || (a.result !== 'won' && a.result !== 'lost')) return
-  const drop = await one(ctx, 'card_drops', str(a.drop_id), 'owner_id, vehicle_name, challenge_time_sec')
-  if (!drop || drop.owner_id === a.challenger_id) return
-  if (!(await markOnce(ctx, `card_attempt:${id}`))) return
-  const who = clip(str(a.challenger_name, 'A rider'), 30)
-  const vehicle = clip(str(drop.vehicle_name, 'your card'), 40)
-  const theirs = mmss(num(a.time_sec))
-  const yours = drop.challenge_time_sec != null ? mmss(num(drop.challenge_time_sec)) : null
-  const message: PushMessage =
-    a.result === 'won'
-      ? {
-          title: '⏱️ Your time attack was beaten',
-          body: `${who} beat your ${vehicle} time: ${theirs}${yours ? ` vs your ${yours}` : ''}. Race it back?`,
-          tag: `card-attempt-${id}`,
-          url: '/world',
-        }
-      : {
-          title: '🛡️ Your time attack held',
-          body: `${who} raced your ${vehicle} card and lost: ${theirs}${yours ? ` vs your ${yours}` : ''}.`,
-          tag: `card-attempt-${id}`,
-          url: '/world',
-        }
-  await deliver(ctx, { userIds: [str(drop.owner_id)] }, 'timeattack', message)
+/** Lap time as m:ss.SSS. */
+function lapTime(ms: number): string {
+  const m = Math.floor(ms / 60000)
+  const s = (ms % 60000) / 1000
+  return `${m}:${s.toFixed(3).padStart(6, '0')}`
+}
+
+/** Someone beat this rider's track record (submit_track_lap queues one per rider beaten). */
+async function trackBeaten(ctx: Ctx, p: Row) {
+  const user = str(p.beaten)
+  const theirs = num(p.their_ms)
+  const by = num(p.by_ms)
+  if (!user || !theirs || !by) return
+  if (!(await markOnce(ctx, `track_beaten:${user}:${str(p.track)}:${theirs}:${clip(str(p.by_name), 30)}`))) return
+  const who = clip(str(p.by_name, 'A rider'), 30)
+  const track = clip(str(p.track, 'the track'), 60)
+  await deliver(ctx, { userIds: [user] }, 'timeattack', {
+    title: `🏁 Your ${track} time was beaten`,
+    body: `${who} ran ${lapTime(by)} vs your ${lapTime(theirs)} and took your dog tag. Go get it back on track.`,
+    tag: `track-beaten-${track}`,
+    url: '/track',
+  })
 }
 
 async function cardCollected(ctx: Ctx, id: string) {

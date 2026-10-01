@@ -106,6 +106,8 @@ export interface AppSettings {
   proximityEnabled: boolean;
   /** Track Pack: lap timing, pit crew link and track sessions (Home button). */
   trackPackEnabled: boolean;
+  /** Opt-in: best laps on circuit library layouts go on public Track Day leaderboards (features/track/lib/trackRecords). */
+  trackLeaderboardsEnabled: boolean;
 }
 
 // Hardware-floor bounds for auto-rescue, enforced both in the Settings UI
@@ -170,6 +172,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   burnTripsInterval: 'off',
   proximityEnabled: false,
   trackPackEnabled: false,
+  trackLeaderboardsEnabled: false,
 };
 
 export const AUTO_RESCUE_ACK_TIMEOUT_SEC = 300; // 5 minutes

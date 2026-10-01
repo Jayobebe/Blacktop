@@ -733,8 +733,8 @@
   position: relative;
 }
 
-/* Time-attack (card challenge) receipts print on pink stock. */
-.receipt-timeattack {
+/* Track Day session receipts print on pink stock. */
+.receipt-track {
   --paper: #ffe3f0;
   --paper-shadow: #f0bfd6;
   --ink: #7a1247;
@@ -744,27 +744,10 @@
     0 10px 30px -10px rgba(0,0,0,0.5),
     inset 0 0 40px rgba(200,60,130,0.12);
 }
-.receipt-timeattack + .receipt-edge-bottom,
-.receipt-edge-top.receipt-edge-timeattack,
-.receipt-edge-bottom.receipt-edge-timeattack {
-  background-color: #ffe3f0;
-}
-
-/* Track Pack session receipts print on blue stock. */
-.receipt-track {
-  --paper: #e1edfc;
-  --paper-shadow: #bcd3f2;
-  --ink: #123f7a;
-  --ink-soft: #3f6aa8;
-  box-shadow:
-    0 30px 60px -20px rgba(0,0,0,0.7),
-    0 10px 30px -10px rgba(0,0,0,0.5),
-    inset 0 0 40px rgba(57,135,229,0.14);
-}
 .receipt-track + .receipt-edge-bottom,
 .receipt-edge-top.receipt-edge-track,
 .receipt-edge-bottom.receipt-edge-track {
-  background-color: #e1edfc;
+  background-color: #ffe3f0;
 }
 
 /* torn zigzag edges: one sawtooth mask (V teeth hanging off the paper) */

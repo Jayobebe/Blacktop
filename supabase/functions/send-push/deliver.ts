@@ -22,6 +22,7 @@ export type Category =
   | 'rescue_nearby'
   | 'weather'
   | 'blacktank'
+  /** Your track record was beaten (the category id predates Track Day records). */
   | 'timeattack'
   | 'card_pickups'
   | 'leaderboard'

@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          {tr("Last updated: September 30, 2026 · Maintained by the Blacktop team.")}
+          {tr("Last updated: October 1, 2026 · Maintained by the Blacktop team.")}
         </p>
 
         <section className="space-y-2">
@@ -94,7 +94,7 @@ export default function PrivacyPolicy() {
             <span className="text-foreground">{tr("Speedshop survey:")}</span>{" "}{tr("nothing is sold yet. When you answer whether you'd buy an item and what you'd pay, or send a suggestion, we store that answer linked to your anonymous account. Other riders only ever see anonymous totals, and the survey table in the app's demo mode shows those totals and the suggestion text (never who sent them). The Burn Button deletes your answers.")}
           </p>
           <p className="text-muted-foreground">
-            <span className="text-foreground">{tr("Track Day (opt-in):")}</span>{" "}{tr("tracks, lap times and session data stay on your device. While Track Day is open, anyone who scans your pairing QR receives your display name, live position, speed, lean, lap and sector times, and pit board messages over a temporary realtime channel keyed by that QR, along with the track you've selected (its name, outline and timing lines). Rider ⇄ crew voice is peer-to-peer, and pit board calls are spoken by your phone's own text-to-speech. Nothing is stored on our servers, and the link closes when you leave Track Day. The circuit library is a file of public OpenStreetMap circuit data served with the app: searching it happens on your phone and sends nothing. Building a track from the map sends only the corners of the box you draw to our search service, which asks OpenStreetMap (Overpass) for the roads inside it.")}
+            <span className="text-foreground">{tr("Track Day (opt-in):")}</span>{" "}{tr("tracks, lap times and session data stay on your device. While Track Day is open, anyone who scans your pairing QR receives your display name, live position, speed, lean, lap and sector times, and pit board messages over a temporary realtime channel keyed by that QR, along with the track you've selected (its name, outline and timing lines). Rider ⇄ crew voice is peer-to-peer, and pit board calls are spoken by your phone's own text-to-speech. Nothing is stored on our servers (unless you opt in to track leaderboards, below), and the link closes when you leave Track Day. The circuit library is a file of public OpenStreetMap circuit data served with the app: searching it happens on your phone and sends nothing.")}
           </p>
           <p className="text-muted-foreground">
             <span className="text-foreground">{tr("Nearby Riders (separate opt-in, Settings → Navigation):")}</span>{" "}{tr("while you ride with it on, your display name, precise position, speed and convoy (if any) are shared live with other riders who have also turned it on and are within a few kilometres. Nothing is stored on our servers: it is sent over a temporary realtime channel and disappears when you stop riding or turn it off. Joining up or merging convoys always needs both sides to accept, and you can block a rider from the prompt.")}
@@ -123,12 +123,12 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold">{tr("Card challenges (time attack)")}</h2>
+          <h2 className="text-base font-semibold">{tr("Track records (opt-in)")}</h2>
           <p className="text-muted-foreground">
-            {tr("Card challenges are also part of")}{" "}<span className="text-foreground">{tr("Blacktop World")}</span>{" "}{tr("and only work while it is switched on. If you attach a challenge to a card you drop, you ready up, a five-second countdown runs, and the route you then ride is recorded. Five seconds are deducted from your recorded time to account for stopping to set the finish line. The challenge route, its distance, the time to beat and the finish-line coordinates are stored on our server alongside the drop, and are visible to any rider who can see that card.")}
+            {tr("Track leaderboards are off until you turn them on (Settings → Your Blacktop → Track Day). While they're on, when you end a Track Day session on a circuit from the library, your fastest clean lap is sent to our server with its sector times, the circuit layout and direction, your vehicle class (car or bike), your display name, your vehicle's name and your vehicle card. Your name, vehicle and lap time are shown on that layout's public leaderboard, and your card is given as a dog tag to riders who beat your time. When you beat someone, we keep a record of it (both times) so the same time can't be beaten twice, and tell them by notification. No GPS track, position or speed leaves your phone for this, and custom tracks never have a board.")}
           </p>
           <p className="text-muted-foreground">
-            {tr("When you take on someone else's challenge, your position is compared against the stored route while the run is live so we can detect the finish line and off-route deviations. Only the outcome (your display name, your time and whether you won, lost or were voided) is stored server-side; the raw track of your attempt stays on your device as a normal ride in your history. Removing the drop, or burning your data, removes the challenge and its attempts.")}
+            {tr("Turning leaderboards off, or using the Burn Button, deletes your times and those records from our server. Dog tags you've already given stay in the vaults of the riders who earned them, on their phones.")}
           </p>
         </section>
 
@@ -199,7 +199,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-base font-semibold">{tr("Third parties")}</h2>
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li><span className="text-foreground">{tr("Lovable Cloud")}</span>{" "}{tr("— hosts the realtime convoy backend")}</li>
-            <li><span className="text-foreground">{tr("OpenStreetMap / Nominatim / Overpass / Photon (komoot)")}</span>{" "}{tr("— location search, the roads for building tracks, and the circuit library (© OpenStreetMap contributors, ODbL)")}</li>
+            <li><span className="text-foreground">{tr("OpenStreetMap / Nominatim / Overpass / Photon (komoot)")}</span>{" "}{tr("— location search and the circuit library (© OpenStreetMap contributors, ODbL)")}</li>
             <li><span className="text-foreground">{tr("OpenFreeMap, Esri World Imagery, AWS Open Data terrain")}</span>{" "}{tr("— map, satellite and elevation tiles (they see which map areas you load)")}</li>
             <li><span className="text-foreground">{tr("RainViewer / Open-Meteo")}</span>{" "}{tr("— rain radar and route weather, only if you turn those on")}</li>
             <li><span className="text-foreground">{tr("Hugging Face, cdnjs, jsDelivr")}</span>{" "}{tr("— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.")}</li>
@@ -223,7 +223,7 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Your rights")}</h2>
           <p className="text-muted-foreground">
-            {tr("Because your data lives on your device, you already control it. You can view it, export it (via screenshots/share), and erase it with the Burn Button. Burning deletes your anonymous account and everything linked to it on our servers (crew membership and scores, card drops and challenges, hazard reports and answers, survey answers, notification devices and reminders, card photos), then everything Blacktop kept on your device, including offline maps. Burning the demo account deletes nothing: it just takes you back to your own.")}
+            {tr("Because your data lives on your device, you already control it. You can view it, export it (via screenshots/share), and erase it with the Burn Button. Burning deletes your anonymous account and everything linked to it on our servers (crew membership and scores, card drops, track records, hazard reports and answers, survey answers, notification devices and reminders, card photos), then everything Blacktop kept on your device, including offline maps. Burning the demo account deletes nothing: it just takes you back to your own.")}
           </p>
         </section>
 

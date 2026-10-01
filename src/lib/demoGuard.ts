@@ -38,6 +38,8 @@ const WRITE_RPCS = new Set([
   'vote_hazard',
   'remove_my_hazard',
   'verify_enterprise_token',
+  'submit_track_lap',
+  'leave_track_leaderboards',
 ]);
 
 const WRITE_FUNCTIONS = new Set([

@@ -62,6 +62,8 @@ export interface RacerSnapshot {
   pitStops?: PitStop[];
   /** The track has pit lane timing lines. */
   pitTiming?: boolean;
+  /** The pit crew's post-race choice the racer has (null: none yet). Missing from older apps. */
+  postRace?: import('./postRace').PostRace | null;
   /** Rider's latest position (walking / on the grid). */
   pos?: { lat: number; lng: number } | null;
   gpsHz?: number;
@@ -78,6 +80,8 @@ export type LinkMessage =
   | { type: 'track'; track: TrackDef }
   /** Pit crew → racer: the pit lane speed limit, m/s. */
   | { type: 'pitLimit'; mps: number }
+  /** Pit crew → racer: the post-race telemetry they want (lib/postRace). */
+  | { type: 'postRace'; post: import('./postRace').PostRace }
   /** Racer → crew at the end: the session (JSON, in parts; see sendSessionToCrew). */
   | { type: 'session'; id: string; part: number; parts: number; data: string }
   | { type: 'ended' };

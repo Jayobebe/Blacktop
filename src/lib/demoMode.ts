@@ -3,7 +3,6 @@ import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 import type { Bike } from '@/features/garage/types';
 import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
-import type { RideChallenge } from '@/lib/challengeRun';
 import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
 import { demoTrackData } from '@/lib/demoTrack';
 import { tr } from '@/lib/i18n';
@@ -16,6 +15,7 @@ type SpectreCard = {
   card: SharedCardPayload;
   img?: string;
   setterName: string;
+  track?: string;
   timeSec: number;
   targetSec: number;
   earnedAt: number;
@@ -156,8 +156,8 @@ function buildDemoRides(): RideSession[] {
       ...demoGTrace(i, Math.round(20 + 25 * Math.abs(Math.sin(i * 1.1))), Math.round(20 + 25 * Math.abs(Math.cos(i * 1.1)))),
     });
   }
-  // A Track Day session (prints on blue stock and opens the demo session).
-  // Rides 0-3 carry the time attacks; 9 is a solo ride nothing else claims.
+  // A Track Day session (prints on pink stock and opens the demo session);
+  // ride 9 is a solo ride nothing else claims.
   const { session, receipt } = demoTrackData();
   const lapDistance = session.laps.reduce((a, l) => a + l.distance, 0) / 1609.344;
   const lapDuration = (session.endedAt - session.startedAt) / 1000;
@@ -199,87 +199,6 @@ export const DEMO_BIKE: Bike = {
   ],
 };
 
-/**
- * Card-challenge (time-attack) demo rides — a win that claimed the card, a
- * narrow loss and a route the demo rider set themselves. These drive the pink
- * time-attack receipt in ride history.
- */
-function demoRoute(lat: number, lng: number, n = 24) {
-  return Array.from({ length: n }, (_, i) => ({
-    lat: lat + i * 0.0009 + Math.sin(i / 3) * 0.0004,
-    lng: lng + i * 0.0012 + Math.cos(i / 4) * 0.0005,
-  }));
-}
-
-const DEMO_CHALLENGES: RideChallenge[] = [
-  {
-    dropId: 'demo-drop-01',
-    vehicleName: "Rico\u2019s Panigale",
-    ownerName: 'Rico',
-    tier: 'Gold',
-    role: 'attempt',
-    targetSec: 238,
-    timeSec: 221,
-    result: 'won',
-    route: demoRoute(51.5074, -0.1278),
-  },
-  {
-    dropId: 'demo-drop-02',
-    vehicleName: "Marlowe\u2019s R1",
-    ownerName: 'Marlowe',
-    tier: 'Silver',
-    role: 'attempt',
-    targetSec: 184,
-    timeSec: 199,
-    result: 'lost',
-    route: demoRoute(51.49, -0.09),
-  },
-  {
-    dropId: 'demo-drop-03',
-    vehicleName: 'V4 Ducati',
-    ownerName: DEMO_NAME,
-    tier: 'Gold',
-    role: 'set',
-    targetSec: null,
-    timeSec: 305,
-    route: demoRoute(51.46, -0.16),
-  },
-  {
-    // Raced their own line again and beat it: own Spectre card, no badges.
-    dropId: 'demo-drop-03',
-    vehicleName: 'V4 Ducati',
-    ownerName: DEMO_NAME,
-    tier: 'Gold',
-    role: 'attempt',
-    targetSec: 305,
-    timeSec: 297,
-    result: 'won',
-    route: demoRoute(51.46, -0.16),
-    own: true,
-  },
-];
-
-// Staple the challenges onto the three most recent demo rides.
-DEMO_CHALLENGES.forEach((challenge, i) => {
-  const ride = DEMO_RIDES[i];
-  if (!ride) return;
-  ride.challenge = challenge;
-  ride.duration = Math.round(challenge.timeSec);
-  // ~0.9 mi a minute (≈ 54 mph average) over a time-attack run.
-  ride.distance = Math.round((challenge.timeSec / 60) * 0.9 * 10) / 10;
-  ride.averageSpeed = Math.round((ride.distance / (ride.duration / 3600)) * 10) / 10;
-  ride.maxSpeed = Math.max(ride.maxSpeed, Math.round(ride.averageSpeed * 1.6));
-  ride.endedAt = new Date(new Date(ride.startedAt).getTime() + ride.duration * 1000).toISOString();
-  ride.isConvoyRide = false;
-  ride.earnedBadges = challenge.own
-    ? undefined
-    : challenge.result === 'won'
-    ? ['speed-demon', 'speed-demon', 'speed-demon']
-    : challenge.result === 'lost'
-      ? ['fallback']
-      : undefined;
-});
-
 // Tag every demo ride against the demo bike so Garage / VehicleCards roll up.
 DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });
 
@@ -302,7 +221,7 @@ DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });
 
 // A few starred favourites, so Burn Trips has rides it keeps.
 ([
-  [0, 'Rico time attack'],
+  [0, 'Early start, empty roads'],
   [6, 'Sunday twisties'],
   [15, 'Coast run with the crew'],
 ] as const).forEach(([i, name]) => {
@@ -368,36 +287,27 @@ export const DEMO_COLLECTED_CARDS: CollectedCard[] = [
 ];
 
 /**
- * Spectre cards: one from beating Rico's time attack, one from the demo
- * rider beating their own challenge on the V4 Ducati.
+ * Spectre cards (dog tags): Rico's from beating his Brands Hatch Indy time,
+ * Marlowe's from the GP layout.
  */
 export const DEMO_SPECTRE_CARDS: SpectreCard[] = [
   {
-    key: 'demo-drop-01',
+    key: 'demo-track-11248425-rico',
     card: { ...DEMO_COLLECTED_CARDS[0], ts: Date.now() - 2 * 86_400_000 },
     setterName: 'Rico',
-    timeSec: 221,
-    targetSec: 238,
+    track: 'Brands Hatch Indy',
+    timeSec: 52.318,
+    targetSec: 52.904,
     earnedAt: Date.now() - 2 * 86_400_000,
   },
   {
-    key: 'demo-drop-03',
-    card: {
-      v: 1,
-      i: DEMO_BIKE_ID.replace(/-/g, ''),
-      n: DEMO_BIKE.name,
-      m: DEMO_BIKE.makeModel,
-      o: DEMO_NAME,
-      t: 'gold',
-      tl: 'Gold',
-      s: { totalRides: 74, totalDistanceMi: 1234, totalDurationSec: 89 * 3600 + 12 * 60, topSpeedMph: 142, maxLean: 45, maxGForce: 1.6 },
-      ts: Date.now() - 4 * 86_400_000,
-    },
-    img: DEMO_BIKE_HERO,
-    setterName: DEMO_NAME,
-    timeSec: 297,
-    targetSec: 305,
-    earnedAt: Date.now() - 4 * 86_400_000,
+    key: 'demo-track-7218462-marlowe',
+    card: { ...DEMO_COLLECTED_CARDS[1], ts: Date.now() - 9 * 86_400_000 },
+    setterName: 'Marlowe',
+    track: 'Brands Hatch Grand Prix',
+    timeSec: 98.441,
+    targetSec: 99.002,
+    earnedAt: Date.now() - 9 * 86_400_000,
   },
 ];
 

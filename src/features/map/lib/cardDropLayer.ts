@@ -18,7 +18,6 @@ export interface CardPinLook {
   glow: { color: string; size: number } | null;
   badge: string | null;
   badgeBg: string;
-  challenge: boolean;
   big: boolean;
 }
 
@@ -47,7 +46,7 @@ function roundRect(g: CanvasRenderingContext2D, x: number, y: number, w: number,
 }
 
 const lookId = (l: CardPinLook) =>
-  `btcard|${l.edge}|${l.glow ? `${l.glow.color}/${l.glow.size}` : '-'}|${l.badge ?? '-'}|${l.badgeBg}|${l.challenge ? 1 : 0}|${l.big ? 1 : 0}`;
+  `btcard|${l.edge}|${l.glow ? `${l.glow.color}/${l.glow.size}` : '-'}|${l.badge ?? '-'}|${l.badgeBg}|${l.big ? 1 : 0}`;
 
 function drawCardPin(l: CardPinLook): ImageData {
   const bw = l.big ? 34 : 30;
@@ -108,26 +107,6 @@ function drawCardPin(l: CardPinLook): ImageData {
     g.fill();
     g.fillStyle = '#04140a';
     g.fillText(l.badge, bx + bwid / 2, by + 8);
-  }
-  // Time-attack pip, bottom left (inside the sprite so it isn't clipped)
-  if (l.challenge) {
-    const cx = x + 2;
-    const cy = y + bh - 8;
-    g.fillStyle = l.badgeBg;
-    g.beginPath();
-    g.arc(cx, cy, 8, 0, Math.PI * 2);
-    g.fill();
-    // stopwatch
-    g.strokeStyle = '#04140a';
-    g.lineWidth = 1.4;
-    g.lineCap = 'round';
-    g.beginPath();
-    g.arc(cx, cy + 0.8, 4, 0, Math.PI * 2);
-    g.moveTo(cx, cy + 0.8);
-    g.lineTo(cx, cy - 1.6);
-    g.moveTo(cx - 1.4, cy - 4.8);
-    g.lineTo(cx + 1.4, cy - 4.8);
-    g.stroke();
   }
   return g.getImageData(0, 0, W * PR, H * PR);
 }

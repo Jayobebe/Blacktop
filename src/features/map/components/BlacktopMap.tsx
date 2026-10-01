@@ -61,7 +61,6 @@ import { useProfile } from "@/features/profile";
 
 import {
   useActiveRide,
-  recordBadges,
   useSoloRoute,
   addSoloStop,
   removeSoloStopAt,
@@ -96,29 +95,8 @@ import { useWaypoints } from "@/features/waypoints";
 
 import { useRescueBridge } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
-import { useCollectedCards, useSpectreCards, useVehicleCards, TIER_STYLES, useCardKickbacks, TIER_LADDER } from "@/features/cards";
-import { fetchCardPhoto } from "@/features/cards/lib/cardPhoto";
+import { useCollectedCards, useVehicleCards, useCardKickbacks } from "@/features/cards";
 import { copyLedger } from "@/features/cards/lib/dropEconomy";
-import {
-  CHALLENGE_COUNTDOWN_MS,
-  CHALLENGE_WIN_BADGES,
-  DEVIATION_GRACE_MS,
-  DEVIATION_LIMIT_M,
-  distanceToRoute,
-  formatChallengeTime,
-  SETTER_STOP_ALLOWANCE_SEC,
-  formatDelta,
-  hasCrossedFinish,
-  scoreAttempt,
-} from "@/features/cards/lib/challenge";
-import {
-  clearChallengeRun,
-  setPendingChallengeReceipt,
-  startChallengeRun,
-  updateChallengeRun,
-  useChallengeRun,
-  type ChallengeResult,
-} from "@/lib/challengeRun";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
 import { setGuidanceActive } from '../lib/guidanceState';
@@ -353,7 +331,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const { settings } = useSettings();
   const { user, profile } = useProfile();
   const { terms } = useExperience();
-  const { rideState, startRide, endRide } = useActiveRide();
+  const { rideState } = useActiveRide();
   // Read from the long-lived GPS callback (it's bound once).
   const rideActiveRef = useRef(rideState.isActive);
   rideActiveRef.current = rideState.isActive;
@@ -1119,11 +1097,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
   // ── Card drops (Blacktop World trading cards planted on the map) ─────────
   const cardsEnabled = settings.blacktopWorldEnabled;
-  const { drops, myDrops, collectDrop, placeDrop, pickUpDrop, setChallenge, recordAttempt } = useCardDrops(
+  const { drops, myDrops, collectDrop, placeDrop, pickUpDrop } = useCardDrops(
     cardsEnabled ? userLocation : null,
   );
   const { addCard } = useCollectedCards();
-  const { earnSpectre } = useSpectreCards();
   useCardKickbacks();
   const { cards } = useVehicleCards();
   const [selectedStack, setSelectedStack] = useState<CardDrop[] | null>(null);
@@ -1202,8 +1179,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               glow: allCollected ? { color: "hsla(142, 71%, 45%, 0.6)", size: 8 } : heat ? { color: heatColor, size: 6 + heat * 4 } : null,
               badge: allCollected ? "✓" : count > 1 ? String(count) : null,
               badgeBg: allCollected ? green : heat ? heatColor : accentColor,
-              // Cards carrying a time attack get a stopwatch pip.
-              challenge: stack.some((d) => d.challenge),
               big: count > 1,
             },
           });
@@ -1225,7 +1200,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     setPendingDrop({ lat: userLocation.lat, lng: userLocation.lng });
   }, [droppingCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const confirmDropCard = async (withChallenge = false) => {
+  const confirmDropCard = async () => {
     if (!pendingDrop) return;
     const card = cards[0];
     const spot = pendingDrop;
@@ -1234,204 +1209,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     if (!card) return;
     try {
       const photoPath = card.bike.photos?.hero ? await uploadCardPhoto(card.bike.id, card.bike.photos.hero) : null;
-      const dropId = await placeDrop.mutateAsync({
+      await placeDrop.mutateAsync({
         card,
         lat: spot.lat,
         lng: spot.lng,
         copyIndex: placedCount + 1,
         photoPath,
       });
-      if (!withChallenge) {
-        toast.success(tr("Card dropped"), { description: tr("Riders nearby can now scan it.") });
-        return;
-      }
-      startChallengeRun({
-        mode: "setting",
-        dropId,
-        vehicleName: card.bike.name,
-        ownerName: profile?.name || "Rider",
-        tier: card.tier,
-        start: spot,
-        route: [],
-        finish: null,
-        targetSec: null,
-        startsAt: null,
-        offRouteSince: null,
-        voided: false,
-      });
-      toast.success(tr("Card dropped"), { description: tr("Ready up when you want the clock to start.") });
+      toast.success(tr("Card dropped"), { description: tr("Riders nearby can now scan it.") });
     } catch {
       toast.error(tr("Couldn't drop that card"));
     }
   };
-
-  // ── Card challenges (time attack attached to a dropped card) ─────────────
-  const challengeRun = useChallengeRun();
-  const [challengeNow, setChallengeNow] = useState(Date.now());
-  useEffect(() => {
-    if (!challengeRun) return;
-    const id = setInterval(() => setChallengeNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, [challengeRun]);
-
-  const challengeCountdown = challengeRun?.startsAt ? Math.ceil((challengeRun.startsAt - challengeNow) / 1000) : 0;
-  const challengeElapsedSec = challengeRun?.startsAt ? Math.max(0, (challengeNow - challengeRun.startsAt) / 1000) : 0;
-
-  /** Owner finishes setting a route: the current spot becomes the finish line. */
-  const finishSettingChallenge = async () => {
-    if (!challengeRun || challengeRun.mode !== "setting") return;
-    if (!userLocation) {
-      toast.error(tr("Need your location to set the finish line"));
-      return;
-    }
-    const timeSec = Math.max(
-      1,
-      Math.round((Date.now() - (challengeRun.startsAt ?? Date.now())) / 1000) - SETTER_STOP_ALLOWANCE_SEC,
-    );
-    const route = rideState.gpsPoints.map((p) => ({ lat: p.lat, lng: p.lng }));
-    const finish = { lat: userLocation.lat, lng: userLocation.lng };
-    try {
-      await setChallenge.mutateAsync({
-        dropId: challengeRun.dropId,
-        route: route.length > 1 ? route : [challengeRun.start, finish],
-        timeSec,
-        distanceMi: rideState.distance,
-        finish,
-      });
-      setPendingChallengeReceipt({
-        dropId: challengeRun.dropId,
-        vehicleName: challengeRun.vehicleName,
-        ownerName: challengeRun.ownerName,
-        tier: challengeRun.tier,
-        role: "set",
-        targetSec: null,
-        timeSec,
-        route,
-      });
-      toast.success(tr("Challenge set"), {
-        description: tr("Time to beat: {0}", [formatChallengeTime(timeSec)]),
-      });
-    } catch {
-      toast.error(tr("Couldn't save that challenge"));
-    }
-    clearChallengeRun();
-    await endRide();
-  };
-
-  /** Challenger crosses the line (or gets voided). */
-  const finalizeAttempt = async (result: ChallengeResult, timeSec: number) => {
-    if (!challengeRun || challengeRun.mode !== "attempting") return;
-    const run = challengeRun;
-    clearChallengeRun();
-    const prize = drops.find((d) => d.id === run.dropId);
-    // Racing your own challenge earns your own Spectre card, but never badges
-    // (they buy card copies, so an easy self-set challenge can't farm them).
-    const ownChallenge = !!prize?.isOwn;
-    if (!ownChallenge) {
-      recordBadges(result === "won" ? Array(CHALLENGE_WIN_BADGES).fill("speed-demon") : ["fallback"]);
-    }
-    setPendingChallengeReceipt({
-      dropId: run.dropId,
-      vehicleName: run.vehicleName,
-      ownerName: run.ownerName,
-      tier: run.tier,
-      role: "attempt",
-      targetSec: run.targetSec,
-      timeSec,
-      result,
-      route: run.route,
-      own: ownChallenge,
-    });
-    recordAttempt.mutate({ dropId: run.dropId, timeSec, result });
-    if (result === "won") {
-      // Beating the setter earns the Spectre (ghost) version of their card.
-      // The normal card is still only collected by scanning it.
-      const card = prize
-        ? dropToPayload(prize)
-        : {
-            v: 1 as const,
-            i: run.dropId.replace(/-/g, ""),
-            n: run.vehicleName,
-            o: run.ownerName,
-            t: (run.tier ?? "bronze") as CardDrop["tier"],
-            tl: TIER_LADDER.find((t) => t.id === run.tier)?.label ?? "Bronze",
-            s: { totalRides: 0, totalDistanceMi: 0, totalDurationSec: 0, topSpeedMph: null, maxLean: null, maxGForce: null },
-            ts: Date.now(),
-          };
-      const img = card.p ? await fetchCardPhoto(card.p) : null;
-      const outcome = earnSpectre({
-        key: run.dropId,
-        card,
-        img: img ?? undefined,
-        setterName: run.ownerName,
-        timeSec,
-        targetSec: run.targetSec ?? timeSec,
-      });
-      toast.success(tr("Challenge beaten"), {
-        description: `${formatChallengeTime(timeSec)} · ${formatDelta(timeSec, run.targetSec ?? timeSec)}${ownChallenge ? "" : " · 3x Speed Demon"} · ${
-          outcome === "new" ? "Spectre card unlocked" : outcome === "improved" ? "Spectre time improved" : "Spectre already yours"
-        }`,
-      });
-    } else if (result === "void") {
-      toast.error(tr("Challenge voided"), { description: tr("You strayed off the route.{0}", [ownChallenge ? "" : " 1x Fallback."]) });
-    } else {
-      toast(tr("Challenge lost"), {
-        description: tr("{0} vs {1}{2}", [formatChallengeTime(timeSec), formatChallengeTime(run.targetSec ?? 0), ownChallenge ? "" : " · 1x Fallback"]),
-      });
-    }
-    await endRide();
-  };
-
-  /** Start an attempt on a card's challenge — must be within pick-up range. */
-  const takeChallenge = (drop: CardDrop) => {
-    if (!drop.challenge) return;
-    if (!userLocation || metersBetween(userLocation, drop) > COLLECT_RADIUS_M) {
-      toast.error(tr("Get closer to the card to take its challenge"));
-      return;
-    }
-    setSelectedStack(null);
-    startChallengeRun({
-      mode: "attempting",
-      dropId: drop.id,
-      vehicleName: drop.vehicleName,
-      ownerName: drop.ownerName,
-      tier: drop.tier,
-      start: { lat: drop.lat, lng: drop.lng },
-      route: drop.challenge.route,
-      finish: drop.challenge.finish,
-      targetSec: drop.challenge.timeSec,
-      startsAt: Date.now() + CHALLENGE_COUNTDOWN_MS,
-      offRouteSince: null,
-      voided: false,
-    });
-    startRide(false);
-  };
-
-  // Live attempt policing: route deviation and finish-line detection.
-  useEffect(() => {
-    if (!challengeRun || challengeRun.mode !== "attempting" || !userLocation) return;
-    if (!challengeRun.startsAt || Date.now() < challengeRun.startsAt) return;
-    const here = { lat: userLocation.lat, lng: userLocation.lng };
-
-    const off = distanceToRoute(here, challengeRun.route) > DEVIATION_LIMIT_M;
-    if (off) {
-      const since = challengeRun.offRouteSince ?? Date.now();
-      if (challengeRun.offRouteSince == null) updateChallengeRun({ offRouteSince: since });
-      if (Date.now() - since > DEVIATION_GRACE_MS) {
-        void finalizeAttempt("void", (Date.now() - challengeRun.startsAt) / 1000);
-        return;
-      }
-    } else if (challengeRun.offRouteSince != null) {
-      updateChallengeRun({ offRouteSince: null });
-    }
-
-    // Ignore the finish line for the first few seconds when start and finish
-    // sit close together (short loops), so the run can't instantly complete.
-    const elapsed = (Date.now() - (challengeRun.startsAt ?? Date.now())) / 1000;
-    if (elapsed > 5 && hasCrossedFinish(here, challengeRun.finish)) {
-      void finalizeAttempt(scoreAttempt(elapsed, challengeRun.targetSec ?? elapsed, false), elapsed);
-    }
-  }, [challengeRun, userLocation, challengeNow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Rider moving (drives pin visibility and the nearby-riders ring; set further down).
   const [moving, setMoving] = useState(false);
@@ -1516,37 +1305,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       markers.clear();
     };
   }, []);
-
-  // Draw the challenge route being raced.
-  useEffect(() => {
-    if (!map) return;
-    const SRC = "challenge-route";
-    const LAYER = "challenge-route-line";
-    const coords =
-      challengeRun && challengeRun.mode === "attempting" ? challengeRun.route.map((p) => [p.lng, p.lat]) : [];
-    const data = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: { type: "LineString" as const, coordinates: coords },
-    };
-    const apply = () => {
-      const existing = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined;
-      if (existing) {
-        existing.setData(data);
-        return;
-      }
-      if (!coords.length) return;
-      map.addSource(SRC, { type: "geojson", data });
-      map.addLayer({
-        id: LAYER,
-        type: "line",
-        source: SRC,
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": accentColor, "line-width": 5, "line-opacity": 0.75, "line-dasharray": [2, 1] },
-      });
-    };
-    return whenStyleReady(map, apply);
-  }, [map, challengeRun, accentColor]);
 
   // Proximity ping while riding without a destination.
   const pingedDropsRef = useRef<Set<string>>(new Set());
@@ -2712,16 +2470,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             <>
               <p className="font-semibold">{tr("Place card here?")}</p>
               <div className="flex gap-2 mt-2">
-                <Button size="sm" className="h-7 px-4 text-xs" onClick={() => confirmDropCard(false)}>
+                <Button size="sm" className="h-7 px-4 text-xs" onClick={() => void confirmDropCard()}>
                   {tr("Yes")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-7 px-3 text-xs"
-                  onClick={() => confirmDropCard(true)}
-                >
-                  {tr("Yes + Challenge")}
                 </Button>
                 <Button
                   size="sm"
@@ -2742,110 +2492,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         </div>
       )}
 
-      {challengeRun && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-accent bg-card/95 shadow-2xl backdrop-blur px-4 py-3 text-center">
-          {challengeRun.startsAt == null ? (
-            <>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{tr("Setting challenge")}</p>
-              <p className="mt-1 text-sm font-bold">{tr("Card dropped — this is your start line")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {tr("Ready up for a 5-second countdown, then ride your route and hit Finish challenge. Five seconds are taken off your time for the stop.")}
-              </p>
-              <div className="flex gap-2 mt-3">
-                <Button
-                  size="sm"
-                  className="flex-1 h-8 text-xs"
-                  onClick={() => {
-                    updateChallengeRun({ startsAt: Date.now() + CHALLENGE_COUNTDOWN_MS });
-                    startRide(false);
-                  }}
-                >
-                  {tr("Ready up")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 text-xs"
-                  onClick={() => {
-                    clearChallengeRun();
-                    setPendingChallengeReceipt(null);
-                    toast(tr("Challenge cancelled"), { description: tr("Your card stays dropped without one.") });
-                  }}
-                >
-                  {tr("Cancel")}
-                </Button>
-              </div>
-            </>
-          ) : challengeCountdown > 0 ? (
-            <>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {challengeRun.mode === "setting" ? tr("Setting challenge") : tr("Time attack")}
-              </p>
-              <p className="text-5xl font-black tabular-nums text-accent leading-tight">{challengeCountdown}</p>
-              <p className="text-xs text-muted-foreground">{tr("Get ready…")}</p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-center gap-2">
-                <Flag className="w-4 h-4 text-accent" />
-                <p className="text-sm font-bold truncate">
-                  {challengeRun.mode === "setting" ? tr("Setting your route") : tr("Beat {0}", [challengeRun.ownerName])}
-                </p>
-              </div>
-              <p className="text-4xl font-black tabular-nums leading-tight">
-                {formatChallengeTime(challengeElapsedSec)}
-              </p>
-              {challengeRun.mode === "attempting" && challengeRun.targetSec != null && (
-                <p
-                  className={cn(
-                    "text-xs font-bold tabular-nums",
-                    challengeElapsedSec < challengeRun.targetSec ? "text-[hsl(142_71%_45%)]" : "text-destructive",
-                  )}
-                >
-                  {tr("Target")}{" "}{formatChallengeTime(challengeRun.targetSec)} ·{" "}
-                  {formatDelta(challengeElapsedSec, challengeRun.targetSec)}
-                </p>
-              )}
-              {challengeRun.mode === "attempting" && challengeRun.offRouteSince != null && (
-                <p className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-destructive">
-                  <AlertTriangle className="w-3.5 h-3.5" />{" "}{tr("Off route — get back on or the run is voided")}
-                </p>
-              )}
-              <div className="flex gap-2 mt-2">
-                {challengeRun.mode === "setting" ? (
-                  <Button size="sm" className="flex-1 h-8 text-xs" onClick={finishSettingChallenge}>
-                    {tr("Finish challenge")}
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => finalizeAttempt("void", challengeElapsedSec)}
-                  >
-                    {tr("Abandon run")}
-                  </Button>
-                )}
-                {challengeRun.mode === "setting" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 text-xs"
-                    onClick={async () => {
-                      clearChallengeRun();
-                      setPendingChallengeReceipt(null);
-                      await endRide();
-                      toast(tr("Challenge cancelled"), { description: tr("Your card stays dropped without one.") });
-                    }}
-                  >
-                    {tr("Cancel")}
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
 
       {showLoopPlanner && (
         <LoopPlannerPanel
@@ -3203,16 +2849,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           <p className="text-xs text-muted-foreground mt-0.5">
             {selectedDrop.ownerName} · {selectedDrop.makeModel || tr("Unknown model")} · {selectedDrop.tier}
           </p>
-          {selectedDrop.challenge && (
-            <div className="mt-2 rounded-xl border border-accent/60 bg-accent/10 px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-accent">{tr("Time attack")}</p>
-              <p className="text-xs text-muted-foreground">
-                {tr("Beat")}{" "}{formatChallengeTime(selectedDrop.challenge.timeSec)}{" "}{tr("over")}{" "}
-                {formatDistance(selectedDrop.challenge.distanceMi, settings.distanceUnit)}{" "}
-                {getDistanceLabel(settings.distanceUnit)}{" "}{tr("· stay on route")}
-              </p>
-            </div>
-          )}
           {userLocation && (
             <p className="text-xs text-muted-foreground mt-1">
               {formatDistance((metersBetween(userLocation, selectedDrop) / 1000) * 0.621371, settings.distanceUnit)}{" "}
@@ -3234,11 +2870,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             >
               {tr("Go for it")}
             </Button>
-            {selectedDrop.challenge && (
-              <Button size="sm" variant="secondary" onClick={() => takeChallenge(selectedDrop)}>
-                {tr("Take challenge")}
-              </Button>
-            )}
             {selectedDrop.isOwn ? (
               <Button
                 size="sm"
@@ -3303,9 +2934,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                   <p className="text-[10px] text-muted-foreground truncate">
                     {d.ownerName} · {d.tier}
                   </p>
-                  {d.challenge && (
-                    <p className="text-[10px] font-bold text-accent">⏱ {formatChallengeTime(d.challenge.timeSec)}</p>
-                  )}
                 </div>
               );
             })}

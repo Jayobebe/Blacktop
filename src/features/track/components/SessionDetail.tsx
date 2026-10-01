@@ -40,7 +40,7 @@ function asRide(session: TrackSession): RideSession {
  * After a session: lap list, two laps compared (traces, racing lines, corner
  * scores) and exports.
  */
-export function SessionDetail({ session, onBack }: { session: TrackSession; onBack: () => void }) {
+export function SessionDetail({ session, onBack, autoFlyover = false }: { session: TrackSession; onBack: () => void; /** The pit crew asked for the flyover: it plays on opening. */ autoFlyover?: boolean }) {
   const { settings } = useSettings();
   const { tracks } = useTrackStore();
   const track = tracks.find((t) => t.id === session.trackId);
@@ -49,7 +49,7 @@ export function SessionDetail({ session, onBack }: { session: TrackSession; onBa
   const best = valid.reduce<(typeof valid)[number] | null>((b, l) => (!b || l.ms < b.ms ? l : b), null);
   const last = session.laps[session.laps.length - 1] ?? null;
   const [aN, setAN] = useState<number | null>(best?.n ?? last?.n ?? null);
-  const [flyover, setFlyover] = useState(false);
+  const [flyover, setFlyover] = useState(autoFlyover && session.samples.length > 10);
   const [bN, setBN] = useState<number | null>(last && best && last.n !== best.n ? last.n : null);
 
   const lapSamples = (n: number | null) => {

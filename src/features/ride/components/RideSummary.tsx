@@ -1,4 +1,5 @@
 import { shareFileNative } from '@/lib/nativeShare';
+import type { TrackReceipt } from '@/lib/trackReceipt';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConvoyMemberInfo, calculateBadges, BADGE_INFO, BADGE_ORDER, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
@@ -47,12 +48,10 @@ interface RideSummaryProps {
   onClose?: () => void;
   /** 'overlay' (default): full-screen takeover shown right after a ride ends. 'embedded': a plain card for reuse elsewhere, e.g. Ride History. */
   variant?: 'overlay' | 'embedded';
-  /** Print this receipt on pink time-attack stock (card challenge rides). */
-  timeAttack?: boolean;
-  /** Track Pack session: prints on blue stock. */
+  /** Track Day session: prints on pink stock. */
   trackDay?: boolean;
-  /** Track Pack session details, printed on track-day receipts. */
-  track?: { trackName: string; laps: number; bestLapMs: number | null } | null;
+  /** Track Day session details, printed on track-day receipts. */
+  track?: Pick<TrackReceipt, 'trackName' | 'laps' | 'bestLapMs'> & Partial<TrackReceipt> | null;
   /** Hide the Save/Continue buttons (e.g. Speedshop preview). */
   hideActions?: boolean;
 }
@@ -75,7 +74,7 @@ function formatLapTime(ms: number | null | undefined): string {
   return `${m}:${sec}`;
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', timeAttack = false, trackDay = false, track = null, hideActions = false }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', trackDay = false, track = null, hideActions = false }: RideSummaryProps) {
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();
   // Each receipt section follows the rider's setup answers.
@@ -190,8 +189,8 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
         : 'flex flex-col items-center',
     )}>
       <div ref={receiptRef} className={cn("w-full max-w-[360px]", !hideActions && "animate-receipt-print")}>
-        <div className={cn('receipt-edge-top', timeAttack && 'receipt-edge-timeattack', !timeAttack && trackDay && 'receipt-edge-track')} />
-        <div className={cn('receipt relative px-6 py-5 font-receipt text-[--ink]', timeAttack && 'receipt-timeattack', !timeAttack && trackDay && 'receipt-track')}>
+        <div className={cn('receipt-edge-top', trackDay && 'receipt-edge-track')} />
+        <div className={cn('receipt relative px-6 py-5 font-receipt text-[--ink]', trackDay && 'receipt-track')}>
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
@@ -205,7 +204,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           <div className="text-center mb-1">
             <div className="text-3xl font-bold tracking-[0.15em]">{tr("BLACKTOP STORE")}</div>
             <div className="text-sm tracking-[0.3em] opacity-70 mt-1">
-              {timeAttack ? tr("— TIME ATTACK RECEIPT —") : trackDay ? tr("— TRACK DAY RECEIPT —") : tr("— {0} RECEIPT —", [terms.Ride.toUpperCase()])}
+              {trackDay ? tr("— TRACK DAY RECEIPT —") : tr("— {0} RECEIPT —", [terms.Ride.toUpperCase()])}
             </div>
           </div>
 
@@ -232,7 +231,12 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               {track && (
                 <>
                   <ReceiptRow label={tr("Best Lap")} value={formatLapTime(track.bestLapMs)} />
+                  {track.theoreticalMs != null && <ReceiptRow label={tr("Theoretical")} value={formatLapTime(track.theoreticalMs)} />}
                   <ReceiptRow label={tr("Laps")} value={String(track.laps)} />
+                  {!!track.pitStops && <ReceiptRow label={tr("Pit Stops")} value={String(track.pitStops)} />}
+                  {track.fastestPitMs != null && <ReceiptRow label={tr("Fastest Pit")} value={formatLapTime(track.fastestPitMs)} />}
+                  {track.rank != null && <ReceiptRow label={tr("Board")} value={`P${track.rank}`} />}
+                  {track.dogTags != null && <ReceiptRow label={tr("Dog Tags")} value={String(track.dogTags)} />}
                 </>
               )}
               {showSpeed && (
@@ -377,7 +381,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             <div className="text-center py-4 text-sm opacity-60">{tr("No data to display.")}</div>
           )}
         </div>
-        <div className={cn('receipt-edge-bottom', timeAttack && 'receipt-edge-timeattack', !timeAttack && trackDay && 'receipt-edge-track')} />
+        <div className={cn('receipt-edge-bottom', trackDay && 'receipt-edge-track')} />
       </div>
 
       {/* Action buttons (outside the receipt) */}

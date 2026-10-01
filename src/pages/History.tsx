@@ -200,15 +200,9 @@ export default function History() {
                         </span>
                       ) : null}
                       {ride.track && (
-                        <span className="flex items-center gap-1 text-[10px] text-[#3987e5] bg-[#3987e5]/10 px-2 py-0.5 rounded-lg font-medium">
+                        <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
                           <Zap className="w-2.5 h-2.5" />
                           {ride.track.trackName}
-                        </span>
-                      )}
-                      {ride.challenge && (
-                        <span className="flex items-center gap-1 text-[10px] text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
-                          <Timer className="w-2.5 h-2.5" />
-                          {tr("Time attack")}
                         </span>
                       )}
                       {hasBadges && (

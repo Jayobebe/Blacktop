@@ -80,6 +80,8 @@ export function useRideHistory() {
     const ridesToday =
       realRides.filter(r => new Date(r.startedAt).toDateString() === day).length + 1;
     recordBadges(soloBadgesForRide(ride, ridesToday));
+    // Track Day dog-tag badges, banked like any others.
+    if (ride.track?.badges?.length) recordBadges(ride.track.badges);
 
     // 3+ consecutive ride days earns a card copy (once per streak run).
     const streakGrant = recordRideDay(ride.endedAt ? new Date(ride.endedAt) : new Date());

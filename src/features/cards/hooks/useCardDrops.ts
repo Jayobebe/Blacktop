@@ -11,8 +11,6 @@ import type { VehicleCardData } from './useVehicleCards';
 import type { SharedCardPayload } from '../lib/cardCodec';
 import { grantCollectCopy } from '../lib/dropEconomy';
 import { TIER_LADDER, type CardTier } from '../types';
-import type { ChallengePoint, ChallengeResult } from '@/lib/challengeRun';
-import { compactRoute } from '../lib/challenge';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 import { tr } from '@/lib/i18n';
 
@@ -41,13 +39,6 @@ export interface CardDrop {
   collected: boolean;
   /** Planted by this rider. */
   isOwn: boolean;
-  /** Time-attack challenge attached to this drop, if the owner set one. */
-  challenge: {
-    route: ChallengePoint[];
-    timeSec: number;
-    distanceMi: number;
-    finish: ChallengePoint;
-  } | null;
 }
 
 /** Server-side proximity gate for collecting a card, in metres. */
@@ -76,11 +67,6 @@ type DropRow = {
   max_g_force: number | null;
   collected?: boolean;
   is_own?: boolean;
-  challenge_route?: unknown;
-  challenge_time_sec?: number | null;
-  challenge_distance_mi?: number | null;
-  challenge_finish_lat?: number | null;
-  challenge_finish_lng?: number | null;
 };
 
 function toDrop(r: DropRow): CardDrop {
@@ -110,15 +96,6 @@ function toDrop(r: DropRow): CardDrop {
     },
     collected: !!r.collected,
     isOwn: !!r.is_own,
-    challenge:
-      r.challenge_route && r.challenge_time_sec != null && r.challenge_finish_lat != null && r.challenge_finish_lng != null
-        ? {
-            route: r.challenge_route as ChallengePoint[],
-            timeSec: Number(r.challenge_time_sec),
-            distanceMi: Number(r.challenge_distance_mi) || 0,
-            finish: { lat: Number(r.challenge_finish_lat), lng: Number(r.challenge_finish_lng) },
-          }
-        : null,
   };
 }
 
@@ -239,48 +216,6 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
     onSuccess: invalidate,
   });
 
-  /** Attach (or clear) a time-attack challenge on one of my own drops. */
-  const setChallenge = useMutation({
-    mutationFn: async (args: {
-      dropId: string;
-      route: ChallengePoint[];
-      timeSec: number;
-      distanceMi: number;
-      finish: ChallengePoint;
-    }) => {
-      const { error } = await supabase
-        .from('card_drops')
-        .update({
-          challenge_route: compactRoute(args.route) as unknown as never,
-          challenge_time_sec: Math.max(1, Math.round(args.timeSec)),
-          challenge_distance_mi: args.distanceMi,
-          challenge_finish_lat: args.finish.lat,
-          challenge_finish_lng: args.finish.lng,
-          challenge_set_at: new Date().toISOString(),
-        })
-        .eq('id', args.dropId);
-      if (error) throw error;
-    },
-    onSuccess: invalidate,
-  });
-
-  /** Log a challenge attempt so the card owner can see who raced it. */
-  const recordAttempt = useMutation({
-    mutationFn: async (args: { dropId: string; timeSec: number; result: ChallengeResult }) => {
-      if (!user?.id) return;
-      const { error } = await supabase.from('card_challenge_attempts').insert({
-        drop_id: args.dropId,
-        challenger_id: user.id,
-        challenger_name: profile?.name || 'Rider',
-        time_sec: Math.max(0, Math.round(args.timeSec)),
-        result: args.result,
-      });
-      if (error) throw error;
-    },
-    // The card's owner hears whether their time attack held.
-    onSuccess: () => nudgePush(),
-  });
-
   const pickUpDrop = useMutation({
     mutationFn: async (dropId: string) => {
       const { error } = await supabase.from('card_drops').delete().eq('id', dropId);
@@ -316,5 +251,5 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
 
   const uncollected = useMemo(() => drops.filter((d) => !d.collected && !d.isOwn), [drops]);
 
-  return { drops, uncollected, myDrops, refetch, placeDrop, pickUpDrop, collectDrop, setChallenge, recordAttempt };
+  return { drops, uncollected, myDrops, refetch, placeDrop, pickUpDrop, collectDrop };
 }

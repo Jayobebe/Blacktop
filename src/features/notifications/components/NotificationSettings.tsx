@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, HeartHandshake, IdCard, BellOff, CloudLightning, Fuel, Loader2, Send, Smartphone, Swords, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
+import { AlertTriangle, Bell, HeartHandshake, IdCard, BellOff, CloudLightning, Fuel, Loader2, Send, Smartphone, Flag, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ const ICONS: Record<PushCategory, React.ElementType> = {
   rescue_nearby: HeartHandshake,
   weather: CloudLightning,
   blacktank: Fuel,
-  timeattack: Swords,
+  timeattack: Flag,
   card_pickups: IdCard,
   leaderboard: TrendingDown,
   crew_convoys: Users,

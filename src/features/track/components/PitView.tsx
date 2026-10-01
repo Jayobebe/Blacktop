@@ -27,6 +27,8 @@ import { formatLap } from '../lib/timing';
 import { theoreticalBest } from '../lib/laps';
 import { TrackMinimap } from './TrackMinimap';
 import { TrackVoice } from './TrackVoice';
+import { PostRaceDialog, PostRaceLine } from './PostRacePicker';
+import { loadPostRace, samePostRace, savePostRace, type PostRace } from '../lib/postRace';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -67,6 +69,14 @@ export function PitView() {
   const trailRef = useRef<{ lat: number; lng: number }[]>([]);
   const logRef = useRef<Telemetry[]>([]);
   const [now, setNow] = useState(Date.now());
+  /** Post-race telemetry the crew wants (sent to the racer before timing starts). */
+  const [post, setPost] = useState<PostRace>(loadPostRace);
+  const [askPost, setAskPost] = useState(false);
+  const changePost = (p: PostRace) => {
+    setPost(p);
+    savePostRace(p);
+    if (!snapRef.current?.running) linkRef.current?.send({ type: 'postRace', post: p });
+  };
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 47);
@@ -165,6 +175,18 @@ export function PitView() {
     return () => clearInterval(id);
   }, [token, hostTrack]);
 
+  // Keep offering the post-race choice until the racer's state shows it (apps
+  // that don't know it never report one, so they're left alone).
+  useEffect(() => {
+    if (!token) return;
+    const id = setInterval(() => {
+      const s = snapRef.current;
+      if (!s || s.running || s.postRace === undefined || samePostRace(s.postRace, post)) return;
+      linkRef.current?.send({ type: 'postRace', post });
+    }, 1500);
+    return () => clearInterval(id);
+  }, [token, post]);
+
   const host = (t: TrackDef) => {
     markTrackUsed(t.id);
     setHostTrack(t);
@@ -198,7 +220,10 @@ export function PitView() {
   const running = !!snap?.running && !ended;
 
   if (!token && walker.phase === 'walking') return <WalkScreen onSaved={setSelected} />;
-  if (viewing) return <SessionDetail session={viewing} onBack={() => setViewing(null)} />;
+  if (viewing) return <SessionDetail session={viewing} autoFlyover={viewing === received && post.flyover} onBack={() => setViewing(null)} />;
+  const postDialog = (
+    <PostRaceDialog open={askPost} trackName={hostTrack?.name ?? snap?.track?.name ?? selected?.name} value={post} onChange={changePost} onClose={() => setAskPost(false)} />
+  );
 
   // Crew-hosted, before the racer joins: the crew's QR and the track it carries.
   if (token && hostTrack && !snap) {
@@ -215,9 +240,11 @@ export function PitView() {
           </p>
           <TrackMinimap className="w-40 h-40" outline={hostTrack.outline} startFinish={hostTrack.startFinish} splits={hostTrack.splits} pitLane={hostTrack.pitLane} startFinishPits={hostTrack.startFinishPits} />
         </div>
+        <PostRaceLine value={post} onClick={() => setAskPost(true)} />
         <Button variant="outline" className="h-12 gap-2" onClick={changeTrack}>
           <RefreshCw className="w-4 h-4" />{" "}{tr("Change track")}
         </Button>
+        {postDialog}
       </div>
     );
   }
@@ -225,10 +252,15 @@ export function PitView() {
   // Track Day home, the same as the racer's: scan their QR, or pick a track and show them yours.
   if (!token) {
     return (
+      <>
       <TrackHome
         role="pit"
         selected={selected}
-        onSelect={setSelected}
+        onSelect={(t) => {
+          setSelected(t);
+          // Picking (or saving) a track asks what the crew wants after the session.
+          if (t) setAskPost(true);
+        }}
         onWalk={() => startWalk(profile.name || 'Pit crew')}
         scan={{
           label: tr("Scan racer QR"),
@@ -243,6 +275,8 @@ export function PitView() {
         primary={{ label: tr("Show racer QR"), icon: <QrCode className="w-5 h-5" />, onClick: host }}
         onViewSession={setViewing}
       />
+      {postDialog}
+      </>
     );
   }
 
@@ -266,9 +300,11 @@ export function PitView() {
       {!running && (
         <IdlePanel snap={snap} ended={ended} />
       )}
+      {!running && !ended && snap && <PostRaceLine value={post} onClick={() => setAskPost(true)} />}
+      {postDialog}
       {!running && received && (
         <Button className="h-14 text-base font-bold gap-2" onClick={() => setViewing(received)}>
-          <Flag className="w-5 h-5" />{" "}{tr("View results and 3D flyover")}
+          <Flag className="w-5 h-5" />{" "}{post.flyover ? tr("View results and 3D flyover") : tr("View results")}
         </Button>
       )}
 

@@ -11,6 +11,7 @@ import {
   Sparkles,
   Timer,
   TrendingUp,
+  Trophy,
   Users,
   Video,
   Wrench,
@@ -68,11 +69,10 @@ import {
  */
 
 const loopFade = (t: number, period: number) => clamp01(t / 0.4) * (1 - clamp01((t - (period - 0.45)) / 0.45));
-/** The receipt stocks, as the app prints them (index.css: .receipt, .receipt-timeattack, .receipt-track). */
+/** The receipt stocks, as the app prints them (index.css: .receipt, .receipt-track). */
 const STOCK = {
   ride: { paper: '#f4f1e8', ink: '#1a1614' },
-  attack: { paper: '#ffe3f0', ink: '#7a1247' },
-  track: { paper: '#e1edfc', ink: '#123f7a' },
+  track: { paper: '#ffe3f0', ink: '#7a1247' },
 };
 const PURPLE = '#a855f7';
 
@@ -161,11 +161,10 @@ function Receipt({
 
 // =============================================================================
 // After the ride: the receipt prints, the ride lands in History with its
-// corner grade and badges; a time attack prints on pink stock and a Track
-// Day session on blue
+// corner grade and badges; a Track Day session prints on pink stock
 // =============================================================================
 
-const AR_P = 18;
+const AR_P = 12;
 /** Each receipt's turn: it prints, sits, then slides off for the next (the last one stays). */
 const AR_SLOT = 6;
 const AR_TRACE = new Route([[160, 76], [172, 58], [190, 64], [204, 44], [226, 52], [238, 70], [256, 60], [276, 72], [290, 56]], false, 10);
@@ -173,17 +172,17 @@ const AR_TRACE = new Route([[160, 76], [172, 58], [190, 64], [204, 44], [226, 52
 /** Each receipt prints, the badges bank, and the receipt slides off for the next. */
 const AR_CUES: SceneCue[] = [
   [0.6, 'print'], [3.6, 'tap'], [4.0, 'tap'], [4.4, 'tap'], [4.8, 'tap'], [5.4, 'whoosh'],
-  [6.6, 'print'], [11.4, 'whoosh'], [12.6, 'print'],
+  [6.6, 'print'],
 ];
 
 export function AfterRideScene() {
   const id = useIds();
   const u = useUnits();
   const t = loopT(useSceneTime(0), AR_P);
-  const which = Math.min(2, Math.floor(t / AR_SLOT));
+  const which = Math.min(1, Math.floor(t / AR_SLOT));
   const local = t - which * AR_SLOT;
   const f = easeInOut((local - 0.6) / 2.5);
-  const slide = which < 2 ? easeInOut((local - 5.4) / 0.6) : 0;
+  const slide = which < 1 ? easeInOut((local - 5.4) / 0.6) : 0;
   const receipts: { stock: { paper: string; ink: string }; sub: string; rows: [string, string][]; footer: string[] }[] = [
     {
       stock: STOCK.ride,
@@ -199,28 +198,18 @@ export function AfterRideScene() {
       footer: [tr("THANK YOU FOR THE RIDE"), tr("ORDER #4C1A9F")],
     },
     {
-      stock: STOCK.attack,
-      sub: tr("— TIME ATTACK RECEIPT —"),
-      rows: [
-        [tr("Max Spd"), `${u.speed(118)} ${u.speedLabel}`],
-        [tr("Distance"), `${u.miles1(29.5)} ${u.distLabel.toUpperCase()}`],
-        [tr("Duration"), '3:41'],
-        [tr("Target"), '3:58'],
-        [tr("Delta"), '-0:17'],
-      ],
-      footer: [tr("WON · SPECTRE UNLOCKED"), tr("3x SPEED DEMON")],
-    },
-    {
       stock: STOCK.track,
       sub: tr("— TRACK DAY RECEIPT —"),
       rows: [
         [tr("Track"), 'Brands Hatch Indy'],
-        [tr("Best Lap"), '0:49.312'],
+        [tr("Best Lap"), '0:52.318'],
+        [tr("Theoretical"), '0:51.977'],
         [tr("Laps"), '14'],
-        [tr("Max Spd"), `${u.speed(121)} ${u.speedLabel}`],
-        [tr("Max Lean"), '53°'],
+        [tr("Fastest Pit"), '0:31.402'],
+        [tr("Board"), 'P3'],
+        [tr("Dog Tags"), '1'],
       ],
-      footer: [tr("THANK YOU FOR THE RIDE"), `${tr("ORDER")} #7F20C4`],
+      footer: [tr("3x SPEED DEMON"), `${tr("ORDER")} #7F20C4`],
     },
   ];
   const r = receipts[which];
@@ -525,39 +514,40 @@ export function TradingCardsScene() {
 }
 
 // =============================================================================
-// Card challenges: ready up, race the setter's line with a live delta, beat
-// it, and their Spectre card rises out of the fog
+// Track records: a flying lap on a library circuit, the rider climbs the
+// opt-in board past Rico, and Rico's dog tag (a Spectre of his card) rises
 // =============================================================================
 
-const CC_P = 11;
-const CC_ROUTE = new Route([[30, 170], [66, 158], [90, 124], [132, 112], [176, 118], [212, 90], [244, 64], [288, 44]], false, 16);
-const CC_RUN = [1.3, 6.3];
-const CC_TARGET = 238;
-const CC_TIME = 221;
+const TR_P = 11;
+const TR_CIRCUIT = new Route(
+  [[40, 62], [86, 50], [122, 58], [134, 84], [112, 104], [96, 122], [112, 146], [132, 166], [100, 182], [54, 178], [28, 150], [22, 104]],
+  true,
+  12,
+);
+const TR_RUN = [0.4, 5.2];
+const TR_LAP = 52.318;
+const TR_RIVAL = 52.904;
+/** Board rows before and after the lap: [name, time, is me]. */
+const TR_BEFORE: [string, string, boolean][] = [['Priya', '52.104', false], ['Rico', '52.904', false], ['Demo Rider', '53.311', true], ['Kit', '53.720', false]];
 
-/** The countdown, the launch, the finish and the Spectre rising. */
-const CC_CUES: SceneCue[] = [[CC_RUN[0] - 1.26, 'beep'], [CC_RUN[0] - 0.84, 'beep'], [CC_RUN[0] - 0.42, 'beep'], [CC_RUN[0], 'whoosh'], [CC_RUN[1], 'success'], [6.8, 'whoosh']];
+/** The line, the board shuffling, and the dog tag rising. */
+const TR_CUES: SceneCue[] = [[TR_RUN[0], 'beep'], [TR_RUN[1], 'beep'], [TR_RUN[1] + 0.4, 'success'], [6.4, 'whoosh']];
 
-export function CardChallengeScene() {
+export function TrackRecordsScene() {
   const id = useIds();
-  const t = loopT(useSceneTime(0), CC_P);
-  const run = clamp01((t - CC_RUN[0]) / (CC_RUN[1] - CC_RUN[0]));
-  const prog = 1 - Math.pow(1 - run, 1.3);
-  const at = CC_ROUTE.at(prog);
-  const clock = CC_TIME * run;
-  const delta = clock - CC_TARGET * run;
-  const counting = t < CC_RUN[0];
-  const count = Math.max(1, Math.ceil((CC_RUN[0] - t) / 0.42));
-  const finished = t >= CC_RUN[1];
-  const burst = clamp01((t - CC_RUN[1]) / 0.6);
-  const spectre = win(t, 6.8, 10.5, 0.5);
-  const rise = easeOutBack((t - 6.8) / 0.8);
-  const end = CC_ROUTE.at(1).p;
-  const start = CC_ROUTE.at(0).p;
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const t = loopT(useSceneTime(0), TR_P);
+  const run = clamp01((t - TR_RUN[0]) / (TR_RUN[1] - TR_RUN[0]));
+  const at = TR_CIRCUIT.at(run);
+  const clock = TR_LAP * run;
+  const delta = (TR_LAP - TR_RIVAL) * run;
+  const finished = t >= TR_RUN[1];
+  const swap = easeInOut((t - TR_RUN[1] - 0.3) / 0.7);
+  const tag = win(t, 6.4, 10.4, 0.5);
+  const rise = easeOutBack((t - 6.4) / 0.8);
+  const sf = TR_CIRCUIT.at(0);
 
   return (
-    <Frame sound={{ t, cues: CC_CUES }}>
+    <Frame sound={{ t, cues: TR_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <defs>
@@ -572,61 +562,68 @@ export function CardChallengeScene() {
             <feFuncA type="linear" slope="0.75" />
           </feComponentTransfer>
         </filter>
-        <clipPath id={id('sp')}>
-          <rect x={125} y={48} width={70} height={98} rx={7} />
+        <clipPath id={id('tag')}>
+          <rect x={128} y={52} width={64} height={92} rx={14} />
         </clipPath>
       </defs>
-      <g opacity={loopFade(t, CC_P)}>
-        <Road d="M0 100 L90 124" w={3.5} />
-        <Road d="M176 118 L220 200" w={3.5} />
-        <Road d={CC_ROUTE.d} w={7} />
-        <path d={CC_ROUTE.d} fill="none" style={{ stroke: A }} strokeOpacity={0.35} strokeWidth={2} strokeDasharray="4 4" />
-        {run > 0 && <path d={CC_ROUTE.slice(0, prog, 60)} fill="none" style={{ stroke: A }} strokeWidth={3} strokeLinecap="round" />}
-        {/* Start: the dropped card */}
-        <g transform={`translate(${start[0] - 7} ${start[1] - 22})`}>
-          <rect width={14} height={18} rx={2.5} fill={PANEL} style={{ stroke: A }} strokeWidth={1} />
-          <Ico I={Timer} x={3} y={4.5} s={8} />
+      <g opacity={loopFade(t, TR_P)}>
+        <Road d={TR_CIRCUIT.d} w={8} />
+        {run > 0 && <path d={TR_CIRCUIT.slice(0, run, 60)} fill="none" style={{ stroke: A }} strokeWidth={2.6} strokeLinecap="round" />}
+        <g transform={`translate(${sf.p[0]} ${sf.p[1]}) rotate(${sf.a + 90})`}>
+          {[-6, -3, 0, 3].map((x, i) => (
+            <rect key={x} x={x} y={-2.5} width={3} height={2.5} fill={i % 2 ? '#111' : '#fff'} />
+          ))}
+          {[-6, -3, 0, 3].map((x, i) => (
+            <rect key={`b${x}`} x={x} y={0} width={3} height={2.5} fill={i % 2 ? '#fff' : '#111'} />
+          ))}
         </g>
-        {/* Finish */}
-        <g transform={`translate(${end[0]} ${end[1]})`}>
-          {finished && <circle r={6 + burst * 22} fill="none" stroke={GREEN} strokeWidth={1.5} opacity={1 - burst} />}
-          <circle r={5} fill={GREEN} />
-          <Ico I={Flag} x={-3.5} y={-3.5} s={7} color="#111" />
-        </g>
-        {run > 0 && !finished && <Arrow p={at.p} a={at.a} color={INK} />}
+        {!finished && <Arrow p={at.p} a={at.a} color={INK} glow={id('glow')} />}
 
-        {counting ? (
-          <g transform={popAt([160, 96], easeOutBack((1 - frac((CC_RUN[0] - t) / 0.42)) * 2.5))}>
-            <T x={160} y={112} anchor="middle" size={46} weight={800} color={A} mono>{count}</T>
-          </g>
-        ) : (
-          <Panel x={112} y={8} w={96} h={40} r={8} stroke={aa(0.7)}>
-            <T x={48} y={11} anchor="middle" size={5.5} color={MUTED} weight={700} spacing={1}>{tr("Time attack").toUpperCase()}</T>
-            <T x={48} y={26} anchor="middle" size={14} weight={800} mono>{fmt(clock)}</T>
-            <T x={48} y={35} anchor="middle" size={6.5} weight={800} color={delta <= 0 ? GREEN : RED} mono>
-              {finished ? tr("Target 3:58 · -0:17") : `${delta <= 0 ? '−' : '+'}${Math.abs(delta).toFixed(1)}`}
-            </T>
-          </Panel>
-        )}
+        {/* Live lap against the rival just above */}
+        <Panel x={20} y={8} w={110} h={34} r={8} stroke={aa(0.7)}>
+          <T x={55} y={10} anchor="middle" size={5.5} color={MUTED} weight={700} spacing={1}>{tr("Flying lap").toUpperCase()}</T>
+          <T x={55} y={24} anchor="middle" size={13} weight={800} mono>{`0:${clock.toFixed(3).padStart(6, '0')}`}</T>
+          <T x={55} y={31.5} anchor="middle" size={5.5} weight={800} color={GREEN} mono>{`${tr("vs Rico")} −${Math.abs(delta).toFixed(3)}`}</T>
+        </Panel>
 
-        {/* Beaten: the setter's Spectre card */}
-        {spectre > 0 && (
-          <g opacity={spectre}>
-            <rect width={VW} height={VH} fill="black" opacity={0.55} />
-            <g transform={`translate(0 ${((1 - clamp01(rise)) * 26).toFixed(1)}) ${popAt([160, 97], 0.75 + 0.25 * clamp01(rise))}`}>
-              <rect x={125} y={48} width={70} height={98} rx={7} fill={`url(#${id('metal')})`} />
-              <g clipPath={`url(#${id('sp')})`}>
-                <BikePhoto cx={160} floor={118} height={44} filter={`url(#${id('ghost')})`} opacity={0.85} />
-                {[0, 1].map((k) => (
-                  <ellipse key={k} cx={125 + 70 * frac(t * 0.12 + k * 0.5)} cy={112 + k * 14} rx={46} ry={12} fill="white" opacity={0.18} filter={`url(#${id('soft')})`} />
-                ))}
-                <rect x={125 - 70 + 140 * frac(t * 0.35)} y={40} width={22} height={120} fill="white" opacity={0.15} transform="rotate(18 160 97)" />
+        {/* The board: Brands Hatch Indy, bikes */}
+        <Panel x={160} y={8} w={152} h={92}>
+          <Ico I={Trophy} x={8} y={6} s={8} />
+          <T x={20} y={12.5} size={6.5} weight={700}>Brands Hatch Indy</T>
+          <T x={144} y={12.5} anchor="end" size={5.5} color={MUTED}>{tr("Bikes")}</T>
+          {TR_BEFORE.map(([name, time, me], i) => {
+            // Me and Rico trade places once the lap is in.
+            const slot = me ? 2 - swap : name === 'Rico' ? 1 + swap : i;
+            const y = 28 + slot * 16;
+            const shown = me && swap > 0.5 ? '52.318' : time;
+            const beaten = name === 'Rico' && swap > 0;
+            return (
+              <g key={name}>
+                {me && <rect x={4} y={y - 9} width={144} height={14} rx={4} style={{ fill: aa(0.15) }} />}
+                <T x={12} y={y} size={6.5} weight={800} mono color={me ? A : MUTED}>{`P${Math.round(slot) + 1}`}</T>
+                <T x={32} y={y} size={6.5} weight={me ? 800 : 600} color={beaten ? MUTED : INK}>{me ? tr("You") : name}</T>
+                <T x={144} y={y} anchor="end" size={6.5} weight={800} mono color={me && swap > 0.5 ? GREEN : INK}>{shown}</T>
               </g>
-              <rect x={125} y={48} width={70} height={98} rx={7} fill="none" stroke="#e5eaf0" strokeWidth={1.4} />
-              <rect x={130} y={53} width={36} height={11} rx={5.5} fill="white" fillOpacity={0.12} stroke="white" strokeOpacity={0.35} />
-              <Ico I={Ghost} x={133} y={55.5} s={6} color="#f1f5f9" />
-              <T x={141} y={61} size={5} weight={800} color="#f1f5f9" spacing={0.6}>{tr("Spectre").toUpperCase()}</T>
-              <T x={160} y={138} anchor="middle" size={9} weight={800} color="#f8fafc" mono>-0:17</T>
+            );
+          })}
+        </Panel>
+        <Chip x={160} y={108} label={tr("Opt-in · circuits only")} I={Flag} />
+
+        {/* Rico's dog tag: a Spectre of his card */}
+        {tag > 0 && (
+          <g opacity={tag}>
+            <rect width={VW} height={VH} fill="black" opacity={0.55} />
+            <g transform={`translate(0 ${((1 - clamp01(rise)) * 26).toFixed(1)}) ${popAt([160, 98], 0.75 + 0.25 * clamp01(rise))}`}>
+              <rect x={128} y={52} width={64} height={92} rx={14} fill={`url(#${id('metal')})`} />
+              <g clipPath={`url(#${id('tag')})`}>
+                <BikePhoto cx={160} floor={118} height={40} filter={`url(#${id('ghost')})`} opacity={0.85} />
+                <rect x={128 - 64 + 128 * frac(t * 0.35)} y={40} width={20} height={120} fill="white" opacity={0.15} transform="rotate(18 160 98)" />
+              </g>
+              <rect x={128} y={52} width={64} height={92} rx={14} fill="none" stroke="#e5eaf0" strokeWidth={1.4} />
+              <circle cx={160} cy={61} r={3.2} fill="#050506" stroke="#e5eaf0" strokeWidth={0.8} />
+              <Ico I={Ghost} x={140} y={68} s={6} color="#f1f5f9" />
+              <T x={148} y={73.5} size={5} weight={800} color="#f1f5f9" spacing={0.6}>RICO</T>
+              <T x={160} y={134} anchor="middle" size={8} weight={800} color="#f8fafc" mono>−0.586</T>
             </g>
           </g>
         )}
@@ -634,7 +631,7 @@ export function CardChallengeScene() {
           x={VW - 8}
           y={175}
           right
-          label={finished ? tr("3x Speed Demon + Spectre") : tr("Target 3:58")}
+          label={finished ? tr("3x Speed Demon + dog tag") : tr("Best lap goes on the board")}
           I={finished ? Check : Timer}
           color={finished ? GREEN : A}
           tone={finished ? GREEN : undefined}

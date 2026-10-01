@@ -12,7 +12,6 @@ import { useState } from 'react';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
-import { formatChallengeTime, formatDelta } from '@/features/cards/lib/challenge';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/features/profile';
 import { CornerReportCard } from '@/features/ride/components/CornerReportCard';
@@ -20,7 +19,7 @@ import { shareRecapCard } from '@/features/ride/lib/recapCard';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { formatLap } from '@/features/track';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
 import { usePeaksHidden } from '@/features/ride';
 
 export default function RideDetail() {
@@ -137,14 +136,8 @@ export default function RideDetail() {
         backTo="/history"
         right={
           <>
-            {ride.challenge && (
-              <span className="flex items-center gap-1 text-xs font-medium text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2.5 py-1 rounded-full">
-                <IdCard className="w-3.5 h-3.5" />
-                {tr("Time attack")}
-              </span>
-            )}
             {ride.track && (
-              <span className="flex items-center gap-1 text-xs font-medium text-[#3987e5] bg-[#3987e5]/10 px-2.5 py-1 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-medium text-[hsl(330_81%_60%)] bg-[hsl(330_81%_60%)]/10 px-2.5 py-1 rounded-full">
                 <Zap className="w-3.5 h-3.5" />
                 {tr("Track")}
               </span>
@@ -185,7 +178,6 @@ export default function RideDetail() {
             earnedBadges={ride.earnedBadges}
             printedAt={ride.endedAt ?? ride.startedAt}
             orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
-            timeAttack={!!ride.challenge}
             trackDay={!!ride.track}
             track={ride.track ?? null}
           />
@@ -194,10 +186,10 @@ export default function RideDetail() {
         {ride.track && (
           <button
             onClick={() => navigate(`/track?session=${ride.track!.sessionId}`)}
-            className="w-full text-left bg-[#3987e5]/5 rounded-lg p-3 border border-[#3987e5]/50 mb-3 animate-slide-up"
+            className="w-full text-left bg-[hsl(330_81%_60%)]/5 rounded-lg p-3 border border-[hsl(330_81%_60%)]/50 mb-3 animate-slide-up"
           >
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#3987e5]" />
+              <Zap className="w-4 h-4 text-[hsl(330_81%_60%)]" />
               <p className="text-sm font-bold flex-1">{tr("Track Day ·")}{" "}{ride.track.trackName}</p>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
@@ -219,62 +211,6 @@ export default function RideDetail() {
           </button>
         )}
 
-        {ride.challenge && (
-          <div className="bg-[hsl(330_81%_60%)]/5 rounded-lg p-3 border border-[hsl(330_81%_60%)]/50 mb-3 animate-slide-up">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <IdCard className="w-4 h-4 text-[hsl(330_81%_60%)]" />
-                <p className="text-sm font-bold">
-                  {ride.challenge.role === 'set' ? tr("Challenge set") : tr("Card challenge")}
-                </p>
-              </div>
-              {ride.challenge.result && (
-                <span
-                  className={cn(
-                    'text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded',
-                    ride.challenge.result === 'won'
-                      ? 'bg-[hsl(142_71%_45%)]/15 text-[hsl(142_71%_45%)]'
-                      : 'bg-destructive/15 text-destructive',
-                  )}
-                >
-                  {ride.challenge.result === 'won' ? tr("Won") : ride.challenge.result === 'void' ? tr("Void") : tr("Lost")}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {ride.challenge.vehicleName} · {ride.challenge.ownerName}
-              {ride.challenge.tier ? ` · ${ride.challenge.tier}` : ''}
-            </p>
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Your time")}</p>
-                <p className="text-sm font-bold tabular-nums">{formatChallengeTime(ride.challenge.timeSec)}</p>
-              </div>
-              <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Target")}</p>
-                <p className="text-sm font-bold tabular-nums">
-                  {ride.challenge.targetSec != null ? formatChallengeTime(ride.challenge.targetSec) : '—'}
-                </p>
-              </div>
-              <div className="rounded-lg bg-secondary/50 p-2 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{tr("Delta")}</p>
-                <p className="text-sm font-bold tabular-nums">
-                  {ride.challenge.targetSec != null
-                    ? formatDelta(ride.challenge.timeSec, ride.challenge.targetSec)
-                    : '—'}
-                </p>
-              </div>
-            </div>
-            {ride.challenge.result === 'won' && (
-              <p className="text-[11px] text-[hsl(142_71%_45%)] font-semibold mt-2">
-                {ride.challenge.own ? tr("Spectre card unlocked") : tr("3x Speed Demon earned · Spectre card unlocked")}
-              </p>
-            )}
-            {ride.challenge.result && ride.challenge.result !== 'won' && !ride.challenge.own && (
-              <p className="text-[11px] text-destructive font-semibold mt-2">{tr("1x Fallback earned")}</p>
-            )}
-          </div>
-        )}
 
         {/* Photos Section */}
         <div className="bg-card rounded-lg p-3 landscape:p-2.5 border border-border mb-3 animate-slide-up">
@@ -447,7 +383,7 @@ export default function RideDetail() {
         )}
 
         {/* Download Overlay Section - show if overlay was recorded */}
-        {settings.rideOverlayEnabled && (ride.overlayAvailable || ride.overlayBlobUrl) && (
+        {(settings.rideOverlayEnabled || ride.track) && (ride.overlayAvailable || ride.overlayBlobUrl) && (
           <button
             disabled={overlayProgress !== null}
             onClick={async () => {

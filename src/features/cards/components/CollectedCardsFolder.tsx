@@ -29,7 +29,7 @@ import type { VehicleCardData } from '../hooks/useVehicleCards';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
 import { useVehicleCards } from '../hooks/useVehicleCards';
-import { formatChallengeTime, formatDelta } from '../lib/challenge';
+import { formatSpectreTime as formatChallengeTime, formatSpectreGap as formatDelta } from '../lib/spectre';
 import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
@@ -170,13 +170,13 @@ export function CollectedCardsFolder() {
       </div>
       <p className="px-4 pb-3 text-[10px] text-muted-foreground">{tr("Tap a card to flip it.")}</p>
 
-      {/* Spectre row — earned only by beating time attacks; no QR, no trading */}
+      {/* Spectre row — dog tags, earned only by beating a lap on a Track Day board; no QR, no trading */}
       <CardRow
         icon={<Ghost className="w-4 h-4 text-cyan-300" />}
         title={tr("Spectre")}
         count={spectres.length}
-        hint={tr("Earned by beating time attacks")}
-        empty={tr("Take a card's time attack on the map and beat it. Spectre cards can't be scanned or traded.")}
+        hint={tr("Dog tags from Track Day leaderboards")}
+        empty={tr("Beat a rider's lap on a Track Day leaderboard to take their dog tag. Spectre cards can't be scanned or traded.")}
         emptyClass="border-cyan-300/30"
       >
         {spectres.map((sp) => (
@@ -360,6 +360,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-white/10 text-slate-100 border border-white/30 spectre-text">
                 <Ghost className="w-3.5 h-3.5" />{" "}{tr("Spectre")}
               </span>
+              {spectre.track && <p className="text-[10px] uppercase tracking-widest text-slate-200/80 text-center truncate w-full">{spectre.track}</p>}
               <div className="w-full grid grid-cols-2 gap-1.5">
                 <Stat icon={Timer} label={tr("Your time")} value={formatChallengeTime(spectre.timeSec)} unit="" />
                 <Stat icon={Timer} label={tr("{0}'s", [spectre.setterName])} value={formatChallengeTime(spectre.targetSec)} unit="" />

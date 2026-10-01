@@ -80,7 +80,6 @@ function ReceiptPreview() {
         earnedBadges={ride?.earnedBadges}
         printedAt={ride ? ride.endedAt ?? ride.startedAt : undefined}
         orderId={ride ? `#${ride.id.slice(0, 6).toUpperCase()}` : '#SAMPLE'}
-        timeAttack={!!ride?.challenge}
         trackDay={!!ride?.track}
         track={ride?.track ?? null}
       />

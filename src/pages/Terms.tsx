@@ -19,7 +19,7 @@ export default function Terms() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 text-sm leading-relaxed">
         <p className="text-xs text-muted-foreground">
-          {tr("Last updated: September 30, 2026")}
+          {tr("Last updated: October 1, 2026")}
         </p>
 
         <section className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 space-y-2">
@@ -124,6 +124,9 @@ export default function Terms() {
             <li>{tr("Lap and sector times come from your phone's GPS. They are approximate and not official timing.")}</li>
             <li>{tr("The circuit library is built from public OpenStreetMap data (© OpenStreetMap contributors, ODbL). Layouts, lengths and directions may be inaccurate. Blacktop isn't affiliated with any circuit; circuit names belong to their owners.")}</li>
             <li>{tr("Spoken pit board calls and the pit crew link are aids, not a replacement for circuit marshals, flags or official signals.")}</li>
+            <li>{tr("Track leaderboards and dog tags are for circuits only. Blacktop has no timed challenges on public roads: never race, chase a time or try to beat anyone on a public road.")}</li>
+            <li>{tr("Leaderboard times are unofficial GPS times, checked only for plausibility. We may remove any time or rider from a board. A place on a board is not a record recognised by any circuit or governing body.")}</li>
+            <li>{tr("You are solely responsible for your riding on track and for following the circuit's rules. The app owner and contributors accept")}<span className="text-foreground font-medium">{" "}{tr("no liability")}{" "}</span>{tr("for any collision, injury or damage arising from chasing a lap time or a leaderboard place.")}</li>
           </ul>
         </section>
 
@@ -179,30 +182,6 @@ export default function Terms() {
             {tr("If you are not willing to accept these risks, do not play Hit Heavy.")}
           </p>
         </section>
-
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold">{tr("Card challenges (time attack)")}</h2>
-          <p className="text-muted-foreground">
-            {tr("Card challenges are a game layer inside Blacktop World, not a race. By setting or taking one you agree that:")}
-          </p>
-          <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
-            <li>
-              {tr("Both setting and taking a challenge start only after you press Ready up and a five-second countdown finishes. Never ready up while moving, in traffic, or anywhere it is unsafe to stop.")}
-            </li>
-            <li>
-              {tr("Five seconds are deducted from a setter's recorded time to allow for stopping to mark the finish line. Times, routes and results are approximate and derived from GPS.")}
-            </li>
-            <li>
-              {tr("Speed limits, traffic law and road conditions always take priority over any time on screen. A faster time is never worth breaking the law or riding beyond your ability.")}
-            </li>
-            <li>
-              {tr("You are solely responsible for your riding during a challenge. The app owner and contributors accept")}
-              <span className="text-foreground font-medium">{" "}{tr("no liability")}{" "}</span>
-              {tr("for any collision, injury, penalty or damage arising from setting or attempting a challenge.")}
-            </li>
-          </ul>
-        </section>
-
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Payments — Pay Up &amp; Blacktank")}</h2>

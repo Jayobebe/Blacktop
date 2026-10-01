@@ -1,7 +1,6 @@
 import { takePendingTrackReceipt } from '@/lib/trackReceipt';
 import { mergeGVector, type GMax } from '@/lib/gForceVector';
 import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
-import { takePendingChallengeReceipt } from '@/lib/challengeRun';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { backgroundGpsAvailable, startBackgroundGps, stopBackgroundGps } from '../lib/backgroundGps';
@@ -1125,8 +1124,9 @@ export function useActiveRide(convoyId?: string | null) {
         gEnvelope: currentState.gEnvelope?.some((v) => v > 0) ? currentState.gEnvelope : undefined,
         gMax: currentState.gMax,
         bikeId,
-        challenge: takePendingChallengeReceipt(),
         track,
+        // Track Day: 3 Speed Demon per dog tag collected on the board.
+        earnedBadges: track?.badges?.length ? track.badges : undefined,
       };
       const didSaveRide = addRideRef.current(ride);
       if (didSaveRide) {

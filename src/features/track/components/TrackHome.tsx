@@ -15,6 +15,8 @@ import { TrackEditor } from './TrackEditor';
 import { TrackSearch } from './TrackSearch';
 import { TrackMinimap } from './TrackMinimap';
 import { TrackQrScanner } from './TrackQrScanner';
+import { TrackBoard } from './TrackBoard';
+import { hasBoard } from '../lib/trackRecords';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -144,6 +146,7 @@ export function TrackHome({
           onClose={() => onSelect(null)}
         />
       )}
+      {current && hasBoard(current) && <TrackBoard track={current} />}
 
       <TrackShelf
         title={tr("Previous tracks")}

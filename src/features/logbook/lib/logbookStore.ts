@@ -98,16 +98,6 @@ export function toLogRide(r: RideSession, owner: string): LogRide {
     maxLeanRight: r.maxLeanRight,
     maxGForce: r.maxGForce,
     earnedBadges: r.earnedBadges,
-    challenge: r.challenge
-      ? {
-          vehicleName: r.challenge.vehicleName,
-          ownerName: r.challenge.ownerName,
-          role: r.challenge.role,
-          timeSec: r.challenge.timeSec,
-          targetSec: r.challenge.targetSec,
-          result: r.challenge.result,
-        }
-      : undefined,
     track: r.track ? { trackName: r.track.trackName, laps: r.track.laps, bestLapMs: r.track.bestLapMs } : undefined,
     owner,
   };

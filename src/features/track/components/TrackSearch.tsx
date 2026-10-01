@@ -160,7 +160,7 @@ export function TrackSearch({
           )}
           {query && !mine.length && !library.length && (
             <p className="px-3 py-3 text-xs text-muted-foreground">
-              {index || indexFailed ? tr("No tracks by that name. Build it below, from the map or with a GPS lap.") : tr("Searching…")}
+              {index || indexFailed ? tr("No tracks by that name. Build it below with a GPS lap.") : tr("Searching…")}
             </p>
           )}
           {indexFailed && <p className="px-3 pb-2 text-[11px] text-destructive">{tr("The circuit library didn't load. Your own tracks still work.")}</p>}
