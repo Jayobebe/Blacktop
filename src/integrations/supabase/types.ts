@@ -231,44 +231,6 @@ export type Database = {
           },
         ]
       }
-      card_challenge_attempts: {
-        Row: {
-          challenger_id: string
-          challenger_name: string
-          created_at: string
-          drop_id: string
-          id: string
-          result: string
-          time_sec: number
-        }
-        Insert: {
-          challenger_id: string
-          challenger_name?: string
-          created_at?: string
-          drop_id: string
-          id?: string
-          result?: string
-          time_sec?: number
-        }
-        Update: {
-          challenger_id?: string
-          challenger_name?: string
-          created_at?: string
-          drop_id?: string
-          id?: string
-          result?: string
-          time_sec?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "card_challenge_attempts_drop_id_fkey"
-            columns: ["drop_id"]
-            isOneToOne: false
-            referencedRelation: "card_drops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       card_drop_collections: {
         Row: {
           collector_id: string
@@ -304,12 +266,6 @@ export type Database = {
       card_drops: {
         Row: {
           card_zoom: number
-          challenge_distance_mi: number | null
-          challenge_finish_lat: number | null
-          challenge_finish_lng: number | null
-          challenge_route: Json | null
-          challenge_set_at: string | null
-          challenge_time_sec: number | null
           copy_index: number
           created_at: string
           crew_code: string
@@ -337,12 +293,6 @@ export type Database = {
         }
         Insert: {
           card_zoom?: number
-          challenge_distance_mi?: number | null
-          challenge_finish_lat?: number | null
-          challenge_finish_lng?: number | null
-          challenge_route?: Json | null
-          challenge_set_at?: string | null
-          challenge_time_sec?: number | null
           copy_index?: number
           created_at?: string
           crew_code: string
@@ -370,12 +320,6 @@ export type Database = {
         }
         Update: {
           card_zoom?: number
-          challenge_distance_mi?: number | null
-          challenge_finish_lat?: number | null
-          challenge_finish_lng?: number | null
-          challenge_route?: Json | null
-          challenge_set_at?: string | null
-          challenge_time_sec?: number | null
           copy_index?: number
           created_at?: string
           crew_code?: string
@@ -1196,10 +1140,12 @@ export type Database = {
           crew_code: string | null
           crew_codes: string[]
           crew_names: Json
+          distance_unit: string | null
           endpoint: string
           id: string
           last_sent_at: string | null
           p256dh: string
+          speed_unit: string | null
           updated_at: string
           user_agent: string | null
           user_id: string
@@ -1214,10 +1160,12 @@ export type Database = {
           crew_code?: string | null
           crew_codes?: string[]
           crew_names?: Json
+          distance_unit?: string | null
           endpoint: string
           id?: string
           last_sent_at?: string | null
           p256dh: string
+          speed_unit?: string | null
           updated_at?: string
           user_agent?: string | null
           user_id: string
@@ -1232,10 +1180,12 @@ export type Database = {
           crew_code?: string | null
           crew_codes?: string[]
           crew_names?: Json
+          distance_unit?: string | null
           endpoint?: string
           id?: string
           last_sent_at?: string | null
           p256dh?: string
+          speed_unit?: string | null
           updated_at?: string
           user_agent?: string | null
           user_id?: string
@@ -1287,6 +1237,81 @@ export type Database = {
           price_band?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      track_record_beats: {
+        Row: {
+          at: string
+          beaten_id: string
+          beaten_ms: number
+          beater_id: string
+          beater_ms: number
+          direction: string
+          osm_id: number
+          vehicle_class: string
+        }
+        Insert: {
+          at?: string
+          beaten_id: string
+          beaten_ms: number
+          beater_id: string
+          beater_ms: number
+          direction: string
+          osm_id: number
+          vehicle_class: string
+        }
+        Update: {
+          at?: string
+          beaten_id?: string
+          beaten_ms?: number
+          beater_id?: string
+          beater_ms?: number
+          direction?: string
+          osm_id?: number
+          vehicle_class?: string
+        }
+        Relationships: []
+      }
+      track_records: {
+        Row: {
+          card: Json | null
+          direction: string
+          display_name: string
+          lap_ms: number
+          osm_id: number
+          sectors: number[]
+          set_at: string
+          track_name: string
+          user_id: string
+          vehicle_class: string
+          vehicle_name: string | null
+        }
+        Insert: {
+          card?: Json | null
+          direction: string
+          display_name: string
+          lap_ms: number
+          osm_id: number
+          sectors?: number[]
+          set_at?: string
+          track_name: string
+          user_id: string
+          vehicle_class: string
+          vehicle_name?: string | null
+        }
+        Update: {
+          card?: Json | null
+          direction?: string
+          display_name?: string
+          lap_ms?: number
+          osm_id?: number
+          sectors?: number[]
+          set_at?: string
+          track_name?: string
+          user_id?: string
+          vehicle_class?: string
+          vehicle_name?: string | null
         }
         Relationships: []
       }
@@ -1531,6 +1556,7 @@ export type Database = {
         Args: { _endpoint: string }
         Returns: boolean
       }
+      leave_track_leaderboards: { Args: never; Returns: undefined }
       list_card_drops: {
         Args: {
           _crew_code: string
@@ -1540,11 +1566,6 @@ export type Database = {
         }
         Returns: {
           card_zoom: number
-          challenge_distance_mi: number
-          challenge_finish_lat: number
-          challenge_finish_lng: number
-          challenge_route: Json
-          challenge_time_sec: number
           collected: boolean
           created_at: string
           id: string
@@ -1695,10 +1716,12 @@ export type Database = {
           _crew_code?: string
           _crew_codes?: string[]
           _crew_names?: Json
+          _distance_unit?: string
           _endpoint: string
           _lat?: number
           _lng?: number
           _p256dh: string
+          _speed_unit?: string
           _user_agent?: string
         }
         Returns: undefined
@@ -1739,6 +1762,43 @@ export type Database = {
           no: number
           prices: Json
           yes: number
+        }[]
+      }
+      submit_track_lap: {
+        Args: {
+          _card?: Json
+          _direction: string
+          _display_name: string
+          _lap_ms: number
+          _length_m: number
+          _osm_id: number
+          _sectors: number[]
+          _track_name: string
+          _vehicle_class: string
+          _vehicle_name?: string
+        }
+        Returns: {
+          card: Json
+          display_name: string
+          lap_ms: number
+          vehicle_name: string
+        }[]
+      }
+      track_leaderboard: {
+        Args: {
+          _direction: string
+          _limit?: number
+          _osm_id: number
+          _vehicle_class: string
+        }
+        Returns: {
+          display_name: string
+          is_me: boolean
+          lap_ms: number
+          rank: number
+          sectors: number[]
+          set_at: string
+          vehicle_name: string
         }[]
       }
       transfer_convoy_leadership: {
