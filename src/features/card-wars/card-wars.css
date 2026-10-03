@@ -83,7 +83,7 @@ html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:no
 .cw-vault-stat svg { width:10px; height:10px; }
 .cw-vault-stat strong { display:block; font-size:14px; line-height:1.2; }
 .cw-stat-change { display:inline-block; margin-left:6px; vertical-align:middle; }
-.cw-stat-better { color:hsl(var(--stat-improvement)); }.cw-stat-worse { color:hsl(var(--destructive)); }.cw-stat-equal { color:hsl(var(--muted-foreground)); }
+.cw-vault-stat svg.cw-stat-better { color:hsl(var(--stat-improvement)); }.cw-vault-stat svg.cw-stat-worse { color:hsl(var(--destructive)); }.cw-vault-stat svg.cw-stat-equal { color:hsl(var(--muted-foreground)); }
 .cw-deck-editor { margin-block:24px; }
 .cw-empty-slot { width:100%; height:auto; aspect-ratio:5/7; border-style:dashed; }
 .cw-picker { max-height:85dvh; display:flex; flex-direction:column; }
