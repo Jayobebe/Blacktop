@@ -52,7 +52,7 @@ export function CardWarsScreen(){
  useEffect(()=>{
   if(!online)return;
   const last=online.log?.[online.log.length-1];const id=last?`${online.code}:${last.round}`:'';
-  if(last&&displayOnline?.code===online.code&&id!==seen.current&&(displayOnline.log?.length??0)<(online.log?.length??0)){
+  if(last&&displayOnline&&displayOnline.code===online.code&&id!==seen.current&&(displayOnline.log?.length??0)<(online.log?.length??0)){
    const player=CATALOG.find(c=>c.id===(online.side===1?last.card1:last.card2));const opponent=CATALOG.find(c=>c.id===(online.side===1?last.card2:last.card1));
    if(player&&opponent){seen.current=id;setReveal({id,player,opponent,category:CATEGORIES[last.category-1],damage:last.damage,winner:last.winner===null?null:last.winner===online.side?0:1,hp:[online.hp??[],online.rivalHp??[]]});return;}
   }
