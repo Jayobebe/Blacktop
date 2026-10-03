@@ -10,13 +10,16 @@ export function playRound(previous:BattleState, index:number, tag?:DogTag, rando
  if(previous.result || !previous.player[index] || previous.hp[0][index]<=0) return previous;
  if(tag && previous.usedTags.includes(tag.id)) return previous;
  const s:BattleState=structuredClone(previous);
+ const eligible=s.opponent.map((c,i)=>({c,i})).filter(x=>s.hp[1][x.i]>0);
+ const rival=eligible[Math.floor(random()*eligible.length)];
+ if(!rival) return {...s,result:'win'};
+ const allowed=CATEGORIES.filter(c=>c!=='lean'||((s.player[index].displayVehicle??s.player[index].vehicle)==='bike' && rival.c.vehicle==='bike'));
  let category:Category=s.categories[s.round];
+ if(!allowed.includes(category))category=allowed[Math.floor(random()*allowed.length)];
+ s.categories[s.round]=category;
  const card=s.player[index];
  const resonant=tag?.vehicle===card.vehicle;
  if(tag){s.usedTags.push(tag.id); if(tag.power==='reroll'){const alternatives=allowed.filter(c=>c!==category);category=alternatives[Math.floor(random()*alternatives.length)];s.categories[s.round]=category;} if(tag.power==='heal') s.hp[0][index]=Math.min(100,s.hp[0][index]+(resonant?38:30));}
- const eligible=s.opponent.map((c,i)=>({c,i})).filter(x=>s.hp[1][x.i]>0);
- const rival=random()<.65?eligible[Math.floor(random()*eligible.length)]:eligible.sort((a,b)=>b.c.ratings[category]-a.c.ratings[category])[0];
- if(!rival) return {...s,result:'win'};
  const penalty=s.penaltyRound===s.round && category==='lean'?.8:1;
  const a=card.ratings[category]*penalty*(tag?.power==='boost'?(resonant?1.65:1.5):1);
  const b=rival.c.ratings[category]*penalty;
