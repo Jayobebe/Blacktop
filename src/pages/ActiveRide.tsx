@@ -206,6 +206,8 @@ export default function ActiveRide() {
     display: settings.gForceEnabled,
     displayIntervalMs: 100,
     leanRef: leanForGRef,
+    initialVector: rideState.gEnvelope && rideState.gMax ? { envelope: rideState.gEnvelope, max: rideState.gMax } : undefined,
+    initialMaxG: rideState.maxGForce,
     onSample: useCallback((g: number) => crashSampleRef.current(g), []),
   });
 
