@@ -1,5 +1,7 @@
 # Current tasks
 
+- [x] Reuse complete vault trading-card faces without clipped ratings and show Spectre faces in the dog-tag picker; zero clipped stats verified in deck and battle at 491px, 390px and landscape.
+
 - [x] Keep reward card identities continuous through flip, shuffle and selection; retained DOM identities and settled positions verified, including return to rewards and tracked-card claim.
 
 - [x] Battle hands: two cards above three, with selectable vault-style Spectre dog tags at the side; portrait/landscape checked and five-round computer battle completed.

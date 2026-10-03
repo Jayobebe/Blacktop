@@ -16,6 +16,7 @@ import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { demoBlocked } from '@/lib/demoGuard';
 import { tr } from '@/lib/i18n';
+import { BattleDogTag } from './BattleDogTag';
 import { BattleCard } from './BattleCard';
 import { RewardShuffle } from './RewardShuffle';
 import { BattleArena, type Reveal } from './BattleArena';
@@ -70,7 +71,7 @@ export function CardWarsScreen(){
  <p className="cw-privacy text-[11px] text-muted-foreground mb-4">{tr('Fictional game ratings · no riding telemetry shared')}</p>
  {riding&&<p className="text-destructive mb-4">{tr('Battles unavailable during a ride')}</p>}
   {view==='deck'&&<><h2 className="font-semibold mb-3">{tr('Five cards')} · {vault.deck.length}/5</h2><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{pool.map(c=><BattleCard key={c.id} card={c} selected={vault.deck.includes(c.id)} disabled={locked||riding} onSelect={()=>toggle(c.id,'deck',5)}/>)}</div>
- <h2 className="font-semibold mt-6 mb-3">{tr('Three dog tags')} · {vault.tags.length}/3</h2><div className="flex flex-wrap gap-2">{tags.map(t=>{const Icon=POWERS[t.power];return <Button key={t.id} variant={vault.tags.includes(t.id)?'default':'outline'} disabled={locked||riding} onClick={()=>toggle(t.id,'tags',3)}><Icon className="w-4 h-4 mr-2"/>{tr(t.name)}</Button>;})}</div>
+ <h2 className="font-semibold mt-6 mb-3">{tr('Three dog tags')} · {vault.tags.length}/3</h2><div className="cw-tag-picker">{tags.map(t=><BattleDogTag key={t.id} tag={t} selected={vault.tags.includes(t.id)} disabled={!!locked||riding} used={false} onSelect={()=>toggle(t.id,'tags',3)}/>)}</div>
  <div className="border-t border-border mt-6 py-4 space-y-2 text-sm text-muted-foreground"><p>{tr('Demo card · {0}/10 hours',[Math.min(10,hours).toFixed(1)])}</p><p>{tr('Dev card · {0}/50 hours',[Math.min(50,hours).toFixed(1)])}</p></div></>}
  {view==='computer'&&<>{!run&&<Button disabled={riding||deck.length!==5||deckTags.length!==3} className="w-full h-12" onClick={()=>{updateVault({run:createRun(deck)});setTag(null);}}><Swords className="mr-2 w-5 h-5"/>{tr('Start battle')}</Button>}
  {run&&(!run.result||reveal)&&<><BattleArena player={run.player} opponent={run.opponent} hp={run.hp} round={reveal?run.round:run.round+1} disabled={riding} tags={deckTags} usedTags={run.usedTags} tag={tag} onTag={setTag} onPick={pickComputer} reveal={reveal} onRevealEnd={finishReveal} penalty={run.penaltyRound===(reveal?run.round-1:run.round)}/><Button variant="ghost" disabled={!!reveal} className="mt-3" onClick={()=>updateVault({run:{...run,result:'loss'}})}><Flag className="w-4 h-4 mr-2"/>{tr('Forfeit')}</Button></>}

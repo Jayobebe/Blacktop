@@ -409,7 +409,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
   );
 }
 
-export function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
+export function FullCard({ card, spectre, stats }: { card: CollectedCard; spectre?: SpectreCard; stats?: React.ReactNode }) {
   const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
@@ -489,13 +489,13 @@ export function FullCard({ card, spectre }: { card: CollectedCard; spectre?: Spe
         </div>
       </div>
 
-      <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
+      {stats ?? <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
         {/* "--" when this rider hides peaks, or the card's owner kept them private (null). */}
         <Stat icon={Gauge} label={tr("Top speed")} value={peaksHidden || card.s.topSpeedMph == null ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden || card.s.topSpeedMph == null ? '' : getSpeedLabel(settings.speedUnit)} />
         <Stat icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
         <Stat icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
         <Stat icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />
-      </div>
+      </div>}
     </div>
   );
 }

@@ -8,6 +8,6 @@
 - Keep Card Wars artwork and manufacturer/vehicle presentation separate from authoritative catalog ratings; reuse saved collection images without uploading telemetry or changing battle scoring.
 - Keep battle choices category-blind and reveal server-settled rounds through a cancellable presentation sequence; the arena never calculates online damage or transfers points.
 
-- Reuse the vault card face for earned battle dog tags, keeping visual Spectre payloads local and independent of combat powers.
+- Reuse the vault card face for battle cards and all dog-tag selectors, scaling the complete face at a stable design size and injecting game ratings separately from private ride statistics.
 
 - Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
