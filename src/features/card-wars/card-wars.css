@@ -1,151 +1,63 @@
-.cw-card-slot { min-width: 0; width: 100%; }
-.cw-trading-card { position:relative; display:flex; flex-direction:column; align-items:stretch; justify-content:start; width:100%; height:auto; aspect-ratio: 5/7; min-width:0; padding:10px; gap:8px; border-width:2px; border-radius:16px; overflow:hidden; text-align:left; white-space:normal; color:hsl(var(--foreground)); box-shadow:var(--shadow-md); }
-button.cw-trading-card:hover { filter:brightness(1.08); }
+.cw-card-slot { min-width:0; width:100%; }
+.cw-trading-card { position:relative; display:block; width:100%; min-width:0; white-space:normal; text-align:left; color:hsl(var(--foreground)); }
+button.cw-trading-card:hover { filter:brightness(1.06); }
 button.cw-trading-card:disabled { opacity:1; }
 .cw-knocked-out { filter:grayscale(1); opacity:.45!important; }
-.cw-card-heading { display:flex; justify-content:space-between; align-items:start; gap:4px; position:relative; }
-.cw-card-name { display:block; font-size:14px; line-height:1.2; font-weight:700; overflow-wrap:anywhere; }
-.cw-card-make { display:block; font-size:9px; text-transform:uppercase; opacity:.75; margin-top:3px; }
-.cw-tier { display:flex; align-items:center; gap:3px; border-radius:20px; padding:3px 5px; font-size:8px; flex-shrink:0; }
-.cw-tier svg { width:9px; height:9px; }
-.cw-card-art { position:relative; display:flex; align-items:center; justify-content:center; aspect-ratio:4/3; width:100%; border:1px solid hsl(var(--foreground)/.1); border-radius:10px; overflow:hidden; flex-shrink:0; }
-.cw-card-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin-top:auto; position:relative; }
-.cw-stat { background:hsl(var(--background)/.65); border:1px solid hsl(var(--foreground)/.1); border-radius:6px; padding:5px; }
-.cw-stat>span { display:flex; align-items:center; gap:3px; font-size:8px; opacity:.75; }
-.cw-stat svg { width:9px; height:9px; flex-shrink:0; }
-.cw-stat strong { display:block; font-size:14px; line-height:1.4; }
-.cw-stat small { font-size:7px; font-weight:400; margin-left:2px; opacity:.6; }
 .cw-stat-active { border-color:hsl(var(--accent)); box-shadow:0 0 0 1px hsl(var(--accent)); }
-.cw-card-footer { display:flex; justify-content:space-between; font-size:8px; opacity:.8; }
-.cw-card-footer svg { width:12px; height:12px; }
-.cw-card-sheen { position:absolute; inset:0; pointer-events:none; background:linear-gradient(130deg,transparent 35%,hsl(var(--foreground)/.09) 45%,transparent 60%); }
-.cw-card-back { flex:1; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-around; border:1px solid hsl(var(--foreground)/.3); font-size:10px; font-weight:700; }
+.cw-card-back { width:100%; height:100%; aspect-ratio:5/7; display:flex; flex-direction:column; align-items:center; justify-content:space-around; border:1px solid hsl(var(--border)); border-radius:8px; background:hsl(var(--background)); font-size:10px; font-weight:700; }
 .cw-card-back svg { width:45%; height:45%; }
-.cw-health { margin-top:5px; display:flex; flex-direction:column; gap:3px; align-items:center; font-size:9px; color:hsl(var(--foreground)); }
-.cw-health-track { width:100%; height:5px; border-radius:8px; background:hsl(var(--muted)); overflow:hidden; }
+.cw-health { margin-top:6px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; line-height:12px; color:hsl(var(--foreground)); }
+.cw-health-track { width:100%; height:5px; border-radius:3px; background:hsl(var(--muted)); overflow:hidden; }
 .cw-health-fill,.cw-health-low { height:100%; background:hsl(var(--accent)); transition:width .35s ease; }
 .cw-health-low { background:hsl(var(--destructive)); }
-.cw-arena { display:grid; grid-template-areas:'opponent' 'showdown' 'player'; grid-template-rows:auto minmax(210px,1fr) auto; gap:10px; min-height:calc(100dvh - 190px); max-width:1400px; margin:auto; }
+/* Street Circuit: one proportional card grid, never height-constrained faces. */
+.cw-arena { display:grid; grid-template-areas:'opponent' 'showdown' 'player'; grid-template-columns:minmax(0,1fr); grid-template-rows:auto 280px auto; gap:20px; max-width:1200px; margin:auto; padding-block:8px 20px; }
 .cw-opponent { grid-area:opponent; }.cw-player { grid-area:player; }.cw-showdown { grid-area:showdown; }
-.cw-deck-label { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:11px; color:hsl(var(--muted-foreground)); }
-.cw-hand { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
-.cw-hand .cw-trading-card { padding:4px; gap:4px; border-radius:8px; }
-.cw-hand .cw-card-name { font-size:9px; min-height:22px; }
-.cw-hand .cw-card-make { font-size:6px; }
-.cw-hand .cw-tier { position:absolute; right:0; top:35px; z-index:1; font-size:6px; padding:2px; }
-.cw-hand .cw-tier svg { display:none; }
-.cw-hand .cw-card-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:2px; }
-.cw-hand .cw-stat { padding:2px; border-radius:3px; }
-.cw-hand .cw-stat>span { font-size:6px; gap:0; }
-.cw-hand .cw-stat svg,.cw-hand .cw-stat small { display:none; }
-.cw-hand .cw-stat strong { font-size:9px; }
-.cw-hand .cw-card-footer { font-size:5px; }
-.cw-hand .cw-card-art { border-radius:4px; }
-.cw-showdown { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-width:0; }
-.cw-round { font-size:10px; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
-.cw-duel { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; }
-.cw-contender { width:clamp(90px,25%,155px); position:relative; z-index:2; }
-.cw-contender .cw-trading-card { padding:6px; gap:5px; border-radius:10px; }
-.cw-contender .cw-card-name { font-size:11px; }.cw-contender .cw-tier { font-size:6px; padding:2px; }.cw-contender .cw-tier svg { display:none; }
-.cw-contender .cw-stat { padding:3px; }.cw-contender .cw-stat strong { font-size:11px; }.cw-contender .cw-stat>span { font-size:6px; }.cw-contender .cw-stat svg { display:none; }
-.cw-versus { width:20px; flex-shrink:0; }
-.cw-wheel { position:relative; overflow:hidden; height:44px; width:220px; border-block:1px solid hsl(var(--accent)/.5); background:hsl(var(--background)/.8); }
+.cw-deck { min-width:0; width:100%; max-width:440px; margin-inline:auto; }
+.cw-deck-label { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; font-size:11px; font-weight:700; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
+.cw-deck-label::before,.cw-deck-label::after { content:''; height:1px; flex:1; background:hsl(var(--border)); }
+.cw-hand-with-tags { display:grid; grid-template-columns:minmax(0,1fr) 48px; align-items:center; gap:12px; }
+.cw-hand { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px 8px; width:100%; align-items:start; }
+.cw-hand > .cw-card-slot { grid-column:span 2; }
+.cw-hand > .cw-card-slot:nth-child(1) { grid-column:2 / span 2; }
+.cw-hand > .cw-card-slot:nth-child(2) { grid-column:4 / span 2; }
+.cw-opponent .cw-hand { opacity:.8; }
+.cw-tags { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.cw-dog-tag-selected { outline:2px solid hsl(var(--accent)); outline-offset:2px; }
+.cw-dog-tag-used { filter:grayscale(1); opacity:.45; }
+.cw-dog-power { position:absolute; bottom:3px; right:3px; display:flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:hsl(var(--background)); color:hsl(var(--accent)); }
+.cw-dog-power svg { width:10px; height:10px; }
+.cw-showdown { position:relative; isolation:isolate; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; min-width:0; }
+.cw-showdown::before { content:''; position:absolute; width:220px; height:220px; border:8px solid hsl(var(--muted)/.4); outline:1px solid hsl(var(--accent)/.2); outline-offset:6px; border-radius:50%; z-index:-1; pointer-events:none; }
+.cw-round { font-size:11px; font-weight:700; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
+.cw-duel { display:flex; align-items:center; justify-content:center; gap:14px; width:100%; }
+.cw-contender { width:120px; max-width:calc((100% - 60px)/2); position:relative; z-index:2; flex-shrink:0; }
+.cw-contender-player .cw-trading-card { rotate:-3deg; outline:1px solid hsl(var(--accent)); border-radius:8px; }
+.cw-contender-opponent .cw-trading-card { rotate:3deg; }
+.cw-versus { width:24px; height:24px; flex-shrink:0; }
+.cw-wheel { position:relative; overflow:hidden; height:44px; width:200px; max-width:100%; border-block:1px solid hsl(var(--accent)/.5); background:hsl(var(--background)/.9); flex-shrink:0; }
 .cw-wheel-track { animation:cw-wheelspin 2.4s cubic-bezier(.12,.7,.12,1); }
-.cw-wheel-item { height:44px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:hsl(var(--foreground)); }
-.cw-wheel-marker { position:absolute; top:17px; left:8px; width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:7px solid hsl(var(--accent)); z-index:1; }
-.cw-await { display:flex; flex-direction:column; align-items:center; gap:12px; }.cw-await h2 { font-size:16px; font-weight:600; }
-.cw-round-status { min-height:20px; font-size:12px; font-weight:600; color:hsl(var(--accent)); }
-.cw-tags { display:flex; gap:4px; }.cw-tags button { width:30px; height:30px; }
+.cw-wheel-item { height:44px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; text-transform:uppercase; color:hsl(var(--foreground)); }
+.cw-wheel-marker { position:absolute; top:17px; left:8px; width:0; height:0; border-top:5px solid transparent; border-bottom:5px solid transparent; border-left:7px solid hsl(var(--accent)); z-index:1; }
+.cw-await { display:flex; flex-direction:column; align-items:center; gap:12px; }.cw-await h2 { font-size:20px; font-weight:800; text-transform:uppercase; text-align:center; }
+.cw-round-status { min-height:20px; font-size:12px; font-weight:600; text-align:center; color:hsl(var(--accent)); }
 .cw-strike-player { animation:cw-slap-right .75s ease-in-out; }.cw-strike-opponent { animation:cw-slap-left .75s ease-in-out; }.cw-hit { animation:cw-damage .55s .24s ease-in-out; }
 @keyframes cw-wheelspin { from { transform:translateY(0); } }
 @keyframes cw-slap-right { 0%,100%{transform:translateX(0) rotate(0)} 40%{transform:translateX(95%) rotate(12deg) scale(1.05)} }
 @keyframes cw-slap-left { 0%,100%{transform:translateX(0) rotate(0)} 40%{transform:translateX(-95%) rotate(-12deg) scale(1.05)} }
 @keyframes cw-damage { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(7px) rotate(4deg);filter:brightness(1.5)} 40%,80%{transform:translateX(-7px) rotate(-4deg)} }
-.cw-shuffling > :nth-child(odd) { animation:cw-slap-right .75s ease-in-out 2; }.cw-shuffling > :nth-child(even) { animation:cw-slap-left .75s ease-in-out 2; }
-@media (orientation:landscape) { .cw-arena { grid-template-areas:'player showdown opponent'; grid-template-columns:minmax(0,1fr) minmax(220px,.9fr) minmax(0,1fr); grid-template-rows:1fr; min-height:calc(100dvh - 160px); align-items:center; }.cw-hand { grid-template-columns:repeat(3,minmax(0,1fr)); }.cw-hand .cw-trading-card { max-height:240px; }.cw-deck-label { min-height:30px; }.cw-contender { width:44%; }.cw-duel { gap:6px; } }
-@media (orientation:landscape) and (max-height:600px) { .cw-arena { min-height:0; }.cw-hand .cw-card-art { aspect-ratio:2/1; }.cw-hand .cw-card-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }.cw-hand .cw-card-name { min-height:12px; }.cw-hand .cw-card-footer { display:none; }.cw-showdown { gap:5px; } }
-@media (prefers-reduced-motion:reduce) { .cw-arena *, .cw-shuffling>* { animation:none!important; transition:none!important; } }
-html.thermal .cw-arena *,html.thermal .cw-shuffling>* { animation:none!important; transition:none!important; }
-html.thermal .cw-trading-card { background:hsl(var(--background)); box-shadow:none; }
-
-.cw-trading-card.cw-tier-silver { background-image:var(--battle-silver); }
-.cw-trading-card.cw-tier-ruby { background-image:var(--battle-ruby); }
-.cw-tier-silver button { color:inherit; }
-.cw-hand .cw-trading-card { aspect-ratio:5/7; }
+@media (orientation:landscape) {
+ .cw-arena { grid-template-areas:'player showdown opponent'; grid-template-columns:minmax(280px,1fr) 260px minmax(280px,1fr); grid-template-rows:minmax(300px,auto); align-items:center; gap:20px; }
+ .cw-hand-with-tags { grid-template-columns:minmax(0,1fr) 40px; gap:10px; }
+}
 @media (orientation:landscape) and (max-height:600px) {
- .cw-screen.cw-active { padding-top:6px; padding-bottom:6px; }
+ .cw-screen.cw-active { padding:8px 12px; overflow-x:auto; }
  .cw-active .cw-privacy { display:none; }
- .cw-active [role=tablist] { margin-bottom:8px; height:32px; }
- .cw-active header { margin-bottom:4px; }
- .cw-active .cw-hand .cw-trading-card { aspect-ratio:auto; height:106px; gap:2px; }
- .cw-active .cw-hand .cw-card-art { height:27px; aspect-ratio:auto; }
- .cw-active .cw-hand .cw-tier { top:19px; }
- .cw-active .cw-hand .cw-stat>span { font-size:5px; }
- .cw-active .cw-hand .cw-stat strong { font-size:8px; line-height:1; }
- .cw-active .cw-hand .cw-card-name { font-size:8px; }
- .cw-active .cw-hand .cw-card-make { margin-top:0; }
- .cw-active .cw-hand .cw-card-heading { height:22px; }
- .cw-active .cw-hand .cw-health { margin-top:3px; gap:1px; font-size:8px; }
- .cw-active .cw-hand { gap:4px; }
- .cw-active .cw-contender .cw-trading-card { aspect-ratio:auto; height:145px; }
- .cw-active .cw-contender .cw-card-art { height:50px; aspect-ratio:auto; }
- .cw-active .cw-contender .cw-card-name { font-size:9px; }
- .cw-active .cw-contender .cw-card-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .cw-active [role=tablist] { margin-bottom:8px; }
+ .cw-arena { gap:12px; }
 }
-
-@media (orientation:portrait) and (max-width:600px) {
- .cw-hand .cw-trading-card { aspect-ratio:auto; height:158px; }
- .cw-hand .cw-card-art { height:35px; aspect-ratio:auto; }
- .cw-hand .cw-card-heading { min-height:31px; }
- .cw-hand .cw-stat>span { font-size:5px; }
- .cw-hand .cw-stat strong { line-height:1.1; }
- .cw-hand .cw-card-footer { display:none; }
- .cw-arena { grid-template-rows:auto minmax(170px,1fr) auto; min-height:calc(100dvh - 180px); }
- .cw-contender .cw-card-heading { min-height:30px; }
-}
-
-/* Both battle hands keep a centered two-over-three formation. */
-.cw-arena .cw-hand { grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; width:100%; max-width:600px; margin-inline:auto; }
-.cw-arena .cw-hand > .cw-card-slot { grid-column:span 2; }
-.cw-arena .cw-hand > .cw-card-slot:nth-child(1) { grid-column:2 / span 2; }
-.cw-arena .cw-hand > .cw-card-slot:nth-child(2) { grid-column:4 / span 2; }
-.cw-hand-with-tags { display:grid; grid-template-columns:minmax(0,1fr) 64px; gap:8px; align-items:center; }
-.cw-arena .cw-tags { display:flex; flex-direction:column; gap:8px; }
-.cw-arena .cw-tags .cw-dog-tag { position:relative; width:100%; height:auto; aspect-ratio:5/7; padding:0; border-radius:8px; white-space:normal; overflow:hidden; border:1px solid hsl(var(--border)); }
-.cw-dog-tag-selected { outline:2px solid hsl(var(--accent)); outline-offset:2px; }
-.cw-dog-tag-used { filter:grayscale(1); opacity:.45; }
-.cw-dog-tag .spectre-card { height:100%; padding:4px; gap:3px; border-radius:7px; }
-.cw-dog-tag .spectre-card > .relative:first-of-type { gap:2px; }
-.cw-dog-tag .spectre-card p,.cw-dog-tag .spectre-card span { font-size:5px; letter-spacing:0; }
-.cw-dog-tag .spectre-card h3 { font-size:8px; }
-.cw-dog-tag .spectre-card svg { width:7px; height:7px; }
-.cw-dog-tag .spectre-card > .grid { gap:2px; }
-.cw-dog-tag .spectre-card > .grid > div { padding:2px; }
-.cw-dog-tag .spectre-card > .rounded-xl { border-radius:3px; margin-top:0; }
-.cw-dog-power { position:absolute; bottom:3px; right:3px; display:flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:hsl(var(--background)); color:hsl(var(--accent)); }
-.cw-dog-power svg { width:10px; height:10px; }
-.cw-starter-spectre { width:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-around; }
-.cw-starter-spectre > span,.cw-starter-spectre > strong,.cw-starter-spectre > svg { position:relative; }
-.cw-dog-tag .cw-starter-spectre > svg { width:25px; height:25px; }
-.cw-starter-spectre > strong { font-size:7px; text-align:center; overflow-wrap:anywhere; }
-@media (orientation:portrait) and (max-width:600px) {
- .cw-arena .cw-hand .cw-trading-card { height:132px; gap:3px; }
- .cw-arena .cw-hand .cw-card-art { height:28px; }
- .cw-arena .cw-hand .cw-card-heading { min-height:20px; }
- .cw-arena .cw-hand .cw-card-name { min-height:10px; font-size:8px; }
- .cw-arena .cw-hand .cw-card-make { margin-top:0; }
- .cw-arena .cw-hand .cw-stat { padding:1px 2px; }
- .cw-arena .cw-hand .cw-stat strong { font-size:8px; }
- .cw-arena .cw-hand .cw-tier { top:20px; }
- .cw-arena { grid-template-rows:auto minmax(110px,1fr) auto; min-height:0; }
- .cw-hand-with-tags { grid-template-columns:minmax(0,1fr) 56px; gap:6px; }
-}
-@media (orientation:landscape) and (max-height:600px) {
- .cw-hand-with-tags { grid-template-columns:minmax(0,1fr) 48px; gap:5px; }
- .cw-arena .cw-tags { gap:5px; }
-}
-
-.cw-dog-tag .cw-starter-spectre > strong { width:100%; white-space:normal; padding-inline:2px; }
+@media (prefers-reduced-motion:reduce) { .cw-arena * { animation:none!important; transition:none!important; } }
+html.thermal .cw-arena * { animation:none!important; transition:none!important; }
 
 .cw-reward-board { position:relative; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; perspective:1000px; }
 .cw-reward-anchor { aspect-ratio:5/7; min-width:0; }
@@ -160,6 +72,7 @@ html.thermal .cw-trading-card { background:hsl(var(--background)); box-shadow:no
 @media (prefers-reduced-motion:reduce) { .cw-reward-position,.cw-reward-flipper { transition:none; } }
 html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:none; }
 
+
 /* Complete vault faces at a stable design size, scaled together in every view. */
 .cw-scaled-face { position:relative; width:100%; aspect-ratio:5/7; flex-shrink:0; }
 .cw-face-canvas { position:absolute; inset:0 auto auto 0; width:280px; height:392px; transform-origin:top left; pointer-events:none; }
@@ -172,7 +85,7 @@ html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:no
 .cw-vault-stat small { margin-left:4px; font-size:10px; font-weight:400; color:hsl(var(--foreground)/.7); }
 .cw-scaled-face:has(.cw-vault-ratings) .cw-face-canvas > div > .aspect-\[4\/3\] { height:115px; flex-shrink:0; aspect-ratio:auto; }
 .cw-screen .cw-trading-card { padding:0; gap:0; border:0; border-radius:0; box-shadow:none; background:none; overflow:visible; height:auto; aspect-ratio:5/7; }
-.cw-screen.cw-active .cw-hand .cw-trading-card,.cw-screen.cw-active .cw-contender .cw-trading-card,.cw-screen .cw-arena .cw-hand .cw-trading-card { height:auto; padding:0; gap:0; aspect-ratio:5/7; }
+
 .cw-screen .cw-card-selected { outline:2px solid hsl(var(--accent)); outline-offset:2px; border-radius:8px; }
 .cw-card-check { position:absolute; right:5px; bottom:5px; width:16px; height:16px; color:hsl(var(--accent)); }
 .cw-screen .cw-dog-tag { display:block; position:relative; width:100%; height:auto; padding:0; border:0; aspect-ratio:5/7; border-radius:8px; overflow:hidden; }
