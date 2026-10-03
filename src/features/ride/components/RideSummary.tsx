@@ -348,12 +348,12 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 {visibleAwards.map(({ member, badge }) => (
                   <div
                     key={`${member?.userId ?? 'self'}-${badge.type}`}
-                    className="receipt-bracket text-center px-2 py-3"
+                     className="receipt-bracket text-center px-1 py-1.5 opacity-80"
                   >
                     <span className="receipt-bracket-tr" />
                     <span className="receipt-bracket-bl" />
-                    <div className="text-2xl leading-none mb-1">{badge.emoji}</div>
-                    <div className="text-[11px] uppercase tracking-wider font-bold leading-tight">
+                     <div className="text-base leading-none mb-1">{badge.emoji}</div>
+                     <div className="text-[9px] uppercase font-bold leading-tight break-words">
                       {badge.label}
                     </div>
                     {member && (
