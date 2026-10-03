@@ -26,7 +26,7 @@ export function BattleArena({player,opponent,hp,round,disabled,submitted,selecte
  const categoryIndex=reveal?CATEGORIES.indexOf(reveal.category):0;
  return <div className={`cw-arena cw-phase-${phase}`} data-no-pull>
   <section className="cw-deck cw-opponent"><div className="cw-deck-label"><span>{tr('Opponent')}</span><LockKeyhole className="w-3 h-3"/></div><div className="cw-hand-with-tags"><div className="cw-hand">{opponent.map((c,i)=><BattleCard key={c.id} card={c} hp={shownHp[1]?.[i]??100} selected={reveal?.opponent.id===c.id} readOnly/>)}</div><div aria-hidden="true"/></div></section>
-  <section className="cw-showdown"><div className="cw-round font-mono">{tr('Round {0} / 5',[Math.min(5,round)])}</div>
+   <section className="cw-showdown"><div className="cw-round font-mono">{tr('Round {0}',[round])}</div>
    {reveal ? <><div className="cw-duel">
     <div className={`cw-contender cw-contender-player ${phase==='impact'?(reveal.winner===0?'cw-strike-player':reveal.winner===1?'cw-hit':''):''}`}><BattleCard card={reveal.player} hp={shownHp[0]?.[player.findIndex(c=>c.id===reveal.player.id)]??100} category={phase==='spin'?undefined:reveal.category} readOnly/></div>
     <Swords className="cw-versus text-accent"/>
