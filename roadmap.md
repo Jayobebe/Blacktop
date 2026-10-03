@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Present Card Wars decks as trading cards with manufacturer/vehicle names, existing vehicle pictures and no car lean statistic; leave manual catalog pictures/data for later.
+
 - [x] Move Card Wars into Blacktop Arcade; World vault collections retained, legacy invitations redirected with battle codes preserved. Placement/navigation source checks passed; automated build OK.
 
 - [x] Keep deck editing in Card Wars and split the vault into scanned cards, won battle cards and dog tags; reward visibility, single claims and deck removal preserving rewards passed targeted checks.
