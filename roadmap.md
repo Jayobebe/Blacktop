@@ -1,5 +1,7 @@
 # Current tasks
 
+- [x] Rebuild normal-style Silver/Ruby cards and portrait/landscape battle arena; hidden-category choices, wheel reveal, card strike/shake feedback and always-visible health bars. Browser checks passed at desktop, 390×844 portrait and 932×430 landscape; five-round computer outcome passed, automatic build OK. Physical haptics and two-phone player battles remain unverified.
+
 - [x] Present Card Wars decks as portrait trading cards with manufacturer/vehicle names, saved vehicle pictures and no car lean statistic; manual catalog pictures/data remain placeholders. Visual and real-device checks not performed; ambiguous collected vehicle types omit lean rather than inventing it.
 
 - [x] Move Card Wars into Blacktop Arcade; World vault collections retained, legacy invitations redirected with battle codes preserved. Placement/navigation source checks passed; automated build OK.
