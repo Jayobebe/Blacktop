@@ -1,6 +1,6 @@
 # Current tasks
 
-- [ ] Present Card Wars decks as trading cards with manufacturer/vehicle names, existing vehicle pictures and no car lean statistic; leave manual catalog pictures/data for later.
+- [x] Present Card Wars decks as portrait trading cards with manufacturer/vehicle names, saved vehicle pictures and no car lean statistic; manual catalog pictures/data remain placeholders. Visual and real-device checks not performed; ambiguous collected vehicle types omit lean rather than inventing it.
 
 - [x] Move Card Wars into Blacktop Arcade; World vault collections retained, legacy invitations redirected with battle codes preserved. Placement/navigation source checks passed; automated build OK.
 
