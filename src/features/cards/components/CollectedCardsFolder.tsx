@@ -30,8 +30,10 @@ import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCard
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
 import { useVehicleCards } from '../hooks/useVehicleCards';
 import { formatSpectreTime as formatChallengeTime, formatSpectreGap as formatDelta } from '../lib/spectre';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
+import { BattleCard, useWonBattleCards } from '@/features/card-wars/collection';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
@@ -39,6 +41,7 @@ export function CollectedCardsFolder() {
   const locked = useDemoLocked();
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const { spectres } = useSpectreCards();
+  const wonCards = useWonBattleCards();
   // The rider's own vehicle cards always lead the regular row.
   const { cards: myCards } = useVehicleCards();
   const [showScanner, setShowScanner] = useState(false);
@@ -170,29 +173,10 @@ export function CollectedCardsFolder() {
       </div>
       <p className="px-4 pb-3 text-[10px] text-muted-foreground">{tr("Tap a card to flip it.")}</p>
 
-      {/* Spectre row — dog tags, earned only by beating a lap on a Track Day board; no QR, no trading */}
-      <CardRow
-        icon={<Ghost className="w-4 h-4 text-cyan-300" />}
-        title={tr("Spectre")}
-        count={spectres.length}
-        hint={tr("Dog tags from Track Day leaderboards")}
-        empty={tr("Beat a rider's lap on a Track Day leaderboard to take their dog tag. Spectre cards can't be scanned or traded.")}
-        emptyClass="border-cyan-300/30"
-      >
-        {spectres.map((sp) => (
-          <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <FlipCard
-              card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }}
-              spectre={sp}
-            />
-          </div>
-        ))}
-      </CardRow>
-
       {/* Collected row — scanned from other riders; flips to its QR to pass on */}
       <CardRow
         icon={<Sparkles className="w-4 h-4 text-accent" />}
-        title={tr("Collected")}
+        title={tr("Scanned cards")}
         count={myCards.length + collected.length}
         hint={tr("Yours first, then scanned")}
         empty={tr("Scan another rider's card QR to start your collection.")}
@@ -227,6 +211,40 @@ export function CollectedCardsFolder() {
                 <Trash2 className="w-3.5 h-3.5" />{" "}{tr("Remove")}
               </button>
             </div>
+          </div>
+        ))}
+      </CardRow>
+
+      <CardRow
+        icon={<Sparkles className="w-4 h-4 text-accent" />}
+        title={tr("Won cards")}
+        count={wonCards.length}
+        hint={tr("Battle cards")}
+        empty={tr("No won cards yet")}
+        emptyClass="border-border"
+      >
+        {wonCards.map(card => (
+          <div key={card.id} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+            <BattleCard card={card} readOnly />
+          </div>
+        ))}
+      </CardRow>
+
+      {/* Spectre row — dog tags, earned only by beating a lap on a Track Day board; no QR, no trading */}
+      <CardRow
+        icon={<Ghost className="w-4 h-4 text-cyan-300" />}
+        title={tr("Dog tags")}
+        count={spectres.length}
+        hint={tr("Dog tags from Track Day leaderboards")}
+        empty={tr("Beat a rider's lap on a Track Day leaderboard to take their dog tag. Spectre cards can't be scanned or traded.")}
+        emptyClass="border-cyan-300/30"
+      >
+        {spectres.map((sp) => (
+          <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+            <FlipCard
+              card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }}
+              spectre={sp}
+            />
           </div>
         ))}
       </CardRow>
