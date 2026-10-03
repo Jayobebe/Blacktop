@@ -170,8 +170,9 @@ html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:no
 .cw-vault-stat svg { width:10px; height:10px; }
 .cw-vault-stat strong { display:block; font-size:14px; line-height:1.2; }
 .cw-vault-stat small { margin-left:4px; font-size:10px; font-weight:400; color:hsl(var(--foreground)/.7); }
-.cw-scaled-face:has(.cw-vault-ratings) .cw-face-canvas > div > .aspect-\[4\/3\] { height:140px; flex-shrink:0; aspect-ratio:auto; }
+.cw-scaled-face:has(.cw-vault-ratings) .cw-face-canvas > div > .aspect-\[4\/3\] { height:115px; flex-shrink:0; aspect-ratio:auto; }
 .cw-screen .cw-trading-card { padding:0; gap:0; border:0; border-radius:0; box-shadow:none; background:none; overflow:visible; height:auto; aspect-ratio:5/7; }
+.cw-screen.cw-active .cw-hand .cw-trading-card,.cw-screen.cw-active .cw-contender .cw-trading-card,.cw-screen .cw-arena .cw-hand .cw-trading-card { height:auto; padding:0; gap:0; aspect-ratio:5/7; }
 .cw-screen .cw-card-selected { outline:2px solid hsl(var(--accent)); outline-offset:2px; border-radius:8px; }
 .cw-card-check { position:absolute; right:5px; bottom:5px; width:16px; height:16px; color:hsl(var(--accent)); }
 .cw-screen .cw-dog-tag { display:block; position:relative; width:100%; height:auto; padding:0; border:0; aspect-ratio:5/7; border-radius:8px; overflow:hidden; }
