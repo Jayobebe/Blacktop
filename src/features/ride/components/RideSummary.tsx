@@ -279,17 +279,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             </div>
           )}
 
-          {showG && rideStats?.gEnvelope && rideStats.gMax && rideStats.gEnvelope.some((v) => v > 0) && (<>
-          <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
-          {/* The G meter, with Mecha-Nick's stamp beside it for riders who use the
-              garage (he's the garage's mechanic) */}
-          <div className="flex items-center justify-center gap-1 py-1" style={{ color: 'var(--ink)' }}>
-            <GForceCircle ink envelope={rideStats.gEnvelope} max={rideStats.gMax} className={showVehicle ? 'w-44 shrink-0' : 'w-48'} />
-            {showVehicle && <MechaNickStamp date={printedAt} className="w-[6.5rem] shrink-0 -ml-1 mt-8" />}
-          </div>
-          </>)}
-
-          {(showVehicle || (showG && gForceSamples && gForceSamples.length > 1)) && (<>
+          {(showVehicle || (showG && (rideStats?.gEnvelope || (gForceSamples && gForceSamples.length > 1)))) && (<>
           {/* Divider */}
           <div className="my-4 border-t-2 border-dashed border-[--ink] opacity-60" />
 
@@ -298,7 +288,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
               receipt width, with the hero vehicle photo opaquely overlaid on
               top so the bike clearly reads as the foreground. Ink-toned trace
               keeps the printed-paper feel. */}
-          <div className="relative min-h-[10rem] flex items-center justify-center">
+          <div className="relative grid grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] items-center gap-1 min-h-28 py-3">
             {showG && gForceSamples && gForceSamples.length > 1 && (
               <GForceGraph
                 samples={gForceSamples}
@@ -307,15 +297,21 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0 pointer-events-none"
               />
             )}
+            <div className="relative z-10 flex justify-center -rotate-6 opacity-80">
+              {showG && rideStats?.gEnvelope && rideStats.gMax && (
+                <GForceCircle ink hidePeaks={peaksHidden} envelope={rideStats.gEnvelope} max={rideStats.gMax} className="w-[4.5rem] shrink-0" />
+              )}
+            </div>
+            <div className="relative z-10 min-w-0">
             {showVehicle && (
-            <div className="relative z-10 w-full">
+            <div className="w-full">
               {bikePhoto ? (
                 <div className="flex items-center justify-center py-2">
                   <img
                     src={bikePhoto}
                     alt={bikeName || tr("Vehicle")}
                     crossOrigin="anonymous"
-                    className="max-h-40 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+                    className="max-h-28 max-w-full w-auto object-contain"
                     style={{ filter: 'grayscale(100%) contrast(1.15)' }}
                   />
                 </div>
@@ -324,13 +320,17 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                   <div className="receipt-bracket text-center bg-[--paper]" data-bike-slot>
                     <span className="receipt-bracket-tr" />
                     <span className="receipt-bracket-bl" />
-                    <div className="text-xl tracking-[0.2em]">{tr("VEHICLE MODEL")}</div>
+                     <div className="text-xs break-words">{tr("VEHICLE MODEL")}</div>
                     <div className="text-sm opacity-60 mt-1">{tr("add in garage")}</div>
                   </div>
                 )
               )}
             </div>
             )}
+            </div>
+            <div className="relative z-10 flex justify-center opacity-80">
+              {showVehicle && <MechaNickStamp date={printedAt} className="w-16 shrink-0" />}
+            </div>
           </div>
           </>)}
 
@@ -348,12 +348,12 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                 {visibleAwards.map(({ member, badge }) => (
                   <div
                     key={`${member?.userId ?? 'self'}-${badge.type}`}
-                    className="receipt-bracket text-center px-2 py-3"
+                     className="receipt-bracket text-center px-1 py-1.5 opacity-80"
                   >
                     <span className="receipt-bracket-tr" />
                     <span className="receipt-bracket-bl" />
-                    <div className="text-2xl leading-none mb-1">{badge.emoji}</div>
-                    <div className="text-[11px] uppercase tracking-wider font-bold leading-tight">
+                     <div className="text-base leading-none mb-1">{badge.emoji}</div>
+                     <div className="text-[9px] uppercase font-bold leading-tight break-words">
                       {badge.label}
                     </div>
                     {member && (

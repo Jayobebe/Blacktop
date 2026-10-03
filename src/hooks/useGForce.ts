@@ -16,6 +16,9 @@ interface GForceState {
 }
 
 interface GForceOptions {
+  /** Restore this ride's peaks when its screen mounts again. Never shared between consumers. */
+  initialVector?: { envelope: number[]; max: GMax };
+  initialMaxG?: number;
   /**
    * Keep `currentG` / `maxG` React state live (for a gauge on screen). Off when
    * nothing shows the value: then the sensor causes no re-renders at all, and
@@ -49,13 +52,21 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
   onSampleRef.current = options.onSample;
   const [state, setState] = useState<GForceState>(() => {
     const v = emptyGVector();
-    return { currentG: 0, maxG: 0, lateralG: 0, longitudinalG: 0, envelope: v.envelope, gMax: v.max, isSupported: false, permissionGranted: false };
+    return { currentG: 0, maxG: options.initialMaxG ?? 0, lateralG: 0, longitudinalG: 0, envelope: options.initialVector?.envelope.slice() ?? v.envelope, gMax: { ...(options.initialVector?.max ?? v.max) }, isSupported: false, permissionGranted: false };
   });
-  const trackerRef = useRef(new GVectorTracker());
+  const trackerRef = useRef<GVectorTracker | null>(null);
+  if (!trackerRef.current) {
+    const tracker = new GVectorTracker();
+    if (options.initialVector) {
+      tracker.state.envelope = options.initialVector.envelope.slice();
+      tracker.state.max = { ...options.initialVector.max };
+    }
+    trackerRef.current = tracker;
+  }
   const leanRef = useRef(options.leanRef);
   leanRef.current = options.leanRef;
 
-  const maxGRef = useRef(0);
+  const maxGRef = useRef(options.initialMaxG ?? 0);
 
   const requestPermission = useCallback(async () => {
     const anyMotion = (window as any).DeviceMotionEvent;
@@ -79,7 +90,7 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
 
   const resetMax = useCallback(() => {
     maxGRef.current = 0;
-    trackerRef.current.reset();
+    trackerRef.current?.reset();
     const v = emptyGVector();
     setState(prev => ({ ...prev, maxG: 0, lateralG: 0, longitudinalG: 0, envelope: v.envelope, gMax: v.max }));
   }, []);
@@ -105,11 +116,11 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
       // Friction-circle vector (cheap; runs every sample so peaks aren't missed).
       if (e.accelerationIncludingGravity) {
         const lin = e.acceleration;
-        const hasLin = lin && lin.x != null && lin.y != null && lin.z != null;
+        const linear: [number, number, number] | null = lin && lin.x != null && lin.y != null && lin.z != null ? [lin.x, lin.y, lin.z] : null;
         const angle = window.screen?.orientation?.angle ?? (typeof window.orientation === 'number' ? window.orientation : 0);
-        trackerRef.current.update(
+        trackerRef.current?.update(
           [x, y, z],
-          hasLin ? [lin!.x!, lin!.y!, lin!.z!] : null,
+          linear,
           angle,
           leanRef.current?.current ?? null,
           e.timeStamp || performance.now(),
@@ -128,7 +139,8 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
 
       if (!displayRef.current || now - lastDisplay < displayIntervalRef.current) return;
       lastDisplay = now;
-      const v = trackerRef.current.state;
+      const v = trackerRef.current?.state;
+      if (!v) return;
       setState(prev => ({
         ...prev,
         currentG,

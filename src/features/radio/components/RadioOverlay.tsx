@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Play, Pause, SkipBack, SkipForward, Plus, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { pickWithInput } from '../lib/audioFiles';
 import { StationManager } from './StationManager';
 import { LIVE_STATIONS } from '../lib/liveStations';
 import { tr } from '@/lib/i18n';
+import { Button } from '@/components/ui/button';
 
 /**
  * GTA-style radio dial: stations sit around a wheel, the active one locks to
@@ -24,11 +25,20 @@ export function RadioOverlay() {
   const player = useRadioPlayer();
   const isLive = !!LIVE_STATIONS.find((s) => s.id === player.stationId);
   const [showManager, setShowManager] = useState(false);
+  const [dialRotation, setDialRotation] = useState(0);
+  const gesture = useRef<{ angle: number; index: number; steps: number } | null>(null);
+  const dragged = useRef(false);
 
   const activeIndex = useMemo(
     () => Math.max(0, stations.findIndex((s) => s.id === player.stationId)),
     [stations, player.stationId],
   );
+  const step = stations.length ? 360 / stations.length : 0;
+
+  useEffect(() => {
+    const target = -activeIndex * step;
+    setDialRotation((current) => current + ((target - current + 540) % 360 + 360) % 360 - 180);
+  }, [activeIndex, step]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,9 +48,6 @@ export function RadioOverlay() {
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const step = stations.length ? 360 / stations.length : 0;
-  const dialRotation = -activeIndex * step;
 
   const handleReselect = async () => {
     const station = stations.find((s) => s.id === player.stationId);
@@ -56,7 +63,7 @@ export function RadioOverlay() {
 
 
   return createPortal(
-    <div className="radio-overlay fixed inset-0 z-[90] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
+    <div className="radio-overlay fixed inset-0 z-[1200] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
       {/* Clear of the notch / Dynamic Island, and the side notch in landscape (env() on the header itself). */}
       <div className="flex items-center justify-between shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Blacktop Radio")}</p>
@@ -89,7 +96,40 @@ export function RadioOverlay() {
             {/* The dial */}
             {/* --dial drives the dial, station orbit and hub, so they stay in proportion at any size.
                 Landscape caps it by viewport height so short phone screens never clip. */}
-            <div className="relative shrink-0 w-[var(--dial)] h-[var(--dial)] [--dial:280px] landscape:[--dial:min(230px,calc(100dvh-116px))]">
+            <div
+              className="relative shrink-0 touch-none select-none w-[var(--dial)] h-[var(--dial)] [--dial:280px] landscape:[--dial:min(230px,calc(100dvh-116px))]"
+              onPointerDown={(event) => {
+                dragged.current = false;
+                const bounds = event.currentTarget.getBoundingClientRect();
+                gesture.current = { angle: Math.atan2(event.clientY - bounds.top - bounds.height / 2, event.clientX - bounds.left - bounds.width / 2), index: activeIndex, steps: 0 };
+              }}
+              onPointerMove={(event) => {
+                const start = gesture.current;
+                if (!start || !step) return;
+                const bounds = event.currentTarget.getBoundingClientRect();
+                const angle = Math.atan2(event.clientY - bounds.top - bounds.height / 2, event.clientX - bounds.left - bounds.width / 2);
+                const delta = Math.atan2(Math.sin(angle - start.angle), Math.cos(angle - start.angle)) * 180 / Math.PI;
+                if (Math.abs(delta) > 8) dragged.current = true;
+                start.steps = Math.round(delta / step);
+                setDialRotation(-start.index * step + delta);
+              }}
+              onPointerUp={() => {
+                const start = gesture.current;
+                gesture.current = null;
+                if (!start) return;
+                const index = ((start.index - start.steps) % stations.length + stations.length) % stations.length;
+                const station = stations[index];
+                setDialRotation((current) => current + ((-index * step - current + 540) % 360 + 360) % 360 - 180);
+                if (start.steps && station) void playStation(station);
+              }}
+              onPointerCancel={() => { gesture.current = null; setDialRotation(-activeIndex * step); }}
+              onPointerLeave={() => { gesture.current = null; setDialRotation(-activeIndex * step); }}
+              onClickCapture={(event) => {
+                // A drag releases as a click on touch screens; only a tap tunes a station.
+                if (dragged.current && event.detail !== 0) { event.preventDefault(); event.stopPropagation(); }
+                dragged.current = false;
+              }}
+            >
               <div className="absolute inset-0 rounded-full border border-border/60 bg-card/40" />
               <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-0 h-0 border-l-[7px] border-r-[7px] border-t-[10px] border-l-transparent border-r-transparent border-t-accent" />
               <div
@@ -102,15 +142,16 @@ export function RadioOverlay() {
                   const hsl = stationHsl(station.color);
                   const isActive = station.id === player.stationId;
                   return (
-                    <button
+                    <Button
                       key={station.id}
                       type="button"
                       onClick={() => void playStation(station)}
                       aria-label={tr("Play {0}", [station.name])}
                       aria-pressed={isActive}
-                      className="absolute left-1/2 top-1/2 flex flex-col items-center gap-1"
+                      variant="ghost"
+                      className="absolute left-1/2 top-1/2 h-auto min-h-12 w-[72px] p-0 flex flex-col items-center gap-1 hover:bg-transparent transition-transform duration-500 motion-reduce:transition-none"
                       style={{
-                        transform: `rotate(${angle}deg) translateY(calc(var(--dial) * -0.4)) rotate(${-angle - dialRotation}deg) translate(-50%, -50%)`,
+                        transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(calc(var(--dial) * -0.4)) rotate(${-angle - dialRotation}deg)`,
                       }}
                     >
                       <span
@@ -130,7 +171,7 @@ export function RadioOverlay() {
                       <span className={cn('text-[10px] landscape:text-[9px] max-w-[72px] landscape:max-w-[60px] truncate', isActive ? 'text-foreground font-semibold' : 'text-muted-foreground')}>
                         {station.name}
                       </span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
