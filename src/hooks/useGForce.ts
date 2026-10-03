@@ -139,7 +139,8 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
 
       if (!displayRef.current || now - lastDisplay < displayIntervalRef.current) return;
       lastDisplay = now;
-      const v = trackerRef.current.state;
+      const v = trackerRef.current?.state;
+      if (!v) return;
       setState(prev => ({
         ...prev,
         currentG,
