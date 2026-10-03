@@ -5,6 +5,6 @@ export interface OnlineBattle { code?:string;status?:'waiting'|'playing'|'finish
 export async function battleAction(action:'status'|'create'|'join'|'play'|'leave',code?:string,deck?:string[],card?:number,tag?:number,round?:number):Promise<OnlineBattle>{
  if(action!=='status'&&demoBlocked())throw new Error(tr('Not available in demo mode'));
  const {data,error}=await supabase.rpc('cw_action' as never,{_action:action,_code:code||null,_deck:deck||null,_card:card??null,_tag:tag??null,_round:round??null} as never);
- if(error)throw new Error(error.message);
+ if(error)throw new Error(tr(error.message));
  return data as unknown as OnlineBattle;
 }
