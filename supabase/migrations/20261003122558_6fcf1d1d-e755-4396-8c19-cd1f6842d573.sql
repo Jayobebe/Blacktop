@@ -1,0 +1,4 @@
+create policy "No direct battle access" on public.cw_matches for all to authenticated using(false) with check(false);
+comment on function public.cw_action(text,uuid,text[],integer,integer,integer) is 'Intentional authenticated SECURITY DEFINER: auth.uid membership validation, fixed search path, bounded inputs, authoritative catalog scores, serialized settlement. Guest identities are the established Blacktop account model; no unauthenticated execution.';
+comment on policy "Own game balance" on public.cw_accounts is 'Intentional guest-account access: each authenticated identity sees only its own balance, never another player. No client balance writes granted.';
+comment on policy "Signed in catalog" on public.cw_catalog is 'Fictional public game catalog accessible to authenticated guest identities. No personal telemetry.';

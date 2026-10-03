@@ -1,0 +1,1 @@
+alter policy "No direct battle access" on public.cw_matches using(false and ((auth.jwt()->>'is_anonymous')::boolean is not true)) with check(false and ((auth.jwt()->>'is_anonymous')::boolean is not true));
