@@ -7,7 +7,7 @@ export function ScaledCardFace({ children }: { children: ReactNode }) {
  useLayoutEffect(() => {
   const node = ref.current;
   if (!node) return;
-  const measure = () => setWidth(node.getBoundingClientRect().width);
+  const measure = () => setWidth(node.clientWidth);
   measure();
   const observer = new ResizeObserver(measure);
   observer.observe(node);

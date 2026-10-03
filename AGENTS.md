@@ -9,5 +9,6 @@
 - Keep battle choices category-blind and reveal server-settled rounds through a cancellable presentation sequence; the arena never calculates online damage or transfers points.
 
 - Reuse the vault card face for battle cards and all dog-tag selectors, scaling the complete face at a stable design size and injecting game ratings separately from private ride statistics.
+- Size battle hands through identical two-over-three grids with reserved tag rails and intrinsic card ratios; allow scrolling instead of height compression so faces never distort.
 
 - Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
