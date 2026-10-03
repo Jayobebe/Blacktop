@@ -21,6 +21,8 @@ export interface RadioStation {
   icon: RadioIcon;
   tracks: RadioTrack[];
   createdAt: string;
+  /** Built-in live internet station: streamed, no tracks. */
+  streamUrl?: string;
 }
 
 export interface RadioPlayerState {

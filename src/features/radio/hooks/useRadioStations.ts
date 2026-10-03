@@ -3,6 +3,7 @@ import type { AccentColor } from '@/features/settings';
 import type { RadioIcon, RadioStation, RadioTrack } from '../types';
 import { loadStations, saveStation, deleteStationRecord, clearStations } from '../lib/stationDb';
 import { forgetFile } from '../lib/audioFiles';
+import { getLiveStation } from '../lib/liveStations';
 
 import { tr } from '@/lib/i18n';
 /**
@@ -52,7 +53,7 @@ export function getStations() {
 
 export function getStation(id: string | null) {
   if (!id) return null;
-  return state.stations.find((s) => s.id === id) || null;
+  return getLiveStation(id) || state.stations.find((s) => s.id === id) || null;
 }
 
 export async function createStation(input: {
