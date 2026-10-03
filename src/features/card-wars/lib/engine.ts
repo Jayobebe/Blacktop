@@ -14,7 +14,7 @@ export function playRound(previous:BattleState, index:number, tag?:DogTag, rando
  const rival=eligible[Math.floor(random()*eligible.length)];
  if(!rival) return {...s,result:'win'};
  const allowed=CATEGORIES.filter(c=>c!=='lean'||((s.player[index].displayVehicle??s.player[index].vehicle)==='bike' && rival.c.vehicle==='bike'));
- let category:Category=s.categories[s.round];
+  let category:Category=allowed[Math.floor(random()*allowed.length)];
  if(!allowed.includes(category))category=allowed[Math.floor(random()*allowed.length)];
  s.categories[s.round]=category;
  const card=s.player[index];
@@ -27,6 +27,6 @@ export function playRound(previous:BattleState, index:number, tag?:DogTag, rando
  const damage=winner===null?0:Math.min(65,20+Math.round(Math.abs(a-b)*.7));
  if(winner!==null){const loser=1-winner; const target=loser===0?index:rival.i;s.hp[loser][target]=Math.max(0,s.hp[loser][target]-damage);}
  s.log.push({round:s.round+1,category,player:card.id,opponent:rival.c.id,damage,winner}); s.round++;
- if(s.round===5 || s.hp.some(h=>h.every(v=>v===0))){const totals=s.hp.map(h=>h.reduce((a,b)=>a+b,0));s.result=totals[0]===totals[1]?'draw':totals[0]>totals[1]?'win':'loss';}
+  if(s.hp.some(h=>h.every(v=>v===0))){const totals=s.hp.map(h=>h.reduce((a,b)=>a+b,0));s.result=totals[0]===totals[1]?'draw':totals[0]>totals[1]?'win':'loss';}
  return s;
 }

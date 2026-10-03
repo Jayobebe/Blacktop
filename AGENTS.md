@@ -12,3 +12,4 @@
 - Size battle hands through identical two-over-three grids with reserved tag rails and intrinsic card ratios; allow scrolling instead of height compression so faces never distort.
 
 - Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
+- Edit decks through indexed replacement dialogs sharing the battle hand grid; resolve normal combat only on whole-deck knockout, keeping player settlement server-authoritative.

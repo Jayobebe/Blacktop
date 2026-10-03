@@ -82,6 +82,14 @@ html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:no
 .cw-vault-stat > span { display:flex; align-items:center; gap:4px; font-size:8px; text-transform:uppercase; color:hsl(var(--foreground)/.6); }
 .cw-vault-stat svg { width:10px; height:10px; }
 .cw-vault-stat strong { display:block; font-size:14px; line-height:1.2; }
+.cw-stat-change { display:inline-block; margin-left:6px; vertical-align:middle; }
+.cw-vault-stat svg.cw-stat-better { color:hsl(var(--stat-improvement)); }.cw-vault-stat svg.cw-stat-worse { color:hsl(var(--destructive)); }.cw-vault-stat svg.cw-stat-equal { color:hsl(var(--muted-foreground)); }
+.cw-deck-editor { margin-block:24px; }
+.cw-empty-slot { width:100%; height:auto; aspect-ratio:5/7; border-style:dashed; }
+.cw-picker { max-height:85dvh; display:flex; flex-direction:column; }
+.cw-replacement-list { overflow-y:auto; min-height:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:4px; }
+.cw-tag-option { display:flex; flex-direction:column; gap:8px; }
+@media(min-width:640px) { .cw-replacement-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 .cw-vault-stat small { margin-left:4px; font-size:10px; font-weight:400; color:hsl(var(--foreground)/.7); }
 .cw-scaled-face:has(.cw-vault-ratings) .cw-face-canvas > div > .aspect-\[4\/3\] { height:115px; flex-shrink:0; aspect-ratio:auto; }
 .cw-screen .cw-trading-card { padding:0; gap:0; border:0; border-radius:0; box-shadow:none; background:none; overflow:visible; height:auto; aspect-ratio:5/7; }

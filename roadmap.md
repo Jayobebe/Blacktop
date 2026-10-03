@@ -1,6 +1,6 @@
 # Current tasks
 
-- [ ] Reshape deck editing into battle-style slots with replacement overlays and stat arrows; launch computer/player battles from the top Battle button; finish combat only on all-card knockout.
+- [x] Reshape deck editing into battle-style slots with replacement overlays and stat arrows; launch computer/player battles from the top Battle button; finish combat only on all-card knockout. Browser-verified replacements and launch; round-six knockout and continued combat tested, server rules confirmed; live two-player combat remains untested.
 
 - [x] Apply Street Circuit Arena with equal proportional battle hands, side Spectre tags, and a stable central reveal area; remove conflicting compressed-card styles.
 
