@@ -146,3 +146,16 @@ html.thermal .cw-trading-card { background:hsl(var(--background)); box-shadow:no
 }
 
 .cw-dog-tag .cw-starter-spectre > strong { width:100%; white-space:normal; padding-inline:2px; }
+
+.cw-reward-board { position:relative; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; perspective:1000px; }
+.cw-reward-anchor { aspect-ratio:5/7; min-width:0; }
+.cw-reward-position { position:absolute; top:0; left:0; transition:transform 700ms cubic-bezier(.4,0,.2,1); }
+.cw-reward-moving { z-index:2; }
+.cw-reward-flipper { position:relative; aspect-ratio:5/7; transform-style:preserve-3d; transition:transform 600ms ease-in-out; }
+.cw-reward-facedown { transform:rotateY(180deg); }
+.cw-reward-face { position:absolute; inset:0; backface-visibility:hidden; }
+.cw-reward-face .cw-card-slot,.cw-reward-face .cw-trading-card { height:100%; }
+.cw-reward-back { transform:rotateY(180deg); }
+@media (max-width:600px) { .cw-reward-board { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .cw-reward-face .cw-trading-card { padding:5px; gap:4px; } .cw-reward-face .cw-card-name { font-size:10px; } .cw-reward-face .cw-tier { font-size:6px; padding:2px; } .cw-reward-face .cw-card-stats { gap:2px; grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-reward-face .cw-stat { padding:2px; } .cw-reward-face .cw-stat strong { font-size:10px; } .cw-reward-face .cw-stat>span { font-size:6px; } .cw-reward-face .cw-stat svg,.cw-reward-face .cw-stat small { display:none; } }
+@media (prefers-reduced-motion:reduce) { .cw-reward-position,.cw-reward-flipper { transition:none; } }
+html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:none; }

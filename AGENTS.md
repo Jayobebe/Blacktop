@@ -9,3 +9,5 @@
 - Keep battle choices category-blind and reveal server-settled rounds through a cancellable presentation sequence; the arena never calculates online damage or transfers points.
 
 - Reuse the vault card face for earned battle dog tags, keeping visual Spectre payloads local and independent of combat powers.
+
+- Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
