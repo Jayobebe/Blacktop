@@ -375,9 +375,10 @@ export default function ActiveRide() {
     if (rideState.isActive && settings.gForceEnabled && gForce.isSupported) {
       updateGForce(gForce.currentG, gForce.maxG, { envelope: gForce.envelope, max: gForce.gMax });
     }
-    // gForce.envelope / gMax change together with currentG (same state update).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rideState.isActive, settings.gForceEnabled, gForce.isSupported, gForce.currentG, gForce.maxG, updateGForce]);
+    // Vector peaks can change while total G is unchanged (e.g. a steady turn).
+    // Persist those snapshots too, so covering the ride with the map never
+    // leaves the retained trace behind the live sensor.
+  }, [rideState.isActive, settings.gForceEnabled, gForce.isSupported, gForce.currentG, gForce.maxG, gForce.envelope, gForce.gMax, updateGForce]);
 
   // Start overlay recording when ride starts, only when the rider uses overlay videos
   // (Settings / "Film & share"): it draws and encodes 1080p video for the whole ride,
