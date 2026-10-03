@@ -21,8 +21,8 @@ export function RadioOverlay() {
   const isOpen = useRadioOverlay();
   const { stations: ownStations } = useRadioStations();
   const stations = useMemo(() => [...LIVE_STATIONS, ...ownStations], [ownStations]);
-  const isLive = !!LIVE_STATIONS.find((s) => s.id === player.stationId);
   const player = useRadioPlayer();
+  const isLive = !!LIVE_STATIONS.find((s) => s.id === player.stationId);
   const [showManager, setShowManager] = useState(false);
 
   const activeIndex = useMemo(
