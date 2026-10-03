@@ -1,6 +1,7 @@
 # Current tasks
 
-- [ ] Hide equipped cards/tags from replacement lists and fit Card Wars pages to the screen, with scrolling confined to selection lists.
+- [ ] Replace the Derez Legacy demo slide with an Arcade showcase covering every game.
+- [x] Hide equipped cards/tags from replacement lists and fit Card Wars pages to the screen, with scrolling confined to selection lists; verified in portrait and landscape.
 
 - [x] Reshape deck editing into battle-style slots with replacement overlays and stat arrows; launch computer/player battles from the top Battle button; finish combat only on all-card knockout. Browser-verified replacements and launch; round-six knockout and continued combat tested, server rules confirmed; live two-player combat remains untested.
 
