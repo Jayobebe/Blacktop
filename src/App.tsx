@@ -82,6 +82,10 @@ function JoinLink() {
   const { search } = useLocation();
   return <Navigate to={`/join-convoy${search}`} replace />;
 }
+function CardWarsLink() {
+  const { search, hash } = useLocation();
+  return <Navigate to={`/arcade/card-wars${search}${hash}`} replace />;
+}
 const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
@@ -247,12 +251,13 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       
       <Route path="/world" element={<World />} />
-      <Route path="/world/card-wars" element={<CardWars />} />
+      <Route path="/world/card-wars" element={<CardWarsLink />} />
       <Route path="/crew/convoys" element={<CrewConvoys />} />
       <Route path="/crew/leaderboard" element={<CrewLeaderboard />} />
       <Route path="/crew/join" element={<CrewJoin />} />
       <Route path="/crew/challenges" element={<CrewChallenges />} />
       <Route path="/arcade" element={<Arcade />} />
+      <Route path="/arcade/card-wars" element={<CardWars />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
       <Route path="/arcade/derez-legacy" element={<ArcadeDerezLegacy />} />

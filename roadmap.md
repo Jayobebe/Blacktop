@@ -1,6 +1,6 @@
 # Current tasks
 
-- [ ] Move Card Wars into Blacktop Arcade; keep World vault collections and existing battle invitations working.
+- [x] Move Card Wars into Blacktop Arcade; World vault collections retained, legacy invitations redirected with battle codes preserved. Placement/navigation source checks passed; automated build OK.
 
 - [x] Keep deck editing in Card Wars and split the vault into scanned cards, won battle cards and dog tags; reward visibility, single claims and deck removal preserving rewards passed targeted checks.
 
