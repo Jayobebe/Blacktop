@@ -1,6 +1,6 @@
 # Current tasks
 
-- [ ] Battle hands: two cards above three, with selectable vault-style Spectre dog tags at the side.
+- [x] Battle hands: two cards above three, with selectable vault-style Spectre dog tags at the side; portrait/landscape checked and five-round computer battle completed.
 
 - [x] Rebuild normal-style Silver/Ruby cards and portrait/landscape battle arena; hidden-category choices, wheel reveal, card strike/shake feedback and always-visible health bars. Browser checks passed at desktop, 390×844 portrait and 932×430 landscape; five-round computer outcome passed, automatic build OK. Physical haptics and two-phone player battles remain unverified.
 
