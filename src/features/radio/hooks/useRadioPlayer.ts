@@ -5,6 +5,8 @@ import type { RadioPlayerState, RadioStation } from '../types';
 import { resolveTrackFile } from '../lib/audioFiles';
 import { getStation } from './useRadioStations';
 import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
+import { LIVE_STATIONS, getLiveStation } from '../lib/liveStations';
+import { tr } from '@/lib/i18n';
 
 const EMPTY: RadioPlayerState = {
   stationId: null,
@@ -46,7 +48,11 @@ function getAudio(): HTMLAudioElement {
   });
   audio.addEventListener('play', () => { setState({ isPlaying: true }); syncMediaSession(); });
   audio.addEventListener('pause', () => { setState({ isPlaying: false }); syncMediaSession(); });
-  audio.addEventListener('error', () => { void next(); });
+  audio.addEventListener('error', () => {
+    // A dead stream mustn't hop stations on its own; files skip to the next track.
+    if (getLiveStation(state.stationId)) setState({ isPlaying: false, trackName: tr("Stream unavailable") });
+    else void next();
+  });
   return audio;
 }
 
@@ -113,6 +119,19 @@ async function loadIndex(station: RadioStation, index: number, autoplay: boolean
 
 /** Start a station: shuffles the track list and plays immediately. */
 export async function playStation(station: RadioStation) {
+  if (station.streamUrl) {
+    const el = getAudio();
+    if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+    // Streams rarely send CORS headers; an anonymous request would be refused.
+    el.removeAttribute('crossorigin');
+    el.src = station.streamUrl;
+    setState({ stationId: station.id, stationName: station.name, queue: [], index: 0, trackName: tr("Live"), needsReselect: false, position: 0, duration: 0 });
+    setupMediaSessionHandlers();
+    try { await el.play(); } catch { setState({ isPlaying: false }); }
+    syncMediaSession();
+    return;
+  }
+  getAudio().crossOrigin = 'anonymous';
   if (!station.tracks.length) {
     setState({ stationId: station.id, stationName: station.name, queue: [], trackName: null, needsReselect: false });
     return;
@@ -125,6 +144,7 @@ export async function playStation(station: RadioStation) {
 export async function play() {
   const station = getStation(state.stationId);
   if (!station) return;
+  if (station.streamUrl) { await playStation(station); return; }
   const el = getAudio();
   if (!el.src) { await loadIndex(station, state.index, true); return; }
   try { await el.play(); } catch { /* blocked until a gesture */ }
@@ -132,6 +152,14 @@ export async function play() {
 
 export function pause() {
   audio?.pause();
+  // Live radio has no buffer worth keeping: drop the connection so data stops.
+  if (audio && getLiveStation(state.stationId)) audio.removeAttribute('src');
+}
+
+/** Next / previous on a live station turns the dial to the neighbouring one. */
+async function stepLive(dir: 1 | -1) {
+  const i = LIVE_STATIONS.findIndex((s) => s.id === state.stationId);
+  await playStation(LIVE_STATIONS[(i + dir + LIVE_STATIONS.length) % LIVE_STATIONS.length]);
 }
 
 export async function toggle() {
@@ -140,6 +168,7 @@ export async function toggle() {
 }
 
 export async function next() {
+  if (getLiveStation(state.stationId)) return stepLive(1);
   const station = getStation(state.stationId);
   if (!station || !state.queue.length) return;
   const idx = (state.index + 1) % state.queue.length;
@@ -147,6 +176,7 @@ export async function next() {
 }
 
 export async function previous() {
+  if (getLiveStation(state.stationId)) return stepLive(-1);
   const station = getStation(state.stationId);
   if (!station || !state.queue.length) return;
   const el = getAudio();

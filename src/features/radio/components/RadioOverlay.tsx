@@ -9,6 +9,7 @@ import { useRadioOverlay, closeRadioOverlay } from '../hooks/useRadioOverlay';
 import { getRadioIcon, stationHsl, trackTitle, formatClock } from '../lib/stationVisuals';
 import { pickWithInput } from '../lib/audioFiles';
 import { StationManager } from './StationManager';
+import { LIVE_STATIONS } from '../lib/liveStations';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -18,7 +19,9 @@ import { tr } from '@/lib/i18n';
  */
 export function RadioOverlay() {
   const isOpen = useRadioOverlay();
-  const { stations } = useRadioStations();
+  const { stations: ownStations } = useRadioStations();
+  const stations = useMemo(() => [...LIVE_STATIONS, ...ownStations], [ownStations]);
+  const isLive = !!LIVE_STATIONS.find((s) => s.id === player.stationId);
   const player = useRadioPlayer();
   const [showManager, setShowManager] = useState(false);
 
@@ -151,6 +154,9 @@ export function RadioOverlay() {
                   <FolderOpen className="w-3.5 h-3.5" />{" "}{tr("Please reselect your files for this station")}
                 </button>
               )}
+              {isLive ? (
+                <p className="text-center text-[10px] uppercase tracking-widest text-destructive font-bold">● {tr("On air")}</p>
+              ) : (<>
               <input
                 type="range"
                 min={0}
@@ -165,6 +171,7 @@ export function RadioOverlay() {
                 <span>{formatClock(player.position)}</span>
                 <span>{formatClock(player.duration)}</span>
               </div>
+              </>)}
 
               <div className="flex items-center justify-center gap-6 landscape:gap-4 pt-1">
                 <button type="button" onClick={() => void previous()} aria-label={tr("Previous track")} className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
