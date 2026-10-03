@@ -22,7 +22,7 @@ export function DeckEditor({deck,tags,pool,availableTags,disabled,onReplace}:{de
   <Dialog open={!!slot} onOpenChange={open=>{if(!open)setSlot(null);}}><DialogContent className="cw-screen cw-picker max-w-3xl rounded-lg" aria-describedby={undefined}>
    <DialogTitle>{tr(slot?.type==='tags'?'Replace dog tag':'Replace card')}</DialogTitle>
    {(currentCard||currentTag)&&<DialogDescription>{tr('Replacing {0}',[currentCard?.name??tr(currentTag?.name??'')])}</DialogDescription>}
-   <div className="cw-replacement-list">{slot?.type==='deck'?pool.map(c=><BattleCard key={c.id} card={c} compareTo={currentCard} selected={c.id===currentCard?.id} disabled={disabled||(deck.some(x=>x.id===c.id)&&c.id!==currentCard?.id)} onSelect={()=>replace(c.id)}/>):availableTags.map(t=><div key={t.id} className="cw-tag-option"><BattleDogTag tag={t} selected={t.id===currentTag?.id} used={false} disabled={disabled||tags.some((x,i)=>i!==slot?.index&&(x.id===t.id||x.power===t.power))} onSelect={()=>replace(t.id)}/><span className="text-xs text-muted-foreground text-center">{tr(POWER_LABELS[t.power])}</span></div>)}</div>
+    <div className="cw-replacement-list">{slot?.type==='deck'?pool.filter(c=>!deck.some(x=>x.id===c.id)).map(c=><BattleCard key={c.id} card={c} compareTo={currentCard} disabled={disabled} onSelect={()=>replace(c.id)}/>):availableTags.filter(t=>!tags.some(x=>x.id===t.id)&&!tags.some((x,i)=>i!==slot?.index&&x.power===t.power)).map(t=><div key={t.id} className="cw-tag-option"><BattleDogTag tag={t} selected={false} used={false} disabled={disabled} onSelect={()=>replace(t.id)}/><span className="text-xs text-muted-foreground text-center">{tr(POWER_LABELS[t.power])}</span></div>)}</div>
   </DialogContent></Dialog>
  </>;
 }
