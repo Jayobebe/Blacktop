@@ -657,6 +657,120 @@ export type Database = {
         }
         Relationships: []
       }
+      cw_accounts: {
+        Row: {
+          active_code: string | null
+          balance: number
+          created_at: string
+          last_created_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_code?: string | null
+          balance?: number
+          created_at?: string
+          last_created_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_code?: string | null
+          balance?: number
+          created_at?: string
+          last_created_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cw_catalog: {
+        Row: {
+          id: string
+          ratings: number[]
+          vehicle: string
+        }
+        Insert: {
+          id: string
+          ratings: number[]
+          vehicle: string
+        }
+        Update: {
+          id?: string
+          ratings?: number[]
+          vehicle?: string
+        }
+        Relationships: []
+      }
+      cw_matches: {
+        Row: {
+          categories: number[]
+          code: string
+          created_at: string
+          d1: string[]
+          d2: string[] | null
+          deadline: string
+          hp1: number[]
+          hp2: number[]
+          log: Json
+          move1: number | null
+          move2: number | null
+          p1: string
+          p2: string | null
+          penalty: number
+          round: number
+          status: string
+          tag1: number | null
+          tag2: number | null
+          used1: number[]
+          used2: number[]
+          winner: string | null
+        }
+        Insert: {
+          categories: number[]
+          code?: string
+          created_at?: string
+          d1: string[]
+          d2?: string[] | null
+          deadline?: string
+          hp1?: number[]
+          hp2?: number[]
+          log?: Json
+          move1?: number | null
+          move2?: number | null
+          p1: string
+          p2?: string | null
+          penalty?: number
+          round?: number
+          status?: string
+          tag1?: number | null
+          tag2?: number | null
+          used1?: number[]
+          used2?: number[]
+          winner?: string | null
+        }
+        Update: {
+          categories?: number[]
+          code?: string
+          created_at?: string
+          d1?: string[]
+          d2?: string[] | null
+          deadline?: string
+          hp1?: number[]
+          hp2?: number[]
+          log?: Json
+          move1?: number | null
+          move2?: number | null
+          p1?: string
+          p2?: string | null
+          penalty?: number
+          round?: number
+          status?: string
+          tag1?: number | null
+          tag2?: number | null
+          used1?: number[]
+          used2?: number[]
+          winner?: string | null
+        }
+        Relationships: []
+      }
       derez_lobbies: {
         Row: {
           arena: Json | null
@@ -1514,6 +1628,18 @@ export type Database = {
           top_speed: number
         }[]
       }
+      cw_action: {
+        Args: {
+          _action: string
+          _card?: number
+          _code?: string
+          _deck?: string[]
+          _round?: number
+          _tag?: number
+        }
+        Returns: Json
+      }
+      cw_available: { Args: never; Returns: boolean }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
