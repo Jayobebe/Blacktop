@@ -64,10 +64,10 @@ export function CardWarsScreen(){
  if(!settings.blacktopWorldEnabled||!settings.collectiblesEnabled)return <Navigate to="/arcade" replace/>;
  const locked=!!run&&!run.result || online?.status==='playing'||online?.status==='waiting';
  const shownOnline=displayOnline??online;const liveDeck=shownOnline?.deck?.flatMap(id=>{const c=CATALOG.find(x=>x.id===id);return c?[c]:[];})||[];
- return <main className="min-h-dvh safe-top safe-bottom px-4 py-5 max-w-7xl mx-auto text-foreground">
+ return <main className={`cw-screen ${view!=='deck'&&(run&&!run.result||online?.status==='playing'||reveal)?'cw-active':''} min-h-dvh safe-top safe-bottom px-4 py-5 max-w-7xl mx-auto text-foreground`}>
   <PageHeader title={tr('Card Wars')} backTo="/arcade" subtitle={tr('Deck · {0} cards · {1} dog tags',[vault.deck.length,vault.tags.length])}/>
   <Tabs value={view} onValueChange={v=>{if(!reveal)setView(v);}}><TabsList className="w-full mb-5"><TabsTrigger className="flex-1" value="deck">{tr('Deck')}</TabsTrigger><TabsTrigger className="flex-1" value="computer">{tr('Computer')}</TabsTrigger><TabsTrigger className="flex-1" value="players">{tr('Players')}</TabsTrigger></TabsList></Tabs>
- <p className="text-[11px] text-muted-foreground mb-4">{tr('Fictional game ratings · no riding telemetry shared')}</p>
+ <p className="cw-privacy text-[11px] text-muted-foreground mb-4">{tr('Fictional game ratings · no riding telemetry shared')}</p>
  {riding&&<p className="text-destructive mb-4">{tr('Battles unavailable during a ride')}</p>}
   {view==='deck'&&<><h2 className="font-semibold mb-3">{tr('Five cards')} · {vault.deck.length}/5</h2><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{pool.map(c=><BattleCard key={c.id} card={c} selected={vault.deck.includes(c.id)} disabled={locked||riding} onSelect={()=>toggle(c.id,'deck',5)}/>)}</div>
  <h2 className="font-semibold mt-6 mb-3">{tr('Three dog tags')} · {vault.tags.length}/3</h2><div className="flex flex-wrap gap-2">{tags.map(t=>{const Icon=POWERS[t.power];return <Button key={t.id} variant={vault.tags.includes(t.id)?'default':'outline'} disabled={locked||riding} onClick={()=>toggle(t.id,'tags',3)}><Icon className="w-4 h-4 mr-2"/>{tr(t.name)}</Button>;})}</div>
