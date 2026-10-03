@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Car, Gamepad2, Bike } from 'lucide-react';
+import { Zap, Car, Gamepad2, Bike, Swords } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useSettings } from '@/features/settings';
 import { useArcadeScores } from '../hooks/useArcadeScores';
 import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
 import { tr } from '@/lib/i18n';
@@ -8,6 +10,7 @@ import { tr } from '@/lib/i18n';
 export function ArcadeLobby() {
   const navigate = useNavigate();
   const { scores } = useArcadeScores();
+  const { settings } = useSettings();
 
   // Backfill any bests set before scores were syncing to the crew board.
   useEffect(() => { void syncExistingArcadeScores(); }, []);
@@ -72,6 +75,18 @@ export function ArcadeLobby() {
             {scores['legacy-derez'] > 0 ? tr("Wins: {0}", [scores['legacy-derez']]) : tr("No wins yet")}
           </div>
         </button>
+        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && (
+          <Button
+            variant="outline"
+            onClick={() => navigate('/arcade/card-wars')}
+            className="col-span-2 h-auto justify-start gap-3 py-5 px-4 bg-card/50 border-border/30 rounded-lg hover:bg-card/70 hover:border-accent/40"
+          >
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <Swords className="w-5 h-5 text-accent" />
+            </div>
+            <span className="text-sm font-semibold text-foreground">{tr('Card Wars')}</span>
+          </Button>
+        )}
       </div>
     </section>
   );
