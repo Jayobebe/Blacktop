@@ -105,7 +105,7 @@ html.thermal .cw-trading-card { background:hsl(var(--background)); box-shadow:no
 }
 
 /* Both battle hands keep a centered two-over-three formation. */
-.cw-arena .cw-hand { grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; max-width:600px; margin-inline:auto; }
+.cw-arena .cw-hand { grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; width:100%; max-width:600px; margin-inline:auto; }
 .cw-arena .cw-hand > .cw-card-slot { grid-column:span 2; }
 .cw-arena .cw-hand > .cw-card-slot:nth-child(1) { grid-column:2 / span 2; }
 .cw-arena .cw-hand > .cw-card-slot:nth-child(2) { grid-column:4 / span 2; }
