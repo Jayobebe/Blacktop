@@ -18,7 +18,21 @@ const definitions: [string,string,'car'|'bike','factory'|'race',number[]][] = [
  ['s1000','BMW S 1000 RR race spec','bike','race',[96,88,84,24,78]],
  ['rs660','Aprilia RS 660 Trofeo','bike','race',[72,92,70,40,90]],
 ];
-export const CATALOG: BattleCard[] = definitions.map(([id,name,vehicle,spec,v]) => ({id,name,vehicle,spec,archetype:id,ratings:{speed:v[0],lean:v[1],g:v[2],distance:v[3],corners:v[4]}}));
+export const CATALOG: BattleCard[] = definitions.map(([id,fullName,vehicle,spec,v]) => {
+ const [manufacturer, ...model] = fullName.split(' ');
+ return {id,name:model.join(' '),manufacturer,vehicle,spec,archetype:id,ratings:{speed:v[0],lean:v[1],g:v[2],distance:v[3],corners:v[4]}};
+});
+/** Presentation metadata only: never replaces the catalog ratings used for battles. */
+export function cardIdentity(name: string, makeModel?: string): Pick<BattleCard, 'manufacturer' | 'displayVehicle'> {
+ const text = makeModel || name;
+ const makes = ['Mercedes-Benz', 'Land Rover', 'Aston Martin', 'Harley-Davidson', 'Royal Enfield', 'Volkswagen', 'Kawasaki', 'Suzuki', 'Yamaha', 'Ducati', 'Aprilia', 'Triumph', 'KTM', 'Honda', 'BMW', 'Mazda', 'Porsche', 'Toyota', 'Ford', 'Audi', 'Tesla', 'Nissan', 'Peugeot', 'Renault', 'Volvo', 'Subaru', 'Hyundai', 'Kia', 'Lexus', 'Chevrolet', 'Ferrari', 'Lamborghini', 'McLaren', 'Mini'];
+ const manufacturer = makes.find(make => new RegExp(`\\b${make}\\b`, 'i').test(text));
+ const known = CATALOG.find(c => manufacturer === c.manufacturer && text.toLowerCase().includes(c.name.toLowerCase().replace(/ (cup|race spec|trofeo)$/, '')));
+ const bikeMake = /^(Yamaha|Kawasaki|Suzuki|Ducati|Aprilia|Triumph|KTM|Harley-Davidson|Royal Enfield)$/;
+ const carMake = /^(Mercedes-Benz|Land Rover|Aston Martin|Volkswagen|Mazda|Porsche|Toyota|Ford|Audi|Tesla|Nissan|Peugeot|Renault|Volvo|Subaru|Hyundai|Kia|Lexus|Chevrolet|Ferrari|Lamborghini|McLaren|Mini)$/;
+ const displayVehicle = known?.vehicle || (manufacturer && bikeMake.test(manufacturer) ? 'bike' : manufacturer && carMake.test(manufacturer) ? 'car' : undefined);
+ return {manufacturer, displayVehicle};
+}
 export const STARTERS = ['mx5','gti','mt07','sv650','ninja'];
 export const STARTER_TAGS: DogTag[] = [
  {id:'tag-reroll',name:'Second chance',power:'reroll',vehicle:'bike'},
@@ -26,4 +40,4 @@ export const STARTER_TAGS: DogTag[] = [
  {id:'tag-boost',name:'Overdrive',power:'boost',vehicle:'bike'},
 ];
 export function archetypeFor(identity: string): BattleCard { let h=0; for(const c of identity) h=(h*31+c.charCodeAt(0))>>>0; return CATALOG[h%CATALOG.length]; }
-export function unlockCard(id: 'demo'|'dev'): BattleCard { const base=CATALOG[id==='demo'?0:8]; return {...base,id,name:id==='demo'?'Blacktop Demo':'Blacktop Dev',source:'unlock'}; }
+export function unlockCard(id: 'demo'|'dev'): BattleCard { const base=CATALOG[id==='demo'?0:8]; return {...base,id,manufacturer:'Blacktop',name:id==='demo'?'Demo':'Dev',source:'unlock'}; }
