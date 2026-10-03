@@ -409,7 +409,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
   );
 }
 
-function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
+export function FullCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
   const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
