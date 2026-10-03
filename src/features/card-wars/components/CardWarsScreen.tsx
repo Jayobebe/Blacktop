@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
 import { useVehicleCards, useCollectedCards, useSpectreCards } from '@/features/cards';
-import { useRideHistory, getActiveRideStatus } from '@/features/ride';
+import { useRideHistory, useRideSpeed } from '@/features/ride';
 import { useDemoMode } from '@/lib/demoMode';
 import { useServerCap } from '@/lib/serverCaps';
 import { shareOrigin } from '@/lib/platform';
@@ -22,13 +22,14 @@ import { createRun, playRound } from '../lib/engine';
 import { useVault, updateVault, claimReward } from '../lib/store';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { CATEGORIES, type BattleCard as Card, type DogTag, type Category } from '../types';
+import '../card-wars.css';
 const LABELS:Record<Category,string>={speed:'Speed',lean:'Lean',g:'G-force',distance:'Distance',corners:'Corners'};
 const POWERS={reroll:Shuffle,heal:Heart,boost:Zap};
 export function CardWarsScreen(){
  const {settings}=useSettings();const vault=useVault();const {enabled:demo}=useDemoMode();const cap=useServerCap('cardWars');
  const {cards:own}=useVehicleCards();const {collected}=useCollectedCards();const {spectres}=useSpectreCards();const {rides,burnedTotals}=useRideHistory();
  const [params]=useSearchParams();const [view,setView]=useState('vault');const [online,setOnline]=useState<OnlineBattle|null>(null);const [code,setCode]=useState(params.get('battle')||'');const [busy,setBusy]=useState(false);const [tag,setTag]=useState<string|null>(null);const [rewardStage,setRewardStage]=useState<'show'|'shuffle'|'pick'>('show');const [scan,setScan]=useState(false);const [clock,setClock]=useState(Date.now());
- const riding=!!getActiveRideStatus()?.isActive;
+ const riding=useRideSpeed().isActive;
  const hours=(rides.filter(r=>r.endedAt).reduce((s,r)=>s+r.duration,0)+Object.values(burnedTotals).reduce((s,r)=>s+r.duration,0))/3600;
  useEffect(()=>{const ids=[...(hours>=10?['demo']:[]),...(hours>=50?['dev']:[])];const next=Array.from(new Set([...vault.unlocks,...ids]));if(next.length!==vault.unlocks.length&&!demo)updateVault({unlocks:next});},[hours,demo,vault.unlocks]);
  const pool=useMemo(()=>{
@@ -66,7 +67,7 @@ export function CardWarsScreen(){
  <Button variant="ghost" className="mt-4" onClick={()=>updateVault({run:{...run,result:'loss'}})}><Flag className="w-4 h-4 mr-2"/>{tr('Forfeit')}</Button></>}
  {run?.result&&<><h2 className="text-xl font-semibold mb-4">{tr(run.result==='win'?'Victory':run.result==='draw'?'Draw':'Defeat')}</h2>
  {run.result==='win'&&!run.rewardClaimed&&<>{rewardStage==='show'&&<Button className="mb-4" onClick={()=>setRewardStage('shuffle')}><Shuffle className="w-4 h-4 mr-2"/>{tr('Shuffle reward cards')}</Button>}
- <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 ${rewardStage==='shuffle'?'animate-pulse motion-reduce:animate-none':''}`}>{(rewardStage==='show'?run.opponent:run.rewardOrder.map(id=>run.opponent.find(c=>c.id===id)).filter((c):c is Card=>!!c)).map(c=><BattleCard key={c.id} card={c} faceDown={rewardStage!=='show'} disabled={rewardStage!=='pick'||riding} onSelect={()=>{if(claimReward(c.id))toast.success(tr('Added {0} to your vault',[c.name]));}}/>)}</div></>}
+ <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 ${rewardStage==='shuffle'?'cw-shuffling':''}`}>{(rewardStage==='show'?run.opponent:run.rewardOrder.map(id=>run.opponent.find(c=>c.id===id)).filter((c):c is Card=>!!c)).map(c=><BattleCard key={c.id} card={c} faceDown={rewardStage!=='show'} disabled={rewardStage!=='pick'||riding} onSelect={()=>{if(claimReward(c.id))toast.success(tr('Added {0} to your vault',[c.name]));}}/>)}</div></>}
  {(run.result!=='win'||run.rewardClaimed)&&<Button onClick={()=>{updateVault({run:null});setRewardStage('show');}}>{tr('New battle')}</Button>}
  </>}{run&&run.log.length>0&&<div className="border-t border-border mt-5 pt-3 space-y-2 text-xs text-muted-foreground">{run.log.map(l=><p key={l.round}>{tr('Round {0} · {1} · {2} damage',[l.round,tr(LABELS[l.category]),l.damage])}</p>)}</div>}</>}
  {view==='players'&&<><div className="flex justify-between mb-4"><span>{tr('Overdrive')}</span><strong className="font-mono text-accent">{online?.balance??'—'}</strong></div><p className="text-sm text-muted-foreground mb-5">{tr('10 points each · winner takes 20 · draws refund stakes · no cards lost')}</p>

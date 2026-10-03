@@ -87,6 +87,7 @@ const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
 const EnterpriseDemo = lazyPage(() => loadLocaleExtra().then(() => import("./pages/EnterpriseDemo")));
 const World = lazyPage(() => import("./pages/World"));
+const CardWars = lazyPage(() => import("./pages/CardWars"));
 const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
 const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));
 const CrewJoin = lazyPage(() => import("./pages/CrewJoin"));
@@ -246,6 +247,7 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       
       <Route path="/world" element={<World />} />
+      <Route path="/world/card-wars" element={<CardWars />} />
       <Route path="/crew/convoys" element={<CrewConvoys />} />
       <Route path="/crew/leaderboard" element={<CrewLeaderboard />} />
       <Route path="/crew/join" element={<CrewJoin />} />

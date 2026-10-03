@@ -19,6 +19,8 @@ import { X } from 'lucide-react';
 import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
 import { CrewList } from '@/features/crew/CrewList';
 import { BlacktankPanel } from '@/features/blacktank';
+import { Button } from '@/components/ui/button';
+import { Swords } from 'lucide-react';
 
 import { tr } from '@/lib/i18n';
 
@@ -289,6 +291,11 @@ export default function World() {
       {/* Card collection — full-height vertical snap carousel */}
       {settings.collectiblesEnabled && (
         <div className="flex-shrink-0">
+          <div className="px-5 py-4 border-y border-border/40">
+            <Button variant="outline" className="w-full h-12" onClick={() => navigate('/world/card-wars')}>
+              <Swords className="w-5 h-5 mr-2 text-accent" />{tr('Card Wars')}
+            </Button>
+          </div>
           <CollectedCardsFolder />
         </div>
       )}
