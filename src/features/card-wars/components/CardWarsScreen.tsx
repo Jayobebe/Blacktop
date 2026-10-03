@@ -17,7 +17,7 @@ import { loadQrScanner } from '@/lib/qrScanner';
 import { demoBlocked } from '@/lib/demoGuard';
 import { tr } from '@/lib/i18n';
 import { BattleCard } from './BattleCard';
-import { CATALOG, STARTERS, STARTER_TAGS, archetypeFor, unlockCard } from '../lib/catalog';
+import { CATALOG, STARTERS, STARTER_TAGS, archetypeFor, unlockCard, cardIdentity } from '../lib/catalog';
 import { createRun, playRound } from '../lib/engine';
 import { useVault, updateVault, claimReward } from '../lib/store';
 import { battleAction, type OnlineBattle } from '../lib/online';
@@ -35,8 +35,8 @@ export function CardWarsScreen(){
  const pool=useMemo(()=>{
  const ids=Array.from(new Set([...STARTERS,...vault.rewards]));const a:Card[]=ids.flatMap(id=>{const c=CATALOG.find(x=>x.id===id);return c?[{...c,source:STARTERS.includes(id)?'relic' as const:'reward' as const}]:[];});
  for(const id of vault.unlocks)if(id==='demo'||id==='dev')a.push(unlockCard(id));
- for(const c of own){const b=archetypeFor(c.bike.id);a.push({...b,id:`own:${c.bike.id}`,name:c.bike.name||b.name,source:'collection'});}
- for(const c of collected){const b=archetypeFor(c.i);a.push({...b,id:`collected:${c.key}`,name:c.n,source:'collection'});}
+  for(const c of own){const b=archetypeFor(c.bike.id);a.push({...b,...cardIdentity(c.bike.name,c.bike.makeModel),id:`own:${c.bike.id}`,name:c.bike.name||b.name,image:c.bike.photos.hero||undefined,source:'collection'});}
+  for(const c of collected){const b=archetypeFor(c.i);a.push({...b,...cardIdentity(c.n,c.m),id:`collected:${c.key}`,name:c.n,image:c.img,source:'collection'});}
  return a;
  },[vault.rewards,vault.unlocks,own,collected]);
  const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
