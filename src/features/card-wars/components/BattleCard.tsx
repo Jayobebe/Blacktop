@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { tr } from '@/lib/i18n';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { TIER_STYLES } from '@/features/cards/types';
 import type { BattleCard as Card, Category } from '../types';
+import '../card-wars.css';
 const STATS: { key: Category; label: string; icon: typeof Gauge }[] = [
  {key:'speed',label:'Speed',icon:Gauge}, {key:'lean',label:'Lean',icon:RotateCw},
  {key:'g',label:'G-force',icon:Zap}, {key:'distance',label:'Distance',icon:Route},
@@ -12,7 +14,8 @@ const STATS: { key: Category; label: string; icon: typeof Gauge }[] = [
 export function BattleCard({card,hp,selected,onSelect,disabled,category,faceDown=false,readOnly=false}:{card:Card;hp?:number;selected?:boolean;onSelect?:()=>void;disabled?:boolean;category?:Category;faceDown?:boolean;readOnly?:boolean}){
  const vehicle=card.displayVehicle ?? card.vehicle;
  const Icon=vehicle==='bike'?Bike:Car;
- const stats=STATS.filter(s=>s.key!=='lean'||vehicle==='bike');
+ const stats=STATS.filter(s=>s.key!=='lean'||(vehicle==='bike' && (card.source!=='collection'||card.displayVehicle==='bike')));
+ const frame=TIER_STYLES[card.tier ?? 'locked'];
  const content=faceDown ? <div className="cw-card-back"><span className="text-xs font-bold text-accent">BLACKTOP</span><Ghost className="w-16 h-16 text-accent" strokeWidth={1}/><span className="text-xs font-semibold text-foreground">{tr('Card Wars')}</span></div> : <>
   <div className="flex items-center justify-between gap-1 text-[9px] text-muted-foreground uppercase">
    <span className="truncate">{tr(card.source==='relic'?'Relic':card.spec==='race'?'Race spec':'Factory')}</span>
@@ -31,6 +34,6 @@ export function BattleCard({card,hp,selected,onSelect,disabled,category,faceDown
    {hp!==undefined ? <div className="mt-1 space-y-1"><Progress value={hp} className="h-1"/><span className="block text-[9px] text-muted-foreground">{tr('{0} HP',[hp])}</span></div> : <span className="block text-[8px] text-muted-foreground mt-1">BLACKTOP · {tr('Card Wars')}</span>}
   </div>
  </>;
- const className=`cw-trading-card no-frost h-auto w-full min-w-0 flex flex-col items-stretch justify-start p-2.5 rounded-lg whitespace-normal border-2 text-left ${selected?'border-accent':'border-border'} ${hp===0?'opacity-40':''}`;
+ const className=`cw-trading-card no-frost h-auto w-full min-w-0 flex flex-col items-stretch justify-start p-2.5 rounded-lg whitespace-normal border-2 text-left ${selected?'border-accent':frame.border} ${hp===0?'opacity-40':''}`;
  return readOnly ? <div className={className}>{content}</div> : <Button variant="outline" disabled={disabled} onClick={onSelect} aria-pressed={selected} aria-label={faceDown?tr('Choose face-down card'):`${card.manufacturer || ''} ${card.name}`.trim()} className={className}>{content}</Button>;
 }

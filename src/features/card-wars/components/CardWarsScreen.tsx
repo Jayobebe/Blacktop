@@ -36,7 +36,7 @@ export function CardWarsScreen(){
  const ids=Array.from(new Set([...STARTERS,...vault.rewards]));const a:Card[]=ids.flatMap(id=>{const c=CATALOG.find(x=>x.id===id);return c?[{...c,source:STARTERS.includes(id)?'relic' as const:'reward' as const}]:[];});
  for(const id of vault.unlocks)if(id==='demo'||id==='dev')a.push(unlockCard(id));
   for(const c of own){const b=archetypeFor(c.bike.id);a.push({...b,...cardIdentity(c.bike.name,c.bike.makeModel),id:`own:${c.bike.id}`,name:c.bike.name||b.name,image:c.bike.photos.hero||undefined,source:'collection'});}
-  for(const c of collected){const b=archetypeFor(c.i);a.push({...b,...cardIdentity(c.n,c.m),id:`collected:${c.key}`,name:c.n,image:c.img,source:'collection'});}
+  for(const c of collected){const b=archetypeFor(c.i);a.push({...b,...cardIdentity(c.n,c.m),id:`collected:${c.key}`,name:c.n,image:c.img,tier:c.t,source:'collection'});}
  return a;
  },[vault.rewards,vault.unlocks,own,collected]);
  const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
