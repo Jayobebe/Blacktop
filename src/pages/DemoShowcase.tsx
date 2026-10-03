@@ -77,9 +77,9 @@ import {
   SafetyScene,
 } from '@/components/demo/scenesRide';
 import { AfterRideScene, GarageScene, TrackDayScene, TrackRecordsScene, TradingCardsScene } from '@/components/demo/scenesGarage';
+import { ArcadeScene } from '@/components/demo/ArcadeScene';
 import {
   BurnScene,
-  DerezScene,
   MakeItYoursScene,
   PayUpScene,
   RadioScene,
@@ -348,7 +348,7 @@ export default function DemoShowcase() {
         { icon: Users, label: tr("Crew Convoys"), text: tr("A live list of your crew's open rides — tap for leader and riders.") },
         { icon: Trophy, label: tr("Crew Leaderboards"), text: tr("Named rankings for distance, top speed, lean, rides and arcade, updated after every ride. Get a heads-up when a mate passes you.") },
         { icon: Flag, label: tr("Challenges"), text: tr("Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year. Notifications for targets hit, results and a 5-days-left nudge.") },
-        { icon: Gamepad2, label: tr("Arcade"), text: tr("Hit Heavy with Classic, Flurry and Precision modes, Petrol Head with fuel, near misses and shields, and Derez Legacy. Your bests go on the crew board.") },
+        { icon: Gamepad2, label: tr("Arcade"), text: tr("Hit Heavy, Petrol Head, Derez Legacy and Card Wars — punch scores, traffic runs, live light trails and vehicle-card battles.") },
         { icon: Fuel, label: tr("Blacktank"), text: tr("On the South Pole: your crew's shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.") },
       ],
     },
@@ -366,17 +366,18 @@ export default function DemoShowcase() {
       ],
     },
     {
-      id: 'legacy-derez',
-      title: tr("Derez Legacy"),
-      subtitle: tr("Tron-Style Light-Bike Arena"),
-      description: tr("Two or more riders draw a live arena on the map, ready up, then ride inside it. Your GPS trail becomes a glowing wall in your accent colour — crash into someone else's line and you're out."),
+      id: 'arcade',
+      title: tr("Arcade"),
+      subtitle: tr("Four Games. One Arcade."),
+      description: tr("Chase punch scores, dodge traffic, outlast live light trails or battle your vehicle cards. Find all four games in Blacktop Arcade, with Card Wars available when World and collectibles are on."),
       icon: Gamepad2,
       tone: 'accent',
-      scene: <DerezScene />,
+      scene: <ArcadeScene />,
       cards: [
-        { icon: MapIcon, label: tr("Draw The Grid"), text: tr("The lobby leader freehands the game space on a map — a car park, a lot, any closed loop.") },
-        { icon: Zap, label: tr("Live Trails"), text: tr("High-frequency GPS paints a wall behind every rider in their own colour.") },
-        { icon: Skull, label: tr("Crash Out"), text: tr("Hit another wall or leave the arena for 5 seconds and you lose a life.") },
+        { icon: Zap, label: tr("Hit Heavy"), text: tr("Classic measures your hardest hit, Flurry counts rapid punches and Precision tests target G-force. Challenge your crew's best.") },
+        { icon: Fuel, label: tr("Petrol Head"), text: tr("Dodge three lanes of traffic, collect fuel and build near-miss combos to charge a shield. Survive longer to climb the crew board.") },
+        { icon: Gamepad2, label: tr("Derez Legacy"), text: tr("Draw an arena and ready up with other players. GPS trails become light walls: hit a rival's wall or stay outside for five seconds and lose a life. Play only in a safe, closed area away from traffic.") },
+        { icon: IdCard, label: tr("Card Wars"), text: tr("Build a deck of five vehicle cards and three dog tags. Choose your card before the category spins, then battle until one whole deck reaches zero HP. Beat the computer to pick a shuffled reward card, or stake Overdrive against another player — no cards lost.") },
       ],
     },
     {
