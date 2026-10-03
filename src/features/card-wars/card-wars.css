@@ -11,7 +11,7 @@ button.cw-trading-card:disabled { opacity:1; }
 .cw-health-fill,.cw-health-low { height:100%; background:hsl(var(--accent)); transition:width .35s ease; }
 .cw-health-low { background:hsl(var(--destructive)); }
 /* Street Circuit: one proportional card grid, never height-constrained faces. */
-.cw-arena { display:grid; grid-template-areas:'opponent' 'showdown' 'player'; grid-template-columns:minmax(0,1fr); grid-template-rows:auto 280px auto; gap:20px; max-width:1200px; margin:auto; padding-block:8px 20px; }
+.cw-arena { display:grid; grid-template-areas:'opponent' 'showdown' 'player'; grid-template-columns:minmax(0,1fr); grid-template-rows:auto 340px auto; gap:20px; max-width:1200px; margin:auto; padding-block:8px 20px; }
 .cw-opponent { grid-area:opponent; }.cw-player { grid-area:player; }.cw-showdown { grid-area:showdown; }
 .cw-deck { min-width:0; width:100%; max-width:440px; margin-inline:auto; }
 .cw-deck-label { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; font-size:11px; font-weight:700; text-transform:uppercase; color:hsl(var(--muted-foreground)); }
@@ -47,7 +47,7 @@ button.cw-trading-card:disabled { opacity:1; }
 @keyframes cw-slap-left { 0%,100%{transform:translateX(0) rotate(0)} 40%{transform:translateX(-95%) rotate(-12deg) scale(1.05)} }
 @keyframes cw-damage { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(7px) rotate(4deg);filter:brightness(1.5)} 40%,80%{transform:translateX(-7px) rotate(-4deg)} }
 @media (orientation:landscape) {
- .cw-arena { grid-template-areas:'player showdown opponent'; grid-template-columns:minmax(280px,1fr) 260px minmax(280px,1fr); grid-template-rows:minmax(300px,auto); align-items:center; gap:20px; }
+ .cw-arena { grid-template-areas:'player showdown opponent'; grid-template-columns:minmax(280px,1fr) 260px minmax(280px,1fr); grid-template-rows:minmax(340px,auto); align-items:center; gap:20px; }
  .cw-hand-with-tags { grid-template-columns:minmax(0,1fr) 40px; gap:10px; }
 }
 @media (orientation:landscape) and (max-height:600px) {
