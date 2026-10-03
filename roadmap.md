@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Keep deck editing in Card Wars and split the vault into scanned cards, won battle cards and dog tags, with computer rewards shared between both screens.
+
 - [x] Patch radio wheel selection, drag rotation and map overlay visibility; interaction checks not performed.
 - [x] Make receipt award stamps compact, with G-force and mechanic stamps flanking the vehicle slot; appearance not previewed.
 - [x] Persist vector-only G-force changes and seed the sensor from the ride's retained peaks on remount.
