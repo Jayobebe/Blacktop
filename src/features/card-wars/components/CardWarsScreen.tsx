@@ -17,6 +17,7 @@ import { loadQrScanner } from '@/lib/qrScanner';
 import { demoBlocked } from '@/lib/demoGuard';
 import { tr } from '@/lib/i18n';
 import { BattleCard } from './BattleCard';
+import { RewardShuffle } from './RewardShuffle';
 import { BattleArena, type Reveal } from './BattleArena';
 import { CATALOG, STARTERS, STARTER_TAGS, archetypeFor, unlockCard, cardIdentity } from '../lib/catalog';
 import { createRun, playRound } from '../lib/engine';
@@ -29,7 +30,7 @@ const POWERS={reroll:Shuffle,heal:Heart,boost:Zap};
 export function CardWarsScreen(){
  const {settings}=useSettings();const vault=useVault();const {enabled:demo}=useDemoMode();const cap=useServerCap('cardWars');
  const {cards:own}=useVehicleCards();const {collected}=useCollectedCards();const {spectres}=useSpectreCards();const {rides,burnedTotals}=useRideHistory();
-  const [params]=useSearchParams();const [view,setView]=useState(params.has('battle')?'players':'deck');const [online,setOnline]=useState<OnlineBattle|null>(null);const [code,setCode]=useState(params.get('battle')||'');const [busy,setBusy]=useState(false);const [tag,setTag]=useState<string|null>(null);const [rewardStage,setRewardStage]=useState<'show'|'shuffle'|'pick'>('show');const [scan,setScan]=useState(false);const [clock,setClock]=useState(Date.now());
+  const [params]=useSearchParams();const [view,setView]=useState(params.has('battle')?'players':'deck');const [online,setOnline]=useState<OnlineBattle|null>(null);const [code,setCode]=useState(params.get('battle')||'');const [busy,setBusy]=useState(false);const [tag,setTag]=useState<string|null>(null);const [scan,setScan]=useState(false);const [clock,setClock]=useState(Date.now());
  const [reveal,setReveal]=useState<Reveal|null>(null);const [displayOnline,setDisplayOnline]=useState<OnlineBattle|null>(null);const seen=useRef('');
  const riding=useRideSpeed().isActive;
  const hours=(rides.filter(r=>r.endedAt).reduce((s,r)=>s+r.duration,0)+Object.values(burnedTotals).reduce((s,r)=>s+r.duration,0))/3600;
@@ -47,7 +48,6 @@ export function CardWarsScreen(){
  async function action(a:'status'|'create'|'join'|'play'|'leave',card?:number){if(busy||((a!=='status')&&(riding||demoBlocked())))return;setBusy(true);try{const result=await battleAction(a,a==='join'?code.trim():online?.code,a==='create'||a==='join'?deck.map(c=>c.archetype):undefined,card,selectedTag?STARTER_TAGS.findIndex(t=>t.power===selectedTag.power):undefined,online?.round);setOnline(result);setTag(null);}catch(e){toast.error(e instanceof Error?e.message:tr('Battle unavailable'));}finally{setBusy(false);}}
  useEffect(()=>{if(view!=='players'||!cap||demo)return;let stopped=false;let fetching=false;const poll=async()=>{if(fetching||document.hidden)return;fetching=true;try{const next=await battleAction('status',online?.code);if(!stopped)setOnline(next);}catch{}finally{fetching=false;}};void poll();const timer=setInterval(()=>void poll(),4000);return()=>{stopped=true;clearInterval(timer);};},[view,cap,demo,online?.code]);
  useEffect(()=>{if(!online?.deadline)return;const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer);},[online?.deadline]);
- useEffect(()=>{if(rewardStage!=='shuffle')return;const timer=setTimeout(()=>setRewardStage('pick'),1600);return()=>clearTimeout(timer);},[rewardStage]);
  useEffect(()=>{if(!scan)return;let cancelled=false;let scanner:InstanceType<Awaited<ReturnType<typeof loadQrScanner>>>|null=null;void(async()=>{try{const Qr=await loadQrScanner();if(cancelled)return;scanner=new Qr('cw-scanner');await scanner.start({facingMode:'environment'},{fps:8,qrbox:220},text=>{try{const url=new URL(text);const value=url.searchParams.get('battle');if(value&&/^[a-f0-9-]{36}$/i.test(value)){setCode(value);setScan(false);}}catch{}},()=>{});}catch{setScan(false);toast.error(tr('Could not access camera'));}})();return()=>{cancelled=true;const s=scanner;if(s)void(async()=>{if(s.isScanning)await s.stop();s.clear();})().catch(()=>{});};},[scan]);
  useEffect(()=>{
   if(!online)return;
@@ -72,13 +72,12 @@ export function CardWarsScreen(){
   {view==='deck'&&<><h2 className="font-semibold mb-3">{tr('Five cards')} · {vault.deck.length}/5</h2><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{pool.map(c=><BattleCard key={c.id} card={c} selected={vault.deck.includes(c.id)} disabled={locked||riding} onSelect={()=>toggle(c.id,'deck',5)}/>)}</div>
  <h2 className="font-semibold mt-6 mb-3">{tr('Three dog tags')} · {vault.tags.length}/3</h2><div className="flex flex-wrap gap-2">{tags.map(t=>{const Icon=POWERS[t.power];return <Button key={t.id} variant={vault.tags.includes(t.id)?'default':'outline'} disabled={locked||riding} onClick={()=>toggle(t.id,'tags',3)}><Icon className="w-4 h-4 mr-2"/>{tr(t.name)}</Button>;})}</div>
  <div className="border-t border-border mt-6 py-4 space-y-2 text-sm text-muted-foreground"><p>{tr('Demo card · {0}/10 hours',[Math.min(10,hours).toFixed(1)])}</p><p>{tr('Dev card · {0}/50 hours',[Math.min(50,hours).toFixed(1)])}</p></div></>}
- {view==='computer'&&<>{!run&&<Button disabled={riding||deck.length!==5||deckTags.length!==3} className="w-full h-12" onClick={()=>{updateVault({run:createRun(deck)});setRewardStage('show');setTag(null);}}><Swords className="mr-2 w-5 h-5"/>{tr('Start battle')}</Button>}
+ {view==='computer'&&<>{!run&&<Button disabled={riding||deck.length!==5||deckTags.length!==3} className="w-full h-12" onClick={()=>{updateVault({run:createRun(deck)});setTag(null);}}><Swords className="mr-2 w-5 h-5"/>{tr('Start battle')}</Button>}
  {run&&(!run.result||reveal)&&<><BattleArena player={run.player} opponent={run.opponent} hp={run.hp} round={reveal?run.round:run.round+1} disabled={riding} tags={deckTags} usedTags={run.usedTags} tag={tag} onTag={setTag} onPick={pickComputer} reveal={reveal} onRevealEnd={finishReveal} penalty={run.penaltyRound===(reveal?run.round-1:run.round)}/><Button variant="ghost" disabled={!!reveal} className="mt-3" onClick={()=>updateVault({run:{...run,result:'loss'}})}><Flag className="w-4 h-4 mr-2"/>{tr('Forfeit')}</Button></>}
   {run?.result&&!reveal&&<><h2 className="text-xl font-semibold mb-4">{tr(run.result==='win'?'Victory':run.result==='draw'?'Draw':'Defeat')}</h2>
  {run.chosenReward&&<div className="max-w-48 mb-4">{run.opponent.filter(c=>c.id===run.chosenReward).map(c=><BattleCard key={c.id} card={c} selected/>)}</div>}
- {run.result==='win'&&!run.rewardClaimed&&<>{rewardStage==='show'&&<Button className="mb-4" onClick={()=>setRewardStage('shuffle')}><Shuffle className="w-4 h-4 mr-2"/>{tr('Shuffle reward cards')}</Button>}
- <div className={`grid grid-cols-2 sm:grid-cols-5 gap-2 ${rewardStage==='shuffle'?'cw-shuffling':''}`}>{(rewardStage==='show'?run.opponent:run.rewardOrder.map(id=>run.opponent.find(c=>c.id===id)).filter((c):c is Card=>!!c)).map(c=><BattleCard key={c.id} card={c} faceDown={rewardStage!=='show'} disabled={rewardStage!=='pick'||riding} onSelect={()=>{if(claimReward(c.id))toast.success(tr('Added {0} to your vault',[c.name]));}}/>)}</div></>}
- {(run.result!=='win'||run.rewardClaimed)&&<Button onClick={()=>{updateVault({run:null});setRewardStage('show');}}>{tr('New battle')}</Button>}
+ {run.result==='win'&&!run.rewardClaimed&&<RewardShuffle key={run.id} run={run} riding={riding} onComplete={()=>updateVault({run:{...run,rewardShuffleComplete:true}})} onClaim={id=>{const card=run.opponent.find(c=>c.id===id);if(card&&claimReward(id))toast.success(tr('Added {0} to your vault',[card.name]));}}/>}
+ {(run.result!=='win'||run.rewardClaimed)&&<Button onClick={()=>{updateVault({run:null});}}>{tr('New battle')}</Button>}
  </>}{run&&!reveal&&run.log.length>0&&<div className="border-t border-border mt-5 pt-3 space-y-2 text-xs text-muted-foreground">{run.log.map(l=><p key={l.round}>{tr('Round {0} · {1} · {2} damage',[l.round,tr(LABELS[l.category]),l.damage])}</p>)}</div>}</>}
  {view==='players'&&<><div className="flex justify-between mb-4"><span>{tr('Overdrive')}</span><strong className="font-mono text-accent">{online?.balance??'—'}</strong></div><p className="text-sm text-muted-foreground mb-5">{tr('10 points each · winner takes 20 · draws refund stakes · no cards lost')}</p>
  {!cap&&<p>{tr('Player battles are not available yet')}</p>}
