@@ -1,3 +1,4 @@
+import { usePeaksHidden } from '@/features/ride';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
@@ -30,7 +31,7 @@ const LABELS:Record<Category,string>={speed:'Speed',lean:'Lean',g:'G-force',dist
 const POWERS={reroll:Shuffle,heal:Heart,boost:Zap};
 export function CardWarsScreen(){
  const {settings}=useSettings();const vault=useVault();const {enabled:demo}=useDemoMode();const cap=useServerCap('cardWars');
- const {cards:own}=useVehicleCards();const {collected}=useCollectedCards();const {spectres}=useSpectreCards();const {rides,burnedTotals}=useRideHistory();
+ const peaksHidden=usePeaksHidden();const {cards:own}=useVehicleCards();const {collected}=useCollectedCards();const {spectres}=useSpectreCards();const {rides,burnedTotals}=useRideHistory();
   const [params]=useSearchParams();const [view,setView]=useState(params.has('battle')?'players':vault.run&&!vault.run.result?'computer':'deck');const [online,setOnline]=useState<OnlineBattle|null>(null);const [code,setCode]=useState(params.get('battle')||'');const [busy,setBusy]=useState(false);const [tag,setTag]=useState<string|null>(null);const [scan,setScan]=useState(false);const [clock,setClock]=useState(Date.now());
  const [reveal,setReveal]=useState<Reveal|null>(null);const [displayOnline,setDisplayOnline]=useState<OnlineBattle|null>(null);const seen=useRef('');
  const riding=useRideSpeed().isActive;
@@ -39,10 +40,10 @@ export function CardWarsScreen(){
  const pool=useMemo(()=>{
  const ids=Array.from(new Set([...STARTERS,...vault.rewards]));const a:Card[]=ids.flatMap(id=>{const c=CATALOG.find(x=>x.id===id);return c?[{...c,source:STARTERS.includes(id)?'relic' as const:'reward' as const}]:[];});
  for(const id of vault.unlocks)if(id==='demo'||id==='dev')a.push(unlockCard(id));
-  for(const c of own){const b=archetypeFor(c.bike.id);a.push({...b,...cardIdentity(c.bike.name,c.bike.makeModel),id:`own:${c.bike.id}`,name:c.bike.name||b.name,image:c.bike.photos.hero||undefined,tier:c.tier,source:'collection'});}
-  for(const c of collected){const b=archetypeFor(c.i);a.push({...b,...cardIdentity(c.n,c.m),id:`collected:${c.key}`,name:c.n,image:c.img,tier:c.t,source:'collection'});}
+  if(!peaksHidden)for(const c of own){const b=archetypeFor(c.bike.id);a.push({...b,...cardIdentity(c.bike.name,c.bike.makeModel),id:`own:${c.bike.id}`,name:c.bike.name||b.name,image:c.bike.photos.hero||undefined,tier:c.tier,source:'collection'});}
+  for(const c of collected){if(c.s?.topSpeedMph==null||c.s?.maxGForce==null)continue;const b=archetypeFor(c.i);a.push({...b,...cardIdentity(c.n,c.m),id:`collected:${c.key}`,name:c.n,image:c.img,tier:c.t,source:'collection'});}
  return a;
- },[vault.rewards,vault.unlocks,own,collected]);
+ },[vault.rewards,vault.unlocks,own,collected,peaksHidden]);
  const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,spectre:s,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
  const deck=vault.deck.map(id=>pool.find(c=>c.id===id)).filter((c):c is Card=>!!c);const deckTags=vault.tags.map(id=>tags.find(t=>t.id===id)).filter((t):t is DogTag=>!!t);
  const run=vault.run;const selectedTag=deckTags.find(t=>t.id===tag);
@@ -78,7 +79,6 @@ export function CardWarsScreen(){
   {inBattle?<div className="flex justify-end mb-4"><Button variant="outline" disabled={busy||riding||!!reveal} onClick={()=>{if(view==='players'){void action('leave');}else if(run){updateVault({run:{...run,result:'loss'}});setTag(null);}}}><Flag className="w-4 h-4 mr-2"/>{tr(view==='players'?'Forfeit · lose 10 points':'Forfeit')}</Button></div>:<>
   <PageHeader title={tr('Card Wars')} backTo="/arcade" subtitle={tr('Deck · {0} cards · {1} dog tags',[vault.deck.length,vault.tags.length])}/>
   <Tabs value={view} onValueChange={v=>{if(!reveal)setView(v);}}><TabsList className="w-full mb-5"><TabsTrigger className="flex-1" value="deck">{tr('Deck')}</TabsTrigger><TabsTrigger className="flex-1" value="computer">{tr('Computer')}</TabsTrigger><TabsTrigger className="flex-1" value="players">{tr('Players')}</TabsTrigger></TabsList></Tabs>
- <p className="cw-privacy text-[11px] text-muted-foreground mb-4">{tr('Fictional game ratings · no riding telemetry shared')}</p>
   </>}
  {riding&&<p className="text-destructive mb-4">{tr('Battles unavailable during a ride')}</p>}
   {view==='deck'&&<>{locked&&<div className="mb-4 space-y-2"><p role="status" className="text-sm text-muted-foreground">{tr('Your deck is locked for this battle. Finish or forfeit the battle to change it.')}</p><Button variant="outline" disabled={busy||riding||!!reveal} onClick={()=>{if(online?.status==='waiting'||online?.status==='playing'){void action('leave');}else if(run&&!run.result){updateVault({run:{...run,result:'loss'}});setTag(null);}}}><Flag className="mr-2 h-4 w-4"/>{tr(online?.status==='waiting'?'Cancel invitation':online?.status==='playing'?'Forfeit · lose 10 points':'Forfeit')}</Button></div>}<h2 className="font-semibold mb-3">{tr('Five cards')} · {vault.deck.length}/5</h2><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{pool.map(c=><BattleCard key={c.id} card={c} selected={vault.deck.includes(c.id)} disabled={riding} onSelect={()=>toggle(c.id,'deck',5)}/>)}</div>
