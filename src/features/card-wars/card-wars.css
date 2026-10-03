@@ -159,3 +159,28 @@ html.thermal .cw-trading-card { background:hsl(var(--background)); box-shadow:no
 @media (max-width:600px) { .cw-reward-board { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .cw-reward-face .cw-trading-card { padding:5px; gap:4px; } .cw-reward-face .cw-card-name { font-size:10px; } .cw-reward-face .cw-tier { font-size:6px; padding:2px; } .cw-reward-face .cw-card-stats { gap:2px; grid-template-columns:repeat(2,minmax(0,1fr)); } .cw-reward-face .cw-stat { padding:2px; } .cw-reward-face .cw-stat strong { font-size:10px; } .cw-reward-face .cw-stat>span { font-size:6px; } .cw-reward-face .cw-stat svg,.cw-reward-face .cw-stat small { display:none; } }
 @media (prefers-reduced-motion:reduce) { .cw-reward-position,.cw-reward-flipper { transition:none; } }
 html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:none; }
+
+/* Complete vault faces at a stable design size, scaled together in every view. */
+.cw-scaled-face { position:relative; width:100%; aspect-ratio:5/7; flex-shrink:0; }
+.cw-face-canvas { position:absolute; inset:0 auto auto 0; width:280px; height:392px; transform-origin:top left; pointer-events:none; }
+.cw-face-canvas > div { height:392px; }
+.cw-vault-ratings { position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:auto; }
+.cw-vault-stat { background:hsl(var(--background)/.35); border:1px solid hsl(var(--foreground)/.1); border-radius:8px; padding:6px 8px; }
+.cw-vault-stat > span { display:flex; align-items:center; gap:4px; font-size:8px; text-transform:uppercase; color:hsl(var(--foreground)/.6); }
+.cw-vault-stat svg { width:10px; height:10px; }
+.cw-vault-stat strong { display:block; font-size:14px; line-height:1.2; }
+.cw-vault-stat small { margin-left:4px; font-size:10px; font-weight:400; color:hsl(var(--foreground)/.7); }
+.cw-scaled-face:has(.cw-vault-ratings) .cw-face-canvas > div > .aspect-\[4\/3\] { height:140px; flex-shrink:0; aspect-ratio:auto; }
+.cw-screen .cw-trading-card { padding:0; gap:0; border:0; border-radius:0; box-shadow:none; background:none; overflow:visible; height:auto; aspect-ratio:5/7; }
+.cw-screen .cw-card-selected { outline:2px solid hsl(var(--accent)); outline-offset:2px; border-radius:8px; }
+.cw-card-check { position:absolute; right:5px; bottom:5px; width:16px; height:16px; color:hsl(var(--accent)); }
+.cw-screen .cw-dog-tag { display:block; position:relative; width:100%; height:auto; padding:0; border:0; aspect-ratio:5/7; border-radius:8px; overflow:hidden; }
+.cw-screen .cw-dog-tag .spectre-card { padding:14px; gap:10px; border-radius:16px; }
+.cw-screen .cw-dog-tag .spectre-card p,.cw-screen .cw-dog-tag .spectre-card span { font-size:10px; }
+.cw-screen .cw-dog-tag .spectre-card h3 { font-size:16px; }
+.cw-screen .cw-dog-tag .spectre-card svg { width:10px; height:10px; }
+.cw-screen .cw-dog-tag .spectre-card > .grid { gap:6px; }
+.cw-screen .cw-dog-tag .spectre-card > .grid > div { padding:6px 8px; }
+.cw-screen .cw-dog-tag .spectre-card > .rounded-xl { border-radius:12px; margin-top:4px; }
+.cw-tag-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+@media (min-width:640px) { .cw-tag-picker { grid-template-columns:repeat(5,minmax(0,1fr)); } }
