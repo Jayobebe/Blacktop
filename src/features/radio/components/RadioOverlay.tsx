@@ -27,6 +27,7 @@ export function RadioOverlay() {
   const [showManager, setShowManager] = useState(false);
   const [dialRotation, setDialRotation] = useState(0);
   const gesture = useRef<{ angle: number; index: number; steps: number } | null>(null);
+  const dragged = useRef(false);
 
   const activeIndex = useMemo(
     () => Math.max(0, stations.findIndex((s) => s.id === player.stationId)),
@@ -98,6 +99,7 @@ export function RadioOverlay() {
             <div
               className="relative shrink-0 touch-none select-none w-[var(--dial)] h-[var(--dial)] [--dial:280px] landscape:[--dial:min(230px,calc(100dvh-116px))]"
               onPointerDown={(event) => {
+                dragged.current = false;
                 const bounds = event.currentTarget.getBoundingClientRect();
                 gesture.current = { angle: Math.atan2(event.clientY - bounds.top - bounds.height / 2, event.clientX - bounds.left - bounds.width / 2), index: activeIndex, steps: 0 };
               }}
@@ -107,6 +109,7 @@ export function RadioOverlay() {
                 const bounds = event.currentTarget.getBoundingClientRect();
                 const angle = Math.atan2(event.clientY - bounds.top - bounds.height / 2, event.clientX - bounds.left - bounds.width / 2);
                 const delta = Math.atan2(Math.sin(angle - start.angle), Math.cos(angle - start.angle)) * 180 / Math.PI;
+                if (Math.abs(delta) > 8) dragged.current = true;
                 start.steps = Math.round(delta / step);
                 setDialRotation(-start.index * step + delta);
               }}
@@ -123,7 +126,8 @@ export function RadioOverlay() {
               onPointerLeave={() => { gesture.current = null; setDialRotation(-activeIndex * step); }}
               onClickCapture={(event) => {
                 // A drag releases as a click on touch screens; only a tap tunes a station.
-                if (event.detail === 0) return;
+                if (dragged.current && event.detail !== 0) { event.preventDefault(); event.stopPropagation(); }
+                dragged.current = false;
               }}
             >
               <div className="absolute inset-0 rounded-full border border-border/60 bg-card/40" />
