@@ -28,7 +28,7 @@ export function RewardShuffle({run,riding,onClaim,onComplete}:{run:BattleState;r
   for(let i=0;i<run.rewardOrder.length;i++){const at=next.indexOf(run.rewardOrder[i]);if(at>=0&&at!==i)swap(i,at);}
   timers.push(setTimeout(()=>{if(cancelled)return;setMoving([]);setStage('pick');complete.current();},time));
   return()=>{cancelled=true;timers.forEach(clearTimeout);};
- },[stage==='flip',run.id]);
+ },[stage==='flip'||stage==='shuffle',run.id]);
  return <>
   {stage==='show'&&<Button className="mb-4" disabled={riding} onClick={()=>setStage('flip')}><Shuffle className="w-4 h-4 mr-2"/>{tr('Shuffle reward cards')}</Button>}
   <div ref={board} className="cw-reward-board" aria-busy={stage==='flip'||stage==='shuffle'}>
