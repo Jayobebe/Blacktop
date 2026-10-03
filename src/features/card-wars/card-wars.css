@@ -92,3 +92,14 @@ html.thermal .cw-trading-card { background:hsl(var(--background)); box-shadow:no
  .cw-active .cw-contender .cw-card-name { font-size:9px; }
  .cw-active .cw-contender .cw-card-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+@media (orientation:portrait) and (max-width:600px) {
+ .cw-hand .cw-trading-card { aspect-ratio:auto; height:158px; }
+ .cw-hand .cw-card-art { height:35px; aspect-ratio:auto; }
+ .cw-hand .cw-card-heading { min-height:31px; }
+ .cw-hand .cw-stat>span { font-size:5px; }
+ .cw-hand .cw-stat strong { line-height:1.1; }
+ .cw-hand .cw-card-footer { display:none; }
+ .cw-arena { grid-template-rows:auto minmax(170px,1fr) auto; min-height:calc(100dvh - 180px); }
+ .cw-contender .cw-card-heading { min-height:30px; }
+}

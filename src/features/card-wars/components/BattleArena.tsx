@@ -6,7 +6,7 @@ import { haptics } from '@/lib/haptics';
 import { BattleCard } from './BattleCard';
 import { CATEGORIES, type BattleCard as Card, type Category, type DogTag } from '../types';
 export const CATEGORY_LABELS:Record<Category,string>={speed:'Speed',lean:'Lean',g:'G-force',distance:'Distance',corners:'Corners'};
-export interface Reveal { id:string; player:Card; opponent:Card; category:Category; damage:number; winner:number|null; hp:number[][] }
+export interface Reveal { id:string; player:Card; opponent:Card; category:Category; damage:number; winner:number|null; hp:number[][]; beforeHp?:number[][] }
 const POWERS={reroll:Shuffle,heal:Heart,boost:Zap};
 export function BattleArena({player,opponent,hp,round,disabled,submitted,selected,tags,usedTags,tag,onTag,onPick,reveal,onRevealEnd,penalty}:{player:Card[];opponent:Card[];hp:number[][];round:number;disabled:boolean;submitted?:boolean;selected?:number|null;tags:DogTag[];usedTags:string[];tag:string|null;onTag:(id:string|null)=>void;onPick:(index:number)=>void;reveal:Reveal|null;onRevealEnd:()=>void;penalty?:boolean}){
  const [phase,setPhase]=useState<'pick'|'spin'|'impact'|'done'>('pick');
@@ -20,7 +20,7 @@ export function BattleArena({player,opponent,hp,round,disabled,submitted,selecte
   const end=setTimeout(()=>finish.current(),reduced?900:4300);
   return()=>{clearTimeout(impact);clearTimeout(done);clearTimeout(end);};
  },[reveal?.id]);
- const shownHp=reveal && (phase==='impact'||phase==='done')?reveal.hp:hp;
+ const shownHp=reveal && (phase==='impact'||phase==='done')?reveal.hp:reveal?.beforeHp??hp;
  const locked=disabled||submitted||!!reveal;
  const wheel=CATEGORIES.concat(CATEGORIES,CATEGORIES,CATEGORIES,CATEGORIES,CATEGORIES);
  const categoryIndex=reveal?CATEGORIES.indexOf(reveal.category):0;
