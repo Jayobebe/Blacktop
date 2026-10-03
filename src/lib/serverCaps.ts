@@ -13,7 +13,7 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 export type ServerCap = 'trackRecords' | 'cardWars';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
-  cardWars: () => supabase.rpc('cw_action' as never, { _action: 'status' } as never),
+  cardWars: () => supabase.rpc('cw_available' as never),
   trackRecords: () =>
     supabase.rpc('track_leaderboard' as never, { _osm_id: -1, _direction: 'cw', _vehicle_class: 'motorcycle', _limit: 1 } as never),
 };
