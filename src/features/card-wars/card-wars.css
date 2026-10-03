@@ -1,0 +1,6 @@
+.cw-shuffling > :nth-child(odd) { animation: cw-switch-right 0.75s ease-in-out 2; }
+.cw-shuffling > :nth-child(even) { animation: cw-switch-left 0.75s ease-in-out 2; }
+@keyframes cw-switch-right { 0%,100% { transform: translate(0,0) rotateY(0); } 45% { transform: translate(45%, -12px) rotateY(180deg); } }
+@keyframes cw-switch-left { 0%,100% { transform: translate(0,0) rotateY(0); } 45% { transform: translate(-45%, 12px) rotateY(180deg); } }
+@media (prefers-reduced-motion: reduce) { .cw-shuffling > * { animation: none; } }
+html.thermal .cw-shuffling > * { animation: none; }
