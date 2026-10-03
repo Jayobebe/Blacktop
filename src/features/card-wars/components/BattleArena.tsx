@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Swords, Shuffle, Heart, Zap, LockKeyhole } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BattleDogTag } from './BattleDogTag';
 import { tr } from '@/lib/i18n';
 import { haptics } from '@/lib/haptics';
 import { BattleCard } from './BattleCard';
@@ -34,6 +34,6 @@ export function BattleArena({player,opponent,hp,round,disabled,submitted,selecte
    </div><div className="cw-wheel" aria-label={tr('Category wheel')}><div className="cw-wheel-marker"/><div key={reveal.id} className="cw-wheel-track" style={{transform:`translateY(-${(20+categoryIndex)*44}px)`}}>{wheel.map((c,i)=><div key={i} className="cw-wheel-item">{tr(CATEGORY_LABELS[c])}</div>)}</div></div><div className="cw-round-status" aria-live="polite">{phase!=='spin'&&<span className="cw-comparison font-mono">{reveal.player.ratings[reveal.category]} : {reveal.opponent.ratings[reveal.category]} · </span>}{phase==='spin'?tr('Cards locked'):reveal.damage===0?tr('Draw'):tr('{0} damage',[reveal.damage])}</div></> : <div className="cw-await"><Swords className="w-8 h-8 text-accent"/><h2>{tr(submitted?'Waiting for opponent':'Choose your card')}</h2><span className="text-muted-foreground text-xs">{tr('Category hidden')}</span>{submitted&&<LockKeyhole className="w-4 h-4 text-accent"/>}</div>}
    {penalty&&<p className="text-warning text-xs">{tr('Rain · lean ratings reduced by 20% this round')}</p>}
   </section>
-  <section className="cw-deck cw-player"><div className="cw-deck-label"><span>{tr('Your deck')}</span><div className="cw-tags">{tags.map(t=>{const Icon=POWERS[t.power];return <Button key={t.id} size="icon" variant={tag===t.id?'default':'outline'} disabled={locked||usedTags.includes(t.id)} aria-label={tr(t.name)} title={tr(t.name)} onClick={()=>onTag(tag===t.id?null:t.id)}><Icon className="w-3.5 h-3.5"/></Button>;})}</div></div><div className="cw-hand">{player.map((c,i)=><BattleCard key={c.id} card={c} hp={shownHp[0]?.[i]??100} selected={reveal?.player.id===c.id||selected===i} disabled={locked||shownHp[0]?.[i]===0} onSelect={()=>onPick(i)}/>)}</div></section>
+  <section className="cw-deck cw-player"><div className="cw-deck-label"><span>{tr('Your deck')}</span></div><div className="cw-hand-with-tags"><div className="cw-hand">{player.map((c,i)=><BattleCard key={c.id} card={c} hp={shownHp[0]?.[i]??100} selected={reveal?.player.id===c.id||selected===i} disabled={locked||shownHp[0]?.[i]===0} onSelect={()=>onPick(i)}/>)}</div><aside className="cw-tags" aria-label={tr('Dog tags')}>{tags.map(t=><BattleDogTag key={t.id} tag={t} selected={tag===t.id} disabled={locked} used={usedTags.includes(t.id)} onSelect={()=>onTag(tag===t.id?null:t.id)}/>)}</aside></div></section>
  </div>;
 }

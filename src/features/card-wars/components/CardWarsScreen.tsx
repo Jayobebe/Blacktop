@@ -41,7 +41,7 @@ export function CardWarsScreen(){
   for(const c of collected){const b=archetypeFor(c.i);a.push({...b,...cardIdentity(c.n,c.m),id:`collected:${c.key}`,name:c.n,image:c.img,tier:c.t,source:'collection'});}
  return a;
  },[vault.rewards,vault.unlocks,own,collected]);
- const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
+ const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,spectre:s,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
  const deck=vault.deck.map(id=>pool.find(c=>c.id===id)).filter((c):c is Card=>!!c);const deckTags=vault.tags.map(id=>tags.find(t=>t.id===id)).filter((t):t is DogTag=>!!t);
  const run=vault.run;const selectedTag=deckTags.find(t=>t.id===tag);
  async function action(a:'status'|'create'|'join'|'play'|'leave',card?:number){if(busy||((a!=='status')&&(riding||demoBlocked())))return;setBusy(true);try{const result=await battleAction(a,a==='join'?code.trim():online?.code,a==='create'||a==='join'?deck.map(c=>c.archetype):undefined,card,selectedTag?STARTER_TAGS.findIndex(t=>t.power===selectedTag.power):undefined,online?.round);setOnline(result);setTag(null);}catch(e){toast.error(e instanceof Error?e.message:tr('Battle unavailable'));}finally{setBusy(false);}}

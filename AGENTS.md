@@ -7,3 +7,5 @@
 - Place Card Wars navigation under Arcade, retaining a query-preserving redirect for legacy World invitations so existing battle links remain valid.
 - Keep Card Wars artwork and manufacturer/vehicle presentation separate from authoritative catalog ratings; reuse saved collection images without uploading telemetry or changing battle scoring.
 - Keep battle choices category-blind and reveal server-settled rounds through a cancellable presentation sequence; the arena never calculates online damage or transfers points.
+
+- Reuse the vault card face for earned battle dog tags, keeping visual Spectre payloads local and independent of combat powers.
