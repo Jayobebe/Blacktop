@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Reshape deck editing into battle-style slots with replacement overlays and stat arrows; launch computer/player battles from the top Battle button; finish combat only on all-card knockout.
+
 - [x] Apply Street Circuit Arena with equal proportional battle hands, side Spectre tags, and a stable central reveal area; remove conflicting compressed-card styles.
 
 - [x] Make deck deselection explicit, warn at five cards/three dog tags, and expose active-battle locks with a forfeit/cancel action.
