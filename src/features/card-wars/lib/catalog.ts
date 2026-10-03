@@ -1,5 +1,5 @@
 import type { BattleCard, DogTag } from '../types';
-// Fictional 0–100 game ratings, never manufacturer figures or recorded peaks.
+// 0–100 game ratings, never manufacturer figures or recorded peaks.
 const definitions: [string,string,'car'|'bike','factory'|'race',number[]][] = [
  ['mx5','Mazda MX-5','car','factory',[52,44,54,78,72]],
  ['gti','Volkswagen Golf GTI','car','factory',[62,38,58,80,62]],
