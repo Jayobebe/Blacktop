@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Give the Card Wars shop one header, unclipped scrolling and prices, portrait category rows and corner tier indicators; check portrait and landscape.
+
 - [x] Replace the Derez Legacy demo slide with an animated Arcade showcase covering Hit Heavy, Petrol Head, Derez Legacy and Card Wars; phone/desktop checks passed with no runtime errors.
 - [x] Hide equipped cards/tags from replacement lists and fit Card Wars pages to the screen, with scrolling confined to selection lists; verified in portrait and landscape.
 
