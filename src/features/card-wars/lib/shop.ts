@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive } from '@/lib/demoMode';
 import type { ShopCategory } from './catalog';
+import { getVault, updateVault } from './store';
 
 /** RPM, owned cards, free starter spins and bonus spins: all held by the server. */
 export interface ShopState { balance: number | null; owned: string[]; freeSpins: number; spins: Partial<Record<ShopCategory, number>> }
@@ -49,8 +50,11 @@ export async function rewardOffline(result: 'win' | 'draw' | 'loss'): Promise<nu
 export async function repairCard(id: string): Promise<string | null> {
  if (demoBlocked()) return 'demo';
  const { data, error } = await rpc('cw_repair', { _card: id });
- if (error) return error.message;
+ const markNew = () => updateVault({ wear: { ...(getVault().wear || {}), [id]: 100 } });
+ // The server holds no wear for this card: it's already at 100%, so drop the stale local figure.
+ if (error) { if (error.message.includes('not worn')) { markNew(); return null; } return error.message; }
  setRpm((data as { balance: number }).balance);
+ markNew();
  return null;
 }
 export function useShop() { return useSyncExternalStore(l => { listeners.add(l); return () => listeners.delete(l); }, () => state, () => state); }
