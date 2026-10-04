@@ -662,39 +662,48 @@ export type Database = {
           active_code: string | null
           balance: number
           created_at: string
+          free_spins: number
           last_created_at: string | null
+          last_offline_reward: string | null
           user_id: string
         }
         Insert: {
           active_code?: string | null
           balance?: number
           created_at?: string
+          free_spins?: number
           last_created_at?: string | null
+          last_offline_reward?: string | null
           user_id: string
         }
         Update: {
           active_code?: string | null
           balance?: number
           created_at?: string
+          free_spins?: number
           last_created_at?: string | null
+          last_offline_reward?: string | null
           user_id?: string
         }
         Relationships: []
       }
       cw_catalog: {
         Row: {
+          category: string | null
           id: string
           price: number
           ratings: number[]
           vehicle: string
         }
         Insert: {
+          category?: string | null
           id: string
           price?: number
           ratings: number[]
           vehicle: string
         }
         Update: {
+          category?: string | null
           id?: string
           price?: number
           ratings?: number[]
@@ -799,6 +808,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cw_spins: {
+        Row: {
+          category: string
+          count: number
+          user_id: string
+        }
+        Insert: {
+          category: string
+          count?: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          count?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       cw_wear: {
         Row: {
@@ -1698,6 +1725,7 @@ export type Database = {
       }
       cw_available: { Args: never; Returns: boolean }
       cw_buy: { Args: { _card: string }; Returns: Json }
+      cw_cat_cost: { Args: { _cat: string; _spin: boolean }; Returns: number }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_my_wear: {
         Args: never
@@ -1706,7 +1734,9 @@ export type Database = {
           condition: number
         }[]
       }
+      cw_reward_offline: { Args: { _result: string }; Returns: Json }
       cw_shop: { Args: never; Returns: Json }
+      cw_spin: { Args: { _cat: string; _free?: boolean }; Returns: Json }
       cw_wear_mult: {
         Args: { _card: string; _cat: number; _user: string }
         Returns: number
