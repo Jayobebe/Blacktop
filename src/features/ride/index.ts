@@ -2,7 +2,7 @@ export { useActiveRide, useRideSpeed, attachRideToConvoy, subscribeRawFixes, set
 export type { RawFix } from './hooks/useActiveRide';
 export { useRideHistory } from './hooks/useRideHistory';
 export { keepPeakTelemetry, usePeaksHidden, PEAK_HIDDEN } from './lib/telemetryPrivacy';
-export { burnExpiredTrips, burnedAggregate, NO_BIKE, aggregateRides, mergeAggregates, emptyAggregate, BURNED_TOTALS_KEY } from './lib/tripBurner';
+export { burnExpiredTrips, burnedAggregate, readBurnedLog, BURNED_LOG_KEY, NO_BIKE, aggregateRides, mergeAggregates, emptyAggregate, BURNED_TOTALS_KEY } from './lib/tripBurner';
 export type { BurnTripsInterval, BurnedAggregate, BurnedTotals } from './lib/tripBurner';
 export { useCrashDetection } from './hooks/useCrashDetection';
 export { RideSummary } from './components/RideSummary';
