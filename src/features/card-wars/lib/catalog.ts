@@ -110,10 +110,10 @@ const gRating = (hp: number, kg: number) => clamp(20 + 25 * Math.log2((hp / kg *
 const leanRating = (deg: number | null) => deg == null ? 30 : clamp(20 + (deg - 40) / 24 * 79);
 
 export const BANK_INFO: Record<CardBank, { label: string; price: number; tier: CardTier; vehicle: 'car' | 'bike' }> = {
- gtlm: { label: 'GTLM', price: 150, tier: 'diamond', vehicle: 'car' },
- f1: { label: 'F1', price: 300, tier: 'obsidian', vehicle: 'car' },
- tt: { label: 'Isle of Man TT', price: 150, tier: 'diamond', vehicle: 'bike' },
- motogp: { label: 'MotoGP', price: 300, tier: 'obsidian', vehicle: 'bike' },
+ gtlm: { label: 'GTLM', price: 180, tier: 'diamond', vehicle: 'car' },
+ f1: { label: 'F1', price: 400, tier: 'obsidian', vehicle: 'car' },
+ tt: { label: 'Isle of Man TT', price: 180, tier: 'diamond', vehicle: 'bike' },
+ motogp: { label: 'MotoGP', price: 400, tier: 'obsidian', vehicle: 'bike' },
 };
 
 export const SPECS: Record<string, CardSpecs> = {};
@@ -149,3 +149,16 @@ export const STARTER_TAGS: DogTag[] = [
 /** Rider cards borrow a brand card's ratings (never an RPM bank card). */
 export function archetypeFor(identity: string): BattleCard { let h=0; for(const c of identity) h=(h*31+c.charCodeAt(0))>>>0; return BRAND_CARDS[h%BRAND_CARDS.length]; }
 export function unlockCard(id: 'demo'|'dev'): BattleCard { const base=CATALOG.find(c=>c.id===(id==='demo'?'mx5':'mt07'))!; return {...base,id,manufacturer:'Blacktop',name:id==='demo'?'Demo':'Dev',source:'unlock'}; }
+
+/** Shop categories; prices mirror `cw_cat_cost` on the server (a spin is a sixth of a card). */
+export type ShopCategory = 'road' | 'race' | CardBank;
+export const SHOP_CATEGORIES: { id: ShopCategory; label: string; price: number; odds: string }[] = [
+ { id: 'road', label: 'Road', price: 60, odds: '50%' },
+ { id: 'race', label: 'Race', price: 100, odds: '30%' },
+ { id: 'gtlm', label: 'GTLM', price: 180, odds: '8%' },
+ { id: 'tt', label: 'Isle of Man TT', price: 180, odds: '8%' },
+ { id: 'f1', label: 'F1', price: 400, odds: '2%' },
+ { id: 'motogp', label: 'MotoGP', price: 400, odds: '2%' },
+];
+export const spinCost = (price: number) => Math.floor(price / 6);
+export const categoryOf = (c: BattleCard): ShopCategory => c.bank ?? (c.spec === 'race' ? 'race' : 'road');
