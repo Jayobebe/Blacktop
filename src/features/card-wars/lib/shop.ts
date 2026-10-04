@@ -45,4 +45,12 @@ export async function rewardOffline(result: 'win' | 'draw' | 'loss'): Promise<nu
  setRpm(d.balance);
  return d.rpm;
 }
+/** Restore a worn card to 100% condition: 1 RPM per missing %. Server-checked. */
+export async function repairCard(id: string): Promise<string | null> {
+ if (demoBlocked()) return 'demo';
+ const { data, error } = await rpc('cw_repair', { _card: id });
+ if (error) return error.message;
+ setRpm((data as { balance: number }).balance);
+ return null;
+}
 export function useShop() { return useSyncExternalStore(l => { listeners.add(l); return () => listeners.delete(l); }, () => state, () => state); }
