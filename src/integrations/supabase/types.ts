@@ -1680,6 +1680,13 @@ export type Database = {
         Args: { _card: string; _cat: number; _user: string }
         Returns: number
       }
+      cw_wear_offline: {
+        Args: { _deck: string[]; _fought: string[] }
+        Returns: {
+          card_id: string
+          condition: number
+        }[]
+      }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
