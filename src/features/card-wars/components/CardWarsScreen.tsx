@@ -86,7 +86,7 @@ export function CardWarsScreen(){
  const shownOnline=displayOnline??online;const liveDeck=shownOnline?.deck?.flatMap(id=>{const c=CATALOG.find(x=>x.id===id);return c?[c]:[];})||[];
  const inBattle=view==='computer'&&!!run&&(!run.result||!!reveal)||view==='players'&&(online?.status==='playing'||shownOnline?.status==='playing'||!!reveal);
   return <main className={`cw-screen cw-page ${inBattle?'cw-active':''} text-foreground`}>
-  {inBattle?<div className="flex justify-end mb-4"><Button variant="outline" disabled={busy||riding||!!reveal} onClick={()=>{if(view==='players'){void action('leave');}else if(run){updateVault({run:{...run,result:'loss'}});setTag(null);}}}><Flag className="w-4 h-4 mr-2"/>{tr(view==='players'?'Forfeit · lose 10 points':'Forfeit')}</Button></div>:<>
+  {inBattle?<div className="flex justify-end mb-4"><Button variant="outline" disabled={busy||riding||!!reveal} onClick={()=>{if(view==='players'){void action('leave');}else if(run){updateVault({run:{...run,result:'loss'}});setTag(null);}}}><Flag className="w-4 h-4 mr-2"/>{tr(view==='players'?'Forfeit · lose 10 points':'Forfeit')}</Button></div>:view!=='shop'&&<>
   <PageHeader title={tr('Card Wars')} backTo="/arcade" subtitle={tr('Deck · {0} cards · {1} dog tags',[vault.deck.length,vault.tags.length])} right={view==='computer'?<Button variant="outline" onClick={()=>setView('deck')}>{tr('Your deck')}</Button>:<div className="flex gap-2 items-center"><span className="font-mono text-sm text-accent">{shop.balance??'—'} RPM</span><Button disabled={riding} onClick={()=>{setView('players');setBattleMenu(true);}}><Swords className="w-4 h-4 mr-2"/>{tr('Battle')}</Button></div>}/>
   </>}
  {riding&&<p className="text-destructive mb-4">{tr('Battles unavailable during a ride')}</p>}
