@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Bias computer deck matchmaking toward a 51% player win target; validate simulations without changing PvP or catalog ratings.
+
 - [x] Give the Card Wars shop one header, unclipped scrolling and prices, portrait category rows and corner tier indicators; browser verified at five portrait/landscape sizes, product scrolling and return to deck passed with no runtime errors.
 
 - [x] Replace the Derez Legacy demo slide with an animated Arcade showcase covering Hit Heavy, Petrol Head, Derez Legacy and Card Wars; phone/desktop checks passed with no runtime errors.
