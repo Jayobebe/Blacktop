@@ -684,16 +684,19 @@ export type Database = {
       cw_catalog: {
         Row: {
           id: string
+          price: number
           ratings: number[]
           vehicle: string
         }
         Insert: {
           id: string
+          price?: number
           ratings: number[]
           vehicle: string
         }
         Update: {
           id?: string
+          price?: number
           ratings?: number[]
           vehicle?: string
         }
@@ -770,6 +773,32 @@ export type Database = {
           winner?: string | null
         }
         Relationships: []
+      }
+      cw_owned: {
+        Row: {
+          bought_at: string
+          card_id: string
+          user_id: string
+        }
+        Insert: {
+          bought_at?: string
+          card_id: string
+          user_id: string
+        }
+        Update: {
+          bought_at?: string
+          card_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_owned_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cw_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cw_wear: {
         Row: {
@@ -1668,6 +1697,7 @@ export type Database = {
         Returns: undefined
       }
       cw_available: { Args: never; Returns: boolean }
+      cw_buy: { Args: { _card: string }; Returns: Json }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_my_wear: {
         Args: never
@@ -1676,6 +1706,7 @@ export type Database = {
           condition: number
         }[]
       }
+      cw_shop: { Args: never; Returns: Json }
       cw_wear_mult: {
         Args: { _card: string; _cat: number; _user: string }
         Returns: number

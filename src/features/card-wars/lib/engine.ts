@@ -1,9 +1,9 @@
 import { CATEGORIES, type BattleCard, type BattleState, type DogTag, type Category } from '../types';
-import { CATALOG } from './catalog';
+import { BRAND_CARDS } from './catalog';
 export function shuffle<T>(values: T[], random:()=>number=Math.random): T[] { const a=values.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
 export function createRun(player: BattleCard[], random:()=>number=Math.random): BattleState {
  if(player.length!==5 || new Set(player.map(c=>c.id)).size!==5) throw new Error('Deck needs five unique cards');
- const opponent=shuffle(CATALOG,random).slice(0,5);
+ const opponent=shuffle(BRAND_CARDS,random).slice(0,5);
  return {id:crypto.randomUUID(),player,opponent,hp:[Array(5).fill(100),Array(5).fill(100)],round:0,categories:shuffle([...CATEGORIES],random),penaltyRound:random()<.125?1+Math.floor(random()*4):-1,usedTags:[],log:[],result:null,rewardOrder:shuffle(opponent.map(c=>c.id),random),rewardClaimed:false};
 }
 export function playRound(previous:BattleState, index:number, tag?:DogTag, random:()=>number=Math.random):BattleState {
