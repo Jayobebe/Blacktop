@@ -11,6 +11,38 @@ export type BurnTripsInterval = 'off' | 'week' | 'month';
 
 export const RIDES_KEY = 'blacktop_rides';
 export const BURNED_TOTALS_KEY = 'blacktop_burned_ride_totals';
+/** Burned rides' logbook lines (no GPS), keyed by bikeId: the logbook keeps them after a burn. */
+export const BURNED_LOG_KEY = 'blacktop_burned_log_rides';
+
+export interface BurnedLogRide {
+  id: string;
+  startedAt: string;
+  endedAt: string | null;
+  name?: string;
+  isConvoyRide: boolean;
+  distance: number;
+  duration: number;
+  averageSpeed: number;
+  maxSpeed: number;
+  maxLeanLeft: number;
+  maxLeanRight: number;
+  maxGForce?: number;
+  earnedBadges?: RideSession['earnedBadges'];
+  track?: { trackName: string; laps: number; bestLapMs: number | null };
+}
+
+export function readBurnedLog(): Record<string, BurnedLogRide[]> {
+  return readJson<Record<string, BurnedLogRide[]>>(BURNED_LOG_KEY, {});
+}
+
+function toBurnedLog(r: RideSession): BurnedLogRide {
+  return {
+    id: r.id, startedAt: r.startedAt, endedAt: r.endedAt, name: r.name, isConvoyRide: r.isConvoyRide,
+    distance: r.distance, duration: r.duration, averageSpeed: r.averageSpeed, maxSpeed: r.maxSpeed,
+    maxLeanLeft: r.maxLeanLeft, maxLeanRight: r.maxLeanRight, maxGForce: r.maxGForce, earnedBadges: r.earnedBadges,
+    track: r.track ? { trackName: r.track.trackName, laps: r.track.laps, bestLapMs: r.track.bestLapMs } : undefined,
+  };
+}
 
 const INTERVAL_MS: Record<Exclude<BurnTripsInterval, 'off'>, number> = {
   week: 7 * 24 * 60 * 60 * 1000,
@@ -147,6 +179,16 @@ export function burnExpiredTrips(interval: BurnTripsInterval = readInterval(), n
     const key = ride.bikeId || NO_BIKE;
     totals[key] = addRide(totals[key] ?? emptyAggregate(), ride);
   }
+  const log = readBurnedLog();
+  for (const ride of burned) {
+    const key = ride.bikeId || NO_BIKE;
+    log[key] = [...(log[key] ?? []).filter((x) => x.id !== ride.id), toBurnedLog(ride)];
+  }
+  try {
+    localStorage.setItem(BURNED_LOG_KEY, JSON.stringify(log));
+  } catch (e) {
+    console.warn('[TripBurner] logbook lines not kept', e);
+  }
 
   try {
     // Totals first: if the ride write then fails, the rides are still there
@@ -165,7 +207,7 @@ export function burnExpiredTrips(interval: BurnTripsInterval = readInterval(), n
     return 0;
   }
 
-  for (const key of [BURNED_TOTALS_KEY, RIDES_KEY]) {
+  for (const key of [BURNED_TOTALS_KEY, BURNED_LOG_KEY, RIDES_KEY]) {
     window.dispatchEvent(new CustomEvent('bt-local-storage-change', { detail: { key } }));
   }
   return burned.length;
