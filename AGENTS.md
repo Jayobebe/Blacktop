@@ -16,4 +16,4 @@
 - Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
 - Edit decks through indexed replacement dialogs sharing the battle hand grid; resolve normal combat only on whole-deck knockout, keeping player settlement server-authoritative.
 - Keep one server-held Card Wars condition per card, changed only by locked settlement and a rate-limited offline report, with the vault caching it, so clients can never forge or split condition.
-- Keep Card Wars RPM bank cards priced and owned on the server (cw_catalog.price, cw_owned via cw_buy), with player battles rejecting unowned bank cards, so purchases can't be forged on the phone.
+- Keep Card Wars RPM, card ownership, purchases and every wheel spin on the server (cw_buy, cw_spin, cw_reward_offline, cw_owned), with player battles rejecting unowned bank cards, so the economy cannot be forged on the phone.
