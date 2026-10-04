@@ -18,3 +18,4 @@
 - Keep one server-held Card Wars condition per card, changed only by locked settlement and a rate-limited offline report, with the vault caching it, so clients can never forge or split condition.
 - Keep Card Wars RPM, card ownership, purchases and every wheel spin on the server (cw_buy, cw_spin, cw_reward_offline, cw_owned), with player battles rejecting unowned bank cards, so the economy cannot be forged on the phone.
 - Let the Card Wars shop own its single page header and flex-sized content area, with scrolling only in the product list, so nested headers and viewport clipping cannot recur.
+- Match computer decks through bounded, category-blind pre-battle simulations of current player ratings; never alter catalog stats or live outcomes, so difficulty tuning stays separate from rewards and PvP settlement.
