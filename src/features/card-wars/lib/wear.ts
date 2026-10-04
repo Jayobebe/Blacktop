@@ -34,3 +34,23 @@ export function wearAfterRun(wear: Record<string, number> | undefined, run: Batt
   }
   return next;
 }
+
+import { supabase } from '@/integrations/supabase/client';
+import { isDemoModeActive } from '@/lib/demoMode';
+
+const toMap = (rows: { card_id: string; condition: number }[] | null) => Object.fromEntries((rows || []).map(r => [r.card_id, r.condition]));
+
+/** The server holds the one condition count shared by computer and player battles. */
+export async function fetchServerWear(): Promise<Record<string, number> | null> {
+  if (isDemoModeActive()) return null;
+  const { data, error } = await supabase.rpc('cw_my_wear' as never);
+  return error ? null : toMap(data as never);
+}
+
+export async function reportOfflineWear(run: BattleState): Promise<Record<string, number> | null> {
+  if (isDemoModeActive()) return null;
+  const fought = Array.from(new Set(run.log.map(l => l.player)));
+  if (!fought.length) return null;
+  const { data, error } = await supabase.rpc('cw_wear_offline' as never, { _deck: run.player.map(c => c.id), _fought: fought } as never);
+  return error ? null : toMap(data as never);
+}
