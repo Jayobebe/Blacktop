@@ -665,6 +665,7 @@ export type Database = {
           free_spins: number
           last_created_at: string | null
           last_offline_reward: string | null
+          last_topup: string | null
           user_id: string
         }
         Insert: {
@@ -674,6 +675,7 @@ export type Database = {
           free_spins?: number
           last_created_at?: string | null
           last_offline_reward?: string | null
+          last_topup?: string | null
           user_id: string
         }
         Update: {
@@ -683,6 +685,7 @@ export type Database = {
           free_spins?: number
           last_created_at?: string | null
           last_offline_reward?: string | null
+          last_topup?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1726,6 +1729,7 @@ export type Database = {
       cw_available: { Args: never; Returns: boolean }
       cw_buy: { Args: { _card: string }; Returns: Json }
       cw_cat_cost: { Args: { _cat: string; _spin: boolean }; Returns: number }
+      cw_daily_topup: { Args: { _u: string }; Returns: undefined }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_my_wear: {
         Args: never
@@ -1734,6 +1738,7 @@ export type Database = {
           condition: number
         }[]
       }
+      cw_repair: { Args: { _card: string }; Returns: Json }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
       cw_shop: { Args: never; Returns: Json }
       cw_spin: { Args: { _cat: string; _free?: boolean }; Returns: Json }
