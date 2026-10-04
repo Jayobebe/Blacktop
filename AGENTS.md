@@ -15,4 +15,4 @@
 
 - Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
 - Edit decks through indexed replacement dialogs sharing the battle hand grid; resolve normal combat only on whole-deck knockout, keeping player settlement server-authoritative.
-- Keep Card Wars wear twofold: offline vault wear for computer battles and server-held wear applied inside locked player settlement, so clients can never forge condition.
+- Keep one server-held Card Wars condition per card, changed only by locked settlement and a rate-limited offline report, with the vault caching it, so clients can never forge or split condition.
