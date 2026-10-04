@@ -24,6 +24,7 @@ import { RewardShuffle } from './RewardShuffle';
 import { BattleArena, type Reveal } from './BattleArena';
 import { CATALOG, STARTERS, STARTER_TAGS, archetypeFor, unlockCard, cardIdentity } from '../lib/catalog';
 import { createRun, playRound } from '../lib/engine';
+import { withWear, conditionOf, wearAfterRun } from '../lib/wear';
 import { useVault, updateVault, claimReward } from '../lib/store';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { CATEGORIES, type BattleCard as Card, type DogTag, type Category } from '../types';
@@ -47,7 +48,9 @@ export function CardWarsScreen(){
  return a;
  },[vault.rewards,vault.unlocks,own,collected,peaksHidden]);
  const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,spectre:s,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
- const deck=vault.deck.map(id=>pool.find(c=>c.id===id)).filter((c):c is Card=>!!c);const deckTags=vault.tags.map(id=>tags.find(t=>t.id===id)).filter((t):t is DogTag=>!!t);
+ const wornPool=useMemo(()=>pool.map(c=>withWear(c,conditionOf(vault.wear,c.id))),[pool,vault.wear]);
+ useEffect(()=>{const r=vault.run;if(!r||!r.result||vault.wearApplied===r.id||demo)return;updateVault({wear:wearAfterRun(vault.wear,r,pool),wearApplied:r.id});},[vault.run,vault.wear,vault.wearApplied,pool,demo]);
+ const deck=vault.deck.map(id=>wornPool.find(c=>c.id===id)).filter((c):c is Card=>!!c);const deckTags=vault.tags.map(id=>tags.find(t=>t.id===id)).filter((t):t is DogTag=>!!t);
  const run=vault.run;const selectedTag=deckTags.find(t=>t.id===tag);
  async function action(a:'status'|'create'|'join'|'play'|'leave',card?:number){if(busy||((a!=='status')&&(riding||demoBlocked())))return;setBusy(true);try{const result=await battleAction(a,a==='join'?code.trim():online?.code,a==='create'||a==='join'?deck.map(c=>c.archetype):undefined,card,selectedTag?STARTER_TAGS.findIndex(t=>t.power===selectedTag.power):undefined,online?.round);setOnline(result);setTag(null);}catch(e){toast.error(e instanceof Error?e.message:tr('Battle unavailable'));}finally{setBusy(false);}}
  useEffect(()=>{if(view!=='players'||!cap||demo)return;let stopped=false;let fetching=false;const poll=async()=>{if(fetching||document.hidden)return;fetching=true;try{const next=await battleAction('status',online?.code);if(!stopped)setOnline(next);}catch{}finally{fetching=false;}};void poll();const timer=setInterval(()=>void poll(),4000);return()=>{stopped=true;clearInterval(timer);};},[view,cap,demo,online?.code]);
@@ -81,7 +84,7 @@ export function CardWarsScreen(){
   <PageHeader title={tr('Card Wars')} backTo="/arcade" subtitle={tr('Deck · {0} cards · {1} dog tags',[vault.deck.length,vault.tags.length])} right={view==='computer'?<Button variant="outline" onClick={()=>setView('deck')}>{tr('Your deck')}</Button>:<Button disabled={riding} onClick={()=>{setView('players');setBattleMenu(true);}}><Swords className="w-4 h-4 mr-2"/>{tr('Battle')}</Button>}/>
   </>}
  {riding&&<p className="text-destructive mb-4">{tr('Battles unavailable during a ride')}</p>}
-  {!inBattle&&view!=='computer'&&<><DeckEditor deck={deck} tags={deckTags} pool={pool} availableTags={tags} disabled={riding||locked} onReplace={replaceSlot}/>
+  {!inBattle&&view!=='computer'&&<><DeckEditor deck={deck} tags={deckTags} pool={wornPool} availableTags={tags} disabled={riding||locked} onReplace={replaceSlot}/>
   {locked&&<p role="status" className="text-sm text-muted-foreground">{tr('Your deck is locked for this battle. Finish or forfeit the battle to change it.')}</p>}
   <div className="cw-unlocks border-t border-border text-xs text-muted-foreground"><p>{tr('Demo card · {0}/10 hours',[Math.min(10,hours).toFixed(1)])}</p><p>{tr('Dev card · {0}/50 hours',[Math.min(50,hours).toFixed(1)])}</p></div></>}
   {view==='computer'&&<>

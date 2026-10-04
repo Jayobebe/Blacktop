@@ -129,3 +129,5 @@ html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:no
  .cw-battle-options svg[role=img] { width:100px; height:100px; }
  .cw-reward-board { width:min(100%,calc((100dvh - 190px)*3.7)); }
 }
+
+.cw-condition-fill{height:100%;background:hsl(var(--muted-foreground));border-radius:inherit}
