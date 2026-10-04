@@ -8,8 +8,8 @@ import { BattleDogTag } from './BattleDogTag';
 import { FittedHand } from './FittedHand';
 import type { BattleCard as Card, DogTag } from '../types';
 import { toast } from 'sonner';
-import { Dices } from 'lucide-react';
-import { spin, useShop, type SpinResult } from '../lib/shop';
+import { Dices, Wrench } from 'lucide-react';
+import { spin, useShop, repairCard, type SpinResult } from '../lib/shop';
 import { SpinReel } from './SpinReel';
 import { spinLabel, REEL_LABELS } from './ShopPage';
 
@@ -24,6 +24,8 @@ export function DeckEditor({deck,tags,pool,availableTags,disabled,onReplace}:{de
  const currentCard=slot?.type==='deck'?deck[slot.index]:undefined;
  const currentTag=slot?.type==='tags'?tags[slot.index]:undefined;
  function replace(id:string){if(!slot||disabled)return;onReplace(slot.type,slot.index,id);setSlot(null);}
+ const [repairing,setRepairing]=useState(false);
+ async function repair(id:string){setRepairing(true);const err=await repairCard(id);setRepairing(false);if(err){if(err!=='demo')toast.error(err.includes('Not enough')?tr('Not enough RPM'):tr('Repair failed'));return;}toast.success(tr('Card repaired'));window.dispatchEvent(new Event('blacktop:refresh'));setSlot(null);}
  return <>
   <FittedHand><section className="cw-deck cw-deck-editor" data-no-pull>
    <div className="cw-deck-label">{tr('Your deck')} · {deck.length}/5</div>
@@ -33,6 +35,7 @@ export function DeckEditor({deck,tags,pool,availableTags,disabled,onReplace}:{de
   <Dialog open={!!slot} onOpenChange={open=>{if(!open)setSlot(null);}}><DialogContent className="cw-screen cw-picker max-w-3xl rounded-lg" aria-describedby={undefined}>
    <DialogTitle>{tr(slot?.type==='tags'?'Replace dog tag':'Replace card')}</DialogTitle>
    {(currentCard||currentTag)&&<DialogDescription>{tr('Replacing {0}',[currentCard?.name??tr(currentTag?.name??'')])}</DialogDescription>}
+   {currentCard&&currentCard.condition!==undefined&&currentCard.condition<100&&(()=>{const cost=100-currentCard.condition;const short=(shop.balance??0)<cost;return <Button variant="outline" disabled={disabled||repairing||short} onClick={()=>void repair(currentCard.id)}><Wrench className="w-4 h-4 mr-2"/>{short?tr('Repair · {0} RPM (not enough RPM)',[cost]):tr('Repair to 100% · {0} RPM',[cost])}</Button>;})()}
     <div className="cw-replacement-list">{slot?.type==='deck'?pool.filter(c=>!deck.some(x=>x.id===c.id)).map(c=><BattleCard key={c.id} card={c} compareTo={currentCard} showCondition disabled={disabled} onSelect={()=>replace(c.id)}/>):availableTags.filter(t=>!tags.some(x=>x.id===t.id)&&!tags.some((x,i)=>i!==slot?.index&&x.power===t.power)).map(t=><div key={t.id} className="cw-tag-option"><BattleDogTag tag={t} selected={false} used={false} disabled={disabled} onSelect={()=>replace(t.id)}/><span className="text-xs text-muted-foreground text-center">{tr(POWER_LABELS[t.power])}</span></div>)}</div>
   </DialogContent></Dialog>
   <Dialog open={spinSlot!==null} onOpenChange={open=>{if(!open&&!spinning)setSpinSlot(null);}}><DialogContent className="cw-battle-menu rounded-lg" aria-describedby={undefined}>
