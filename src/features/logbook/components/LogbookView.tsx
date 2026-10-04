@@ -22,7 +22,7 @@ import { useDemoMode } from '@/lib/demoMode';
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
-import { useRideHistory, burnedAggregate, mergeAggregates, emptyAggregate } from '@/features/ride';
+import { useRideHistory, burnedAggregate, mergeAggregates, emptyAggregate, readBurnedLog, badgeWallet } from '@/features/ride';
 import { useGarage, useBikeStats, serviceStatus, type Bike } from '@/features/garage';
 import { useVehicleCards } from '@/features/cards';
 import { addLogNote, getInheritedLog, setInheritedLog, toLogRide, useInheritedLogs, NOTE_MAX_CHARS } from '../lib/logbookStore';
@@ -93,10 +93,20 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
   const kmOrMi = (km: number) =>
     settings.distanceUnit === 'km' ? `${Math.round(km).toLocaleString()} km` : `${Math.round(km / KM_PER_MI).toLocaleString()} mi`;
 
-  const myRides = useMemo(
-    () => rides.filter((r) => r.bikeId === bike.id && r.endedAt).map((r) => toLogRide(r, myName)),
-    [rides, bike.id, myName],
+  // Burned rides keep their logbook line (rides deleted by hand don't).
+  const burnedLog = useMemo(
+    () => (demoEnabled ? [] : readBurnedLog()[bike.id] ?? []).map((r) => ({ ...r, owner: myName }) as LogRide),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bike.id, myName, burnedTotals, demoEnabled],
   );
+  const myRides = useMemo(() => {
+    const live = rides.filter((r) => r.bikeId === bike.id && r.endedAt).map((r) => toLogRide(r, myName));
+    const ids = new Set(live.map((r) => r.id));
+    return [...live, ...burnedLog.filter((r) => !ids.has(r.id))];
+  }, [rides, bike.id, myName, burnedLog]);
+  // Rides burned before logbook lines were kept: totals only.
+  const burnedAgg = demoEnabled ? emptyAggregate() : burnedAggregate(burnedTotals, bike.id);
+  const legacyConvoy = Math.max(0, burnedAgg.convoyRides - burnedLog.filter((r) => r.isConvoyRide).length);
   const allRides: LogRide[] = useMemo(
     () => [...myRides, ...(inherited?.rides ?? [])].sort((a, b) => +new Date(b.startedAt) - +new Date(a.startedAt)),
     [myRides, inherited],
@@ -120,12 +130,26 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       return acc;
     }, {}),
   );
-  const badgeCounts = allRides.reduce<Record<string, number>>((acc, r) => {
-    (r.earnedBadges ?? []).forEach((b) => (acc[b] = (acc[b] ?? 0) + 1));
-    return acc;
-  }, {});
-  const longest = allRides.reduce<LogRide | null>((m, r) => (!m || r.distance > m.distance ? r : m), null);
-  const fastest = allRides.reduce<LogRide | null>((m, r) => (r.maxSpeed != null && (!m || r.maxSpeed > (m.maxSpeed ?? -1)) ? r : m), null);
+  // Badges: every one this rider has collected (the wallet), plus earlier keepers'.
+  const badgeCounts: Record<string, number> = {};
+  const add = (b: string, n: number) => n > 0 && (badgeCounts[b] = (badgeCounts[b] ?? 0) + n);
+  const ownLog: Record<string, number> = {};
+  myRides.forEach((r) => (r.earnedBadges ?? []).forEach((b) => (ownLog[b] = (ownLog[b] ?? 0) + 1)));
+  ownLog['speed-demon'] = Math.max(ownLog['speed-demon'] ?? 0, burnedAgg.badges.speedDemon);
+  ownLog['journeyman'] = Math.max(ownLog['journeyman'] ?? 0, burnedAgg.badges.journeyman);
+  ownLog['fallback'] = Math.max(ownLog['fallback'] ?? 0, burnedAgg.badges.fallback);
+  const wallet = demoEnabled ? {} : badgeWallet().counts;
+  new Set([...Object.keys(ownLog), ...Object.keys(wallet)]).forEach((b) =>
+    add(b, Math.max(ownLog[b] ?? 0, (wallet as Record<string, number>)[b] ?? 0)),
+  );
+  (inherited?.rides ?? []).forEach((r) => (r.earnedBadges ?? []).forEach((b) => add(b, 1)));
+  const longestRide = allRides.reduce<LogRide | null>((m, r) => (!m || r.distance > m.distance ? r : m), null);
+  const fastestRide = allRides.reduce<LogRide | null>((m, r) => (r.maxSpeed != null && (!m || r.maxSpeed > (m.maxSpeed ?? -1)) ? r : m), null);
+  // Fall back to burned totals (no date) when they beat every ride still listed.
+  const longestMi = Math.max(longestRide?.distance ?? 0, burnedAgg.longestRide, stats.longestRideMi || 0);
+  const longest = longestRide && longestRide.distance >= longestMi ? longestRide : null;
+  const fastestMph = Math.max(fastestRide?.maxSpeed ?? 0, burnedAgg.maxSpeed);
+  const fastest = fastestRide && (fastestRide.maxSpeed ?? 0) >= fastestMph ? fastestRide : null;
 
   // ── pages ────────────────────────────────────────────────────────────────
   const pages: ((n: number, side: 'l' | 'r') => React.ReactNode)[] = [];
@@ -182,7 +206,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       <Row label={tr("Lean L / R")} value={peaksHidden || !(stats.maxLeanLeft || stats.maxLeanRight) ? PEAK_HIDDEN : `${Math.round(stats.maxLeanLeft)}° / ${Math.round(stats.maxLeanRight)}°`} />
       <Row label={tr("Peak G")} value={peaksHidden ? PEAK_HIDDEN : stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : '—'} />
       <Row label={tr("Longest ride")} value={dist(stats.longestRideMi)} />
-      <Row label={tr("Convoy rides")} value={allRides.filter((r) => r.isConvoyRide).length} />
+      <Row label={tr("Convoy rides")} value={allRides.filter((r) => r.isConvoyRide).length + legacyConvoy} />
     </Page>
   ));
 
@@ -224,10 +248,10 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
   pages.push((n, side) => (
     <Page n={n} side={side}>
       <PageTitle>{tr("Highlights")}</PageTitle>
-      <Row label={tr("Longest")} value={longest ? dist(longest.distance) : '—'} />
+      <Row label={tr("Longest")} value={longestMi > 0 ? dist(longestMi) : '—'} />
       {longest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(longest.startedAt)} · {longest.owner}</p>}
-      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastest?.maxSpeed != null && fastest.maxSpeed > 0 ? spd(fastest.maxSpeed) : '—'} />
-      {fastest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
+      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastestMph > 0 ? spd(fastestMph) : '—'} />
+      {fastest && !peaksHidden && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
       <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Badges")}</p>
       {Object.keys(badgeCounts).length === 0 ? (
         <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
