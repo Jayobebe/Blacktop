@@ -41,7 +41,21 @@ export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[],
  * A bounded search approaches the target; extreme decks can exceed catalog limits. */
 export function createComputerDeck(player: BattleCard[], random: () => number = Math.random): BattleCard[] {
  const seed = Math.floor(random() * 4294967296);
- const candidates = Array.from({ length: 32 }, () => shuffle(BRAND_CARDS, random).slice(0, 5));
+ const usesLean = player.every(c => (c.displayVehicle ?? c.vehicle) === 'bike');
+ const power = (card: BattleCard) => {
+  const categories = CATEGORIES.filter(c => c !== 'lean' || (usesLean && card.vehicle === 'bike'));
+  return categories.reduce((sum, c) => sum + card.ratings[c], 0) / categories.length;
+ };
+ const targetPower = player.reduce((sum, card) => sum + power(card), 0) / player.length;
+ const near = BRAND_CARDS.slice().sort((a, b) => Math.abs(power(a) - targetPower) - Math.abs(power(b) - targetPower)).slice(0, 12);
+ const candidates = [
+  BRAND_CARDS.slice().sort((a, b) => power(a) - power(b)).slice(0, 5),
+  BRAND_CARDS.slice().sort((a, b) => power(b) - power(a)).slice(0, 5),
+  ...Array.from({ length: 16 }, () => shuffle(near, random).slice(0, 5)),
+  ...Array.from({ length: 14 }, () => shuffle(BRAND_CARDS, random).slice(0, 5)),
+ ];
+ const mirror = player.map(card => BRAND_CARDS.find(c => c.id === card.id));
+ if (mirror.every((card): card is BattleCard => card !== undefined)) candidates.push(mirror);
  const ranked = candidates.map(deck => ({ deck, rate: estimatePlayerWins(player, deck, 96, seed) }))
   .sort((a, b) => Math.abs(a.rate - COMPUTER_WIN_TARGET) - Math.abs(b.rate - COMPUTER_WIN_TARGET));
  const finalists = ranked.slice(0, 6).map(({ deck }) => ({ deck, rate: estimatePlayerWins(player, deck, 512, seed ^ 0x9e3779b9) }));
