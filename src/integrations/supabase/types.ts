@@ -771,6 +771,24 @@ export type Database = {
         }
         Relationships: []
       }
+      cw_wear: {
+        Row: {
+          card_id: string
+          condition: number
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          condition?: number
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          condition?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       derez_lobbies: {
         Row: {
           arena: Json | null
@@ -1639,7 +1657,29 @@ export type Database = {
         }
         Returns: Json
       }
+      cw_apply_wear: {
+        Args: {
+          _d1: string[]
+          _d2: string[]
+          _log: Json
+          _p1: string
+          _p2: string
+        }
+        Returns: undefined
+      }
       cw_available: { Args: never; Returns: boolean }
+      cw_is_race: { Args: { _card: string }; Returns: boolean }
+      cw_my_wear: {
+        Args: never
+        Returns: {
+          card_id: string
+          condition: number
+        }[]
+      }
+      cw_wear_mult: {
+        Args: { _card: string; _cat: number; _user: string }
+        Returns: number
+      }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
