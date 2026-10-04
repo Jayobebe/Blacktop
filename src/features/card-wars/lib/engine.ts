@@ -1,9 +1,62 @@
 import { CATEGORIES, type BattleCard, type BattleState, type DogTag, type Category } from '../types';
 import { BRAND_CARDS } from './catalog';
 export function shuffle<T>(values: T[], random:()=>number=Math.random): T[] { const a=values.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/** Neutral, category-blind play used only before a run to estimate deck difficulty.
+ * Dog tags and player strategy are deliberately not priced into this estimate. */
+export const COMPUTER_WIN_TARGET = 0.51;
+function seededRandom(seed: number): () => number {
+ return () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+}
+export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[], trials = 128, seed = 1): number {
+ const random = seededRandom(seed);
+ let wins = 0;
+ for (let trial = 0; trial < trials; trial++) {
+  const hp = [Array(5).fill(100), Array(5).fill(100)];
+  const penaltyRound = random() < .125 ? 1 + Math.floor(random() * 4) : -1;
+  for (let round = 0; round < 400; round++) {
+   const alive = hp.map(hand => hand.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0));
+   if (!alive[0].length || !alive[1].length) break;
+   const aIndex = alive[0][Math.floor(random() * alive[0].length)];
+   const bIndex = alive[1][Math.floor(random() * alive[1].length)];
+   const aCard = player[aIndex], bCard = opponent[bIndex];
+   const allowed = CATEGORIES.filter(c => c !== 'lean' || ((aCard.displayVehicle ?? aCard.vehicle) === 'bike' && bCard.vehicle === 'bike'));
+   const category = allowed[Math.floor(random() * allowed.length)];
+   const penalty = penaltyRound === round && category === 'lean' ? .8 : 1;
+   const difference = (aCard.ratings[category] - bCard.ratings[category]) * penalty;
+   if (difference !== 0) {
+    const loser = difference > 0 ? 1 : 0;
+    const index = loser === 0 ? aIndex : bIndex;
+    hp[loser][index] = Math.max(0, hp[loser][index] - Math.min(65, 20 + Math.round(Math.abs(difference) * .7)));
+   }
+  }
+  // Tied/stalled neutral games count as half a win for matchmaking only.
+  const totals = hp.map(hand => hand.reduce((a, b) => a + b, 0));
+  wins += totals[0] === totals[1] ? .5 : totals[0] > totals[1] ? 1 : 0;
+ }
+ return wins / trials;
+}
+
+/** Select real catalog cards, never weaken their stats or rig a live round.
+ * A bounded search approaches the target; extreme decks can exceed catalog limits. */
+export function createComputerDeck(player: BattleCard[], random: () => number = Math.random): BattleCard[] {
+ const seed = Math.floor(random() * 4294967296);
+ const candidates = Array.from({ length: 32 }, () => shuffle(BRAND_CARDS, random).slice(0, 5));
+ const ranked = candidates.map(deck => ({ deck, rate: estimatePlayerWins(player, deck, 96, seed) }))
+  .sort((a, b) => Math.abs(a.rate - COMPUTER_WIN_TARGET) - Math.abs(b.rate - COMPUTER_WIN_TARGET));
+ const finalists = ranked.slice(0, 6).map(({ deck }) => ({ deck, rate: estimatePlayerWins(player, deck, 512, seed ^ 0x9e3779b9) }));
+ const below = finalists.filter(c => c.rate <= COMPUTER_WIN_TARGET).sort((a, b) => b.rate - a.rate)[0];
+ const above = finalists.filter(c => c.rate > COMPUTER_WIN_TARGET).sort((a, b) => a.rate - b.rate)[0];
+ if (below && above) {
+  const chanceOfAbove = (COMPUTER_WIN_TARGET - below.rate) / (above.rate - below.rate);
+  return random() < chanceOfAbove ? above.deck : below.deck;
+ }
+ finalists.sort((a, b) => Math.abs(a.rate - COMPUTER_WIN_TARGET) - Math.abs(b.rate - COMPUTER_WIN_TARGET));
+ return finalists[0]?.deck ?? candidates[0];
+}
 export function createRun(player: BattleCard[], random:()=>number=Math.random): BattleState {
  if(player.length!==5 || new Set(player.map(c=>c.id)).size!==5) throw new Error('Deck needs five unique cards');
- const opponent=shuffle(BRAND_CARDS,random).slice(0,5);
+ const opponent=createComputerDeck(player,random);
  return {id:crypto.randomUUID(),player,opponent,hp:[Array(5).fill(100),Array(5).fill(100)],round:0,categories:shuffle([...CATEGORIES],random),penaltyRound:random()<.125?1+Math.floor(random()*4):-1,usedTags:[],log:[],result:null,rewardOrder:shuffle(opponent.map(c=>c.id),random),rewardClaimed:false};
 }
 export function playRound(previous:BattleState, index:number, tag?:DogTag, random:()=>number=Math.random):BattleState {
