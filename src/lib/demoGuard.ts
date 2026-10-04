@@ -20,6 +20,7 @@ import { isDemoModeActive } from '@/lib/demoMode';
  */
 
 const WRITE_RPCS = new Set([
+  'cw_wear_offline',
   'cw_action',
   'blacktank_cancel_request',
   'blacktank_join',

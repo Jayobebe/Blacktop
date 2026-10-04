@@ -24,7 +24,7 @@ import { RewardShuffle } from './RewardShuffle';
 import { BattleArena, type Reveal } from './BattleArena';
 import { CATALOG, STARTERS, STARTER_TAGS, archetypeFor, unlockCard, cardIdentity } from '../lib/catalog';
 import { createRun, playRound } from '../lib/engine';
-import { withWear, conditionOf, wearAfterRun } from '../lib/wear';
+import { withWear, conditionOf, wearAfterRun, fetchServerWear, reportOfflineWear } from '../lib/wear';
 import { useVault, updateVault, claimReward } from '../lib/store';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { CATEGORIES, type BattleCard as Card, type DogTag, type Category } from '../types';
@@ -49,7 +49,8 @@ export function CardWarsScreen(){
  },[vault.rewards,vault.unlocks,own,collected,peaksHidden]);
  const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,spectre:s,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
  const wornPool=useMemo(()=>pool.map(c=>withWear(c,conditionOf(vault.wear,c.id))),[pool,vault.wear]);
- useEffect(()=>{const r=vault.run;if(!r||!r.result||vault.wearApplied===r.id||demo)return;updateVault({wear:wearAfterRun(vault.wear,r,pool),wearApplied:r.id});},[vault.run,vault.wear,vault.wearApplied,pool,demo]);
+ useEffect(()=>{const r=vault.run;if(!r||!r.result||vault.wearApplied===r.id||demo)return;updateVault({wear:wearAfterRun(vault.wear,r,pool),wearApplied:r.id});void reportOfflineWear(r).then(w=>{if(w)updateVault({wear:{...w}});});},[vault.run,vault.wear,vault.wearApplied,pool,demo]);
+ useEffect(()=>{const sync=()=>{void fetchServerWear().then(w=>{if(w&&Object.keys(w).length)updateVault({wear:w});});};sync();window.addEventListener('focus',sync);window.addEventListener('blacktop:refresh',sync);return()=>{window.removeEventListener('focus',sync);window.removeEventListener('blacktop:refresh',sync);};},[demo,online?.status]);
  const deck=vault.deck.map(id=>wornPool.find(c=>c.id===id)).filter((c):c is Card=>!!c);const deckTags=vault.tags.map(id=>tags.find(t=>t.id===id)).filter((t):t is DogTag=>!!t);
  const run=vault.run;const selectedTag=deckTags.find(t=>t.id===tag);
  async function action(a:'status'|'create'|'join'|'play'|'leave',card?:number){if(busy||((a!=='status')&&(riding||demoBlocked())))return;setBusy(true);try{const result=await battleAction(a,a==='join'?code.trim():online?.code,a==='create'||a==='join'?deck.map(c=>c.archetype):undefined,card,selectedTag?STARTER_TAGS.findIndex(t=>t.power===selectedTag.power):undefined,online?.round);setOnline(result);setTag(null);}catch(e){toast.error(e instanceof Error?e.message:tr('Battle unavailable'));}finally{setBusy(false);}}
