@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + placa",
  "{0} gives": "{0} da",
  "{0} set": "Set de {0}",
- "{0} set complete: +{1} RPM": "Set de {0} completo: +{1} RPM"
+ "{0} set complete: +{1} RPM": "Set de {0} completo: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 ronda luchada, {0} % de desgaste por ahora.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Cada ronda que lucha una carta le cuesta un {0} % (las de competición, un {1} %), y un {2} % más por cada ronda después de su décima en un combate. Descansar un combate le devuelve un {3} %. Por debajo del 50 % sus valoraciones empiezan a bajar.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Cada ronda que lucha una carta la desgasta, y más rápido después de su décima ronda en un combate, así que no te apoyes solo en tu mejor carta. Una que descansa un combate recupera estado. Por debajo del 50 % sus valoraciones bajan: rota tu mazo o repara con RPM. Las cartas más caras cuestan más de reparar.",
+ "Fresh this battle. Every round it fights wears it.": "Fresca en este combate. Cada ronda que lucha la desgasta.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "El desgaste sigue las rondas que luchó cada carta (×), y sube más rápido después de diez. Dales un combate de descanso o repáralas desde tu mazo.",
+ "{0} rounds fought": "{0} rondas luchadas",
+ "{0} rounds fought, {1}% wear so far.": "{0} rondas luchadas, {1} % de desgaste por ahora.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} rondas luchadas, {1} % de desgaste por ahora. Después de diez se desgasta más rápido: dale un descanso."
 }

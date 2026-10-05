@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + dog tag",
  "{0} gives": "{0} geeft",
  "{0} set": "{0}-set",
- "{0} set complete: +{1} RPM": "{0}-set compleet: +{1} RPM"
+ "{0} set complete: +{1} RPM": "{0}-set compleet: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 ronde gevochten, tot nu toe {0}% slijtage.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Elke ronde die een kaart vecht kost {0}% (racebouw {1}%), en {2}% extra voor elke ronde na zijn tiende in één gevecht. Een gevecht overslaan geeft {3}% terug. Onder 50% beginnen de ratings te zakken.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Elke ronde die een kaart vecht slijt hem, en sneller na zijn tiende ronde in een gevecht, dus leun niet op je beste kaart. Een kaart die een gevecht overslaat krijgt conditie terug. Onder 50% zakken de ratings: wissel je deck af of repareer met RPM. Duurdere kaarten zijn duurder om te repareren.",
+ "Fresh this battle. Every round it fights wears it.": "Nog fris dit gevecht. Elke ronde die hij vecht slijt hem.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Slijtage volgt de rondes die elke kaart vocht (×), en loopt na tien sneller op. Laat ze een gevecht rusten, of repareer ze vanuit je deck.",
+ "{0} rounds fought": "{0} rondes gevochten",
+ "{0} rounds fought, {1}% wear so far.": "{0} rondes gevochten, tot nu toe {1}% slijtage.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} rondes gevochten, tot nu toe {1}% slijtage. Na tien slijt hij sneller: gun hem rust."
 }

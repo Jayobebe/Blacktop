@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + Hundemarke",
  "{0} gives": "{0} gibt",
  "{0} set": "{0}-Set",
- "{0} set complete: +{1} RPM": "{0}-Set komplett: +{1} RPM"
+ "{0} set complete: +{1} RPM": "{0}-Set komplett: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 Runde gekämpft, bisher {0} % Verschleiß.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Jede Runde, die eine Karte kämpft, kostet sie {0} % (Rennumbauten {1} %), und {2} % mehr für jede Runde nach ihrer zehnten in einem Kampf. Einen Kampf aussetzen bringt {3} % zurück. Unter 50 % sinken ihre Werte.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Jede Runde, die eine Karte kämpft, nutzt sie ab, nach ihrer zehnten Runde in einem Kampf noch schneller: Verlass dich also nicht nur auf deine beste Karte. Eine Karte, die einen Kampf aussetzt, gewinnt Zustand zurück. Unter 50 % sinken ihre Werte: Wechsle im Deck durch oder repariere mit RPM. Teurere Karten kosten mehr Reparatur.",
+ "Fresh this battle. Every round it fights wears it.": "In diesem Kampf noch frisch. Jede Runde, die sie kämpft, nutzt sie ab.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Der Verschleiß richtet sich nach den Runden, die jede Karte gekämpft hat (×), und steigt nach zehn schneller. Lass sie einen Kampf ruhen oder repariere sie im Deck.",
+ "{0} rounds fought": "{0} Runden gekämpft",
+ "{0} rounds fought, {1}% wear so far.": "{0} Runden gekämpft, bisher {1} % Verschleiß.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} Runden gekämpft, bisher {1} % Verschleiß. Nach zehn nutzt sie sich schneller ab: Gönn ihr eine Pause."
 }

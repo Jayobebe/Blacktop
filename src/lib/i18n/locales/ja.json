@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM＋ドッグタグ",
  "{0} gives": "{0}が出すもの",
  "{0} set": "{0}セット",
- "{0} set complete: +{1} RPM": "{0}セット達成：+{1} RPM"
+ "{0} set complete: +{1} RPM": "{0}セット達成：+{1} RPM",
+ "1 round fought, {0}% wear so far.": "1ラウンド出場、ここまでの消耗{0}%。",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "カードは出場したラウンドごとにコンディションが{0}%減ります（レース仕様は{1}%）。同じバトルで10ラウンドを超えると、1ラウンドごとにさらに{2}%減ります。1バトル休むと{3}%回復します。50%を切るとレーティングが下がり始めます。",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "カードは出場したラウンドごとに消耗し、同じバトルで10ラウンドを超えるとさらに早く消耗します。いちばん強いカードに頼りすぎないようにしましょう。1バトル休んだカードはコンディションが回復します。50%を切るとレーティングが下がるので、デッキを入れ替えるかRPMで修理しましょう。高いカードほど修理代も高くなります。",
+ "Fresh this battle. Every round it fights wears it.": "このバトルではまだ未出場。出場するラウンドごとに消耗します。",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "消耗は各カードが出場したラウンド数（×）で決まり、10を超えると早くなります。1バトル休ませるか、デッキから修理しましょう。",
+ "{0} rounds fought": "{0}ラウンド出場",
+ "{0} rounds fought, {1}% wear so far.": "{0}ラウンド出場、ここまでの消耗{1}%。",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0}ラウンド出場、ここまでの消耗{1}%。10を超えると消耗が早くなります。休ませましょう。"
 }

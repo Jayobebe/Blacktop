@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + жетон",
  "{0} gives": "{0} дає",
  "{0} set": "Набір {0}",
- "{0} set complete: +{1} RPM": "Набір {0} зібрано: +{1} RPM"
+ "{0} set complete: +{1} RPM": "Набір {0} зібрано: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 раунд у бою, поки що {0}% зносу.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Кожен раунд бою коштує картці {0}% стану (гоночним {1}%), а кожен раунд після десятого в одному бою — ще на {2}% більше. Пропуск бою повертає {3}%. Нижче 50% її рейтинги починають падати.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Кожен раунд бою зношує картку, а після десятого раунду в бою — ще швидше, тож не покладайтеся лише на найкращу картку. Картка, що пропускає бій, відновлює стан. Нижче 50% рейтинги падають: міняйте картки в колоді або ремонтуйте за RPM. Дорожчі картки дорожче ремонтувати.",
+ "Fresh this battle. Every round it fights wears it.": "У цьому бою ще свіжа. Кожен раунд бою її зношує.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Знос залежить від кількості раундів, які провела кожна картка (×), і після десяти зростає швидше. Дайте їм відпочити один бій або відремонтуйте з колоди.",
+ "{0} rounds fought": "Раундів у бою: {0}",
+ "{0} rounds fought, {1}% wear so far.": "Раундів у бою: {0}, поки що {1}% зносу.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "Раундів у бою: {0}, поки що {1}% зносу. Після десяти вона зношується швидше: дайте їй відпочити."
 }

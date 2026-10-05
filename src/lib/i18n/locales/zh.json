@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + 身份牌",
  "{0} gives": "{0} 给出",
  "{0} set": "{0} 套装",
- "{0} set complete: +{1} RPM": "{0} 套装集齐：+{1} RPM"
+ "{0} set complete: +{1} RPM": "{0} 套装集齐：+{1} RPM",
+ "1 round fought, {0}% wear so far.": "已出战 1 回合，目前磨损 {0}%。",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "卡牌每出战一回合损耗 {0}%（赛车改装为 {1}%），同一场对战中第十回合之后每回合再多损耗 {2}%。休息一场恢复 {3}%。低于 50% 时评分开始下降。",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "卡牌每出战一回合都会磨损，同一场对战中第十回合之后磨损更快，所以别只靠你最强的那张。休息一场的卡牌会恢复状态。低于 50% 评分下降：轮换牌组或用 RPM 修理。越贵的卡牌修理越贵。",
+ "Fresh this battle. Every round it fights wears it.": "本场对战还没出战。每出战一回合都会磨损。",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "磨损取决于每张卡牌出战的回合数（×），超过十回合后增长更快。让它们休息一场，或在牌组里修理。",
+ "{0} rounds fought": "已出战 {0} 回合",
+ "{0} rounds fought, {1}% wear so far.": "已出战 {0} 回合，目前磨损 {1}%。",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "已出战 {0} 回合，目前磨损 {1}%。超过十回合后磨损更快：让它歇一歇。"
 }

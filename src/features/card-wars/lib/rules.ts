@@ -25,22 +25,32 @@ function serverRules(): 1 | 2 {
 
 export const V2 = serverRules() === 2;
 
-/**
- * The server knows the Coin flip dog tag (migration
- * 20261010000000_card_wars_coin_flip.sql; the `cardWarsFlip` cap). Without it
- * the tag still works against the computer, as the standard one everyone has:
- * it just can't be taken into a player battle or won on a spin.
- */
-function serverFlip(): boolean {
+/** What the server said at launch about a later migration (scripts: on with the second rule set). */
+function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear'): boolean {
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
   if (env) return env === '2';
   try {
-    return !!JSON.parse(localStorage.getItem('bt.server_caps') || '{}').cardWarsFlip;
+    return !!JSON.parse(localStorage.getItem('bt.server_caps') || '{}')[cap];
   } catch {
     return false;
   }
 }
-export const FLIP = V2 && serverFlip();
+
+/**
+ * The server knows the Coin flip dog tag (the coin flip migration, applied as
+ * 20261005174423_…; the `cardWarsFlip` cap). Without it the tag still works
+ * against the computer, as the standard one everyone has: it just can't be
+ * taken into a player battle or won on a spin.
+ */
+export const FLIP = V2 && serverHas('cardWarsFlip');
+
+/**
+ * Wear follows the rounds each card fought (migration
+ * 20261011000000_card_wars_wear_by_round.sql; the `cardWarsWear` cap). Until
+ * the server has it, a battle costs a card that fought the flat `wear.road` /
+ * `wear.race`, however often it was played.
+ */
+export const WEAR_BY_ROUND = V2 && serverHas('cardWarsWear');
 
 export interface Rules {
   /** RPM for a finished battle against the computer. */
@@ -94,6 +104,23 @@ const RULES_V2: Rules = {
 };
 
 export const RULES: Rules = V2 ? RULES_V2 : RULES_V1;
+
+/**
+ * Wear by round: condition a card loses per round it fights (race builds
+ * more), `extra` more for each round past its `past`-th in one battle, `cap` a
+ * battle at most. A card played about as often as its deck mates (seven or
+ * eight rounds of a battle's 38 or so) wears as it did under the flat rule;
+ * one leaned on all battle wears two or three times as fast. Mirrored by
+ * `cw_wear_loss` on the server.
+ */
+export const WEAR_ROUND = { road: 1, race: 2, past: 10, extra: 1, cap: 45 } as const;
+
+/** Condition a card loses for the rounds it fought in one battle. */
+export function wearLoss(race: boolean, rounds: number): number {
+  if (rounds <= 0) return 0;
+  if (!WEAR_BY_ROUND) return race ? RULES.wear.race : RULES.wear.road;
+  return Math.min(WEAR_ROUND.cap, rounds * (race ? WEAR_ROUND.race : WEAR_ROUND.road) + Math.max(0, rounds - WEAR_ROUND.past) * WEAR_ROUND.extra);
+}
 
 /** RPM to bring a card back to 100% condition. Dearer cards cost more to run. */
 export function repairCost(price: number | undefined, condition: number): number {

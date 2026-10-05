@@ -20,12 +20,12 @@ import { overall } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
-import { FLIP, RULES, V2 } from '../lib/rules';
+import { FLIP, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
 import { claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, updateVault, useVault } from '../lib/store';
 import { powerIndex, tagRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
-import { conditionOf, flushPendingWear, queueWear, syncWear, wearAfterRun, withWear } from '../lib/wear';
+import { conditionOf, flushPendingWear, queueWear, roundsFought, syncWear, wearAfterRun, withWear } from '../lib/wear';
 import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type CoinFlip, type DogTag, type TagPower } from '../types';
 import { BattleArena, type Reveal } from './BattleArena';
 import { BattleResult } from './BattleResult';
@@ -463,6 +463,7 @@ export function CardWarsScreen() {
           disabled={riding}
           tags={deckTags}
           usedTags={run.usedTags}
+          rounds={WEAR_BY_ROUND ? run.player.map((c) => roundsFought(run)[c.id] ?? 0) : undefined}
           tag={tag}
           onTag={setTag}
           onPick={pickComputer}
@@ -515,7 +516,13 @@ export function CardWarsScreen() {
                   : tr("No RPM this time: battles pay at most once every half minute, and only when you're online.")
                 : undefined
           }
-          wear={wearBefore?.run === run.id ? run.player.map((card) => ({ card, change: conditionOf(vault.wear, card.id) - (wearBefore.before[card.id] ?? 100) })).filter((w) => w.change !== 0) : []}
+          wear={
+            wearBefore?.run === run.id
+              ? run.player
+                  .map((card) => ({ card, change: conditionOf(vault.wear, card.id) - (wearBefore.before[card.id] ?? 100), rounds: WEAR_BY_ROUND ? roundsFought(run)[card.id] : undefined }))
+                  .filter((w) => w.change !== 0)
+              : []
+          }
           prize={chosen}
           prizeNote={mine?.had ? (mine.rpm > 0 ? tr("You already own this card, so it paid {0} RPM instead.", [mine.rpm]) : tr("You already own this one, so nothing new this time.")) : undefined}
           canLeave={!won || run.rewardClaimed}
@@ -546,6 +553,7 @@ export function CardWarsScreen() {
           selected={online?.selected}
           tags={battleTags}
           usedTags={battleTags.filter((t) => shownOnline.used?.includes(powerIndex(t.power))).map((t) => t.id)}
+          rounds={WEAR_BY_ROUND ? sideCards(shownOnline, true).map((c) => (shownOnline.log ?? []).filter((l) => (shownOnline.side === 1 ? l.card1 : l.card2) === c.id).length) : undefined}
           tag={tag}
           onTag={setTag}
           onPick={(i) => void act('play', i)}

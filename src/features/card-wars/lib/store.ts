@@ -14,11 +14,12 @@ const KEY = 'bt.card_wars.v1';
 const initial = (): VaultState => ({ deck: [], tags: STARTER_TAGS.slice(0, TAG_SLOTS).map((t) => t.id), rewards: [], unlocks: [], run: null });
 const demo = (): VaultState => ({ ...initial(), deck: [...STARTERS] });
 
-/** What the server needs to know about a finished battle: the deck, and which of it fought. */
+/** What the server needs to know about a finished battle: the deck, which of it fought, and for how many rounds. */
 export const wearReportOf = (run: BattleState): WearReport => ({
   id: run.id,
   deck: run.player.map((c) => c.id),
   fought: Array.from(new Set(run.log.map((l) => l.player))),
+  rounds: run.player.map((c) => run.log.filter((l) => l.player === c.id).length),
   raptured: run.log.find((l) => l.raptured?.[0])?.raptured?.[0] ?? null,
 });
 

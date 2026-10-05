@@ -92,6 +92,8 @@ export interface WearReport {
   id: string;
   deck: string[];
   fought: string[];
+  /** Rounds each card of `deck` fought, in its order (0: sat the battle out). */
+  rounds?: number[];
   /** The deck's card a rapture took: it comes home at full condition. */
   raptured?: string | null;
 }

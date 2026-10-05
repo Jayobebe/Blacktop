@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + ID-brikke",
  "{0} gives": "{0} gir",
  "{0} set": "{0}-sett",
- "{0} set complete: +{1} RPM": "{0}-sett fullført: +{1} RPM"
+ "{0} set complete: +{1} RPM": "{0}-sett fullført: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 runde kjempet, {0} % slitasje så langt.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Hver runde et kort kjemper koster det {0} % (racebygde {1} %), og {2} % mer for hver runde etter den tiende i en kamp. Å stå over en kamp gir {3} % tilbake. Under 50 % begynner vurderingene å falle.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Hver runde et kort kjemper sliter på det, og raskere etter den tiende runden i en kamp, så ikke len deg på det beste kortet ditt. Et kort som står over en kamp får tilstand tilbake. Under 50 % faller vurderingene: bytt på kortene i decket eller reparer med RPM. Dyrere kort koster mer å reparere.",
+ "Fresh this battle. Every round it fights wears it.": "Friskt i denne kampen. Hver runde det kjemper sliter på det.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Slitasjen følger rundene hvert kort kjempet (×), og øker raskere etter ti. La dem hvile en kamp, eller reparer dem fra decket.",
+ "{0} rounds fought": "{0} runder kjempet",
+ "{0} rounds fought, {1}% wear so far.": "{0} runder kjempet, {1} % slitasje så langt.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} runder kjempet, {1} % slitasje så langt. Etter ti slites det raskere: gi det en pause."
 }

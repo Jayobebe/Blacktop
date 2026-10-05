@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { tr } from '@/lib/i18n';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
-import { RULES, V2 } from '../lib/rules';
+import { RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
 import { TAG_ICON, TAG_ORDER, tagDescription, tagName } from '../lib/tags';
 
 const SEEN_KEY = 'bt.card_wars_howto';
@@ -110,7 +110,9 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
       icon: Wrench,
       title: tr("Cards wear"),
       text: V2
-        ? tr("A card that fights loses condition and one that rests gets it back. Under 50% its ratings drop, so rotate your deck or repair with RPM. Dearer cards cost more to repair.")
+        ? WEAR_BY_ROUND
+          ? tr("Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.")
+          : tr("A card that fights loses condition and one that rests gets it back. Under 50% its ratings drop, so rotate your deck or repair with RPM. Dearer cards cost more to repair.")
         : tr("A card that fights loses condition and one that rests gets it back. Under 50% its ratings drop, so rotate your deck or repair with RPM."),
     },
     ...(players

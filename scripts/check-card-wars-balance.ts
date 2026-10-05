@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { V2 } from '../src/features/card-wars/lib/rules';
+import { RULES, V2, WEAR_BY_ROUND, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
@@ -69,6 +69,16 @@ assert.ok(run.log.every((l) => l.event === 'rapture' ? !l.values : l.values && (
 // The checks below test the plain rules, without round events.
 setEventsEnabled(false);
 assert.throws(() => createRun(player.slice(0, 4)), /five unique cards/);
+
+// ── Wear: by the rounds a card fought, so leaning on the best card costs it ──
+if (WEAR_BY_ROUND) {
+  assert.deepEqual([0, 1, 7, 10, 18, 60].map((n) => wearLoss(false, n)), [0, 1, 7, 10, 26, 45], 'Road cards: 1 a round, 1 more past the tenth, 45 at most');
+  assert.deepEqual([7, 12, 30].map((n) => wearLoss(true, n)), [14, 26, 45], 'Race builds: 2 a round');
+  console.log(`Wear: 7 rounds ${wearLoss(false, 7)}%, 18 rounds ${wearLoss(false, 18)}% (race builds ${wearLoss(true, 7)}% and ${wearLoss(true, 18)}%)`);
+} else {
+  assert.equal(wearLoss(false, 20), RULES.wear.road, 'The flat rule charges the same however often a card is played');
+  assert.equal(wearLoss(true, 1), RULES.wear.race);
+}
 
 // ── Dog tags ──
 const plain = (power: DogTag['power']): DogTag => ({ id: `tag-${power}`, name: power, power });

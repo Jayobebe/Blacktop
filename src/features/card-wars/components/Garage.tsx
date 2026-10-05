@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { SPECS, cardById } from '../lib/catalog';
 import { deckRating, isBike, overall } from '../lib/ratings';
-import { RULES, V2, repairCost } from '../lib/rules';
+import { RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost } from '../lib/rules';
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
@@ -489,11 +489,18 @@ export function Garage({
                   <i className={cn('block h-full rounded-full', condition < 50 ? 'bg-destructive' : 'bg-foreground/80')} style={{ width: `${condition}%` }} />
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-snug">
-                  {tr("A battle costs a card that fights {0}% (race builds {1}%); sitting one out gives {2}% back. Under 50% its ratings start to drop.", [
-                    WEAR_PER_BATTLE.factory,
-                    WEAR_PER_BATTLE.race,
-                    REST_RECOVERY,
-                  ])}
+                  {WEAR_BY_ROUND
+                    ? tr("Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.", [
+                        WEAR_ROUND.road,
+                        WEAR_ROUND.race,
+                        WEAR_ROUND.extra,
+                        REST_RECOVERY,
+                      ])
+                    : tr("A battle costs a card that fights {0}% (race builds {1}%); sitting one out gives {2}% back. Under 50% its ratings start to drop.", [
+                        WEAR_PER_BATTLE.factory,
+                        WEAR_PER_BATTLE.race,
+                        REST_RECOVERY,
+                      ])}
                 </p>
                 {repairPrice > 0 && (
                   <Button variant="outline" className="w-full h-11 gap-2" disabled={frozen || repairing || (shop.balance ?? 0) < repairPrice} onClick={() => void repair(current.id)}>

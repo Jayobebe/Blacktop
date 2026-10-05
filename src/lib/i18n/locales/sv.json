@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + ID-bricka",
  "{0} gives": "{0} ger",
  "{0} set": "{0}-set",
- "{0} set complete: +{1} RPM": "{0}-set komplett: +{1} RPM"
+ "{0} set complete: +{1} RPM": "{0}-set komplett: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 rond stridd, {0} % slitage hittills.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Varje rond ett kort slåss kostar det {0} % (racebyggen {1} %), och {2} % till för varje rond efter dess tionde i en strid. Att stå över en strid ger {3} % tillbaka. Under 50 % börjar betygen sjunka.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Varje rond ett kort slåss sliter på det, och snabbare efter dess tionde rond i en strid, så luta dig inte mot ditt bästa kort. Ett kort som står över en strid får tillbaka skick. Under 50 % sjunker betygen: rotera din lek eller reparera med RPM. Dyrare kort kostar mer att reparera.",
+ "Fresh this battle. Every round it fights wears it.": "Fräscht i den här striden. Varje rond det slåss sliter på det.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Slitaget följer ronderna varje kort stred (×), och ökar snabbare efter tio. Låt dem vila en strid, eller reparera dem från din lek.",
+ "{0} rounds fought": "{0} ronder stridda",
+ "{0} rounds fought, {1}% wear so far.": "{0} ronder stridda, {1} % slitage hittills.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} ronder stridda, {1} % slitage hittills. Efter tio slits det snabbare: ge det en paus."
 }

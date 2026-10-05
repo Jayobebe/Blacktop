@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + plaqueta",
  "{0} gives": "{0} dá",
  "{0} set": "Conjunto {0}",
- "{0} set complete: +{1} RPM": "Conjunto {0} completo: +{1} RPM"
+ "{0} set complete: +{1} RPM": "Conjunto {0} completo: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 rodada lutada, {0}% de desgaste até agora.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Cada rodada que uma carta luta custa {0}% a ela ({1}% às de competição), e {2}% a mais por rodada depois da décima na mesma batalha. Ficar de fora de uma batalha devolve {3}%. Abaixo de 50% as avaliações começam a cair.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Cada rodada que uma carta luta a desgasta, e mais rápido depois da décima rodada numa batalha, então não se apoie só na sua melhor carta. Uma carta que fica de fora de uma batalha recupera condição. Abaixo de 50% as avaliações caem: reveze o baralho ou repare com RPM. Cartas mais caras custam mais para reparar.",
+ "Fresh this battle. Every round it fights wears it.": "Inteira nesta batalha. Cada rodada que ela luta a desgasta.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "O desgaste segue as rodadas que cada carta lutou (×), e sobe mais rápido depois de dez. Deixe-as descansar uma batalha ou repare pelo baralho.",
+ "{0} rounds fought": "{0} rodadas lutadas",
+ "{0} rounds fought, {1}% wear so far.": "{0} rodadas lutadas, {1}% de desgaste até agora.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} rodadas lutadas, {1}% de desgaste até agora. Depois de dez ela se desgasta mais rápido: dê um descanso a ela."
 }

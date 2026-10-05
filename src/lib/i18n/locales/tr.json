@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + künye",
  "{0} gives": "{0} veriyor",
  "{0} set": "{0} seti",
- "{0} set complete: +{1} RPM": "{0} seti tamam: +{1} RPM"
+ "{0} set complete: +{1} RPM": "{0} seti tamam: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 raunt dövüştü, şimdiye kadar %{0} yıpranma.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Bir kartın dövüştüğü her raunt durumundan %{0} götürür (yarış yapımı kartlarda %{1}), bir savaşta onuncu rauntundan sonraki her raunt %{2} daha fazla. Bir savaşı dinlenerek geçirmek %{3} geri verir. %50'nin altında puanları düşmeye başlar.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Bir kart dövüştüğü her rauntta yıpranır, bir savaşta onuncu rauntundan sonra daha da hızlı; bu yüzden yalnızca en iyi kartına yaslanma. Bir savaşı dinlenerek geçiren kart durum geri kazanır. %50'nin altında puanlar düşer: desteni döndür ya da RPM ile onar. Pahalı kartların onarımı daha pahalıdır.",
+ "Fresh this battle. Every round it fights wears it.": "Bu savaşta henüz dinç. Dövüştüğü her raunt onu yıpratır.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Yıpranma her kartın dövüştüğü raunt sayısına (×) göredir ve ondan sonra daha hızlı artar. Bir savaş dinlendir ya da destenden onar.",
+ "{0} rounds fought": "{0} raunt dövüştü",
+ "{0} rounds fought, {1}% wear so far.": "{0} raunt dövüştü, şimdiye kadar %{1} yıpranma.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} raunt dövüştü, şimdiye kadar %{1} yıpranma. Ondan sonra daha hızlı yıpranır: dinlendir."
 }

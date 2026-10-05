@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { CloudRain, Flag, Loader2, Swords, TrendingDown, TrendingUp, Undo2, X } from 'lucide-react';
+import { CloudRain, Flag, Loader2, Swords, TrendingDown, TrendingUp, Undo2, Wrench, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { eventSound } from '@/lib/appSound';
 import { haptics } from '@/lib/haptics';
@@ -7,6 +7,7 @@ import { tr } from '@/lib/i18n';
 import { isThermal } from '@/lib/thermal';
 import { cn } from '@/lib/utils';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
+import { WEAR_ROUND, wearLoss } from '../lib/rules';
 import { flipCategory } from '../lib/tagRules';
 import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
 import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower } from '../types';
@@ -116,6 +117,7 @@ export function BattleArena({
   selected,
   tags,
   usedTags,
+  rounds,
   tag,
   onTag,
   onPick,
@@ -139,6 +141,8 @@ export function BattleArena({
   selected?: number | null;
   tags: DogTag[];
   usedTags: string[];
+  /** Rounds each card in the hand has fought this battle (wear follows them); left out, nothing is shown. */
+  rounds?: number[];
   tag: string | null;
   onTag: (id: string | null) => void;
   onPick: (index: number) => void;
@@ -334,6 +338,9 @@ export function BattleArena({
   const myFlip = reveal?.flips?.[0] ?? null;
   const theirFlip = reveal?.flips?.[1] ?? null;
   const armedFlip = armed?.power === 'flip' && focusCard ? focusCard : null;
+  // What the card being looked at has cost itself so far this battle.
+  const focusRounds = focusCard && rounds && focus !== null ? rounds[focus] ?? 0 : null;
+  const focusWear = focusCard && focusRounds !== null ? { rounds: focusRounds, loss: wearLoss(focusCard.spec === 'race', focusRounds), hard: focusRounds >= WEAR_ROUND.past } : null;
   /** A card the beam has taken (or is taking right now). */
   const beamClass = (side: 0 | 1, id: string) => {
     const now = rapture && reveal?.raptured?.[side] === id;
@@ -526,6 +533,18 @@ export function BattleArena({
                   </span>
                 </p>
               )}
+              {focusCard && focusWear && (
+                <p className={cn('cw-info-wear', focusWear.hard && 'cw-info-wear-hard')}>
+                  <Wrench aria-hidden />
+                  {focusWear.rounds === 0
+                    ? tr("Fresh this battle. Every round it fights wears it.")
+                    : focusWear.hard
+                      ? tr("{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.", [focusWear.rounds, focusWear.loss])
+                      : focusWear.rounds === 1
+                        ? tr("1 round fought, {0}% wear so far.", [focusWear.loss])
+                        : tr("{0} rounds fought, {1}% wear so far.", [focusWear.rounds, focusWear.loss])}
+                </p>
+              )}
               {theirsCard && <p className="cw-info-note">{tr("{0}'s card", [rivalName])}</p>}
             </div>
           ) : null}
@@ -667,7 +686,8 @@ export function BattleArena({
               size="thumb"
               hp={mine[i] ?? 100}
               away={mineIndex === i}
-              className={beamClass(0, c.id)}
+              className={cn(beamClass(0, c.id), (rounds?.[i] ?? 0) > 0 && 'cw-card-counted', (rounds?.[i] ?? 0) >= WEAR_ROUND.past && 'cw-card-worked')}
+              badge={rounds?.[i] ? <span aria-label={tr("{0} rounds fought", [rounds[i]])}>×{rounds[i]}</span> : undefined}
               disabled={locked || (mine[i] ?? 100) === 0}
               onClick={() => {
                 haptics.light();

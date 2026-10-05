@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + piastrina",
  "{0} gives": "{0} dà",
  "{0} set": "Set {0}",
- "{0} set complete: +{1} RPM": "Set {0} completo: +{1} RPM"
+ "{0} set complete: +{1} RPM": "Set {0} completo: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 round combattuto, {0}% di usura finora.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Ogni round combattuto costa a una carta il {0}% (il {1}% a quelle da gara), e il {2}% in più per ogni round dopo il decimo nella stessa battaglia. Saltare una battaglia le rende il {3}%. Sotto il 50% le sue valutazioni iniziano a calare.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Ogni round combattuto usura una carta, e più in fretta dopo il decimo round in una battaglia: non contare solo sulla tua carta migliore. Una carta che salta una battaglia recupera condizione. Sotto il 50% le valutazioni calano: ruota il mazzo o ripara con gli RPM. Le carte più care costano di più da riparare.",
+ "Fresh this battle. Every round it fights wears it.": "Fresca in questa battaglia. Ogni round che combatte la usura.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "L'usura segue i round combattuti da ogni carta (×), e sale più in fretta dopo dieci. Falle riposare una battaglia o riparale dal mazzo.",
+ "{0} rounds fought": "{0} round combattuti",
+ "{0} rounds fought, {1}% wear so far.": "{0} round combattuti, {1}% di usura finora.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} round combattuti, {1}% di usura finora. Dopo dieci si usura più in fretta: falla riposare."
 }

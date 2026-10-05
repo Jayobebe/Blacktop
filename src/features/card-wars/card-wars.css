@@ -290,6 +290,13 @@ button.cw-card:disabled { cursor: default; }
 .cw-coin-mine { outline: 2px solid hsl(var(--accent)); outline-offset: 3px; border-radius: 50%; }
 .cw-coin-theirs { outline: 2px solid hsl(var(--burn)); outline-offset: 3px; border-radius: 50%; }
 .cw-info-flip { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid hsl(0 0% 100% / 0.1); font-size: 11px; font-weight: 600; }
+/* Rounds a card has fought this battle: a quiet count on its place in the hand, red once it's past ten. */
+.cw-card-counted .cw-photo-badge { background: hsl(0 0% 0% / 0.72); color: hsl(var(--foreground)); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.cw-card-worked .cw-photo-badge { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
+.cw-info-wear { display: flex; align-items: center; gap: 5px; margin-top: 8px; padding-top: 8px; border-top: 1px solid hsl(0 0% 100% / 0.1); font-size: 11px; line-height: 1.3; color: hsl(var(--muted-foreground)); }
+.cw-info-wear svg { flex-shrink: 0; width: 13px; height: 13px; color: hsl(var(--accent)); }
+.cw-info-wear-hard { color: hsl(var(--destructive)); font-weight: 600; }
+.cw-info-wear-hard svg { color: inherit; }
 .cw-info-flip span { display: inline-flex; align-items: center; gap: 4px; }
 .cw-info-flip svg { width: 13px; height: 13px; }
 .cw-info-flip span:first-child { color: hsl(var(--stat-improvement)); }

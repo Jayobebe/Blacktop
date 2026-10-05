@@ -34,7 +34,8 @@ export function BattleResult({
   /** A line under the RPM (the day's limit reached, a stake returned). */
   note?: string;
   /** Cards whose condition this battle changed. */
-  wear: { card: Card; change: number }[];
+  /** `rounds`: how many the card fought, when wear follows them. */
+  wear: { card: Card; change: number; rounds?: number }[];
   /** The card kept from the prize table. */
   prize?: Card;
   prizeNote?: string;
@@ -101,9 +102,12 @@ export function BattleResult({
         <section className="cw-panel">
           <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{tr("Card condition")}</h2>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-            {wear.map(({ card, change }) => (
+            {wear.map(({ card, change, rounds }) => (
               <li key={card.id} className="flex items-center justify-between gap-2 min-w-0">
-                <span className="truncate">{card.name}</span>
+                <span className="truncate">
+                  {card.name}
+                  {rounds ? <span className="text-muted-foreground font-mono"> ×{rounds}</span> : null}
+                </span>
                 <span className={cn('font-mono font-semibold shrink-0', change < 0 ? 'text-destructive' : 'text-[hsl(var(--stat-improvement))]')}>
                   {change > 0 ? '+' : ''}
                   {change}%
@@ -111,7 +115,11 @@ export function BattleResult({
               </li>
             ))}
           </ul>
-          <p className="text-[11px] text-muted-foreground leading-snug">{tr("Cards that fought wore a little. Rest them for a battle, or repair them from your deck.")}</p>
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            {wear.some((w) => w.rounds)
+              ? tr("Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.")
+              : tr("Cards that fought wore a little. Rest them for a battle, or repair them from your deck.")}
+          </p>
         </section>
       )}
 

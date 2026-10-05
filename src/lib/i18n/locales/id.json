@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + dog tag",
  "{0} gives": "{0} memberi",
  "{0} set": "Set {0}",
- "{0} set complete: +{1} RPM": "Set {0} lengkap: +{1} RPM"
+ "{0} set complete: +{1} RPM": "Set {0} lengkap: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 ronde bertarung, aus {0}% sejauh ini.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Setiap ronde yang dijalani kartu mengurangi kondisinya {0}% (versi balap {1}%), dan {2}% lagi untuk tiap ronde setelah ronde kesepuluhnya dalam satu pertarungan. Beristirahat satu pertarungan mengembalikan {3}%. Di bawah 50% ratingnya mulai turun.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Setiap ronde yang dijalani kartu membuatnya aus, dan lebih cepat setelah ronde kesepuluhnya dalam satu pertarungan, jadi jangan hanya mengandalkan kartu terbaikmu. Kartu yang beristirahat satu pertarungan mendapat kondisinya kembali. Di bawah 50% ratingnya turun: rotasi dek atau perbaiki dengan RPM. Kartu mahal lebih mahal diperbaiki.",
+ "Fresh this battle. Every round it fights wears it.": "Masih segar di pertarungan ini. Setiap ronde yang dijalaninya membuatnya aus.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Keausan mengikuti jumlah ronde yang dijalani tiap kartu (×), dan naik lebih cepat setelah sepuluh. Istirahatkan satu pertarungan, atau perbaiki dari dekmu.",
+ "{0} rounds fought": "{0} ronde bertarung",
+ "{0} rounds fought, {1}% wear so far.": "{0} ronde bertarung, aus {1}% sejauh ini.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} ronde bertarung, aus {1}% sejauh ini. Setelah sepuluh ia aus lebih cepat: beri istirahat."
 }

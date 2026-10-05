@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + nieśmiertelnik",
  "{0} gives": "{0} daje",
  "{0} set": "Zestaw {0}",
- "{0} set complete: +{1} RPM": "Zestaw {0} skompletowany: +{1} RPM"
+ "{0} set complete: +{1} RPM": "Zestaw {0} skompletowany: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 runda walki, na razie {0}% zużycia.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Każda runda walki kosztuje kartę {0}% (wersje wyścigowe {1}%), a każda runda po dziesiątej w jednej bitwie o {2}% więcej. Odpuszczenie bitwy oddaje {3}%. Poniżej 50% jej oceny zaczynają spadać.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Każda runda walki zużywa kartę, a po dziesiątej rundzie w bitwie jeszcze szybciej, więc nie polegaj tylko na najlepszej karcie. Karta, która odpuszcza bitwę, odzyskuje stan. Poniżej 50% oceny spadają: rotuj talię albo naprawiaj za RPM. Droższe karty są droższe w naprawie.",
+ "Fresh this battle. Every round it fights wears it.": "Świeża w tej bitwie. Każda runda walki ją zużywa.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "Zużycie zależy od liczby rund, które stoczyła każda karta (×), i po dziesięciu rośnie szybciej. Daj im odpocząć jedną bitwę albo napraw je z poziomu talii.",
+ "{0} rounds fought": "Rundy walki: {0}",
+ "{0} rounds fought, {1}% wear so far.": "Rundy walki: {0}, na razie {1}% zużycia.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "Rundy walki: {0}, na razie {1}% zużycia. Po dziesięciu zużywa się szybciej: daj jej odpocząć."
 }

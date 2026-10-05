@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + डॉग टैग",
  "{0} gives": "{0} देते हैं",
  "{0} set": "{0} सेट",
- "{0} set complete: +{1} RPM": "{0} सेट पूरा: +{1} RPM"
+ "{0} set complete: +{1} RPM": "{0} सेट पूरा: +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 राउंड लड़ा, अब तक {0}% घिसावट।",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "कार्ड जो भी राउंड लड़ता है, उसकी हालत {0}% घटती है (रेस बिल्ड की {1}%), और एक मुकाबले में दसवें राउंड के बाद हर राउंड पर {2}% और। एक मुकाबला बाहर बैठने पर {3}% लौटती है। 50% से नीचे उसकी रेटिंग गिरने लगती है।",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "कार्ड जो भी राउंड लड़ता है, वह उसे घिसाता है, और एक मुकाबले में दसवें राउंड के बाद और तेज़ी से, इसलिए सिर्फ़ अपने सबसे अच्छे कार्ड के भरोसे न रहें। जो कार्ड एक मुकाबला बाहर बैठता है, उसकी हालत लौटती है। 50% से नीचे रेटिंग गिरती है: डेक बदलते रहें या RPM से मरम्मत करें। महंगे कार्ड की मरम्मत महंगी है।",
+ "Fresh this battle. Every round it fights wears it.": "इस मुकाबले में अभी ताज़ा। हर राउंड जो यह लड़ता है, इसे घिसाता है।",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "घिसावट इस पर निर्भर है कि हर कार्ड कितने राउंड लड़ा (×), और दस के बाद तेज़ी से बढ़ती है। उन्हें एक मुकाबला आराम दें, या अपने डेक से मरम्मत करें।",
+ "{0} rounds fought": "{0} राउंड लड़े",
+ "{0} rounds fought, {1}% wear so far.": "{0} राउंड लड़े, अब तक {1}% घिसावट।",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} राउंड लड़े, अब तक {1}% घिसावट। दस के बाद यह तेज़ी से घिसता है: इसे आराम दें।"
 }

@@ -4124,5 +4124,13 @@
  "{0} RPM + dog tag": "{0} RPM + plaque",
  "{0} gives": "{0} donne",
  "{0} set": "Set {0}",
- "{0} set complete: +{1} RPM": "Set {0} complet : +{1} RPM"
+ "{0} set complete: +{1} RPM": "Set {0} complet : +{1} RPM",
+ "1 round fought, {0}% wear so far.": "1 manche disputée, {0} % d'usure pour l'instant.",
+ "Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.": "Chaque manche disputée coûte {0} % à une carte ({1} % pour les versions course), et {2} % de plus pour chaque manche après sa dixième dans un combat. Sauter un combat lui rend {3} %. Sous 50 %, ses notes commencent à baisser.",
+ "Every round a card fights wears it, and faster past its tenth round in a battle, so don't lean on your best card. One that sits a battle out gets condition back. Under 50% its ratings drop: rotate your deck or repair with RPM. Dearer cards cost more to repair.": "Chaque manche disputée use une carte, et plus vite après sa dixième manche dans un combat : ne te repose donc pas sur ta meilleure carte. Une carte qui saute un combat regagne de l'état. Sous 50 %, ses notes baissent : fais tourner ton deck ou répare avec des RPM. Les cartes plus chères coûtent plus cher à réparer.",
+ "Fresh this battle. Every round it fights wears it.": "Fraîche pour ce combat. Chaque manche disputée l'use.",
+ "Wear follows the rounds each card fought (×), and climbs faster past ten. Rest them for a battle, or repair them from your deck.": "L'usure suit les manches disputées par chaque carte (×), et grimpe plus vite après dix. Laisse-les reposer un combat, ou répare-les depuis ton deck.",
+ "{0} rounds fought": "{0} manches disputées",
+ "{0} rounds fought, {1}% wear so far.": "{0} manches disputées, {1} % d'usure pour l'instant.",
+ "{0} rounds fought, {1}% wear so far. Past ten it wears faster: give it a rest.": "{0} manches disputées, {1} % d'usure pour l'instant. Après dix, elle s'use plus vite : laisse-la souffler."
 }

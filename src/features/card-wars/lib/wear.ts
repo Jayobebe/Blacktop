@@ -1,10 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { isDemoModeActive } from '@/lib/demoMode';
-import { RULES } from './rules';
+import { RULES, WEAR_BY_ROUND, wearLoss } from './rules';
 import { getVault, updateVault, wearReportOf } from './store';
 import type { BattleCard, BattleState, WearReport } from '../types';
 
-/** Condition lost per battle a card fights in: race builds wear out faster than road cards. */
+/** The flat rule (before wear by round): condition lost per battle a card fights in. Race builds wear out faster than road cards. */
 export const WEAR_PER_BATTLE = { factory: RULES.wear.road, race: RULES.wear.race } as const;
 /** Condition regained per battle a card sits out (resting in the garage). */
 export const REST_RECOVERY = RULES.wear.rest;
@@ -31,9 +31,16 @@ export function withWear(card: BattleCard, condition: number): BattleCard {
   };
 }
 
-/** Condition after a battle against the computer: cards that fought wear, the rest recover. */
+/** Rounds each of the player's cards fought in a battle, by card id. */
+export function roundsFought(run: BattleState): Record<string, number> {
+  const rounds: Record<string, number> = {};
+  for (const l of run.log) rounds[l.player] = (rounds[l.player] ?? 0) + 1;
+  return rounds;
+}
+
+/** Condition after a battle against the computer: cards that fought wear (by the rounds they fought), the rest recover. */
 export function wearAfterRun(wear: Record<string, number> | undefined, run: BattleState, owned: BattleCard[]): Record<string, number> {
-  const fought = new Set(run.log.map((l) => l.player));
+  const rounds = roundsFought(run);
   const raptured = run.log.find((l) => l.raptured?.[0])?.raptured?.[0];
   const next: Record<string, number> = { ...(wear || {}) };
   for (const card of owned) {
@@ -43,7 +50,7 @@ export function wearAfterRun(wear: Record<string, number> | undefined, run: Batt
       next[card.id] = 100;
       continue;
     }
-    next[card.id] = fought.has(card.id) ? Math.max(0, c - WEAR_PER_BATTLE[card.spec]) : Math.min(100, c + REST_RECOVERY);
+    next[card.id] = rounds[card.id] ? Math.max(0, c - wearLoss(card.spec === 'race', rounds[card.id])) : Math.min(100, c + REST_RECOVERY);
   }
   return next;
 }
@@ -75,7 +82,11 @@ export function queueWear(run: BattleState) {
 type Sent = { wear: Record<string, number> } | 'retry' | 'rejected';
 
 async function send(report: WearReport): Promise<Sent> {
-  const { data, error } = await supabase.rpc('cw_save_wear' as never, { _run: report.id, _deck: report.deck, _fought: report.fought, _raptured: report.raptured ?? null } as never);
+  // By round where the server counts them; a report saved by an older app only knows which cards fought.
+  const byRound = WEAR_BY_ROUND && report.rounds?.length === report.deck.length;
+  const { data, error } = byRound
+    ? await supabase.rpc('cw_report_wear' as never, { _run: report.id, _deck: report.deck, _rounds: report.rounds, _raptured: report.raptured ?? null } as never)
+    : await supabase.rpc('cw_save_wear' as never, { _run: report.id, _deck: report.deck, _fought: report.fought, _raptured: report.raptured ?? null } as never);
   if (!error) return { wear: toMap(data as never) };
   // No code: the request never reached the database (offline). "Too many
   // battles" is the server's rate limit. Both are worth another go. Anything
