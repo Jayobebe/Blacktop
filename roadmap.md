@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Enlarge and center Card Wars cutouts within their garage boxes; fix failed wear saves and retain pending wear across reopening without resetting condition.
+
 - [x] Add the second ten supplied vehicle cutouts to the remaining car-brand cards; twenty links and matching transparent canvas sizes verified without a build or preview. The supplied 720S artwork fills the existing 750S catalog slot; ratings unchanged.
 
 - [x] Add the first ten supplied Card Wars vehicle cutouts with consistent proportional sizing; ten asset links and matching visible widths verified without running a build or preview.
