@@ -37,6 +37,7 @@ export function wearAfterRun(wear: Record<string, number> | undefined, run: Batt
 
 import { supabase } from '@/integrations/supabase/client';
 import { isDemoModeActive } from '@/lib/demoMode';
+import { getVault, updateVault } from './store';
 
 const toMap = (rows: { card_id: string; condition: number }[] | null) => Object.fromEntries((rows || []).map(r => [r.card_id, r.condition]));
 
@@ -51,6 +52,31 @@ export async function reportOfflineWear(run: BattleState): Promise<Record<string
   if (isDemoModeActive()) return null;
   const fought = Array.from(new Set(run.log.map(l => l.player)));
   if (!fought.length) return null;
-  const { data, error } = await supabase.rpc('cw_wear_offline' as never, { _deck: run.player.map(c => c.id), _fought: fought } as never);
+  const { data, error } = await supabase.rpc('cw_save_wear' as never, { _run: run.id, _deck: run.player.map(c => c.id), _fought: fought } as never);
   return error ? null : toMap(data as never);
+}
+
+let saving: Promise<boolean> | null = null;
+/** Persist retries across screen changes; never replace pending condition with a stale read. */
+export function flushPendingWear(): Promise<boolean> {
+ if (saving) return saving;
+ const pending=getVault().pendingWear;
+ if (!pending || isDemoModeActive()) return Promise.resolve(true);
+ saving=reportOfflineWear(pending).then(w=>{
+  if (!w) return false;
+  if(getVault().pendingWear?.id===pending.id) updateVault({wear:w,pendingWear:undefined});
+  return true;
+ }).catch(()=>false).finally(()=>{saving=null;});
+ return saving;
+}
+let syncing: Promise<void> | null=null;
+export function syncWear(): Promise<void> {
+ if(syncing)return syncing;
+ syncing=(async()=>{
+  if(!await flushPendingWear())return;
+  const before=getVault().wear;
+  const w=await fetchServerWear();
+  if(w&&!getVault().pendingWear&&getVault().wear===before)updateVault({wear:w});
+ })().finally(()=>{syncing=null;});
+ return syncing;
 }
