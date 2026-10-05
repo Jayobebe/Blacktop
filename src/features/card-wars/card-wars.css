@@ -80,6 +80,7 @@ html.thermal .cw-reward-position,html.thermal .cw-reward-flipper { transition:no
 .cw-scaled-face { position:relative; width:100%; aspect-ratio:5/7; flex-shrink:0; }
 .cw-face-canvas { position:absolute; inset:0 auto auto 0; width:280px; height:392px; transform-origin:top left; pointer-events:none; }
 .cw-face-canvas > div { height:392px; }
+.cw-catalog-art .cw-face-canvas img { left:50%!important; bottom:5%!important; width:92%; height:90%!important; max-width:92%!important; object-fit:contain; }
 .cw-vault-ratings { position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:auto; }
 .cw-vault-stat { background:hsl(var(--background)/.35); border:1px solid hsl(var(--foreground)/.1); border-radius:8px; padding:6px 8px; }
 .cw-vault-stat > span { display:flex; align-items:center; gap:4px; font-size:8px; text-transform:uppercase; color:hsl(var(--foreground)/.6); }

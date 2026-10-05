@@ -4,6 +4,7 @@ import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive } from '@/lib/demoMode';
 import type { ShopCategory } from './catalog';
 import { getVault, updateVault } from './store';
+import { flushPendingWear } from './wear';
 
 /** RPM, owned cards, free starter spins and bonus spins: all held by the server. */
 export interface ShopState { balance: number | null; owned: string[]; freeSpins: number; spins: Partial<Record<ShopCategory, number>> }
@@ -49,6 +50,7 @@ export async function rewardOffline(result: 'win' | 'draw' | 'loss'): Promise<nu
 /** Restore a worn card to 100% condition: 1 RPM per missing %. Server-checked. */
 export async function repairCard(id: string): Promise<string | null> {
  if (demoBlocked()) return 'demo';
+ if (!await flushPendingWear()) return 'Condition save pending';
  const { data, error } = await rpc('cw_repair', { _card: id });
  const markNew = () => updateVault({ wear: { ...(getVault().wear || {}), [id]: 100 } });
  // The server holds no wear for this card: it's already at 100%, so drop the stale local figure.

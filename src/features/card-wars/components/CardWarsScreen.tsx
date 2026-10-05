@@ -24,7 +24,7 @@ import { RewardShuffle } from './RewardShuffle';
 import { BattleArena, type Reveal } from './BattleArena';
 import { CATALOG, STARTERS, STARTER_TAGS, archetypeFor, unlockCard, cardIdentity } from '../lib/catalog';
 import { createRun, playRound } from '../lib/engine';
-import { withWear, conditionOf, wearAfterRun, fetchServerWear, reportOfflineWear } from '../lib/wear';
+import { withWear, conditionOf, wearAfterRun, flushPendingWear, syncWear } from '../lib/wear';
 import { useVault, updateVault, claimReward } from '../lib/store';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { useShop, refreshShop, setRpm, rewardOffline } from '../lib/shop';
@@ -54,11 +54,11 @@ export function CardWarsScreen(){
  const tags:DogTag[]=useMemo(()=>[...STARTER_TAGS,...spectres.map((s,i)=>({id:`spectre:${s.key}`,name:s.setterName,spectre:s,power:STARTER_TAGS[i%3].power,vehicle:archetypeFor(s.card.i).vehicle}))],[spectres]);
  const wornPool=useMemo(()=>pool.map(c=>withWear(c,conditionOf(vault.wear,c.id))),[pool,vault.wear]);
  useEffect(()=>{const r=vault.run;if(!r||!r.result||vault.rpmApplied===r.id||demo)return;updateVault({rpmApplied:r.id});void rewardOffline(r.result).then(n=>{if(n>0)toast.success(tr('+{0} RPM',[n]));});},[vault.run,vault.rpmApplied,demo]);
- useEffect(()=>{const r=vault.run;if(!r||!r.result||vault.wearApplied===r.id||demo)return;updateVault({wear:wearAfterRun(vault.wear,r,pool),wearApplied:r.id});void reportOfflineWear(r).then(w=>{if(w)updateVault({wear:{...w}});});},[vault.run,vault.wear,vault.wearApplied,pool,demo]);
- useEffect(()=>{const sync=()=>{void fetchServerWear().then(w=>{if(w)updateVault({wear:w});});};sync();window.addEventListener('focus',sync);window.addEventListener('blacktop:refresh',sync);return()=>{window.removeEventListener('focus',sync);window.removeEventListener('blacktop:refresh',sync);};},[demo,online?.status]);
+ useEffect(()=>{const r=vault.run;if(!r||!r.result||vault.wearApplied===r.id||demo)return;const fought=r.log.length>0;updateVault({wear:fought?wearAfterRun(vault.wear,r,pool):vault.wear,wearApplied:r.id,...(fought?{pendingWear:r}:{})});void flushPendingWear();},[vault.run,vault.wear,vault.wearApplied,pool,demo]);
+ useEffect(()=>{const sync=()=>{void syncWear();};sync();const timer=setInterval(sync,15000);window.addEventListener('focus',sync);window.addEventListener('online',sync);window.addEventListener('blacktop:refresh',sync);return()=>{clearInterval(timer);window.removeEventListener('focus',sync);window.removeEventListener('online',sync);window.removeEventListener('blacktop:refresh',sync);};},[demo,online?.status]);
  const deck=vault.deck.map(id=>wornPool.find(c=>c.id===id)).filter((c):c is Card=>!!c);const deckTags=vault.tags.map(id=>tags.find(t=>t.id===id)).filter((t):t is DogTag=>!!t);
  const run=vault.run;const selectedTag=deckTags.find(t=>t.id===tag);
- async function action(a:'status'|'create'|'join'|'play'|'leave',card?:number){if(busy||((a!=='status')&&(riding||demoBlocked())))return;setBusy(true);try{const result=await battleAction(a,a==='join'?code.trim():online?.code,a==='create'||a==='join'?deck.map(c=>c.archetype):undefined,card,selectedTag?STARTER_TAGS.findIndex(t=>t.power===selectedTag.power):undefined,online?.round);setOnline(result);setTag(null);}catch(e){toast.error(e instanceof Error?e.message:tr('Battle unavailable'));}finally{setBusy(false);}}
+ async function action(a:'status'|'create'|'join'|'play'|'leave',card?:number){if(busy||((a!=='status')&&(riding||demoBlocked())))return;if((a==='create'||a==='join')&&vault.pendingWear){void flushPendingWear();toast(tr('Saving card condition. Try again shortly.'));return;}setBusy(true);try{const result=await battleAction(a,a==='join'?code.trim():online?.code,a==='create'||a==='join'?deck.map(c=>c.archetype):undefined,card,selectedTag?STARTER_TAGS.findIndex(t=>t.power===selectedTag.power):undefined,online?.round);setOnline(result);setTag(null);}catch(e){toast.error(e instanceof Error?e.message:tr('Battle unavailable'));}finally{setBusy(false);}}
  useEffect(()=>{if(view!=='players'||!cap||demo)return;let stopped=false;let fetching=false;const poll=async()=>{if(fetching||document.hidden)return;fetching=true;try{const next=await battleAction('status',online?.code);if(!stopped)setOnline(next);}catch{}finally{fetching=false;}};void poll();const timer=setInterval(()=>void poll(),4000);return()=>{stopped=true;clearInterval(timer);};},[view,cap,demo,online?.code]);
  useEffect(()=>{if(!online?.deadline)return;const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer);},[online?.deadline]);
  useEffect(()=>{if(!scan)return;let cancelled=false;let scanner:InstanceType<Awaited<ReturnType<typeof loadQrScanner>>>|null=null;void(async()=>{try{const Qr=await loadQrScanner();if(cancelled)return;scanner=new Qr('cw-scanner');await scanner.start({facingMode:'environment'},{fps:8,qrbox:220},text=>{try{const url=new URL(text);const value=url.searchParams.get('battle');if(value&&/^[a-f0-9-]{36}$/i.test(value)){setCode(value);setScan(false);}}catch{}},()=>{});}catch{setScan(false);toast.error(tr('Could not access camera'));}})();return()=>{cancelled=true;const s=scanner;if(s)void(async()=>{if(s.isScanning)await s.stop();s.clear();})().catch(()=>{});};},[scan]);
@@ -80,7 +80,7 @@ export function CardWarsScreen(){
   if(type==='tags'&&values.some((x,i)=>i!==index&&tags.find(t=>t.id===x)?.power===tags.find(t=>t.id===id)?.power))return;
   values[index]=id;updateVault({[type]:values});
  }
- function startComputer(){if(riding||locked||deck.length!==5||deckTags.length!==3)return;updateVault({run:createRun(deck)});setTag(null);setBattleMenu(false);setView('computer');}
+ function startComputer(){if(riding||locked||deck.length!==5||deckTags.length!==3)return;if(vault.pendingWear){void flushPendingWear();toast(tr('Saving card condition. Try again shortly.'));return;}updateVault({run:createRun(deck)});setTag(null);setBattleMenu(false);setView('computer');}
  if(!settings.blacktopWorldEnabled||!settings.collectiblesEnabled)return <Navigate to="/arcade" replace/>;
  const locked=!!run&&!run.result || online?.status==='playing'||online?.status==='waiting';
  const shownOnline=displayOnline??online;const liveDeck=shownOnline?.deck?.flatMap(id=>{const c=CATALOG.find(x=>x.id===id);return c?[c]:[];})||[];
