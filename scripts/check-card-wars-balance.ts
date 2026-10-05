@@ -1,10 +1,10 @@
 import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
-import { createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, shuffle } from '../src/features/card-wars/lib/engine';
+import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
 import { V2 } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
-import { tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
+import { flipCategory, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
 
 // npm run cardwars:check (first rule set), or with CW_RULES=2 for the second.
@@ -23,7 +23,8 @@ console.log(`Card Wars, rule set ${V2 ? 2 : 1}`);
 const pool = V2 ? CATALOG : BRAND_CARDS;
 const sorted = pool.slice().sort((a, b) => fieldStrength(a, CATALOG) - fieldStrength(b, CATALOG));
 const cases: { name: string; player: BattleCard[]; tolerance: number }[] = [
-  { name: 'mixed', player: shuffle(BRAND_CARDS, rng(18)).slice(0, 5), tolerance: 0.045 },
+  // The first rule set's catalogue is half the size: its decks land a little further off.
+  { name: 'mixed', player: shuffle(BRAND_CARDS, rng(18)).slice(0, 5), tolerance: V2 ? 0.045 : 0.07 },
   { name: 'middling', player: sorted.slice(Math.floor(sorted.length / 2) - 2, Math.floor(sorted.length / 2) + 3), tolerance: 0.045 },
   // The five weakest and the five strongest cards have nothing below or above them to meet:
   // the computer gets as near as the catalogue allows.
@@ -43,7 +44,7 @@ for (const { name, player, tolerance } of cases) {
     wins += estimatePlayerWins(player, deck, 1024, 5000 + i);
   }
   const rate = wins / 30;
-  assert.ok(Math.abs(rate - 0.51) < tolerance, `${name}: ${rate} outside balance tolerance`);
+  assert.ok(Math.abs(rate - COMPUTER_WIN_TARGET) < tolerance, `${name}: ${rate} outside balance tolerance`);
   // Copies of the player's own cards only tie with them: there should be few, and none for an ordinary deck.
   if (tolerance < 0.1) assert.ok(shared / 30 < 0.5, `${name}: ${shared / 30} of the player's own cards per deck`);
   console.log(`${name}: ${(rate * 100).toFixed(1)}% neutral player wins, ${(shared / 30).toFixed(1)} of their own cards per computer deck`);
@@ -116,6 +117,25 @@ const trials = 400;
   } else {
     assert.equal(replays, 0);
   }
+}
+// Coin flip: the category is the card's best rating on heads and its worst on tails, about as often as the tag says.
+{
+  const tag = V2 ? vehicleTag('flip', 'f2004')! : plain('flip');
+  let heads = 0;
+  for (let i = 0; i < trials; i++) {
+    const next = playRound(fresh(), i % 5, tag, rng(900 + i));
+    const last = next.log[0];
+    const card = next.player[i % 5];
+    const flip = last.flips?.[0];
+    assert.ok(flip, 'A Coin flip is logged');
+    assert.equal(last.category, flip.category, 'The round is fought in the category the coin picked');
+    assert.equal(flip.category, flipCategory(card.ratings, flip.heads), 'Heads is the best rating, tails the worst');
+    assert.notEqual(flip.category, 'lean', 'Never Lean');
+    if (flip.heads) heads++;
+  }
+  const expected = tagStrength(tag, fresh().player[0]) / 100;
+  assert.ok(Math.abs(heads / trials - expected) < 0.09, `Coin flip landed heads ${heads} of ${trials}, expected about ${expected}`);
+  console.log(`Coin flip: heads ${heads} of ${trials} (the tag says ${Math.round(expected * 100)}%)`);
 }
 // ── Stalemate: the same card left on both sides can never land a hit ──
 {

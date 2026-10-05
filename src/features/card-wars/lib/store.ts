@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
 import { STARTERS, STARTER_TAGS } from './catalog';
-import type { BattleState, VaultState, WearReport } from '../types';
+import { TAG_SLOTS, type BattleState, type VaultState, type WearReport } from '../types';
 
 /**
  * What Card Wars keeps on the phone: the deck, the battle against the computer
@@ -11,7 +11,7 @@ import type { BattleState, VaultState, WearReport } from '../types';
  */
 const KEY = 'bt.card_wars.v1';
 
-const initial = (): VaultState => ({ deck: [], tags: STARTER_TAGS.map((t) => t.id), rewards: [], unlocks: [], run: null });
+const initial = (): VaultState => ({ deck: [], tags: STARTER_TAGS.slice(0, TAG_SLOTS).map((t) => t.id), rewards: [], unlocks: [], run: null });
 const demo = (): VaultState => ({ ...initial(), deck: [...STARTERS] });
 
 /** What the server needs to know about a finished battle: the deck, and which of it fought. */

@@ -4,6 +4,7 @@ import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { HeaderButton, PageHeader } from '@/components/PageHeader';
 import { useCollectedCards, useSpectreCards, useVehicleCards } from '@/features/cards';
+import { useExperience } from '@/features/experience';
 import { usePeaksHidden, useRideHistory, useRideSpeed } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { eventSound } from '@/lib/appSound';
@@ -11,20 +12,21 @@ import { demoBlocked } from '@/lib/demoGuard';
 import { useDemoMode } from '@/lib/demoMode';
 import { tr } from '@/lib/i18n';
 import { useServerCap } from '@/lib/serverCaps';
-import { STARTER_TAGS, archetypeFor, cardById, cardIdentity, unlockCard } from '../lib/catalog';
+import { STARTER_TAGS, cardById, cardIdentity, unlockCard } from '../lib/catalog';
 import { createRun, deadlocked, playRound } from '../lib/engine';
 import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { overall } from '../lib/ratings';
+import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
-import { RULES, V2 } from '../lib/rules';
+import { FLIP, RULES, V2 } from '../lib/rules';
 import { claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, updateVault, useVault } from '../lib/store';
 import { powerIndex, tagRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
 import { conditionOf, flushPendingWear, queueWear, syncWear, wearAfterRun, withWear } from '../lib/wear';
-import { CATEGORIES, POWERS, type BattleCard as Card, type DogTag, type TagPower } from '../types';
+import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type CoinFlip, type DogTag, type TagPower } from '../types';
 import { BattleArena, type Reveal } from './BattleArena';
 import { BattleResult } from './BattleResult';
 import { Garage } from './Garage';
@@ -39,6 +41,9 @@ type View = 'home' | 'shop' | 'computer' | 'players';
 
 const standing = (hp: number[] | undefined) => (hp ?? []).filter((v) => v > 0).length;
 const powerAt = (index: number | null | undefined): TagPower | null => (typeof index === 'number' ? POWERS[index] ?? null : null);
+const flipOf = (f: { h: boolean; c: number } | null | undefined): CoinFlip | null => (f && CATEGORIES[f.c - 1] ? { heads: !!f.h, category: CATEGORIES[f.c - 1] } : null);
+/** The powers a player battle can carry: the Coin flip only where the server knows it. */
+const ONLINE_POWERS = FLIP ? POWERS : POWERS.filter((p) => p !== 'flip');
 
 /**
  * Card Wars: the deck and everything round it (home), the shop, a battle
@@ -58,6 +63,7 @@ export function CardWarsScreen() {
   const { spectres } = useSpectreCards();
   const { rides, burnedTotals } = useRideHistory();
   const riding = useRideSpeed().isActive;
+  const drives = useExperience().terms.car;
   const [params] = useSearchParams();
   const invited = params.get('battle') || '';
 
@@ -101,29 +107,37 @@ export function CardWarsScreen() {
       return c ? [{ ...c, source: shop.owned.includes(id) ? ('purchased' as const) : ('reward' as const) }] : [];
     });
     for (const id of vault.unlocks) if (id === 'demo' || id === 'dev') cards.push(unlockCard(id));
-    // A rider's own cards start from a catalog card's ratings and are lifted by their riding, scaled by tier
-    // (ownRatings). Cards with hidden peaks can't be picked, as before. They wear like road cards.
+    // A rider's own cards battle as the Road card nearest to the vehicle (ownMatch), lifted a little by their
+    // riding, scaled by tier (ownRatings). Cards with hidden peaks can't be picked, as before. They wear like road cards.
+    const matched: string[] = [];
     if (!peaksHidden) for (const c of own) {
-      const b = archetypeFor(c.bike.id);
+      const b = matchOwn(c.bike.name, c.bike.makeModel, drives ? 'car' : 'bike', matched);
+      matched.push(b.id);
       const figures = { topSpeedMph: c.stats.topSpeedMph, maxGForce: c.stats.maxGForce, maxLean: c.stats.maxLean, totalDistanceMi: c.stats.totalDistanceMi };
       cards.push({ ...b, ...cardIdentity(c.bike.name, c.bike.makeModel), id: `own:${c.bike.id}`, name: c.bike.name || b.name, image: c.bike.photos.hero || undefined, tier: c.tier, spec: 'factory', source: 'collection', ratings: ownRatings(b, figures, c.tier) });
     }
     // Scanned rider cards: what their QR shares, under the same tier rules.
     for (const c of collected) {
       if (c.s?.topSpeedMph == null || c.s?.maxGForce == null) continue;
-      const b = archetypeFor(c.i);
+      const b = matchOwn(c.n, c.m, 'bike', matched);
+      matched.push(b.id);
       const figures = c.s ? { topSpeedMph: c.s.topSpeedMph, maxGForce: c.s.maxGForce, maxLean: c.s.maxLean, totalDistanceMi: c.s.totalDistanceMi } : null;
       cards.push({ ...b, ...cardIdentity(c.n, c.m), id: `collected:${c.key}`, name: c.n, image: c.img, tier: c.t, spec: 'factory', source: 'collection', ratings: ownRatings(b, figures, c.t) });
     }
     return cards;
-  }, [vault.rewards, vault.unlocks, own, collected, peaksHidden, shop.owned]);
+  }, [vault.rewards, vault.unlocks, own, collected, peaksHidden, shop.owned, drives]);
 
   const tags = useMemo(() => allTags(shop.tags, spectres), [shop.tags, spectres]);
   const wornPool = useMemo(() => pool.map((c) => withWear(c, conditionOf(vault.wear, c.id))), [pool, vault.wear]);
   const deck = vault.deck.map((id) => wornPool.find((c) => c.id === id)).filter((c): c is Card => !!c);
-  // One tag per power: the one chosen, or the standard one if that's gone (a tag from another phone, say).
-  const chosenTags = vault.tags.map((id) => tags.find((t) => t.id === id)).filter((t): t is DogTag => !!t);
-  const deckTags = POWERS.flatMap((power) => chosenTags.find((t) => t.power === power) ?? STARTER_TAGS.find((t) => t.power === power) ?? []);
+  // Three dog tags, each a different power, of the four there are. A tag that's gone (won on another phone, say)
+  // gives its slot to a standard one.
+  const deckTags = vault.tags
+    .map((id) => tags.find((t) => t.id === id))
+    .filter((t): t is DogTag => !!t)
+    .filter((t, i, all) => all.findIndex((x) => x.power === t.power) === i)
+    .slice(0, TAG_SLOTS);
+  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => t.power === spare.power)) deckTags.push(spare);
   const run = vault.run;
   const armed = deckTags.find((t) => t.id === tag);
 
@@ -287,6 +301,7 @@ export function CardWarsScreen() {
           values: said ? (first ? [last.s1!, last.s2!] : [last.s2!, last.s1!]) : null,
           tags: 't1' in last ? [powerAt(first ? last.t1 : last.t2), powerAt(first ? last.t2 : last.t1)] : [lastPlay.current.round === last.round ? lastPlay.current.tag : null, null],
           event: eventAt(last.event),
+          flips: last.f1 || last.f2 ? (first ? [flipOf(last.f1), flipOf(last.f2)] : [flipOf(last.f2), flipOf(last.f1)]) : undefined,
           raptured: last.r1 || last.r2 ? (first ? [last.r1 ?? null, last.r2 ?? null] : [last.r2 ?? null, last.r1 ?? null]) : undefined,
         });
         return;
@@ -318,9 +333,10 @@ export function CardWarsScreen() {
                 return fresh && c.source === 'collection' ? { key: c.id, r: ratingsArray(fresh.ratings) } : null;
               }),
               // One per power, in the server's order.
-              tags: POWERS.map((power) => {
+              // One per power, in the server's order; "-" for the power this deck leaves at home.
+              tags: ONLINE_POWERS.map((power) => {
                 const mine = deckTags.find((t) => t.power === power);
-                return mine ? tagRef(mine) : '';
+                return mine ? tagRef(mine) : FLIP ? '-' : '';
               }),
             }
           : {}),
@@ -369,6 +385,7 @@ export function CardWarsScreen() {
       tags: [last.tag ?? null, null],
       event: last.event ?? null,
       raptured: last.raptured,
+      flips: last.flips,
     });
     updateVault({ run: next });
   }
@@ -406,7 +423,7 @@ export function CardWarsScreen() {
   }
 
   function startComputer() {
-    if (riding || locked || deck.length !== 5 || deckTags.length !== 3) return;
+    if (riding || locked || deck.length !== 5 || deckTags.length !== TAG_SLOTS) return;
     setTag(null);
     setReveal(null);
     updateVault({ run: createRun(deck) });
@@ -502,7 +519,7 @@ export function CardWarsScreen() {
           prize={chosen}
           prizeNote={mine?.had ? (mine.rpm > 0 ? tr("You already own this card, so it paid {0} RPM instead.", [mine.rpm]) : tr("You already own this one, so nothing new this time.")) : undefined}
           canLeave={!won || run.rewardClaimed}
-          onAgain={riding || deck.length !== 5 || deckTags.length !== 3 ? undefined : startComputer}
+          onAgain={riding || deck.length !== 5 || deckTags.length !== TAG_SLOTS ? undefined : startComputer}
           onDone={() => {
             updateVault({ run: null });
             setView('home');
@@ -516,7 +533,7 @@ export function CardWarsScreen() {
 
   if (pvpBattle && shownOnline) {
     // The first rule set's server only told a car from a bike: its medic does more for a car, its Overdrive for a bike.
-    const battleTags = V2 ? deckTags : deckTags.map((t) => ({ ...t, vehicle: t.power === 'heal' ? ('car' as const) : t.power === 'boost' ? ('bike' as const) : undefined }));
+    const battleTags = (V2 ? deckTags : deckTags.map((t) => ({ ...t, vehicle: t.power === 'heal' ? ('car' as const) : t.power === 'boost' ? ('bike' as const) : undefined }))).filter((t) => (ONLINE_POWERS as readonly TagPower[]).includes(t.power));
     return (
       <main className="cw-arena-page text-foreground">
         <BattleArena
@@ -593,7 +610,7 @@ export function CardWarsScreen() {
 
   const why = riding
     ? tr("Battles are off while you ride.")
-    : deck.length !== 5 || deckTags.length !== 3
+    : deck.length !== 5 || deckTags.length !== TAG_SLOTS
       ? tr("Build your deck first: five cards and three dog tags.")
       : new Set(deck.map((c) => c.archetype)).size !== 5
         ? tr("Two of your cards battle with the same ratings. Swap one to battle a player.")

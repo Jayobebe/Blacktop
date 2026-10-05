@@ -1,8 +1,8 @@
-import { CATEGORIES, type BattleCard, type BattleState, type Category, type DogTag } from '../types';
+import { CATEGORIES, type BattleCard, type BattleState, type Category, type CoinFlip, type DogTag } from '../types';
 import { BRAND_CARDS, CATALOG } from './catalog';
 import { V2, damageFor } from './rules';
 import { fieldStrength } from './strength';
-import { tagStrength } from './tagRules';
+import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
 
 /**
@@ -26,9 +26,11 @@ const allowedFor = (mine: BattleCard, theirs: BattleCard): Category[] =>
 /**
  * Neutral, category-blind play, used only before a battle to judge how hard a
  * computer deck is for this player. Dog tags and the player's choices are
- * deliberately left out.
+ * deliberately left out. The target leans the player's way: a rider who
+ * plays their cards at random should still win a little more than they lose,
+ * and one who uses their dog tags well, a good deal more.
  */
-export const COMPUTER_WIN_TARGET = 0.51;
+export const COMPUTER_WIN_TARGET = 0.57;
 
 function seededRandom(seed: number): () => number {
   return () => {
@@ -184,6 +186,8 @@ export function deadlocked(state: BattleState): boolean {
  * A dog tag armed for the round is used up whatever happens:
  *   Overdrive multiplies the player's rating;
  *   Pit medic gives the card HP back before the round;
+ *   Coin flip picks the category: the card's best rating on heads, its worst
+ *     on tails (never Lean);
  *   Second chance replays a lost round once in another category, with a
  *     rating bonus on the replay (first rule set: it just drew another
  *     category, which changed nothing the player could see).
@@ -238,6 +242,13 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
   // Fresh tyres: the catalog's ratings, as new.
   const mineRatings = event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
+  // A Coin flip sets the category itself: the card's best rating on heads, its worst on tails.
+  let flip: CoinFlip | null = null;
+  if (live?.power === 'flip') {
+    const heads = random() * 100 < tagStrength(live, card);
+    flip = { heads, category: flipCategory(mineRatings, heads) };
+    category = flip.category;
+  }
   const crowd = (id: string, side: 0 | 1) => (event === 'crowd' && s.log.some((l) => l.winner === side && (side === 0 ? l.player : l.opponent) === id) ? EVENT_NUMBERS.crowd : 1);
   const crowdMine = crowd(card.id, 0);
   const crowdTheirs = crowd(rival.c.id, 1);
@@ -295,6 +306,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     values: [shown(a), shown(b)],
     ...(first ? { first } : {}),
     ...(live ? { tag: live.power } : {}),
+    ...(flip ? { flips: [flip, null] as [CoinFlip, null] } : {}),
     ...(event ? { event } : {}),
   });
   s.round++;

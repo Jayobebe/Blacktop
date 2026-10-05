@@ -1,5 +1,5 @@
 import { forwardRef, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Bike, Car, Check, Flame, Ghost, Wrench } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bike, Car, Check, Flame, Swords, Wrench } from 'lucide-react';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
 import { cn } from '@/lib/utils';
@@ -96,9 +96,12 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   if (faceDown) {
     const back = (
       <div className="cw-card-back">
-        <span>BLACKTOP</span>
-        <Ghost strokeWidth={1.25} />
-        <span>{tr("Card Wars")}</span>
+        <span className="cw-back-frame" aria-hidden />
+        <span className="cw-back-word">BLACKTOP</span>
+        <span className="cw-back-emblem">
+          <Swords strokeWidth={1.5} aria-hidden />
+        </span>
+        <span className="cw-back-word">{tr("Card Wars")}</span>
       </div>
     );
     const cls = cn('cw-card no-frost cw-card-facedown', `cw-card-${size}`, className);

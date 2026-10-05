@@ -25,6 +25,23 @@ function serverRules(): 1 | 2 {
 
 export const V2 = serverRules() === 2;
 
+/**
+ * The server knows the Coin flip dog tag (migration
+ * 20261010000000_card_wars_coin_flip.sql; the `cardWarsFlip` cap). Without it
+ * the tag still works against the computer, as the standard one everyone has:
+ * it just can't be taken into a player battle or won on a spin.
+ */
+function serverFlip(): boolean {
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
+  if (env) return env === '2';
+  try {
+    return !!JSON.parse(localStorage.getItem('bt.server_caps') || '{}').cardWarsFlip;
+  } catch {
+    return false;
+  }
+}
+export const FLIP = V2 && serverFlip();
+
 export interface Rules {
   /** RPM for a finished battle against the computer. */
   reward: { win: number; draw: number; loss: number };
@@ -71,7 +88,7 @@ const RULES_V2: Rules = {
   pot: 36,
   odds: { card: 16, tag: 12, spin: 20, rpm: 52 },
   freeCardSpins: 5,
-  freeTagSpins: 3,
+  freeTagSpins: FLIP ? 4 : 3,
   freeOdds: { road: 55, race: 30, gtlm: 6, tt: 6, f1: 1.5, motogp: 1.5 },
   wear: { road: 8, race: 15, rest: 10 },
 };

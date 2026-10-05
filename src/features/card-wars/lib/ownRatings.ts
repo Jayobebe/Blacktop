@@ -3,11 +3,13 @@ import { CATEGORIES, type BattleCard, type Category } from '../types';
 import { CATALOG, SPECS } from './catalog';
 
 /**
- * A rider's own card in Card Wars. It starts from its catalog match (as it
- * always has), then the rider's riding lifts it: each figure is turned into a
- * rating on the catalogue's scale, and only the gap above the match counts,
- * scaled by the card's tier. Riding never makes a card worse, and nothing goes
- * above the catalogue's best (per category, and overall). Pure maths: the
+ * A rider's own card in Card Wars. It starts from its catalog match (the Road
+ * card nearest to the vehicle, ownMatch.ts), then the rider's riding lifts it:
+ * each figure is turned into a rating on the catalogue's scale, and only the
+ * gap above the match counts, scaled by the card's tier and never more than
+ * MAX_LIFT a category. So riding makes a card the best of its kind, not a
+ * different kind of machine: a well-ridden 600 doesn't pass a superbike.
+ * Riding never makes a card worse. The server holds the same limit. Pure maths: the
  * figures never leave the phone, only the finished ratings do (player battles).
  */
 export const TIER_SHARE: Record<CardTier, number> = {
@@ -22,6 +24,9 @@ export const TIER_SHARE: Record<CardTier, number> = {
   polyatomic: 2,
   orion: 2,
 };
+
+/** The most riding can add to any one rating (`cw_action` refuses more). */
+export const MAX_LIFT = 12;
 
 export interface RideFigures {
   topSpeedMph: number | null;
@@ -68,7 +73,7 @@ export function ownRatings(base: BattleCard, figures: RideFigures | null, tier: 
   for (const c of CATEGORIES) {
     const v = riding[c];
     if (v == null || (c === 'lean' && base.vehicle !== 'bike')) continue;
-    lift[c] = Math.max(0, v - base.ratings[c]) * share;
+    lift[c] = Math.min(MAX_LIFT, Math.max(0, v - base.ratings[c]) * share);
   }
   const apply = (k: number) => {
     const out = { ...base.ratings };

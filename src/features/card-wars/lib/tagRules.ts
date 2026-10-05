@@ -6,17 +6,18 @@ import { V2 } from './rules';
  * What a dog tag does, in numbers (plain maths, no app imports: the engine
  * and the balance scripts read this; `cw_tag_value` on the server is the same
  * sums). Strength is in hundredths for Overdrive (the rating multiplier) and
- * Second chance (the multiplier on the replay), and in HP for Pit medic.
+ * Second chance (the multiplier on the replay), in HP for Pit medic, and the
+ * chance of heads in percent for Coin flip.
  *
  * Under the second rule set a tag won on a spin is tied to a vehicle and takes
  * its strength from it: Overdrive from its G-force, Pit medic from its
- * Distance, Second chance from its Corners. So a tourer makes the best medic
- * and a MotoGP bike the best Overdrive. The three plain tags everyone has are
+ * Distance, Second chance from its Corners, Coin flip from its Speed. So a
+ * tourer makes the best medic and a MotoGP bike the best Overdrive. The plain tags everyone has are
  * always a little weaker than any of those. Every tag with a vehicle does
  * more when it's played with the same kind (car or bike).
  */
-const PLAIN: Record<TagPower, number> = V2 ? { boost: 135, heal: 20, reroll: 100 } : { boost: 150, heal: 30, reroll: 100 };
-const MATCH: Record<TagPower, number> = V2 ? { boost: 10, heal: 6, reroll: 5 } : { boost: 15, heal: 8, reroll: 0 };
+const PLAIN: Record<TagPower, number> = V2 ? { boost: 135, heal: 20, reroll: 100, flip: 50 } : { boost: 150, heal: 30, reroll: 100, flip: 50 };
+const MATCH: Record<TagPower, number> = V2 ? { boost: 10, heal: 6, reroll: 5, flip: 4 } : { boost: 15, heal: 8, reroll: 0, flip: 0 };
 
 export const powerIndex = (power: TagPower): number => POWERS.indexOf(power);
 
@@ -29,6 +30,7 @@ export function tagBase(tag: Pick<DogTag, 'power' | 'card'>): number {
   if (!tied) return PLAIN[tag.power];
   if (tag.power === 'boost') return 125 + Math.floor(tied.ratings.g / 2);
   if (tag.power === 'heal') return 14 + Math.floor((tied.ratings.distance * 32) / 100);
+  if (tag.power === 'flip') return 50 + Math.floor(tied.ratings.speed / 6);
   return 100 + Math.max(0, Math.floor((tied.ratings.corners - 40) / 4));
 }
 
@@ -55,3 +57,13 @@ export function parseOwnedTag(entry: string): DogTag | null {
  * plain one.
  */
 export const tagRef = (tag: DogTag): string => tag.card ?? (tag.vehicle ? `~${tag.vehicle}` : '');
+
+/** The categories a Coin flip can land on: never Lean, so it means the same against a car or a bike. */
+const FLIP_CATEGORIES = ['speed', 'g', 'distance', 'corners'] as const;
+
+/** What a Coin flip would pick for these ratings: the best one on heads, the worst on tails (the first of equals, in the server's order). */
+export function flipCategory(ratings: BattleCard['ratings'], heads: boolean): (typeof FLIP_CATEGORIES)[number] {
+  let pick: (typeof FLIP_CATEGORIES)[number] = FLIP_CATEGORIES[0];
+  for (const c of FLIP_CATEGORIES) if (heads ? ratings[c] > ratings[pick] : ratings[c] < ratings[pick]) pick = c;
+  return pick;
+}

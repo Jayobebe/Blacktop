@@ -3,7 +3,9 @@ export const CATEGORIES = ['speed', 'lean', 'g', 'distance', 'corners'] as const
 export type Category = typeof CATEGORIES[number];
 export type CardBank = 'gtlm' | 'f1' | 'tt' | 'motogp';
 /** The server's order too: a dog tag is played as its power's index. */
-export const POWERS = ['reroll', 'heal', 'boost'] as const;
+export const POWERS = ['reroll', 'heal', 'boost', 'flip'] as const;
+/** A deck carries three dog tags, each a different power: one of the four stays at home. */
+export const TAG_SLOTS = 3;
 export type TagPower = typeof POWERS[number];
 
 export interface BattleCard {
@@ -39,6 +41,12 @@ export interface DogTag {
   spectre?: import('@/features/cards').SpectreCard;
 }
 
+/** A Coin flip dog tag: heads is the card's best rating, tails its worst. */
+export interface CoinFlip {
+  heads: boolean;
+  category: Category;
+}
+
 export interface RoundLog {
   round: number;
   category: Category;
@@ -52,6 +60,8 @@ export interface RoundLog {
   values?: [number, number];
   /** The dog tag the player armed. */
   tag?: TagPower;
+  /** Coin flips that set the category: the player's, then the rival's. */
+  flips?: [CoinFlip | null, CoinFlip | null];
   /** Something that happened before the category was drawn. */
   event?: import('./lib/events').RoundEvent;
   /** A rapture: the card each side lost to the beam (player, rival). */

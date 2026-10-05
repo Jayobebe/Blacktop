@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { CloudRain, Flag, Loader2, Swords, Undo2, X } from 'lucide-react';
+import { CloudRain, Flag, Loader2, Swords, TrendingDown, TrendingUp, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { eventSound } from '@/lib/appSound';
 import { haptics } from '@/lib/haptics';
@@ -7,8 +7,9 @@ import { tr } from '@/lib/i18n';
 import { isThermal } from '@/lib/thermal';
 import { cn } from '@/lib/utils';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
+import { flipCategory } from '../lib/tagRules';
 import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
-import type { BattleCard as Card, Category, DogTag, TagPower } from '../types';
+import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower } from '../types';
 import { CardBurn } from './CardBurn';
 import type { RoundEvent } from '../lib/events';
 import { EVENT_ICON, eventEffect, eventName } from '../lib/eventText';
@@ -36,9 +37,11 @@ export interface Reveal {
   event?: RoundEvent | null;
   /** A rapture: the card each side lost to the beam. */
   raptured?: [string | null, string | null];
+  /** Coin flips that set the category: the player's, then the rival's. */
+  flips?: [CoinFlip | null, CoinFlip | null];
 }
 
-type Phase = 'idle' | 'event' | 'beam' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
+type Phase = 'idle' | 'event' | 'beam' | 'coin' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
 
 const REEL_ROW = 34;
 const quick = () => isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -76,6 +79,22 @@ function flyOut(el: HTMLElement | null, to: HTMLElement | null | undefined, burn
       fill: 'forwards',
     })
     .finished.catch(() => undefined);
+}
+
+/** A Coin flip dog tag in the air: it lands best side up (heads) or worst (tails). */
+function Coin({ flip, side }: { flip: CoinFlip; side: 'mine' | 'theirs' }) {
+  return (
+    <span className={cn('cw-coin', flip.heads ? 'cw-coin-heads' : 'cw-coin-tails', `cw-coin-${side}`)} role="img" aria-label={flip.heads ? tr("Heads") : tr("Tails")}>
+      <span className="cw-coin-in">
+        <i className="cw-coin-face cw-coin-h">
+          <TrendingUp aria-hidden />
+        </i>
+        <i className="cw-coin-face cw-coin-t">
+          <TrendingDown aria-hidden />
+        </i>
+      </span>
+    </span>
+  );
 }
 
 /**
@@ -140,6 +159,7 @@ export function BattleArena({
   const [peek, setPeek] = useState<number | null>(null);
   const [sure, setSure] = useState(false);
   const [reelAt, setReelAt] = useState(0);
+  const [landed, setLanded] = useState(false);
 
   const handRefs = useRef<(HTMLElement | null)[]>([]);
   const rivalRefs = useRef<(HTMLElement | null)[]>([]);
@@ -218,8 +238,28 @@ export function BattleArena({
         timers.forEach(clearTimeout);
       };
     }
-    if (!ev) setPhase('spin');
-    else at(lead, () => setPhase('spin'));
+    // A Coin flip: the coin is tossed (after any event) and what it lands on is the category.
+    const flipped = !!reveal.flips?.some(Boolean);
+    const toss = () => {
+      setLanded(false);
+      setPhase('coin');
+      eventSound('whoosh');
+      haptics.medium();
+    };
+    // The coin comes down: now it can be read.
+    const land = () => {
+      setLanded(true);
+      eventSound('coin');
+      haptics.heavy();
+    };
+    if (flipped) {
+      if (ev) at(lead, toss);
+      else toss();
+      at(lead + (fast ? 150 : 1350), land);
+    }
+    const go = lead + (flipped ? (fast ? 800 : 2300) : 0);
+    if (go === 0) setPhase('spin');
+    else at(go, () => setPhase('spin'));
     const hit = () => {
       setPhase('clash');
       if (reveal.damage > 0) {
@@ -234,26 +274,28 @@ export function BattleArena({
     if (fast) {
       // No reel, no flights: the result, long enough to read.
       setReelAt(turns(4, reveal.category));
-      at(lead + 80, hit);
-      at(lead + 220, verdict);
-      at(lead + 1500, home);
+      at(go + 80, hit);
+      at(go + 220, verdict);
+      at(go + 1500, home);
     } else {
-      setReelAt(0);
       const first = reveal.first;
-      at(lead + 30, () => setReelAt(turns(2, first ?? reveal.category)));
+      // The coin has already named the category: the reel just shows it.
+      const named = flipped && !first;
+      setReelAt(named ? turns(2, reveal.category) : 0);
+      if (!named) at(go + 30, () => setReelAt(turns(2, first ?? reveal.category)));
       // A Second chance: the reel stops on the category that was lost, then goes round again.
-      const base = lead + (first ? 1750 : 0);
+      const base = go + (first ? 1750 : 0);
       if (first) {
-        at(lead + 1150, () => {
+        at(go + 1150, () => {
           setPhase('replay');
           eventSound('radioIn');
           haptics.medium();
         });
-        at(lead + 1700, () => setReelAt(turns(4, reveal.category)));
+        at(go + 1700, () => setReelAt(turns(4, reveal.category)));
       }
-      at(base + 1200, hit);
-      at(base + 1950, verdict);
-      at(base + (burnt[0] || burnt[1] ? 3350 : 2950), home);
+      at(base + (named ? 550 : 1200), hit);
+      at(base + (named ? 1300 : 1950), verdict);
+      at(base + (burnt[0] || burnt[1] ? 3350 : 2950) - (named ? 650 : 0), home);
     }
     return () => {
       cancelled = true;
@@ -289,6 +331,9 @@ export function BattleArena({
   const rapture = reveal?.event === 'rapture';
   const burning = phase === 'done' && !quick() && !rapture;
   const EventIcon = reveal?.event ? EVENT_ICON[reveal.event] : null;
+  const myFlip = reveal?.flips?.[0] ?? null;
+  const theirFlip = reveal?.flips?.[1] ?? null;
+  const armedFlip = armed?.power === 'flip' && focusCard ? focusCard : null;
   /** A card the beam has taken (or is taking right now). */
   const beamClass = (side: 0 | 1, id: string) => {
     const now = rapture && reveal?.raptured?.[side] === id;
@@ -300,10 +345,11 @@ export function BattleArena({
 
   const tagChip = (power: TagPower, side: 'mine' | 'theirs') => {
     const Icon = TAG_ICON[power];
+    const flip = power === 'flip' ? (side === 'mine' ? myFlip : theirFlip) : null;
     return (
       <span className={cn('cw-armed', `cw-armed-${side}`)}>
         <Icon aria-hidden />
-        {tagName(power)}
+        {flip && phase !== 'event' && phase !== 'coin' ? (flip.heads ? tr("Heads") : tr("Tails")) : tagName(power)}
       </span>
     );
   };
@@ -406,6 +452,11 @@ export function BattleArena({
                 <small>{eventEffect(reveal.event)}</small>
               </div>
             </div>
+          ) : reveal && phase === 'coin' && (myFlip || theirFlip) ? (
+            <div className="cw-mid cw-mid-coin">
+              {theirFlip && <Coin flip={theirFlip} side="theirs" />}
+              {myFlip && <Coin flip={myFlip} side="mine" />}
+            </div>
           ) : reveal && DrawnIcon ? (
             <div className="cw-mid">
               {reveal.event && EventIcon && (
@@ -463,6 +514,18 @@ export function BattleArena({
           {!reveal && (focusCard || (theirsCard && !submitted)) ? (
             <div className={cn('cw-info', theirsCard && 'cw-info-left')}>
               <StatBars card={(focusCard ?? theirsCard)!} />
+              {armedFlip && (
+                <p className="cw-info-flip">
+                  <span>
+                    <TrendingUp aria-hidden />
+                    {tr("Heads: {0}", [categoryLabel(flipCategory(armedFlip.ratings, true))])} <b className="font-mono">{armedFlip.ratings[flipCategory(armedFlip.ratings, true)]}</b>
+                  </span>
+                  <span>
+                    <TrendingDown aria-hidden />
+                    {tr("Tails: {0}", [categoryLabel(flipCategory(armedFlip.ratings, false))])} <b className="font-mono">{armedFlip.ratings[flipCategory(armedFlip.ratings, false)]}</b>
+                  </span>
+                </p>
+              )}
               {theirsCard && <p className="cw-info-note">{tr("{0}'s card", [rivalName])}</p>}
             </div>
           ) : null}
@@ -503,6 +566,18 @@ export function BattleArena({
                   ? tr("Tractor beam! The best cards are being taken…")
                   : rapture
                     ? tr("Raptured! Your card beams back home at full condition.")
+                    : phase === 'coin'
+                      ? !landed
+                        ? tr("The coin is in the air…")
+                        : myFlip && theirFlip
+                        ? tr("Two coins, two categories: the round takes one of them")
+                        : myFlip
+                          ? myFlip.heads
+                            ? tr("Heads! Your best rating: {0}", [categoryLabel(myFlip.category)])
+                            : tr("Tails. Your worst rating: {0}", [categoryLabel(myFlip.category)])
+                          : theirFlip?.heads
+                            ? tr("Your rival flips heads: their best rating, {0}", [categoryLabel(theirFlip.category)])
+                            : tr("Your rival flips tails: their worst rating, {0}", [categoryLabel(theirFlip?.category ?? reveal.category)])
                     : phase === 'replay'
                 ? tr("Lost on {0}. Drawing again…", [categoryLabel(reveal.first ?? reveal.category)])
                 : phase !== 'done' && phase !== 'return'

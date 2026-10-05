@@ -212,7 +212,7 @@ export function cardIdentity(name: string, makeModel?: string): Pick<BattleCard,
 /** The deck demo mode plays with. */
 export const STARTERS = ['mx5','gti','mt07','sv650','ninja'];
 /**
- * The three dog tags everyone has, one per power. Under the first rule set each
+ * The four dog tags everyone has, one per power. Under the first rule set each
  * is stronger with one kind of vehicle; under the second they're the plain
  * ones, and the tags worth having are won on spins (lib/tagRules.ts).
  */
@@ -221,12 +221,12 @@ export const STARTER_TAGS: DogTag[] = V2
   {id:'tag-reroll',name:'Second chance',power:'reroll'},
   {id:'tag-heal',name:'Pit medic',power:'heal'},
   {id:'tag-boost',name:'Overdrive',power:'boost'},
+  {id:'tag-flip',name:'Coin flip',power:'flip'},
  ]
  : [
   {id:'tag-reroll',name:'Second chance',power:'reroll',vehicle:'bike'},
   {id:'tag-heal',name:'Pit medic',power:'heal',vehicle:'car'},
   {id:'tag-boost',name:'Overdrive',power:'boost',vehicle:'bike'},
+  {id:'tag-flip',name:'Coin flip',power:'flip'},
  ];
-/** Rider cards borrow a brand card's ratings (never an RPM bank card). */
-export function archetypeFor(identity: string): BattleCard { let h=0; for(const c of identity) h=(h*31+c.charCodeAt(0))>>>0; return BRAND_CARDS[h%BRAND_CARDS.length]; }
 export function unlockCard(id: 'demo'|'dev'): BattleCard { const base=CATALOG.find(c=>c.id===(id==='demo'?'mx5':'mt07'))!; return {...base,id,manufacturer:'Blacktop',name:id==='demo'?'Demo':'Dev',source:'unlock'}; }

@@ -136,9 +136,27 @@ button.cw-card:disabled { cursor: default; }
 .cw-meter-text { display: inline-flex; align-items: center; gap: 0.2em; font-size: var(--small); line-height: 1; font-weight: 700; white-space: nowrap; }
 .cw-meter-text svg { width: 1em; height: 1em; }
 
-.cw-card-facedown { aspect-ratio: 10 / 13; background: repeating-linear-gradient(135deg, hsl(240 5% 13%) 0 8px, hsl(240 5% 10%) 8px 16px); border-color: hsl(var(--accent) / 0.55); }
-.cw-card-back { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 10% 6%; font-size: max(7px, 8cqw); font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: hsl(var(--accent)); text-align: center; }
-.cw-card-back svg { width: 42%; height: auto; color: hsl(var(--foreground) / 0.85); }
+/* The back: carbon weave, a pinstripe frame and the crossed-swords emblem lit in the accent. */
+.cw-card-facedown {
+  aspect-ratio: 10 / 13;
+  border-color: hsl(var(--accent) / 0.7);
+  background:
+    radial-gradient(60% 45% at 50% 50%, hsl(var(--accent) / 0.28), transparent 70%),
+    repeating-linear-gradient(45deg, hsl(0 0% 100% / 0.045) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, hsl(0 0% 100% / 0.045) 0 2px, transparent 2px 6px),
+    linear-gradient(160deg, hsl(240 6% 16%), hsl(240 8% 6%));
+  box-shadow: 0 6px 16px hsl(0 0% 0% / 0.5), inset 0 0 0 1px hsl(0 0% 100% / 0.06);
+}
+.cw-card-back { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 12% 6%; color: hsl(var(--accent)); text-align: center; }
+.cw-back-frame { position: absolute; inset: 5%; border-radius: max(5px, 6cqw); border: 1px solid hsl(var(--accent) / 0.55); box-shadow: inset 0 0 0 2px hsl(240 8% 6%), inset 0 0 0 3px hsl(var(--accent) / 0.22); }
+.cw-back-frame::before, .cw-back-frame::after { content: ''; position: absolute; left: 50%; width: 5cqw; height: 5cqw; min-width: 4px; min-height: 4px; margin-left: -2.5cqw; rotate: 45deg; background: hsl(var(--accent)); }
+.cw-back-frame::before { top: -3cqw; }
+.cw-back-frame::after { bottom: -3cqw; }
+.cw-back-word { position: relative; font-size: max(6px, 7.4cqw); font-weight: 900; letter-spacing: 0.22em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 0 8px hsl(var(--accent) / 0.6); }
+.cw-back-emblem { position: relative; display: grid; place-items: center; width: 46%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, hsl(240 8% 8%) 55%, hsl(var(--accent) / 0.25)); border: 1.5px solid hsl(var(--accent)); box-shadow: 0 0 0 3px hsl(240 8% 6%), 0 0 0 4px hsl(var(--accent) / 0.4), 0 0 18px hsl(var(--accent) / 0.55); }
+.cw-back-emblem svg { width: 56%; height: 56%; color: hsl(var(--foreground)); }
+/* Light sweeps across a card that can be picked. */
+.cw-card-facedown::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(115deg, transparent 38%, hsl(0 0% 100% / 0.22) 50%, transparent 62%); background-size: 280% 100%; background-position: 140% 0; }
 
 /* ── Battle ────────────────────────────────────────────────────────────── */
 .cw-arena-page {
@@ -259,6 +277,23 @@ button.cw-card:disabled { cursor: default; }
 .cw-struck { animation: cw-shake 0.5s 0.2s ease-in-out; }
 /* The hit lights the table. */
 .cw-phase-clash::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(50% 40% at 50% 45%, hsl(0 0% 100% / 0.5), transparent 70%); animation: cw-flash 0.5s 0.22s ease-out both; }
+/* Coin flip: a steel coin tossed over the table, best side or worst side up. */
+.cw-mid-coin { gap: 10px; }
+.cw-coin { --turns: 5; display: block; width: clamp(44px, 16cqw, 64px); aspect-ratio: 1; perspective: 400px; animation: cw-toss 1.35s cubic-bezier(0.3, 0, 0.3, 1) both; }
+.cw-coin-theirs { animation-delay: 0.12s; }
+.cw-coin-in { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; animation: cw-flip-heads 1.35s cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: inherit; }
+.cw-coin-tails .cw-coin-in { animation-name: cw-flip-tails; }
+.cw-coin-face { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; backface-visibility: hidden; background: radial-gradient(circle at 35% 30%, #f6f7f9, #a9afb9 55%, #6f7580); box-shadow: inset 0 0 0 3px hsl(0 0% 100% / 0.35), inset 0 0 0 5px hsl(0 0% 0% / 0.25), 0 4px 10px hsl(0 0% 0% / 0.6); color: #14171c; }
+.cw-coin-face svg { width: 52%; height: 52%; }
+.cw-coin-h { box-shadow: inset 0 0 0 3px hsl(var(--stat-improvement) / 0.9), inset 0 0 0 5px hsl(0 0% 0% / 0.25), 0 0 18px hsl(var(--stat-improvement) / 0.6); }
+.cw-coin-t { transform: rotateX(180deg); box-shadow: inset 0 0 0 3px hsl(var(--destructive) / 0.9), inset 0 0 0 5px hsl(0 0% 0% / 0.25), 0 0 18px hsl(var(--destructive) / 0.6); }
+.cw-coin-mine { outline: 2px solid hsl(var(--accent)); outline-offset: 3px; border-radius: 50%; }
+.cw-coin-theirs { outline: 2px solid hsl(var(--burn)); outline-offset: 3px; border-radius: 50%; }
+.cw-info-flip { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid hsl(0 0% 100% / 0.1); font-size: 11px; font-weight: 600; }
+.cw-info-flip span { display: inline-flex; align-items: center; gap: 4px; }
+.cw-info-flip svg { width: 13px; height: 13px; }
+.cw-info-flip span:first-child { color: hsl(var(--stat-improvement)); }
+.cw-info-flip span:last-child { color: hsl(var(--destructive)); }
 .cw-burn { position: absolute; z-index: 6; left: -8%; top: -24%; width: 116%; height: 126%; pointer-events: none; }
 
 /* Dog tags in a battle: three steel plates to arm. */
@@ -267,8 +302,8 @@ button.cw-card:disabled { cursor: default; }
 .cw-tag::before { content: ''; position: absolute; left: 6px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: hsl(240 6% 8%); box-shadow: inset 0 1px 2px #000, 0 1px 0 hsl(0 0% 100% / 0.6); }
 .cw-tag svg { flex-shrink: 0; width: 16px; height: 16px; }
 .cw-tag span { display: flex; flex-direction: column; min-width: 0; }
-.cw-tag b { font-size: 11px; line-height: 1.15; font-weight: 800; }
-.cw-tag small { font-size: 10px; line-height: 1.2; font-weight: 600; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cw-tag b { display: block; font-size: 11px; line-height: 1.15; font-weight: 800; }
+.cw-tag small { display: block; font-size: 10px; line-height: 1.2; font-weight: 600; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cw-tag-on { transform: translateY(-3px); box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.7), 0 0 0 2px hsl(var(--accent)), 0 0 18px hsl(var(--accent) / 0.7); }
 .cw-tag-used { opacity: 0.32; filter: grayscale(1); }
 .cw-tag:disabled:not(.cw-tag-used) { opacity: 0.6; }
@@ -317,14 +352,26 @@ button.cw-card:disabled { cursor: default; }
 /* ── Prize shuffle ─────────────────────────────────────────────────────── */
 .cw-reward-board { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 620px; margin-inline: auto; perspective: 1000px; }
 .cw-reward-anchor { aspect-ratio: 10 / 13; min-width: 0; }
-.cw-reward-position { position: absolute; top: 0; left: 0; transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1); }
-.cw-reward-moving { z-index: 2; }
-.cw-reward-flipper { position: relative; aspect-ratio: 10 / 13; transform-style: preserve-3d; transition: transform 600ms ease-in-out; }
+.cw-reward-position { position: absolute; top: 0; left: 0; padding: 0; border-radius: 14px; transition: transform 210ms cubic-bezier(0.5, 0, 0.2, 1), opacity 0.4s ease, scale 0.3s ease, box-shadow 0.3s ease; }
+.cw-reward-show .cw-reward-position, .cw-reward-flip .cw-reward-position { transition-duration: 500ms; }
+.cw-reward-flipper { position: relative; display: block; aspect-ratio: 10 / 13; transform-style: preserve-3d; transition: transform 480ms cubic-bezier(0.4, 0, 0.2, 1); }
 .cw-reward-facedown { transform: rotateY(180deg); }
-.cw-reward-face { position: absolute; inset: 0; backface-visibility: hidden; }
+.cw-reward-face { position: absolute; inset: 0; display: block; backface-visibility: hidden; pointer-events: none; }
 .cw-reward-face > .cw-card { height: 100%; }
 .cw-reward-back { transform: rotateY(180deg); }
-.cw-reward-back > button.cw-card:not(:disabled) { animation: cw-pulse 1.6s ease-in-out infinite; }
+/* Ready to be picked: the backs catch the light in turn. */
+.cw-reward-pick .cw-reward-position { cursor: pointer; }
+.cw-reward-pick .cw-reward-position:active { scale: 0.95; }
+.cw-reward-pick .cw-card-facedown::after { animation: cw-glint 2.4s ease-in-out infinite; }
+.cw-reward-pick .cw-reward-position:nth-of-type(2) .cw-card-facedown::after { animation-delay: 0.25s; }
+.cw-reward-pick .cw-reward-position:nth-of-type(3) .cw-card-facedown::after { animation-delay: 0.5s; }
+.cw-reward-pick .cw-reward-position:nth-of-type(4) .cw-card-facedown::after { animation-delay: 0.75s; }
+.cw-reward-pick .cw-reward-position:nth-of-type(5) .cw-card-facedown::after { animation-delay: 1s; }
+/* The pick turns over first and stands out; the rest follow, dimmed. */
+.cw-reward-picked { z-index: 3; scale: 1.08; }
+.cw-reward-picked { box-shadow: 0 0 26px hsl(var(--accent) / 0.75); }
+.cw-reward-missed { opacity: 0.5; }
+.cw-reward-missed .cw-reward-flipper { transition-delay: 650ms; }
 @media (max-width: 520px) {
   .cw-reward-board { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; max-width: 360px; }
   .cw-reward-anchor { grid-column: span 2; }
@@ -369,9 +416,14 @@ button.cw-card:disabled { cursor: default; }
 .cw-shelf-on { border-color: hsl(var(--accent)); background: hsl(var(--accent) / 0.16); box-shadow: 0 0 16px hsl(var(--accent) / 0.25); }
 
 .cw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+/* A deck of five on a phone: three above, two centred below. */
+.cw-grid-deck { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.cw-grid-deck > * { grid-column: span 2; }
+.cw-grid-deck > :nth-child(4) { grid-column: 2 / span 2; }
 .cw-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (min-width: 640px) {
   .cw-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .cw-grid-deck > *, .cw-grid-deck > :nth-child(4) { grid-column: auto; }
   .cw-grid-2 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .cw-slot { container-type: inline-size; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; aspect-ratio: 10 / 13; border-radius: 14px; border: 1.5px dashed hsl(var(--accent) / 0.55); background: hsl(var(--card) / 0.45); color: hsl(var(--accent)); font-size: 10.5px; font-weight: 600; text-align: center; padding: 6px; }
@@ -403,6 +455,10 @@ button.cw-card:disabled { cursor: default; }
 @keyframes cw-win { from { opacity: 0; transform: scale(0.4) rotate(-10deg); } }
 @keyframes cw-shine { from { background-position: 130% 0; } to { background-position: -30% 0; } }
 @keyframes cw-swing { 0% { opacity: 0; rotate: -24deg; } 12% { opacity: 1; } 30% { rotate: 14deg; } 50% { rotate: -8deg; } 70% { rotate: 4deg; } 86% { rotate: -2deg; } 100% { rotate: 0deg; } }
+@keyframes cw-toss { 0% { transform: translateY(40px) scale(0.6); opacity: 0; } 12% { opacity: 1; } 45% { transform: translateY(-34px) scale(1.15); } 80% { transform: translateY(4px) scale(1); } 90% { transform: translateY(-5px); } 100% { transform: none; } }
+@keyframes cw-flip-heads { from { transform: rotateX(0deg); } to { transform: rotateX(1800deg); } }
+@keyframes cw-flip-tails { from { transform: rotateX(0deg); } to { transform: rotateX(1980deg); } }
+@keyframes cw-glint { 0%, 55% { background-position: 140% 0; } 100% { background-position: -40% 0; } }
 @keyframes cw-rainfall { to { transform: translateY(28px); } }
 
 

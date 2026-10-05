@@ -13,19 +13,19 @@ import { RULES, V2, repairCost } from '../lib/rules';
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
-import { TAG_ORDER, tagDescription, tagName, tagSourceLine, tagStrength, type TagPower } from '../lib/tags';
+import { TAG_ORDER, tagDescription, tagName, tagSourceLine, tagStrength } from '../lib/tags';
 import { REST_RECOVERY, WEAR_PER_BATTLE } from '../lib/wear';
 import { updateVault, useVault } from '../lib/store';
 import { eventSound } from '@/lib/appSound';
 import { TradeSheet } from './TradeSheet';
 import { claimSet, contractText, useProgress } from '../lib/progress';
 import { Progress } from '@/components/ui/progress';
-import type { BattleCard as Card, DogTag } from '../types';
+import { TAG_SLOTS, type BattleCard as Card, type DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
 import { SpinPanel } from './SpinPanel';
 
-type Open = { kind: 'card'; index: number } | { kind: 'pick'; index: number } | { kind: 'tag'; power: TagPower } | null;
+type Open = { kind: 'card'; index: number } | { kind: 'pick'; index: number } | { kind: 'tag'; slot: number } | null;
 
 const sheetClass = 'rounded-t-3xl max-h-[88dvh] overflow-y-auto safe-bottom';
 const heading = 'text-[11px] font-semibold uppercase tracking-widest text-muted-foreground';
@@ -97,7 +97,7 @@ export function Garage({
   const frozen = locked || riding;
   const spare = useMemo(() => pool.filter((c) => !deck.some((d) => d.id === c.id)).sort((a, b) => overall(b) - overall(a)), [pool, deck]);
   const missing = 5 - deck.length;
-  const ready = missing === 0 && tags.length === 3;
+  const ready = missing === 0 && tags.length === TAG_SLOTS;
   const rating = deckRating(deck);
   const freeCards = shop.freeSpins > 0;
   const freeTags = V2 && shop.freeTagSpins > 0;
@@ -126,9 +126,11 @@ export function Garage({
   };
 
   const equipIfBetter = (won: DogTag) => {
+    // Into the deck if its power is already carried and this one is stronger, or if there's a slot free.
     const at = tags.findIndex((t) => t.power === won.power);
-    if (at < 0) onReplace('tags', tags.length, won.id);
-    else if (tagStrength(won) > tagStrength(tags[at])) onReplace('tags', at, won.id);
+    if (at >= 0) {
+      if (tagStrength(won) > tagStrength(tags[at])) onReplace('tags', at, won.id);
+    } else if (tags.length < TAG_SLOTS) onReplace('tags', tags.length, won.id);
   };
 
   const cardSpins = (freeCards || cardBoxOpen) && (
@@ -171,7 +173,7 @@ export function Garage({
         <Tag className="w-5 h-5 text-accent shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold">{shop.freeTagSpins === 0 ? tr("No free dog tag spins left") : shop.freeTagSpins === 1 ? tr("1 free dog tag spin") : tr("{0} free dog tag spins", [shop.freeTagSpins])}</p>
-          <p className="text-xs text-muted-foreground leading-snug">{tr("Each spin wins a dog tag tied to a vehicle, which sets how strong it is. Your first three cover all three powers.")}</p>
+          <p className="text-xs text-muted-foreground leading-snug">{tr("Each spin wins a dog tag tied to a vehicle, which sets how strong it is. Your first spins cover every power; a deck carries three.")}</p>
         </div>
       </div>
       <SpinPanel
@@ -283,7 +285,7 @@ export function Garage({
             <span className="text-[11px] text-muted-foreground">{tr("Tap a card to look, swap or repair")}</span>
           )}
         </div>
-        <div className="cw-grid">
+        <div className="cw-grid cw-grid-deck">
           {Array.from({ length: 5 }, (_, i) => {
             const c = deck[i];
             return c ? (
@@ -311,19 +313,20 @@ export function Garage({
       <section>
         <div className="flex items-baseline justify-between mb-2">
           <h2 className={heading}>{tr("Dog tags")}</h2>
-          <span className="text-[11px] text-muted-foreground">{tr("One use each per battle")}</span>
+          <span className="text-[11px] text-muted-foreground">{tr("Three of the four powers, one use each")}</span>
         </div>
         <div className="space-y-2">
-          {TAG_ORDER.map((power) => {
-            const tag = tags.find((t) => t.power === power);
-            const others = availableTags.filter((t) => t.power === power && t.id !== tag?.id).length;
+          {Array.from({ length: TAG_SLOTS }, (_, slot) => {
+            const tag = tags[slot];
+            // What could go here instead: any tag whose power the other two slots don't already carry.
+            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && x.power === t.power)).length;
             return (
-              <button key={power} type="button" className="cw-tag-row" disabled={frozen} onClick={() => setOpen({ kind: 'tag', power })}>
+              <button key={slot} type="button" className="cw-tag-row" disabled={frozen} onClick={() => setOpen({ kind: 'tag', slot })}>
                 {tag ? (
                   <DogTagPlate tag={tag} />
                 ) : (
                   <span className="flex-1 text-left">
-                    <b className="block text-sm">{tagName(power)}</b>
+                    <b className="block text-sm">{tr("Dog tag {0}", [slot + 1])}</b>
                     <span className="text-[11px] text-destructive">{tr("Empty. Tap to choose a tag.")}</span>
                   </span>
                 )}
@@ -559,41 +562,46 @@ export function Garage({
         </SheetContent>
       </Sheet>
 
-      {/* Choosing the tag for a power */}
+      {/* Choosing the tag for a slot: its own power or the one the deck leaves out */}
       <Sheet open={open?.kind === 'tag'} onOpenChange={(v) => !v && setOpen(null)}>
         <SheetContent side="bottom" className={sheetClass}>
           {open?.kind === 'tag' && (
-            <div className="space-y-3 max-w-md mx-auto">
+            <div className="space-y-4 max-w-md mx-auto">
               <SheetHeader className="text-left">
-                <SheetTitle>{tagName(open.power)}</SheetTitle>
-                <SheetDescription>
-                  {tagDescription(open.power)} {V2 && tagSourceLine(open.power)}
-                </SheetDescription>
+                <SheetTitle>{tr("Choose a dog tag")}</SheetTitle>
+                <SheetDescription>{tr("A deck carries three dog tags, each a different power. There are four powers, so one stays at home: pick the three that suit your cards.")}</SheetDescription>
               </SheetHeader>
-              <div className="space-y-2">
-                {availableTags
-                  .filter((t) => t.power === open.power)
-                  .sort((a, b) => tagStrength(b) - tagStrength(a))
-                  .map((t) => {
-                    const inUse = tags.some((x) => x.id === t.id);
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        className={cn('cw-tag-row', inUse && 'cw-tag-row-on')}
-                        disabled={inUse || frozen}
-                        onClick={() => {
-                          const at = tags.findIndex((x) => x.power === open.power);
-                          onReplace('tags', at >= 0 ? at : tags.length, t.id);
-                          setOpen(null);
-                        }}
-                      >
-                        <DogTagPlate tag={t} />
-                        {inUse && <span className="text-[11px] font-semibold text-accent shrink-0">{tr("In use")}</span>}
-                      </button>
-                    );
-                  })}
-              </div>
+              {TAG_ORDER.filter((power) => !tags.some((x, i) => i !== open.slot && x.power === power)).map((power) => (
+                <div key={power} className="space-y-2">
+                  <div>
+                    <p className="text-sm font-semibold">{tagName(power)}</p>
+                    <p className="text-[11px] text-muted-foreground leading-snug">
+                      {tagDescription(power)} {V2 && tagSourceLine(power)}
+                    </p>
+                  </div>
+                  {availableTags
+                    .filter((t) => t.power === power)
+                    .sort((a, b) => tagStrength(b) - tagStrength(a))
+                    .map((t) => {
+                      const inUse = tags[open.slot]?.id === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className={cn('cw-tag-row', inUse && 'cw-tag-row-on')}
+                          disabled={inUse || frozen}
+                          onClick={() => {
+                            onReplace('tags', Math.min(open.slot, tags.length), t.id);
+                            setOpen(null);
+                          }}
+                        >
+                          <DogTagPlate tag={t} />
+                          {inUse && <span className="text-[11px] font-semibold text-accent shrink-0">{tr("In use")}</span>}
+                        </button>
+                      );
+                    })}
+                </div>
+              ))}
               <p className="text-[11px] text-muted-foreground leading-snug pb-2">
                 {V2
                   ? tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs.")

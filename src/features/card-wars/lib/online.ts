@@ -18,6 +18,9 @@ export interface OnlineRound {
   s2?: number;
   t1?: number | null;
   t2?: number | null;
+  /** A Coin flip each side armed: heads or tails, and the category (1 to 5) it picked. */
+  f1?: { h: boolean; c: number } | null;
+  f2?: { h: boolean; c: number } | null;
   /** A round event (1 to 11, `EVENTS` order), and the cards a rapture took (side 1, side 2). */
   event?: number | null;
   r1?: string;

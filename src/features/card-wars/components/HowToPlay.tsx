@@ -81,7 +81,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
           })}
           <span>
             {V2
-              ? tr("Arm one before you play. Each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle.")
+              ? tr("A deck carries three of the four, so choose the ones that suit your cards. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle.")
               : tr("Arm one before you play. Each works once per battle.")}
           </span>
         </span>
