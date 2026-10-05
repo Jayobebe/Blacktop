@@ -3,6 +3,7 @@ import { BRAND_CARDS, CATALOG } from './catalog';
 import { V2, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { tagStrength } from './tagRules';
+import { EVENT_NUMBERS, rollEvent } from './events';
 
 /**
  * Battles against the computer, settled on the phone (player battles are the
@@ -198,16 +199,54 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   const allowed = allowedFor(card, rival.c);
   let category: Category = allowed[Math.floor(random() * allowed.length)];
   let first: Category | undefined;
+  const event = rollEvent(random);
+  const shown = (v: number) => Math.round(v * 10) / 10;
 
-  if (tag) s.usedTags.push(tag.id);
-  if (tag?.power === 'heal') s.hp[0][index] = Math.min(100, s.hp[0][index] + tagStrength(tag, card));
-  const boost = tag?.power === 'boost' ? tagStrength(tag, card) / 100 : 1;
+  if (event === 'rapture') {
+    // Each side's strongest card still standing is beamed away; no round is fought.
+    const best = (cards: BattleCard[], hp: number[]) =>
+      cards.map((c, i) => ({ i, p: c.ratings.speed + c.ratings.g + c.ratings.distance + c.ratings.corners })).filter((x) => hp[x.i] > 0).sort((a, b) => b.p - a.p)[0]?.i ?? -1;
+    const mine = best(s.player, s.hp[0]);
+    const theirs = best(s.opponent, s.hp[1]);
+    if (mine >= 0) s.hp[0][mine] = 0;
+    if (theirs >= 0) s.hp[1][theirs] = 0;
+    s.categories[s.round] = category;
+    s.log.push({
+      round: s.round + 1,
+      category,
+      player: card.id,
+      opponent: rival.c.id,
+      damage: 0,
+      winner: null,
+      event,
+      raptured: [mine >= 0 ? s.player[mine].id : null, theirs >= 0 ? s.opponent[theirs].id : null],
+    });
+    s.round++;
+    return finish(s);
+  }
+
+  // A gremlin jams the tag: no effect, not used up.
+  const live = event === 'gremlin' ? undefined : tag;
+  if (live) s.usedTags.push(live.id);
+  if (event === 'pitstop') {
+    for (const hp of s.hp) {
+      const low = hp.map((v, i) => ({ v, i })).filter((x) => x.v > 0).sort((a, b) => a.v - b.v || a.i - b.i)[0];
+      if (low) hp[low.i] = Math.min(100, hp[low.i] + EVENT_NUMBERS.pitHeal);
+    }
+  }
+  if (live?.power === 'heal') s.hp[0][index] = Math.min(100, s.hp[0][index] + tagStrength(live, card));
+  const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
+  // Fresh tyres: the catalog's ratings, as new.
+  const mineRatings = event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
+  const crowd = (id: string, side: 0 | 1) => (event === 'crowd' && s.log.some((l) => l.winner === side && (side === 0 ? l.player : l.opponent) === id) ? EVENT_NUMBERS.crowd : 1);
+  const crowdMine = crowd(card.id, 0);
+  const crowdTheirs = crowd(rival.c.id, 1);
   const score = (c: Category, replay = 1): [number, number] => {
     const rain = s.penaltyRound === s.round && c === 'lean' ? 0.8 : 1;
-    return [card.ratings[c] * rain * boost * replay, rival.c.ratings[c] * rain];
+    return [mineRatings[c] * rain * boost * replay * crowdMine, rival.c.ratings[c] * rain * crowdTheirs];
   };
   let [a, b] = score(category);
-  if (tag?.power === 'reroll') {
+  if (live?.power === 'reroll') {
     const others = allowed.filter((c) => c !== category);
     if (!V2) {
       category = others[Math.floor(random() * others.length)];
@@ -215,19 +254,37 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     } else if (a < b && others.length) {
       first = category;
       category = others[Math.floor(random() * others.length)];
-      [a, b] = score(category, tagStrength(tag, card) / 100);
+      [a, b] = score(category, tagStrength(live, card) / 100);
     }
+  }
+  if (event === 'rain') {
+    const mid = (a + b) / 2;
+    a = mid + (a - mid) * 0.5;
+    b = mid + (b - mid) * 0.5;
   }
   s.categories[s.round] = category;
 
-  const winner = a === b ? null : a > b ? 0 : 1;
-  const damage = damageFor(a, b);
-  if (winner !== null) {
-    const loser = 1 - winner;
-    const target = loser === 0 ? index : rival.i;
-    s.hp[loser][target] = Math.max(0, s.hp[loser][target] - damage);
+  let winner: number | null = a === b ? null : a > b ? 0 : 1;
+  let damage = damageFor(a, b);
+  const floor = event === 'safety' ? 1 : 0;
+  const hit = (side: number, i: number, d: number) => {
+    const before = s.hp[side][i];
+    s.hp[side][i] = Math.max(before > 0 ? floor : 0, before - d);
+  };
+  if (event === 'redflag') {
+    winner = null;
+    damage = 0;
+    if (live) s.usedTags = s.usedTags.filter((id) => id !== live.id);
+  } else if (event === 'photo' && a !== b && Math.abs(a - b) <= Math.max(a, b) * EVENT_NUMBERS.photoGap) {
+    winner = null;
+    damage = EVENT_NUMBERS.photoDamage;
+    hit(0, index, damage);
+    hit(1, rival.i, damage);
+  } else {
+    if (event === 'tailwind' && damage > 0) damage = Math.min(80, damage + EVENT_NUMBERS.tailwind);
+    if (event === 'oil' && category === 'corners' && damage > 0) damage = Math.min(100, damage * 2);
+    if (winner !== null) hit(1 - winner, winner === 0 ? rival.i : index, damage);
   }
-  const shown = (v: number) => Math.round(v * 10) / 10;
   s.log.push({
     round: s.round + 1,
     category,
@@ -237,12 +294,20 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     winner,
     values: [shown(a), shown(b)],
     ...(first ? { first } : {}),
-    ...(tag ? { tag: tag.power } : {}),
+    ...(live ? { tag: live.power } : {}),
+    ...(event ? { event } : {}),
   });
   s.round++;
+  return finish(s);
+}
+
+function finish(s: BattleState): BattleState {
   if (s.hp.some((h) => h.every((v) => v === 0))) {
     const totals = s.hp.map((h) => h.reduce((x, y) => x + y, 0));
     s.result = totals[0] === totals[1] ? 'draw' : totals[0] > totals[1] ? 'win' : 'loss';
   }
   return s;
 }
+
+/** The player's card a rapture took this battle, if one did. */
+export const rapturedOf = (run: BattleState): string | null => run.log.find((l) => l.raptured?.[0])?.raptured?.[0] ?? null;

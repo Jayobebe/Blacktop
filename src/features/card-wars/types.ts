@@ -52,6 +52,10 @@ export interface RoundLog {
   values?: [number, number];
   /** The dog tag the player armed. */
   tag?: TagPower;
+  /** Something that happened before the category was drawn. */
+  event?: import('./lib/events').RoundEvent;
+  /** A rapture: the card each side lost to the beam (player, rival). */
+  raptured?: [string | null, string | null];
 }
 
 export interface BattleState {
@@ -78,6 +82,8 @@ export interface WearReport {
   id: string;
   deck: string[];
   fought: string[];
+  /** The deck's card a rapture took: it comes home at full condition. */
+  raptured?: string | null;
 }
 
 export interface VaultState {
@@ -92,4 +98,6 @@ export interface VaultState {
   rpmApplied?: string;
   /** Older saves kept one whole battle here; it's moved into `wearQueue` on load. */
   pendingWear?: BattleState;
+  /** Raptured cards beaming back into the deck, shown once on the home screen. */
+  beamIn?: string[];
 }
