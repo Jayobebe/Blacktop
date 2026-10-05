@@ -63,7 +63,7 @@ for (let i = 0; i < 400 && !run.result; i++) {
 assert.ok(run.result && run.hp.some((hand) => hand.every((hp) => hp === 0)), 'Full-deck knockout ends battle');
 assert.equal(JSON.stringify(run.opponent), initial, 'Computer deck and ratings stay fixed throughout battle');
 assert.deepEqual(JSON.parse(JSON.stringify(run)).opponent, run.opponent, 'Deck survives persistence');
-assert.ok(run.log.every((l) => l.values && (l.winner === null) === (l.values[0] === l.values[1])), 'Every round logs what was compared');
+assert.ok(run.log.every((l) => l.event === 'rapture' ? !l.values : l.values && (l.event === 'redflag' || l.event === 'photo' || (l.winner === null) === (l.values[0] === l.values[1]))), 'Every round logs what was compared');
 assert.throws(() => createRun(player.slice(0, 4)), /five unique cards/);
 
 // ── Dog tags ──
