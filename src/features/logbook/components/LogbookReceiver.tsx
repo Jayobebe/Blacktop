@@ -99,7 +99,7 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
 
       {scanning &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] bg-background flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="fixed inset-0 z-[9999] bg-background flex flex-col safe-frame-x" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
             <div className="flex items-center gap-3 px-4 py-3">
               <button onClick={() => void stopScanner()} className="p-2.5 rounded-xl bg-secondary hover:bg-muted" aria-label={tr("Back")}>
                 <ArrowLeft className="w-5 h-5" />
@@ -118,8 +118,8 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
 
       {state &&
         createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/95 backdrop-blur-sm p-6">
-            <div className="w-full max-w-xs flex flex-col items-center text-center gap-4">
+          <div className="fixed inset-0 z-[9999] safe-frame flex items-center justify-center bg-background/95 backdrop-blur-sm p-6">
+            <div className="w-full max-w-xs max-h-full overflow-y-auto flex flex-col items-center text-center gap-4">
               {state.phase === 'receiving' && (
                 <>
                   <BookOpen className="w-10 h-10 text-accent" />

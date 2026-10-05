@@ -2173,7 +2173,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           bar, or the convoy strip while riding in a convoy) with the toolbar
           flowing underneath, so when the search bar steps aside while moving
           the toolbar slides up into its place. */}
-      <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] short:right-auto short:w-[22rem] short:gap-1.5 z-30 flex flex-col items-start gap-2 pointer-events-none">
+      <div className="absolute top-[calc(0.75rem+var(--safe-top))] left-[calc(0.75rem+var(--safe-left))] right-[calc(4.25rem+var(--safe-right))] short:right-auto short:w-[22rem] short:gap-1.5 z-30 flex flex-col items-start gap-2 pointer-events-none">
         {/* A hazard warning takes the search bar's slot too, above the turn banner. */}
         {hazardWarning && (
           <div className="w-full pointer-events-auto">
@@ -2538,7 +2538,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
 
 
-      <div className="absolute bottom-3 left-3 right-3 short:right-auto short:w-[22rem] z-10 space-y-1.5">
+      <div className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] short:right-auto short:w-[22rem] z-10 space-y-1.5">
         {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
         {showWaypointsPanel && (
           <div className="animate-slide-up">
@@ -2753,7 +2753,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       </div>
 
       {/* Landscape: credits at the top, just right of the (22rem) search column. */}
-      <div className="hidden short:block absolute top-[calc(0.75rem+env(safe-area-inset-top)+0.6rem)] left-[calc(0.75rem+env(safe-area-inset-left)+22.75rem)] z-20 px-2 py-0.5 rounded-md bg-background/40 text-[10px] text-muted-foreground/80 pointer-events-none whitespace-nowrap">
+      <div className="hidden short:block absolute top-[calc(0.75rem+var(--safe-top)+0.6rem)] left-[calc(0.75rem+var(--safe-left)+22.75rem)] z-20 px-2 py-0.5 rounded-md bg-background/40 text-[10px] text-muted-foreground/80 pointer-events-none whitespace-nowrap">
         <MapCredits />
       </div>
 
@@ -2762,13 +2762,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         <HazardCard
           hazard={tappedHazard}
           onClose={() => setHazardId(null)}
-          className="absolute left-3 right-3 bottom-3 short:right-auto short:w-[22rem] z-30"
+          className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] bottom-[calc(0.75rem+var(--safe-bottom))] short:right-auto short:w-[22rem] z-30"
         />
       )}
 
       {/* Tapped pin: the camera orbits it; Back unlocks, Navigate sets the route. */}
       {pin && (
-        <div className="absolute left-3 right-3 bottom-3 short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-3 animate-slide-up">
+        <div className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] bottom-[calc(0.75rem+var(--safe-bottom))] short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-3 animate-slide-up">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-sm truncate">{pin.name}</p>
@@ -2828,7 +2828,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       )}
 
       {selectedDrop && (
-        <div className="absolute inset-x-3 bottom-3 short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
+        <div className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] bottom-[calc(0.75rem+var(--safe-bottom))] short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
           <button
             type="button"
             onClick={() => setSelectedStack(null)}
@@ -2894,7 +2894,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       )}
 
       {selectedStack && selectedStack.length > 1 && (
-        <div className="absolute inset-x-3 bottom-3 short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
+        <div className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] bottom-[calc(0.75rem+var(--safe-bottom))] short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-4 animate-slide-up">
           <button
             type="button"
             onClick={() => setSelectedStack(null)}

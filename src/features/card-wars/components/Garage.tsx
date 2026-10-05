@@ -418,26 +418,26 @@ export function Garage({
         </section>
       )}
 
-      <Button variant="outline" className="w-full h-14 gap-2 justify-between px-4" onClick={onShop}>
-        <span className="flex items-center gap-2">
-          <Store className="w-5 h-5 text-accent" />
-          <span className="text-left">
+      <Button variant="outline" className="w-full h-auto min-h-14 py-2 gap-2 justify-between px-4 whitespace-normal" onClick={onShop}>
+        <span className="flex items-center gap-2 min-w-0">
+          <Store className="w-5 h-5 shrink-0 text-accent" />
+          <span className="text-left min-w-0">
             <span className="block text-sm font-semibold leading-tight">{tr("Shop")}</span>
             <span className="block text-[11px] text-muted-foreground font-normal leading-tight">{V2 ? tr("Cards, spins and dog tags for RPM") : tr("Cards and spins for RPM")}</span>
           </span>
         </span>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />
       </Button>
 
-      <Button variant="outline" className="w-full h-14 gap-2 justify-between px-4" onClick={() => setTrade(true)}>
-        <span className="flex items-center gap-2">
-          <Repeat className="w-5 h-5 text-accent" />
-          <span className="text-left">
+      <Button variant="outline" className="w-full h-auto min-h-14 py-2 gap-2 justify-between px-4 whitespace-normal" onClick={() => setTrade(true)}>
+        <span className="flex items-center gap-2 min-w-0">
+          <Repeat className="w-5 h-5 shrink-0 text-accent" />
+          <span className="text-left min-w-0">
             <span className="block text-sm font-semibold leading-tight">{tr("Trade cards")}</span>
             <span className="block text-[11px] text-muted-foreground font-normal leading-tight">{tr("Sell a card by code, or make an offer on someone else's")}</span>
           </span>
         </span>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />
       </Button>
       <TradeSheet open={trade} onClose={() => setTrade(false)} locked={frozen} />
 

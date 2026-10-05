@@ -206,11 +206,11 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
       {selectedPhoto && (
         <div
           onClick={() => setSelectedPhoto(null)}
-          className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-50 safe-frame bg-background/95 flex items-center justify-center p-4 animate-fade-in"
         >
           <button
             onClick={() => setSelectedPhoto(null)}
-            className="absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors"
+            className="glove-hit absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -227,11 +227,11 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
       {selectedVideo && (
         <div
           onClick={() => setSelectedVideo(null)}
-          className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-50 safe-frame bg-background/95 flex items-center justify-center p-4 animate-fade-in"
         >
           <button
             onClick={() => setSelectedVideo(null)}
-            className="absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors z-10"
+            className="glove-hit absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>

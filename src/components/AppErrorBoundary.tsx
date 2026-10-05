@@ -37,7 +37,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
     if (!error) return this.props.children;
 
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 gap-4 safe-top safe-bottom">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 gap-4 safe-top safe-bottom safe-frame-x overflow-y-auto">
         <div className="max-w-md w-full bg-card border border-border rounded-2xl p-5 space-y-3">
           <h1 className="text-lg font-semibold">{tr("Something went wrong")}</h1>
           <p className="text-sm text-muted-foreground break-words">

@@ -405,7 +405,7 @@ export function RacerView() {
         </Button>
 
         {racer.pit && (
-          <button onClick={dismissPit} className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black">
+          <button onClick={dismissPit} className="fixed inset-0 z-[100] safe-frame flex flex-col items-center justify-center bg-black">
             <div className="absolute inset-3 rounded-3xl border-[6px] border-accent animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-[0.4em] text-accent">{tr("Pit board")}</span>
             <span className="mt-2 text-8xl font-black tracking-tight text-center px-4 leading-none text-white">{pitLabel(racer.pit.text)}</span>
@@ -468,7 +468,7 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 
 function QrOverlay({ value, crew, onClose }: { value: string; crew: { id: string; name: string }[]; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[90] bg-background/95 flex flex-col items-center justify-center gap-3 p-6" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] safe-frame bg-background/95 flex flex-col items-center gap-3 p-6 overflow-y-auto [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto" onClick={onClose}>
       <p className="text-sm font-semibold">{tr("Pit crew: scan to link")}</p>
       <div className="p-3 rounded-2xl bg-white">
         <QRCodeSVG value={value} size={220} level="M" marginSize={1} />

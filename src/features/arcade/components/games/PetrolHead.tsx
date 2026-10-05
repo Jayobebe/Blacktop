@@ -862,7 +862,7 @@ export function PetrolHead({ accentColor, showSpeed }: PetrolHeadProps) {
   };
 
   const inRun = phase === 'playing' || phase === 'paused' || phase === 'crashing' || phase === 'coasting';
-  const safeBottom = 'bottom-[max(0.75rem,env(safe-area-inset-bottom))]';
+  const safeBottom = 'bottom-[max(0.75rem,var(--safe-bottom))]';
 
   return (
     <div

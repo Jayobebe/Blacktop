@@ -11,6 +11,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       position="top-center"
+      // Under the notch or Dynamic Island a toast (and its action button) can't be read or pressed.
+      offset={{ top: "max(24px, calc(var(--safe-top) + 8px))", left: "max(24px, var(--safe-left))", right: "max(24px, var(--safe-right))" }}
+      mobileOffset={{ top: "max(16px, calc(var(--safe-top) + 8px))", left: "max(16px, var(--safe-left))", right: "max(16px, var(--safe-right))" }}
       toastOptions={{
         classNames: {
           toast:

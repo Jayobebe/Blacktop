@@ -161,7 +161,7 @@ function RescueDrillScreens({ onClose }: { onClose: () => void }) {
 
       {(phase === 'intro' || phase === 'result') &&
         createPortal(
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/90 backdrop-blur-md p-4 safe-top safe-bottom animate-fade-in" role="dialog" aria-modal="true" data-state="open">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/90 backdrop-blur-md p-4 safe-top safe-bottom safe-frame-x animate-fade-in" role="dialog" aria-modal="true" data-state="open">
             <div className="w-full max-w-md max-h-full overflow-y-auto rounded-3xl bg-card border border-border p-5 shadow-2xl">
               {phase === 'intro' ? (
                 <>

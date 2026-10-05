@@ -294,7 +294,7 @@ export default function Garage() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-border/30 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <Dialog open={editOpen} onOpenChange={setEditOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-xs">

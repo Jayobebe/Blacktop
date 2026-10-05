@@ -165,7 +165,7 @@ button.cw-card:disabled { cursor: default; }
   z-index: 30;
   display: flex;
   justify-content: center;
-  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  padding: max(10px, var(--safe-top)) max(12px, var(--safe-right)) max(10px, var(--safe-bottom)) max(12px, var(--safe-left));
   /* The rival's end glows burn, the player's the accent. */
   background:
     radial-gradient(110% 46% at 50% 0%, hsl(var(--burn) / 0.16), transparent 70%),
@@ -316,6 +316,20 @@ button.cw-card:disabled { cursor: default; }
 .cw-tag:disabled:not(.cw-tag-used) { opacity: 0.6; }
 
 /* A phone on its side: hands and tags down the left, the table on the right. */
+/* The narrowest phones (320px), and landscape, where the tag bar is half the width: the dog tags stack their
+   icon over the name so a word like "Overdrive" isn't cut, and the wear note goes unless it's the warning. */
+@media (max-width: 360px), (orientation: landscape) and (max-height: 560px) {
+  .cw-tag { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 5px 5px 5px 15px; }
+  .cw-tag svg { width: 13px; height: 13px; }
+  .cw-tag b { font-size: 10px; line-height: 1.1; overflow-wrap: anywhere; }
+  .cw-tag small { font-size: 9.5px; max-width: 100%; }
+  .cw-tag::before { left: 4px; }
+}
+@media (max-width: 360px), (max-height: 600px) {
+  .cw-info-wear:not(.cw-info-wear-hard) { display: none; }
+  .cw-info-wear { font-size: 10px; margin-top: 6px; padding-top: 6px; }
+}
+
 @media (orientation: landscape) and (max-height: 560px) {
   .cw-arena { max-width: none; display: grid; grid-template-columns: minmax(0, 43%) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: 'bar bar' 'note note' 'theirs stage' 'tags stage' 'mine stage'; gap: 5px 12px; }
   .cw-arena-bar { grid-area: bar; }

@@ -145,13 +145,13 @@ export function HazardAlerts() {
     <>
       {/* With the map open, BlacktopMap shows the warning in the search bar's slot. */}
       {banner && !mapOpen && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-[calc(env(safe-area-inset-top)+4.75rem)] z-[1300] w-[min(24rem,calc(100%-1.5rem))]">
+        <div className="fixed left-1/2 -translate-x-1/2 top-[calc(var(--safe-top)+4.75rem)] z-[1300] w-[min(24rem,calc(100%-1.5rem))]">
           <HazardBanner warning={banner} />
         </div>
       )}
 
       {prompt && promptType && (
-        <div className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+6rem)] z-[1300] mx-auto max-w-sm animate-slide-up">
+        <div className="fixed inset-x-3 bottom-[calc(var(--safe-bottom)+6rem)] z-[1300] mx-auto max-w-sm animate-slide-up">
           <div className="rounded-2xl border border-border bg-card/95 backdrop-blur p-3 shadow-2xl">
             <p className="text-sm font-semibold text-center">{promptType.label}{tr(": still there?")}</p>
             <div className="mt-2.5 grid grid-cols-2 gap-2">

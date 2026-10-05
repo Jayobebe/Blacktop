@@ -149,7 +149,7 @@ export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, rou
   };
 
   return (
-    <div className="absolute inset-x-3 top-20 z-40 rounded-xl border border-border bg-card/95 backdrop-blur p-4 shadow-2xl max-w-md mx-auto">
+    <div className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] top-20 z-40 rounded-xl border border-border bg-card/95 backdrop-blur p-4 shadow-2xl max-w-md mx-auto">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Download className="w-4 h-4 text-accent" />

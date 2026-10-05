@@ -85,7 +85,7 @@ function RescueSirenScreen() {
       role="alertdialog"
       aria-modal="true"
       aria-label={tr("Crash detected")}
-      className="fixed inset-0 z-[10000] pointer-events-auto flex flex-col items-center justify-center gap-4 px-8 bg-black text-center text-foreground select-none animate-fade-in safe-top safe-bottom"
+      className="fixed inset-0 z-[10000] pointer-events-auto flex flex-col items-center justify-center gap-4 px-8 bg-black text-center text-foreground select-none animate-fade-in safe-top safe-bottom safe-frame-x"
       style={{ touchAction: 'none' }}
     >
       <div className="absolute inset-0 bg-destructive/30 alarm-flash pointer-events-none" />
@@ -287,10 +287,10 @@ function AlarmScreen() {
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-[10000] pointer-events-auto flex flex-col landscape:flex-row bg-black text-foreground select-none animate-fade-in"
+      className="fixed inset-0 z-[10000] pointer-events-auto flex flex-col landscape:flex-row bg-black text-foreground select-none animate-fade-in safe-frame-x"
       style={{ touchAction: 'none' }}
     >
-      {phase === 'alarm' && <div className="absolute inset-0 bg-destructive/30 alarm-flash pointer-events-none" />}
+      {phase === 'alarm' && <div className="fixed inset-0 bg-destructive/30 alarm-flash pointer-events-none" />}
 
       {/* The lock */}
       <section className="relative flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-8 pt-10 landscape:pt-4 safe-top text-center">

@@ -594,8 +594,8 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
       {/* QR + 10 s window */}
       {handover && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm p-6 animate-fade-in">
-          <div className="w-full max-w-xs flex flex-col items-center text-center gap-4">
+        <div className="fixed inset-0 z-[100] safe-frame flex items-center justify-center bg-background/95 backdrop-blur-sm p-6 animate-fade-in">
+          <div className="w-full max-w-xs max-h-full overflow-y-auto flex flex-col items-center text-center gap-4">
             {handover.phase === 'waiting' && (
               <>
                 <p className="text-sm font-semibold">{tr("Scan to take over")}{" "}{bike.name}</p>

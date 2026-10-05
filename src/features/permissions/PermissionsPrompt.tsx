@@ -142,8 +142,8 @@ export function PermissionsPrompt({ onComplete }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex items-center justify-center p-4 safe-top safe-bottom">
-      <div className="w-full max-w-sm space-y-5">
+    <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl flex items-center justify-center p-4 safe-top safe-bottom safe-frame-x">
+      <div className="w-full max-w-sm max-h-full overflow-y-auto space-y-5">
         <div className="text-center space-y-2">
           <div className="w-12 h-12 mx-auto rounded-full bg-accent/15 flex items-center justify-center">
             <Shield className="w-6 h-6 text-accent" />

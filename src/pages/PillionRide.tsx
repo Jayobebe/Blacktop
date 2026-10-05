@@ -242,10 +242,10 @@ export default function PillionRide() {
 
       {showAudio && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
+          className="fixed inset-0 z-[100] safe-frame flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
           onClick={() => setShowAudio(false)}
         >
-          <div className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm max-h-full overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Headphones className="w-4 h-4 text-accent" />

@@ -185,7 +185,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
   return (
     <div className={cn(
       variant === 'overlay'
-        ? 'fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto animate-fade-in'
+        ? 'fixed inset-0 z-50 safe-frame bg-background/95 backdrop-blur-md flex flex-col items-center p-4 overflow-y-auto animate-fade-in [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto'
         : 'flex flex-col items-center',
     )}>
       <div ref={receiptRef} className={cn("w-full max-w-[360px]", !hideActions && "animate-receipt-print")}>

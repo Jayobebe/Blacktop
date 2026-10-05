@@ -253,7 +253,7 @@ export function CollectedCardsFolder() {
           transform stacking context, which would otherwise make fixed positioning
           scroll with the page instead of anchoring to the viewport. */}
       {showScanner && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-background flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="fixed inset-0 z-[9999] bg-background flex flex-col overflow-hidden safe-frame-x" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
           <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3">
             <button
               onClick={stopScanner}

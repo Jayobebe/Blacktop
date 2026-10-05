@@ -138,7 +138,7 @@ export function SpeedshopView() {
                     onClick={() => setIndex(i)}
                     aria-label={i < SUGGEST ? SHOP_ITEMS[i].name : tr("Suggest something")}
                     className={cn(
-                      'h-2.5 rounded-full transition-all',
+                      'tall-hit h-2.5 rounded-full transition-all',
                       i === index ? 'w-6 bg-accent' : done ? 'w-2.5 bg-accent/50' : 'w-2.5 bg-muted-foreground/30',
                     )}
                   />

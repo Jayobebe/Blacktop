@@ -4,6 +4,16 @@
 
 @layer base {
   :root {
+    /* The phone's safe area: the notch or Dynamic Island, the home bar and the
+       rounded corners (the sides too, with the phone in landscape). Every rule
+       reads these, never env() itself, so there's one source, and a notch can
+       be tried in a desktop browser:
+       document.documentElement.style.setProperty('--safe-top', '59px'). */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+
     /* Near-black neutral palette (native dark-mode feel): a true-dark base with
        gently lifted surfaces, instead of a blue-tinted slate. */
     --background: 240 6% 4%;
@@ -123,6 +133,56 @@
 }
 
 @layer components {
+  /* Dialogs and sheets (components/ui): never wider or taller than the safe
+     area, and they scroll when a short screen (a phone in landscape, an
+     iPhone SE) can't show all of them. Component layer, so a utility on one
+     dialog (max-h-…, p-0, overflow-hidden) still wins. */
+  .dialog-fit {
+    width: calc(100% - 2rem - var(--safe-left) - var(--safe-right));
+    max-height: calc(100dvh - 1.5rem - var(--safe-top) - var(--safe-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sheet-bottom {
+    padding: 1.5rem max(1.5rem, var(--safe-right)) max(1.5rem, var(--safe-bottom)) max(1.5rem, var(--safe-left));
+    max-height: calc(100dvh - var(--safe-top) - 0.75rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sheet-top {
+    padding: max(1.5rem, var(--safe-top)) max(1.5rem, var(--safe-right)) 1.5rem max(1.5rem, var(--safe-left));
+    max-height: calc(100dvh - var(--safe-bottom) - 0.75rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sheet-left {
+    padding: max(1.5rem, var(--safe-top)) 1.5rem max(1.5rem, var(--safe-bottom)) max(1.5rem, var(--safe-left));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .sheet-right {
+    padding: max(1.5rem, var(--safe-top)) max(1.5rem, var(--safe-right)) max(1.5rem, var(--safe-bottom)) 1.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Their close button: clear of the notch, with a thumb-sized hit area. */
+  .overlay-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  .sheet-top > .overlay-close, .sheet-left > .overlay-close, .sheet-right > .overlay-close { top: max(1rem, var(--safe-top)); }
+  .sheet-top > .overlay-close, .sheet-bottom > .overlay-close, .sheet-right > .overlay-close { right: max(1rem, var(--safe-right)); }
+  .overlay-close::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
   /* Glass card effect - Sonoma style */
   .glass {
     background: hsl(var(--glass-bg));
@@ -285,6 +345,21 @@
     width: max(100%, 48px);
     height: max(100%, 48px);
     transform: translate(-50%, -50%);
+  }
+
+  /* Taller only: for controls packed side by side (the halves of a switch,
+     a row of dots), where a square hit area would cover the neighbours. */
+  .tall-hit {
+    position: relative;
+  }
+  .tall-hit::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: max(100%, 44px);
+    transform: translateY(-50%);
   }
 
   .touch-target-lg {
@@ -614,13 +689,54 @@
     text-shadow: 0 1px 3px hsl(0 0% 0% / 0.6);
   }
 
-  /* Safe area padding for mobile */
-  .safe-bottom {
-    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  /* Safe area padding for mobile. The class is doubled on purpose: a padding
+     variant on the same element (landscape:p-3, md:p-5) comes later in the
+     stylesheet and used to win, which put the last row of a page under the
+     home bar in landscape. */
+  .safe-bottom.safe-bottom {
+    padding-bottom: max(1.5rem, var(--safe-bottom));
   }
 
-  .safe-top {
-    padding-top: max(0.75rem, env(safe-area-inset-top));
+  .safe-top.safe-top {
+    padding-top: max(0.75rem, var(--safe-top));
+  }
+
+  /* A phone in landscape has no height to spare: only what the home bar needs. */
+  @media (orientation: landscape) and (max-height: 560px) {
+    .safe-bottom.safe-bottom {
+      padding-bottom: max(0.75rem, var(--safe-bottom));
+    }
+  }
+
+  /* The sides, for a full-screen overlay (landscape puts the notch there).
+     Pages don't need it: their wrapper has .page-safe-x. */
+  .safe-x {
+    padding-left: max(1rem, var(--safe-left));
+    padding-right: max(1rem, var(--safe-right));
+  }
+
+  /* A full-screen overlay (fixed inset-0): a transparent border as wide as the
+     safe area. The background still fills the screen, while the content, its
+     own padding and anything placed absolutely inside all stay clear of the
+     notch, the home bar and the rounded corners. -x: the sides only, for an
+     overlay that already has safe-top / safe-bottom. Not for one whose child
+     must fill the screen (a map, a camera). */
+  .safe-frame {
+    border-style: solid;
+    border-color: transparent;
+    border-width: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+  .safe-frame-x {
+    border-style: solid;
+    border-color: transparent;
+    border-width: 0 var(--safe-right) 0 var(--safe-left);
+  }
+
+  /* Every page sits inside this (PageTransition in App.tsx): in landscape the
+     page's own padding starts clear of the notch and the rounded corners. */
+  .page-safe-x {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
   }
 
   /* Text gradient */

@@ -918,7 +918,7 @@ export default function ActiveRide() {
 
       {/* Rider in distress: who's coming. Stays up until the rescue is closed. */}
       {hasPendingRescue && rideState.isConvoyMode && (
-        <div className="fixed top-[calc(0.75rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-40 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-[hsl(var(--burn))]/60 bg-[hsl(var(--burn))]/15 backdrop-blur-xl px-4 py-3 shadow-2xl animate-slide-down">
+        <div className="fixed top-[calc(0.75rem+var(--safe-top))] left-1/2 -translate-x-1/2 z-40 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-[hsl(var(--burn))]/60 bg-[hsl(var(--burn))]/15 backdrop-blur-xl px-4 py-3 shadow-2xl animate-slide-down">
           <p className="text-sm font-semibold text-[hsl(var(--burn))]">{tr("Rescue request sent")}</p>
           <p className="text-xs text-foreground/85 mt-0.5">
             {rescueResponders.length === 0
@@ -1351,7 +1351,7 @@ export default function ActiveRide() {
               onClick={() => setShowMembers(false)}
               aria-hidden
             />
-            <div className="fixed z-50 animate-slide-up left-3 right-3 bottom-3 max-h-[45dvh] safe-bottom landscape:left-auto landscape:right-3 landscape:top-3 landscape:bottom-3 landscape:w-56 md:landscape:w-64 landscape:max-h-none">
+            <div className="fixed z-50 animate-slide-up left-3 right-3 bottom-3 max-h-[45dvh] safe-bottom landscape:left-auto landscape:right-[calc(0.75rem+var(--safe-right))] landscape:top-[calc(0.75rem+var(--safe-top))] landscape:bottom-3 landscape:w-56 md:landscape:w-64 landscape:max-h-none">
             <div className="bg-card border border-border rounded-xl p-2 md:p-3 h-full max-h-full flex flex-col shadow-lg">
               <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
                 <Users className="w-3 h-3" />

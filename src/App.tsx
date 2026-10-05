@@ -120,7 +120,7 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   const navType = useNavigationType();
   const animation = navType === "POP" ? "page-in-back" : navType === "REPLACE" ? "page-in-fade" : "page-in-forward";
   return (
-    <div key={location.pathname} className={animation}>
+    <div key={location.pathname} className={`${animation} page-safe-x`}>
       {children}
     </div>
   );

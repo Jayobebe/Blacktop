@@ -275,7 +275,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
         'space-y-2 pointer-events-none',
         inline
           ? 'relative z-30 w-full'
-          : 'absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-[calc(0.75rem+env(safe-area-inset-left))] right-[calc(4.25rem+env(safe-area-inset-right))] z-30',
+          : 'absolute top-[calc(0.75rem+var(--safe-top))] left-[calc(0.75rem+var(--safe-left))] right-[calc(4.25rem+var(--safe-right))] z-30',
       )}
     >
       {/* Stops short of the MapLibre control column (zoom/compass/locate) so it never

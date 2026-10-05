@@ -56,7 +56,7 @@ export function TrackQrScanner({ title, hint, read, onClose }: { title: string; 
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-background flex flex-col safe-top safe-bottom">
+    <div className="fixed inset-0 z-[100] bg-background flex flex-col safe-top safe-bottom safe-frame-x">
       <div className="flex items-center justify-between p-4">
         <p className="font-semibold">{title}</p>
         <Button variant="ghost" onClick={onClose}>

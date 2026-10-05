@@ -35,7 +35,7 @@ export function TrackEditor({
 
   if (!loop) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center gap-4 p-6 text-center safe-top safe-bottom">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center gap-4 p-6 text-center safe-top safe-bottom safe-frame-x">
         <p className="text-sm max-w-xs">{tr("This track was saved before track outlines, so its lines can't be moved. It still times as it is. To change it, record a lap with GPS or pick it from the circuit library.")}</p>
         <Button onClick={onCancel}>{tr("Back")}</Button>
       </div>

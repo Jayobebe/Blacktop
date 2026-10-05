@@ -654,11 +654,11 @@ export default function Lobby() {
       {/* Audio Device Selector Overlay */}
       {showAudioDevices && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
+          className="fixed inset-0 z-[100] safe-frame flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
           onClick={() => setShowAudioDevices(false)}
         >
           <div 
-            className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm shadow-2xl"
+            className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm max-h-full overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">
@@ -688,7 +688,7 @@ export default function Lobby() {
       {/* QR Code Overlay - tap to dismiss or auto-hide after 15s */}
       {showQR && convoy.code && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] safe-frame flex items-center justify-center p-3 bg-background/90 backdrop-blur-sm animate-fade-in"
           onClick={() => setShowQR(false)}
         >
           <div className="bg-white p-6 rounded-3xl shadow-2xl">

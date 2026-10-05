@@ -71,7 +71,7 @@ export function BlacktopMapOverlay() {
       {rideState.isActive ? (
         <button
           onClick={handleExit}
-          className="absolute bottom-3 right-3 z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
+          className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
           aria-label={tr("Exit map and return to ride")}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -80,7 +80,7 @@ export function BlacktopMapOverlay() {
       ) : inLobby ? (
         <button
           onClick={() => closeBlacktopMap()}
-          className="absolute bottom-3 right-3 z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
+          className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] z-20 flex items-center gap-1 pl-2 pr-3 py-2 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
           aria-label={tr("Back to lobby")}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -89,7 +89,7 @@ export function BlacktopMapOverlay() {
       ) : (
         <button
           onClick={handleExit}
-          className="absolute bottom-3 right-3 z-20 p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
+          className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] z-20 p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
           aria-label={tr("Close map")}
         >
           <X className="w-5 h-5" />

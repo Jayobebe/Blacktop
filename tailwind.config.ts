@@ -128,8 +128,8 @@ export default {
         "scale-in": "scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
       },
       spacing: {
-        'safe-bottom': 'env(safe-area-inset-bottom)',
-        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'var(--safe-bottom)',
+        'safe-top': 'var(--safe-top)',
       },
       transitionTimingFunction: {
         'spring': 'cubic-bezier(0.16, 1, 0.3, 1)',

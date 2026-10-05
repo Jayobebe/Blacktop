@@ -167,7 +167,7 @@ export function SwipeDeckPips({
             aria-selected={active}
             aria-label={labels?.[i]}
             onClick={() => onSelect(i)}
-            className="p-1.5 -m-0.5"
+            className="tall-hit p-1.5 -m-0.5"
           >
             <span
               className={cn(

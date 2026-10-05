@@ -63,9 +63,9 @@ export function StationManager({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[95] bg-background/95 backdrop-blur-xl flex flex-col animate-fade-in">
-      {/* Clear of the notch / Dynamic Island, and the side notch in landscape. */}
-      <div className="flex items-center justify-between pb-3 border-b border-border/50" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+    <div className="fixed inset-0 z-[95] safe-frame-x bg-background/95 backdrop-blur-xl flex flex-col animate-fade-in">
+      {/* Clear of the notch / Dynamic Island; the sides are the overlay's safe-frame-x. */}
+      <div className="flex items-center justify-between pb-3 border-b border-border/50" style={{ paddingTop: 'calc(var(--safe-top) + 0.75rem)', paddingLeft: '1rem', paddingRight: '1rem' }}>
         <div>
           <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Stations")}</p>
           <p className="text-xs text-muted-foreground">{tr("Your own files. Nothing leaves the phone.")}</p>

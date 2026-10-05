@@ -137,7 +137,7 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
       </div>
 
       {/* Header */}
-      <div className="relative z-10 safe-top px-4 pt-3 flex items-center justify-between">
+      <div className="relative z-10 safe-top safe-x pt-3 flex items-center justify-between">
         <button onClick={onCancel} className="p-2.5 rounded-xl bg-card/90 border border-border/40 backdrop-blur" aria-label={tr("Cancel arena")}>
           <X className="w-5 h-5" />
         </button>
@@ -160,7 +160,7 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
       </div>
 
       {/* Controls */}
-      <div className="relative z-10 mt-auto safe-bottom px-4 pb-4 flex items-center gap-2">
+      <div className="relative z-10 mt-auto safe-bottom safe-x flex items-center gap-2">
         <button
           onClick={() => setDrawing(d => !d)}
           className="flex-1 py-3 rounded-xl border-2 font-semibold text-sm"

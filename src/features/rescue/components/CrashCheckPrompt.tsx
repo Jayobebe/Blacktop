@@ -62,13 +62,14 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
   const secs = remaining % 60;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/90 backdrop-blur-md animate-fade-in">
-      <div className="w-[92vw] max-w-md bg-card border-2 border-destructive/60 rounded-3xl p-6 shadow-2xl animate-scale-in text-center">
-        <div className="mx-auto w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center animate-pulse mb-4">
-          <AlertTriangle className="w-10 h-10 text-destructive" />
+    <div className="fixed inset-0 z-[60] safe-frame flex items-center justify-center p-3 bg-background/90 backdrop-blur-md animate-fade-in">
+      <div className="w-full max-w-md short:max-w-2xl max-h-full overflow-y-auto bg-card border-2 border-destructive/60 rounded-3xl p-6 short:p-4 shadow-2xl animate-scale-in text-center short:grid short:grid-cols-2 short:items-center short:gap-x-6">
+        <div>
+        <div className="mx-auto w-20 h-20 short:w-12 short:h-12 rounded-full bg-destructive/20 flex items-center justify-center animate-pulse mb-4 short:mb-2">
+          <AlertTriangle className="w-10 h-10 short:w-6 short:h-6 text-destructive" />
         </div>
         <h2 className="text-2xl font-bold mb-1">{tr("Are you okay?")}</h2>
-        <p className="text-sm text-muted-foreground mb-5">
+        <p className="text-sm text-muted-foreground mb-5 short:mb-3">
           {tr("Possible crash detected. If you don't respond, a rescue ping will be sent automatically.")}
         </p>
 
@@ -79,9 +80,10 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
             style={{ width: `${pct * 100}%` }}
           />
         </div>
-        <p className="font-mono text-3xl font-bold text-destructive tabular-nums mb-6">
+        <p className="font-mono text-3xl font-bold text-destructive tabular-nums mb-6 short:mb-0">
           {mins}:{secs.toString().padStart(2, '0')}
         </p>
+        </div>
 
         <div className="flex flex-col gap-3">
           <Button

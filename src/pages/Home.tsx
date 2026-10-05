@@ -179,12 +179,12 @@ export default function Home() {
           onClick={() => setTrackRole(id)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setTrackRole(id)}
           className={cn(
-            'flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors',
+            'tall-hit flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors',
             compact ? 'px-1.5 py-1' : 'px-2.5 py-1.5',
             trackRole === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
           )}
         >
-          <Icon className="w-3 h-3" />
+          <Icon className="w-3 h-3 landscape:group-data-[room=tight]/tile:hidden" />
           {label}
         </span>
       ))}
@@ -228,11 +228,11 @@ export default function Home() {
           onClick={() => setJoinRole(id)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setJoinRole(id)}
           className={cn(
-            'flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors px-1.5 py-1',
+            'tall-hit flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors px-1.5 py-1',
             joinRole === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
           )}
         >
-          <Icon className="w-3 h-3" />
+          <Icon className="w-3 h-3 landscape:group-data-[room=tight]/tile:hidden" />
           {label}
         </span>
       ))}
@@ -344,6 +344,23 @@ export default function Home() {
         // Pressed, these brighten instead of shrinking: a scaled tile's notch slid off the
         // globe and away from its redrawn border (see .globe-tile in index.css).
         el.classList.add('globe-tile');
+      });
+
+      // In landscape the notch takes a bite out of the bottom tiles' middle. Tell each how much
+      // room its label has (where the label's top line sits), so it can drop its icon, then tighten its switch,
+      // rather than slide under the globe (a small phone, or one whose notch narrows the page).
+      const landscape = window.matchMedia('(orientation: landscape)').matches;
+      bottomTiles.forEach((el) => {
+        if (!landscape) {
+          delete el.dataset.room;
+          return;
+        }
+        const rect = el.getBoundingClientRect();
+        const dy = rect.top + rect.height * 0.3 - cyAbs;
+        const chord = Math.abs(dy) < pr ? Math.sqrt(pr * pr - dy * dy) : 0;
+        // Join beside Track keeps its label left of the globe; every other case, right of it.
+        const room = el === join && trackShown ? cxAbs - chord - rect.left : rect.right - (cxAbs + chord);
+        el.dataset.room = room < 205 ? 'tight' : room < 250 ? 'snug' : 'wide';
       });
 
       // Carry the accent border around the circular cut on Convoy + Solo tiles.
@@ -557,13 +574,13 @@ export default function Home() {
                             secondaryTile.onClick();
                           }}
                           className={cn(
-                            'pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
+                            'group/tile pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
                             // The globe sits over this tile's centre in landscape, so the label moves right of it;
                             // with Track beside it the globe is on its right corner, so the label goes left.
-                            showTrack ? 'landscape:justify-start landscape:pl-6' : 'landscape:justify-end landscape:pr-8'
+                            showTrack ? 'landscape:justify-start landscape:pl-6 landscape:data-[room=tight]:pl-3' : 'landscape:justify-end landscape:pr-8 landscape:data-[room=tight]:pr-3'
                           )}
                         >
-                          <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                          <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
                             <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
                           </div>
                           <div className="text-left flex flex-col items-start gap-1">
@@ -579,9 +596,9 @@ export default function Home() {
                             tabIndex={0}
                             onClick={openTrack}
                             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                            className="pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 touch-target-lg cursor-pointer"
+                            className="group/tile pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 data-[room=tight]:pr-3 touch-target-lg cursor-pointer"
                           >
-                            <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
                               <Zap className="w-4 h-4 text-accent" />
                             </div>
                             <div className="flex flex-col items-start gap-1">

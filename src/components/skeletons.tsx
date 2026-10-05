@@ -10,7 +10,7 @@ import { tr } from '@/lib/i18n';
 /** Home-shaped skeleton shown while the profile/session check runs at boot. */
 export function AppBootSkeleton() {
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6" aria-busy="true" aria-label={tr("Loading")}>
+    <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom safe-frame-x md:p-5 lg:p-6" aria-busy="true" aria-label={tr("Loading")}>
       <div className="flex items-center justify-between mb-4">
         <div className="space-y-2">
           <Skeleton className="h-2.5 w-20" />

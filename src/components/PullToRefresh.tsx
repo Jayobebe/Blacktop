@@ -138,7 +138,7 @@ export function PullToRefresh({ disabled = false }: { disabled?: boolean }) {
       role={refreshing ? 'status' : undefined}
       aria-label={refreshing ? tr("Refreshing") : undefined}
       className="pointer-events-none fixed inset-x-0 z-40 flex justify-center"
-      style={{ top: 'calc(env(safe-area-inset-top) - 40px)' }}
+      style={{ top: 'calc(var(--safe-top) - 40px)' }}
     >
       <div
         className={cn(

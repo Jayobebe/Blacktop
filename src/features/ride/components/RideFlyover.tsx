@@ -485,7 +485,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const hasRoute = routeCoords.length >= 2;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[100] safe-frame-x bg-black flex flex-col">
       {/* Offscreen map — the visible frame is the composited canvas below. */}
       <div
         ref={mapContainerRef}
@@ -504,7 +504,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       {/* Clear of the notch / Dynamic Island, and the side notch in landscape. */}
       <div
         className="flex items-center justify-between pb-3 relative z-10"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
+        style={{ paddingTop: 'calc(var(--safe-top) + 0.75rem)', paddingLeft: '1rem', paddingRight: '1rem' }}
       >
         <h2 className="text-sm font-semibold">{tr("3D Ride Overview")}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr("Close 3D overview")}>
@@ -534,7 +534,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
         )}
       </div>
 
-      <div className="p-4 space-y-3 relative z-10">
+      <div className="p-4 safe-bottom space-y-3 relative z-10">
         <div className="flex items-center justify-center gap-2">
           {DURATIONS.map(d => (
             <button

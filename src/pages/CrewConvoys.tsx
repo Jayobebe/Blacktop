@@ -122,8 +122,8 @@ export default function CrewConvoys() {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border/40 bg-card p-5 space-y-4">
+        <div className="fixed inset-0 z-50 safe-frame bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-md max-h-full overflow-y-auto rounded-2xl border border-border/40 bg-card p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">{selected.name}</h2>

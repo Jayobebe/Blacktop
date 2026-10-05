@@ -296,8 +296,8 @@ export default function World() {
       {/* Blacktank — the crew fuel pot landmark. Portalled out of the page so
           the animated (transformed) wrapper doesn't trap the fixed overlay. */}
       {showBlacktank && createPortal(
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6">
-          <div className="w-full sm:max-w-md max-h-[88dvh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border/40 bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="fixed inset-0 z-50 safe-frame-x bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 pt-[var(--safe-top)] sm:p-6">
+          <div className="w-full sm:max-w-md max-h-[min(88dvh,100%)] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border/40 bg-card p-4 pb-[calc(1rem+var(--safe-bottom))]">
             <BlacktankPanel onClose={() => setShowBlacktank(false)} />
           </div>
         </div>,
@@ -308,7 +308,7 @@ export default function World() {
       {/* Crew QR — mates scan this to join your crew */}
 
       {showCrewQr && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6 safe-top safe-bottom overflow-y-auto">
+        <div className="fixed inset-0 z-50 safe-frame-x bg-black/85 backdrop-blur-sm flex items-start justify-center p-6 safe-top safe-bottom overflow-y-auto">
           <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4 my-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold uppercase tracking-[0.2em]">{tr("Crew QR")}</h2>

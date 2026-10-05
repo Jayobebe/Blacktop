@@ -63,9 +63,9 @@ export function RadioOverlay() {
 
 
   return createPortal(
-    <div className="radio-overlay fixed inset-0 z-[1200] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-bottom landscape:max-h-[100dvh] landscape:overflow-hidden">
-      {/* Clear of the notch / Dynamic Island, and the side notch in landscape (env() on the header itself). */}
-      <div className="flex items-center justify-between shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+    <div className="radio-overlay fixed inset-0 z-[1200] flex flex-col bg-background/40 backdrop-blur-2xl backdrop-saturate-150 animate-fade-in safe-bottom safe-frame-x landscape:max-h-[100dvh] landscape:overflow-hidden">
+      {/* Clear of the notch / Dynamic Island; the sides (the notch in landscape) are the overlay's safe-frame-x. */}
+      <div className="flex items-center justify-between shrink-0" style={{ paddingTop: 'calc(var(--safe-top) + 0.75rem)', paddingLeft: '1rem', paddingRight: '1rem' }}>
         <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Blacktop Radio")}</p>
         <button
           type="button"

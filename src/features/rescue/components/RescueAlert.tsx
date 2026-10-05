@@ -23,8 +23,8 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDi
   if (requests.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
-      <div className="w-[90vw] max-w-sm space-y-3 animate-scale-in">
+    <div className="fixed inset-0 z-50 safe-frame flex items-center justify-center p-3 bg-background/80 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-sm max-h-full overflow-y-auto space-y-3 animate-scale-in">
         {requests.map((request) => (
           <div
             key={request.id}

@@ -343,7 +343,7 @@ export function ChaseCamPlacer({
         <div className="absolute inset-0">
           <div ref={mapElRef} className="w-full h-full" />
         </div>
-        <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-3 right-3 flex items-start gap-2">
+        <div className="absolute top-[calc(0.75rem+var(--safe-top))] left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] flex items-start gap-2">
           <div className="flex-1 rounded-xl frost-accent px-3 py-2 text-xs shadow-lg">
             <p className="font-semibold flex items-center gap-1.5">
               {markers.sf === null ? <Flag className="w-3.5 h-3.5" /> : <Split className="w-3.5 h-3.5" />}
@@ -366,7 +366,7 @@ export function ChaseCamPlacer({
         </div>
       </div>
 
-      <div className="p-3 space-y-2.5 border-t border-border safe-bottom bg-background">
+      <div className="p-3 pl-[max(0.75rem,var(--safe-left))] pr-[max(0.75rem,var(--safe-right))] space-y-2.5 border-t border-border safe-bottom bg-background">
         {finishing ? (
           <div className="space-y-2">
             <p className="text-sm font-semibold">{tr("Complete the track")}</p>
@@ -395,13 +395,13 @@ export function ChaseCamPlacer({
             {/* Position + scrub strip */}
             <div>
               <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground mb-1">
-                <button className="p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current - 1); }} aria-label={tr("Back 1 metre")}>
+                <button className="glove-hit p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current - 1); }} aria-label={tr("Back 1 metre")}>
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <span>
                   {km(rel)} / {km(line.length)} {markers.sf !== null ? tr("from S/F") : ''}
                 </span>
-                <button className="p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current + 1); }} aria-label={tr("Forward 1 metre")}>
+                <button className="glove-hit p-1 -m-1" onClick={() => { setPlaying(false); seek(posRef.current + 1); }} aria-label={tr("Forward 1 metre")}>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

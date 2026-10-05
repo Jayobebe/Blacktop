@@ -72,7 +72,7 @@ export function DemoSuccess({ show }: { show: boolean }) {
   if (!show) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 safe-frame flex items-center justify-center bg-background/50 backdrop-blur-sm animate-fade-in">
       <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center animate-scale-in">
         <svg className="w-12 h-12 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
           <path 

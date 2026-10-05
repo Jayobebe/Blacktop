@@ -122,7 +122,7 @@ export default function JoinConvoy() {
 
       {/* QR Scanner Overlay */}
       {showScanner && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        <div className="fixed inset-0 z-50 safe-frame bg-background flex flex-col">
           <div className="p-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">{tr("Scan Convoy QR Code")}</h2>
             <button

@@ -91,7 +91,11 @@ export function FloatingRadioLayer() {
   return createPortal(
     <div
       className="fixed z-[85] -translate-x-1/2 -translate-y-1/2"
-      style={{ left: `${x * 100}%`, top: `${y * 100}%` }}
+      // Wherever it was left, it stays inside the safe area: under the notch or on the home bar it couldn't be pressed.
+      style={{
+        left: `clamp(calc(var(--safe-left) + 2rem), ${x * 100}%, calc(100% - var(--safe-right) - 2rem))`,
+        top: `clamp(calc(var(--safe-top) + 2rem), ${y * 100}%, calc(100% - var(--safe-bottom) - 2rem))`,
+      }}
     >
       <RadioOrb
         active={player.isPlaying}

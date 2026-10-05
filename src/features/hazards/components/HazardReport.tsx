@@ -83,11 +83,11 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
   const types = category ? HAZARD_TYPES.filter((t) => t.category === category) : [];
 
   return (
-    <div className="fixed inset-0 z-[1250] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[1250] bg-background/80 backdrop-blur-sm safe-frame-x flex items-end sm:items-center justify-center p-3 pt-[calc(0.75rem+var(--safe-top))] pb-[calc(0.75rem+var(--safe-bottom))] animate-fade-in" onClick={onClose}>
       <div
         role="dialog"
         aria-label={tr("Report a hazard")}
-        className="w-full max-w-md short:max-w-2xl rounded-3xl border border-border bg-card/95 shadow-2xl p-3 animate-slide-up"
+        className="w-full max-w-md short:max-w-2xl max-h-full overflow-y-auto rounded-3xl border border-border bg-card/95 shadow-2xl p-3 animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-1 pb-3">
