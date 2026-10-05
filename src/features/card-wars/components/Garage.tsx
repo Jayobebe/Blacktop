@@ -18,6 +18,8 @@ import { REST_RECOVERY, WEAR_PER_BATTLE } from '../lib/wear';
 import { updateVault, useVault } from '../lib/store';
 import { eventSound } from '@/lib/appSound';
 import { TradeSheet } from './TradeSheet';
+import { claimSet, contractText, useProgress } from '../lib/progress';
+import { Progress } from '@/components/ui/progress';
 import type { BattleCard as Card, DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
@@ -71,6 +73,13 @@ export function Garage({
   const shop = useShop();
   const { beamIn } = useVault();
   const [trade, setTrade] = useState(false);
+  const progress = useProgress();
+  const [claiming, setClaiming] = useState<string | null>(null);
+  const doneSets = new Set(progress.sets.filter((x) => x.claimed).map((x) => x.maker));
+  const setBadge = (c: Card) => {
+    const maker = cardById(c.archetype)?.manufacturer;
+    return c.source !== 'collection' && maker && doneSets.has(maker) ? tr("{0} set", [maker]) : undefined;
+  };
   // A raptured card beams back into the deck once, then the note clears.
   useEffect(() => {
     if (!beamIn?.length) return;
@@ -278,7 +287,7 @@ export function Garage({
           {Array.from({ length: 5 }, (_, i) => {
             const c = deck[i];
             return c ? (
-              <CwCard key={c.id} card={c} showCondition className={cn(fresh === c.id && 'cw-pop', beamIn?.includes(c.id) && 'cw-beam-in')} onClick={() => setOpen({ kind: 'card', index: i })} />
+              <CwCard key={c.id} card={c} showCondition badge={setBadge(c)} className={cn(fresh === c.id && 'cw-pop', beamIn?.includes(c.id) && 'cw-beam-in')} onClick={() => setOpen({ kind: 'card', index: i })} />
             ) : (
               <button
                 key={i}
@@ -332,6 +341,79 @@ export function Garage({
 
       {!mustSpin && cardSpins}
       {!mustSpin && tagSpins}
+
+
+      {progress.contracts.length > 0 && (
+        <section className="cw-panel space-y-2.5">
+          <div className="flex items-baseline justify-between">
+            <p className="text-sm font-semibold">{tr("Daily contracts")}</p>
+            <span className="text-[11px] text-muted-foreground">{tr("New ones at midnight")}</span>
+          </div>
+          {progress.contracts.map((k) => (
+            <div key={k.id} className={cn('space-y-1', k.paid && 'opacity-60')}>
+              <p className="flex items-center justify-between gap-2 text-xs">
+                <span>{contractText(k.id, k.target)}</span>
+                <span className="font-mono text-accent shrink-0">{k.paid ? tr("Paid") : `+${k.rpm} RPM`}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <Progress value={(k.progress / k.target) * 100} className="h-1.5" />
+                <span className="text-[10.5px] font-mono text-muted-foreground shrink-0">
+                  {k.progress}/{k.target}
+                </span>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {progress.sets.length > 0 && (
+        <section className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{tr("Maker sets")}</h2>
+            <span className="text-[11px] text-muted-foreground">{tr("Own every Road and Race card from a maker")}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {progress.sets.map((x) => {
+              const complete = x.owned >= x.total;
+              return (
+                <div key={x.maker} className={cn('cw-panel py-2 px-3 space-y-1.5', x.claimed && 'border-accent/50')}>
+                  <p className="flex items-center justify-between text-xs font-semibold">
+                    <span className="truncate">{x.maker}</span>
+                    <span className="font-mono text-muted-foreground">
+                      {x.owned}/{x.total}
+                    </span>
+                  </p>
+                  <Progress value={(x.owned / x.total) * 100} className="h-1" />
+                  {x.claimed ? (
+                    <p className="text-[10.5px] text-accent">{tr("Set complete")}</p>
+                  ) : complete ? (
+                    <Button
+                      size="sm"
+                      className="w-full h-9"
+                      disabled={claiming === x.maker}
+                      onClick={async () => {
+                        setClaiming(x.maker);
+                        const r = await claimSet(x.maker);
+                        setClaiming(null);
+                        if (typeof r === 'string') {
+                          if (r !== 'demo') toast.error(tr("Could not claim the set"));
+                        } else {
+                          eventSound('success');
+                          toast.success(tr("{0} set complete: +{1} RPM", [x.maker, r.rpm]), { description: tr("And a {0} Overdrive dog tag.", [x.maker]) });
+                        }
+                      }}
+                    >
+                      {tr("Claim {0} RPM + dog tag", [x.rpm])}
+                    </Button>
+                  ) : (
+                    <p className="text-[10.5px] text-muted-foreground">{tr("{0} RPM + dog tag", [x.rpm])}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <Button variant="outline" className="w-full h-14 gap-2 justify-between px-4" onClick={onShop}>
         <span className="flex items-center gap-2">
