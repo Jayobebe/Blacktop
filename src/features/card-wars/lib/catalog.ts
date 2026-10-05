@@ -14,6 +14,7 @@ const CAR_ART = [
 const BIKE_ART = [
  'mt07', 'r6', 'ninja', 'zx10rr', 'sv650', 'gsxr', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk',
  'gs', 's1000', 'rs660f', 'rs660', '890duke', 'rc8c', 'striple', 'moto2', 'f3rr', 'f3ss',
+ 'm1_15',
 ];
 const ARTWORK: Record<string, string> = Object.fromEntries([
  ...CAR_ART.map(id => [id, `/card-wars/cars/${id}.png`]),

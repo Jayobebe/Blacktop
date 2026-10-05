@@ -32,6 +32,8 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 
 BIKE_ORDER = [
     'mt07', 'r6', '890duke', 'f3rr', 'rc8c', 'f3ss', 'striple', 'ninja', 'moto2', 'zx10rr',
     'sv650', 'gsxr', 'gs', 's1000', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk', 'rs660f', 'rs660',
+    # shop-only cards, as their artwork arrives (by catalog id only: 1.png .. 20.png are the twenty above)
+    'm1_15',
 ]
 
 # Smoked glass: dark, and see-through enough that the backdrop reads behind it.
