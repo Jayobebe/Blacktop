@@ -79,6 +79,9 @@ export function Garage({
   const rating = deckRating(deck);
   const freeCards = shop.freeSpins > 0;
   const freeTags = V2 && shop.freeTagSpins > 0;
+  // Keep a spin box up after its last free spin, so the reel and the win still show.
+  const [cardBoxOpen, setCardBoxOpen] = useState(false);
+  const [tagBoxOpen, setTagBoxOpen] = useState(false);
   // Nothing to field and nothing spare: the free spins are the only way in.
   const mustSpin = missing > 0 && spare.length === 0 && freeCards;
 
@@ -106,22 +109,25 @@ export function Garage({
     else if (tagStrength(won) > tagStrength(tags[at])) onReplace('tags', at, won.id);
   };
 
-  const cardSpins = freeCards && (
+  const cardSpins = (freeCards || cardBoxOpen) && (
     <section className="cw-panel cw-panel-gift">
       <div className="flex items-start gap-2.5">
         <Gift className="w-5 h-5 text-accent shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold">{shop.freeSpins === 1 ? tr("1 free card spin") : tr("{0} free card spins", [shop.freeSpins])}</p>
+          <p className="text-sm font-semibold">{shop.freeSpins === 0 ? tr("No free card spins left") : shop.freeSpins === 1 ? tr("1 free card spin") : tr("{0} free card spins", [shop.freeSpins])}</p>
           <p className="text-xs text-muted-foreground leading-snug">
             {tr("Every free spin wins a card you don't have. Road cards come up most; an F1 or MotoGP card is a {0}% shot.", [RULES.freeOdds.f1 + RULES.freeOdds.motogp])}
           </p>
         </div>
       </div>
       <SpinPanel
-        button={tr("Spin for a card")}
-        disabled={frozen}
+        button={freeCards ? (cardBoxOpen ? tr("Spin again") : tr("Spin for a card")) : tr("No free spins left")}
+        disabled={frozen || !freeCards}
         labels={CARD_REEL_LABELS}
-        onSpin={() => spin(null)}
+        onSpin={() => {
+          setCardBoxOpen(true);
+          return spin(null);
+        }}
         onWon={(r) => {
           if (!r.card) return;
           setFresh(r.card);
@@ -129,28 +135,41 @@ export function Garage({
           if (deck.length < 5) onReplace('deck', deck.length, r.card);
         }}
       />
+      {!freeCards && cardBoxOpen && (
+        <Button variant="outline" className="w-full h-11 mt-2" onClick={() => setCardBoxOpen(false)}>
+          {tr("Done")}
+        </Button>
+      )}
     </section>
   );
 
-  const tagSpins = freeTags && (
+  const tagSpins = (freeTags || tagBoxOpen) && (
     <section className="cw-panel cw-panel-gift">
       <div className="flex items-start gap-2.5">
         <Tag className="w-5 h-5 text-accent shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold">{shop.freeTagSpins === 1 ? tr("1 free dog tag spin") : tr("{0} free dog tag spins", [shop.freeTagSpins])}</p>
+          <p className="text-sm font-semibold">{shop.freeTagSpins === 0 ? tr("No free dog tag spins left") : shop.freeTagSpins === 1 ? tr("1 free dog tag spin") : tr("{0} free dog tag spins", [shop.freeTagSpins])}</p>
           <p className="text-xs text-muted-foreground leading-snug">{tr("Each spin wins a dog tag tied to a vehicle, which sets how strong it is. Your first three cover all three powers.")}</p>
         </div>
       </div>
       <SpinPanel
-        button={tr("Spin for a dog tag")}
-        disabled={frozen}
+        button={freeTags ? (tagBoxOpen ? tr("Spin again") : tr("Spin for a dog tag")) : tr("No free spins left")}
+        disabled={frozen || !freeTags}
         labels={TAG_REEL_LABELS}
-        onSpin={spinTag}
+        onSpin={() => {
+          setTagBoxOpen(true);
+          return spinTag();
+        }}
         onWon={(r) => {
           const won = r.tag ? parseOwnedTag(r.tag) : null;
           if (won) equipIfBetter(won);
         }}
       />
+      {!freeTags && tagBoxOpen && (
+        <Button variant="outline" className="w-full h-11 mt-2" onClick={() => setTagBoxOpen(false)}>
+          {tr("Done")}
+        </Button>
+      )}
     </section>
   );
 
