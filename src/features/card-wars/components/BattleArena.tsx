@@ -386,7 +386,7 @@ export function BattleArena({
                   card={mineCard}
                   hp={mine[mineIndex ?? 0] ?? 100}
                   highlight={live}
-                  className={cn(mineOut && phase !== 'clash' && 'cw-charred')}
+                  className={cn(!rapture && mineOut && phase !== 'clash' && 'cw-charred', beamClass(0, mineCard.id))}
                   onClick={focusCard ? () => setFocus(null) : undefined}
                 />
                 {myTag && reveal && tagChip(myTag, 'mine')}
@@ -450,7 +450,7 @@ export function BattleArena({
                   card={theirsCard}
                   hp={theirs[theirsIndex ?? 0] ?? 100}
                   highlight={live}
-                  className={cn(theirsOut && phase !== 'clash' && 'cw-charred')}
+                  className={cn(!rapture && theirsOut && phase !== 'clash' && 'cw-charred', beamClass(1, theirsCard.id))}
                   onClick={!reveal ? () => setPeek(null) : undefined}
                 />
                 {theirTag && reveal && tagChip(theirTag, 'theirs')}
