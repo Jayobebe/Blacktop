@@ -417,6 +417,21 @@ button.cw-card:disabled { cursor: default; }
 
 /* ── Pages ─────────────────────────────────────────────────────────────── */
 .cw-panel { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 22px; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.55); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+/* Card Wars on the Arcade page: one tile that takes the room the other games leave. */
+.cw-arcade { display: flex; flex-direction: column; gap: 12px; min-height: 0; padding: 16px; border-radius: 16px; border: 1px solid hsl(var(--border) / 0.3); background: hsl(var(--card) / 0.5); transition: background-color 0.2s, border-color 0.2s; }
+.cw-arcade:hover { background: hsl(var(--card) / 0.7); border-color: hsl(var(--accent) / 0.4); }
+.cw-arcade-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cw-arcade-stats > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 8px 10px; border-radius: 12px; background: hsl(0 0% 0% / 0.3); border: 1px solid hsl(0 0% 100% / 0.07); font-size: 9.5px; line-height: 1.2; text-transform: uppercase; letter-spacing: 0.08em; color: hsl(var(--muted-foreground)); }
+.cw-arcade-stats b { font-size: 18px; line-height: 1.1; letter-spacing: 0; color: hsl(var(--foreground)); }
+.cw-arcade-tags { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.cw-arcade-tags .cw-plate { flex: none; min-width: 0; padding: 7px 8px 7px 20px; gap: 6px; overflow: hidden; }
+.cw-arcade-tags .cw-plate-hole { left: 7px; }
+.cw-arcade-tags .cw-plate-icon { width: 16px; height: 16px; }
+.cw-arcade-tags .cw-plate-text { min-width: 0; }
+.cw-arcade-tags .cw-plate-text b, .cw-arcade-tags .cw-plate-effect { display: block; font-size: 10px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cw-arcade-note { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; line-height: 1.35; color: hsl(var(--muted-foreground)); }
+.cw-arcade-note svg { flex-shrink: 0; width: 13px; height: 13px; margin-top: 1px; }
+.cw-arcade .cw-strip > .cw-card { animation: none; }
 .cw-panel-hero { border-color: hsl(var(--accent) / 0.35); background: radial-gradient(120% 90% at 0% 0%, hsl(var(--accent) / 0.2), transparent 60%), hsl(var(--card) / 0.6); }
 .cw-panel-gift { border: 1.5px dashed hsl(var(--accent) / 0.6); background: hsl(var(--accent) / 0.08); }
 .cw-emblem { flex-shrink: 0; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: hsl(var(--accent) / 0.16); color: hsl(var(--accent)); box-shadow: inset 0 0 0 1px hsl(var(--accent) / 0.35), 0 0 22px hsl(var(--accent) / 0.25); }

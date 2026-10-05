@@ -26,7 +26,7 @@ function serverRules(): 1 | 2 {
 export const V2 = serverRules() === 2;
 
 /** What the server said at launch about a later migration (scripts: on with the second rule set). */
-function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes'): boolean {
+function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds'): boolean {
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
   if (env) return env === '2';
   try {
@@ -54,13 +54,23 @@ export const WEAR_BY_ROUND = V2 && serverHas('cardWarsWear');
 
 /**
  * The prize table is the computer's own deck, shop-only cards included
- * (migration 20261012000000_card_wars_prize_deck.sql; the `cardWarsPrizes`
+ * (migration 20261012, applied as 20261005192322_…; the `cardWarsPrizes`
  * cap). Until the server has it, it only hands out Road and Race cards, so a
  * shop-only card on the table is swapped for one of those.
  */
 export const PRIZE_DECK = V2 && serverHas('cardWarsPrizes');
 /** A shop-only prize costs at most this many times the dearest card in the deck that won it (the server checks it against what the rider owns). */
 export const PRIZE_REACH = 2;
+
+/**
+ * Migration 20261013000000_card_wars_builds.sql (the `cardWarsBuilds` cap):
+ * a deck's three dog tags can share a power, a Spectre's tag has the power
+ * spun for it and its bonus with any vehicle, repairs cost half as much, a
+ * battle sat out gives 15 % back, and the other arcade games pay RPM.
+ */
+export const BUILDS = V2 && serverHas('cardWarsBuilds');
+/** RPM for a finished game of Hit Heavy or Petrol Head (`best`: a new personal best), and the most a day pays. The server's numbers. */
+export const ARCADE_PAY = { game: 5, best: 15, daily: 40 } as const;
 
 export interface Rules {
   /** RPM for a finished battle against the computer. */
@@ -110,7 +120,7 @@ const RULES_V2: Rules = {
   freeCardSpins: 5,
   freeTagSpins: FLIP ? 4 : 3,
   freeOdds: { road: 55, race: 30, gtlm: 6, tt: 6, f1: 1.5, motogp: 1.5 },
-  wear: { road: 8, race: 15, rest: 10 },
+  wear: { road: 8, race: 15, rest: BUILDS ? 15 : 10 },
 };
 
 export const RULES: Rules = V2 ? RULES_V2 : RULES_V1;
@@ -136,7 +146,7 @@ export function wearLoss(race: boolean, rounds: number): number {
 export function repairCost(price: number | undefined, condition: number): number {
   const missing = Math.max(0, 100 - condition);
   if (missing === 0) return 0;
-  return V2 ? Math.max(1, Math.ceil((missing * (price ?? 100)) / 200)) : missing;
+  return V2 ? Math.max(1, Math.ceil((missing * (price ?? 100)) / (BUILDS ? 400 : 200))) : missing;
 }
 
 /** Damage a lost round does: at least 20, more the wider the gap, 65 at most. */

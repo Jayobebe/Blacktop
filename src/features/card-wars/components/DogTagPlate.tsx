@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Bike, Car } from 'lucide-react';
+import { Bike, Car, Ghost } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TAG_ICON, tagEffect, tagKindLine, tagName, tagTitle } from '../lib/tags';
 import type { BattleCard, DogTag } from '../types';
@@ -26,7 +26,7 @@ export function DogTagPlate({
   children?: ReactNode;
 }) {
   const Icon = TAG_ICON[tag.power];
-  const Kind = tag.vehicle === 'car' ? Car : tag.vehicle === 'bike' ? Bike : null;
+  const Kind = tag.vehicle === 'car' ? Car : tag.vehicle === 'bike' ? Bike : tag.vehicle === 'any' ? Ghost : null;
   return (
     <span className={cn('cw-plate', `cw-plate-${size}`, className)}>
       {size === 'big' && <span className="cw-plate-chain" aria-hidden />}

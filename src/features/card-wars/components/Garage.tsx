@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { SPECS, cardById } from '../lib/catalog';
 import { deckRating, isBike, overall } from '../lib/ratings';
-import { RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost } from '../lib/rules';
+import { BUILDS, RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost } from '../lib/rules';
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
@@ -313,13 +313,13 @@ export function Garage({
       <section>
         <div className="flex items-baseline justify-between mb-2">
           <h2 className={heading}>{tr("Dog tags")}</h2>
-          <span className="text-[11px] text-muted-foreground">{tr("Three of the four powers, one use each")}</span>
+          <span className="text-[11px] text-muted-foreground">{BUILDS ? tr("Any three, one use each") : tr("Three of the four powers, one use each")}</span>
         </div>
         <div className="space-y-2">
           {Array.from({ length: TAG_SLOTS }, (_, slot) => {
             const tag = tags[slot];
-            // What could go here instead: any tag whose power the other two slots don't already carry.
-            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && x.power === t.power)).length;
+            // What could go here instead: any tag not in another slot (before builds: whose power the other two don't carry).
+            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && (BUILDS ? x.id === t.id : x.power === t.power))).length;
             return (
               <button key={slot} type="button" className="cw-tag-row" disabled={frozen} onClick={() => setOpen({ kind: 'tag', slot })}>
                 {tag ? (
@@ -576,9 +576,13 @@ export function Garage({
             <div className="space-y-4 max-w-md mx-auto">
               <SheetHeader className="text-left">
                 <SheetTitle>{tr("Choose a dog tag")}</SheetTitle>
-                <SheetDescription>{tr("A deck carries three dog tags, each a different power. There are four powers, so one stays at home: pick the three that suit your cards.")}</SheetDescription>
+                <SheetDescription>
+                  {BUILDS
+                    ? tr("A deck carries three dog tags. Mix the powers or double up: two or three of the same power is a build like any other.")
+                    : tr("A deck carries three dog tags, each a different power. There are four powers, so one stays at home: pick the three that suit your cards.")}
+                </SheetDescription>
               </SheetHeader>
-              {TAG_ORDER.filter((power) => !tags.some((x, i) => i !== open.slot && x.power === power)).map((power) => (
+              {TAG_ORDER.filter((power) => BUILDS || !tags.some((x, i) => i !== open.slot && x.power === power)).map((power) => (
                 <div key={power} className="space-y-2">
                   <div>
                     <p className="text-sm font-semibold">{tagName(power)}</p>
@@ -591,19 +595,21 @@ export function Garage({
                     .sort((a, b) => tagStrength(b) - tagStrength(a))
                     .map((t) => {
                       const inUse = tags[open.slot]?.id === t.id;
+                      // Under builds a tag sits in one slot only.
+                      const elsewhere = BUILDS && tags.some((x, i) => i !== open.slot && x.id === t.id);
                       return (
                         <button
                           key={t.id}
                           type="button"
                           className={cn('cw-tag-row', inUse && 'cw-tag-row-on')}
-                          disabled={inUse || frozen}
+                          disabled={inUse || elsewhere || frozen}
                           onClick={() => {
                             onReplace('tags', Math.min(open.slot, tags.length), t.id);
                             setOpen(null);
                           }}
                         >
                           <DogTagPlate tag={t} />
-                          {inUse && <span className="text-[11px] font-semibold text-accent shrink-0">{tr("In use")}</span>}
+                          {(inUse || elsewhere) && <span className="text-[11px] font-semibold text-accent shrink-0">{inUse ? tr("In use") : tr("In another slot")}</span>}
                         </button>
                       );
                     })}
@@ -611,7 +617,9 @@ export function Garage({
               ))}
               <p className="text-[11px] text-muted-foreground leading-snug pb-2">
                 {V2
-                  ? tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs.")
+                  ? BUILDS
+                    ? tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs: turn their card over in your vault to spin for its power.")
+                    : tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs.")
                   : tr("A tag from a bike rider does more with a bike, and a car driver's with a car. Beat riders' lap times on Track Day to win their dog tags.")}
               </p>
             </div>

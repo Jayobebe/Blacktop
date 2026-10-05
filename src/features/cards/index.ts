@@ -1,6 +1,6 @@
 export { VehicleCard } from './components/VehicleCard';
 export { VehicleCardCarousel } from './components/VehicleCardCarousel';
-export { FullCard as VaultCardFace, CollectedCardsFolder } from './components/CollectedCardsFolder';
+export { FullCard as VaultCardFace, CollectedCardsFolder, type SpectreBack } from './components/CollectedCardsFolder';
 export { useVehicleCards } from './hooks/useVehicleCards';
 export { useCollectedCards } from './hooks/useCollectedCards';
 export { useSpectreCards, SPECTRE_STORAGE_KEY } from './hooks/useSpectreCards';

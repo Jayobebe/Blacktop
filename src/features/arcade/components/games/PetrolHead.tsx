@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { HeaderButton } from '@/components/PageHeader';
 import { saveModeBest, saveScore, useArcadeScores, useModeBests } from '../../hooks/useArcadeScores';
+import { payArcadeGame } from '@/features/card-wars/light';
 
 /*
  * Petrol Head: three-lane traffic run.
@@ -695,6 +696,8 @@ export function PetrolHead({ accentColor, showSpeed }: PetrolHeadProps) {
     const record = saveScore('petrol-head', score);
     const missRecord = saveModeBest('petrol-head-misses', w.stats.misses);
     setResult({ score, reason, record, missRecord, stats: { ...w.stats } });
+    // A finished run pays a little RPM for Card Wars (more for a best); the server caps the day.
+    void payArcadeGame('petrol-head', record || missRecord);
   }, []);
 
   const hooks = useRef<Hooks>({

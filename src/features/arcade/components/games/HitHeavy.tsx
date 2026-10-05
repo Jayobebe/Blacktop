@@ -6,6 +6,7 @@ import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { saveModeBest, saveScore, useArcadeScores, useModeBests } from '../../hooks/useArcadeScores';
+import { payArcadeGame } from '@/features/card-wars/light';
 
 /*
  * Hit Heavy: a punch machine on the phone's accelerometer.
@@ -328,6 +329,8 @@ export function HitHeavy() {
       s.record = saveModeBest('hit-heavy-precision', total);
     }
     if (s.record) haptics.success();
+    // A finished game pays a little RPM for Card Wars (more for a best); the server caps the day.
+    void payArcadeGame('hit-heavy', !!s.record);
   }, []);
 
   // One clock drives the phases and redraws at the sensor's rate.

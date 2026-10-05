@@ -3,7 +3,7 @@ import type { SpectreCard } from '@/features/cards';
 import { tr } from '@/lib/i18n';
 import { STARTER_TAGS } from './catalog';
 import { matchOwn } from './ownMatch';
-import { FLIP, V2 } from './rules';
+import { BUILDS, FLIP, V2 } from './rules';
 import { parseOwnedTag, tagMatches, tagStrength } from './tagRules';
 import type { BattleCard, DogTag, TagPower } from '../types';
 
@@ -76,26 +76,36 @@ export function tagTitle(tag: DogTag): string {
 /** The line under a tag's title: what it does more with. */
 export function tagKindLine(tag: DogTag): string {
   if (!tag.vehicle) return tr("The same with any card");
+  if (tag.vehicle === 'any') return tr("Earned on track: stronger with any card");
   return tag.vehicle === 'car' ? tr("Stronger with a car") : tr("Stronger with a bike");
 }
 
 /**
- * Every dog tag the player can put in a deck: the three standard ones, the
- * tags taken from riders on Track Day boards (each rider's tag gets a power in
- * turn, and is tied to the kind of vehicle they rode), and under the second
- * rule set the tags won on spins.
+ * Every dog tag the player can put in a deck: the standard ones, the tags
+ * taken from riders on Track Day boards, and under the second rule set the
+ * tags won on spins. A Spectre's tag has the power spun for it in the vault
+ * (none until its card has been turned over) and, being earned, its bonus
+ * with cars and bikes alike. Before builds each rider's tag took a power in
+ * turn and was tied to the kind of vehicle they rode.
  */
 export function allTags(owned: string[], spectres: SpectreCard[]): DogTag[] {
-  const track: DogTag[] = spectres.map((s, i) => ({
-    id: `spectre:${s.key}`,
-    name: s.setterName,
-    spectre: s,
-    power: STARTER_TAGS[i % 3].power,
-    vehicle: matchOwn(s.card.n, s.card.m, 'bike').vehicle,
-  }));
+  const track: DogTag[] = BUILDS
+    ? spectres.flatMap((s) => (s.power ? [spectreTag(s)] : []))
+    : spectres.map((s, i) => ({
+        id: `spectre:${s.key}`,
+        name: s.setterName,
+        spectre: s,
+        power: STARTER_TAGS[i % 3].power,
+        vehicle: matchOwn(s.card.n, s.card.m, 'bike').vehicle,
+      }));
   // A Coin flip won on a spin only exists on a server that knows the tag.
   const won = V2 ? owned.flatMap((entry) => parseOwnedTag(entry) ?? []).filter((t) => FLIP || t.power !== 'flip') : [];
   return [...STARTER_TAGS, ...track, ...won];
+}
+
+/** The dog tag a Spectre gives, once its power has been spun for. */
+export function spectreTag(s: SpectreCard & { power?: TagPower }): DogTag {
+  return { id: `spectre:${s.key}`, name: s.setterName, spectre: s, power: s.power ?? 'boost', vehicle: 'any' };
 }
 
 /** The strongest tag of each power the player has, for filling a deck's empty slots. */

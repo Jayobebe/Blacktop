@@ -21,7 +21,7 @@ export default function Arcade() {
         </div>
       </header>
 
-      <div className="flex-1 animate-slide-up delay-100">
+      <div className="flex-1 flex flex-col animate-slide-up delay-100">
         <ArcadeLobby />
       </div>
     </div>

@@ -25,6 +25,8 @@ export interface SpectreCard {
   timeSec: number;
   targetSec: number;
   earnedAt: number;
+  /** The Card Wars power its dog tag has: spun for the first time the card is turned over in the vault. */
+  power?: 'reroll' | 'heal' | 'boost' | 'flip';
 }
 
 export const SPECTRE_STORAGE_KEY = 'bt.spectre_cards.v1';
@@ -48,7 +50,7 @@ export function useSpectreCards() {
         }
         outcome = 'improved';
         return prev.map((s) =>
-          s.key === entry.key ? { ...s, ...entry, img: entry.img ?? s.img, earnedAt: Date.now() } : s,
+          s.key === entry.key ? { ...s, ...entry, img: entry.img ?? s.img, power: s.power, earnedAt: Date.now() } : s,
         );
       });
       return outcome;
@@ -56,5 +58,14 @@ export function useSpectreCards() {
     [setSpectres],
   );
 
-  return { spectres, earnSpectre };
+  /** Keeps the power the wheel landed on (once: a Spectre's tag never changes power). Demo Spectres come with theirs. */
+  const assignPower = useCallback(
+    (key: string, power: NonNullable<SpectreCard['power']>) => {
+      if (demoEnabled) return;
+      setSpectres((prev) => prev.map((s) => (s.key === key && !s.power ? { ...s, power } : s)));
+    },
+    [setSpectres, demoEnabled],
+  );
+
+  return { spectres, earnSpectre, assignPower };
 }

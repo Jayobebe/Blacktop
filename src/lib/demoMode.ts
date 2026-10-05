@@ -19,7 +19,7 @@ type SpectreCard = {
   timeSec: number;
   targetSec: number;
   earnedAt: number;
-};
+power?: 'reroll' | 'heal' | 'boost' | 'flip'; };
 
 /**
  * Demo-mode store. When enabled, read-only overrides are surfaced for:
@@ -299,6 +299,7 @@ export const DEMO_SPECTRE_CARDS: SpectreCard[] = [
     timeSec: 52.318,
     targetSec: 52.904,
     earnedAt: Date.now() - 2 * 86_400_000,
+    power: 'boost',
   },
   {
     key: 'demo-track-7218462-marlowe',
@@ -308,6 +309,7 @@ export const DEMO_SPECTRE_CARDS: SpectreCard[] = [
     timeSec: 98.441,
     targetSec: 99.002,
     earnedAt: Date.now() - 9 * 86_400_000,
+    power: 'heal',
   },
 ];
 

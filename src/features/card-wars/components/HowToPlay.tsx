@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { tr } from '@/lib/i18n';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
-import { RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
+import { BUILDS, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
 import { TAG_ICON, TAG_ORDER, tagDescription, tagName } from '../lib/tags';
 
 const SEEN_KEY = 'bt.card_wars_howto';
@@ -80,7 +80,9 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
             );
           })}
           <span>
-            {V2
+            {BUILDS
+              ? tr("A deck carries any three: mix the powers, or carry two or three of the same. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.")
+              : V2
               ? tr("A deck carries three of the four, so choose the ones that suit your cards. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle.")
               : tr("Arm one before you play. Each works once per battle.")}
           </span>

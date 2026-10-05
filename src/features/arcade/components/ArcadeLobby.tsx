@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Car, Gamepad2, Bike, Swords } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Zap, Car, Gamepad2, Bike } from 'lucide-react';
 import { useSettings } from '@/features/settings';
 import { useArcadeScores } from '../hooks/useArcadeScores';
 import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
 import { tr } from '@/lib/i18n';
+// Not the Card Wars barrel: only its panel belongs on this page.
+import { CardWarsArcadePanel } from '@/features/card-wars/light';
 
 export function ArcadeLobby() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export function ArcadeLobby() {
 
 
   return (
-    <section className="w-full">
+    <section className="w-full h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-center gap-2 px-4 pt-4 pb-3">
         <Gamepad2 className="w-4 h-4 text-accent" />
@@ -25,7 +26,7 @@ export function ArcadeLobby() {
       </div>
 
       {/* Game tiles */}
-      <div className="grid grid-cols-2 gap-3 px-4 pb-8">
+      <div className="flex-1 grid grid-cols-2 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 px-4 pb-2">
         <button
           onClick={() => navigate('/arcade/hit-heavy')}
           className="flex flex-col items-center gap-3 py-6 px-3 bg-card/50 border border-border/30 rounded-2xl
@@ -75,18 +76,8 @@ export function ArcadeLobby() {
             {scores['legacy-derez'] > 0 ? tr("Wins: {0}", [scores['legacy-derez']]) : tr("No wins yet")}
           </div>
         </button>
-        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && (
-          <Button
-            variant="outline"
-            onClick={() => navigate('/arcade/card-wars')}
-            className="col-span-2 h-auto justify-start gap-3 py-5 px-4 bg-card/50 border-border/30 rounded-lg hover:bg-card/70 hover:border-accent/40"
-          >
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-              <Swords className="w-5 h-5 text-accent" />
-            </div>
-            <span className="text-sm font-semibold text-foreground">{tr('Card Wars')}</span>
-          </Button>
-        )}
+        {/* Card Wars has more to show than a best score: its panel takes the rest of the page. */}
+        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && <CardWarsArcadePanel onOpen={() => navigate('/arcade/card-wars')} />}
       </div>
     </section>
   );

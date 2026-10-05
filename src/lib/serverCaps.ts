@@ -10,7 +10,7 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
  * permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
-export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWars2' | 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes';
+export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWars2' | 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
   cardWars: () => supabase.rpc('cw_available' as never),
@@ -22,6 +22,8 @@ const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | n
   cardWarsWear: () => supabase.rpc('cw_wear_rules' as never),
   // The computer's own deck as the prize table, shop-only cards included (lib/rules.ts, PRIZE_DECK).
   cardWarsPrizes: () => supabase.rpc('cw_prize_rules' as never),
+  // Free dog tag builds, Spectre tags, cheaper upkeep and RPM from the arcade (lib/rules.ts, BUILDS).
+  cardWarsBuilds: () => supabase.rpc('cw_build_rules' as never),
   trackRecords: () =>
     supabase.rpc('track_leaderboard' as never, { _osm_id: -1, _direction: 'cw', _vehicle_class: 'motorcycle', _limit: 1 } as never),
 };

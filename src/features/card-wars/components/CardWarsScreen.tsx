@@ -16,14 +16,14 @@ import { STARTER_TAGS, cardById, cardIdentity, unlockCard } from '../lib/catalog
 import { createRun, deadlocked, playRound } from '../lib/engine';
 import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
-import { overall } from '../lib/ratings';
+import { deckRating, overall } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
-import { FLIP, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
+import { BUILDS, FLIP, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
 import { claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
-import { claimReward, updateVault, useVault } from '../lib/store';
-import { powerIndex, tagRef, tagStrength } from '../lib/tagRules';
+import { claimReward, getVault, updateVault, useVault } from '../lib/store';
+import { powerIndex, slotRef, tagRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
 import { conditionOf, flushPendingWear, queueWear, roundsFought, syncWear, wearAfterRun, withWear } from '../lib/wear';
 import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type CoinFlip, type DogTag, type TagPower } from '../types';
@@ -130,15 +130,34 @@ export function CardWarsScreen() {
   const tags = useMemo(() => allTags(shop.tags, spectres), [shop.tags, spectres]);
   const wornPool = useMemo(() => pool.map((c) => withWear(c, conditionOf(vault.wear, c.id))), [pool, vault.wear]);
   const deck = vault.deck.map((id) => wornPool.find((c) => c.id === id)).filter((c): c is Card => !!c);
-  // Three dog tags, each a different power, of the four there are. A tag that's gone (won on another phone, say)
-  // gives its slot to a standard one.
+  // Three dog tags: any three under builds (two or three of a power is a build like any other), each a
+  // different power before. A tag that's gone (won on another phone, say) gives its slot to a standard one.
   const deckTags = vault.tags
     .map((id) => tags.find((t) => t.id === id))
     .filter((t): t is DogTag => !!t)
-    .filter((t, i, all) => all.findIndex((x) => x.power === t.power) === i)
+    .filter((t, i, all) => all.findIndex((x) => (BUILDS ? x.id === t.id : x.power === t.power)) === i)
     .slice(0, TAG_SLOTS);
-  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => t.power === spare.power)) deckTags.push(spare);
+  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => (BUILDS ? t.id === spare.id : t.power === spare.power))) deckTags.push(spare);
   const run = vault.run;
+
+  // The Arcade page shows the deck without opening the game: keep a light copy with the vault
+  // (no photos: a rider's own are data URLs, far too big to store twice).
+  const summary = useMemo(
+    () =>
+      JSON.stringify({
+        cards: deck.map((c) => ({ ...c, condition: undefined, image: c.image?.startsWith('data:') ? undefined : c.image })),
+        tags: deckTags.map(({ spectre: _s, ...t }) => t),
+        rating: deckRating(vault.deck.map((id) => pool.find((c) => c.id === id)).filter((c): c is Card => !!c)),
+      }),
+    // The ids say when it changed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vault.deck.join(), deckTags.map((t) => t.id).join(), pool.length],
+  );
+  useEffect(() => {
+    if (demo || !deck.length) return;
+    if (JSON.stringify(getVault().summary) !== summary) updateVault({ summary: JSON.parse(summary) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summary, demo]);
   const armed = deckTags.find((t) => t.id === tag);
 
   // ── A finished battle against the computer: RPM, then wear ──
@@ -334,13 +353,16 @@ export function CardWarsScreen() {
               }),
               // One per power, in the server's order.
               // One per power, in the server's order; "-" for the power this deck leaves at home.
-              tags: ONLINE_POWERS.map((power) => {
-                const mine = deckTags.find((t) => t.power === power);
-                return mine ? tagRef(mine) : FLIP ? '-' : '';
-              }),
+              tags: BUILDS
+                ? // Three slots, "power:ref" each.
+                  Array.from({ length: TAG_SLOTS }, (_, i) => slotRef(deckTags[i]))
+                : ONLINE_POWERS.map((power) => {
+                    const mine = deckTags.find((t) => t.power === power);
+                    return mine ? tagRef(mine) : FLIP ? '-' : '';
+                  }),
             }
           : {}),
-        ...(action === 'play' ? { card, tag: armed ? powerIndex(armed.power) : undefined, round: online?.round } : {}),
+        ...(action === 'play' ? { card, tag: armed ? (BUILDS ? deckTags.indexOf(armed) : powerIndex(armed.power)) : undefined, round: online?.round } : {}),
       });
       if (action === 'play') lastPlay.current = { round: online?.round ?? 0, tag: armed?.power ?? null };
       accept(result);
@@ -406,8 +428,8 @@ export function CardWarsScreen() {
     if (riding || locked) return;
     const values = (type === 'deck' ? deck : deckTags).map((x) => x.id);
     if (values.some((x, i) => i !== index && x === id)) return;
-    // One tag per power.
-    if (type === 'tags' && values.some((x, i) => i !== index && tags.find((t) => t.id === x)?.power === tags.find((t) => t.id === id)?.power)) return;
+    // One tag per power, before builds.
+    if (!BUILDS && type === 'tags' && values.some((x, i) => i !== index && tags.find((t) => t.id === x)?.power === tags.find((t) => t.id === id)?.power)) return;
     values[index] = id;
     updateVault({ [type]: values });
   }
@@ -552,7 +574,7 @@ export function CardWarsScreen() {
           submitted={!reveal && online?.submitted}
           selected={online?.selected}
           tags={battleTags}
-          usedTags={battleTags.filter((t) => shownOnline.used?.includes(powerIndex(t.power))).map((t) => t.id)}
+          usedTags={battleTags.filter((t, i) => shownOnline.used?.includes(BUILDS ? i : powerIndex(t.power))).map((t) => t.id)}
           rounds={WEAR_BY_ROUND ? sideCards(shownOnline, true).map((c) => (shownOnline.log ?? []).filter((l) => (shownOnline.side === 1 ? l.card1 : l.card2) === c.id).length) : undefined}
           tag={tag}
           onTag={setTag}

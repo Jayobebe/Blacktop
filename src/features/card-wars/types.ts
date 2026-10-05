@@ -33,8 +33,8 @@ export interface DogTag {
   id: string;
   name: string;
   power: TagPower;
-  /** The kind of vehicle it does more with. The plain tags have none. */
-  vehicle?: 'car' | 'bike';
+  /** The kind of vehicle it does more with. The plain tags have none; a Spectre's (earned on track) has the bonus with any. */
+  vehicle?: 'car' | 'bike' | 'any';
   /** A tag won on a spin: the catalog vehicle it's tied to, which sets how strong it is. */
   card?: string;
   /** A tag taken from a rider on a Track Day board. */
@@ -105,6 +105,8 @@ export interface VaultState {
   run: BattleState | null;
   unlocks: string[];
   wear?: Record<string, number>;
+  /** The deck as Card Wars last showed it (cards without their photos, dog tags, rating): what the Arcade page draws. */
+  summary?: { cards: BattleCard[]; tags: DogTag[]; rating: number | null };
   wearQueue?: WearReport[];
   wearApplied?: string;
   rpmApplied?: string;

@@ -21,8 +21,8 @@ const MATCH: Record<TagPower, number> = V2 ? { boost: 10, heal: 6, reroll: 5, fl
 
 export const powerIndex = (power: TagPower): number => POWERS.indexOf(power);
 
-/** The tag is tied to the kind of vehicle this card is. */
-export const tagMatches = (tag: Pick<DogTag, 'vehicle'>, card: Pick<BattleCard, 'vehicle'> | null | undefined): boolean => !!card && !!tag.vehicle && tag.vehicle === card.vehicle;
+/** The tag gets its bonus with this card: it's tied to that kind of vehicle, or (a Spectre's, earned on track) to any. */
+export const tagMatches = (tag: Pick<DogTag, 'vehicle'>, card: Pick<BattleCard, 'vehicle'> | null | undefined): boolean => tag.vehicle === 'any' || (!!card && !!tag.vehicle && tag.vehicle === card.vehicle);
 
 /** A tag's strength before the bonus for a matching vehicle. */
 export function tagBase(tag: Pick<DogTag, 'power' | 'card'>): number {
@@ -52,11 +52,14 @@ export function parseOwnedTag(entry: string): DogTag | null {
 
 /**
  * How a tag is named to the server for a player battle: the vehicle it's tied
- * to (checked against what the player owns), "~car" / "~bike" for a tag taken
- * on a track (plain strength, with the bonus for its kind), or nothing for a
- * plain one.
+ * to (checked against what the player owns), "~all" for a tag taken on a track
+ * (plain strength, with the bonus whatever it's played with; "~car" / "~bike"
+ * before builds), or nothing for a plain one.
  */
-export const tagRef = (tag: DogTag): string => tag.card ?? (tag.vehicle ? `~${tag.vehicle}` : '');
+export const tagRef = (tag: DogTag): string => tag.card ?? (tag.vehicle ? (tag.vehicle === 'any' ? '~all' : `~${tag.vehicle}`) : '');
+
+/** A deck slot as the server takes it under builds: "power:ref", or "-" for an empty one. */
+export const slotRef = (tag: DogTag | undefined): string => (tag ? `${tag.power}:${tagRef(tag)}` : '-');
 
 /** The categories a Coin flip can land on: never Lean, so it means the same against a car or a bike. */
 const FLIP_CATEGORIES = ['speed', 'g', 'distance', 'corners'] as const;

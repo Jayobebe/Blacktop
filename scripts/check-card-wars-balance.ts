@@ -2,9 +2,9 @@ import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, prizesFor, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { PRIZE_DECK, PRIZE_REACH, RULES, V2, WEAR_BY_ROUND, wearLoss } from '../src/features/card-wars/lib/rules';
+import { BUILDS, PRIZE_DECK, PRIZE_REACH, RULES, V2, WEAR_BY_ROUND, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
-import { flipCategory, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
+import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
 
 // npm run cardwars:check (first rule set), or with CW_RULES=2 for the second.
@@ -91,6 +91,23 @@ if (WEAR_BY_ROUND) {
 } else {
   assert.equal(wearLoss(false, 20), RULES.wear.road, 'The flat rule charges the same however often a card is played');
   assert.equal(wearLoss(true, 1), RULES.wear.race);
+}
+
+// ── Builds: any three tags (even the same power three times), Spectre tags, cheaper upkeep ──
+if (BUILDS) {
+  const fresh2 = createRun(shuffle(BRAND_CARDS, rng(7)).slice(0, 5), rng(8));
+  const a: DogTag = { id: 'tag-boost', name: 'Overdrive', power: 'boost' };
+  const b: DogTag = { id: 'spectre:x', name: 'Rico', power: 'boost', vehicle: 'any' };
+  const one = playRound(fresh2, 0, a, rng(9));
+  const alive = one.hp[0].findIndex((v) => v > 0);
+  const two = one.result ? one : playRound(one, alive, b, rng(10));
+  assert.ok(one.usedTags.includes(a.id) || one.log[0].event === 'gremlin', 'The first Overdrive is spent');
+  assert.ok(two.result || two.usedTags.includes(b.id) || two.log[1].event === 'gremlin', 'A second Overdrive in the same deck can still be armed');
+  assert.equal(tagStrength(b, { vehicle: 'car' }), tagStrength(b, { vehicle: 'bike' }), 'A Spectre tag is as strong with a car as with a bike');
+  assert.ok(tagStrength(b) > tagStrength(a), 'and stronger than the plain tag');
+  assert.deepEqual([slotRef(a), slotRef(b), slotRef(undefined)], ['boost:', 'boost:~all', '-'], 'Slots as the server takes them');
+  assert.equal(repairCost(400, 50), 50, 'A repair costs a quarter of the price for a full one');
+  assert.equal(RULES.wear.rest, 15);
 }
 
 // ── Dog tags ──

@@ -37,10 +37,10 @@ import { BattleCard, useWonBattleCards } from '@/features/card-wars/collection';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
-export function CollectedCardsFolder() {
+export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBack } = {}) {
   const locked = useDemoLocked();
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
-  const { spectres } = useSpectreCards();
+  const { spectres, assignPower } = useSpectreCards();
   const wonCards = useWonBattleCards();
   // The rider's own vehicle cards always lead the regular row.
   const { cards: myCards } = useVehicleCards();
@@ -244,6 +244,7 @@ export function CollectedCardsFolder() {
             <FlipCard
               card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }}
               spectre={sp}
+              spectreBack={spectreBack ? (shown) => spectreBack(sp, shown, (power) => assignPower(sp.key, power)) : undefined}
             />
           </div>
         ))}
@@ -340,8 +341,28 @@ function OwnFlipCard({ card }: { card: VehicleCardData }) {
   return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} />;
 }
 
-/** Tap to flip. Collected cards show their QR on the back; Spectre cards show the win. */
-function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCard }) {
+/** What a Spectre's back shows (its Card Wars dog tag): drawn by whoever hosts the vault, so cards don't depend on Card Wars. */
+export type SpectreBack = (spectre: SpectreCard, shown: boolean, assign: (power: NonNullable<SpectreCard['power']>) => void) => React.ReactNode;
+
+/** A Spectre's front, under the photo: where it was won, both times and the gap. */
+function SpectreResult({ spectre }: { spectre: SpectreCard }) {
+  return (
+    <div className="relative mt-auto space-y-1.5">
+      <p className="text-[10px] uppercase tracking-widest text-slate-200/80 text-center truncate">{spectre.track ?? tr("Road challenge")}</p>
+      <div className="grid grid-cols-2 gap-1.5">
+        <Stat icon={Timer} label={tr("{0}'s", [spectre.setterName])} value={formatChallengeTime(spectre.targetSec)} unit="" />
+        <Stat icon={Timer} label={tr("Your time")} value={formatChallengeTime(spectre.timeSec)} unit="" />
+      </div>
+      <div className="rounded-lg bg-white/5 border border-white/20 backdrop-blur-sm px-2 py-1 text-center">
+        <p className="text-[8px] uppercase tracking-widest text-slate-200/70">{tr("Beaten by")}</p>
+        <p className="font-mono text-base font-bold text-slate-50 leading-tight spectre-text">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Tap to flip. Collected cards show their QR on the back; Spectre cards their dog tag (the win, where nothing draws the tag). */
+function FlipCard({ card, spectre, spectreBack }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode }) {
   const [flipped, setFlipped] = useState(false);
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
   return (
@@ -351,7 +372,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
         haptics.light();
         setFlipped((f) => !f);
       }}
-      aria-label={flipped ? tr("Show front of {0}", [card.n]) : spectre ? tr("Show {0} Spectre result", [card.n]) : tr("Show {0} QR code", [card.n])}
+      aria-label={flipped ? tr("Show front of {0}", [card.n]) : spectre ? (spectreBack ? tr("Show {0} dog tag", [card.n]) : tr("Show {0} Spectre result", [card.n])) : tr("Show {0} QR code", [card.n])}
       className="block w-full aspect-[5/7] [perspective:1200px] text-left"
     >
       <div
@@ -361,7 +382,7 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
         )}
       >
         <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(0deg)_translateZ(1px)]">
-          <FullCard card={card} spectre={spectre} />
+          <FullCard card={card} spectre={spectre} stats={spectre && spectreBack ? <SpectreResult spectre={spectre} /> : undefined} />
         </div>
         <div
           className={cn(
@@ -373,7 +394,9 @@ function FlipCard({ card, spectre }: { card: CollectedCard; spectre?: SpectreCar
             <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">{card.o ?? tr("Anonymous rider")}</p>
             <h3 className="text-sm font-bold leading-tight text-white truncate">{card.n}</h3>
           </div>
-          {spectre ? (
+          {spectre && spectreBack ? (
+            spectreBack(flipped)
+          ) : spectre ? (
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2.5">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-white/10 text-slate-100 border border-white/30 spectre-text">
                 <Ghost className="w-3.5 h-3.5" />{" "}{tr("Spectre")}

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 import { STARTERS, type ShopCategory } from './catalog';
-import { RULES, V2 } from './rules';
+import { BUILDS, RULES, V2 } from './rules';
 import { getVault, updateVault } from './store';
 import { flushPendingWear } from './wear';
 
@@ -139,6 +139,20 @@ export async function claimPrize(card: string): Promise<{ kind: 'card' | 'duplic
   const d = data as { kind: 'card' | 'duplicate'; rpm: number } & Raw;
   apply(d);
   return { kind: d.kind, rpm: d.rpm };
+}
+
+/**
+ * RPM for a finished game elsewhere in the arcade (Hit Heavy, Petrol Head): a
+ * little for playing, more for a personal best, capped a day by the server.
+ * Null when there's nothing to say (no server for it yet, demo mode, offline).
+ */
+export async function arcadeReward(game: 'hit-heavy' | 'petrol-head', best: boolean): Promise<number | null> {
+  if (!BUILDS || isDemoModeActive()) return null;
+  const { data, error } = await rpc('cw_arcade_reward', { _game: game, _best: best });
+  if (error || !data) return null;
+  const d = data as { rpm: number; balance: number };
+  if (typeof d.balance === 'number') setRpm(d.balance);
+  return d.rpm;
 }
 
 /** Restores a worn card to 100% condition. Server-checked; the price is rules.ts `repairCost`. */
