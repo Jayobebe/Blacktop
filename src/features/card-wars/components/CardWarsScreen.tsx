@@ -102,14 +102,15 @@ export function CardWarsScreen() {
     });
     for (const id of vault.unlocks) if (id === 'demo' || id === 'dev') cards.push(unlockCard(id));
     // A rider's own cards start from a catalog card's ratings and are lifted by their riding, scaled by tier
-    // (ownRatings). With peaks hidden they battle as the catalog card, as before. They wear like road cards.
-    for (const c of own) {
+    // (ownRatings). Cards with hidden peaks can't be picked, as before. They wear like road cards.
+    if (!peaksHidden) for (const c of own) {
       const b = archetypeFor(c.bike.id);
-      const figures = peaksHidden ? null : { topSpeedMph: c.stats.topSpeedMph, maxGForce: c.stats.maxGForce, maxLean: c.stats.maxLean, totalDistanceMi: c.stats.totalDistanceMi };
+      const figures = { topSpeedMph: c.stats.topSpeedMph, maxGForce: c.stats.maxGForce, maxLean: c.stats.maxLean, totalDistanceMi: c.stats.totalDistanceMi };
       cards.push({ ...b, ...cardIdentity(c.bike.name, c.bike.makeModel), id: `own:${c.bike.id}`, name: c.bike.name || b.name, image: c.bike.photos.hero || undefined, tier: c.tier, spec: 'factory', source: 'collection', ratings: ownRatings(b, figures, c.tier) });
     }
-    // Scanned rider cards: what their QR shares (a hidden peak just doesn't count).
+    // Scanned rider cards: what their QR shares, under the same tier rules.
     for (const c of collected) {
+      if (c.s?.topSpeedMph == null || c.s?.maxGForce == null) continue;
       const b = archetypeFor(c.i);
       const figures = c.s ? { topSpeedMph: c.s.topSpeedMph, maxGForce: c.s.maxGForce, maxLean: c.s.maxLean, totalDistanceMi: c.s.totalDistanceMi } : null;
       cards.push({ ...b, ...cardIdentity(c.n, c.m), id: `collected:${c.key}`, name: c.n, image: c.img, tier: c.t, spec: 'factory', source: 'collection', ratings: ownRatings(b, figures, c.t) });
