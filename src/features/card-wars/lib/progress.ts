@@ -129,7 +129,7 @@ export function onlineFacts(b: OnlineBattle, fullDeck: boolean): Facts {
     if (l.category === 5 && mine?.vehicle === 'bike') add(f, 'corners_bike');
     if (l.first) add(f, 'second_win');
     if (l.event) add(f, 'event_win');
-    const rival = (me === 1 ? b.rivalDeck : b.rivalDeck)?.indexOf(me === 1 ? l.card2 : l.card1) ?? -1;
+    const rival = b.rivalDeck?.indexOf(me === 1 ? l.card2 : l.card1) ?? -1;
     if (rival >= 0) {
       hp[rival] = Math.max(0, hp[rival] - l.damage);
       if (hp[rival] === 0) {
