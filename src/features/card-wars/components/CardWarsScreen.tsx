@@ -16,6 +16,8 @@ import { createRun, deadlocked, playRound } from '../lib/engine';
 import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { overall } from '../lib/ratings';
+import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
+import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
 import { RULES, V2 } from '../lib/rules';
 import { claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, updateVault, useVault } from '../lib/store';
@@ -78,6 +80,7 @@ export function CardWarsScreen() {
 
   useEffect(() => {
     void refreshShop();
+    void refreshProgress();
   }, []);
   useEffect(() => {
     if (typeof online?.balance === 'number') setRpm(online.balance);
@@ -98,16 +101,18 @@ export function CardWarsScreen() {
       return c ? [{ ...c, source: shop.owned.includes(id) ? ('purchased' as const) : ('reward' as const) }] : [];
     });
     for (const id of vault.unlocks) if (id === 'demo' || id === 'dev') cards.push(unlockCard(id));
-    // A rider's own cards battle with a catalog card's ratings (never their ride figures), and wear like road cards.
-    if (!peaksHidden)
-      for (const c of own) {
-        const b = archetypeFor(c.bike.id);
-        cards.push({ ...b, ...cardIdentity(c.bike.name, c.bike.makeModel), id: `own:${c.bike.id}`, name: c.bike.name || b.name, image: c.bike.photos.hero || undefined, tier: c.tier, spec: 'factory', source: 'collection' });
-      }
+    // A rider's own cards start from a catalog card's ratings and are lifted by their riding, scaled by tier
+    // (ownRatings). With peaks hidden they battle as the catalog card, as before. They wear like road cards.
+    for (const c of own) {
+      const b = archetypeFor(c.bike.id);
+      const figures = peaksHidden ? null : { topSpeedMph: c.stats.topSpeedMph, maxGForce: c.stats.maxGForce, maxLean: c.stats.maxLean, totalDistanceMi: c.stats.totalDistanceMi };
+      cards.push({ ...b, ...cardIdentity(c.bike.name, c.bike.makeModel), id: `own:${c.bike.id}`, name: c.bike.name || b.name, image: c.bike.photos.hero || undefined, tier: c.tier, spec: 'factory', source: 'collection', ratings: ownRatings(b, figures, c.tier) });
+    }
+    // Scanned rider cards: what their QR shares (a hidden peak just doesn't count).
     for (const c of collected) {
-      if (c.s?.topSpeedMph == null || c.s?.maxGForce == null) continue;
       const b = archetypeFor(c.i);
-      cards.push({ ...b, ...cardIdentity(c.n, c.m), id: `collected:${c.key}`, name: c.n, image: c.img, tier: c.t, spec: 'factory', source: 'collection' });
+      const figures = c.s ? { topSpeedMph: c.s.topSpeedMph, maxGForce: c.s.maxGForce, maxLean: c.s.maxLean, totalDistanceMi: c.s.totalDistanceMi } : null;
+      cards.push({ ...b, ...cardIdentity(c.n, c.m), id: `collected:${c.key}`, name: c.n, image: c.img, tier: c.t, spec: 'factory', source: 'collection', ratings: ownRatings(b, figures, c.t) });
     }
     return cards;
   }, [vault.rewards, vault.unlocks, own, collected, peaksHidden, shop.owned]);
@@ -126,6 +131,9 @@ export function CardWarsScreen() {
     const r = vault.run;
     if (!r || !r.result || vault.rpmApplied === r.id || demo) return;
     updateVault({ rpmApplied: r.id });
+    void reportContracts(r.id, computerFacts(r, r.player.every((c) => (c.condition ?? 100) >= 100))).then((earned) => {
+      if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [earned]));
+    });
     void rewardOffline(r.result).then((paid) => {
       setPay((all) => ({ ...all, [r.id]: paid }));
       if (paid.rpm > 0) eventSound('coin');
@@ -234,20 +242,25 @@ export function CardWarsScreen() {
     const ids = (online.log ?? []).flatMap((l) => (l[key] ? [l[key] as string] : []));
     const mine = ids.flatMap((id) => deck.find((c) => c.archetype === id)?.id ?? []);
     if (mine.length) updateVault({ beamIn: mine });
+    void reportContracts(online.code, onlineFacts(online, deck.every((c) => (c.condition ?? 100) >= 100))).then((earned) => {
+      if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [earned]));
+    });
     // Once per finished battle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online?.status, online?.code]);
 
   /** A card in a player battle: the catalog card the server is comparing, at its condition, under the rider's own name where it's theirs. */
-  const battleCard = (id: string, condition: number, mine: boolean): Card | null => {
-    const base = cardById(id);
-    if (!base) return null;
+  const battleCard = (id: string, condition: number, mine: boolean, rated?: number[] | null): Card | null => {
+    const catalog = cardById(id);
+    if (!catalog) return null;
+    const lifted = ratingsFrom(rated);
+    const base = lifted ? { ...catalog, ratings: lifted } : catalog;
     const worn = withWear(base, condition);
     const ownCard = mine ? deck.find((c) => c.archetype === id && c.id !== id) : undefined;
     return ownCard ? { ...worn, name: ownCard.name, manufacturer: ownCard.manufacturer, image: ownCard.image, tier: ownCard.tier, displayVehicle: base.vehicle, source: 'collection' } : worn;
   };
   const sideCards = (b: OnlineBattle | null, mine: boolean): Card[] =>
-    ((mine ? b?.deck : b?.rivalDeck) ?? []).flatMap((id, i) => battleCard(id, (mine ? b?.wear?.[i] : b?.rivalWear?.[i]) ?? (mine ? conditionOf(vault.wear, id) : 100), mine) ?? []);
+    ((mine ? b?.deck : b?.rivalDeck) ?? []).flatMap((id, i) => battleCard(id, (mine ? b?.wear?.[i] : b?.rivalWear?.[i]) ?? (mine ? conditionOf(vault.wear, id) : 100), mine, (mine ? b?.ratings : b?.rivalRatings)?.[i]) ?? []);
 
   // A new line in the server's log is a round to play back; the table shows the round before until it has.
   useEffect(() => {
@@ -298,6 +311,11 @@ export function CardWarsScreen() {
         ...(starting
           ? {
               deck: deck.map((c) => c.archetype),
+              // Own and scanned cards carry their ratings from riding (never the figures behind them).
+              own: deck.map((c) => {
+                const fresh = pool.find((p) => p.id === c.id);
+                return fresh && c.source === 'collection' ? { key: c.id, r: ratingsArray(fresh.ratings) } : null;
+              }),
               // One per power, in the server's order.
               tags: POWERS.map((power) => {
                 const mine = deckTags.find((t) => t.power === power);
