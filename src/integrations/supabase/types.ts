@@ -660,11 +660,14 @@ export type Database = {
       cw_accounts: {
         Row: {
           active_code: string | null
+          arcade_day: string | null
+          arcade_rpm: number
           balance: number
           created_at: string
           first_win_day: string | null
           free_spins: number
           free_tag_spins: number
+          last_arcade_reward: string | null
           last_created_at: string | null
           last_offline_reward: string | null
           last_rapture: string | null
@@ -677,11 +680,14 @@ export type Database = {
         }
         Insert: {
           active_code?: string | null
+          arcade_day?: string | null
+          arcade_rpm?: number
           balance?: number
           created_at?: string
           first_win_day?: string | null
           free_spins?: number
           free_tag_spins?: number
+          last_arcade_reward?: string | null
           last_created_at?: string | null
           last_offline_reward?: string | null
           last_rapture?: string | null
@@ -694,11 +700,14 @@ export type Database = {
         }
         Update: {
           active_code?: string | null
+          arcade_day?: string | null
+          arcade_rpm?: number
           balance?: number
           created_at?: string
           first_win_day?: string | null
           free_spins?: number
           free_tag_spins?: number
+          last_arcade_reward?: string | null
           last_created_at?: string | null
           last_offline_reward?: string | null
           last_rapture?: string | null
@@ -2034,8 +2043,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      cw_arcade_reward: {
+        Args: { _best: boolean; _game: string }
+        Returns: Json
+      }
+      cw_armed_power: {
+        Args: { _tag: number; _tags: string[] }
+        Returns: number
+      }
+      cw_armed_ref: { Args: { _tag: number; _tags: string[] }; Returns: string }
       cw_available: { Args: never; Returns: boolean }
+      cw_boost_left: {
+        Args: { _tags: string[]; _used: number[] }
+        Returns: boolean
+      }
+      cw_build_rules: { Args: never; Returns: Json }
       cw_buy: { Args: { _card: string }; Returns: Json }
+      cw_check_slots: {
+        Args: { _tags: string[]; _user: string }
+        Returns: undefined
+      }
       cw_claim_prize: { Args: { _card: string }; Returns: Json }
       cw_contract_defs: {
         Args: never
