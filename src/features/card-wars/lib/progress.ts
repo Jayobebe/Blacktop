@@ -55,7 +55,7 @@ export function useProgress(): State {
 
 export async function refreshProgress() {
   if (isDemoModeActive()) return;
-  const [s, c] = await Promise.all([rpc('cw_sets'), rpc('cw_contracts_today')]);
+  const [s, c] = (await Promise.all([rpc('cw_sets'), rpc('cw_contracts_today')])) as unknown as { data: unknown; error: unknown }[];
   set({
     ...(!s.error && Array.isArray(s.data) ? { sets: s.data as SetInfo[] } : {}),
     ...(!c.error && c.data ? { contracts: ((c.data as { contracts: Contract[] }).contracts ?? []) as Contract[] } : {}),
