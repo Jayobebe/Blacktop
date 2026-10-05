@@ -105,7 +105,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
               <p className="text-sm font-semibold">{tr("Spin the {0} wheel", [shelfLabel(shelf)])}</p>
               <p className="text-xs text-muted-foreground leading-snug mt-0.5">
                 {V2
-                  ? tr("One spin can land a card or a dog tag from this shelf, RPM, or another spin. Something you already have gives half the spin back.")
+                  ? tr("One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own pays 75% of its price; a dog tag you have gives half the spin back.")
                   : tr("One in five spins lands a card from this shelf; the rest pay RPM back or hand you more spins. A card you already own refunds the spin.")}
               </p>
             </div>

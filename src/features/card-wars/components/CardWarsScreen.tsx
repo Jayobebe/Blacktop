@@ -13,6 +13,7 @@ import { tr } from '@/lib/i18n';
 import { useServerCap } from '@/lib/serverCaps';
 import { STARTER_TAGS, archetypeFor, cardById, cardIdentity, unlockCard } from '../lib/catalog';
 import { createRun, deadlocked, playRound } from '../lib/engine';
+import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { overall } from '../lib/ratings';
 import { RULES, V2 } from '../lib/rules';
@@ -136,7 +137,8 @@ export function CardWarsScreen() {
     if (!r || !r.result || vault.wearApplied === r.id || demo) return;
     const fought = r.log.length > 0;
     if (fought) setWearBefore({ run: r.id, before: Object.fromEntries(r.player.map((c) => [c.id, conditionOf(vault.wear, c.id)])) });
-    updateVault({ wear: fought ? wearAfterRun(vault.wear, r, pool) : vault.wear, wearApplied: r.id });
+    const raptured = r.log.find((l) => l.raptured?.[0])?.raptured?.[0];
+    updateVault({ wear: fought ? wearAfterRun(vault.wear, r, pool) : vault.wear, wearApplied: r.id, ...(raptured ? { beamIn: [raptured] } : {}) });
     if (fought) {
       queueWear(r);
       void flushPendingWear();
@@ -223,6 +225,19 @@ export function CardWarsScreen() {
     }
   }, [online?.status, online?.balance, online?.stake]);
 
+  // A player battle that ended with a card raptured: it beams back into the deck at home.
+  const beamed = useRef('');
+  useEffect(() => {
+    if (online?.status !== 'finished' || !online.code || beamed.current === online.code) return;
+    beamed.current = online.code;
+    const key = online.side === 1 ? 'r1' : 'r2';
+    const ids = (online.log ?? []).flatMap((l) => (l[key] ? [l[key] as string] : []));
+    const mine = ids.flatMap((id) => deck.find((c) => c.archetype === id)?.id ?? []);
+    if (mine.length) updateVault({ beamIn: mine });
+    // Once per finished battle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online?.status, online?.code]);
+
   /** A card in a player battle: the catalog card the server is comparing, at its condition, under the rider's own name where it's theirs. */
   const battleCard = (id: string, condition: number, mine: boolean): Card | null => {
     const base = cardById(id);
@@ -257,6 +272,8 @@ export function CardWarsScreen() {
           hp: [online.hp ?? [], online.rivalHp ?? []],
           values: said ? (first ? [last.s1!, last.s2!] : [last.s2!, last.s1!]) : null,
           tags: 't1' in last ? [powerAt(first ? last.t1 : last.t2), powerAt(first ? last.t2 : last.t1)] : [lastPlay.current.round === last.round ? lastPlay.current.tag : null, null],
+          event: eventAt(last.event),
+          raptured: last.r1 || last.r2 ? (first ? [last.r1 ?? null, last.r2 ?? null] : [last.r2 ?? null, last.r1 ?? null]) : undefined,
         });
         return;
       }
@@ -331,6 +348,8 @@ export function CardWarsScreen() {
       beforeHp: before,
       values: last.values ?? null,
       tags: [last.tag ?? null, null],
+      event: last.event ?? null,
+      raptured: last.raptured,
     });
     updateVault({ run: next });
   }
@@ -414,6 +433,7 @@ export function CardWarsScreen() {
           reveal={reveal}
           onRevealEnd={finishReveal}
           penalty={run.penaltyRound === (reveal ? run.round - 1 : run.round)}
+          gone={[run.log.flatMap((l) => (l.raptured?.[0] ? [l.raptured[0]] : [])), run.log.flatMap((l) => (l.raptured?.[1] ? [l.raptured[1]] : []))]}
           rivalName={tr("Computer")}
           forfeitLabel={tr("Forfeit")}
           onForfeit={() => {
@@ -496,6 +516,10 @@ export function CardWarsScreen() {
           reveal={reveal}
           onRevealEnd={finishReveal}
           penalty={shownOnline.penalty}
+          gone={[
+            (shownOnline.log ?? []).flatMap((l) => ((shownOnline.side === 1 ? l.r1 : l.r2) ? [(shownOnline.side === 1 ? l.r1 : l.r2) as string] : [])),
+            (shownOnline.log ?? []).flatMap((l) => ((shownOnline.side === 1 ? l.r2 : l.r1) ? [(shownOnline.side === 1 ? l.r2 : l.r1) as string] : [])),
+          ]}
           rivalName={tr("Rival")}
           forfeitLabel={tr("Forfeit: lose your stake")}
           onForfeit={() => void act('leave')}

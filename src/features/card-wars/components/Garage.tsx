@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronRight, Gift, Lock, Plus, Repeat, Sparkles, Store, Swords, Tag, Users, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,9 @@ import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
 import { TAG_ORDER, tagDescription, tagName, tagSourceLine, tagStrength, type TagPower } from '../lib/tags';
 import { REST_RECOVERY, WEAR_PER_BATTLE } from '../lib/wear';
+import { updateVault, useVault } from '../lib/store';
+import { eventSound } from '@/lib/appSound';
+import { TradeSheet } from './TradeSheet';
 import type { BattleCard as Card, DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
@@ -66,6 +69,16 @@ export function Garage({
   onShop: () => void;
 }) {
   const shop = useShop();
+  const { beamIn } = useVault();
+  const [trade, setTrade] = useState(false);
+  // A raptured card beams back into the deck once, then the note clears.
+  useEffect(() => {
+    if (!beamIn?.length) return;
+    eventSound('success');
+    toast.success(tr("Your raptured card has beamed back"), { description: tr("Back in your deck at full condition.") });
+    const t = setTimeout(() => updateVault({ beamIn: [] }), 2600);
+    return () => clearTimeout(t);
+  }, [beamIn]);
   const { settings } = useSettings();
   const [open, setOpen] = useState<Open>(null);
   const [filter, setFilter] = useState<'all' | 'car' | 'bike'>('all');
@@ -265,7 +278,7 @@ export function Garage({
           {Array.from({ length: 5 }, (_, i) => {
             const c = deck[i];
             return c ? (
-              <CwCard key={c.id} card={c} showCondition className={cn(fresh === c.id && 'cw-pop')} onClick={() => setOpen({ kind: 'card', index: i })} />
+              <CwCard key={c.id} card={c} showCondition className={cn(fresh === c.id && 'cw-pop', beamIn?.includes(c.id) && 'cw-beam-in')} onClick={() => setOpen({ kind: 'card', index: i })} />
             ) : (
               <button
                 key={i}
@@ -330,6 +343,19 @@ export function Garage({
         </span>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </Button>
+
+      <Button variant="outline" className="w-full h-14 gap-2 justify-between px-4" onClick={() => setTrade(true)}>
+        <span className="flex items-center gap-2">
+          <Repeat className="w-5 h-5 text-accent" />
+          <span className="text-left">
+            <span className="block text-sm font-semibold leading-tight">{tr("Trade cards")}</span>
+            <span className="block text-[11px] text-muted-foreground font-normal leading-tight">{tr("Sell a card by code, or make an offer on someone else's")}</span>
+          </span>
+        </span>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+      </Button>
+      <TradeSheet open={trade} onClose={() => setTrade(false)} locked={frozen} />
+
 
       {/* Riding unlocks */}
       <section className="rounded-2xl border border-border/60 p-3 space-y-2.5">

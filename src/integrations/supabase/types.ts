@@ -667,6 +667,7 @@ export type Database = {
           free_tag_spins: number
           last_created_at: string | null
           last_offline_reward: string | null
+          last_rapture: string | null
           last_topup: string | null
           last_wear_run: string | null
           prize_due: boolean
@@ -683,6 +684,7 @@ export type Database = {
           free_tag_spins?: number
           last_created_at?: string | null
           last_offline_reward?: string | null
+          last_rapture?: string | null
           last_topup?: string | null
           last_wear_run?: string | null
           prize_due?: boolean
@@ -699,6 +701,7 @@ export type Database = {
           free_tag_spins?: number
           last_created_at?: string | null
           last_offline_reward?: string | null
+          last_rapture?: string | null
           last_topup?: string | null
           last_wear_run?: string | null
           prize_due?: boolean
@@ -813,6 +816,41 @@ export type Database = {
         }
         Relationships: []
       }
+      cw_offers: {
+        Row: {
+          buyer: string
+          created_at: string
+          id: string
+          rpm: number
+          status: string
+          trade_id: string
+        }
+        Insert: {
+          buyer: string
+          created_at?: string
+          id?: string
+          rpm: number
+          status?: string
+          trade_id: string
+        }
+        Update: {
+          buyer?: string
+          created_at?: string
+          id?: string
+          rpm?: number
+          status?: string
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_offers_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "cw_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cw_owned: {
         Row: {
           bought_at: string
@@ -879,6 +917,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cw_tags_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cw_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cw_trades: {
+        Row: {
+          card_id: string
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          seller: string
+          status: string
+        }
+        Insert: {
+          card_id: string
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          seller: string
+          status?: string
+        }
+        Update: {
+          card_id?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          seller?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_trades_card_id_fkey"
             columns: ["card_id"]
             isOneToOne: false
             referencedRelation: "cw_catalog"
@@ -1819,13 +1895,26 @@ export type Database = {
       cw_repair: { Args: { _card: string }; Returns: Json }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
       cw_rules: { Args: never; Returns: Json }
-      cw_save_wear: {
-        Args: { _deck: string[]; _fought: string[]; _run: string }
-        Returns: {
-          card_id: string
-          condition: number
-        }[]
-      }
+      cw_save_wear:
+        | {
+            Args: { _deck: string[]; _fought: string[]; _run: string }
+            Returns: {
+              card_id: string
+              condition: number
+            }[]
+          }
+        | {
+            Args: {
+              _deck: string[]
+              _fought: string[]
+              _raptured: string
+              _run: string
+            }
+            Returns: {
+              card_id: string
+              condition: number
+            }[]
+          }
       cw_shop: { Args: never; Returns: Json }
       cw_spin: { Args: { _cat: string; _free?: boolean }; Returns: Json }
       cw_spin_cost: { Args: { _cat: string }; Returns: number }
@@ -1834,6 +1923,17 @@ export type Database = {
         Args: { _kind: string; _power: number; _ref: string }
         Returns: number
       }
+      cw_trade_cancel: { Args: { _trade: string }; Returns: Json }
+      cw_trade_list: { Args: { _card: string }; Returns: Json }
+      cw_trade_offer: { Args: { _code: string; _rpm: number }; Returns: Json }
+      cw_trade_respond: {
+        Args: { _accept: boolean; _offer: string }
+        Returns: Json
+      }
+      cw_trade_sweep: { Args: never; Returns: undefined }
+      cw_trade_view: { Args: { _code: string }; Returns: Json }
+      cw_trade_withdraw: { Args: { _offer: string }; Returns: Json }
+      cw_trades_mine: { Args: never; Returns: Json }
       cw_wear_for: {
         Args: { _fought: string[]; _user: string }
         Returns: undefined

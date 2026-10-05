@@ -10,6 +10,8 @@ import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
 import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
 import type { BattleCard as Card, Category, DogTag, TagPower } from '../types';
 import { CardBurn } from './CardBurn';
+import type { RoundEvent } from '../lib/events';
+import { EVENT_ICON, eventEffect, eventName } from '../lib/eventText';
 import { CwCard, StatBars } from './CwCard';
 
 /** One settled round, played back: the two cards, the category drawn and what it did. */
@@ -30,9 +32,13 @@ export interface Reveal {
   values: [number, number] | null;
   /** The dog tag each side armed. */
   tags?: [TagPower | null, TagPower | null];
+  /** Something that happened before the category was drawn. */
+  event?: RoundEvent | null;
+  /** A rapture: the card each side lost to the beam. */
+  raptured?: [string | null, string | null];
 }
 
-type Phase = 'idle' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
+type Phase = 'idle' | 'event' | 'beam' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
 
 const REEL_ROW = 34;
 const quick = () => isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -101,6 +107,7 @@ export function BattleArena({
   forfeitLabel,
   onForfeit,
   note,
+  gone,
 }: {
   player: Card[];
   opponent: Card[];
@@ -125,6 +132,8 @@ export function BattleArena({
   onForfeit: () => void;
   /** A line under the top bar (the clock in a player battle). */
   note?: ReactNode;
+  /** Cards raptured earlier this battle: the player's, then the rival's. */
+  gone?: [string[], string[]];
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [focus, setFocus] = useState<number | null>(null);
@@ -188,7 +197,29 @@ export function BattleArena({
     };
     skip.current = home;
 
-    setPhase('spin');
+    const ev = reveal.event ?? null;
+    // The event card shows first; everything after it waits.
+    const lead = ev ? (fast ? 900 : 1700) : 0;
+    if (ev) {
+      setPhase('event');
+      eventSound('radioIn');
+      haptics.medium();
+    }
+    if (ev === 'rapture') {
+      at(lead, () => {
+        setPhase('beam');
+        eventSound('whoosh');
+        haptics.heavy();
+      });
+      at(lead + (fast ? 900 : 2200), () => setPhase('done'));
+      at(lead + (fast ? 2200 : 3600), home);
+      return () => {
+        cancelled = true;
+        timers.forEach(clearTimeout);
+      };
+    }
+    if (!ev) setPhase('spin');
+    else at(lead, () => setPhase('spin'));
     const hit = () => {
       setPhase('clash');
       if (reveal.damage > 0) {
@@ -203,22 +234,22 @@ export function BattleArena({
     if (fast) {
       // No reel, no flights: the result, long enough to read.
       setReelAt(turns(4, reveal.category));
-      at(80, hit);
-      at(220, verdict);
-      at(1500, home);
+      at(lead + 80, hit);
+      at(lead + 220, verdict);
+      at(lead + 1500, home);
     } else {
       setReelAt(0);
       const first = reveal.first;
-      at(30, () => setReelAt(turns(2, first ?? reveal.category)));
+      at(lead + 30, () => setReelAt(turns(2, first ?? reveal.category)));
       // A Second chance: the reel stops on the category that was lost, then goes round again.
-      const base = first ? 1750 : 0;
+      const base = lead + (first ? 1750 : 0);
       if (first) {
-        at(1150, () => {
+        at(lead + 1150, () => {
           setPhase('replay');
           eventSound('radioIn');
           haptics.medium();
         });
-        at(1700, () => setReelAt(turns(4, reveal.category)));
+        at(lead + 1700, () => setReelAt(turns(4, reveal.category)));
       }
       at(base + 1200, hit);
       at(base + 1950, verdict);
@@ -255,7 +286,17 @@ export function BattleArena({
   const theirTag = reveal?.tags?.[1] ?? null;
   const mineOut = !!reveal && settled && reveal.hp[0]?.[mineIndex ?? -1] === 0;
   const theirsOut = !!reveal && settled && reveal.hp[1]?.[theirsIndex ?? -1] === 0;
-  const burning = phase === 'done' && !quick();
+  const rapture = reveal?.event === 'rapture';
+  const burning = phase === 'done' && !quick() && !rapture;
+  const EventIcon = reveal?.event ? EVENT_ICON[reveal.event] : null;
+  /** A card the beam has taken (or is taking right now). */
+  const beamClass = (side: 0 | 1, id: string) => {
+    const now = rapture && reveal?.raptured?.[side] === id;
+    if (now && phase === 'beam') return 'cw-beaming';
+    if (now && (phase === 'done' || phase === 'return')) return 'cw-beamed';
+    if (!now && gone?.[side]?.includes(id)) return 'cw-beamed';
+    return undefined;
+  };
 
   const tagChip = (power: TagPower, side: 'mine' | 'theirs') => {
     const Icon = TAG_ICON[power];
@@ -311,6 +352,7 @@ export function BattleArena({
               size="thumb"
               hp={theirs[i] ?? 100}
               away={theirsIndex === i}
+              className={beamClass(1, c.id)}
               disabled={!!reveal || !!submitted}
               onClick={() => {
                 haptics.light();
@@ -344,7 +386,7 @@ export function BattleArena({
                   card={mineCard}
                   hp={mine[mineIndex ?? 0] ?? 100}
                   highlight={live}
-                  className={cn(mineOut && phase !== 'clash' && 'cw-charred')}
+                  className={cn(!rapture && mineOut && phase !== 'clash' && 'cw-charred', beamClass(0, mineCard.id))}
                   onClick={focusCard ? () => setFocus(null) : undefined}
                 />
                 {myTag && reveal && tagChip(myTag, 'mine')}
@@ -354,8 +396,24 @@ export function BattleArena({
             </div>
           ) : null}
 
-          {reveal && DrawnIcon ? (
+          {reveal && EventIcon && reveal.event && (phase === 'event' || rapture) ? (
             <div className="cw-mid">
+              <div className={cn('cw-event', `cw-event-${reveal.event}`)} role="status">
+                <span className="cw-event-icon">
+                  <EventIcon aria-hidden />
+                </span>
+                <b>{eventName(reveal.event)}</b>
+                <small>{eventEffect(reveal.event)}</small>
+              </div>
+            </div>
+          ) : reveal && DrawnIcon ? (
+            <div className="cw-mid">
+              {reveal.event && EventIcon && (
+                <span className="cw-event-chip">
+                  <EventIcon aria-hidden />
+                  {eventName(reveal.event)}
+                </span>
+              )}
               {phase === 'replay' && <p className="cw-second">{tr("Second chance!")}</p>}
               <div className={cn('cw-reel', settled && 'cw-reel-set')} aria-label={tr("Category drawn")}>
                 <div className="cw-reel-track" style={{ transform: `translateY(-${reelAt * REEL_ROW}px)` }}>
@@ -392,7 +450,7 @@ export function BattleArena({
                   card={theirsCard}
                   hp={theirs[theirsIndex ?? 0] ?? 100}
                   highlight={live}
-                  className={cn(theirsOut && phase !== 'clash' && 'cw-charred')}
+                  className={cn(!rapture && theirsOut && phase !== 'clash' && 'cw-charred', beamClass(1, theirsCard.id))}
                   onClick={!reveal ? () => setPeek(null) : undefined}
                 />
                 {theirTag && reveal && tagChip(theirTag, 'theirs')}
@@ -439,7 +497,13 @@ export function BattleArena({
         <div className="cw-below">
           {reveal ? (
             <p className={cn('cw-verdict', (phase === 'done' || phase === 'return') && (reveal.winner === 0 ? 'cw-won-text' : reveal.winner === 1 ? 'cw-lost-text' : ''))} aria-live="polite">
-              {phase === 'replay'
+              {phase === 'event' && reveal.event
+                ? tr("Event: {0}", [eventName(reveal.event)])
+                : phase === 'beam'
+                  ? tr("Tractor beam! The best cards are being taken…")
+                  : rapture
+                    ? tr("Raptured! Your card beams back home at full condition.")
+                    : phase === 'replay'
                 ? tr("Lost on {0}. Drawing again…", [categoryLabel(reveal.first ?? reveal.category)])
                 : phase !== 'done' && phase !== 'return'
                   ? tr("Drawing the category…")
@@ -451,7 +515,11 @@ export function BattleArena({
                       ? mineOut
                         ? tr("Your card is out: {0} damage taken", [reveal.damage])
                         : tr("You lose the round: {0} damage taken", [reveal.damage])
-                      : tr("A tie: no damage")}
+                      : reveal.event === 'photo' && reveal.damage > 0
+                        ? tr("Photo finish: both cards take {0}", [reveal.damage])
+                        : reveal.event === 'redflag'
+                          ? tr("Red flag: no damage")
+                          : tr("A tie: no damage")}
             </p>
           ) : focusCard ? (
             <>
@@ -524,6 +592,7 @@ export function BattleArena({
               size="thumb"
               hp={mine[i] ?? 100}
               away={mineIndex === i}
+              className={beamClass(0, c.id)}
               disabled={locked || (mine[i] ?? 100) === 0}
               onClick={() => {
                 haptics.light();

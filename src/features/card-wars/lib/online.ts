@@ -18,6 +18,10 @@ export interface OnlineRound {
   s2?: number;
   t1?: number | null;
   t2?: number | null;
+  /** A round event (1 to 11, `EVENTS` order), and the cards a rapture took (side 1, side 2). */
+  event?: number | null;
+  r1?: string;
+  r2?: string;
 }
 
 /** A player battle from this player's side. The server settles every round (`cw_action`). */
