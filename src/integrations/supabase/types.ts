@@ -1472,7 +1472,10 @@ export type Database = {
           card: Json | null
           direction: string
           display_name: string
+          fixes: number | null
+          flagged: boolean
           lap_ms: number
+          max_gap_ms: number | null
           osm_id: number
           sectors: number[]
           set_at: string
@@ -1485,7 +1488,10 @@ export type Database = {
           card?: Json | null
           direction: string
           display_name: string
+          fixes?: number | null
+          flagged?: boolean
           lap_ms: number
+          max_gap_ms?: number | null
           osm_id: number
           sectors?: number[]
           set_at?: string
@@ -1498,7 +1504,10 @@ export type Database = {
           card?: Json | null
           direction?: string
           display_name?: string
+          fixes?: number | null
+          flagged?: boolean
           lap_ms?: number
+          max_gap_ms?: number | null
           osm_id?: number
           sectors?: number[]
           set_at?: string
@@ -2013,26 +2022,49 @@ export type Database = {
           yes: number
         }[]
       }
-      submit_track_lap: {
-        Args: {
-          _card?: Json
-          _direction: string
-          _display_name: string
-          _lap_ms: number
-          _length_m: number
-          _osm_id: number
-          _sectors: number[]
-          _track_name: string
-          _vehicle_class: string
-          _vehicle_name?: string
-        }
-        Returns: {
-          card: Json
-          display_name: string
-          lap_ms: number
-          vehicle_name: string
-        }[]
-      }
+      submit_track_lap:
+        | {
+            Args: {
+              _card?: Json
+              _direction: string
+              _display_name: string
+              _lap_ms: number
+              _length_m: number
+              _osm_id: number
+              _sectors: number[]
+              _track_name: string
+              _vehicle_class: string
+              _vehicle_name?: string
+            }
+            Returns: {
+              card: Json
+              display_name: string
+              lap_ms: number
+              vehicle_name: string
+            }[]
+          }
+        | {
+            Args: {
+              _card?: Json
+              _direction: string
+              _display_name: string
+              _fixes?: number
+              _lap_ms: number
+              _length_m: number
+              _max_gap_ms?: number
+              _osm_id: number
+              _sectors: number[]
+              _track_name: string
+              _vehicle_class: string
+              _vehicle_name?: string
+            }
+            Returns: {
+              card: Json
+              display_name: string
+              lap_ms: number
+              vehicle_name: string
+            }[]
+          }
       track_leaderboard: {
         Args: {
           _direction: string
