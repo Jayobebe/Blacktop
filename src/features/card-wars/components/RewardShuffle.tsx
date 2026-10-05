@@ -6,29 +6,54 @@ import { haptics } from '@/lib/haptics';
 import { isThermal } from '@/lib/thermal';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { shuffle } from '../lib/engine';
 import type { BattleState } from '../types';
 import { CwCard } from './CwCard';
 
 type Stage = 'show' | 'flip' | 'shuffle' | 'pick' | 'reveal';
 
-/** How many times the table is rearranged, and how long each move takes. Too quick to follow one card by eye. */
-const MOVES = 11;
+/** Swaps before the table settles, and how long each takes. One pair at a time, too quick to follow for long. */
+const SWAPS = 12;
 const MOVE_MS = 210;
 
-/** A new arrangement in which no card stays where it was. */
-function rearranged(order: string[]): string[] {
-  for (let tries = 0; tries < 20; tries++) {
-    const next = shuffle(order);
-    if (next.every((id, i) => id !== order[i])) return next;
+const swapped = (order: string[], a: number, b: number) => {
+  const next = [...order];
+  [next[a], next[b]] = [next[b], next[a]];
+  return next;
+};
+
+/**
+ * The shuffle, planned up front: each step is the table after two cards have
+ * changed places (never the pair that just moved), and the last few swaps put
+ * every card where the saved order has it.
+ */
+function planSwaps(from: string[], to: string[]): string[][] {
+  const steps: string[][] = [];
+  let current = from;
+  let last = [-1, -1];
+  for (let i = 0; i < SWAPS; i++) {
+    let a = 0;
+    let b = 0;
+    do {
+      a = Math.floor(Math.random() * current.length);
+      b = Math.floor(Math.random() * current.length);
+    } while (a === b || (last.includes(a) && last.includes(b)));
+    last = [a, b];
+    current = swapped(current, a, b);
+    steps.push(current);
   }
-  return [...order.slice(1), order[0]];
+  for (let i = 0; i < to.length; i++) {
+    const at = current.indexOf(to[i]);
+    if (at === i || at < 0) continue;
+    current = swapped(current, i, at);
+    steps.push(current);
+  }
+  return steps;
 }
 
 /**
  * The prize for beating the computer: five cards are shown (its own, with any
  * shop-only card swapped for a Road or Race one), turned face down and
- * shuffled fast, all five moving at once; the one picked is turned over and
+ * shuffled fast, two cards changing places at a time, one swap after another; the one picked is turned over and
  * kept. Each card is one element that keeps its identity through the flip and
  * every move (measured slots), and the whole card is the button, so a tap
  * can't land between its faces. The settled order is saved with the run:
@@ -59,7 +84,7 @@ export function RewardShuffle({ run, riding, onClaim, onComplete }: { run: Battl
     return () => observer.disconnect();
   }, []);
 
-  // Face down, then the shuffle: every card moves on every beat, and the last beat lands on the saved order.
+  // Face down, then the shuffle: one pair swaps per beat, and the last swaps land on the saved order.
   const shuffling = stage === 'flip' || stage === 'shuffle';
   useEffect(() => {
     if (stage !== 'flip') return;
@@ -74,20 +99,16 @@ export function RewardShuffle({ run, riding, onClaim, onComplete }: { run: Battl
     if (quick) {
       at(250, settle);
     } else {
-      let current = initial;
       let time = 520;
-      for (let i = 0; i < MOVES - 1; i++) {
-        const next = rearranged(current);
-        current = next;
+      planSwaps(initial, run.rewardOrder).forEach((next, i) => {
         at(time, () => {
           setStage('shuffle');
           setOrder(next);
           if (i % 2 === 0) eventSound('whoosh');
         });
         time += MOVE_MS + 25;
-      }
-      at(time, () => setOrder(run.rewardOrder));
-      at(time + MOVE_MS + 150, settle);
+      });
+      at(time + 150, settle);
     }
     return () => {
       cancelled = true;
