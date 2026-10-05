@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, shuffle } from '../src/features/card-wars/lib/engine';
+import { setEventsEnabled } from '../src/features/card-wars/lib/events';
 import { V2 } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
 import { tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
@@ -64,6 +65,8 @@ assert.ok(run.result && run.hp.some((hand) => hand.every((hp) => hp === 0)), 'Fu
 assert.equal(JSON.stringify(run.opponent), initial, 'Computer deck and ratings stay fixed throughout battle');
 assert.deepEqual(JSON.parse(JSON.stringify(run)).opponent, run.opponent, 'Deck survives persistence');
 assert.ok(run.log.every((l) => l.event === 'rapture' ? !l.values : l.values && (l.event === 'redflag' || l.event === 'photo' || (l.winner === null) === (l.values[0] === l.values[1]))), 'Every round logs what was compared');
+// The checks below test the plain rules, without round events.
+setEventsEnabled(false);
 assert.throws(() => createRun(player.slice(0, 4)), /five unique cards/);
 
 // ── Dog tags ──

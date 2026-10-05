@@ -10,8 +10,15 @@ export type RoundEvent = (typeof EVENTS)[number];
 export const EVENT_CHANCE = 1 / 6;
 export const RAPTURE_CHANCE = 0.004;
 
+let enabled = true;
+/** The rule checks turn events off to test the plain rules. */
+export function setEventsEnabled(on: boolean) {
+  enabled = on;
+}
+
 export function rollEvent(random: () => number): RoundEvent | null {
   const r = random();
+  if (!enabled) return null;
   if (r < RAPTURE_CHANCE) return 'rapture';
   if (r < EVENT_CHANCE) return EVENTS[Math.floor(random() * 10)];
   return null;
