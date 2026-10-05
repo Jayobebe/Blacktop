@@ -1,5 +1,22 @@
 import type { BattleCard, CardBank, DogTag } from '../types';
 import type { CardTier } from '@/features/cards/types';
+import mx5Art from '@/assets/card-wars/mx5.png.asset.json';
+import mx5cupArt from '@/assets/card-wars/mx5cup.png.asset.json';
+import civicArt from '@/assets/card-wars/civic.png.asset.json';
+import nsxgt3Art from '@/assets/card-wars/nsxgt3.png.asset.json';
+import mustangArt from '@/assets/card-wars/mustangdh.png.asset.json';
+import gtiArt from '@/assets/card-wars/gti.png.asset.json';
+import ferrariArt from '@/assets/card-wars/296gt3.png.asset.json';
+import mclarenArt from '@/assets/card-wars/720sgt3.png.asset.json';
+import amgBlackArt from '@/assets/card-wars/amggtbs.png.asset.json';
+import amgRaceArt from '@/assets/card-wars/amggt3.png.asset.json';
+
+/** Supplied transparent cutouts share a canvas, visible width and ground baseline. */
+const ARTWORK: Record<string, string> = {
+ mx5: mx5Art.url, mx5cup: mx5cupArt.url, civic: civicArt.url, nsxgt3: nsxgt3Art.url,
+ mustangdh: mustangArt.url, gti: gtiArt.url, '296gt3': ferrariArt.url,
+ '720sgt3': mclarenArt.url, amggtbs: amgBlackArt.url, amggt3: amgRaceArt.url,
+};
 
 /**
  * Card Wars catalog. Each card carries real published figures (year, power,
@@ -121,6 +138,7 @@ export const CATALOG: BattleCard[] = rows.map(([id, manufacturer, name, vehicle,
  SPECS[id] = { year, hp, kg, vmaxKmh, ...(leanDeg != null ? { leanDeg } : {}) };
  return {
   id, name, manufacturer, vehicle, spec, archetype: id,
+  ...(ARTWORK[id] ? { image: ARTWORK[id] } : {}),
   ...(bank ? { bank, tier: BANK_INFO[bank].tier, price: BANK_INFO[bank].price } : {}),
   ratings: { speed: speedRating(vmaxKmh), lean: leanRating(leanDeg), g: gRating(hp, kg), distance, corners },
  };
