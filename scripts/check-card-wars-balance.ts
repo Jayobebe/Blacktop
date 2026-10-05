@@ -1,8 +1,8 @@
 import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
-import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, shuffle } from '../src/features/card-wars/lib/engine';
+import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, prizesFor, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { RULES, V2, WEAR_BY_ROUND, wearLoss } from '../src/features/card-wars/lib/rules';
+import { PRIZE_DECK, PRIZE_REACH, RULES, V2, WEAR_BY_ROUND, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
@@ -56,7 +56,20 @@ let run = createRun(player, random);
 const initial = JSON.stringify(run.opponent);
 const prizes = run.prizes ?? run.opponent;
 assert.equal(new Set(prizes.map((c) => c.id)).size, 5, 'Five different prizes');
-assert.ok(prizes.every((c) => !c.bank), 'Prizes are Road and Race cards only');
+if (PRIZE_DECK) {
+  // The prize table is the computer's deck: a shop-only card stays when it's within reach of the deck that won.
+  const dear = sorted.slice(-5);
+  const bank = dear.filter((c) => c.bank);
+  assert.ok(bank.length > 0, 'The strongest cards include shop-only ones');
+  assert.deepEqual(prizesFor(dear, dear, random).map((c) => c.id), dear.map((c) => c.id), "A deck as dear as the computer's wins the computer's own cards");
+  const cheap = sorted.slice(0, 5);
+  const swappedOut = prizesFor(dear, cheap, random);
+  const limit = PRIZE_REACH * Math.max(...cheap.map((c) => c.price ?? 0));
+  assert.ok(swappedOut.length === 5 && swappedOut.every((c) => !c.bank || (c.price ?? 0) <= limit), 'A shop-only card out of reach is swapped for a Road or Race one');
+  assert.ok(prizes.every((c) => run.opponent.some((o) => o.id === c.id) || !c.bank), "Prizes are the computer's own cards");
+} else {
+  assert.ok(prizes.every((c) => !c.bank), 'Prizes are Road and Race cards only');
+}
 assert.deepEqual([...run.rewardOrder].sort(), prizes.map((c) => c.id).sort(), 'The shuffle holds exactly the prizes');
 for (let i = 0; i < 400 && !run.result; i++) {
   const alive = run.hp[0].map((v, index) => (v > 0 ? index : -1)).filter((index) => index >= 0);

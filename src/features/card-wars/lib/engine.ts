@@ -1,6 +1,6 @@
 import { CATEGORIES, type BattleCard, type BattleState, type Category, type CoinFlip, type DogTag } from '../types';
-import { BRAND_CARDS, CATALOG } from './catalog';
-import { V2, damageFor } from './rules';
+import { BRAND_CARDS, CATALOG, cardById } from './catalog';
+import { PRIZE_DECK, PRIZE_REACH, V2, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
@@ -128,12 +128,15 @@ export function createComputerDeck(player: BattleCard[], random: () => number = 
 }
 
 /**
- * The five cards a win picks from, face down: the computer's own, with any
- * shop-only card (GTLM, TT, F1, MotoGP) swapped for one of the strongest Road
- * or Race cards. Those four series are only ever bought or spun for.
+ * The five cards a win picks from, face down: the computer's own deck. A
+ * shop-only card (GTLM, TT, F1, MotoGP) stays on the table when the server
+ * hands those out (`PRIZE_DECK`) and it's within reach of the deck that beat
+ * it (`PRIZE_REACH`, the one check the server can make on a battle it didn't
+ * see); otherwise one of the strongest Road or Race cards takes its place.
  */
-export function prizesFor(opponent: BattleCard[], random: () => number = Math.random): BattleCard[] {
-  const prizes = opponent.filter((c) => !c.bank);
+export function prizesFor(opponent: BattleCard[], player: BattleCard[] = [], random: () => number = Math.random): BattleCard[] {
+  const reach = PRIZE_DECK ? PRIZE_REACH * Math.max(0, ...player.map((c) => cardById(c.id)?.price ?? 0)) : 0;
+  const prizes = opponent.filter((c) => !c.bank || (c.price ?? Infinity) <= reach);
   if (prizes.length === opponent.length) return prizes;
   const best = BRAND_CARDS.filter((c) => !prizes.some((p) => p.id === c.id))
     .map((c) => ({ c, s: fieldStrength(c, CATALOG) }))
@@ -148,7 +151,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
   const opponent = createComputerDeck(player, random);
   const categories = shuffle([...CATEGORIES], random);
   const penaltyRound = random() < 0.125 ? 1 + Math.floor(random() * 4) : -1;
-  const prizes = V2 ? prizesFor(opponent, random) : opponent;
+  const prizes = V2 ? prizesFor(opponent, player, random) : opponent;
   return {
     id: crypto.randomUUID(),
     player,

@@ -26,7 +26,7 @@ function serverRules(): 1 | 2 {
 export const V2 = serverRules() === 2;
 
 /** What the server said at launch about a later migration (scripts: on with the second rule set). */
-function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear'): boolean {
+function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes'): boolean {
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
   if (env) return env === '2';
   try {
@@ -46,11 +46,21 @@ export const FLIP = V2 && serverHas('cardWarsFlip');
 
 /**
  * Wear follows the rounds each card fought (migration
- * 20261011000000_card_wars_wear_by_round.sql; the `cardWarsWear` cap). Until
+ * 20261011, applied as 20261005184020_…; the `cardWarsWear` cap). Until
  * the server has it, a battle costs a card that fought the flat `wear.road` /
  * `wear.race`, however often it was played.
  */
 export const WEAR_BY_ROUND = V2 && serverHas('cardWarsWear');
+
+/**
+ * The prize table is the computer's own deck, shop-only cards included
+ * (migration 20261012000000_card_wars_prize_deck.sql; the `cardWarsPrizes`
+ * cap). Until the server has it, it only hands out Road and Race cards, so a
+ * shop-only card on the table is swapped for one of those.
+ */
+export const PRIZE_DECK = V2 && serverHas('cardWarsPrizes');
+/** A shop-only prize costs at most this many times the dearest card in the deck that won it (the server checks it against what the rider owns). */
+export const PRIZE_REACH = 2;
 
 export interface Rules {
   /** RPM for a finished battle against the computer. */
