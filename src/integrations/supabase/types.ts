@@ -666,6 +666,7 @@ export type Database = {
           last_created_at: string | null
           last_offline_reward: string | null
           last_topup: string | null
+          last_wear_run: string | null
           user_id: string
         }
         Insert: {
@@ -676,6 +677,7 @@ export type Database = {
           last_created_at?: string | null
           last_offline_reward?: string | null
           last_topup?: string | null
+          last_wear_run?: string | null
           user_id: string
         }
         Update: {
@@ -686,6 +688,7 @@ export type Database = {
           last_created_at?: string | null
           last_offline_reward?: string | null
           last_topup?: string | null
+          last_wear_run?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1740,6 +1743,13 @@ export type Database = {
       }
       cw_repair: { Args: { _card: string }; Returns: Json }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
+      cw_save_wear: {
+        Args: { _deck: string[]; _fought: string[]; _run: string }
+        Returns: {
+          card_id: string
+          condition: number
+        }[]
+      }
       cw_shop: { Args: never; Returns: Json }
       cw_spin: { Args: { _cat: string; _free?: boolean }; Returns: Json }
       cw_wear_mult: {
