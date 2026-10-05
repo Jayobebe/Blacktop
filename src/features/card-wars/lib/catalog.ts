@@ -10,12 +10,25 @@ import ferrariArt from '@/assets/card-wars/296gt3.png.asset.json';
 import mclarenArt from '@/assets/card-wars/720sgt3.png.asset.json';
 import amgBlackArt from '@/assets/card-wars/amggtbs.png.asset.json';
 import amgRaceArt from '@/assets/card-wars/amggt3.png.asset.json';
+import porscheRoadArt from '@/assets/card-wars/911.png.asset.json';
+import porscheRaceArt from '@/assets/card-wars/gt3r.png.asset.json';
+import bmwRoadArt from '@/assets/card-wars/m3.png.asset.json';
+import bmwRaceArt from '@/assets/card-wars/m4gt3.png.asset.json';
+import ferrariRoadArt from '@/assets/card-wars/296gtb.png.asset.json';
+import mclarenRoadArt from '@/assets/card-wars/750s.png.asset.json';
+import fiestaArt from '@/assets/card-wars/rally.png.asset.json';
+import golfRaceArt from '@/assets/card-wars/gtitcr.png.asset.json';
+import supraArt from '@/assets/card-wars/suprag4.png.asset.json';
+import yarisArt from '@/assets/card-wars/gryaris.png.asset.json';
 
 /** Supplied transparent cutouts share a canvas, visible width and ground baseline. */
 const ARTWORK: Record<string, string> = {
  mx5: mx5Art.url, mx5cup: mx5cupArt.url, civic: civicArt.url, nsxgt3: nsxgt3Art.url,
  mustangdh: mustangArt.url, gti: gtiArt.url, '296gt3': ferrariArt.url,
  '720sgt3': mclarenArt.url, amggtbs: amgBlackArt.url, amggt3: amgRaceArt.url,
+ '911': porscheRoadArt.url, gt3r: porscheRaceArt.url, m3: bmwRoadArt.url,
+ m4gt3: bmwRaceArt.url, '296gtb': ferrariRoadArt.url, '750s': mclarenRoadArt.url,
+ rally: fiestaArt.url, gtitcr: golfRaceArt.url, suprag4: supraArt.url, gryaris: yarisArt.url,
 };
 
 /**
