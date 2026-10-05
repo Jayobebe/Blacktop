@@ -19,6 +19,7 @@ export const wearReportOf = (run: BattleState): WearReport => ({
   id: run.id,
   deck: run.player.map((c) => c.id),
   fought: Array.from(new Set(run.log.map((l) => l.player))),
+  raptured: run.log.find((l) => l.raptured?.[0])?.raptured?.[0] ?? null,
 });
 
 function load(): VaultState {

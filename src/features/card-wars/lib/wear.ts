@@ -34,9 +34,15 @@ export function withWear(card: BattleCard, condition: number): BattleCard {
 /** Condition after a battle against the computer: cards that fought wear, the rest recover. */
 export function wearAfterRun(wear: Record<string, number> | undefined, run: BattleState, owned: BattleCard[]): Record<string, number> {
   const fought = new Set(run.log.map((l) => l.player));
+  const raptured = run.log.find((l) => l.raptured?.[0])?.raptured?.[0];
   const next: Record<string, number> = { ...(wear || {}) };
   for (const card of owned) {
     const c = conditionOf(wear, card.id);
+    // Beamed back at full condition.
+    if (card.id === raptured) {
+      next[card.id] = 100;
+      continue;
+    }
     next[card.id] = fought.has(card.id) ? Math.max(0, c - WEAR_PER_BATTLE[card.spec]) : Math.min(100, c + REST_RECOVERY);
   }
   return next;
@@ -69,7 +75,7 @@ export function queueWear(run: BattleState) {
 type Sent = { wear: Record<string, number> } | 'retry' | 'rejected';
 
 async function send(report: WearReport): Promise<Sent> {
-  const { data, error } = await supabase.rpc('cw_save_wear' as never, { _run: report.id, _deck: report.deck, _fought: report.fought } as never);
+  const { data, error } = await supabase.rpc('cw_save_wear' as never, { _run: report.id, _deck: report.deck, _fought: report.fought, _raptured: report.raptured ?? null } as never);
   if (!error) return { wear: toMap(data as never) };
   // No code: the request never reached the database (offline). "Too many
   // battles" is the server's rate limit. Both are worth another go. Anything
