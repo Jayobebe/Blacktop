@@ -1,5 +1,7 @@
 # Current tasks
 
+- [x] Add the second ten supplied vehicle cutouts to the remaining car-brand cards; twenty links and matching transparent canvas sizes verified without a build or preview. The supplied 720S artwork fills the existing 750S catalog slot; ratings unchanged.
+
 - [x] Add the first ten supplied Card Wars vehicle cutouts with consistent proportional sizing; ten asset links and matching visible widths verified without running a build or preview.
 
 - [x] Bias computer deck matchmaking toward a 51% player win target; repeatable simulations measured 50.2–51.0% across low/high/mixed catalog decks, with unchanged stats, persistence and knockout checks passing. Very worn or out-of-range decks cannot meet the target without changing catalog stats; PvP untouched.
