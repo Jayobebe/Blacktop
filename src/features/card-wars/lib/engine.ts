@@ -189,7 +189,7 @@ export function deadlocked(state: BattleState): boolean {
  * A dog tag armed for the round is used up whatever happens:
  *   Overdrive multiplies the player's rating;
  *   Pit medic gives the card HP back before the round;
- *   Coin flip picks the category: the card's best rating on heads, its worst
+ *   Coin flip picks the category against the rival's card: the best on heads, the worst
  *     on tails (never Lean);
  *   Second chance replays a lost round once in another category, with a
  *     rating bonus on the replay (first rule set: it just drew another
@@ -245,11 +245,11 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
   // Fresh tyres: the catalog's ratings, as new.
   const mineRatings = event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
-  // A Coin flip sets the category itself: the card's best rating on heads, its worst on tails.
+  // A Coin flip sets the category itself: against the rival's card, the best one for this card on heads, the worst on tails.
   let flip: CoinFlip | null = null;
   if (live?.power === 'flip') {
     const heads = random() * 100 < tagStrength(live, card);
-    flip = { heads, category: flipCategory(mineRatings, heads) };
+    flip = { heads, category: flipCategory(mineRatings, rival.c.ratings, heads) };
     category = flip.category;
   }
   const crowd = (id: string, side: 0 | 1) => (event === 'crowd' && s.log.some((l) => l.winner === side && (side === 0 ? l.player : l.opponent) === id) ? EVENT_NUMBERS.crowd : 1);

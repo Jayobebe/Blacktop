@@ -169,7 +169,8 @@ const trials = 400;
     const flip = last.flips?.[0];
     assert.ok(flip, 'A Coin flip is logged');
     assert.equal(last.category, flip.category, 'The round is fought in the category the coin picked');
-    assert.equal(flip.category, flipCategory(card.ratings, flip.heads), 'Heads is the best rating, tails the worst');
+    const faced = next.opponent.find((c) => c.id === last.opponent)!;
+    if (last.event !== 'tyres') assert.equal(flip.category, flipCategory(card.ratings, faced.ratings, flip.heads), 'Heads is the best category against the card faced, tails the worst');
     assert.notEqual(flip.category, 'lean', 'Never Lean');
     if (flip.heads) heads++;
   }

@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "其他游戏也能赚 RPM：每局 {0}，刷新个人纪录 {1}，每天最多 {2}。",
  "Turn the card over to spin for its power": "翻开卡牌，转出它的能力",
  "{0} cards are under 50%: rest or repair them": "有 {0} 张卡牌低于 50%：让它们休息或修理",
- "{0} free spins waiting": "有 {0} 次免费转盘"
+ "{0} free spins waiting": "有 {0} 次免费转盘",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "掷硬币决定类别：正面，取你的卡牌相对对方卡牌优势最大的类别；反面，取落后最多的类别。",
+ "Heads! Your best category against their card: {0}": "正面！你对阵对方卡牌的最佳类别：{0}",
+ "Heads: your best category against their card": "正面：你对阵对方卡牌的最佳类别",
+ "Tails. Your worst category against their card: {0}": "反面。你对阵对方卡牌的最差类别：{0}",
+ "Tails: your worst category against their card": "反面：你对阵对方卡牌的最差类别",
+ "Your rival flips heads: their best category against your card, {0}": "对手掷出正面：对方对阵你卡牌的最佳类别，{0}",
+ "Your rival flips tails: their worst category against your card, {0}": "对手掷出反面：对方对阵你卡牌的最差类别，{0}"
 }

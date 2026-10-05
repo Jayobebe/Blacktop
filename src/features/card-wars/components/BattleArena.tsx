@@ -8,7 +8,6 @@ import { isThermal } from '@/lib/thermal';
 import { cn } from '@/lib/utils';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
 import { WEAR_ROUND, wearLoss } from '../lib/rules';
-import { flipCategory } from '../lib/tagRules';
 import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
 import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower } from '../types';
 import { CardBurn } from './CardBurn';
@@ -525,11 +524,11 @@ export function BattleArena({
                 <p className="cw-info-flip">
                   <span>
                     <TrendingUp aria-hidden />
-                    {tr("Heads: {0}", [categoryLabel(flipCategory(armedFlip.ratings, true))])} <b className="font-mono">{armedFlip.ratings[flipCategory(armedFlip.ratings, true)]}</b>
+                    {tr("Heads: your best category against their card")}
                   </span>
                   <span>
                     <TrendingDown aria-hidden />
-                    {tr("Tails: {0}", [categoryLabel(flipCategory(armedFlip.ratings, false))])} <b className="font-mono">{armedFlip.ratings[flipCategory(armedFlip.ratings, false)]}</b>
+                    {tr("Tails: your worst category against their card")}
                   </span>
                 </p>
               )}
@@ -592,11 +591,11 @@ export function BattleArena({
                         ? tr("Two coins, two categories: the round takes one of them")
                         : myFlip
                           ? myFlip.heads
-                            ? tr("Heads! Your best rating: {0}", [categoryLabel(myFlip.category)])
-                            : tr("Tails. Your worst rating: {0}", [categoryLabel(myFlip.category)])
+                            ? tr("Heads! Your best category against their card: {0}", [categoryLabel(myFlip.category)])
+                            : tr("Tails. Your worst category against their card: {0}", [categoryLabel(myFlip.category)])
                           : theirFlip?.heads
-                            ? tr("Your rival flips heads: their best rating, {0}", [categoryLabel(theirFlip.category)])
-                            : tr("Your rival flips tails: their worst rating, {0}", [categoryLabel(theirFlip?.category ?? reveal.category)])
+                            ? tr("Your rival flips heads: their best category against your card, {0}", [categoryLabel(theirFlip.category)])
+                            : tr("Your rival flips tails: their worst category against your card, {0}", [categoryLabel(theirFlip?.category ?? reveal.category)])
                     : phase === 'replay'
                 ? tr("Lost on {0}. Drawing again…", [categoryLabel(reveal.first ?? reveal.category)])
                 : phase !== 'done' && phase !== 'return'

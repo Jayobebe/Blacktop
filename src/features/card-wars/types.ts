@@ -41,7 +41,7 @@ export interface DogTag {
   spectre?: import('@/features/cards').SpectreCard;
 }
 
-/** A Coin flip dog tag: heads is the card's best rating, tails its worst. */
+/** A Coin flip dog tag: heads is the card's best category against the card it faces, tails its worst. */
 export interface CoinFlip {
   heads: boolean;
   category: Category;

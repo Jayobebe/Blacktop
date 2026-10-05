@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "Інші ігри теж дають RPM: {0} за гру, {1} за особистий рекорд, до {2} на день.",
  "Turn the card over to spin for its power": "Переверніть картку, щоб розіграти силу",
  "{0} cards are under 50%: rest or repair them": "Карток нижче 50%: {0}. Дайте їм відпочити або відремонтуйте",
- "{0} free spins waiting": "Чекає безкоштовних обертів: {0}"
+ "{0} free spins waiting": "Чекає безкоштовних обертів: {0}",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "Підкидає монету на категорію: орел, та, де ваша картка найбільше випереджає їхню; решка, та, де найбільше відстає.",
+ "Heads! Your best category against their card: {0}": "Орел! Ваша найкраща категорія проти їхньої картки: {0}",
+ "Heads: your best category against their card": "Орел: ваша найкраща категорія проти їхньої картки",
+ "Tails. Your worst category against their card: {0}": "Решка. Ваша найгірша категорія проти їхньої картки: {0}",
+ "Tails: your worst category against their card": "Решка: ваша найгірша категорія проти їхньої картки",
+ "Your rival flips heads: their best category against your card, {0}": "У суперника орел: його найкраща категорія проти вашої картки, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "У суперника решка: його найгірша категорія проти вашої картки, {0}"
 }

@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "Diğer oyunlar da RPM kazandırır: oyun başına {0}, kişisel rekor için {1}, günde en fazla {2}.",
  "Turn the card over to spin for its power": "Gücü için çevirmek üzere kartı çevir",
  "{0} cards are under 50%: rest or repair them": "{0} kart %50'nin altında: dinlendir ya da onar",
- "{0} free spins waiting": "{0} ücretsiz çevirme bekliyor"
+ "{0} free spins waiting": "{0} ücretsiz çevirme bekliyor",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "Kategori için yazı tura atar: tura, kartının onların kartına karşı en çok öne geçtiği kategori; yazı, en geride kaldığı kategori.",
+ "Heads! Your best category against their card: {0}": "Tura! Onların kartına karşı en iyi kategorin: {0}",
+ "Heads: your best category against their card": "Tura: onların kartına karşı en iyi kategorin",
+ "Tails. Your worst category against their card: {0}": "Yazı. Onların kartına karşı en kötü kategorin: {0}",
+ "Tails: your worst category against their card": "Yazı: onların kartına karşı en kötü kategorin",
+ "Your rival flips heads: their best category against your card, {0}": "Rakibin tura attı: senin kartına karşı en iyi kategorisi, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "Rakibin yazı attı: senin kartına karşı en kötü kategorisi, {0}"
 }

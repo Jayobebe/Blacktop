@@ -64,9 +64,14 @@ export const slotRef = (tag: DogTag | undefined): string => (tag ? `${tag.power}
 /** The categories a Coin flip can land on: never Lean, so it means the same against a car or a bike. */
 const FLIP_CATEGORIES = ['speed', 'g', 'distance', 'corners'] as const;
 
-/** What a Coin flip would pick for these ratings: the best one on heads, the worst on tails (the first of equals, in the server's order). */
-export function flipCategory(ratings: BattleCard['ratings'], heads: boolean): (typeof FLIP_CATEGORIES)[number] {
+/**
+ * What a Coin flip picks against the card it's facing: on heads the category
+ * where `mine` leads `theirs` by most (or trails by least), on tails the one
+ * where it's furthest behind (the first of equals, in the server's order).
+ */
+export function flipCategory(mine: BattleCard['ratings'], theirs: BattleCard['ratings'], heads: boolean): (typeof FLIP_CATEGORIES)[number] {
+  const lead = (c: (typeof FLIP_CATEGORIES)[number]) => mine[c] - theirs[c];
   let pick: (typeof FLIP_CATEGORIES)[number] = FLIP_CATEGORIES[0];
-  for (const c of FLIP_CATEGORIES) if (heads ? ratings[c] > ratings[pick] : ratings[c] < ratings[pick]) pick = c;
+  for (const c of FLIP_CATEGORIES) if (heads ? lead(c) > lead(pick) : lead(c) < lead(pick)) pick = c;
   return pick;
 }

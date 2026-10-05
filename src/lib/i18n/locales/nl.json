@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "De andere spellen leveren ook RPM op: {0} per spel, {1} voor een persoonlijk record, tot {2} per dag.",
  "Turn the card over to spin for its power": "Draai de kaart om en draai voor de kracht",
  "{0} cards are under 50%: rest or repair them": "{0} kaarten zitten onder 50%: laat ze rusten of repareer ze",
- "{0} free spins waiting": "{0} gratis draaien wachten"
+ "{0} free spins waiting": "{0} gratis draaien wachten",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "Gooit een munt voor de categorie: kop, die waarin jouw kaart de grootste voorsprong heeft op die van hen; munt, die waarin hij het verst achterligt.",
+ "Heads! Your best category against their card: {0}": "Kop! Je beste categorie tegen hun kaart: {0}",
+ "Heads: your best category against their card": "Kop: je beste categorie tegen hun kaart",
+ "Tails. Your worst category against their card: {0}": "Munt. Je slechtste categorie tegen hun kaart: {0}",
+ "Tails: your worst category against their card": "Munt: je slechtste categorie tegen hun kaart",
+ "Your rival flips heads: their best category against your card, {0}": "Je rivaal gooit kop: zijn beste categorie tegen jouw kaart, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "Je rivaal gooit munt: zijn slechtste categorie tegen jouw kaart, {0}"
 }

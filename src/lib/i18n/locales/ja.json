@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "ほかのゲームでもRPMがもらえます：1プレイ{0}、自己ベストで{1}、1日{2}まで。",
  "Turn the card over to spin for its power": "カードを裏返してパワーをスピン",
  "{0} cards are under 50%: rest or repair them": "{0}枚が50%未満です：休ませるか修理しましょう",
- "{0} free spins waiting": "無料スピンが{0}回あります"
+ "{0} free spins waiting": "無料スピンが{0}回あります",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "カテゴリーをコイントスで決めます。表なら相手のカードに対していちばん有利なカテゴリー、裏ならいちばん不利なカテゴリー。",
+ "Heads! Your best category against their card: {0}": "表！相手のカードに対するあなたの最良カテゴリー：{0}",
+ "Heads: your best category against their card": "表：相手のカードに対するあなたの最良カテゴリー",
+ "Tails. Your worst category against their card: {0}": "裏。相手のカードに対するあなたの最悪カテゴリー：{0}",
+ "Tails: your worst category against their card": "裏：相手のカードに対するあなたの最悪カテゴリー",
+ "Your rival flips heads: their best category against your card, {0}": "ライバルは表：あなたのカードに対する相手の最良カテゴリー、{0}",
+ "Your rival flips tails: their worst category against your card, {0}": "ライバルは裏：あなたのカードに対する相手の最悪カテゴリー、{0}"
 }

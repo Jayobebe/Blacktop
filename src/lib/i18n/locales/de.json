@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "Die anderen Spiele bringen auch RPM: {0} pro Spiel, {1} für eine persönliche Bestleistung, bis zu {2} am Tag.",
  "Turn the card over to spin for its power": "Dreh die Karte um, um ihre Kraft zu erdrehen",
  "{0} cards are under 50%: rest or repair them": "{0} Karten sind unter 50 %: Lass sie ruhen oder repariere sie",
- "{0} free spins waiting": "{0} kostenlose Drehs warten"
+ "{0} free spins waiting": "{0} kostenlose Drehs warten",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "Wirft eine Münze um die Kategorie: Kopf, die, in der deine Karte den größten Vorsprung auf die gegnerische hat; Zahl, die, in der sie am weitesten zurückliegt.",
+ "Heads! Your best category against their card: {0}": "Kopf! Deine beste Kategorie gegen ihre Karte: {0}",
+ "Heads: your best category against their card": "Kopf: deine beste Kategorie gegen ihre Karte",
+ "Tails. Your worst category against their card: {0}": "Zahl. Deine schlechteste Kategorie gegen ihre Karte: {0}",
+ "Tails: your worst category against their card": "Zahl: deine schlechteste Kategorie gegen ihre Karte",
+ "Your rival flips heads: their best category against your card, {0}": "Dein Rivale wirft Kopf: seine beste Kategorie gegen deine Karte, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "Dein Rivale wirft Zahl: seine schlechteste Kategorie gegen deine Karte, {0}"
 }

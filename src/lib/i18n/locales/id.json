@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "Game lain juga memberi RPM: {0} per game, {1} untuk rekor pribadi, hingga {2} sehari.",
  "Turn the card over to spin for its power": "Balik kartu untuk memutar kekuatannya",
  "{0} cards are under 50%: rest or repair them": "{0} kartu di bawah 50%: istirahatkan atau perbaiki",
- "{0} free spins waiting": "{0} putaran gratis menunggu"
+ "{0} free spins waiting": "{0} putaran gratis menunggu",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "Melempar koin untuk kategori: kepala, kategori tempat kartumu paling unggul atas kartu lawan; ekor, tempat ia paling tertinggal.",
+ "Heads! Your best category against their card: {0}": "Kepala! Kategori terbaikmu melawan kartu mereka: {0}",
+ "Heads: your best category against their card": "Kepala: kategori terbaikmu melawan kartu mereka",
+ "Tails. Your worst category against their card: {0}": "Ekor. Kategori terburukmu melawan kartu mereka: {0}",
+ "Tails: your worst category against their card": "Ekor: kategori terburukmu melawan kartu mereka",
+ "Your rival flips heads: their best category against your card, {0}": "Lawanmu dapat kepala: kategori terbaiknya melawan kartumu, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "Lawanmu dapat ekor: kategori terburuknya melawan kartumu, {0}"
 }

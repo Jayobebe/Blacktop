@@ -46,7 +46,7 @@ export function tagDescription(power: TagPower): string {
     case 'heal':
       return tr("Gives the card you play HP back before the round.");
     case 'flip':
-      return tr("Flips a coin for the category: heads, your card's best rating; tails, its worst.");
+      return tr("Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.");
     default:
       return V2 ? tr("If you lose the round, it's replayed once in another category.") : tr("Throws the drawn category away and draws another.");
   }

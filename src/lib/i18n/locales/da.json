@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "De andre spil giver også RPM: {0} pr. spil, {1} for en personlig rekord, op til {2} om dagen.",
  "Turn the card over to spin for its power": "Vend kortet for at spinne om dets kraft",
  "{0} cards are under 50%: rest or repair them": "{0} kort er under 50 %: lad dem hvile eller reparer dem",
- "{0} free spins waiting": "{0} gratis spin venter"
+ "{0} free spins waiting": "{0} gratis spin venter",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "Slår plat eller krone om kategorien: krone, den hvor dit kort har størst forspring på deres; plat, den hvor det er længst bagud.",
+ "Heads! Your best category against their card: {0}": "Krone! Din bedste kategori mod deres kort: {0}",
+ "Heads: your best category against their card": "Krone: din bedste kategori mod deres kort",
+ "Tails. Your worst category against their card: {0}": "Plat. Din dårligste kategori mod deres kort: {0}",
+ "Tails: your worst category against their card": "Plat: din dårligste kategori mod deres kort",
+ "Your rival flips heads: their best category against your card, {0}": "Din rival slår krone: deres bedste kategori mod dit kort, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "Din rival slår plat: deres dårligste kategori mod dit kort, {0}"
 }

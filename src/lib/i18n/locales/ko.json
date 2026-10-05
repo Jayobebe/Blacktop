@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "다른 게임도 RPM을 줍니다: 한 판에 {0}, 개인 최고 기록이면 {1}, 하루 최대 {2}.",
  "Turn the card over to spin for its power": "카드를 뒤집어 파워를 스핀하세요",
  "{0} cards are under 50%: rest or repair them": "카드 {0}장이 50% 미만입니다: 쉬게 하거나 수리하세요",
- "{0} free spins waiting": "무료 스핀 {0}회 대기 중"
+ "{0} free spins waiting": "무료 스핀 {0}회 대기 중",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "카테고리를 동전 던지기로 정합니다. 앞면이면 내 카드가 상대 카드보다 가장 앞서는 카테고리, 뒷면이면 가장 뒤처지는 카테고리.",
+ "Heads! Your best category against their card: {0}": "앞면! 상대 카드에 맞선 내 최고 카테고리: {0}",
+ "Heads: your best category against their card": "앞면: 상대 카드에 맞선 내 최고 카테고리",
+ "Tails. Your worst category against their card: {0}": "뒷면. 상대 카드에 맞선 내 최악 카테고리: {0}",
+ "Tails: your worst category against their card": "뒷면: 상대 카드에 맞선 내 최악 카테고리",
+ "Your rival flips heads: their best category against your card, {0}": "라이벌은 앞면: 내 카드에 맞선 상대의 최고 카테고리, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "라이벌은 뒷면: 내 카드에 맞선 상대의 최악 카테고리, {0}"
 }

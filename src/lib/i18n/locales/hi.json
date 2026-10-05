@@ -4154,5 +4154,12 @@
  "The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.": "बाकी गेम भी RPM देते हैं: हर गेम पर {0}, निजी रिकॉर्ड पर {1}, रोज़ {2} तक।",
  "Turn the card over to spin for its power": "इसकी पावर के लिए स्पिन करने को कार्ड पलटें",
  "{0} cards are under 50%: rest or repair them": "{0} कार्ड 50% से नीचे हैं: उन्हें आराम दें या मरम्मत करें",
- "{0} free spins waiting": "{0} मुफ़्त स्पिन इंतज़ार में"
+ "{0} free spins waiting": "{0} मुफ़्त स्पिन इंतज़ार में",
+ "Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.": "कैटेगरी के लिए सिक्का उछालता है: हेड, वह जिसमें आपका कार्ड उनके कार्ड से सबसे आगे है; टेल, वह जिसमें सबसे पीछे है।",
+ "Heads! Your best category against their card: {0}": "हेड! उनके कार्ड के ख़िलाफ़ आपकी सबसे अच्छी कैटेगरी: {0}",
+ "Heads: your best category against their card": "हेड: उनके कार्ड के ख़िलाफ़ आपकी सबसे अच्छी कैटेगरी",
+ "Tails. Your worst category against their card: {0}": "टेल। उनके कार्ड के ख़िलाफ़ आपकी सबसे ख़राब कैटेगरी: {0}",
+ "Tails: your worst category against their card": "टेल: उनके कार्ड के ख़िलाफ़ आपकी सबसे ख़राब कैटेगरी",
+ "Your rival flips heads: their best category against your card, {0}": "आपके प्रतिद्वंद्वी का हेड आया: आपके कार्ड के ख़िलाफ़ उनकी सबसे अच्छी कैटेगरी, {0}",
+ "Your rival flips tails: their worst category against your card, {0}": "आपके प्रतिद्वंद्वी का टेल आया: आपके कार्ड के ख़िलाफ़ उनकी सबसे ख़राब कैटेगरी, {0}"
 }
