@@ -2073,6 +2073,18 @@ export type Database = {
         Returns: undefined
       }
       cw_repair: { Args: { _card: string }; Returns: Json }
+      cw_report_wear: {
+        Args: {
+          _deck: string[]
+          _raptured: string
+          _rounds: number[]
+          _run: string
+        }
+        Returns: {
+          card_id: string
+          condition: number
+        }[]
+      }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
       cw_rules: { Args: never; Returns: Json }
       cw_save_wear:
@@ -2134,6 +2146,10 @@ export type Database = {
         Args: { _fought: string[]; _user: string }
         Returns: undefined
       }
+      cw_wear_loss: {
+        Args: { _card: string; _rounds: number }
+        Returns: number
+      }
       cw_wear_mult: {
         Args: { _card: string; _cat: number; _user: string }
         Returns: number
@@ -2145,6 +2161,11 @@ export type Database = {
           condition: number
         }[]
       }
+      cw_wear_rounds: {
+        Args: { _cards: string[]; _rounds: number[]; _user: string }
+        Returns: undefined
+      }
+      cw_wear_rules: { Args: never; Returns: Json }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
