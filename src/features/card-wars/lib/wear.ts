@@ -1,20 +1,27 @@
-import type { BattleCard, BattleState } from '../types';
+import { supabase } from '@/integrations/supabase/client';
+import { isDemoModeActive } from '@/lib/demoMode';
+import { RULES } from './rules';
+import { getVault, updateVault, wearReportOf } from './store';
+import type { BattleCard, BattleState, WearReport } from '../types';
 
 /** Condition lost per battle a card fights in: race builds wear out faster than road cards. */
-export const WEAR_PER_BATTLE = { factory: 8, race: 15 } as const;
+export const WEAR_PER_BATTLE = { factory: RULES.wear.road, race: RULES.wear.race } as const;
 /** Condition regained per battle a card sits out (resting in the garage). */
-export const REST_RECOVERY = 10;
+export const REST_RECOVERY = RULES.wear.rest;
 
 export function conditionOf(wear: Record<string, number> | undefined, id: string): number {
   const v = wear?.[id];
   return typeof v === 'number' ? Math.max(0, Math.min(100, v)) : 100;
 }
 
-/** Game ratings at a given condition. Stats hold until 50%, then fade to half at 0%.
- *  Race cards' distance fades from the first battle: road cards go further between rebuilds. */
+/**
+ * Game ratings at a given condition. Stats hold until 50%, then fade to half
+ * at 0%. Race cards' distance fades from the first battle: road cards go
+ * further between rebuilds.
+ */
 export function withWear(card: BattleCard, condition: number): BattleCard {
   const general = condition >= 50 ? 1 : 1 - (50 - condition) * 0.01;
-  const distance = card.spec === 'race' ? general * (0.6 + 0.4 * condition / 100) : general;
+  const distance = card.spec === 'race' ? general * (0.6 + (0.4 * condition) / 100) : general;
   const r = card.ratings;
   const scale = (v: number, m: number) => Math.round(v * m);
   return {
@@ -24,9 +31,9 @@ export function withWear(card: BattleCard, condition: number): BattleCard {
   };
 }
 
-/** Condition after a finished offline run: cards that fought wear, the rest recover. */
+/** Condition after a battle against the computer: cards that fought wear, the rest recover. */
 export function wearAfterRun(wear: Record<string, number> | undefined, run: BattleState, owned: BattleCard[]): Record<string, number> {
-  const fought = new Set(run.log.map(l => l.player));
+  const fought = new Set(run.log.map((l) => l.player));
   const next: Record<string, number> = { ...(wear || {}) };
   for (const card of owned) {
     const c = conditionOf(wear, card.id);
@@ -35,11 +42,7 @@ export function wearAfterRun(wear: Record<string, number> | undefined, run: Batt
   return next;
 }
 
-import { supabase } from '@/integrations/supabase/client';
-import { isDemoModeActive } from '@/lib/demoMode';
-import { getVault, updateVault } from './store';
-
-const toMap = (rows: { card_id: string; condition: number }[] | null) => Object.fromEntries((rows || []).map(r => [r.card_id, r.condition]));
+const toMap = (rows: { card_id: string; condition: number }[] | null) => Object.fromEntries((rows || []).map((r) => [r.card_id, r.condition]));
 
 /** The server holds the one condition count shared by computer and player battles. */
 export async function fetchServerWear(): Promise<Record<string, number> | null> {
@@ -48,35 +51,67 @@ export async function fetchServerWear(): Promise<Record<string, number> | null> 
   return error ? null : toMap(data as never);
 }
 
-export async function reportOfflineWear(run: BattleState): Promise<Record<string, number> | null> {
-  if (isDemoModeActive()) return null;
-  const fought = Array.from(new Set(run.log.map(l => l.player)));
-  if (!fought.length) return null;
-  const { data, error } = await supabase.rpc('cw_save_wear' as never, { _run: run.id, _deck: run.player.map(c => c.id), _fought: fought } as never);
-  return error ? null : toMap(data as never);
+/**
+ * Battles against the computer are settled on the phone, so each one's wear
+ * is reported afterwards. Reports wait in a queue (kept with the vault) and go
+ * out oldest first; the server ignores one it has already taken, so a retry
+ * after a lost answer is safe. Nothing waits on the queue to start another
+ * battle: an offline evening of battles is reported when the phone is back.
+ */
+const QUEUE_LIMIT = 20;
+
+export function queueWear(run: BattleState) {
+  if (isDemoModeActive() || !run.log.length) return;
+  const queue = (getVault().wearQueue ?? []).filter((r) => r.id !== run.id);
+  updateVault({ wearQueue: [...queue, wearReportOf(run)].slice(-QUEUE_LIMIT) });
+}
+
+type Sent = { wear: Record<string, number> } | 'retry' | 'rejected';
+
+async function send(report: WearReport): Promise<Sent> {
+  const { data, error } = await supabase.rpc('cw_save_wear' as never, { _run: report.id, _deck: report.deck, _fought: report.fought } as never);
+  if (!error) return { wear: toMap(data as never) };
+  // No code: the request never reached the database (offline). "Too many
+  // battles" is the server's rate limit. Both are worth another go. Anything
+  // else is the server saying no for good, and a report that can never be
+  // taken must not sit at the head of the queue for ever.
+  return error.code && !/too many/i.test(error.message) ? 'rejected' : 'retry';
 }
 
 let saving: Promise<boolean> | null = null;
-/** Persist retries across screen changes; never replace pending condition with a stale read. */
+
+/** Sends what's waiting. True once nothing is. */
 export function flushPendingWear(): Promise<boolean> {
- if (saving) return saving;
- const pending=getVault().pendingWear;
- if (!pending || isDemoModeActive()) return Promise.resolve(true);
- saving=reportOfflineWear(pending).then(w=>{
-  if (!w) return false;
-  if(getVault().pendingWear?.id===pending.id) updateVault({wear:w,pendingWear:undefined});
-  return true;
- }).catch(()=>false).finally(()=>{saving=null;});
- return saving;
+  if (saving) return saving;
+  if (isDemoModeActive() || !getVault().wearQueue?.length) return Promise.resolve(true);
+  saving = (async () => {
+    for (;;) {
+      const next = getVault().wearQueue?.[0];
+      if (!next) return true;
+      const sent = await send(next).catch(() => 'retry' as const);
+      if (sent === 'retry') return false;
+      const rest = (getVault().wearQueue ?? []).filter((r) => r.id !== next.id);
+      // The server's figures replace the phone's own sums once everything is in.
+      updateVault({ wearQueue: rest, ...(sent !== 'rejected' && !rest.length ? { wear: sent.wear } : {}) });
+    }
+  })().finally(() => {
+    saving = null;
+  });
+  return saving;
 }
-let syncing: Promise<void> | null=null;
+
+let syncing: Promise<void> | null = null;
+
+/** Reports what's waiting, then reads the server's condition for every card. Never while reports wait: they'd be overwritten. */
 export function syncWear(): Promise<void> {
- if(syncing)return syncing;
- syncing=(async()=>{
-  if(!await flushPendingWear())return;
-  const before=getVault().wear;
-  const w=await fetchServerWear();
-  if(w&&!getVault().pendingWear&&getVault().wear===before)updateVault({wear:w});
- })().finally(()=>{syncing=null;});
- return syncing;
+  if (syncing) return syncing;
+  syncing = (async () => {
+    if (!(await flushPendingWear())) return;
+    const before = getVault().wear;
+    const wear = await fetchServerWear();
+    if (wear && !getVault().wearQueue?.length && getVault().wear === before) updateVault({ wear });
+  })().finally(() => {
+    syncing = null;
+  });
+  return syncing;
 }

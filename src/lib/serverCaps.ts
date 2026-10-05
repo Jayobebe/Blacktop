@@ -10,10 +10,12 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
  * permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
-export type ServerCap = 'trackRecords' | 'cardWars';
+export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWars2';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
   cardWars: () => supabase.rpc('cw_available' as never),
+  // The Card Wars economy migration (lib/rules.ts reads the stored answer when the game loads).
+  cardWars2: () => supabase.rpc('cw_rules' as never),
   trackRecords: () =>
     supabase.rpc('track_leaderboard' as never, { _osm_id: -1, _direction: 'cw', _vehicle_class: 'motorcycle', _limit: 1 } as never),
 };

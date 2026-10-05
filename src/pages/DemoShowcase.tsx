@@ -377,7 +377,7 @@ export default function DemoShowcase() {
         { icon: Zap, label: tr("Hit Heavy"), text: tr("Classic measures your hardest hit, Flurry counts rapid punches and Precision tests target G-force. Challenge your crew's best.") },
         { icon: Fuel, label: tr("Petrol Head"), text: tr("Dodge three lanes of traffic, collect fuel and build near-miss combos to charge a shield. Survive longer to climb the crew board.") },
         { icon: Gamepad2, label: tr("Derez Legacy"), text: tr("Draw an arena and ready up with other players. GPS trails become light walls: hit a rival's wall or stay outside for five seconds and lose a life. Play only in a safe, closed area away from traffic.") },
-        { icon: IdCard, label: tr("Card Wars"), text: tr("Build a deck of five vehicle cards and three dog tags. Choose your card before the category spins, then battle until one whole deck reaches zero HP. Beat the computer to pick a shuffled reward card, or stake Overdrive against another player — no cards lost.") },
+        { icon: IdCard, label: tr("Card Wars"), text: tr("Build a deck of five real cars and bikes and three dog tags. Play a card, the category is drawn, and the higher rating burns the other card down. Beat the computer to pick a prize card face down, or stake RPM against another rider: nobody loses a card.") },
       ],
     },
     {

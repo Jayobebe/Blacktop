@@ -12,6 +12,8 @@
     "cap:sync:store": "vite build && node scripts/cap-sync-store.mjs",
     "i18n:check": "node scripts/i18n/extract.mjs",
     "routing:eval": "node scripts/eval-routing.ts",
+    "cardwars:balance": "esbuild scripts/make-card-wars-balance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/card-wars-balance.mjs --log-level=warning && node node_modules/.cache/card-wars-balance.mjs",
+    "cardwars:check": "esbuild scripts/check-card-wars-balance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/card-wars-check.mjs --log-level=warning && node node_modules/.cache/card-wars-check.mjs",
     "tracks:build": "esbuild scripts/build-circuit-library.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/build-circuit-library.mjs --log-level=warning && node node_modules/.cache/build-circuit-library.mjs",
     "preview": "vite preview"
   },

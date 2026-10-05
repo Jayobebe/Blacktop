@@ -11,13 +11,15 @@
 - Trim supplied Card Wars cutouts to visible bounds and fit them proportionally inside a centered dedicated photo area; resolve missing saved-run artwork from the catalog without changing saved battle data.
 - Keep battle choices category-blind and reveal server-settled rounds through a cancellable presentation sequence; the arena never calculates online damage or transfers points.
 
-- Reuse the vault card face for battle cards and all dog-tag selectors, scaling the complete face at a stable design size and injecting game ratings separately from private ride statistics.
-- Size battle hands through identical two-over-three grids with reserved tag rails and intrinsic card ratios; fit them to available viewport areas without stretching, and limit scrolling to replacement lists.
+- Draw every Card Wars card with the one `CwCard` face (thumb, tile or full, sized by container units) and every dog tag with `DogTagPlate`; game ratings stay separate from private ride statistics.
+- Keep the battle on one screen without scrolling: each hand is a strip of five, the table between them shows the round, and cards move between the two by measured flights; all motion stops under Thermal mode and reduced motion.
 
 - Animate reward cards by stable identity through measured slot swaps and persist the settled shuffle flag with the run, so selection and reopening keep the same card positions.
-- Edit decks through indexed replacement dialogs sharing the battle hand grid; resolve normal combat only on whole-deck knockout, keeping player settlement server-authoritative.
+- Edit decks from the Card Wars home (`Garage`) through its sheets; resolve combat only on whole-deck knockout (or the stalemate draw), keeping player settlement server-authoritative.
 - Keep one server-held Card Wars condition per card, changed only by locked settlement and a rate-limited offline report, with the vault caching it, so clients can never forge or split condition.
-- Persist pending computer wear until idempotent server acknowledgement and serialize wear reads with writes; never mark failed reports settled or overwrite pending condition with stale reads.
+- Queue computer-battle wear reports with the vault and send them oldest first; never block a new battle on the queue, never overwrite pending condition with a stale read, and drop a report the server refuses for good.
 - Keep Card Wars RPM, card ownership, purchases and every wheel spin on the server (cw_buy, cw_spin, cw_reward_offline, cw_owned), with player battles rejecting unowned bank cards, so the economy cannot be forged on the phone.
-- Let the Card Wars shop own its single page header and flex-sized content area, with scrolling only in the product list, so nested headers and viewport clipping cannot recur.
-- Match computer decks through bounded, category-blind pre-battle simulations of current player ratings; never alter catalog stats or live outcomes, so difficulty tuning stays separate from rewards and PvP settlement.
+- Give each Card Wars page the app's scrolling page layout and one `PageHeader`; only the battle is fixed to the screen.
+- Match computer decks through bounded, category-blind pre-battle simulations of current player ratings, without the player's own cards where others their size exist; never alter catalog stats or live outcomes.
+- Keep Card Wars numbers in step across `lib/rules.ts`, `lib/catalog.ts` (`BALANCE`, `SPIN_COST`), `lib/tagRules.ts` and the server (`cw_rules`, `cw_catalog`, `cw_spin_cost`, `cw_tag_value`): change them with `npm run cardwars:balance` and a migration together, never one side alone.
+- Card Wars artwork lives in `public/card-wars/<cars|bikes>/<id>.png` (made by `scripts/make-card-wars-art.py`), not in `src/assets`; every user-facing string is a literal `tr("…")`, never `tr(variable)`.

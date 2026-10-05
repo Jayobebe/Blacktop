@@ -225,7 +225,7 @@ export function CollectedCardsFolder() {
       >
         {wonCards.map(card => (
           <div key={card.id} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <BattleCard card={card} readOnly />
+            <BattleCard card={card} />
           </div>
         ))}
       </CardRow>

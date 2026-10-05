@@ -1,87 +1,157 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Dices, ChevronRight, Gem } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Dices } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
+import { useSettings } from '@/features/settings';
+import { eventSound } from '@/lib/appSound';
+import { formatSpeed, getSpeedLabel } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { BANK_INFO, CATALOG, SHOP_CATEGORIES, SPECS, categoryOf, spinCost, type ShopCategory } from '../lib/catalog';
-import { buyCard, refreshShop, spin, useShop, type SpinResult } from '../lib/shop';
-import { BattleCard } from './BattleCard';
-import { SpinReel } from './SpinReel';
+import { BANK_INFO, CATALOG, SHELVES, SPECS, SPIN_COST, categoryOf, type ShopCategory } from '../lib/catalog';
+import { RULES, V2 } from '../lib/rules';
+import { buyCard, refreshShop, spin, useShop } from '../lib/shop';
+import { REEL_LABELS } from '../lib/spinText';
+import { CwCard } from './CwCard';
+import { RpmPill } from './RpmPill';
+import { SpinPanel } from './SpinPanel';
 
-export function spinLabel(r: SpinResult): string {
- if (r.kind === 'card') return CATALOG.find(c => c.id === r.card)?.name ?? tr('New card');
- if (r.kind === 'duplicate') return tr('Duplicate · +{0} RPM', [r.rpm]);
- if (r.kind === 'rpm') return tr('+{0} RPM', [r.rpm]);
- return r.spins === 1 ? tr('+1 spin') : tr('+{0} spins', [r.spins]);
+/** A shelf's name. The racing series keep their own. */
+export function shelfLabel(id: ShopCategory): string {
+  if (id === 'road') return tr("Road");
+  if (id === 'race') return tr("Race");
+  return BANK_INFO[id].label;
 }
-export const REEL_LABELS = [tr('Card'), tr('RPM'), tr('+1 spin'), tr('RPM'), tr('Card')];
 
-/** Full-screen shop: pick a category, buy a card outright or spin the wheel for it. */
+/**
+ * The shop: six shelves of cards. A card is bought outright at its own price
+ * (stronger cards cost more), or the shelf's wheel is spun for about a fifth
+ * of that: a spin can land one of its cards, a dog tag tied to one of them,
+ * RPM or another spin. The server decides every purchase and every spin; this
+ * only shows what it answered.
+ */
 export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: boolean }) {
- const shop = useShop();
- const [cat, setCat] = useState<ShopCategory | null>(null);
- const [busy, setBusy] = useState(false);
- const [result, setResult] = useState<SpinResult | null>(null);
- useEffect(() => { void refreshShop(); }, []);
- const info = SHOP_CATEGORIES.find(c => c.id === cat);
- const bonus = cat ? shop.spins[cat] ?? 0 : 0;
- const done = useCallback(() => {
-  setBusy(false);
-  setResult(r => { if (r) toast.success(spinLabel(r)); return r; });
- }, []);
- async function doSpin() {
-  if (!cat || busy) return;
-  setBusy(true); setResult(null);
-  const r = await spin(cat);
-  if (typeof r === 'string') { setBusy(false); if (r !== 'demo') toast.error(r.includes('RPM') ? tr('Not enough RPM') : tr('Spin failed')); return; }
-  setResult(r);
- }
- async function buy(id: string, name: string) {
-  setBusy(true);
-  const err = await buyCard(id);
-  setBusy(false);
-  if (!err) toast.success(tr('Added {0} to your vault', [name]));
-  else if (err !== 'demo') toast.error(err.includes('RPM') ? tr('Not enough RPM') : tr('Could not buy this card'));
- }
- return <div className={`cw-shop ${cat ? 'cw-shop-category' : ''}`}>
-  <PageHeader title={info ? tr(info.label) : tr('Shop')} backLabel={tr('Back')} onBack={() => { if (busy) return; if (cat) { setCat(null); setResult(null); } else onBack(); }} right={<span className="font-mono text-accent">{shop.balance ?? '—'} RPM</span>} />
-  {!cat && <>
-   <div className="cw-shop-categories">
-    {SHOP_CATEGORIES.map(c => {
-     const tier = c.id === 'road' ? 'silver' : c.id === 'race' ? 'ruby' : BANK_INFO[c.id].tier;
-     const label = tier === 'silver' ? tr('Silver') : tier === 'ruby' ? tr('Ruby') : tier === 'diamond' ? tr('Diamond') : tr('Obsidian');
-     return <Button key={c.id} variant="outline" className="cw-shop-category-button" onClick={() => setCat(c.id)}>
-      <span className="cw-shop-category-copy"><span className="font-semibold">{tr(c.label)}</span>
-       <span className="cw-shop-price text-muted-foreground font-mono">{tr('Cards {0} RPM · spin {1} RPM', [c.price, spinCost(c.price)])}</span>
-       {(shop.spins[c.id] ?? 0) > 0 && <span className="text-xs text-accent">{tr('{0} bonus spins', [shop.spins[c.id] ?? 0])}</span>}
-      </span>
-      <span className={`cw-shop-tier cw-shop-tier-${tier}`}><Gem aria-hidden="true"/><span>{label}</span></span>
-      <ChevronRight className="cw-shop-chevron text-accent" aria-hidden="true" />
-     </Button>;
-    })}
-   </div>
-  </>}
-  {cat && info && <div className="cw-shop-content">
-   <div className="cw-shop-spin">
-    <p className="text-sm">{tr('Wheel spin · win a card, RPM or more spins')}</p>
-    {result || busy ? <SpinReel key={result ? JSON.stringify(result) : 'wait'} result={result ? spinLabel(result) : '…'} labels={REEL_LABELS} onDone={result ? done : () => undefined} /> : null}
-    <Button className="w-full" disabled={busy || disabled || (bonus === 0 && (shop.balance ?? 0) < spinCost(info.price))} onClick={() => void doSpin()}>
-     <Dices className="w-4 h-4 mr-2" />{bonus > 0 ? tr('Spin · {0} bonus left', [bonus]) : tr('Spin · {0} RPM', [spinCost(info.price)])}
-    </Button>
-   </div>
-   <div className="cw-shop-card-list">
-    {CATALOG.filter(c => categoryOf(c) === cat).map(c => {
-     const owned = shop.owned.includes(c.id); const s = SPECS[c.id];
-     return <div key={c.id} className="space-y-1">
-      <BattleCard card={c} readOnly />
-      <p className="text-[11px] text-muted-foreground font-mono break-words">{s.year} · {s.hp} hp · {s.kg} kg · {s.vmaxKmh} km/h</p>
-      <Button size="sm" className="w-full" disabled={owned || disabled || busy || (shop.balance ?? 0) < info.price} onClick={() => void buy(c.id, c.name)}>
-       {owned ? tr('Owned') : tr('{0} RPM', [info.price])}
-      </Button>
-     </div>;
-    })}
-   </div>
-  </div>}
- </div>;
+  const shop = useShop();
+  const { settings } = useSettings();
+  const [shelf, setShelf] = useState<ShopCategory>('road');
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<string | null>(null);
+
+  useEffect(() => {
+    void refreshShop();
+  }, []);
+  useEffect(() => {
+    if (!confirm) return;
+    const t = setTimeout(() => setConfirm(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirm]);
+
+  const cost = SPIN_COST[shelf];
+  const bonus = shop.spins[shelf] ?? 0;
+  const balance = shop.balance ?? 0;
+  const cards = useMemo(() => CATALOG.filter((c) => categoryOf(c) === shelf).sort((a, b) => (a.price ?? 0) - (b.price ?? 0)), [shelf]);
+  const ownedHere = cards.filter((c) => shop.owned.includes(c.id)).length;
+  const from = cards[0]?.price ?? 0;
+  const to = cards[cards.length - 1]?.price ?? 0;
+
+  const buy = async (id: string, name: string) => {
+    if (confirm !== id) return setConfirm(id);
+    setConfirm(null);
+    setBusy(true);
+    const err = await buyCard(id);
+    setBusy(false);
+    if (!err) {
+      eventSound('coin');
+      toast.success(tr("{0} is yours", [name]), { description: tr("Swap it into your deck any time.") });
+    } else if (err !== 'demo') toast.error(/rpm/i.test(err) ? tr("Not enough RPM") : tr("Could not buy this card"));
+  };
+
+  return (
+    <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom max-w-3xl mx-auto w-full">
+      <PageHeader title={tr("Shop")} subtitle={V2 ? tr("Cards, spins and dog tags for RPM") : tr("Cards and spins for RPM")} onBack={() => !busy && onBack()} right={<RpmPill balance={shop.balance} />} />
+
+      <div className="cw-shelves" role="tablist" data-no-pull>
+        {SHELVES.map((id) => {
+          const extra = shop.spins[id] ?? 0;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={shelf === id}
+              className={cn('cw-shelf', shelf === id && 'cw-shelf-on')}
+              onClick={() => {
+                setShelf(id);
+                setConfirm(null);
+              }}
+            >
+              <b>{shelfLabel(id)}</b>
+              <small className="font-mono">
+                {tr("Spin {0}", [SPIN_COST[id]])}
+                {extra > 0 && <i> +{extra}</i>}
+              </small>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="space-y-5 mt-4">
+        <section className="cw-panel" key={shelf}>
+          <div className="flex items-start gap-3">
+            <div className="cw-emblem cw-emblem-sm">
+              <Dices />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{tr("Spin the {0} wheel", [shelfLabel(shelf)])}</p>
+              <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                {V2
+                  ? tr("One spin can land a card or a dog tag from this shelf, RPM, or another spin. Something you already have gives half the spin back.")
+                  : tr("One in five spins lands a card from this shelf; the rest pay RPM back or hand you more spins. A card you already own refunds the spin.")}
+              </p>
+            </div>
+          </div>
+          <SpinPanel
+            button={bonus > 0 ? tr("Use a free spin ({0} left)", [bonus]) : balance < cost ? tr("A spin needs {0} RPM", [cost]) : tr("Spin for {0} RPM", [cost])}
+            disabled={disabled || (bonus === 0 && balance < cost)}
+            labels={REEL_LABELS}
+            onSpin={() => spin(shelf)}
+          >
+            <p className="cw-odds font-mono">
+              <span>{tr("Card {0}%", [RULES.odds.card])}</span>
+              {RULES.odds.tag > 0 && <span>{tr("Dog tag {0}%", [RULES.odds.tag])}</span>}
+              <span>{tr("Spin {0}%", [RULES.odds.spin])}</span>
+              <span>{tr("RPM {0}%", [RULES.odds.rpm])}</span>
+            </p>
+          </SpinPanel>
+        </section>
+
+        <section>
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {tr("{0} cards", [shelfLabel(shelf)])} <span className="font-mono">{ownedHere}/{cards.length}</span>
+            </h2>
+            <span className="text-[11px] text-muted-foreground font-mono">{from === to ? tr("{0} RPM each", [from]) : tr("{0} to {1} RPM", [from, to])}</span>
+          </div>
+          <div className="cw-grid-2">
+            {cards.map((c) => {
+              const owned = shop.owned.includes(c.id);
+              const s = SPECS[c.id];
+              const price = c.price ?? 0;
+              return (
+                <div key={c.id} className="space-y-1.5">
+                  <CwCard card={c} badge={owned ? tr("Owned") : undefined} />
+                  <p className="text-[10.5px] text-muted-foreground font-mono leading-tight text-center">
+                    {s.year} · {s.hp} hp · {s.kg} kg · {formatSpeed(s.vmaxKmh / 1.609344, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}
+                  </p>
+                  <Button size="sm" variant={confirm === c.id ? 'default' : 'outline'} className="w-full h-11" disabled={owned || disabled || busy || balance < price} onClick={() => void buy(c.id, c.name)}>
+                    {owned ? tr("Owned") : confirm === c.id ? tr("Tap again to buy") : balance < price ? tr("Needs {0} RPM", [price]) : tr("Buy for {0} RPM", [price])}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 }
