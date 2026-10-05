@@ -662,33 +662,48 @@ export type Database = {
           active_code: string | null
           balance: number
           created_at: string
+          first_win_day: string | null
           free_spins: number
+          free_tag_spins: number
           last_created_at: string | null
           last_offline_reward: string | null
           last_topup: string | null
           last_wear_run: string | null
+          prize_due: boolean
+          reward_count: number
+          reward_day: string | null
           user_id: string
         }
         Insert: {
           active_code?: string | null
           balance?: number
           created_at?: string
+          first_win_day?: string | null
           free_spins?: number
+          free_tag_spins?: number
           last_created_at?: string | null
           last_offline_reward?: string | null
           last_topup?: string | null
           last_wear_run?: string | null
+          prize_due?: boolean
+          reward_count?: number
+          reward_day?: string | null
           user_id: string
         }
         Update: {
           active_code?: string | null
           balance?: number
           created_at?: string
+          first_win_day?: string | null
           free_spins?: number
+          free_tag_spins?: number
           last_created_at?: string | null
           last_offline_reward?: string | null
           last_topup?: string | null
           last_wear_run?: string | null
+          prize_due?: boolean
+          reward_count?: number
+          reward_day?: string | null
           user_id?: string
         }
         Relationships: []
@@ -734,9 +749,12 @@ export type Database = {
           p2: string | null
           penalty: number
           round: number
+          stake: number
           status: string
           tag1: number | null
           tag2: number | null
+          tags1: string[] | null
+          tags2: string[] | null
           used1: number[]
           used2: number[]
           winner: string | null
@@ -757,9 +775,12 @@ export type Database = {
           p2?: string | null
           penalty?: number
           round?: number
+          stake?: number
           status?: string
           tag1?: number | null
           tag2?: number | null
+          tags1?: string[] | null
+          tags2?: string[] | null
           used1?: number[]
           used2?: number[]
           winner?: string | null
@@ -780,9 +801,12 @@ export type Database = {
           p2?: string | null
           penalty?: number
           round?: number
+          stake?: number
           status?: string
           tag1?: number | null
           tag2?: number | null
+          tags1?: string[] | null
+          tags2?: string[] | null
           used1?: number[]
           used2?: number[]
           winner?: string | null
@@ -832,6 +856,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      cw_tags: {
+        Row: {
+          card_id: string
+          power: string
+          user_id: string
+          won_at: string
+        }
+        Insert: {
+          card_id: string
+          power: string
+          user_id: string
+          won_at?: string
+        }
+        Update: {
+          card_id?: string
+          power?: string
+          user_id?: string
+          won_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_tags_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cw_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cw_wear: {
         Row: {
@@ -1472,7 +1525,10 @@ export type Database = {
           card: Json | null
           direction: string
           display_name: string
+          fixes: number | null
+          flagged: boolean
           lap_ms: number
+          max_gap_ms: number | null
           osm_id: number
           sectors: number[]
           set_at: string
@@ -1485,7 +1541,10 @@ export type Database = {
           card?: Json | null
           direction: string
           display_name: string
+          fixes?: number | null
+          flagged?: boolean
           lap_ms: number
+          max_gap_ms?: number | null
           osm_id: number
           sectors?: number[]
           set_at?: string
@@ -1498,7 +1557,10 @@ export type Database = {
           card?: Json | null
           direction?: string
           display_name?: string
+          fixes?: number | null
+          flagged?: boolean
           lap_ms?: number
+          max_gap_ms?: number | null
           osm_id?: number
           sectors?: number[]
           set_at?: string
@@ -1716,6 +1778,7 @@ export type Database = {
           _deck?: string[]
           _round?: number
           _tag?: number
+          _tags?: string[]
         }
         Returns: Json
       }
@@ -1731,7 +1794,7 @@ export type Database = {
       }
       cw_available: { Args: never; Returns: boolean }
       cw_buy: { Args: { _card: string }; Returns: Json }
-      cw_cat_cost: { Args: { _cat: string; _spin: boolean }; Returns: number }
+      cw_claim_prize: { Args: { _card: string }; Returns: Json }
       cw_daily_topup: { Args: { _u: string }; Returns: undefined }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_my_wear: {
@@ -1741,8 +1804,21 @@ export type Database = {
           condition: number
         }[]
       }
+      cw_pay_out: {
+        Args: {
+          _d1: string[]
+          _d2: string[]
+          _log: Json
+          _p1: string
+          _p2: string
+          _stake: number
+          _winner: string
+        }
+        Returns: undefined
+      }
       cw_repair: { Args: { _card: string }; Returns: Json }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
+      cw_rules: { Args: never; Returns: Json }
       cw_save_wear: {
         Args: { _deck: string[]; _fought: string[]; _run: string }
         Returns: {
@@ -1752,6 +1828,16 @@ export type Database = {
       }
       cw_shop: { Args: never; Returns: Json }
       cw_spin: { Args: { _cat: string; _free?: boolean }; Returns: Json }
+      cw_spin_cost: { Args: { _cat: string }; Returns: number }
+      cw_spin_tag: { Args: never; Returns: Json }
+      cw_tag_value: {
+        Args: { _kind: string; _power: number; _ref: string }
+        Returns: number
+      }
+      cw_wear_for: {
+        Args: { _fought: string[]; _user: string }
+        Returns: undefined
+      }
       cw_wear_mult: {
         Args: { _card: string; _cat: number; _user: string }
         Returns: number
@@ -2013,26 +2099,49 @@ export type Database = {
           yes: number
         }[]
       }
-      submit_track_lap: {
-        Args: {
-          _card?: Json
-          _direction: string
-          _display_name: string
-          _lap_ms: number
-          _length_m: number
-          _osm_id: number
-          _sectors: number[]
-          _track_name: string
-          _vehicle_class: string
-          _vehicle_name?: string
-        }
-        Returns: {
-          card: Json
-          display_name: string
-          lap_ms: number
-          vehicle_name: string
-        }[]
-      }
+      submit_track_lap:
+        | {
+            Args: {
+              _card?: Json
+              _direction: string
+              _display_name: string
+              _lap_ms: number
+              _length_m: number
+              _osm_id: number
+              _sectors: number[]
+              _track_name: string
+              _vehicle_class: string
+              _vehicle_name?: string
+            }
+            Returns: {
+              card: Json
+              display_name: string
+              lap_ms: number
+              vehicle_name: string
+            }[]
+          }
+        | {
+            Args: {
+              _card?: Json
+              _direction: string
+              _display_name: string
+              _fixes?: number
+              _lap_ms: number
+              _length_m: number
+              _max_gap_ms?: number
+              _osm_id: number
+              _sectors: number[]
+              _track_name: string
+              _vehicle_class: string
+              _vehicle_name?: string
+            }
+            Returns: {
+              card: Json
+              display_name: string
+              lap_ms: number
+              vehicle_name: string
+            }[]
+          }
       track_leaderboard: {
         Args: {
           _direction: string
