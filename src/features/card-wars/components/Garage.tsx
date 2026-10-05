@@ -344,6 +344,19 @@ export function Garage({
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </Button>
 
+      <Button variant="outline" className="w-full h-14 gap-2 justify-between px-4" onClick={() => setTrade(true)}>
+        <span className="flex items-center gap-2">
+          <Repeat className="w-5 h-5 text-accent" />
+          <span className="text-left">
+            <span className="block text-sm font-semibold leading-tight">{tr("Trade cards")}</span>
+            <span className="block text-[11px] text-muted-foreground font-normal leading-tight">{tr("Sell a card by code, or make an offer on someone else's")}</span>
+          </span>
+        </span>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+      </Button>
+      <TradeSheet open={trade} onClose={() => setTrade(false)} locked={frozen} />
+
+
       {/* Riding unlocks */}
       <section className="rounded-2xl border border-border/60 p-3 space-y-2.5">
         <h2 className={cn(heading, 'flex items-center gap-1.5')}>
