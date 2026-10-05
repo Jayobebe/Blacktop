@@ -49,6 +49,9 @@ export interface OnlineBattle {
   deadline?: string;
   balance: number;
   log?: OnlineRound[];
+  /** Own cards' ratings from riding, per slot (null: the catalog card's). */
+  ratings?: (number[] | null)[] | null;
+  rivalRatings?: (number[] | null)[] | null;
 }
 
 /** The server's refusals, in the app's words. Anything else reads "Battle unavailable". */
@@ -63,12 +66,13 @@ function refusal(message: string): string {
   if (/dog tag not owned/i.test(message)) return tr("One of your dog tags isn't yours on the server. Pick another.");
   if (/already used/i.test(message)) return tr("That dog tag is already used.");
   if (/knocked out/i.test(message)) return tr("That card is out.");
+  if (/own card/i.test(message)) return tr("Your own card's ratings couldn't be checked. Try again.");
   return tr("Battle unavailable");
 }
 
 export async function battleAction(
   action: 'status' | 'create' | 'join' | 'play' | 'leave',
-  opts: { code?: string; deck?: string[]; tags?: string[]; card?: number; tag?: number; round?: number } = {},
+  opts: { code?: string; deck?: string[]; tags?: string[]; own?: ({ key: string; r: number[] } | null)[]; card?: number; tag?: number; round?: number } = {},
 ): Promise<OnlineBattle> {
   if (action !== 'status' && demoBlocked()) throw new Error(tr("Not available in demo mode"));
   const { data, error } = await supabase.rpc(
@@ -82,6 +86,7 @@ export async function battleAction(
       _round: opts.round ?? null,
       // Only the newer server takes the tags a deck carries.
       ...(V2 && opts.tags ? { _tags: opts.tags } : {}),
+      ...(opts.own && opts.own.some(Boolean) ? { _own: opts.own } : {}),
     } as never,
   );
   if (error) throw new Error(refusal(error.message));

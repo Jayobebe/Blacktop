@@ -715,6 +715,7 @@ export type Database = {
         Row: {
           category: string | null
           id: string
+          maker: string | null
           price: number
           ratings: number[]
           vehicle: string
@@ -722,6 +723,7 @@ export type Database = {
         Insert: {
           category?: string | null
           id: string
+          maker?: string | null
           price?: number
           ratings: number[]
           vehicle: string
@@ -729,9 +731,52 @@ export type Database = {
         Update: {
           category?: string | null
           id?: string
+          maker?: string | null
           price?: number
           ratings?: number[]
           vehicle?: string
+        }
+        Relationships: []
+      }
+      cw_contract_runs: {
+        Row: {
+          at: string
+          run: string
+          user_id: string
+        }
+        Insert: {
+          at?: string
+          run: string
+          user_id: string
+        }
+        Update: {
+          at?: string
+          run?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cw_contracts: {
+        Row: {
+          day: string
+          ids: string[]
+          paid: boolean[]
+          progress: number[]
+          user_id: string
+        }
+        Insert: {
+          day: string
+          ids: string[]
+          paid: boolean[]
+          progress: number[]
+          user_id: string
+        }
+        Update: {
+          day?: string
+          ids?: string[]
+          paid?: boolean[]
+          progress?: number[]
+          user_id?: string
         }
         Relationships: []
       }
@@ -752,6 +797,8 @@ export type Database = {
           p2: string | null
           penalty: number
           round: number
+          rt1: Json | null
+          rt2: Json | null
           stake: number
           status: string
           tag1: number | null
@@ -778,6 +825,8 @@ export type Database = {
           p2?: string | null
           penalty?: number
           round?: number
+          rt1?: Json | null
+          rt2?: Json | null
           stake?: number
           status?: string
           tag1?: number | null
@@ -804,6 +853,8 @@ export type Database = {
           p2?: string | null
           penalty?: number
           round?: number
+          rt1?: Json | null
+          rt2?: Json | null
           stake?: number
           status?: string
           tag1?: number | null
@@ -851,6 +902,27 @@ export type Database = {
           },
         ]
       }
+      cw_own_cards: {
+        Row: {
+          card_key: string
+          ratings: number[]
+          set_at: string
+          user_id: string
+        }
+        Insert: {
+          card_key: string
+          ratings: number[]
+          set_at?: string
+          user_id: string
+        }
+        Update: {
+          card_key?: string
+          ratings?: number[]
+          set_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cw_owned: {
         Row: {
           bought_at: string
@@ -877,6 +949,24 @@ export type Database = {
           },
         ]
       }
+      cw_sets_claimed: {
+        Row: {
+          claimed_at: string
+          maker: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          maker: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          maker?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cw_spins: {
         Row: {
           category: string
@@ -892,6 +982,81 @@ export type Database = {
           category?: string
           count?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      cw_swap_items: {
+        Row: {
+          card_id: string
+          side: number
+          swap_id: string
+        }
+        Insert: {
+          card_id: string
+          side: number
+          swap_id: string
+        }
+        Update: {
+          card_id?: string
+          side?: number
+          swap_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_swap_items_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cw_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cw_swap_items_swap_id_fkey"
+            columns: ["swap_id"]
+            isOneToOne: false
+            referencedRelation: "cw_swaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cw_swaps: {
+        Row: {
+          a: string
+          a_ready: boolean
+          a_rpm: number
+          b: string | null
+          b_ready: boolean
+          b_rpm: number
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          status: string
+        }
+        Insert: {
+          a: string
+          a_ready?: boolean
+          a_rpm?: number
+          b?: string | null
+          b_ready?: boolean
+          b_rpm?: number
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          a?: string
+          a_ready?: boolean
+          a_rpm?: number
+          b?: string | null
+          b_ready?: boolean
+          b_rpm?: number
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -1852,6 +2017,7 @@ export type Database = {
           _card?: number
           _code?: string
           _deck?: string[]
+          _own?: Json
           _round?: number
           _tag?: number
           _tags?: string[]
@@ -1871,6 +2037,19 @@ export type Database = {
       cw_available: { Args: never; Returns: boolean }
       cw_buy: { Args: { _card: string }; Returns: Json }
       cw_claim_prize: { Args: { _card: string }; Returns: Json }
+      cw_contract_defs: {
+        Args: never
+        Returns: {
+          id: string
+          rpm: number
+          target: number
+        }[]
+      }
+      cw_contract_report: {
+        Args: { _facts: Json; _run: string }
+        Returns: Json
+      }
+      cw_contracts_today: { Args: never; Returns: Json }
       cw_daily_topup: { Args: { _u: string }; Returns: undefined }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_my_wear: {
@@ -1915,10 +2094,26 @@ export type Database = {
               condition: number
             }[]
           }
+      cw_set_claim: { Args: { _maker: string }; Returns: Json }
+      cw_sets: { Args: never; Returns: Json }
       cw_shop: { Args: never; Returns: Json }
+      cw_slot_ratings: {
+        Args: { _base: number[]; _idx: number; _rt: Json }
+        Returns: number[]
+      }
       cw_spin: { Args: { _cat: string; _free?: boolean }; Returns: Json }
       cw_spin_cost: { Args: { _cat: string }; Returns: number }
       cw_spin_tag: { Args: never; Returns: Json }
+      cw_swap_cancel: { Args: { _swap: string }; Returns: Json }
+      cw_swap_join: { Args: { _code: string }; Returns: Json }
+      cw_swap_mine: { Args: never; Returns: Json }
+      cw_swap_open: { Args: never; Returns: Json }
+      cw_swap_ready: { Args: { _ready: boolean; _swap: string }; Returns: Json }
+      cw_swap_set: {
+        Args: { _cards: string[]; _rpm: number; _swap: string }
+        Returns: Json
+      }
+      cw_swap_view: { Args: { _swap: string }; Returns: Json }
       cw_tag_value: {
         Args: { _kind: string; _power: number; _ref: string }
         Returns: number

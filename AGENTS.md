@@ -23,5 +23,4 @@
 - Match computer decks through bounded, category-blind pre-battle simulations of current player ratings, without the player's own cards where others their size exist; never alter catalog stats or live outcomes.
 - Keep Card Wars numbers in step across `lib/rules.ts`, `lib/catalog.ts` (`BALANCE`, `SPIN_COST`), `lib/tagRules.ts` and the server (`cw_rules`, `cw_catalog`, `cw_spin_cost`, `cw_tag_value`): change them with `npm run cardwars:balance` and a migration together, never one side alone.
 - Card Wars artwork lives in `public/card-wars/<cars|bikes>/<id>.png` (made by `scripts/make-card-wars-art.py`), not in `src/assets`; every user-facing string is a literal `tr("…")`, never `tr(variable)`.
-- Keep Card Wars round events in step between `lib/events.ts` (order, odds, numbers) and `cw_action` (event index + 1 in the log); a rapture restores the card server-side (player battles always, computer battles at most once a day), so a forged report gains little.
-- Card sales go only through the `cw_trade_*` server functions, with offered RPM held in escrow and refunded on decline, cancel, expiry or delete, so cards and RPM always move together.
+- More Card Wars rules (events, sales, swaps, own cards, contracts) live in `src/features/card-wars/AGENTS.md`.

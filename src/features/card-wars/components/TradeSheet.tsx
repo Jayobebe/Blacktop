@@ -16,6 +16,7 @@ import { cardById } from '../lib/catalog';
 import { useShop } from '../lib/shop';
 import { SALE_CODE, answerOffer, cancelSale, listCard, makeOffer, myTrades, saleLink, viewSale, withdrawOffer, type MyOffer, type Sale, type SaleView } from '../lib/trade';
 import { CwCard } from './CwCard';
+import { SwapPanel } from './SwapPanel';
 
 function why(code: string): string {
   switch (code) {
@@ -168,15 +169,20 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
         <div className="max-w-md mx-auto space-y-4">
           <SheetHeader className="text-left">
             <SheetTitle>{tr("Trade cards")}</SheetTitle>
-            <SheetDescription>{tr("Sell a card for RPM, or buy one from another rider. The RPM you offer is held until they answer.")}</SheetDescription>
+            <SheetDescription>{tr("Swap cards with another rider, or buy and sell them for RPM.")}</SheetDescription>
           </SheetHeader>
           {demo && <DemoLockNote />}
 
-          <Tabs defaultValue="buy">
-            <TabsList className="grid grid-cols-2 w-full">
+          <Tabs defaultValue="swap">
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="swap">{tr("Swap")}</TabsTrigger>
               <TabsTrigger value="buy">{tr("Buy")}</TabsTrigger>
               <TabsTrigger value="sell">{tr("Sell")}</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="swap" className="mt-4">
+              {open && <SwapPanel demo={demo} locked={locked} />}
+            </TabsContent>
 
             <TabsContent value="buy" className="space-y-4 mt-4">
               <div className="flex gap-2">
