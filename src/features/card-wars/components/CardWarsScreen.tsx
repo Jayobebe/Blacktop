@@ -433,6 +433,7 @@ export function CardWarsScreen() {
           reveal={reveal}
           onRevealEnd={finishReveal}
           penalty={run.penaltyRound === (reveal ? run.round - 1 : run.round)}
+          gone={[run.log.flatMap((l) => (l.raptured?.[0] ? [l.raptured[0]] : [])), run.log.flatMap((l) => (l.raptured?.[1] ? [l.raptured[1]] : []))]}
           rivalName={tr("Computer")}
           forfeitLabel={tr("Forfeit")}
           onForfeit={() => {
@@ -515,6 +516,10 @@ export function CardWarsScreen() {
           reveal={reveal}
           onRevealEnd={finishReveal}
           penalty={shownOnline.penalty}
+          gone={[
+            (shownOnline.log ?? []).flatMap((l) => ((shownOnline.side === 1 ? l.r1 : l.r2) ? [(shownOnline.side === 1 ? l.r1 : l.r2) as string] : [])),
+            (shownOnline.log ?? []).flatMap((l) => ((shownOnline.side === 1 ? l.r2 : l.r1) ? [(shownOnline.side === 1 ? l.r2 : l.r1) as string] : [])),
+          ]}
           rivalName={tr("Rival")}
           forfeitLabel={tr("Forfeit: lose your stake")}
           onForfeit={() => void act('leave')}

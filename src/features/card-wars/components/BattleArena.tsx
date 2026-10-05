@@ -10,6 +10,8 @@ import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
 import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
 import type { BattleCard as Card, Category, DogTag, TagPower } from '../types';
 import { CardBurn } from './CardBurn';
+import type { RoundEvent } from '../lib/events';
+import { EVENT_ICON, eventEffect, eventName } from '../lib/eventText';
 import { CwCard, StatBars } from './CwCard';
 
 /** One settled round, played back: the two cards, the category drawn and what it did. */
@@ -30,9 +32,13 @@ export interface Reveal {
   values: [number, number] | null;
   /** The dog tag each side armed. */
   tags?: [TagPower | null, TagPower | null];
+  /** Something that happened before the category was drawn. */
+  event?: RoundEvent | null;
+  /** A rapture: the card each side lost to the beam. */
+  raptured?: [string | null, string | null];
 }
 
-type Phase = 'idle' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
+type Phase = 'idle' | 'event' | 'beam' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
 
 const REEL_ROW = 34;
 const quick = () => isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -101,6 +107,7 @@ export function BattleArena({
   forfeitLabel,
   onForfeit,
   note,
+  gone,
 }: {
   player: Card[];
   opponent: Card[];
@@ -125,6 +132,8 @@ export function BattleArena({
   onForfeit: () => void;
   /** A line under the top bar (the clock in a player battle). */
   note?: ReactNode;
+  /** Cards raptured earlier this battle: the player's, then the rival's. */
+  gone?: [string[], string[]];
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [focus, setFocus] = useState<number | null>(null);
@@ -188,7 +197,29 @@ export function BattleArena({
     };
     skip.current = home;
 
-    setPhase('spin');
+    const ev = reveal.event ?? null;
+    // The event card shows first; everything after it waits.
+    const lead = ev ? (fast ? 900 : 1700) : 0;
+    if (ev) {
+      setPhase('event');
+      eventSound('radioIn');
+      haptics.medium();
+    }
+    if (ev === 'rapture') {
+      at(lead, () => {
+        setPhase('beam');
+        eventSound('whoosh');
+        haptics.heavy();
+      });
+      at(lead + (fast ? 900 : 2200), () => setPhase('done'));
+      at(lead + (fast ? 2200 : 3600), home);
+      return () => {
+        cancelled = true;
+        timers.forEach(clearTimeout);
+      };
+    }
+    if (!ev) setPhase('spin');
+    else at(lead, () => setPhase('spin'));
     const hit = () => {
       setPhase('clash');
       if (reveal.damage > 0) {
@@ -203,22 +234,22 @@ export function BattleArena({
     if (fast) {
       // No reel, no flights: the result, long enough to read.
       setReelAt(turns(4, reveal.category));
-      at(80, hit);
-      at(220, verdict);
-      at(1500, home);
+      at(lead + 80, hit);
+      at(lead + 220, verdict);
+      at(lead + 1500, home);
     } else {
       setReelAt(0);
       const first = reveal.first;
-      at(30, () => setReelAt(turns(2, first ?? reveal.category)));
+      at(lead + 30, () => setReelAt(turns(2, first ?? reveal.category)));
       // A Second chance: the reel stops on the category that was lost, then goes round again.
-      const base = first ? 1750 : 0;
+      const base = lead + (first ? 1750 : 0);
       if (first) {
-        at(1150, () => {
+        at(lead + 1150, () => {
           setPhase('replay');
           eventSound('radioIn');
           haptics.medium();
         });
-        at(1700, () => setReelAt(turns(4, reveal.category)));
+        at(lead + 1700, () => setReelAt(turns(4, reveal.category)));
       }
       at(base + 1200, hit);
       at(base + 1950, verdict);
