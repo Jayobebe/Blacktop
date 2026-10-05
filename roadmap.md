@@ -1,5 +1,7 @@
 # Current tasks
 
+- [ ] Add the first ten supplied Card Wars vehicle cutouts with consistent proportional sizing; no builds or preview requested.
+
 - [x] Bias computer deck matchmaking toward a 51% player win target; repeatable simulations measured 50.2–51.0% across low/high/mixed catalog decks, with unchanged stats, persistence and knockout checks passing. Very worn or out-of-range decks cannot meet the target without changing catalog stats; PvP untouched.
 
 - [x] Give the Card Wars shop one header, unclipped scrolling and prices, portrait category rows and corner tier indicators; browser verified at five portrait/landscape sizes, product scrolling and return to deck passed with no runtime errors.
