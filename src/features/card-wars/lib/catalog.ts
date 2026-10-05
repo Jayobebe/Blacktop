@@ -21,6 +21,16 @@ import golfRaceArt from '@/assets/card-wars/gtitcr.png.asset.json';
 import supraArt from '@/assets/card-wars/suprag4.png.asset.json';
 import yarisArt from '@/assets/card-wars/gryaris.png.asset.json';
 
+/**
+ * The brand bikes' cutouts, trimmed to their visible bounds by
+ * scripts/make-card-wars-bikes.py into public/card-wars/bikes/<id>.png (plain
+ * URLs, so the balance script can still load this file in Node).
+ */
+const BIKE_ART = [
+ 'mt07', 'r6', 'ninja', 'zx10rr', 'sv650', 'gsxr', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk',
+ 'gs', 's1000', 'rs660f', 'rs660', '890duke', 'rc8c', 'striple', 'moto2', 'f3rr', 'f3ss',
+];
+
 /** Supplied transparent cutouts share a canvas, visible width and ground baseline. */
 const ARTWORK: Record<string, string> = {
  mx5: mx5Art.url, mx5cup: mx5cupArt.url, civic: civicArt.url, nsxgt3: nsxgt3Art.url,
@@ -29,6 +39,7 @@ const ARTWORK: Record<string, string> = {
  '911': porscheRoadArt.url, gt3r: porscheRaceArt.url, m3: bmwRoadArt.url,
  m4gt3: bmwRaceArt.url, '296gtb': ferrariRoadArt.url, '750s': mclarenRoadArt.url,
  rally: fiestaArt.url, gtitcr: golfRaceArt.url, suprag4: supraArt.url, gryaris: yarisArt.url,
+ ...Object.fromEntries(BIKE_ART.map(id => [id, `/card-wars/bikes/${id}.png`])),
 };
 
 /**
