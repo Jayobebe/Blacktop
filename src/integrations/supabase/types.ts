@@ -2051,6 +2051,7 @@ export type Database = {
       }
       cw_contracts_today: { Args: never; Returns: Json }
       cw_daily_topup: { Args: { _u: string }; Returns: undefined }
+      cw_flip: { Args: never; Returns: boolean }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_my_wear: {
         Args: never
