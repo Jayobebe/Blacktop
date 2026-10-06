@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Globe adalah satu tombol dengan dua fungsi. Ketuk untuk membuka peta. Tahan untuk beralih ke Blacktop World, lalu ketuk untuk masuk.",
  "Tip": "Tips",
  "Tips will show again as you open each page.": "Tips akan muncul lagi saat kamu membuka tiap halaman.",
- "{0} of {1}": "{0} dari {1}"
+ "{0} of {1}": "{0} dari {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Mengakhiri butuh dua ketukan, agar sarung tangan tidak melakukannya tanpa sengaja. Apa pun di bawah satu menit atau di bawah 0,1 mil tidak disimpan.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Mengakhiri butuh dua ketukan, agar sarung tangan tidak melakukannya tanpa sengaja. Apa pun di bawah satu menit atau di bawah 150 meter tidak disimpan.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R meminta pertolongan. Lokasimu dikirim ke orang yang kamu pilih di Pengaturan: konvoi, kru, Discord, pengendara di sekitar.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Berhenti isi bensin? Ini mengunci dengan alarm anti-maling. Perjalananmu dijeda sampai kamu membuka kunci dan menekan putar."
 }

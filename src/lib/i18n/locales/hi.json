@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "ग्लोब दो काम वाला एक बटन है। नक्शा खोलने के लिए टैप करें। Blacktop World पर जाने के लिए दबाए रखें, फिर अंदर जाने के लिए टैप करें।",
  "Tip": "सुझाव",
  "Tips will show again as you open each page.": "हर पेज खोलने पर सुझाव फिर दिखेंगे।",
- "{0} of {1}": "{1} में से {0}"
+ "{0} of {1}": "{1} में से {0}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "खत्म करने के लिए दो टैप लगते हैं, ताकि दस्ताने से गलती से न हो। एक मिनट से कम या 0.1 मील से कम कुछ भी सेव नहीं होता।",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "खत्म करने के लिए दो टैप लगते हैं, ताकि दस्ताने से गलती से न हो। एक मिनट से कम या 150 मीटर से कम कुछ भी सेव नहीं होता।",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R मदद बुलाता है। यह आपकी लोकेशन उन्हें भेजता है जिन्हें आपने सेटिंग्स में चुना है: आपका कॉन्वॉय, आपका क्रू, Discord, आस-पास के राइडर।",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "पेट्रोल के लिए रुक रहे हैं? यह चोरी-रोधी अलार्म से लॉक करता है। जब तक आप अनलॉक करके प्ले नहीं दबाते, राइड रुकी रहती है।"
 }

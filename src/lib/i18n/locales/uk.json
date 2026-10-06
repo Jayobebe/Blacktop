@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Глобус — це одна кнопка з двома завданнями. Торкнися, щоб відкрити мапу. Утримуй, щоб перемкнути на Blacktop World, а потім торкнися, щоб увійти.",
  "Tip": "Підказка",
  "Tips will show again as you open each page.": "Підказки з'являтимуться знову, коли відкриватимеш кожну сторінку.",
- "{0} of {1}": "{0} з {1}"
+ "{0} of {1}": "{0} з {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Завершення потребує двох дотиків, щоб рукавиця не зробила цього випадково. Усе, що коротше хвилини або менше 0,1 милі, не зберігається.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Завершення потребує двох дотиків, щоб рукавиця не зробила цього випадково. Усе, що коротше хвилини або менше 150 метрів, не зберігається.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R кличе на допомогу. Надсилає твоє місцезнаходження тим, кого ти обрав у Налаштуваннях: колоні, команді, Discord, райдерам поблизу.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Зупинка на заправку? Це блокує протиугінною сигналізацією. Поїздка на паузі, доки не розблокуєш і не натиснеш відтворення."
 }

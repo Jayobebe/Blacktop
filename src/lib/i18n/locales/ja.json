@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "地球儀は2つの役割を持つボタンです。タップでマップを開きます。長押しでBlacktop Worldに切り替え、タップで入ります。",
  "Tip": "ヒント",
  "Tips will show again as you open each page.": "各ページを開くと、ヒントが再び表示されます。",
- "{0} of {1}": "{0} / {1}"
+ "{0} of {1}": "{0} / {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "終了は2回タップが必要なので、グローブで誤って終了することはありません。1分未満または0.1マイル未満の走行は保存されません。",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "終了は2回タップが必要なので、グローブで誤って終了することはありません。1分未満または150メートル未満の走行は保存されません。",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "Rは救助を呼びます。設定で選んだ相手（コンボイ、クルー、Discord、近くのライダー）に位置情報を送ります。",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "給油で止まりますか？これで盗難防止アラームをかけてロックします。解除して再生を押すまで走行は一時停止します。"
 }

@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "De globe is één knop met twee taken. Tik om de kaart te openen. Houd vast om naar Blacktop World te wisselen en tik dan om naar binnen te gaan.",
  "Tip": "Tip",
  "Tips will show again as you open each page.": "Tips verschijnen weer als je elke pagina opent.",
- "{0} of {1}": "{0} van {1}"
+ "{0} of {1}": "{0} van {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Stoppen vraagt twee tikken, zodat een handschoen het niet per ongeluk doet. Alles onder een minuut of onder 0,1 mijl wordt niet opgeslagen.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Stoppen vraagt twee tikken, zodat een handschoen het niet per ongeluk doet. Alles onder een minuut of onder 150 meter wordt niet opgeslagen.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R roept om hulp. Je locatie gaat naar wie je in Instellingen hebt gekozen: je konvooi, je crew, Discord, rijders in de buurt.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Tanken? Hiermee vergrendel je met het antidiefstalalarm. Je rit staat op pauze tot je ontgrendelt en op play drukt."
 }

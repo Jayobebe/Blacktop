@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "地球是一个有两种用途的按钮。点按可打开地图。长按可切换到 Blacktop World，然后点按进入。",
  "Tip": "提示",
  "Tips will show again as you open each page.": "打开各页面时会再次显示提示。",
- "{0} of {1}": "{0} / {1}"
+ "{0} of {1}": "{0} / {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "结束需要点按两次，这样戴手套也不会误触。不足一分钟或不足 0.1 英里的行程不会保存。",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "结束需要点按两次，这样戴手套也不会误触。不足一分钟或不足 150 米的行程不会保存。",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R 用于呼叫救援。它会把你的位置发送给你在设置中选择的对象：同行队伍、车队、Discord、附近的骑手。",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "停车加油？这会用防盗警报上锁。在你解锁并按下播放之前，行程会暂停。"
 }

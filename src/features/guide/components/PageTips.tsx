@@ -23,10 +23,17 @@ interface Spot {
 }
 
 function locate(selector: string): Spot | null {
-  const el = document.querySelector<HTMLElement>(selector);
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > window.innerHeight) return null;
+  // The control may be on the page twice (a copy for each way up, one of them hidden): the first that's on screen.
+  let el: HTMLElement | null = null;
+  let r: DOMRect | null = null;
+  for (const candidate of Array.from(document.querySelectorAll<HTMLElement>(selector))) {
+    const rect = candidate.getBoundingClientRect();
+    if (rect.width < 4 || rect.height < 4 || rect.bottom < 0 || rect.top > window.innerHeight) continue;
+    el = candidate;
+    r = rect;
+    break;
+  }
+  if (!el || !r) return null;
   const radius = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 12, Math.min(r.width, r.height) / 2);
   return { x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12, radius: radius + 6 };
 }

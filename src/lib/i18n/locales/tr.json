@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Küre, iki işi olan tek bir düğme. Haritayı açmak için dokun. Blacktop World'e geçmek için basılı tut, sonra girmek için dokun.",
  "Tip": "İpucu",
  "Tips will show again as you open each page.": "Her sayfayı açtığında ipuçları yeniden gösterilecek.",
- "{0} of {1}": "{0} / {1}"
+ "{0} of {1}": "{0} / {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Bitirmek iki dokunuş ister, böylece eldiven yanlışlıkla yapamaz. Bir dakikadan kısa ya da 0,1 milden az olan hiçbir şey kaydedilmez.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Bitirmek iki dokunuş ister, böylece eldiven yanlışlıkla yapamaz. Bir dakikadan kısa ya da 150 metreden az olan hiçbir şey kaydedilmez.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R yardım çağırır. Konumunu Ayarlar'da seçtiğin kişilere gönderir: konvoyun, ekibin, Discord, yakındaki sürücüler.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Yakıt için mi duruyorsun? Bu, hırsızlık alarmıyla kilitler. Kilidi açıp oynata basana kadar sürüşün duraklatılır."
 }

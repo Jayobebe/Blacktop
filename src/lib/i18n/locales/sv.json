@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Globen är en knapp med två uppgifter. Tryck för att öppna kartan. Håll in för att byta till Blacktop World och tryck sedan för att gå in.",
  "Tip": "Tips",
  "Tips will show again as you open each page.": "Tips visas igen när du öppnar varje sida.",
- "{0} of {1}": "{0} av {1}"
+ "{0} of {1}": "{0} av {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Att avsluta kräver två tryck, så att en handske inte gör det av misstag. Allt under en minut eller under 0,1 mile sparas inte.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Att avsluta kräver två tryck, så att en handske inte gör det av misstag. Allt under en minut eller under 150 meter sparas inte.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R kallar på hjälp. Den skickar din position till dem du valt i Inställningar: din konvoj, ditt crew, Discord, förare i närheten.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Stannar du för att tanka? Den här låser med stöldlarmet. Turen är pausad tills du låser upp och trycker på play."
 }

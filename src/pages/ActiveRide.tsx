@@ -36,7 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, AlertTriangle, Pause, Play, VolumeX } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, Pause, Play, VolumeX } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -45,6 +45,7 @@ import { getMemberColorStyles } from '@/lib/memberColors';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { tr } from '@/lib/i18n';
 import { ScreenOnGuard } from '@/features/ride/components/ScreenOnGuard';
+import { PageTips } from '@/features/guide';
 
 // Read at call time inside realtime handlers so wording never forces a resubscribe.
 const liveTerms = () => termsFor(getExperience().vehicles);
@@ -884,7 +885,7 @@ export default function ActiveRide() {
     : convoy.members;
 
   const endRideButton = (
-    <div className="flex justify-center items-center min-h-[2.25rem] md:min-h-[2.5rem] min-w-[230px]">
+    <div data-tip="end-ride" className="flex justify-center items-center min-h-[2.25rem] md:min-h-[2.5rem] min-w-[230px]">
       {!showEndConfirm ? (
         <Button
           onClick={() => setShowEndConfirm(true)}
@@ -1036,6 +1037,22 @@ export default function ActiveRide() {
           </div>
           {!rideState.isPaused && <GpsNotice gpsStatus={rideState.gpsStatus} startedAt={rideState.startedAt} />}
           <ScreenOnGuard active={rideState.isActive} paused={rideState.isPaused} lastFix={rideState.gpsStatus.lastUpdate} />
+          {/* First-time tips, only at a standstill: they're put away the moment the rider moves. */}
+          <PageTips
+            page="ride"
+            when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !showEndConfirm}
+            tips={[
+              { target: '[data-tip="rescue"]', text: tr("R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.") },
+              { target: '[data-tip="alarm"]', text: tr("Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.") },
+              {
+                target: '[data-tip="end-ride"]',
+                text:
+                  settings.distanceUnit === 'km'
+                    ? tr("Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.")
+                    : tr("Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved."),
+              },
+            ]}
+          />
 
           {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">
@@ -1186,15 +1203,14 @@ export default function ActiveRide() {
           {rideState.isConvoyMode && !convoy.isLeader && (
             <button
               onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
+              data-tip="rescue"
               className={cn(
-                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target",
-                hasPendingRescue 
-                  ? "bg-warning/20 text-warning animate-pulse" 
-                  : "bg-secondary hover:bg-warning/20 text-warning"
+                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
+                hasPendingRescue && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
               )}
               title={hasPendingRescue ? tr("Cancel rescue request") : tr("Request rescue")}
             >
-              <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
+              <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
             </button>
           )}
           {!rideState.isConvoyMode && (
@@ -1234,15 +1250,14 @@ export default function ActiveRide() {
                 }
               }}
               disabled={soloRescueSending || soloRescueSent}
+              data-tip="rescue"
               className={cn(
-                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target disabled:opacity-60",
-                soloRescueSent
-                  ? "bg-warning/20 text-warning animate-pulse"
-                  : "bg-secondary hover:bg-warning/20 text-warning"
+                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
+                soloRescueSent && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
               )}
               title={soloRescueSent ? tr("Rescue call sent") : soloRescueSending ? tr("Sending…") : tr("Call for rescue (your crew and Discord)")}
             >
-              <AlertTriangle className="w-7 h-7 landscape:w-8 landscape:h-8" />
+              <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
             </button>
           )}
 

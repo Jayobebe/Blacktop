@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "지구본은 두 가지 일을 하는 버튼입니다. 탭하면 지도가 열립니다. 길게 누르면 Blacktop World로 전환되고, 탭하면 들어갑니다.",
  "Tip": "팁",
  "Tips will show again as you open each page.": "각 페이지를 열 때 팁이 다시 표시됩니다.",
- "{0} of {1}": "{0} / {1}"
+ "{0} of {1}": "{0} / {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "종료는 두 번 탭해야 하므로 장갑으로 실수할 일이 없습니다. 1분 미만이거나 0.1마일 미만이면 저장되지 않습니다.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "종료는 두 번 탭해야 하므로 장갑으로 실수할 일이 없습니다. 1분 미만이거나 150미터 미만이면 저장되지 않습니다.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R은 구조를 요청합니다. 설정에서 고른 대상(콘보이, 크루, Discord, 근처 라이더)에게 내 위치를 보냅니다.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "주유하러 멈추나요? 도난 방지 알람으로 잠급니다. 잠금을 풀고 재생을 누를 때까지 주행이 일시정지됩니다."
 }

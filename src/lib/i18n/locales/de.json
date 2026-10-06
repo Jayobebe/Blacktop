@@ -4263,5 +4263,9 @@
  "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Der Globus ist ein Knopf mit zwei Aufgaben. Tippe, um die Karte zu öffnen. Halte ihn, um zu Blacktop World zu wechseln, und tippe dann, um hineinzugehen.",
  "Tip": "Tipp",
  "Tips will show again as you open each page.": "Tipps erscheinen wieder, wenn du die einzelnen Seiten öffnest.",
- "{0} of {1}": "{0} von {1}"
+ "{0} of {1}": "{0} von {1}",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Beenden braucht zwei Tipper, damit es mit Handschuh nicht versehentlich passiert. Alles unter einer Minute oder unter 0,1 Meilen wird nicht gespeichert.",
+ "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Beenden braucht zwei Tipper, damit es mit Handschuh nicht versehentlich passiert. Alles unter einer Minute oder unter 150 Metern wird nicht gespeichert.",
+ "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R ruft Hilfe. Dein Standort geht an die, die du in den Einstellungen gewählt hast: dein Konvoi, deine Crew, Discord, Fahrer in der Nähe.",
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Tankstopp? Damit sicherst du mit der Diebstahlsicherung ab. Die Fahrt pausiert, bis du entsperrst und auf Play drückst."
 }
