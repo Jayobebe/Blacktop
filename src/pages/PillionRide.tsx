@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Headphones, LogOut, AlertTriangle, X } from 'lucide-react';
+import { Mic, MicOff, Headphones, LogOut, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
@@ -227,11 +227,14 @@ export default function PillionRide() {
             hasPendingRescue
               ? 'border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse'
               : confirmRescue
-                ? 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                : 'border-destructive/60 text-destructive',
+                ? 'border-[hsl(var(--burn))] bg-[hsl(var(--burn))] text-white hover:bg-[hsl(var(--burn))] hover:brightness-110'
+                : 'border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn)/0.1)] hover:text-[hsl(var(--burn))]',
           )}
         >
-          <AlertTriangle className="w-5 h-5 mr-2" />
+          {/* The same R as the ride screen's rescue button. */}
+          <span aria-hidden className={cn('mr-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-black leading-none', confirmRescue && !hasPendingRescue ? 'bg-white text-[hsl(var(--burn))]' : 'bg-[hsl(var(--burn))] text-white')}>
+            R
+          </span>
           {hasPendingRescue ? tr("Rescue sent · tap to cancel") : confirmRescue ? tr("Tap again to alert the convoy") : tr("Request rescue")}
         </Button>
         <Button onClick={handleLeave} variant="ghost" className="w-full h-11 text-muted-foreground">

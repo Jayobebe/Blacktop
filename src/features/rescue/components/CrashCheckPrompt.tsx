@@ -98,7 +98,7 @@ export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }:
             size="lg"
             variant="outline"
             onClick={onSendNow}
-            className="w-full h-12 border-destructive/60 text-destructive hover:bg-destructive/10 gap-2"
+            className="w-full h-12 border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn)/0.1)] hover:text-[hsl(var(--burn))] gap-2"
           >
             <Send className="w-4 h-4" />
             {tr("Send rescue now")}

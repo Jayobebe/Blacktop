@@ -22,18 +22,26 @@ interface Spot {
   radius: number;
 }
 
-function locate(selector: string): Spot | null {
-  // The control may be on the page twice (a copy for each way up, one of them hidden): the first that's on screen.
-  let el: HTMLElement | null = null;
-  let r: DOMRect | null = null;
+/**
+ * The control a tip is about. It may be on the page twice (a copy for each way
+ * up, one of them hidden): the first with any size that isn't off to one side.
+ * `anywhere`: one that's scrolled out of view up or down still counts.
+ */
+function find(selector: string, anywhere: boolean): HTMLElement | null {
+  let below: HTMLElement | null = null;
   for (const candidate of Array.from(document.querySelectorAll<HTMLElement>(selector))) {
     const rect = candidate.getBoundingClientRect();
-    if (rect.width < 4 || rect.height < 4 || rect.bottom < 0 || rect.top > window.innerHeight) continue;
-    el = candidate;
-    r = rect;
-    break;
+    if (rect.width < 4 || rect.height < 4 || rect.right < 0 || rect.left > window.innerWidth) continue;
+    if (rect.bottom >= 0 && rect.top <= window.innerHeight) return candidate;
+    below ??= candidate;
   }
-  if (!el || !r) return null;
+  return anywhere ? below : null;
+}
+
+function locate(selector: string): Spot | null {
+  const el = find(selector, false);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
   const radius = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 12, Math.min(r.width, r.height) / 2);
   return { x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12, radius: radius + 6 };
 }
@@ -45,7 +53,7 @@ function locate(selector: string): Spot | null {
  * Nothing shows again once they've been through or skipped. It waits for the
  * page to settle, and for any dialog to be out of the way, before starting.
  */
-export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowing }: { page: string; tips: PageTip[]; /** Hold the tips back (and hide them at once) while this is false. */ when?: boolean; /** More than the usual three, for a page that walks through a toolbar. */ max?: number; /** Told when the tips come up and when they're put away (the ride screen pauses its clock meanwhile). */ onShowing?: (showing: boolean) => void }) {
+export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowing, scroll = false }: { page: string; tips: PageTip[]; /** Hold the tips back (and hide them at once) while this is false. */ when?: boolean; /** More than the usual three, for a page that walks through a toolbar. */ max?: number; /** Told when the tips come up and when they're put away (the ride screen pauses its clock meanwhile). */ onShowing?: (showing: boolean) => void; /** On a page that scrolls: a tip about something further down brings it into view first. Not for Home, which must never scroll. */ scroll?: boolean }) {
   const due = useTipsDue(page);
   const list = tips.slice(0, max);
   const [step, setStep] = useState<number | null>(null);
@@ -57,7 +65,7 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
 
   /** The first tip from `from` whose target is on screen. */
   const next = (from: number): number | null => {
-    for (let i = from; i < tipsRef.current.length; i++) if (locate(tipsRef.current[i].target)) return i;
+    for (let i = from; i < tipsRef.current.length; i++) if (find(tipsRef.current[i].target, scroll)) return i;
     return null;
   };
 
@@ -88,6 +96,11 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
   useLayoutEffect(() => {
     if (step === null) return;
     const place = () => setSpot(locate(tipsRef.current[step]?.target ?? ''));
+    if (scroll) {
+      const el = find(tipsRef.current[step]?.target ?? '', true);
+      const r = el?.getBoundingClientRect();
+      if (el && r && (r.top < 70 || r.bottom > window.innerHeight - 170)) el.scrollIntoView({ block: 'center' });
+    }
     place();
     window.addEventListener('resize', place);
     const again = window.setInterval(place, 500);
@@ -114,8 +127,8 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
   const tip = list[step];
   if (!tip) return null;
   // "4 of 11": counting only the tips whose control is on this rider's screen.
-  const position = list.slice(0, step + 1).filter((t, i) => i === step || locate(t.target)).length;
-  const shown = position + list.slice(step + 1).filter((t) => locate(t.target)).length;
+  const position = list.slice(0, step + 1).filter((t, i) => i === step || find(t.target, scroll)).length;
+  const shown = position + list.slice(step + 1).filter((t) => find(t.target, scroll)).length;
   const last = next(step + 1) === null;
 
   const advance = () => {

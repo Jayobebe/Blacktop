@@ -23,6 +23,7 @@ import { BlacktankPanel } from '@/features/blacktank';
 import { tr } from '@/lib/i18n';
 import { useServerCap } from '@/lib/serverCaps';
 import { endWarp } from '@/lib/warp';
+import { PageTips } from '@/features/guide';
 // Not the Card Wars barrel: that would pull the whole game into this page.
 import { SpectreTagBack } from '@/features/card-wars/light';
 
@@ -186,6 +187,16 @@ export default function World() {
   return (
 
     <div className="min-h-dvh flex flex-col safe-top safe-bottom animate-world-enter overflow-y-auto">
+      {/* First-time tips. The collection is further down the page, so its tips bring it into view. */}
+      <PageTips
+        page="world"
+        scroll
+        tips={[
+          { target: '[data-tip="world-globe"]', text: tr("Spin the globe and tap a landmark: crew convoys, leaderboards, challenges, the arcade and more.") },
+          { target: '[data-tip="scan-card"]', text: tr("Scan another rider's card QR here to add it to your collection.") },
+          { target: '[data-tip="vault-card"]', text: tr("Tap any card to turn it over. The back has its QR to pass on, or its dog tag, and a sticker for your Home screen.") },
+        ]}
+      />
       {/* Header */}
       <header className="relative flex items-center justify-center px-4 pt-4 pb-3 flex-shrink-0">
         <button
@@ -208,7 +219,7 @@ export default function World() {
       </header>
 
       {/* Globe — fixed-height section, page scrolls past it */}
-      <div className="relative w-full h-[70vh] flex-shrink-0">
+      <div data-tip="world-globe" className="relative w-full h-[70vh] flex-shrink-0">
         <WorldGlobe
           accentColor={accentColor}
           landmarks={CREW_LANDMARKS}

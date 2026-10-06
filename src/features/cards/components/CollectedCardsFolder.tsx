@@ -183,6 +183,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
           disabled={locked}
           className="disabled:opacity-40 disabled:pointer-events-none [&:nth-child(3)]:ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
           aria-label={tr("Scan a card")}
+          data-tip="scan-card"
         >
           <ScanLine className="w-3.5 h-3.5" />
           {tr("Scan card")}
@@ -393,6 +394,7 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}` 
         setFlipped((f) => !f);
       }}
       aria-label={flipped ? tr("Show front of {0}", [card.n]) : spectre ? (spectreBack ? tr("Show {0} dog tag", [card.n]) : tr("Show {0} Spectre result", [card.n])) : tr("Show {0} QR code", [card.n])}
+      data-tip="vault-card"
       className="block w-full aspect-[5/7] [perspective:1200px] text-left"
     >
       <div
@@ -469,6 +471,7 @@ function WonFlipCard({ card }: { card: ReturnType<typeof useWonBattleCards>[numb
         setFlipped((f) => !f);
       }}
       aria-label={flipped ? tr("Show front of {0}", [card.name]) : tr("Show {0} sticker", [card.name])}
+      data-tip="vault-card"
       className="block w-full [perspective:1200px] text-left"
     >
       <div className={cn('relative w-full transition-transform duration-700 [transform-style:preserve-3d]', flipped && '[transform:rotateY(180deg)]')}>
