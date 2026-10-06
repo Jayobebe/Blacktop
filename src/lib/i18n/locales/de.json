@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Ein beendetes Spiel hier bringt RPM für Card Wars. Eine persönliche Bestleistung bringt mehr.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Fahrten verbrennen löscht alles ohne Stern, das älter als eine Woche oder einen Monat ist, um Speicher zu sparen. Deine Summen und Statistiken bleiben.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Tippe auf einen Eintrag für seine Route, seinen Beleg und eine Zusammenfassungskarte zum Teilen.",
- "Star the ones you want to keep. Starred entries are never burned.": "Gib denen einen Stern, die du behalten willst. Einträge mit Stern werden nie verbrannt."
+ "Star the ones you want to keep. Starred entries are never burned.": "Gib denen einen Stern, die du behalten willst. Einträge mit Stern werden nie verbrannt.",
+ "These are your all-time totals. They stay even when old trips are burned.": "Das sind deine Gesamtwerte über die ganze Zeit. Sie bleiben, auch wenn alte Fahrten verbrannt werden.",
+ "convoys": "Konvois",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "Abzeichen verdienst du allein und im Konvoi. Tippe eins an, um zu sehen wie.",
+ "{0}: how to earn it": "{0}: so verdienst du es",
+ "Another rider collects one of the cards you dropped on the map.": "Ein anderer Fahrer sammelt eine der Karten ein, die du auf der Karte abgelegt hast.",
+ "Set the highest top speed in a convoy.": "Fahre die höchste Spitzengeschwindigkeit in einem Konvoi.",
+ "Cover the most distance in a convoy.": "Lege in einem Konvoi die größte Strecke zurück.",
+ "Lean further than anyone else in a convoy.": "Lege dich in einem Konvoi tiefer in die Kurve als alle anderen.",
+ "Pull the highest G-force in a convoy.": "Erreiche die höchste G-Kraft in einem Konvoi.",
+ "Score the best corners in a convoy.": "Hol dir die beste Kurvenwertung in einem Konvoi.",
+ "Set off between 20:00 and 05:00.": "Brich zwischen 20:00 und 05:00 Uhr auf.",
+ "Cover {0} or more in one go.": "Lege {0} oder mehr am Stück zurück.",
+ "Head out three times in one day.": "Brich dreimal an einem Tag auf.",
+ "Spend the longest standing still in a convoy.": "Steh in einem Konvoi am längsten still."
 }

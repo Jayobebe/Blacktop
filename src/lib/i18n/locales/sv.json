@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Ett avslutat spel här ger RPM till Card Wars. Ett personbästa ger mer.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Bränn turer raderar allt utan stjärna som är äldre än en vecka eller en månad, för att spara utrymme. Dina totaler och din statistik finns kvar.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Tryck på en post för att se rutten, kvittot och ett sammanfattningskort att dela.",
- "Star the ones you want to keep. Starred entries are never burned.": "Stjärnmärk dem du vill behålla. Poster med stjärna bränns aldrig."
+ "Star the ones you want to keep. Starred entries are never burned.": "Stjärnmärk dem du vill behålla. Poster med stjärna bränns aldrig.",
+ "These are your all-time totals. They stay even when old trips are burned.": "Det här är dina totaler genom tiderna. De finns kvar även när gamla turer bränns.",
+ "convoys": "konvojer",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "Märken tjänas på egen hand och i konvojer. Tryck på ett för att se hur.",
+ "{0}: how to earn it": "{0}: så tjänar du det",
+ "Another rider collects one of the cards you dropped on the map.": "En annan förare plockar upp ett av korten du lagt ut på kartan.",
+ "Set the highest top speed in a convoy.": "Sätt den högsta toppfarten i en konvoj.",
+ "Cover the most distance in a convoy.": "Kör längst i en konvoj.",
+ "Lean further than anyone else in a convoy.": "Luta mer än alla andra i en konvoj.",
+ "Pull the highest G-force in a convoy.": "Dra den högsta G-kraften i en konvoj.",
+ "Score the best corners in a convoy.": "Få den bästa kurvpoängen i en konvoj.",
+ "Set off between 20:00 and 05:00.": "Ge dig av mellan 20:00 och 05:00.",
+ "Cover {0} or more in one go.": "Avverka {0} eller mer i ett svep.",
+ "Head out three times in one day.": "Ge dig av tre gånger på en dag.",
+ "Spend the longest standing still in a convoy.": "Stå stilla längst i en konvoj."
 }

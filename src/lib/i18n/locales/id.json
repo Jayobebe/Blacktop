@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Menyelesaikan permainan di sini memberi RPM untuk Card Wars. Rekor pribadi memberi lebih banyak.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Bakar perjalanan menghapus semua yang tanpa bintang dan lebih lama dari seminggu atau sebulan untuk menghemat penyimpanan. Total dan statistikmu tetap ada.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Ketuk sebuah entri untuk melihat rutenya, struknya, dan kartu rekap untuk dibagikan.",
- "Star the ones you want to keep. Starred entries are never burned.": "Beri bintang pada yang ingin kamu simpan. Entri berbintang tidak pernah dibakar."
+ "Star the ones you want to keep. Starred entries are never burned.": "Beri bintang pada yang ingin kamu simpan. Entri berbintang tidak pernah dibakar.",
+ "These are your all-time totals. They stay even when old trips are burned.": "Ini total sepanjang masamu. Total ini tetap ada meski perjalanan lama dibakar.",
+ "convoys": "konvoi",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "Lencana diraih saat sendiri dan dalam konvoi. Ketuk salah satu untuk melihat caranya.",
+ "{0}: how to earn it": "{0}: cara mendapatkannya",
+ "Another rider collects one of the cards you dropped on the map.": "Pengendara lain mengambil salah satu kartu yang kamu taruh di peta.",
+ "Set the highest top speed in a convoy.": "Catat kecepatan puncak tertinggi dalam konvoi.",
+ "Cover the most distance in a convoy.": "Tempuh jarak terjauh dalam konvoi.",
+ "Lean further than anyone else in a convoy.": "Miring lebih dalam dari siapa pun dalam konvoi.",
+ "Pull the highest G-force in a convoy.": "Raih gaya G tertinggi dalam konvoi.",
+ "Score the best corners in a convoy.": "Raih skor tikungan terbaik dalam konvoi.",
+ "Set off between 20:00 and 05:00.": "Berangkat antara pukul 20:00 dan 05:00.",
+ "Cover {0} or more in one go.": "Tempuh {0} atau lebih dalam sekali jalan.",
+ "Head out three times in one day.": "Berangkat tiga kali dalam satu hari.",
+ "Spend the longest standing still in a convoy.": "Paling lama diam dalam konvoi."
 }

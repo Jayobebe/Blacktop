@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Et fullført spill her gir RPM til Card Wars. En personlig rekord gir mer.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Brenn turer sletter alt uten stjerne som er eldre enn en uke eller en måned, for å spare plass. Totalene og tallene dine blir.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Trykk på en oppføring for ruten, kvitteringen og et oppsummeringskort du kan dele.",
- "Star the ones you want to keep. Starred entries are never burned.": "Gi stjerne til dem du vil beholde. Oppføringer med stjerne brennes aldri."
+ "Star the ones you want to keep. Starred entries are never burned.": "Gi stjerne til dem du vil beholde. Oppføringer med stjerne brennes aldri.",
+ "These are your all-time totals. They stay even when old trips are burned.": "Dette er totalene dine gjennom tidene. De blir, også når gamle turer brennes.",
+ "convoys": "konvoier",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "Merker tjenes alene og i konvoier. Trykk på ett for å se hvordan.",
+ "{0}: how to earn it": "{0}: slik tjener du det",
+ "Another rider collects one of the cards you dropped on the map.": "En annen fører plukker opp et av kortene du har lagt på kartet.",
+ "Set the highest top speed in a convoy.": "Sett den høyeste toppfarten i en konvoi.",
+ "Cover the most distance in a convoy.": "Kjør lengst i en konvoi.",
+ "Lean further than anyone else in a convoy.": "Legg deg lenger ned enn alle andre i en konvoi.",
+ "Pull the highest G-force in a convoy.": "Dra den høyeste G-kraften i en konvoi.",
+ "Score the best corners in a convoy.": "Få den beste svingpoengsummen i en konvoi.",
+ "Set off between 20:00 and 05:00.": "Dra av sted mellom 20:00 og 05:00.",
+ "Cover {0} or more in one go.": "Tilbakelegg {0} eller mer i ett strekk.",
+ "Head out three times in one day.": "Dra av sted tre ganger på én dag.",
+ "Spend the longest standing still in a convoy.": "Stå stille lengst i en konvoi."
 }

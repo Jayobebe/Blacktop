@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Finire una partita qui dà RPM per Card Wars. Un record personale ne dà di più.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Brucia giri cancella tutto ciò che non ha la stella ed è più vecchio di una settimana o di un mese, per risparmiare spazio. I tuoi totali e le statistiche restano.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Tocca una voce per vedere il percorso, la ricevuta e una scheda riepilogo da condividere.",
- "Star the ones you want to keep. Starred entries are never burned.": "Metti una stella a quelle che vuoi tenere. Le voci con la stella non vengono mai bruciate."
+ "Star the ones you want to keep. Starred entries are never burned.": "Metti una stella a quelle che vuoi tenere. Le voci con la stella non vengono mai bruciate.",
+ "These are your all-time totals. They stay even when old trips are burned.": "Questi sono i tuoi totali di sempre. Restano anche quando i vecchi viaggi vengono bruciati.",
+ "convoys": "convogli",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "I badge si guadagnano da soli e in convoglio. Toccane uno per vedere come.",
+ "{0}: how to earn it": "{0}: come si guadagna",
+ "Another rider collects one of the cards you dropped on the map.": "Un altro pilota raccoglie una delle carte che hai lasciato sulla mappa.",
+ "Set the highest top speed in a convoy.": "Fai la velocità massima più alta di un convoglio.",
+ "Cover the most distance in a convoy.": "Percorri la distanza maggiore di un convoglio.",
+ "Lean further than anyone else in a convoy.": "Piega più di chiunque altro in un convoglio.",
+ "Pull the highest G-force in a convoy.": "Raggiungi la forza G più alta di un convoglio.",
+ "Score the best corners in a convoy.": "Ottieni il miglior punteggio in curva di un convoglio.",
+ "Set off between 20:00 and 05:00.": "Parti tra le 20:00 e le 05:00.",
+ "Cover {0} or more in one go.": "Percorri {0} o più in una volta sola.",
+ "Head out three times in one day.": "Parti tre volte nello stesso giorno.",
+ "Spend the longest standing still in a convoy.": "Resta fermo più a lungo di tutti in un convoglio."
 }

@@ -1459,3 +1459,11 @@ html.thermal [role="button"] {
 html.thermal .pressable:active:not(:disabled) {
   transform: none;
 }
+
+/* A badge box that turns over to show how it's earned (BadgeWalletPanel). Both faces sit in one grid cell. */
+.badge-flip { perspective: 700px; display: block; }
+.badge-flip-inner { display: grid; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.badge-flip-inner.is-flipped { transform: rotateY(180deg); }
+.badge-face { grid-area: 1 / 1; min-width: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.badge-back { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) { .badge-flip-inner { transition: none; } }

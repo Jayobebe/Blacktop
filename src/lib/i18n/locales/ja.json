@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "ここでゲームを終えるとCard Wars用のRPMがもらえます。自己ベストならさらに多くもらえます。",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "「ライドを焼却」は、容量を節約するために1週間または1か月より古いスターなしの記録を消去します。合計とスタッツは残ります。",
  "Tap an entry for its route, its receipt and a recap card to share.": "項目をタップすると、ルート、レシート、共有用のまとめカードが見られます。",
- "Star the ones you want to keep. Starred entries are never burned.": "残したいものにスターを付けましょう。スター付きの項目は焼却されません。"
+ "Star the ones you want to keep. Starred entries are never burned.": "残したいものにスターを付けましょう。スター付きの項目は焼却されません。",
+ "These are your all-time totals. They stay even when old trips are burned.": "これまでの累計です。古い記録を焼却しても残ります。",
+ "convoys": "コンボイ",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "バッジはソロでもコンボイでも獲得できます。タップすると獲得方法が見られます。",
+ "{0}: how to earn it": "{0}：獲得方法",
+ "Another rider collects one of the cards you dropped on the map.": "マップに置いたあなたのカードを他のライダーが拾う。",
+ "Set the highest top speed in a convoy.": "コンボイで最高速度を記録する。",
+ "Cover the most distance in a convoy.": "コンボイで最も長い距離を走る。",
+ "Lean further than anyone else in a convoy.": "コンボイで誰よりも深くバンクする。",
+ "Pull the highest G-force in a convoy.": "コンボイで最大のGフォースを記録する。",
+ "Score the best corners in a convoy.": "コンボイでコーナースコア1位になる。",
+ "Set off between 20:00 and 05:00.": "20:00から05:00の間に出発する。",
+ "Cover {0} or more in one go.": "一度に{0}以上走る。",
+ "Head out three times in one day.": "1日に3回出発する。",
+ "Spend the longest standing still in a convoy.": "コンボイで最も長く停車する。"
 }

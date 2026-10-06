@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "यहाँ एक गेम पूरा करने पर Card Wars के लिए RPM मिलता है। अपना सर्वश्रेष्ठ बनाने पर और ज़्यादा।",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "राइड जलाएँ जगह बचाने के लिए एक हफ़्ते या एक महीने से पुरानी हर बिना स्टार वाली चीज़ मिटा देता है। आपके कुल आँकड़े बने रहते हैं।",
  "Tap an entry for its route, its receipt and a recap card to share.": "किसी एंट्री पर टैप करें: उसका रास्ता, उसकी रसीद और साझा करने के लिए रीकैप कार्ड।",
- "Star the ones you want to keep. Starred entries are never burned.": "जिन्हें रखना चाहते हैं उन पर स्टार लगाएँ। स्टार वाली एंट्री कभी नहीं जलाई जातीं।"
+ "Star the ones you want to keep. Starred entries are never burned.": "जिन्हें रखना चाहते हैं उन पर स्टार लगाएँ। स्टार वाली एंट्री कभी नहीं जलाई जातीं।",
+ "These are your all-time totals. They stay even when old trips are burned.": "ये आपके अब तक के कुल आँकड़े हैं। पुरानी यात्राएँ जलाने पर भी ये बने रहते हैं।",
+ "convoys": "काफ़िले",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "बैज अकेले और काफ़िलों में कमाए जाते हैं। तरीका देखने के लिए किसी पर टैप करें।",
+ "{0}: how to earn it": "{0}: इसे कैसे कमाएँ",
+ "Another rider collects one of the cards you dropped on the map.": "कोई दूसरा राइडर नक्शे पर आपका छोड़ा हुआ कार्ड उठा लेता है।",
+ "Set the highest top speed in a convoy.": "काफ़िले में सबसे ऊँची टॉप स्पीड बनाएँ।",
+ "Cover the most distance in a convoy.": "काफ़िले में सबसे ज़्यादा दूरी तय करें।",
+ "Lean further than anyone else in a convoy.": "काफ़िले में सबसे ज़्यादा झुकें।",
+ "Pull the highest G-force in a convoy.": "काफ़िले में सबसे ज़्यादा G-फ़ोर्स खींचें।",
+ "Score the best corners in a convoy.": "काफ़िले में मोड़ों का सबसे अच्छा स्कोर पाएँ।",
+ "Set off between 20:00 and 05:00.": "20:00 और 05:00 के बीच निकलें।",
+ "Cover {0} or more in one go.": "एक बार में {0} या उससे ज़्यादा तय करें।",
+ "Head out three times in one day.": "एक ही दिन में तीन बार निकलें।",
+ "Spend the longest standing still in a convoy.": "काफ़िले में सबसे देर तक खड़े रहें।"
 }

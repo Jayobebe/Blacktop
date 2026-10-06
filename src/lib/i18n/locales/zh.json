@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "在这里完成一局游戏可获得 Card Wars 的 RPM。刷新个人最佳会得到更多。",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "“焚毁行程”会清除一周或一个月之前所有未加星标的记录，以节省存储空间。你的总计和统计数据会保留。",
  "Tap an entry for its route, its receipt and a recap card to share.": "点按一条记录，查看它的路线、小票和可分享的回顾卡。",
- "Star the ones you want to keep. Starred entries are never burned.": "给想保留的记录加星标。加了星标的记录永远不会被焚毁。"
+ "Star the ones you want to keep. Starred entries are never burned.": "给想保留的记录加星标。加了星标的记录永远不会被焚毁。",
+ "These are your all-time totals. They stay even when old trips are burned.": "这是你的历史总计。即使旧行程被焚毁，它们也会保留。",
+ "convoys": "车队",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "徽章可以独自获得，也可以在车队中获得。点按一枚查看获得方法。",
+ "{0}: how to earn it": "{0}：如何获得",
+ "Another rider collects one of the cards you dropped on the map.": "其他骑手拾取了你放在地图上的一张卡片。",
+ "Set the highest top speed in a convoy.": "在车队中创下最高极速。",
+ "Cover the most distance in a convoy.": "在车队中行驶最远的距离。",
+ "Lean further than anyone else in a convoy.": "在车队中压弯角度比任何人都大。",
+ "Pull the highest G-force in a convoy.": "在车队中拉出最高的 G 值。",
+ "Score the best corners in a convoy.": "在车队中取得最佳弯道评分。",
+ "Set off between 20:00 and 05:00.": "在 20:00 到 05:00 之间出发。",
+ "Cover {0} or more in one go.": "一次行驶 {0} 或更远。",
+ "Head out three times in one day.": "一天内出发三次。",
+ "Spend the longest standing still in a convoy.": "在车队中静止时间最长。"
 }

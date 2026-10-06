@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Et færdigt spil her giver RPM til Card Wars. En personlig rekord giver mere.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Brænd ture sletter alt uden stjerne, der er ældre end en uge eller en måned, for at spare plads. Dine totaler og tal bliver.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Tryk på en post for at se dens rute, dens kvittering og et opsummeringskort til deling.",
- "Star the ones you want to keep. Starred entries are never burned.": "Sæt stjerne på dem, du vil beholde. Poster med stjerne brændes aldrig."
+ "Star the ones you want to keep. Starred entries are never burned.": "Sæt stjerne på dem, du vil beholde. Poster med stjerne brændes aldrig.",
+ "These are your all-time totals. They stay even when old trips are burned.": "Det er dine samlede tal gennem tiden. De bliver, også når gamle ture brændes.",
+ "convoys": "konvojer",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "Mærker optjenes alene og i konvojer. Tryk på et for at se hvordan.",
+ "{0}: how to earn it": "{0}: sådan optjenes det",
+ "Another rider collects one of the cards you dropped on the map.": "En anden kører samler et af de kort, du har lagt på kortet.",
+ "Set the highest top speed in a convoy.": "Sæt den højeste topfart i en konvoj.",
+ "Cover the most distance in a convoy.": "Kør længst i en konvoj.",
+ "Lean further than anyone else in a convoy.": "Læg dig længere ned end alle andre i en konvoj.",
+ "Pull the highest G-force in a convoy.": "Træk den højeste G-kraft i en konvoj.",
+ "Score the best corners in a convoy.": "Få den bedste svingscore i en konvoj.",
+ "Set off between 20:00 and 05:00.": "Tag af sted mellem 20:00 og 05:00.",
+ "Cover {0} or more in one go.": "Tilbagelæg {0} eller mere i ét stræk.",
+ "Head out three times in one day.": "Tag af sted tre gange på én dag.",
+ "Spend the longest standing still in a convoy.": "Stå stille længst i en konvoj."
 }

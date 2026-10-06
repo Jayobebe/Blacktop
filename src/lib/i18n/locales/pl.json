@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Ukończona gra tutaj daje RPM do Card Wars. Rekord życiowy daje więcej.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Spalanie przejazdów usuwa wszystko bez gwiazdki starsze niż tydzień lub miesiąc, by oszczędzać miejsce. Twoje sumy i statystyki zostają.",
  "Tap an entry for its route, its receipt and a recap card to share.": "Dotknij wpisu, aby zobaczyć jego trasę, paragon i kartę podsumowania do udostępnienia.",
- "Star the ones you want to keep. Starred entries are never burned.": "Oznacz gwiazdką te, które chcesz zachować. Wpisy z gwiazdką nigdy nie są palone."
+ "Star the ones you want to keep. Starred entries are never burned.": "Oznacz gwiazdką te, które chcesz zachować. Wpisy z gwiazdką nigdy nie są palone.",
+ "These are your all-time totals. They stay even when old trips are burned.": "To twoje sumy z całego czasu. Zostają, nawet gdy stare przejazdy są palone.",
+ "convoys": "konwoje",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "Odznaki zdobywa się solo i w konwojach. Dotknij jednej, aby zobaczyć jak.",
+ "{0}: how to earn it": "{0}: jak ją zdobyć",
+ "Another rider collects one of the cards you dropped on the map.": "Inny kierowca zbiera jedną z kart, które zostawiłeś na mapie.",
+ "Set the highest top speed in a convoy.": "Osiągnij najwyższą prędkość maksymalną w konwoju.",
+ "Cover the most distance in a convoy.": "Pokonaj największy dystans w konwoju.",
+ "Lean further than anyone else in a convoy.": "Złóż się głębiej niż ktokolwiek w konwoju.",
+ "Pull the highest G-force in a convoy.": "Osiągnij największe przeciążenie w konwoju.",
+ "Score the best corners in a convoy.": "Zdobądź najlepszy wynik w zakrętach w konwoju.",
+ "Set off between 20:00 and 05:00.": "Wyrusz między 20:00 a 05:00.",
+ "Cover {0} or more in one go.": "Pokonaj {0} lub więcej za jednym razem.",
+ "Head out three times in one day.": "Wyrusz trzy razy jednego dnia.",
+ "Spend the longest standing still in a convoy.": "Stój najdłużej w konwoju."
 }

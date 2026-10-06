@@ -4304,5 +4304,19 @@
  "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "여기서 게임을 마치면 Card Wars용 RPM을 받습니다. 개인 최고 기록이면 더 많이 받습니다.",
  "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "'라이딩 소각'는 저장 공간을 아끼기 위해 일주일 또는 한 달이 지난 별표 없는 기록을 지웁니다. 합계와 통계는 남습니다.",
  "Tap an entry for its route, its receipt and a recap card to share.": "항목을 탭하면 경로, 영수증, 공유용 요약 카드를 볼 수 있습니다.",
- "Star the ones you want to keep. Starred entries are never burned.": "남기고 싶은 것에 별표를 하세요. 별표한 항목은 절대 소각되지 않습니다."
+ "Star the ones you want to keep. Starred entries are never burned.": "남기고 싶은 것에 별표를 하세요. 별표한 항목은 절대 소각되지 않습니다.",
+ "These are your all-time totals. They stay even when old trips are burned.": "지금까지의 누적 합계입니다. 오래된 기록을 소각해도 남습니다.",
+ "convoys": "콘보이",
+ "Badges are earned on your own and in convoys. Tap one to see how.": "배지는 혼자서도, 콘보이에서도 얻습니다. 탭하면 얻는 방법이 나옵니다.",
+ "{0}: how to earn it": "{0}: 얻는 방법",
+ "Another rider collects one of the cards you dropped on the map.": "다른 라이더가 내가 지도에 놓은 카드를 주워 갑니다.",
+ "Set the highest top speed in a convoy.": "콘보이에서 가장 높은 최고 속도를 기록하세요.",
+ "Cover the most distance in a convoy.": "콘보이에서 가장 먼 거리를 달리세요.",
+ "Lean further than anyone else in a convoy.": "콘보이에서 누구보다 깊이 기울이세요.",
+ "Pull the highest G-force in a convoy.": "콘보이에서 가장 높은 G-포스를 기록하세요.",
+ "Score the best corners in a convoy.": "콘보이에서 코너 점수 1위를 하세요.",
+ "Set off between 20:00 and 05:00.": "20:00에서 05:00 사이에 출발하세요.",
+ "Cover {0} or more in one go.": "한 번에 {0} 이상 달리세요.",
+ "Head out three times in one day.": "하루에 세 번 출발하세요.",
+ "Spend the longest standing still in a convoy.": "콘보이에서 가장 오래 멈춰 있기."
 }

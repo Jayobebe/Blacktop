@@ -1,18 +1,16 @@
-import { useNavigate } from 'react-router-dom';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
-import { ArrowLeft, Route, Clock, TrendingUp, Hash, Users, Zap, Ruler } from 'lucide-react';
+import { Route, Clock, TrendingUp, Hash, Users, Zap, Ruler } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import { VehicleCardCarousel } from '@/features/cards';
 import { BadgeWalletPanel } from '@/features/ride';
 import { useExperience } from '@/features/experience';
-import { PageHeader, HeaderButton } from '@/components/PageHeader';
-import { tr } from '@/lib/i18n';
+import { PageHeader } from '@/components/PageHeader';
+import { PageTips } from '@/features/guide';
+import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 export default function Stats() {
   const peaksHidden = usePeaksHidden();
-  const navigate = useNavigate();
   const { stats } = useRideHistory();
   const { settings } = useSettings();
   const { terms, showGroup } = useExperience();
@@ -53,7 +51,7 @@ export default function Stats() {
       icon: Users,
       label: tr("Convoy {0}", [terms.Rides]),
       value: stats.convoyRides.toString(),
-      unit: 'convoys',
+      unit: tr("convoys"),
     },
     settings.gForceEnabled && {
       icon: Zap,
@@ -68,28 +66,25 @@ export default function Stats() {
       {/* Header */}
       <PageHeader title={tr("Statistics")} subtitle={tr("Your journey")} backTo="/" />
 
-      {/* Main content */}
+      {/* First-time tips */}
+      <PageTips
+        page="stats"
+        scroll
+        tips={[
+          { target: '[data-tip="stats-totals"]', text: tr("These are your all-time totals. They stay even when old trips are burned.") },
+          { target: '[data-tip="stats-badges"]', text: tr("Badges are earned on your own and in convoys. Tap one to see how.") },
+        ]}
+      />
+
+      {/* The figures first, then the badges. (The rider's own card lives in the vault.) */}
       <div className="flex flex-col landscape:flex-row gap-4 landscape:gap-3 landscape:flex-1 landscape:min-h-0">
-
-
-        {/* Badges Section */}
-        {settings.collectiblesEnabled && (
-          <div className="landscape:flex-1 landscape:overflow-y-auto">
-            <BadgeWalletPanel />
-          </div>
-        )}
-
-        {/* Stats Grid */}
         <div className="landscape:flex-1 landscape:min-h-0 pr-1">
-
-
-
-          <div className="flex flex-col gap-2">
+          <div data-tip="stats-totals" className="flex flex-col gap-2">
             {statCards.map((stat, index) => (
               <div
                 key={stat.label}
                 className="bg-card/50 rounded-2xl p-4 landscape:p-3 border border-border/30 animate-slide-up"
-                style={{ animationDelay: `${(index + 3) * 60}ms` }}
+                style={{ animationDelay: `${index * 60}ms` }}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-secondary/50 rounded-xl flex-shrink-0">
@@ -117,14 +112,14 @@ export default function Stats() {
               ? tr("Stored on your device. Crew leaderboards only see the totals you publish.")
               : tr("All statistics stored locally on your device")}
           </p>
-
-          {/* Vehicle trading cards — minted from garage vehicles, so they need both */}
-          {settings.collectiblesEnabled && settings.garageEnabled && (
-            <div className="mt-6 pb-2 animate-fade-in">
-              <VehicleCardCarousel />
-            </div>
-          )}
         </div>
+
+        {/* Badges */}
+        {settings.collectiblesEnabled && (
+          <div data-tip="stats-badges" className="landscape:flex-1 landscape:overflow-y-auto pb-2">
+            <BadgeWalletPanel />
+          </div>
+        )}
       </div>
     </div>
   );
