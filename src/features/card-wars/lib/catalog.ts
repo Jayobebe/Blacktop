@@ -10,6 +10,9 @@ import { V2 } from './rules';
 const CAR_ART = [
  '911', 'gt3r', 'm3', 'm4gt3', '296gtb', '296gt3', '750s', '720sgt3', 'amggtbs', 'amggt3',
  'gryaris', 'suprag4', 'civic', 'nsxgt3', 'mustangdh', 'rally', 'mx5', 'mx5cup', 'gti', 'gtitcr',
+ // shop-only shelves, as their artwork arrives
+ 'c8r', 'c7r', 'rsr19', 'rsr17', '488gte', 'm8gte', 'm6gtlm', 'fordgt', 'vantagegte', 'lexusrcf',
+ 'rb19', 'w11', 'f2004', 'mp44', 'fw14b', 'w07', 'rb9', 'lotus79', 'mcl38', 'bgp001',
 ];
 const BIKE_ART = [
  'mt07', 'r6', 'ninja', 'zx10rr', 'sv650', 'gsxr', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk',
