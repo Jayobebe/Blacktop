@@ -1390,6 +1390,10 @@
 }
 
 
+/* The rider's second accent colour where one is chosen (--lava, set in useSettings), else the accent: Home's button and nav icons. */
+.text-accent-2 { color: hsl(var(--lava, var(--accent))); }
+html.thermal .text-accent-2 { color: hsl(var(--accent)); }
+
 /* Stickers (features/stickers): a die-cut vehicle with a white edge and a little lift off the surface. */
 .sticker-img {
   image-rendering: pixelated;

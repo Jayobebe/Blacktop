@@ -611,7 +611,7 @@ export default function Home() {
                             )}
                           >
                             <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                              <tile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
+                              <tile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent-2" />
                             </div>
                             <div className="text-left">
                               <span className="text-base font-semibold tracking-tight block text-foreground">{tile.label}</span>
@@ -645,7 +645,7 @@ export default function Home() {
                           )}
                         >
                           <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
-                            <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent" />
+                            <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent-2" />
                           </div>
                           <div className="text-left flex flex-col items-start gap-1">
                             <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
@@ -664,7 +664,7 @@ export default function Home() {
                             className="group/tile pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 data-[room=tight]:pr-3 touch-target-lg cursor-pointer"
                           >
                             <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
-                              <Zap className="w-4 h-4 text-accent" />
+                              <Zap className="w-4 h-4 text-accent-2" />
                             </div>
                             <div className="flex flex-col items-start gap-1">
                               <span className="text-base font-semibold tracking-tight text-foreground">{tr("Track")}</span>
@@ -685,7 +685,7 @@ export default function Home() {
                           className="pressable landscape:hidden flex-none h-16 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
                         >
                           <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                            <Zap className="w-5 h-5 text-accent" />
+                            <Zap className="w-5 h-5 text-accent-2" />
                           </div>
                           <span className="flex-1 text-base font-semibold tracking-tight text-foreground">{tr("Track Day")}</span>
                           {trackRoleToggle(false)}
@@ -743,7 +743,7 @@ export default function Home() {
                       }}
                       className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target hover:bg-accent/10"
                     >
-                      <Icon className="w-5 h-5 text-accent" />
+                      <Icon className="w-5 h-5 text-accent-2" />
                       <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
                     </button>
                   ))}
