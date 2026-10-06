@@ -8,6 +8,7 @@ import { eventSound } from '@/lib/appSound';
 import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
+import { RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
 import { cn } from '@/lib/utils';
 import { cardById } from '../lib/catalog';
 import { refreshShop, setRpm, useShop } from '../lib/shop';
@@ -165,7 +166,8 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
     if (!next) return toast(tr("Five cards at most"));
     void run(() => setSwap(swap.id, next, swap.mine.rpm));
   };
-  const amount = Math.max(0, Math.floor(Number(rpm) || 0));
+  // Typed as it's shown; sent as the server counts it.
+  const amount = Math.max(0, baseRpm(Number(rpm) || 0));
   const collection = shop.owned.filter((id) => cardById(id));
 
   const Side = ({ title, cards, extra, ready }: { title: string; cards: string[]; extra: number; ready: boolean }) => (
@@ -183,7 +185,7 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
           return card ? <CwCard key={cards[i]} card={card} size="thumb" /> : <div key={i} className="cw-slot aspect-[5/7] min-h-0" aria-hidden />;
         })}
       </div>
-      {extra > 0 && <p className="text-xs font-mono text-accent">+ {extra} RPM</p>}
+      {extra > 0 && <p className="text-xs font-mono text-accent">+ {showRpm(extra)} RPM</p>}
     </section>
   );
 
@@ -206,7 +208,7 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
       <Side title={tr("You give")} cards={mine} extra={swap.mine.rpm} ready={swap.mine.ready} />
 
       <div className="flex gap-2">
-        <Input type="number" inputMode="numeric" min={0} aria-label={tr("RPM you add")} value={rpm} onChange={(e) => setRpmInput(e.target.value)} className="h-11 font-mono" />
+        <Input type="number" inputMode="numeric" min={0} step={RPM_SCALE} aria-label={tr("RPM you add")} value={rpm} onChange={(e) => setRpmInput(e.target.value)} className="h-11 font-mono" />
         <Button variant="outline" className="h-11 shrink-0" disabled={busy || amount === swap.mine.rpm || amount > (shop.balance ?? 0)} onClick={() => void run(() => setSwap(swap.id, mine, amount))}>
           {tr("Add RPM")}
         </Button>

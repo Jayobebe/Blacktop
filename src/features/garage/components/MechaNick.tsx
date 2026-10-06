@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import nickAsset from '@/assets/mecha-nick.png.asset.json';
+// A lightly pixelated copy of the Mecha-Nick artwork, so he sits with the pixel-art vehicles (made from the original asset, same canvas).
+const NICK = '/garage/mecha-nick.png';
 import { tr } from '@/lib/i18n';
 
 interface MechaNickProps {
@@ -99,7 +100,8 @@ export function MechaNick({ tip, lines, className }: MechaNickProps) {
         aria-label={tr("Talk to Mecha-Nick")}
       >
         <img
-          src={nickAsset.url}
+          src={NICK}
+          style={{ imageRendering: 'pixelated' }}
           alt={tr("Mecha-Nick the mechanic")}
           draggable={false}
           className={`absolute inset-0 h-full w-full object-contain object-bottom drop-shadow-[0_10px_14px_rgba(0,0,0,0.6)] ${message ? 'animate-nick-bob' : ''}`}

@@ -116,6 +116,7 @@ export function BattleArena({
   selected,
   tags,
   usedTags,
+  rivalTags,
   rounds,
   tag,
   onTag,
@@ -140,6 +141,8 @@ export function BattleArena({
   selected?: number | null;
   tags: DogTag[];
   usedTags: string[];
+  /** Hard battles against the computer: its dog tags, and which it has spent. */
+  rivalTags?: { power: TagPower; used: boolean }[];
   /** Rounds each card in the hand has fought this battle (wear follows them); left out, nothing is shown. */
   rounds?: number[];
   tag: string | null;
@@ -391,7 +394,20 @@ export function BattleArena({
       <section className="cw-side cw-side-theirs">
         <p className="cw-side-label">
           <span>{rivalName}</span>
-          <span>{tr("Tap a card to look")}</span>
+          {rivalTags?.length ? (
+            <span className="cw-rival-tags" role="list" aria-label={tr("Their dog tags")}>
+              {rivalTags.map((t) => {
+                const Icon = TAG_ICON[t.power];
+                return (
+                  <i key={t.power} role="listitem" className={cn(t.used && 'cw-rival-tag-used')} title={tagName(t.power)} aria-label={t.used ? tr("{0}: used", [tagName(t.power)]) : tagName(t.power)}>
+                    <Icon aria-hidden />
+                  </i>
+                );
+              })}
+            </span>
+          ) : (
+            <span>{tr("Tap a card to look")}</span>
+          )}
         </p>
         <div className="cw-strip">
           {opponent.map((c, i) => (

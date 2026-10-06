@@ -9,7 +9,7 @@ import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
 import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
-import { RULES } from '../lib/rules';
+import { RULES, showRpm } from '../lib/rules';
 import type { OnlineBattle } from '../lib/online';
 
 const CODE = /^[a-f0-9-]{36}$/i;
@@ -131,11 +131,11 @@ export function PlayerBattleSheet({
           <ul className="cw-panel text-xs text-muted-foreground space-y-1.5">
             <li className="flex gap-2">
               <Users className="w-4 h-4 text-accent shrink-0" />
-              {tr("You each put in {0} RPM.", [RULES.stake])}
+              {tr("You each put in {0} RPM.", [showRpm(RULES.stake)])}
             </li>
             <li className="flex gap-2">
               <Trophy className="w-4 h-4 text-accent shrink-0" />
-              {tr("The winner takes {0} RPM. A draw hands both stakes back.", [RULES.pot])}
+              {tr("The winner takes {0} RPM. A draw hands both stakes back.", [showRpm(RULES.pot)])}
             </li>
             <li className="flex gap-2">
               <Swords className="w-4 h-4 text-accent shrink-0" />
@@ -174,7 +174,7 @@ export function PlayerBattleSheet({
               </div>
               <Button variant="ghost" className="h-11 gap-2 text-muted-foreground" disabled={busy} onClick={onCancel}>
                 <X className="w-4 h-4" />
-                {tr("Cancel and take my {0} RPM back", [RULES.stake])}
+                {tr("Cancel and take my {0} RPM back", [showRpm(RULES.stake)])}
               </Button>
             </div>
           ) : (
@@ -186,7 +186,7 @@ export function PlayerBattleSheet({
               )}
               <Button className="w-full h-14 text-base font-bold gap-2" disabled={blocked} onClick={onInvite}>
                 {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Swords className="w-5 h-5" />}
-                {tr("Invite a player · {0} RPM", [RULES.stake])}
+                {tr("Invite a player · {0} RPM", [showRpm(RULES.stake)])}
               </Button>
 
               <div className="space-y-2">
@@ -199,7 +199,7 @@ export function PlayerBattleSheet({
                 </div>
                 {scan && <div id="cw-scanner" className="overflow-hidden rounded-2xl" />}
                 <Button variant="outline" className="w-full h-12 gap-2" disabled={blocked || !CODE.test(code.trim())} onClick={onJoin}>
-                  {tr("Accept · {0} RPM", [RULES.stake])}
+                  {tr("Accept · {0} RPM", [showRpm(RULES.stake)])}
                 </Button>
               </div>
               {demo && <DemoLockNote />}

@@ -26,7 +26,7 @@ function serverRules(): 1 | 2 {
 export const V2 = serverRules() === 2;
 
 /** What the server said at launch about a later migration (scripts: on with the second rule set). */
-function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels'): boolean {
+function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels' | 'cardWarsPace'): boolean {
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
   if (env) return env === '2';
   try {
@@ -99,6 +99,39 @@ export const QUICK = { themeShare: 0.5, buildSeconds: 15, chaosEvents: 2, sudden
 export const levelRounds = (level: keyof typeof LEVEL | undefined, rounds: number): number => (rounds > 0 ? Math.max(1, Math.ceil(rounds * (level ? LEVEL[level].wear : 1))) : 0);
 /** RPM a battle at `level` pays for a result (the first win of the day comes on top, on hard). */
 export const levelPay = (level: keyof typeof LEVEL, result: 'win' | 'draw' | 'loss'): number => Math.ceil(RULES.reward[result] * LEVEL[level].pay);
+
+/**
+ * Pace and reasons to come back (migration 20261016000000_card_wars_pace.sql;
+ * the `cardWarsPace` cap): rounds hit harder so battles are shorter, hard wins
+ * in a row pay a streak bonus, and one quick play a day is the same for
+ * everyone and pays once.
+ */
+export const PACE = V2 && serverHas('cardWarsPace');
+/** A win streak on hard: each win after the first adds `step` RPM, up to `most`. A hard loss or draw ends it. */
+export const STREAK = { step: 2, most: 10 } as const;
+/** The daily challenge: RPM for winning it, once a day. */
+export const DAILY_PAY = 30;
+const DAILY_THEMES = ['speed', 'corners', 'g', 'distance'] as const;
+const DAILY_MODES = ['themed', 'chaos', 'sudden', 'bare'] as const;
+/**
+ * Today's challenge, the same for everyone: the day is the UTC date (as the
+ * server counts it), and the theme and the twist follow from its number, all
+ * sixteen pairs in turn.
+ */
+export function dailyChallenge(now: number = Date.now()) {
+  const n = Math.floor(now / 86_400_000);
+  return { day: String(n), theme: DAILY_THEMES[n % 4], mode: DAILY_MODES[(n + Math.floor(n / 4)) % 4] };
+}
+
+/**
+ * RPM is shown ten times what the server counts: a bigger number, the same
+ * economy. Every sum (prices, pay, balances, what the server sends) stays in
+ * the server's units; a figure on screen goes through `showRpm`, and one typed
+ * in comes back through `baseRpm`.
+ */
+export const RPM_SCALE = 10;
+export const showRpm = (n: number): number => n * RPM_SCALE;
+export const baseRpm = (shown: number): number => Math.floor(shown / RPM_SCALE);
 
 export interface Rules {
   /** RPM for a finished battle against the computer. */
@@ -177,5 +210,12 @@ export function repairCost(price: number | undefined, condition: number): number
   return V2 ? Math.max(1, Math.ceil((missing * (price ?? 100)) / (BUILDS ? 400 : 200))) : missing;
 }
 
-/** Damage a lost round does: at least 20, more the wider the gap, 65 at most. */
-export const damageFor = (a: number, b: number) => (a === b ? 0 : Math.min(65, 20 + Math.round(Math.abs(a - b) * 0.7)));
+/**
+ * Damage a lost round does: a floor, more the wider the gap, up to a cap. It
+ * was 20 / 0.7 a point / 65, and a battle ran about 35 rounds: long for a
+ * phone. With `PACE` it's 35 / 0.8 / 80, about 24 rounds, and a wide gap still
+ * takes two hits to knock a fresh card out. `cw_action` does the same sum.
+ */
+const envDamage = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_DAMAGE?.split(',').map(Number);
+export const DAMAGE = envDamage?.length === 3 ? { floor: envDamage[0], gap: envDamage[1], cap: envDamage[2] } : PACE ? { floor: 35, gap: 0.8, cap: 80 } : { floor: 20, gap: 0.7, cap: 65 };
+export const damageFor = (a: number, b: number) => (a === b ? 0 : Math.min(DAMAGE.cap, DAMAGE.floor + Math.round(Math.abs(a - b) * DAMAGE.gap)));

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
+import { FLAME, pixelLayer, pixelSpark, tongues } from '@/lib/pixelFlame';
 
 type Origin = { x: number; y: number } | null;
 
 /**
  * Burn overlay, in the spirit of DuckDuckGo's Fire Button ("Inferno"): a wall
  * of flames rises from the bottom, swallows the whole screen, then burns off
- * the top to reveal a clean app. Drawn on a canvas as layered flat flames (red
- * tips, orange body, yellow core) with sparks, so it's cheap on phones.
+ * the top to reveal a clean app. Drawn on a canvas as pixel art (`lib/pixelFlame`,
+ * the look a burnt-out Card Wars card shares): layered flat flames in whole
+ * blocks (red tips, orange body, yellow core) with square sparks, so it's
+ * cheap on phones.
  *
  * A real burn reloads the app while the screen is covered, so the animation is
  * split in two: `mode="burn"` rises to full cover, fires `onPeak`, and (with
@@ -92,24 +95,12 @@ export function BurnFlameOverlay({
     const sparks: Spark[] = [];
     const phase = Math.random() * 100;
 
-    // Flame tongues: pointed tips that flicker and drift.
-    const tongues = (x: number, t: number, amp: number, seed: number) => {
-      const a = Math.abs(Math.sin(x * 0.021 + t * 6.3 + seed));
-      const b = Math.abs(Math.sin(x * 0.053 - t * 9.1 + seed * 1.7));
-      const c = Math.sin(x * 0.009 + t * 2.2 + seed * 0.3) * 0.5 + 0.5;
-      return amp * (0.35 + 0.65 * Math.pow(a, 3) * (0.55 + 0.45 * b)) * (0.7 + 0.3 * c);
-    };
-
-    // One flame layer: tongues along its top edge, ragged tail along its bottom edge.
-    const layer = (top: number, bottom: number, t: number, amp: number, seed: number, fill: string | CanvasGradient) => {
+    // One flame layer: tongues along its top edge, a ragged tail along its bottom edge, a block at a time.
+    const layer = (top: number, bottom: number, t: number, amp: number, seed: number, fill: string) => {
       if (bottom <= top) return;
-      ctx.beginPath();
-      ctx.moveTo(-10, bottom);
-      for (let x = -10; x <= W + 10; x += 6) ctx.lineTo(x, top - tongues(x, t, amp, seed));
-      for (let x = W + 10; x >= -10; x -= 6) ctx.lineTo(x, bottom + tongues(x, t * 0.8, amp * 0.55, seed + 11));
-      ctx.closePath();
-      ctx.fillStyle = fill;
-      ctx.fill();
+      // About 64 blocks across the screen.
+      const px = Math.max(5, Math.round(W / 64));
+      pixelLayer(ctx, -px, W + px, px, (x) => top - tongues(x, t, amp, seed), (x) => bottom + tongues(x, t * 0.8, amp * 0.55, seed + 11), fill);
     };
 
     const frame = (now: number) => {
@@ -139,25 +130,13 @@ export function BurnFlameOverlay({
       const tail = head + band;
 
       ctx.clearRect(0, 0, W, H);
-      const body = ctx.createLinearGradient(0, head - 60, 0, tail);
-      body.addColorStop(0, '#f97316');
-      body.addColorStop(0.35, '#ea580c');
-      body.addColorStop(1, '#7f1d1d');
-      const core = ctx.createLinearGradient(0, head, 0, tail);
-      core.addColorStop(0, '#fde047');
-      core.addColorStop(0.5, '#fbbf24');
-      core.addColorStop(1, '#f97316');
+      // Heat ahead of the flames: two stepped bands, no soft gradient.
+      layer(head - 210, head, t * 0.6, 50, phase + 40, 'rgba(249, 115, 22, 0.14)');
+      layer(head - 120, head, t * 0.7, 40, phase + 45, 'rgba(249, 115, 22, 0.2)');
 
-      // Heat haze ahead of the flames.
-      const haze = ctx.createLinearGradient(0, head - 220, 0, head);
-      haze.addColorStop(0, 'rgba(249, 115, 22, 0)');
-      haze.addColorStop(1, 'rgba(249, 115, 22, 0.35)');
-      ctx.fillStyle = haze;
-      ctx.fillRect(0, head - 220, W, 220);
-
-      layer(head - 40, tail + 40, t, 120, phase, '#b91c1c'); // red tips / smouldering tail
-      layer(head, tail - 30, t, 95, phase + 3, body); // orange body
-      layer(head + 55, tail - 110, t, 70, phase + 7, core); // yellow core
+      layer(head - 40, tail + 40, t, 120, phase, FLAME.tips); // red tips / smouldering tail
+      layer(head, tail - 30, t, 95, phase + 3, FLAME.body); // orange body
+      layer(head + 55, tail - 110, t, 70, phase + 7, FLAME.core); // yellow core
 
       // Inside the fire: rows of flame tongues rising faster than the wall, so a
       // fully covered screen still reads as burning rather than a flat fill.
@@ -179,7 +158,7 @@ export function BurnFlameOverlay({
           sparks.push({ x: Math.random() * W, y: tail + 20, vx: (Math.random() - 0.5) * 30, vy: -40 - Math.random() * 80, life: 0.8, size: 1 + Math.random() * 1.5 });
         }
       }
-      ctx.globalCompositeOperation = 'lighter';
+      const sparkPx = Math.max(4, Math.round(W / 96));
       for (let i = sparks.length - 1; i >= 0; i--) {
         const s = sparks[i];
         s.x += s.vx / 60;
@@ -189,12 +168,9 @@ export function BurnFlameOverlay({
           sparks.splice(i, 1);
           continue;
         }
-        ctx.fillStyle = `rgba(253, 224, 71, ${s.life.toFixed(2)})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fill();
+        // Square, and flickering out rather than fading.
+        if (s.life > 0.3 || Math.floor(t * 20 + i) % 2) pixelSpark(ctx, s.x, s.y, s.size > 2.2 ? sparkPx * 2 : sparkPx, s.life > 0.5 ? FLAME.spark : FLAME.body);
       }
-      ctx.globalCompositeOperation = 'source-over';
 
       if (reduce) {
         canvas.style.opacity = mode === 'reveal' ? '0' : '1';

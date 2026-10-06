@@ -4,9 +4,11 @@ draw, public/card-wars/<cars|bikes>/<catalog id>.png.
 
   python scripts/make-card-wars-art.py bikes <folder>
   python scripts/make-card-wars-art.py cars  <folder>
+  python scripts/make-card-wars-art.py even  cars|bikes   (existing files: same pixel size for all)
 
 <folder> holds <catalog id>.png files (bikes may also be 1.png .. 20.png in
-BIKE_ORDER). Pixels are never resampled: cards draw them pixelated.
+BIKE_ORDER). Cards draw them pixelated, and every vehicle is about as many
+pixels across (PIXELS): finer artwork is redrawn at that size.
 
 Bikes are only trimmed to their visible bounds.
 
@@ -34,6 +36,7 @@ BIKE_ORDER = [
     'sv650', 'gsxr', 'gs', 's1000', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk', 'rs660f', 'rs660',
     # shop-only cards, as their artwork arrives (by catalog id only: 1.png .. 20.png are the twenty above)
     'm1_15',
+    'm1000tt', 'firebladett', 'zx10tt', 'gsxrtt', 'r1tt', 'norton', 'shinden', 'rc30', 'ow01', 'striplett',
 ]
 
 # Smoked glass: dark, and see-through enough that the backdrop reads behind it.
@@ -187,6 +190,67 @@ def clean_car(card, im):
     return out
 
 
+# Every card's artwork has pixels of about the same size on the card: the
+# vehicle is this many pixels across its longer side (the supplied pixel art
+# runs from 100 to 160). Finer artwork is cut down to it, so nothing looks
+# like a photograph beside the rest.
+PIXELS = {'cars': 132, 'bikes': 120}
+FINE = 1.25  # only artwork finer than this much over the target is touched
+
+
+def block_size(im):
+    """How many file pixels make one pixel of the artwork (1: not upscaled pixel art)."""
+    px = im.load()
+    w, h = im.size
+    runs = {}
+    for y in range(0, h, max(1, h // 40)):
+        run = 1
+        for x in range(1, w):
+            if px[x, y] == px[x - 1, y]:
+                run += 1
+            else:
+                if px[x - 1, y][3] > 200:
+                    runs[run] = runs.get(run, 0) + 1
+                run = 1
+    return max(runs, key=runs.get) if runs else 1
+
+
+def pixelate(im, across):
+    """Redraws `im` with `across` pixels on its longer side: averaged down, hard-edged, scaled back up."""
+    w, h = im.size
+    scale = across / max(w, h)
+    small = (max(1, round(w * scale)), max(1, round(h * scale)))
+    # Average with the alpha weighed in, or the see-through background bleeds dark into the edges.
+    pre = im.copy()
+    r, g, b, a = pre.split()
+    pre = Image.merge('RGBA', tuple(Image.composite(c, Image.new('L', im.size, 0), a) for c in (r, g, b)) + (a,))
+    down = pre.resize(small, Image.BOX)
+    px = down.load()
+    for y in range(small[1]):
+        for x in range(small[0]):
+            pr, pg, pb, pa = px[x, y]
+            # A pixel is there or it isn't: no soft edge.
+            px[x, y] = (min(255, pr * 255 // pa), min(255, pg * 255 // pa), min(255, pb * 255 // pa), 255) if pa >= 128 else (0, 0, 0, 0)
+    up = max(1, round(max(w, h) / max(small)))
+    return down.resize((small[0] * up, small[1] * up), Image.NEAREST)
+
+
+def even(kind):
+    """Brings every finished image in public/card-wars/<kind> to the same pixel size."""
+    out_dir = os.path.join(ROOT, kind)
+    for f in sorted(os.listdir(out_dir)):
+        if not f.endswith('.png'):
+            continue
+        path = os.path.join(out_dir, f)
+        im = Image.open(path).convert('RGBA')
+        across = max(im.size) / block_size(im)
+        if across <= PIXELS[kind] * FINE:
+            continue
+        im = trim(pixelate(im, PIXELS[kind]))
+        im.save(path, optimize=True)
+        print(f'{f[:-4]}: {round(across)} -> {PIXELS[kind]} pixels across, {im.size[0]}x{im.size[1]}')
+
+
 def main(kind, src):
     out_dir = os.path.join(ROOT, kind)
     os.makedirs(out_dir, exist_ok=True)
@@ -203,12 +267,17 @@ def main(kind, src):
         if kind == 'cars':
             im = clean_car(card, im)
         im = trim(im)
+        if max(im.size) / block_size(im) > PIXELS[kind] * FINE:
+            im = trim(pixelate(im, PIXELS[kind]))
         out = os.path.join(out_dir, f'{card}.png')
         im.save(out, optimize=True)
         print(f'{card}: {im.size[0]}x{im.size[1]}, {os.path.getsize(out) // 1024} KB')
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3 or sys.argv[1] not in ('cars', 'bikes'):
+    if len(sys.argv) == 3 and sys.argv[1] == 'even' and sys.argv[2] in ('cars', 'bikes'):
+        even(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] in ('cars', 'bikes'):
+        main(sys.argv[1], sys.argv[2])
+    else:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])

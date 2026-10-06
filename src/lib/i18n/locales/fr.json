@@ -4191,5 +4191,17 @@
  "This battle's theme": "Thème de ce combat",
  "{0} of 5": "{0} sur 5",
  "{0} seconds left": "{0} secondes restantes",
- "{0} · theme: {1}": "{0} · thème : {1}"
+ "{0} · theme: {1}": "{0} · thème : {1}",
+ "1 win in a row: the next pays {0} RPM more.": "1 victoire d'affilée : la prochaine rapporte {0} RPM de plus.",
+ "Daily challenge": "Défi du jour",
+ "From your dog tags": "De tes plaques",
+ "Plus {0} from your dog tags": "Plus {0} grâce à tes plaques",
+ "Their dog tags": "Leurs plaques",
+ "Today's theme": "Thème du jour",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "Aujourd'hui, pour tout le monde : {0}, thème {1}. Gagne-le pour un bonus, une fois par jour.",
+ "Won today. A new one comes tomorrow.": "Gagné aujourd'hui. Un nouveau arrive demain.",
+ "{0} wins in a row": "{0} victoires d'affilée",
+ "{0} wins in a row: the next pays {1} RPM more.": "{0} victoires d'affilée : la prochaine rapporte {1} RPM de plus.",
+ "{0}: used": "{0} : utilisée",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "La carte perdante subit des dégâts : au moins {0}, plus si l'écart est grand. Une carte à 0 HP brûle. Brûle les cinq cartes adverses pour gagner."
 }

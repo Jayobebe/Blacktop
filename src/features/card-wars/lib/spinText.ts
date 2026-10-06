@@ -1,6 +1,6 @@
 import { tr } from '@/lib/i18n';
 import { cardById } from './catalog';
-import { V2 } from './rules';
+import { V2, showRpm } from './rules';
 import type { SpinResult } from './shop';
 import { parseOwnedTag } from './tagRules';
 import { tagName } from './tags';
@@ -12,8 +12,8 @@ export function spinLabel(r: SpinResult): string {
     const tag = r.tag ? parseOwnedTag(r.tag) : null;
     return tag ? tr("{0} dog tag", [tagName(tag.power)]) : tr("Dog tag");
   }
-  if (r.kind === 'duplicate') return tr("Duplicate · +{0} RPM", [r.rpm]);
-  if (r.kind === 'rpm') return tr("+{0} RPM", [r.rpm]);
+  if (r.kind === 'duplicate') return tr("Duplicate · +{0} RPM", [showRpm(r.rpm)]);
+  if (r.kind === 'rpm') return tr("+{0} RPM", [showRpm(r.rpm)]);
   return r.spins === 1 ? tr("+1 spin") : tr("+{0} spins", [r.spins]);
 }
 

@@ -4,8 +4,9 @@ import { useServerCap } from '@/lib/serverCaps';
 import { useDemoMode } from '@/lib/demoMode';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { ARCADE_PAY, BUILDS } from '../lib/rules';
+import { ARCADE_PAY, BUILDS, showRpm } from '../lib/rules';
 import { refreshShop, useShop } from '../lib/shop';
+import { deckTagBonus } from '../lib/tags';
 import { useVault } from '../lib/store';
 import { conditionOf, withWear } from '../lib/wear';
 import { CwCard } from './CwCard';
@@ -53,13 +54,16 @@ export function CardWarsArcadePanel({ onOpen }: { onOpen: () => void }) {
         <>
           <span className="cw-arcade-stats">
             <span>
-              <b className="font-mono">{view?.rating ?? '--'}</b>
+              <b className="font-mono">
+                {view?.rating ?? '--'}
+                {!!view?.tags.length && <span className="ml-0.5 align-top text-[11px] text-accent">+{deckTagBonus(view.tags)}</span>}
+              </b>
               {tr("Deck rating")}
             </span>
             <span>
               <b className="font-mono inline-flex items-center gap-1">
                 <Coins className="w-3.5 h-3.5 text-accent" aria-hidden />
-                {shop.balance ?? '--'}
+                {shop.balance === null ? '--' : showRpm(shop.balance)}
               </b>
               {tr("RPM")}
             </span>
@@ -99,7 +103,7 @@ export function CardWarsArcadePanel({ onOpen }: { onOpen: () => void }) {
             {BUILDS && (
               <span className="cw-arcade-note">
                 <Coins aria-hidden />
-                {tr("The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.", [ARCADE_PAY.game, ARCADE_PAY.best, ARCADE_PAY.daily])}
+                {tr("The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.", [showRpm(ARCADE_PAY.game), showRpm(ARCADE_PAY.best), showRpm(ARCADE_PAY.daily)])}
               </span>
             )}
           </span>

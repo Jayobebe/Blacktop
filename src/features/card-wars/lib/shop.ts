@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 import { STARTERS, type ShopCategory } from './catalog';
-import { BUILDS, LEVELS, RULES, V2 } from './rules';
+import { BUILDS, LEVELS, PACE, RULES, V2 } from './rules';
 import type { Level } from '../types';
 import { getVault, updateVault } from './store';
 import { flushPendingWear } from './wear';
@@ -26,6 +26,9 @@ export interface ShopState {
   rewardsLeft: number | null;
   /** The first-win bonus is still to be had today. */
   firstWin: boolean;
+  /** Hard wins in a row (the server's count), and whether today's challenge has been won. */
+  streak: number;
+  dailyDone: boolean;
 }
 
 export interface SpinResult {
@@ -38,7 +41,7 @@ export interface SpinResult {
   spins: number;
 }
 
-const EMPTY: ShopState = { balance: null, owned: [], freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false };
+const EMPTY: ShopState = { balance: null, owned: [], freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false };
 
 /** Demo mode: a small collection to play with. Nothing here reaches the server. */
 const DEMO_SHOP: ShopState = {
@@ -50,6 +53,8 @@ const DEMO_SHOP: ShopState = {
   tags: ['boost:panigale', 'heal:gs', 'reroll:gt3r', 'boost:rsr19'],
   rewardsLeft: RULES.dailyBattles === null ? null : RULES.dailyBattles - 6,
   firstWin: false,
+  streak: 0,
+  dailyDone: false,
 };
 
 let state: ShopState = EMPTY;
@@ -71,6 +76,8 @@ const apply = (d: Raw) =>
     tags: d.tags ?? [],
     rewardsLeft: typeof d.rewardsLeft === 'number' ? d.rewardsLeft : null,
     firstWin: !!d.firstWin,
+    streak: state.streak,
+    dailyDone: state.dailyDone,
   });
 const rpc = (name: string, args?: object) => supabase.rpc(name as never, args as never);
 
@@ -78,6 +85,10 @@ export async function refreshShop() {
   if (isDemoModeActive()) return;
   const { data, error } = await rpc('cw_shop');
   if (!error && data) apply(data as Raw);
+  if (!PACE) return;
+  const extra = await rpc('cw_daily_state');
+  const d = extra.data as { streak?: number; dailyDone?: boolean } | null;
+  if (!extra.error && d) set({ ...state, streak: d.streak ?? 0, dailyDone: !!d.dailyDone });
 }
 
 export function setRpm(balance: number) {
@@ -116,6 +127,11 @@ export interface BattlePay {
   /** RPM paid, the first-win bonus included. */
   rpm: number;
   bonus: number;
+  /** Hard wins in a row after this one, and what the streak added (in `rpm` too). */
+  streak?: number;
+  streakBonus?: number;
+  /** The daily challenge, when this battle won it. */
+  daily?: number;
 }
 
 /** RPM for a finished battle against the computer. The server paces it and counts the day's battles. */
@@ -124,9 +140,19 @@ export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Lev
   // The level sets the pay (easy none, medium half, hard all of it) where the server knows levels.
   const { data, error } = LEVELS && level ? await rpc('cw_reward_battle', { _result: result, _level: level }) : await rpc('cw_reward_offline', { _result: result });
   if (error || !data) return { rpm: 0, bonus: 0 };
-  const d = data as { rpm: number; bonus?: number; balance: number; left?: number };
-  set({ ...state, balance: d.balance, rewardsLeft: typeof d.left === 'number' ? d.left : state.rewardsLeft, firstWin: state.firstWin && !(d.bonus && d.bonus > 0) });
-  return { rpm: d.rpm, bonus: d.bonus ?? 0 };
+  const d = data as { rpm: number; bonus?: number; balance: number; left?: number; streak?: number; streakBonus?: number };
+  set({ ...state, balance: d.balance, rewardsLeft: typeof d.left === 'number' ? d.left : state.rewardsLeft, firstWin: state.firstWin && !(d.bonus && d.bonus > 0), streak: typeof d.streak === 'number' ? d.streak : state.streak });
+  return { rpm: d.rpm, bonus: d.bonus ?? 0, streak: d.streak, streakBonus: d.streakBonus ?? 0 };
+}
+
+/** The daily challenge, won: pays once a day (0 when today's is already paid, or the server didn't answer). */
+export async function claimDaily(): Promise<number> {
+  if (!PACE || isDemoModeActive()) return 0;
+  const { data, error } = await rpc('cw_daily_claim');
+  if (error || !data) return 0;
+  const d = data as { rpm: number; balance: number };
+  set({ ...state, balance: d.balance, dailyDone: true });
+  return d.rpm;
 }
 
 /**

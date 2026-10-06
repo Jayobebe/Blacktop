@@ -11,6 +11,7 @@ import { eventSound } from '@/lib/appSound';
 import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
+import { RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
 import { cn } from '@/lib/utils';
 import { cardById } from '../lib/catalog';
 import { useShop } from '../lib/shop';
@@ -138,7 +139,7 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
         if (v !== 'demo') toast.error(why(v));
       } else {
         setSale(v);
-        setOffer(v.myOffer ? String(v.myOffer) : String(cardById(v.card)?.price ?? 50));
+        setOffer(String(showRpm(v.myOffer || (cardById(v.card)?.price ?? 50))));
       }
     });
     return () => {
@@ -160,7 +161,8 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
   };
 
   const sellable = shop.owned.filter((id) => cardById(id) && !mine.selling.some((s) => s.card === id));
-  const amount = Math.floor(Number(offer));
+  // Typed as it's shown; offered as the server counts it.
+  const amount = baseRpm(Number(offer));
   const balance = shop.balance ?? 0;
 
   return (
@@ -206,15 +208,15 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
                     <p className="text-sm text-muted-foreground text-center">{tr("That sale isn't open any more.")}</p>
                   ) : (
                     <>
-                      <p className="text-xs text-muted-foreground text-center">{tr("Shop price {0} RPM. Offer what you think it's worth.", [cardById(sale.card)?.price ?? 0])}</p>
+                      <p className="text-xs text-muted-foreground text-center">{tr("Shop price {0} RPM. Offer what you think it's worth.", [showRpm(cardById(sale.card)?.price ?? 0)])}</p>
                       <div className="flex gap-2">
-                        <Input type="number" inputMode="numeric" min={1} aria-label={tr("Your offer in RPM")} value={offer} onChange={(e) => setOffer(e.target.value)} className="h-12 font-mono" />
+                        <Input type="number" inputMode="numeric" min={RPM_SCALE} step={RPM_SCALE} aria-label={tr("Your offer in RPM")} value={offer} onChange={(e) => setOffer(e.target.value)} className="h-12 font-mono" />
                         <Button
                           className="h-12 shrink-0"
                           disabled={busy || locked || !(amount >= 1) || amount > balance + (sale.myOffer ?? 0)}
                           onClick={() => void run(() => makeOffer(sale.code, amount), tr("Offer sent"))}
                         >
-                          {sale.myOffer ? tr("Change offer") : tr("Offer {0} RPM", [amount || 0])}
+                          {sale.myOffer ? tr("Change offer") : tr("Offer {0} RPM", [showRpm(amount || 0)])}
                         </Button>
                       </div>
                     </>
@@ -230,7 +232,7 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold truncate">{cardById(o.card)?.name ?? o.card}</p>
                         <p className="text-xs text-muted-foreground font-mono">
-                          {o.rpm} RPM · {statusText(o.status)}
+                          {showRpm(o.rpm)} RPM · {statusText(o.status)}
                         </p>
                       </div>
                       {o.status === 'pending' && (
@@ -286,7 +288,7 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
                     s.offers.map((o) => (
                       <div key={o.id} className="flex items-center gap-2">
                         <p className="flex-1 min-w-0 text-sm truncate">
-                          <b className="font-mono">{o.rpm} RPM</b> <span className="text-muted-foreground">· {o.from}</span>
+                          <b className="font-mono">{showRpm(o.rpm)} RPM</b> <span className="text-muted-foreground">· {o.from}</span>
                         </p>
                         <Button variant="outline" size="sm" className="h-11 w-11 p-0" aria-label={tr("Decline")} disabled={busy} onClick={() => void run(() => answerOffer(o.id, false))}>
                           <X className="w-4 h-4" />

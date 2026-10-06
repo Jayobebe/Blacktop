@@ -4191,5 +4191,17 @@
  "This battle's theme": "Thema van dit gevecht",
  "{0} of 5": "{0} van 5",
  "{0} seconds left": "Nog {0} seconden",
- "{0} · theme: {1}": "{0} · thema: {1}"
+ "{0} · theme: {1}": "{0} · thema: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "1 overwinning op rij: de volgende levert {0} RPM meer op.",
+ "Daily challenge": "Dagelijkse uitdaging",
+ "From your dog tags": "Van je dog tags",
+ "Plus {0} from your dog tags": "Plus {0} van je dog tags",
+ "Their dog tags": "Hun dog tags",
+ "Today's theme": "Thema van vandaag",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "Vandaag, voor iedereen: {0}, thema {1}. Win hem voor een bonus, één keer per dag.",
+ "Won today. A new one comes tomorrow.": "Vandaag gewonnen. Morgen komt er een nieuwe.",
+ "{0} wins in a row": "{0} overwinningen op rij",
+ "{0} wins in a row: the next pays {1} RPM more.": "{0} overwinningen op rij: de volgende levert {1} RPM meer op.",
+ "{0}: used": "{0}: gebruikt",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "De verliezende kaart krijgt schade: minstens {0}, meer naarmate het verschil groter is. Een kaart met 0 HP brandt op. Brand alle vijf van de tegenstander op om te winnen."
 }

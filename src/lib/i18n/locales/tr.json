@@ -4191,5 +4191,17 @@
  "This battle's theme": "Bu savaşın teması",
  "{0} of 5": "5 üzerinden {0}",
  "{0} seconds left": "{0} saniye kaldı",
- "{0} · theme: {1}": "{0} · tema: {1}"
+ "{0} · theme: {1}": "{0} · tema: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "Üst üste 1 galibiyet: sıradaki {0} RPM fazla öder.",
+ "Daily challenge": "Günün görevi",
+ "From your dog tags": "Künyelerinden",
+ "Plus {0} from your dog tags": "Künyelerinden artı {0}",
+ "Their dog tags": "Onların künyeleri",
+ "Today's theme": "Bugünün teması",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "Bugün, herkes için: {0}, tema {1}. Günde bir kez, bonus için kazan.",
+ "Won today. A new one comes tomorrow.": "Bugün kazanıldı. Yenisi yarın gelir.",
+ "{0} wins in a row": "Üst üste {0} galibiyet",
+ "{0} wins in a row: the next pays {1} RPM more.": "Üst üste {0} galibiyet: sıradaki {1} RPM fazla öder.",
+ "{0}: used": "{0}: kullanıldı",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "Kaybeden kart hasar alır: en az {0}, fark büyüdükçe daha fazla. 0 HP'ye düşen kart yanar. Kazanmak için rakibin beş kartını da yak."
 }

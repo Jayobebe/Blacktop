@@ -4191,5 +4191,17 @@
  "This battle's theme": "इस मुकाबले की थीम",
  "{0} of 5": "5 में से {0}",
  "{0} seconds left": "{0} सेकंड बचे",
- "{0} · theme: {1}": "{0} · थीम: {1}"
+ "{0} · theme: {1}": "{0} · थीम: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "लगातार 1 जीत: अगली पर {0} RPM ज़्यादा मिलेंगे।",
+ "Daily challenge": "आज की चुनौती",
+ "From your dog tags": "आपके डॉग टैग से",
+ "Plus {0} from your dog tags": "आपके डॉग टैग से {0} और",
+ "Their dog tags": "उनके डॉग टैग",
+ "Today's theme": "आज की थीम",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "आज, सबके लिए: {0}, थीम {1}। इसे जीतें और बोनस पाएँ, दिन में एक बार।",
+ "Won today. A new one comes tomorrow.": "आज जीत ली। कल नई आएगी।",
+ "{0} wins in a row": "लगातार {0} जीत",
+ "{0} wins in a row: the next pays {1} RPM more.": "लगातार {0} जीत: अगली पर {1} RPM ज़्यादा मिलेंगे।",
+ "{0}: used": "{0}: इस्तेमाल हो चुका",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "हारने वाला कार्ड नुकसान उठाता है: कम से कम {0}, अंतर जितना बड़ा उतना ज़्यादा। 0 HP वाला कार्ड जल जाता है। जीतने के लिए उनके पाँचों जला दें।"
 }

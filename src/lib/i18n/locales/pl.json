@@ -4191,5 +4191,17 @@
  "This battle's theme": "Temat tej bitwy",
  "{0} of 5": "{0} z 5",
  "{0} seconds left": "Zostało sekund: {0}",
- "{0} · theme: {1}": "{0} · temat: {1}"
+ "{0} · theme: {1}": "{0} · temat: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "1 wygrana z rzędu: następna da {0} RPM więcej.",
+ "Daily challenge": "Wyzwanie dnia",
+ "From your dog tags": "Z twoich nieśmiertelników",
+ "Plus {0} from your dog tags": "Plus {0} z twoich nieśmiertelników",
+ "Their dog tags": "Ich nieśmiertelniki",
+ "Today's theme": "Temat dnia",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "Dziś, dla wszystkich: {0}, temat {1}. Wygraj je po bonus, raz dziennie.",
+ "Won today. A new one comes tomorrow.": "Wygrane dzisiaj. Jutro będzie nowe.",
+ "{0} wins in a row": "Wygrane z rzędu: {0}",
+ "{0} wins in a row: the next pays {1} RPM more.": "Wygrane z rzędu: {0}. Następna da {1} RPM więcej.",
+ "{0}: used": "{0}: użyty",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "Przegrywająca karta dostaje obrażenia: co najmniej {0}, tym więcej, im większa różnica. Karta z 0 HP spala się. Spal całą piątkę rywala, by wygrać."
 }

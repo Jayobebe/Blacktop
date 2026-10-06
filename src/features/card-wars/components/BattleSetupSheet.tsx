@@ -1,9 +1,10 @@
-import { Dices, Flame, Shield, Skull, Sparkles, Swords, Timer, Zap, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, Check, Dices, Flame, Shield, Skull, Sparkles, Swords, Timer, Zap, type LucideIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { LEVEL, QUICK, RULES, levelPay } from '../lib/rules';
-import { LEVELS_ORDER, QUICK_MODES, type Level, type QuickMode } from '../types';
+import { DAILY_PAY, LEVEL, QUICK, RULES, STREAK, levelPay, showRpm } from '../lib/rules';
+import { categoryLabel } from '../lib/ratings';
+import { LEVELS_ORDER, QUICK_MODES, type Category, type Level, type QuickMode } from '../types';
 
 const LEVEL_ICON: Record<Level, LucideIcon> = { easy: Shield, medium: Swords, hard: Flame };
 
@@ -16,9 +17,9 @@ function levelBlurb(level: Level): string {
     case 'easy':
       return tr("Practice. A weaker deck, played at random. No RPM, no prize card, and your cards wear a third as much.");
     case 'medium':
-      return tr("A fair deck, played at random. Pays {0} RPM for a win, no prize card, and your cards wear two thirds as much.", [levelPay('medium', 'win')]);
+      return tr("A fair deck, played at random. Pays {0} RPM for a win, no prize card, and your cards wear two thirds as much.", [showRpm(levelPay('medium', 'win'))]);
     default:
-      return tr("An even deck that picks its cards and carries dog tags of its own. Pays {0} RPM for a win, and you pick a prize card.", [RULES.reward.win]);
+      return tr("An even deck that picks its cards and carries dog tags of its own. Pays {0} RPM for a win, and you pick a prize card.", [showRpm(RULES.reward.win)]);
   }
 }
 
@@ -53,9 +54,30 @@ export function modeBlurb(mode: QuickMode): string {
 /**
  * Before a battle against the computer: how hard, or a quick play mode. The
  * level sets what the battle pays and how much it wears the deck; quick play
- * is always hard, with a deck built on the spot.
+ * is always hard, with a deck built on the spot. `streak` (hard wins in a row)
+ * and `daily` (today's challenge) only come where the server has them.
  */
-export function BattleSetupSheet({ open, onClose, onLevel, onQuick, canQuick }: { open: boolean; onClose: () => void; onLevel: (level: Level) => void; onQuick: (mode: QuickMode) => void; canQuick: boolean }) {
+export function BattleSetupSheet({
+  open,
+  onClose,
+  onLevel,
+  onQuick,
+  canQuick,
+  streak,
+  daily,
+  onDaily,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onLevel: (level: Level) => void;
+  onQuick: (mode: QuickMode) => void;
+  canQuick: boolean;
+  streak?: number;
+  daily?: { theme: Category; mode: QuickMode; done: boolean };
+  onDaily?: () => void;
+}) {
+  // What the next hard win adds: nothing for the first, then a step a win up to the most.
+  const nextBonus = streak ? Math.min(STREAK.most, STREAK.step * streak) : 0;
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="bottom" className="rounded-t-3xl max-h-[92dvh] overflow-y-auto safe-bottom">
@@ -74,12 +96,32 @@ export function BattleSetupSheet({ open, onClose, onLevel, onQuick, canQuick }: 
                   <span className="flex-1 min-w-0">
                     <b>{levelName(level)}</b>
                     <span>{levelBlurb(level)}</span>
+                    {level === 'hard' && nextBonus > 0 && (
+                      <span className="cw-setup-streak">
+                        {streak === 1 ? tr("1 win in a row: the next pays {0} RPM more.", [showRpm(nextBonus)]) : tr("{0} wins in a row: the next pays {1} RPM more.", [streak ?? 0, showRpm(nextBonus)])}
+                      </span>
+                    )}
                   </span>
-                  <span className="cw-setup-pay font-mono">{LEVEL[level].pay === 0 ? tr("0 RPM") : tr("{0} RPM", [levelPay(level, 'win')])}</span>
+                  <span className="cw-setup-pay font-mono">{LEVEL[level].pay === 0 ? tr("0 RPM") : tr("{0} RPM", [showRpm(levelPay(level, 'win'))])}</span>
                 </button>
               );
             })}
           </div>
+
+          {daily && (
+            <button type="button" className="cw-setup-row cw-setup-row-hot" disabled={!canQuick || daily.done} onClick={onDaily}>
+              {daily.done ? <Check aria-hidden /> : <CalendarCheck aria-hidden />}
+              <span className="flex-1 min-w-0">
+                <b>{tr("Daily challenge")}</b>
+                <span>
+                  {daily.done
+                    ? tr("Won today. A new one comes tomorrow.")
+                    : tr("Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.", [modeName(daily.mode), categoryLabel(daily.theme)])}
+                </span>
+              </span>
+              <span className="cw-setup-pay font-mono">{daily.done ? tr("Done") : tr("+{0} RPM", [showRpm(DAILY_PAY)])}</span>
+            </button>
+          )}
 
           <div>
             <p className="text-sm font-semibold flex items-center gap-1.5">

@@ -37,7 +37,7 @@ const JUDGEMENT: Record<string, [number, number]> = {
   m8gte: [80, 85], m6gtlm: [76, 84], fordgt: [80, 90], vantagegte: [82, 88], lexusrcf: [76, 84],
   // Isle of Man TT (six laps of the Mountain Course; the electric Shinden does one)
   m1000tt: [64, 86], firebladett: [62, 85], zx10tt: [62, 84], gsxrtt: [63, 83], r1tt: [60, 85],
-  norton: [60, 82], shinden: [24, 76], rc30: [58, 78], ow01: [58, 78], striplett: [58, 86],
+  norton: [60, 82], shinden: [24, 76], rc30: [58, 78], ow01: [58, 78], striplett: [30, 92],
   // F1
   rb19: [40, 99], w11: [40, 99], f2004: [38, 96], mp44: [34, 88], fw14b: [36, 94],
   w07: [40, 95], rb9: [38, 95], lotus79: [32, 86], mcl38: [40, 98], bgp001: [38, 93],

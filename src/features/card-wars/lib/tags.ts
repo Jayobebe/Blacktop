@@ -108,6 +108,22 @@ export function spectreTag(s: SpectreCard & { power?: TagPower }): DogTag {
   return { id: `spectre:${s.key}`, name: s.setterName, spectre: s, power: s.power ?? 'boost', vehicle: 'any' };
 }
 
+/**
+ * What a dog tag adds to a deck, in points beside the deck rating (the cards'
+ * own average says nothing about the tags). Roughly what one use is worth:
+ * an Overdrive by how far it lifts a rating, a Pit medic by the health it
+ * gives back, a Second chance and a Coin flip by how much better than a plain
+ * one they are. A plain tag is worth 3 or 4.
+ */
+export function tagPoints(tag: DogTag): number {
+  const s = tagStrength(tag);
+  if (tag.power === 'boost') return Math.round((s - 100) / 10);
+  if (tag.power === 'heal') return Math.round(s / 5);
+  if (tag.power === 'flip') return 3 + Math.round((s - 50) / 5);
+  return 3 + Math.round((s - 100) / 3);
+}
+export const deckTagBonus = (tags: DogTag[]): number => tags.reduce((sum, t) => sum + tagPoints(t), 0);
+
 /** The strongest tag of each power the player has, for filling a deck's empty slots. */
 export function bestTag(tags: DogTag[], power: TagPower): DogTag | undefined {
   return tags.filter((t) => t.power === power).sort((a, b) => tagStrength(b) - tagStrength(a))[0];

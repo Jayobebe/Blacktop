@@ -20,8 +20,8 @@ import { categoryLabel, deckRating, overall } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
-import { BUILDS, FLIP, LEVEL, LEVELS, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
-import { claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
+import { BUILDS, FLIP, LEVEL, LEVELS, PACE, RULES, V2, WEAR_BY_ROUND, dailyChallenge, showRpm } from '../lib/rules';
+import { claimDaily, claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, getVault, updateVault, useVault } from '../lib/store';
 import { powerIndex, slotRef, tagRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
@@ -73,6 +73,8 @@ export function CardWarsScreen() {
   const [view, setView] = useState<View>(vault.run ? 'computer' : 'home');
   const [setup, setSetup] = useState(false);
   const [quickMode, setQuickMode] = useState<QuickMode | null>(null);
+  // The daily challenge being set up: its day, so the battle carries it.
+  const [quickDaily, setQuickDaily] = useState<{ day: string; theme: Category } | null>(null);
   const [sheet, setSheet] = useState(!!invited);
   const [help, setHelp] = useState(() => !howToSeen() && !vault.run && !invited);
   const [online, setOnline] = useState<OnlineBattle | null>(null);
@@ -163,6 +165,7 @@ export function CardWarsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [summary, demo]);
   const armed = deckTags.find((t) => t.id === tag);
+  const today = dailyChallenge(clock);
 
   // ── A finished battle against the computer: RPM, then wear ──
   useEffect(() => {
@@ -170,11 +173,13 @@ export function CardWarsScreen() {
     if (!r || !r.result || vault.rpmApplied === r.id || demo) return;
     updateVault({ rpmApplied: r.id });
     void reportContracts(r.id, computerFacts(r, r.player.every((c) => (c.condition ?? 100) >= 100))).then((earned) => {
-      if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [earned]));
+      if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [showRpm(earned)]));
     });
-    void rewardOffline(r.result, r.level).then((paid) => {
-      setPay((all) => ({ ...all, [r.id]: paid }));
-      if (paid.rpm > 0) eventSound('coin');
+    void rewardOffline(r.result, r.level).then(async (paid) => {
+      // Today's challenge, won: its bonus comes on top, once.
+      const daily = r.daily && r.result === 'win' && r.daily === dailyChallenge().day ? await claimDaily() : 0;
+      setPay((all) => ({ ...all, [r.id]: { ...paid, daily } }));
+      if (paid.rpm + daily > 0) eventSound('coin');
     });
   }, [vault.run, vault.rpmApplied, demo]);
 
@@ -265,7 +270,7 @@ export function CardWarsScreen() {
       setSheet(false);
       setView('players');
     } else if (online?.status === 'cancelled') {
-      toast(tr("Invitation closed. Your {0} RPM is back.", [online.stake ?? RULES.stake]));
+      toast(tr("Invitation closed. Your {0} RPM is back.", [showRpm(online.stake ?? RULES.stake)]));
       setOnline({ balance: online.balance });
       setDisplayOnline(null);
     }
@@ -281,7 +286,7 @@ export function CardWarsScreen() {
     const mine = ids.flatMap((id) => deck.find((c) => c.archetype === id)?.id ?? []);
     if (mine.length) updateVault({ beamIn: mine });
     void reportContracts(online.code, onlineFacts(online, deck.every((c) => (c.condition ?? 100) >= 100))).then((earned) => {
-      if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [earned]));
+      if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [showRpm(earned)]));
     });
     // Once per finished battle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -464,7 +469,8 @@ export function CardWarsScreen() {
     if (riding || locked || cards.length !== 5) return;
     setTag(null);
     setReveal(null);
-    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme }) });
+    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme, ...(quickDaily ? { daily: quickDaily.day } : {}) }) });
+    setQuickDaily(null);
     setView('computer');
   }
 
@@ -510,6 +516,7 @@ export function CardWarsScreen() {
           disabled={riding}
           tags={deckTags}
           usedTags={run.usedTags}
+          rivalTags={run.rivalUsed && run.mode !== 'bare' ? (['boost', 'heal', 'reroll'] as const).map((power) => ({ power, used: run.rivalUsed!.includes(power) })) : undefined}
           rounds={WEAR_BY_ROUND ? run.player.map((c) => roundsFought(run)[c.id] ?? 0) : undefined}
           tag={tag}
           onTag={setTag}
@@ -535,9 +542,12 @@ export function CardWarsScreen() {
     const won = run.result === 'win';
     const lines: { label: string; rpm: number }[] = [];
     if (paid && paid.rpm > 0) {
-      lines.push({ label: won ? tr("Battle won") : run.result === 'draw' ? tr("Battle drawn") : tr("Battle fought"), rpm: paid.rpm - paid.bonus });
+      const streakBonus = paid.streakBonus ?? 0;
+      lines.push({ label: won ? tr("Battle won") : run.result === 'draw' ? tr("Battle drawn") : tr("Battle fought"), rpm: paid.rpm - paid.bonus - streakBonus });
       if (paid.bonus > 0) lines.push({ label: tr("First win of the day"), rpm: paid.bonus });
+      if (streakBonus > 0) lines.push({ label: tr("{0} wins in a row", [paid.streak ?? 0]), rpm: streakBonus });
     }
+    if (paid?.daily) lines.push({ label: tr("Daily challenge"), rpm: paid.daily });
     const mine = prize?.run === run.id ? prize : null;
     if (mine && mine.rpm > 0) lines.push({ label: tr("Prize already owned"), rpm: mine.rpm });
     const chosen = run.chosenReward ? (run.prizes ?? run.opponent).find((c) => c.id === run.chosenReward) : undefined;
@@ -577,7 +587,7 @@ export function CardWarsScreen() {
               : []
           }
           prize={chosen}
-          prizeNote={mine?.had ? (mine.rpm > 0 ? tr("You already own this card, so it paid {0} RPM instead.", [mine.rpm]) : tr("You already own this one, so nothing new this time.")) : undefined}
+          prizeNote={mine?.had ? (mine.rpm > 0 ? tr("You already own this card, so it paid {0} RPM instead.", [showRpm(mine.rpm)]) : tr("You already own this one, so nothing new this time.")) : undefined}
           canLeave={!won || !prizeDue || run.rewardClaimed}
           onAgain={riding || deck.length !== 5 || deckTags.length !== TAG_SLOTS ? undefined : again}
           onDone={() => {
@@ -668,8 +678,10 @@ export function CardWarsScreen() {
           key={quickMode}
           mode={quickMode}
           pool={wornPool}
+          fixedTheme={quickDaily?.theme}
           onStart={(cards, theme) => startQuick(cards, theme, quickMode)}
           onCancel={() => {
+            setQuickDaily(null);
             setView('home');
             setSetup(true);
           }}
@@ -693,7 +705,7 @@ export function CardWarsScreen() {
       : new Set(deck.map((c) => c.archetype)).size !== 5
         ? tr("Two of your cards battle with the same ratings. Swap one to battle a player.")
         : shop.balance !== null && shop.balance < RULES.stake
-          ? tr("You need {0} RPM to battle a player.", [RULES.stake])
+          ? tr("You need {0} RPM to battle a player.", [showRpm(RULES.stake)])
           : null;
 
   return (
@@ -746,7 +758,16 @@ export function CardWarsScreen() {
         canQuick={wornPool.length >= 5 && deckTags.length === TAG_SLOTS}
         onQuick={(mode) => {
           setSetup(false);
+          setQuickDaily(null);
           setQuickMode(mode);
+          setView('quick');
+        }}
+        streak={PACE && !demo ? shop.streak : undefined}
+        daily={PACE && !demo ? { theme: today.theme, mode: today.mode, done: shop.dailyDone } : undefined}
+        onDaily={() => {
+          setSetup(false);
+          setQuickDaily({ day: today.day, theme: today.theme });
+          setQuickMode(today.mode);
           setView('quick');
         }}
       />

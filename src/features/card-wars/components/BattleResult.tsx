@@ -3,6 +3,7 @@ import { Coins, Flag, Handshake, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { showRpm } from '../lib/rules';
 import type { BattleCard as Card } from '../types';
 import { CwCard } from './CwCard';
 
@@ -65,7 +66,7 @@ export function BattleResult({
               <span className="text-muted-foreground">{p.label}</span>
               <b className={cn('font-mono', p.rpm < 0 && 'text-destructive')}>
                 {p.rpm > 0 ? '+' : ''}
-                {p.rpm} RPM
+                {showRpm(p.rpm)} RPM
               </b>
             </p>
           ))}
@@ -77,7 +78,7 @@ export function BattleResult({
               </span>
               <b className={cn('font-mono text-base', total < 0 ? 'text-destructive' : 'text-accent')}>
                 {total > 0 ? '+' : ''}
-                {total} RPM
+                {showRpm(total)} RPM
               </b>
             </p>
           )}

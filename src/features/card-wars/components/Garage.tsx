@@ -9,11 +9,11 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { SPECS, cardById } from '../lib/catalog';
 import { deckRating, isBike, overall } from '../lib/ratings';
-import { BUILDS, LEVELS, RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost } from '../lib/rules';
+import { BUILDS, LEVELS, RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost, showRpm } from '../lib/rules';
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
-import { TAG_ORDER, tagDescription, tagName, tagSourceLine, tagStrength } from '../lib/tags';
+import { TAG_ORDER, deckTagBonus, tagDescription, tagName, tagSourceLine, tagStrength } from '../lib/tags';
 import { REST_RECOVERY, WEAR_PER_BATTLE } from '../lib/wear';
 import { updateVault, useVault } from '../lib/store';
 import { eventSound } from '@/lib/appSound';
@@ -227,7 +227,14 @@ export function Garage({
           </div>
           {rating !== null && (
             <div className="text-right shrink-0">
-              <p className="font-mono text-3xl font-bold leading-none">{rating}</p>
+              <p className="font-mono text-3xl font-bold leading-none">
+                {rating}
+                {tags.length > 0 && (
+                  <span className="ml-1 align-top text-sm text-accent" title={tr("From your dog tags")} aria-label={tr("Plus {0} from your dog tags", [deckTagBonus(tags)])}>
+                    +{deckTagBonus(tags)}
+                  </span>
+                )}
+              </p>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{tr("Deck rating")}</p>
             </div>
           )}
@@ -252,13 +259,13 @@ export function Garage({
           <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground text-center">
             <span>
               {LEVELS
-                ? tr("Hard pays {0} RPM for a win · draw {1} · lose {2}", [RULES.reward.win, RULES.reward.draw, RULES.reward.loss])
-                : tr("Win {0} RPM · draw {1} · lose {2}", [RULES.reward.win, RULES.reward.draw, RULES.reward.loss])}
+                ? tr("Hard pays {0} RPM for a win · draw {1} · lose {2}", [showRpm(RULES.reward.win), showRpm(RULES.reward.draw), showRpm(RULES.reward.loss)])
+                : tr("Win {0} RPM · draw {1} · lose {2}", [showRpm(RULES.reward.win), showRpm(RULES.reward.draw), showRpm(RULES.reward.loss)])}
             </span>
             {shop.firstWin && RULES.firstWin > 0 && (
               <span className="inline-flex items-center gap-1 text-accent font-semibold">
                 <Sparkles className="w-3 h-3" />
-                {tr("First win today: +{0} RPM", [RULES.firstWin])}
+                {tr("First win today: +{0} RPM", [showRpm(RULES.firstWin)])}
               </span>
             )}
             {shop.rewardsLeft !== null && RULES.dailyBattles !== null && (
@@ -360,7 +367,7 @@ export function Garage({
             <div key={k.id} className={cn('space-y-1', k.paid && 'opacity-60')}>
               <p className="flex items-center justify-between gap-2 text-xs">
                 <span>{contractText(k.id, k.target)}</span>
-                <span className="font-mono text-accent shrink-0">{k.paid ? tr("Paid") : `+${k.rpm} RPM`}</span>
+                <span className="font-mono text-accent shrink-0">{k.paid ? tr("Paid") : `+${showRpm(k.rpm)} RPM`}</span>
               </p>
               <div className="flex items-center gap-2">
                 <Progress value={(k.progress / k.target) * 100} className="h-1.5" />
@@ -406,14 +413,14 @@ export function Garage({
                           if (r !== 'demo') toast.error(tr("Could not claim the set"));
                         } else {
                           eventSound('success');
-                          toast.success(tr("{0} set complete: +{1} RPM", [x.maker, r.rpm]), { description: tr("And a {0} Overdrive dog tag.", [x.maker]) });
+                          toast.success(tr("{0} set complete: +{1} RPM", [x.maker, showRpm(r.rpm)]), { description: tr("And a {0} Overdrive dog tag.", [x.maker]) });
                         }
                       }}
                     >
-                      {tr("Claim {0} RPM + dog tag", [x.rpm])}
+                      {tr("Claim {0} RPM + dog tag", [showRpm(x.rpm)])}
                     </Button>
                   ) : (
-                    <p className="text-[10.5px] text-muted-foreground">{tr("{0} RPM + dog tag", [x.rpm])}</p>
+                    <p className="text-[10.5px] text-muted-foreground">{tr("{0} RPM + dog tag", [showRpm(x.rpm)])}</p>
                   )}
                 </div>
               );
@@ -509,7 +516,7 @@ export function Garage({
                 {repairPrice > 0 && (
                   <Button variant="outline" className="w-full h-11 gap-2" disabled={frozen || repairing || (shop.balance ?? 0) < repairPrice} onClick={() => void repair(current.id)}>
                     <Wrench className="w-4 h-4" />
-                    {(shop.balance ?? 0) < repairPrice ? tr("Repair needs {0} RPM", [repairPrice]) : tr("Repair to 100% for {0} RPM", [repairPrice])}
+                    {(shop.balance ?? 0) < repairPrice ? tr("Repair needs {0} RPM", [showRpm(repairPrice)]) : tr("Repair to 100% for {0} RPM", [showRpm(repairPrice)])}
                   </Button>
                 )}
               </div>

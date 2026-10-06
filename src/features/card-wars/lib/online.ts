@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { tr } from '@/lib/i18n';
-import { RULES, V2 } from './rules';
+import { RULES, V2, showRpm } from './rules';
 
 /** One settled round of a player battle, as the server logs it. Sides are 1 and 2. */
 export interface OnlineRound {
@@ -59,7 +59,7 @@ export interface OnlineBattle {
 
 /** The server's refusals, in the app's words. Anything else reads "Battle unavailable". */
 function refusal(message: string): string {
-  if (/not enough|insufficient/i.test(message)) return tr("You need {0} RPM and no other battle running.", [RULES.stake]);
+  if (/not enough|insufficient/i.test(message)) return tr("You need {0} RPM and no other battle running.", [showRpm(RULES.stake)]);
   if (/finish your current/i.test(message)) return tr("Finish your current battle first.");
   if (/wait before/i.test(message)) return tr("Wait a few seconds before inviting again.");
   if (/not found/i.test(message)) return tr("That battle code doesn't exist.");

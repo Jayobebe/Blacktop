@@ -4191,5 +4191,17 @@
  "This battle's theme": "Denne kamps tema",
  "{0} of 5": "{0} af 5",
  "{0} seconds left": "{0} sekunder tilbage",
- "{0} · theme: {1}": "{0} · tema: {1}"
+ "{0} · theme: {1}": "{0} · tema: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "1 sejr i træk: den næste giver {0} RPM mere.",
+ "Daily challenge": "Dagens udfordring",
+ "From your dog tags": "Fra dine kendingsmærker",
+ "Plus {0} from your dog tags": "Plus {0} fra dine kendingsmærker",
+ "Their dog tags": "Deres kendingsmærker",
+ "Today's theme": "Dagens tema",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "I dag, for alle: {0}, tema {1}. Vind den for en bonus, én gang om dagen.",
+ "Won today. A new one comes tomorrow.": "Vundet i dag. En ny kommer i morgen.",
+ "{0} wins in a row": "{0} sejre i træk",
+ "{0} wins in a row: the next pays {1} RPM more.": "{0} sejre i træk: den næste giver {1} RPM mere.",
+ "{0}: used": "{0}: brugt",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "Det tabende kort tager skade: mindst {0}, mere jo større forskellen er. Et kort på 0 HP brænder ud. Brænd alle fem af deres for at vinde."
 }

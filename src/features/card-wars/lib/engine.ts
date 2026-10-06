@@ -1,6 +1,6 @@
 import { CATEGORIES, type BattleCard, type BattleState, type Category, type CoinFlip, type DogTag, type Level, type QuickMode, type TagPower } from '../types';
 import { BRAND_CARDS, CATALOG, cardById } from './catalog';
-import { LEVEL, PRIZE_DECK, PRIZE_REACH, QUICK, V2, damageFor } from './rules';
+import { DAMAGE, LEVEL, PRIZE_DECK, PRIZE_REACH, QUICK, V2, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
@@ -60,7 +60,7 @@ export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[],
       if (difference !== 0) {
         const loser = difference > 0 ? 1 : 0;
         const index = loser === 0 ? aIndex : bIndex;
-        hp[loser][index] = Math.max(0, hp[loser][index] - Math.min(65, 20 + Math.round(Math.abs(difference) * 0.7)));
+        hp[loser][index] = Math.max(0, hp[loser][index] - damageFor(difference, 0));
       }
     }
     // A stalled or level neutral game counts as half a win, for matchmaking only.
@@ -154,6 +154,7 @@ export interface RunOptions {
   level?: Level;
   mode?: QuickMode;
   theme?: Category;
+  daily?: string;
 }
 
 export function createRun(player: BattleCard[], random: () => number = Math.random, options: RunOptions = {}): BattleState {
@@ -163,7 +164,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
   const categories = shuffle([...CATEGORIES], random);
   const penaltyRound = random() < 0.125 ? 1 + Math.floor(random() * 4) : -1;
   const prizes = V2 ? prizesFor(opponent, player, random) : opponent;
-  const { level, mode, theme } = options;
+  const { level, mode, theme, daily } = options;
   return {
     id: crypto.randomUUID(),
     player,
@@ -181,6 +182,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
     ...(level ? { level } : {}),
     ...(mode ? { mode } : {}),
     ...(theme ? { theme } : {}),
+    ...(daily ? { daily } : {}),
     ...(level && LEVEL[level].tags ? { rivalUsed: [] } : {}),
   };
 }
@@ -350,7 +352,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     hit(0, index, damage);
     hit(1, rival.i, damage);
   } else {
-    if (event === 'tailwind' && damage > 0) damage = Math.min(80, damage + EVENT_NUMBERS.tailwind);
+    if (event === 'tailwind' && damage > 0) damage = Math.min(DAMAGE.cap + 15, damage + EVENT_NUMBERS.tailwind);
     if (event === 'oil' && category === 'corners' && damage > 0) damage = Math.min(100, damage * 2);
     if (winner !== null) hit(1 - winner, winner === 0 ? rival.i : index, damage);
   }

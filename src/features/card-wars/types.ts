@@ -99,6 +99,8 @@ export interface BattleState {
   /** Quick play: the twist, and the category that comes up most. */
   mode?: QuickMode;
   theme?: Category;
+  /** The daily challenge: the day it was (`dailyChallenge().day`). */
+  daily?: string;
   /** Hard: the dog tags the computer has spent. */
   rivalUsed?: TagPower[];
 }

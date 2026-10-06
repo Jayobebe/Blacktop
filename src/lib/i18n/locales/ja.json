@@ -4191,5 +4191,17 @@
  "This battle's theme": "このバトルのテーマ",
  "{0} of 5": "{0}/5",
  "{0} seconds left": "残り{0}秒",
- "{0} · theme: {1}": "{0} · テーマ：{1}"
+ "{0} · theme: {1}": "{0} · テーマ：{1}",
+ "1 win in a row: the next pays {0} RPM more.": "1連勝中：次の勝利は{0} RPM多くもらえます。",
+ "Daily challenge": "デイリーチャレンジ",
+ "From your dog tags": "ドッグタグの分",
+ "Plus {0} from your dog tags": "ドッグタグでプラス{0}",
+ "Their dog tags": "相手のドッグタグ",
+ "Today's theme": "今日のテーマ",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "今日は全員共通：{0}、テーマは{1}。勝てばボーナス、1日1回。",
+ "Won today. A new one comes tomorrow.": "今日は勝利済み。明日また新しい挑戦が来ます。",
+ "{0} wins in a row": "{0}連勝",
+ "{0} wins in a row: the next pays {1} RPM more.": "{0}連勝中：次の勝利は{1} RPM多くもらえます。",
+ "{0}: used": "{0}：使用済み",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "負けたカードはダメージを受けます：最低{0}、差が大きいほど増えます。HPが0のカードは燃え尽きます。相手の5枚をすべて燃やせば勝ちです。"
 }

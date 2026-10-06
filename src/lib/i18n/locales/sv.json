@@ -4191,5 +4191,17 @@
  "This battle's theme": "Den här stridens tema",
  "{0} of 5": "{0} av 5",
  "{0} seconds left": "{0} sekunder kvar",
- "{0} · theme: {1}": "{0} · tema: {1}"
+ "{0} · theme: {1}": "{0} · tema: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "1 seger i rad: nästa ger {0} RPM mer.",
+ "Daily challenge": "Dagens utmaning",
+ "From your dog tags": "Från dina ID-brickor",
+ "Plus {0} from your dog tags": "Plus {0} från dina ID-brickor",
+ "Their dog tags": "Deras ID-brickor",
+ "Today's theme": "Dagens tema",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "I dag, för alla: {0}, tema {1}. Vinn den för en bonus, en gång om dagen.",
+ "Won today. A new one comes tomorrow.": "Vunnen i dag. En ny kommer i morgon.",
+ "{0} wins in a row": "{0} segrar i rad",
+ "{0} wins in a row: the next pays {1} RPM more.": "{0} segrar i rad: nästa ger {1} RPM mer.",
+ "{0}: used": "{0}: använd",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "Det förlorande kortet tar skada: minst {0}, mer ju större gapet är. Ett kort på 0 HP brinner upp. Bränn alla fem av deras för att vinna."
 }

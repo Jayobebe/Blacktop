@@ -9,7 +9,7 @@ import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { BANK_INFO, CATALOG, SHELVES, SPECS, SPIN_COST, categoryOf, type ShopCategory } from '../lib/catalog';
-import { RULES, V2 } from '../lib/rules';
+import { RULES, V2, showRpm } from '../lib/rules';
 import { buyCard, refreshShop, spin, useShop } from '../lib/shop';
 import { REEL_LABELS } from '../lib/spinText';
 import { CwCard } from './CwCard';
@@ -87,7 +87,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
             >
               <b>{shelfLabel(id)}</b>
               <small className="font-mono">
-                {tr("Spin {0}", [SPIN_COST[id]])}
+                {tr("Spin {0}", [showRpm(SPIN_COST[id])])}
                 {extra > 0 && <i> +{extra}</i>}
               </small>
             </button>
@@ -111,7 +111,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
             </div>
           </div>
           <SpinPanel
-            button={bonus > 0 ? tr("Use a free spin ({0} left)", [bonus]) : balance < cost ? tr("A spin needs {0} RPM", [cost]) : tr("Spin for {0} RPM", [cost])}
+            button={bonus > 0 ? tr("Use a free spin ({0} left)", [bonus]) : balance < cost ? tr("A spin needs {0} RPM", [showRpm(cost)]) : tr("Spin for {0} RPM", [showRpm(cost)])}
             disabled={disabled || (bonus === 0 && balance < cost)}
             labels={REEL_LABELS}
             onSpin={() => spin(shelf)}
@@ -130,7 +130,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
             <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               {tr("{0} cards", [shelfLabel(shelf)])} <span className="font-mono">{ownedHere}/{cards.length}</span>
             </h2>
-            <span className="text-[11px] text-muted-foreground font-mono">{from === to ? tr("{0} RPM each", [from]) : tr("{0} to {1} RPM", [from, to])}</span>
+            <span className="text-[11px] text-muted-foreground font-mono">{from === to ? tr("{0} RPM each", [showRpm(from)]) : tr("{0} to {1} RPM", [showRpm(from), showRpm(to)])}</span>
           </div>
           <div className="cw-grid-2">
             {cards.map((c) => {
@@ -144,7 +144,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
                     {s.year} · {s.hp} hp · {s.kg} kg · {formatSpeed(s.vmaxKmh / 1.609344, settings.speedUnit)} {getSpeedLabel(settings.speedUnit)}
                   </p>
                   <Button size="sm" variant={confirm === c.id ? 'default' : 'outline'} className="w-full h-11" disabled={owned || disabled || busy || balance < price} onClick={() => void buy(c.id, c.name)}>
-                    {owned ? tr("Owned") : confirm === c.id ? tr("Tap again to buy") : balance < price ? tr("Needs {0} RPM", [price]) : tr("Buy for {0} RPM", [price])}
+                    {owned ? tr("Owned") : confirm === c.id ? tr("Tap again to buy") : balance < price ? tr("Needs {0} RPM", [showRpm(price)]) : tr("Buy for {0} RPM", [showRpm(price)])}
                   </Button>
                 </div>
               );

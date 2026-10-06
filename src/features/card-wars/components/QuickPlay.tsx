@@ -22,8 +22,9 @@ const THEMES: Category[] = ['speed', 'corners', 'g', 'distance'];
  * that category first, and the clock runs while they pick five. When it runs
  * out, the best cards left fill the deck. The deck is for this battle only.
  */
-export function QuickPlay({ mode, pool, onStart, onCancel }: { mode: QuickMode; pool: BattleCard[]; onStart: (deck: BattleCard[], theme: Category) => void; onCancel: () => void }) {
-  const theme = useMemo(() => THEMES[Math.floor(Math.random() * THEMES.length)], []);
+export function QuickPlay({ mode, pool, fixedTheme, onStart, onCancel }: { mode: QuickMode; pool: BattleCard[]; /** The daily challenge's theme: the wheel lands on it. */ fixedTheme?: Category; onStart: (deck: BattleCard[], theme: Category) => void; onCancel: () => void }) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const theme = useMemo(() => fixedTheme ?? THEMES[Math.floor(Math.random() * THEMES.length)], []);
   const labels = useMemo(() => THEMES.map((c) => categoryLabel(c)), []);
   const [building, setBuilding] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
@@ -62,11 +63,11 @@ export function QuickPlay({ mode, pool, onStart, onCancel }: { mode: QuickMode; 
 
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom max-w-3xl mx-auto w-full gap-4">
-      <PageHeader title={tr("Quick play")} subtitle={`${modeName(mode)} · ${modeBlurb(mode)}`} onBack={onCancel} />
+      <PageHeader title={fixedTheme ? tr("Daily challenge") : tr("Quick play")} subtitle={`${modeName(mode)} · ${modeBlurb(mode)}`} onBack={onCancel} />
 
       {!building ? (
         <section className="cw-panel cw-panel-hero items-center text-center my-auto">
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{tr("This battle's theme")}</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{fixedTheme ? tr("Today's theme") : tr("This battle's theme")}</p>
           <SpinReel result={categoryLabel(theme)} labels={labels} onDone={() => setBuilding(true)} />
           <p className="text-xs text-muted-foreground max-w-xs">{tr("The theme comes up in most rounds. Build for it.")}</p>
         </section>

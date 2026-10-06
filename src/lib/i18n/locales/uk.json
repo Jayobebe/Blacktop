@@ -4191,5 +4191,17 @@
  "This battle's theme": "Тема цього бою",
  "{0} of 5": "{0} з 5",
  "{0} seconds left": "Лишилося секунд: {0}",
- "{0} · theme: {1}": "{0} · тема: {1}"
+ "{0} · theme: {1}": "{0} · тема: {1}",
+ "1 win in a row: the next pays {0} RPM more.": "1 перемога поспіль: наступна дасть на {0} RPM більше.",
+ "Daily challenge": "Щоденне випробування",
+ "From your dog tags": "Від твоїх жетонів",
+ "Plus {0} from your dog tags": "Плюс {0} від твоїх жетонів",
+ "Their dog tags": "Їхні жетони",
+ "Today's theme": "Тема дня",
+ "Today, for everyone: {0}, theme {1}. Win it for a bonus, once a day.": "Сьогодні, для всіх: {0}, тема {1}. Виграй його заради бонусу, раз на день.",
+ "Won today. A new one comes tomorrow.": "Сьогодні виграно. Завтра буде нове.",
+ "{0} wins in a row": "Перемог поспіль: {0}",
+ "{0} wins in a row: the next pays {1} RPM more.": "Перемог поспіль: {0}. Наступна дасть на {1} RPM більше.",
+ "{0}: used": "{0}: використано",
+ "The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.": "Картка, що програла, зазнає шкоди: щонайменше {0}, більше, що більший розрив. Картка з 0 HP згоряє. Спаліть усі п'ять карток суперника, щоб перемогти."
 }

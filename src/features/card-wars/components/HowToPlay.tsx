@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { tr } from '@/lib/i18n';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
-import { BUILDS, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
+import { BUILDS, DAMAGE, RULES, V2, WEAR_BY_ROUND, showRpm } from '../lib/rules';
 import { TAG_ICON, TAG_ORDER, tagDescription, tagName } from '../lib/tags';
 
 const SEEN_KEY = 'bt.card_wars_howto';
@@ -61,7 +61,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
     {
       icon: Flame,
       title: tr("Higher rating wins the round"),
-      text: tr("The losing card takes damage: at least 20, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win."),
+      text: tr("The losing card takes damage: at least {0}, more the wider the gap. A card at 0 HP burns out. Burn out all five of theirs to win.", [DAMAGE.floor]),
     },
     {
       icon: Zap,
@@ -94,9 +94,9 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
       title: tr("Win cards and RPM"),
       text: (
         <>
-          {tr("Beat the computer and you keep one of five cards, picked face down. Every battle pays RPM: {0} for a win, {1} for a draw, {2} for a loss.", [RULES.reward.win, RULES.reward.draw, RULES.reward.loss])}
+          {tr("Beat the computer and you keep one of five cards, picked face down. Every battle pays RPM: {0} for a win, {1} for a draw, {2} for a loss.", [showRpm(RULES.reward.win), showRpm(RULES.reward.draw), showRpm(RULES.reward.loss)])}
           {RULES.dailyBattles !== null && (
-            <span className="block mt-1">{tr("The first win of the day pays {0} more, and the first {1} battles of the day pay.", [RULES.firstWin, RULES.dailyBattles])}</span>
+            <span className="block mt-1">{tr("The first win of the day pays {0} more, and the first {1} battles of the day pay.", [showRpm(RULES.firstWin), RULES.dailyBattles])}</span>
           )}
         </>
       ),
@@ -122,7 +122,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
           {
             icon: Users,
             title: tr("Battle a player"),
-            text: tr("Invite a rider with a QR code or a link. You each put in {0} RPM and the winner takes {1}. Nobody loses a card.", [RULES.stake, RULES.pot]),
+            text: tr("Invite a rider with a QR code or a link. You each put in {0} RPM and the winner takes {1}. Nobody loses a card.", [showRpm(RULES.stake), showRpm(RULES.pot)]),
           },
         ]
       : []),
