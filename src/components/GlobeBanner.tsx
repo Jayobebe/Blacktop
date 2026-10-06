@@ -45,7 +45,7 @@ const contrast = (a: string, b: string) => {
 /** Title white or subheading grey, whichever reads better on the band. */
 export const bannerInk = (band: string) => (contrast(GREY, band) > contrast(WHITE, band) ? GREY : WHITE);
 
-export function GlobeBanner({ layer, word, color }: { layer: 'back' | 'front'; word: string; /** The band's colour, as `h s% l%`. */ color: string }) {
+export function GlobeBanner({ layer, word, color, dim }: { layer: 'back' | 'front'; word: string; /** The band's colour, as `h s% l%`. */ color: string; /** The lettering fades out while the word is being changed. */ dim?: boolean }) {
   const id = useId().replace(/:/g, '');
   const still = isThermal() || (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   const label = word.toLocaleUpperCase();
@@ -68,7 +68,7 @@ export function GlobeBanner({ layer, word, color }: { layer: 'back' | 'front'; w
           <g clipPath={`url(#${id}h)`}>
             <path d={ORBIT} fill="none" stroke={`hsl(${color})`} strokeWidth={BAND} opacity={layer === 'back' ? 0.55 : 1} />
             {layer === 'front' && (
-              <text fill={`hsl(${bannerInk(color)})`} fontSize={6} fontWeight={800} dominantBaseline="central" textLength={unit * count} lengthAdjust="spacing" style={{ letterSpacing: '0.12em' }}>
+              <text style={{ opacity: dim ? 0 : 1, transition: 'opacity 180ms linear' }} fill={`hsl(${bannerInk(color)})`} fontSize={6} fontWeight={800} dominantBaseline="central" textLength={unit * count} lengthAdjust="spacing" letterSpacing="0.12em">
                 <textPath href={`#${id}o`} startOffset={still ? -unit * 0.3 : 0}>
                   {/* Against the globe's spin: the lettering runs right to left across the front. */}
                   {!still && <animate attributeName="startOffset" from={0} to={-unit} dur={`${(unit / 9).toFixed(1)}s`} repeatCount="indefinite" />}

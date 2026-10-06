@@ -6,12 +6,20 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { STICKER_SIZE, bringToFront, removeSticker, setArranging, tidy, updateSticker, useArranging, useStickers, type Sticker } from '../lib/store';
 
+/** A button stickers show on: the layer put inside it, and where its inner edge sits in the column. */
+interface Surface {
+  host: HTMLElement;
+  x: number;
+  y: number;
+}
+
 interface Area {
   w: number;
   h: number;
-  /** What a sticker may show on: the buttons, less the globe. */
-  mask: string;
+  surfaces: Surface[];
 }
+
+const HOST = 'data-sticker-host';
 
 type Pt = { x: number; y: number };
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -21,9 +29,11 @@ const HANDLE = 22; // the corner handle's radius
 /**
  * The stickers on Home's ride buttons. It fills the button column (`columnRef`,
  * which is `relative`): buttons in it carry `data-sticker-surface` and the
- * globe `data-sticker-hole`, and the stickers are masked to the first less the
- * second, so one hanging off a button is cut at its edge, two can overlap, and
- * none reaches the globe. Taps go straight through to the buttons.
+ * globe `data-sticker-hole`. Each button gets a layer of its own, under its text
+ * and icons and inside its border, holding every sticker at its place in the
+ * column: so one hanging off a button is cut at its edge, one across two shows
+ * on both, two can overlap, and the notch the buttons leave for the globe keeps
+ * them off it. Taps go straight through to the buttons.
  *
  * Arranging (asked for from the vault): the buttons stop taking taps, each
  * sticker's hidden part shows faintly, and a sticker is moved by dragging it,
@@ -62,23 +72,33 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
       if (!c.width || !c.height) return;
       const w = Math.round(c.width);
       const h = Math.round(c.height);
-      const rects = Array.from(column.querySelectorAll<HTMLElement>('[data-sticker-surface]'))
+      const surfaces = Array.from(column.querySelectorAll<HTMLElement>('[data-sticker-surface]'))
         .filter((el) => el.getClientRects().length > 0)
-        .map((el) => {
+        .map((el): Surface => {
           const r = el.getBoundingClientRect();
           const cs = getComputedStyle(el);
-          const rad = parseFloat(cs.borderTopLeftRadius) || 0;
-          // Inside the button's border, so its accent outline stays on top of a sticker.
           const b = parseFloat(cs.borderTopWidth) || 0;
-          return `<rect x='${(r.left - c.left + b).toFixed(1)}' y='${(r.top - c.top + b).toFixed(1)}' width='${Math.max(0, r.width - b * 2).toFixed(1)}' height='${Math.max(0, r.height - b * 2).toFixed(1)}' rx='${Math.max(0, rad - b)}' fill='white'/>`;
+          // The stickers' layer lives inside the button, under its own text and icons and inside
+          // its border: the button's rounded corners (and the notch cut for the globe) trim it.
+          let host = el.querySelector<HTMLElement>(`:scope > [${HOST}]`);
+          if (!host) {
+            host = document.createElement('div');
+            host.setAttribute(HOST, '');
+            host.setAttribute('aria-hidden', 'true');
+            host.style.cssText = 'position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1;border-radius:inherit';
+            el.prepend(host);
+          }
+          // Below the button's contents but above its background needs the button to be its own layer.
+          if (cs.position === 'static') el.style.position = 'relative';
+          el.style.isolation = 'isolate';
+          host.style.borderRadius = `${Math.max(0, (parseFloat(cs.borderTopLeftRadius) || 0) - b)}px`;
+          return { host, x: r.left - c.left + b, y: r.top - c.top + b };
         });
-      const globe = column.querySelector<HTMLElement>('[data-sticker-hole]');
-      const g = globe?.getBoundingClientRect();
-      // The same notch the buttons are cut with: the globe's rim and 14px round it.
-      const hole = g && g.width ? `<circle cx='${(g.left + g.width / 2 - c.left).toFixed(1)}' cy='${(g.top + g.height / 2 - c.top).toFixed(1)}' r='${(g.width / 2 + 15).toFixed(1)}' fill='black'/>` : '';
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><defs><mask id='m'>${rects.join('')}${hole}</mask></defs><rect width='${w}' height='${h}' fill='white' mask='url(#m)'/></svg>`;
-      const mask = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-      setArea((a) => (a && a.w === w && a.h === h && a.mask === mask ? a : { w, h, mask }));
+      setArea((a) =>
+        a && a.w === w && a.h === h && a.surfaces.length === surfaces.length && a.surfaces.every((o, i) => o.host === surfaces[i].host && Math.abs(o.x - surfaces[i].x) < 0.5 && Math.abs(o.y - surfaces[i].y) < 0.5)
+          ? a
+          : { w, h, surfaces },
+      );
     };
     // Home places its globe in its own layout pass: measure a frame later, so that has happened.
     const later = () => {
@@ -97,6 +117,8 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
       window.removeEventListener('resize', later);
       column.removeEventListener('animationend', later);
       window.clearTimeout(settle);
+      column.querySelectorAll(`[${HOST}]`).forEach((host) => host.remove());
+      setArea(null);
     };
   }, [columnRef, active]);
 
@@ -112,8 +134,12 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
     const b = box(s);
     return { left: b.cx, top: b.cy, width: b.width, height: b.height, transform: `translate(-50%, -50%) rotate(${s.rot}deg)${mirrored && s.flip ? ' scaleX(-1)' : ''}` };
   };
-  const images = (extra?: string) =>
-    stickers.map((s) => <img key={s.id} src={s.src} alt="" draggable={false} className={cn('sticker-img absolute max-w-none select-none', extra)} style={place(s)} />);
+  /** Every sticker, placed in a layer whose corner is `dx`, `dy` into the column. */
+  const images = (extra?: string, dx = 0, dy = 0) =>
+    stickers.map((s) => {
+      const at = place(s);
+      return <img key={s.id} src={s.src} alt="" draggable={false} className={cn('sticker-img absolute max-w-none select-none', extra)} style={{ ...at, left: (at.left as number) - dx, top: (at.top as number) - dy }} />;
+    });
 
   const current = stickers.find((s) => s.id === selected) ?? null;
 
@@ -243,9 +269,7 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
           {images('sticker-img-ghost')}
         </div>
       )}
-      <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" style={{ WebkitMaskImage: area.mask, maskImage: area.mask, WebkitMaskSize: '100% 100%', maskSize: '100% 100%', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }} aria-hidden>
-        {images()}
-      </div>
+{area.surfaces.map((o) => createPortal(images(undefined, o.x, o.y), o.host))}
       {arranging && (
         <div
           ref={layer}

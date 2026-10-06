@@ -103,13 +103,34 @@ export default function Home() {
       // Kept for this visit only.
     }
     haptics.medium();
-    if (settings.uiSoundsEnabled !== false) uiCue(next === 'world' ? 'on' : 'off');
+    if (settings.uiSoundsEnabled !== false) {
+      uiCue(next === 'world' ? 'on' : 'off');
+      setTimeout(() => sceneCue('whoosh'), 60);
+    }
+    // Let go of the squeeze into a fast spin; the colour blends over it and the word changes mid-turn.
+    setGlobeHeld(false);
+    setGlobeBurst((n) => n + 1);
+    setBandDim(true);
+    window.setTimeout(() => {
+      setBandWord(next);
+      setBandDim(false);
+    }, 420);
   };
+  // Held: the globe is squeezed down over the hold, and springs back when it lets go.
+  const [globeHeld, setGlobeHeld] = useState(false);
+  const [globeBurst, setGlobeBurst] = useState(0);
+  // The band's word follows the mode, a beat late when the mode is changed by a hold.
+  const [bandWord, setBandWord] = useState<'map' | 'world'>(globeMode);
+  const [bandDim, setBandDim] = useState(false);
+  useEffect(() => {
+    if (!settings.blacktopWorldEnabled) setBandWord('map');
+  }, [settings.blacktopWorldEnabled]);
 
   const handleGlobePointerDown = (e: React.PointerEvent) => {
     if (!settings.blacktopWorldEnabled) return;
     longPressFired.current = false;
     pressStart.current = { x: e.clientX, y: e.clientY };
+    setGlobeHeld(true);
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true;
       longPressTimer.current = null;
@@ -122,6 +143,7 @@ export default function Home() {
       longPressTimer.current = null;
     }
     pressStart.current = null;
+    setGlobeHeld(false);
   };
   const handleGlobePointerMove = (e: React.PointerEvent) => {
     if (!pressStart.current || !longPressTimer.current) return;
@@ -692,15 +714,17 @@ export default function Home() {
                           }
                         }}
                         tabIndex={0}
-                        className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        // Squeezed down over the hold; let go with a little overshoot as the spin kicks in.
+                        style={{ transform: `scale(${globeHeld ? 0.8 : 1})`, transition: globeHeld ? 'transform 500ms cubic-bezier(0.3, 0, 0.6, 1), background-color 200ms, box-shadow 200ms' : 'transform 420ms cubic-bezier(0.2, 1.7, 0.4, 1), background-color 200ms, box-shadow 200ms' }}
                         aria-label={!settings.blacktopWorldEnabled ? tr("Open map") : globeMode === 'map' ? tr("Open the map. Hold to switch to Blacktop World.") : tr("Open Blacktop World. Hold to switch to the map.")}
                         role="button"
                       >
-                        <GlobeBanner layer="back" word={globeMode === 'world' ? tr("World") : tr("Map")} color={bandHsl} />
+                        <GlobeBanner layer="back" word={bandWord === 'world' ? tr("World") : tr("Map")} color={bandHsl} />
                         <Suspense fallback={null}>
-                          <HomeGlobe accentColor={globeColor} className="relative w-full h-full" />
+                          <HomeGlobe accentColor={globeColor} burst={globeBurst} className="relative w-full h-full" />
                         </Suspense>
-                        <GlobeBanner layer="front" word={globeMode === 'world' ? tr("World") : tr("Map")} color={bandHsl} />
+                        <GlobeBanner layer="front" word={bandWord === 'world' ? tr("World") : tr("Map")} color={bandHsl} dim={bandDim} />
                       </div>
                       {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
                           tiles that the CSS mask clips away, keeping the accent outline continuous. */}
