@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { isDemoModeActive } from '@/lib/demoMode';
-import { RULES, WEAR_BY_ROUND, wearLoss } from './rules';
+import { RULES, WEAR_BY_ROUND, levelRounds, wearLoss } from './rules';
 import { getVault, updateVault, wearReportOf } from './store';
 import type { BattleCard, BattleState, WearReport } from '../types';
 
@@ -50,7 +50,7 @@ export function wearAfterRun(wear: Record<string, number> | undefined, run: Batt
       next[card.id] = 100;
       continue;
     }
-    next[card.id] = rounds[card.id] ? Math.max(0, c - wearLoss(card.spec === 'race', rounds[card.id])) : Math.min(100, c + REST_RECOVERY);
+    next[card.id] = rounds[card.id] ? Math.max(0, c - wearLoss(card.spec === 'race', levelRounds(run.level, rounds[card.id]))) : Math.min(100, c + REST_RECOVERY);
   }
   return next;
 }

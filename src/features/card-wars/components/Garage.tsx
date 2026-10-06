@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { SPECS, cardById } from '../lib/catalog';
 import { deckRating, isBike, overall } from '../lib/ratings';
-import { BUILDS, RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost } from '../lib/rules';
+import { BUILDS, LEVELS, RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost } from '../lib/rules';
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
@@ -250,7 +250,11 @@ export function Garage({
 
         {!mustSpin && !locked && (
           <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground text-center">
-            <span>{tr("Win {0} RPM · draw {1} · lose {2}", [RULES.reward.win, RULES.reward.draw, RULES.reward.loss])}</span>
+            <span>
+              {LEVELS
+                ? tr("Hard pays {0} RPM for a win · draw {1} · lose {2}", [RULES.reward.win, RULES.reward.draw, RULES.reward.loss])
+                : tr("Win {0} RPM · draw {1} · lose {2}", [RULES.reward.win, RULES.reward.draw, RULES.reward.loss])}
+            </span>
             {shop.firstWin && RULES.firstWin > 0 && (
               <span className="inline-flex items-center gap-1 text-accent font-semibold">
                 <Sparkles className="w-3 h-3" />

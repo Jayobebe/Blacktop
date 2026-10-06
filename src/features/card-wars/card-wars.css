@@ -433,6 +433,29 @@ button.cw-card:disabled { cursor: default; }
 .cw-arcade-note { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; line-height: 1.35; color: hsl(var(--muted-foreground)); }
 .cw-arcade-note svg { flex-shrink: 0; width: 13px; height: 13px; margin-top: 1px; }
 .cw-arcade .cw-strip > .cw-card { animation: none; }
+/* Before a battle against the computer: a level, or a quick play mode. */
+.cw-setup-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 14px; border-radius: 16px; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.5); text-align: left; transition: background-color 0.2s, border-color 0.2s; }
+.cw-setup-row:hover, .cw-setup-mode:hover:not(:disabled) { border-color: hsl(var(--accent) / 0.5); background: hsl(var(--accent) / 0.08); }
+.cw-setup-row:active, .cw-setup-mode:active:not(:disabled) { scale: 0.98; }
+.cw-setup-row > svg { flex-shrink: 0; width: 22px; height: 22px; color: hsl(var(--accent)); }
+.cw-setup-row b { display: block; font-size: 15px; line-height: 1.2; }
+.cw-setup-row b + span { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; color: hsl(var(--muted-foreground)); }
+.cw-setup-row-hot { border-color: hsl(var(--accent) / 0.45); background: radial-gradient(120% 120% at 0% 0%, hsl(var(--accent) / 0.16), transparent 60%), hsl(var(--card) / 0.5); }
+.cw-setup-pay { flex-shrink: 0; padding: 4px 9px; border-radius: 999px; background: hsl(0 0% 0% / 0.35); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.cw-setup-mode { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 84px; padding: 12px; border-radius: 16px; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.5); text-align: left; transition: background-color 0.2s, border-color 0.2s; }
+.cw-setup-mode:disabled { opacity: 0.45; }
+.cw-setup-mode svg { width: 18px; height: 18px; color: hsl(var(--accent)); }
+.cw-setup-mode b { font-size: 14px; line-height: 1.2; }
+.cw-setup-mode span { font-size: 11px; line-height: 1.3; color: hsl(var(--muted-foreground)); }
+/* Quick play's deck builder: the theme, the clock and the way in stay on screen while the cards scroll. */
+.cw-quick-bar { position: sticky; top: max(8px, var(--safe-top)); z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 18px; border: 1px solid hsl(var(--accent) / 0.4); background: hsl(240 6% 8% / 0.92); box-shadow: 0 8px 24px hsl(0 0% 0% / 0.5); }
+.cw-quick-theme { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.cw-quick-theme svg { flex-shrink: 0; width: 22px; height: 22px; color: hsl(var(--accent)); }
+.cw-quick-theme small { display: block; font-size: 9.5px; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.1em; color: hsl(var(--muted-foreground)); }
+.cw-quick-theme b { display: block; font-size: 16px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-quick-clock { display: inline-flex; align-items: center; gap: 5px; min-width: 62px; justify-content: center; padding: 8px 10px; border-radius: 12px; background: hsl(0 0% 0% / 0.4); font-size: 20px; font-weight: 800; }
+.cw-quick-clock svg { width: 16px; height: 16px; color: hsl(var(--muted-foreground)); }
+.cw-quick-clock-low { color: hsl(var(--destructive)); }
 .cw-panel-hero { border-color: hsl(var(--accent) / 0.35); background: radial-gradient(120% 90% at 0% 0%, hsl(var(--accent) / 0.2), transparent 60%), hsl(var(--card) / 0.6); }
 .cw-panel-gift { border: 1.5px dashed hsl(var(--accent) / 0.6); background: hsl(var(--accent) / 0.08); }
 .cw-emblem { flex-shrink: 0; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: hsl(var(--accent) / 0.16); color: hsl(var(--accent)); box-shadow: inset 0 0 0 1px hsl(var(--accent) / 0.35), 0 0 22px hsl(var(--accent) / 0.25); }

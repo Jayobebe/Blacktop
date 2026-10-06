@@ -16,28 +16,30 @@ import { STARTER_TAGS, cardById, cardIdentity, unlockCard } from '../lib/catalog
 import { createRun, deadlocked, playRound } from '../lib/engine';
 import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
-import { deckRating, overall } from '../lib/ratings';
+import { categoryLabel, deckRating, overall } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
-import { BUILDS, FLIP, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
+import { BUILDS, FLIP, LEVEL, LEVELS, RULES, V2, WEAR_BY_ROUND } from '../lib/rules';
 import { claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, getVault, updateVault, useVault } from '../lib/store';
 import { powerIndex, slotRef, tagRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
 import { conditionOf, flushPendingWear, queueWear, roundsFought, syncWear, wearAfterRun, withWear } from '../lib/wear';
-import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type CoinFlip, type DogTag, type TagPower } from '../types';
+import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type Category, type CoinFlip, type DogTag, type Level, type QuickMode, type TagPower } from '../types';
 import { BattleArena, type Reveal } from './BattleArena';
 import { BattleResult } from './BattleResult';
 import { Garage } from './Garage';
 import { HowToPlay, howToSeen } from './HowToPlay';
 import { PlayerBattleSheet } from './PlayerBattleSheet';
 import { RewardShuffle } from './RewardShuffle';
+import { BattleSetupSheet, levelName, modeName } from './BattleSetupSheet';
+import { QuickPlay } from './QuickPlay';
 import { RpmPill } from './RpmPill';
 import { ShopPage } from './ShopPage';
 import '../card-wars.css';
 
-type View = 'home' | 'shop' | 'computer' | 'players';
+type View = 'home' | 'shop' | 'computer' | 'players' | 'quick';
 
 const standing = (hp: number[] | undefined) => (hp ?? []).filter((v) => v > 0).length;
 const powerAt = (index: number | null | undefined): TagPower | null => (typeof index === 'number' ? POWERS[index] ?? null : null);
@@ -69,6 +71,8 @@ export function CardWarsScreen() {
 
   // A battle against the computer that was left open (or its prize unpicked) comes straight back.
   const [view, setView] = useState<View>(vault.run ? 'computer' : 'home');
+  const [setup, setSetup] = useState(false);
+  const [quickMode, setQuickMode] = useState<QuickMode | null>(null);
   const [sheet, setSheet] = useState(!!invited);
   const [help, setHelp] = useState(() => !howToSeen() && !vault.run && !invited);
   const [online, setOnline] = useState<OnlineBattle | null>(null);
@@ -168,7 +172,7 @@ export function CardWarsScreen() {
     void reportContracts(r.id, computerFacts(r, r.player.every((c) => (c.condition ?? 100) >= 100))).then((earned) => {
       if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [earned]));
     });
-    void rewardOffline(r.result).then((paid) => {
+    void rewardOffline(r.result, r.level).then((paid) => {
       setPay((all) => ({ ...all, [r.id]: paid }));
       if (paid.rpm > 0) eventSound('coin');
     });
@@ -393,6 +397,8 @@ export function CardWarsScreen() {
     // Health as the round starts: a Pit medic has already done its work.
     const before = structuredClone(run.hp);
     if (armed?.power === 'heal') before[0][index] = Math.min(100, before[0][index] + tagStrength(armed, player));
+    const theirIndex = next.opponent.findIndex((c) => c.id === last.opponent);
+    if (last.rivalTag === 'heal' && theirIndex >= 0) before[1][theirIndex] = Math.min(100, before[1][theirIndex] + tagStrength({ power: 'heal' }, opponent));
     setReveal({
       id: `${next.id}:${next.round}`,
       player,
@@ -404,7 +410,7 @@ export function CardWarsScreen() {
       hp: next.hp,
       beforeHp: before,
       values: last.values ?? null,
-      tags: [last.tag ?? null, null],
+      tags: [last.tag ?? null, last.rivalTag ?? null],
       event: last.event ?? null,
       raptured: last.raptured,
       flips: last.flips,
@@ -444,13 +450,32 @@ export function CardWarsScreen() {
     updateVault({ deck: picked.map((c) => c.id) });
   }
 
-  function startComputer() {
+  function startComputer(level?: Level) {
     if (riding || locked || deck.length !== 5 || deckTags.length !== TAG_SLOTS) return;
     setTag(null);
     setReveal(null);
-    updateVault({ run: createRun(deck) });
+    setSetup(false);
+    updateVault({ run: createRun(deck, Math.random, LEVELS ? { level: level ?? 'medium' } : {}) });
     setView('computer');
   }
+
+  /** Quick play: a deck built for the theme, for this battle only, at hard. */
+  function startQuick(cards: Card[], theme: Category, mode: QuickMode) {
+    if (riding || locked || cards.length !== 5) return;
+    setTag(null);
+    setReveal(null);
+    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme }) });
+    setView('computer');
+  }
+
+  /** Battle again: the level sheet where there are levels, else straight in. */
+  const again = () => {
+    if (LEVELS) {
+      updateVault({ run: null });
+      setView('home');
+      setSetup(true);
+    } else startComputer();
+  };
 
   function claim(id: string) {
     if (!run) return;
@@ -499,7 +524,7 @@ export function CardWarsScreen() {
             updateVault({ run: { ...run, result: 'loss' } });
             setTag(null);
           }}
-          note={riding ? tr("Battles are off while you ride.") : undefined}
+          note={riding ? tr("Battles are off while you ride.") : run.theme ? tr("{0} · theme: {1}", [modeName(run.mode ?? 'themed'), categoryLabel(run.theme)]) : run.level ? levelName(run.level) : undefined}
         />
       </main>
     );
@@ -517,6 +542,8 @@ export function CardWarsScreen() {
     if (mine && mine.rpm > 0) lines.push({ label: tr("Prize already owned"), rpm: mine.rpm });
     const chosen = run.chosenReward ? (run.prizes ?? run.opponent).find((c) => c.id === run.chosenReward) : undefined;
     const forfeited = run.result === 'loss' && standing(run.hp[0]) > 0;
+    // A win picks a prize card on hard only (and in every battle from before levels).
+    const prizeDue = !run.level || LEVEL[run.level].prize;
     return (
       <main className="text-foreground">
         <BattleResult
@@ -532,7 +559,11 @@ export function CardWarsScreen() {
           note={
             demo
               ? tr("Demo mode: nothing is earned or saved.")
-              : paid && paid.rpm === 0
+              : run.level === 'easy'
+                ? tr("Easy is practice: no RPM and no prize card, and your cards wore a third as much.")
+                : run.level === 'medium' && paid && paid.rpm > 0
+                  ? tr("Medium pays half and wins no prize card. Hard pays in full.")
+                  : paid && paid.rpm === 0
                 ? shop.rewardsLeft === 0
                   ? tr("Today's paid battles are used up, so this one paid no RPM.")
                   : tr("No RPM this time: battles pay at most once every half minute, and only when you're online.")
@@ -547,14 +578,14 @@ export function CardWarsScreen() {
           }
           prize={chosen}
           prizeNote={mine?.had ? (mine.rpm > 0 ? tr("You already own this card, so it paid {0} RPM instead.", [mine.rpm]) : tr("You already own this one, so nothing new this time.")) : undefined}
-          canLeave={!won || run.rewardClaimed}
-          onAgain={riding || deck.length !== 5 || deckTags.length !== TAG_SLOTS ? undefined : startComputer}
+          canLeave={!won || !prizeDue || run.rewardClaimed}
+          onAgain={riding || deck.length !== 5 || deckTags.length !== TAG_SLOTS ? undefined : again}
           onDone={() => {
             updateVault({ run: null });
             setView('home');
           }}
         >
-          {won && !run.rewardClaimed && <RewardShuffle key={run.id} run={run} riding={riding} onComplete={() => updateVault({ run: { ...run, rewardShuffleComplete: true } })} onClaim={claim} />}
+          {won && prizeDue && !run.rewardClaimed && <RewardShuffle key={run.id} run={run} riding={riding} onComplete={() => updateVault({ run: { ...run, rewardShuffleComplete: true } })} onClaim={claim} />}
         </BattleResult>
       </main>
     );
@@ -630,6 +661,23 @@ export function CardWarsScreen() {
     );
   }
 
+  if (view === 'quick' && quickMode && !locked) {
+    return (
+      <main className="text-foreground">
+        <QuickPlay
+          key={quickMode}
+          mode={quickMode}
+          pool={wornPool}
+          onStart={(cards, theme) => startQuick(cards, theme, quickMode)}
+          onCancel={() => {
+            setView('home');
+            setSetup(true);
+          }}
+        />
+      </main>
+    );
+  }
+
   if (view === 'shop') {
     return (
       <main className="text-foreground">
@@ -674,7 +722,7 @@ export function CardWarsScreen() {
         playersOpen={cap}
         onReplace={replaceSlot}
         onBestDeck={bestDeck}
-        onBattleComputer={() => (run && !run.result ? setView('computer') : live ? (online?.status === 'playing' ? setView('players') : setSheet(true)) : startComputer())}
+        onBattleComputer={() => (run && !run.result ? setView('computer') : live ? (online?.status === 'playing' ? setView('players') : setSheet(true)) : LEVELS ? setSetup(true) : startComputer())}
         onBattlePlayer={() => setSheet(true)}
         onShop={() => setView('shop')}
       />
@@ -690,6 +738,17 @@ export function CardWarsScreen() {
         onInvite={() => void act('create')}
         onJoin={() => void act('join')}
         onCancel={() => void act('leave')}
+      />
+      <BattleSetupSheet
+        open={setup}
+        onClose={() => setSetup(false)}
+        onLevel={(level) => startComputer(level)}
+        canQuick={wornPool.length >= 5 && deckTags.length === TAG_SLOTS}
+        onQuick={(mode) => {
+          setSetup(false);
+          setQuickMode(mode);
+          setView('quick');
+        }}
       />
       <HowToPlay open={help} onClose={() => setHelp(false)} players={cap} />
     </main>

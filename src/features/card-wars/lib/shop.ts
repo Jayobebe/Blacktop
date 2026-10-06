@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 import { STARTERS, type ShopCategory } from './catalog';
-import { BUILDS, RULES, V2 } from './rules';
+import { BUILDS, LEVELS, RULES, V2 } from './rules';
+import type { Level } from '../types';
 import { getVault, updateVault } from './store';
 import { flushPendingWear } from './wear';
 
@@ -118,9 +119,10 @@ export interface BattlePay {
 }
 
 /** RPM for a finished battle against the computer. The server paces it and counts the day's battles. */
-export async function rewardOffline(result: 'win' | 'draw' | 'loss'): Promise<BattlePay> {
+export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Level): Promise<BattlePay> {
   if (isDemoModeActive()) return { rpm: 0, bonus: 0 };
-  const { data, error } = await rpc('cw_reward_offline', { _result: result });
+  // The level sets the pay (easy none, medium half, hard all of it) where the server knows levels.
+  const { data, error } = LEVELS && level ? await rpc('cw_reward_battle', { _result: result, _level: level }) : await rpc('cw_reward_offline', { _result: result });
   if (error || !data) return { rpm: 0, bonus: 0 };
   const d = data as { rpm: number; bonus?: number; balance: number; left?: number };
   set({ ...state, balance: d.balance, rewardsLeft: typeof d.left === 'number' ? d.left : state.rewardsLeft, firstWin: state.firstWin && !(d.bonus && d.bonus > 0) });

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
 import { STARTERS, STARTER_TAGS } from './catalog';
 import { TAG_SLOTS, type BattleState, type VaultState, type WearReport } from '../types';
+import { levelRounds } from './rules';
 
 /**
  * What Card Wars keeps on the phone: the deck, the battle against the computer
@@ -19,7 +20,9 @@ export const wearReportOf = (run: BattleState): WearReport => ({
   id: run.id,
   deck: run.player.map((c) => c.id),
   fought: Array.from(new Set(run.log.map((l) => l.player))),
-  rounds: run.player.map((c) => run.log.filter((l) => l.player === c.id).length),
+  // Easy and medium wear cards less: fewer of the rounds count.
+  rounds: run.player.map((c) => levelRounds(run.level, run.log.filter((l) => l.player === c.id).length)),
+  ...(run.level ? { level: run.level } : {}),
   raptured: run.log.find((l) => l.raptured?.[0])?.raptured?.[0] ?? null,
 });
 

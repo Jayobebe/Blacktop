@@ -16,11 +16,12 @@ export function setEventsEnabled(on: boolean) {
   enabled = on;
 }
 
-export function rollEvent(random: () => number): RoundEvent | null {
+/** `often`: how many times likelier than usual (chaos mode doubles it). */
+export function rollEvent(random: () => number, often = 1): RoundEvent | null {
   const r = random();
   if (!enabled) return null;
-  if (r < RAPTURE_CHANCE) return 'rapture';
-  if (r < EVENT_CHANCE) return EVENTS[Math.floor(random() * 10)];
+  if (r < RAPTURE_CHANCE * often) return 'rapture';
+  if (r < EVENT_CHANCE * often) return EVENTS[Math.floor(random() * 10)];
   return null;
 }
 

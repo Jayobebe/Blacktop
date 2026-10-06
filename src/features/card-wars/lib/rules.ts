@@ -26,7 +26,7 @@ function serverRules(): 1 | 2 {
 export const V2 = serverRules() === 2;
 
 /** What the server said at launch about a later migration (scripts: on with the second rule set). */
-function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds'): boolean {
+function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels'): boolean {
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
   if (env) return env === '2';
   try {
@@ -71,6 +71,34 @@ export const PRIZE_REACH = 2;
 export const BUILDS = V2 && serverHas('cardWarsBuilds');
 /** RPM for a finished game of Hit Heavy or Petrol Head (`best`: a new personal best), and the most a day pays. The server's numbers. */
 export const ARCADE_PAY = { game: 5, best: 15, daily: 40 } as const;
+
+/**
+ * Difficulty levels and quick play against the computer (migration
+ * 20261015000000_card_wars_levels.sql; the `cardWarsLevels` cap). Until the
+ * server has it there's one kind of battle, as before: it can't yet pay a
+ * level less than another.
+ */
+export const LEVELS = V2 && serverHas('cardWarsLevels');
+/**
+ * What each level is. `target`: the share of battles a player choosing cards
+ * at random would win against the deck the computer is given. On hard the
+ * computer also chooses its cards (`smart`: how often it plays its best pick
+ * rather than a random one) and carries the three standard dog tags, so an
+ * even deck is a real fight. `pay`: the share of the battle's RPM; `prize`: a
+ * win picks a card; `wear`: the share of the rounds fought that count.
+ * Mirrored by `cw_reward_battle`.
+ */
+export const LEVEL = {
+  easy: { target: 0.72, smart: 0, tags: false, pay: 0, prize: false, wear: 1 / 3 },
+  medium: { target: 0.6, smart: 0, tags: false, pay: 0.5, prize: false, wear: 2 / 3 },
+  hard: { target: 0.52, smart: 0.75, tags: true, pay: 1, prize: true, wear: 1 },
+} as const;
+/** Quick play: how much of the time the spun theme is the category (the rest is the usual draw, which can land on it too), the seconds to build a deck, and each mode's twist. */
+export const QUICK = { themeShare: 0.5, buildSeconds: 15, chaosEvents: 2, suddenHp: 60 } as const;
+/** The rounds a card fought, as they count towards its wear at this level (none: battles from before levels, in full). */
+export const levelRounds = (level: keyof typeof LEVEL | undefined, rounds: number): number => (rounds > 0 ? Math.max(1, Math.ceil(rounds * (level ? LEVEL[level].wear : 1))) : 0);
+/** RPM a battle at `level` pays for a result (the first win of the day comes on top, on hard). */
+export const levelPay = (level: keyof typeof LEVEL, result: 'win' | 'draw' | 'loss'): number => Math.ceil(RULES.reward[result] * LEVEL[level].pay);
 
 export interface Rules {
   /** RPM for a finished battle against the computer. */

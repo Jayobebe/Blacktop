@@ -1,6 +1,6 @@
-import { CATEGORIES, type BattleCard, type BattleState, type Category, type CoinFlip, type DogTag } from '../types';
+import { CATEGORIES, type BattleCard, type BattleState, type Category, type CoinFlip, type DogTag, type Level, type QuickMode, type TagPower } from '../types';
 import { BRAND_CARDS, CATALOG, cardById } from './catalog';
-import { PRIZE_DECK, PRIZE_REACH, V2, damageFor } from './rules';
+import { LEVEL, PRIZE_DECK, PRIZE_REACH, QUICK, V2, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
@@ -39,7 +39,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[], trials = 128, seed = 1): number {
+export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[], trials = 128, seed = 1, theme?: Category): number {
   const random = seededRandom(seed);
   let wins = 0;
   for (let trial = 0; trial < trials; trial++) {
@@ -53,7 +53,8 @@ export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[],
       const aCard = player[aIndex];
       const bCard = opponent[bIndex];
       const allowed = allowedFor(aCard, bCard);
-      const category = allowed[Math.floor(random() * allowed.length)];
+      // Quick play: the theme comes up as often here as it will in the battle.
+      const category = theme && allowed.includes(theme) && random() < QUICK.themeShare ? theme : allowed[Math.floor(random() * allowed.length)];
       const penalty = penaltyRound === round && category === 'lean' ? 0.8 : 1;
       const difference = (aCard.ratings[category] - bCard.ratings[category]) * penalty;
       if (difference !== 0) {
@@ -83,14 +84,16 @@ const COMPUTER_POOL = V2 ? CATALOG : BRAND_CARDS;
  * and its prize would be one they have): only a deck at the very bottom or
  * top of the catalogue, with nothing else its size to meet, shares any.
  */
-export function createComputerDeck(player: BattleCard[], random: () => number = Math.random): BattleCard[] {
+export function createComputerDeck(player: BattleCard[], random: () => number = Math.random, target: number = COMPUTER_WIN_TARGET, theme?: Category): BattleCard[] {
   const all = COMPUTER_POOL;
   const others = all.filter((c) => !player.some((p) => p.id === c.id));
   const seed = Math.floor(random() * 4294967296);
   const usesLean = player.every((c) => (c.displayVehicle ?? c.vehicle) === 'bike');
   const power = (card: BattleCard) => {
     const categories = CATEGORIES.filter((c) => c !== 'lean' || (usesLean && card.vehicle === 'bike'));
-    return categories.reduce((sum, c) => sum + card.ratings[c], 0) / categories.length;
+    // A themed battle is mostly about one rating: weigh it as the rounds will.
+    const weight = (c: Category) => (c === theme ? 1 + categories.length : 1);
+    return categories.reduce((sum, c) => sum + card.ratings[c] * weight(c), 0) / categories.reduce((sum, c) => sum + weight(c), 0);
   };
   const targetPower = player.reduce((sum, card) => sum + power(card), 0) / player.length;
   const nearest = (pool: BattleCard[]) =>
@@ -109,17 +112,17 @@ export function createComputerDeck(player: BattleCard[], random: () => number = 
     ...Array.from({ length: 8 }, () => shuffle(nearAll, random).slice(0, 5)),
   ].filter((deck) => shared(deck) < 5);
   // How far from a fair fight, with each shared card counted against it.
-  const cost = (c: { deck: BattleCard[]; rate: number }) => Math.abs(c.rate - COMPUTER_WIN_TARGET) + 0.03 * shared(c.deck);
-  const ranked = candidates.map((deck) => ({ deck, rate: estimatePlayerWins(player, deck, 96, seed) })).sort((a, b) => cost(a) - cost(b));
-  const finalists = ranked.slice(0, 6).map(({ deck }) => ({ deck, rate: estimatePlayerWins(player, deck, 512, seed ^ 0x9e3779b9) }));
+  const cost = (c: { deck: BattleCard[]; rate: number }) => Math.abs(c.rate - target) + 0.03 * shared(c.deck);
+  const ranked = candidates.map((deck) => ({ deck, rate: estimatePlayerWins(player, deck, 96, seed, theme) })).sort((a, b) => cost(a) - cost(b));
+  const finalists = ranked.slice(0, 6).map(({ deck }) => ({ deck, rate: estimatePlayerWins(player, deck, 512, seed ^ 0x9e3779b9, theme) }));
   // Among the fair ones sharing fewest cards, lean either side of the target so the average lands on it.
-  const fair = finalists.filter((c) => Math.abs(c.rate - COMPUTER_WIN_TARGET) < 0.045);
+  const fair = finalists.filter((c) => Math.abs(c.rate - target) < 0.045);
   const fewest = Math.min(...fair.map((c) => shared(c.deck)));
   const pick = fair.filter((c) => shared(c.deck) === fewest);
-  const below = pick.filter((c) => c.rate <= COMPUTER_WIN_TARGET).sort((a, b) => b.rate - a.rate)[0];
-  const above = pick.filter((c) => c.rate > COMPUTER_WIN_TARGET).sort((a, b) => a.rate - b.rate)[0];
+  const below = pick.filter((c) => c.rate <= target).sort((a, b) => b.rate - a.rate)[0];
+  const above = pick.filter((c) => c.rate > target).sort((a, b) => a.rate - b.rate)[0];
   if (below && above) {
-    const chanceOfAbove = (COMPUTER_WIN_TARGET - below.rate) / (above.rate - below.rate);
+    const chanceOfAbove = (target - below.rate) / (above.rate - below.rate);
     return random() < chanceOfAbove ? above.deck : below.deck;
   }
   if (below || above) return (below ?? above).deck;
@@ -146,17 +149,26 @@ export function prizesFor(opponent: BattleCard[], player: BattleCard[] = [], ran
   return [...prizes, ...shuffle(best, random).slice(0, opponent.length - prizes.length)];
 }
 
-export function createRun(player: BattleCard[], random: () => number = Math.random): BattleState {
+/** A battle's setup: its level (none: the one kind of battle there was before levels), and for quick play its twist and theme. */
+export interface RunOptions {
+  level?: Level;
+  mode?: QuickMode;
+  theme?: Category;
+}
+
+export function createRun(player: BattleCard[], random: () => number = Math.random, options: RunOptions = {}): BattleState {
   if (player.length !== 5 || new Set(player.map((c) => c.id)).size !== 5) throw new Error('Deck needs five unique cards');
-  const opponent = createComputerDeck(player, random);
+  const opponent = createComputerDeck(player, random, options.level ? LEVEL[options.level].target : COMPUTER_WIN_TARGET, options.theme);
+  const startHp = options.mode === 'sudden' ? QUICK.suddenHp : 100;
   const categories = shuffle([...CATEGORIES], random);
   const penaltyRound = random() < 0.125 ? 1 + Math.floor(random() * 4) : -1;
   const prizes = V2 ? prizesFor(opponent, player, random) : opponent;
+  const { level, mode, theme } = options;
   return {
     id: crypto.randomUUID(),
     player,
     opponent,
-    hp: [Array(5).fill(100), Array(5).fill(100)],
+    hp: [Array(5).fill(startHp), Array(5).fill(startHp)],
     round: 0,
     categories,
     penaltyRound,
@@ -166,6 +178,10 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
     ...(V2 ? { prizes } : {}),
     rewardOrder: shuffle(prizes.map((c) => c.id), random),
     rewardClaimed: false,
+    ...(level ? { level } : {}),
+    ...(mode ? { mode } : {}),
+    ...(theme ? { theme } : {}),
+    ...(level && LEVEL[level].tags ? { rivalUsed: [] } : {}),
   };
 }
 
@@ -197,16 +213,31 @@ export function deadlocked(state: BattleState): boolean {
  */
 export function playRound(previous: BattleState, index: number, tag?: DogTag, random: () => number = Math.random): BattleState {
   if (previous.result || !previous.player[index] || previous.hp[0][index] <= 0) return previous;
+  // Bare knuckle: nobody has dog tags.
+  if (previous.mode === 'bare') tag = undefined;
   if (tag && previous.usedTags.includes(tag.id)) return previous;
   const s: BattleState = structuredClone(previous);
   const eligible = s.opponent.map((c, i) => ({ c, i })).filter((x) => s.hp[1][x.i] > 0);
-  const rival = eligible[Math.floor(random() * eligible.length)];
+  const rules = s.level ? LEVEL[s.level] : null;
+  // Easy and medium play a card at random. Hard mostly plays the card that does best against
+  // the hand it's facing (it can't see which card is coming: both sides choose at once).
+  const standing = s.player.filter((_, i) => s.hp[0][i] > 0);
+  const edge = (c: BattleCard) =>
+    standing.reduce((sum, p) => {
+      const cats = allowedFor(p, c);
+      return sum + cats.reduce((t, k) => t + Math.sign(c.ratings[k] - p.ratings[k]) + (c.ratings[k] - p.ratings[k]) / 100, 0) / cats.length;
+    }, 0);
+  const rival =
+    rules && rules.smart > 0 && random() < rules.smart
+      ? eligible.slice().sort((x, y) => edge(y.c) - edge(x.c) || x.i - y.i)[0]
+      : eligible[Math.floor(random() * eligible.length)];
   if (!rival) return { ...s, result: 'win' };
   const card = s.player[index];
   const allowed = allowedFor(card, rival.c);
-  let category: Category = allowed[Math.floor(random() * allowed.length)];
+  // Quick play: the theme comes up about half the time, on top of its usual share.
+  let category: Category = s.theme && allowed.includes(s.theme) && random() < QUICK.themeShare ? s.theme : allowed[Math.floor(random() * allowed.length)];
   let first: Category | undefined;
-  const event = rollEvent(random);
+  const event = rollEvent(random, s.mode === 'chaos' ? QUICK.chaosEvents : 1);
   const shown = (v: number) => Math.round(v * 10) / 10;
 
   if (event === 'rapture') {
@@ -243,6 +274,20 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   }
   if (live?.power === 'heal') s.hp[0][index] = Math.min(100, s.hp[0][index] + tagStrength(live, card));
   const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
+  // Hard: the computer has the three standard dog tags, one use each, and arms them by feel:
+  // a medic for a card that's hurting, now and then an Overdrive or a Second chance.
+  let rivalTag: TagPower | undefined;
+  if (rules?.tags && s.mode !== 'bare' && event !== 'gremlin') {
+    const left = (['heal', 'boost', 'reroll'] as const).filter((p) => !(s.rivalUsed ?? []).includes(p));
+    const roll = random();
+    if (left.includes('heal') && s.hp[1][rival.i] <= 55 && roll < 0.8) rivalTag = 'heal';
+    else if (left.includes('boost') && roll < 0.2) rivalTag = 'boost';
+    else if (left.includes('reroll') && roll > 0.82) rivalTag = 'reroll';
+    if (rivalTag) s.rivalUsed = [...(s.rivalUsed ?? []), rivalTag];
+  }
+  const rivalStrength = (power: TagPower) => tagStrength({ power }, rival.c);
+  if (rivalTag === 'heal') s.hp[1][rival.i] = Math.min(100, s.hp[1][rival.i] + rivalStrength('heal'));
+  const rivalBoost = rivalTag === 'boost' ? rivalStrength('boost') / 100 : 1;
   // Fresh tyres: the catalog's ratings, as new.
   const mineRatings = event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
   // A Coin flip sets the category itself: against the rival's card, the best one for this card on heads, the worst on tails.
@@ -255,9 +300,9 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   const crowd = (id: string, side: 0 | 1) => (event === 'crowd' && s.log.some((l) => l.winner === side && (side === 0 ? l.player : l.opponent) === id) ? EVENT_NUMBERS.crowd : 1);
   const crowdMine = crowd(card.id, 0);
   const crowdTheirs = crowd(rival.c.id, 1);
-  const score = (c: Category, replay = 1): [number, number] => {
+  const score = (c: Category, replay = 1, rivalReplay = 1): [number, number] => {
     const rain = s.penaltyRound === s.round && c === 'lean' ? 0.8 : 1;
-    return [mineRatings[c] * rain * boost * replay * crowdMine, rival.c.ratings[c] * rain * crowdTheirs];
+    return [mineRatings[c] * rain * boost * replay * crowdMine, rival.c.ratings[c] * rain * crowdTheirs * rivalBoost * rivalReplay];
   };
   let [a, b] = score(category);
   if (live?.power === 'reroll') {
@@ -269,6 +314,15 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
       first = category;
       category = others[Math.floor(random() * others.length)];
       [a, b] = score(category, tagStrength(live, card) / 100);
+    }
+  }
+  // The computer's Second chance: the round it lost is replayed once in another category.
+  if (rivalTag === 'reroll' && V2 && b < a && !first) {
+    const others = allowed.filter((c) => c !== category);
+    if (others.length) {
+      first = category;
+      category = others[Math.floor(random() * others.length)];
+      [a, b] = score(category, 1, rivalStrength('reroll') / 100);
     }
   }
   if (event === 'rain') {
@@ -289,6 +343,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     winner = null;
     damage = 0;
     if (live) s.usedTags = s.usedTags.filter((id) => id !== live.id);
+    if (rivalTag) s.rivalUsed = (s.rivalUsed ?? []).filter((p) => p !== rivalTag);
   } else if (event === 'photo' && a !== b && Math.abs(a - b) <= Math.max(a, b) * EVENT_NUMBERS.photoGap) {
     winner = null;
     damage = EVENT_NUMBERS.photoDamage;
@@ -309,6 +364,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     values: [shown(a), shown(b)],
     ...(first ? { first } : {}),
     ...(live ? { tag: live.power } : {}),
+    ...(rivalTag ? { rivalTag } : {}),
     ...(flip ? { flips: [flip, null] as [CoinFlip, null] } : {}),
     ...(event ? { event } : {}),
   });

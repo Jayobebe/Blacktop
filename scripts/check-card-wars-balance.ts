@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, prizesFor, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { BUILDS, PRIZE_DECK, PRIZE_REACH, RULES, V2, WEAR_BY_ROUND, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
+import { BUILDS, LEVEL, LEVELS, PRIZE_DECK, PRIZE_REACH, QUICK, RULES, V2, WEAR_BY_ROUND, levelPay, levelRounds, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
@@ -108,6 +108,44 @@ if (BUILDS) {
   assert.deepEqual([slotRef(a), slotRef(b), slotRef(undefined)], ['boost:', 'boost:~all', '-'], 'Slots as the server takes them');
   assert.equal(repairCost(400, 50), 50, 'A repair costs a quarter of the price for a full one');
   assert.equal(RULES.wear.rest, 15);
+}
+
+// ── Levels and quick play ──
+if (LEVELS) {
+  assert.deepEqual([levelPay('easy', 'win'), levelPay('medium', 'win'), levelPay('medium', 'draw'), levelPay('medium', 'loss'), levelPay('hard', 'win')], [0, 8, 4, 3, 15], 'Easy pays nothing, medium half, hard all of it');
+  assert.deepEqual([levelRounds('easy', 9), levelRounds('medium', 9), levelRounds('hard', 9), levelRounds('easy', 1), levelRounds(undefined, 9), levelRounds('easy', 0)], [3, 6, 9, 1, 9, 0], 'Easy and medium count fewer rounds towards wear');
+  const five = shuffle(BRAND_CARDS, rng(41)).slice(0, 5);
+  // Hard: the computer arms dog tags (three at most, each once); easy never does.
+  let armed = 0;
+  for (let g = 0; g < 12; g++) {
+    const r = rng(600 + g);
+    let hard = createRun(five, r, { level: 'hard' });
+    for (let i = 0; i < 400 && !hard.result; i++) hard = playRound(hard, hard.hp[0].findIndex((v) => v > 0), undefined, r);
+    const used = hard.log.flatMap((l) => (l.rivalTag ? [l.rivalTag] : []));
+    assert.ok(used.length <= 3 + hard.log.filter((l) => l.event === 'redflag').length, 'The computer has three dog tags');
+    armed += used.length;
+  }
+  assert.ok(armed > 6, `On hard the computer uses its dog tags (${armed} in 12 battles)`);
+  let easy = createRun(five, rng(7), { level: 'easy' });
+  for (let i = 0; i < 400 && !easy.result; i++) easy = playRound(easy, easy.hp[0].findIndex((v) => v > 0), undefined, random);
+  assert.ok(easy.log.every((l) => !l.rivalTag), 'On easy it has none');
+  // Quick play: the theme comes up most, sudden death starts low, bare knuckle has no tags.
+  let themed = createRun(five, rng(8), { level: 'hard', mode: 'themed', theme: 'corners' });
+  let rounds = 0;
+  let onTheme = 0;
+  for (let g = 0; g < 8; g++) {
+    themed = createRun(five, rng(80 + g), { level: 'hard', mode: 'themed', theme: 'corners' });
+    for (let i = 0; i < 400 && !themed.result; i++) themed = playRound(themed, themed.hp[0].findIndex((v) => v > 0), undefined, random);
+    rounds += themed.log.filter((l) => !l.flips && !l.first && l.event !== 'rapture').length;
+    onTheme += themed.log.filter((l) => !l.flips && !l.first && l.event !== 'rapture' && l.category === 'corners').length;
+  }
+  assert.ok(onTheme / rounds > 0.5 && onTheme / rounds < 0.75, `The theme takes about ${Math.round((QUICK.themeShare + (1 - QUICK.themeShare) / 4) * 100)}% of rounds (${Math.round((onTheme / rounds) * 100)}%)`);
+  assert.ok(createRun(five, rng(9), { level: 'hard', mode: 'sudden', theme: 'speed' }).hp.flat().every((v) => v === QUICK.suddenHp), 'Sudden death starts every card low');
+  const tagB: DogTag = { id: 'tag-boost', name: 'Overdrive', power: 'boost' };
+  let bare = createRun(five, rng(10), { level: 'hard', mode: 'bare', theme: 'speed' });
+  for (let i = 0; i < 400 && !bare.result; i++) bare = playRound(bare, bare.hp[0].findIndex((v) => v > 0), tagB, random);
+  assert.ok(bare.usedTags.length === 0 && bare.log.every((l) => !l.tag && !l.rivalTag), 'Bare knuckle: no dog tags on either side');
+  console.log(`Levels: neutral targets easy ${LEVEL.easy.target}, medium ${LEVEL.medium.target}, hard ${LEVEL.hard.target} (and hard picks its cards and arms ${armed} dog tags in 12 battles)`);
 }
 
 // ── Dog tags ──

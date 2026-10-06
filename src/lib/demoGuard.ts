@@ -44,6 +44,7 @@ const WRITE_RPCS = new Set([
   'cw_claim_prize',
   'cw_repair',
   'cw_arcade_reward',
+  'cw_reward_battle',
   'blacktank_cancel_request',
   'blacktank_join',
   'blacktank_pledge',

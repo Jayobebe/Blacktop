@@ -60,6 +60,8 @@ export interface RoundLog {
   values?: [number, number];
   /** The dog tag the player armed. */
   tag?: TagPower;
+  /** The dog tag the computer armed (hard only). */
+  rivalTag?: TagPower;
   /** Coin flips that set the category: the player's, then the rival's. */
   flips?: [CoinFlip | null, CoinFlip | null];
   /** Something that happened before the category was drawn. */
@@ -67,6 +69,13 @@ export interface RoundLog {
   /** A rapture: the card each side lost to the beam (player, rival). */
   raptured?: [string | null, string | null];
 }
+
+/** How hard the computer plays, and with it what a battle pays and wears. */
+export type Level = 'easy' | 'medium' | 'hard';
+export const LEVELS_ORDER: Level[] = ['easy', 'medium', 'hard'];
+/** Quick play: a theme is spun, a deck is built against the clock, and the battle has one twist. */
+export type QuickMode = 'themed' | 'chaos' | 'sudden' | 'bare';
+export const QUICK_MODES: QuickMode[] = ['themed', 'chaos', 'sudden', 'bare'];
 
 export interface BattleState {
   id: string;
@@ -85,6 +94,13 @@ export interface BattleState {
   rewardClaimed: boolean;
   rewardShuffleComplete?: boolean;
   chosenReward?: string;
+  /** Battles from before levels have none: they played as medium does. */
+  level?: Level;
+  /** Quick play: the twist, and the category that comes up most. */
+  mode?: QuickMode;
+  theme?: Category;
+  /** Hard: the dog tags the computer has spent. */
+  rivalUsed?: TagPower[];
 }
 
 /** What a finished battle against the computer did to the deck, waiting to reach the server. */
@@ -94,6 +110,8 @@ export interface WearReport {
   fought: string[];
   /** Rounds each card of `deck` fought, in its order (0: sat the battle out). */
   rounds?: number[];
+  /** The battle's level: easy and medium wear cards less. */
+  level?: Level;
   /** The deck's card a rapture took: it comes home at full condition. */
   raptured?: string | null;
 }
