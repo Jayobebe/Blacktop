@@ -2656,7 +2656,6 @@
  "{0} stay until you delete them.": "{0} तब तक रहती हैं जब तक आप उन्हें न हटाएँ।",
  "{0} stays in your garage. Show the code again when they're ready.": "{0} आपके गैरेज में रहता है। जब वे तैयार हों तो कोड फिर दिखाएँ।",
  "{0} too short, not saved": "{0} बहुत छोटा, सेव नहीं हुआ",
- "{0} total burners": "कुल {0} बर्नर",
  "{0} tracks": "{0} ट्रैक",
  "{0} tracks queued": "{0} ट्रैक कतार में",
  "{0} updated": "{0} अपडेट हुए",
@@ -4336,9 +4335,11 @@
  "{0} needs a stop": "{0} को रुकना है",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "यह रसीद है, जो हर एंट्री के साथ रखी जाती है। इसके सेव करें बटन से इसे कभी भी तस्वीर के रूप में सहेजें।",
  "Drag & zoom": "खींचें & ज़ूम करें",
- "Burners by country": "देश के अनुसार बर्नर",
  "Each phone works out its own country and shares only that. Nothing finer is kept.": "हर फ़ोन अपना देश ख़ुद पता करता है और केवल वही साझा करता है। इससे बारीक कुछ नहीं रखा जाता।",
  "No countries yet": "अभी कोई देश नहीं",
  "Your country:": "आपका देश:",
- "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "Blacktop World चालू होने पर आपका फ़ोन अपनी आख़िरी ज्ञात स्थिति से पता करता है कि वह किस देश में है और केवल वही देश हमारे सर्वर को भेजता है, ताकि ग्लोब वहाँ चमके जहाँ खाते हैं और बताए कि हर देश में कितने हैं। इसके लिए कोई निर्देशांक नहीं भेजे जाते, कोई आपका देश नहीं देख सकता, और Blacktop World बंद करने या खाता जलाने पर यह हटा दिया जाता है।"
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "Blacktop World चालू होने पर आपका फ़ोन अपनी आख़िरी ज्ञात स्थिति से पता करता है कि वह किस देश में है और केवल वही देश हमारे सर्वर को भेजता है, ताकि ग्लोब वहाँ चमके जहाँ खाते हैं और बताए कि हर देश में कितने हैं। इसके लिए कोई निर्देशांक नहीं भेजे जाते, कोई आपका देश नहीं देख सकता, और Blacktop World बंद करने या खाता जलाने पर यह हटा दिया जाता है।",
+ "{0} people": "{0} लोग",
+ "1 person": "1 व्यक्ति",
+ "People by country": "देश के अनुसार लोग"
 }

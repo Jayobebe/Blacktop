@@ -2656,7 +2656,6 @@
  "{0} stay until you delete them.": "{0} лишаються, доки ти їх не видалиш.",
  "{0} stays in your garage. Show the code again when they're ready.": "{0} лишається у твоєму гаражі. Покажи код знову, коли вони будуть готові.",
  "{0} too short, not saved": "{0} закоротко, не збережено",
- "{0} total burners": "Усього райдерів у дорозі: {0}",
  "{0} tracks": "Треків: {0}",
  "{0} tracks queued": "Треків у черзі: {0}",
  "{0} updated": "Оновлено: {0}",
@@ -4336,9 +4335,11 @@
  "{0} needs a stop": "{0} потребує зупинки",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Це чек, який зберігається з кожним записом. Збережи його як зображення будь-коли кнопкою Зберегти.",
  "Drag & zoom": "Перетягуйте & масштабуйте",
- "Burners by country": "Райдери за країнами",
  "Each phone works out its own country and shares only that. Nothing finer is kept.": "Кожен телефон сам визначає свою країну і ділиться лише нею. Нічого точнішого не зберігається.",
  "No countries yet": "Країн поки немає",
  "Your country:": "Твоя країна:",
- "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "коли Blacktop World увімкнено, твій телефон визначає, у якій країні він перебуває, за останньою відомою позицією і надсилає на наш сервер лише цю країну, щоб глобус світився там, де є акаунти, і показував, скільки їх у кожній країні. Координати для цього не надсилаються, ніхто не може дізнатися твою країну, і її видаляють, коли ти вимикаєш Blacktop World або спалюєш акаунт."
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "коли Blacktop World увімкнено, твій телефон визначає, у якій країні він перебуває, за останньою відомою позицією і надсилає на наш сервер лише цю країну, щоб глобус світився там, де є акаунти, і показував, скільки їх у кожній країні. Координати для цього не надсилаються, ніхто не може дізнатися твою країну, і її видаляють, коли ти вимикаєш Blacktop World або спалюєш акаунт.",
+ "{0} people": "Людей: {0}",
+ "1 person": "1 людина",
+ "People by country": "Люди за країнами"
 }

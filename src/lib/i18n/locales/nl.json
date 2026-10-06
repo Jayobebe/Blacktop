@@ -2656,7 +2656,6 @@
  "{0} stay until you delete them.": "{0} blijven tot je ze verwijdert.",
  "{0} stays in your garage. Show the code again when they're ready.": "{0} blijft in je garage. Laat de code opnieuw zien als ze klaar zijn.",
  "{0} too short, not saved": "{0} te kort, niet opgeslagen",
- "{0} total burners": "{0} burners in totaal",
  "{0} tracks": "{0} nummers",
  "{0} tracks queued": "{0} nummers in de wachtrij",
  "{0} updated": "{0} bijgewerkt",
@@ -4336,9 +4335,11 @@
  "{0} needs a stop": "{0} heeft een stop nodig",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dit is het bonnetje, dat bij elk item wordt bewaard. Sla het altijd op als afbeelding met de knop Bewaren.",
  "Drag & zoom": "Slepen & zoomen",
- "Burners by country": "Burners per land",
  "Each phone works out its own country and shares only that. Nothing finer is kept.": "Elke telefoon bepaalt zelf zijn land en deelt alleen dat. Niets nauwkeurigers wordt bewaard.",
  "No countries yet": "Nog geen landen",
  "Your country:": "Jouw land:",
- "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "met Blacktop World aan bepaalt je telefoon uit zijn laatst bekende positie in welk land hij is en stuurt alleen dat land naar onze server, zodat de wereldbol oplicht waar accounts zijn en toont hoeveel elk land er heeft. Hiervoor worden geen coördinaten verstuurd, niemand kan jouw land opzoeken, en het wordt verwijderd wanneer je Blacktop World uitzet of je account verbrandt."
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "met Blacktop World aan bepaalt je telefoon uit zijn laatst bekende positie in welk land hij is en stuurt alleen dat land naar onze server, zodat de wereldbol oplicht waar accounts zijn en toont hoeveel elk land er heeft. Hiervoor worden geen coördinaten verstuurd, niemand kan jouw land opzoeken, en het wordt verwijderd wanneer je Blacktop World uitzet of je account verbrandt.",
+ "{0} people": "{0} mensen",
+ "1 person": "1 persoon",
+ "People by country": "Mensen per land"
 }

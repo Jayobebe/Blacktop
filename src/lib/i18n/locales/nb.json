@@ -2656,7 +2656,6 @@
  "{0} stay until you delete them.": "{0} blir til du sletter dem.",
  "{0} stays in your garage. Show the code again when they're ready.": "{0} blir i garasjen din. Vis koden igjen når de er klare.",
  "{0} too short, not saved": "{0} for kort, ikke lagret",
- "{0} total burners": "{0} brennere totalt",
  "{0} tracks": "{0} låter",
  "{0} tracks queued": "{0} låter i kø",
  "{0} updated": "{0} oppdatert",
@@ -4336,9 +4335,11 @@
  "{0} needs a stop": "{0} trenger en stopp",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dette er kvitteringen, som følger hver oppføring. Lagre den som bilde når som helst med knappen Lagre.",
  "Drag & zoom": "Dra & zoom",
- "Burners by country": "Brennere etter land",
  "Each phone works out its own country and shares only that. Nothing finer is kept.": "Hver telefon finner sitt eget land og deler bare det. Ingenting mer nøyaktig lagres.",
  "No countries yet": "Ingen land ennå",
  "Your country:": "Landet ditt:",
- "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "med Blacktop World på finner telefonen din ut hvilket land den er i ut fra sin sist kjente posisjon og sender bare det landet til serveren vår, slik at globusen kan lyse der det finnes kontoer og vise hvor mange hvert land har. Ingen koordinater sendes for dette, ingen kan slå opp landet ditt, og det fjernes når du slår av Blacktop World eller brenner kontoen din."
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "med Blacktop World på finner telefonen din ut hvilket land den er i ut fra sin sist kjente posisjon og sender bare det landet til serveren vår, slik at globusen kan lyse der det finnes kontoer og vise hvor mange hvert land har. Ingen koordinater sendes for dette, ingen kan slå opp landet ditt, og det fjernes når du slår av Blacktop World eller brenner kontoen din.",
+ "{0} people": "{0} personer",
+ "1 person": "1 person",
+ "People by country": "Personer etter land"
 }

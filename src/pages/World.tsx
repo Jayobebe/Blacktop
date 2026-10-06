@@ -155,7 +155,7 @@ export default function World() {
     [demoEnabled, byCountry, lights],
   );
   const [showCountries, setShowCountries] = useState(false);
-  const { data: totalBurners = 0 } = useQuery({
+  const { data: totalPeople = 0 } = useQuery({
     queryKey: ['profile-count'],
     queryFn: async () => {
       const { data } = await supabase.rpc('profile_count');
@@ -165,7 +165,7 @@ export default function World() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
+  const displayedActiveCount = demoEnabled ? demoActiveRiders : totalPeople;
 
   const openLandmark = (id: string) => {
     // Landmarks are drawn on the globe's canvas, not buttons, so they don't get the app's click by themselves.
@@ -269,7 +269,7 @@ export default function World() {
             type="button"
             disabled={!countryList}
             onClick={() => setShowCountries(true)}
-            aria-label={tr("Burners by country")}
+            aria-label={tr("People by country")}
             className={cn('glove-hit flex items-center gap-2 px-2 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]', countryList && globeScale <= 1.2 && 'pointer-events-auto pressable')}
           >
             <span
@@ -279,7 +279,7 @@ export default function World() {
                 : { backgroundColor: '#f87171', boxShadow: '0 0 6px #f87171cc' }}
             />
             <span className="text-[9px] tracking-[0.15em] uppercase text-white/60">
-              {tr("{0} total burners", [displayedActiveCount.toLocaleString()])}
+              {displayedActiveCount === 1 ? tr("1 person") : tr("{0} people", [displayedActiveCount.toLocaleString()])}
             </span>
             {countryList && <ChevronDown className="w-3 h-3 text-white/50" />}
           </button>
@@ -358,7 +358,7 @@ export default function World() {
       <Dialog open={showCountries} onOpenChange={setShowCountries}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{tr("Burners by country")}</DialogTitle>
+            <DialogTitle>{tr("People by country")}</DialogTitle>
             <DialogDescription>{tr("Each phone works out its own country and shares only that. Nothing finer is kept.")}</DialogDescription>
           </DialogHeader>
           {countryList?.length ? (

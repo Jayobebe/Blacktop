@@ -2656,7 +2656,6 @@
  "{0} stay until you delete them.": "{0} tetap ada sampai Anda menghapusnya.",
  "{0} stays in your garage. Show the code again when they're ready.": "{0} tetap di garasi Anda. Tunjukkan kodenya lagi saat mereka siap.",
  "{0} too short, not saved": "{0} terlalu pendek, tidak disimpan",
- "{0} total burners": "{0} pembakar total",
  "{0} tracks": "{0} lagu",
  "{0} tracks queued": "{0} lagu dalam antrean",
  "{0} updated": "{0} diperbarui",
@@ -4336,9 +4335,11 @@
  "{0} needs a stop": "{0} perlu berhenti",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Ini struknya, disimpan bersama setiap entri. Simpan sebagai gambar kapan saja dengan tombol Simpan.",
  "Drag & zoom": "Seret & perbesar",
- "Burners by country": "Pembakar per negara",
  "Each phone works out its own country and shares only that. Nothing finer is kept.": "Setiap ponsel menentukan negaranya sendiri dan hanya membagikan itu. Tidak ada yang lebih rinci yang disimpan.",
  "No countries yet": "Belum ada negara",
  "Your country:": "Negaramu:",
- "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "dengan Blacktop World aktif, ponselmu menentukan di negara mana ia berada dari posisi terakhir yang diketahui dan hanya mengirim negara itu ke server kami, agar globe bersinar di tempat akun berada dan menampilkan jumlah akun tiap negara. Tidak ada koordinat yang dikirim untuk ini, tidak ada yang bisa mencari negaramu, dan data ini dihapus saat kamu mematikan Blacktop World atau membakar akunmu."
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "dengan Blacktop World aktif, ponselmu menentukan di negara mana ia berada dari posisi terakhir yang diketahui dan hanya mengirim negara itu ke server kami, agar globe bersinar di tempat akun berada dan menampilkan jumlah akun tiap negara. Tidak ada koordinat yang dikirim untuk ini, tidak ada yang bisa mencari negaramu, dan data ini dihapus saat kamu mematikan Blacktop World atau membakar akunmu.",
+ "{0} people": "{0} orang",
+ "1 person": "1 orang",
+ "People by country": "Orang per negara"
 }

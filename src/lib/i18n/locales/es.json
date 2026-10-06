@@ -2666,7 +2666,6 @@
  "{0} stay until you delete them.": "Las {0} se quedan hasta que las borres.",
  "{0} stays in your garage. Show the code again when they're ready.": "{0} se queda en tu garaje. Vuelve a mostrar el código cuando estén listos.",
  "{0} too short, not saved": "{0} demasiado corto, no guardado",
- "{0} total burners": "{0} quemadores en total",
  "{0} tracks": "{0} pistas",
  "{0} tracks queued": "{0} pistas en cola",
  "{0} updated": "{0} actualizado",
@@ -4336,9 +4335,11 @@
  "{0} needs a stop": "{0} necesita una parada",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Este es el recibo, que se guarda con cada entrada. Guárdalo como imagen cuando quieras con su botón Guardar.",
  "Drag & zoom": "Arrastra y haz zoom",
- "Burners by country": "Quemadores por país",
  "Each phone works out its own country and shares only that. Nothing finer is kept.": "Cada teléfono averigua su propio país y solo comparte eso. No se guarda nada más preciso.",
  "No countries yet": "Aún no hay países",
  "Your country:": "Tu país:",
- "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "con Blacktop World activado, tu teléfono averigua en qué país está a partir de su última posición conocida y envía solo ese país a nuestro servidor, para que el globo brille donde hay cuentas y muestre cuántas tiene cada país. No se envían coordenadas para esto, nadie puede consultar tu país, y se elimina cuando desactivas Blacktop World o quemas tu cuenta."
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "con Blacktop World activado, tu teléfono averigua en qué país está a partir de su última posición conocida y envía solo ese país a nuestro servidor, para que el globo brille donde hay cuentas y muestre cuántas tiene cada país. No se envían coordenadas para esto, nadie puede consultar tu país, y se elimina cuando desactivas Blacktop World o quemas tu cuenta.",
+ "{0} people": "{0} personas",
+ "1 person": "1 persona",
+ "People by country": "Personas por país"
 }
