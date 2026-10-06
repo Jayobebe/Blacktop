@@ -292,20 +292,34 @@ export function endWarp() {
   if (warp && warp.endAt === null) warp.endAt = performance.now();
 }
 
+/** Where the rider last tapped, and when. */
+let tap = { x: 0, y: 0, at: -1e9 };
+
+/**
+ * A quick warp from the last tap, for a change of screen that isn't a change
+ * of address (the map opening over Home). The caller says when the new screen
+ * is up (`endWarp`).
+ */
+export function warpFromTap() {
+  if (typeof window === 'undefined') return false;
+  const recent = performance.now() - tap.at < 1500;
+  return startWarp(recent ? tap.x : window.innerWidth / 2, recent ? tap.y : window.innerHeight / 2, { quick: true, instant: true });
+}
+
 let installed = false;
 /**
  * Every page change gets the quick warp, from where the rider last tapped
  * (the middle of the screen when it wasn't a tap: the phone's Back). It hooks
  * the browser's history, which the router writes to before it redraws, so the
  * old page is still there to copy. Redirects (replace) and changes that keep
- * the same page (a query, a hash, history state) are left alone, and so is a
+ * the same page (a query, a hash, history state) are left alone (but not
+ * World replacing itself with Home, which is a page change), and so is a
  * change made while a warp is already running (Home's globe). Home and World
  * swap at the unhurried pace.
  */
 export function installWarpNavigation() {
   if (installed || typeof window === 'undefined') return;
   installed = true;
-  let tap = { x: window.innerWidth / 2, y: window.innerHeight / 2, at: 0 };
   window.addEventListener('pointerdown', (e) => (tap = { x: e.clientX, y: e.clientY, at: performance.now() }), { capture: true, passive: true });
   let here = window.location.pathname;
   const go = (to: string, tapped: boolean) => {
@@ -328,7 +342,12 @@ export function installWarpNavigation() {
   const replace = window.history.replaceState.bind(window.history);
   window.history.replaceState = (data: unknown, unused: string, url?: string | URL | null) => {
     try {
-      if (url != null) here = new URL(String(url), window.location.href).pathname;
+      if (url != null) {
+        const to = new URL(String(url), window.location.href).pathname;
+        // Blacktop World hands back to Home by replacing itself, and that one is a page change like any other.
+        if (here === '/world' && to === '/') go(to, true);
+        else here = to;
+      }
     } catch {
       // As above.
     }

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { MapDestination } from '../types';
+import { endWarp, warpFromTap } from '@/lib/warp';
 
 interface MapOverlayState {
   isOpen: boolean;
@@ -33,7 +34,13 @@ function emitChange() {
   listeners.forEach((l) => l());
 }
 
+/** The map coming up over a page, or going away, is a page change to the rider: the quick pixel warp, let go once the screen has changed. */
+function warpOver() {
+  if (warpFromTap()) setTimeout(endWarp, 120);
+}
+
 export function openBlacktopMap(destination?: MapDestination) {
+  if (!overlayState.isOpen) warpOver();
   // If a destination is provided, update it; otherwise keep the existing one.
   overlayState = {
     ...overlayState,
@@ -48,6 +55,7 @@ export const isBlacktopMapOpen = () => overlayState.isOpen;
 // Closes the map but intentionally keeps the destination so the next open
 // (e.g. returning from active ride) restores the same route automatically.
 export function closeBlacktopMap() {
+  if (overlayState.isOpen) warpOver();
   overlayState = { ...overlayState, isOpen: false };
   emitChange();
 }
