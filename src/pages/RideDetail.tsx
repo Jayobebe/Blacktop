@@ -20,6 +20,7 @@ import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { formatLap } from '@/features/track';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 import { usePeaksHidden } from '@/features/ride';
 
 export default function RideDetail() {
@@ -129,6 +130,12 @@ export default function RideDetail() {
 
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
+      {/* First-time tip */}
+      <PageTips
+        page="ride-detail"
+        when={!showFlyover}
+        tips={[{ target: '[data-tip="ride-receipt"]', text: tr("This is the receipt, kept with every entry. Save it as a picture any time with its Save button.") }]}
+      />
       {/* Header */}
       <PageHeader
         title={ride.name || formatDate(ride.startedAt)}
@@ -158,7 +165,7 @@ export default function RideDetail() {
             (no separate rendered copy is cached - see burnAllData/burnGarage,
             which already cover everything this receipt reads). Downloadable
             here any time via its own Save button. */}
-        <div className="mb-4 animate-fade-in">
+        <div data-tip="ride-receipt" className="mb-4 animate-fade-in">
           <RideSummary
             variant="embedded"
             members={[]}

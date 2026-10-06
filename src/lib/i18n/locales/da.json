@@ -4334,5 +4334,6 @@
  "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Du går med som Fører. Skal du med som passager i stedet? Gå tilbage, og skift Deltag i konvoj-feltet til Passager.",
  "Tap a reaction to signal the whole convoy without talking.": "Tryk på en reaktion for at give hele konvojen et signal uden at tale.",
  "{0} waved": "{0} vinkede",
- "{0} needs a stop": "{0} har brug for et stop"
+ "{0} needs a stop": "{0} har brug for et stop",
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dette er kvitteringen, som gemmes med hver post. Gem den som billede når som helst med knappen Gem."
 }

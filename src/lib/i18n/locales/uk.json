@@ -4334,5 +4334,6 @@
  "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Ти приєднуєшся як Водій. Їдеш пасажиром? Повернися і перемкни плитку Приєднатися до колони на Пасажир.",
  "Tap a reaction to signal the whole convoy without talking.": "Торкнися реакції, щоб подати знак усьому конвою без слів.",
  "{0} waved": "{0} махає",
- "{0} needs a stop": "{0} потребує зупинки"
+ "{0} needs a stop": "{0} потребує зупинки",
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Це чек, який зберігається з кожним записом. Збережи його як зображення будь-коли кнопкою Зберегти."
 }

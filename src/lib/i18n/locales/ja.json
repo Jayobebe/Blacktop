@@ -4334,5 +4334,6 @@
  "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "運転者として参加します。同乗者として参加する場合は、戻って「コンボイに参加」タイルを「同乗者」に切り替えてください。",
  "Tap a reaction to signal the whole convoy without talking.": "リアクションをタップすると、話さずにコンボイ全体へ合図を送れます。",
  "{0} waved": "{0}が手を振りました",
- "{0} needs a stop": "{0}が休憩を希望しています"
+ "{0} needs a stop": "{0}が休憩を希望しています",
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "これがレシートで、すべての記録に付いています。「保存」ボタンでいつでも画像として保存できます。"
 }

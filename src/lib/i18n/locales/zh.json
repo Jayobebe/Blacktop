@@ -4334,5 +4334,6 @@
  "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "你以驾驶者身份加入。要作为乘客同行？请返回并把“加入车队”卡片切换为“乘客”。",
  "Tap a reaction to signal the whole convoy without talking.": "点按一个表情，无需说话就能向整个车队发出信号。",
  "{0} waved": "{0} 挥了挥手",
- "{0} needs a stop": "{0} 需要停一下"
+ "{0} needs a stop": "{0} 需要停一下",
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "这是小票，每条记录都会保留一张。随时可以用它的“保存”按钮保存为图片。"
 }
