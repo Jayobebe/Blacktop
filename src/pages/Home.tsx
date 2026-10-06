@@ -14,7 +14,6 @@ const HomeGlobe = lazy(() => import('@/components/HomeGlobe').then((m) => ({ def
 const EnterpriseWorkspaceCard = lazy(() => import('@/features/enterprise/components/EnterpriseWorkspaceCard').then((m) => ({ default: m.EnterpriseWorkspaceCard })));
 const EnterpriseDoorway = lazy(() => import('@/features/enterprise/components/EnterpriseDoorway').then((m) => ({ default: m.EnterpriseDoorway })));
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
-import { PermissionsPrompt, usePermissionsPrompt } from '@/features/permissions/PermissionsPrompt';
 import { openBlacktopMap, clearMapDestination, useGuidanceActive } from '@/features/map';
 import { SafetyStatusCard } from '@/features/rescue';
 import { AlarmButton } from '@/features/alarm';
@@ -39,7 +38,6 @@ export default function Home() {
   const { settings } = useSettings();
   const exp = useExperience();
   const [isExploding, setIsExploding] = useState(false);
-  const { show: showPermsPrompt, dismiss: dismissPermsPrompt } = usePermissionsPrompt();
 
   // The deck: the consumer home, then each mounted enterprise workspace, then
   // the Doorway (scan / enter a code). Tracked by key so mounting or removing a
@@ -479,7 +477,6 @@ export default function Home() {
         }
       }}
     >
-      {showPermsPrompt && <PermissionsPrompt onComplete={dismissPermsPrompt} />}
 
       {/* Swipe deck: the consumer home (with its header and nav), then each
           enterprise workspace and the Doorway, which fill the whole screen.
