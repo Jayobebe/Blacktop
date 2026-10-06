@@ -26,8 +26,7 @@ import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
 import { PageTips } from '@/features/guide';
-import { startWarp } from '@/lib/warp';
-import { WARP_SWITCH_MS } from '@/components/WarpOverlay';
+import { WARP_SWITCH_MS, startWarp } from '@/lib/warp';
 import { isThermal } from '@/lib/thermal';
 
 import { tr } from '@/lib/i18n';

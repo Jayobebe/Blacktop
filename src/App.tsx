@@ -9,7 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { PushBridge, PushNudge } from "@/features/notifications";
-import { WarpOverlay } from "@/components/WarpOverlay";
+import { endWarp, installWarpNavigation, warpActive } from "@/lib/warp";
 import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
 import { MaintenanceNotifier } from "@/features/garage";
 import { EnterpriseSync } from "@/features/enterprise/components/EnterpriseSync";
@@ -49,6 +49,8 @@ installDemoGuard();
 // iOS forgets motion access when the app closes: the first tap re-grants it.
 installMotionRegrant();
 installErrorLog();
+// Before the router mounts: it has to hear Back first.
+installWarpNavigation();
 // Features shipped ahead of their migration stay hidden until the server has them.
 probeServerCaps();
 
@@ -118,10 +120,24 @@ const BlacktopMapOverlay = lazyPage(() =>
  * (no exit) so the outgoing page unmounts immediately and ride/voice hooks
  * never run twice.
  */
+/**
+ * Inside the routes' Suspense, so its effect runs only once the page itself has
+ * loaded and drawn: that's what lets the warp go (after a beat for layout).
+ */
+function RouteReady() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    // Not cancelled: the warp must be let go even if this is torn down straight away.
+    window.setTimeout(endWarp, 70);
+  }, [pathname]);
+  return null;
+}
+
 function PageTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navType = useNavigationType();
-  const animation = navType === "POP" ? "page-in-back" : navType === "REPLACE" ? "page-in-fade" : "page-in-forward";
+  // A page change under the pixel warp (lib/warp) arrives already in place: no slide of its own.
+  const animation = warpActive() ? "" : navType === "POP" ? "page-in-back" : navType === "REPLACE" ? "page-in-fade" : "page-in-forward";
   return (
     <div key={location.pathname} className={`${animation} page-safe-x`}>
       {children}
@@ -221,6 +237,7 @@ function AppRoutes() {
         <Route path="/enterprise/demo/:tier" element={<EnterpriseDemo />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>
+      <RouteReady />
       </Suspense>
       </PageTransition>
     );
@@ -276,6 +293,7 @@ function AppRoutes() {
       <Route path="/enterprise/demo/:tier" element={<EnterpriseDemo />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    <RouteReady />
     </Suspense>
     </PageTransition>
     </>
@@ -311,7 +329,6 @@ const App = () => {
                 <NativeLinks />
                 <PushBridge />
                 <PushNudge />
-                <WarpOverlay />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />
                 {/* Finishes the burn flames after the post-burn reload. */}
