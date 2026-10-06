@@ -515,8 +515,24 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
 
     let activeTouches = 0;
 
+    /**
+     * Is this point on the globe itself (at its size right now, zoom included)
+     * or on a landmark's chip, which can stand out past its edge? Only those
+     * take hold of a touch: everywhere else in the canvas's box belongs to the
+     * page, so the page scrolls from the corners and from beside a small globe.
+     */
+    const onGlobe = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+      const r = (Math.min(rect.width, rect.height) / 2 - 10) * scaleRef.current;
+      if (Math.hypot(px - rect.width / 2, py - rect.height / 2) <= r + 8) return true;
+      return hitsRef.current.some((hr) => px >= hr.x - 4 && px <= hr.x + hr.w + 4 && py >= hr.y - 4 && py <= hr.y + hr.h + 4);
+    };
+
     const onDown = (e: PointerEvent) => {
       if (e.pointerType === 'touch' && activeTouches >= 2) return;
+      if (!onGlobe(e.clientX, e.clientY)) return;
       downPtRef.current = { x: e.clientX, y: e.clientY };
       isDragRef.current = true;
       lastPtrRef.current = { x: e.clientX, y: e.clientY };
@@ -553,11 +569,19 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
 
 
     const onWheel = (e: WheelEvent) => {
+      // Off the globe the wheel scrolls the page.
+      if (!onGlobe(e.clientX, e.clientY)) return;
       e.preventDefault();
       scaleRef.current = Math.max(0.5, Math.min(3.0, scaleRef.current * (e.deltaY > 0 ? 0.93 : 1.07)));
     };
     const onTouchStart = (e: TouchEvent) => {
       activeTouches = e.touches.length;
+      // A finger on the globe keeps the page still (it turns the globe); one beside it scrolls the page.
+      if (Array.from(e.touches).some((t) => onGlobe(t.clientX, t.clientY))) {
+        if (e.cancelable) e.preventDefault();
+      } else {
+        return;
+      }
       if (e.touches.length >= 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -567,8 +591,8 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
       }
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length >= 2) {
-        e.preventDefault();
+      if (e.touches.length >= 2 && pinchRef.current > 0) {
+        if (e.cancelable) e.preventDefault();
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         const dist = Math.hypot(dx, dy);
@@ -595,7 +619,7 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
     canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointercancel', onUp);
     canvas.addEventListener('wheel', onWheel, { passive: false });
-    canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
     canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     canvas.addEventListener('touchend', onTouchEnd, { passive: true });
     canvas.addEventListener('touchcancel', onTouchEnd, { passive: true });
@@ -616,5 +640,5 @@ export function WorldGlobe({ accentColor, landmarks, onLandmarkSelect, countryLi
     };
   }, [draw]);
 
-  return <canvas ref={canvasRef} className={className} style={{ touchAction: 'none' }} />;
+  return <canvas ref={canvasRef} className={className} style={{ touchAction: 'pan-y' }} />;
 }
