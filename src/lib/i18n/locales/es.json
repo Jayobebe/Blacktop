@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Añade aquí tu vehículo para llevar su kilometraje y mantenimiento.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick vigila tu mantenimiento y te dice lo que toca.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "El libro de ruta guarda cada salida y cada revisión de este vehículo. ¿Lo vendes? El traspaso, al final, pasa el historial al nuevo dueño.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dos pestañas: los datos de este vehículo y su mantenimiento, que te avisa cuando toca una revisión."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dos pestañas: los datos de este vehículo y su mantenimiento, que te avisa cuando toca una revisión.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Busca un circuito para cargar su vuelta. ¿No aparece? Da una vuelta y Blacktop construye el trazado con tu GPS.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Busca un circuito para cargar su vuelta. ¿No aparece? Recorre una vuelta a pie y Blacktop construye el trazado con tu GPS.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "¿Corres con equipo de boxes? Escanea aquí su QR, o enséñales el tuyo con el botón QR de arriba.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "¿Eres el equipo de boxes de un piloto? Escanea aquí su QR, o elige un circuito y enséñale el tuyo.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Toca Ponte listo, ve a la parrilla y luego toca Estoy en posición. El cronometraje empieza cuando sales.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Esto muestra un QR para que tu piloto lo escanee. Le envía este circuito y enlaza vuestros dos teléfonos."
 }

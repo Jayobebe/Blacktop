@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "여기에서 탈것을 추가해 주행거리와 정비를 기록하세요.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick이 정비를 살피고 때가 된 것을 알려 줍니다.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "로그북에는 이 탈것의 모든 주행과 정비가 담깁니다. 판매하나요? 맨 뒤의 인계로 이력을 새 주인에게 넘길 수 있습니다.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "탭은 두 개: 이 탈것의 기록, 그리고 정비 시기가 되면 알려 주는 정비입니다."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "탭은 두 개: 이 탈것의 기록, 그리고 정비 시기가 되면 알려 주는 정비입니다.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "서킷을 검색해 랩을 불러오세요. 목록에 없나요? 한 바퀴 달리면 Blacktop이 GPS로 트랙을 만듭니다.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "서킷을 검색해 랩을 불러오세요. 목록에 없나요? 한 바퀴 걸으면 Blacktop이 GPS로 트랙을 만듭니다.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "피트 크루와 함께 달리나요? 여기서 상대의 QR을 스캔하거나, 위의 QR 버튼으로 내 QR을 보여 주세요.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "레이서의 피트 크루인가요? 여기서 상대의 QR을 스캔하거나, 트랙을 골라 내 QR을 보여 주세요.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "준비 완료을(를) 탭하고 그리드로 간 다음 위치에 섰습니다을(를) 탭하세요. 출발하면 계측이 시작됩니다.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "레이서가 스캔할 QR을 보여 줍니다. 이 트랙을 상대에게 보내고 두 휴대폰을 연결합니다."
 }

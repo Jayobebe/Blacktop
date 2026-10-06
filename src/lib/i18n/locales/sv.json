@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Lägg till ditt fordon här för att hålla koll på mätarställning och underhåll.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick håller koll på ditt underhåll och säger till när något är dags.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Loggboken innehåller varje tur och varje service för det här fordonet. Säljer du det? Överlämningen längst bak ger historiken vidare till den nya ägaren.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Två flikar: fordonets siffror och dess underhåll, som varnar dig när en service är dags."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Två flikar: fordonets siffror och dess underhåll, som varnar dig när en service är dags.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Sök efter en bana för att ladda dess varv. Finns den inte med? Kör ett varv så bygger Blacktop banan från din GPS.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Sök efter en bana för att ladda dess varv. Finns den inte med? Gå ett varv så bygger Blacktop banan från din GPS.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Kör du med depåteam? Skanna deras QR här, eller visa din med QR-knappen högst upp.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Är du depåteam åt en förare? Skanna deras QR här, eller välj en bana och visa din.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Tryck på Gör dig redo, kör till startgriden och tryck sedan på Jag är i position. Tidtagningen startar när du drar iväg.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Det här visar en QR som din förare kan skanna. Den skickar den här banan till dem och kopplar ihop era två telefoner."
 }

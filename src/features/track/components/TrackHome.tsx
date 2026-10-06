@@ -19,6 +19,7 @@ import { TrackBoard } from './TrackBoard';
 import { hasBoard } from '../lib/trackRecords';
 import { useServerCap } from '@/lib/serverCaps';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 
 /**
  * Track Day home, the same for the racer and the pit crew: search (venues and
@@ -110,6 +111,41 @@ export function TrackHome({
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom gap-4">
       <PageHeader title={tr("Track Day")} subtitle={role === 'racer' ? tr("Racer") : tr("Pit crew")} backTo="/" right={headerRight} />
+      {/* First-time tips, worded for the side the rider is on. The main button only exists once a track is picked, so its tip is its own set. */}
+      <PageTips
+        page="track"
+        when={!scanning}
+        tips={[
+          {
+            target: '[data-tip="track-search"]',
+            text:
+              role === 'racer'
+                ? tr("Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.")
+                : tr("Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS."),
+          },
+          {
+            target: '[data-tip="track-scan"]',
+            text:
+              role === 'racer'
+                ? tr("Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.")
+                : tr("Crewing for a racer? Scan their QR here, or pick a track and show them yours."),
+          },
+        ]}
+      />
+      <PageTips
+        page="track-selected"
+        scroll
+        when={!scanning && !!current}
+        tips={[
+          {
+            target: '[data-tip="track-primary"]',
+            text:
+              role === 'racer'
+                ? tr("Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.")
+                : tr("This shows a QR for your racer to scan. It sends them this track and links your two phones."),
+          },
+        ]}
+      />
 
       <TrackSearch tracks={tracks} onPickTrack={pick} onPickCircuit={importCircuit} loadingId={loadingCircuit} />
 
@@ -120,6 +156,7 @@ export function TrackHome({
         <Button
           variant="outline"
           className="h-12 gap-2"
+          data-tip="track-scan"
           disabled={locked}
           onClick={() => {
             if (demoBlocked()) return;
@@ -328,7 +365,7 @@ export function SelectedTrack({
           <QrCode className="w-4 h-4 shrink-0" />
         </button>
       )}
-      <Button className="w-full h-14 text-lg font-bold gap-2" onClick={() => primary.onClick(track)}>
+      <Button data-tip="track-primary" className="w-full h-14 text-lg font-bold gap-2" onClick={() => primary.onClick(track)}>
         {primary.icon}{" "}{primary.label}
       </Button>
       <div className="flex gap-2">

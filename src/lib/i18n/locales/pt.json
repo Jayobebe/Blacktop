@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Adiciona aqui o teu veículo para registar a quilometragem e a manutenção.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "O Mecha-Nick vigia a tua manutenção e diz-te o que está na altura.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "O livro de bordo guarda cada viagem e cada revisão deste veículo. Vais vendê-lo? A passagem, no fim, entrega o histórico ao novo dono.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dois separadores: os dados deste veículo e a manutenção, que te avisa quando uma revisão está na altura."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dois separadores: os dados deste veículo e a manutenção, que te avisa quando uma revisão está na altura.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Procura um circuito para carregar a sua volta. Não está na lista? Dá uma volta e o Blacktop constrói a pista com o teu GPS.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Procura um circuito para carregar a sua volta. Não está na lista? Dá uma volta a pé e o Blacktop constrói a pista com o teu GPS.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Corres com equipa de boxes? Lê aqui o QR deles, ou mostra-lhes o teu com o botão QR no topo.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "És a equipa de boxes de um piloto? Lê aqui o QR dele, ou escolhe uma pista e mostra-lhe o teu.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Toca em Ficar pronto, vai para a grelha e depois toca em Estou em posição. A cronometragem começa quando arrancas.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Isto mostra um QR para o teu piloto ler. Envia-lhe esta pista e liga os vossos dois telemóveis."
 }

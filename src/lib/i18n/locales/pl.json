@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Dodaj tu swój pojazd, aby prowadzić przebieg i serwis.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick pilnuje twojego serwisu i mówi, co jest do zrobienia.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Dziennik zawiera każdą jazdę i każdy serwis tego pojazdu. Sprzedajesz go? Przekazanie na końcu oddaje historię nowemu właścicielowi.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dwie karty: statystyki tego pojazdu i jego serwis, który ostrzega, gdy zbliża się przegląd."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dwie karty: statystyki tego pojazdu i jego serwis, który ostrzega, gdy zbliża się przegląd.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Wyszukaj tor, aby wczytać jego okrążenie. Nie ma go na liście? Przejedź okrążenie, a Blacktop zbuduje tor z twojego GPS.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Wyszukaj tor, aby wczytać jego okrążenie. Nie ma go na liście? Przejdź okrążenie pieszo, a Blacktop zbuduje tor z twojego GPS.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Ścigasz się z ekipą w boksie? Zeskanuj tu ich kod QR albo pokaż im swój przyciskiem QR u góry.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Jesteś w boksie dla kierowcy? Zeskanuj tu jego kod QR albo wybierz tor i pokaż mu swój.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Dotknij Zgłoś gotowość, jedź na pola startowe, a potem dotknij Jestem na pozycji. Pomiar czasu rusza, gdy wystartujesz.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "To pokazuje kod QR do zeskanowania przez twojego kierowcę. Wysyła mu ten tor i łączy wasze dwa telefony."
 }

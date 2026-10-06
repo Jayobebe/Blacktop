@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Legg til kjøretøyet ditt her for å holde orden på kilometerstand og vedlikehold.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick følger med på vedlikeholdet ditt og sier fra om hva som er på tide.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Loggboken inneholder hver tur og hver service for dette kjøretøyet. Selger du det? Overleveringen bakerst gir historikken videre til den nye eieren.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "To faner: kjøretøyets tall og vedlikeholdet, som varsler deg når en service er på tide."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "To faner: kjøretøyets tall og vedlikeholdet, som varsler deg når en service er på tide.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Søk etter en bane for å laste inn runden. Ikke på listen? Kjør en runde, så bygger Blacktop banen fra GPS-en din.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Søk etter en bane for å laste inn runden. Ikke på listen? Gå en runde, så bygger Blacktop banen fra GPS-en din.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Kjører du med depotmannskap? Skann QR-koden deres her, eller vis dem din med QR-knappen øverst.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Er du depotmannskap for en fører? Skann QR-koden deres her, eller velg en bane og vis dem din.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Trykk Gjør klar, kjør til startoppstillingen, og trykk så Jeg er i posisjon. Tidtakingen starter når du setter av gårde.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Dette viser en QR som føreren din kan skanne. Den sender dem denne banen og kobler de to telefonene deres sammen."
 }

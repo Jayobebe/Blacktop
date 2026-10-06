@@ -92,6 +92,7 @@ export function TrackSearch({
         placeholder={tr("Search tracks (e.g. Brands Hatch Indy)")}
         className="pl-9 pr-9 h-12 rounded-2xl"
         aria-label={tr("Search tracks")}
+        data-tip="track-search"
       />
       {q && (
         <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setQ('')} aria-label={tr("Clear search")}>

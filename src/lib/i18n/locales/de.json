@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Füge hier dein Fahrzeug hinzu, um Kilometerstand und Wartung festzuhalten.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick behält deine Wartung im Blick und sagt dir, was fällig ist.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Das Fahrtenbuch enthält jede Fahrt und jeden Service dieses Fahrzeugs. Du verkaufst es? Die Übergabe ganz hinten reicht die Historie an den neuen Besitzer weiter.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Zwei Reiter: die Werte dieses Fahrzeugs und seine Wartung, die dich warnt, wenn ein Service fällig ist."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Zwei Reiter: die Werte dieses Fahrzeugs und seine Wartung, die dich warnt, wenn ein Service fällig ist.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Suche eine Strecke, um ihre Runde zu laden. Nicht dabei? Fahr eine Runde, und Blacktop baut die Strecke aus deinem GPS.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Suche eine Strecke, um ihre Runde zu laden. Nicht dabei? Geh eine Runde ab, und Blacktop baut die Strecke aus deinem GPS.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Fährst du mit Boxencrew? Scanne hier deren QR oder zeig ihnen deinen über den QR-Knopf oben.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Bist du Boxencrew für einen Fahrer? Scanne hier dessen QR oder wähle eine Strecke und zeig ihm deinen.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Tippe auf Bereit machen, fahr in die Startaufstellung und tippe dann auf Ich bin in Position. Die Zeitnahme beginnt, wenn du losfährst.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Das zeigt einen QR, den dein Fahrer scannen kann. Er schickt ihm diese Strecke und verbindet eure beiden Handys."
 }

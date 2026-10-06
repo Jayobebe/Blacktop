@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Kilometresini ve bakımını tutmak için aracını buraya ekle.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick bakımını takip eder ve zamanı geleni sana söyler.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Kayıt defteri bu aracın her sürüşünü ve her servisini tutar. Satıyor musun? Arkadaki devir, geçmişi yeni sahibine aktarır.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "İki sekme: bu aracın istatistikleri ve servis zamanı geldiğinde seni uyaran bakımı."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "İki sekme: bu aracın istatistikleri ve servis zamanı geldiğinde seni uyaran bakımı.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Turunu yüklemek için bir pist ara. Listede yok mu? Bir tur at, Blacktop pisti GPS'inden oluştursun.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Turunu yüklemek için bir pist ara. Listede yok mu? Bir turu yürü, Blacktop pisti GPS'inden oluştursun.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Pit ekibiyle mi yarışıyorsun? Onların QR'ını burada tara ya da üstteki QR düğmesinden kendininkini göster.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Bir yarışçının pit ekibi misin? Onun QR'ını burada tara ya da bir pist seçip kendininkini göster.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Hazır ol düğmesine dokun, gride git, sonra Yerimdeyim düğmesine dokun. Kalkış yaptığında zamanlama başlar.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Bu, yarışçının taraması için bir QR gösterir. Ona bu pisti gönderir ve iki telefonunuzu bağlar."
 }

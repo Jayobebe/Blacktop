@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Tambahkan kendaraanmu di sini untuk mencatat jarak tempuh dan perawatannya.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick memantau perawatanmu dan memberi tahu apa yang sudah waktunya.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Buku catatan menyimpan setiap perjalanan dan servis kendaraan ini. Mau menjualnya? Serah terima di bagian belakang meneruskan riwayatnya ke pemilik baru.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dua tab: statistik kendaraan ini dan perawatannya, yang mengingatkanmu saat servis sudah waktunya."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dua tab: statistik kendaraan ini dan perawatannya, yang mengingatkanmu saat servis sudah waktunya.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Cari sirkuit untuk memuat lapnya. Tidak ada di daftar? Jalani satu lap dan Blacktop membuat lintasan dari GPS-mu.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Cari sirkuit untuk memuat lapnya. Tidak ada di daftar? Jalan kaki satu lap dan Blacktop membuat lintasan dari GPS-mu.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Balapan dengan kru pit? Pindai QR mereka di sini, atau tunjukkan QR-mu dari tombol QR di atas.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Jadi kru pit untuk pembalap? Pindai QR mereka di sini, atau pilih lintasan dan tunjukkan QR-mu.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Ketuk Bersiap, menuju grid, lalu ketuk Saya sudah di posisi. Pencatatan waktu mulai saat kamu melesat.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Ini menampilkan QR untuk dipindai pembalapmu. QR ini mengirim lintasan ini ke mereka dan menghubungkan kedua ponsel."
 }

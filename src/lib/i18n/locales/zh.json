@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "在这里添加你的车辆，记录里程和保养。",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick 会关注你的保养情况，并告诉你哪些已到期。",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "行车日志记录这辆车的每次骑行和每次保养。要卖车？最后的交接会把历史记录交给新车主。",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "两个标签页：这辆车的数据，以及会在保养到期时提醒你的保养记录。"
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "两个标签页：这辆车的数据，以及会在保养到期时提醒你的保养记录。",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "搜索赛道以载入它的圈线。没有收录？骑一圈，Blacktop 会用你的 GPS 生成赛道。",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "搜索赛道以载入它的圈线。没有收录？步行一圈，Blacktop 会用你的 GPS 生成赛道。",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "和维修站人员一起比赛？在这里扫描他们的二维码，或用顶部的二维码按钮出示你的。",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "为车手做维修站人员？在这里扫描他的二维码，或选好赛道后出示你的。",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "点按准备就绪，前往发车格，然后点按我已就位。起步后开始计时。",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "这里会显示供你的车手扫描的二维码。它会把这条赛道发给对方，并连接你们的两部手机。"
 }

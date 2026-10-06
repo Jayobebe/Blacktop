@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "माइलेज और रखरखाव का हिसाब रखने के लिए अपना वाहन यहाँ जोड़ें।",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick आपके रखरखाव पर नज़र रखता है और बताता है कि क्या बाकी है।",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "लॉगबुक में इस वाहन की हर राइड और हर सर्विस दर्ज है। बेच रहे हैं? पीछे का हैंड-ओवर पूरा इतिहास नए मालिक को सौंप देता है।",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "दो टैब: इस वाहन के आँकड़े, और इसका रखरखाव, जो सर्विस का समय आने पर आपको चेताता है।"
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "दो टैब: इस वाहन के आँकड़े, और इसका रखरखाव, जो सर्विस का समय आने पर आपको चेताता है।",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "किसी सर्किट का लैप लोड करने के लिए उसे खोजें। सूची में नहीं है? एक लैप चलाएँ और Blacktop आपके GPS से ट्रैक बना देगा।",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "किसी सर्किट का लैप लोड करने के लिए उसे खोजें। सूची में नहीं है? एक लैप पैदल चलें और Blacktop आपके GPS से ट्रैक बना देगा।",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "पिट क्रू के साथ रेस कर रहे हैं? उनका QR यहाँ स्कैन करें, या ऊपर के QR बटन से अपना दिखाएँ।",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "किसी रेसर के पिट क्रू हैं? उनका QR यहाँ स्कैन करें, या ट्रैक चुनकर अपना दिखाएँ।",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "तैयार हों पर टैप करें, ग्रिड पर जाएँ, फिर मैं अपनी जगह पर हूँ पर टैप करें। जैसे ही आप निकलते हैं, टाइमिंग शुरू हो जाती है।",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "यह आपके रेसर के स्कैन करने के लिए QR दिखाता है। यह उन्हें यह ट्रैक भेजता है और आपके दोनों फ़ोन जोड़ता है।"
 }

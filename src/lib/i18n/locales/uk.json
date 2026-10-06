@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "Додай сюди свій транспорт, щоб вести пробіг і обслуговування.",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick стежить за обслуговуванням і каже, що вже на часі.",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Журнал містить кожну поїздку і кожне обслуговування цього транспорту. Продаєш? Передача наприкінці віддає історію новому власникові.",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Дві вкладки: статистика цього транспорту і його обслуговування, яке попереджає, коли настає час сервісу."
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Дві вкладки: статистика цього транспорту і його обслуговування, яке попереджає, коли настає час сервісу.",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "Знайди трасу, щоб завантажити її коло. Немає у списку? Проїдь коло, і Blacktop побудує трасу з твого GPS.",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "Знайди трасу, щоб завантажити її коло. Немає у списку? Пройди коло пішки, і Blacktop побудує трасу з твого GPS.",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "Їдеш із командою піт-лейну? Скануй їхній QR тут або покажи їм свій кнопкою QR угорі.",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "Ти в команді піт-лейну для гонщика? Скануй його QR тут або обери трасу і покажи йому свій.",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "Торкнися Стати готовим, їдь на стартову решітку, потім торкнися Я на позиції. Хронометраж починається, коли ти стартуєш.",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Це показує QR, який сканує твій гонщик. Він надсилає йому цю трасу і з'єднує ваші два телефони."
 }

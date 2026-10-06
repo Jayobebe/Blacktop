@@ -4292,5 +4292,11 @@
  "Add your vehicle here to keep its mileage and maintenance.": "ここで乗り物を追加して、走行距離とメンテナンスを記録しましょう。",
  "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nickがメンテナンスを見守り、時期が来たものを知らせます。",
  "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "ログブックにはこの乗り物のすべての走行と整備が記録されます。売却するときは、巻末の引き継ぎで履歴を新しいオーナーに渡せます。",
- "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "タブは2つ：この乗り物のデータと、整備の時期を知らせるメンテナンスです。"
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "タブは2つ：この乗り物のデータと、整備の時期を知らせるメンテナンスです。",
+ "Search for a circuit to load its lap. Not listed? Ride a lap and Blacktop builds the track from your GPS.": "サーキットを検索してラップを読み込みます。一覧にない？1周走れば、BlacktopがGPSからコースを作ります。",
+ "Search for a circuit to load its lap. Not listed? Walk a lap and Blacktop builds the track from your GPS.": "サーキットを検索してラップを読み込みます。一覧にない？1周歩けば、BlacktopがGPSからコースを作ります。",
+ "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "ピットクルーと走りますか？ここで相手のQRをスキャンするか、上のQRボタンから自分のQRを見せましょう。",
+ "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "レーサーのピットクルーですか？ここで相手のQRをスキャンするか、コースを選んで自分のQRを見せましょう。",
+ "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "準備完了にするをタップしてグリッドへ向かい、位置についたをタップ。スタートすると計測が始まります。",
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "レーサーがスキャンするQRを表示します。このコースを相手に送り、2台のスマートフォンをつなぎます。"
 }
