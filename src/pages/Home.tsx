@@ -303,8 +303,8 @@ export default function Home() {
   const secondHsl = settings.thermalMode ? undefined : ACCENT_COLORS.find((c) => c.id === settings.secondaryAccentColor)?.hsl;
   const globeHsl = globeMode === 'world' ? '15 85% 52%' : (secondHsl ?? (settings.thermalMode ? '0 0% 100%' : accentHsl)).trim();
   const globeColor = `hsl(${globeHsl.split(/\s+/).join(', ')})`;
-  // The band: the main accent for the map, a slightly darker burn orange for World.
-  const bandHsl = globeMode === 'world' ? '15 85% 44%' : settings.thermalMode ? '0 0% 100%' : accentHsl.trim();
+  // The band is always the main accent; the globe's own colour is what says map or World.
+  const bandHsl = settings.thermalMode ? '0 0% 100%' : accentHsl.trim();
 
   // The rotating globe sits at the junction where the three ride tiles meet.
   // We measure that point at runtime, position/size the globe there, and mask a
