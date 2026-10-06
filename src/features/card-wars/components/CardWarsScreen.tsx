@@ -30,7 +30,8 @@ import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type Category, 
 import { BattleArena, type Reveal } from './BattleArena';
 import { BattleResult } from './BattleResult';
 import { Garage } from './Garage';
-import { HowToPlay, howToSeen } from './HowToPlay';
+import { HowToPlay } from './HowToPlay';
+import { PageTips } from '@/features/guide';
 import { PlayerBattleSheet } from './PlayerBattleSheet';
 import { RewardShuffle } from './RewardShuffle';
 import { BattleSetupSheet, levelName, modeName } from './BattleSetupSheet';
@@ -76,7 +77,7 @@ export function CardWarsScreen() {
   // The daily challenge being set up: its day, so the battle carries it.
   const [quickDaily, setQuickDaily] = useState<{ day: string; theme: Category } | null>(null);
   const [sheet, setSheet] = useState(!!invited);
-  const [help, setHelp] = useState(() => !howToSeen() && !vault.run && !invited);
+  const [help, setHelp] = useState(false);
   const [online, setOnline] = useState<OnlineBattle | null>(null);
   const [displayOnline, setDisplayOnline] = useState<OnlineBattle | null>(null);
   const [code, setCode] = useState(invited);
@@ -717,7 +718,7 @@ export function CardWarsScreen() {
         right={
           <>
             <RpmPill balance={shop.balance} />
-            <HeaderButton aria-label={tr("How to play")} onClick={() => setHelp(true)}>
+            <HeaderButton data-tip="cw-help" aria-label={tr("How to play")} onClick={() => setHelp(true)}>
               <HelpCircle className="w-5 h-5" />
             </HeaderButton>
           </>
@@ -772,6 +773,19 @@ export function CardWarsScreen() {
         }}
       />
       <HowToPlay open={help} onClose={() => setHelp(false)} players={cap} />
+      {/* First-time tips for the game's home (the rules themselves are behind the ? button, which the last tip points at). */}
+      <PageTips
+        page="card-wars"
+        scroll
+        max={4}
+        when={!help && !setup && !sheet}
+        tips={[
+          { target: '[data-tip="cw-rating"]', text: tr("Your deck's strength. The small number beside it is what your dog tags add.") },
+          { target: '[data-tip="cw-deck"]', text: tr("Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.") },
+          { target: '[data-tip="cw-battle"]', text: tr("Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.") },
+          { target: '[data-tip="cw-help"]', text: tr("The full rules are behind this button whenever you want them.") },
+        ]}
+      />
     </main>
   );
 }

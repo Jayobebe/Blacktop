@@ -226,7 +226,7 @@ export function Garage({
             </p>
           </div>
           {rating !== null && (
-            <div className="text-right shrink-0">
+            <div data-tip="cw-rating" className="text-right shrink-0">
               <p className="font-mono text-3xl font-bold leading-none">
                 {rating}
                 {tags.length > 0 && (
@@ -242,7 +242,7 @@ export function Garage({
 
         {!mustSpin && (
           <div className="grid gap-2">
-            <Button className="h-14 text-base font-bold gap-2" disabled={riding || (!locked && !ready)} onClick={onBattleComputer}>
+            <Button data-tip="cw-battle" className="h-14 text-base font-bold gap-2" disabled={riding || (!locked && !ready)} onClick={onBattleComputer}>
               <Swords className="w-5 h-5" />
               {locked ? tr("Back to the battle") : tr("Battle the computer")}
             </Button>
@@ -296,7 +296,7 @@ export function Garage({
             <span className="text-[11px] text-muted-foreground">{tr("Tap a card to look, swap or repair")}</span>
           )}
         </div>
-        <div className="cw-grid cw-grid-deck">
+        <div data-tip="cw-deck" className="cw-grid cw-grid-deck">
           {Array.from({ length: 5 }, (_, i) => {
             const c = deck[i];
             return c ? (
