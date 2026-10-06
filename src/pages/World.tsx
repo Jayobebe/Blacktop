@@ -52,7 +52,8 @@ export default function World() {
   // Arrived through the warp from Home's globe: let it go once this page has had a moment to draw.
   useEffect(() => {
     // Not cancelled on unmount: the warp must be let go even if this page is torn down and remounted.
-    window.setTimeout(endWarp, 90);
+    // After this page's own slide-in has finished, so the warp copies it where it will sit.
+    window.setTimeout(endWarp, 400);
   }, []);
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);

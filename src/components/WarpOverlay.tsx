@@ -4,23 +4,20 @@ import { clearWarp, useWarp } from '@/lib/warp';
 
 /** One block of the warp is this many CSS px: it's drawn small and scaled up, sharp-edged. */
 const BLOCK = 5;
-/** The approach: the page turns to pixels, pulls back like a catapult being drawn, then is fired into the globe. */
+/** Leaving: the page turns to pixels and draws back from the globe. */
 const PIXEL_MS = 130;
 const PULL_MS = 360;
-const SLING_MS = 340;
-export const WARP_APPROACH_MS = PIXEL_MS + PULL_MS + SLING_MS;
-/** When the page underneath can change without being seen: partway into the slingshot. */
-export const WARP_SWITCH_MS = PIXEL_MS + PULL_MS + 110;
-/** It runs at least this long, however fast the destination is ready. */
-const MIN_MS = WARP_APPROACH_MS + 260;
-const OUT_MS = 420;
-const STARS = 150;
+/** When the page underneath can change without being seen: once it's fully in pixels and pulled back. */
+export const WARP_SWITCH_MS = PIXEL_MS + PULL_MS;
+/** Arriving: the old page's pixels give way to the new page's, which closes back in until it's sharp, then lets go. */
+const CROSS_MS = 200;
+const ZOOM_MS = 380;
+const CLEAR_MS = 150;
+/** How far back it pulls, and how coarse the pixels get (in blocks). */
+const BACK = 0.84;
+const GRAIN = 2.7;
 const DARK = '#050506';
 
-const cssHsl = (name: string, fallback: string) => {
-  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return `hsl(${(v || fallback).split(/\s+/).join(', ')})`;
-};
 const seen = (color: string) => !!color && color !== 'transparent' && !/,\s*0(\.0+)?\)$/.test(color);
 
 /**
@@ -42,31 +39,47 @@ function snapshot(W: number, H: number, skip: HTMLElement): HTMLCanvasElement {
   const vh = window.innerHeight;
   let count = 0;
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-  for (let node = walk.nextNode() as HTMLElement | null; node && count < 700; node = walk.nextNode() as HTMLElement | null) {
-    if (node === skip) continue;
+  /** The next element that isn't inside the current one. */
+  const past = (): HTMLElement | null => {
+    for (;;) {
+      const sibling = walk.nextSibling();
+      if (sibling) return sibling as HTMLElement;
+      if (!walk.parentNode()) return null;
+    }
+  };
+  let node = walk.nextNode() as HTMLElement | null;
+  while (node && count < 700) {
     const r = node.getBoundingClientRect();
+    // A panel that's mostly off to one side (the next card of a swipe deck, cut off by its track): none of it is drawn.
+    if (r.width > 60 && Math.min(r.right, vw) - Math.max(r.left, 0) < r.width * 0.25) {
+      node = past();
+      continue;
+    }
+    const el = node;
+    node = walk.nextNode() as HTMLElement | null;
+    if (el === skip) continue;
     if (r.width < 3 || r.height < 3 || r.right < 0 || r.bottom < 0 || r.left > vw || r.top > vh) continue;
     count++;
     const x = r.left / BLOCK;
     const y = r.top / BLOCK;
     const w = r.width / BLOCK;
     const h = r.height / BLOCK;
-    const tag = node.tagName;
+    const tag = el.tagName;
     try {
       if (tag === 'CANVAS') {
-        // The globe (not a full-screen layer like the backdrop, which may hold nothing to copy).
-        if (r.width < vw * 0.8) ctx.drawImage(node as unknown as HTMLCanvasElement, x, y, w, h);
+        // A globe, a game board: copied as it is. Not a full-screen layer like the backdrop, which may hold nothing to copy.
+        if (!(r.width >= vw * 0.98 && r.height >= vh * 0.9)) ctx.drawImage(el as unknown as HTMLCanvasElement, x, y, w, h);
         continue;
       }
       if (tag === 'IMG') {
-        const img = node as unknown as HTMLImageElement;
+        const img = el as unknown as HTMLImageElement;
         if (img.complete && img.naturalWidth) ctx.drawImage(img, x, y, w, h);
         continue;
       }
     } catch {
       continue;
     }
-    const cs = getComputedStyle(node);
+    const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
     if (tag === 'svg' || tag === 'SVG') {
       if (r.width > 80) continue;
@@ -95,7 +108,7 @@ function snapshot(W: number, H: number, skip: HTMLElement): HTMLCanvasElement {
       ctx.stroke();
     }
     // Text: a bar where the words are.
-    const own = Array.from(node.childNodes).some((c) => c.nodeType === 3 && (c.textContent || '').trim().length > 0);
+    const own = Array.from(el.childNodes).some((c) => c.nodeType === 3 && (c.textContent || '').trim().length > 0);
     if (own) {
       ctx.fillStyle = cs.color;
       ctx.globalAlpha = 0.85;
@@ -109,13 +122,13 @@ function snapshot(W: number, H: number, skip: HTMLElement): HTMLCanvasElement {
 }
 
 /**
- * The jump into Blacktop World. The page turns to pixels and draws back from
- * the globe like a catapult being pulled, then is fired into it: the globe
- * rushes up to swallow the screen, the rider is flung down a tunnel of streaks
- * in the app's own colours round the globe's ring, and it clears in a flash
- * once World has drawn. A small canvas scaled up without smoothing, so it
- * costs next to nothing while the page underneath changes. Portaled to <body>,
- * above the page and below the alarm.
+ * The jump into Blacktop World (and nothing else, yet). Home turns to pixels
+ * and draws back from the globe; while it's held there the page underneath
+ * changes; then the old page's pixels fade into World's, and those close back
+ * in, getting finer, until the copy matches the real page and lets go of it.
+ * So the wait for World to load is spent on the way in. A small canvas scaled
+ * up without smoothing, which costs next to nothing. Portaled to <body>, above
+ * the page and below the alarm.
  */
 export function WarpOverlay() {
   const warp = useWarp();
@@ -136,120 +149,65 @@ export function WarpOverlay() {
     canvas.style.opacity = '0';
     const cx = first.x / BLOCK;
     const cy = first.y / BLOCK;
-    const reach = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy));
-    const accent = cssHsl('--accent', '38 95% 55%');
-    const burn = cssHsl('--burn', '15 85% 52%');
-    const page = snapshot(W, H, canvas);
-    // For the pixels to grow: the page copied smaller still, then blown back up.
+    const from = snapshot(W, H, canvas);
+    // The page it arrives at, copied once that page says it has drawn.
+    let to: HTMLCanvasElement | null = null;
+    let arrivedAt = 0;
+    let heldScale = BACK;
+    // For the pixels to grow: a page copied smaller still, then blown back up.
     const coarse = document.createElement('canvas');
     const coarseCtx = coarse.getContext('2d')!;
-    // Each streak: its bearing from the globe, how far out it is, its own pace and colour.
-    const stars = Array.from({ length: STARS }, () => {
-      const pick = Math.random();
-      return { a: Math.random() * Math.PI * 2, r: 1 + Math.random() * reach, v: 0.5 + Math.random(), color: pick < 0.55 ? accent : pick < 0.8 ? '#f4f4f5' : burn };
-    });
     let raf = 0;
-    let last = performance.now();
 
-    const tunnel = (t: number, dt: number, glow: number) => {
-      const speed = 2.2 + 4 * Math.min(1, t / 700) ** 2;
-      ctx.lineWidth = 1;
-      ctx.globalAlpha = glow;
-      for (const s of stars) {
-        const from = s.r;
-        s.r += s.r * s.v * speed * dt + 4 * dt;
-        if (s.r > reach + 6) {
-          s.r = 1 + Math.random() * 5;
-          s.a = Math.random() * Math.PI * 2;
-          continue;
-        }
-        ctx.strokeStyle = s.color;
-        ctx.beginPath();
-        ctx.moveTo(Math.round(cx + Math.cos(s.a) * from) + 0.5, Math.round(cy + Math.sin(s.a) * from) + 0.5);
-        // Streaks stretch with speed.
-        const tail = s.r + (s.r - from) * 1.6;
-        ctx.lineTo(Math.round(cx + Math.cos(s.a) * tail) + 0.5, Math.round(cy + Math.sin(s.a) * tail) + 0.5);
-        ctx.stroke();
-      }
-      // The globe's ring at the mouth of it, breathing a little.
-      const ring = Math.min(W, H) * (0.1 + 0.05 * Math.min(1, t / 900)) + Math.sin(t / 130) * 0.6;
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, ring, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.strokeStyle = burn;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(cx, cy, ring + 2.5, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = DARK;
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.max(0, ring - 1.5), 0, Math.PI * 2);
-      ctx.fill();
+    /** A page copy, about the globe, at this size, this coarse and this strong. */
+    const draw = (page: HTMLCanvasElement, scale: number, grain: number, alpha: number) => {
+      if (alpha <= 0) return;
+      coarse.width = Math.max(8, Math.round(W / grain));
+      coarse.height = Math.max(8, Math.round(H / grain));
+      coarseCtx.imageSmoothingEnabled = false;
+      coarseCtx.drawImage(page, 0, 0, coarse.width, coarse.height);
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(coarse, cx - cx * scale, cy - cy * scale, W * scale, H * scale);
       ctx.globalAlpha = 1;
-      return ring;
     };
 
     const frame = (now: number) => {
       const w = live.current;
       if (!w) return;
       const t = now - w.startedAt;
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      // The run ends once the destination is ready and the least time is up.
-      const outFrom = w.endAt === null ? null : Math.max(w.endAt, w.startedAt + MIN_MS);
-      const out = outFrom === null ? 0 : Math.min(1, Math.max(0, (now - outFrom) / OUT_MS));
-      if (out >= 1) {
-        clearWarp();
-        return;
-      }
-
       ctx.imageSmoothingEnabled = false;
       ctx.globalAlpha = 1;
       ctx.fillStyle = DARK;
       ctx.fillRect(0, 0, W, H);
-      let ring = 0;
 
-      if (t < WARP_APPROACH_MS) {
-        // How far the page has pulled back, or been flung forward, about the globe.
-        let scale = 1;
-        let fling = 0;
-        if (t >= PIXEL_MS + PULL_MS) {
-          fling = (t - PIXEL_MS - PULL_MS) / SLING_MS;
-          scale = 0.84 + 46 * fling ** 4;
-        } else if (t >= PIXEL_MS) {
-          const u = (t - PIXEL_MS) / PULL_MS;
-          scale = 1 - 0.16 * (1 - (1 - u) ** 3);
-        }
-        // The pixels grow as it goes.
-        const grain = 1 + 1.7 * Math.min(1, t / (PIXEL_MS + PULL_MS));
-        coarse.width = Math.max(8, Math.round(W / grain));
-        coarse.height = Math.max(8, Math.round(H / grain));
-        coarseCtx.imageSmoothingEnabled = false;
-        coarseCtx.drawImage(page, 0, 0, coarse.width, coarse.height);
-        ctx.drawImage(coarse, cx - cx * scale, cy - cy * scale, W * scale, H * scale);
-        if (fling > 0) {
-          // Fired: the tunnel comes up through the page as it tears past.
-          ctx.fillStyle = DARK;
-          ctx.globalAlpha = Math.min(1, fling ** 2 * 1.4);
-          ctx.fillRect(0, 0, W, H);
-          ctx.globalAlpha = 1;
-          ring = tunnel(t - PIXEL_MS - PULL_MS, dt, Math.min(1, fling * 1.5));
-        }
+      if (!to && w.endAt !== null && t >= WARP_SWITCH_MS) {
+        to = snapshot(W, H, canvas);
+        arrivedAt = now;
+      }
+
+      if (!to) {
+        // Leaving: into pixels, then back from the globe; held there (still easing away a touch) until the next page is in.
+        const pull = t < PIXEL_MS ? 0 : Math.min(1, (t - PIXEL_MS) / PULL_MS);
+        const wait = Math.max(0, t - WARP_SWITCH_MS);
+        heldScale = 1 - (1 - BACK) * (1 - (1 - pull) ** 3) - 0.03 * Math.min(1, wait / 900);
+        draw(from, heldScale, 1 + (GRAIN - 1) * Math.min(1, t / WARP_SWITCH_MS), 1 - 0.3 * Math.min(1, wait / 500));
         canvas.style.opacity = String(Math.min(1, t / PIXEL_MS));
       } else {
-        ring = tunnel(t - PIXEL_MS - PULL_MS, dt, 1);
-        // Arrival: the ring's light floods out, then the whole thing lets go of the screen.
-        if (out > 0) {
-          ctx.fillStyle = accent;
-          ctx.globalAlpha = (out < 0.35 ? out / 0.35 : 1) * 0.9;
-          ctx.beginPath();
-          ctx.arc(cx, cy, ring + reach * Math.min(1, out / 0.45), 0, Math.PI * 2);
-          ctx.fill();
-          ctx.globalAlpha = 1;
+        const u = now - arrivedAt;
+        const cross = Math.min(1, u / CROSS_MS);
+        const zoom = Math.min(1, Math.max(0, (u - CROSS_MS) / ZOOM_MS));
+        const clear = Math.min(1, Math.max(0, (u - CROSS_MS - ZOOM_MS) / CLEAR_MS));
+        if (clear >= 1) {
+          clearWarp();
+          return;
         }
-        canvas.style.opacity = String(out < 0.45 ? 1 : 1 - (out - 0.45) / 0.55);
+        // Closing in: fast at first, settling as it comes sharp.
+        const eased = 1 - (1 - zoom) ** 3;
+        const scale = heldScale + (1 - heldScale) * eased;
+        const grain = GRAIN - (GRAIN - 1) * eased;
+        draw(from, scale, grain, 0.7 * (1 - cross));
+        draw(to, scale, grain, cross);
+        canvas.style.opacity = String(1 - clear);
       }
       raf = requestAnimationFrame(frame);
     };
