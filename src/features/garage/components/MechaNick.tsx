@@ -78,7 +78,7 @@ export function MechaNick({ tip, lines, className }: MechaNickProps) {
   };
 
   return (
-    <div className={cn('relative flex flex-col items-end', className)}>
+    <div data-tip="mecha-nick" className={cn('relative flex flex-col items-end', className)}>
       {message && (
         // Dropped into the empty top of Nick's box (his picture is bottom-aligned,
         // head ~50 px down) so the bubble sits by his head, not over the garage edge.

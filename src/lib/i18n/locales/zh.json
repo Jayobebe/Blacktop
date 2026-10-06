@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "你的卡组强度。旁边的小数字是身份牌带来的加成。",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "点按卡片可查看、替换或修理。卡片在战斗中会磨损：让它们休息或进行修理。",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "选择电脑的难度。困难模式报酬最高，还能赢得一张奖品卡。每日挑战也在这里。",
- "The full rules are behind this button whenever you want them.": "完整规则随时可以通过这个按钮查看。"
+ "The full rules are behind this button whenever you want them.": "完整规则随时可以通过这个按钮查看。",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "在这里添加你的车辆。它的照片和数据会成为你的收藏卡。",
+ "Add your vehicle here to keep its mileage and maintenance.": "在这里添加你的车辆，记录里程和保养。",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick 会关注你的保养情况，并告诉你哪些已到期。",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "行车日志记录这辆车的每次骑行和每次保养。要卖车？最后的交接会把历史记录交给新车主。",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "两个标签页：这辆车的数据，以及会在保养到期时提醒你的保养记录。"
 }

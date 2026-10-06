@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "Destenin gücü. Yanındaki küçük sayı, künyelerinin eklediğidir.",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "Bir karta bakmak, değiştirmek ya da onarmak için dokun. Kartlar dövüştükçe yıpranır: dinlendir ya da onar.",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "Bilgisayarın ne kadar zor oynayacağını seç. Zor en çok öder ve sana bir ödül kartı kazandırır. Günün görevi de burada.",
- "The full rules are behind this button whenever you want them.": "Kuralların tamamı, istediğin zaman bu düğmenin arkasında."
+ "The full rules are behind this button whenever you want them.": "Kuralların tamamı, istediğin zaman bu düğmenin arkasında.",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "Aracını buraya ekle. Fotoğrafı ve istatistikleri koleksiyon kartın olur.",
+ "Add your vehicle here to keep its mileage and maintenance.": "Kilometresini ve bakımını tutmak için aracını buraya ekle.",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick bakımını takip eder ve zamanı geleni sana söyler.",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Kayıt defteri bu aracın her sürüşünü ve her servisini tutar. Satıyor musun? Arkadaki devir, geçmişi yeni sahibine aktarır.",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "İki sekme: bu aracın istatistikleri ve servis zamanı geldiğinde seni uyaran bakımı."
 }

@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "デッキの強さです。横の小さな数字はドッグタグによる上乗せ分です。",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "カードをタップして確認、入れ替え、修理ができます。カードは戦うと消耗します。休ませるか修理しましょう。",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "コンピューターの強さを選びます。ハードは最も多く支払われ、賞品カードがもらえます。デイリーチャレンジもここにあります。",
- "The full rules are behind this button whenever you want them.": "ルールの全文は、いつでもこのボタンから見られます。"
+ "The full rules are behind this button whenever you want them.": "ルールの全文は、いつでもこのボタンから見られます。",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "ここで乗り物を追加します。写真とデータがあなたのトレーディングカードになります。",
+ "Add your vehicle here to keep its mileage and maintenance.": "ここで乗り物を追加して、走行距離とメンテナンスを記録しましょう。",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nickがメンテナンスを見守り、時期が来たものを知らせます。",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "ログブックにはこの乗り物のすべての走行と整備が記録されます。売却するときは、巻末の引き継ぎで履歴を新しいオーナーに渡せます。",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "タブは2つ：この乗り物のデータと、整備の時期を知らせるメンテナンスです。"
 }

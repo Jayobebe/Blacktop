@@ -1,3 +1,4 @@
+import { PageTips } from '@/features/guide';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronLeft, ChevronRight, Trash2, Check, Move, X, BookDown } from 'lucide-react';
@@ -130,6 +131,31 @@ export default function Garage() {
 
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom">
+      {/* First-time tips. The logbook only exists once there's a vehicle, and sits further down. */}
+      <PageTips
+        page="garage"
+        scroll
+        when={!addOpen}
+        tips={[
+          {
+            target: '[data-tip="garage-add"]',
+            text: settings.collectiblesEnabled
+              ? tr("Add your vehicle here. Its photo and its stats become your trading card.")
+              : tr("Add your vehicle here to keep its mileage and maintenance."),
+          },
+          { target: '[data-tip="mecha-nick"]', text: tr("Mecha-Nick keeps an eye on your maintenance and tells you what's due.") },
+        ]}
+      />
+      {/* And once there's a vehicle in it (which may be long after the first visit): its own two. They wait for the ones above. */}
+      <PageTips
+        page="garage-vehicle"
+        scroll
+        when={!!activeBike && !addOpen}
+        tips={[
+          { target: '[data-tip="garage-tabs"]', text: tr("Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.") },
+          { target: '[data-tip="garage-logbook"]', text: tr("The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.") },
+        ]}
+      />
       <LogbookReceiver
         trigger={(open) => {
           openReceiverRef.current = open;
@@ -143,7 +169,7 @@ export default function Garage() {
         <h1 className="flex-1 text-[22px] font-semibold tracking-[-0.025em] leading-tight">{tr("Garage")}</h1>
         <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) resetAddForm(); }}>
           <DialogTrigger asChild>
-            <HeaderButton active aria-label={tr("Add vehicle")}>
+            <HeaderButton active data-tip="garage-add" aria-label={tr("Add vehicle")}>
               <Plus className="w-5 h-5" />
             </HeaderButton>
           </DialogTrigger>
@@ -282,7 +308,7 @@ export default function Garage() {
       ) : (
         <div className="mt-4 flex-1 min-h-0">
           <Tabs defaultValue="stats" className="w-full">
-            <TabsList className="grid grid-cols-2 w-full">
+            <TabsList data-tip="garage-tabs" className="grid grid-cols-2 w-full">
               <TabsTrigger value="stats">{tr("Stats")}</TabsTrigger>
               <TabsTrigger value="maint">{tr("Maintenance")}</TabsTrigger>
             </TabsList>
@@ -354,7 +380,7 @@ export default function Garage() {
           </div>
 
           {/* Logbook: every ride, stat and service for this vehicle; hand-over lives at the back */}
-          <div className="mt-6 mb-4">
+          <div data-tip="garage-logbook" className="mt-6 mb-4">
             <LogbookCover vehicleName={activeBike.name} onOpen={() => setLogbookBike(activeBike)} />
             <p className="mt-3 text-center text-[11px] text-muted-foreground">{tr("Tap the logbook to open it")}</p>
           </div>

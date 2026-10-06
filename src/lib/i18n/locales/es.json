@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "La fuerza de tu mazo. El número pequeño de al lado es lo que suman tus placas.",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "Toca una carta para verla, cambiarla o repararla. Las cartas se desgastan al luchar: déjalas descansar o repáralas.",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "Elige lo duro que juega el ordenador. Difícil es lo que más paga y te da una carta de premio. El reto diario también está aquí.",
- "The full rules are behind this button whenever you want them.": "Las reglas completas están detrás de este botón cuando las quieras."
+ "The full rules are behind this button whenever you want them.": "Las reglas completas están detrás de este botón cuando las quieras.",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "Añade aquí tu vehículo. Su foto y sus datos se convierten en tu carta coleccionable.",
+ "Add your vehicle here to keep its mileage and maintenance.": "Añade aquí tu vehículo para llevar su kilometraje y mantenimiento.",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick vigila tu mantenimiento y te dice lo que toca.",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "El libro de ruta guarda cada salida y cada revisión de este vehículo. ¿Lo vendes? El traspaso, al final, pasa el historial al nuevo dueño.",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Dos pestañas: los datos de este vehículo y su mantenimiento, que te avisa cuando toca una revisión."
 }

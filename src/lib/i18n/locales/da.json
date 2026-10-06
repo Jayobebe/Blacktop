@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "Dit decks styrke. Det lille tal ved siden af er det, dine kendingsmærker lægger til.",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "Tryk på et kort for at se det, bytte det ud eller reparere det. Kort slides, når de kæmper: lad dem hvile, eller reparér dem.",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "Vælg, hvor hårdt computeren spiller. Svær giver mest og vinder dig et præmiekort. Dagens udfordring er også herinde.",
- "The full rules are behind this button whenever you want them.": "De fulde regler ligger bag denne knap, når du vil have dem."
+ "The full rules are behind this button whenever you want them.": "De fulde regler ligger bag denne knap, når du vil have dem.",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "Tilføj dit køretøj her. Dets billede og tal bliver til dit samlekort.",
+ "Add your vehicle here to keep its mileage and maintenance.": "Tilføj dit køretøj her for at holde styr på kilometer og vedligeholdelse.",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick holder øje med din vedligeholdelse og fortæller dig, hvad der er på tide.",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Logbogen rummer hver tur og hver service for dette køretøj. Sælger du det? Overdragelsen bagerst giver historikken videre til den nye ejer.",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "To faner: køretøjets tal og dets vedligeholdelse, som advarer dig, når en service er på tide."
 }

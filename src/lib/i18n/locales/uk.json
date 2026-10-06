@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "Сила твоєї колоди. Маленьке число поруч — це те, що додають твої жетони.",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "Торкнися картки, щоб роздивитися її, замінити чи полагодити. Картки зношуються в бою: дай їм відпочити або полагодь.",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "Обери, наскільки сильно грає комп'ютер. Складний платить найбільше і дає призову картку. Щоденне випробування теж тут.",
- "The full rules are behind this button whenever you want them.": "Повні правила — за цією кнопкою, коли забажаєш."
+ "The full rules are behind this button whenever you want them.": "Повні правила — за цією кнопкою, коли забажаєш.",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "Додай сюди свій транспорт. Його фото і статистика стають твоєю колекційною карткою.",
+ "Add your vehicle here to keep its mileage and maintenance.": "Додай сюди свій транспорт, щоб вести пробіг і обслуговування.",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick стежить за обслуговуванням і каже, що вже на часі.",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Журнал містить кожну поїздку і кожне обслуговування цього транспорту. Продаєш? Передача наприкінці віддає історію новому власникові.",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Дві вкладки: статистика цього транспорту і його обслуговування, яке попереджає, коли настає час сервісу."
 }

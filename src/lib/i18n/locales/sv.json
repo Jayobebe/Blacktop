@@ -4287,5 +4287,10 @@
  "Your deck's strength. The small number beside it is what your dog tags add.": "Din kortleks styrka. Den lilla siffran bredvid är vad dina ID-brickor lägger till.",
  "Tap a card to look at it, swap it out or repair it. Cards wear as they fight: rest them or repair them.": "Tryck på ett kort för att titta på det, byta ut det eller reparera det. Kort slits när de slåss: låt dem vila eller reparera dem.",
  "Pick how hard the computer plays. Hard pays the most and wins you a prize card. The daily challenge is in here too.": "Välj hur hårt datorn spelar. Svår betalar mest och ger dig ett priskort. Dagens utmaning finns också här.",
- "The full rules are behind this button whenever you want them.": "De fullständiga reglerna finns bakom den här knappen när du vill ha dem."
+ "The full rules are behind this button whenever you want them.": "De fullständiga reglerna finns bakom den här knappen när du vill ha dem.",
+ "Add your vehicle here. Its photo and its stats become your trading card.": "Lägg till ditt fordon här. Bilden och siffrorna blir ditt samlarkort.",
+ "Add your vehicle here to keep its mileage and maintenance.": "Lägg till ditt fordon här för att hålla koll på mätarställning och underhåll.",
+ "Mecha-Nick keeps an eye on your maintenance and tells you what's due.": "Mecha-Nick håller koll på ditt underhåll och säger till när något är dags.",
+ "The logbook holds every ride and service for this vehicle. Selling it? The hand-over at the back passes the history to the new owner.": "Loggboken innehåller varje tur och varje service för det här fordonet. Säljer du det? Överlämningen längst bak ger historiken vidare till den nya ägaren.",
+ "Two tabs: this vehicle's stats, and its maintenance, which warns you when a service is due.": "Två flikar: fordonets siffror och dess underhåll, som varnar dig när en service är dags."
 }
