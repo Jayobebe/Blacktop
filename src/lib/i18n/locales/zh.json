@@ -4234,5 +4234,10 @@
  "Copy report": "复制报告",
  "Report copied": "报告已复制",
  "Couldn't copy the report. Take a screenshot of this screen instead.": "无法复制报告。请改为截取此屏幕。",
- "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "把报告粘贴给我们，以便我们修复。报告包含错误、当前屏幕以及你的手机和应用版本：不含姓名、位置和骑行数据。不会自动发送任何内容。"
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "把报告粘贴给我们，以便我们修复。报告包含错误、当前屏幕以及你的手机和应用版本：不含姓名、位置和骑行数据。不会自动发送任何内容。",
+ "Blacktop was off screen for 1 minute. That stretch wasn't recorded.": "Blacktop 离开屏幕 1 分钟。这段路程没有记录。",
+ "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop 离开屏幕 {0} 分钟。这段路程没有记录。",
+ "Keep Blacktop on screen while you ride.": "骑行时请让 Blacktop 保持在屏幕上。",
+ "Keep Blacktop on screen": "让 Blacktop 保持在屏幕上",
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "手机锁屏或应用进入后台后，就不再向网页应用提供位置，所以那段路程不会被记录。Blacktop 会为你保持屏幕常亮：请不要锁屏或切换应用，长途骑行时请接上电源。"
 }

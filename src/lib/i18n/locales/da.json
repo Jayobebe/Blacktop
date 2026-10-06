@@ -4234,5 +4234,10 @@
  "Copy report": "Kopiér rapport",
  "Report copied": "Rapport kopieret",
  "Couldn't copy the report. Take a screenshot of this screen instead.": "Rapporten kunne ikke kopieres. Tag et skærmbillede af denne skærm i stedet.",
- "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Indsæt rapporten til os, så vi kan rette det. Den indeholder fejlen, denne skærm samt din telefon og appversion: intet navn, ingen position, ingen turdata. Intet sendes af sig selv."
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Indsæt rapporten til os, så vi kan rette det. Den indeholder fejlen, denne skærm samt din telefon og appversion: intet navn, ingen position, ingen turdata. Intet sendes af sig selv.",
+ "Blacktop was off screen for 1 minute. That stretch wasn't recorded.": "Blacktop var væk fra skærmen i 1 minut. Den strækning blev ikke registreret.",
+ "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop var væk fra skærmen i {0} minutter. Den strækning blev ikke registreret.",
+ "Keep Blacktop on screen while you ride.": "Hold Blacktop på skærmen, mens du kører.",
+ "Keep Blacktop on screen": "Hold Blacktop på skærmen",
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Din telefon holder op med at dele sin position med en webapp, når den er låst eller i baggrunden, så den del af turen registreres ikke. Blacktop holder skærmen vågen for dig: lås den ikke, skift ikke app, og sæt strøm til på lange ture."
 }

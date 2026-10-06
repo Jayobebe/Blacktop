@@ -4234,5 +4234,10 @@
  "Copy report": "Copier le rapport",
  "Report copied": "Rapport copié",
  "Couldn't copy the report. Take a screenshot of this screen instead.": "Impossible de copier le rapport. Fais plutôt une capture de cet écran.",
- "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Colle-nous le rapport pour qu'on puisse corriger ça. Il contient l'erreur, cet écran, ton téléphone et la version de l'app : ni nom, ni position, ni données de trajet. Rien n'est envoyé tout seul."
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Colle-nous le rapport pour qu'on puisse corriger ça. Il contient l'erreur, cet écran, ton téléphone et la version de l'app : ni nom, ni position, ni données de trajet. Rien n'est envoyé tout seul.",
+ "Blacktop was off screen for 1 minute. That stretch wasn't recorded.": "Blacktop a quitté l'écran pendant 1 minute. Ce passage n'a pas été enregistré.",
+ "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop a quitté l'écran pendant {0} minutes. Ce passage n'a pas été enregistré.",
+ "Keep Blacktop on screen while you ride.": "Garde Blacktop à l'écran pendant que tu roules.",
+ "Keep Blacktop on screen": "Garde Blacktop à l'écran",
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Ton téléphone cesse de partager sa position avec une app web dès qu'il est verrouillé ou que l'app passe en arrière-plan : cette partie du trajet n'est pas enregistrée. Blacktop garde l'écran allumé pour toi : ne le verrouille pas, ne change pas d'app, et branche-le sur les longs trajets."
 }

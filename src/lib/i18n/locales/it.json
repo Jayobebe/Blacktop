@@ -4234,5 +4234,10 @@
  "Copy report": "Copia rapporto",
  "Report copied": "Rapporto copiato",
  "Couldn't copy the report. Take a screenshot of this screen instead.": "Impossibile copiare il rapporto. Fai invece uno screenshot di questa schermata.",
- "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Incollaci il rapporto così possiamo sistemare. Contiene l'errore, questa schermata, il tuo telefono e la versione dell'app: niente nome, niente posizione, niente dati dei giri. Nulla viene inviato da solo."
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Incollaci il rapporto così possiamo sistemare. Contiene l'errore, questa schermata, il tuo telefono e la versione dell'app: niente nome, niente posizione, niente dati dei giri. Nulla viene inviato da solo.",
+ "Blacktop was off screen for 1 minute. That stretch wasn't recorded.": "Blacktop è rimasto fuori dallo schermo per 1 minuto. Quel tratto non è stato registrato.",
+ "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop è rimasto fuori dallo schermo per {0} minuti. Quel tratto non è stato registrato.",
+ "Keep Blacktop on screen while you ride.": "Tieni Blacktop sullo schermo mentre guidi.",
+ "Keep Blacktop on screen": "Tieni Blacktop sullo schermo",
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Il telefono smette di condividere la posizione con un'app web quando è bloccato o l'app è in background, quindi quella parte del giro non viene registrata. Blacktop tiene lo schermo acceso per te: non bloccarlo, non cambiare app e collegalo alla corrente nei giri lunghi."
 }

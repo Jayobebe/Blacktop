@@ -4234,5 +4234,10 @@
  "Copy report": "रिपोर्ट कॉपी करें",
  "Report copied": "रिपोर्ट कॉपी हो गई",
  "Couldn't copy the report. Take a screenshot of this screen instead.": "रिपोर्ट कॉपी नहीं हो सकी। इसकी जगह इस स्क्रीन का स्क्रीनशॉट लें।",
- "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "यह रिपोर्ट हमें भेजें ताकि हम इसे ठीक कर सकें। इसमें त्रुटि, यह स्क्रीन, और आपके फ़ोन व ऐप का संस्करण है: न नाम, न लोकेशन, न राइड डेटा। अपने आप कुछ नहीं भेजा जाता।"
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "यह रिपोर्ट हमें भेजें ताकि हम इसे ठीक कर सकें। इसमें त्रुटि, यह स्क्रीन, और आपके फ़ोन व ऐप का संस्करण है: न नाम, न लोकेशन, न राइड डेटा। अपने आप कुछ नहीं भेजा जाता।",
+ "Blacktop was off screen for 1 minute. That stretch wasn't recorded.": "Blacktop 1 मिनट स्क्रीन से हटा रहा। वह हिस्सा रिकॉर्ड नहीं हुआ।",
+ "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop {0} मिनट स्क्रीन से हटा रहा। वह हिस्सा रिकॉर्ड नहीं हुआ।",
+ "Keep Blacktop on screen while you ride.": "राइड के दौरान Blacktop को स्क्रीन पर रखें।",
+ "Keep Blacktop on screen": "Blacktop को स्क्रीन पर रखें",
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "फ़ोन लॉक होने या ऐप के बैकग्राउंड में जाने पर आपका फ़ोन वेब ऐप के साथ लोकेशन साझा करना बंद कर देता है, इसलिए राइड का वह हिस्सा रिकॉर्ड नहीं होता। Blacktop आपके लिए स्क्रीन चालू रखता है: उसे लॉक न करें, ऐप न बदलें, और लंबी राइड पर चार्जर लगाएँ।"
 }

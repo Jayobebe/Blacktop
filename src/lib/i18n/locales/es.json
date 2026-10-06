@@ -4234,5 +4234,10 @@
  "Copy report": "Copiar informe",
  "Report copied": "Informe copiado",
  "Couldn't copy the report. Take a screenshot of this screen instead.": "No se pudo copiar el informe. Haz una captura de esta pantalla.",
- "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Pégamos el informe para que podamos arreglarlo. Contiene el error, esta pantalla y tu teléfono y versión de la app: ni nombre, ni ubicación, ni datos de rutas. Nada se envía por sí solo."
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Pégamos el informe para que podamos arreglarlo. Contiene el error, esta pantalla y tu teléfono y versión de la app: ni nombre, ni ubicación, ni datos de rutas. Nada se envía por sí solo.",
+ "Blacktop was off screen for 1 minute. That stretch wasn't recorded.": "Blacktop estuvo fuera de pantalla 1 minuto. Ese tramo no se registró.",
+ "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop estuvo fuera de pantalla {0} minutos. Ese tramo no se registró.",
+ "Keep Blacktop on screen while you ride.": "Mantén Blacktop en pantalla mientras conduces.",
+ "Keep Blacktop on screen": "Mantén Blacktop en pantalla",
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Tu teléfono deja de compartir su ubicación con una app web cuando se bloquea o pasa a segundo plano, así que esa parte de la ruta no se registra. Blacktop mantiene la pantalla encendida por ti: no la bloquees ni cambies de app, y enchúfalo en rutas largas."
 }

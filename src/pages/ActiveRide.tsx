@@ -44,6 +44,7 @@ import { notifyRescue } from '@/features/notifications';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { tr } from '@/lib/i18n';
+import { ScreenOnGuard } from '@/features/ride/components/ScreenOnGuard';
 
 // Read at call time inside realtime handlers so wording never forces a resubscribe.
 const liveTerms = () => termsFor(getExperience().vehicles);
@@ -1034,6 +1035,7 @@ export default function ActiveRide() {
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
           </div>
           {!rideState.isPaused && <GpsNotice gpsStatus={rideState.gpsStatus} startedAt={rideState.startedAt} />}
+          <ScreenOnGuard active={rideState.isActive} paused={rideState.isPaused} lastFix={rideState.gpsStatus.lastUpdate} />
 
           {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">
