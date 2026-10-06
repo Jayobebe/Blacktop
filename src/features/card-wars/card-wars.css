@@ -446,7 +446,7 @@ button.cw-card:disabled { cursor: default; }
 .cw-setup-row b { display: block; font-size: 15px; line-height: 1.2; }
 .cw-setup-row b + span { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; color: hsl(var(--muted-foreground)); }
 .cw-setup-row:disabled { opacity: 0.55; }
-.cw-setup-row .cw-setup-streak { margin-top: 4px; font-weight: 600; color: hsl(var(--accent)); }
+.cw-setup-row .cw-setup-streak { display: block; margin-top: 4px; font-size: 11px; line-height: 1.35; font-weight: 600; color: hsl(var(--accent)); }
 .cw-setup-row-hot { border-color: hsl(var(--accent) / 0.45); background: radial-gradient(120% 120% at 0% 0%, hsl(var(--accent) / 0.16), transparent 60%), hsl(var(--card) / 0.5); }
 .cw-setup-pay { flex-shrink: 0; padding: 4px 9px; border-radius: 999px; background: hsl(0 0% 0% / 0.35); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .cw-setup-mode { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 84px; padding: 12px; border-radius: 16px; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.5); text-align: left; transition: background-color 0.2s, border-color 0.2s; }
