@@ -4248,5 +4248,9 @@
  "Notifications are on": "通知がオンになりました",
  "Turn on": "オンにする",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "通知をオンにすると、クルーやコンボイの誰かが救助を呼んだとき、アプリを閉じていてもBlacktopがこの端末に知らせます。受け取る通知は設定で選べます。",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "通知をオンにすると、一緒に走る誰かが救助を呼んだとき、アプリを閉じていてもBlacktopがこの端末に知らせます。受け取る通知は設定で選べます。"
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "通知をオンにすると、一緒に走る誰かが救助を呼んだとき、アプリを閉じていてもBlacktopがこの端末に知らせます。受け取る通知は設定で選べます。",
+ "Map": "マップ",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "マップを開きます。長押しでBlacktop Worldに切り替え。",
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop Worldを開きます。長押しでマップに切り替え。"
 }

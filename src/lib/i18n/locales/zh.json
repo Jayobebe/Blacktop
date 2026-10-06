@@ -4248,5 +4248,9 @@
  "Notifications are on": "通知已开启",
  "Turn on": "开启",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "开启通知后，当你的车队或同行队伍中有人呼叫救援时，即使应用已关闭，Blacktop 也能提醒这部手机。你可以在设置中选择接收哪些提醒。",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "开启通知后，当与你同行的人呼叫救援时，即使应用已关闭，Blacktop 也能提醒这部手机。你可以在设置中选择接收哪些提醒。"
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "开启通知后，当与你同行的人呼叫救援时，即使应用已关闭，Blacktop 也能提醒这部手机。你可以在设置中选择接收哪些提醒。",
+ "Map": "地图",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "打开地图。长按切换到 Blacktop World。",
+ "Open Blacktop World. Hold to switch to the map.": "打开 Blacktop World。长按切换到地图。"
 }

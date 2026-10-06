@@ -4248,5 +4248,9 @@
  "Notifications are on": "Bildirimler açık",
  "Turn on": "Aç",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Bildirimleri açarsan, ekibinden ya da konvoyundan biri yardım çağırdığında Blacktop uygulama kapalıyken bile bu telefonu uyarabilir. Hangi uyarıları alacağını Ayarlar'dan seçersin.",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Bildirimleri açarsan, birlikte sürdüğün biri yardım çağırdığında Blacktop uygulama kapalıyken bile bu telefonu uyarabilir. Hangi uyarıları alacağını Ayarlar'dan seçersin."
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Bildirimleri açarsan, birlikte sürdüğün biri yardım çağırdığında Blacktop uygulama kapalıyken bile bu telefonu uyarabilir. Hangi uyarıları alacağını Ayarlar'dan seçersin.",
+ "Map": "Harita",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "Haritayı aç. Blacktop World'e geçmek için basılı tut.",
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop World'ü aç. Haritaya geçmek için basılı tut."
 }

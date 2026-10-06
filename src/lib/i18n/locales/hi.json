@@ -4248,5 +4248,9 @@
  "Notifications are on": "नोटिफ़िकेशन चालू हैं",
  "Turn on": "चालू करें",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "नोटिफ़िकेशन चालू करें, तो आपके क्रू या कॉन्वॉय में कोई मदद माँगे तो Blacktop इस फ़ोन को सूचित कर सकेगा, ऐप बंद होने पर भी। कौन-से अलर्ट मिलें, यह आप सेटिंग्स में चुनते हैं।",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "नोटिफ़िकेशन चालू करें, तो आपके साथ राइड करने वाला कोई मदद माँगे तो Blacktop इस फ़ोन को सूचित कर सकेगा, ऐप बंद होने पर भी। कौन-से अलर्ट मिलें, यह आप सेटिंग्स में चुनते हैं।"
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "नोटिफ़िकेशन चालू करें, तो आपके साथ राइड करने वाला कोई मदद माँगे तो Blacktop इस फ़ोन को सूचित कर सकेगा, ऐप बंद होने पर भी। कौन-से अलर्ट मिलें, यह आप सेटिंग्स में चुनते हैं।",
+ "Map": "नक्शा",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "नक्शा खोलें। Blacktop World पर जाने के लिए दबाए रखें।",
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop World खोलें। नक्शे पर जाने के लिए दबाए रखें।"
 }

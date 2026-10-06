@@ -4248,5 +4248,9 @@
  "Notifications are on": "Сповіщення увімкнено",
  "Turn on": "Увімкнути",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Увімкни сповіщення, і Blacktop зможе сповістити цей телефон, коли хтось із твоєї команди чи колони покличе на допомогу, навіть якщо застосунок закрито. Які сповіщення отримувати, ти обираєш у Налаштуваннях.",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Увімкни сповіщення, і Blacktop зможе сповістити цей телефон, коли хтось із тих, з ким ти їдеш, покличе на допомогу, навіть якщо застосунок закрито. Які сповіщення отримувати, ти обираєш у Налаштуваннях."
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Увімкни сповіщення, і Blacktop зможе сповістити цей телефон, коли хтось із тих, з ким ти їдеш, покличе на допомогу, навіть якщо застосунок закрито. Які сповіщення отримувати, ти обираєш у Налаштуваннях.",
+ "Map": "Мапа",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "Відкрити мапу. Утримуй, щоб перемкнути на Blacktop World.",
+ "Open Blacktop World. Hold to switch to the map.": "Відкрити Blacktop World. Утримуй, щоб перемкнути на мапу."
 }

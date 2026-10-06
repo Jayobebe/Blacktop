@@ -4248,5 +4248,9 @@
  "Notifications are on": "알림이 켜졌습니다",
  "Turn on": "켜기",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "알림을 켜면 크루나 콘보이의 누군가가 구조를 요청할 때 앱이 닫혀 있어도 Blacktop이 이 휴대폰에 알려 줍니다. 어떤 알림을 받을지는 설정에서 고를 수 있습니다.",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "알림을 켜면 함께 달리는 누군가가 구조를 요청할 때 앱이 닫혀 있어도 Blacktop이 이 휴대폰에 알려 줍니다. 어떤 알림을 받을지는 설정에서 고를 수 있습니다."
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "알림을 켜면 함께 달리는 누군가가 구조를 요청할 때 앱이 닫혀 있어도 Blacktop이 이 휴대폰에 알려 줍니다. 어떤 알림을 받을지는 설정에서 고를 수 있습니다.",
+ "Map": "지도",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "지도를 엽니다. 길게 누르면 Blacktop World로 전환합니다.",
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop World를 엽니다. 길게 누르면 지도로 전환합니다."
 }

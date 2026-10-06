@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
+import { GlobeBanner } from '@/components/GlobeBanner';
 
 import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
@@ -83,20 +84,37 @@ export default function Home() {
   const longPressFired = useRef(false);
   const pressStart = useRef<{ x: number; y: number } | null>(null);
 
+  // The globe is one button with two jobs. A tap opens whichever it's set to (the map, or
+  // Blacktop World); holding it switches between them. Its colour and the band orbiting it say which.
+  const [globeChoice, setGlobeChoice] = useState<'map' | 'world'>(() => {
+    try {
+      return localStorage.getItem('blacktop_globe_mode') === 'world' ? 'world' : 'map';
+    } catch {
+      return 'map';
+    }
+  });
+  const globeMode: 'map' | 'world' = settings.blacktopWorldEnabled ? globeChoice : 'map';
+  const switchGlobe = () => {
+    const next = globeMode === 'map' ? 'world' : 'map';
+    setGlobeChoice(next);
+    try {
+      localStorage.setItem('blacktop_globe_mode', next);
+    } catch {
+      // Kept for this visit only.
+    }
+    haptics.medium();
+    if (settings.uiSoundsEnabled !== false) uiCue(next === 'world' ? 'on' : 'off');
+  };
+
   const handleGlobePointerDown = (e: React.PointerEvent) => {
     if (!settings.blacktopWorldEnabled) return;
     longPressFired.current = false;
     pressStart.current = { x: e.clientX, y: e.clientY };
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true;
-      // Into Blacktop World: a click as it catches, then the whoosh as the globe bursts.
-      if (settings.uiSoundsEnabled !== false) {
-        uiCue('tap');
-        setTimeout(() => sceneCue('whoosh'), 70);
-      }
-      setIsExploding(true);
-      setTimeout(() => navigate('/world'), 320);
-    }, 600);
+      longPressTimer.current = null;
+      switchGlobe();
+    }, 500);
   };
   const cancelLongPress = () => {
     if (longPressTimer.current) {
@@ -113,8 +131,21 @@ export default function Home() {
     if (dx * dx + dy * dy > 100) cancelLongPress();
   };
   const handleGlobeClick = () => {
-    if (longPressFired.current) return;
-    openBlacktopMap();
+    if (longPressFired.current) {
+      longPressFired.current = false;
+      return;
+    }
+    if (globeMode === 'map') {
+      openBlacktopMap();
+      return;
+    }
+    // Into Blacktop World: a click as it catches, then the whoosh as the globe bursts.
+    if (settings.uiSoundsEnabled !== false) {
+      uiCue('tap');
+      setTimeout(() => sceneCue('whoosh'), 70);
+    }
+    setIsExploding(true);
+    setTimeout(() => navigate('/world'), 320);
   };
 
 
@@ -269,6 +300,9 @@ export default function Home() {
   // the active accent (same approach as BlacktopMap) for the globe's strokes.
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
+  const secondHsl = settings.thermalMode ? undefined : ACCENT_COLORS.find((c) => c.id === settings.secondaryAccentColor)?.hsl;
+  const globeHsl = globeMode === 'world' ? '15 85% 52%' : (secondHsl ?? (settings.thermalMode ? '0 0% 100%' : accentHsl)).trim();
+  const globeColor = `hsl(${globeHsl.split(/\s+/).join(', ')})`;
 
   // The rotating globe sits at the junction where the three ride tiles meet.
   // We measure that point at runtime, position/size the globe there, and mask a
@@ -657,12 +691,14 @@ export default function Home() {
                         }}
                         tabIndex={0}
                         className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:scale-95 active:bg-accent/20 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                        aria-label={settings.blacktopWorldEnabled ? tr("Open map — hold for Blacktop World") : tr("Open map")}
+                        aria-label={!settings.blacktopWorldEnabled ? tr("Open map") : globeMode === 'map' ? tr("Open the map. Hold to switch to Blacktop World.") : tr("Open Blacktop World. Hold to switch to the map.")}
                         role="button"
                       >
+                        <GlobeBanner layer="back" word={globeMode === 'world' ? tr("World") : tr("Map")} color={globeHsl} />
                         <Suspense fallback={null}>
-                          <HomeGlobe accentColor={accentColor} className="w-full h-full" />
+                          <HomeGlobe accentColor={globeColor} className="relative w-full h-full" />
                         </Suspense>
+                        <GlobeBanner layer="front" word={globeMode === 'world' ? tr("World") : tr("Map")} color={globeHsl} />
                       </div>
                       {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
                           tiles that the CSS mask clips away, keeping the accent outline continuous. */}

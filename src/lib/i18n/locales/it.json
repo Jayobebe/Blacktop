@@ -4248,5 +4248,9 @@
  "Notifications are on": "Le notifiche sono attive",
  "Turn on": "Attiva",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Attiva le notifiche e Blacktop potrà avvisare questo telefono quando qualcuno della tua crew o del tuo convoglio chiede soccorso, anche ad app chiusa. Scegli tu quali avvisi ricevere nelle Impostazioni.",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Attiva le notifiche e Blacktop potrà avvisare questo telefono quando qualcuno con cui giri chiede soccorso, anche ad app chiusa. Scegli tu quali avvisi ricevere nelle Impostazioni."
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Attiva le notifiche e Blacktop potrà avvisare questo telefono quando qualcuno con cui giri chiede soccorso, anche ad app chiusa. Scegli tu quali avvisi ricevere nelle Impostazioni.",
+ "Map": "Mappa",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "Apri la mappa. Tieni premuto per passare a Blacktop World.",
+ "Open Blacktop World. Hold to switch to the map.": "Apri Blacktop World. Tieni premuto per passare alla mappa."
 }

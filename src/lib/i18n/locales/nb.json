@@ -4248,5 +4248,9 @@
  "Notifications are on": "Varsler er på",
  "Turn on": "Slå på",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Slå på varsler, så kan Blacktop varsle denne telefonen når noen i crewet eller konvoien din ber om hjelp, også når appen er lukket. Du velger selv hvilke varsler du får i Innstillinger.",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Slå på varsler, så kan Blacktop varsle denne telefonen når noen du kjører med ber om hjelp, også når appen er lukket. Du velger selv hvilke varsler du får i Innstillinger."
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Slå på varsler, så kan Blacktop varsle denne telefonen når noen du kjører med ber om hjelp, også når appen er lukket. Du velger selv hvilke varsler du får i Innstillinger.",
+ "Map": "Kart",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "Åpne kartet. Hold for å bytte til Blacktop World.",
+ "Open Blacktop World. Hold to switch to the map.": "Åpne Blacktop World. Hold for å bytte til kartet."
 }

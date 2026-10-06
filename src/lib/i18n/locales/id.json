@@ -4248,5 +4248,9 @@
  "Notifications are on": "Notifikasi aktif",
  "Turn on": "Aktifkan",
  "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Aktifkan notifikasi agar Blacktop bisa memberi tahu ponsel ini saat seseorang di kru atau konvoimu meminta pertolongan, bahkan saat aplikasi ditutup. Kamu memilih peringatan mana yang diterima di Pengaturan.",
- "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Aktifkan notifikasi agar Blacktop bisa memberi tahu ponsel ini saat seseorang yang berkendara bersamamu meminta pertolongan, bahkan saat aplikasi ditutup. Kamu memilih peringatan mana yang diterima di Pengaturan."
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Aktifkan notifikasi agar Blacktop bisa memberi tahu ponsel ini saat seseorang yang berkendara bersamamu meminta pertolongan, bahkan saat aplikasi ditutup. Kamu memilih peringatan mana yang diterima di Pengaturan.",
+ "Map": "Peta",
+ "World": "World",
+ "Open the map. Hold to switch to Blacktop World.": "Buka peta. Tahan untuk beralih ke Blacktop World.",
+ "Open Blacktop World. Hold to switch to the map.": "Buka Blacktop World. Tahan untuk beralih ke peta."
 }
