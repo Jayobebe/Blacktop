@@ -179,7 +179,7 @@ async function createProfile(name: string): Promise<boolean> {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
         console.error('Failed to sign in anonymously:', error);
-        toast.error(tr("Couldn't set you up — check your connection and try again."));
+        toast.error(tr("Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again."));
         return false;
       }
       currentUser = data.user;

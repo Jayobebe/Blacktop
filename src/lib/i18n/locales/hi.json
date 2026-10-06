@@ -4228,5 +4228,7 @@
  "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "अभी GPS नहीं है। जब तक Blacktop आपकी लोकेशन नहीं देख पाता, रफ़्तार और दूरी रिकॉर्ड नहीं होंगी: जाँचें कि इस ऐप के लिए लोकेशन की अनुमति है।",
  "Welcome": "स्वागत है",
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "मेरी उम्र कम से कम 16 साल है और जहाँ मैं रहता हूँ वहाँ मुझे अपना वाहन चलाने की क़ानूनी अनुमति है।",
- "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "आपकी उम्र कम से कम 16 साल होनी चाहिए और आपके क्षेत्र में आपको अपना वाहन चलाने की क़ानूनी अनुमति होनी चाहिए, जहाँ ज़रूरी हो वहाँ वैध लाइसेंस के साथ। Blacktop का उपयोग करके आप पुष्टि करते हैं कि आप ये शर्तें पूरी करते हैं।"
+ "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "आपकी उम्र कम से कम 16 साल होनी चाहिए और आपके क्षेत्र में आपको अपना वाहन चलाने की क़ानूनी अनुमति होनी चाहिए, जहाँ ज़रूरी हो वहाँ वैध लाइसेंस के साथ। Blacktop का उपयोग करके आप पुष्टि करते हैं कि आप ये शर्तें पूरी करते हैं।",
+ "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• आपको हमारे सर्वर पर एक गुमनाम ID मिलती है, आपके चुने हुए नाम के साथ: न ईमेल, न पासवर्ड",
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "सेटअप नहीं हो सका। आपकी गुमनाम ID बनाने के लिए Blacktop को एक बार कनेक्शन चाहिए: अपना कनेक्शन जाँचें और फिर कोशिश करें।"
 }

@@ -4228,5 +4228,7 @@
  "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "まだGPSがありません。Blacktopが位置情報を取得できるまで速度と距離は記録されません。このアプリで位置情報が許可されているか確認してください。",
  "Welcome": "ようこそ",
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "16歳以上で、住んでいる地域で自分の乗り物を合法的に運転できます。",
- "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "16歳以上で、お住まいの法域で自分の乗り物を合法的に運転できること（免許が必要な場合は有効な免許を持っていること）が必要です。Blacktopを利用することで、これらの要件を満たしていることを確認したものとみなされます。"
+ "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "16歳以上で、お住まいの法域で自分の乗り物を合法的に運転できること（免許が必要な場合は有効な免許を持っていること）が必要です。Blacktopを利用することで、これらの要件を満たしていることを確認したものとみなされます。",
+ "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• 選んだ名前で、サーバーに匿名IDが作られます。メールもパスワードも不要です",
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "セットアップできませんでした。匿名IDを作るため、Blacktopは一度だけ接続が必要です。接続を確認してもう一度お試しください。"
 }

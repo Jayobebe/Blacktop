@@ -4228,5 +4228,7 @@
  "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Ingen GPS ennå. Fart og distanse registreres ikke før Blacktop kan se posisjonen din: sjekk at den er tillatt for appen.",
  "Welcome": "Velkommen",
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "Jeg er minst 16 år og har lov til å kjøre kjøretøyet mitt der jeg bor.",
- "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Du må være minst 16 år og ha lov til å kjøre kjøretøyet ditt i din jurisdiksjon, med gyldig førerkort der det kreves. Ved å bruke Blacktop bekrefter du at du oppfyller disse kravene."
+ "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Du må være minst 16 år og ha lov til å kjøre kjøretøyet ditt i din jurisdiksjon, med gyldig førerkort der det kreves. Ved å bruke Blacktop bekrefter du at du oppfyller disse kravene.",
+ "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• Du får en anonym ID på serveren vår med navnet du velger: ingen e-post, ikke noe passord",
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Kunne ikke sette deg opp. Blacktop trenger tilkobling én gang for å opprette den anonyme ID-en din: sjekk din og prøv igjen."
 }

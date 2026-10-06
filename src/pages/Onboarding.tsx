@@ -101,6 +101,7 @@ export default function Onboarding() {
             <ul className="space-y-1 text-xs text-muted-foreground">
               <li>{tr("• Your rides, stats and garage are stored on your device")}</li>
               <li>{tr("• No sign-up, no ads, no tracking SDKs")}</li>
+              <li>{tr("• You get an anonymous ID on our server, with the name you choose: no email, no password")}</li>
               <li>{tr("• Only features you turn on (convoys, Blacktop World, crews, card drops) share data")}</li>
               <li>{tr("• Live convoy data is deleted from the server when a ride ends")}</li>
               <li>{tr("• Voice is encrypted and never stored on a server")}</li>

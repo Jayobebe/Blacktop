@@ -4228,5 +4228,7 @@
  "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "还没有 GPS。在 Blacktop 能获取你的位置之前，不会记录速度和距离：请检查是否已允许此应用使用位置。",
  "Welcome": "欢迎",
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "我已年满 16 岁，并且在居住地可以合法驾驶或骑行我的车辆。",
- "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "你必须年满 16 岁，并且在所在司法辖区可以合法驾驶或骑行你的车辆（需要驾照的，须持有有效驾照）。使用 Blacktop 即表示你确认符合这些要求。"
+ "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "你必须年满 16 岁，并且在所在司法辖区可以合法驾驶或骑行你的车辆（需要驾照的，须持有有效驾照）。使用 Blacktop 即表示你确认符合这些要求。",
+ "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• 我们的服务器会用你选的名字为你创建一个匿名 ID：无需邮箱，无需密码",
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "设置失败。Blacktop 需要联网一次来创建你的匿名 ID：请检查网络后重试。"
 }
