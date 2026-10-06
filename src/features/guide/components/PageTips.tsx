@@ -46,6 +46,9 @@ function locate(selector: string): Spot | null {
   return { x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12, radius: radius + 6 };
 }
 
+/** The page whose tips are up. A page can mount two sets (History, the Garage, Track Day); they take turns. */
+let busy: string | null = null;
+
 /**
  * A page's first-time tips. Mount it on the page with up to three tips; the
  * first time the page is open (and `when` holds) it dims the screen, lights
@@ -74,10 +77,12 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
     if (!due || !when || step !== null) return;
     let tries = 0;
     const timer = window.setInterval(() => {
-      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      if (busy !== null || document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
       const first = next(0);
       if (first !== null) {
         window.clearInterval(timer);
+        // Taken here and now: the other set's timer may fire before this one has drawn.
+        busy = page;
         setStep(first);
       } else if (++tries > 12) {
         // Nothing here to point at: don't keep looking.
@@ -90,8 +95,8 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
 
   // Held back mid-way (the rider set off, a dialog opened): put them away; they'll start again later.
   useEffect(() => {
-    if (!when && step !== null) setStep(null);
-  }, [when, step]);
+    if ((!when || !due) && step !== null) setStep(null);
+  }, [when, due, step]);
 
   useLayoutEffect(() => {
     if (step === null) return;
@@ -122,6 +127,14 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
     tell.current?.(true);
     return () => tell.current?.(false);
   }, [showing]);
+  // Hand over to the page's other set once these are done, put away or gone with the page.
+  useEffect(() => {
+    if (step === null) return;
+    busy = page;
+    return () => {
+      if (busy === page) busy = null;
+    };
+  }, [step, page]);
 
   if (!due || !when || step === null || !spot) return null;
   const tip = list[step];
