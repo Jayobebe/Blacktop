@@ -26,6 +26,7 @@ import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
 import { startWarp } from '@/lib/warp';
+import { WARP_SWITCH_MS } from '@/components/WarpOverlay';
 import { isThermal } from '@/lib/thermal';
 
 import { tr } from '@/lib/i18n';
@@ -175,7 +176,8 @@ export default function Home() {
     }
     const g = globeRef.current?.getBoundingClientRect();
     startWarp(g ? g.left + g.width / 2 : window.innerWidth / 2, g ? g.top + g.height / 2 : window.innerHeight / 2);
-    setTimeout(() => navigate('/world'), 360);
+    // The page changes underneath once the slingshot has covered it.
+    setTimeout(() => navigate('/world'), WARP_SWITCH_MS);
   };
 
 
