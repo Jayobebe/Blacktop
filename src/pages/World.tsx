@@ -1,5 +1,5 @@
 import { paymentsAvailable } from '@/lib/platform';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -22,6 +22,7 @@ import { BlacktankPanel } from '@/features/blacktank';
 
 import { tr } from '@/lib/i18n';
 import { useServerCap } from '@/lib/serverCaps';
+import { endWarp } from '@/lib/warp';
 // Not the Card Wars barrel: that would pull the whole game into this page.
 import { SpectreTagBack } from '@/features/card-wars/light';
 
@@ -48,6 +49,11 @@ const countriesGeo = feature(
 ) as unknown as { features: { id: string; geometry: object }[] };
 
 export default function World() {
+  // Arrived through the warp from Home's globe: let it go once this page has had a moment to draw.
+  useEffect(() => {
+    // Not cancelled on unmount: the warp must be let go even if this page is torn down and remounted.
+    window.setTimeout(endWarp, 90);
+  }, []);
   const navigate = useNavigate();
   const [globeScale, setGlobeScale] = useState(1);
   const [showCrewQr, setShowCrewQr] = useState(false);

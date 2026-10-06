@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { PushBridge, PushNudge } from "@/features/notifications";
+import { WarpOverlay } from "@/components/WarpOverlay";
 import { CrewStatsPublisher } from "@/features/crew/CrewStatsPublisher";
 import { MaintenanceNotifier } from "@/features/garage";
 import { EnterpriseSync } from "@/features/enterprise/components/EnterpriseSync";
@@ -310,6 +311,7 @@ const App = () => {
                 <NativeLinks />
                 <PushBridge />
                 <PushNudge />
+                <WarpOverlay />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />
                 {/* Finishes the burn flames after the post-burn reload. */}

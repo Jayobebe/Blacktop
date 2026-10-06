@@ -25,6 +25,8 @@ import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
+import { startWarp } from '@/lib/warp';
+import { isThermal } from '@/lib/thermal';
 
 import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
@@ -38,7 +40,6 @@ export default function Home() {
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
   const exp = useExperience();
-  const [isExploding, setIsExploding] = useState(false);
 
   // The deck: the consumer home, then each mounted enterprise workspace, then
   // the Doorway (scan / enter a code). Tracked by key so mounting or removing a
@@ -161,13 +162,20 @@ export default function Home() {
       openBlacktopMap();
       return;
     }
-    // Into Blacktop World: a click as it catches, then the whoosh as the globe bursts.
+    // Into Blacktop World through the warp (components/WarpOverlay): it opens from the globe and
+    // covers the screen while the page changes underneath, and World clears it once it has drawn.
     if (settings.uiSoundsEnabled !== false) {
       uiCue('tap');
       setTimeout(() => sceneCue('whoosh'), 70);
     }
-    setIsExploding(true);
-    setTimeout(() => navigate('/world'), 320);
+    const still = isThermal() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (still) {
+      navigate('/world');
+      return;
+    }
+    const g = globeRef.current?.getBoundingClientRect();
+    startWarp(g ? g.left + g.width / 2 : window.innerWidth / 2, g ? g.top + g.height / 2 : window.innerHeight / 2);
+    setTimeout(() => navigate('/world'), 360);
   };
 
 
@@ -524,7 +532,7 @@ export default function Home() {
 
   return (
     <div
-      className={`h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6 transition-[transform,opacity] duration-[340ms] ease-in${isExploding ? ' scale-[2.4] opacity-0' : ''}`}
+      className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6"
       // Home never scrolls; if focusing a field inside the deck makes the
       // browser scroll it anyway, snap it back so the padding stays put.
       onScroll={(e) => {

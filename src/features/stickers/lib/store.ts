@@ -27,7 +27,12 @@ export interface Sticker {
   /** Degrees, clockwise. */
   rot: number;
   flip: boolean;
+  /** Which way up the phone was when it was stuck on: it shows only that way up (none: portrait, from before this was kept). */
+  o?: 'p' | 'l';
 }
+
+/** Which way up the phone is now. */
+export const orientationNow = (): 'p' | 'l' => (typeof window !== 'undefined' && window.matchMedia?.('(orientation: landscape)').matches ? 'l' : 'p');
 
 export const STICKERS_KEY = 'blacktop_stickers';
 export const MAX_STICKERS = 12;
@@ -140,7 +145,7 @@ export async function addSticker(card: string, name: string, src: string): Promi
       [0.87, 0.33],
     ];
     const [x, y] = spots[n % spots.length];
-    set([...state, tidy({ id: crypto.randomUUID(), card, name, ...cut, x: x + (Math.random() - 0.5) * 0.04, y: y + (Math.random() - 0.5) * 0.03, w: STICKER_SIZE.start, rot: Math.round((Math.random() - 0.5) * 24), flip: false })]);
+    set([...state, tidy({ id: crypto.randomUUID(), card, name, ...cut, x: x + (Math.random() - 0.5) * 0.04, y: y + (Math.random() - 0.5) * 0.03, w: STICKER_SIZE.start, rot: Math.round((Math.random() - 0.5) * 24), flip: false, o: orientationNow() })]);
     return 'added';
   } catch {
     return 'failed';

@@ -4,7 +4,7 @@ import { BringToFront, Check, FlipHorizontal2, Maximize2, Trash2 } from 'lucide-
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { STICKER_SIZE, bringToFront, removeSticker, setArranging, tidy, updateSticker, useArranging, useStickers, type Sticker } from '../lib/store';
+import { STICKER_SIZE, bringToFront, orientationNow, removeSticker, setArranging, tidy, updateSticker, useArranging, useStickers, type Sticker } from '../lib/store';
 
 /** A button stickers show on: the layer put inside it, and where its inner edge sits in the column. */
 interface Surface {
@@ -41,7 +41,17 @@ const HANDLE = 22; // the corner handle's radius
  * brought to the front or peeled off from the bar.
  */
 export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> }) {
-  const saved = useStickers();
+  // A sticker belongs to the way up the phone was when it was stuck on: the buttons sit
+  // differently the other way, so there it simply isn't shown.
+  const [way, setWay] = useState(orientationNow);
+  useEffect(() => {
+    const mq = window.matchMedia('(orientation: landscape)');
+    const on = () => setWay(orientationNow());
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  const everySticker = useStickers();
+  const saved = everySticker.filter((s) => (s.o ?? 'p') === way);
   const arranging = useArranging();
   const [area, setArea] = useState<Area | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
