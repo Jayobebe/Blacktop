@@ -14,6 +14,7 @@ import { useConvoyState } from '@/features/convoy';
 import { useCrew } from '@/features/crew/useCrew';
 import { useExperience } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
+import { PageTips } from '@/features/guide';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { tr } from '@/lib/i18n';
 
@@ -185,6 +186,7 @@ export default function SoloLobby() {
         backTo="/"
         right={
           <HeaderButton
+            data-tip="solo-lock"
             onClick={toggleUnlocked}
             disabled={busyLock}
             active={isUnlocked}
@@ -197,10 +199,20 @@ export default function SoloLobby() {
       />
 
 
+      {/* First-time tips */}
+      <PageTips
+        page="solo-lobby"
+        when={!showAddStop}
+        tips={[
+          { target: '[data-tip="solo-destination"]', text: tr("Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.") },
+          { target: '[data-tip="solo-lock"]', text: tr("Unlock to list this in Crew Convoys, so your crew can join you.") },
+        ]}
+      />
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
         {/* Destination Search */}
-        <div className="animate-slide-up">
+        <div data-tip="solo-destination" className="animate-slide-up">
           <div className="flex items-center gap-2 mb-3">
             <MapPin className="w-4 h-4 text-accent" />
             <h2 className="text-sm font-medium">{tr("Destination")}</h2>

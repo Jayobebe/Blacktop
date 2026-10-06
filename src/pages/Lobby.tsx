@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 import { QRCodeSVG } from 'qrcode.react';
+import { PageTips } from '@/features/guide';
 import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -556,9 +557,26 @@ export default function Lobby() {
 
   return (
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 safe-top safe-bottom md:p-5 lg:p-6">
+      {/* First-time tips. The leader gets a fourth, for the hold on Start. */}
+      <PageTips
+        page="lobby"
+        max={4}
+        when={!showQR && !showLeaveConfirm && !showAddWaypoint}
+        tips={[
+          { target: '[data-tip="lobby-code"]', text: tr("Share this code or its QR. Others join from Join Convoy on their Home.") },
+          {
+            target: '[data-tip="lobby-destination"]',
+            text: convoy.isLeader
+              ? tr("Set a destination and everyone gets the same route. Leave it empty to just set off together.")
+              : tr("The leader sets the destination, and everyone gets the same route."),
+          },
+          { target: '[data-tip="lobby-voice"]', text: tr("Join voice here before you set off. It takes up to eight people.") },
+          ...(convoy.isLeader ? [{ target: '[data-tip="lobby-start"]', text: tr("Tap Start for just you. Hold it to start everyone at once.") }] : []),
+        ]}
+      />
       {/* Header with Code */}
       <header className="mb-3 landscape:mb-2 md:mb-4 animate-fade-in flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div data-tip="lobby-code" className="flex items-center gap-2">
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1 landscape:hidden">{tr("Convoy Code")}</p>
             <button
@@ -611,6 +629,7 @@ export default function Lobby() {
           
           {/* Voice Toggle */}
           <button
+            data-tip="lobby-voice"
             onClick={async () => {
               try {
                 // CRITICAL: Unlock iOS audio immediately on user gesture (fire-and-forget, never blocks)
@@ -749,7 +768,7 @@ export default function Lobby() {
               />
             </div>
           ) : (
-            <div>
+            <div data-tip="lobby-destination">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                   {nextWaypoint ? tr("Next Stop") : tr("Destination")}
@@ -1008,6 +1027,7 @@ export default function Lobby() {
         {/* Start Ride button - tap for individual start, long-press (leader only) for all */}
         {!showLeaveConfirm && (
           <Button
+            data-tip="lobby-start"
             onClick={() => {
               // If a long-press fired, ignore the subsequent click
               if (didLongPressRef.current) {

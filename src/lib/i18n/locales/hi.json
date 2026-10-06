@@ -4321,5 +4321,12 @@
  "Spend the longest standing still in a convoy.": "काफ़िले में सबसे देर तक खड़े रहें।",
  "Turn whole parts of the app on or off here. Home changes to match.": "ऐप के पूरे हिस्से यहाँ चालू या बंद करें। होम उसी के अनुसार बदल जाता है।",
  "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "तय करें कि रेस्क्यू कॉल किन तक पहुँचे, और बिना कुछ भेजे उसे काम करते देखने के लिए अभ्यास चलाएँ।",
- "Tap the logo to change language.": "भाषा बदलने के लिए लोगो पर टैप करें।"
+ "Tap the logo to change language.": "भाषा बदलने के लिए लोगो पर टैप करें।",
+ "Share this code or its QR. Others join from Join Convoy on their Home.": "यह कोड या इसका QR साझा करें। बाकी लोग अपने होम पर काफ़िले में जुड़ें से जुड़ते हैं।",
+ "Set a destination and everyone gets the same route. Leave it empty to just set off together.": "गंतव्य तय करें और सबको एक ही रास्ता मिलेगा। बस साथ निकलना हो तो इसे खाली छोड़ दें।",
+ "The leader sets the destination, and everyone gets the same route.": "लीडर गंतव्य तय करता है, और सबको एक ही रास्ता मिलता है।",
+ "Join voice here before you set off. It takes up to eight people.": "निकलने से पहले यहाँ वॉइस से जुड़ें। इसमें आठ लोग तक आ सकते हैं।",
+ "Tap Start for just you. Hold it to start everyone at once.": "सिर्फ़ अपने लिए शुरू करने को टैप करें। सबको एक साथ शुरू करने के लिए दबाए रखें।",
+ "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "मोड़-दर-मोड़ रास्ते के लिए गंतव्य तय करें, या बस शुरू दबाएँ: ट्रैकिंग के लिए गंतव्य ज़रूरी नहीं।",
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "इसे क्रू काफ़िले में दिखाने के लिए अनलॉक करें, ताकि आपका क्रू जुड़ सके।"
 }

@@ -4321,5 +4321,12 @@
  "Spend the longest standing still in a convoy.": "Resta fermo più a lungo di tutti in un convoglio.",
  "Turn whole parts of the app on or off here. Home changes to match.": "Attiva o disattiva qui intere parti dell'app. La Home cambia di conseguenza.",
  "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "Scegli chi riceve una chiamata di soccorso e fai un'esercitazione per vederla funzionare senza inviare nulla.",
- "Tap the logo to change language.": "Tocca il logo per cambiare lingua."
+ "Tap the logo to change language.": "Tocca il logo per cambiare lingua.",
+ "Share this code or its QR. Others join from Join Convoy on their Home.": "Condividi questo codice o il suo QR. Gli altri entrano da Unisciti al convoglio nella loro Home.",
+ "Set a destination and everyone gets the same route. Leave it empty to just set off together.": "Imposta una destinazione e tutti ricevono lo stesso percorso. Lasciala vuota per partire semplicemente insieme.",
+ "The leader sets the destination, and everyone gets the same route.": "Il leader imposta la destinazione e tutti ricevono lo stesso percorso.",
+ "Join voice here before you set off. It takes up to eight people.": "Entra in voce qui prima di partire. Ci stanno fino a otto persone.",
+ "Tap Start for just you. Hold it to start everyone at once.": "Tocca Avvia solo per te. Tieni premuto per far partire tutti insieme.",
+ "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Imposta una destinazione per un percorso con indicazioni svolta per svolta, oppure premi Avvia: il tracciamento non ha bisogno di destinazione.",
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Sblocca per mostrarlo in Convogli della crew, così la tua crew può unirsi."
 }

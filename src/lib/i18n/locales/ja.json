@@ -4321,5 +4321,12 @@
  "Spend the longest standing still in a convoy.": "コンボイで最も長く停車する。",
  "Turn whole parts of the app on or off here. Home changes to match.": "アプリの機能をまとめてオン・オフできます。ホームもそれに合わせて変わります。",
  "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "レスキューコールの届け先を設定し、何も送信せずに動作を確かめる訓練を実行できます。",
- "Tap the logo to change language.": "ロゴをタップして言語を変更します。"
+ "Tap the logo to change language.": "ロゴをタップして言語を変更します。",
+ "Share this code or its QR. Others join from Join Convoy on their Home.": "このコードかQRを共有しましょう。相手はホームの「コンボイに参加」から参加します。",
+ "Set a destination and everyone gets the same route. Leave it empty to just set off together.": "目的地を設定すると全員に同じルートが届きます。空のままなら、そのまま一緒に出発できます。",
+ "The leader sets the destination, and everyone gets the same route.": "リーダーが目的地を設定し、全員に同じルートが届きます。",
+ "Join voice here before you set off. It takes up to eight people.": "出発前にここでボイスに参加しましょう。最大8人まで入れます。",
+ "Tap Start for just you. Hold it to start everyone at once.": "タップで自分だけスタート。長押しで全員を同時にスタートします。",
+ "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "目的地を設定するとターンバイターンのルートが使えます。スタートを押すだけでもOK：記録に目的地は不要です。",
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "ロックを解除すると「クルーコンボイ」に表示され、クルーが参加できます。"
 }

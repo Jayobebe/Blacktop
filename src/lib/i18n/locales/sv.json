@@ -4321,5 +4321,12 @@
  "Spend the longest standing still in a convoy.": "Stå stilla längst i en konvoj.",
  "Turn whole parts of the app on or off here. Home changes to match.": "Slå på eller av hela delar av appen här. Hem ändras därefter.",
  "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "Välj vilka ett räddningsanrop når, och kör en övning för att se det fungera utan att skicka något.",
- "Tap the logo to change language.": "Tryck på logotypen för att byta språk."
+ "Tap the logo to change language.": "Tryck på logotypen för att byta språk.",
+ "Share this code or its QR. Others join from Join Convoy on their Home.": "Dela den här koden eller dess QR. Andra går med via Gå med i konvoj på sin Hem.",
+ "Set a destination and everyone gets the same route. Leave it empty to just set off together.": "Ange ett mål så får alla samma rutt. Lämna tomt för att bara ge er av tillsammans.",
+ "The leader sets the destination, and everyone gets the same route.": "Ledaren anger målet, och alla får samma rutt.",
+ "Join voice here before you set off. It takes up to eight people.": "Gå med i rösten här innan ni ger er av. Den rymmer upp till åtta.",
+ "Tap Start for just you. Hold it to start everyone at once.": "Tryck på Starta för bara dig. Håll in för att starta alla samtidigt.",
+ "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Ange ett mål för en rutt med sväng-för-sväng, eller tryck bara på Starta: registrering behöver inget mål.",
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Lås upp för att visa det här i Crew-konvojer, så att ditt crew kan ansluta."
 }

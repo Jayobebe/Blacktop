@@ -4321,5 +4321,12 @@
  "Spend the longest standing still in a convoy.": "Bir konvoyda en uzun süre hareketsiz kal.",
  "Turn whole parts of the app on or off here. Home changes to match.": "Uygulamanın bütün bölümlerini buradan aç ya da kapat. Ana ekran buna göre değişir.",
  "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "Kurtarma çağrısının kimlere ulaşacağını ayarla ve hiçbir şey göndermeden çalıştığını görmek için tatbikat yap.",
- "Tap the logo to change language.": "Dili değiştirmek için logoya dokun."
+ "Tap the logo to change language.": "Dili değiştirmek için logoya dokun.",
+ "Share this code or its QR. Others join from Join Convoy on their Home.": "Bu kodu ya da QR'ını paylaş. Diğerleri Ana ekranlarındaki Konvoya katıl ile katılır.",
+ "Set a destination and everyone gets the same route. Leave it empty to just set off together.": "Bir hedef belirle, herkes aynı rotayı alsın. Sadece birlikte yola çıkmak için boş bırak.",
+ "The leader sets the destination, and everyone gets the same route.": "Hedefi lider belirler ve herkes aynı rotayı alır.",
+ "Join voice here before you set off. It takes up to eight people.": "Yola çıkmadan önce sese buradan katıl. En fazla sekiz kişi alır.",
+ "Tap Start for just you. Hold it to start everyone at once.": "Sadece kendin için Başlat'a dokun. Herkesi aynı anda başlatmak için basılı tut.",
+ "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Adım adım yol tarifli bir rota için hedef belirle ya da sadece Başlat'a bas: kayıt için hedef gerekmez.",
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Bunu Ekip konvoyları içinde listelemek için kilidi aç, ekibin sana katılabilsin."
 }

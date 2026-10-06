@@ -4321,5 +4321,12 @@
  "Spend the longest standing still in a convoy.": "在车队中静止时间最长。",
  "Turn whole parts of the app on or off here. Home changes to match.": "在这里开启或关闭应用的整块功能。主页会随之变化。",
  "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "设置救援呼叫能联系到谁，并进行一次演练，在不发送任何内容的情况下看看它如何运作。",
- "Tap the logo to change language.": "点按标志可更改语言。"
+ "Tap the logo to change language.": "点按标志可更改语言。",
+ "Share this code or its QR. Others join from Join Convoy on their Home.": "分享这个代码或它的二维码。其他人从主页的“加入车队”加入。",
+ "Set a destination and everyone gets the same route. Leave it empty to just set off together.": "设置目的地后，所有人都会收到同一条路线。留空则直接一起出发。",
+ "The leader sets the destination, and everyone gets the same route.": "由领队设置目的地，所有人都会收到同一条路线。",
+ "Join voice here before you set off. It takes up to eight people.": "出发前在这里加入语音。最多可容纳八人。",
+ "Tap Start for just you. Hold it to start everyone at once.": "点按只为自己开始。长按可让所有人同时开始。",
+ "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "设置目的地可获得逐向导航路线，或直接按开始：记录不需要目的地。",
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "解锁后会显示在“团队车队”中，你的车队伙伴就能加入。"
 }
