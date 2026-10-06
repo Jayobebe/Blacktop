@@ -24,6 +24,8 @@ interface CollapsibleSectionProps {
    * Without it, the section expands inline (full-width blocks).
    */
   index?: number;
+  /** A name a first-time tip can point at (`[data-tip="…"]` on the tile's header). */
+  tip?: string;
 }
 
 /** Settings dropdown tile: accent icon, label, accent chevron; content drops down below. */
@@ -40,6 +42,7 @@ export function CollapsibleSection({
   status,
   onHeaderClick,
   index,
+  tip,
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   // Grid panels leave the layout entirely once closed (an empty grid item would
@@ -62,6 +65,7 @@ export function CollapsibleSection({
   const header = (
     <button
       type="button"
+      data-tip={tip}
       aria-expanded={isActionHeader ? undefined : open}
       onClick={() => {
         haptics.tick();

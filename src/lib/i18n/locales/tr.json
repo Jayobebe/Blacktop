@@ -4318,5 +4318,8 @@
  "Set off between 20:00 and 05:00.": "20:00 ile 05:00 arasında yola çık.",
  "Cover {0} or more in one go.": "Tek seferde {0} veya daha fazla yol kat et.",
  "Head out three times in one day.": "Bir günde üç kez yola çık.",
- "Spend the longest standing still in a convoy.": "Bir konvoyda en uzun süre hareketsiz kal."
+ "Spend the longest standing still in a convoy.": "Bir konvoyda en uzun süre hareketsiz kal.",
+ "Turn whole parts of the app on or off here. Home changes to match.": "Uygulamanın bütün bölümlerini buradan aç ya da kapat. Ana ekran buna göre değişir.",
+ "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "Kurtarma çağrısının kimlere ulaşacağını ayarla ve hiçbir şey göndermeden çalıştığını görmek için tatbikat yap.",
+ "Tap the logo to change language.": "Dili değiştirmek için logoya dokun."
 }

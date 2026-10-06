@@ -4318,5 +4318,8 @@
  "Set off between 20:00 and 05:00.": "20:00에서 05:00 사이에 출발하세요.",
  "Cover {0} or more in one go.": "한 번에 {0} 이상 달리세요.",
  "Head out three times in one day.": "하루에 세 번 출발하세요.",
- "Spend the longest standing still in a convoy.": "콘보이에서 가장 오래 멈춰 있기."
+ "Spend the longest standing still in a convoy.": "콘보이에서 가장 오래 멈춰 있기.",
+ "Turn whole parts of the app on or off here. Home changes to match.": "앱의 기능을 통째로 켜거나 끌 수 있습니다. 홈도 그에 맞게 바뀝니다.",
+ "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "구조 요청이 누구에게 닿을지 정하고, 아무것도 보내지 않고 작동을 확인하는 훈련을 해 보세요.",
+ "Tap the logo to change language.": "로고를 탭해 언어를 바꾸세요."
 }

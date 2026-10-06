@@ -42,6 +42,7 @@ import { openBlacktopMap } from '@/features/map';
 import { useGarage } from '@/features/garage';
 import { BurnFlameOverlay, markBurnReveal } from '@/components/BurnFlameOverlay';
 import { LanguagePicker } from '@/components/LanguagePicker';
+import { PageTips } from '@/features/guide';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
@@ -294,6 +295,7 @@ export default function Settings() {
         right={
           <button
             type="button"
+            data-tip="settings-language"
             onPointerDown={(e) => { e.preventDefault(); startDemoHold(); }}
             onPointerUp={() => {
               const held = demoHoldStartRef.current != null ? performance.now() - demoHoldStartRef.current : Infinity;
@@ -389,7 +391,7 @@ export default function Settings() {
           />
 
           {/* Setup answers — same choices as onboarding, applied instantly */}
-          <CollapsibleSection icon={Sparkles} label={tr("Your Blacktop")} index={1} delayClass="delay-75">
+          <CollapsibleSection icon={Sparkles} label={tr("Your Blacktop")} index={1} delayClass="delay-75" tip="settings-yours">
             <div className="space-y-5">
               <div>
                 <p className="text-xs text-muted-foreground mb-2">{exp.terms.car ? tr("What you drive") : tr("What you ride")} <span className="opacity-60">{tr("(first is your main)")}</span></p>
@@ -501,7 +503,7 @@ export default function Settings() {
           </CollapsibleSection>
 
           {/* Safety */}
-        <CollapsibleSection icon={AlertTriangle} label={tr("Safety")} index={2} delayClass="delay-100">
+        <CollapsibleSection icon={AlertTriangle} label={tr("Safety")} index={2} delayClass="delay-100" tip="settings-safety">
           <div className="space-y-5">
             {/* Speed Alerts — they colour the live speed readout, so only for speed-focused riders */}
             {settings.speedFocusEnabled && (
@@ -1332,6 +1334,16 @@ export default function Settings() {
       {showStations && <StationManager onClose={() => setShowStations(false)} />}
 
       <LanguagePicker open={languageOpen} onOpenChange={setLanguageOpen} />
+      {/* First-time tips */}
+      <PageTips
+        page="settings"
+        when={!languageOpen}
+        tips={[
+          { target: '[data-tip="settings-yours"]', text: tr("Turn whole parts of the app on or off here. Home changes to match.") },
+          { target: '[data-tip="settings-safety"]', text: tr("Set who a rescue call reaches, and run a drill to see it work without sending anything.") },
+          { target: '[data-tip="settings-language"]', text: tr("Tap the logo to change language.") },
+        ]}
+      />
 
       <BurnFlameOverlay
         active={burning}

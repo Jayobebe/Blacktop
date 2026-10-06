@@ -4318,5 +4318,8 @@
  "Set off between 20:00 and 05:00.": "20:00から05:00の間に出発する。",
  "Cover {0} or more in one go.": "一度に{0}以上走る。",
  "Head out three times in one day.": "1日に3回出発する。",
- "Spend the longest standing still in a convoy.": "コンボイで最も長く停車する。"
+ "Spend the longest standing still in a convoy.": "コンボイで最も長く停車する。",
+ "Turn whole parts of the app on or off here. Home changes to match.": "アプリの機能をまとめてオン・オフできます。ホームもそれに合わせて変わります。",
+ "Set who a rescue call reaches, and run a drill to see it work without sending anything.": "レスキューコールの届け先を設定し、何も送信せずに動作を確かめる訓練を実行できます。",
+ "Tap the logo to change language.": "ロゴをタップして言語を変更します。"
 }

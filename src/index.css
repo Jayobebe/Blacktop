@@ -1460,10 +1460,17 @@ html.thermal .pressable:active:not(:disabled) {
   transform: none;
 }
 
-/* A badge box that turns over to show how it's earned (BadgeWalletPanel). Both faces sit in one grid cell. */
+/* A badge box that turns over to show how it's earned (BadgeWalletPanel). Both faces sit in one grid cell.
+   The face turned away is also switched off halfway through the turn: some phones still draw the back of an
+   element whatever backface-visibility says, and the front's figures showed through the description. */
 .badge-flip { perspective: 700px; display: block; }
-.badge-flip-inner { display: grid; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.badge-flip-inner { display: grid; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.45s ease-in-out; }
 .badge-flip-inner.is-flipped { transform: rotateY(180deg); }
-.badge-face { grid-area: 1 / 1; min-width: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.badge-face { grid-area: 1 / 1; min-width: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: opacity 0s linear 0.225s, visibility 0s linear 0.225s; }
 .badge-back { transform: rotateY(180deg); }
-@media (prefers-reduced-motion: reduce) { .badge-flip-inner { transition: none; } }
+.badge-flip-inner:not(.is-flipped) > .badge-back,
+.badge-flip-inner.is-flipped > .badge-face:not(.badge-back) { opacity: 0; visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .badge-flip-inner, .badge-face { transition: none; }
+}
+html.thermal .badge-face { transition: none; }

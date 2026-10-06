@@ -197,7 +197,7 @@ export function BadgeWalletPanel() {
             style={{ animationDelay: `${9 * 50}ms` }}
             front={
               <span className="flex items-center gap-3 text-left">
-                <Anchor className="w-6 h-6 text-stone-400 shrink-0" />
+                <Anchor className="w-6 h-6 text-accent-2 shrink-0" />
                 <span className="flex-1 min-w-0">
                   <span className="block text-[10px] font-medium text-muted-foreground">{info.label}</span>
                   {cardEconomy && <span className="block text-[9px] text-muted-foreground/70 mt-0.5">{tr("−1 pt")}</span>}
