@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "Trykk på et kort for å snu det. Hvert kort har et klistremerke på baksiden til Hjem-skjermen din.",
  "Tap a sticker to pick it up.": "Trykk på et klistremerke for å plukke det opp.",
  "This card's sticker isn't printed yet.": "Klistremerket til dette kortet er ikke trykket ennå.",
- "To front": "Fremst"
+ "To front": "Fremst",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "GPS-signalet er borte. Fart og distanse står stille til det er tilbake.",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Ingen GPS ennå. Fart og distanse registreres ikke før Blacktop kan se posisjonen din: sjekk at den er tillatt for appen.",
+ "Welcome": "Velkommen"
 }

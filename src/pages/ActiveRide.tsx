@@ -92,6 +92,24 @@ function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
   );
 }
 
+/**
+ * A ride with no position records nothing, and the signal bars alone don't
+ * say so. After a few seconds without a first fix, or once a fix has gone
+ * stale, this says it in words (the screen redraws every second with the clock).
+ */
+function GpsNotice({ gpsStatus, startedAt }: { gpsStatus: GpsStatus; startedAt: string | null }) {
+  const now = Date.now();
+  const never = gpsStatus.lastUpdate === null;
+  const sinceStart = startedAt ? (now - new Date(startedAt).getTime()) / 1000 : 0;
+  const sinceFix = gpsStatus.lastUpdate ? (now - gpsStatus.lastUpdate) / 1000 : 0;
+  if (never ? sinceStart < 8 : sinceFix < 20) return null;
+  return (
+    <p role="status" className="mx-auto mb-2 max-w-xs rounded-xl border border-destructive/50 bg-destructive/15 px-3 py-2 text-center text-xs font-medium leading-snug text-foreground">
+      {never ? tr("No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.") : tr("GPS signal lost. Speed and distance are on hold until it comes back.")}
+    </p>
+  );
+}
+
 // Get color styles for a member based on their accent color
 const getMemberStyles = (member: ConvoyMemberInfo) => {
   return getMemberColorStyles(member.accentColor);
@@ -1015,6 +1033,7 @@ export default function ActiveRide() {
             )}
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
           </div>
+          {!rideState.isPaused && <GpsNotice gpsStatus={rideState.gpsStatus} startedAt={rideState.startedAt} />}
 
           {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">

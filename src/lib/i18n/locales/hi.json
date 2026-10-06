@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "कार्ड पलटने के लिए उस पर टैप करें। हर कार्ड के पीछे आपकी होम स्क्रीन के लिए एक स्टिकर है।",
  "Tap a sticker to pick it up.": "स्टिकर उठाने के लिए उस पर टैप करें।",
  "This card's sticker isn't printed yet.": "इस कार्ड का स्टिकर अभी छपा नहीं है।",
- "To front": "सबसे आगे"
+ "To front": "सबसे आगे",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "GPS सिग्नल चला गया। लौटने तक रफ़्तार और दूरी रुकी रहेंगी।",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "अभी GPS नहीं है। जब तक Blacktop आपकी लोकेशन नहीं देख पाता, रफ़्तार और दूरी रिकॉर्ड नहीं होंगी: जाँचें कि इस ऐप के लिए लोकेशन की अनुमति है।",
+ "Welcome": "स्वागत है"
 }

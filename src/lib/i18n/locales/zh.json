@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "点按卡片即可翻面。每张卡片背面都有一张可贴到主页的贴纸。",
  "Tap a sticker to pick it up.": "点按贴纸即可拿起。",
  "This card's sticker isn't printed yet.": "这张卡片的贴纸尚未印制。",
- "To front": "置于最前"
+ "To front": "置于最前",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "GPS 信号丢失。信号恢复前，速度和距离暂停记录。",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "还没有 GPS。在 Blacktop 能获取你的位置之前，不会记录速度和距离：请检查是否已允许此应用使用位置。",
+ "Welcome": "欢迎"
 }

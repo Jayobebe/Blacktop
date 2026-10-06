@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,9 +56,10 @@ export function PageHeader({ title, subtitle, backTo, onBack, backLabel = 'Back'
 }
 
 /** Circular 40px icon button used in headers. */
-export function HeaderButton({ className, children, active, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
+export const HeaderButton = forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }>(function HeaderButton({ className, children, active, ...props }, ref) {
   return (
     <button
+      ref={ref}
       type="button"
       className={cn(
         'pressable w-10 h-10 rounded-full flex items-center justify-center shrink-0',
@@ -71,4 +72,4 @@ export function HeaderButton({ className, children, active, ...props }: React.Bu
       {children}
     </button>
   );
-}
+});

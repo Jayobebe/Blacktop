@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "Торкнися картки, щоб перевернути її. На звороті кожної картки є наліпка для твого головного екрана.",
  "Tap a sticker to pick it up.": "Торкнися наліпки, щоб узяти її.",
  "This card's sticker isn't printed yet.": "Наліпку цієї картки ще не надруковано.",
- "To front": "Наперед"
+ "To front": "Наперед",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "Сигнал GPS втрачено. Швидкість і відстань на паузі, доки він не повернеться.",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "GPS ще немає. Швидкість і відстань не записуються, доки Blacktop не побачить твоє місцезнаходження: перевір, чи його дозволено для цього застосунку.",
+ "Welcome": "Вітаємо"
 }

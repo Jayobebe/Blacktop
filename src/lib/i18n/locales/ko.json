@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "카드를 탭하면 뒤집힙니다. 모든 카드 뒷면에는 홈 화면에 붙일 스티커가 있습니다.",
  "Tap a sticker to pick it up.": "스티커를 탭해 집으세요.",
  "This card's sticker isn't printed yet.": "이 카드의 스티커는 아직 인쇄되지 않았습니다.",
- "To front": "맨 앞으로"
+ "To front": "맨 앞으로",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "GPS 신호가 끊겼습니다. 돌아올 때까지 속도와 거리는 멈춰 있습니다.",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "아직 GPS가 없습니다. Blacktop이 위치를 볼 수 있을 때까지 속도와 거리가 기록되지 않습니다. 이 앱의 위치 권한을 확인하세요.",
+ "Welcome": "환영합니다"
 }

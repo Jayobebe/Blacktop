@@ -499,7 +499,7 @@ export default function Home() {
                 <header className="flex items-center gap-3 mb-4 landscape:mb-2 animate-fade-in">
                   <div className="min-w-0 max-w-[45%] shrink-0">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
-                      {tr("Welcome back")}
+                      {stats.totalRides === 0 ? tr("Welcome") : tr("Welcome back")}
                     </p>
                     <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
                   </div>

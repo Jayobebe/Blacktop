@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "カードをタップすると裏返ります。どのカードの裏にもホーム画面用のステッカーがあります。",
  "Tap a sticker to pick it up.": "ステッカーをタップして選びます。",
  "This card's sticker isn't printed yet.": "このカードのステッカーはまだ印刷されていません。",
- "To front": "最前面へ"
+ "To front": "最前面へ",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "GPS信号を見失いました。戻るまで速度と距離は記録を止めています。",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "まだGPSがありません。Blacktopが位置情報を取得できるまで速度と距離は記録されません。このアプリで位置情報が許可されているか確認してください。",
+ "Welcome": "ようこそ"
 }

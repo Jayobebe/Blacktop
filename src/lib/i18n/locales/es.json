@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "Toca una carta para darle la vuelta. Cada carta tiene detrás una pegatina para tu pantalla de Inicio.",
  "Tap a sticker to pick it up.": "Toca una pegatina para cogerla.",
  "This card's sticker isn't printed yet.": "La pegatina de esta carta aún no está impresa.",
- "To front": "Al frente"
+ "To front": "Al frente",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "Señal GPS perdida. La velocidad y la distancia quedan en pausa hasta que vuelva.",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Aún no hay GPS. La velocidad y la distancia no se registrarán hasta que Blacktop pueda ver tu ubicación: comprueba que está permitida para esta app.",
+ "Welcome": "Bienvenido"
 }

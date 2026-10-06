@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "Ketuk kartu untuk membaliknya. Setiap kartu punya stiker di baliknya untuk layar Beranda-mu.",
  "Tap a sticker to pick it up.": "Ketuk stiker untuk mengambilnya.",
  "This card's sticker isn't printed yet.": "Stiker kartu ini belum dicetak.",
- "To front": "Ke depan"
+ "To front": "Ke depan",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "Sinyal GPS hilang. Kecepatan dan jarak ditahan sampai sinyal kembali.",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Belum ada GPS. Kecepatan dan jarak tidak akan terekam sampai Blacktop bisa melihat lokasimu: periksa izin lokasi untuk aplikasi ini.",
+ "Welcome": "Selamat datang"
 }

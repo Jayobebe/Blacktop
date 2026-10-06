@@ -4223,5 +4223,8 @@
  "Tap a card to flip it. Every card has a sticker on its back for your Home screen.": "Tik op een kaart om hem om te draaien. Elke kaart heeft achterop een sticker voor je Home-scherm.",
  "Tap a sticker to pick it up.": "Tik op een sticker om hem op te pakken.",
  "This card's sticker isn't printed yet.": "De sticker van deze kaart is nog niet gedrukt.",
- "To front": "Naar voren"
+ "To front": "Naar voren",
+ "GPS signal lost. Speed and distance are on hold until it comes back.": "Gps-signaal kwijt. Snelheid en afstand staan stil tot het terug is.",
+ "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Nog geen gps. Snelheid en afstand worden pas vastgelegd als Blacktop je locatie kan zien: controleer of die voor deze app is toegestaan.",
+ "Welcome": "Welkom"
 }

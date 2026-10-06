@@ -31,7 +31,7 @@ export interface Sticker {
 
 export const STICKERS_KEY = 'blacktop_stickers';
 export const MAX_STICKERS = 12;
-export const STICKER_SIZE = { min: 0.12, max: 1.1, start: 0.34 } as const;
+export const STICKER_SIZE = { min: 0.12, max: 1.1, start: 0.24 } as const;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -130,14 +130,17 @@ export async function addSticker(card: string, name: string, src: string): Promi
     if (state.some((s) => s.card === card)) return 'already';
     // Spread new ones out so they don't all land in one pile.
     const n = state.length;
+    // The corners of the buttons, where no label sits.
     const spots = [
-      [0.25, 0.2],
-      [0.75, 0.2],
-      [0.3, 0.8],
-      [0.72, 0.78],
+      [0.13, 0.08],
+      [0.87, 0.08],
+      [0.14, 0.6],
+      [0.86, 0.6],
+      [0.13, 0.33],
+      [0.87, 0.33],
     ];
     const [x, y] = spots[n % spots.length];
-    set([...state, tidy({ id: crypto.randomUUID(), card, name, ...cut, x: x + (Math.random() - 0.5) * 0.08, y: y + (Math.random() - 0.5) * 0.08, w: STICKER_SIZE.start, rot: Math.round((Math.random() - 0.5) * 24), flip: false })]);
+    set([...state, tidy({ id: crypto.randomUUID(), card, name, ...cut, x: x + (Math.random() - 0.5) * 0.04, y: y + (Math.random() - 0.5) * 0.03, w: STICKER_SIZE.start, rot: Math.round((Math.random() - 0.5) * 24), flip: false })]);
     return 'added';
   } catch {
     return 'failed';

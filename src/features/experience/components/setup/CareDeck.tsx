@@ -49,8 +49,12 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
   const answer = async (yes: boolean) => {
     if (exiting) return;
     if (yes && q.needsMotion && !(await requestMotionPermission())) {
+      // The phone said no: that's this question answered, not a dead end.
       toast.error(tr("Motion sensor permission denied"), { description: tr("You can turn this on later in Settings.") });
       setDx(0);
+      updateSettings(carePatch(q, false, context));
+      setExiting('no');
+      window.setTimeout(onAnswered, EXIT_MS);
       return;
     }
     if (yes && q.features.includes('autoRescueEnabled') && !(await requestAutoRescueConsent())) {

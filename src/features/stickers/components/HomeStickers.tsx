@@ -66,13 +66,16 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
         .filter((el) => el.getClientRects().length > 0)
         .map((el) => {
           const r = el.getBoundingClientRect();
-          const rad = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
-          return `<rect x='${(r.left - c.left).toFixed(1)}' y='${(r.top - c.top).toFixed(1)}' width='${r.width.toFixed(1)}' height='${r.height.toFixed(1)}' rx='${rad}' fill='white'/>`;
+          const cs = getComputedStyle(el);
+          const rad = parseFloat(cs.borderTopLeftRadius) || 0;
+          // Inside the button's border, so its accent outline stays on top of a sticker.
+          const b = parseFloat(cs.borderTopWidth) || 0;
+          return `<rect x='${(r.left - c.left + b).toFixed(1)}' y='${(r.top - c.top + b).toFixed(1)}' width='${Math.max(0, r.width - b * 2).toFixed(1)}' height='${Math.max(0, r.height - b * 2).toFixed(1)}' rx='${Math.max(0, rad - b)}' fill='white'/>`;
         });
       const globe = column.querySelector<HTMLElement>('[data-sticker-hole]');
       const g = globe?.getBoundingClientRect();
       // The same notch the buttons are cut with: the globe's rim and 14px round it.
-      const hole = g && g.width ? `<circle cx='${(g.left + g.width / 2 - c.left).toFixed(1)}' cy='${(g.top + g.height / 2 - c.top).toFixed(1)}' r='${(g.width / 2 + 14).toFixed(1)}' fill='black'/>` : '';
+      const hole = g && g.width ? `<circle cx='${(g.left + g.width / 2 - c.left).toFixed(1)}' cy='${(g.top + g.height / 2 - c.top).toFixed(1)}' r='${(g.width / 2 + 15).toFixed(1)}' fill='black'/>` : '';
       const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><defs><mask id='m'>${rects.join('')}${hole}</mask></defs><rect width='${w}' height='${h}' fill='white' mask='url(#m)'/></svg>`;
       const mask = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
       setArea((a) => (a && a.w === w && a.h === h && a.mask === mask ? a : { w, h, mask }));
