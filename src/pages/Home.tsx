@@ -24,6 +24,7 @@ import { sceneCue, uiCue } from '@/lib/radioFx';
 import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
+import { HomeStickers, useArranging } from '@/features/stickers';
 
 import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
@@ -45,7 +46,9 @@ export default function Home() {
   // workspace never lands the rider on the wrong card.
   const enterprise = useEnterprise();
   const guiding = useGuidanceActive();
-  const deckLocked = rideState.isActive || guiding;
+  // Arranging stickers: drags belong to the stickers, not the deck.
+  const arrangingStickers = useArranging() && settings.collectiblesEnabled;
+  const deckLocked = rideState.isActive || guiding || arrangingStickers;
   const deckKeys = ['home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
   // Back from a package demo page returns to the Doorway (history state).
   const location = useLocation();
@@ -57,6 +60,10 @@ export default function Home() {
         : 'home',
   );
   const deckIndex = Math.max(0, deckKeys.indexOf(deckKey));
+  // Stickers are arranged on the consumer home, whichever card the deck was on.
+  useEffect(() => {
+    if (arrangingStickers) setDeckKey('home');
+  }, [arrangingStickers]);
   const goToDeck = (i: number) => {
     const key = deckKeys[i] ?? 'home';
     setDeckKey(key);
@@ -537,6 +544,7 @@ export default function Home() {
                           <button
                             key={tile.key}
                             ref={i === 0 ? topATileRef : topBTileRef}
+                            data-sticker-surface
                             onClick={() => {
                               haptics.light();
                               tile.onClick();
@@ -562,6 +570,7 @@ export default function Home() {
                       <div className="flex gap-3 flex-1">
                         <div
                           ref={bottomTileRef}
+                          data-sticker-surface
                           role="button"
                           tabIndex={0}
                           onClick={() => {
@@ -592,6 +601,7 @@ export default function Home() {
                         {showTrack && (
                           <div
                             ref={trackTileRef}
+                            data-sticker-surface
                             role="button"
                             tabIndex={0}
                             onClick={openTrack}
@@ -612,6 +622,7 @@ export default function Home() {
                       {/* Track Pack (portrait): trims the bottom off Join, sits above the nav bar */}
                       {showTrack && (
                         <div
+                          data-sticker-surface
                           role="button"
                           tabIndex={0}
                           onClick={openTrack}
@@ -626,10 +637,14 @@ export default function Home() {
                         </div>
                       )}
 
+                      {/* Stickers from the vault, on the buttons only (cut at their edges and round the globe). */}
+                      {settings.collectiblesEnabled && <HomeStickers columnRef={tileColumnRef} />}
+
                       {/* Rotating globe — tapping opens the map. Sits above the tiles (z-20)
                           so pointer events land here first; the canvas fills the div exactly. */}
                       <div
                         ref={globeRef}
+                        data-sticker-hole
                         onClick={handleGlobeClick}
                         onPointerDown={handleGlobePointerDown}
                         onPointerUp={cancelLongPress}

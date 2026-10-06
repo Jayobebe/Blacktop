@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { toast } from 'sonner';
-import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer } from 'lucide-react';
+import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/features/settings';
@@ -34,6 +34,8 @@ import { tr } from '@/lib/i18n';
 
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { BattleCard, useWonBattleCards } from '@/features/card-wars/collection';
+import { StickerControl, StickerPreview, removeStickerFor, setArranging, useStickers } from '@/features/stickers';
+import { useNavigate } from 'react-router-dom';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
@@ -42,6 +44,8 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const { spectres, assignPower } = useSpectreCards();
   const wonCards = useWonBattleCards();
+  const stickers = useStickers();
+  const navigate = useNavigate();
   // The rider's own vehicle cards always lead the regular row.
   const { cards: myCards } = useVehicleCards();
   const [showScanner, setShowScanner] = useState(false);
@@ -160,18 +164,31 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <Folder className="w-4 h-4 text-accent" />
         <h2 className="text-sm font-semibold tracking-tight">{tr("Card Collection")}</h2>
+        {stickers.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setArranging(true);
+              navigate('/');
+            }}
+            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-xs font-medium"
+          >
+            <StickerIcon className="w-3.5 h-3.5 text-accent" />
+            {tr("Arrange stickers")}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => startScanner(null)}
           disabled={locked}
-          className="disabled:opacity-40 disabled:pointer-events-none ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
+          className="disabled:opacity-40 disabled:pointer-events-none [&:nth-child(3)]:ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors text-xs font-medium"
           aria-label={tr("Scan a card")}
         >
           <ScanLine className="w-3.5 h-3.5" />
           {tr("Scan card")}
         </button>
       </div>
-      <p className="px-4 pb-3 text-[10px] text-muted-foreground">{tr("Tap a card to flip it.")}</p>
+      <p className="px-4 pb-3 text-[10px] text-muted-foreground">{tr("Tap a card to flip it. Every card has a sticker on its back for your Home screen.")}</p>
 
       {/* Collected row — scanned from other riders; flips to its QR to pass on */}
       <CardRow
@@ -204,6 +221,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
                 type="button"
                 onClick={() => {
                   removeCard(card.key);
+                  removeStickerFor(`card:${card.key}`);
                   toast.success(tr("Removed from collection"));
                 }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-xs font-medium"
@@ -225,7 +243,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
       >
         {wonCards.map(card => (
           <div key={card.id} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <BattleCard card={card} />
+            <WonFlipCard card={card} />
           </div>
         ))}
       </CardRow>
@@ -243,6 +261,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
           <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
             <FlipCard
               card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }}
+              stickerKey={`spectre:${sp.key}`}
               spectre={sp}
               spectreBack={spectreBack ? (shown) => spectreBack(sp, shown, (power) => assignPower(sp.key, power)) : undefined}
             />
@@ -362,7 +381,8 @@ function SpectreResult({ spectre }: { spectre: SpectreCard }) {
 }
 
 /** Tap to flip. Collected cards show their QR on the back; Spectre cards their dog tag (the win, where nothing draws the tag). */
-function FlipCard({ card, spectre, spectreBack }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode }) {
+function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}` }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string }) {
+  const sticker = <StickerControl card={stickerKey} name={card.n} src={card.img} className="shrink-0" />;
   const [flipped, setFlipped] = useState(false);
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
   return (
@@ -395,7 +415,10 @@ function FlipCard({ card, spectre, spectreBack }: { card: CollectedCard; spectre
             <h3 className="text-sm font-bold leading-tight text-white truncate">{card.n}</h3>
           </div>
           {spectre && spectreBack ? (
-            spectreBack(flipped)
+            <>
+              {spectreBack(flipped)}
+              {sticker}
+            </>
           ) : spectre ? (
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2.5">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest bg-white/10 text-slate-100 border border-white/30 spectre-text">
@@ -411,12 +434,14 @@ function FlipCard({ card, spectre, spectreBack }: { card: CollectedCard; spectre
                 <p className="font-mono text-xl font-bold text-slate-50 spectre-text">{formatDelta(spectre.timeSec, spectre.targetSec)}</p>
               </div>
               <p className="text-[9px] uppercase tracking-widest text-white/40 text-center">{tr("Earned, not traded · no QR")}</p>
+              {sticker}
             </div>
           ) : (
             <>
-              <div className="flex-1 flex items-center justify-center w-full">
-                <div className="bg-white p-2 rounded-xl shadow-inner">
-                  <QRCodeSVG value={encodePayload(card)} size={168} level="L" marginSize={1} />
+              {/* The QR takes whatever height the name, the caption and the sticker button leave. */}
+              <div className="flex-1 min-h-0 flex items-center justify-center w-full">
+                <div className="bg-white p-2 rounded-xl shadow-inner h-full max-h-[184px] aspect-square max-w-full">
+                  <QRCodeSVG value={encodePayload(card)} size={168} level="L" marginSize={1} style={{ width: '100%', height: '100%' }} />
                 </div>
               </div>
               <p className="text-[9px] uppercase tracking-widest text-white/60 text-center">
@@ -424,7 +449,46 @@ function FlipCard({ card, spectre, spectreBack }: { card: CollectedCard; spectre
                 <br />
                 {tr("to add to a collection")}
               </p>
+              {sticker}
             </>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/** A card won in Card Wars: its face, and on the back its sticker. */
+function WonFlipCard({ card }: { card: ReturnType<typeof useWonBattleCards>[number] }) {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        haptics.light();
+        setFlipped((f) => !f);
+      }}
+      aria-label={flipped ? tr("Show front of {0}", [card.name]) : tr("Show {0} sticker", [card.name])}
+      className="block w-full [perspective:1200px] text-left"
+    >
+      <div className={cn('relative w-full transition-transform duration-700 [transform-style:preserve-3d]', flipped && '[transform:rotateY(180deg)]')}>
+        <div className="[backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(0deg)_translateZ(1px)]">
+          <BattleCard card={card} />
+        </div>
+        <div className="sticker-sheet absolute inset-0 rounded-2xl border-2 border-white/25 overflow-hidden shadow-xl flex flex-col items-center p-3.5 gap-2.5 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]">
+          <div className="w-full min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-white/60">{tr("Sticker")}</p>
+            <h3 className="text-sm font-bold leading-tight text-white truncate">{card.name}</h3>
+          </div>
+          {card.image ? (
+            <>
+              <div className="flex-1 min-h-0 w-full flex items-center justify-center p-3">
+                <StickerPreview src={card.image} />
+              </div>
+              <StickerControl card={`cw:${card.id}`} name={card.name} src={card.image} className="shrink-0" />
+            </>
+          ) : (
+            <p className="flex-1 flex items-center text-center text-[11px] text-white/60">{tr("This card's sticker isn't printed yet.")}</p>
           )}
         </div>
       </div>

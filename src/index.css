@@ -1390,6 +1390,15 @@
 }
 
 
+/* Stickers (features/stickers): a die-cut vehicle with a white edge and a little lift off the surface. */
+.sticker-img {
+  image-rendering: pixelated;
+  filter: drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
+}
+.sticker-img-ghost { filter: none; }
+/* The back of a won card: a sticker sheet's backing paper. */
+.sticker-sheet { background: repeating-linear-gradient(135deg, hsl(0 0% 100% / 0.05) 0 10px, transparent 10px 20px), linear-gradient(160deg, hsl(240 6% 16%), hsl(240 8% 8%)); }
+
 /* ───────────────── Thermal / High-Speed Mode (lib/thermal.ts) ─────────────────
    Survival over looks: no motion, no blur, no gradients or shadows, and the UI
    drawn as white outlines on pure black. */
