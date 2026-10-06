@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "Jeg er mindst 16 år og må lovligt køre mit køretøj, hvor jeg bor.",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Du skal være mindst 16 år og lovligt kunne køre dit køretøj i din jurisdiktion, med gyldigt kørekort hvor det kræves. Ved at bruge Blacktop bekræfter du, at du opfylder disse krav.",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• Du får et anonymt ID på vores server med det navn, du vælger: ingen e-mail, ingen adgangskode",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Kunne ikke sætte dig op. Blacktop skal have forbindelse én gang for at oprette dit anonyme ID: tjek din og prøv igen."
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Kunne ikke sætte dig op. Blacktop skal have forbindelse én gang for at oprette dit anonyme ID: tjek din og prøv igen.",
+ "Copy report": "Kopiér rapport",
+ "Report copied": "Rapport kopieret",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "Rapporten kunne ikke kopieres. Tag et skærmbillede af denne skærm i stedet.",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Indsæt rapporten til os, så vi kan rette det. Den indeholder fejlen, denne skærm samt din telefon og appversion: intet navn, ingen position, ingen turdata. Intet sendes af sig selv."
 }

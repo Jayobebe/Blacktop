@@ -37,6 +37,8 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(backendUrl),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(backendKey),
       "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(backendProjectId),
+      // When this copy of the app was built: an error report names it (lib/errorLog.ts).
+      __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace("T", " ")),
     },
   };
 });

@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "En az 16 yaşındayım ve yaşadığım yerde aracımı yasal olarak kullanabilirim.",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "En az 16 yaşında olmalı ve bulunduğun yargı bölgesinde aracını yasal olarak kullanabilmelisin; gerektiği yerde geçerli bir ehliyetle. Blacktop'u kullanarak bu koşulları karşıladığını onaylarsın.",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• Sunucumuzda, seçtiğin adla anonim bir kimlik alırsın: e-posta yok, parola yok",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Kurulum yapılamadı. Blacktop'un anonim kimliğini oluşturmak için bir kez bağlantıya ihtiyacı var: bağlantını kontrol edip tekrar dene."
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Kurulum yapılamadı. Blacktop'un anonim kimliğini oluşturmak için bir kez bağlantıya ihtiyacı var: bağlantını kontrol edip tekrar dene.",
+ "Copy report": "Raporu kopyala",
+ "Report copied": "Rapor kopyalandı",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "Rapor kopyalanamadı. Bunun yerine bu ekranın görüntüsünü al.",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Düzeltebilmemiz için raporu bize yapıştır. İçinde hata, bu ekran ve telefonunla uygulama sürümün var: ad yok, konum yok, sürüş verisi yok. Hiçbir şey kendiliğinden gönderilmez."
 }

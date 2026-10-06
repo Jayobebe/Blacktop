@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "16歳以上で、住んでいる地域で自分の乗り物を合法的に運転できます。",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "16歳以上で、お住まいの法域で自分の乗り物を合法的に運転できること（免許が必要な場合は有効な免許を持っていること）が必要です。Blacktopを利用することで、これらの要件を満たしていることを確認したものとみなされます。",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• 選んだ名前で、サーバーに匿名IDが作られます。メールもパスワードも不要です",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "セットアップできませんでした。匿名IDを作るため、Blacktopは一度だけ接続が必要です。接続を確認してもう一度お試しください。"
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "セットアップできませんでした。匿名IDを作るため、Blacktopは一度だけ接続が必要です。接続を確認してもう一度お試しください。",
+ "Copy report": "レポートをコピー",
+ "Report copied": "レポートをコピーしました",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "レポートをコピーできませんでした。代わりにこの画面のスクリーンショットを撮ってください。",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "修正できるよう、このレポートを貼り付けて送ってください。含まれるのはエラー、この画面、お使いの端末とアプリのバージョンだけです。名前、位置情報、走行データは入りません。自動で送信されるものはありません。"
 }

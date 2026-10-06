@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "Saya berusia minimal 16 tahun dan secara hukum boleh mengendarai kendaraan saya di tempat saya tinggal.",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Kamu harus berusia minimal 16 tahun dan secara hukum boleh mengendarai kendaraanmu di wilayah hukummu, dengan SIM yang sah bila diwajibkan. Dengan menggunakan Blacktop, kamu menyatakan memenuhi syarat ini.",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• Kamu mendapat ID anonim di server kami, dengan nama yang kamu pilih: tanpa email, tanpa kata sandi",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Penyiapan gagal. Blacktop butuh koneksi satu kali untuk membuat ID anonimmu: periksa koneksimu dan coba lagi."
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Penyiapan gagal. Blacktop butuh koneksi satu kali untuk membuat ID anonimmu: periksa koneksimu dan coba lagi.",
+ "Copy report": "Salin laporan",
+ "Report copied": "Laporan disalin",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "Laporan tidak bisa disalin. Ambil tangkapan layar ini saja.",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Tempelkan laporan ini kepada kami agar bisa kami perbaiki. Isinya galat, layar ini, serta ponsel dan versi aplikasimu: tanpa nama, tanpa lokasi, tanpa data perjalanan. Tidak ada yang dikirim dengan sendirinya."
 }

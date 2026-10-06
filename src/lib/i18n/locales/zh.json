@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "我已年满 16 岁，并且在居住地可以合法驾驶或骑行我的车辆。",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "你必须年满 16 岁，并且在所在司法辖区可以合法驾驶或骑行你的车辆（需要驾照的，须持有有效驾照）。使用 Blacktop 即表示你确认符合这些要求。",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• 我们的服务器会用你选的名字为你创建一个匿名 ID：无需邮箱，无需密码",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "设置失败。Blacktop 需要联网一次来创建你的匿名 ID：请检查网络后重试。"
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "设置失败。Blacktop 需要联网一次来创建你的匿名 ID：请检查网络后重试。",
+ "Copy report": "复制报告",
+ "Report copied": "报告已复制",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "无法复制报告。请改为截取此屏幕。",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "把报告粘贴给我们，以便我们修复。报告包含错误、当前屏幕以及你的手机和应用版本：不含姓名、位置和骑行数据。不会自动发送任何内容。"
 }

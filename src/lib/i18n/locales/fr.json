@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "J'ai au moins 16 ans et j'ai légalement le droit de conduire mon véhicule là où je vis.",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Tu dois avoir au moins 16 ans et avoir légalement le droit de conduire ton véhicule dans ta juridiction, avec un permis valide là où il est exigé. En utilisant Blacktop, tu confirmes remplir ces conditions.",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• Tu reçois un identifiant anonyme sur notre serveur, avec le nom que tu choisis : pas d'e-mail, pas de mot de passe",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Configuration impossible. Blacktop a besoin d'une connexion une fois, pour créer ton identifiant anonyme : vérifie la tienne et réessaie."
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Configuration impossible. Blacktop a besoin d'une connexion une fois, pour créer ton identifiant anonyme : vérifie la tienne et réessaie.",
+ "Copy report": "Copier le rapport",
+ "Report copied": "Rapport copié",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "Impossible de copier le rapport. Fais plutôt une capture de cet écran.",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Colle-nous le rapport pour qu'on puisse corriger ça. Il contient l'erreur, cet écran, ton téléphone et la version de l'app : ni nom, ni position, ni données de trajet. Rien n'est envoyé tout seul."
 }

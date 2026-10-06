@@ -4230,5 +4230,9 @@
  "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "Мені щонайменше 16 років, і я маю законне право керувати своїм транспортним засобом там, де живу.",
  "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Тобі має бути щонайменше 16 років, і ти маєш законне право керувати своїм транспортним засобом у своїй юрисдикції, з чинним посвідченням там, де воно потрібне. Користуючись Blacktop, ти підтверджуєш, що відповідаєш цим вимогам.",
  "• You get an anonymous ID on our server, with the name you choose: no email, no password": "• Ти отримуєш анонімний ID на нашому сервері з іменем, яке обереш: без пошти, без пароля",
- "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Не вдалося налаштувати. Blacktop потребує з'єднання один раз, щоб створити твій анонімний ID: перевір своє і спробуй ще раз."
+ "Couldn't set you up. Blacktop needs a connection once, to create your anonymous ID: check yours and try again.": "Не вдалося налаштувати. Blacktop потребує з'єднання один раз, щоб створити твій анонімний ID: перевір своє і спробуй ще раз.",
+ "Copy report": "Копіювати звіт",
+ "Report copied": "Звіт скопійовано",
+ "Couldn't copy the report. Take a screenshot of this screen instead.": "Не вдалося скопіювати звіт. Натомість зроби знімок цього екрана.",
+ "Paste the report to us so we can fix this. It holds the error, this screen, and your phone and app version: no name, no location, no ride data. Nothing is sent on its own.": "Встав звіт нам, щоб ми могли це виправити. У ньому помилка, цей екран, твій телефон і версія застосунку: без імені, без місцезнаходження, без даних поїздок. Ніщо не надсилається саме."
 }

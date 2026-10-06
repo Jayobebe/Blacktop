@@ -1,6 +1,7 @@
 import { paymentsAvailable } from '@/lib/platform';
 import { NativeBackButton, NativeLinks } from '@/components/NativeBridge';
 import { installMotionRegrant } from '@/lib/motionPermission';
+import { installErrorLog } from '@/lib/errorLog';
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -46,6 +47,7 @@ import { loadLocaleExtra } from '@/lib/i18n';
 installDemoGuard();
 // iOS forgets motion access when the app closes: the first tap re-grants it.
 installMotionRegrant();
+installErrorLog();
 // Features shipped ahead of their migration stay hidden until the server has them.
 probeServerCaps();
 
