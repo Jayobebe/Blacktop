@@ -4226,5 +4226,7 @@
  "To front": "In primo piano",
  "GPS signal lost. Speed and distance are on hold until it comes back.": "Segnale GPS perso. Velocità e distanza sono in pausa finché non torna.",
  "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Ancora nessun GPS. Velocità e distanza non vengono registrate finché Blacktop non vede la tua posizione: controlla che sia consentita per questa app.",
- "Welcome": "Benvenuto"
+ "Welcome": "Benvenuto",
+ "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "Ho almeno 16 anni e posso guidare legalmente il mio veicolo dove vivo.",
+ "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Devi avere almeno 16 anni e poter guidare legalmente il tuo veicolo nella tua giurisdizione, con una patente valida dove è richiesta. Usando Blacktop confermi di soddisfare questi requisiti."
 }

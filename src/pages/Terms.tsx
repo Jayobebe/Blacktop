@@ -41,7 +41,7 @@ export default function Terms() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Eligibility")}</h2>
           <p className="text-muted-foreground">
-            {tr("You must be at least 16 years old and hold a valid license to operate a motor vehicle in your jurisdiction. By using Blacktop you confirm you meet these requirements.")}
+            {tr("You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.")}
           </p>
         </section>
 

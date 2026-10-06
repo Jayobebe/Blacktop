@@ -4226,5 +4226,7 @@
  "To front": "Längst fram",
  "GPS signal lost. Speed and distance are on hold until it comes back.": "GPS-signalen är borta. Fart och sträcka står stilla tills den är tillbaka.",
  "No GPS yet. Speed and distance won't record until Blacktop can see your location: check it's allowed for this app.": "Ingen GPS än. Fart och sträcka registreras inte förrän Blacktop kan se din position: kontrollera att den är tillåten för appen.",
- "Welcome": "Välkommen"
+ "Welcome": "Välkommen",
+ "I'm at least 16 and legally allowed to ride or drive my vehicle where I live.": "Jag är minst 16 år och får lagligt köra mitt fordon där jag bor.",
+ "You must be at least 16 years old and legally allowed to ride or drive your vehicle in your jurisdiction, with a valid license where one is required. By using Blacktop you confirm you meet these requirements.": "Du måste vara minst 16 år och lagligt få köra ditt fordon i din jurisdiktion, med giltigt körkort där det krävs. Genom att använda Blacktop bekräftar du att du uppfyller dessa krav."
 }

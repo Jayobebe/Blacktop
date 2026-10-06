@@ -58,7 +58,7 @@ export default function Onboarding() {
       {
         checked: agreedAge,
         set: setAgreedAge,
-        text: <>{tr("I'm at least 16 and licensed to operate a motor vehicle where I live.")}</>,
+        text: <>{tr("I'm at least 16 and legally allowed to ride or drive my vehicle where I live.")}</>,
       },
       {
         checked: agreedSafety,
