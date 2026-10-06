@@ -5,9 +5,9 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 /**
  * Server features the app ships ahead of: their UI stays hidden until the
  * server has them (migrations go out separately, through Lovable). Each one is
- * probed once per launch with a harmless read RPC: "function not found"
- * (PGRST202) means not yet; any answer from the function itself, even a
- * permission error, means it's there. Offline keeps the last answer (stored),
+ * probed once per launch, once there's a session, with a harmless read RPC:
+ * "function not found" (PGRST202) means not yet; any answer from the function
+ * itself, even a permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
 export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWars2' | 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels' | 'cardWarsPace';
@@ -57,20 +57,39 @@ function set(cap: ServerCap, on: boolean) {
   listeners.forEach((l) => l());
 }
 
-/** Asks the server once per launch (App.tsx). */
-export function probeServerCaps() {
-  if (probed) return;
-  probed = true;
+function ask() {
   for (const cap of Object.keys(PROBES) as ServerCap[]) {
     Promise.resolve(PROBES[cap]())
       .then(({ error }) => {
         if (!error) set(cap, true);
         else if (error.code === 'PGRST202' || error.code === '42883') set(cap, false);
-        // No code: the request never reached the database (offline). Keep what we knew.
-        else if (error.code) set(cap, true);
+        // A sign-in problem (PGRST3xx) says nothing about the feature; no code at all means the
+        // request never reached the database (offline). Either way, keep what we knew.
+        else if (error.code && !error.code.startsWith('PGRST3')) set(cap, true);
       })
       .catch(() => {});
   }
+}
+
+/**
+ * Asks the server once per launch (App.tsx), and only as a signed-in rider:
+ * before onboarding there's no session, every call would just be refused, so
+ * it waits for the first sign-in instead.
+ */
+export function probeServerCaps() {
+  if (probed) return;
+  probed = true;
+  void supabase.auth
+    .getSession()
+    .then(({ data }) => {
+      if (data.session) return ask();
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!session) return;
+        sub.subscription.unsubscribe();
+        ask();
+      });
+    })
+    .catch(() => {});
 }
 
 export function hasServerCap(cap: ServerCap): boolean {
