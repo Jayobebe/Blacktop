@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "Yola çıkmadan önce sese buradan katıl. En fazla sekiz kişi alır.",
  "Tap Start for just you. Hold it to start everyone at once.": "Sadece kendin için Başlat'a dokun. Herkesi aynı anda başlatmak için basılı tut.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Adım adım yol tarifli bir rota için hedef belirle ya da sadece Başlat'a bas: kayıt için hedef gerekmez.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "Bunu Ekip konvoyları içinde listelemek için kilidi aç, ekibin sana katılabilsin."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Bunu Ekip konvoyları içinde listelemek için kilidi aç, ekibin sana katılabilsin.",
+ "Type the leader's code, or scan their QR here.": "Liderin kodunu yaz ya da QR'ını burada tara.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "Yolcu olarak katılıyorsun: ses, el sallama ve kurtarma var, kendi sürüşün kaydedilmez.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Sürücü olarak katılıyorsun. Yolcu olarak mı gidiyorsun? Geri dön ve Konvoya katıl kutusunu Yolcu yap.",
+ "Tap a reaction to signal the whole convoy without talking.": "Konuşmadan tüm konvoya işaret vermek için bir tepkiye dokun.",
+ "{0} waved": "{0} el salladı",
+ "{0} needs a stop": "{0} mola istiyor"
 }

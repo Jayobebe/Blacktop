@@ -15,6 +15,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 
 /**
  * Passenger screen for a convoy ride: voice, Wave / emoji reactions and
@@ -144,6 +145,14 @@ export default function PillionRide() {
         onDismiss={dismissRescue}
       />
 
+      {/* First-time tip */}
+      <PageTips
+        page="pillion"
+        scroll
+        when={!confirmRescue && rescueRequests.length === 0}
+        tips={[{ target: '[data-tip="pillion-reactions"]', text: tr("Tap a reaction to signal the whole convoy without talking.") }]}
+      />
+
       <PageHeader
         title={tr("Pillion")}
         subtitle={`${leader ? tr("{0}'s convoy", [leader.name]) : tr("Convoy")} · ${convoy.members.length === 1 ? tr("1 rider") : tr("{0} riders", [convoy.members.length])}`}
@@ -200,7 +209,7 @@ export default function PillionRide() {
         <Button onClick={() => react(WAVE)} className="w-full h-14 text-lg font-semibold">
           <span className="text-2xl mr-2">{WAVE}</span>{" "}{tr("Wave")}
         </Button>
-        <div className="grid grid-cols-4 gap-2">
+        <div data-tip="pillion-reactions" className="grid grid-cols-4 gap-2">
           {REACTIONS.map((r) => (
             <button
               key={r.emoji}

@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "Tritt hier dem Sprachkanal bei, bevor es losgeht. Er fasst bis zu acht Personen.",
  "Tap Start for just you. Hold it to start everyone at once.": "Tippe auf Start nur für dich. Halte gedrückt, um alle gleichzeitig zu starten.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Lege ein Ziel fest für eine Route mit Abbiegehinweisen, oder drück einfach Start: Die Aufzeichnung braucht kein Ziel.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "Entsperre, um das hier in Crew-Konvois zu listen, damit deine Crew dazukommen kann."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Entsperre, um das hier in Crew-Konvois zu listen, damit deine Crew dazukommen kann.",
+ "Type the leader's code, or scan their QR here.": "Gib den Code des Anführers ein oder scanne hier seinen QR.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "Du trittst als Sozius bei: Sprache, Winken und Rettung, ohne eine eigene Fahrt aufzuzeichnen.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Du trittst als Fahrer bei. Fährst du stattdessen als Sozius mit? Geh zurück und stell die Kachel Konvoi beitreten auf Sozius.",
+ "Tap a reaction to signal the whole convoy without talking.": "Tippe auf eine Reaktion, um dem ganzen Konvoi ohne Worte ein Zeichen zu geben.",
+ "{0} waved": "{0} hat gewunken",
+ "{0} needs a stop": "{0} braucht einen Stopp"
 }

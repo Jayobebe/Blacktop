@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "出発前にここでボイスに参加しましょう。最大8人まで入れます。",
  "Tap Start for just you. Hold it to start everyone at once.": "タップで自分だけスタート。長押しで全員を同時にスタートします。",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "目的地を設定するとターンバイターンのルートが使えます。スタートを押すだけでもOK：記録に目的地は不要です。",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "ロックを解除すると「クルーコンボイ」に表示され、クルーが参加できます。"
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "ロックを解除すると「クルーコンボイ」に表示され、クルーが参加できます。",
+ "Type the leader's code, or scan their QR here.": "リーダーのコードを入力するか、ここでQRをスキャンします。",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "同乗者として参加します：ボイス、手振り、レスキューが使え、自分の走行は記録されません。",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "運転者として参加します。同乗者として参加する場合は、戻って「コンボイに参加」タイルを「同乗者」に切り替えてください。",
+ "Tap a reaction to signal the whole convoy without talking.": "リアクションをタップすると、話さずにコンボイ全体へ合図を送れます。",
+ "{0} waved": "{0}が手を振りました",
+ "{0} needs a stop": "{0}が休憩を希望しています"
 }

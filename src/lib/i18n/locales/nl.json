@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "Doe hier mee met spraak voordat je vertrekt. Er passen maximaal acht mensen in.",
  "Tap Start for just you. Hold it to start everyone at once.": "Tik op Start voor alleen jezelf. Houd ingedrukt om iedereen tegelijk te starten.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Stel een bestemming in voor een route met afslag-voor-afslag, of druk gewoon op Start: bijhouden heeft geen bestemming nodig.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "Ontgrendel om dit in Crewkonvooien te tonen, zodat je crew kan aansluiten."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Ontgrendel om dit in Crewkonvooien te tonen, zodat je crew kan aansluiten.",
+ "Type the leader's code, or scan their QR here.": "Typ de code van de leider, of scan hier de QR.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "Je doet mee als passagier: spraak, zwaaien en redding, zonder je eigen rit bij te houden.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Je doet mee als Bestuurder. Ga je als passagier mee? Ga terug en zet de tegel Konvooi joinen op Passagier.",
+ "Tap a reaction to signal the whole convoy without talking.": "Tik op een reactie om het hele konvooi een seintje te geven zonder te praten.",
+ "{0} waved": "{0} zwaaide",
+ "{0} needs a stop": "{0} heeft een stop nodig"
 }

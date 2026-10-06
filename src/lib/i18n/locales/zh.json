@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "出发前在这里加入语音。最多可容纳八人。",
  "Tap Start for just you. Hold it to start everyone at once.": "点按只为自己开始。长按可让所有人同时开始。",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "设置目的地可获得逐向导航路线，或直接按开始：记录不需要目的地。",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "解锁后会显示在“团队车队”中，你的车队伙伴就能加入。"
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "解锁后会显示在“团队车队”中，你的车队伙伴就能加入。",
+ "Type the leader's code, or scan their QR here.": "输入领队的代码，或在这里扫描对方的二维码。",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "你以乘客身份加入：可使用语音、挥手和救援，不会记录你自己的行程。",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "你以驾驶者身份加入。要作为乘客同行？请返回并把“加入车队”卡片切换为“乘客”。",
+ "Tap a reaction to signal the whole convoy without talking.": "点按一个表情，无需说话就能向整个车队发出信号。",
+ "{0} waved": "{0} 挥了挥手",
+ "{0} needs a stop": "{0} 需要停一下"
 }

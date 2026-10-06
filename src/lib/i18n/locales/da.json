@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "Gå med i stemmechatten her, før I tager af sted. Den har plads til otte.",
  "Tap Start for just you. Hold it to start everyone at once.": "Tryk på Start for kun dig selv. Hold den nede for at starte alle på én gang.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Vælg en destination for at få en rute med sving for sving, eller tryk bare på Start: registrering kræver ingen destination.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "Lås op for at vise denne i Crew-konvojer, så dit crew kan slutte sig til dig."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Lås op for at vise denne i Crew-konvojer, så dit crew kan slutte sig til dig.",
+ "Type the leader's code, or scan their QR here.": "Skriv lederens kode, eller scan deres QR her.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "Du går med som passager: stemme, vink og redning, uden at registrere din egen tur.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Du går med som Fører. Skal du med som passager i stedet? Gå tilbage, og skift Deltag i konvoj-feltet til Passager.",
+ "Tap a reaction to signal the whole convoy without talking.": "Tryk på en reaktion for at give hele konvojen et signal uden at tale.",
+ "{0} waved": "{0} vinkede",
+ "{0} needs a stop": "{0} har brug for et stop"
 }

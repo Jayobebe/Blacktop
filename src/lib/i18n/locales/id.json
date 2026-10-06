@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "Gabung suara di sini sebelum berangkat. Muat hingga delapan orang.",
  "Tap Start for just you. Hold it to start everyone at once.": "Ketuk Mulai untuk dirimu saja. Tahan untuk memulai semua sekaligus.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Tetapkan tujuan untuk rute dengan panduan belokan, atau langsung tekan Mulai: pelacakan tidak butuh tujuan.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "Buka kunci untuk menampilkannya di Konvoi kru, agar kru bisa bergabung."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Buka kunci untuk menampilkannya di Konvoi kru, agar kru bisa bergabung.",
+ "Type the leader's code, or scan their QR here.": "Ketik kode pemimpin, atau pindai QR-nya di sini.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "Kamu bergabung sebagai penumpang: suara, lambaian, dan penyelamatan, tanpa merekam perjalananmu sendiri.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Kamu bergabung sebagai Pengemudi. Ikut sebagai penumpang? Kembali dan ubah ubin Gabung konvoi ke Penumpang.",
+ "Tap a reaction to signal the whole convoy without talking.": "Ketuk reaksi untuk memberi isyarat ke seluruh konvoi tanpa bicara.",
+ "{0} waved": "{0} melambai",
+ "{0} needs a stop": "{0} perlu berhenti"
 }

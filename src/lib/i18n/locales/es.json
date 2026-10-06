@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "Únete a la voz aquí antes de salir. Admite hasta ocho personas.",
  "Tap Start for just you. Hold it to start everyone at once.": "Toca Empezar solo para ti. Mantén pulsado para que empiecen todos a la vez.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "Pon un destino para tener una ruta con indicaciones giro a giro, o pulsa Empezar sin más: el registro no necesita destino.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "Desbloquea para listarlo en Convoyes de crew y que tu crew pueda unirse."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "Desbloquea para listarlo en Convoyes de crew y que tu crew pueda unirse.",
+ "Type the leader's code, or scan their QR here.": "Escribe el código del líder o escanea aquí su QR.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "Te unes como pasajero: voz, saludos y rescate, sin registrar una salida propia.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "Te unes como Conductor. ¿Vas de pasajero? Vuelve atrás y cambia la casilla Unirse a un convoy a Pasajero.",
+ "Tap a reaction to signal the whole convoy without talking.": "Toca una reacción para hacer una señal a todo el convoy sin hablar.",
+ "{0} waved": "{0} ha saludado",
+ "{0} needs a stop": "{0} necesita una parada"
 }

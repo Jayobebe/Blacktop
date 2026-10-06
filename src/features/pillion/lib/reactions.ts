@@ -45,10 +45,9 @@ export async function sendReaction(fromId: string, fromName: string, emoji: stri
 }
 
 function describe(r: Reaction): string {
-  const name = String(r.fromName || 'Rider').slice(0, 30);
-  if (r.emoji === WAVE) return `${name} waved`;
-  const label = REACTIONS.find((x) => x.emoji === r.emoji)?.label;
-  return label === 'Need a stop' ? `${name} needs a stop` : name;
+  const name = String(r.fromName || tr("Rider")).slice(0, 30);
+  if (r.emoji === WAVE) return tr("{0} waved", [name]);
+  return r.emoji === '🛑' ? tr("{0} needs a stop", [name]) : name;
 }
 
 export function useReactionsListener(convoyId: string | null, userId: string | null) {

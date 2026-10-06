@@ -12,6 +12,7 @@ import { loadQrScanner } from '@/lib/qrScanner';
 import { PageHeader } from '@/components/PageHeader';
 import { setRideRole, type RideRole } from '@/features/pillion';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 
 export default function JoinConvoy() {
   const locked = useDemoLocked();
@@ -120,6 +121,22 @@ export default function JoinConvoy() {
       {/* Header */}
       <PageHeader title={tr("Join Convoy")} backTo="/" />
 
+      {/* First-time tips */}
+      <PageTips
+        page="join-convoy"
+        when={!showScanner && !isJoining}
+        tips={[
+          { target: '[data-tip="join-scan"]', text: tr("Type the leader's code, or scan their QR here.") },
+          {
+            target: '[data-tip="join-role"]',
+            text:
+              role === 'pillion'
+                ? tr("You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.")
+                : tr("You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger."),
+          },
+        ]}
+      />
+
       {/* QR Scanner Overlay */}
       {showScanner && (
         <div className="fixed inset-0 z-50 safe-frame bg-background flex flex-col">
@@ -159,7 +176,7 @@ export default function JoinConvoy() {
         {/* Input and buttons - right side in landscape */}
         <div className="w-full max-w-xs space-y-3 landscape:flex-1 landscape:max-w-xs">
           {/* Riding the bike, or on the back of it (chosen on Home's Join Convoy tile) */}
-          <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground text-center">
+          <p data-tip="join-role" className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground text-center">
             {role === 'pillion' ? <UserRound className="w-3.5 h-3.5 text-accent shrink-0" /> : <Bike className="w-3.5 h-3.5 text-accent shrink-0" />}
             {role === 'pillion'
               ? tr("On the back: voice, waves and rescue alerts. No map or stats.")
@@ -187,6 +204,7 @@ export default function JoinConvoy() {
             </Button>
             
             <Button
+              data-tip="join-scan"
               onClick={startScanner}
               variant="outline"
               disabled={locked}

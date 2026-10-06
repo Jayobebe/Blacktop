@@ -4328,5 +4328,11 @@
  "Join voice here before you set off. It takes up to eight people.": "출발 전에 여기서 음성에 참가하세요. 최대 8명까지 가능합니다.",
  "Tap Start for just you. Hold it to start everyone at once.": "탭하면 나만 시작합니다. 길게 누르면 모두 한 번에 시작합니다.",
  "Set a destination for a route with turn-by-turn, or just press Start: tracking needs no destination.": "목적지를 정하면 턴바이턴 경로가 제공됩니다. 그냥 시작을 눌러도 됩니다: 기록에는 목적지가 필요 없습니다.",
- "Unlock to list this in Crew Convoys, so your crew can join you.": "잠금을 풀면 '크루 컨보이'에 표시되어 크루가 합류할 수 있습니다."
+ "Unlock to list this in Crew Convoys, so your crew can join you.": "잠금을 풀면 '크루 컨보이'에 표시되어 크루가 합류할 수 있습니다.",
+ "Type the leader's code, or scan their QR here.": "리더의 코드를 입력하거나 여기서 QR을 스캔하세요.",
+ "You're joining as a passenger: voice, waves and rescue, without tracking a ride of your own.": "동승자로 참가합니다: 음성, 손 흔들기, 구조 요청을 쓸 수 있고 내 주행은 기록되지 않습니다.",
+ "You're joining as the operator. Going as a passenger instead? Go back and switch the Join Convoy tile to Passenger.": "운전자(으)로 참가합니다. 동승자로 가나요? 뒤로 가서 '컨보이 참가' 타일을 '동승자'(으)로 바꾸세요.",
+ "Tap a reaction to signal the whole convoy without talking.": "리액션을 탭하면 말없이 콘보이 전체에 신호를 보냅니다.",
+ "{0} waved": "{0} 님이 손을 흔들었습니다",
+ "{0} needs a stop": "{0} 님이 쉬어 가길 원합니다"
 }
