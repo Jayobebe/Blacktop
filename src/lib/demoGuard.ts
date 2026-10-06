@@ -20,6 +20,7 @@ import { isDemoModeActive } from '@/lib/demoMode';
  */
 
 const WRITE_RPCS = new Set([
+  'set_profile_country',
   'cw_save_wear',
   'cw_report_wear',
   'cw_wear_offline',

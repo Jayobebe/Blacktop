@@ -4335,5 +4335,10 @@
  "{0} waved": "{0} 挥了挥手",
  "{0} needs a stop": "{0} 需要停一下",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "这是小票，每条记录都会保留一张。随时可以用它的“保存”按钮保存为图片。",
- "Drag & zoom": "拖动 & 缩放"
+ "Drag & zoom": "拖动 & 缩放",
+ "Burners by country": "各国燃烧者人数",
+ "Each phone works out its own country and shares only that. Nothing finer is kept.": "每部手机自行判断所在国家，并且只分享国家。不会保存更精确的信息。",
+ "No countries yet": "还没有国家",
+ "Your country:": "你的国家：",
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "开启 Blacktop World 后，你的手机会根据最后已知的位置判断所在国家，并且只把这个国家发送到我们的服务器，这样地球仪就能在有账号的地方发光，并列出每个国家的账号数量。为此不会发送任何坐标，任何人都无法查询你的国家，在你关闭 Blacktop World 或焚毁账号时它会被删除。"
 }

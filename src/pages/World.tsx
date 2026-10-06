@@ -1,10 +1,10 @@
 import { paymentsAvailable } from '@/lib/platform';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Crown } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, Crown, ChevronDown } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { geoContains } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countriesTopo from 'world-atlas/countries-110m.json';
@@ -21,8 +21,14 @@ import { CrewList } from '@/features/crew/CrewList';
 import { BlacktankPanel } from '@/features/blacktank';
 
 import { tr } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { useServerCap } from '@/lib/serverCaps';
 import { PageTips } from '@/features/guide';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { uiCue } from '@/lib/radioFx';
+import { appSoundsOn } from '@/lib/appSound';
+import { countryName } from '@/lib/countries';
+import { syncProfileCountry } from '@/lib/profileCountry';
 // Not the Card Wars barrel: that would pull the whole game into this page.
 import { SpectreTagBack } from '@/features/card-wars/light';
 
@@ -119,6 +125,36 @@ export default function World() {
 
     return { countryLights: lights, activeCount: memberRows.length };
   }, [memberRows]);
+  // With the country migration in: the globe glows by where accounts are, not by who's riding now.
+  const byCountry = useServerCap('worldCountries');
+  const queryClient = useQueryClient();
+  const { data: countryRows } = useQuery({
+    queryKey: ['profile-countries'],
+    enabled: byCountry && !demoEnabled,
+    queryFn: async () => {
+      const { data } = await supabase.rpc('profile_country_counts' as never);
+      return ((data ?? []) as Array<{ country: number; riders: number }>).map((r) => ({ country: Number(r.country), riders: Number(r.riders) }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  // This phone's own country goes up when it's new (or the rider has travelled); then the counts are worth another look.
+  useEffect(() => {
+    if (!byCountry || demoEnabled) return;
+    void syncProfileCountry().then((changed) => {
+      if (changed) void queryClient.invalidateQueries({ queryKey: ['profile-countries'] });
+    });
+  }, [byCountry, demoEnabled, queryClient]);
+  const accountLights = useMemo(() => {
+    const lights: Record<number, number> = {};
+    for (const r of countryRows ?? []) if (r.riders > 0) lights[r.country] = r.riders;
+    return lights;
+  }, [countryRows]);
+  const lights = demoEnabled ? DEMO_COUNTRY_LIGHTS : byCountry ? accountLights : countryLights;
+  const countryList = useMemo(
+    () => (demoEnabled || byCountry ? Object.entries(lights).map(([id, n]) => ({ id: Number(id), n })).sort((a, b) => b.n - a.n) : null),
+    [demoEnabled, byCountry, lights],
+  );
+  const [showCountries, setShowCountries] = useState(false);
   const { data: totalBurners = 0 } = useQuery({
     queryKey: ['profile-count'],
     queryFn: async () => {
@@ -132,6 +168,8 @@ export default function World() {
   const displayedActiveCount = demoEnabled ? demoActiveRiders : totalBurners;
 
   const openLandmark = (id: string) => {
+    // Landmarks are drawn on the globe's canvas, not buttons, so they don't get the app's click by themselves.
+    if (appSoundsOn()) uiCue('tap');
     if (id === 'crewqr') {
       setShowCrewQr(true);
       return;
@@ -217,7 +255,7 @@ export default function World() {
           accentColor={accentColor}
           landmarks={CREW_LANDMARKS}
           onLandmarkSelect={openLandmark}
-          countryLights={demoEnabled ? DEMO_COUNTRY_LIGHTS : countryLights}
+          countryLights={lights}
           onScaleChange={setGlobeScale}
           className="w-full h-full"
         />
@@ -227,7 +265,13 @@ export default function World() {
           className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none transition-opacity duration-500"
           style={{ opacity: globeScale > 1.2 ? 0 : 1 }}
         >
-          <div className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]">
+          <button
+            type="button"
+            disabled={!countryList}
+            onClick={() => setShowCountries(true)}
+            aria-label={tr("Burners by country")}
+            className={cn('glove-hit flex items-center gap-2 px-2 py-1.5 rounded-xl bg-black/40 backdrop-blur-sm border border-white/[0.06]', countryList && globeScale <= 1.2 && 'pointer-events-auto pressable')}
+          >
             <span
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
               style={displayedActiveCount > 0
@@ -237,7 +281,8 @@ export default function World() {
             <span className="text-[9px] tracking-[0.15em] uppercase text-white/60">
               {tr("{0} total burners", [displayedActiveCount.toLocaleString()])}
             </span>
-          </div>
+            {countryList && <ChevronDown className="w-3 h-3 text-white/50" />}
+          </button>
         </div>
         {/* Scroll hint — only when there's a collection below to scroll to */}
         {settings.collectiblesEnabled && (
@@ -308,6 +353,28 @@ export default function World() {
           <CollectedCardsFolder spectreBack={tagBuilds ? (sp, shown, assign) => <SpectreTagBack spectre={sp} shown={shown} onAssign={assign} /> : undefined} />
         </div>
       )}
+
+      {/* Where the accounts are: the list behind the globe's glow. */}
+      <Dialog open={showCountries} onOpenChange={setShowCountries}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{tr("Burners by country")}</DialogTitle>
+            <DialogDescription>{tr("Each phone works out its own country and shares only that. Nothing finer is kept.")}</DialogDescription>
+          </DialogHeader>
+          {countryList?.length ? (
+            <ul className="max-h-[50vh] overflow-y-auto -mx-1 pr-1">
+              {countryList.map(({ id, n }) => (
+                <li key={id} className="flex items-center gap-3 px-1 py-2 border-b border-white/[0.06] last:border-0">
+                  <span className="flex-1 min-w-0 truncate text-sm text-foreground">{countryName(id)}</span>
+                  <span className="font-mono text-sm font-semibold text-accent">{n.toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-6">{tr("No countries yet")}</p>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Blacktank — the crew fuel pot landmark. Portalled out of the page so
           the animated (transformed) wrapper doesn't trap the fixed overlay. */}

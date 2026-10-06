@@ -4335,5 +4335,10 @@
  "{0} waved": "{0} melambai",
  "{0} needs a stop": "{0} perlu berhenti",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Ini struknya, disimpan bersama setiap entri. Simpan sebagai gambar kapan saja dengan tombol Simpan.",
- "Drag & zoom": "Seret & perbesar"
+ "Drag & zoom": "Seret & perbesar",
+ "Burners by country": "Pembakar per negara",
+ "Each phone works out its own country and shares only that. Nothing finer is kept.": "Setiap ponsel menentukan negaranya sendiri dan hanya membagikan itu. Tidak ada yang lebih rinci yang disimpan.",
+ "No countries yet": "Belum ada negara",
+ "Your country:": "Negaramu:",
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "dengan Blacktop World aktif, ponselmu menentukan di negara mana ia berada dari posisi terakhir yang diketahui dan hanya mengirim negara itu ke server kami, agar globe bersinar di tempat akun berada dan menampilkan jumlah akun tiap negara. Tidak ada koordinat yang dikirim untuk ini, tidak ada yang bisa mencari negaramu, dan data ini dihapus saat kamu mematikan Blacktop World atau membakar akunmu."
 }

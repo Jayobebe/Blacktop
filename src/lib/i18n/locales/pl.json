@@ -4335,5 +4335,10 @@
  "{0} waved": "{0} macha",
  "{0} needs a stop": "{0} potrzebuje postoju",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "To paragon, przechowywany z każdym wpisem. Zapisz go jako obraz w dowolnej chwili przyciskiem Zapisz.",
- "Drag & zoom": "Przeciągnij & przybliż"
+ "Drag & zoom": "Przeciągnij & przybliż",
+ "Burners by country": "Spalacze według kraju",
+ "Each phone works out its own country and shares only that. Nothing finer is kept.": "Każdy telefon sam ustala swój kraj i udostępnia tylko to. Nic dokładniejszego nie jest przechowywane.",
+ "No countries yet": "Brak krajów",
+ "Your country:": "Twój kraj:",
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "przy włączonym Blacktop World twój telefon ustala, w jakim kraju się znajduje, na podstawie ostatniej znanej pozycji i wysyła na nasz serwer tylko ten kraj, aby globus świecił tam, gdzie są konta, i pokazywał, ile ma ich każdy kraj. Nie są w tym celu wysyłane żadne współrzędne, nikt nie może sprawdzić twojego kraju, a dane są usuwane, gdy wyłączysz Blacktop World lub spalisz konto."
 }

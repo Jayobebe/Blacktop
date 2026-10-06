@@ -4335,5 +4335,10 @@
  "{0} waved": "{0} vinkede",
  "{0} needs a stop": "{0} har brug for et stop",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dette er kvitteringen, som gemmes med hver post. Gem den som billede når som helst med knappen Gem.",
- "Drag & zoom": "Træk & zoom"
+ "Drag & zoom": "Træk & zoom",
+ "Burners by country": "Brændere efter land",
+ "Each phone works out its own country and shares only that. Nothing finer is kept.": "Hver telefon finder selv sit land og deler kun det. Intet mere præcist gemmes.",
+ "No countries yet": "Ingen lande endnu",
+ "Your country:": "Dit land:",
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "med Blacktop World slået til finder din telefon ud af, hvilket land den er i, ud fra sin sidst kendte position og sender kun det land til vores server, så globussen kan lyse, hvor der er konti, og vise, hvor mange hvert land har. Ingen koordinater sendes til dette, ingen kan slå dit land op, og det fjernes, når du slår Blacktop World fra eller brænder din konto."
 }

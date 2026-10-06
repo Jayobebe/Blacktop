@@ -85,6 +85,9 @@ export default function PrivacyPolicy() {
             <span className="text-foreground">{tr("When it is removed:")}</span>{" "}{tr("your location record is deleted from our servers the moment you end your ride. If your ride is interrupted (app crash, phone dies, signal lost) the record expires automatically within 10 minutes based on a freshness check — it is never retained beyond your active session. Disabling Blacktop World in Settings stops any further writes immediately.")}
           </p>
           <p className="text-muted-foreground">
+            <span className="text-foreground">{tr("Your country:")}</span>{" "}{tr("with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.")}
+          </p>
+          <p className="text-muted-foreground">
             <span className="text-foreground">{tr("Logbook hand-over:")}</span>{" "}{tr("when you hand a vehicle to another rider, its logbook (vehicle name, photo, service items, keepers and that vehicle's ride summaries, without GPS tracks) is sent straight to their phone over a one-off realtime channel opened by the QR code. It passes through our realtime relay but is never stored on our servers.")}
           </p>
           <p className="text-muted-foreground">

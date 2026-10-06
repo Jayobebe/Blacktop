@@ -4335,5 +4335,10 @@
  "{0} waved": "{0}が手を振りました",
  "{0} needs a stop": "{0}が休憩を希望しています",
  "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "これがレシートで、すべての記録に付いています。「保存」ボタンでいつでも画像として保存できます。",
- "Drag & zoom": "ドラッグ & ズーム"
+ "Drag & zoom": "ドラッグ & ズーム",
+ "Burners by country": "国別のバーナー数",
+ "Each phone works out its own country and shares only that. Nothing finer is kept.": "国は各スマートフォンが自分で判定し、その国だけを共有します。それより細かい情報は保存されません。",
+ "No countries yet": "まだ国がありません",
+ "Your country:": "あなたの国：",
+ "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "Blacktop Worldをオンにすると、スマートフォンが最後に確認された位置から現在の国を判定し、その国だけをサーバーに送信します。これにより地球儀はアカウントのある場所が光り、国ごとのアカウント数を表示できます。このために座標が送信されることはなく、誰もあなたの国を調べることはできません。Blacktop Worldをオフにするか、アカウントを焼却すると削除されます。"
 }

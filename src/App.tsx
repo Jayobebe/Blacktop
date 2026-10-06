@@ -65,7 +65,11 @@ function lazyPage<T extends React.ComponentType>(load: () => Promise<{ default: 
   return lazy(load);
 }
 function prefetchPages() {
-  const run = () => pageLoaders.forEach((load) => void load().catch(() => {}));
+  const run = () => {
+    pageLoaders.forEach((load) => void load().catch(() => {}));
+    // The rider's country for Blacktop World's globe (a no-op unless it's new or they've travelled).
+    void import("@/lib/profileCountry").then((m) => m.syncProfileCountry()).catch(() => {});
+  };
   if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 5000 });
   else setTimeout(run, 2000);
 }
