@@ -664,9 +664,11 @@ export type Database = {
           arcade_rpm: number
           balance: number
           created_at: string
+          daily_day: string | null
           first_win_day: string | null
           free_spins: number
           free_tag_spins: number
+          hard_streak: number
           last_arcade_reward: string | null
           last_created_at: string | null
           last_offline_reward: string | null
@@ -684,9 +686,11 @@ export type Database = {
           arcade_rpm?: number
           balance?: number
           created_at?: string
+          daily_day?: string | null
           first_win_day?: string | null
           free_spins?: number
           free_tag_spins?: number
+          hard_streak?: number
           last_arcade_reward?: string | null
           last_created_at?: string | null
           last_offline_reward?: string | null
@@ -704,9 +708,11 @@ export type Database = {
           arcade_rpm?: number
           balance?: number
           created_at?: string
+          daily_day?: string | null
           first_win_day?: string | null
           free_spins?: number
           free_tag_spins?: number
+          hard_streak?: number
           last_arcade_reward?: string | null
           last_created_at?: string | null
           last_offline_reward?: string | null
@@ -2077,9 +2083,12 @@ export type Database = {
         Returns: Json
       }
       cw_contracts_today: { Args: never; Returns: Json }
+      cw_daily_claim: { Args: never; Returns: Json }
+      cw_daily_state: { Args: never; Returns: Json }
       cw_daily_topup: { Args: { _u: string }; Returns: undefined }
       cw_flip: { Args: never; Returns: boolean }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
+      cw_level_rules: { Args: never; Returns: Json }
       cw_my_wear: {
         Args: never
         Returns: {
@@ -2087,6 +2096,7 @@ export type Database = {
           condition: number
         }[]
       }
+      cw_pace_rules: { Args: never; Returns: Json }
       cw_pay_out: {
         Args: {
           _d1: string[]
@@ -2112,6 +2122,10 @@ export type Database = {
           card_id: string
           condition: number
         }[]
+      }
+      cw_reward_battle: {
+        Args: { _level: string; _result: string }
+        Returns: Json
       }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
       cw_rules: { Args: never; Returns: Json }
