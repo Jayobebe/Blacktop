@@ -301,7 +301,8 @@ button.cw-card:disabled { cursor: default; }
 .cw-info-flip svg { width: 13px; height: 13px; }
 .cw-info-flip span:first-child { color: hsl(var(--stat-improvement)); }
 .cw-info-flip span:last-child { color: hsl(var(--destructive)); }
-.cw-burn { position: absolute; z-index: 6; left: -8%; top: -24%; width: 116%; height: 126%; pointer-events: none; }
+/* Room above the card for the flames to rise into and thin out: they must never meet the canvas edge. */
+.cw-burn { position: absolute; z-index: 6; left: -8%; top: -70%; width: 116%; height: 172%; pointer-events: none; }
 
 /* Dog tags in a battle: three steel plates to arm. */
 .cw-tags { flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
