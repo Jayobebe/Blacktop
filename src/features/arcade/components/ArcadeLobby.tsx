@@ -5,6 +5,7 @@ import { useSettings } from '@/features/settings';
 import { useArcadeScores } from '../hooks/useArcadeScores';
 import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 // Not the Card Wars barrel: only its panel belongs on this page.
 import { CardWarsArcadePanel } from '@/features/card-wars/light';
 
@@ -19,6 +20,16 @@ export function ArcadeLobby() {
 
   return (
     <section className="w-full h-full flex flex-col">
+      {/* First-time tips: what each game is, and that playing here pays into Card Wars. */}
+      <PageTips
+        page="arcade"
+        scroll
+        tips={[
+          { target: '[data-tip="arcade-hit"]', text: tr("Hold your phone tight in your fist and punch. Blacktop measures the hit in G.") },
+          { target: '[data-tip="arcade-petrol"]', text: tr("Dodge traffic and grab fuel cans. Near misses charge a shield.") },
+          { target: '[data-tip="arcade-cw"]', text: tr("Finishing a game here pays RPM for Card Wars. A personal best pays more.") },
+        ]}
+      />
       {/* Header */}
       <div className="flex items-center justify-center gap-2 px-4 pt-4 pb-3">
         <Gamepad2 className="w-4 h-4 text-accent" />
@@ -28,6 +39,7 @@ export function ArcadeLobby() {
       {/* Game tiles */}
       <div className="flex-1 grid grid-cols-2 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 px-4 pb-2">
         <button
+          data-tip="arcade-hit"
           onClick={() => navigate('/arcade/hit-heavy')}
           className="flex flex-col items-center gap-3 py-6 px-3 bg-card/50 border border-border/30 rounded-2xl
                      hover:bg-card/70 hover:border-accent/40 active:scale-[0.98] transition-all duration-200"
@@ -45,6 +57,7 @@ export function ArcadeLobby() {
         </button>
 
         <button
+          data-tip="arcade-petrol"
           onClick={() => navigate('/arcade/petrol-head')}
           className="flex flex-col items-center gap-3 py-6 px-3 bg-card/50 border border-border/30 rounded-2xl
                      hover:bg-card/70 hover:border-accent/40 active:scale-[0.98] transition-all duration-200"

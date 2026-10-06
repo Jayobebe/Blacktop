@@ -4298,5 +4298,8 @@
  "Racing with a pit crew? Scan their QR here, or show them yours from the QR button at the top.": "पिट क्रू के साथ रेस कर रहे हैं? उनका QR यहाँ स्कैन करें, या ऊपर के QR बटन से अपना दिखाएँ।",
  "Crewing for a racer? Scan their QR here, or pick a track and show them yours.": "किसी रेसर के पिट क्रू हैं? उनका QR यहाँ स्कैन करें, या ट्रैक चुनकर अपना दिखाएँ।",
  "Ready up, head to the grid, then tap I'm in position. Timing starts when you launch.": "तैयार हों पर टैप करें, ग्रिड पर जाएँ, फिर मैं अपनी जगह पर हूँ पर टैप करें। जैसे ही आप निकलते हैं, टाइमिंग शुरू हो जाती है।",
- "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "यह आपके रेसर के स्कैन करने के लिए QR दिखाता है। यह उन्हें यह ट्रैक भेजता है और आपके दोनों फ़ोन जोड़ता है।"
+ "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "यह आपके रेसर के स्कैन करने के लिए QR दिखाता है। यह उन्हें यह ट्रैक भेजता है और आपके दोनों फ़ोन जोड़ता है।",
+ "Hold your phone tight in your fist and punch. Blacktop measures the hit in G.": "फ़ोन को मुट्ठी में कसकर पकड़ें और मुक्का मारें। Blacktop वार को G में नापता है।",
+ "Dodge traffic and grab fuel cans. Near misses charge a shield.": "ट्रैफ़िक से बचें और ईंधन के कैन उठाएँ। बाल-बाल बचने से ढाल चार्ज होती है।",
+ "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "यहाँ एक गेम पूरा करने पर Card Wars के लिए RPM मिलता है। अपना सर्वश्रेष्ठ बनाने पर और ज़्यादा।"
 }

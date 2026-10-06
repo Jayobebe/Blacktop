@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-// A lightly pixelated copy of the Mecha-Nick artwork, so he sits with the pixel-art vehicles (made from the original asset, same canvas).
+// Mecha-Nick as pixel art, so he sits with the pixel-art vehicles: 96 pixels across, scaled up without smoothing (scripts/make-mecha-nick.py).
 const NICK = '/garage/mecha-nick.png';
 import { tr } from '@/lib/i18n';
 
