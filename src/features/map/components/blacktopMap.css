@@ -48,7 +48,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: hsl(var(--destructive));
+  color: hsl(var(--burn));
+}
+
+/* The compass: north in burn orange, south grey (MapLibre's own needle, redrawn; no invert on this one). */
+.blacktop-maplibre .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon {
+  filter: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='29' height='29' viewBox='0 0 29 29' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m10.5 14 4-8 4 8z' fill='%23ed511d'/%3E%3Cpath d='m10.5 16 4 8 4-8z' fill='%23a1a1aa'/%3E%3C/svg%3E");
 }
 
 /* Make control buttons large enough to tap comfortably on mobile. */

@@ -33,6 +33,7 @@ export function HazardReport({ getPosition, className }: { getPosition?: () => R
           className,
         )}
         aria-label={tr("Report a hazard")}
+        data-tip="map-report"
       >
         <Megaphone className="w-4 h-4" />{" "}{tr("Report")}
       </button>

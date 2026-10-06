@@ -99,6 +99,7 @@ import { useCollectedCards, useVehicleCards, useCardKickbacks } from "@/features
 import { copyLedger } from "@/features/cards/lib/dropEconomy";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 import { setGuidanceActive } from '../lib/guidanceState';
 import { etaClock, etaSpread, spreadDuration } from '../lib/eta';
 import { W3WAddress } from '@/components/W3WAddress';
@@ -2169,6 +2170,31 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
 
+      {/* First-time tips: a walk along the toolbar and the controls, so more than the usual three.
+          Only with the map open and at rest: never on a ride or while guiding. */}
+      {isVisible && (
+        <PageTips
+          page="map"
+          max={13}
+          when={!rideState.isActive && !guiding && showSearchBar && !droppingCard && !showLoopPlanner && !showOfflinePacks}
+          tips={[
+            { target: '[data-tip="map-search"]', text: tr("Search for a place, pick a result, then tap Go for turn-by-turn directions.") },
+            { target: '[data-tip="map-report"]', text: tr("Spotted something? Report a hazard here. Riders coming up behind get a warning.") },
+            { target: '[data-tip="map-dark"]', text: tr("The dark map: Blacktop's own look.") },
+            { target: '[data-tip="map-satellite"]', text: tr("Satellite view, for seeing the road and what's around it.") },
+            { target: '[data-tip="map-3d"]', text: tr("3D terrain and buildings, for hills and passes.") },
+            { target: '[data-tip="map-loop"]', text: tr("The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.") },
+            { target: '[data-tip="map-offline"]', text: tr("Download the map for an area, so it still draws with no signal.") },
+            { target: '[data-tip="radio"]', text: tr("Blacktop Radio. Tap to play or pause; hold for the station dial.") },
+            { target: '[data-tip="map-drop"]', text: tr("Plant a spare copy of your card on the map for other riders to find.") },
+            { target: '[data-tip="map-save"]', text: tr("Save where you are now as a place, to find or navigate to later.") },
+            { target: '[data-tip="handshake"]', text: tr("Riders nearby who have opted in show up here. Tap to invite them to ride with you.") },
+            { target: '.blacktop-maplibre .bt-alarm-ctrl', text: tr("This arms the anti-theft alarm: the same lock as on Home.") },
+            { target: '.blacktop-maplibre .maplibregl-ctrl-compass', text: tr("Tap the compass to turn the map north-up again. The locate button brings the map back to you.") },
+          ]}
+        />
+      )}
+
       {/* Top-left column, left of the MapLibre controls: the top slot (search
           bar, or the convoy strip while riding in a convoy) with the toolbar
           flowing underneath, so when the search bar steps aside while moving
@@ -2300,6 +2326,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             onClick={() => setBasemap("dark")}
             aria-pressed={basemap === "dark"}
             aria-label={tr("Dark map")}
+            data-tip="map-dark"
             className={cn(
               "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "dark" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2313,6 +2340,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             onClick={() => setBasemap("satellite")}
             aria-pressed={basemap === "satellite"}
             aria-label={tr("Satellite view")}
+            data-tip="map-satellite"
             className={cn(
               "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               basemap === "satellite" ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2326,6 +2354,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             onClick={() => setThreeD((v) => !v)}
             aria-pressed={threeD}
             aria-label={tr("3D terrain and buildings")}
+            data-tip="map-3d"
             className={cn(
               "w-9 h-9 landscape:w-8 landscape:h-8 flex items-center justify-center transition-colors",
               threeD ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2342,6 +2371,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             }}
             aria-pressed={showLoopPlanner}
             aria-label={tr("Plan a loop ride")}
+            data-tip="map-loop"
             className={cn(
               "w-9 h-9 flex items-center justify-center transition-colors",
               showLoopPlanner ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2358,6 +2388,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             }}
             aria-pressed={showOfflinePacks}
             aria-label={tr("Offline maps")}
+            data-tip="map-offline"
             className={cn(
               "w-9 h-9 flex items-center justify-center transition-colors",
               showOfflinePacks ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2376,6 +2407,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                 onClick={() => setDroppingCard((v) => !v)}
                 aria-pressed={droppingCard}
                 aria-label={tr("Drop a trading card on the map")}
+                data-tip="map-drop"
                 className={cn(
                   "w-9 h-9 flex items-center justify-center transition-colors",
                   droppingCard ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
@@ -2453,6 +2485,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               }}
               className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
               aria-label={tr("Save current location as a POI")}
+              data-tip="map-save"
             >
               <BookmarkPlus className="w-5 h-5" />
             </button>

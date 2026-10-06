@@ -261,7 +261,7 @@ export function HandshakeButton({
     );
   }
   return (
-    <div className={cn('flex flex-col items-end gap-2', className)}>
+    <div data-tip="handshake" className={cn('flex flex-col items-end gap-2', className)}>
       {panel}
       {button}
     </div>

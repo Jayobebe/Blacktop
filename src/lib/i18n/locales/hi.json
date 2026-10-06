@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "खत्म करने के लिए दो टैप लगते हैं, ताकि दस्ताने से गलती से न हो। एक मिनट से कम या 0.1 मील से कम कुछ भी सेव नहीं होता।",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "खत्म करने के लिए दो टैप लगते हैं, ताकि दस्ताने से गलती से न हो। एक मिनट से कम या 150 मीटर से कम कुछ भी सेव नहीं होता।",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R मदद बुलाता है। यह आपकी लोकेशन उन्हें भेजता है जिन्हें आपने सेटिंग्स में चुना है: आपका कॉन्वॉय, आपका क्रू, Discord, आस-पास के राइडर।",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "पेट्रोल के लिए रुक रहे हैं? यह चोरी-रोधी अलार्म से लॉक करता है। जब तक आप अनलॉक करके प्ले नहीं दबाते, राइड रुकी रहती है।"
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "पेट्रोल के लिए रुक रहे हैं? यह चोरी-रोधी अलार्म से लॉक करता है। जब तक आप अनलॉक करके प्ले नहीं दबाते, राइड रुकी रहती है।",
+ "3D terrain and buildings, for hills and passes.": "3D ज़मीन और इमारतें, पहाड़ियों और दर्रों के लिए।",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. चलाने या रोकने के लिए टैप करें; स्टेशन डायल के लिए दबाए रखें।",
+ "Download the map for an area, so it still draws with no signal.": "किसी इलाके का नक्शा डाउनलोड करें, ताकि सिग्नल न होने पर भी वह दिखे।",
+ "Plant a spare copy of your card on the map for other riders to find.": "अपने कार्ड की एक अतिरिक्त प्रति नक्शे पर रखें, ताकि दूसरे राइडर उसे ढूँढ सकें।",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "आस-पास के वे राइडर जिन्होंने इसे चालू किया है, यहाँ दिखते हैं। उन्हें साथ राइड करने के लिए बुलाने को टैप करें।",
+ "Satellite view, for seeing the road and what's around it.": "सैटेलाइट व्यू, सड़क और उसके आस-पास को देखने के लिए।",
+ "Save where you are now as a place, to find or navigate to later.": "अभी जहाँ हैं उसे एक जगह के रूप में सेव करें, ताकि बाद में ढूँढ सकें या वहाँ तक नेविगेट कर सकें।",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "कोई जगह खोजें, नतीजा चुनें, फिर मोड़-दर-मोड़ दिशाओं के लिए चलें पर टैप करें।",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "कुछ दिखा? यहाँ ख़तरे की रिपोर्ट करें। पीछे आ रहे राइडरों को चेतावनी मिलती है।",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "नक्शे को फिर उत्तर की ओर करने के लिए कंपास पर टैप करें। लोकेट बटन नक्शे को वापस आप पर ले आता है।",
+ "The dark map: Blacktop's own look.": "डार्क मैप: Blacktop का अपना लुक।",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "लूप प्लानर आपकी जगह से एक राउंड ट्रिप बनाता है। लंबाई और शैली चुनें: घुमावदार, दृश्य या आरामदायक।",
+ "This arms the anti-theft alarm: the same lock as on Home.": "यह चोरी-रोधी अलार्म चालू करता है: वही लॉक जो होम पर है।"
 }

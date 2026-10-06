@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "结束需要点按两次，这样戴手套也不会误触。不足一分钟或不足 0.1 英里的行程不会保存。",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "结束需要点按两次，这样戴手套也不会误触。不足一分钟或不足 150 米的行程不会保存。",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R 用于呼叫救援。它会把你的位置发送给你在设置中选择的对象：同行队伍、车队、Discord、附近的骑手。",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "停车加油？这会用防盗警报上锁。在你解锁并按下播放之前，行程会暂停。"
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "停车加油？这会用防盗警报上锁。在你解锁并按下播放之前，行程会暂停。",
+ "3D terrain and buildings, for hills and passes.": "3D 地形和建筑，适合看坡道和山口。",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio。点按播放或暂停；长按打开电台旋钮。",
+ "Download the map for an area, so it still draws with no signal.": "下载某个区域的地图，没有信号时也能显示。",
+ "Plant a spare copy of your card on the map for other riders to find.": "在地图上放一张你的卡片副本，让其他骑手来找。",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "附近已开启此功能的骑手会显示在这里。点按即可邀请他们同行。",
+ "Satellite view, for seeing the road and what's around it.": "卫星视图，可查看道路及其周边。",
+ "Save where you are now as a place, to find or navigate to later.": "把当前位置保存为地点，方便以后查找或导航前往。",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "搜索地点，选择结果，然后点按出发开始逐向导航。",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "发现情况？在这里报告危险。后面的骑手会收到警告。",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "点按指南针可让地图重新朝北。定位按钮会把地图带回你的位置。",
+ "The dark map: Blacktop's own look.": "深色地图：Blacktop 自己的风格。",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "环线规划会从你所在位置生成一条环线。选择长度和风格：弯道、风景 或 休闲。",
+ "This arms the anti-theft alarm: the same lock as on Home.": "这会启动防盗警报：与主页上的锁相同。"
 }

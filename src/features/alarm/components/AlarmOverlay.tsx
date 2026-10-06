@@ -312,9 +312,9 @@ function AlarmScreen() {
             </svg>
           )}
           <Lock
-            className={cn('w-24 h-24 text-destructive', loud && 'animate-pulse')}
+            className={cn('w-24 h-24 text-[hsl(var(--burn))]', loud && 'animate-pulse')}
             strokeWidth={1.8}
-            style={{ filter: `drop-shadow(0 0 ${loud ? 34 : 22}px hsl(var(--destructive) / ${loud ? 0.8 : 0.55}))` }}
+            style={{ filter: `drop-shadow(0 0 ${loud ? 34 : 22}px hsl(var(--burn) / ${loud ? 0.8 : 0.55}))` }}
           />
         </div>
         <h2 className={cn('font-semibold tracking-tight', phase === 'alarm' ? 'text-4xl text-destructive' : 'text-2xl')}>{title}</h2>

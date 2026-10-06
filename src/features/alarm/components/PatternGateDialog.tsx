@@ -87,7 +87,7 @@ export function PatternGateDialog() {
     <Dialog open={!!req} onOpenChange={(o) => !o && req?.resolve(false)}>
       <DialogContent data-no-ui-sound className="max-w-sm">
         <DialogHeader className="items-center text-center">
-          <Lock className="w-8 h-8 text-destructive" aria-hidden />
+          <Lock className="w-8 h-8 text-[hsl(var(--burn))]" aria-hidden />
           <DialogTitle>{req?.title}</DialogTitle>
           <DialogDescription>{message ?? req?.reason}</DialogDescription>
         </DialogHeader>

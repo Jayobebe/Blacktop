@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Bitirmek iki dokunuş ister, böylece eldiven yanlışlıkla yapamaz. Bir dakikadan kısa ya da 0,1 milden az olan hiçbir şey kaydedilmez.",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Bitirmek iki dokunuş ister, böylece eldiven yanlışlıkla yapamaz. Bir dakikadan kısa ya da 150 metreden az olan hiçbir şey kaydedilmez.",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R yardım çağırır. Konumunu Ayarlar'da seçtiğin kişilere gönderir: konvoyun, ekibin, Discord, yakındaki sürücüler.",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Yakıt için mi duruyorsun? Bu, hırsızlık alarmıyla kilitler. Kilidi açıp oynata basana kadar sürüşün duraklatılır."
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Yakıt için mi duruyorsun? Bu, hırsızlık alarmıyla kilitler. Kilidi açıp oynata basana kadar sürüşün duraklatılır.",
+ "3D terrain and buildings, for hills and passes.": "3B arazi ve binalar; tepeler ve geçitler için.",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. Çalmak ya da duraklatmak için dokun; istasyon kadranı için basılı tut.",
+ "Download the map for an area, so it still draws with no signal.": "Bir bölgenin haritasını indir; sinyal yokken de görünsün.",
+ "Plant a spare copy of your card on the map for other riders to find.": "Kartının yedek bir kopyasını haritaya bırak; diğer sürücüler bulsun.",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "Bunu açmış yakındaki sürücüler burada görünür. Seninle sürmeye davet etmek için dokun.",
+ "Satellite view, for seeing the road and what's around it.": "Uydu görünümü; yolu ve çevresini görmek için.",
+ "Save where you are now as a place, to find or navigate to later.": "Şu an bulunduğun yeri kaydet; sonra bulmak ya da oraya gitmek için.",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "Bir yer ara, bir sonuç seç, sonra adım adım yol tarifi için Git düğmesine dokun.",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "Bir şey mi gördün? Burada tehlike bildir. Arkandan gelen sürücüler uyarı alır.",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "Haritayı yeniden kuzeye çevirmek için pusulaya dokun. Konum düğmesi haritayı sana geri getirir.",
+ "The dark map: Blacktop's own look.": "Koyu harita: Blacktop'un kendi görünümü.",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "Tur planlayıcı, bulunduğun yerden bir gidiş-dönüş turu oluşturur. Bir uzunluk ve tarz seç: Virajlı, Manzaralı ya da Rahat.",
+ "This arms the anti-theft alarm: the same lock as on Home.": "Bu, hırsızlık alarmını kurar: Ana ekrandaki kilidin aynısı."
 }

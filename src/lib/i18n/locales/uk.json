@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Завершення потребує двох дотиків, щоб рукавиця не зробила цього випадково. Усе, що коротше хвилини або менше 0,1 милі, не зберігається.",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Завершення потребує двох дотиків, щоб рукавиця не зробила цього випадково. Усе, що коротше хвилини або менше 150 метрів, не зберігається.",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R кличе на допомогу. Надсилає твоє місцезнаходження тим, кого ти обрав у Налаштуваннях: колоні, команді, Discord, райдерам поблизу.",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Зупинка на заправку? Це блокує протиугінною сигналізацією. Поїздка на паузі, доки не розблокуєш і не натиснеш відтворення."
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Зупинка на заправку? Це блокує протиугінною сигналізацією. Поїздка на паузі, доки не розблокуєш і не натиснеш відтворення.",
+ "3D terrain and buildings, for hills and passes.": "3D-рельєф і будівлі, для пагорбів і перевалів.",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. Торкнися, щоб відтворити чи призупинити; утримуй, щоб обрати станцію.",
+ "Download the map for an area, so it still draws with no signal.": "Завантаж мапу району, щоб вона показувалася й без сигналу.",
+ "Plant a spare copy of your card on the map for other riders to find.": "Залиш запасну копію своєї картки на мапі, щоб її знайшли інші райдери.",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "Тут з'являються райдери поблизу, які це ввімкнули. Торкнися, щоб запросити їх їхати разом.",
+ "Satellite view, for seeing the road and what's around it.": "Супутниковий вигляд, щоб бачити дорогу й те, що навколо.",
+ "Save where you are now as a place, to find or navigate to later.": "Збережи місце, де ти зараз, щоб потім знайти його чи прокласти туди маршрут.",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "Знайди місце, обери результат і торкнися Їхати, щоб отримати покрокові вказівки.",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "Щось помітив? Повідом про небезпеку тут. Райдери позаду отримають попередження.",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "Торкнися компаса, щоб знову повернути мапу на північ. Кнопка локації повертає мапу до тебе.",
+ "The dark map: Blacktop's own look.": "Темна мапа: власний стиль Blacktop.",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "Планувальник кільцевих маршрутів будує коло від того місця, де ти є. Обери довжину і стиль: Звивистий, Мальовничий або Спокійний.",
+ "This arms the anti-theft alarm: the same lock as on Home.": "Це вмикає протиугінну сигналізацію: той самий замок, що й на головному екрані."
 }

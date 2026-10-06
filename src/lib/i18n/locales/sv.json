@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Att avsluta kräver två tryck, så att en handske inte gör det av misstag. Allt under en minut eller under 0,1 mile sparas inte.",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Att avsluta kräver två tryck, så att en handske inte gör det av misstag. Allt under en minut eller under 150 meter sparas inte.",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R kallar på hjälp. Den skickar din position till dem du valt i Inställningar: din konvoj, ditt crew, Discord, förare i närheten.",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Stannar du för att tanka? Den här låser med stöldlarmet. Turen är pausad tills du låser upp och trycker på play."
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Stannar du för att tanka? Den här låser med stöldlarmet. Turen är pausad tills du låser upp och trycker på play.",
+ "3D terrain and buildings, for hills and passes.": "3D-terräng och byggnader, för backar och pass.",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. Tryck för att spela eller pausa; håll in för stationsväljaren.",
+ "Download the map for an area, so it still draws with no signal.": "Ladda ner kartan för ett område så att den visas även utan täckning.",
+ "Plant a spare copy of your card on the map for other riders to find.": "Lägg en extra kopia av ditt kort på kartan så att andra förare kan hitta den.",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "Förare i närheten som har slagit på det visas här. Tryck för att bjuda in dem att köra med dig.",
+ "Satellite view, for seeing the road and what's around it.": "Satellitvy, för att se vägen och det runt omkring.",
+ "Save where you are now as a place, to find or navigate to later.": "Spara var du är nu som en plats, för att hitta eller navigera dit senare.",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "Sök efter en plats, välj ett resultat och tryck på Kör för sväng-för-sväng-vägledning.",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "Sett något? Rapportera en fara här. Förare som kommer bakom får en varning.",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "Tryck på kompassen för att vända kartan mot norr igen. Platsknappen tar kartan tillbaka till dig.",
+ "The dark map: Blacktop's own look.": "Den mörka kartan: Blacktops egen stil.",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "Rundturplaneraren bygger en rundtur från där du är. Välj en längd och en stil: Kurvig, Naturskön eller Avslappnad.",
+ "This arms the anti-theft alarm: the same lock as on Home.": "Den här larmar stöldlarmet: samma lås som på Hem."
 }

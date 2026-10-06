@@ -265,6 +265,10 @@ export default function ActiveRide() {
   const { orientation } = useOrientationLock();
   
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  // The ride was paused for the first-time tips (not by the rider).
+  const tipPaused = useRef(false);
+  const tipTimer = useRef(0);
+  const [tipsShelved, setTipsShelved] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [endingFlow, setEndingFlow] = useState(false);
@@ -1040,7 +1044,20 @@ export default function ActiveRide() {
           {/* First-time tips, only at a standstill: they're put away the moment the rider moves. */}
           <PageTips
             page="ride"
-            when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !showEndConfirm}
+            when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !showEndConfirm && !tipsShelved}
+            // The clock doesn't run while the rider is reading: paused for the tips, and set going again after (unless they'd paused it themselves).
+            onShowing={(showing) => {
+              window.clearTimeout(tipTimer.current);
+              if (showing) {
+                tipPaused.current = !rideState.isPaused;
+                if (tipPaused.current) setRidePaused(true);
+                // Left unread (the rider has set off with them up): put them away so the ride isn't left paused. They come back next ride.
+                tipTimer.current = window.setTimeout(() => setTipsShelved(true), 45_000);
+              } else if (tipPaused.current) {
+                tipPaused.current = false;
+                setRidePaused(false);
+              }
+            }}
             tips={[
               { target: '[data-tip="rescue"]', text: tr("R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.") },
               { target: '[data-tip="alarm"]', text: tr("Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.") },

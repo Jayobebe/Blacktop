@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "종료는 두 번 탭해야 하므로 장갑으로 실수할 일이 없습니다. 1분 미만이거나 0.1마일 미만이면 저장되지 않습니다.",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "종료는 두 번 탭해야 하므로 장갑으로 실수할 일이 없습니다. 1분 미만이거나 150미터 미만이면 저장되지 않습니다.",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R은 구조를 요청합니다. 설정에서 고른 대상(콘보이, 크루, Discord, 근처 라이더)에게 내 위치를 보냅니다.",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "주유하러 멈추나요? 도난 방지 알람으로 잠급니다. 잠금을 풀고 재생을 누를 때까지 주행이 일시정지됩니다."
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "주유하러 멈추나요? 도난 방지 알람으로 잠급니다. 잠금을 풀고 재생을 누를 때까지 주행이 일시정지됩니다.",
+ "3D terrain and buildings, for hills and passes.": "3D 지형과 건물. 언덕과 고갯길에 좋습니다.",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. 탭하면 재생/일시정지, 길게 누르면 방송국 다이얼.",
+ "Download the map for an area, so it still draws with no signal.": "지역 지도를 내려받아 두면 신호가 없어도 표시됩니다.",
+ "Plant a spare copy of your card on the map for other riders to find.": "내 카드의 여분을 지도에 두어 다른 라이더가 찾게 하세요.",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "기능을 켠 근처 라이더가 여기에 표시됩니다. 탭해서 함께 달리자고 초대하세요.",
+ "Satellite view, for seeing the road and what's around it.": "위성 보기. 도로와 주변을 확인할 수 있습니다.",
+ "Save where you are now as a place, to find or navigate to later.": "지금 있는 곳을 장소로 저장해 나중에 찾거나 길 안내를 받을 수 있습니다.",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "장소를 검색하고 결과를 고른 다음 출발를 탭하면 턴바이턴 안내가 시작됩니다.",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "뭔가 발견했나요? 여기서 위험을 신고하세요. 뒤따라오는 라이더에게 경고가 갑니다.",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "나침반을 탭하면 지도가 다시 북쪽을 향합니다. 위치 버튼은 지도를 내 위치로 되돌립니다.",
+ "The dark map: Blacktop's own look.": "다크 지도: Blacktop만의 스타일.",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "루프 플래너는 지금 있는 곳에서 출발하는 순환 코스를 만듭니다. 길이와 스타일(와인딩, 경치, 여유)을 고르세요.",
+ "This arms the anti-theft alarm: the same lock as on Home.": "도난 방지 알람을 켭니다. 홈에 있는 것과 같은 잠금입니다."
 }

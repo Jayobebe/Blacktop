@@ -58,6 +58,7 @@ export function RadioButton({ variant = 'ride', className }: Props) {
       onPointerCancel={endHold}
       onContextMenu={(e) => e.preventDefault()}
       onClick={handleClick}
+      data-tip="radio"
       aria-label={active ? tr("Pause radio (hold for stations)") : tr("Blacktop Radio (hold for stations)")}
       title={tr("Blacktop Radio — hold for stations")}
       className={cn(

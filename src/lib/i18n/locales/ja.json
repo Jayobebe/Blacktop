@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "終了は2回タップが必要なので、グローブで誤って終了することはありません。1分未満または0.1マイル未満の走行は保存されません。",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "終了は2回タップが必要なので、グローブで誤って終了することはありません。1分未満または150メートル未満の走行は保存されません。",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "Rは救助を呼びます。設定で選んだ相手（コンボイ、クルー、Discord、近くのライダー）に位置情報を送ります。",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "給油で止まりますか？これで盗難防止アラームをかけてロックします。解除して再生を押すまで走行は一時停止します。"
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "給油で止まりますか？これで盗難防止アラームをかけてロックします。解除して再生を押すまで走行は一時停止します。",
+ "3D terrain and buildings, for hills and passes.": "3Dの地形と建物。丘や峠道に。",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio。タップで再生・一時停止、長押しで選局ダイヤル。",
+ "Download the map for an area, so it still draws with no signal.": "エリアの地図をダウンロードしておくと、電波がなくても表示されます。",
+ "Plant a spare copy of your card on the map for other riders to find.": "自分のカードの予備を地図に置いて、ほかのライダーに見つけてもらいましょう。",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "オンにしている近くのライダーがここに表示されます。タップして一緒に走るよう誘えます。",
+ "Satellite view, for seeing the road and what's around it.": "衛星写真。道路とその周辺を確認できます。",
+ "Save where you are now as a place, to find or navigate to later.": "今いる場所をスポットとして保存し、あとで探したりナビしたりできます。",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "場所を検索して結果を選び、出発をタップするとターンバイターン案内が始まります。",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "何か見つけましたか？ここで危険を報告。後ろから来るライダーに警告が届きます。",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "コンパスをタップすると地図が北向きに戻ります。現在地ボタンで地図が自分の位置に戻ります。",
+ "The dark map: Blacktop's own look.": "ダークマップ：Blacktop独自のスタイル。",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "ループプランナーは今いる場所からの周回ルートを作ります。長さとスタイル（ワインディング、景観、ゆったり）を選びます。",
+ "This arms the anti-theft alarm: the same lock as on Home.": "盗難防止アラームをセットします。ホームと同じロックです。"
 }

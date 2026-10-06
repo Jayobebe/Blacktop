@@ -45,9 +45,9 @@ function locate(selector: string): Spot | null {
  * Nothing shows again once they've been through or skipped. It waits for the
  * page to settle, and for any dialog to be out of the way, before starting.
  */
-export function PageTips({ page, tips, when = true }: { page: string; tips: PageTip[]; /** Hold the tips back (and hide them at once) while this is false. */ when?: boolean }) {
+export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowing }: { page: string; tips: PageTip[]; /** Hold the tips back (and hide them at once) while this is false. */ when?: boolean; /** More than the usual three, for a page that walks through a toolbar. */ max?: number; /** Told when the tips come up and when they're put away (the ride screen pauses its clock meanwhile). */ onShowing?: (showing: boolean) => void }) {
   const due = useTipsDue(page);
-  const list = tips.slice(0, TIPS_PER_PAGE);
+  const list = tips.slice(0, max);
   const [step, setStep] = useState<number | null>(null);
   const [spot, setSpot] = useState<Spot | null>(null);
   const card = useRef<HTMLDivElement>(null);
@@ -101,11 +101,21 @@ export function PageTips({ page, tips, when = true }: { page: string; tips: Page
     if (card.current) setCardH(card.current.offsetHeight);
   }, [step, spot]);
 
+  const showing = due && when && step !== null;
+  const tell = useRef(onShowing);
+  tell.current = onShowing;
+  useEffect(() => {
+    if (!showing) return;
+    tell.current?.(true);
+    return () => tell.current?.(false);
+  }, [showing]);
+
   if (!due || !when || step === null || !spot) return null;
   const tip = list[step];
   if (!tip) return null;
-  const shown = list.map((_, i) => i).filter((i) => i <= step || locate(list[i].target)).length;
+  // "4 of 11": counting only the tips whose control is on this rider's screen.
   const position = list.slice(0, step + 1).filter((t, i) => i === step || locate(t.target)).length;
+  const shown = position + list.slice(step + 1).filter((t) => locate(t.target)).length;
   const last = next(step + 1) === null;
 
   const advance = () => {
@@ -141,7 +151,7 @@ export function PageTips({ page, tips, when = true }: { page: string; tips: Page
       >
         <p className="text-sm leading-snug text-foreground">{tip.text}</p>
         <div className="mt-3 flex items-center gap-2">
-          <span className="font-mono text-[11px] text-muted-foreground">{tr("{0} of {1}", [position, Math.max(position, shown)])}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{tr("{0} of {1}", [position, shown])}</span>
           <button
             type="button"
             className="ml-auto min-h-11 rounded-xl px-3 text-xs font-medium text-muted-foreground hover:text-foreground"

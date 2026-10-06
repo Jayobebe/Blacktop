@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Terminar requiere dos toques, para que un guante no lo haga sin querer. Lo que dure menos de un minuto o menos de 0,1 millas no se guarda.",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Terminar requiere dos toques, para que un guante no lo haga sin querer. Lo que dure menos de un minuto o menos de 150 metros no se guarda.",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R pide rescate. Envía tu ubicación a quienes elegiste en Ajustes: tu convoy, tu crew, Discord, pilotos cercanos.",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "¿Paras a repostar? Esto bloquea con la alarma antirrobo. La ruta queda en pausa hasta que desbloquees y pulses reproducir."
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "¿Paras a repostar? Esto bloquea con la alarma antirrobo. La ruta queda en pausa hasta que desbloquees y pulses reproducir.",
+ "3D terrain and buildings, for hills and passes.": "Terreno y edificios en 3D, para colinas y puertos.",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. Toca para reproducir o pausar; mantén pulsado para el dial de emisoras.",
+ "Download the map for an area, so it still draws with no signal.": "Descarga el mapa de una zona para que se siga viendo sin cobertura.",
+ "Plant a spare copy of your card on the map for other riders to find.": "Deja una copia extra de tu carta en el mapa para que otros pilotos la encuentren.",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "Aquí aparecen los pilotos cercanos que lo han activado. Toca para invitarlos a rodar contigo.",
+ "Satellite view, for seeing the road and what's around it.": "Vista satélite, para ver la carretera y lo que la rodea.",
+ "Save where you are now as a place, to find or navigate to later.": "Guarda dónde estás ahora como lugar, para encontrarlo o navegar hasta él más tarde.",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "Busca un lugar, elige un resultado y toca Ir para las indicaciones paso a paso.",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "¿Has visto algo? Informa de un peligro aquí. Los pilotos que vienen detrás reciben un aviso.",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "Toca la brújula para volver a orientar el mapa al norte. El botón de localización devuelve el mapa a tu posición.",
+ "The dark map: Blacktop's own look.": "El mapa oscuro: el estilo propio de Blacktop.",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "El planificador de circuitos crea una ruta circular desde donde estás. Elige una longitud y un estilo: Curvas, Paisaje o Tranquila.",
+ "This arms the anti-theft alarm: the same lock as on Home.": "Esto activa la alarma antirrobo: el mismo candado que en Inicio."
 }

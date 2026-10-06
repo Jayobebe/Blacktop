@@ -4267,5 +4267,18 @@
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved.": "Mengakhiri butuh dua ketukan, agar sarung tangan tidak melakukannya tanpa sengaja. Apa pun di bawah satu menit atau di bawah 0,1 mil tidak disimpan.",
  "Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.": "Mengakhiri butuh dua ketukan, agar sarung tangan tidak melakukannya tanpa sengaja. Apa pun di bawah satu menit atau di bawah 150 meter tidak disimpan.",
  "R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.": "R meminta pertolongan. Lokasimu dikirim ke orang yang kamu pilih di Pengaturan: konvoi, kru, Discord, pengendara di sekitar.",
- "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Berhenti isi bensin? Ini mengunci dengan alarm anti-maling. Perjalananmu dijeda sampai kamu membuka kunci dan menekan putar."
+ "Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.": "Berhenti isi bensin? Ini mengunci dengan alarm anti-maling. Perjalananmu dijeda sampai kamu membuka kunci dan menekan putar.",
+ "3D terrain and buildings, for hills and passes.": "Medan dan bangunan 3D, untuk bukit dan jalur pegunungan.",
+ "Blacktop Radio. Tap to play or pause; hold for the station dial.": "Blacktop Radio. Ketuk untuk memutar atau menjeda; tahan untuk memilih stasiun.",
+ "Download the map for an area, so it still draws with no signal.": "Unduh peta suatu area agar tetap tampil tanpa sinyal.",
+ "Plant a spare copy of your card on the map for other riders to find.": "Letakkan salinan cadangan kartumu di peta agar ditemukan pengendara lain.",
+ "Riders nearby who have opted in show up here. Tap to invite them to ride with you.": "Pengendara di sekitar yang mengaktifkannya muncul di sini. Ketuk untuk mengajak mereka berkendara bersamamu.",
+ "Satellite view, for seeing the road and what's around it.": "Tampilan satelit, untuk melihat jalan dan sekitarnya.",
+ "Save where you are now as a place, to find or navigate to later.": "Simpan lokasimu sekarang sebagai tempat, untuk dicari atau dituju nanti.",
+ "Search for a place, pick a result, then tap Go for turn-by-turn directions.": "Cari tempat, pilih hasil, lalu ketuk Jalan untuk petunjuk belokan demi belokan.",
+ "Spotted something? Report a hazard here. Riders coming up behind get a warning.": "Melihat sesuatu? Laporkan bahaya di sini. Pengendara di belakangmu mendapat peringatan.",
+ "Tap the compass to turn the map north-up again. The locate button brings the map back to you.": "Ketuk kompas untuk mengarahkan peta ke utara lagi. Tombol lokasi mengembalikan peta ke posisimu.",
+ "The dark map: Blacktop's own look.": "Peta gelap: tampilan khas Blacktop.",
+ "The loop planner builds a round trip from where you are. Pick a length and a style: Twisty, Scenic or Relaxed.": "Perencana rute melingkar membuat perjalanan pulang-pergi dari posisimu. Pilih panjang dan gaya: Berliku, Pemandangan, atau Santai.",
+ "This arms the anti-theft alarm: the same lock as on Home.": "Ini mengaktifkan alarm anti-maling: kunci yang sama seperti di Beranda."
 }

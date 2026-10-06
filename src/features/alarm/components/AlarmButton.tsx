@@ -25,12 +25,12 @@ export function AlarmButton({ variant, className }: { variant: 'home' | 'ride'; 
       className={cn(
         'flex items-center justify-center shrink-0 touch-target',
         variant === 'home'
-          ? 'pressable h-12 w-12 rounded-2xl border bg-destructive/10 border-destructive/30'
-          : 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full transition-all bg-secondary hover:bg-destructive/15',
+          ? 'pressable h-12 w-12 rounded-2xl border bg-[hsl(var(--burn)/0.1)] border-[hsl(var(--burn)/0.35)]'
+          : 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full transition-all bg-secondary hover:bg-[hsl(var(--burn)/0.15)]',
         className,
       )}
     >
-      <Lock className={cn('text-destructive', variant === 'home' ? 'w-[18px] h-[18px]' : 'w-7 h-7 landscape:w-8 landscape:h-8')} />
+      <Lock className={cn('text-[hsl(var(--burn))]', variant === 'home' ? 'w-[18px] h-[18px]' : 'w-7 h-7 landscape:w-8 landscape:h-8')} />
     </button>
   );
 }

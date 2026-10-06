@@ -280,7 +280,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     >
       {/* Stops short of the MapLibre control column (zoom/compass/locate) so it never
           covers them; the wrapper itself ignores taps and only its children take them. */}
-      <div className="flex gap-2 pointer-events-auto">
+      <div data-tip="map-search" className="flex gap-2 pointer-events-auto">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
