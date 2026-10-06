@@ -303,6 +303,8 @@ export default function Home() {
   const secondHsl = settings.thermalMode ? undefined : ACCENT_COLORS.find((c) => c.id === settings.secondaryAccentColor)?.hsl;
   const globeHsl = globeMode === 'world' ? '15 85% 52%' : (secondHsl ?? (settings.thermalMode ? '0 0% 100%' : accentHsl)).trim();
   const globeColor = `hsl(${globeHsl.split(/\s+/).join(', ')})`;
+  // The band: the main accent for the map, a slightly darker burn orange for World.
+  const bandHsl = globeMode === 'world' ? '15 85% 44%' : settings.thermalMode ? '0 0% 100%' : accentHsl.trim();
 
   // The rotating globe sits at the junction where the three ride tiles meet.
   // We measure that point at runtime, position/size the globe there, and mask a
@@ -694,11 +696,11 @@ export default function Home() {
                         aria-label={!settings.blacktopWorldEnabled ? tr("Open map") : globeMode === 'map' ? tr("Open the map. Hold to switch to Blacktop World.") : tr("Open Blacktop World. Hold to switch to the map.")}
                         role="button"
                       >
-                        <GlobeBanner layer="back" word={globeMode === 'world' ? tr("World") : tr("Map")} color={globeHsl} />
+                        <GlobeBanner layer="back" word={globeMode === 'world' ? tr("World") : tr("Map")} color={bandHsl} />
                         <Suspense fallback={null}>
                           <HomeGlobe accentColor={globeColor} className="relative w-full h-full" />
                         </Suspense>
-                        <GlobeBanner layer="front" word={globeMode === 'world' ? tr("World") : tr("Map")} color={globeHsl} />
+                        <GlobeBanner layer="front" word={globeMode === 'world' ? tr("World") : tr("Map")} color={bandHsl} />
                       </div>
                       {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
                           tiles that the CSS mask clips away, keeping the accent outline continuous. */}

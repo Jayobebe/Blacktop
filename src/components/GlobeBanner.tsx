@@ -13,10 +13,11 @@ import { isThermal } from '@/lib/thermal';
  *
  * Units: the globe is a circle of radius 50 at the origin.
  */
-const RX = 57;
-const RY = 15;
+// Kept tight to the globe: the ring's outer edge is 1.1 radii out, inside the notch the buttons leave at every globe size.
+const RX = 51;
+const RY = 13;
 const TILT = -14;
-const BAND = 11;
+const BAND = 8;
 // From the top (behind the globe) round the left to the front, where it runs left to right.
 const ORBIT = `M0,${-RY} A${RX},${RY} 0 0 0 ${-RX},0 A${RX},${RY} 0 0 0 0,${RY} A${RX},${RY} 0 0 0 ${RX},0 A${RX},${RY} 0 0 0 0,${-RY}`;
 const CIRCUMFERENCE = 2 * Math.PI * Math.sqrt((RX * RX + RY * RY) / 2);
@@ -49,7 +50,7 @@ export function GlobeBanner({ layer, word, color }: { layer: 'back' | 'front'; w
   const still = isThermal() || (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   const label = word.toLocaleUpperCase();
   // One "WORD ·" takes this much of the ring; enough of them to go all the way round, and one spare to slide in.
-  const unit = Math.max(34, Array.from(label).length * 7.4 + 14);
+  const unit = Math.max(30, Array.from(label).length * 5.9 + 11);
   const count = Math.ceil(CIRCUMFERENCE / unit) + 2;
 
   return (
@@ -67,9 +68,10 @@ export function GlobeBanner({ layer, word, color }: { layer: 'back' | 'front'; w
           <g clipPath={`url(#${id}h)`}>
             <path d={ORBIT} fill="none" stroke={`hsl(${color})`} strokeWidth={BAND} opacity={layer === 'back' ? 0.55 : 1} />
             {layer === 'front' && (
-              <text fill={`hsl(${bannerInk(color)})`} fontSize={7.6} fontWeight={800} dominantBaseline="central" textLength={unit * count} lengthAdjust="spacing" style={{ letterSpacing: '0.12em' }}>
-                <textPath href={`#${id}o`} startOffset={still ? -unit * 0.3 : -unit}>
-                  {!still && <animate attributeName="startOffset" from={-unit} to={0} dur={`${(unit / 9).toFixed(1)}s`} repeatCount="indefinite" />}
+              <text fill={`hsl(${bannerInk(color)})`} fontSize={6} fontWeight={800} dominantBaseline="central" textLength={unit * count} lengthAdjust="spacing" style={{ letterSpacing: '0.12em' }}>
+                <textPath href={`#${id}o`} startOffset={still ? -unit * 0.3 : 0}>
+                  {/* Against the globe's spin: the lettering runs right to left across the front. */}
+                  {!still && <animate attributeName="startOffset" from={0} to={-unit} dur={`${(unit / 9).toFixed(1)}s`} repeatCount="indefinite" />}
                   {Array.from({ length: count }, () => `${label} · `).join('')}
                 </textPath>
               </text>
