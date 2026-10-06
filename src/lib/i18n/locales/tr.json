@@ -4301,5 +4301,8 @@
  "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "Bu, yarışçının taraması için bir QR gösterir. Ona bu pisti gönderir ve iki telefonunuzu bağlar.",
  "Hold your phone tight in your fist and punch. Blacktop measures the hit in G.": "Telefonunu yumruğunda sıkıca tut ve vur. Blacktop darbeyi G olarak ölçer.",
  "Dodge traffic and grab fuel cans. Near misses charge a shield.": "Trafikten kaç ve benzin bidonlarını topla. Kıl payı geçişler kalkanı doldurur.",
- "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Burada bir oyunu bitirmek Card Wars için RPM kazandırır. Kişisel rekor daha fazlasını verir."
+ "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "Burada bir oyunu bitirmek Card Wars için RPM kazandırır. Kişisel rekor daha fazlasını verir.",
+ "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "Sürüşleri yak, yer açmak için bir haftadan ya da bir aydan eski, yıldızsız her şeyi siler. Toplamların ve istatistiklerin kalır.",
+ "Tap an entry for its route, its receipt and a recap card to share.": "Rotası, fişi ve paylaşılacak özet kartı için bir kayda dokun.",
+ "Star the ones you want to keep. Starred entries are never burned.": "Saklamak istediklerine yıldız koy. Yıldızlı kayıtlar asla yakılmaz."
 }

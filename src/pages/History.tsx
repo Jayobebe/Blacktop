@@ -20,7 +20,8 @@ import { formatDuration, formatDistance, formatDate, formatSpeed, getDistanceLab
 import { cn } from '@/lib/utils';
 import { useExperience } from '@/features/experience';
 import { PageHeader } from '@/components/PageHeader';
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 const BURN_LABELS: Record<BurnTripsInterval, string> = {
@@ -94,6 +95,7 @@ export default function History() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                data-tip="history-burn"
                 className={cn(
                   'pressable h-10 px-3.5 rounded-full flex items-center gap-1.5 frost-accent text-[13px] font-medium',
                   settings.burnTripsInterval !== 'off' ? 'text-[hsl(var(--burn))]' : 'text-foreground',
@@ -121,6 +123,22 @@ export default function History() {
         }
       />
 
+      {/* First-time tips. Burn trips is always there; the other two need something recorded, so they're their own set. */}
+      <PageTips
+        page="history"
+        tips={[
+          { target: '[data-tip="history-burn"]', text: tr("Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.") },
+        ]}
+      />
+      <PageTips
+        page="history-rides"
+        when={rides.length > 0 && !editingRideId}
+        tips={[
+          { target: '[data-tip="history-ride"]', text: tr("Tap an entry for its route, its receipt and a recap card to share.") },
+          { target: '[data-tip="history-star"]', text: tr("Star the ones you want to keep. Starred entries are never burned.") },
+        ]}
+      />
+
       {/* Rides List */}
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 landscape:space-y-2 pr-1">
         {rides.length === 0 ? (
@@ -139,6 +157,7 @@ export default function History() {
             return (
               <button
                 key={ride.id}
+                data-tip="history-ride"
                 onClick={() => navigate(`/ride/${ride.id}`)}
                 className={cn(
                   "pressable w-full bg-card border rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target",
@@ -164,6 +183,7 @@ export default function History() {
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm truncate">{displayName}</p>
                         <button
+                          data-tip="history-star"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleRideStarred(ride.id);

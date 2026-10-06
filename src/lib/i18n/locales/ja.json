@@ -4301,5 +4301,8 @@
  "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "レーサーがスキャンするQRを表示します。このコースを相手に送り、2台のスマートフォンをつなぎます。",
  "Hold your phone tight in your fist and punch. Blacktop measures the hit in G.": "スマートフォンをこぶしでしっかり握ってパンチ。Blacktopが衝撃をGで測ります。",
  "Dodge traffic and grab fuel cans. Near misses charge a shield.": "車をよけて燃料缶を集めましょう。ニアミスでシールドがたまります。",
- "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "ここでゲームを終えるとCard Wars用のRPMがもらえます。自己ベストならさらに多くもらえます。"
+ "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "ここでゲームを終えるとCard Wars用のRPMがもらえます。自己ベストならさらに多くもらえます。",
+ "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "「ライドを焼却」は、容量を節約するために1週間または1か月より古いスターなしの記録を消去します。合計とスタッツは残ります。",
+ "Tap an entry for its route, its receipt and a recap card to share.": "項目をタップすると、ルート、レシート、共有用のまとめカードが見られます。",
+ "Star the ones you want to keep. Starred entries are never burned.": "残したいものにスターを付けましょう。スター付きの項目は焼却されません。"
 }

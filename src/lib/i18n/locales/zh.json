@@ -4301,5 +4301,8 @@
  "This shows a QR for your racer to scan. It sends them this track and links your two phones.": "这里会显示供你的车手扫描的二维码。它会把这条赛道发给对方，并连接你们的两部手机。",
  "Hold your phone tight in your fist and punch. Blacktop measures the hit in G.": "把手机紧握在拳头里出拳。Blacktop 以 G 值测量这一击。",
  "Dodge traffic and grab fuel cans. Near misses charge a shield.": "躲避车流并拾取油桶。险些擦碰会为护盾充能。",
- "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "在这里完成一局游戏可获得 Card Wars 的 RPM。刷新个人最佳会得到更多。"
+ "Finishing a game here pays RPM for Card Wars. A personal best pays more.": "在这里完成一局游戏可获得 Card Wars 的 RPM。刷新个人最佳会得到更多。",
+ "Burn trips wipes anything unstarred older than a week or a month to save storage. Your totals and stats stay.": "“焚毁行程”会清除一周或一个月之前所有未加星标的记录，以节省存储空间。你的总计和统计数据会保留。",
+ "Tap an entry for its route, its receipt and a recap card to share.": "点按一条记录，查看它的路线、小票和可分享的回顾卡。",
+ "Star the ones you want to keep. Starred entries are never burned.": "给想保留的记录加星标。加了星标的记录永远不会被焚毁。"
 }
