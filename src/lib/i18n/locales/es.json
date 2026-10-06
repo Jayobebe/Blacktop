@@ -4239,5 +4239,9 @@
  "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop estuvo fuera de pantalla {0} minutos. Ese tramo no se registró.",
  "Keep Blacktop on screen while you ride.": "Mantén Blacktop en pantalla mientras conduces.",
  "Keep Blacktop on screen": "Mantén Blacktop en pantalla",
- "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Tu teléfono deja de compartir su ubicación con una app web cuando se bloquea o pasa a segundo plano, así que esa parte de la ruta no se registra. Blacktop mantiene la pantalla encendida por ti: no la bloquees ni cambies de app, y enchúfalo en rutas largas."
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Tu teléfono deja de compartir su ubicación con una app web cuando se bloquea o pasa a segundo plano, así que esa parte de la ruta no se registra. Blacktop mantiene la pantalla encendida por ti: no la bloquees ni cambies de app, y enchúfalo en rutas largas.",
+ "A slot opened. Unmute when you want to talk.": "Se liberó un hueco. Activa el micro cuando quieras hablar.",
+ "Voice is full ({0} riders)": "El chat de voz está lleno ({0} pilotos)",
+ "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Seguirás viendo a todos en el mapa y entrarás en el chat de voz en cuanto alguien salga.",
+ "You're in voice now": "Ya estás en el chat de voz"
 }

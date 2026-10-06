@@ -4239,5 +4239,9 @@
  "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop tidak di layar selama {0} menit. Bagian itu tidak terekam.",
  "Keep Blacktop on screen while you ride.": "Biarkan Blacktop tetap di layar selama berkendara.",
  "Keep Blacktop on screen": "Biarkan Blacktop di layar",
- "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Ponselmu berhenti membagikan lokasinya ke aplikasi web begitu terkunci atau berada di latar belakang, jadi bagian perjalanan itu tidak terekam. Blacktop menjaga layar tetap menyala untukmu: jangan dikunci, jangan pindah aplikasi, dan colokkan pengisi daya pada perjalanan jauh."
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Ponselmu berhenti membagikan lokasinya ke aplikasi web begitu terkunci atau berada di latar belakang, jadi bagian perjalanan itu tidak terekam. Blacktop menjaga layar tetap menyala untukmu: jangan dikunci, jangan pindah aplikasi, dan colokkan pengisi daya pada perjalanan jauh.",
+ "A slot opened. Unmute when you want to talk.": "Ada slot kosong. Nyalakan mikrofon saat ingin bicara.",
+ "Voice is full ({0} riders)": "Suara penuh ({0} pengendara)",
+ "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Kamu tetap melihat semua orang di peta, dan akan masuk ke suara begitu ada yang keluar.",
+ "You're in voice now": "Kamu sudah masuk suara"
 }

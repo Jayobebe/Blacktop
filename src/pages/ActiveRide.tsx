@@ -127,7 +127,7 @@ export default function ActiveRide() {
   const { stop: stopRadio } = usePlayer();
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended, createConvoy, joinConvoy, leaveConvoy } = useConvoyState();
   // Only use voice channel for convoy rides with other members
-  const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id ?? undefined : undefined);
+  const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id ?? undefined : undefined, { priority: convoy.isLeader });
   const { isConnected, isMuted, speakingUsers, peerLinks, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();

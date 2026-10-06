@@ -4239,5 +4239,9 @@
  "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop이 {0}분 동안 화면에 없었습니다. 그 구간은 기록되지 않았습니다.",
  "Keep Blacktop on screen while you ride.": "주행 중에는 Blacktop을 화면에 띄워 두세요.",
  "Keep Blacktop on screen": "Blacktop을 화면에 띄워 두세요",
- "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "휴대폰이 잠기거나 앱이 백그라운드로 가면 웹 앱에 위치를 공유하지 않으므로, 그 구간은 기록되지 않습니다. Blacktop이 화면을 켜 둡니다. 잠그거나 다른 앱으로 전환하지 말고, 장거리에서는 충전기를 연결하세요."
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "휴대폰이 잠기거나 앱이 백그라운드로 가면 웹 앱에 위치를 공유하지 않으므로, 그 구간은 기록되지 않습니다. Blacktop이 화면을 켜 둡니다. 잠그거나 다른 앱으로 전환하지 말고, 장거리에서는 충전기를 연결하세요.",
+ "A slot opened. Unmute when you want to talk.": "자리가 났습니다. 말하려면 음소거를 해제하세요.",
+ "Voice is full ({0} riders)": "음성이 가득 찼습니다({0}명)",
+ "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "지도에서는 계속 모두를 볼 수 있고, 누군가 음성에서 나가면 바로 참여합니다.",
+ "You're in voice now": "이제 음성에 참여했습니다"
 }

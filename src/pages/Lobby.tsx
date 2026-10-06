@@ -38,7 +38,7 @@ export default function Lobby() {
   const [twistyVia, setTwistyVia] = useState<{ lat: number; lng: number }[] | null>(null);
   const { convoy, leaveConvoy, setDestination, clearDestination, markAsNavigated, transferLeadership, allMembersNavigated, refreshConvoyState } = useConvoyState();
   const { startRide, rideState } = useActiveRide(convoy.id);
-  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id ?? undefined);
+  const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id ?? undefined, { priority: convoy.isLeader });
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
   const { settings } = useSettings();
   const { terms } = useExperience();

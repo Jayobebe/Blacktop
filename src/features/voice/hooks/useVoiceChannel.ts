@@ -23,6 +23,39 @@ let relayWarningShown = false;
  */
 export const VOICE_MESH_COMFORT = 8;
 let meshWarningShown = false;
+/**
+ * Voice takes this many riders and no more (the convoy itself has no limit: the
+ * map, rescue and waypoints carry on for everyone). Who's in is worked out the
+ * same way on every phone from the channel's presence: the leader first, then
+ * whoever joined voice earliest. A rider past the line waits with no audio links
+ * and is let in by the same sum when someone leaves. Phones on an older copy of
+ * the app don't know the rule: they're still counted, and a newer phone simply
+ * doesn't answer one that's past the line.
+ */
+export const VOICE_MAX = 8;
+
+interface VoicePresence {
+  user_id?: string;
+  joined_at?: number;
+  priority?: boolean;
+}
+
+/** The riders voice has room for, from everyone present on the channel. */
+export function voiceSlots(present: VoicePresence[], max: number = VOICE_MAX): Set<string> {
+  const riders = new Map<string, { at: number; first: boolean }>();
+  for (const p of present) {
+    if (!p?.user_id) continue;
+    const at = typeof p.joined_at === 'number' ? p.joined_at : Number.MAX_SAFE_INTEGER;
+    const had = riders.get(p.user_id);
+    riders.set(p.user_id, { at: had ? Math.min(had.at, at) : at, first: !!p.priority || !!had?.first });
+  }
+  return new Set(
+    [...riders.entries()]
+      .sort((a, b) => Number(b[1].first) - Number(a[1].first) || a[1].at - b[1].at || (a[0] < b[0] ? -1 : 1))
+      .slice(0, max)
+      .map(([id]) => id),
+  );
+}
 
 interface PeerConnection {
   pc: RTCPeerConnection;
@@ -42,6 +75,8 @@ interface VoiceChannelState {
    * uses this to say so instead of implying they can be heard.
    */
   peerLinks: Record<string, PeerAudioLink>;
+  /** Voice is full and this rider is waiting for a slot: connected to the channel, with no audio links. */
+  waiting: boolean;
 }
 
 // ICE servers (STUN + fetched TURN relay credentials) live in ../lib/iceServers.
@@ -170,13 +205,21 @@ interface SignalingMessage {
 /** What a failed getUserMedia / play() rejects with (a DOMException, read loosely). */
 type MediaError = { name?: string; message?: string } | undefined;
 
-export function useVoiceChannel(convoyId?: string) {
+export function useVoiceChannel(convoyId?: string, options: { /** The convoy's leader always has a voice slot. */ priority?: boolean } = {}) {
   const [state, setState] = useState<VoiceChannelState>({
     isConnected: false,
     isMuted: true,
     speakingUsers: new Set(),
     peerLinks: {},
+    waiting: false,
   });
+  const priorityRef = useRef(!!options.priority);
+  priorityRef.current = !!options.priority;
+  // Who voice has room for (null until the channel has said who's here: until then nobody is turned away).
+  const slotsRef = useRef<Set<string> | null>(null);
+  const waitingRef = useRef(false);
+  // When this phone joined voice: kept for the whole session, so a re-announce never costs a rider their place.
+  const joinedAtRef = useRef(0);
 
   const setPeerLink = useCallback((peerId: string, link: PeerAudioLink | null) => {
     setState((prev) => {
@@ -818,6 +861,9 @@ export function useVoiceChannel(convoyId?: string) {
       peerConsentRef.current.set(from, consent);
     }
 
+    // Voice is full: no audio links with a rider past the line, or for one who's waiting.
+    if (type !== 'user-left' && from && slotsRef.current && userIdRef.current && !(slotsRef.current.has(userIdRef.current) && slotsRef.current.has(from))) return;
+
     console.log(`[Voice] Received signaling: ${type} from ${from}, our ID: ${userIdRef.current}`);
 
     switch (type) {
@@ -1031,6 +1077,41 @@ export function useVoiceChannel(convoyId?: string) {
     }
   }, [createPeerConnection, clearReconnectSchedule, readRecordConsent, setPeerLink]);
 
+  /** Works out who voice has room for, drops links with anyone past the line, and tells this rider when they start or stop waiting. */
+  const applySlots = useCallback((present: VoicePresence[]) => {
+    const me = userIdRef.current;
+    if (!me) return;
+    const slots = voiceSlots(present);
+    // Our own presence hasn't arrived yet: nothing to decide on.
+    if (!present.some((p) => p?.user_id === me)) return;
+    slotsRef.current = slots;
+    const waiting = !slots.has(me);
+    for (const id of Array.from(peersRef.current.keys())) {
+      if (!waiting && slots.has(id)) continue;
+      clearReconnectSchedule(id);
+      peersRef.current.get(id)?.pc.close();
+      peersRef.current.delete(id);
+      audioElementsRef.current.get(id)?.remove();
+      audioElementsRef.current.delete(id);
+      remoteStreamsRef.current.delete(id);
+      setPeerLink(id, null);
+    }
+    if (waiting === waitingRef.current) return;
+    waitingRef.current = waiting;
+    if (waiting) {
+      // Nobody can hear a rider who's waiting: the mic goes quiet until they're in.
+      isMutedRef.current = true;
+      localStreamRef.current?.getAudioTracks().forEach((track) => (track.enabled = false));
+      setState((prev) => ({ ...prev, waiting: true, isMuted: true }));
+      toast.warning(tr("Voice is full ({0} riders)", [VOICE_MAX]), { description: tr("You'll still see everyone on the map, and you'll join voice as soon as someone leaves it."), duration: 10000 });
+    } else {
+      setState((prev) => ({ ...prev, waiting: false }));
+      toast.success(tr("You're in voice now"), { description: tr("A slot opened. Unmute when you want to talk.") });
+      // Say hello again, so the riders already in start their links with this phone.
+      channelRef.current?.send({ type: 'broadcast', event: 'user-joined', payload: { from: me, consent: readRecordConsent() } });
+    }
+  }, [clearReconnectSchedule, readRecordConsent, setPeerLink]);
+
   // Check and request microphone permission
   // Note: iOS Safari doesn't reliably support permissions.query for microphone
   // so we treat 'prompt' and unknown states as "try anyway"
@@ -1180,6 +1261,8 @@ export function useVoiceChannel(convoyId?: string) {
       // Start audio level monitoring as early as possible (important for iOS gesture policies)
       startAudioLevelMonitoring();
 
+      // A new channel: who has a slot is decided afresh from its presence.
+      slotsRef.current = null;
       // Create signaling channel
       const channel = supabase.channel(`voice:${convoyId}`, {
         config: {
@@ -1217,6 +1300,7 @@ export function useVoiceChannel(convoyId?: string) {
         .on('presence', { event: 'sync' }, () => {
           const presenceState = channel.presenceState();
           console.log('[Voice] Presence sync:', presenceState);
+          applySlots(Object.values(presenceState).flat() as VoicePresence[]);
         });
 
       await channel.subscribe(async (status) => {
@@ -1224,7 +1308,8 @@ export function useVoiceChannel(convoyId?: string) {
           console.log('[Voice] Subscribed to voice channel');
           
           // Track our presence
-          await channel.track({ user_id: user.id, joined_at: Date.now() });
+          if (!joinedAtRef.current) joinedAtRef.current = Date.now();
+          await channel.track({ user_id: user.id, joined_at: joinedAtRef.current, priority: priorityRef.current });
           
           // Announce we joined
           channel.send({
@@ -1241,7 +1326,7 @@ export function useVoiceChannel(convoyId?: string) {
 
       // Start periodic refresh to maintain connections when returning from nav app
       refreshIntervalRef.current = window.setInterval(() => {
-        if (channelRef.current && userIdRef.current) {
+        if (channelRef.current && userIdRef.current && !waitingRef.current) {
           console.log('[Voice] Periodic refresh - re-announcing presence');
           // Re-announce presence to trigger reconnection with any lost peers
           channelRef.current.send({
@@ -1279,7 +1364,7 @@ export function useVoiceChannel(convoyId?: string) {
       cleanup();
       return { success: false, error: tr("Failed to connect to voice channel") };
     }
-  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission, readRecordConsent]);
+  }, [convoyId, handleSignaling, cleanup, startAudioLevelMonitoring, state.isConnected, checkMicrophonePermission, readRecordConsent, applySlots]);
 
   // Disconnect from voice channel
   // Disconnect from voice channel
@@ -1306,12 +1391,16 @@ export function useVoiceChannel(convoyId?: string) {
     }
 
     cleanup();
+    slotsRef.current = null;
+    waitingRef.current = false;
+    joinedAtRef.current = 0;
     
     setState({
       isConnected: false,
       isMuted: true,
       speakingUsers: new Set(),
       peerLinks: {},
+      waiting: false,
     });
   }, [cleanup]);
 
@@ -1319,6 +1408,10 @@ export function useVoiceChannel(convoyId?: string) {
   const toggleMute = useCallback(() => {
     if (!state.isConnected || !localStreamRef.current) {
       console.warn('[Voice] Cannot toggle mute - not connected or no stream');
+      return;
+    }
+    if (waitingRef.current) {
+      toast.info(tr("Voice is full ({0} riders)", [VOICE_MAX]), { description: tr("You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.") });
       return;
     }
     

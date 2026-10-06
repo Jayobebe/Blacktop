@@ -4239,5 +4239,9 @@
  "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktopが{0}分間画面から外れていました。その区間は記録されていません。",
  "Keep Blacktop on screen while you ride.": "走行中はBlacktopを画面に表示したままにしてください。",
  "Keep Blacktop on screen": "Blacktopを画面に表示したままに",
- "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "スマートフォンは、ロック中やアプリがバックグラウンドにある間、ウェブアプリに位置情報を渡さなくなるため、その区間は記録されません。Blacktopが画面を点灯したままにします。ロックしたりアプリを切り替えたりせず、長距離では充電しながら使ってください。"
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "スマートフォンは、ロック中やアプリがバックグラウンドにある間、ウェブアプリに位置情報を渡さなくなるため、その区間は記録されません。Blacktopが画面を点灯したままにします。ロックしたりアプリを切り替えたりせず、長距離では充電しながら使ってください。",
+ "A slot opened. Unmute when you want to talk.": "枠が空きました。話すときはミュートを解除してください。",
+ "Voice is full ({0} riders)": "ボイスは満員です（{0}人）",
+ "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "全員の位置は引き続きマップで見られます。誰かがボイスを抜けるとすぐに参加できます。",
+ "You're in voice now": "ボイスに参加しました"
 }

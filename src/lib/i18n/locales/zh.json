@@ -4239,5 +4239,9 @@
  "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop 离开屏幕 {0} 分钟。这段路程没有记录。",
  "Keep Blacktop on screen while you ride.": "骑行时请让 Blacktop 保持在屏幕上。",
  "Keep Blacktop on screen": "让 Blacktop 保持在屏幕上",
- "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "手机锁屏或应用进入后台后，就不再向网页应用提供位置，所以那段路程不会被记录。Blacktop 会为你保持屏幕常亮：请不要锁屏或切换应用，长途骑行时请接上电源。"
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "手机锁屏或应用进入后台后，就不再向网页应用提供位置，所以那段路程不会被记录。Blacktop 会为你保持屏幕常亮：请不要锁屏或切换应用，长途骑行时请接上电源。",
+ "A slot opened. Unmute when you want to talk.": "有空位了。想说话时请取消静音。",
+ "Voice is full ({0} riders)": "语音已满（{0} 人）",
+ "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "你仍能在地图上看到所有人，有人离开语音后你会立即加入。",
+ "You're in voice now": "你已加入语音"
 }

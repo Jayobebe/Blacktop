@@ -4239,5 +4239,9 @@
  "Blacktop was off screen for {0} minutes. That stretch wasn't recorded.": "Blacktop was {0} minuten niet in beeld. Dat stuk is niet vastgelegd.",
  "Keep Blacktop on screen while you ride.": "Houd Blacktop in beeld terwijl je rijdt.",
  "Keep Blacktop on screen": "Houd Blacktop in beeld",
- "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Je telefoon deelt zijn locatie niet meer met een webapp zodra hij vergrendeld is of de app op de achtergrond staat, dus dat deel van de rit wordt niet vastgelegd. Blacktop houdt het scherm voor je aan: vergrendel het niet, wissel niet van app en sluit hem aan op lange ritten."
+ "Your phone stops sharing its location with a web app once it's locked or in the background, so that part of a ride isn't recorded. Blacktop keeps the screen awake for you: don't lock it or switch apps, and plug in on long rides.": "Je telefoon deelt zijn locatie niet meer met een webapp zodra hij vergrendeld is of de app op de achtergrond staat, dus dat deel van de rit wordt niet vastgelegd. Blacktop houdt het scherm voor je aan: vergrendel het niet, wissel niet van app en sluit hem aan op lange ritten.",
+ "A slot opened. Unmute when you want to talk.": "Er kwam een plek vrij. Zet je microfoon aan als je wilt praten.",
+ "Voice is full ({0} riders)": "Spraak is vol ({0} rijders)",
+ "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Je ziet iedereen nog steeds op de kaart en je komt in spraak zodra iemand vertrekt.",
+ "You're in voice now": "Je zit nu in spraak"
 }
