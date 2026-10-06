@@ -4252,5 +4252,16 @@
  "Map": "Harita",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "Haritayı aç. Blacktop World'e geçmek için basılı tut.",
- "Open Blacktop World. Hold to switch to the map.": "Blacktop World'ü aç. Haritaya geçmek için basılı tut."
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop World'ü aç. Haritaya geçmek için basılı tut.",
+ "Each page points out a few things the first time you open it.": "Her sayfa, ilk açtığında birkaç şeyi gösterir.",
+ "First-time tips": "İlk kullanım ipuçları",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "Park mı ediyorsun? Bu, hırsızlık alarmını kurar. İlk dokunuş kilit açma desenini belirler.",
+ "Show tips again": "İpuçlarını yeniden göster",
+ "Skip all tips": "Tüm ipuçlarını atla",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "Blacktop Kurumsal için yana kaydır ya da bu noktalara dokun: okulundan, bayinden, atölyenden ya da takımından bir çalışma alanı.",
+ "Tap the globe to open the map.": "Haritayı açmak için küreye dokun.",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Küre, iki işi olan tek bir düğme. Haritayı açmak için dokun. Blacktop World'e geçmek için basılı tut, sonra girmek için dokun.",
+ "Tip": "İpucu",
+ "Tips will show again as you open each page.": "Her sayfayı açtığında ipuçları yeniden gösterilecek.",
+ "{0} of {1}": "{0} / {1}"
 }

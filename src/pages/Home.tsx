@@ -25,6 +25,7 @@ import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
+import { PageTips } from '@/features/guide';
 import { startWarp } from '@/lib/warp';
 import { WARP_SWITCH_MS } from '@/components/WarpOverlay';
 import { isThermal } from '@/lib/thermal';
@@ -545,6 +546,22 @@ export default function Home() {
         }
       }}
     >
+
+      {/* First-time tips: only what isn't obvious here. Not while arranging stickers or off on another card. */}
+      <PageTips
+        page="home"
+        when={deckKey === 'home' && !arrangingStickers && !rideState.isActive}
+        tips={[
+          {
+            target: '[data-sticker-hole]',
+            text: settings.blacktopWorldEnabled
+              ? tr("The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.")
+              : tr("Tap the globe to open the map."),
+          },
+          { target: '[data-tip="alarm"]', text: tr("Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.") },
+          { target: '[role="tablist"]', text: tr("Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.") },
+        ]}
+      />
 
       {/* Swipe deck: the consumer home (with its header and nav), then each
           enterprise workspace and the Doorway, which fill the whole screen.

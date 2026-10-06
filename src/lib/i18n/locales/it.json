@@ -4252,5 +4252,16 @@
  "Map": "Mappa",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "Apri la mappa. Tieni premuto per passare a Blacktop World.",
- "Open Blacktop World. Hold to switch to the map.": "Apri Blacktop World. Tieni premuto per passare alla mappa."
+ "Open Blacktop World. Hold to switch to the map.": "Apri Blacktop World. Tieni premuto per passare alla mappa.",
+ "Each page points out a few things the first time you open it.": "Ogni pagina indica alcune cose la prima volta che la apri.",
+ "First-time tips": "Suggerimenti della prima volta",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "Parcheggi? Questo attiva l'antifurto. Il primo tocco imposta la sequenza di sblocco.",
+ "Show tips again": "Mostra di nuovo i suggerimenti",
+ "Skip all tips": "Salta tutti i suggerimenti",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "Scorri di lato, o tocca questi puntini, per Blacktop Aziende: uno spazio della tua scuola, concessionaria, officina o squadra.",
+ "Tap the globe to open the map.": "Tocca il globo per aprire la mappa.",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Il globo è un pulsante con due compiti. Toccalo per aprire la mappa. Tienilo premuto per passare a Blacktop World, poi tocca per entrare.",
+ "Tip": "Suggerimento",
+ "Tips will show again as you open each page.": "I suggerimenti torneranno all'apertura di ogni pagina.",
+ "{0} of {1}": "{0} di {1}"
 }

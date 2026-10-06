@@ -1,3 +1,4 @@
+import { resetTips } from '@/features/guide';
 import { paymentsAvailable } from '@/lib/platform';
 import { useState, useRef, useEffect } from 'react';
 import { noteMotionGranted } from '@/lib/motionPermission';
@@ -460,6 +461,23 @@ export default function Settings() {
                   <p className="text-[10px] text-muted-foreground">{tr("Clicks, toggles, sliders and confirmations. Alerts like hazards, cameras, crash checks, the alarm and directions always sound.")}</p>
                 </div>
                 <Switch checked={settings.uiSoundsEnabled !== false} onCheckedChange={(v) => updateSetting('uiSoundsEnabled', v)} />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{tr("First-time tips")}</p>
+                  <p className="text-[10px] text-muted-foreground">{tr("Each page points out a few things the first time you open it.")}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-11 shrink-0"
+                  onClick={() => {
+                    resetTips();
+                    toast.success(tr("Tips will show again as you open each page."));
+                  }}
+                >
+                  {tr("Show tips again")}
+                </Button>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <div>

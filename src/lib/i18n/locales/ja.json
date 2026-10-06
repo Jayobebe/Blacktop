@@ -4252,5 +4252,16 @@
  "Map": "マップ",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "マップを開きます。長押しでBlacktop Worldに切り替え。",
- "Open Blacktop World. Hold to switch to the map.": "Blacktop Worldを開きます。長押しでマップに切り替え。"
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop Worldを開きます。長押しでマップに切り替え。",
+ "Each page points out a few things the first time you open it.": "各ページを初めて開いたとき、いくつかのポイントを案内します。",
+ "First-time tips": "初回のヒント",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "駐車しますか？これで盗難防止アラームをセットします。最初のタップで解除パターンを設定します。",
+ "Show tips again": "ヒントをもう一度表示",
+ "Skip all tips": "すべてのヒントをスキップ",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "横にスワイプするか点をタップすると Blacktop エンタープライズ：スクール、販売店、ワークショップ、チームのワークスペースです。",
+ "Tap the globe to open the map.": "地球儀をタップするとマップが開きます。",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "地球儀は2つの役割を持つボタンです。タップでマップを開きます。長押しでBlacktop Worldに切り替え、タップで入ります。",
+ "Tip": "ヒント",
+ "Tips will show again as you open each page.": "各ページを開くと、ヒントが再び表示されます。",
+ "{0} of {1}": "{0} / {1}"
 }

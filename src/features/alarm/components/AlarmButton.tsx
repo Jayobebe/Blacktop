@@ -17,6 +17,7 @@ export function AlarmButton({ variant, className }: { variant: 'home' | 'ride'; 
       type="button"
       aria-label={label}
       title={label}
+      data-tip="alarm"
       onClick={() => {
         haptics.tick();
         void armAlarm();

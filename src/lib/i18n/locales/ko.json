@@ -4252,5 +4252,16 @@
  "Map": "지도",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "지도를 엽니다. 길게 누르면 Blacktop World로 전환합니다.",
- "Open Blacktop World. Hold to switch to the map.": "Blacktop World를 엽니다. 길게 누르면 지도로 전환합니다."
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop World를 엽니다. 길게 누르면 지도로 전환합니다.",
+ "Each page points out a few things the first time you open it.": "각 페이지를 처음 열 때 몇 가지를 알려 줍니다.",
+ "First-time tips": "처음 사용 팁",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "주차하나요? 도난 방지 알람을 켭니다. 첫 탭에서 잠금 해제 패턴을 설정합니다.",
+ "Show tips again": "팁 다시 보기",
+ "Skip all tips": "모든 팁 건너뛰기",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "옆으로 밀거나 이 점들을 탭하면 Blacktop 엔터프라이즈: 스쿨, 딜러, 정비소, 팀의 워크스페이스입니다.",
+ "Tap the globe to open the map.": "지구본을 탭하면 지도가 열립니다.",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "지구본은 두 가지 일을 하는 버튼입니다. 탭하면 지도가 열립니다. 길게 누르면 Blacktop World로 전환되고, 탭하면 들어갑니다.",
+ "Tip": "팁",
+ "Tips will show again as you open each page.": "각 페이지를 열 때 팁이 다시 표시됩니다.",
+ "{0} of {1}": "{0} / {1}"
 }

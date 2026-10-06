@@ -4252,5 +4252,16 @@
  "Map": "Kart",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "Åpne kartet. Hold for å bytte til Blacktop World.",
- "Open Blacktop World. Hold to switch to the map.": "Åpne Blacktop World. Hold for å bytte til kartet."
+ "Open Blacktop World. Hold to switch to the map.": "Åpne Blacktop World. Hold for å bytte til kartet.",
+ "Each page points out a few things the first time you open it.": "Hver side peker ut et par ting første gang du åpner den.",
+ "First-time tips": "Tips første gang",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "Parkerer du? Denne slår på tyverialarmen. Første trykk setter opplåsingsmønsteret ditt.",
+ "Show tips again": "Vis tips igjen",
+ "Skip all tips": "Hopp over alle tips",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "Sveip til siden, eller trykk på prikkene, for Blacktop Bedrift: et arbeidsområde fra skolen, forhandleren, verkstedet eller teamet ditt.",
+ "Tap the globe to open the map.": "Trykk på globusen for å åpne kartet.",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Globusen er én knapp med to oppgaver. Trykk for å åpne kartet. Hold for å bytte til Blacktop World, og trykk så for å gå inn.",
+ "Tip": "Tips",
+ "Tips will show again as you open each page.": "Tips vises igjen når du åpner hver side.",
+ "{0} of {1}": "{0} av {1}"
 }

@@ -4252,5 +4252,16 @@
  "Map": "地图",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "打开地图。长按切换到 Blacktop World。",
- "Open Blacktop World. Hold to switch to the map.": "打开 Blacktop World。长按切换到地图。"
+ "Open Blacktop World. Hold to switch to the map.": "打开 Blacktop World。长按切换到地图。",
+ "Each page points out a few things the first time you open it.": "每个页面在首次打开时会指出几处要点。",
+ "First-time tips": "首次使用提示",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "要停车吗？这会启动防盗警报。第一次点按会设置你的解锁图案。",
+ "Show tips again": "再次显示提示",
+ "Skip all tips": "跳过所有提示",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "向侧面滑动或点按这些圆点可进入 Blacktop 企业版：来自你的学校、经销商、维修店或车队的工作区。",
+ "Tap the globe to open the map.": "点按地球即可打开地图。",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "地球是一个有两种用途的按钮。点按可打开地图。长按可切换到 Blacktop World，然后点按进入。",
+ "Tip": "提示",
+ "Tips will show again as you open each page.": "打开各页面时会再次显示提示。",
+ "{0} of {1}": "{0} / {1}"
 }

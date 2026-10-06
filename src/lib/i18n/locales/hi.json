@@ -4252,5 +4252,16 @@
  "Map": "नक्शा",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "नक्शा खोलें। Blacktop World पर जाने के लिए दबाए रखें।",
- "Open Blacktop World. Hold to switch to the map.": "Blacktop World खोलें। नक्शे पर जाने के लिए दबाए रखें।"
+ "Open Blacktop World. Hold to switch to the map.": "Blacktop World खोलें। नक्शे पर जाने के लिए दबाए रखें।",
+ "Each page points out a few things the first time you open it.": "हर पेज पहली बार खोलने पर कुछ चीज़ें दिखाता है।",
+ "First-time tips": "पहली बार के सुझाव",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "पार्क कर रहे हैं? यह चोरी-रोधी अलार्म चालू करता है। पहला टैप आपका अनलॉक पैटर्न सेट करता है।",
+ "Show tips again": "सुझाव फिर दिखाएँ",
+ "Skip all tips": "सभी सुझाव छोड़ें",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "Blacktop एंटरप्राइज़ के लिए बगल में स्वाइप करें या इन बिंदुओं पर टैप करें: आपके स्कूल, डीलर, वर्कशॉप या टीम का वर्कस्पेस।",
+ "Tap the globe to open the map.": "नक्शा खोलने के लिए ग्लोब पर टैप करें।",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "ग्लोब दो काम वाला एक बटन है। नक्शा खोलने के लिए टैप करें। Blacktop World पर जाने के लिए दबाए रखें, फिर अंदर जाने के लिए टैप करें।",
+ "Tip": "सुझाव",
+ "Tips will show again as you open each page.": "हर पेज खोलने पर सुझाव फिर दिखेंगे।",
+ "{0} of {1}": "{1} में से {0}"
 }

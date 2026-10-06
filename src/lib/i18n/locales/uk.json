@@ -4252,5 +4252,16 @@
  "Map": "Мапа",
  "World": "World",
  "Open the map. Hold to switch to Blacktop World.": "Відкрити мапу. Утримуй, щоб перемкнути на Blacktop World.",
- "Open Blacktop World. Hold to switch to the map.": "Відкрити Blacktop World. Утримуй, щоб перемкнути на мапу."
+ "Open Blacktop World. Hold to switch to the map.": "Відкрити Blacktop World. Утримуй, щоб перемкнути на мапу.",
+ "Each page points out a few things the first time you open it.": "Кожна сторінка під час першого відкриття вказує на кілька речей.",
+ "First-time tips": "Підказки для початку",
+ "Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.": "Паркуєшся? Це вмикає протиугінну сигналізацію. Перший дотик задає твій візерунок розблокування.",
+ "Show tips again": "Показати підказки знову",
+ "Skip all tips": "Пропустити всі підказки",
+ "Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.": "Проведи вбік або торкнися цих крапок, щоб відкрити Blacktop Бізнес: простір твоєї школи, дилера, майстерні чи команди.",
+ "Tap the globe to open the map.": "Торкнися глобуса, щоб відкрити мапу.",
+ "The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.": "Глобус — це одна кнопка з двома завданнями. Торкнися, щоб відкрити мапу. Утримуй, щоб перемкнути на Blacktop World, а потім торкнися, щоб увійти.",
+ "Tip": "Підказка",
+ "Tips will show again as you open each page.": "Підказки з'являтимуться знову, коли відкриватимеш кожну сторінку.",
+ "{0} of {1}": "{0} з {1}"
 }
