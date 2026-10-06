@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "자리가 났습니다. 말하려면 음소거를 해제하세요.",
  "Voice is full ({0} riders)": "음성이 가득 찼습니다({0}명)",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "지도에서는 계속 모두를 볼 수 있고, 누군가 음성에서 나가면 바로 참여합니다.",
- "You're in voice now": "이제 음성에 참여했습니다"
+ "You're in voice now": "이제 음성에 참여했습니다",
+ "Hear about it when it matters": "중요할 때 알림 받기",
+ "Notifications are on": "알림이 켜졌습니다",
+ "Turn on": "켜기",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "알림을 켜면 크루나 콘보이의 누군가가 구조를 요청할 때 앱이 닫혀 있어도 Blacktop이 이 휴대폰에 알려 줍니다. 어떤 알림을 받을지는 설정에서 고를 수 있습니다.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "알림을 켜면 함께 달리는 누군가가 구조를 요청할 때 앱이 닫혀 있어도 Blacktop이 이 휴대폰에 알려 줍니다. 어떤 알림을 받을지는 설정에서 고를 수 있습니다."
 }

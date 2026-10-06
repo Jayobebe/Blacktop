@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "Se liberó un hueco. Activa el micro cuando quieras hablar.",
  "Voice is full ({0} riders)": "El chat de voz está lleno ({0} pilotos)",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Seguirás viendo a todos en el mapa y entrarás en el chat de voz en cuanto alguien salga.",
- "You're in voice now": "Ya estás en el chat de voz"
+ "You're in voice now": "Ya estás en el chat de voz",
+ "Hear about it when it matters": "Entérate cuando importa",
+ "Notifications are on": "Las notificaciones están activadas",
+ "Turn on": "Activar",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Activa las notificaciones y Blacktop podrá avisar a este teléfono cuando alguien de tu crew o convoy pida rescate, incluso con la app cerrada. Tú eliges qué avisos recibes en Ajustes.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Activa las notificaciones y Blacktop podrá avisar a este teléfono cuando alguien con quien ruedas pida rescate, incluso con la app cerrada. Tú eliges qué avisos recibes en Ajustes."
 }

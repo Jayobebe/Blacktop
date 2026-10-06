@@ -1,4 +1,5 @@
 export { PushBridge } from './components/PushBridge';
+export { PushNudge } from './components/PushNudge';
 export { NotificationSettings } from './components/NotificationSettings';
 export {
   usePush,

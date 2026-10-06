@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "有空位了。想说话时请取消静音。",
  "Voice is full ({0} riders)": "语音已满（{0} 人）",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "你仍能在地图上看到所有人，有人离开语音后你会立即加入。",
- "You're in voice now": "你已加入语音"
+ "You're in voice now": "你已加入语音",
+ "Hear about it when it matters": "重要时刻及时知道",
+ "Notifications are on": "通知已开启",
+ "Turn on": "开启",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "开启通知后，当你的车队或同行队伍中有人呼叫救援时，即使应用已关闭，Blacktop 也能提醒这部手机。你可以在设置中选择接收哪些提醒。",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "开启通知后，当与你同行的人呼叫救援时，即使应用已关闭，Blacktop 也能提醒这部手机。你可以在设置中选择接收哪些提醒。"
 }

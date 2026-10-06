@@ -1,3 +1,4 @@
+import { offerPushNudge } from '@/features/notifications/lib/pushNudge';
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { tr } from '@/lib/i18n';
@@ -183,6 +184,7 @@ export function joinCrew(code: string, name?: string): 'joined' | 'already' | 'f
   if (crews.length >= MAX_CREWS) return 'full';
   const chosen = name?.trim().slice(0, 30) ?? '';
   save([...crews, { code: clean, name: chosen || defaultCrewName(clean), custom: !!chosen, own: false, joinedAt: Date.now() }], clean);
+  offerPushNudge('crew');
   return 'joined';
 }
 

@@ -1,3 +1,4 @@
+import { offerPushNudge } from '@/features/notifications/lib/pushNudge';
 import { useSyncExternalStore } from 'react';
 import { tr } from '@/lib/i18n';
 
@@ -24,6 +25,8 @@ export function requestAutoRescueConsent(): Promise<boolean> {
       pending = null;
       emit();
       resolve(ok);
+      // Crash detection just went on: offer the alerts that go with it (once ever).
+      if (ok) offerPushNudge('rescue');
     };
     emit();
   });

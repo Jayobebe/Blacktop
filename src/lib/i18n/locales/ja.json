@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "枠が空きました。話すときはミュートを解除してください。",
  "Voice is full ({0} riders)": "ボイスは満員です（{0}人）",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "全員の位置は引き続きマップで見られます。誰かがボイスを抜けるとすぐに参加できます。",
- "You're in voice now": "ボイスに参加しました"
+ "You're in voice now": "ボイスに参加しました",
+ "Hear about it when it matters": "大事なときに知らせを受け取る",
+ "Notifications are on": "通知がオンになりました",
+ "Turn on": "オンにする",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "通知をオンにすると、クルーやコンボイの誰かが救助を呼んだとき、アプリを閉じていてもBlacktopがこの端末に知らせます。受け取る通知は設定で選べます。",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "通知をオンにすると、一緒に走る誰かが救助を呼んだとき、アプリを閉じていてもBlacktopがこの端末に知らせます。受け取る通知は設定で選べます。"
 }

@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "Une place s'est libérée. Active ton micro quand tu veux parler.",
  "Voice is full ({0} riders)": "Le vocal est complet ({0} pilotes)",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Tu vois toujours tout le monde sur la carte, et tu rejoindras le vocal dès que quelqu'un le quitte.",
- "You're in voice now": "Tu es dans le vocal maintenant"
+ "You're in voice now": "Tu es dans le vocal maintenant",
+ "Hear about it when it matters": "Sois prévenu quand ça compte",
+ "Notifications are on": "Les notifications sont activées",
+ "Turn on": "Activer",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Active les notifications et Blacktop pourra alerter ce téléphone quand quelqu'un de ton crew ou de ton convoi appelle à l'aide, même app fermée. Tu choisis les alertes que tu reçois dans les Réglages.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Active les notifications et Blacktop pourra alerter ce téléphone quand quelqu'un avec qui tu roules appelle à l'aide, même app fermée. Tu choisis les alertes que tu reçois dans les Réglages."
 }

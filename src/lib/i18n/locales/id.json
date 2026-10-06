@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "Ada slot kosong. Nyalakan mikrofon saat ingin bicara.",
  "Voice is full ({0} riders)": "Suara penuh ({0} pengendara)",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Kamu tetap melihat semua orang di peta, dan akan masuk ke suara begitu ada yang keluar.",
- "You're in voice now": "Kamu sudah masuk suara"
+ "You're in voice now": "Kamu sudah masuk suara",
+ "Hear about it when it matters": "Dapat kabar saat penting",
+ "Notifications are on": "Notifikasi aktif",
+ "Turn on": "Aktifkan",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Aktifkan notifikasi agar Blacktop bisa memberi tahu ponsel ini saat seseorang di kru atau konvoimu meminta pertolongan, bahkan saat aplikasi ditutup. Kamu memilih peringatan mana yang diterima di Pengaturan.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Aktifkan notifikasi agar Blacktop bisa memberi tahu ponsel ini saat seseorang yang berkendara bersamamu meminta pertolongan, bahkan saat aplikasi ditutup. Kamu memilih peringatan mana yang diterima di Pengaturan."
 }

@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "Zwolniło się miejsce. Włącz mikrofon, gdy chcesz mówić.",
  "Voice is full ({0} riders)": "Czat głosowy jest pełny (kierowców: {0})",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Nadal widzisz wszystkich na mapie, a do czatu głosowego dołączysz, gdy tylko ktoś z niego wyjdzie.",
- "You're in voice now": "Jesteś teraz na czacie głosowym"
+ "You're in voice now": "Jesteś teraz na czacie głosowym",
+ "Hear about it when it matters": "Dowiedz się, gdy to ważne",
+ "Notifications are on": "Powiadomienia są włączone",
+ "Turn on": "Włącz",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Włącz powiadomienia, a Blacktop zaalarmuje ten telefon, gdy ktoś z twojej ekipy lub konwoju wezwie pomoc, nawet przy zamkniętej aplikacji. W Ustawieniach wybierzesz, które alerty dostajesz.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Włącz powiadomienia, a Blacktop zaalarmuje ten telefon, gdy ktoś, z kim jeździsz, wezwie pomoc, nawet przy zamkniętej aplikacji. W Ustawieniach wybierzesz, które alerty dostajesz."
 }

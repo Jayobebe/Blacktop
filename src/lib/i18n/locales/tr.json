@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "Bir yer açıldı. Konuşmak istediğinde mikrofonu aç.",
  "Voice is full ({0} riders)": "Sesli sohbet dolu ({0} sürücü)",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Herkesi haritada görmeye devam edersin; biri sesli sohbetten çıkar çıkmaz katılırsın.",
- "You're in voice now": "Artık sesli sohbettesin"
+ "You're in voice now": "Artık sesli sohbettesin",
+ "Hear about it when it matters": "Önemli olduğunda haberin olsun",
+ "Notifications are on": "Bildirimler açık",
+ "Turn on": "Aç",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Bildirimleri açarsan, ekibinden ya da konvoyundan biri yardım çağırdığında Blacktop uygulama kapalıyken bile bu telefonu uyarabilir. Hangi uyarıları alacağını Ayarlar'dan seçersin.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Bildirimleri açarsan, birlikte sürdüğün biri yardım çağırdığında Blacktop uygulama kapalıyken bile bu telefonu uyarabilir. Hangi uyarıları alacağını Ayarlar'dan seçersin."
 }

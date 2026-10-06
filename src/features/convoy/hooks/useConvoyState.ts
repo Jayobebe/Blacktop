@@ -1,3 +1,4 @@
+import { offerPushNudge } from '@/features/notifications/lib/pushNudge';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { ConvoyState, ConvoyMemberInfo, ConvoyDestination } from '@/types/convoy';
 import { useProfile } from '@/features/profile';
@@ -37,6 +38,8 @@ let convoyRealtimeTopicSeq = 0;
 function rememberActiveConvoy(convoyId: string | null) {
   try {
     if (convoyId) {
+      // A convoy this phone wasn't already in: the moment to offer rescue alerts (once ever).
+      if (localStorage.getItem(ACTIVE_CONVOY_KEY) !== convoyId) offerPushNudge('convoy');
       localStorage.setItem(ACTIVE_CONVOY_KEY, convoyId);
     } else {
       localStorage.removeItem(ACTIVE_CONVOY_KEY);

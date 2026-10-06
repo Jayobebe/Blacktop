@@ -4243,5 +4243,10 @@
  "A slot opened. Unmute when you want to talk.": "Er kwam een plek vrij. Zet je microfoon aan als je wilt praten.",
  "Voice is full ({0} riders)": "Spraak is vol ({0} rijders)",
  "You'll still see everyone on the map, and you'll join voice as soon as someone leaves it.": "Je ziet iedereen nog steeds op de kaart en je komt in spraak zodra iemand vertrekt.",
- "You're in voice now": "Je zit nu in spraak"
+ "You're in voice now": "Je zit nu in spraak",
+ "Hear about it when it matters": "Hoor het wanneer het ertoe doet",
+ "Notifications are on": "Meldingen staan aan",
+ "Turn on": "Aanzetten",
+ "Turn on notifications and Blacktop can alert this phone when someone in your crew or convoy calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Zet meldingen aan en Blacktop kan deze telefoon waarschuwen als iemand in je crew of konvooi om hulp vraagt, ook als de app dicht is. Welke meldingen je krijgt, kies je in Instellingen.",
+ "Turn on notifications and Blacktop can alert this phone when someone you ride with calls for rescue, even with the app closed. You choose which alerts you get in Settings.": "Zet meldingen aan en Blacktop kan deze telefoon waarschuwen als iemand met wie je rijdt om hulp vraagt, ook als de app dicht is. Welke meldingen je krijgt, kies je in Instellingen."
 }
