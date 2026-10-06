@@ -2080,6 +2080,7 @@ export type Database = {
       cw_daily_topup: { Args: { _u: string }; Returns: undefined }
       cw_flip: { Args: never; Returns: boolean }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
+      cw_level_rules: { Args: never; Returns: Json }
       cw_my_wear: {
         Args: never
         Returns: {
@@ -2112,6 +2113,10 @@ export type Database = {
           card_id: string
           condition: number
         }[]
+      }
+      cw_reward_battle: {
+        Args: { _level: string; _result: string }
+        Returns: Json
       }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
       cw_rules: { Args: never; Returns: Json }
