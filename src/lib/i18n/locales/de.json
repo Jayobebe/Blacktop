@@ -655,7 +655,6 @@
  "Download area around me": "Gebiet um mich herunterladen",
  "Download route": "Route herunterladen",
  "Download this area": "Diesen Bereich herunterladen",
- "Drag &amp; zoom": "Ziehen &amp; zoomen",
  "Drag a waypoint to reorder": "Zieh einen Wegpunkt, um ihn neu zu ordnen",
  "Drag handles to reorder your route": "Ziehe die Griffe, um deine Route neu zu ordnen",
  "Drag me!": "Zieh mich!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Tippe auf eine Reaktion, um dem ganzen Konvoi ohne Worte ein Zeichen zu geben.",
  "{0} waved": "{0} hat gewunken",
  "{0} needs a stop": "{0} braucht einen Stopp",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Das ist der Beleg, der zu jedem Eintrag gehört. Speichere ihn jederzeit als Bild mit dem Knopf Speichern."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Das ist der Beleg, der zu jedem Eintrag gehört. Speichere ihn jederzeit als Bild mit dem Knopf Speichern.",
+ "Drag & zoom": "Ziehen & zoomen"
 }

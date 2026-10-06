@@ -655,7 +655,6 @@
  "Download area around me": "Pobierz obszar wokół mnie",
  "Download route": "Pobierz trasę",
  "Download this area": "Pobierz ten obszar",
- "Drag &amp; zoom": "Przeciągnij &amp; przybliż",
  "Drag a waypoint to reorder": "Przeciągnij punkt, aby zmienić kolejność",
  "Drag handles to reorder your route": "Przeciągnij uchwyty, by zmienić kolejność trasy",
  "Drag me!": "Przeciągnij mnie!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Dotknij reakcji, aby dać znak całemu konwojowi bez mówienia.",
  "{0} waved": "{0} macha",
  "{0} needs a stop": "{0} potrzebuje postoju",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "To paragon, przechowywany z każdym wpisem. Zapisz go jako obraz w dowolnej chwili przyciskiem Zapisz."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "To paragon, przechowywany z każdym wpisem. Zapisz go jako obraz w dowolnej chwili przyciskiem Zapisz.",
+ "Drag & zoom": "Przeciągnij & przybliż"
 }

@@ -519,10 +519,20 @@
     animation: card-stat-pulse 1.6s ease-in-out 2;
   }
 
+  /* The same glow in red, for a figure that has gone down (a ride deleted or moved to another vehicle). */
+  @keyframes card-stat-drop {
+    0%, 100% { background-color: hsl(0 0% 0% / 0.35); }
+    50% { background-color: hsl(0 75% 50% / 0.38); }
+  }
+  .animate-card-stat-drop {
+    animation: card-stat-drop 1.6s ease-in-out 2;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-card-shine,
     .animate-card-tier-pulse,
-    .animate-card-stat-pulse {
+    .animate-card-stat-pulse,
+    .animate-card-stat-drop {
       animation: none !important;
     }
   }

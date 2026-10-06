@@ -20,6 +20,15 @@ export interface VehicleCardStats {
   maxGForce: number | null;
 }
 
+/** A figure against the card's last-seen snapshot. Down happens when a ride is deleted or moved to another vehicle. */
+export type Trend = 'up' | 'down' | undefined;
+export interface CardTrend {
+  topSpeed: Trend;
+  distance: Trend;
+  duration: Trend;
+  rides: Trend;
+}
+
 export interface VehicleCardData {
   bike: Bike;
   stats: VehicleCardStats;
@@ -34,6 +43,8 @@ export interface VehicleCardData {
     duration: boolean;
     rides: boolean;
   };
+  /** The same comparison with falls as well as rises, for the vault's own card. */
+  trend: CardTrend;
   isNewTier: boolean; // tier upgraded since last seen
 }
 
@@ -84,6 +95,13 @@ export function useVehicleCards() {
               duration: false,
               rides: false,
             };
+        const move = (now: number, then: number | undefined): Trend => (then === undefined ? undefined : now > then ? 'up' : now < then ? 'down' : undefined);
+        const trend: CardTrend = {
+          topSpeed: move(stats.topSpeedMph ?? 0, snap?.topSpeedMph),
+          distance: move(Math.round(stats.totalDistanceKm * 10), snap ? Math.round(snap.totalDistanceKm * 10) : undefined),
+          duration: move(stats.totalDurationSec, snap?.totalDurationSec),
+          rides: move(stats.totalRides, snap?.totalRides),
+        };
         const isNewTier = tierRank(tierDef.id) > tierRank(prevSeen) && tierDef.id !== 'locked';
         const next = (() => {
           // rides remaining to next tier
@@ -98,6 +116,7 @@ export function useVehicleCards() {
           tierLabel: tierDef.label,
           nextTierRides: next,
           improved,
+          trend,
           isNewTier,
         } as VehicleCardData;
       })

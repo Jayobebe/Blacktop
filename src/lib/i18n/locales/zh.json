@@ -655,7 +655,6 @@
  "Download area around me": "下载我周围的区域",
  "Download route": "下载路线",
  "Download this area": "下载此区域",
- "Drag &amp; zoom": "拖动 &amp; 缩放",
  "Drag a waypoint to reorder": "拖动途经点以重新排序",
  "Drag handles to reorder your route": "拖动手柄调整路线顺序",
  "Drag me!": "拖我！",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "点按一个表情，无需说话就能向整个车队发出信号。",
  "{0} waved": "{0} 挥了挥手",
  "{0} needs a stop": "{0} 需要停一下",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "这是小票，每条记录都会保留一张。随时可以用它的“保存”按钮保存为图片。"
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "这是小票，每条记录都会保留一张。随时可以用它的“保存”按钮保存为图片。",
+ "Drag & zoom": "拖动 & 缩放"
 }

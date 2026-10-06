@@ -655,7 +655,6 @@
  "Download area around me": "내 주변 지역 다운로드",
  "Download route": "경로 다운로드",
  "Download this area": "이 지역 다운로드",
- "Drag &amp; zoom": "드래그 &amp; 확대",
  "Drag a waypoint to reorder": "경유지를 드래그해 순서 변경",
  "Drag handles to reorder your route": "핸들을 끌어 경로 순서를 바꾸세요",
  "Drag me!": "끌어 주세요!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "리액션을 탭하면 말없이 콘보이 전체에 신호를 보냅니다.",
  "{0} waved": "{0} 님이 손을 흔들었습니다",
  "{0} needs a stop": "{0} 님이 쉬어 가길 원합니다",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "모든 기록과 함께 보관되는 영수증입니다. '저장' 버튼으로 언제든 이미지로 저장하세요."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "모든 기록과 함께 보관되는 영수증입니다. '저장' 버튼으로 언제든 이미지로 저장하세요.",
+ "Drag & zoom": "드래그 & 확대"
 }

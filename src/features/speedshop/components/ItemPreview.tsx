@@ -46,7 +46,7 @@ function CardPreview() {
   // The rider's actual card, scaled down.
   return (
     <div className="shop-flat w-[300px] origin-bottom scale-[0.44] drop-shadow-[0_18px_14px_rgba(0,0,0,0.85)] pointer-events-none">
-      <VehicleCard card={card} />
+      <VehicleCard card={card} editable={false} />
     </div>
   );
 }

@@ -19,14 +19,16 @@ import { uploadCardPhoto } from '../lib/cardPhoto';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
-import { tr } from '@/lib/i18n';
+import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 interface Props {
   card: VehicleCardData;
+  /** False where the card is only shown, not owned on screen (the Speed Shop's preview): no card image button. */
+  editable?: boolean;
 }
 
-export function VehicleCard({ card }: Props) {
+export function VehicleCard({ card, editable = true }: Props) {
   const { settings } = useSettings();
   const peaksHidden = usePeaksHidden();
   const { profile } = useProfile();
@@ -168,7 +170,7 @@ export function VehicleCard({ card }: Props) {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                {!locked && (
+                {!locked && editable && (
                   <button
                     type="button"
                     data-export-hide
@@ -266,7 +268,7 @@ export function VehicleCard({ card }: Props) {
                   className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-lg bg-black/75 backdrop-blur px-2 py-1.5 border border-white/15"
                   onPointerDown={(e) => e.stopPropagation()}
                 >
-                  <span className="text-[8px] uppercase tracking-widest text-white/70">{tr("Drag &amp; zoom")}</span>
+                  <span className="text-[8px] uppercase tracking-widest text-white/70">{tr("Drag & zoom")}</span>
                   <input
                     type="range"
                     min={0.6}
@@ -362,7 +364,7 @@ export function VehicleCard({ card }: Props) {
               }
               return (
                 <div className={cn('grid gap-1.5 mt-auto', cells.length > 4 ? 'grid-cols-3' : 'grid-cols-2')}>
-                  {cells.map(({ key, ...cell }) => <StatCell key={key} {...cell} />)}
+                  {cells.map(({ key, ...cell }) => <StatCell key={key} {...cell} improved={editable && cell.improved} />)}
                 </div>
               );
             })()}

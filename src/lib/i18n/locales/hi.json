@@ -655,7 +655,6 @@
  "Download area around me": "मेरे आसपास का इलाक़ा डाउनलोड करें",
  "Download route": "रूट डाउनलोड करें",
  "Download this area": "यह इलाक़ा डाउनलोड करें",
- "Drag &amp; zoom": "खींचें &amp; ज़ूम करें",
  "Drag a waypoint to reorder": "क्रम बदलने के लिए वेपॉइंट खींचें",
  "Drag handles to reorder your route": "रूट का क्रम बदलने के लिए हैंडल खींचें",
  "Drag me!": "मुझे खींचो!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "बिना बोले पूरे काफ़िले को संकेत देने के लिए किसी रिएक्शन पर टैप करें।",
  "{0} waved": "{0} ने हाथ हिलाया",
  "{0} needs a stop": "{0} को रुकना है",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "यह रसीद है, जो हर एंट्री के साथ रखी जाती है। इसके सेव करें बटन से इसे कभी भी तस्वीर के रूप में सहेजें।"
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "यह रसीद है, जो हर एंट्री के साथ रखी जाती है। इसके सेव करें बटन से इसे कभी भी तस्वीर के रूप में सहेजें।",
+ "Drag & zoom": "खींचें & ज़ूम करें"
 }

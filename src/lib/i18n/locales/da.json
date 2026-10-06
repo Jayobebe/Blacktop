@@ -655,7 +655,6 @@
  "Download area around me": "Download området omkring mig",
  "Download route": "Download ruten",
  "Download this area": "Download dette område",
- "Drag &amp; zoom": "Træk &amp; zoom",
  "Drag a waypoint to reorder": "Træk et waypoint for at ændre rækkefølgen",
  "Drag handles to reorder your route": "Træk i håndtagene for at ændre rækkefølgen på ruten",
  "Drag me!": "Træk mig!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Tryk på en reaktion for at give hele konvojen et signal uden at tale.",
  "{0} waved": "{0} vinkede",
  "{0} needs a stop": "{0} har brug for et stop",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dette er kvitteringen, som gemmes med hver post. Gem den som billede når som helst med knappen Gem."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dette er kvitteringen, som gemmes med hver post. Gem den som billede når som helst med knappen Gem.",
+ "Drag & zoom": "Træk & zoom"
 }

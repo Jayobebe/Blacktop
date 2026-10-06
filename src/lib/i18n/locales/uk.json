@@ -655,7 +655,6 @@
  "Download area around me": "Завантажити область навколо мене",
  "Download route": "Завантажити маршрут",
  "Download this area": "Завантажити цю ділянку",
- "Drag &amp; zoom": "Перетягуйте &amp; масштабуйте",
  "Drag a waypoint to reorder": "Перетягни точку маршруту, щоб змінити порядок",
  "Drag handles to reorder your route": "Перетягуйте маркери, щоб змінити порядок маршруту",
  "Drag me!": "Перетягни мене!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Торкнися реакції, щоб подати знак усьому конвою без слів.",
  "{0} waved": "{0} махає",
  "{0} needs a stop": "{0} потребує зупинки",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Це чек, який зберігається з кожним записом. Збережи його як зображення будь-коли кнопкою Зберегти."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Це чек, який зберігається з кожним записом. Збережи його як зображення будь-коли кнопкою Зберегти.",
+ "Drag & zoom": "Перетягуйте & масштабуйте"
 }

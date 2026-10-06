@@ -655,7 +655,6 @@
  "Download area around me": "Gebied om mij heen downloaden",
  "Download route": "Route downloaden",
  "Download this area": "Dit gebied downloaden",
- "Drag &amp; zoom": "Slepen &amp; zoomen",
  "Drag a waypoint to reorder": "Sleep een waypoint om de volgorde te wijzigen",
  "Drag handles to reorder your route": "Sleep de grepen om je route te herschikken",
  "Drag me!": "Sleep me!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Tik op een reactie om het hele konvooi een seintje te geven zonder te praten.",
  "{0} waved": "{0} zwaaide",
  "{0} needs a stop": "{0} heeft een stop nodig",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dit is het bonnetje, dat bij elk item wordt bewaard. Sla het altijd op als afbeelding met de knop Bewaren."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Dit is het bonnetje, dat bij elk item wordt bewaard. Sla het altijd op als afbeelding met de knop Bewaren.",
+ "Drag & zoom": "Slepen & zoomen"
 }

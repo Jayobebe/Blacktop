@@ -655,7 +655,6 @@
  "Download area around me": "Unduh area di sekitar saya",
  "Download route": "Unduh rute",
  "Download this area": "Unduh area ini",
- "Drag &amp; zoom": "Seret &amp; perbesar",
  "Drag a waypoint to reorder": "Seret titik jalan untuk mengubah urutan",
  "Drag handles to reorder your route": "Seret pegangan untuk menyusun ulang rute Anda",
  "Drag me!": "Seret aku!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Ketuk reaksi untuk memberi isyarat ke seluruh konvoi tanpa bicara.",
  "{0} waved": "{0} melambai",
  "{0} needs a stop": "{0} perlu berhenti",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Ini struknya, disimpan bersama setiap entri. Simpan sebagai gambar kapan saja dengan tombol Simpan."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Ini struknya, disimpan bersama setiap entri. Simpan sebagai gambar kapan saja dengan tombol Simpan.",
+ "Drag & zoom": "Seret & perbesar"
 }

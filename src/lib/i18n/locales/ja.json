@@ -655,7 +655,6 @@
  "Download area around me": "周辺エリアをダウンロード",
  "Download route": "ルートをダウンロード",
  "Download this area": "このエリアをダウンロード",
- "Drag &amp; zoom": "ドラッグ &amp; ズーム",
  "Drag a waypoint to reorder": "経由地をドラッグして並べ替え",
  "Drag handles to reorder your route": "ハンドルをドラッグしてルートを並べ替え",
  "Drag me!": "ドラッグしてね!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "リアクションをタップすると、話さずにコンボイ全体へ合図を送れます。",
  "{0} waved": "{0}が手を振りました",
  "{0} needs a stop": "{0}が休憩を希望しています",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "これがレシートで、すべての記録に付いています。「保存」ボタンでいつでも画像として保存できます。"
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "これがレシートで、すべての記録に付いています。「保存」ボタンでいつでも画像として保存できます。",
+ "Drag & zoom": "ドラッグ & ズーム"
 }

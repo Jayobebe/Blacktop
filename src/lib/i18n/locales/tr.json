@@ -655,7 +655,6 @@
  "Download area around me": "Çevremdeki alanı indir",
  "Download route": "Rotayı indir",
  "Download this area": "Bu bölgeyi indir",
- "Drag &amp; zoom": "Sürükle &amp; yakınlaştır",
  "Drag a waypoint to reorder": "Sıralamak için bir ara noktayı sürükle",
  "Drag handles to reorder your route": "Rotanızı yeniden sıralamak için tutamaçları sürükleyin",
  "Drag me!": "Sürükle beni!",
@@ -4335,5 +4334,6 @@
  "Tap a reaction to signal the whole convoy without talking.": "Konuşmadan tüm konvoya işaret vermek için bir tepkiye dokun.",
  "{0} waved": "{0} el salladı",
  "{0} needs a stop": "{0} mola istiyor",
- "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Bu, her kayıtla birlikte saklanan fiş. Kaydet düğmesiyle istediğin zaman resim olarak kaydet."
+ "This is the receipt, kept with every entry. Save it as a picture any time with its Save button.": "Bu, her kayıtla birlikte saklanan fiş. Kaydet düğmesiyle istediğin zaman resim olarak kaydet.",
+ "Drag & zoom": "Sürükle & yakınlaştır"
 }

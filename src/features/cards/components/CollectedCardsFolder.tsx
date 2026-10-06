@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { toast } from 'sonner';
-import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon } from 'lucide-react';
+import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon, Scan, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/features/settings';
@@ -25,7 +25,7 @@ import { fetchCardPhoto, uploadCardPhoto } from '../lib/cardPhoto';
 import { encodeCard } from '../lib/cardCodec';
 import { useProfile } from '@/features/profile';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import type { VehicleCardData } from '../hooks/useVehicleCards';
+import type { VehicleCardData, CardTrend, Trend } from '../hooks/useVehicleCards';
 import { useCollectedCards, type CollectedCard } from '../hooks/useCollectedCards';
 import { useSpectreCards, type SpectreCard } from '../hooks/useSpectreCards';
 import { useVehicleCards } from '../hooks/useVehicleCards';
@@ -47,7 +47,14 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
   const stickers = useStickers();
   const navigate = useNavigate();
   // The rider's own vehicle cards always lead the regular row.
-  const { cards: myCards } = useVehicleCards();
+  const { cards: myCards, markTierSeen } = useVehicleCards();
+  // A card that has moved up a tier since it was last looked at: once it's been seen here, its arrows start again from today's figures.
+  useEffect(() => {
+    const fresh = myCards.filter((c) => c.isNewTier);
+    if (!fresh.length) return;
+    const t = window.setTimeout(() => fresh.forEach((c) => markTierSeen(c.bike.id)), 8000);
+    return () => window.clearTimeout(t);
+  }, [myCards, markTierSeen]);
   const [showScanner, setShowScanner] = useState(false);
   const [rescanKey, setRescanKey] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -343,10 +350,30 @@ function CardRow({
   );
 }
 
-/** The rider's own card in the vault: same tap-to-flip card as the rest, no edit controls. */
+/** How the rider frames the picture on their own card: the zoom travels with the card, the position stays on this phone. */
+interface ImageEdit {
+  zoom: number;
+  pan: { x: number; y: number };
+  setZoom: (zoom: number) => void;
+  setPan: (pan: { x: number; y: number }) => void;
+}
+
+/**
+ * The rider's own card in the vault: the same tap-to-flip card as the rest,
+ * plus the card image button (drag and zoom the picture). Only here: a copy
+ * someone scanned, and the card in the Speed Shop, never carry it.
+ */
 function OwnFlipCard({ card }: { card: VehicleCardData }) {
   const { profile } = useProfile();
-  const [zooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
+  const [pans, setPans] = useLocalStorage<Record<string, { x: number; y: number }>>('bt.cards.pan.v1', {});
+  const id = card.bike.id;
+  const image: ImageEdit = {
+    zoom: zooms[id] ?? 1,
+    pan: pans[id] ?? { x: 0, y: 0 },
+    setZoom: (zoom) => setZooms((prev) => ({ ...prev, [id]: zoom })),
+    setPan: (pan) => setPans((prev) => ({ ...prev, [id]: pan })),
+  };
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const hero = card.bike.photos.hero;
   const uid = card.bike.id.replace(/-/g, '');
@@ -358,7 +385,7 @@ function OwnFlipCard({ card }: { card: VehicleCardData }) {
   }, [hero, uid]);
   const payload = decodeCard(encodeCard(card, profile.name, photoPath ?? undefined, zooms[card.bike.id] ?? 1));
   if (!payload) return null;
-  return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} />;
+  return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} image={hero ? image : undefined} trend={card.trend} />;
 }
 
 /** What a Spectre's back shows (its Card Wars dog tag): drawn by whoever hosts the vault, so cards don't depend on Card Wars. */
@@ -382,20 +409,28 @@ function SpectreResult({ spectre }: { spectre: SpectreCard }) {
 }
 
 /** Tap to flip. Collected cards show their QR on the back; Spectre cards their dog tag (the win, where nothing draws the tag). */
-function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}` }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string }) {
+function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`, image, trend }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string; /** The rider's own card only: lets them frame its picture. */ image?: ImageEdit; /** The rider's own card only: which figures have gone up or down since its last tier. */ trend?: CardTrend }) {
   const sticker = <StickerControl card={stickerKey} name={card.n} src={card.img} className="shrink-0" />;
   const [flipped, setFlipped] = useState(false);
+  const [framing, setFraming] = useState(false);
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
+  const flip = () => {
+    // Not while the picture is being framed: a drag ending on the card would turn it over.
+    if (framing) return;
+    haptics.light();
+    setFlipped((f) => !f);
+  };
+  // A card with controls on it can't be a <button> (no buttons or sliders inside one): it's a div that acts as one.
+  const Root = image ? 'div' : 'button';
   return (
-    <button
-      type="button"
-      onClick={() => {
-        haptics.light();
-        setFlipped((f) => !f);
-      }}
+    <Root
+      {...(image
+        ? { role: 'button', tabIndex: 0, onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); flip(); } } }
+        : { type: 'button' as const })}
+      onClick={flip}
       aria-label={flipped ? tr("Show front of {0}", [card.n]) : spectre ? (spectreBack ? tr("Show {0} dog tag", [card.n]) : tr("Show {0} Spectre result", [card.n])) : tr("Show {0} QR code", [card.n])}
       data-tip="vault-card"
-      className="block w-full aspect-[5/7] [perspective:1200px] text-left"
+      className="block w-full aspect-[5/7] [perspective:1200px] text-left cursor-pointer"
     >
       <div
         className={cn(
@@ -404,7 +439,7 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}` 
         )}
       >
         <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(0deg)_translateZ(1px)]">
-          <FullCard card={card} spectre={spectre} stats={spectre && spectreBack ? <SpectreResult spectre={spectre} /> : undefined} />
+          <FullCard card={card} spectre={spectre} stats={spectre && spectreBack ? <SpectreResult spectre={spectre} /> : undefined} image={image && !flipped ? { ...image, framing, setFraming } : undefined} trend={trend} />
         </div>
         <div
           className={cn(
@@ -456,7 +491,7 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}` 
           )}
         </div>
       </div>
-    </button>
+    </Root>
   );
 }
 
@@ -499,10 +534,37 @@ function WonFlipCard({ card }: { card: ReturnType<typeof useWonBattleCards>[numb
   );
 }
 
-export function FullCard({ card, spectre, stats }: { card: CollectedCard; spectre?: SpectreCard; stats?: React.ReactNode }) {
+export function FullCard({ card, spectre, stats, image, trend }: { card: CollectedCard; spectre?: SpectreCard; stats?: React.ReactNode; /** The rider's own card in the vault: the card image button and its drag-and-zoom. */ image?: ImageEdit & { framing: boolean; setFraming: (on: boolean) => void }; trend?: CardTrend }) {
   const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
+  const frame = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  const framing = !!image?.framing;
+  const zoom = image ? image.zoom : card.z ?? 1;
+  const pan = image ? image.pan : { x: 0, y: 0 };
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+  const onPanDown = (e: React.PointerEvent) => {
+    if (!framing || !image) return;
+    // Keep the gesture on the picture: the row of cards must not scroll with it.
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+  };
+  const onPanMove = (e: React.PointerEvent) => {
+    if (!drag.current || !frame.current || !image) return;
+    e.stopPropagation();
+    const rect = frame.current.getBoundingClientRect();
+    const limit = 60;
+    image.setPan({
+      x: Math.max(-limit, Math.min(limit, drag.current.px + ((e.clientX - drag.current.x) / rect.width) * 100)),
+      y: Math.max(-limit, Math.min(limit, drag.current.py + ((e.clientY - drag.current.y) / rect.height) * 100)),
+    });
+  };
+  const onPanUp = () => {
+    drag.current = null;
+  };
   return (
     <div
       className={cn(
@@ -539,18 +601,44 @@ export function FullCard({ card, spectre, stats }: { card: CollectedCard; spectr
             <p className="text-[10px] uppercase tracking-wider text-white/70 truncate">{card.m}</p>
           )}
         </div>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-black/50 text-white shrink-0">
-          <Sparkles className="w-2.5 h-2.5" />
-          {card.tl}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {image && (
+            <button
+              type="button"
+              data-tip="vault-card-image"
+              onClick={(e) => {
+                e.stopPropagation();
+                image.setFraming(!framing);
+              }}
+              aria-label={framing ? tr("Finish resizing image") : tr("Resize card image")}
+              className="glove-hit inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/50 text-white transition-transform active:scale-90"
+            >
+              {framing ? <Check className="w-3 h-3" /> : <Scan className="w-3 h-3" />}
+            </button>
+          )}
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-black/50 text-white shrink-0">
+            <Sparkles className="w-2.5 h-2.5" />
+            {card.tl}
+          </span>
+        </div>
       </div>
 
-      <div className="relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 mt-1">
+      <div
+        ref={frame}
+        className={cn('relative rounded-xl overflow-hidden aspect-[4/3] border border-white/10 mt-1', framing && 'cursor-grab active:cursor-grabbing touch-none')}
+        onPointerDown={onPanDown}
+        onPointerMove={onPanMove}
+        onPointerUp={onPanUp}
+        onPointerCancel={onPanUp}
+        onClick={framing ? stop : undefined}
+        onTouchStart={framing ? stop : undefined}
+        onTouchMove={framing ? stop : undefined}
+      >
         <div
           className={cn("absolute inset-0 bg-cover bg-center origin-center", spectre && "grayscale opacity-80")}
           style={{
             backgroundImage: `url(${garageShopAsset.url})`,
-            transform: `scale(${card.z ?? 1})`,
+            transform: `translate(${pan.x}%, ${pan.y}%) scale(${zoom})`,
           }}
         >
           <div className="absolute inset-0 bg-black/20" />
@@ -577,25 +665,53 @@ export function FullCard({ card, spectre, stats }: { card: CollectedCard; spectr
             </div>
           )}
         </div>
+        {framing && image && (
+          <div className="absolute inset-x-1.5 bottom-1.5 flex items-center gap-1.5 rounded-lg bg-black/80 px-2 py-1.5 border border-white/15" onPointerDown={stop} onClick={stop}>
+            <span className="text-[8px] uppercase tracking-widest text-white/70 shrink-0">{tr("Drag & zoom")}</span>
+            <input
+              type="range"
+              min={0.6}
+              max={2.5}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => image.setZoom(Number(e.target.value))}
+              aria-label={tr("Card image zoom")}
+              className="flex-1 min-w-0 accent-[hsl(var(--accent))]"
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                image.setFraming(false);
+              }}
+              aria-label={tr("Confirm image size")}
+              className="glove-hit inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/90 text-black active:scale-90 shrink-0"
+            >
+              <Check className="w-3 h-3" />
+            </button>
+          </div>
+        )}
       </div>
 
       {stats ?? <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
         {/* "--" when this rider hides peaks, or the card's owner kept them private (null). */}
-        <Stat icon={Gauge} label={tr("Top speed")} value={peaksHidden || card.s.topSpeedMph == null ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden || card.s.topSpeedMph == null ? '' : getSpeedLabel(settings.speedUnit)} />
-        <Stat icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
-        <Stat icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
-        <Stat icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />
+        <Stat trend={peaksHidden ? undefined : trend?.topSpeed} icon={Gauge} label={tr("Top speed")} value={peaksHidden || card.s.topSpeedMph == null ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden || card.s.topSpeedMph == null ? '' : getSpeedLabel(settings.speedUnit)} />
+        <Stat trend={trend?.duration} icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
+        <Stat trend={trend?.distance} icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
+        <Stat trend={trend?.rides} icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />
       </div>}
     </div>
   );
 }
 
-function Stat({ icon: Icon, label, value, unit }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; unit: string }) {
+function Stat({ icon: Icon, label, value, unit, trend }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; unit: string; /** Up or down since the card's last tier: a green or red arrow, and the box glows that colour twice. */ trend?: Trend }) {
   return (
-    <div className="rounded-lg bg-black/35 backdrop-blur-sm border border-white/10 px-2 py-1.5">
+    <div className={cn('rounded-lg bg-black/35 backdrop-blur-sm border border-white/10 px-2 py-1.5', trend === 'up' && 'animate-card-stat-pulse', trend === 'down' && 'animate-card-stat-drop')}>
       <div className="flex items-center gap-1 text-[8px] uppercase tracking-widest text-white/60">
         <Icon className="w-2.5 h-2.5" />
         <span className="truncate">{label}</span>
+        {trend === 'up' && <ArrowUp className="w-2.5 h-2.5 text-emerald-300 ml-auto shrink-0" />}
+        {trend === 'down' && <ArrowDown className="w-2.5 h-2.5 text-red-400 ml-auto shrink-0" />}
       </div>
       <p className="font-mono text-sm font-bold text-white leading-tight truncate">
         {value}
