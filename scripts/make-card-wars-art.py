@@ -35,7 +35,7 @@ BIKE_ORDER = [
     'mt07', 'r6', '890duke', 'f3rr', 'rc8c', 'f3ss', 'striple', 'ninja', 'moto2', 'zx10rr',
     'sv650', 'gsxr', 'gs', 's1000', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk', 'rs660f', 'rs660',
     # shop-only cards, as their artwork arrives (by catalog id only: 1.png .. 20.png are the twenty above)
-    'm1_15',
+    'm1_15', 'gp23', 'rc213v', 'gsxrr', 'rc16', 'rsgp', 'rc211v', 'gp7', 'm1_04', 'nsr500',
     'm1000tt', 'firebladett', 'zx10tt', 'gsxrtt', 'r1tt', 'norton', 'shinden', 'rc30', 'ow01', 'striplett',
 ]
 

@@ -17,7 +17,7 @@ const CAR_ART = [
 const BIKE_ART = [
  'mt07', 'r6', 'ninja', 'zx10rr', 'sv650', 'gsxr', 'fireblade', 'firebladesbk', 'panigale', 'v4rsbk',
  'gs', 's1000', 'rs660f', 'rs660', '890duke', 'rc8c', 'striple', 'moto2', 'f3rr', 'f3ss',
- 'm1_15',
+ 'm1_15', 'gp23', 'rc213v', 'gsxrr', 'rc16', 'rsgp', 'rc211v', 'gp7', 'm1_04', 'nsr500',
  'm1000tt', 'firebladett', 'zx10tt', 'gsxrtt', 'r1tt', 'norton', 'shinden', 'rc30', 'ow01', 'striplett',
 ];
 const ARTWORK: Record<string, string> = Object.fromEntries([
