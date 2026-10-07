@@ -8,7 +8,7 @@ import { eventSound } from '@/lib/appSound';
 import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
-import { RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
+import { MARKET, RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
 import { cn } from '@/lib/utils';
 import { cardById } from '../lib/catalog';
 import { refreshShop, setRpm, useShop } from '../lib/shop';
@@ -25,7 +25,8 @@ function why(message: string): string {
   if (/not owned/i.test(message)) return tr("One of the cards isn't owned any more.");
   if (/current battle/i.test(message)) return tr("Finish your current battle first.");
   if (/too many/i.test(message)) return tr("Too many open swaps. Close one first.");
-  if (/nothing/i.test(message)) return tr("Add a card or some RPM first.");
+  if (/same tier|cards only/i.test(message)) return tr("Swap card for card, each for one of the same tier.");
+  if (/nothing/i.test(message)) return MARKET ? tr("Add a card first.") : tr("Add a card or some RPM first.");
   return tr("Something went wrong. Try again.");
 }
 
@@ -207,7 +208,9 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
       <Side title={swap.theirs.name ? tr("{0} gives", [swap.theirs.name]) : tr("They give")} cards={swap.theirs.cards} extra={swap.theirs.rpm} ready={swap.theirs.ready} />
       <Side title={tr("You give")} cards={mine} extra={swap.mine.rpm} ready={swap.mine.ready} />
 
-      <div className="flex gap-2">
+      {/* Cards only once the server has closed RPM in swaps: one for one, tier for tier. */}
+      {MARKET && <p className="text-xs text-muted-foreground">{tr("Swap card for card, each for one of the same tier.")}</p>}
+      <div className={MARKET ? 'hidden' : 'flex gap-2'}>
         <Input type="number" inputMode="numeric" min={0} step={RPM_SCALE} aria-label={tr("RPM you add")} value={rpm} onChange={(e) => setRpmInput(e.target.value)} className="h-11 font-mono" />
         <Button variant="outline" className="h-11 shrink-0" disabled={busy || amount === swap.mine.rpm || amount > (shop.balance ?? 0)} onClick={() => void run(() => setSwap(swap.id, mine, amount))}>
           {tr("Add RPM")}

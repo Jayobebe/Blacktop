@@ -11,7 +11,7 @@ import { eventSound } from '@/lib/appSound';
 import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
-import { RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
+import { MARKET, RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
 import { cn } from '@/lib/utils';
 import { cardById } from '../lib/catalog';
 import { useShop } from '../lib/shop';
@@ -171,12 +171,13 @@ export function TradeSheet({ open, onClose, locked }: { open: boolean; onClose: 
         <div className="max-w-md mx-auto space-y-4">
           <SheetHeader className="text-left">
             <SheetTitle>{tr("Trade cards")}</SheetTitle>
-            <SheetDescription>{tr("Swap cards with another rider, or buy and sell them for RPM.")}</SheetDescription>
+            <SheetDescription>{MARKET ? tr("Swap cards with another rider: card for card, each for one of the same tier.") : tr("Swap cards with another rider, or buy and sell them for RPM.")}</SheetDescription>
           </SheetHeader>
           {demo && <DemoLockNote />}
 
           <Tabs defaultValue="swap">
-            <TabsList className="grid grid-cols-3 w-full">
+            {/* Card sales for RPM are closed with the Marketplace migration: swapping is all there is. */}
+            <TabsList className={MARKET ? 'hidden' : 'grid grid-cols-3 w-full'}>
               <TabsTrigger value="swap">{tr("Swap")}</TabsTrigger>
               <TabsTrigger value="buy">{tr("Buy")}</TabsTrigger>
               <TabsTrigger value="sell">{tr("Sell")}</TabsTrigger>

@@ -4341,5 +4341,8 @@
  "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "Blacktop World açıkken telefonun, bilinen son konumundan hangi ülkede olduğunu belirler ve sunucumuza yalnızca o ülkeyi gönderir; böylece küre hesapların olduğu yerde parlar ve her ülkede kaç hesap olduğunu gösterir. Bunun için koordinat gönderilmez, kimse ülkeni sorgulayamaz ve Blacktop World'ü kapattığında ya da hesabını yaktığında silinir.",
  "{0} people": "{0} kişi",
  "1 person": "1 kişi",
- "People by country": "Ülkeye göre kişiler"
+ "People by country": "Ülkeye göre kişiler",
+ "Swap card for card, each for one of the same tier.": "Kart karşılığı kart takas et, her biri aynı seviyeden bir kartla.",
+ "Add a card first.": "Önce bir kart ekle.",
+ "Swap cards with another rider: card for card, each for one of the same tier.": "Başka bir sürücüyle kart takas et: kart karşılığı kart, her biri aynı seviyeden bir kartla."
 }

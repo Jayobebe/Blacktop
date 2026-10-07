@@ -4341,5 +4341,8 @@
  "with Blacktop World on, your phone works out which country it is in from its last known position and sends only that country to our server, so the globe can glow where accounts are and list how many each country has. No coordinates are sent for this, nobody can look up your country, and it is removed when you turn Blacktop World off or burn your account.": "przy włączonym Blacktop World twój telefon ustala, w jakim kraju się znajduje, na podstawie ostatniej znanej pozycji i wysyła na nasz serwer tylko ten kraj, aby globus świecił tam, gdzie są konta, i pokazywał, ile ma ich każdy kraj. Nie są w tym celu wysyłane żadne współrzędne, nikt nie może sprawdzić twojego kraju, a dane są usuwane, gdy wyłączysz Blacktop World lub spalisz konto.",
  "{0} people": "Osoby: {0}",
  "1 person": "1 osoba",
- "People by country": "Osoby według kraju"
+ "People by country": "Osoby według kraju",
+ "Swap card for card, each for one of the same tier.": "Wymieniaj kartę za kartę, każdą na kartę tego samego poziomu.",
+ "Add a card first.": "Najpierw dodaj kartę.",
+ "Swap cards with another rider: card for card, each for one of the same tier.": "Wymieniaj karty z innym kierowcą: karta za kartę, każda na kartę tego samego poziomu."
 }

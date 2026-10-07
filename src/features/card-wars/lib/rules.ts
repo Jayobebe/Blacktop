@@ -26,7 +26,7 @@ function serverRules(): 1 | 2 {
 export const V2 = serverRules() === 2;
 
 /** What the server said at launch about a later migration (scripts: on with the second rule set). */
-function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels' | 'cardWarsPace'): boolean {
+function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels' | 'cardWarsPace' | 'cardWarsMarket'): boolean {
   const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
   if (env) return env === '2';
   try {
@@ -107,6 +107,22 @@ export const levelPay = (level: keyof typeof LEVEL, result: 'win' | 'draw' | 'lo
  * everyone and pays once.
  */
 export const PACE = V2 && serverHas('cardWarsPace');
+/**
+ * The economy closed to second accounts (migration
+ * 20261019000000_card_wars_market.sql; the `cardWarsMarket` cap). RPM never
+ * leaves an account: card sales by code are gone and a swap is cards only, one
+ * for one, each for a card of the same tier. A card can be held up to five
+ * times (a spin or prize that lands on one already held is another copy; with
+ * five it pays a quarter of its price) and played twice in a deck. Five cards
+ * of one tier trade up for a spin at the next tier, and the Blacktop
+ * Marketplace buys a card on a coin flip. Until the server has it, the sale
+ * and swap screens stay as they were.
+ */
+export const MARKET = V2 && serverHas('cardWarsMarket');
+/** Mirrors cw_market_rules(). */
+export const COPIES = { most: 5, deck: 2 } as const;
+export const MARKETPLACE = { low: 0.1, high: 0.5, daily: 3, keep: 5 } as const;
+export const TRADE_UP = { cards: 5, keep: 5 } as const;
 /** A win streak on hard: each win after the first adds `step` RPM, up to `most`. A hard loss or draw ends it. */
 export const STREAK = { step: 2, most: 10 } as const;
 /** The daily challenge: RPM for winning it, once a day. */
