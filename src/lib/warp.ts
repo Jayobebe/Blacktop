@@ -306,6 +306,11 @@ export function warpFromTap() {
   return startWarp(recent ? tap.x : window.innerWidth / 2, recent ? tap.y : window.innerHeight / 2, { quick: true, instant: true });
 }
 
+/** The same, for a screen swapped in place (Card Wars' shop, a battle): it lets go once the new screen has drawn. */
+export function warpScreen() {
+  if (warpFromTap()) setTimeout(endWarp, 120);
+}
+
 let installed = false;
 /**
  * Every page change gets the quick warp, from where the rider last tapped

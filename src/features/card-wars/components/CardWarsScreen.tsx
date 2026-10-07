@@ -11,12 +11,13 @@ import { eventSound } from '@/lib/appSound';
 import { demoBlocked } from '@/lib/demoGuard';
 import { useDemoMode } from '@/lib/demoMode';
 import { tr } from '@/lib/i18n';
+import { warpScreen } from '@/lib/warp';
 import { useServerCap } from '@/lib/serverCaps';
 import { STARTER_TAGS, cardById, cardIdentity, unlockCard } from '../lib/catalog';
 import { createRun, deadlocked, playRound } from '../lib/engine';
 import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
-import { categoryLabel, deckRating, overall } from '../lib/ratings';
+import { bestFive, categoryLabel, deckRating } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
@@ -72,6 +73,11 @@ export function CardWarsScreen() {
 
   // A battle against the computer that was left open (or its prize unpicked) comes straight back.
   const [view, setView] = useState<View>(vault.run ? 'computer' : 'home');
+  /** A change of screen inside the game: the app's page warp, as between any two pages. */
+  const go = (next: View) => {
+    if (next !== view) warpScreen();
+    setView(next);
+  };
   const [setup, setSetup] = useState(false);
   const [quickMode, setQuickMode] = useState<QuickMode | null>(null);
   // The daily challenge being set up: its day, so the battle carries it.
@@ -269,7 +275,7 @@ export function CardWarsScreen() {
   useEffect(() => {
     if (online?.status === 'playing') {
       setSheet(false);
-      setView('players');
+      go('players');
     } else if (online?.status === 'cancelled') {
       toast(tr("Invitation closed. Your {0} RPM is back.", [showRpm(online.stake ?? RULES.stake)]));
       setOnline({ balance: online.balance });
@@ -441,11 +447,13 @@ export function CardWarsScreen() {
   /** The five strongest cards as they are now, different ratings first (a player battle needs five different). */
   function bestDeck() {
     if (riding || locked) return;
-    const ranked = [...wornPool].sort((a, b) => overall(b) - overall(a) || (b.condition ?? 100) - (a.condition ?? 100));
-    const picked: Card[] = [];
-    for (const c of ranked) if (picked.length < 5 && !picked.some((p) => p.archetype === c.archetype)) picked.push(c);
-    for (const c of ranked) if (picked.length < 5 && !picked.includes(c)) picked.push(c);
-    updateVault({ deck: picked.map((c) => c.id) });
+    updateVault({ deck: bestFive(wornPool).map((c) => c.id) });
+  }
+
+  /** Fields these five (the Potential deck). */
+  function fieldDeck(ids: string[]) {
+    if (riding || locked || ids.length !== 5 || ids.some((id) => !wornPool.some((c) => c.id === id))) return;
+    updateVault({ deck: ids });
   }
 
   function startComputer(level?: Level) {
@@ -454,7 +462,7 @@ export function CardWarsScreen() {
     setReveal(null);
     setSetup(false);
     updateVault({ run: createRun(deck, Math.random, { level: level ?? 'medium' }) });
-    setView('computer');
+    go('computer');
   }
 
   /** Quick play: a deck built for the theme, for this battle only, at hard. */
@@ -464,13 +472,13 @@ export function CardWarsScreen() {
     setReveal(null);
     updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme, ...(quickDaily ? { daily: quickDaily.day } : {}) }) });
     setQuickDaily(null);
-    setView('computer');
+    go('computer');
   }
 
   /** Battle again: back to the level sheet. */
   const again = () => {
     updateVault({ run: null });
-    setView('home');
+    go('home');
     setSetup(true);
   };
 
@@ -583,7 +591,7 @@ export function CardWarsScreen() {
           onAgain={riding || deck.length !== 5 || deckTags.length !== TAG_SLOTS ? undefined : again}
           onDone={() => {
             updateVault({ run: null });
-            setView('home');
+            go('home');
           }}
         >
           {won && prizeDue && !run.rewardClaimed && <RewardShuffle key={run.id} run={run} riding={riding} onComplete={() => updateVault({ run: { ...run, rewardShuffleComplete: true } })} onClaim={claim} />}
@@ -653,7 +661,7 @@ export function CardWarsScreen() {
             setDisplayOnline(null);
             seen.current = '';
             setCode('');
-            setView('home');
+            go('home');
             void refreshShop();
           }}
         />
@@ -672,7 +680,7 @@ export function CardWarsScreen() {
           onStart={(cards, theme) => startQuick(cards, theme, quickMode)}
           onCancel={() => {
             setQuickDaily(null);
-            setView('home');
+            go('home');
             setSetup(true);
           }}
         />
@@ -683,7 +691,7 @@ export function CardWarsScreen() {
   if (view === 'shop') {
     return (
       <main className="text-foreground">
-        <ShopPage onBack={() => setView('home')} disabled={riding} />
+        <ShopPage onBack={() => go('home')} disabled={riding} />
       </main>
     );
   }
@@ -717,6 +725,7 @@ export function CardWarsScreen() {
         deck={deck}
         tags={deckTags}
         pool={wornPool}
+        basePool={pool}
         availableTags={tags}
         locked={locked}
         riding={riding}
@@ -724,9 +733,10 @@ export function CardWarsScreen() {
         playersOpen={cap}
         onReplace={replaceSlot}
         onBestDeck={bestDeck}
-        onBattleComputer={() => (run && !run.result ? setView('computer') : live ? (online?.status === 'playing' ? setView('players') : setSheet(true)) : setSetup(true))}
+        onFieldDeck={fieldDeck}
+        onBattleComputer={() => (run && !run.result ? go('computer') : live ? (online?.status === 'playing' ? go('players') : setSheet(true)) : setSetup(true))}
         onBattlePlayer={() => setSheet(true)}
-        onShop={() => setView('shop')}
+        onShop={() => go('shop')}
       />
       <PlayerBattleSheet
         open={sheet}
@@ -750,7 +760,7 @@ export function CardWarsScreen() {
           setSetup(false);
           setQuickDaily(null);
           setQuickMode(mode);
-          setView('quick');
+          go('quick');
         }}
         streak={!demo ? shop.streak : undefined}
         daily={!demo ? { theme: today.theme, mode: today.mode, done: shop.dailyDone } : undefined}
@@ -758,7 +768,7 @@ export function CardWarsScreen() {
           setSetup(false);
           setQuickDaily({ day: today.day, theme: today.theme });
           setQuickMode(today.mode);
-          setView('quick');
+          go('quick');
         }}
       />
       <HowToPlay open={help} onClose={() => setHelp(false)} players={cap} />

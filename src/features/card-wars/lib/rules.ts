@@ -126,9 +126,12 @@ export function wearLoss(race: boolean, rounds: number): number {
   return Math.min(WEAR_ROUND.cap, rounds * (race ? WEAR_ROUND.race : WEAR_ROUND.road) + Math.max(0, rounds - WEAR_ROUND.past) * WEAR_ROUND.extra);
 }
 
-/** RPM to bring a card back to 100% condition. Dearer cards cost more to run. */
-export function repairCost(price: number | undefined, condition: number): number {
-  const missing = Math.max(0, 100 - condition);
+/** A part repair stops here: clear of the 50% line where ratings start to fade. */
+export const REPAIR_PART = 60;
+
+/** RPM to bring a card back to 100% condition (or to `to`). Dearer cards cost more to run. */
+export function repairCost(price: number | undefined, condition: number, to = 100): number {
+  const missing = Math.max(0, to - condition);
   if (missing === 0) return 0;
   return Math.max(1, Math.ceil((missing * (price ?? 100)) / 400));
 }

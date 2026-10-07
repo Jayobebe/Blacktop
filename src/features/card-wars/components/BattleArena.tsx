@@ -11,6 +11,7 @@ import { WEAR_ROUND, wearLoss } from '../lib/rules';
 import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
 import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower } from '../types';
 import { CardBurn } from './CardBurn';
+import { Coin } from './Coin';
 import type { RoundEvent } from '../lib/events';
 import { EVENT_ICON, eventEffect, eventName } from '../lib/eventText';
 import { CwCard, StatBars } from './CwCard';
@@ -79,22 +80,6 @@ function flyOut(el: HTMLElement | null, to: HTMLElement | null | undefined, burn
       fill: 'forwards',
     })
     .finished.catch(() => undefined);
-}
-
-/** A Coin flip dog tag in the air: it lands best side up (heads) or worst (tails). */
-function Coin({ flip, side }: { flip: CoinFlip; side: 'mine' | 'theirs' }) {
-  return (
-    <span className={cn('cw-coin', flip.heads ? 'cw-coin-heads' : 'cw-coin-tails', `cw-coin-${side}`)} role="img" aria-label={flip.heads ? tr("Heads") : tr("Tails")}>
-      <span className="cw-coin-in">
-        <i className="cw-coin-face cw-coin-h">
-          <TrendingUp aria-hidden />
-        </i>
-        <i className="cw-coin-face cw-coin-t">
-          <TrendingDown aria-hidden />
-        </i>
-      </span>
-    </span>
-  );
 }
 
 /**
@@ -476,8 +461,8 @@ export function BattleArena({
             </div>
           ) : reveal && phase === 'coin' && (myFlip || theirFlip) ? (
             <div className="cw-mid cw-mid-coin">
-              {theirFlip && <Coin flip={theirFlip} side="theirs" />}
-              {myFlip && <Coin flip={myFlip} side="mine" />}
+              {theirFlip && <Coin heads={theirFlip.heads} side="theirs" />}
+              {myFlip && <Coin heads={myFlip.heads} side="mine" />}
             </div>
           ) : reveal && DrawnIcon ? (
             <div className="cw-mid">

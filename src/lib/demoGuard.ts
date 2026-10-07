@@ -27,6 +27,8 @@ const WRITE_RPCS = new Set([
   'cw_action',
   'cw_shop',
   'cw_buy',
+  'cw_market_sell',
+  'cw_trade_up',
   'cw_swap_open',
   'cw_swap_join',
   'cw_swap_set',

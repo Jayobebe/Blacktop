@@ -10,10 +10,12 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
  * itself, even a permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
-export type ServerCap = 'trackRecords' | 'cardWars' | 'worldCountries';
+export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWarsRepair' | 'worldCountries';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
   cardWars: () => supabase.rpc('cw_available' as never),
+  // A part repair, to 60% (migration 20261020000000_card_wars_repair_to.sql).
+  cardWarsRepair: () => supabase.rpc('cw_repair_rules' as never),
   // Blacktop World's globe glowing by accounts per country, and its list (lib/profileCountry.ts).
   worldCountries: () => supabase.rpc('profile_country_counts' as never),
   trackRecords: () =>

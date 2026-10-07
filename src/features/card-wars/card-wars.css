@@ -128,6 +128,14 @@ button.cw-card:disabled { cursor: default; }
 .cw-stat-bar i { display: block; height: 100%; border-radius: inherit; background: currentColor; opacity: 0.85; }
 .cw-stat-line b { text-align: right; font-weight: 800; }
 .cw-stat-line .cw-up, .cw-stat-line .cw-down { width: 1em; height: 1em; }
+/* A worn card against itself repaired: the lost part of each bar stays as a ghost, the old figure struck through. */
+.cw-stat-bar { position: relative; }
+.cw-stat-bar .cw-stat-ghost { position: absolute; inset: 0 auto 0 0; opacity: 0.28; }
+.cw-stat-bar i:not(.cw-stat-ghost) { position: relative; }
+.cw-stat-line.cw-stat-fresh { grid-template-columns: 1.15em minmax(0, auto) minmax(18px, 1fr) auto; }
+.cw-stat-line.cw-stat-fresh b { min-width: 2.1em; white-space: nowrap; }
+.cw-stat-line.cw-stat-worn b { color: hsl(var(--destructive)); }
+.cw-stat-line s { margin-right: 0.4em; font-weight: 600; color: hsl(var(--muted-foreground)); text-decoration-thickness: 1px; }
 .cw-stat-line.cw-stat-live { border-color: hsl(var(--accent)); background: hsl(var(--accent) / 0.18); }
 
 .cw-meter { display: flex; align-items: center; gap: 3cqw; }
@@ -286,6 +294,12 @@ button.cw-card:disabled { cursor: default; }
 .cw-struck { animation: cw-shake 0.5s 0.2s ease-in-out; }
 /* The hit lights the table. */
 .cw-phase-clash::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(50% 40% at 50% 45%, hsl(0 0% 100% / 0.5), transparent 70%); animation: cw-flash 0.5s 0.22s ease-out both; }
+/* The Marketplace's coin, in a dialog rather than on the table. */
+.cw-coin.cw-coin-lg { width: 92px; }
+.cw-sale { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-block: 18px 6px; text-align: center; min-height: 190px; }
+.cw-sale-side { font-size: 12px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; animation: cw-win 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.cw-sale-heads { color: hsl(var(--stat-improvement)); }
+.cw-sale-tails { color: hsl(var(--destructive)); }
 /* Coin flip: a steel coin tossed over the table, best side or worst side up. */
 .cw-mid-coin { gap: 10px; }
 .cw-coin { --turns: 5; display: block; width: clamp(44px, 16cqw, 64px); aspect-ratio: 1; perspective: 400px; animation: cw-toss 1.35s cubic-bezier(0.3, 0, 0.3, 1) both; }
@@ -576,7 +590,7 @@ button.cw-card:disabled { cursor: default; }
 @keyframes cw-beam-down { 0% { transform: translateY(-50px) scale(0.5); opacity: 0; } 30% { opacity: 0.5; } 75%, 100% { transform: none; opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .cw-arena-page *, .cw-result *, .cw-won *, .cw-pop, .cw-plate-big, .cw-rpm b, .cw-spin-track, .cw-reward-back > button.cw-card, .cw-event, .cw-event *, .cw-beaming, .cw-beam-in { animation: none !important; }
+  .cw-arena-page *, .cw-result *, .cw-won *, .cw-sale *, .cw-pop, .cw-plate-big, .cw-rpm b, .cw-spin-track, .cw-reward-back > button.cw-card, .cw-event, .cw-event *, .cw-beaming, .cw-beam-in { animation: none !important; }
   .cw-beaming::before, .cw-beam-in::before { display: none; }
   .cw-reward-position, .cw-reward-flipper, .cw-meter-fill, .cw-card, .cw-reel-track, .cw-charred, .cw-tag { transition: none !important; }
 }

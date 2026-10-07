@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpCircle, Coins, Store } from 'lucide-react';
+import { ArrowUpCircle, Coins } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { isThermal } from '@/lib/thermal';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { eventSound } from '@/lib/appSound';
@@ -10,6 +12,7 @@ import { CATALOG, categoryOf, type ShopCategory } from '../lib/catalog';
 import { MARKETPLACE, TRADE_UP, showRpm } from '../lib/rules';
 import { sellCard, tradeUp, useShop } from '../lib/shop';
 import { REEL_LABELS } from '../lib/spinText';
+import { Coin } from './Coin';
 import { CwCard } from './CwCard';
 import { shelfLabel } from './ShopPage';
 import { SpinPanel } from './SpinPanel';
@@ -40,7 +43,18 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
   const shop = useShop();
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
-  const [flip, setFlip] = useState<{ heads: boolean; rpm: number; name: string } | null>(null);
+  const [tab, setTab] = useState<'sell' | 'up'>('sell');
+  /** A sale: the coin is in the air until `landed`, then what it paid shows. */
+  const [flip, setFlip] = useState<{ heads: boolean; rpm: number; name: string; landed: boolean } | null>(null);
+  useEffect(() => {
+    if (!flip || flip.landed) return;
+    const t = setTimeout(() => {
+      setFlip((f) => (f ? { ...f, landed: true } : f));
+      haptics.light();
+      eventSound(flip.heads ? 'success' : 'coin');
+    }, 1450);
+    return () => clearTimeout(t);
+  }, [flip]);
   /** The five for a trade-up: ids, a card named once for each copy given. */
   const [picked, setPicked] = useState<string[]>([]);
 
@@ -68,7 +82,8 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
     }
     haptics.light();
     eventSound('coin');
-    setFlip({ heads: res.heads, rpm: res.rpm, name });
+    const still = isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setFlip({ heads: res.heads, rpm: res.rpm, name, landed: still });
     setPicked((p) => p.filter((x) => x !== id));
   };
 
@@ -92,28 +107,62 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
   const enough = total - TRADE_UP.cards >= TRADE_UP.keep;
 
   return (
-    <div className="space-y-5 mt-4">
+    <div className="space-y-4 mt-4">
+      <div role="tablist" aria-label={tr("Blacktop Marketplace")} className="flex rounded-xl border border-accent/40 bg-background/60 p-0.5 text-sm">
+        {(
+          [
+            ['sell', tr("Sell"), Coins],
+            ['up', tr("Trade up"), ArrowUpCircle],
+          ] as const
+        ).map(([id, label, Icon]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            className={cn('flex-1 min-h-11 flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors', tab === id ? 'bg-accent text-accent-foreground' : 'text-accent/80')}
+            onClick={() => setTab(id)}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <Dialog open={!!flip} onOpenChange={(v) => !v && flip?.landed && setFlip(null)}>
+        <DialogContent className="max-w-xs">
+          {flip && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{flip.landed ? tr("{0} sold.", [flip.name]) : tr("Selling {0}", [flip.name])}</DialogTitle>
+                <DialogDescription>{tr("Heads pays {0}% of its price, tails {1}%.", [MARKETPLACE.high * 100, MARKETPLACE.low * 100])}</DialogDescription>
+              </DialogHeader>
+              <div className="cw-sale" role="status">
+                <Coin heads={flip.heads} className="cw-coin-lg" />
+                {flip.landed && (
+                  <>
+                    <p className={cn('cw-sale-side', flip.heads ? 'cw-sale-heads' : 'cw-sale-tails')}>{flip.heads ? tr("Heads") : tr("Tails")}</p>
+                    <p className="cw-won-figure font-mono">
+                      <Coins aria-hidden />
+                      {tr("+{0} RPM", [showRpm(flip.rpm)])}
+                    </p>
+                    {shop.balance !== null && <p className="cw-won-caption font-mono">{tr("You have {0} RPM", [showRpm(shop.balance)])}</p>}
+                  </>
+                )}
+              </div>
+              <Button className="w-full h-12" disabled={!flip.landed} onClick={() => setFlip(null)}>
+                {tr("Done")}
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {tab === 'sell' && (
       <section className="cw-panel">
-        <div className="flex items-start gap-3">
-          <div className="cw-emblem cw-emblem-sm">
-            <Store />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{tr("Blacktop Marketplace")}</p>
-            <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-              {tr("Sell a card to the house on a coin flip: heads pays {0}% of its price, tails {1}%.", [MARKETPLACE.high * 100, MARKETPLACE.low * 100])}
-            </p>
-          </div>
-        </div>
-        {flip && (
-          <div className="cw-won" role="status">
-            <p className="cw-won-figure font-mono">
-              <Coins aria-hidden />
-              {flip.heads ? tr("Heads · +{0} RPM", [showRpm(flip.rpm)]) : tr("Tails · +{0} RPM", [showRpm(flip.rpm)])}
-            </p>
-            <p className="cw-won-caption">{tr("{0} sold.", [flip.name])}</p>
-          </div>
-        )}
+        <p className="text-xs text-muted-foreground leading-snug">
+          {tr("Sell a card to the house on a coin flip: heads pays {0}% of its price, tails {1}%.", [MARKETPLACE.high * 100, MARKETPLACE.low * 100])}
+        </p>
         <p className="text-xs font-mono text-muted-foreground">
           {left === 0 ? tr("No sales left today. Back tomorrow.") : left === 1 ? tr("1 sale left today") : tr("{0} sales left today", [left])}
           {total <= MARKETPLACE.keep && left > 0 && <> · {tr("You keep at least five cards for a deck.")}</>}
@@ -140,19 +189,13 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
           </div>
         )}
       </section>
+      )}
 
+      {tab === 'up' && (
       <section className="cw-panel">
-        <div className="flex items-start gap-3">
-          <div className="cw-emblem cw-emblem-sm">
-            <ArrowUpCircle />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{tr("Trade up")}</p>
-            <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-              {tr("Pick five cards of one tier. They're traded for one spin: a card from the next tier up, a dog tag, a free spin or RPM.")}
-            </p>
-          </div>
-        </div>
+        <p className="text-xs text-muted-foreground leading-snug">
+          {tr("Pick five cards of one tier. They're traded for one spin: a card from the next tier up, a dog tag, a free spin or RPM.")}
+        </p>
         {!enough ? (
           <p className="text-sm text-muted-foreground">{tr("A trade-up takes five cards and leaves you five for a deck, so it needs ten.")}</p>
         ) : (
@@ -216,6 +259,7 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
           </>
         )}
       </section>
+      )}
     </div>
   );
 }

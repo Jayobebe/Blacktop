@@ -39,21 +39,26 @@ function Meter({ value, tone, label, text }: { value: number; tone: 'health' | '
 }
 
 /** Every rating a card shows, as labelled bars (inside a full card, or on their own beside one). */
-export function StatBars({ card, highlight, compareTo, className }: { card: BattleCard; highlight?: Category | null; compareTo?: BattleCard; className?: string }) {
+export function StatBars({ card, highlight, compareTo, fresh, className }: { card: BattleCard; highlight?: Category | null; compareTo?: BattleCard; /** The same card unworn: a rating wear has cut shows both figures. */ fresh?: BattleCard; className?: string }) {
   return (
     <div className={cn('cw-stat-list', className)}>
       {categoriesOf(card).map((c) => {
         const Icon = CATEGORY_ICON[c];
         const other = compareTo && categoriesOf(compareTo).includes(c) ? compareTo.ratings[c] : null;
         const d = other === null ? 0 : card.ratings[c] - other;
+        const was = fresh && fresh.ratings[c] > card.ratings[c] ? fresh.ratings[c] : null;
         return (
-          <div key={c} className={cn('cw-stat-line', highlight === c && 'cw-stat-live')}>
+          <div key={c} className={cn('cw-stat-line', highlight === c && 'cw-stat-live', fresh && 'cw-stat-fresh', was !== null && 'cw-stat-worn')}>
             <Icon aria-hidden />
             <span className="cw-stat-label">{categoryLabel(c)}</span>
             <span className="cw-stat-bar" aria-hidden>
+              {was !== null && <i className="cw-stat-ghost" style={{ width: `${was}%` }} />}
               <i style={{ width: `${card.ratings[c]}%` }} />
             </span>
-            <b className="font-mono">{card.ratings[c]}</b>
+            <b className="font-mono">
+              {was !== null && <s aria-label={tr("{0} when repaired", [was])}>{was}</s>}
+              {card.ratings[c]}
+            </b>
             {d !== 0 && (d > 0 ? <ArrowUp className="cw-up" aria-label={tr("Higher")} /> : <ArrowDown className="cw-down" aria-label={tr("Lower")} />)}
           </div>
         );
@@ -75,6 +80,8 @@ export interface CwCardProps {
   highlight?: Category | null;
   /** Arrows against this card (choosing a replacement). */
   compareTo?: BattleCard;
+  /** The same card unworn: the full card shows each rating wear has cut beside what it was. */
+  fresh?: BattleCard;
   faceDown?: boolean;
   /** The card has left its place (it's in the middle of the table): only its outline stays. */
   away?: boolean;
@@ -85,7 +92,7 @@ export interface CwCardProps {
 }
 
 export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
-  { card, size = 'tile', hp, showCondition = false, selected = false, disabled = false, highlight, compareTo, faceDown = false, away = false, onClick, badge, className },
+  { card, size = 'tile', hp, showCondition = false, selected = false, disabled = false, highlight, compareTo, fresh, faceDown = false, away = false, onClick, badge, className },
   ref,
 ) {
   const tier = tierOf(card);
@@ -175,7 +182,7 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
         </div>
       )}
 
-      {size === 'full' && <StatBars card={card} highlight={highlight} compareTo={compareTo} />}
+      {size === 'full' && <StatBars card={card} highlight={highlight} compareTo={compareTo} fresh={fresh} />}
 
       {hp !== undefined && (
         <Meter value={hp} tone={hp <= 25 ? 'low' : hp <= 50 ? 'mid' : 'health'} label={tr("{0} health", [card.name])} text={size === 'thumb' ? hp : tr("{0} HP", [hp])} />

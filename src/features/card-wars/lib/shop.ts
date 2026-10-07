@@ -227,12 +227,13 @@ export async function arcadeReward(game: 'hit-heavy' | 'petrol-head', best: bool
   return d.rpm;
 }
 
-/** Restores a worn card to 100% condition. Server-checked; the price is rules.ts `repairCost`. */
-export async function repairCard(id: string): Promise<string | null> {
+/** Restores a worn card to 100% condition, or to `to` (60, the part repair). Server-checked; the price is rules.ts `repairCost`. */
+export async function repairCard(id: string, to = 100): Promise<string | null> {
   if (demoBlocked()) return 'demo';
   if (!(await flushPendingWear())) return 'Condition save pending';
-  const { data, error } = await rpc('cw_repair', { _card: id });
-  const markNew = () => updateVault({ wear: { ...(getVault().wear || {}), [id]: 100 } });
+  // The full repair goes out as it always has, so a server without the part repair still takes it.
+  const { data, error } = await rpc('cw_repair', to === 100 ? { _card: id } : { _card: id, _to: to });
+  const markNew = (at = 100) => updateVault({ wear: { ...(getVault().wear || {}), [id]: at } });
   // The server holds no wear for this card: it's already at 100%, so drop the stale local figure.
   if (error) {
     if (error.message.includes('not worn')) {
@@ -242,7 +243,7 @@ export async function repairCard(id: string): Promise<string | null> {
     return error.message;
   }
   setRpm((data as { balance: number }).balance);
-  markNew();
+  markNew(to);
   return null;
 }
 

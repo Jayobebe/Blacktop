@@ -52,6 +52,15 @@ export function overall(card: BattleCard): number {
   return rating;
 }
 
+/** The five strongest of these cards, different vehicles first (a player battle needs five different). */
+export function bestFive(cards: BattleCard[]): BattleCard[] {
+  const ranked = [...cards].sort((a, b) => overall(b) - overall(a) || (b.condition ?? 100) - (a.condition ?? 100));
+  const picked: BattleCard[] = [];
+  for (const c of ranked) if (picked.length < 5 && !picked.some((p) => p.archetype === c.archetype)) picked.push(c);
+  for (const c of ranked) if (picked.length < 5 && !picked.includes(c)) picked.push(c);
+  return picked;
+}
+
 /** A deck's strength: the average of its cards. */
 export function deckRating(cards: BattleCard[]): number | null {
   return cards.length ? Math.round(cards.reduce((sum, c) => sum + overall(c), 0) / cards.length) : null;
