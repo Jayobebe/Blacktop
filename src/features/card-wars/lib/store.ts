@@ -1,3 +1,4 @@
+import { REDLINES } from './redline';
 import { useSyncExternalStore } from 'react';
 import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
 import { STARTERS, STARTER_TAGS } from './catalog';
@@ -13,7 +14,7 @@ import { levelRounds } from './rules';
 const KEY = 'bt.card_wars.v1';
 
 const initial = (): VaultState => ({ deck: [], tags: STARTER_TAGS.slice(0, TAG_SLOTS).map((t) => t.id), rewards: [], unlocks: [], run: null });
-const demo = (): VaultState => ({ ...initial(), deck: [...STARTERS] });
+const demo = (): VaultState => ({ ...initial(), deck: [...STARTERS], redlines: REDLINES.slice(0, 7).map((c) => c.id) });
 
 /** What the server needs to know about a finished battle: the deck, which of it fought, and for how many rounds. */
 export const wearReportOf = (run: BattleState): WearReport => ({

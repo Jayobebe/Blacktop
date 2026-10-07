@@ -140,4 +140,6 @@ export interface VaultState {
   pendingWear?: BattleState;
   /** Raptured cards beaming back into the deck, shown once on the home screen. */
   beamIn?: string[];
+  /** The Redline cards held, as the server last listed them: the vault shows them without opening the game. */
+  redlines?: string[];
 }

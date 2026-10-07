@@ -109,6 +109,8 @@ type RedlineRaw = Partial<{ wildcard: boolean; pity: number; wheel: string[]; ow
 const applyRedline = (d: RedlineRaw | null) => {
   if (!d) return;
   set({ ...state, wildcard: !!d.wildcard, redlines: d.owned ?? [], wheel: d.wheel ?? [], wildPity: d.pity ?? 0 });
+  // The vault keeps its own copy, so Redline cards show there without the game being opened.
+  if ((d.owned ?? []).join() !== (getVault().redlines ?? []).join()) updateVault({ redlines: d.owned ?? [] });
 };
 /** What the server holds of the player's Redline cards and Wildcard (nothing before the Redline migration). */
 export async function refreshRedline() {
@@ -251,7 +253,9 @@ export async function claimDaily(): Promise<{ rpm: number; redline: string | nul
   if (error || !data) return { rpm: 0, redline: null };
   const d = data as { rpm: number; balance: number; redline?: string | null };
   // A Wildcard holder's daily win can bring another Redline card.
-  set({ ...state, balance: d.balance, dailyDone: true, redlines: d.redline && !state.redlines.includes(d.redline) ? [...state.redlines, d.redline] : state.redlines });
+  const redlines = d.redline && !state.redlines.includes(d.redline) ? [...state.redlines, d.redline] : state.redlines;
+  set({ ...state, balance: d.balance, dailyDone: true, redlines });
+  if (redlines !== state.redlines) updateVault({ redlines });
   return { rpm: d.rpm, redline: d.redline ?? null };
 }
 

@@ -33,7 +33,7 @@ import { formatSpectreTime as formatChallengeTime, formatSpectreGap as formatDel
 import { tr } from '@/lib/i18n';
 
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
-import { BattleCard, useWonBattleCards } from '@/features/card-wars/collection';
+import { BattleCard, useRedlineCards, useWonBattleCards } from '@/features/card-wars/collection';
 import { StickerControl, StickerPreview, removeStickerFor, setArranging, useStickers } from '@/features/stickers';
 import { useNavigate } from 'react-router-dom';
 import { useCardArt } from '@/hooks/useCardArt';
@@ -45,6 +45,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const { spectres, assignPower } = useSpectreCards();
   const wonCards = useWonBattleCards();
+  const redlineCards = useRedlineCards();
   const stickers = useStickers();
   const navigate = useNavigate();
   // The rider's own vehicle cards always lead the regular row.
@@ -256,6 +257,17 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
           </div>
         ))}
       </CardRow>
+
+      {/* Redline cards: never in a deck, but collected, and each has its sticker. The row is only there once one is held. */}
+      {redlineCards.length > 0 && (
+        <CardRow icon={<Gauge className="w-4 h-4 text-destructive" />} title={tr("Redline cards")} count={redlineCards.length} hint={tr("Redline")} empty="" emptyClass="border-border">
+          {redlineCards.map((card) => (
+            <div key={card.id} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
+              <WonFlipCard card={card} />
+            </div>
+          ))}
+        </CardRow>
+      )}
 
       {/* Spectre row — dog tags, earned only by beating a lap on a Track Day board; no QR, no trading */}
       <CardRow
@@ -498,7 +510,7 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`,
 }
 
 /** A card won in Card Wars: its face, and on the back its sticker. */
-function WonFlipCard({ card }: { card: ReturnType<typeof useWonBattleCards>[number] }) {
+function WonFlipCard({ card }: { card: ReturnType<typeof useWonBattleCards>[number] | ReturnType<typeof useRedlineCards>[number] }) {
   const [flipped, setFlipped] = useState(false);
   return (
     <button
