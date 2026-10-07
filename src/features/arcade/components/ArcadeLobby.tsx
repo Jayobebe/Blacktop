@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Car, Gamepad2, Bike } from 'lucide-react';
+import { Zap, Car, Bike } from 'lucide-react';
 import { useSettings } from '@/features/settings';
 import { useArcadeScores } from '../hooks/useArcadeScores';
 import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
@@ -30,14 +30,8 @@ export function ArcadeLobby() {
           { target: '[data-tip="arcade-cw"]', text: tr("Finishing a game here pays RPM for Card Wars. A personal best pays more.") },
         ]}
       />
-      {/* Header */}
-      <div className="flex items-center justify-center gap-2 px-4 pt-4 pb-3">
-        <Gamepad2 className="w-4 h-4 text-accent" />
-        <h2 className="text-sm font-semibold tracking-tight text-white">{tr("Blacktop Arcade")}</h2>
-      </div>
-
       {/* Game tiles */}
-      <div className="flex-1 grid grid-cols-2 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 px-4 pb-2">
+      <div className="flex-1 grid grid-cols-2 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 pb-2">
         <button
           data-tip="arcade-hit"
           onClick={() => navigate('/arcade/hit-heavy')}

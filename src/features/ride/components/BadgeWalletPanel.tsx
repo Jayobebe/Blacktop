@@ -1,6 +1,7 @@
 import { useCallback, useState, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
-import { Trophy, Sparkles, Gauge, Route, Bike, Orbit, Spline, Moon, Armchair, CalendarDays, Anchor, Repeat, type LucideIcon } from 'lucide-react';
+import { Trophy, Sparkles, Anchor, Repeat } from 'lucide-react';
+import { BADGE_ICON } from '../lib/badgeIcons';
 import { getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { BADGE_ORDER, BADGE_INFO, type BadgeType } from '@/types/convoy';
@@ -14,19 +15,6 @@ function subscribe(cb: () => void) {
   window.addEventListener('blacktop-badges', cb);
   return () => window.removeEventListener('blacktop-badges', cb);
 }
-
-/** Each badge's icon, in the app's own line style (the emoji stay for receipts). */
-const BADGE_ICON: Record<BadgeType, LucideIcon> = {
-  'speed-demon': Gauge,
-  journeyman: Route,
-  'lean-fiend': Bike,
-  'g-lock': Orbit,
-  'corner-carver': Spline,
-  'night-owl': Moon,
-  'hard-ass': Armchair,
-  'always-out': CalendarDays,
-  fallback: Anchor,
-};
 
 /** How a badge is earned, on the back of its box (so it's short). The long-haul distance is in the rider's units. */
 function howToEarn(type: BadgeType | 'kickback', longHaul: string): string {

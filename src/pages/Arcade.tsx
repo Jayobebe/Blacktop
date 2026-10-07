@@ -1,25 +1,11 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { ArcadeLobby } from '@/features/arcade';
 import { tr } from '@/lib/i18n';
 
 export default function Arcade() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom overflow-y-auto">
-      <header className="flex items-center gap-4 mb-4 landscape:mb-3 flex-shrink-0 animate-fade-in">
-        <button
-          onClick={() => navigate('/world')}
-          className="p-2.5 landscape:p-2 rounded-xl bg-card/50 border border-border/30 hover:bg-secondary transition-colors touch-target"
-        >
-          <ArrowLeft className="w-5 h-5 landscape:w-4 landscape:h-4" />
-        </button>
-        <div>
-          <h1 className="text-2xl landscape:text-xl font-semibold tracking-tight">{tr("Blacktop Arcade")}</h1>
-          <p className="text-xs text-muted-foreground">{tr("Games & personal bests")}</p>
-        </div>
-      </header>
+      <PageHeader title={tr("Blacktop Arcade")} subtitle={tr("Games & personal bests")} backTo="/world" />
 
       <div className="flex-1 flex flex-col animate-slide-up delay-100">
         <ArcadeLobby />

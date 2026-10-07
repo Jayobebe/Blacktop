@@ -299,7 +299,6 @@ export default function Garage() {
       {!activeBike ? (
         <div className="flex-1 flex items-center justify-center text-center p-6">
           <div>
-            <p className="text-muted-foreground mb-4">{tr("Your garage is empty.")}</p>
             <Button onClick={() => setAddOpen(true)} className="gap-1">
               <Plus className="w-4 h-4" />{" "}{tr("Add a vehicle")}
             </Button>

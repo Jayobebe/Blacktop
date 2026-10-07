@@ -1,3 +1,4 @@
+import { BADGE_ICON } from '@/features/ride/lib/badgeIcons';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -922,9 +923,9 @@ export default function DemoRide() {
 
             <div className="space-y-3">
               {[
-                { emoji: '⚡', label: tr("Speed Demon"), desc: tr("Highest top speed"), name: demoName || 'You', color: 'yellow' },
-                { emoji: '🛣️', label: tr("Journeyman"), desc: tr("Most distance covered"), name: 'Marcus', color: 'blue' },
-                { emoji: '🪨', label: tr("Fallback"), desc: tr("Longest stationary"), name: 'Jake', color: 'stone' },
+                { type: 'speed-demon' as const, label: tr("Speed Demon"), desc: tr("Highest top speed"), name: demoName || 'You', color: 'yellow' },
+                { type: 'journeyman' as const, label: tr("Journeyman"), desc: tr("Most distance covered"), name: 'Marcus', color: 'blue' },
+                { type: 'fallback' as const, label: tr("Fallback"), desc: tr("Longest stationary"), name: 'Jake', color: 'stone' },
               ].map((badge, i) => (
                 <div
                   key={i}
@@ -942,7 +943,10 @@ export default function DemoRide() {
                     badge.color === 'blue' && "bg-blue-500/20",
                     badge.color === 'stone' && "bg-stone-500/20"
                   )}>
-                    {badge.emoji}
+                    {(() => {
+                      const Icon = BADGE_ICON[badge.type];
+                      return <Icon className="w-5 h-5" aria-hidden />;
+                    })()}
                   </div>
                   <div className="flex-1">
                     <p className={cn(
@@ -1053,9 +1057,9 @@ export default function DemoRide() {
               
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { emoji: '⚡', count: 3, color: 'yellow' },
-                  { emoji: '🛣️', count: 2, color: 'blue' },
-                  { emoji: '🪨', count: 1, color: 'stone' },
+                  { type: 'speed-demon' as const, count: 3, color: 'yellow' },
+                  { type: 'journeyman' as const, count: 2, color: 'blue' },
+                  { type: 'fallback' as const, count: 1, color: 'stone' },
                 ].map((badge, i) => (
                   <div
                     key={i}
@@ -1066,7 +1070,10 @@ export default function DemoRide() {
                       badge.color === 'stone' && "bg-stone-500/10 border-stone-500/20"
                     )}
                   >
-                    <span className="text-2xl mb-1">{badge.emoji}</span>
+                    {(() => {
+                      const Icon = BADGE_ICON[badge.type];
+                      return <Icon className="w-6 h-6 mb-1.5" aria-hidden />;
+                    })()}
                     <span className="font-mono text-xl font-semibold">{badge.count}</span>
                   </div>
                 ))}

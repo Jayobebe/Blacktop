@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConvoyMemberInfo, calculateBadges, BADGE_INFO, BADGE_ORDER, MemberBadge, BadgeType } from '@/types/convoy';
 import { Button } from '@/components/ui/button';
 import { Crown, User, Download, Check } from 'lucide-react';
+import { BADGE_ICON } from '../lib/badgeIcons';
 import { cn } from '@/lib/utils';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { useSettings } from '@/features/settings';
@@ -16,7 +17,7 @@ import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { GForceCircle } from '@/components/GForceCircle';
 import { MechaNickStamp } from './MechaNickStamp';
-import type { GMax } from '@/lib/gForceVector';
+import type { GMax } from '@/lib/gForceVector';
 import { PEAK_HIDDEN, usePeaksHidden } from '../lib/telemetryPrivacy';
 
 interface RideStats {
@@ -352,7 +353,10 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                   >
                     <span className="receipt-bracket-tr" />
                     <span className="receipt-bracket-bl" />
-                     <div className="text-base leading-none mb-1">{badge.emoji}</div>
+                     <div className="flex justify-center mb-1">{(() => {
+                       const Icon = BADGE_ICON[badge.type];
+                       return <Icon className="w-4 h-4" strokeWidth={2.2} aria-hidden />;
+                     })()}</div>
                      <div className="text-[9px] uppercase font-bold leading-tight break-words">
                       {badge.label}
                     </div>
