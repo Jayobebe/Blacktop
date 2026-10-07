@@ -675,6 +675,8 @@ export type Database = {
           last_rapture: string | null
           last_topup: string | null
           last_wear_run: string | null
+          market_count: number
+          market_day: string | null
           prize_due: boolean
           reward_count: number
           reward_day: string | null
@@ -697,6 +699,8 @@ export type Database = {
           last_rapture?: string | null
           last_topup?: string | null
           last_wear_run?: string | null
+          market_count?: number
+          market_day?: string | null
           prize_due?: boolean
           reward_count?: number
           reward_day?: string | null
@@ -719,6 +723,8 @@ export type Database = {
           last_rapture?: string | null
           last_topup?: string | null
           last_wear_run?: string | null
+          market_count?: number
+          market_day?: string | null
           prize_due?: boolean
           reward_count?: number
           reward_day?: string | null
@@ -942,16 +948,19 @@ export type Database = {
         Row: {
           bought_at: string
           card_id: string
+          copies: number
           user_id: string
         }
         Insert: {
           bought_at?: string
           card_id: string
+          copies?: number
           user_id: string
         }
         Update: {
           bought_at?: string
           card_id?: string
+          copies?: number
           user_id?: string
         }
         Relationships: [
@@ -997,6 +1006,24 @@ export type Database = {
           category?: string
           count?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      cw_stake_wins: {
+        Row: {
+          day: string
+          loser: string
+          winner: string
+        }
+        Insert: {
+          day?: string
+          loser: string
+          winner: string
+        }
+        Update: {
+          day?: string
+          loser?: string
+          winner?: string
         }
         Relationships: []
       }
@@ -2083,6 +2110,7 @@ export type Database = {
       }
       cw_build_rules: { Args: never; Returns: Json }
       cw_buy: { Args: { _card: string }; Returns: Json }
+      cw_card_count: { Args: { _u: string }; Returns: number }
       cw_check_slots: {
         Args: { _tags: string[]; _user: string }
         Returns: undefined
@@ -2105,8 +2133,11 @@ export type Database = {
       cw_daily_state: { Args: never; Returns: Json }
       cw_daily_topup: { Args: { _u: string }; Returns: undefined }
       cw_flip: { Args: never; Returns: boolean }
+      cw_grant_card: { Args: { _card: string; _u: string }; Returns: boolean }
       cw_is_race: { Args: { _card: string }; Returns: boolean }
       cw_level_rules: { Args: never; Returns: Json }
+      cw_market_rules: { Args: never; Returns: Json }
+      cw_market_sell: { Args: { _card: string }; Returns: Json }
       cw_my_wear: {
         Args: never
         Returns: {
@@ -2191,6 +2222,7 @@ export type Database = {
         Args: { _kind: string; _power: number; _ref: string }
         Returns: number
       }
+      cw_take_card: { Args: { _card: string; _u: string }; Returns: boolean }
       cw_trade_cancel: { Args: { _trade: string }; Returns: Json }
       cw_trade_list: { Args: { _card: string }; Returns: Json }
       cw_trade_offer: { Args: { _code: string; _rpm: number }; Returns: Json }
@@ -2199,6 +2231,7 @@ export type Database = {
         Returns: Json
       }
       cw_trade_sweep: { Args: never; Returns: undefined }
+      cw_trade_up: { Args: { _cards: string[] }; Returns: Json }
       cw_trade_view: { Args: { _code: string }; Returns: Json }
       cw_trade_withdraw: { Args: { _offer: string }; Returns: Json }
       cw_trades_mine: { Args: never; Returns: Json }
