@@ -12,6 +12,7 @@ import { CATALOG, categoryOf, type ShopCategory } from '../lib/catalog';
 import { MARKETPLACE, TRADE_UP, showRpm } from '../lib/rules';
 import { sellCard, tradeUp, useShop } from '../lib/shop';
 import { REEL_LABELS } from '../lib/spinText';
+import { useVault } from '../lib/store';
 import { Coin } from './Coin';
 import { CwCard } from './CwCard';
 import { shelfLabel } from './ShopPage';
@@ -41,6 +42,9 @@ function refusal(message: string, fallback: string): string {
  */
 export function Marketplace({ disabled }: { disabled?: boolean }) {
   const shop = useShop();
+  // Cards fielded right now carry an In deck pill, so nobody sells or trades one away by mistake.
+  const { deck } = useVault();
+  const inDeck = (id: string) => deck.includes(id);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [tab, setTab] = useState<'sell' | 'up'>('sell');
@@ -176,7 +180,7 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
               const price = c.price ?? 0;
               return (
                 <div key={c.id} className="space-y-1.5">
-                  <CwCard card={c} badge={n > 1 ? `×${n}` : undefined} />
+                  <CwCard card={c} badge={inDeck(c.id) ? (n > 1 ? `${tr("In deck")} · ×${n}` : tr("In deck")) : n > 1 ? `×${n}` : undefined} />
                   <p className="text-[10.5px] text-muted-foreground font-mono leading-tight text-center">
                     {tr("{0} or {1} RPM", [showRpm(Math.max(1, Math.round(price * MARKETPLACE.low))), showRpm(Math.max(1, Math.round(price * MARKETPLACE.high)))])}
                   </p>
@@ -210,7 +214,7 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
                     card={c}
                     selected={given > 0}
                     disabled={busy || disabled}
-                    badge={given > 0 ? tr("{0} of {1}", [given, n]) : n > 1 ? `×${n}` : undefined}
+                    badge={given > 0 ? tr("{0} of {1}", [given, n]) : inDeck(c.id) ? (n > 1 ? `${tr("In deck")} · ×${n}` : tr("In deck")) : n > 1 ? `×${n}` : undefined}
                     onClick={() => toggle(c.id)}
                     className={cn(full && given === 0 && 'opacity-50')}
                   />
