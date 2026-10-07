@@ -2159,7 +2159,8 @@ export type Database = {
         Returns: undefined
       }
       cw_prize_rules: { Args: never; Returns: Json }
-      cw_repair: { Args: { _card: string }; Returns: Json }
+      cw_repair: { Args: { _card: string; _to?: number }; Returns: Json }
+      cw_repair_rules: { Args: never; Returns: Json }
       cw_report_wear: {
         Args: {
           _deck: string[]
