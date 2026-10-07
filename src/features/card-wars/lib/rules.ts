@@ -126,6 +126,22 @@ export function wearLoss(race: boolean, rounds: number): number {
   return Math.min(WEAR_ROUND.cap, rounds * (race ? WEAR_ROUND.race : WEAR_ROUND.road) + Math.max(0, rounds - WEAR_ROUND.past) * WEAR_ROUND.extra);
 }
 
+/**
+ * A spin's card by tier (migration 20261023000000_card_wars_spin_tiers.sql). The tier is drawn first, then a
+ * card of it: the tiers a shelf has are weighted by rank, the top one 1, the next 2, and so on down, so the
+ * lowest tier on a shelf is the likeliest and the highest the least. The server tells a card's tier from its
+ * price (`cw_card_tier`), which follows its rating: `from` are its lines, Silver upwards.
+ */
+export const SPIN_TIERS = { from: [50, 80, 125, 210, 350] } as const;
+/** 1 (Bronze) to 6 (Obsidian). */
+export const tierOfPrice = (price: number): number => 1 + SPIN_TIERS.from.filter((p) => price >= p).length;
+/** The chance of each tier when a spin on a shelf lands a card, lowest tier first (shares add up to 1). */
+export function tierOdds(prices: number[]): { tier: number; share: number }[] {
+  const tiers = Array.from(new Set(prices.map(tierOfPrice))).sort((a, b) => a - b);
+  const total = (tiers.length * (tiers.length + 1)) / 2;
+  return tiers.map((tier, i) => ({ tier, share: (tiers.length - i) / total }));
+}
+
 /** A part repair stops here: clear of the 50% line where ratings start to fade. */
 export const REPAIR_PART = 60;
 

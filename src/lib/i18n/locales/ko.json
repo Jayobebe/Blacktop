@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "처음 다섯 장은 Wildcard와 함께 옵니다. 그 뒤에는 일일 챌린지에서 이기면 {0}분의 1 확률로 한 장 더 받고, 빌더의 코드로 그 머신을 잠금 해제합니다.",
  "{0} of {1} collected": "{1}장 중 {0}장 수집",
  "{0} {1} is in": "{0} {1} 등장",
- "{0} {1} is yours": "{0} {1} 획득"
+ "{0} {1} is yours": "{0} {1} 획득",
+ "When a spin lands a card, the lower tiers come up more often:": "스핀에서 카드가 나올 때는 낮은 티어일수록 더 자주 나옵니다:"
 }

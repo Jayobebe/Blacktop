@@ -2,8 +2,8 @@ import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, prizesFor, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
-import { fieldStrength } from '../src/features/card-wars/lib/strength';
+import { LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, tierOdds, tierOfPrice, wearLoss } from '../src/features/card-wars/lib/rules';
+import { fieldStrength, ratingFromStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import { REDLINE, REDLINES, WILD_TAG } from '../src/features/card-wars/lib/redline';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
@@ -196,6 +196,18 @@ const trials = 400;
   const expected = tagStrength(tag, fresh().player[0]) / 100;
   assert.ok(Math.abs(heads / trials - expected) < 0.09, `Coin flip landed heads ${heads} of ${trials}, expected about ${expected}`);
   console.log(`Coin flip: heads ${heads} of ${trials} (the tag says ${Math.round(expected * 100)}%)`);
+}
+// ── Spins by tier: the server reads a card's tier from its price, the app's frames from its rating ──
+{
+  const frame = (r: number) => (r >= 90 ? 6 : r >= 80 ? 5 : r >= 70 ? 4 : r >= 60 ? 3 : r >= 50 ? 2 : 1);
+  for (const c of CATALOG) {
+    const rating = ratingFromStrength(fieldStrength(c, CATALOG));
+    assert.equal(tierOfPrice(c.price ?? 0), frame(rating), `${c.id} (rating ${rating}, ${c.price} RPM): its price puts it in another tier than its frame. Move the lines in rules.ts SPIN_TIERS and in cw_card_tier together.`);
+  }
+  const f1 = tierOdds(CATALOG.filter((c) => c.bank === 'f1').map((c) => c.price ?? 0));
+  assert.deepEqual(f1.map((x) => [x.tier, Math.round(x.share * 100)]), [[2, 40], [4, 30], [5, 20], [6, 10]], 'F1: Silver 40, Platinum 30, Diamond 20, Obsidian 10');
+  for (let i = 1; i < f1.length; i++) assert.ok(f1[i].share < f1[i - 1].share, 'The higher the tier, the rarer');
+  console.log(`Spin tiers: F1 ${f1.map((x) => Math.round(x.share * 100) + '%').join(' / ')} from the lowest tier up`);
 }
 // ── Redline cards and the Wildcard ──
 {

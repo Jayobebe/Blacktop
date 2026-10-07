@@ -11,13 +11,17 @@ import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { BANK_INFO, CATALOG, SHELVES, SPECS, SPIN_COST, categoryOf, type ShopCategory } from '../lib/catalog';
-import { COPIES, RULES, showRpm } from '../lib/rules';
+import { TIER_LADDER } from '@/features/cards/types';
+import { COPIES, RULES, showRpm, tierOdds } from '../lib/rules';
 import { buyCard, refreshShop, spin, useShop } from '../lib/shop';
 import { REEL_LABELS } from '../lib/spinText';
 import { CwCard } from './CwCard';
 import { Marketplace } from './Marketplace';
 import { RpmPill } from './RpmPill';
 import { SpinPanel } from './SpinPanel';
+
+/** The frames a catalogue card can wear, lowest first (`tierOfPrice` counts from 1). */
+const SPIN_TIER_IDS = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'obsidian'] as const;
 
 /** A shelf's name. The racing series keep their own. */
 export function shelfLabel(id: ShopCategory): string {
@@ -55,7 +59,10 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
   const bonus = shop.spins[shelf] ?? 0;
   const balance = shop.balance ?? 0;
   const redlineOn = useServerCap('cardWarsRedline');
+  const tiersOn = useServerCap('cardWarsTiers');
   const cards = useMemo(() => CATALOG.filter((c) => categoryOf(c) === shelf).sort((a, b) => (a.price ?? 0) - (b.price ?? 0)), [shelf]);
+  // Which tier a card from this shelf's wheel is likely to be: the lowest most, the highest least.
+  const tierChances = useMemo(() => tierOdds(cards.map((c) => c.price ?? 0)), [cards]);
   const ownedHere = cards.filter((c) => shop.owned.includes(c.id)).length;
   const from = cards[0]?.price ?? 0;
   const to = cards[cards.length - 1]?.price ?? 0;
@@ -136,6 +143,18 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
               <span>{tr("Spin {0}%", [RULES.odds.spin])}</span>
               <span>{tr("RPM {0}%", [RULES.odds.rpm])}</span>
             </p>
+            {tiersOn && tierChances.length > 1 && (
+              <>
+                <p className="text-[11px] text-muted-foreground leading-snug text-center">{tr("When a spin lands a card, the lower tiers come up more often:")}</p>
+                <p className="cw-odds font-mono">
+                  {tierChances.map(({ tier, share }) => (
+                    <span key={tier}>
+                      {TIER_LADDER.find((t) => t.id === SPIN_TIER_IDS[tier - 1])?.label} {Math.round(share * 100)}%
+                    </span>
+                  ))}
+                </p>
+              </>
+            )}
             {redlineOn && (shelf === 'f1' || shelf === 'motogp') && !shop.wildcard && (
               <p className="text-[11px] text-muted-foreground leading-snug text-center">
                 <b className="text-destructive">{tr("Wildcard dog tag: {0}% on a paid spin.", [REDLINE.odds])}</b>{' '}

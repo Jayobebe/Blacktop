@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "最初の5枚はWildcardと一緒に手に入ります。その後は、デイリーチャレンジに勝つと{0}分の1の確率でもう1枚、ビルダーのコードでそのマシンが解放されます。",
  "{0} of {1} collected": "{1}枚中{0}枚を収集",
  "{0} {1} is in": "{0} {1} が登場",
- "{0} {1} is yours": "{0} {1} を手に入れました"
+ "{0} {1} is yours": "{0} {1} を手に入れました",
+ "When a spin lands a card, the lower tiers come up more often:": "スピンでカードが出るとき、低いティアほど出やすくなります:"
 }

@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "Deine ersten fünf kommen mit der Wildcard. Danach gibt ein Sieg in der Tagesaufgabe eine Chance von eins zu {0} auf eine weitere, und der Code eines Erbauers schaltet dessen Maschine frei.",
  "{0} of {1} collected": "{0} von {1} gesammelt",
  "{0} {1} is in": "{0} {1} ist dabei",
- "{0} {1} is yours": "{0} {1} gehört dir"
+ "{0} {1} is yours": "{0} {1} gehört dir",
+ "When a spin lands a card, the lower tiers come up more often:": "Wenn ein Spin eine Karte bringt, kommen die niedrigeren Stufen häufiger:"
 }

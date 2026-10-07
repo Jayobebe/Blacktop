@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "Dine første fem følger med Wildcard. Derefter giver en sejr i dagens udfordring én chance ud af {0} for et til, og en byggers kode låser deres maskine op.",
  "{0} of {1} collected": "{0} af {1} samlet",
  "{0} {1} is in": "{0} {1} er inde",
- "{0} {1} is yours": "{0} {1} er din"
+ "{0} {1} is yours": "{0} {1} er din",
+ "When a spin lands a card, the lower tiers come up more often:": "Når et spin giver et kort, kommer de lavere niveauer oftere:"
 }

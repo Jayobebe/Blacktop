@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "前五张随 Wildcard 一起获得。之后,赢得每日挑战有 {0} 分之一的机会再得一张,改装者的代码可解锁他们的机器。",
  "{0} of {1} collected": "已收集 {0} / {1}",
  "{0} {1} is in": "{0} {1} 上场",
- "{0} {1} is yours": "{0} {1} 归你了"
+ "{0} {1} is yours": "{0} {1} 归你了",
+ "When a spin lands a card, the lower tiers come up more often:": "抽奖抽到卡片时,等级越低越容易出现:"
 }

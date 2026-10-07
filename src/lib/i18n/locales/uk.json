@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "Перші п'ять приходять разом із Wildcard. Далі перемога в щоденному випробуванні дає шанс один до {0} на ще одну, а код конструктора відкриває його машину.",
  "{0} of {1} collected": "Зібрано {0} з {1}",
  "{0} {1} is in": "{0} {1} у грі",
- "{0} {1} is yours": "{0} {1} тепер твоя"
+ "{0} {1} is yours": "{0} {1} тепер твоя",
+ "When a spin lands a card, the lower tiers come up more often:": "Коли спін дає картку, нижчі рівні випадають частіше:"
 }

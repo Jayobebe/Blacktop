@@ -4442,5 +4442,6 @@
  "Your first five come with the Wildcard. After that, winning the daily challenge is a one in {0} shot at another, and a builder's code unlocks their machine.": "आपके पहले पाँच Wildcard के साथ आते हैं। उसके बाद, दैनिक चुनौती जीतने पर {0} में एक मौका होता है दूसरा पाने का, और बिल्डर का कोड उसकी मशीन खोलता है।",
  "{0} of {1} collected": "{1} में से {0} जमा",
  "{0} {1} is in": "{0} {1} मैदान में",
- "{0} {1} is yours": "{0} {1} अब आपका है"
+ "{0} {1} is yours": "{0} {1} अब आपका है",
+ "When a spin lands a card, the lower tiers come up more often:": "जब स्पिन में कार्ड निकलता है, तो निचले टियर ज़्यादा बार आते हैं:"
 }
