@@ -149,10 +149,12 @@ export default function World() {
     for (const r of countryRows ?? []) if (r.riders > 0) lights[r.country] = r.riders;
     return lights;
   }, [countryRows]);
-  const lights = demoEnabled ? DEMO_COUNTRY_LIGHTS : byCountry ? accountLights : countryLights;
+  // Until some accounts have been counted the globe keeps its old glow (who's riding now): a dark globe looks broken.
+  const counted = Object.keys(accountLights).length > 0;
+  const lights = demoEnabled ? DEMO_COUNTRY_LIGHTS : byCountry && counted ? accountLights : countryLights;
   const countryList = useMemo(
-    () => (demoEnabled || byCountry ? Object.entries(lights).map(([id, n]) => ({ id: Number(id), n })).sort((a, b) => b.n - a.n) : null),
-    [demoEnabled, byCountry, lights],
+    () => (demoEnabled || byCountry ? Object.entries(demoEnabled ? DEMO_COUNTRY_LIGHTS : accountLights).map(([id, n]) => ({ id: Number(id), n })).sort((a, b) => b.n - a.n) : null),
+    [demoEnabled, byCountry, accountLights],
   );
   const [showCountries, setShowCountries] = useState(false);
   const { data: totalPeople = 0 } = useQuery({

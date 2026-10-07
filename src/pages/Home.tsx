@@ -339,8 +339,8 @@ export default function Home() {
   const otherHsl = (secondHsl ?? mainHsl).trim();
   const globeHsl = globeMode === 'world' ? otherHsl : mainHsl;
   const globeColor = `hsl(${globeHsl.split(/\s+/).join(', ')})`;
-  // The band changes colour with its word, halfway through the globe's turn.
-  const bandHsl = bandWord === 'world' ? mainHsl : otherHsl;
+  // The band's colour starts changing with the globe's, on the release, and fades over the same time.
+  const bandHsl = globeMode === 'world' ? mainHsl : otherHsl;
 
   // The rotating globe sits at the junction where the three ride tiles meet.
   // We measure that point at runtime, position/size the globe there, and mask a
@@ -754,7 +754,7 @@ export default function Home() {
                         <Suspense fallback={null}>
                           <HomeGlobe accentColor={globeColor} burst={globeBurst} className="relative w-full h-full" />
                         </Suspense>
-                        <GlobeBanner layer="front" word={bandWord === 'world' ? tr("World") : tr("Map")} color={bandHsl} dim={bandDim} />
+                        <GlobeBanner layer="front" word={bandWord === 'world' ? tr("World") : tr("Map")} color={bandHsl} dim={bandDim} burst={globeBurst} />
                       </div>
                       {/* Accent arc overlay: redraws the circular border segment on Convoy + Solo
                           tiles that the CSS mask clips away, keeping the accent outline continuous. */}
