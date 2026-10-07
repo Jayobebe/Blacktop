@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "一次转盘可能得到这个货架的卡或身份牌、RPM，或再转一次。已拥有的卡会变成多一份；满五份时支付其价格的 25%。已拥有的身份牌会退还半次转盘。",
  "Owned ×{0}": "已拥有 ×{0}",
  "Another for {0} RPM": "再买一张 {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "你已持有五张该卡，因此获得其商店价格 25% 的 RPM。"
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "你已持有五张该卡，因此获得其商店价格 25% 的 RPM。",
+ "Pixel-art cards": "像素风卡片",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "把你的卡片和已扫描卡片上的车辆照片重绘成 Card Wars 的美术风格。你的照片本身不会改变。"
 }

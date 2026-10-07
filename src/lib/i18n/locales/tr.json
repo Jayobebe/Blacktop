@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "Bir çevirme bu raftan bir kart ya da künye, RPM veya bir çevirme daha verebilir. Zaten sahip olduğun kart bir kopya daha olur; beş taneyse fiyatının %25'ini öder. Zaten sahip olduğun künye çevirmenin yarısını geri verir.",
  "Owned ×{0}": "Sahipsin ×{0}",
  "Another for {0} RPM": "Bir tane daha {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "O karttan zaten beş tane var, bu yüzden mağaza fiyatının %25'ini RPM olarak alırsın."
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "O karttan zaten beş tane var, bu yüzden mağaza fiyatının %25'ini RPM olarak alırsın.",
+ "Pixel-art cards": "Piksel sanat kartları",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "Kartlarındaki ve taradığın kartlardaki araç fotoğraflarını Card Wars sanat tarzında yeniden çizer. Fotoğrafların değişmez."
 }

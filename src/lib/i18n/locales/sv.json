@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "Ett snurr kan ge ett kort eller en ID-bricka från den här hyllan, RPM eller ett snurr till. Ett kort du redan äger blir en kopia till; har du fem ger det 25% av priset. En ID-bricka du redan har ger halva snurret tillbaka.",
  "Owned ×{0}": "Ägs ×{0}",
  "Another for {0} RPM": "Ett till för {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "Du har redan fem av det kortet, så du får 25% av butikspriset i RPM."
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "Du har redan fem av det kortet, så du får 25% av butikspriset i RPM.",
+ "Pixel-art cards": "Pixelkonstkort",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "Ritar om fordonsbilderna på dina kort och de du har skannat i Card Wars-stilen. Dina bilder ändras inte."
 }

@@ -25,8 +25,9 @@ export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
       title={tr("Blacktop Radio — hold and drag to move")}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        'relative flex items-center justify-center rounded-lg border touch-none select-none transition-all',
-        'w-11 h-11',
+        'relative flex items-center justify-center rounded-2xl border touch-none select-none transition-all',
+        // The lock button's size and corners (AlarmButton, home): the two sit in Home's header together.
+        'w-12 h-12',
         active ? 'border-accent/70 bg-accent/15' : 'border-accent/30 bg-background',
         dragging && 'scale-110 shadow-glow',
         className,

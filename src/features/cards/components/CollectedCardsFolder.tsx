@@ -36,6 +36,7 @@ import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { BattleCard, useWonBattleCards } from '@/features/card-wars/collection';
 import { StickerControl, StickerPreview, removeStickerFor, setArranging, useStickers } from '@/features/stickers';
 import { useNavigate } from 'react-router-dom';
+import { useCardArt } from '@/hooks/useCardArt';
 
 const SCANNER_ID = 'collected-cards-qr-scanner';
 
@@ -410,7 +411,9 @@ function SpectreResult({ spectre }: { spectre: SpectreCard }) {
 
 /** Tap to flip. Collected cards show their QR on the back; Spectre cards their dog tag (the win, where nothing draws the tag). */
 function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`, image, trend }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string; /** The rider's own card only: lets them frame its picture. */ image?: ImageEdit; /** The rider's own card only: which figures have gone up or down since its last tier. */ trend?: CardTrend }) {
-  const sticker = <StickerControl card={stickerKey} name={card.n} src={card.img} className="shrink-0" />;
+  // The sticker is cut from the picture as the card shows it (the photo, or its pixel-art redraw).
+  const art = useCardArt(card.img);
+  const sticker = <StickerControl card={stickerKey} name={card.n} src={art} className="shrink-0" />;
   const [flipped, setFlipped] = useState(false);
   const [framing, setFraming] = useState(false);
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
@@ -538,6 +541,7 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
   const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
+  const art = useCardArt(card.img);
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const framing = !!image?.framing;
@@ -646,7 +650,7 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
             const placement = card.pl ?? DEFAULT_BIKE_PLACEMENT;
             return (
               <img
-                src={card.img}
+                src={art}
                 alt={card.n}
                 className={cn("absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]", spectre && "spectre-photo")}
                 style={{

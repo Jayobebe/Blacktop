@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "Jedno losowanie może dać kartę lub nieśmiertelnik z tej półki, RPM albo kolejne losowanie. Karta, którą już masz, staje się kolejną kopią; przy pięciu płaci 25% swojej ceny. Nieśmiertelnik, który już masz, zwraca połowę losowania.",
  "Owned ×{0}": "Posiadane ×{0}",
  "Another for {0} RPM": "Kolejna za {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "Masz już pięć sztuk tej karty, więc dostajesz 25% jej ceny sklepowej w RPM."
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "Masz już pięć sztuk tej karty, więc dostajesz 25% jej ceny sklepowej w RPM.",
+ "Pixel-art cards": "Karty w pixel arcie",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "Rysuje na nowo zdjęcia pojazdów na twoich i zeskanowanych kartach w stylu Card Wars. Twoje zdjęcia się nie zmieniają."
 }

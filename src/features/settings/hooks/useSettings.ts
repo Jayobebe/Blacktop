@@ -61,6 +61,8 @@ export interface AppSettings {
   alarmSensitivity: 'low' | 'normal' | 'high';
   /** Interface sounds: taps, toggles, sliders, dialogs and confirmations. Alerts (hazards, cameras, crash check, alarm, directions) sound regardless. */
   uiSoundsEnabled: boolean;
+  /** Riders' vehicle photos on cards (their own and scanned ones) are redrawn in the Card Wars pixel-art look. The photos themselves are untouched. */
+  cardArtStyle: boolean;
   /** When the rider accepted the crash detection disclaimer (ms), or null: auto-rescue can't be on without it. */
   autoRescueAcknowledgedAt: number | null;
   /**
@@ -158,6 +160,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   hazardVoiceEnabled: true,
   alarmSensitivity: 'normal',
   uiSoundsEnabled: true,
+  cardArtStyle: false,
   autoRescueAcknowledgedAt: null,
   logPeakTelemetry: true,
   thermalMode: false,

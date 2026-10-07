@@ -8,6 +8,7 @@ import { BANK_INFO, cardById } from '../lib/catalog';
 import { CATEGORY_ICON, categoriesOf, categoryLabel, isBike, overall, tierOf } from '../lib/ratings';
 import type { BattleCard, Category } from '../types';
 import '../card-wars.css';
+import { useCardArt } from '@/hooks/useCardArt';
 
 /**
  * thumb: a hand in battle (picture, rating, name, health).
@@ -93,6 +94,8 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   const shell = cn('cw-card no-frost', `cw-card-${size}`, `cw-tier-${tier}`, style.bg, style.border, selected && 'cw-card-selected', out && 'cw-card-out', away && 'cw-card-away', className);
   const name = `${card.manufacturer || ''} ${card.name}`.trim();
 
+  // A rider's own or scanned card carries a photo: drawn as it is, or in the set's look (the catalogue's art has it already).
+  const image = useCardArt(faceDown ? undefined : artOf(card));
   if (faceDown) {
     const back = (
       <div className="cw-card-back">
@@ -117,7 +120,6 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   }
 
   const cats = categoriesOf(card);
-  const image = artOf(card);
   const rating = overall(card);
   const delta = compareTo ? rating - overall(compareTo) : 0;
   const Vehicle = isBike(card) ? Bike : Car;

@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "Una tirada puede dar una carta o una placa de este estante, RPM u otra tirada. Una carta que ya tienes se convierte en otra copia; con cinco, paga el 25% de su precio. Una placa que ya tienes devuelve media tirada.",
  "Owned ×{0}": "En propiedad ×{0}",
  "Another for {0} RPM": "Otra por {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "Ya tienes cinco de esa carta, así que recibes el 25% de su precio de tienda en RPM."
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "Ya tienes cinco de esa carta, así que recibes el 25% de su precio de tienda en RPM.",
+ "Pixel-art cards": "Cartas en pixel art",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "Redibuja las fotos de vehículos de tus cartas y de las que has escaneado con el estilo de Card Wars. Tus fotos no cambian."
 }

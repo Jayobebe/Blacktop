@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "1回のスピンで、この棚のカードやドッグタグ、RPM、またはもう1回のスピンが当たります。すでに持っているカードはコピーが1枚増え、5枚あれば価格の25%が支払われます。持っているドッグタグならスピンの半分が戻ります。",
  "Owned ×{0}": "所有 ×{0}",
  "Another for {0} RPM": "もう1枚 {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "そのカードはすでに5枚持っているため、ショップ価格の25%がRPMで支払われます。"
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "そのカードはすでに5枚持っているため、ショップ価格の25%がRPMで支払われます。",
+ "Pixel-art cards": "ピクセルアートカード",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "自分のカードとスキャンしたカードの車両写真を、Card Warsのアートスタイルで描き直します。写真そのものは変更されません。"
 }

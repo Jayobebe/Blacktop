@@ -47,7 +47,7 @@ export function HomeRadioDock() {
   };
 
   return (
-    <div data-radio-dock className="flex items-center justify-center w-11 h-11">
+    <div data-radio-dock className="flex items-center justify-center w-12 h-12">
       {docked ? (
         <RadioOrb
           active={player.isPlaying}
@@ -61,7 +61,7 @@ export function HomeRadioDock() {
         <div
           data-radio-placeholder
           aria-hidden
-          className="w-11 h-11 rounded-lg border border-dashed border-accent/25 opacity-60 transition-all"
+          className="w-12 h-12 rounded-2xl border border-dashed border-accent/25 opacity-60 transition-all"
         />
       )}
     </div>

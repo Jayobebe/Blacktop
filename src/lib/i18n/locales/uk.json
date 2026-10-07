@@ -4372,5 +4372,7 @@
  "One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.": "Одне обертання може дати картку або жетон із цієї полиці, RPM чи ще одне обертання. Картка, яка в тебе вже є, стає ще однією копією; якщо їх п'ять, виплачується 25% її ціни. Жетон, який у тебе вже є, повертає половину обертання.",
  "Owned ×{0}": "У тебе ×{0}",
  "Another for {0} RPM": "Ще одна за {0} RPM",
- "You already hold five of that card, so you get 25% of its shop price in RPM.": "У тебе вже п'ять таких карток, тож ти отримуєш 25% її магазинної ціни в RPM."
+ "You already hold five of that card, so you get 25% of its shop price in RPM.": "У тебе вже п'ять таких карток, тож ти отримуєш 25% її магазинної ціни в RPM.",
+ "Pixel-art cards": "Картки в піксель-арті",
+ "Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.": "Перемальовує фото транспорту на твоїх і сканованих картках у стилі Card Wars. Самі фото не змінюються."
 }

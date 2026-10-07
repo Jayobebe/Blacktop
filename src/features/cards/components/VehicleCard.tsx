@@ -20,6 +20,7 @@ import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
 import { tr } from '@/lib/i18n';
+import { useCardArt } from '@/hooks/useCardArt';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 interface Props {
@@ -34,6 +35,7 @@ export function VehicleCard({ card, editable = true }: Props) {
   const { profile } = useProfile();
   const style = TIER_STYLES[card.tier];
   const locked = card.tier === 'locked';
+  const art = useCardArt(card.bike.photos.hero);
   const [flipped, setFlipped] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
@@ -236,7 +238,7 @@ export function VehicleCard({ card, editable = true }: Props) {
                   const placement = card.bike.placement ?? DEFAULT_BIKE_PLACEMENT;
                   return (
                     <img
-                      src={card.bike.photos.hero}
+                      src={art}
                       alt={card.bike.name}
                       className={cn(
                         'absolute object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]',
