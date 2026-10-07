@@ -5,6 +5,7 @@ draw, public/card-wars/<cars|bikes>/<catalog id>.png.
   python scripts/make-card-wars-art.py bikes <folder>
   python scripts/make-card-wars-art.py cars  <folder>
   python scripts/make-card-wars-art.py even  cars|bikes   (existing files: same pixel size for all)
+  python scripts/make-card-wars-art.py pixel cars|bikes <folder>   (artwork supplied as pixel art already)
 
 <folder> holds <catalog id>.png files (bikes may also be 1.png .. 20.png in
 BIKE_ORDER). Cards draw them pixelated, and every vehicle is about as many
@@ -264,7 +265,7 @@ def level(card, im, block):
     return trim(im.rotate(angle, resample=Image.NEAREST if block > 1 else Image.BICUBIC, expand=True)), float(angle)
 
 
-def style(im, heavy=False):
+def style(im, heavy=False, colours=None, white_from=206):
     """The set's look, on artwork at its real pixel size (one file pixel a pixel): a short palette taken from the
     vehicle's own colours, stray pixels tidied (small lettering goes with them), and a dark line round the outside."""
     a = im.getchannel('A').point(lambda v: 255 if v > 110 else 0)
@@ -280,12 +281,12 @@ def style(im, heavy=False):
     only = [rp[x, y] for y in range(h) for x in range(w) if am[x, y]]
     strip = Image.new('RGB', (max(1, len(only)), 1))
     strip.putdata(only or [(0, 0, 0)])
-    pal = strip.quantize(16 if heavy else 30 if dark else COLOURS, method=Image.MEDIANCUT, dither=Image.NONE)
+    pal = strip.quantize(colours or (16 if heavy else 30 if dark else COLOURS), method=Image.MEDIANCUT, dither=Image.NONE)
     q = rgb.quantize(palette=pal, dither=Image.NONE)
     # Near-white stays white. A few bright pixels (headlights, a number board) are too few to earn a palette colour of
     # their own and would take the nearest one: a yellow, on a lime-green car.
     op = im.convert('RGB').load()
-    white = [(x, y) for y in range(h) for x in range(w) if am[x, y] and min(op[x, y]) >= 206 and max(op[x, y]) - min(op[x, y]) <= 34]
+    white = [(x, y) for y in range(h) for x in range(w) if am[x, y] and min(op[x, y]) >= white_from and max(op[x, y]) - min(op[x, y]) <= 34]
     if heavy:
         q = q.filter(ImageFilter.ModeFilter(3))
     else:
@@ -339,6 +340,60 @@ def finish(card, im, kind):
         down = im.resize(size, Image.NEAREST)
     art = trim(style(down, card in HEAVY))
     return art.resize((art.width * STORE, art.height * STORE), Image.NEAREST), angle
+
+
+PIXEL_COLOURS = 48
+
+
+def native(im, solid=200):
+    """Supplied pixel art (each of its pixels a block of file pixels, with a soft shadow or a faded edge round it) at
+    its real size: one sample from the middle of every block. Only solid pixels are kept, which takes the shadow."""
+    im = trim(im)
+    px = im.load()
+    w, h = im.size
+    block = block_size(im)
+    if block < 2:
+        return im
+    # Where the blocks start: the columns and rows where colours change most often.
+    cols, rows = Counter(), Counter()
+    for y in range(0, h, 2):
+        for x in range(1, w):
+            if px[x, y] != px[x - 1, y]:
+                cols[x % block] += 1
+    for x in range(0, w, 2):
+        for y in range(1, h):
+            if px[x, y] != px[x, y - 1]:
+                rows[y % block] += 1
+    ox, oy = cols.most_common(1)[0][0], rows.most_common(1)[0][0]
+    xs = [x for x in range(ox - block + block // 2, w, block) if x >= 0]
+    ys = [y for y in range(oy - block + block // 2, h, block) if y >= 0]
+    out = Image.new('RGBA', (len(xs), len(ys)))
+    op = out.load()
+    for j, y in enumerate(ys):
+        for i, x in enumerate(xs):
+            r, g, b, a = px[x, y]
+            op[i, j] = (r, g, b, 255) if a >= solid else (0, 0, 0, 0)
+    return trim(out)
+
+
+def pixel(kind, src):
+    """Artwork that arrives as pixel art (the Redline cards): kept at its own pixels, never resampled (bringing 70 or
+    100 pixels up to the set's size only doubles some of them and smears the rest), levelled if listed, then the
+    set's look. No car clean-up: these have no chroma key, and it took dark bodywork for glass and shadow."""
+    out_dir = os.path.join(ROOT, kind)
+    for f in sorted(os.listdir(src)):
+        if not f.endswith('.png') or f.startswith('_'):
+            continue
+        card = f[:-4]
+        im = native(Image.open(os.path.join(src, f)).convert('RGBA'))
+        im, angle = level(card, im, 2)
+        # Coarser than the set and photographic underneath: 20 colours leave blotches at this size (an orange tank
+        # went brown, a truck's lettering went to white patches), so these keep more, and only true white is held white.
+        art = trim(style(im, card in HEAVY, colours=PIXEL_COLOURS, white_from=236))
+        art = art.resize((art.width * STORE, art.height * STORE), Image.NEAREST)
+        out = os.path.join(out_dir, f)
+        art.save(out, optimize=True)
+        print(f'{card}: {art.width // STORE}x{art.height // STORE} pixels, {os.path.getsize(out) // 1024} KB' + (f', levelled {angle:+.1f} deg' if angle else ''))
 
 
 def restyle(kind, only=None):
@@ -396,6 +451,8 @@ if __name__ == '__main__':
         even(sys.argv[2])
     elif len(sys.argv) in (3, 4) and sys.argv[1] == 'restyle' and sys.argv[2] in ('cars', 'bikes'):
         restyle(sys.argv[2], sys.argv[3] if len(sys.argv) == 4 else None)
+    elif len(sys.argv) == 4 and sys.argv[1] == 'pixel' and sys.argv[2] in ('cars', 'bikes'):
+        pixel(sys.argv[2], sys.argv[3])
     elif len(sys.argv) == 3 and sys.argv[1] in ('cars', 'bikes'):
         main(sys.argv[1], sys.argv[2])
     else:
