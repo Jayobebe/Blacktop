@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 import { STARTERS, type ShopCategory } from './catalog';
-import { BUILDS, LEVELS, PACE, RULES, V2 } from './rules';
+import { BUILDS, COPIES, LEVELS, PACE, RULES, V2 } from './rules';
 import type { Level } from '../types';
 import { getVault, updateVault } from './store';
 import { flushPendingWear } from './wear';
@@ -15,6 +15,10 @@ import { flushPendingWear } from './wear';
 export interface ShopState {
   balance: number | null;
   owned: string[];
+  /** Cards held more than once, and how many times (the market rules; nothing here before them). */
+  copies: Record<string, number>;
+  /** Marketplace sales still open today (null: the server doesn't say). */
+  marketLeft: number | null;
   /** Free spins left for cards, and for dog tags. */
   freeSpins: number;
   freeTagSpins: number;
@@ -41,12 +45,14 @@ export interface SpinResult {
   spins: number;
 }
 
-const EMPTY: ShopState = { balance: null, owned: [], freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false };
+const EMPTY: ShopState = { balance: null, owned: [], copies: {}, marketLeft: null, freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false };
 
 /** Demo mode: a small collection to play with. Nothing here reaches the server. */
 const DEMO_SHOP: ShopState = {
   balance: 260,
   owned: [...STARTERS, '911', 'civic', 'panigale', 'gs', 'striple', 'gt3r', 'r6', 'rsr19'],
+  copies: { '911': 2, civic: 3 },
+  marketLeft: 3,
   freeSpins: 0,
   freeTagSpins: 0,
   spins: {},
@@ -64,12 +70,14 @@ const set = (s: ShopState) => {
   listeners.forEach((l) => l());
 };
 
-type Raw = Partial<{ balance: number; owned: string[]; freeSpins: number; freeTagSpins: number; spins: Record<string, number>; tags: string[]; rewardsLeft: number; firstWin: boolean }>;
+type Raw = Partial<{ balance: number; owned: string[]; copies: Record<string, number>; marketLeft: number; freeSpins: number; freeTagSpins: number; spins: Record<string, number>; tags: string[]; rewardsLeft: number; firstWin: boolean }>;
 /** Takes whatever the server sent: an older server leaves the newer fields out. */
 const apply = (d: Raw) =>
   set({
     balance: typeof d.balance === 'number' ? d.balance : state.balance,
     owned: d.owned ?? state.owned,
+    copies: d.copies ?? (d.owned ? {} : state.copies),
+    marketLeft: typeof d.marketLeft === 'number' ? d.marketLeft : state.marketLeft,
     freeSpins: d.freeSpins ?? 0,
     freeTagSpins: d.freeTagSpins ?? 0,
     spins: d.spins ?? {},
@@ -99,8 +107,45 @@ export async function buyCard(id: string): Promise<string | null> {
   if (demoBlocked()) return 'demo';
   const { data, error } = await rpc('cw_buy', { _card: id });
   if (error) return error.message;
-  set({ ...state, balance: (data as { balance: number }).balance, owned: Array.from(new Set([...state.owned, id])) });
+  // Another copy of a card already held counts up; the first is just owned.
+  const had = state.owned.includes(id);
+  set({
+    ...state,
+    balance: (data as { balance: number }).balance,
+    owned: Array.from(new Set([...state.owned, id])),
+    copies: had ? { ...state.copies, [id]: Math.min(COPIES.most, (state.copies[id] ?? 1) + 1) } : state.copies,
+  });
   return null;
+}
+
+/** Cards that have left the collection for good (sold or traded up) leave the phone's own lists too. */
+function forget(ids: string[]) {
+  const gone = ids.filter((id) => !state.owned.includes(id));
+  if (!gone.length) return;
+  const v = getVault();
+  updateVault({ rewards: v.rewards.filter((id) => !gone.includes(id)), deck: v.deck.filter((id) => !gone.includes(id)) });
+}
+
+/** The Blacktop Marketplace: one card to the house on a coin flip (heads the better price). A string is its refusal. */
+export async function sellCard(id: string): Promise<{ heads: boolean; rpm: number } | string> {
+  if (demoBlocked()) return 'demo';
+  const { data, error } = await rpc('cw_market_sell', { _card: id });
+  if (error) return error.message;
+  const d = data as { heads: boolean; rpm: number } & Raw;
+  apply(d);
+  forget([id]);
+  return { heads: !!d.heads, rpm: d.rpm };
+}
+
+/** Five cards of one tier for one spin at the tier above (a card named once for each copy given). */
+export async function tradeUp(ids: string[]): Promise<SpinResult | string> {
+  if (demoBlocked()) return 'demo';
+  const { data, error } = await rpc('cw_trade_up', { _cards: ids });
+  if (error) return error.message;
+  const d = data as SpinResult & Raw;
+  apply(d);
+  forget(ids);
+  return d;
 }
 
 /** One spin: paid or bonus on a shelf, or (null) one of the free spins that always lands a card. */
