@@ -1518,6 +1518,24 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_countries: {
+        Row: {
+          country: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          country: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          country?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2393,6 +2411,13 @@ export type Database = {
       }
       my_card_collection_count: { Args: never; Returns: number }
       profile_count: { Args: never; Returns: number }
+      profile_country_counts: {
+        Args: never
+        Returns: {
+          country: number
+          riders: number
+        }[]
+      }
       push_call: { Args: { _action: string }; Returns: undefined }
       push_enqueue: {
         Args: { _kind: string; _payload: Json }
@@ -2425,6 +2450,7 @@ export type Database = {
         Args: { _heading?: number; _kind: string; _lat: number; _lng: number }
         Returns: string
       }
+      set_profile_country: { Args: { _country: number }; Returns: undefined }
       set_push_reminders: {
         Args: { _category: string; _reminders: Json }
         Returns: undefined
