@@ -411,9 +411,8 @@ function SpectreResult({ spectre }: { spectre: SpectreCard }) {
 
 /** Tap to flip. Collected cards show their QR on the back; Spectre cards their dog tag (the win, where nothing draws the tag). */
 function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`, image, trend }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string; /** The rider's own card only: lets them frame its picture. */ image?: ImageEdit; /** The rider's own card only: which figures have gone up or down since its last tier. */ trend?: CardTrend }) {
-  // The sticker is cut from the picture as the card shows it (the photo, or its pixel-art redraw).
-  const art = useCardArt(card.img);
-  const sticker = <StickerControl card={stickerKey} name={card.n} src={art} className="shrink-0" />;
+  // The sticker is always cut from the photo itself; it's drawn in the pixel-art look where it's shown, so the switch works both ways.
+  const sticker = <StickerControl card={stickerKey} name={card.n} src={card.img} className="shrink-0" />;
   const [flipped, setFlipped] = useState(false);
   const [framing, setFraming] = useState(false);
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;

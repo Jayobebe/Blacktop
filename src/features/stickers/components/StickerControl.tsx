@@ -5,6 +5,7 @@ import { Sticker as StickerIcon, X } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { useCardArt } from '@/hooks/useCardArt';
 import { MAX_STICKERS, addSticker, removeStickerFor, setArranging, useStickers } from '../lib/store';
 
 /**
@@ -74,5 +75,7 @@ export function StickerControl({ card, name, src, className }: { card: string; n
 
 /** The sticker itself, as the back of a card shows it: the cut-out with its white edge, a little askew. */
 export function StickerPreview({ src, className }: { src: string; className?: string }) {
-  return <img src={src} alt="" draggable={false} className={cn('sticker-img max-w-full max-h-full object-contain -rotate-6', className)} />;
+  // With Pixel-art cards on, a rider's photo is drawn in that look here too (the sticker kept is still the photo).
+  const art = useCardArt(src);
+  return <img src={art} alt="" draggable={false} className={cn('sticker-img max-w-full max-h-full object-contain -rotate-6', className)} />;
 }

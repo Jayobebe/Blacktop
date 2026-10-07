@@ -1,3 +1,4 @@
+import { useCardArt } from '@/hooks/useCardArt';
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { BringToFront, Check, FlipHorizontal2, Maximize2, Trash2 } from 'lucide-react';
@@ -25,6 +26,12 @@ type Pt = { x: number; y: number };
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
 const angle = (a: Pt, b: Pt) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 const HANDLE = 22; // the corner handle's radius
+
+/** One sticker's picture: the photo it was cut from, or (Settings → Pixel-art cards) that photo in the Card Wars look. */
+function StickerArt({ src, className, style }: { src: string; className?: string; style?: CSSProperties }) {
+  const art = useCardArt(src);
+  return <img src={art} alt="" draggable={false} className={className} style={style} />;
+}
 
 /**
  * The stickers on Home's ride buttons. It fills the button column (`columnRef`,
@@ -148,7 +155,7 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
   const images = (extra?: string, dx = 0, dy = 0) =>
     stickers.map((s) => {
       const at = place(s);
-      return <img key={s.id} src={s.src} alt="" draggable={false} className={cn('sticker-img absolute max-w-none select-none', extra)} style={{ ...at, left: (at.left as number) - dx, top: (at.top as number) - dy }} />;
+      return <StickerArt key={s.id} src={s.src} className={cn('sticker-img absolute max-w-none select-none', extra)} style={{ ...at, left: (at.left as number) - dx, top: (at.top as number) - dy }} />;
     });
 
   const current = stickers.find((s) => s.id === selected) ?? null;
