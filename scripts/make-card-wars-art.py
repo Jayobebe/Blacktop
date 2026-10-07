@@ -12,6 +12,12 @@ pixels across (PIXELS): finer artwork is redrawn at that size.
 
 Bikes are only trimmed to their visible bounds.
 
+Every picture then gets the set's look (`finish`): stood level on the floor
+(several were shot on a slant), brought to the set's pixel size, drawn in a
+short palette of its own colours with stray pixels tidied (which takes small
+sponsor lettering with it) and a dark line round the outside. New artwork gets
+it as it's made; `restyle cars|bikes` gave it to the pictures already there.
+
 Cars were generated on a chroma background and keyed, which left three things
 this cleans up (the originals are the Lovable assets named in
 src/assets/card-wars/*.png.asset.json):
@@ -26,8 +32,9 @@ src/assets/card-wars/*.png.asset.json):
 """
 import os
 import sys
-from collections import deque
-from PIL import Image
+import math
+from collections import Counter, deque
+from PIL import Image, ImageEnhance, ImageFilter
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'card-wars')
 
@@ -195,6 +202,7 @@ def clean_car(card, im):
 # runs from 100 to 160). Finer artwork is cut down to it, so nothing looks
 # like a photograph beside the rest.
 PIXELS = {'cars': 132, 'bikes': 120}
+STORE = 4  # file pixels to one pixel of the artwork
 FINE = 1.25  # only artwork finer than this much over the target is touched
 
 
@@ -235,6 +243,132 @@ def pixelate(im, across):
     return down.resize((small[0] * up, small[1] * up), Image.NEAREST)
 
 
+INK = (16, 18, 24, 255)
+COLOURS = 20
+# Artwork that came out noisy from its source takes the stronger setting (fewer colours, one smoothing pass).
+HEAVY = {'norton', 'firebladett', 'rc30'}
+LEVEL_MOST = 22.0  # degrees: further off level than this is the picture's own angle (a bike seen from the front), not a slant
+LEVEL_LEAST = 1.2
+
+
+def ground_angle(im):
+    """How far off level the vehicle stands, in degrees: the line through the bottom of its tyre at each end. A tyre's
+    bottom is dark, a few pixels thick and wide just above its lowest point, which tells it from a paddock stand's foot
+    (a thin bar, often lower than the tyre it holds up) so a bike on a stand is levelled by its wheels, not the stand."""
+    px = im.load()
+    w, h = im.size
+
+    def dark(x, y):
+        if not (0 <= x < w and 0 <= y < h):
+            return False
+        r, g, b, a = px[x, y]
+        return a > 128 and 0.299 * r + 0.587 * g + 0.114 * b < 78
+
+    def tyre(x0, x1):
+        best = None
+        for x in range(x0, x1):
+            for y in range(h - 1, h // 3, -1):
+                if not dark(x, y):
+                    continue
+                thick = all(dark(x, y - k) for k in range(1, 4))
+                wide = sum(1 for dx in range(-7, 8) if dark(x + dx, y - 2)) >= 9
+                if thick and wide:
+                    if best is None or y > best[1]:
+                        best = (x, y)
+                    break
+        return best
+
+    left, right = tyre(0, int(w * 0.42)), tyre(int(w * 0.58), w)
+    if not left or not right or right[0] - left[0] < w * 0.3:
+        return 0.0
+    return math.degrees(math.atan2(right[1] - left[1], right[0] - left[0]))
+
+
+def level(im, block):
+    """Stands the vehicle level on the garage floor: several source pictures were shot on a slant. The slant is read
+    at the artwork's real pixel size (`block` file pixels a pixel); the picture is turned as it is, hard-edged."""
+    seen = im.resize((max(1, round(im.width / block)), max(1, round(im.height / block))), Image.NEAREST) if block > 1 else im
+    angle = ground_angle(seen)
+    if not LEVEL_LEAST <= abs(angle) <= LEVEL_MOST:
+        return im, 0.0
+    return trim(im.rotate(angle, resample=Image.NEAREST if block > 1 else Image.BICUBIC, expand=True)), angle
+
+
+def style(im, heavy=False):
+    """The set's look, on artwork at its real pixel size (one file pixel a pixel): a short palette taken from the
+    vehicle's own colours, stray pixels tidied (small lettering goes with them), and a dark line round the outside."""
+    a = im.getchannel('A').point(lambda v: 255 if v > 110 else 0)
+    am = a.load()
+    w, h = im.size
+    rp = im.convert('RGB').load()
+    lumas = sorted(0.299 * r + 0.587 * g + 0.114 * b for r, g, b in (rp[x, y] for y in range(h) for x in range(w) if am[x, y]))
+    # A dark vehicle (a black car, a carbon bike) lives in a narrow band of tones: it needs more of the palette to keep
+    # its shape, and pushing its colour only turns the shadows into blotches.
+    dark = bool(lumas) and lumas[len(lumas) // 2] < 62
+    rgb = im.convert('RGB') if dark else ImageEnhance.Contrast(ImageEnhance.Color(im.convert('RGB')).enhance(1.18)).enhance(1.08)
+    rp = rgb.load()
+    only = [rp[x, y] for y in range(h) for x in range(w) if am[x, y]]
+    strip = Image.new('RGB', (max(1, len(only)), 1))
+    strip.putdata(only or [(0, 0, 0)])
+    pal = strip.quantize(16 if heavy else 30 if dark else COLOURS, method=Image.MEDIANCUT, dither=Image.NONE)
+    q = rgb.quantize(palette=pal, dither=Image.NONE)
+    if heavy:
+        q = q.filter(ImageFilter.ModeFilter(3))
+    else:
+        src = q.load()
+        fixed = q.copy()
+        dst = fixed.load()
+        for y in range(1, h - 1):
+            for x in range(1, w - 1):
+                if not am[x, y]:
+                    continue
+                near = [src[x + dx, y + dy] for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx or dy) and am[x + dx, y + dy]]
+                # A pixel that matches at most one of its neighbours takes the commonest colour round it.
+                if len(near) >= 5 and near.count(src[x, y]) <= 1:
+                    dst[x, y] = Counter(near).most_common(1)[0][0]
+        q = fixed
+    out = Image.new('RGBA', im.size)
+    out.paste(q.convert('RGB'), mask=a)
+    px = out.load()
+    edge = [(x, y) for y in range(h) for x in range(w)
+            if am[x, y] and any(not (0 <= x + dx < w and 0 <= y + dy < h) or not am[x + dx, y + dy] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+    for x, y in edge:
+        px[x, y] = INK
+    return out
+
+
+def finish(card, im, kind):
+    """A cleaned cutout to the finished card picture: level, the set's pixel size, the set's look, stored 4x."""
+    im = trim(im)
+    block = block_size(im)
+    fine = max(im.size) / block > PIXELS[kind] * FINE
+    # Bikes only: the cars were generated standing level, and their wings and splitters fool the tyre finder.
+    im, angle = level(im, 1 if fine else block) if kind == 'bikes' else (im, 0.0)
+    if fine:
+        # Finer than the set: averaged down to PIXELS on the longer side.
+        down = pixelate(im, PIXELS[kind])
+        up = block_size(down)
+        down = down.resize((max(1, round(down.width / up)), max(1, round(down.height / up))), Image.NEAREST)
+    else:
+        # Pixel art already: one sample from each of its pixels. Averaging here would mix neighbours across every
+        # edge (the file's pixels aren't a whole number of file pixels wide) and turn a dark car to mud.
+        down = im.resize((max(1, round(im.width / block)), max(1, round(im.height / block))), Image.NEAREST)
+    art = trim(style(down, card in HEAVY))
+    return art.resize((art.width * STORE, art.height * STORE), Image.NEAREST), angle
+
+
+def restyle(kind):
+    """Gives every finished picture in public/card-wars/<kind> the set's look. Run once: it works on what's there."""
+    out_dir = os.path.join(ROOT, kind)
+    for f in sorted(os.listdir(out_dir)):
+        if not f.endswith('.png'):
+            continue
+        path = os.path.join(out_dir, f)
+        im, angle = finish(f[:-4], Image.open(path).convert('RGBA'), kind)
+        im.save(path, optimize=True)
+        print(f'{f[:-4]}: {im.size[0] // STORE}x{im.size[1] // STORE} pixels' + (f', levelled {angle:+.1f} deg' if angle else ''))
+
+
 def even(kind):
     """Brings every finished image in public/card-wars/<kind> to the same pixel size."""
     out_dir = os.path.join(ROOT, kind)
@@ -266,9 +400,7 @@ def main(kind, src):
         im = Image.open(path).convert('RGBA')
         if kind == 'cars':
             im = clean_car(card, im)
-        im = trim(im)
-        if max(im.size) / block_size(im) > PIXELS[kind] * FINE:
-            im = trim(pixelate(im, PIXELS[kind]))
+        im, _ = finish(card, im, kind)
         out = os.path.join(out_dir, f'{card}.png')
         im.save(out, optimize=True)
         print(f'{card}: {im.size[0]}x{im.size[1]}, {os.path.getsize(out) // 1024} KB')
@@ -277,6 +409,8 @@ def main(kind, src):
 if __name__ == '__main__':
     if len(sys.argv) == 3 and sys.argv[1] == 'even' and sys.argv[2] in ('cars', 'bikes'):
         even(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] == 'restyle' and sys.argv[2] in ('cars', 'bikes'):
+        restyle(sys.argv[2])
     elif len(sys.argv) == 3 and sys.argv[1] in ('cars', 'bikes'):
         main(sys.argv[1], sys.argv[2])
     else:
