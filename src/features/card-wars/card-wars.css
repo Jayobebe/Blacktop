@@ -80,6 +80,10 @@ button.cw-card:disabled { cursor: default; }
 /* One ground shadow for every vehicle (the artwork carries none of its own). */
 .cw-photo-floor { position: absolute; z-index: 1; left: 10%; right: 10%; bottom: 3%; height: 16%; background: radial-gradient(ellipse at center, hsl(0 0% 0% / 0.7), transparent 68%); }
 .cw-art { position: absolute; z-index: 2; left: 6%; bottom: 7%; width: 88%; height: 82%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 3px 4px hsl(0 0% 0% / 0.5)); user-select: none; }
+/* A hand card's picture carries no shadow filter of its own (the floor shadow under it is enough at that size). On an
+   iPhone a filtered picture inside a card that is dealt in with a transform sometimes isn't painted at all, which left
+   some hand cards with an empty garage. */
+.cw-card-thumb .cw-art { filter: none; }
 .cw-art-missing { position: absolute; z-index: 2; left: 22%; top: 16%; width: 56%; height: 68%; color: hsl(0 0% 100% / 0.38); }
 .cw-rating {
   position: absolute;
@@ -194,7 +198,7 @@ button.cw-card:disabled { cursor: default; }
 .cw-side-mine .cw-side-label span:first-child { color: hsl(var(--accent)); }
 .cw-side-label span:last-child { font-weight: 500; letter-spacing: 0; text-transform: none; opacity: 0.85; text-align: right; }
 .cw-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: 480px; margin-inline: auto; }
-.cw-strip > .cw-card { animation: cw-deal 0.45s cubic-bezier(0.2, 0.85, 0.3, 1.1) both; }
+.cw-strip > .cw-card { animation: cw-deal 0.45s cubic-bezier(0.2, 0.85, 0.3, 1.1) backwards; }
 .cw-strip > .cw-card:nth-child(2) { animation-delay: 60ms; }
 .cw-strip > .cw-card:nth-child(3) { animation-delay: 120ms; }
 .cw-strip > .cw-card:nth-child(4) { animation-delay: 180ms; }

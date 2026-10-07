@@ -740,7 +740,7 @@ export default function Home() {
                           }
                         }}
                         tabIndex={0}
-                        className="absolute z-20 cursor-pointer rounded-full hover:bg-accent/10 hover:shadow-glow active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        className="hold-target absolute z-20 cursor-pointer rounded-full [@media(hover:hover)]:hover:bg-accent/10 [@media(hover:hover)]:hover:shadow-glow active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                         // Squeezed down over the hold; let go with a little overshoot as the spin kicks in.
                         style={{ transform: `scale(${globeHeld ? 0.8 : 1})`, transition: globeHeld ? 'transform 500ms cubic-bezier(0.3, 0, 0.6, 1), background-color 200ms, box-shadow 200ms' : 'transform 420ms cubic-bezier(0.2, 1.7, 0.4, 1), background-color 200ms, box-shadow 200ms' }}
                         aria-label={!settings.blacktopWorldEnabled ? tr("Open map") : globeMode === 'map' ? tr("Open the map. Hold to switch to Blacktop World.") : tr("Open Blacktop World. Hold to switch to the map.")}
