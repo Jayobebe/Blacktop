@@ -5,6 +5,7 @@ import { setEventsEnabled } from '../src/features/card-wars/lib/events';
 import { LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
+import { REDLINE, REDLINES, WILD_TAG } from '../src/features/card-wars/lib/redline';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
 
 // npm run cardwars:check
@@ -195,6 +196,45 @@ const trials = 400;
   const expected = tagStrength(tag, fresh().player[0]) / 100;
   assert.ok(Math.abs(heads / trials - expected) < 0.09, `Coin flip landed heads ${heads} of ${trials}, expected about ${expected}`);
   console.log(`Coin flip: heads ${heads} of ${trials} (the tag says ${Math.round(expected * 100)}%)`);
+}
+// ── Redline cards and the Wildcard ──
+{
+  assert.equal(REDLINES.length, 10);
+  assert.equal(new Set(REDLINES.map((c) => c.id)).size, REDLINES.length, 'Redline ids are unique');
+  for (const c of REDLINES) {
+    const main = [c.ratings.speed, c.ratings.g, c.ratings.distance, c.ratings.corners];
+    assert.equal(main.reduce((a, b) => a + b, 0), REDLINE.budget, `${c.id}: the four main ratings add up to ${REDLINE.budget}`);
+    assert.ok(main.includes(100) && main.includes(0), `${c.id}: a 100 and a 0`);
+    assert.ok(!CATALOG.some((k) => k.id === c.id), `${c.id} isn't a catalogue card: it can't be put in a deck`);
+  }
+  const wheel = REDLINES.slice(0, REDLINE.wheel);
+  const withWheel = () => createRun(player, rng(7), { wheel });
+  const landed = new Set<string>();
+  let rounds = 0;
+  for (let i = 0; i < trials; i++) {
+    const before = withWheel();
+    const next = playRound(before, i % 5, WILD_TAG, rng(4000 + i));
+    const last = next.log[0];
+    if (last.event === 'gremlin' || last.event === 'rapture') {
+      assert.ok(!last.wild, 'A jammed Wildcard lands on nothing');
+      continue;
+    }
+    rounds++;
+    const red = wheel.find((c) => c.id === last.wild);
+    assert.ok(red, 'The Wildcard lands on a card from the wheel');
+    landed.add(red.id);
+    assert.notEqual(last.category, 'lean', 'A Redline never fights in Lean');
+    assert.equal(last.player, before.player[i % 5].id, "The round is still logged against the player's own card (it takes the hit and the wear)");
+    if (!last.event && !last.first) assert.equal(last.values![0], red.ratings[last.category], "The Redline's rating is what's compared");
+    if (last.winner === 1 && last.event !== 'photo' && last.event !== 'redflag') assert.ok(next.hp[0][i % 5] < before.hp[0][i % 5], "A lost round costs the player's own card");
+    if (last.event !== 'redflag') assert.deepEqual(next.usedTags, [WILD_TAG.id], 'One use a battle');
+  }
+  assert.equal(landed.size, wheel.length, 'Every card on the wheel comes up');
+  // Without a wheel the tag does nothing but get spent.
+  const bare = playRound(fresh(), 0, WILD_TAG, rng(11)).log[0];
+  assert.ok(!bare.wild);
+  assert.equal(slotRef(WILD_TAG), 'wild:', 'The slot as the server takes it');
+  console.log(`Wildcard: ${rounds} rounds, landed on all ${landed.size} of the wheel, never in Lean`);
 }
 // ── Stalemate: the same card left on both sides can never land a hit ──
 {

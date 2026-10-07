@@ -3,6 +3,8 @@ import { Dices } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
+import { useServerCap } from '@/lib/serverCaps';
+import { REDLINE } from '../lib/redline';
 import { useSettings } from '@/features/settings';
 import { eventSound } from '@/lib/appSound';
 import { formatSpeed, getSpeedLabel } from '@/lib/format';
@@ -52,6 +54,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
   const cost = SPIN_COST[shelf];
   const bonus = shop.spins[shelf] ?? 0;
   const balance = shop.balance ?? 0;
+  const redlineOn = useServerCap('cardWarsRedline');
   const cards = useMemo(() => CATALOG.filter((c) => categoryOf(c) === shelf).sort((a, b) => (a.price ?? 0) - (b.price ?? 0)), [shelf]);
   const ownedHere = cards.filter((c) => shop.owned.includes(c.id)).length;
   const from = cards[0]?.price ?? 0;
@@ -133,6 +136,12 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
               <span>{tr("Spin {0}%", [RULES.odds.spin])}</span>
               <span>{tr("RPM {0}%", [RULES.odds.rpm])}</span>
             </p>
+            {redlineOn && (shelf === 'f1' || shelf === 'motogp') && !shop.wildcard && (
+              <p className="text-[11px] text-muted-foreground leading-snug text-center">
+                <b className="text-destructive">{tr("Wildcard dog tag: {0}% on a paid spin.", [REDLINE.odds])}</b>{' '}
+                {REDLINE.pity - shop.wildPity <= 1 ? tr("Certain on your next paid spin") : tr("Certain within {0} more paid spins", [REDLINE.pity - shop.wildPity])}
+              </p>
+            )}
           </SpinPanel>
         </section>
 

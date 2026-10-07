@@ -3,7 +3,7 @@ export const CATEGORIES = ['speed', 'lean', 'g', 'distance', 'corners'] as const
 export type Category = typeof CATEGORIES[number];
 export type CardBank = 'gtlm' | 'f1' | 'tt' | 'motogp';
 /** The server's order too: a dog tag is played as its power's index. */
-export const POWERS = ['reroll', 'heal', 'boost', 'flip'] as const;
+export const POWERS = ['reroll', 'heal', 'boost', 'flip', 'wild'] as const;
 /** A deck carries three dog tags, each a different power: one of the four stays at home. */
 export const TAG_SLOTS = 3;
 export type TagPower = typeof POWERS[number];
@@ -27,6 +27,8 @@ export interface BattleCard {
   source?: 'relic' | 'collection' | 'unlock' | 'reward' | 'purchased';
   /** 0 to 100, set on cards outside a battle. */
   condition?: number;
+  /** A Redline card (lib/redline.ts): never in a deck, it only fights from the Wildcard's wheel. */
+  redline?: boolean;
 }
 
 export interface DogTag {
@@ -68,6 +70,8 @@ export interface RoundLog {
   event?: import('./lib/events').RoundEvent;
   /** A rapture: the card each side lost to the beam (player, rival). */
   raptured?: [string | null, string | null];
+  /** The Redline card the player's Wildcard landed on: it fought the round in `player`'s place. */
+  wild?: string;
 }
 
 /** How hard the computer plays, and with it what a battle pays and wears. */
@@ -103,6 +107,8 @@ export interface BattleState {
   daily?: string;
   /** Hard: the dog tags the computer has spent. */
   rivalUsed?: TagPower[];
+  /** The player's Redline wheel as the battle began (the Wildcard lands on one of these). */
+  wheel?: BattleCard[];
 }
 
 /** What a finished battle against the computer did to the deck, waiting to reach the server. */

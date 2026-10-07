@@ -20,6 +20,7 @@ export type CardSize = 'thumb' | 'tile' | 'full';
 
 /** "Road", "Race", or the series a shop-only card races in. */
 export function classLabel(card: BattleCard): string {
+  if (card.redline) return tr("Redline");
   if (card.bank) return BANK_INFO[card.bank].label;
   return card.spec === 'race' ? tr("Race") : tr("Road");
 }
@@ -98,7 +99,7 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   const tier = tierOf(card);
   const style = TIER_STYLES[tier];
   const out = hp === 0;
-  const shell = cn('cw-card no-frost', `cw-card-${size}`, `cw-tier-${tier}`, style.bg, style.border, selected && 'cw-card-selected', out && 'cw-card-out', away && 'cw-card-away', className);
+  const shell = cn('cw-card no-frost', `cw-card-${size}`, `cw-tier-${tier}`, style.bg, style.border, selected && 'cw-card-selected', out && 'cw-card-out', away && 'cw-card-away', card.redline && 'cw-card-redline', className);
   const name = `${card.manufacturer || ''} ${card.name}`.trim();
 
   // A rider's own or scanned card carries a photo: drawn as it is, or in the set's look (the catalogue's art has it already).
@@ -142,7 +143,7 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
           </div>
           {size === 'full' && (
             <span className={cn('cw-card-tier', style.chip)}>
-              {classLabel(card)} · {TIER_LADDER.find((t) => t.id === tier)?.label}
+              {card.redline ? classLabel(card) : <>{classLabel(card)} · {TIER_LADDER.find((t) => t.id === tier)?.label}</>}
             </span>
           )}
         </div>

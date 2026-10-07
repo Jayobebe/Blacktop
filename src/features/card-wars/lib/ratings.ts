@@ -73,6 +73,8 @@ export function deckRating(cards: BattleCard[]): number | null {
  */
 export function tierOf(card: BattleCard): CardTier {
   if (card.tier) return card.tier;
+  // Redline cards all wear the same frame: none outranks another.
+  if (card.redline) return 'obsidian';
   const rating = overall(cardById(card.id) ?? card);
   return rating >= 90 ? 'obsidian' : rating >= 80 ? 'diamond' : rating >= 70 ? 'platinum' : rating >= 60 ? 'gold' : rating >= 50 ? 'silver' : 'bronze';
 }

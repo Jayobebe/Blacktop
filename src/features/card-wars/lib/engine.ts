@@ -153,6 +153,8 @@ export interface RunOptions {
   mode?: QuickMode;
   theme?: Category;
   daily?: string;
+  /** The player's Redline wheel: what their Wildcard can land on. */
+  wheel?: BattleCard[];
 }
 
 export function createRun(player: BattleCard[], random: () => number = Math.random, options: RunOptions = {}): BattleState {
@@ -162,7 +164,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
   const categories = shuffle([...CATEGORIES], random);
   const penaltyRound = random() < 0.125 ? 1 + Math.floor(random() * 4) : -1;
   const prizes = prizesFor(opponent, player, random);
-  const { level, mode, theme, daily } = options;
+  const { level, mode, theme, daily, wheel } = options;
   return {
     id: crypto.randomUUID(),
     player,
@@ -178,6 +180,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
     rewardOrder: shuffle(prizes.map((c) => c.id), random),
     rewardClaimed: false,
     ...(level ? { level } : {}),
+    ...(wheel?.length ? { wheel } : {}),
     ...(mode ? { mode } : {}),
     ...(theme ? { theme } : {}),
     ...(daily ? { daily } : {}),
@@ -208,7 +211,10 @@ export function deadlocked(state: BattleState): boolean {
  *   Coin flip picks the category against the rival's card: the best on heads, the worst
  *     on tails (never Lean);
  *   Second chance replays a lost round once in another category, with a
- *     rating bonus on the replay.
+ *     rating bonus on the replay;
+ *   Wildcard puts one of the wheel's five Redline cards in the card's place
+ *     for the round (unworn, and never in Lean). The player's own card still
+ *     takes the hit, and the wear.
  */
 export function playRound(previous: BattleState, index: number, tag?: DogTag, random: () => number = Math.random): BattleState {
   if (previous.result || !previous.player[index] || previous.hp[0][index] <= 0) return previous;
@@ -271,6 +277,11 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
       if (low) hp[low.i] = Math.min(100, hp[low.i] + EVENT_NUMBERS.pitHeal);
     }
   }
+  // The Wildcard: the category is already drawn; now the rev counter lands on one of the wheel's five.
+  const wild = live?.power === 'wild' && s.wheel?.length ? s.wheel[Math.floor(random() * s.wheel.length)] : null;
+  // A Redline never fights in Lean, whatever it's facing.
+  const cats = wild ? allowed.filter((c) => c !== 'lean') : allowed;
+  if (wild && category === 'lean') category = cats[Math.floor(random() * cats.length)];
   if (live?.power === 'heal') s.hp[0][index] = Math.min(100, s.hp[0][index] + tagStrength(live, card));
   const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
   // Hard: the computer has the three standard dog tags, one use each, and arms them by feel:
@@ -288,7 +299,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   if (rivalTag === 'heal') s.hp[1][rival.i] = Math.min(100, s.hp[1][rival.i] + rivalStrength('heal'));
   const rivalBoost = rivalTag === 'boost' ? rivalStrength('boost') / 100 : 1;
   // Fresh tyres: the catalog's ratings, as new.
-  const mineRatings = event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
+  const mineRatings = wild ? wild.ratings : event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
   // A Coin flip sets the category itself: against the rival's card, the best one for this card on heads, the worst on tails.
   let flip: CoinFlip | null = null;
   if (live?.power === 'flip') {
@@ -305,7 +316,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   };
   let [a, b] = score(category);
   if (live?.power === 'reroll') {
-    const others = allowed.filter((c) => c !== category);
+    const others = cats.filter((c) => c !== category);
     if (a < b && others.length) {
       first = category;
       category = others[Math.floor(random() * others.length)];
@@ -314,7 +325,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   }
   // The computer's Second chance: the round it lost is replayed once in another category.
   if (rivalTag === 'reroll' && b < a && !first) {
-    const others = allowed.filter((c) => c !== category);
+    const others = cats.filter((c) => c !== category);
     if (others.length) {
       first = category;
       category = others[Math.floor(random() * others.length)];
@@ -362,6 +373,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     ...(live ? { tag: live.power } : {}),
     ...(rivalTag ? { rivalTag } : {}),
     ...(flip ? { flips: [flip, null] as [CoinFlip, null] } : {}),
+    ...(wild ? { wild: wild.id } : {}),
     ...(event ? { event } : {}),
   });
   s.round++;

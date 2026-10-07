@@ -15,7 +15,7 @@ import { REPAIR_PART, RULES, WEAR_ROUND, repairCost, showRpm } from '../lib/rule
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
-import { TAG_ORDER, deckTagBonus, tagDescription, tagName, tagSourceLine, tagStrength } from '../lib/tags';
+import { deckTagBonus, shownPowers, tagDescription, tagName, tagSourceLine, tagStrength } from '../lib/tags';
 import { REST_RECOVERY } from '../lib/wear';
 import { updateVault, useVault } from '../lib/store';
 import { eventSound } from '@/lib/appSound';
@@ -25,6 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { TAG_SLOTS, type BattleCard as Card, type DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
+import { RedlineWheel } from './RedlineWheel';
 import { SpinPanel } from './SpinPanel';
 
 type Open = { kind: 'card'; index: number } | { kind: 'pick'; index: number } | { kind: 'tag'; slot: number } | null;
@@ -393,6 +394,8 @@ export function Garage({
           })}
         </div>
       </section>
+
+      <RedlineWheel frozen={frozen} />
 
       {!mustSpin && cardSpins}
       {!mustSpin && tagSpins}
@@ -767,7 +770,7 @@ export function Garage({
                   {tr("A deck carries three dog tags. Mix the powers or double up: two or three of the same power is a build like any other.")}
                 </SheetDescription>
               </SheetHeader>
-              {TAG_ORDER.map((power) => (
+              {shownPowers().map((power) => (
                 <div key={power} className="space-y-2">
                   <div>
                     <p className="text-sm font-semibold">{tagName(power)}</p>

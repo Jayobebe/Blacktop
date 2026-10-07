@@ -1,7 +1,9 @@
-import { CircleDollarSign, Heart, RefreshCw, Zap, type LucideIcon } from 'lucide-react';
+import { CircleDollarSign, Gauge, Heart, RefreshCw, Zap, type LucideIcon } from 'lucide-react';
+import { hasServerCap } from '@/lib/serverCaps';
 import type { SpectreCard } from '@/features/cards';
 import { tr } from '@/lib/i18n';
 import { STARTER_TAGS } from './catalog';
+import { REDLINE, WILD_TAG } from './redline';
 import { parseOwnedTag, tagMatches, tagStrength } from './tagRules';
 import type { BattleCard, DogTag, TagPower } from '../types';
 
@@ -9,9 +11,11 @@ export { tagMatches, tagStrength };
 export type { TagPower };
 
 /** Dog tags, as the app shows them. The numbers are lib/tagRules.ts. */
-export const TAG_ORDER: TagPower[] = ['boost', 'heal', 'reroll', 'flip'];
+export const TAG_ORDER: TagPower[] = ['boost', 'heal', 'reroll', 'flip', 'wild'];
+/** The powers the app talks about: the Wildcard only once the server has it. */
+export const shownPowers = (): TagPower[] => TAG_ORDER.filter((p) => p !== 'wild' || hasServerCap('cardWarsRedline'));
 
-export const TAG_ICON: Record<TagPower, LucideIcon> = { reroll: RefreshCw, heal: Heart, boost: Zap, flip: CircleDollarSign };
+export const TAG_ICON: Record<TagPower, LucideIcon> = { reroll: RefreshCw, heal: Heart, boost: Zap, flip: CircleDollarSign, wild: Gauge };
 
 export function tagName(power: TagPower): string {
   switch (power) {
@@ -21,6 +25,8 @@ export function tagName(power: TagPower): string {
       return tr("Pit medic");
     case 'flip':
       return tr("Coin flip");
+    case 'wild':
+      return tr("Wildcard");
     default:
       return tr("Second chance");
   }
@@ -28,6 +34,7 @@ export function tagName(power: TagPower): string {
 
 /** What a tag does in a few words, for the card it would be played with (or in general). */
 export function tagEffect(tag: DogTag, card?: BattleCard | null): string {
+  if (tag.power === 'wild') return tr("A Redline card fights");
   const strength = tagStrength(tag, card);
   if (tag.power === 'boost') return tr("Rating ×{0}", [String(strength / 100)]);
   if (tag.power === 'heal') return tr("+{0} HP", [strength]);
@@ -44,6 +51,8 @@ export function tagDescription(power: TagPower): string {
       return tr("Gives the card you play HP back before the round.");
     case 'flip':
       return tr("Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.");
+    case 'wild':
+      return tr("The category is drawn, then the rev counter lands on one of your five Redline cards, which fights the round in your card's place. Your own card still takes the hit if it loses.");
     default:
       return tr("If you lose the round, it's replayed once in another category.");
   }
@@ -58,6 +67,8 @@ export function tagSourceLine(power: TagPower): string {
       return tr("A Pit medic is as strong as its vehicle's Distance.");
     case 'flip':
       return tr("A Coin flip lands heads more often the higher its vehicle's Speed.");
+    case 'wild':
+      return tr("Only from paid spins on the F1 and MotoGP shelves: {0}% a spin, certain within {1} spins. One a deck.", [REDLINE.odds, REDLINE.pity]);
     default:
       return tr("A Second chance is as strong as its vehicle's Corners.");
   }
@@ -65,6 +76,7 @@ export function tagSourceLine(power: TagPower): string {
 
 /** What a tag is tied to: its vehicle, the rider it was taken from, or nothing. */
 export function tagTitle(tag: DogTag): string {
+  if (tag.power === 'wild') return tr("One of your five Redline cards");
   if (tag.card) return tag.name;
   if (tag.spectre) return tr("{0}'s tag", [tag.name]);
   return tr("Standard tag");
@@ -72,6 +84,7 @@ export function tagTitle(tag: DogTag): string {
 
 /** The line under a tag's title: what it does more with. */
 export function tagKindLine(tag: DogTag): string {
+  if (tag.power === 'wild') return tr("Never Lean");
   if (!tag.vehicle) return tr("The same with any card");
   if (tag.vehicle === 'any') return tr("Earned on track: stronger with any card");
   return tag.vehicle === 'car' ? tr("Stronger with a car") : tr("Stronger with a bike");
@@ -84,10 +97,10 @@ export function tagKindLine(tag: DogTag): string {
  * (none until its card has been turned over) and, being earned, its bonus
  * with cars and bikes alike.
  */
-export function allTags(owned: string[], spectres: SpectreCard[]): DogTag[] {
+export function allTags(owned: string[], spectres: SpectreCard[], wildcard = false): DogTag[] {
   const track: DogTag[] = spectres.flatMap((s) => (s.power ? [spectreTag(s)] : []));
   const won = owned.flatMap((entry) => parseOwnedTag(entry) ?? []);
-  return [...STARTER_TAGS, ...track, ...won];
+  return [...STARTER_TAGS, ...(wildcard ? [WILD_TAG] : []), ...track, ...won];
 }
 
 /** The dog tag a Spectre gives, once its power has been spun for. */
@@ -103,6 +116,8 @@ export function spectreTag(s: SpectreCard & { power?: TagPower }): DogTag {
  * one they are. A plain tag is worth 3 or 4.
  */
 export function tagPoints(tag: DogTag): number {
+  // A Redline's 100 in the right round is worth more than any other tag; its 0 in the wrong one, less than none.
+  if (tag.power === 'wild') return 6;
   const s = tagStrength(tag);
   if (tag.power === 'boost') return Math.round((s - 100) / 10);
   if (tag.power === 'heal') return Math.round(s / 5);

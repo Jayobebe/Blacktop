@@ -12,6 +12,7 @@ import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
 import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower } from '../types';
 import { CardBurn } from './CardBurn';
 import { Coin } from './Coin';
+import { RevCounter } from './RevCounter';
 import type { RoundEvent } from '../lib/events';
 import { EVENT_ICON, eventEffect, eventName } from '../lib/eventText';
 import { CwCard, StatBars } from './CwCard';
@@ -40,9 +41,12 @@ export interface Reveal {
   raptured?: [string | null, string | null];
   /** Coin flips that set the category: the player's, then the rival's. */
   flips?: [CoinFlip | null, CoinFlip | null];
+  /** The Redline card each side's Wildcard landed on (it fights in that side's card's place), and the player's wheel. */
+  wild?: [Card | null, Card | null];
+  wheel?: Card[];
 }
 
-type Phase = 'idle' | 'event' | 'beam' | 'coin' | 'spin' | 'replay' | 'clash' | 'done' | 'return';
+type Phase = 'idle' | 'event' | 'beam' | 'coin' | 'spin' | 'replay' | 'wild' | 'clash' | 'done' | 'return';
 
 const REEL_ROW = 34;
 const quick = () => isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -151,6 +155,8 @@ export function BattleArena({
   const [sure, setSure] = useState(false);
   const [reelAt, setReelAt] = useState(0);
   const [landed, setLanded] = useState(false);
+  /** The rev counter has stopped: the Redline card is in the seat. */
+  const [wildOn, setWildOn] = useState(false);
 
   const handRefs = useRef<(HTMLElement | null)[]>([]);
   const rivalRefs = useRef<(HTMLElement | null)[]>([]);
@@ -179,6 +185,7 @@ export function BattleArena({
 
   // Play a settled round back: reel, (replay,) hit, verdict, cards home.
   useEffect(() => {
+    setWildOn(false);
     if (!reveal) {
       setPhase('idle');
       setReelAt(0);
@@ -262,8 +269,12 @@ export function BattleArena({
       setPhase('done');
       if (burnt[0] || burnt[1]) eventSound(burnt[0] ? 'error' : 'success');
     };
+    // A Wildcard: once the category is up, the rev counter sweeps to one of the wheel's five and that card takes the seat.
+    const wild = !!reveal.wild?.some(Boolean);
+    const revs = wild && !fast ? 2300 : 0;
     if (fast) {
       // No reel, no flights: the result, long enough to read.
+      if (wild) setWildOn(true);
       setReelAt(turns(4, reveal.category));
       at(go + 80, hit);
       at(go + 220, verdict);
@@ -284,9 +295,21 @@ export function BattleArena({
         });
         at(go + 1700, () => setReelAt(turns(4, reveal.category)));
       }
-      at(base + (named ? 550 : 1200), hit);
-      at(base + (named ? 1300 : 1950), verdict);
-      at(base + (burnt[0] || burnt[1] ? 3350 : 2950) - (named ? 650 : 0), home);
+      if (wild) {
+        at(base + (named ? 500 : 1150), () => {
+          setPhase('wild');
+          eventSound('radioIn');
+          haptics.medium();
+        });
+        at(base + (named ? 500 : 1150) + 1500, () => {
+          setWildOn(true);
+          eventSound('success');
+          haptics.heavy();
+        });
+      }
+      at(base + revs + (named ? 550 : 1200), hit);
+      at(base + revs + (named ? 1300 : 1950), verdict);
+      at(base + revs + (burnt[0] || burnt[1] ? 3350 : 2950) - (named ? 650 : 0), home);
     }
     return () => {
       cancelled = true;
@@ -325,6 +348,9 @@ export function BattleArena({
   const myFlip = reveal?.flips?.[0] ?? null;
   const theirFlip = reveal?.flips?.[1] ?? null;
   const armedFlip = armed?.power === 'flip' && focusCard ? focusCard : null;
+  const wildMine = (wildOn && reveal?.wild?.[0]) || null;
+  const wildTheirs = (wildOn && reveal?.wild?.[1]) || null;
+  const revSide = reveal?.wild?.[0] ? 0 : 1;
   // What the card being looked at has cost itself so far this battle.
   const focusRounds = focusCard && rounds && focus !== null ? rounds[focus] ?? 0 : null;
   const focusWear = focusCard && focusRounds !== null ? { rounds: focusRounds, loss: wearLoss(focusCard.spec === 'race', focusRounds), hard: focusRounds >= WEAR_ROUND.past } : null;
@@ -436,10 +462,10 @@ export function BattleArena({
             <div className={cn('cw-seat cw-seat-mine', reveal && phase === 'clash' && (reveal.winner === 0 ? 'cw-lunge-right' : reveal.winner === 1 ? 'cw-struck' : ''))}>
               <div ref={mineFly} className="cw-flyer" key={mineCard.id}>
                 <CwCard
-                  card={mineCard}
+                  card={wildMine ?? mineCard}
                   hp={mine[mineIndex ?? 0] ?? 100}
                   highlight={live}
-                  className={cn(!rapture && mineOut && phase !== 'clash' && 'cw-charred', beamClass(0, mineCard.id))}
+                  className={cn(!rapture && mineOut && phase !== 'clash' && 'cw-charred', beamClass(0, mineCard.id), wildMine && 'cw-wild-in')}
                   onClick={focusCard ? () => setFocus(null) : undefined}
                 />
                 {myTag && reveal && tagChip(myTag, 'mine')}
@@ -463,6 +489,14 @@ export function BattleArena({
             <div className="cw-mid cw-mid-coin">
               {theirFlip && <Coin heads={theirFlip.heads} side="theirs" />}
               {myFlip && <Coin heads={myFlip.heads} side="mine" />}
+            </div>
+          ) : reveal && phase === 'wild' && reveal.wild?.[revSide] ? (
+            <div className="cw-mid">
+              <span className="cw-event-chip">
+                {DrawnIcon && <DrawnIcon aria-hidden />}
+                {categoryLabel(reveal.category)}
+              </span>
+              <RevCounter wheel={revSide === 0 ? reveal.wheel : null} landed={reveal.wild[revSide]!} side={revSide === 0 ? 'mine' : 'theirs'} />
             </div>
           ) : reveal && DrawnIcon ? (
             <div className="cw-mid">
@@ -505,10 +539,10 @@ export function BattleArena({
             <div className={cn('cw-seat cw-seat-theirs', reveal && phase === 'clash' && (reveal.winner === 1 ? 'cw-lunge-left' : reveal.winner === 0 ? 'cw-struck' : ''))}>
               <div ref={theirsFly} className="cw-flyer" key={theirsCard.id}>
                 <CwCard
-                  card={theirsCard}
+                  card={wildTheirs ?? theirsCard}
                   hp={theirs[theirsIndex ?? 0] ?? 100}
                   highlight={live}
-                  className={cn(!rapture && theirsOut && phase !== 'clash' && 'cw-charred', beamClass(1, theirsCard.id))}
+                  className={cn(!rapture && theirsOut && phase !== 'clash' && 'cw-charred', beamClass(1, theirsCard.id), wildTheirs && 'cw-wild-in')}
                   onClick={!reveal ? () => setPeek(null) : undefined}
                 />
                 {theirTag && reveal && tagChip(theirTag, 'theirs')}

@@ -6,6 +6,7 @@ import { eventSound } from '@/lib/appSound';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
 import { cardById } from '../lib/catalog';
+import { WILD_TAG } from '../lib/redline';
 import type { SpinResult } from '../lib/shop';
 import { spinCaption, spinLabel } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
@@ -16,7 +17,7 @@ import { SpinReel } from './SpinReel';
 /** What a spin won, shown off: the card, the dog tag on its chain, or the RPM. */
 function Won({ result }: { result: SpinResult }) {
   const card = result.kind === 'card' ? cardById(result.card) : undefined;
-  const tag = result.kind === 'tag' && result.tag ? parseOwnedTag(result.tag) : null;
+  const tag = result.kind === 'wildcard' ? WILD_TAG : result.kind === 'tag' && result.tag ? parseOwnedTag(result.tag) : null;
   return (
     <div className="cw-won" role="status">
       {card ? (
@@ -95,7 +96,7 @@ export function SpinPanel({
     if (!r) return;
     setShown(r);
     haptics.success();
-    eventSound(r.kind === 'card' || r.kind === 'tag' ? 'success' : 'coin');
+    eventSound(r.kind === 'card' || r.kind === 'tag' || r.kind === 'wildcard' ? 'success' : 'coin');
     won.current?.(r);
   }, []);
 

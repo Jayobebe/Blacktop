@@ -25,6 +25,9 @@ export interface OnlineRound {
   event?: number | null;
   r1?: string;
   r2?: string;
+  /** The Redline card each side's Wildcard landed on. */
+  w1?: string | null;
+  w2?: string | null;
 }
 
 /** A player battle from this player's side. The server settles every round (`cw_action`). */
@@ -66,6 +69,7 @@ function refusal(message: string): string {
   if (/expired/i.test(message)) return tr("That invitation has expired.");
   if (/private battle|battle unavailable/i.test(message)) return tr("That battle already has two players.");
   if (/five unique/i.test(message)) return tr("A player battle needs five different cards you own.");
+  if (/redline cards for your wheel/i.test(message)) return tr("Pick five Redline cards for your wheel first.");
   if (/dog tag not owned/i.test(message)) return tr("One of your dog tags isn't yours on the server. Pick another.");
   if (/already used/i.test(message)) return tr("That dog tag is already used.");
   if (/knocked out/i.test(message)) return tr("That card is out.");

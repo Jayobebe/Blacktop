@@ -19,6 +19,7 @@ import { eventAt } from '../lib/events';
 import { battleAction, type OnlineBattle } from '../lib/online';
 import { bestFive, categoryLabel, deckRating } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
+import { redlineById } from '../lib/redline';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
 import { LEVEL, RULES, dailyChallenge, showRpm } from '../lib/rules';
@@ -140,7 +141,9 @@ export function CardWarsScreen() {
     return cards;
   }, [vault.rewards, vault.unlocks, own, collected, peaksHidden, shop.owned, drives]);
 
-  const tags = useMemo(() => allTags(shop.tags, spectres), [shop.tags, spectres]);
+  const tags = useMemo(() => allTags(shop.tags, spectres, shop.wildcard), [shop.tags, spectres, shop.wildcard]);
+  // The Redline wheel: what a Wildcard in the deck can land on.
+  const wheel = useMemo(() => shop.wheel.map((id) => redlineById(id)).filter((c): c is Card => !!c), [shop.wheel]);
   const wornPool = useMemo(() => pool.map((c) => withWear(c, conditionOf(vault.wear, c.id))), [pool, vault.wear]);
   const deck = vault.deck.map((id) => wornPool.find((c) => c.id === id)).filter((c): c is Card => !!c);
   // Three dog tags: any three under builds (two or three of a power is a build like any other), each a
@@ -184,7 +187,10 @@ export function CardWarsScreen() {
     });
     void rewardOffline(r.result, r.level).then(async (paid) => {
       // Today's challenge, won: its bonus comes on top, once.
-      const daily = r.daily && r.result === 'win' && r.daily === dailyChallenge().day ? await claimDaily() : 0;
+      const claim = r.daily && r.result === 'win' && r.daily === dailyChallenge().day ? await claimDaily() : null;
+      const daily = claim?.rpm ?? 0;
+      const red = redlineById(claim?.redline);
+      if (red) toast.success(tr("A new Redline card: {0} {1}", [red.manufacturer ?? '', red.name]), { description: tr("Put it on your wheel from the deck page.") });
       setPay((all) => ({ ...all, [r.id]: { ...paid, daily } }));
       if (paid.rpm + daily > 0) eventSound('coin');
     });
@@ -338,6 +344,7 @@ export function CardWarsScreen() {
           event: eventAt(last.event),
           flips: last.f1 || last.f2 ? (first ? [flipOf(last.f1), flipOf(last.f2)] : [flipOf(last.f2), flipOf(last.f1)]) : undefined,
           raptured: last.r1 || last.r2 ? (first ? [last.r1 ?? null, last.r2 ?? null] : [last.r2 ?? null, last.r1 ?? null]) : undefined,
+          ...(last.w1 || last.w2 ? { wild: [redlineById(first ? last.w1 : last.w2) ?? null, redlineById(first ? last.w2 : last.w1) ?? null] as [Card | null, Card | null], wheel } : {}),
         });
         return;
       }
@@ -419,6 +426,7 @@ export function CardWarsScreen() {
       event: last.event ?? null,
       raptured: last.raptured,
       flips: last.flips,
+      ...(last.wild && redlineById(last.wild) ? { wild: [redlineById(last.wild)!, null] as [Card, null], wheel: next.wheel } : {}),
     });
     updateVault({ run: next });
   }
@@ -461,7 +469,7 @@ export function CardWarsScreen() {
     setTag(null);
     setReveal(null);
     setSetup(false);
-    updateVault({ run: createRun(deck, Math.random, { level: level ?? 'medium' }) });
+    updateVault({ run: createRun(deck, Math.random, { level: level ?? 'medium', wheel }) });
     go('computer');
   }
 
@@ -470,7 +478,7 @@ export function CardWarsScreen() {
     if (riding || locked || cards.length !== 5) return;
     setTag(null);
     setReveal(null);
-    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme, ...(quickDaily ? { daily: quickDaily.day } : {}) }) });
+    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme, wheel, ...(quickDaily ? { daily: quickDaily.day } : {}) }) });
     setQuickDaily(null);
     go('computer');
   }

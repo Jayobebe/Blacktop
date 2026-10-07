@@ -2,7 +2,9 @@ import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
+import { hasServerCap } from '@/lib/serverCaps';
 import { STARTERS, type ShopCategory } from './catalog';
+import { REDLINES } from './redline';
 import { COPIES, RULES } from './rules';
 import type { Level } from '../types';
 import { getVault, updateVault } from './store';
@@ -33,10 +35,17 @@ export interface ShopState {
   /** Hard wins in a row (the server's count), and whether today's challenge has been won. */
   streak: number;
   dailyDone: boolean;
+  /** Redline: the Wildcard dog tag is held, the Redline cards collected, the five on the wheel, and paid F1 / MotoGP spins so far without the Wildcard. */
+  wildcard: boolean;
+  redlines: string[];
+  wheel: string[];
+  wildPity: number;
 }
 
 export interface SpinResult {
-  kind: 'card' | 'tag' | 'duplicate' | 'rpm' | 'spins';
+  kind: 'card' | 'tag' | 'duplicate' | 'rpm' | 'spins' | 'wildcard';
+  /** The Redline cards that came with the Wildcard. */
+  redlines?: string[] | null;
   card: string | null;
   /** The dog tag won, as "power:card". */
   tag?: string | null;
@@ -45,7 +54,7 @@ export interface SpinResult {
   spins: number;
 }
 
-const EMPTY: ShopState = { balance: null, owned: [], copies: {}, marketLeft: null, freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false };
+const EMPTY: ShopState = { balance: null, owned: [], copies: {}, marketLeft: null, freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false, wildcard: false, redlines: [], wheel: [], wildPity: 0 };
 
 /** Demo mode: a small collection to play with. Nothing here reaches the server. */
 const DEMO_SHOP: ShopState = {
@@ -61,6 +70,10 @@ const DEMO_SHOP: ShopState = {
   firstWin: false,
   streak: 0,
   dailyDone: false,
+  wildcard: true,
+  redlines: REDLINES.slice(0, 7).map((c) => c.id),
+  wheel: REDLINES.slice(0, 5).map((c) => c.id),
+  wildPity: 0,
 };
 
 let state: ShopState = EMPTY;
@@ -86,7 +99,46 @@ const apply = (d: Raw) =>
     firstWin: !!d.firstWin,
     streak: state.streak,
     dailyDone: state.dailyDone,
+    wildcard: state.wildcard,
+    redlines: state.redlines,
+    wheel: state.wheel,
+    wildPity: state.wildPity,
   });
+
+type RedlineRaw = Partial<{ wildcard: boolean; pity: number; wheel: string[]; owned: string[] }>;
+const applyRedline = (d: RedlineRaw | null) => {
+  if (!d) return;
+  set({ ...state, wildcard: !!d.wildcard, redlines: d.owned ?? [], wheel: d.wheel ?? [], wildPity: d.pity ?? 0 });
+};
+/** What the server holds of the player's Redline cards and Wildcard (nothing before the Redline migration). */
+export async function refreshRedline() {
+  if (isDemoModeActive() || !hasServerCap('cardWarsRedline')) return;
+  const { data, error } = await rpc('cw_redline_state');
+  if (!error) applyRedline(data as RedlineRaw);
+}
+
+/** Puts these five Redline cards on the wheel. A string is the server's refusal. */
+export async function setWheel(ids: string[]): Promise<string | null> {
+  // Demo mode: the sample wheel can be rearranged, in memory only.
+  if (isDemoModeActive()) {
+    set({ ...state, wheel: ids });
+    return null;
+  }
+  const { data, error } = await rpc('cw_redline_wheel_set', { _cards: ids });
+  if (error) return error.message;
+  applyRedline(data as RedlineRaw);
+  return null;
+}
+
+/** An influencer build's code. The card it gave (null: no such code), or a string refusal. */
+export async function redeemRedline(code: string): Promise<{ card: string | null; fresh: boolean } | string> {
+  if (demoBlocked()) return 'demo';
+  const { data, error } = await rpc('cw_redline_redeem', { _code: code });
+  if (error) return error.message;
+  const d = data as RedlineRaw & { card: string | null; fresh?: boolean };
+  applyRedline(d);
+  return { card: d.card ?? null, fresh: !!d.fresh };
+}
 const rpc = (name: string, args?: object) => supabase.rpc(name as never, args as never);
 
 export async function refreshShop() {
@@ -96,6 +148,7 @@ export async function refreshShop() {
   const extra = await rpc('cw_daily_state');
   const d = extra.data as { streak?: number; dailyDone?: boolean } | null;
   if (!extra.error && d) set({ ...state, streak: d.streak ?? 0, dailyDone: !!d.dailyDone });
+  await refreshRedline();
 }
 
 export function setRpm(balance: number) {
@@ -154,6 +207,8 @@ export async function spin(category: ShopCategory | null): Promise<SpinResult | 
   if (error) return error.message;
   const d = data as SpinResult & Raw;
   apply(d);
+  // A paid F1 or MotoGP spin moves the Wildcard's count, or lands it.
+  if (category === 'f1' || category === 'motogp') await refreshRedline();
   return d;
 }
 
@@ -190,13 +245,14 @@ export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Lev
 }
 
 /** The daily challenge, won: pays once a day (0 when today's is already paid, or the server didn't answer). */
-export async function claimDaily(): Promise<number> {
-  if (isDemoModeActive()) return 0;
+export async function claimDaily(): Promise<{ rpm: number; redline: string | null }> {
+  if (isDemoModeActive()) return { rpm: 0, redline: null };
   const { data, error } = await rpc('cw_daily_claim');
-  if (error || !data) return 0;
-  const d = data as { rpm: number; balance: number };
-  set({ ...state, balance: d.balance, dailyDone: true });
-  return d.rpm;
+  if (error || !data) return { rpm: 0, redline: null };
+  const d = data as { rpm: number; balance: number; redline?: string | null };
+  // A Wildcard holder's daily win can bring another Redline card.
+  set({ ...state, balance: d.balance, dailyDone: true, redlines: d.redline && !state.redlines.includes(d.redline) ? [...state.redlines, d.redline] : state.redlines });
+  return { rpm: d.rpm, redline: d.redline ?? null };
 }
 
 /**

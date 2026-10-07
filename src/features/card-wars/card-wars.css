@@ -294,6 +294,26 @@ button.cw-card:disabled { cursor: default; }
 .cw-struck { animation: cw-shake 0.5s 0.2s ease-in-out; }
 /* The hit lights the table. */
 .cw-phase-clash::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(50% 40% at 50% 45%, hsl(0 0% 100% / 0.5), transparent 70%); animation: cw-flash 0.5s 0.22s ease-out both; }
+/* Redline: red is the one colour here that means something (the top of the rev counter). */
+.cw-card.cw-card-redline { border-color: hsl(var(--destructive)); box-shadow: 0 0 0 1px hsl(var(--destructive) / 0.55), 0 0 18px hsl(var(--destructive) / 0.35); }
+.cw-card-redline .cw-class { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
+.cw-panel.cw-panel-redline { border-color: hsl(var(--destructive) / 0.45); }
+.cw-emblem.cw-emblem-redline { background: hsl(var(--destructive) / 0.16); color: hsl(var(--destructive)); }
+.cw-redline-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cw-redline-locked { opacity: 0.45; filter: grayscale(0.8); }
+.cw-wild-in { animation: cw-win 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+/* The Wildcard's rev counter, in the middle of the table. */
+.cw-rev { display: flex; flex-direction: column; align-items: center; width: min(100%, 190px); text-align: center; }
+.cw-rev svg { width: 100%; height: auto; overflow: visible; }
+.cw-rev-arc { fill: none; stroke: hsl(0 0% 100% / 0.28); stroke-width: 6; stroke-linecap: round; }
+.cw-rev-red { fill: none; stroke: hsl(var(--destructive)); stroke-width: 6; stroke-linecap: round; }
+.cw-rev-mark { stroke: hsl(0 0% 100% / 0.7); stroke-width: 3; stroke-linecap: round; }
+.cw-rev-mark-on { stroke: hsl(var(--destructive)); stroke-width: 5; transition: stroke 0.2s 1.2s, stroke-width 0.2s 1.2s; }
+.cw-rev-needle { transform-origin: 100px 100px; transform-box: view-box; transition: transform 1.35s cubic-bezier(0.25, 0.9, 0.3, 1.18); }
+.cw-rev-needle line { stroke: hsl(var(--destructive)); stroke-width: 4; stroke-linecap: round; }
+.cw-rev-hub { fill: hsl(var(--foreground)); }
+.cw-rev-word { margin-top: -4px; font-size: 10px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: hsl(var(--destructive)); }
+.cw-rev-name { font-size: 13px; font-weight: 800; line-height: 1.15; animation: cw-win 0.5s 1.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 /* The Marketplace's coin, in a dialog rather than on the table. */
 .cw-coin.cw-coin-lg { width: 92px; }
 .cw-sale { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-block: 18px 6px; text-align: center; min-height: 190px; }
@@ -590,7 +610,7 @@ button.cw-card:disabled { cursor: default; }
 @keyframes cw-beam-down { 0% { transform: translateY(-50px) scale(0.5); opacity: 0; } 30% { opacity: 0.5; } 75%, 100% { transform: none; opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .cw-arena-page *, .cw-result *, .cw-won *, .cw-sale *, .cw-pop, .cw-plate-big, .cw-rpm b, .cw-spin-track, .cw-reward-back > button.cw-card, .cw-event, .cw-event *, .cw-beaming, .cw-beam-in { animation: none !important; }
+  .cw-arena-page *, .cw-result *, .cw-won *, .cw-sale *, .cw-wild-in, .cw-pop, .cw-plate-big, .cw-rpm b, .cw-spin-track, .cw-reward-back > button.cw-card, .cw-event, .cw-event *, .cw-beaming, .cw-beam-in { animation: none !important; }
   .cw-beaming::before, .cw-beam-in::before { display: none; }
   .cw-reward-position, .cw-reward-flipper, .cw-meter-fill, .cw-card, .cw-reel-track, .cw-charred, .cw-tag { transition: none !important; }
 }

@@ -12,6 +12,7 @@ export function spinLabel(r: SpinResult): string {
     const tag = r.tag ? parseOwnedTag(r.tag) : null;
     return tag ? tr("{0} dog tag", [tagName(tag.power)]) : tr("Dog tag");
   }
+  if (r.kind === 'wildcard') return tr("Wildcard dog tag");
   if (r.kind === 'duplicate') return tr("Duplicate · +{0} RPM", [showRpm(r.rpm)]);
   if (r.kind === 'rpm') return tr("+{0} RPM", [showRpm(r.rpm)]);
   return r.spins === 1 ? tr("+1 spin") : tr("+{0} spins", [r.spins]);
@@ -24,6 +25,8 @@ export function spinCaption(r: SpinResult): string {
       return tr("It's yours. Swap it into your deck any time.");
     case 'tag':
       return tr("A new dog tag. Put it in your deck from the dog tags list.");
+    case 'wildcard':
+      return tr("The Wildcard, with five Redline cards on its wheel. Put it in your deck from the dog tags list.");
     case 'duplicate':
       return r.tag ? tr("You already have that dog tag, so part of the spin came back.") : tr("You already hold five of that card, so you get 25% of its shop price in RPM.");
     case 'rpm':

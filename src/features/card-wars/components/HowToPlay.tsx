@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { tr } from '@/lib/i18n';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
 import { DAMAGE, RULES, showRpm } from '../lib/rules';
-import { TAG_ICON, TAG_ORDER, tagDescription, tagName } from '../lib/tags';
+import { TAG_ICON, shownPowers, tagDescription, tagName } from '../lib/tags';
 
 const SEEN_KEY = 'bt.card_wars_howto';
 
@@ -68,7 +68,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
       title: tr("Dog tags turn a round"),
       text: (
         <span className="grid gap-1">
-          {TAG_ORDER.map((power) => {
+          {shownPowers().map((power) => {
             const Icon = TAG_ICON[power];
             return (
               <span key={power} className="flex items-start gap-1.5">

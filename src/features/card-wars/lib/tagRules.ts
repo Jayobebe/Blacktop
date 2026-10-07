@@ -15,8 +15,9 @@ import { cardById } from './catalog';
  * always a little weaker than any of those. Every tag with a vehicle does
  * more when it's played with the same kind (car or bike).
  */
-const PLAIN: Record<TagPower, number> = { boost: 135, heal: 20, reroll: 100, flip: 50 };
-const MATCH: Record<TagPower, number> = { boost: 10, heal: 6, reroll: 5, flip: 4 };
+// The Wildcard has no strength of its own: the Redline card it lands on is the whole of it.
+const PLAIN: Record<TagPower, number> = { boost: 135, heal: 20, reroll: 100, flip: 50, wild: 0 };
+const MATCH: Record<TagPower, number> = { boost: 10, heal: 6, reroll: 5, flip: 4, wild: 0 };
 
 export const powerIndex = (power: TagPower): number => POWERS.indexOf(power);
 
@@ -26,7 +27,7 @@ export const tagMatches = (tag: Pick<DogTag, 'vehicle'>, card: Pick<BattleCard, 
 /** A tag's strength before the bonus for a matching vehicle. */
 export function tagBase(tag: Pick<DogTag, 'power' | 'card'>): number {
   const tied = cardById(tag.card);
-  if (!tied) return PLAIN[tag.power];
+  if (!tied || tag.power === 'wild') return PLAIN[tag.power];
   if (tag.power === 'boost') return 125 + Math.floor(tied.ratings.g / 2);
   if (tag.power === 'heal') return 14 + Math.floor((tied.ratings.distance * 32) / 100);
   if (tag.power === 'flip') return 50 + Math.floor(tied.ratings.speed / 6);
