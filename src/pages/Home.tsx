@@ -333,14 +333,12 @@ export default function Home() {
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
   const secondHsl = settings.thermalMode ? undefined : ACCENT_COLORS.find((c) => c.id === settings.secondaryAccentColor)?.hsl;
-  // The two accents swap between the globe and its band: the map is a main-accent globe with a second-accent band,
-  // Blacktop World the other way round. With no second accent chosen both are the main one and the word says which.
+  // The globe's own colour says map or World: the second accent (or the main one) for the map, burn orange for World.
   const mainHsl = (settings.thermalMode ? '0 0% 100%' : accentHsl).trim();
-  const otherHsl = (secondHsl ?? mainHsl).trim();
-  const globeHsl = globeMode === 'world' ? otherHsl : mainHsl;
+  const globeHsl = globeMode === 'world' ? '15 85% 52%' : (secondHsl ?? mainHsl).trim();
   const globeColor = `hsl(${globeHsl.split(/\s+/).join(', ')})`;
-  // The band's colour starts changing with the globe's, on the release, and fades over the same time.
-  const bandHsl = globeMode === 'world' ? mainHsl : otherHsl;
+  // The band is always the main accent.
+  const bandHsl = mainHsl;
 
   // The rotating globe sits at the junction where the three ride tiles meet.
   // We measure that point at runtime, position/size the globe there, and mask a
