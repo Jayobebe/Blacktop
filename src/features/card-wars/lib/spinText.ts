@@ -1,6 +1,6 @@
 import { tr } from '@/lib/i18n';
 import { cardById } from './catalog';
-import { MARKET, V2, showRpm } from './rules';
+import { showRpm } from './rules';
 import type { SpinResult } from './shop';
 import { parseOwnedTag } from './tagRules';
 import { tagName } from './tags';
@@ -25,7 +25,7 @@ export function spinCaption(r: SpinResult): string {
     case 'tag':
       return tr("A new dog tag. Put it in your deck from the dog tags list.");
     case 'duplicate':
-      return r.tag ? tr("You already have that dog tag, so part of the spin came back.") : MARKET ? tr("You already hold five of that card, so you get 25% of its shop price in RPM.") : tr("You already own that card, so you get 75% of its shop price in RPM.");
+      return r.tag ? tr("You already have that dog tag, so part of the spin came back.") : tr("You already hold five of that card, so you get 25% of its shop price in RPM.");
     case 'rpm':
       return tr("RPM back in your pocket.");
     default:
@@ -34,7 +34,7 @@ export function spinCaption(r: SpinResult): string {
 }
 
 /** What flies past on a shelf's reel before it stops. */
-export const REEL_LABELS = V2 ? [tr("Card"), tr("RPM"), tr("Dog tag"), tr("+1 spin"), tr("RPM"), tr("Card")] : [tr("Card"), tr("RPM"), tr("+1 spin"), tr("RPM"), tr("Card")];
+export const REEL_LABELS = [tr("Card"), tr("RPM"), tr("Dog tag"), tr("+1 spin"), tr("RPM"), tr("Card")];
 /** The free card spins only ever land cards. */
 export const CARD_REEL_LABELS = [tr("Road"), tr("Race"), 'GTLM', 'F1', tr("Road"), 'MotoGP', tr("Race"), 'TT'];
 /** And the free dog tag spins, dog tags. */

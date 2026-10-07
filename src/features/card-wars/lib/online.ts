@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { tr } from '@/lib/i18n';
-import { RULES, V2, showRpm } from './rules';
+import { RULES, showRpm } from './rules';
 
 /** One settled round of a player battle, as the server logs it. Sides are 1 and 2. */
 export interface OnlineRound {
@@ -12,7 +12,7 @@ export interface OnlineRound {
   card2: string;
   damage: number;
   winner: number | null;
-  /** Second rule set: the category a Second chance threw away, what was compared, and the dog tag each side armed. */
+  /** The category a Second chance threw away, what was compared, and the dog tag each side armed. */
   first?: number | null;
   s1?: number;
   s2?: number;
@@ -41,7 +41,7 @@ export interface OnlineBattle {
   /** Powers already used, by index. */
   used?: number[];
   rivalUsed?: number[];
-  /** Second rule set: each side's card condition, in deck order, and what was staked. */
+  /** Each side's card condition, in deck order, and what was staked. */
   wear?: number[];
   rivalWear?: number[];
   stake?: number;
@@ -88,7 +88,7 @@ export async function battleAction(
       _tag: opts.tag ?? null,
       _round: opts.round ?? null,
       // Only the newer server takes the tags a deck carries.
-      ...(V2 && opts.tags ? { _tags: opts.tags } : {}),
+      ...(opts.tags ? { _tags: opts.tags } : {}),
       ...(opts.own && opts.own.some(Boolean) ? { _own: opts.own } : {}),
     } as never,
   );

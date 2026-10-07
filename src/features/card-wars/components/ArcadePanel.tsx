@@ -4,7 +4,7 @@ import { useServerCap } from '@/lib/serverCaps';
 import { useDemoMode } from '@/lib/demoMode';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { ARCADE_PAY, BUILDS, showRpm } from '../lib/rules';
+import { ARCADE_PAY, showRpm } from '../lib/rules';
 import { refreshShop, useShop } from '../lib/shop';
 import { deckTagBonus } from '../lib/tags';
 import { useVault } from '../lib/store';
@@ -100,7 +100,7 @@ export function CardWarsArcadePanel({ onOpen }: { onOpen: () => void }) {
                 {spins === 1 ? tr("1 free spin waiting") : tr("{0} free spins waiting", [spins])}
               </span>
             )}
-            {BUILDS && (
+            {(
               <span className="cw-arcade-note">
                 <Coins aria-hidden />
                 {tr("The other games pay RPM too: {0} a game, {1} for a personal best, up to {2} a day.", [showRpm(ARCADE_PAY.game), showRpm(ARCADE_PAY.best), showRpm(ARCADE_PAY.daily)])}

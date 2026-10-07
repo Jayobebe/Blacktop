@@ -1,6 +1,6 @@
 /**
- * Card Wars balance: works out every card's ratings and price under the
- * second rule set and prints them for the two places they live, the BALANCE
+ * Card Wars balance: works out every card's ratings and price
+ * and prints them for the two places they live, the BALANCE
  * table in src/features/card-wars/lib/catalog.ts and the `cw_catalog` rows in
  * a migration.
  *
@@ -90,8 +90,7 @@ const total = rows.reduce((a, r) => a + r.price, 0);
 
 if (process.argv.includes('--check')) {
   const off = rows.filter((r) => [...r.line, r.price].join(',') !== (BALANCE[r.card.id] ?? []).join(','));
-  const spinOff = process.env.CW_RULES === '2' ? SHELVES.filter((s) => SPIN_COST[s as ShopCategory] !== spin[s]) : [];
-  if (process.env.CW_RULES !== '2') console.warn('Spin costs are only checked with CW_RULES=2.');
+  const spinOff = SHELVES.filter((s) => SPIN_COST[s as ShopCategory] !== spin[s]);
   if (off.length || spinOff.length) {
     for (const r of off) console.error(`catalog.ts BALANCE.${r.card.id} is [${(BALANCE[r.card.id] ?? []).join(', ')}], should be [${[...r.line, r.price].join(', ')}]`);
     for (const s of spinOff) console.error(`catalog.ts SPIN_COST.${s} is ${SPIN_COST[s as ShopCategory]}, should be ${spin[s]}`);

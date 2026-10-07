@@ -2,12 +2,12 @@ import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, prizesFor, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { BUILDS, LEVEL, LEVELS, PRIZE_DECK, PRIZE_REACH, QUICK, RULES, V2, WEAR_BY_ROUND, levelPay, levelRounds, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
+import { LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
 
-// npm run cardwars:check (first rule set), or with CW_RULES=2 for the second.
+// npm run cardwars:check
 // Independent seeds judge the decks the computer picks, rather than reusing
 // matchmaking's own random samples.
 function rng(seed: number) {
@@ -17,14 +17,12 @@ function rng(seed: number) {
   };
 }
 const random = rng(2414);
-console.log(`Card Wars, rule set ${V2 ? 2 : 1}`);
 
 // ── The computer's deck: a fair fight at every level ──
-const pool = V2 ? CATALOG : BRAND_CARDS;
+const pool = CATALOG;
 const sorted = pool.slice().sort((a, b) => fieldStrength(a, CATALOG) - fieldStrength(b, CATALOG));
 const cases: { name: string; player: BattleCard[]; tolerance: number }[] = [
-  // The first rule set's catalogue is half the size: its decks land a little further off.
-  { name: 'mixed', player: shuffle(BRAND_CARDS, rng(18)).slice(0, 5), tolerance: V2 ? 0.045 : 0.07 },
+  { name: 'mixed', player: shuffle(BRAND_CARDS, rng(18)).slice(0, 5), tolerance: 0.045 },
   { name: 'middling', player: sorted.slice(Math.floor(sorted.length / 2) - 2, Math.floor(sorted.length / 2) + 3), tolerance: 0.045 },
   // The five weakest and the five strongest cards have nothing below or above them to meet:
   // the computer gets as near as the catalogue allows.
@@ -56,20 +54,16 @@ let run = createRun(player, random);
 const initial = JSON.stringify(run.opponent);
 const prizes = run.prizes ?? run.opponent;
 assert.equal(new Set(prizes.map((c) => c.id)).size, 5, 'Five different prizes');
-if (PRIZE_DECK) {
-  // The prize table is the computer's deck: a shop-only card stays when it's within reach of the deck that won.
-  const dear = sorted.slice(-5);
-  const bank = dear.filter((c) => c.bank);
-  assert.ok(bank.length > 0, 'The strongest cards include shop-only ones');
-  assert.deepEqual(prizesFor(dear, dear, random).map((c) => c.id), dear.map((c) => c.id), "A deck as dear as the computer's wins the computer's own cards");
-  const cheap = sorted.slice(0, 5);
-  const swappedOut = prizesFor(dear, cheap, random);
-  const limit = PRIZE_REACH * Math.max(...cheap.map((c) => c.price ?? 0));
-  assert.ok(swappedOut.length === 5 && swappedOut.every((c) => !c.bank || (c.price ?? 0) <= limit), 'A shop-only card out of reach is swapped for a Road or Race one');
-  assert.ok(prizes.every((c) => run.opponent.some((o) => o.id === c.id) || !c.bank), "Prizes are the computer's own cards");
-} else {
-  assert.ok(prizes.every((c) => !c.bank), 'Prizes are Road and Race cards only');
-}
+// The prize table is the computer's deck: a shop-only card stays when it's within reach of the deck that won.
+const dear = sorted.slice(-5);
+const bank = dear.filter((c) => c.bank);
+assert.ok(bank.length > 0, 'The strongest cards include shop-only ones');
+assert.deepEqual(prizesFor(dear, dear, random).map((c) => c.id), dear.map((c) => c.id), "A deck as dear as the computer's wins the computer's own cards");
+const cheap = sorted.slice(0, 5);
+const swappedOut = prizesFor(dear, cheap, random);
+const limit = PRIZE_REACH * Math.max(...cheap.map((c) => c.price ?? 0));
+assert.ok(swappedOut.length === 5 && swappedOut.every((c) => !c.bank || (c.price ?? 0) <= limit), 'A shop-only card out of reach is swapped for a Road or Race one');
+assert.ok(prizes.every((c) => run.opponent.some((o) => o.id === c.id) || !c.bank), "Prizes are the computer's own cards");
 assert.deepEqual([...run.rewardOrder].sort(), prizes.map((c) => c.id).sort(), 'The shuffle holds exactly the prizes');
 for (let i = 0; i < 400 && !run.result; i++) {
   const alive = run.hp[0].map((v, index) => (v > 0 ? index : -1)).filter((index) => index >= 0);
@@ -84,77 +78,67 @@ setEventsEnabled(false);
 assert.throws(() => createRun(player.slice(0, 4)), /five unique cards/);
 
 // ── Wear: by the rounds a card fought, so leaning on the best card costs it ──
-if (WEAR_BY_ROUND) {
-  assert.deepEqual([0, 1, 7, 10, 18, 60].map((n) => wearLoss(false, n)), [0, 1, 7, 10, 26, 45], 'Road cards: 1 a round, 1 more past the tenth, 45 at most');
-  assert.deepEqual([7, 12, 30].map((n) => wearLoss(true, n)), [14, 26, 45], 'Race builds: 2 a round');
-  console.log(`Wear: 7 rounds ${wearLoss(false, 7)}%, 18 rounds ${wearLoss(false, 18)}% (race builds ${wearLoss(true, 7)}% and ${wearLoss(true, 18)}%)`);
-} else {
-  assert.equal(wearLoss(false, 20), RULES.wear.road, 'The flat rule charges the same however often a card is played');
-  assert.equal(wearLoss(true, 1), RULES.wear.race);
-}
+assert.deepEqual([0, 1, 7, 10, 18, 60].map((n) => wearLoss(false, n)), [0, 1, 7, 10, 26, 45], 'Road cards: 1 a round, 1 more past the tenth, 45 at most');
+assert.deepEqual([7, 12, 30].map((n) => wearLoss(true, n)), [14, 26, 45], 'Race builds: 2 a round');
+console.log(`Wear: 7 rounds ${wearLoss(false, 7)}%, 18 rounds ${wearLoss(false, 18)}% (race builds ${wearLoss(true, 7)}% and ${wearLoss(true, 18)}%)`);
 
 // ── Builds: any three tags (even the same power three times), Spectre tags, cheaper upkeep ──
-if (BUILDS) {
-  const fresh2 = createRun(shuffle(BRAND_CARDS, rng(7)).slice(0, 5), rng(8));
-  const a: DogTag = { id: 'tag-boost', name: 'Overdrive', power: 'boost' };
-  const b: DogTag = { id: 'spectre:x', name: 'Rico', power: 'boost', vehicle: 'any' };
-  const one = playRound(fresh2, 0, a, rng(9));
-  const alive = one.hp[0].findIndex((v) => v > 0);
-  const two = one.result ? one : playRound(one, alive, b, rng(10));
-  assert.ok(one.usedTags.includes(a.id) || one.log[0].event === 'gremlin', 'The first Overdrive is spent');
-  assert.ok(two.result || two.usedTags.includes(b.id) || two.log[1].event === 'gremlin', 'A second Overdrive in the same deck can still be armed');
-  assert.equal(tagStrength(b, { vehicle: 'car' }), tagStrength(b, { vehicle: 'bike' }), 'A Spectre tag is as strong with a car as with a bike');
-  assert.ok(tagStrength(b) > tagStrength(a), 'and stronger than the plain tag');
-  assert.deepEqual([slotRef(a), slotRef(b), slotRef(undefined)], ['boost:', 'boost:~all', '-'], 'Slots as the server takes them');
-  assert.equal(repairCost(400, 50), 50, 'A repair costs a quarter of the price for a full one');
-  assert.equal(RULES.wear.rest, 15);
-}
+const fresh2 = createRun(shuffle(BRAND_CARDS, rng(7)).slice(0, 5), rng(8));
+const a: DogTag = { id: 'tag-boost', name: 'Overdrive', power: 'boost' };
+const b: DogTag = { id: 'spectre:x', name: 'Rico', power: 'boost', vehicle: 'any' };
+const one = playRound(fresh2, 0, a, rng(9));
+const alive = one.hp[0].findIndex((v) => v > 0);
+const two = one.result ? one : playRound(one, alive, b, rng(10));
+assert.ok(one.usedTags.includes(a.id) || one.log[0].event === 'gremlin', 'The first Overdrive is spent');
+assert.ok(two.result || two.usedTags.includes(b.id) || two.log[1].event === 'gremlin', 'A second Overdrive in the same deck can still be armed');
+assert.equal(tagStrength(b, { vehicle: 'car' }), tagStrength(b, { vehicle: 'bike' }), 'A Spectre tag is as strong with a car as with a bike');
+assert.ok(tagStrength(b) > tagStrength(a), 'and stronger than the plain tag');
+assert.deepEqual([slotRef(a), slotRef(b), slotRef(undefined)], ['boost:', 'boost:~all', '-'], 'Slots as the server takes them');
+assert.equal(repairCost(400, 50), 50, 'A repair costs a quarter of the price for a full one');
+assert.equal(RULES.wear.rest, 15);
 
 // ── Levels and quick play ──
-if (LEVELS) {
-  assert.deepEqual([levelPay('easy', 'win'), levelPay('medium', 'win'), levelPay('medium', 'draw'), levelPay('medium', 'loss'), levelPay('hard', 'win')], [0, 8, 4, 3, 15], 'Easy pays nothing, medium half, hard all of it');
-  assert.deepEqual([levelRounds('easy', 9), levelRounds('medium', 9), levelRounds('hard', 9), levelRounds('easy', 1), levelRounds(undefined, 9), levelRounds('easy', 0)], [3, 6, 9, 1, 9, 0], 'Easy and medium count fewer rounds towards wear');
-  const five = shuffle(BRAND_CARDS, rng(41)).slice(0, 5);
-  // Hard: the computer arms dog tags (three at most, each once); easy never does.
-  let armed = 0;
-  for (let g = 0; g < 12; g++) {
-    const r = rng(600 + g);
-    let hard = createRun(five, r, { level: 'hard' });
-    for (let i = 0; i < 400 && !hard.result; i++) hard = playRound(hard, hard.hp[0].findIndex((v) => v > 0), undefined, r);
-    const used = hard.log.flatMap((l) => (l.rivalTag ? [l.rivalTag] : []));
-    assert.ok(used.length <= 3 + hard.log.filter((l) => l.event === 'redflag').length, 'The computer has three dog tags');
-    armed += used.length;
-  }
-  assert.ok(armed > 6, `On hard the computer uses its dog tags (${armed} in 12 battles)`);
-  let easy = createRun(five, rng(7), { level: 'easy' });
-  for (let i = 0; i < 400 && !easy.result; i++) easy = playRound(easy, easy.hp[0].findIndex((v) => v > 0), undefined, random);
-  assert.ok(easy.log.every((l) => !l.rivalTag), 'On easy it has none');
-  // Quick play: the theme comes up most, sudden death starts low, bare knuckle has no tags.
-  let themed = createRun(five, rng(8), { level: 'hard', mode: 'themed', theme: 'corners' });
-  let rounds = 0;
-  let onTheme = 0;
-  for (let g = 0; g < 8; g++) {
-    themed = createRun(five, rng(80 + g), { level: 'hard', mode: 'themed', theme: 'corners' });
-    for (let i = 0; i < 400 && !themed.result; i++) themed = playRound(themed, themed.hp[0].findIndex((v) => v > 0), undefined, random);
-    rounds += themed.log.filter((l) => !l.flips && !l.first && l.event !== 'rapture').length;
-    onTheme += themed.log.filter((l) => !l.flips && !l.first && l.event !== 'rapture' && l.category === 'corners').length;
-  }
-  assert.ok(onTheme / rounds > 0.5 && onTheme / rounds < 0.75, `The theme takes about ${Math.round((QUICK.themeShare + (1 - QUICK.themeShare) / 4) * 100)}% of rounds (${Math.round((onTheme / rounds) * 100)}%)`);
-  assert.ok(createRun(five, rng(9), { level: 'hard', mode: 'sudden', theme: 'speed' }).hp.flat().every((v) => v === QUICK.suddenHp), 'Sudden death starts every card low');
-  const tagB: DogTag = { id: 'tag-boost', name: 'Overdrive', power: 'boost' };
-  let bare = createRun(five, rng(10), { level: 'hard', mode: 'bare', theme: 'speed' });
-  for (let i = 0; i < 400 && !bare.result; i++) bare = playRound(bare, bare.hp[0].findIndex((v) => v > 0), tagB, random);
-  assert.ok(bare.usedTags.length === 0 && bare.log.every((l) => !l.tag && !l.rivalTag), 'Bare knuckle: no dog tags on either side');
-  console.log(`Levels: neutral targets easy ${LEVEL.easy.target}, medium ${LEVEL.medium.target}, hard ${LEVEL.hard.target} (and hard picks its cards and arms ${armed} dog tags in 12 battles)`);
+assert.deepEqual([levelPay('easy', 'win'), levelPay('medium', 'win'), levelPay('medium', 'draw'), levelPay('medium', 'loss'), levelPay('hard', 'win')], [0, 8, 4, 3, 15], 'Easy pays nothing, medium half, hard all of it');
+assert.deepEqual([levelRounds('easy', 9), levelRounds('medium', 9), levelRounds('hard', 9), levelRounds('easy', 1), levelRounds(undefined, 9), levelRounds('easy', 0)], [3, 6, 9, 1, 9, 0], 'Easy and medium count fewer rounds towards wear');
+const five = shuffle(BRAND_CARDS, rng(41)).slice(0, 5);
+// Hard: the computer arms dog tags (three at most, each once); easy never does.
+let armed = 0;
+for (let g = 0; g < 12; g++) {
+  const r = rng(600 + g);
+  let hard = createRun(five, r, { level: 'hard' });
+  for (let i = 0; i < 400 && !hard.result; i++) hard = playRound(hard, hard.hp[0].findIndex((v) => v > 0), undefined, r);
+  const used = hard.log.flatMap((l) => (l.rivalTag ? [l.rivalTag] : []));
+  assert.ok(used.length <= 3 + hard.log.filter((l) => l.event === 'redflag').length, 'The computer has three dog tags');
+  armed += used.length;
 }
+assert.ok(armed > 6, `On hard the computer uses its dog tags (${armed} in 12 battles)`);
+let easy = createRun(five, rng(7), { level: 'easy' });
+for (let i = 0; i < 400 && !easy.result; i++) easy = playRound(easy, easy.hp[0].findIndex((v) => v > 0), undefined, random);
+assert.ok(easy.log.every((l) => !l.rivalTag), 'On easy it has none');
+// Quick play: the theme comes up most, sudden death starts low, bare knuckle has no tags.
+let themed = createRun(five, rng(8), { level: 'hard', mode: 'themed', theme: 'corners' });
+let rounds = 0;
+let onTheme = 0;
+for (let g = 0; g < 8; g++) {
+  themed = createRun(five, rng(80 + g), { level: 'hard', mode: 'themed', theme: 'corners' });
+  for (let i = 0; i < 400 && !themed.result; i++) themed = playRound(themed, themed.hp[0].findIndex((v) => v > 0), undefined, random);
+  rounds += themed.log.filter((l) => !l.flips && !l.first && l.event !== 'rapture').length;
+  onTheme += themed.log.filter((l) => !l.flips && !l.first && l.event !== 'rapture' && l.category === 'corners').length;
+}
+assert.ok(onTheme / rounds > 0.5 && onTheme / rounds < 0.75, `The theme takes about ${Math.round((QUICK.themeShare + (1 - QUICK.themeShare) / 4) * 100)}% of rounds (${Math.round((onTheme / rounds) * 100)}%)`);
+assert.ok(createRun(five, rng(9), { level: 'hard', mode: 'sudden', theme: 'speed' }).hp.flat().every((v) => v === QUICK.suddenHp), 'Sudden death starts every card low');
+const tagB: DogTag = { id: 'tag-boost', name: 'Overdrive', power: 'boost' };
+let bare = createRun(five, rng(10), { level: 'hard', mode: 'bare', theme: 'speed' });
+for (let i = 0; i < 400 && !bare.result; i++) bare = playRound(bare, bare.hp[0].findIndex((v) => v > 0), tagB, random);
+assert.ok(bare.usedTags.length === 0 && bare.log.every((l) => !l.tag && !l.rivalTag), 'Bare knuckle: no dog tags on either side');
+console.log(`Levels: neutral targets easy ${LEVEL.easy.target}, medium ${LEVEL.medium.target}, hard ${LEVEL.hard.target} (and hard picks its cards and arms ${armed} dog tags in 12 battles)`);
 
 // ── Dog tags ──
-const plain = (power: DogTag['power']): DogTag => ({ id: `tag-${power}`, name: power, power });
 const fresh = () => createRun(player, rng(7));
 const trials = 400;
 // Overdrive: the rating that's compared is the card's times the tag's strength.
 {
-  const tag = V2 ? vehicleTag('boost', 'gp23')! : { ...plain('boost'), vehicle: 'bike' as const };
+  const tag = vehicleTag('boost', 'gp23')!;
   const next = playRound(fresh(), 0, tag, rng(3));
   const last = next.log[0];
   const card = next.player[0];
@@ -164,7 +148,7 @@ const trials = 400;
 }
 // Pit medic: HP back before the round, never past 100.
 {
-  const tag = V2 ? vehicleTag('heal', 'gs')! : { ...plain('heal'), vehicle: 'car' as const };
+  const tag = vehicleTag('heal', 'gs')!;
   const hurt = fresh();
   hurt.hp[0][0] = 30;
   const next = playRound(hurt, 0, tag, rng(5));
@@ -174,7 +158,7 @@ const trials = 400;
 }
 // Second chance: only ever replays a round that was lost, and wins more rounds than playing without it.
 {
-  const tag = V2 ? vehicleTag('reroll', 'gt3r')! : plain('reroll');
+  const tag = vehicleTag('reroll', 'gt3r')!;
   let withTag = 0;
   let without = 0;
   let replays = 0;
@@ -189,16 +173,12 @@ const trials = 400;
       assert.equal(b.winner, 1, 'Only a lost round is replayed');
     }
   }
-  if (V2) {
-    assert.ok(replays > 0 && withTag > without, `Second chance should win more rounds (${withTag} against ${without})`);
-    console.log(`Second chance: ${withTag} rounds won of ${trials} against ${without} without it (${replays} replays)`);
-  } else {
-    assert.equal(replays, 0);
-  }
+  assert.ok(replays > 0 && withTag > without, `Second chance should win more rounds (${withTag} against ${without})`);
+  console.log(`Second chance: ${withTag} rounds won of ${trials} against ${without} without it (${replays} replays)`);
 }
 // Coin flip: the category is the card's best rating on heads and its worst on tails, about as often as the tag says.
 {
-  const tag = V2 ? vehicleTag('flip', 'f2004')! : plain('flip');
+  const tag = vehicleTag('flip', 'f2004')!;
   let heads = 0;
   for (let i = 0; i < trials; i++) {
     const next = playRound(fresh(), i % 5, tag, rng(900 + i));

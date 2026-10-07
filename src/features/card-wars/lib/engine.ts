@@ -1,6 +1,6 @@
 import { CATEGORIES, type BattleCard, type BattleState, type Category, type CoinFlip, type DogTag, type Level, type QuickMode, type TagPower } from '../types';
 import { BRAND_CARDS, CATALOG, cardById } from './catalog';
-import { DAMAGE, LEVEL, PRIZE_DECK, PRIZE_REACH, QUICK, V2, damageFor } from './rules';
+import { DAMAGE, LEVEL, PRIZE_REACH, QUICK, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
@@ -71,11 +71,10 @@ export function estimatePlayerWins(player: BattleCard[], opponent: BattleCard[],
 }
 
 /**
- * The cards the computer may field. Under the first rule set, only the cards a
- * win can earn; under the second the whole catalogue, so a deck of F1 cars
- * meets its match (the prize is still a Road or Race card, see `prizesFor`).
+ * The cards the computer may field: the whole catalogue, so a deck of F1 cars
+ * meets its match (what a win can take from it is `prizesFor`).
  */
-const COMPUTER_POOL = V2 ? CATALOG : BRAND_CARDS;
+const COMPUTER_POOL = CATALOG;
 
 /**
  * Picks real catalog cards: never weakens their ratings or rigs a round. A
@@ -132,13 +131,12 @@ export function createComputerDeck(player: BattleCard[], random: () => number = 
 
 /**
  * The five cards a win picks from, face down: the computer's own deck. A
- * shop-only card (GTLM, TT, F1, MotoGP) stays on the table when the server
- * hands those out (`PRIZE_DECK`) and it's within reach of the deck that beat
- * it (`PRIZE_REACH`, the one check the server can make on a battle it didn't
+ * shop-only card (GTLM, TT, F1, MotoGP) stays on the table when it's within
+ * reach of the deck that beat it (`PRIZE_REACH`, the one check the server can make on a battle it didn't
  * see); otherwise one of the strongest Road or Race cards takes its place.
  */
 export function prizesFor(opponent: BattleCard[], player: BattleCard[] = [], random: () => number = Math.random): BattleCard[] {
-  const reach = PRIZE_DECK ? PRIZE_REACH * Math.max(0, ...player.map((c) => cardById(c.id)?.price ?? 0)) : 0;
+  const reach = PRIZE_REACH * Math.max(0, ...player.map((c) => cardById(c.id)?.price ?? 0));
   const prizes = opponent.filter((c) => !c.bank || (c.price ?? Infinity) <= reach);
   if (prizes.length === opponent.length) return prizes;
   const best = BRAND_CARDS.filter((c) => !prizes.some((p) => p.id === c.id))
@@ -163,7 +161,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
   const startHp = options.mode === 'sudden' ? QUICK.suddenHp : 100;
   const categories = shuffle([...CATEGORIES], random);
   const penaltyRound = random() < 0.125 ? 1 + Math.floor(random() * 4) : -1;
-  const prizes = V2 ? prizesFor(opponent, player, random) : opponent;
+  const prizes = prizesFor(opponent, player, random);
   const { level, mode, theme, daily } = options;
   return {
     id: crypto.randomUUID(),
@@ -176,7 +174,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
     usedTags: [],
     log: [],
     result: null,
-    ...(V2 ? { prizes } : {}),
+    prizes,
     rewardOrder: shuffle(prizes.map((c) => c.id), random),
     rewardClaimed: false,
     ...(level ? { level } : {}),
@@ -210,8 +208,7 @@ export function deadlocked(state: BattleState): boolean {
  *   Coin flip picks the category against the rival's card: the best on heads, the worst
  *     on tails (never Lean);
  *   Second chance replays a lost round once in another category, with a
- *     rating bonus on the replay (first rule set: it just drew another
- *     category, which changed nothing the player could see).
+ *     rating bonus on the replay.
  */
 export function playRound(previous: BattleState, index: number, tag?: DogTag, random: () => number = Math.random): BattleState {
   if (previous.result || !previous.player[index] || previous.hp[0][index] <= 0) return previous;
@@ -309,17 +306,14 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   let [a, b] = score(category);
   if (live?.power === 'reroll') {
     const others = allowed.filter((c) => c !== category);
-    if (!V2) {
-      category = others[Math.floor(random() * others.length)];
-      [a, b] = score(category);
-    } else if (a < b && others.length) {
+    if (a < b && others.length) {
       first = category;
       category = others[Math.floor(random() * others.length)];
       [a, b] = score(category, tagStrength(live, card) / 100);
     }
   }
   // The computer's Second chance: the round it lost is replayed once in another category.
-  if (rivalTag === 'reroll' && V2 && b < a && !first) {
+  if (rivalTag === 'reroll' && b < a && !first) {
     const others = allowed.filter((c) => c !== category);
     if (others.length) {
       first = category;

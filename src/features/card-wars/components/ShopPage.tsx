@@ -9,7 +9,7 @@ import { formatSpeed, getSpeedLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { BANK_INFO, CATALOG, SHELVES, SPECS, SPIN_COST, categoryOf, type ShopCategory } from '../lib/catalog';
-import { COPIES, MARKET, RULES, V2, showRpm } from '../lib/rules';
+import { COPIES, RULES, showRpm } from '../lib/rules';
 import { buyCard, refreshShop, spin, useShop } from '../lib/shop';
 import { REEL_LABELS } from '../lib/spinText';
 import { CwCard } from './CwCard';
@@ -71,7 +71,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
 
   return (
     <div className="min-h-dvh flex flex-col p-4 safe-top safe-bottom max-w-3xl mx-auto w-full">
-      <PageHeader title={tr("Shop")} subtitle={V2 ? tr("Cards, spins and dog tags for RPM") : tr("Cards and spins for RPM")} onBack={() => !busy && onBack()} right={<RpmPill balance={shop.balance} />} />
+      <PageHeader title={tr("Shop")} subtitle={tr("Cards, spins and dog tags for RPM")} onBack={() => !busy && onBack()} right={<RpmPill balance={shop.balance} />} />
 
       <div className="cw-shelves" role="tablist" data-no-pull>
         {SHELVES.map((id) => {
@@ -97,7 +97,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
             </button>
           );
         })}
-        {MARKET && (
+        {(
           <button type="button" role="tab" aria-selected={market} className={cn('cw-shelf', market && 'cw-shelf-on')} onClick={() => setMarket(true)}>
             <b>{tr("Marketplace")}</b>
             <small>{tr("Sell · Trade up")}</small>
@@ -117,11 +117,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
             <div className="min-w-0">
               <p className="text-sm font-semibold">{tr("Spin the {0} wheel", [shelfLabel(shelf)])}</p>
               <p className="text-xs text-muted-foreground leading-snug mt-0.5">
-                {MARKET
-                  ? tr("One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.")
-                  : V2
-                  ? tr("One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own pays 75% of its price; a dog tag you have gives half the spin back.")
-                  : tr("One in five spins lands a card from this shelf; the rest pay RPM back or hand you more spins. A card you already own refunds the spin.")}
+                {tr("One spin can land a card or a dog tag from this shelf, RPM, or another spin. A card you already own becomes another copy; with five, it pays 25% of its price. A dog tag you have gives half the spin back.")}
               </p>
             </div>
           </div>
@@ -133,7 +129,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
           >
             <p className="cw-odds font-mono">
               <span>{tr("Card {0}%", [RULES.odds.card])}</span>
-              {RULES.odds.tag > 0 && <span>{tr("Dog tag {0}%", [RULES.odds.tag])}</span>}
+              <span>{tr("Dog tag {0}%", [RULES.odds.tag])}</span>
               <span>{tr("Spin {0}%", [RULES.odds.spin])}</span>
               <span>{tr("RPM {0}%", [RULES.odds.rpm])}</span>
             </p>
@@ -150,8 +146,8 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
           <div className="cw-grid-2">
             {cards.map((c) => {
               const copies = shop.owned.includes(c.id) ? shop.copies[c.id] ?? 1 : 0;
-              // With the market rules a card can be bought again, up to five copies.
-              const owned = MARKET ? copies >= COPIES.most : copies > 0;
+              // A card can be bought again, up to five copies.
+              const owned = copies >= COPIES.most;
               const s = SPECS[c.id];
               const price = c.price ?? 0;
               return (

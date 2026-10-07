@@ -9,12 +9,12 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { SPECS, cardById } from '../lib/catalog';
 import { deckRating, isBike, overall } from '../lib/ratings';
-import { BUILDS, LEVELS, RULES, V2, WEAR_BY_ROUND, WEAR_ROUND, repairCost, showRpm } from '../lib/rules';
+import { RULES, WEAR_ROUND, repairCost, showRpm } from '../lib/rules';
 import { repairCard, spin, spinTag, useShop } from '../lib/shop';
 import { CARD_REEL_LABELS, TAG_REEL_LABELS } from '../lib/spinText';
 import { parseOwnedTag } from '../lib/tagRules';
 import { TAG_ORDER, deckTagBonus, tagDescription, tagName, tagSourceLine, tagStrength } from '../lib/tags';
-import { REST_RECOVERY, WEAR_PER_BATTLE } from '../lib/wear';
+import { REST_RECOVERY } from '../lib/wear';
 import { updateVault, useVault } from '../lib/store';
 import { eventSound } from '@/lib/appSound';
 import { TradeSheet } from './TradeSheet';
@@ -100,7 +100,7 @@ export function Garage({
   const ready = missing === 0 && tags.length === TAG_SLOTS;
   const rating = deckRating(deck);
   const freeCards = shop.freeSpins > 0;
-  const freeTags = V2 && shop.freeTagSpins > 0;
+  const freeTags = shop.freeTagSpins > 0;
   // Keep a spin box up after its last free spin, so the reel and the win still show.
   const [cardBoxOpen, setCardBoxOpen] = useState(false);
   const [tagBoxOpen, setTagBoxOpen] = useState(false);
@@ -258,11 +258,9 @@ export function Garage({
         {!mustSpin && !locked && (
           <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground text-center">
             <span>
-              {LEVELS
-                ? tr("Hard pays {0} RPM for a win · draw {1} · lose {2}", [showRpm(RULES.reward.win), showRpm(RULES.reward.draw), showRpm(RULES.reward.loss)])
-                : tr("Win {0} RPM · draw {1} · lose {2}", [showRpm(RULES.reward.win), showRpm(RULES.reward.draw), showRpm(RULES.reward.loss)])}
+              {tr("Hard pays {0} RPM for a win · draw {1} · lose {2}", [showRpm(RULES.reward.win), showRpm(RULES.reward.draw), showRpm(RULES.reward.loss)])}
             </span>
-            {shop.firstWin && RULES.firstWin > 0 && (
+            {shop.firstWin && (
               <span className="inline-flex items-center gap-1 text-accent font-semibold">
                 <Sparkles className="w-3 h-3" />
                 {tr("First win today: +{0} RPM", [showRpm(RULES.firstWin)])}
@@ -324,13 +322,13 @@ export function Garage({
       <section>
         <div className="flex items-baseline justify-between mb-2">
           <h2 className={heading}>{tr("Dog tags")}</h2>
-          <span className="text-[11px] text-muted-foreground">{BUILDS ? tr("Any three, one use each") : tr("Three of the four powers, one use each")}</span>
+          <span className="text-[11px] text-muted-foreground">{tr("Any three, one use each")}</span>
         </div>
         <div className="space-y-2">
           {Array.from({ length: TAG_SLOTS }, (_, slot) => {
             const tag = tags[slot];
             // What could go here instead: any tag not in another slot (before builds: whose power the other two don't carry).
-            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && (BUILDS ? x.id === t.id : x.power === t.power))).length;
+            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && x.id === t.id)).length;
             return (
               <button key={slot} type="button" className="cw-tag-row" disabled={frozen} onClick={() => setOpen({ kind: 'tag', slot })}>
                 {tag ? (
@@ -434,7 +432,7 @@ export function Garage({
           <Store className="w-5 h-5 shrink-0 text-accent" />
           <span className="text-left min-w-0">
             <span className="block text-sm font-semibold leading-tight">{tr("Shop")}</span>
-            <span className="block text-[11px] text-muted-foreground font-normal leading-tight">{V2 ? tr("Cards, spins and dog tags for RPM") : tr("Cards and spins for RPM")}</span>
+            <span className="block text-[11px] text-muted-foreground font-normal leading-tight">{tr("Cards, spins and dog tags for RPM")}</span>
           </span>
         </span>
         <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -500,16 +498,10 @@ export function Garage({
                   <i className={cn('block h-full rounded-full', condition < 50 ? 'bg-destructive' : 'bg-foreground/80')} style={{ width: `${condition}%` }} />
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-snug">
-                  {WEAR_BY_ROUND
-                    ? tr("Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.", [
+                  {tr("Every round a card fights costs it {0}% (race builds {1}%), and {2}% more for each round past its tenth in a battle. Sitting a battle out gives {3}% back. Under 50% its ratings start to drop.", [
                         WEAR_ROUND.road,
                         WEAR_ROUND.race,
                         WEAR_ROUND.extra,
-                        REST_RECOVERY,
-                      ])
-                    : tr("A battle costs a card that fights {0}% (race builds {1}%); sitting one out gives {2}% back. Under 50% its ratings start to drop.", [
-                        WEAR_PER_BATTLE.factory,
-                        WEAR_PER_BATTLE.race,
                         REST_RECOVERY,
                       ])}
                 </p>
@@ -588,17 +580,15 @@ export function Garage({
               <SheetHeader className="text-left">
                 <SheetTitle>{tr("Choose a dog tag")}</SheetTitle>
                 <SheetDescription>
-                  {BUILDS
-                    ? tr("A deck carries three dog tags. Mix the powers or double up: two or three of the same power is a build like any other.")
-                    : tr("A deck carries three dog tags, each a different power. There are four powers, so one stays at home: pick the three that suit your cards.")}
+                  {tr("A deck carries three dog tags. Mix the powers or double up: two or three of the same power is a build like any other.")}
                 </SheetDescription>
               </SheetHeader>
-              {TAG_ORDER.filter((power) => BUILDS || !tags.some((x, i) => i !== open.slot && x.power === power)).map((power) => (
+              {TAG_ORDER.map((power) => (
                 <div key={power} className="space-y-2">
                   <div>
                     <p className="text-sm font-semibold">{tagName(power)}</p>
                     <p className="text-[11px] text-muted-foreground leading-snug">
-                      {tagDescription(power)} {V2 && tagSourceLine(power)}
+                      {tagDescription(power)} {tagSourceLine(power)}
                     </p>
                   </div>
                   {availableTags
@@ -607,7 +597,7 @@ export function Garage({
                     .map((t) => {
                       const inUse = tags[open.slot]?.id === t.id;
                       // Under builds a tag sits in one slot only.
-                      const elsewhere = BUILDS && tags.some((x, i) => i !== open.slot && x.id === t.id);
+                      const elsewhere = tags.some((x, i) => i !== open.slot && x.id === t.id);
                       return (
                         <button
                           key={t.id}
@@ -627,11 +617,7 @@ export function Garage({
                 </div>
               ))}
               <p className="text-[11px] text-muted-foreground leading-snug pb-2">
-                {V2
-                  ? BUILDS
-                    ? tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs: turn their card over in your vault to spin for its power.")
-                    : tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs.")
-                  : tr("A tag from a bike rider does more with a bike, and a car driver's with a car. Beat riders' lap times on Track Day to win their dog tags.")}
+                {tr("More dog tags: spins in the shop can land one tied to a vehicle from that shelf. Beat a rider's lap on a Track Day board and you take theirs: turn their card over in your vault to spin for its power.")}
               </p>
             </div>
           )}

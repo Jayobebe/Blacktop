@@ -8,7 +8,6 @@ import { eventSound } from '@/lib/appSound';
 import { shareOrigin } from '@/lib/platform';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
-import { MARKET, RPM_SCALE, baseRpm, showRpm } from '../lib/rules';
 import { cn } from '@/lib/utils';
 import { cardById } from '../lib/catalog';
 import { refreshShop, setRpm, useShop } from '../lib/shop';
@@ -26,7 +25,7 @@ function why(message: string): string {
   if (/current battle/i.test(message)) return tr("Finish your current battle first.");
   if (/too many/i.test(message)) return tr("Too many open swaps. Close one first.");
   if (/same tier|cards only/i.test(message)) return tr("Swap card for card, each for one of the same tier.");
-  if (/nothing/i.test(message)) return MARKET ? tr("Add a card first.") : tr("Add a card or some RPM first.");
+  if (/nothing/i.test(message)) return tr("Add a card first.");
   return tr("Something went wrong. Try again.");
 }
 
@@ -49,7 +48,6 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState('');
   const [scan, setScan] = useState(false);
-  const [rpm, setRpmInput] = useState('0');
   const given = useRef<string[]>([]);
 
   const take = (s: Swap | string) => {
@@ -165,13 +163,12 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
   const toggle = (id: string) => {
     const next = mine.includes(id) ? mine.filter((x) => x !== id) : mine.length < SWAP_LIMIT ? [...mine, id] : null;
     if (!next) return toast(tr("Five cards at most"));
-    void run(() => setSwap(swap.id, next, swap.mine.rpm));
+    void run(() => setSwap(swap.id, next, 0));
   };
   // Typed as it's shown; sent as the server counts it.
-  const amount = Math.max(0, baseRpm(Number(rpm) || 0));
   const collection = shop.owned.filter((id) => cardById(id));
 
-  const Side = ({ title, cards, extra, ready }: { title: string; cards: string[]; extra: number; ready: boolean }) => (
+  const Side = ({ title, cards, ready }: { title: string; cards: string[]; ready: boolean }) => (
     <section className="space-y-1.5">
       <p className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
         <span>{title}</span>
@@ -186,7 +183,6 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
           return card ? <CwCard key={cards[i]} card={card} size="thumb" /> : <div key={i} className="cw-slot aspect-[5/7] min-h-0" aria-hidden />;
         })}
       </div>
-      {extra > 0 && <p className="text-xs font-mono text-accent">+ {showRpm(extra)} RPM</p>}
     </section>
   );
 
@@ -205,17 +201,10 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
         </div>
       ) : null}
 
-      <Side title={swap.theirs.name ? tr("{0} gives", [swap.theirs.name]) : tr("They give")} cards={swap.theirs.cards} extra={swap.theirs.rpm} ready={swap.theirs.ready} />
-      <Side title={tr("You give")} cards={mine} extra={swap.mine.rpm} ready={swap.mine.ready} />
+      <Side title={swap.theirs.name ? tr("{0} gives", [swap.theirs.name]) : tr("They give")} cards={swap.theirs.cards} ready={swap.theirs.ready} />
+      <Side title={tr("You give")} cards={mine} ready={swap.mine.ready} />
 
-      {/* Cards only once the server has closed RPM in swaps: one for one, tier for tier. */}
-      {MARKET && <p className="text-xs text-muted-foreground">{tr("Swap card for card, each for one of the same tier.")}</p>}
-      <div className={MARKET ? 'hidden' : 'flex gap-2'}>
-        <Input type="number" inputMode="numeric" min={0} step={RPM_SCALE} aria-label={tr("RPM you add")} value={rpm} onChange={(e) => setRpmInput(e.target.value)} className="h-11 font-mono" />
-        <Button variant="outline" className="h-11 shrink-0" disabled={busy || amount === swap.mine.rpm || amount > (shop.balance ?? 0)} onClick={() => void run(() => setSwap(swap.id, mine, amount))}>
-          {tr("Add RPM")}
-        </Button>
-      </div>
+      <p className="text-xs text-muted-foreground">{tr("Swap card for card, each for one of the same tier.")}</p>
 
       <section className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{tr("Tap your cards to add or take back")}</p>

@@ -1,5 +1,4 @@
 import type { BattleCard, CardBank, DogTag } from '../types';
-import { V2 } from './rules';
 /**
  * Brand card artwork: public/card-wars/<cars|bikes>/<id>.png, made by
  * scripts/make-card-wars-art.py (cars cleaned of their chroma key: smoked
@@ -28,11 +27,10 @@ const ARTWORK: Record<string, string> = Object.fromEntries([
 /**
  * Card Wars catalog. Each card carries real published figures (year, power,
  * weight, top speed and, for bikes, max lean), shown on the card. Ratings
- * drive battles. Under the first rule set they're worked out here: Speed,
- * G-force and Lean from the figures, Distance (endurance) and Corners
- * (handling) from the last two columns. Under the second they come from the
- * BALANCE table below. Either way the server holds the same numbers in
- * `cw_catalog`: keep ids and ratings in step.
+ * drive battles and come from the BALANCE table below (the last two columns
+ * here are the Distance and Corners judgements the balance script starts
+ * from). The server holds the same numbers in `cw_catalog`: keep ids and
+ * ratings in step.
  */
 export interface CardSpecs { year: number; hp: number; kg: number; vmaxKmh: number; leanDeg?: number }
 
@@ -128,16 +126,8 @@ const rows: Row[] = [
  ['nsr500','Honda','NSR500','bike','race','motogp',2001,190,131,320,60,28,93],
 ];
 
-const clamp = (v: number) => Math.round(Math.max(10, Math.min(99, v)));
-/** Top speed: 150 km/h → 20, 370 km/h → 99. */
-const speedRating = (kmh: number) => clamp(20 + (kmh - 150) / 220 * 79);
-/** Power-to-weight, log scale: 150 hp/t → 20, doubling adds 25 (cars and bikes share it). */
-const gRating = (hp: number, kg: number) => clamp(20 + 25 * Math.log2((hp / kg * 1000) / 150));
-/** Max lean: 40° → 20, 64° → 99; cars never use it. */
-const leanRating = (deg: number | null) => deg == null ? 30 : clamp(20 + (deg - 40) / 24 * 79);
-
 /**
- * Ratings and prices under the second rule set (rules.ts):
+ * Ratings and prices:
  * [speed, lean, g-force, distance, corners, price in RPM]. Written by
  * `npm run cardwars:balance` (scripts/make-card-wars-balance.ts), which
  * prints the same rows for `cw_catalog`; never edit one side alone. A card's
@@ -178,25 +168,20 @@ export const BANK_INFO: Record<CardBank, { label: string; vehicle: 'car' | 'bike
 export type ShopCategory = 'road' | 'race' | CardBank;
 export const categoryOf = (c: Pick<BattleCard, 'bank' | 'spec'>): ShopCategory => c.bank ?? (c.spec === 'race' ? 'race' : 'road');
 /** RPM for one spin on each shelf: about a fifth of what its cards cost (`cw_spin_cost` on the server). */
-export const SPIN_COST: Record<ShopCategory, number> = V2
- ? { road: 10, race: 25, gtlm: 30, tt: 30, f1: 65, motogp: 75 }
- : { road: 10, race: 16, gtlm: 30, tt: 30, f1: 66, motogp: 66 };
+export const SPIN_COST: Record<ShopCategory, number> = { road: 10, race: 25, gtlm: 30, tt: 30, f1: 65, motogp: 75 };
 export const SHELVES: ShopCategory[] = ['road', 'race', 'gtlm', 'tt', 'f1', 'motogp'];
-/** What every card on a shelf cost under the first rule set. */
-const SHELF_PRICE: Record<ShopCategory, number> = { road: 60, race: 100, gtlm: 180, tt: 180, f1: 400, motogp: 400 };
 
 export const SPECS: Record<string, CardSpecs> = {};
 export const CATALOG: BattleCard[] = rows.map(([id, manufacturer, name, vehicle, spec, bank, year, hp, kg, vmaxKmh, leanDeg, distance, corners]) => {
  SPECS[id] = { year, hp, kg, vmaxKmh, ...(leanDeg != null ? { leanDeg } : {}) };
- const b = V2 ? BALANCE[id] : undefined;
+ const b = BALANCE[id];
+ if (!b) throw new Error(`Card Wars: ${id} has no BALANCE row (npm run cardwars:balance)`);
  return {
   id, name, manufacturer, vehicle, spec, archetype: id,
   ...(ARTWORK[id] ? { image: ARTWORK[id] } : {}),
   ...(bank ? { bank } : {}),
-  price: b ? b[5] : SHELF_PRICE[bank ?? (spec === 'race' ? 'race' : 'road')],
-  ratings: b
-   ? { speed: b[0], lean: b[1], g: b[2], distance: b[3], corners: b[4] }
-   : { speed: speedRating(vmaxKmh), lean: leanRating(leanDeg), g: gRating(hp, kg), distance, corners },
+  price: b[5],
+  ratings: { speed: b[0], lean: b[1], g: b[2], distance: b[3], corners: b[4] },
  };
 });
 /** Brand cards (the Road and Race shelves): the ones a win against the computer can earn. */
@@ -218,21 +203,13 @@ export function cardIdentity(name: string, makeModel?: string): Pick<BattleCard,
 /** The deck demo mode plays with. */
 export const STARTERS = ['mx5','gti','mt07','sv650','ninja'];
 /**
- * The four dog tags everyone has, one per power. Under the first rule set each
- * is stronger with one kind of vehicle; under the second they're the plain
- * ones, and the tags worth having are won on spins (lib/tagRules.ts).
+ * The four dog tags everyone has, one per power: the plain ones. The tags
+ * worth having are won on spins (lib/tagRules.ts).
  */
-export const STARTER_TAGS: DogTag[] = V2
- ? [
-  {id:'tag-reroll',name:'Second chance',power:'reroll'},
-  {id:'tag-heal',name:'Pit medic',power:'heal'},
-  {id:'tag-boost',name:'Overdrive',power:'boost'},
-  {id:'tag-flip',name:'Coin flip',power:'flip'},
- ]
- : [
-  {id:'tag-reroll',name:'Second chance',power:'reroll',vehicle:'bike'},
-  {id:'tag-heal',name:'Pit medic',power:'heal',vehicle:'car'},
-  {id:'tag-boost',name:'Overdrive',power:'boost',vehicle:'bike'},
-  {id:'tag-flip',name:'Coin flip',power:'flip'},
- ];
+export const STARTER_TAGS: DogTag[] = [
+ {id:'tag-reroll',name:'Second chance',power:'reroll'},
+ {id:'tag-heal',name:'Pit medic',power:'heal'},
+ {id:'tag-boost',name:'Overdrive',power:'boost'},
+ {id:'tag-flip',name:'Coin flip',power:'flip'},
+];
 export function unlockCard(id: 'demo'|'dev'): BattleCard { const base=CATALOG.find(c=>c.id===(id==='demo'?'mx5':'mt07'))!; return {...base,id,manufacturer:'Blacktop',name:id==='demo'?'Demo':'Dev',source:'unlock'}; }

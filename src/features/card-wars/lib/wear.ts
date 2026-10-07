@@ -1,11 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { isDemoModeActive } from '@/lib/demoMode';
-import { RULES, WEAR_BY_ROUND, levelRounds, wearLoss } from './rules';
+import { RULES, levelRounds, wearLoss } from './rules';
 import { getVault, updateVault, wearReportOf } from './store';
 import type { BattleCard, BattleState, WearReport } from '../types';
 
-/** The flat rule (before wear by round): condition lost per battle a card fights in. Race builds wear out faster than road cards. */
-export const WEAR_PER_BATTLE = { factory: RULES.wear.road, race: RULES.wear.race } as const;
 /** Condition regained per battle a card sits out (resting in the garage). */
 export const REST_RECOVERY = RULES.wear.rest;
 
@@ -83,7 +81,7 @@ type Sent = { wear: Record<string, number> } | 'retry' | 'rejected';
 
 async function send(report: WearReport): Promise<Sent> {
   // By round where the server counts them; a report saved by an older app only knows which cards fought.
-  const byRound = WEAR_BY_ROUND && report.rounds?.length === report.deck.length;
+  const byRound = report.rounds?.length === report.deck.length;
   const { data, error } = byRound
     ? await supabase.rpc('cw_report_wear' as never, { _run: report.id, _deck: report.deck, _rounds: report.rounds, _raptured: report.raptured ?? null } as never)
     : await supabase.rpc('cw_save_wear' as never, { _run: report.id, _deck: report.deck, _fought: report.fought, _raptured: report.raptured ?? null } as never);

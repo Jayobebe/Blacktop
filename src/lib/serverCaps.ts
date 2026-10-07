@@ -10,26 +10,10 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
  * itself, even a permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
-export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWars2' | 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels' | 'cardWarsPace' | 'cardWarsMarket' | 'worldCountries';
+export type ServerCap = 'trackRecords' | 'cardWars' | 'worldCountries';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
   cardWars: () => supabase.rpc('cw_available' as never),
-  // The Card Wars economy migration (lib/rules.ts reads the stored answer when the game loads).
-  cardWars2: () => supabase.rpc('cw_rules' as never),
-  // The Coin flip dog tag in player battles and on spins (lib/rules.ts, FLIP).
-  cardWarsFlip: () => supabase.rpc('cw_flip' as never),
-  // Card wear that follows the rounds each card fought (lib/rules.ts, WEAR_BY_ROUND).
-  cardWarsWear: () => supabase.rpc('cw_wear_rules' as never),
-  // The computer's own deck as the prize table, shop-only cards included (lib/rules.ts, PRIZE_DECK).
-  cardWarsPrizes: () => supabase.rpc('cw_prize_rules' as never),
-  // Free dog tag builds, Spectre tags, cheaper upkeep and RPM from the arcade (lib/rules.ts, BUILDS).
-  cardWarsBuilds: () => supabase.rpc('cw_build_rules' as never),
-  // Difficulty levels and quick play against the computer (lib/rules.ts, LEVELS).
-  cardWarsLevels: () => supabase.rpc('cw_level_rules' as never),
-  // Shorter battles, the hard win streak and the daily challenge (lib/rules.ts, PACE).
-  cardWarsPace: () => supabase.rpc('cw_pace_rules' as never),
-  // Cards-only swaps, copies, trade-ups and the Blacktop Marketplace (lib/rules.ts, MARKET).
-  cardWarsMarket: () => supabase.rpc('cw_market_rules' as never),
   // Blacktop World's globe glowing by accounts per country, and its list (lib/profileCountry.ts).
   worldCountries: () => supabase.rpc('profile_country_counts' as never),
   trackRecords: () =>

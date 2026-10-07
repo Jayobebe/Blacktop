@@ -61,8 +61,6 @@ export default function World() {
 
   const crew = useCrew();
   const { settings } = useSettings();
-  // A Spectre's back is its Card Wars dog tag once the server knows those tags.
-  const tagBuilds = useServerCap('cardWarsBuilds');
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
   const { enabled: demoEnabled, activeRiders: demoActiveRiders } = useDemoMode();
@@ -337,7 +335,7 @@ export default function World() {
       {/* Card collection — full-height vertical snap carousel */}
       {settings.collectiblesEnabled && (
         <div className="flex-shrink-0">
-          <CollectedCardsFolder spectreBack={tagBuilds ? (sp, shown, assign) => <SpectreTagBack spectre={sp} shown={shown} onAssign={assign} /> : undefined} />
+          <CollectedCardsFolder spectreBack={(sp, shown, assign) => <SpectreTagBack spectre={sp} shown={shown} onAssign={assign} />} />
         </div>
       )}
 

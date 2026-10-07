@@ -3,82 +3,17 @@
  * (RPM, ownership, spins, player battles), so these only mirror what it does:
  * they drive the wording in the app and the battles against the computer.
  *
- * There are two sets. The first is what the server ran until migration
- * 20261009000000_card_wars_economy.sql; the second is what that migration
- * brings (prices and ratings that follow a card's strength, a daily limit on
- * battle rewards, staked player battles that pay out no more than went in, dog
- * tags that are won and tied to a vehicle). The app picks one when Card Wars
- * loads, from what the server said at launch, and keeps it until the next
- * launch: ratings, prices and wording never mix. Once the migration is live
- * everywhere, the first set and everything that reads `V2 ? … : …` can go.
+ * There is one rule set. The app used to carry the one before it too, and a
+ * switch for each later migration, read from what the server said at launch;
+ * every one of those migrations is live, so they're gone (2026-10-07).
  */
-function serverRules(): 1 | 2 {
-  // Scripts choose with CW_RULES (there's no server to ask).
-  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
-  if (env) return env === '2' ? 2 : 1;
-  try {
-    return JSON.parse(localStorage.getItem('bt.server_caps') || '{}').cardWars2 ? 2 : 1;
-  } catch {
-    return 1;
-  }
-}
 
-export const V2 = serverRules() === 2;
-
-/** What the server said at launch about a later migration (scripts: on with the second rule set). */
-function serverHas(cap: 'cardWarsFlip' | 'cardWarsWear' | 'cardWarsPrizes' | 'cardWarsBuilds' | 'cardWarsLevels' | 'cardWarsPace' | 'cardWarsMarket'): boolean {
-  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_RULES;
-  if (env) return env === '2';
-  try {
-    return !!JSON.parse(localStorage.getItem('bt.server_caps') || '{}')[cap];
-  } catch {
-    return false;
-  }
-}
-
-/**
- * The server knows the Coin flip dog tag (the coin flip migration, applied as
- * 20261005174423_…; the `cardWarsFlip` cap). Without it the tag still works
- * against the computer, as the standard one everyone has: it just can't be
- * taken into a player battle or won on a spin.
- */
-export const FLIP = V2 && serverHas('cardWarsFlip');
-
-/**
- * Wear follows the rounds each card fought (migration
- * 20261011, applied as 20261005184020_…; the `cardWarsWear` cap). Until
- * the server has it, a battle costs a card that fought the flat `wear.road` /
- * `wear.race`, however often it was played.
- */
-export const WEAR_BY_ROUND = V2 && serverHas('cardWarsWear');
-
-/**
- * The prize table is the computer's own deck, shop-only cards included
- * (migration 20261012, applied as 20261005192322_…; the `cardWarsPrizes`
- * cap). Until the server has it, it only hands out Road and Race cards, so a
- * shop-only card on the table is swapped for one of those.
- */
-export const PRIZE_DECK = V2 && serverHas('cardWarsPrizes');
 /** A shop-only prize costs at most this many times the dearest card in the deck that won it (the server checks it against what the rider owns). */
 export const PRIZE_REACH = 2;
 
-/**
- * Migration 20261013000000_card_wars_builds.sql (the `cardWarsBuilds` cap):
- * a deck's three dog tags can share a power, a Spectre's tag has the power
- * spun for it and its bonus with any vehicle, repairs cost half as much, a
- * battle sat out gives 15 % back, and the other arcade games pay RPM.
- */
-export const BUILDS = V2 && serverHas('cardWarsBuilds');
 /** RPM for a finished game of Hit Heavy or Petrol Head (`best`: a new personal best), and the most a day pays. The server's numbers. */
 export const ARCADE_PAY = { game: 5, best: 15, daily: 40 } as const;
 
-/**
- * Difficulty levels and quick play against the computer (migration
- * 20261015000000_card_wars_levels.sql; the `cardWarsLevels` cap). Until the
- * server has it there's one kind of battle, as before: it can't yet pay a
- * level less than another.
- */
-export const LEVELS = V2 && serverHas('cardWarsLevels');
 /**
  * What each level is. `target`: the share of battles a player choosing cards
  * at random would win against the deck the computer is given. On hard the
@@ -101,24 +36,13 @@ export const levelRounds = (level: keyof typeof LEVEL | undefined, rounds: numbe
 export const levelPay = (level: keyof typeof LEVEL, result: 'win' | 'draw' | 'loss'): number => Math.ceil(RULES.reward[result] * LEVEL[level].pay);
 
 /**
- * Pace and reasons to come back (migration 20261016000000_card_wars_pace.sql;
- * the `cardWarsPace` cap): rounds hit harder so battles are shorter, hard wins
- * in a row pay a streak bonus, and one quick play a day is the same for
- * everyone and pays once.
+ * RPM never leaves an account: a swap is cards only, one for one, each for a
+ * card of the same tier. A card can be held up to five times (a spin or prize
+ * that lands on one already held is another copy; with five it pays a quarter
+ * of its price); a deck takes each card once. Five cards of one tier trade up
+ * for a spin at the next tier, and the Blacktop Marketplace buys a card on a
+ * coin flip.
  */
-export const PACE = V2 && serverHas('cardWarsPace');
-/**
- * The economy closed to second accounts (migration
- * 20261019000000_card_wars_market.sql; the `cardWarsMarket` cap). RPM never
- * leaves an account: card sales by code are gone and a swap is cards only, one
- * for one, each for a card of the same tier. A card can be held up to five
- * times (a spin or prize that lands on one already held is another copy; with
- * five it pays a quarter of its price); a deck still takes each card once. Five cards
- * of one tier trade up for a spin at the next tier, and the Blacktop
- * Marketplace buys a card on a coin flip. Until the server has it, the sale
- * and swap screens stay as they were.
- */
-export const MARKET = V2 && serverHas('cardWarsMarket');
 /** Mirrors cw_market_rules(). */
 export const COPIES = { most: 5 } as const;
 export const MARKETPLACE = { low: 0.1, high: 0.5, daily: 3, keep: 5 } as const;
@@ -172,21 +96,7 @@ export interface Rules {
   wear: { road: number; race: number; rest: number };
 }
 
-const RULES_V1: Rules = {
-  reward: { win: 10, draw: 4, loss: 2 },
-  firstWin: 0,
-  dailyBattles: null,
-  prizeDuplicate: 0,
-  stake: 10,
-  pot: 70,
-  odds: { card: 20, tag: 0, spin: 25, rpm: 55 },
-  freeCardSpins: 5,
-  freeTagSpins: 0,
-  freeOdds: { road: 50, race: 30, gtlm: 8, tt: 8, f1: 2, motogp: 2 },
-  wear: { road: 8, race: 15, rest: 10 },
-};
-
-const RULES_V2: Rules = {
+export const RULES: Rules = {
   reward: { win: 15, draw: 8, loss: 5 },
   firstWin: 20,
   dailyBattles: 20,
@@ -195,12 +105,10 @@ const RULES_V2: Rules = {
   pot: 36,
   odds: { card: 16, tag: 12, spin: 20, rpm: 52 },
   freeCardSpins: 5,
-  freeTagSpins: FLIP ? 4 : 3,
+  freeTagSpins: 4,
   freeOdds: { road: 55, race: 30, gtlm: 6, tt: 6, f1: 1.5, motogp: 1.5 },
-  wear: { road: 8, race: 15, rest: BUILDS ? 15 : 10 },
+  wear: { road: 8, race: 15, rest: 15 },
 };
-
-export const RULES: Rules = V2 ? RULES_V2 : RULES_V1;
 
 /**
  * Wear by round: condition a card loses per round it fights (race builds
@@ -215,7 +123,6 @@ export const WEAR_ROUND = { road: 1, race: 2, past: 10, extra: 1, cap: 45 } as c
 /** Condition a card loses for the rounds it fought in one battle. */
 export function wearLoss(race: boolean, rounds: number): number {
   if (rounds <= 0) return 0;
-  if (!WEAR_BY_ROUND) return race ? RULES.wear.race : RULES.wear.road;
   return Math.min(WEAR_ROUND.cap, rounds * (race ? WEAR_ROUND.race : WEAR_ROUND.road) + Math.max(0, rounds - WEAR_ROUND.past) * WEAR_ROUND.extra);
 }
 
@@ -223,15 +130,15 @@ export function wearLoss(race: boolean, rounds: number): number {
 export function repairCost(price: number | undefined, condition: number): number {
   const missing = Math.max(0, 100 - condition);
   if (missing === 0) return 0;
-  return V2 ? Math.max(1, Math.ceil((missing * (price ?? 100)) / (BUILDS ? 400 : 200))) : missing;
+  return Math.max(1, Math.ceil((missing * (price ?? 100)) / 400));
 }
 
 /**
  * Damage a lost round does: a floor, more the wider the gap, up to a cap. It
  * was 20 / 0.7 a point / 65, and a battle ran about 35 rounds: long for a
- * phone. With `PACE` it's 35 / 0.8 / 80, about 24 rounds, and a wide gap still
+ * phone. Now it's 35 / 0.8 / 80, about 24 rounds, and a wide gap still
  * takes two hits to knock a fresh card out. `cw_action` does the same sum.
  */
 const envDamage = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CW_DAMAGE?.split(',').map(Number);
-export const DAMAGE = envDamage?.length === 3 ? { floor: envDamage[0], gap: envDamage[1], cap: envDamage[2] } : PACE ? { floor: 35, gap: 0.8, cap: 80 } : { floor: 20, gap: 0.7, cap: 65 };
+export const DAMAGE = envDamage?.length === 3 ? { floor: envDamage[0], gap: envDamage[1], cap: envDamage[2] } : { floor: 35, gap: 0.8, cap: 80 };
 export const damageFor = (a: number, b: number) => (a === b ? 0 : Math.min(DAMAGE.cap, DAMAGE.floor + Math.round(Math.abs(a - b) * DAMAGE.gap)));

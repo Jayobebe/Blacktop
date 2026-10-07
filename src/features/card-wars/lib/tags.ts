@@ -2,8 +2,6 @@ import { CircleDollarSign, Heart, RefreshCw, Zap, type LucideIcon } from 'lucide
 import type { SpectreCard } from '@/features/cards';
 import { tr } from '@/lib/i18n';
 import { STARTER_TAGS } from './catalog';
-import { matchOwn } from './ownMatch';
-import { BUILDS, FLIP, V2 } from './rules';
 import { parseOwnedTag, tagMatches, tagStrength } from './tagRules';
 import type { BattleCard, DogTag, TagPower } from '../types';
 
@@ -34,7 +32,6 @@ export function tagEffect(tag: DogTag, card?: BattleCard | null): string {
   if (tag.power === 'boost') return tr("Rating ×{0}", [String(strength / 100)]);
   if (tag.power === 'heal') return tr("+{0} HP", [strength]);
   if (tag.power === 'flip') return tr("Heads {0}%", [strength]);
-  if (!V2) return tr("New category");
   return strength > 100 ? tr("Replay +{0}%", [strength - 100]) : tr("Replay");
 }
 
@@ -48,7 +45,7 @@ export function tagDescription(power: TagPower): string {
     case 'flip':
       return tr("Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.");
     default:
-      return V2 ? tr("If you lose the round, it's replayed once in another category.") : tr("Throws the drawn category away and draws another.");
+      return tr("If you lose the round, it's replayed once in another category.");
   }
 }
 
@@ -82,24 +79,14 @@ export function tagKindLine(tag: DogTag): string {
 
 /**
  * Every dog tag the player can put in a deck: the standard ones, the tags
- * taken from riders on Track Day boards, and under the second rule set the
+ * taken from riders on Track Day boards, and the
  * tags won on spins. A Spectre's tag has the power spun for it in the vault
  * (none until its card has been turned over) and, being earned, its bonus
- * with cars and bikes alike. Before builds each rider's tag took a power in
- * turn and was tied to the kind of vehicle they rode.
+ * with cars and bikes alike.
  */
 export function allTags(owned: string[], spectres: SpectreCard[]): DogTag[] {
-  const track: DogTag[] = BUILDS
-    ? spectres.flatMap((s) => (s.power ? [spectreTag(s)] : []))
-    : spectres.map((s, i) => ({
-        id: `spectre:${s.key}`,
-        name: s.setterName,
-        spectre: s,
-        power: STARTER_TAGS[i % 3].power,
-        vehicle: matchOwn(s.card.n, s.card.m, 'bike').vehicle,
-      }));
-  // A Coin flip won on a spin only exists on a server that knows the tag.
-  const won = V2 ? owned.flatMap((entry) => parseOwnedTag(entry) ?? []).filter((t) => FLIP || t.power !== 'flip') : [];
+  const track: DogTag[] = spectres.flatMap((s) => (s.power ? [spectreTag(s)] : []));
+  const won = owned.flatMap((entry) => parseOwnedTag(entry) ?? []);
   return [...STARTER_TAGS, ...track, ...won];
 }
 

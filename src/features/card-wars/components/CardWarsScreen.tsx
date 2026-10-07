@@ -20,10 +20,10 @@ import { categoryLabel, deckRating, overall } from '../lib/ratings';
 import { matchOwn } from '../lib/ownMatch';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
-import { BUILDS, FLIP, LEVEL, LEVELS, PACE, RULES, V2, WEAR_BY_ROUND, dailyChallenge, showRpm } from '../lib/rules';
+import { LEVEL, RULES, dailyChallenge, showRpm } from '../lib/rules';
 import { claimDaily, claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, getVault, updateVault, useVault } from '../lib/store';
-import { powerIndex, slotRef, tagRef, tagStrength } from '../lib/tagRules';
+import { slotRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
 import { conditionOf, flushPendingWear, queueWear, roundsFought, syncWear, wearAfterRun, withWear } from '../lib/wear';
 import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type Category, type CoinFlip, type DogTag, type Level, type QuickMode, type TagPower } from '../types';
@@ -46,7 +46,7 @@ const standing = (hp: number[] | undefined) => (hp ?? []).filter((v) => v > 0).l
 const powerAt = (index: number | null | undefined): TagPower | null => (typeof index === 'number' ? POWERS[index] ?? null : null);
 const flipOf = (f: { h: boolean; c: number } | null | undefined): CoinFlip | null => (f && CATEGORIES[f.c - 1] ? { heads: !!f.h, category: CATEGORIES[f.c - 1] } : null);
 /** The powers a player battle can carry: the Coin flip only where the server knows it. */
-const ONLINE_POWERS = FLIP ? POWERS : POWERS.filter((p) => p !== 'flip');
+const ONLINE_POWERS = POWERS;
 
 /**
  * Card Wars: the deck and everything round it (home), the shop, a battle
@@ -142,9 +142,9 @@ export function CardWarsScreen() {
   const deckTags = vault.tags
     .map((id) => tags.find((t) => t.id === id))
     .filter((t): t is DogTag => !!t)
-    .filter((t, i, all) => all.findIndex((x) => (BUILDS ? x.id === t.id : x.power === t.power)) === i)
+    .filter((t, i, all) => all.findIndex((x) => x.id === t.id) === i)
     .slice(0, TAG_SLOTS);
-  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => (BUILDS ? t.id === spare.id : t.power === spare.power))) deckTags.push(spare);
+  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => t.id === spare.id)) deckTags.push(spare);
   const run = vault.run;
 
   // The Arcade page shows the deck without opening the game: keep a light copy with the vault
@@ -361,18 +361,11 @@ export function CardWarsScreen() {
                 const fresh = pool.find((p) => p.id === c.id);
                 return fresh && c.source === 'collection' ? { key: c.id, r: ratingsArray(fresh.ratings) } : null;
               }),
-              // One per power, in the server's order.
-              // One per power, in the server's order; "-" for the power this deck leaves at home.
-              tags: BUILDS
-                ? // Three slots, "power:ref" each.
-                  Array.from({ length: TAG_SLOTS }, (_, i) => slotRef(deckTags[i]))
-                : ONLINE_POWERS.map((power) => {
-                    const mine = deckTags.find((t) => t.power === power);
-                    return mine ? tagRef(mine) : FLIP ? '-' : '';
-                  }),
+              // Three slots, "power:ref" each.
+              tags: Array.from({ length: TAG_SLOTS }, (_, i) => slotRef(deckTags[i])),
             }
           : {}),
-        ...(action === 'play' ? { card, tag: armed ? (BUILDS ? deckTags.indexOf(armed) : powerIndex(armed.power)) : undefined, round: online?.round } : {}),
+        ...(action === 'play' ? { card, tag: armed ? deckTags.indexOf(armed) : undefined, round: online?.round } : {}),
       });
       if (action === 'play') lastPlay.current = { round: online?.round ?? 0, tag: armed?.power ?? null };
       accept(result);
@@ -441,7 +434,6 @@ export function CardWarsScreen() {
     const values = (type === 'deck' ? deck : deckTags).map((x) => x.id);
     if (values.some((x, i) => i !== index && x === id)) return;
     // One tag per power, before builds.
-    if (!BUILDS && type === 'tags' && values.some((x, i) => i !== index && tags.find((t) => t.id === x)?.power === tags.find((t) => t.id === id)?.power)) return;
     values[index] = id;
     updateVault({ [type]: values });
   }
@@ -461,7 +453,7 @@ export function CardWarsScreen() {
     setTag(null);
     setReveal(null);
     setSetup(false);
-    updateVault({ run: createRun(deck, Math.random, LEVELS ? { level: level ?? 'medium' } : {}) });
+    updateVault({ run: createRun(deck, Math.random, { level: level ?? 'medium' }) });
     setView('computer');
   }
 
@@ -475,13 +467,11 @@ export function CardWarsScreen() {
     setView('computer');
   }
 
-  /** Battle again: the level sheet where there are levels, else straight in. */
+  /** Battle again: back to the level sheet. */
   const again = () => {
-    if (LEVELS) {
-      updateVault({ run: null });
-      setView('home');
-      setSetup(true);
-    } else startComputer();
+    updateVault({ run: null });
+    setView('home');
+    setSetup(true);
   };
 
   function claim(id: string) {
@@ -518,7 +508,7 @@ export function CardWarsScreen() {
           tags={deckTags}
           usedTags={run.usedTags}
           rivalTags={run.rivalUsed && run.mode !== 'bare' ? (['boost', 'heal', 'reroll'] as const).map((power) => ({ power, used: run.rivalUsed!.includes(power) })) : undefined}
-          rounds={WEAR_BY_ROUND ? run.player.map((c) => roundsFought(run)[c.id] ?? 0) : undefined}
+          rounds={run.player.map((c) => roundsFought(run)[c.id] ?? 0)}
           tag={tag}
           onTag={setTag}
           onPick={pickComputer}
@@ -583,7 +573,7 @@ export function CardWarsScreen() {
           wear={
             wearBefore?.run === run.id
               ? run.player
-                  .map((card) => ({ card, change: conditionOf(vault.wear, card.id) - (wearBefore.before[card.id] ?? 100), rounds: WEAR_BY_ROUND ? roundsFought(run)[card.id] : undefined }))
+                  .map((card) => ({ card, change: conditionOf(vault.wear, card.id) - (wearBefore.before[card.id] ?? 100), rounds: roundsFought(run)[card.id] }))
                   .filter((w) => w.change !== 0)
               : []
           }
@@ -603,8 +593,7 @@ export function CardWarsScreen() {
   }
 
   if (pvpBattle && shownOnline) {
-    // The first rule set's server only told a car from a bike: its medic does more for a car, its Overdrive for a bike.
-    const battleTags = (V2 ? deckTags : deckTags.map((t) => ({ ...t, vehicle: t.power === 'heal' ? ('car' as const) : t.power === 'boost' ? ('bike' as const) : undefined }))).filter((t) => (ONLINE_POWERS as readonly TagPower[]).includes(t.power));
+    const battleTags = deckTags.filter((t) => (ONLINE_POWERS as readonly TagPower[]).includes(t.power));
     return (
       <main className="cw-arena-page text-foreground">
         <BattleArena
@@ -616,8 +605,8 @@ export function CardWarsScreen() {
           submitted={!reveal && online?.submitted}
           selected={online?.selected}
           tags={battleTags}
-          usedTags={battleTags.filter((t, i) => shownOnline.used?.includes(BUILDS ? i : powerIndex(t.power))).map((t) => t.id)}
-          rounds={WEAR_BY_ROUND ? sideCards(shownOnline, true).map((c) => (shownOnline.log ?? []).filter((l) => (shownOnline.side === 1 ? l.card1 : l.card2) === c.id).length) : undefined}
+          usedTags={battleTags.filter((t, i) => shownOnline.used?.includes(i)).map((t) => t.id)}
+          rounds={sideCards(shownOnline, true).map((c) => (shownOnline.log ?? []).filter((l) => (shownOnline.side === 1 ? l.card1 : l.card2) === c.id).length)}
           tag={tag}
           onTag={setTag}
           onPick={(i) => void act('play', i)}
@@ -735,7 +724,7 @@ export function CardWarsScreen() {
         playersOpen={cap}
         onReplace={replaceSlot}
         onBestDeck={bestDeck}
-        onBattleComputer={() => (run && !run.result ? setView('computer') : live ? (online?.status === 'playing' ? setView('players') : setSheet(true)) : LEVELS ? setSetup(true) : startComputer())}
+        onBattleComputer={() => (run && !run.result ? setView('computer') : live ? (online?.status === 'playing' ? setView('players') : setSheet(true)) : setSetup(true))}
         onBattlePlayer={() => setSheet(true)}
         onShop={() => setView('shop')}
       />
@@ -763,8 +752,8 @@ export function CardWarsScreen() {
           setQuickMode(mode);
           setView('quick');
         }}
-        streak={PACE && !demo ? shop.streak : undefined}
-        daily={PACE && !demo ? { theme: today.theme, mode: today.mode, done: shop.dailyDone } : undefined}
+        streak={!demo ? shop.streak : undefined}
+        daily={!demo ? { theme: today.theme, mode: today.mode, done: shop.dailyDone } : undefined}
         onDaily={() => {
           setSetup(false);
           setQuickDaily({ day: today.day, theme: today.theme });

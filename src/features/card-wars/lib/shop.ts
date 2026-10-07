@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 import { STARTERS, type ShopCategory } from './catalog';
-import { BUILDS, COPIES, LEVELS, PACE, RULES, V2 } from './rules';
+import { COPIES, RULES } from './rules';
 import type { Level } from '../types';
 import { getVault, updateVault } from './store';
 import { flushPendingWear } from './wear';
@@ -93,7 +93,6 @@ export async function refreshShop() {
   if (isDemoModeActive()) return;
   const { data, error } = await rpc('cw_shop');
   if (!error && data) apply(data as Raw);
-  if (!PACE) return;
   const extra = await rpc('cw_daily_state');
   const d = extra.data as { streak?: number; dailyDone?: boolean } | null;
   if (!extra.error && d) set({ ...state, streak: d.streak ?? 0, dailyDone: !!d.dailyDone });
@@ -183,7 +182,7 @@ export interface BattlePay {
 export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Level): Promise<BattlePay> {
   if (isDemoModeActive()) return { rpm: 0, bonus: 0 };
   // The level sets the pay (easy none, medium half, hard all of it) where the server knows levels.
-  const { data, error } = LEVELS && level ? await rpc('cw_reward_battle', { _result: result, _level: level }) : await rpc('cw_reward_offline', { _result: result });
+  const { data, error } = level ? await rpc('cw_reward_battle', { _result: result, _level: level }) : await rpc('cw_reward_offline', { _result: result });
   if (error || !data) return { rpm: 0, bonus: 0 };
   const d = data as { rpm: number; bonus?: number; balance: number; left?: number; streak?: number; streakBonus?: number };
   set({ ...state, balance: d.balance, rewardsLeft: typeof d.left === 'number' ? d.left : state.rewardsLeft, firstWin: state.firstWin && !(d.bonus && d.bonus > 0), streak: typeof d.streak === 'number' ? d.streak : state.streak });
@@ -192,7 +191,7 @@ export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Lev
 
 /** The daily challenge, won: pays once a day (0 when today's is already paid, or the server didn't answer). */
 export async function claimDaily(): Promise<number> {
-  if (!PACE || isDemoModeActive()) return 0;
+  if (isDemoModeActive()) return 0;
   const { data, error } = await rpc('cw_daily_claim');
   if (error || !data) return 0;
   const d = data as { rpm: number; balance: number };
@@ -206,7 +205,7 @@ export async function claimDaily(): Promise<number> {
  * The phone keeps the prize whatever the server says; null when it said nothing.
  */
 export async function claimPrize(card: string): Promise<{ kind: 'card' | 'duplicate'; rpm: number } | null> {
-  if (!V2 || isDemoModeActive()) return null;
+  if (isDemoModeActive()) return null;
   const { data, error } = await rpc('cw_claim_prize', { _card: card });
   if (error || !data) return null;
   const d = data as { kind: 'card' | 'duplicate'; rpm: number } & Raw;
@@ -220,7 +219,7 @@ export async function claimPrize(card: string): Promise<{ kind: 'card' | 'duplic
  * Null when there's nothing to say (no server for it yet, demo mode, offline).
  */
 export async function arcadeReward(game: 'hit-heavy' | 'petrol-head', best: boolean): Promise<number | null> {
-  if (!BUILDS || isDemoModeActive()) return null;
+  if (isDemoModeActive()) return null;
   const { data, error } = await rpc('cw_arcade_reward', { _game: game, _best: best });
   if (error || !data) return null;
   const d = data as { rpm: number; balance: number };
