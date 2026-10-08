@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronRight, Gift, Lock, Plus, Repeat, Sparkles, Store, Swords, Tag, TrendingUp, Trophy, Users, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ import { TAG_SLOTS, type BattleCard as Card, type DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
 import { RedlineWheel } from './RedlineWheel';
+import { UnlockBox } from './UnlockBox';
+import { useDemoLocked } from '@/components/DemoLock';
 import { SpinPanel } from './SpinPanel';
 
 type Open = { kind: 'card'; index: number } | { kind: 'pick'; index: number } | { kind: 'tag'; slot: number } | null;
@@ -107,6 +109,14 @@ export function Garage({
   /** A spare card tapped in the swap list: it's compared with the one coming out before anything changes. */
   const [candidate, setCandidate] = useState<Card | null>(null);
   const [potentialOpen, setPotentialOpen] = useState(false);
+  // Held for three seconds (like the BT logo in Settings), the Potential button shows a code box instead of opening.
+  const demoLocked = useDemoLocked();
+  const [codeBox, setCodeBox] = useState(false);
+  const hold = useRef<{ timer: number; fired: boolean } | null>(null);
+  const endHold = () => {
+    if (hold.current) window.clearTimeout(hold.current.timer);
+  };
+  useEffect(() => endHold, []);
   const partRepair = useServerCap('cardWarsRepair');
 
   const frozen = locked || riding;
@@ -325,7 +335,30 @@ export function Garage({
           {!frozen && (pool.length > 5 || (missing > 0 && spare.length > 0)) && (
             <div className="flex flex-wrap gap-1.5">
               {potential && pool.length > 5 && (
-                <Button variant="outline" size="sm" className="h-10 gap-1.5 text-xs" onClick={() => setPotentialOpen(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 gap-1.5 text-xs hold-target"
+                  onPointerDown={() => {
+                    endHold();
+                    const mine = { timer: 0, fired: false };
+                    mine.timer = window.setTimeout(() => {
+                      mine.fired = true;
+                      // Codes are dead in demo mode, like every other code box.
+                      if (!demoLocked) setCodeBox((v) => !v);
+                    }, 3000);
+                    hold.current = mine;
+                  }}
+                  onPointerUp={endHold}
+                  onPointerLeave={endHold}
+                  onPointerCancel={endHold}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onClick={() => {
+                    // The tap that ends a hold isn't a tap.
+                    if (hold.current?.fired) return void (hold.current.fired = false);
+                    setPotentialOpen(true);
+                  }}
+                >
                   <TrendingUp className="w-3.5 h-3.5" />
                   {tr("Potential")}
                 </Button>
@@ -337,6 +370,7 @@ export function Garage({
             </div>
           )}
         </div>
+        {codeBox && <UnlockBox onDone={() => setCodeBox(false)} />}
         <p className="text-[11px] text-muted-foreground mb-2">{tr("Tap a card to look, swap or repair")}</p>
         <div data-tip="cw-deck" className="cw-grid cw-grid-deck">
           {Array.from({ length: 5 }, (_, i) => {

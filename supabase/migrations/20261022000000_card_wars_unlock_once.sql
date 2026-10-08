@@ -3,8 +3,9 @@
 -- One code, held here only as its SHA-256, works for the first account that
 -- enters it and for nobody after. That account gets everything the vault has:
 -- every catalogue card, the Wildcard with every Redline card, and every dog
--- tag (each of the four powers tied to each of the cards). The app shows the code box only while
--- cw_unlock_open() says the code hasn't been used; both go in a later migration.
+-- tag (each of the four powers tied to each of the cards). The app's code box is hidden: it shows when
+-- the deck page's Potential button is held for three seconds. (cw_unlock_open says whether the code is
+-- still unused; the app no longer asks.)
 
 create table if not exists public.cw_unlock_used(
   code_hash text primary key,

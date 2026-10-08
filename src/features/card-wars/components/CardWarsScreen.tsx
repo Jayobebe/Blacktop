@@ -40,7 +40,6 @@ import { BattleSetupSheet, levelName, modeName } from './BattleSetupSheet';
 import { QuickPlay } from './QuickPlay';
 import { RpmPill } from './RpmPill';
 import { ShopPage } from './ShopPage';
-import { UnlockBox } from './UnlockBox';
 import '../card-wars.css';
 
 type View = 'home' | 'shop' | 'computer' | 'players' | 'quick';
@@ -730,7 +729,6 @@ export function CardWarsScreen() {
           </>
         }
       />
-      <UnlockBox />
       <Garage
         deck={deck}
         tags={deckTags}
