@@ -35,7 +35,7 @@ button.cw-card:disabled { cursor: default; }
 /* Burnt out: what the flames leave. */
 .cw-charred { filter: grayscale(1) brightness(0.3) contrast(1.25) sepia(0.45); box-shadow: 0 0 22px hsl(var(--burn) / 0.55), inset 0 0 18px hsl(var(--burn) / 0.5); transition: filter 0.9s ease 0.2s, box-shadow 0.9s ease; }
 /* The stronger tiers catch the light. */
-.cw-tier-platinum::after, .cw-tier-diamond::after, .cw-tier-obsidian::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, hsl(0 0% 100% / 0.16) 46%, transparent 58%); mix-blend-mode: screen; }
+.cw-tier-platinum::after, .cw-tier-ruby::after, .cw-tier-diamond::after, .cw-tier-obsidian::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, hsl(0 0% 100% / 0.16) 46%, transparent 58%); mix-blend-mode: screen; }
 .cw-card-thumb::after { display: none; }
 
 .cw-card-in {

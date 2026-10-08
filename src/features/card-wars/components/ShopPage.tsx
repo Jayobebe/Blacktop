@@ -21,7 +21,7 @@ import { RpmPill } from './RpmPill';
 import { SpinPanel } from './SpinPanel';
 
 /** The frames a catalogue card can wear, lowest first (`tierOfPrice` counts from 1). */
-const SPIN_TIER_IDS = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'obsidian'] as const;
+const SPIN_TIER_IDS = ['bronze', 'silver', 'gold', 'ruby', 'diamond', 'obsidian'] as const;
 
 /** A shelf's name. The racing series keep their own. */
 export function shelfLabel(id: ShopCategory): string {

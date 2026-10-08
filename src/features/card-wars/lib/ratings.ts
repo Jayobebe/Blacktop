@@ -69,12 +69,13 @@ export function deckRating(cards: BattleCard[]): number | null {
 /**
  * The frame a card wears. A rider's own card keeps the tier it earned on the
  * road; a catalog card's follows its rating when new, so the look says how
- * strong it is (and doesn't change as it wears).
+ * strong it is (and doesn't change as it wears). The fourth frame is Ruby,
+ * not Platinum: Platinum's grey was being taken for Silver.
  */
 export function tierOf(card: BattleCard): CardTier {
   if (card.tier) return card.tier;
   // Redline cards all wear the same frame: none outranks another.
   if (card.redline) return 'obsidian';
   const rating = overall(cardById(card.id) ?? card);
-  return rating >= 90 ? 'obsidian' : rating >= 80 ? 'diamond' : rating >= 70 ? 'platinum' : rating >= 60 ? 'gold' : rating >= 50 ? 'silver' : 'bronze';
+  return rating >= 90 ? 'obsidian' : rating >= 80 ? 'diamond' : rating >= 70 ? 'ruby' : rating >= 60 ? 'gold' : rating >= 50 ? 'silver' : 'bronze';
 }
