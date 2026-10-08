@@ -843,6 +843,7 @@ export default function ActiveRide() {
   crashSampleRef.current = useCrashDetection({
     enabled: settings.autoRescueEnabled && rideState.isActive && !rideState.isPaused && !crashPromptOpen && !autoRescueFiredRef.current,
     currentSpeed: rideState.currentSpeed,
+    fixStamp: rideState.gpsStatus.lastUpdate,
     gThreshold: settings.autoRescueGThreshold,
     stopWindowSec: settings.autoRescueStopWindowSec,
     onPossibleCrash: useCallback(() => {

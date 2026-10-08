@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { requestMotionAccess } from '@/lib/motionPermission';
 import { isNimiqPayHost } from '@/features/tips/lib/walletBridge';
+import { clearCrashTrace, readCrashTrace } from '@/features/ride/lib/crashTrace';
+import type { CrashEvent } from '@/features/ride/lib/crashDetector';
 
 /**
  * /device-check: a developer page (not linked anywhere, not translated) that
@@ -44,6 +46,17 @@ const TAP: Check[] = [
 ];
 
 const LAST_KEY = 'blacktop_devicecheck_last';
+
+// What the crash check made of each hard knock on recent rides (see ride/lib/crashTrace).
+const CRASH_SAYS: Record<CrashEvent['kind'], string> = {
+  held: 'Impact while moving: watching for a stop',
+  'rode-on': 'Kept going: let go (pothole)',
+  fired: 'Stopped and stayed stopped: asked "Are you okay?"',
+  standstill: 'Knock at a standstill: ignored',
+  unarmed: 'Knock before the ride got going: ignored',
+};
+const crashSays = (e: CrashEvent) => `${CRASH_SAYS[e.kind] ?? e.kind}${e.by === 'motion' ? ' (no GPS: judged by the phone lying still)' : ''}`;
+const crashLine = (e: CrashEvent) => `${new Date(e.t).toLocaleString()}\t${e.g} G at ${e.mph} mph\t${crashSays(e)}`;
 
 const ok = (detail = ''): Result => ({ state: 'ok', detail });
 const fail = (detail: string): Result => ({ state: 'fail', detail });
@@ -214,6 +227,7 @@ function Icon({ state }: { state?: State }) {
 export default function DeviceCheck() {
   const [results, setResults] = useState<Record<string, Result>>({});
   const [running, setRunning] = useState(false);
+  const [crashes, setCrashes] = useState(() => readCrashTrace().reverse());
 
   useEffect(() => {
     void passiveChecks().then((r) => setResults((prev) => ({ ...prev, ...r })));
@@ -238,6 +252,9 @@ export default function DeviceCheck() {
         const r = results[c.id];
         return `${r?.state ?? 'not run'}\t${c.label}${r?.detail ? ` (${r.detail})` : ''}`;
       }),
+      '',
+      `Crash check, last ${crashes.length} hard knocks (newest first)`,
+      ...crashes.map(crashLine),
     ].join('\n');
 
   const copy = async () => {
@@ -281,6 +298,23 @@ export default function DeviceCheck() {
       <div className="rounded-2xl bg-card/50 border border-border/50 px-3 mb-4">
         {TAP.map((c) => <Row key={c.id} c={c} />)}
       </div>
+
+      <h2 className="text-sm font-semibold mb-1">Crash check log</h2>
+      <p className="text-[11px] text-muted-foreground mb-2">Every knock over your crash threshold on recent rides, and what the crash check made of it. Kept on this phone only.</p>
+      <div className="rounded-2xl bg-card/50 border border-border/50 px-3 mb-3">
+        {crashes.length === 0 && <p className="py-3 text-xs text-muted-foreground">Nothing yet. Ride with crash detection on and look again.</p>}
+        {crashes.map((e, i) => (
+          <div key={i} className="py-2.5 border-b border-border/40 last:border-0">
+            <p className="text-sm font-medium">{crashSays(e)}</p>
+            <p className="text-[11px] text-muted-foreground">{new Date(e.t).toLocaleString()} · {e.g} G at {e.mph} mph</p>
+          </div>
+        ))}
+      </div>
+      {crashes.length > 0 && (
+        <Button variant="outline" className="w-full h-12 rounded-2xl mb-3" onClick={() => { clearCrashTrace(); setCrashes([]); }}>
+          Clear crash check log
+        </Button>
+      )}
 
       <Button variant="outline" className="w-full h-12 rounded-2xl" onClick={copy}>
         <Copy className="w-4 h-4 mr-2" />

@@ -40,7 +40,11 @@ export default function PrivacyPolicy() {
             <li>{tr("Offline map areas you download")}</li>
             <li>{tr("Your unlock pattern for the anti-theft alarm and Public Road Privacy, kept only as a one-way hash (the pattern itself is never stored or sent)")}</li>
             <li>{tr("When you accepted the crash detection notice")}</li>
+            <li>{tr("A short log of the hard knocks crash detection noticed on your rides (time, force and speed), so you can check it's working")}</li>
           </ul>
+          <p className="text-muted-foreground">
+            {tr("Back up this phone (Settings → Privacy) puts what's listed above, except offline maps and videos, into a file made on your phone. It goes only where you save it and we never receive it. Anyone who has the file can read what's in it, so keep it somewhere you trust.")}
+          </p>
           <p className="text-muted-foreground">
             {tr("Tap")}{" "}<span className="text-foreground font-medium">{tr("Burn All Data")}</span>{" "}{tr("in Settings at any time to permanently erase everything, on your device and on our servers (see Your rights).")}
           </p>
