@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
 import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
 import { hasServerCap } from '@/lib/serverCaps';
-import { STARTERS, type ShopCategory } from './catalog';
+import { DEMO_OWNED, DEMO_TAGS, type ShopCategory } from './catalog';
 import { REDLINES } from './redline';
 import { COPIES, RULES } from './rules';
 import type { Level } from '../types';
@@ -59,13 +59,13 @@ const EMPTY: ShopState = { balance: null, owned: [], copies: {}, marketLeft: nul
 /** Demo mode: a small collection to play with. Nothing here reaches the server. */
 const DEMO_SHOP: ShopState = {
   balance: 260,
-  owned: [...STARTERS, '911', 'civic', 'panigale', 'gs', 'striple', 'gt3r', 'r6', 'rsr19'],
+  owned: DEMO_OWNED,
   copies: { '911': 2, civic: 3 },
   marketLeft: 3,
   freeSpins: 0,
   freeTagSpins: 0,
   spins: {},
-  tags: ['boost:panigale', 'heal:gs', 'reroll:gt3r', 'boost:rsr19'],
+  tags: DEMO_TAGS,
   rewardsLeft: RULES.dailyBattles === null ? null : RULES.dailyBattles - 6,
   firstWin: false,
   streak: 0,
@@ -79,8 +79,11 @@ const DEMO_SHOP: ShopState = {
 let state: ShopState = EMPTY;
 const listeners = new Set<() => void>();
 const set = (s: ShopState) => {
+  const held = state.owned !== s.owned || state.tags !== s.tags;
   state = s;
   listeners.forEach((l) => l());
+  // Only once the server has spoken (never the empty state before it has).
+  if (held && s.balance !== null && !isDemoModeActive()) keepForVault();
 };
 
 type Raw = Partial<{ balance: number; owned: string[]; copies: Record<string, number>; marketLeft: number; freeSpins: number; freeTagSpins: number; spins: Record<string, number>; tags: string[]; rewardsLeft: number; firstWin: boolean }>;
@@ -110,7 +113,7 @@ const applyRedline = (d: RedlineRaw | null) => {
   if (!d) return;
   set({ ...state, wildcard: !!d.wildcard, redlines: d.owned ?? [], wheel: d.wheel ?? [], wildPity: d.pity ?? 0 });
   // The vault keeps its own copy, so Redline cards show there without the game being opened.
-  if ((d.owned ?? []).join() !== (getVault().redlines ?? []).join()) updateVault({ redlines: d.owned ?? [] });
+  if ((d.owned ?? []).join() !== (getVault().redlines ?? []).join() || !!getVault().wildcard !== !!d.wildcard) updateVault({ redlines: d.owned ?? [], wildcard: !!d.wildcard });
 };
 /** What the server holds of the player's Redline cards and Wildcard (nothing before the Redline migration). */
 export async function refreshRedline() {
@@ -143,14 +146,25 @@ export async function redeemRedline(code: string): Promise<{ card: string | null
 }
 const rpc = (name: string, args?: object) => supabase.rpc(name as never, args as never);
 
+/** The vault keeps its own copy of what's held, so its full list is right without the game being opened. */
+function keepForVault() {
+  const v = getVault();
+  const same = (a: string[] | undefined, b: string[]) => (a ?? []).join() === b.join();
+  if (!same(v.owned, state.owned) || !same(v.ownedTags, state.tags) || !same(v.redlines, state.redlines) || !!v.wildcard !== state.wildcard) {
+    updateVault({ owned: state.owned, ownedTags: state.tags, redlines: state.redlines, wildcard: state.wildcard });
+  }
+}
+
 export async function refreshShop() {
   if (isDemoModeActive()) return;
   const { data, error } = await rpc('cw_shop');
   if (!error && data) apply(data as Raw);
+  const loaded = !error && !!data;
   const extra = await rpc('cw_daily_state');
   const d = extra.data as { streak?: number; dailyDone?: boolean } | null;
   if (!extra.error && d) set({ ...state, streak: d.streak ?? 0, dailyDone: !!d.dailyDone });
   await refreshRedline();
+  if (loaded) keepForVault();
 }
 
 export function setRpm(balance: number) {

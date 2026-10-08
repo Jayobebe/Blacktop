@@ -4443,5 +4443,8 @@
  "{0} of {1} collected": "{1}장 중 {0}장 수집",
  "{0} {1} is in": "{0} {1} 등장",
  "{0} {1} is yours": "{0} {1} 획득",
- "When a spin lands a card, the lower tiers come up more often:": "스핀에서 카드가 나올 때는 낮은 티어일수록 더 자주 나옵니다:"
+ "When a spin lands a card, the lower tiers come up more often:": "스핀에서 카드가 나올 때는 낮은 티어일수록 더 자주 나옵니다:",
+ "Full vault": "전체 보관함",
+ "Its dog tags": "이 카드의 도그태그",
+ "No battle cards yet": "아직 배틀 카드가 없습니다"
 }

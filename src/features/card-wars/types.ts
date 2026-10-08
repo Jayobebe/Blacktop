@@ -142,4 +142,8 @@ export interface VaultState {
   beamIn?: string[];
   /** The Redline cards held, as the server last listed them: the vault shows them without opening the game. */
   redlines?: string[];
+  /** The same for the vault's full list: the catalogue cards and dog tags ("power:card") the account holds, and whether it has the Wildcard. */
+  owned?: string[];
+  ownedTags?: string[];
+  wildcard?: boolean;
 }

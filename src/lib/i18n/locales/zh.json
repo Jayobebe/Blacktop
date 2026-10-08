@@ -4443,5 +4443,8 @@
  "{0} of {1} collected": "已收集 {0} / {1}",
  "{0} {1} is in": "{0} {1} 上场",
  "{0} {1} is yours": "{0} {1} 归你了",
- "When a spin lands a card, the lower tiers come up more often:": "抽奖抽到卡片时,等级越低越容易出现:"
+ "When a spin lands a card, the lower tiers come up more often:": "抽奖抽到卡片时,等级越低越容易出现:",
+ "Full vault": "完整卡库",
+ "Its dog tags": "它的身份牌",
+ "No battle cards yet": "还没有对战卡牌"
 }

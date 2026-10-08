@@ -206,6 +206,9 @@ export const STARTERS = ['mx5','gti','mt07','sv650','ninja'];
  * The four dog tags everyone has, one per power: the plain ones. The tags
  * worth having are won on spins (lib/tagRules.ts).
  */
+/** Demo mode's sample collection (lib/shop.ts shows it; the vault's full list reads the same). */
+export const DEMO_OWNED = [...STARTERS, '911', 'civic', 'panigale', 'gs', 'striple', 'gt3r', 'r6', 'rsr19'];
+export const DEMO_TAGS = ['boost:panigale', 'heal:gs', 'reroll:gt3r', 'boost:rsr19'];
 export const STARTER_TAGS: DogTag[] = [
  {id:'tag-reroll',name:'Second chance',power:'reroll'},
  {id:'tag-heal',name:'Pit medic',power:'heal'},

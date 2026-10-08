@@ -1,5 +1,5 @@
 import { paymentsAvailable } from '@/lib/platform';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -53,6 +53,15 @@ const countriesGeo = feature(
 
 export default function World() {
   const navigate = useNavigate();
+  // Back from arranging stickers on Home (?vault=1): straight to the vault, to pick the next one.
+  const vaultRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (searchParams.get('vault') !== '1') return;
+    const t = window.setTimeout(() => vaultRef.current?.scrollIntoView({ block: 'start' }), 450);
+    return () => window.clearTimeout(t);
+    // Once, as the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [globeScale, setGlobeScale] = useState(1);
   const [showCrewQr, setShowCrewQr] = useState(false);
   const [searchParams] = useSearchParams();
@@ -334,7 +343,7 @@ export default function World() {
 
       {/* Card collection — full-height vertical snap carousel */}
       {settings.collectiblesEnabled && (
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0" ref={vaultRef}>
           <CollectedCardsFolder spectreBack={(sp, shown, assign) => <SpectreTagBack spectre={sp} shown={shown} onAssign={assign} />} />
         </div>
       )}

@@ -1404,6 +1404,16 @@
 .text-accent-2 { color: hsl(var(--lava, var(--accent))); }
 html.thermal .text-accent-2 { color: hsl(var(--accent)); }
 
+/* The vault: a card lifted out of its row, and what isn't held yet (greyed, but still readable). */
+.vault-lift-card { transform-origin: 0 0; transition: transform 720ms cubic-bezier(0.2, 0.8, 0.25, 1); will-change: transform; }
+.vault-lift-dim { background: hsl(0 0% 0% / 0.84); opacity: 0; transition: opacity 0.35s ease; }
+.vault-lift-dim[data-shown='true'] { opacity: 1; }
+.vault-lift-fade { opacity: 0; transition: opacity 0.25s ease; }
+.vault-lift-fade[data-shown='true'] { opacity: 1; transition-delay: 0.3s; }
+.vault-locked { filter: grayscale(1) brightness(0.95); opacity: 0.72; }
+.vault-lift-card .vault-locked, .vault-lift-fade .vault-locked { opacity: 0.85; }
+.vault-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+
 /* Stickers (features/stickers): a die-cut vehicle with a white edge and a little lift off the surface. */
 .sticker-img {
   /* A sticker keeps the shape it was stuck on with; if its picture is redrawn to another shape, it sits inside, never stretched. */

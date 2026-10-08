@@ -1,11 +1,11 @@
 import { useDemoLocked } from '@/components/DemoLock';
 import { demoBlocked } from '@/lib/demoGuard';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { toast } from 'sonner';
-import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon, Scan, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon, Scan, Check, ArrowUp, ArrowDown, LayoutGrid, Lock, Swords } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/features/settings';
@@ -33,7 +33,9 @@ import { formatSpectreTime as formatChallengeTime, formatSpectreGap as formatDel
 import { tr } from '@/lib/i18n';
 
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
-import { BattleCard, useRedlineCards, useWonBattleCards } from '@/features/card-wars/collection';
+import { BattleCard, VaultTags, useBattleCards, useRedlineCards, type VaultBattleCard } from '@/features/card-wars/collection';
+import { CardLift } from './CardLift';
+import { VaultCarousel } from './VaultCarousel';
 import { StickerControl, StickerPreview, removeStickerFor, setArranging, useStickers } from '@/features/stickers';
 import { useNavigate } from 'react-router-dom';
 import { useCardArt } from '@/hooks/useCardArt';
@@ -44,8 +46,11 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
   const locked = useDemoLocked();
   const { collected, addCard, rescanCard, removeCard } = useCollectedCards();
   const { spectres, assignPower } = useSpectreCards();
-  const wonCards = useWonBattleCards();
-  const redlineCards = useRedlineCards();
+  const battle = useBattleCards();
+  const redline = useRedlineCards();
+  /** The card lifted out of its place (by key), and the place it left. */
+  const [lift, setLift] = useState<{ key: string; source: HTMLElement | null } | null>(null);
+  const [showIndex, setShowIndex] = useState(false);
   const stickers = useStickers();
   const navigate = useNavigate();
   // The rider's own vehicle cards always lead the regular row.
@@ -167,6 +172,83 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
     };
   }, []);
 
+  // Every card in the vault as one kind of thing: how it draws (both faces), its thumb in the full list, and what sits under it when lifted.
+  const actions = 'flex-1 inline-flex items-center justify-center gap-1.5 min-h-12 rounded-xl text-xs font-medium transition-colors';
+  const scanned: Entry[] = [
+    ...myCards.map((c): Entry => ({
+      key: `own:${c.bike.id}`,
+      title: c.bike.name,
+      card: (turn, onTap, up) => <OwnFlipCard card={c} turn={turn} onTap={onTap} edit={up} />,
+      thumb: (onTap) => <MiniCard img={c.bike.photos.hero || undefined} name={c.bike.name} tier={c.tier} onClick={onTap} />,
+      caption: <p className="mt-2 py-1 text-center text-xs font-medium text-accent">{tr("Your card")}</p>,
+      below: <p className="text-center text-xs text-white/70">{tr("Your card")}</p>,
+    })),
+    ...collected.map((card): Entry => ({
+      key: `card:${card.key}`,
+      title: card.n,
+      card: (turn, onTap) => <FlipCard card={card} turn={turn} onTap={onTap} />,
+      thumb: (onTap) => <MiniCard img={card.img} name={card.n} tier={card.t} onClick={onTap} />,
+      below: (
+        <div className="flex gap-1.5">
+          <button type="button" onClick={() => startScanner(card.key)} disabled={locked} className={cn(actions, 'disabled:opacity-40 disabled:pointer-events-none bg-secondary text-foreground')}>
+            <RefreshCw className="w-3.5 h-3.5" /> {tr("Rescan")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLift(null);
+              removeCard(card.key);
+              removeStickerFor(`card:${card.key}`);
+              toast.success(tr("Removed from collection"));
+            }}
+            className={cn(actions, 'bg-destructive/25 text-destructive')}
+          >
+            <Trash2 className="w-3.5 h-3.5" /> {tr("Remove")}
+          </button>
+        </div>
+      ),
+    })),
+  ];
+  const battleEntry = (card: VaultBattleCard, held: boolean): Entry => ({
+    key: `cw:${card.id}`,
+    title: card.name,
+    locked: !held,
+    card: (turn, onTap) =>
+      held ? (
+        <WonFlipCard card={card} turn={turn} onTap={onTap} />
+      ) : (
+        <div className="vault-locked">
+          <BattleCard card={card} badge={<LockedBadge />} />
+        </div>
+      ),
+    thumb: (onTap) => <BattleCard card={card} size="thumb" onClick={onTap} className={held ? undefined : 'vault-locked'} />,
+    below: <VaultTags card={card} />,
+  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const battleAll = useMemo(() => battle.all.map((c) => battleEntry(c, battle.has(c.id))), [battle]);
+  const battleHeld = battleAll.filter((e) => !e.locked);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const redlineAll = useMemo(() => redline.all.map((c) => battleEntry(c, redline.has(c.id))), [redline]);
+  const redlineHeld = redlineAll.filter((e) => !e.locked);
+  const spectreEntries: Entry[] = spectres.map((sp) => {
+    const card = { ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt };
+    return {
+      key: `spectre:${sp.key}`,
+      title: sp.card.n,
+      card: (turn, onTap) => (
+        <FlipCard card={card} stickerKey={`spectre:${sp.key}`} spectre={sp} spectreBack={spectreBack ? (shown) => spectreBack(sp, shown, (power) => assignPower(sp.key, power)) : undefined} turn={turn} onTap={onTap} />
+      ),
+      thumb: (onTap) => <MiniCard img={sp.img} name={sp.card.n} tier={sp.card.t} spectre onClick={onTap} />,
+    };
+  });
+  const heldCount = scanned.length + battleHeld.length + redlineHeld.length + spectreEntries.length;
+  const totalCount = scanned.length + battleAll.length + redlineAll.length + spectreEntries.length;
+  const lifted = lift ? [...scanned, ...battleAll, ...redlineAll, ...spectreEntries].find((e) => e.key === lift.key) ?? null : null;
+  const open = (entry: Entry, source: HTMLElement | null) => {
+    haptics.light();
+    setLift({ key: entry.key, source });
+  };
+
   return (
     <section className="w-full">
       {/* Header — scan button always visible here, no scrolling required */}
@@ -200,95 +282,64 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
       </div>
       <p className="px-4 pb-3 text-[10px] text-muted-foreground">{tr("Tap a card to flip it. Every card has a sticker on its back for your Home screen.")}</p>
 
-      {/* Collected row — scanned from other riders; flips to its QR to pass on */}
-      <CardRow
-        icon={<Sparkles className="w-4 h-4 text-accent" />}
-        title={tr("Scanned cards")}
-        count={myCards.length + collected.length}
-        hint={tr("Yours first, then scanned")}
-        empty={tr("Scan another rider's card QR to start your collection.")}
-        emptyClass="border-border"
-      >
-        {myCards.map((c) => (
-          <div key={`own-${c.bike.id}`} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <OwnFlipCard card={c} />
-            <p className="mt-2 py-2 text-center text-xs font-medium text-accent">{tr("Your card")}</p>
-          </div>
-        ))}
-        {collected.map((card) => (
-          <div key={card.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <FlipCard card={card} />
-            <div className="mt-2 flex gap-1.5">
-              <button
-                type="button"
-                onClick={() => startScanner(card.key)}
-                disabled={locked}
-                className="disabled:opacity-40 disabled:pointer-events-none flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-secondary/60 text-foreground hover:bg-secondary transition-colors text-xs font-medium"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />{" "}{tr("Rescan")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  removeCard(card.key);
-                  removeStickerFor(`card:${card.key}`);
-                  toast.success(tr("Removed from collection"));
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors text-xs font-medium"
-              >
-                <Trash2 className="w-3.5 h-3.5" />{" "}{tr("Remove")}
-              </button>
-            </div>
-          </div>
-        ))}
-      </CardRow>
 
-      <CardRow
-        icon={<Sparkles className="w-4 h-4 text-accent" />}
-        title={tr("Won cards")}
-        count={wonCards.length}
-        hint={tr("Battle cards")}
-        empty={tr("No won cards yet")}
-        emptyClass="border-border"
+      <button
+        type="button"
+        onClick={() => {
+          haptics.light();
+          setShowIndex(true);
+        }}
+        className="frost-accent mx-4 mb-4 w-[calc(100%-2rem)] min-h-12 px-4 rounded-xl border flex items-center gap-2 text-sm font-semibold"
       >
-        {wonCards.map(card => (
-          <div key={card.id} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <WonFlipCard card={card} />
-          </div>
-        ))}
-      </CardRow>
+        <LayoutGrid className="w-4 h-4 text-accent" />
+        {tr("Full vault")}
+        <span className="ml-auto text-xs font-mono font-normal text-muted-foreground">{tr("{0} of {1} collected", [heldCount, totalCount])}</span>
+      </button>
 
-      {/* Redline cards: never in a deck, but collected, and each has its sticker. The row is only there once one is held. */}
-      {redlineCards.length > 0 && (
-        <CardRow icon={<Gauge className="w-4 h-4 text-destructive" />} title={tr("Redline cards")} count={redlineCards.length} hint={tr("Redline")} empty="" emptyClass="border-border">
-          {redlineCards.map((card) => (
-            <div key={card.id} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-              <WonFlipCard card={card} />
-            </div>
-          ))}
-        </CardRow>
+      {/* Scanned: the rider's own cards first, then the ones scanned from other riders */}
+      <CardRow icon={<Sparkles className="w-4 h-4 text-accent" />} title={tr("Scanned cards")} entries={scanned} hint={tr("Yours first, then scanned")} empty={tr("Scan another rider's card QR to start your collection.")} lifted={lift?.key} onOpen={open} />
+
+      {/* Battle cards: every catalogue card the account holds */}
+      <CardRow icon={<Swords className="w-4 h-4 text-accent" />} title={tr("Battle cards")} entries={battleHeld} hint={tr("Card Wars")} empty={tr("No battle cards yet")} lifted={lift?.key} onOpen={open} />
+
+      {/* Redline cards and Spectres: only there once one is held */}
+      {redlineHeld.length > 0 && <CardRow icon={<Gauge className="w-4 h-4 text-destructive" />} title={tr("Redline cards")} entries={redlineHeld} hint={tr("Redline")} lifted={lift?.key} onOpen={open} />}
+      {spectreEntries.length > 0 && (
+        <CardRow icon={<Ghost className="w-4 h-4 text-cyan-300" />} title={tr("Dog tags")} entries={spectreEntries} hint={tr("Dog tags from Track Day leaderboards")} lifted={lift?.key} onOpen={open} />
       )}
 
-      {/* Spectre row — dog tags, earned only by beating a lap on a Track Day board; no QR, no trading */}
-      <CardRow
-        icon={<Ghost className="w-4 h-4 text-cyan-300" />}
-        title={tr("Dog tags")}
-        count={spectres.length}
-        hint={tr("Dog tags from Track Day leaderboards")}
-        empty={tr("Beat a rider's lap on a Track Day leaderboard to take their dog tag. Spectre cards can't be scanned or traded.")}
-        emptyClass="border-cyan-300/30"
-      >
-        {spectres.map((sp) => (
-          <div key={sp.key} className="snap-start flex-shrink-0 w-[62%] max-w-[240px]">
-            <FlipCard
-              card={{ ...sp.card, key: sp.key, img: sp.img, collectedAt: sp.earnedAt }}
-              stickerKey={`spectre:${sp.key}`}
-              spectre={sp}
-              spectreBack={spectreBack ? (shown) => spectreBack(sp, shown, (power) => assignPower(sp.key, power)) : undefined}
-            />
-          </div>
-        ))}
-      </CardRow>
+      {/* The full vault: every card there is, five across, the ones not held greyed. Portaled like the scanner (the World page is a transform context). */}
+      {showIndex &&
+        createPortal(
+          <div className="fixed inset-0 z-[9990] bg-background flex flex-col overflow-hidden safe-frame-x" style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}>
+            <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3">
+              <button onClick={() => setShowIndex(false)} className="p-2.5 rounded-xl bg-secondary hover:bg-muted transition-colors glove-hit" aria-label={tr("Back")}>
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-base font-semibold">{tr("Full vault")}</h2>
+              <span className="ml-auto text-xs font-mono text-muted-foreground">{tr("{0} of {1} collected", [heldCount, totalCount])}</span>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-5" data-no-pull>
+              <IndexSection title={tr("Scanned cards")} count={String(scanned.length)} entries={scanned} empty={tr("Scan another rider's card QR to start your collection.")} lifted={lift?.key} onOpen={open} />
+              <IndexSection title={tr("Battle cards")} count={tr("{0} of {1} collected", [battleHeld.length, battleAll.length])} entries={battleAll} lifted={lift?.key} onOpen={open} />
+              <IndexSection title={tr("Redline cards")} count={tr("{0} of {1} collected", [redlineHeld.length, redlineAll.length])} entries={redlineAll} lifted={lift?.key} onOpen={open} />
+              {spectreEntries.length > 0 && <IndexSection title={tr("Dog tags")} count={String(spectreEntries.length)} entries={spectreEntries} lifted={lift?.key} onOpen={open} />}
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {lifted && (
+        <CardLift
+          key={lifted.key}
+          source={lift!.source}
+          locked={lifted.locked}
+          title={lifted.title}
+          render={(turn, onTap) => lifted.card(turn, onTap, true)}
+          below={lifted.below}
+          onClosed={() => setLift(null)}
+        />
+      )}
 
       {/* Scanner portal — rendered at document.body to escape the World page's
           transform stacking context, which would otherwise make fixed positioning
@@ -325,41 +376,119 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
 }
 
 
+/** One card of the vault, however it's shown. */
+interface Entry {
+  key: string;
+  title: string;
+  /** Not held yet: greyed, and it comes forward without turning over. */
+  locked?: boolean;
+  /** The card with both its faces, turned `turn` degrees. `up`: it's the lifted one (the rider's own card takes its controls there). */
+  card: (turn: number, onTap: () => void, up: boolean) => React.ReactNode;
+  /** Its thumb in the full list. */
+  thumb: (onTap: () => void) => React.ReactNode;
+  /** Under it in its row, and under it once lifted. */
+  caption?: React.ReactNode;
+  below?: React.ReactNode;
+}
+
+/** A card's place in a list. It keeps the place (unseen) while the card is lifted out of it, and is what the card flies back to. */
+function Slot({ entry, thumb, gone, onOpen, className }: { entry: Entry; thumb?: boolean; gone: boolean; onOpen: (entry: Entry, source: HTMLElement | null) => void; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const tap = () => onOpen(entry, ref.current);
+  return (
+    <div className={className}>
+      <div ref={ref} className={cn(gone && 'invisible')}>
+        {thumb ? entry.thumb(tap) : entry.card(0, tap, false)}
+      </div>
+      {!thumb && entry.caption}
+    </div>
+  );
+}
+
+/** A row of the vault: it crawls on its own once it has more than one card, and the rider's finger sets its pace (`VaultCarousel`). */
 function CardRow({
   icon,
   title,
-  count,
+  entries,
   hint,
   empty,
-  emptyClass,
-  children,
+  lifted,
+  onOpen,
 }: {
   icon: React.ReactNode;
   title: string;
-  count: number;
+  entries: Entry[];
   hint: string;
-  empty: string;
-  emptyClass: string;
-  children: React.ReactNode;
+  /** What to say when there's nothing in it (rows that hide when empty have none). */
+  empty?: string;
+  /** The card that's lifted out, if one is: every row comes to a stop. */
+  lifted?: string;
+  onOpen: (entry: Entry, source: HTMLElement | null) => void;
 }) {
   return (
     <div className="px-4 pb-5">
       <div className="flex items-center gap-2 pb-2">
         {icon}
         <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
-        <span className="text-xs text-muted-foreground">{count}</span>
+        <span className="text-xs text-muted-foreground">{entries.length}</span>
         <span className="ml-auto text-[10px] text-muted-foreground">{hint}</span>
       </div>
-      {count === 0 ? (
-        <div className={cn('rounded-2xl border border-dashed px-4 py-6 text-center', emptyClass)}>
+      {entries.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center">
           <p className="text-xs text-muted-foreground/70">{empty}</p>
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-px-4 -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {children}
-        </div>
+        <VaultCarousel count={entries.length} paused={!!lifted}>
+          {entries.map((e) => (
+            <Slot key={e.key} entry={e} gone={lifted === e.key} onOpen={onOpen} className="flex-shrink-0 w-[62%] max-w-[240px]" />
+          ))}
+        </VaultCarousel>
       )}
     </div>
+  );
+}
+
+/** A section of the full vault: its cards five across, as small as a hand in a battle. */
+function IndexSection({ title, count, entries, empty, lifted, onOpen }: { title: string; count: string; entries: Entry[]; empty?: string; lifted?: string; onOpen: (entry: Entry, source: HTMLElement | null) => void }) {
+  return (
+    <section>
+      <div className="flex items-baseline gap-2 pb-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{title}</h3>
+        <span className="ml-auto text-[11px] font-mono text-muted-foreground">{count}</span>
+      </div>
+      {entries.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-border px-4 py-5 text-center text-xs text-muted-foreground/70">{empty}</p>
+      ) : (
+        <div className="vault-grid">
+          {entries.map((e) => (
+            <Slot key={e.key} entry={e} thumb gone={lifted === e.key} onOpen={onOpen} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function LockedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Lock className="w-2.5 h-2.5" aria-hidden />
+      {tr("Locked")}
+    </span>
+  );
+}
+
+/** A rider's card (their own, a scanned one, a Spectre) at the size of the full list: its picture in the garage and its name. */
+function MiniCard({ img, name, tier, spectre, onClick }: { img?: string; name: string; tier: CollectedCard['t']; spectre?: boolean; onClick: () => void }) {
+  const style = TIER_STYLES[tier] ?? TIER_STYLES.bronze;
+  const art = useCardArt(img);
+  return (
+    <button type="button" onClick={onClick} aria-label={name} className={cn('block w-full rounded-lg border overflow-hidden text-left', spectre ? 'spectre-card-back border-white/30' : cn(style.bg, style.border))}>
+      <span className="relative block aspect-[5/4] bg-cover bg-center" style={{ backgroundImage: `url(${garageShopAsset.url})` }}>
+        {art && <img src={art} alt="" className="absolute inset-0 w-full h-full object-contain p-0.5" draggable={false} />}
+      </span>
+      <span className="block px-1 py-0.5 text-[8px] font-semibold leading-tight truncate text-white">{name}</span>
+    </button>
   );
 }
 
@@ -376,7 +505,7 @@ interface ImageEdit {
  * plus the card image button (drag and zoom the picture). Only here: a copy
  * someone scanned, and the card in the Speed Shop, never carry it.
  */
-function OwnFlipCard({ card }: { card: VehicleCardData }) {
+function OwnFlipCard({ card, turn, onTap, edit }: { card: VehicleCardData; turn?: number; onTap?: () => void; /** Lifted out of its row: the card image button is offered. */ edit?: boolean }) {
   const { profile } = useProfile();
   const [zooms, setZooms] = useLocalStorage<Record<string, number>>('bt.cards.zoom.v1', {});
   const [pans, setPans] = useLocalStorage<Record<string, { x: number; y: number }>>('bt.cards.pan.v1', {});
@@ -398,7 +527,7 @@ function OwnFlipCard({ card }: { card: VehicleCardData }) {
   }, [hero, uid]);
   const payload = decodeCard(encodeCard(card, profile.name, photoPath ?? undefined, zooms[card.bike.id] ?? 1));
   if (!payload) return null;
-  return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} image={hero ? image : undefined} trend={card.trend} />;
+  return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} image={hero && (edit || turn === undefined) ? image : undefined} trend={card.trend} turn={turn} onTap={onTap} />;
 }
 
 /** What a Spectre's back shows (its Card Wars dog tag): drawn by whoever hosts the vault, so cards don't depend on Card Wars. */
@@ -422,17 +551,21 @@ function SpectreResult({ spectre }: { spectre: SpectreCard }) {
 }
 
 /** Tap to flip. Collected cards show their QR on the back; Spectre cards their dog tag (the win, where nothing draws the tag). */
-function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`, image, trend }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string; /** The rider's own card only: lets them frame its picture. */ image?: ImageEdit; /** The rider's own card only: which figures have gone up or down since its last tier. */ trend?: CardTrend }) {
+function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`, image, trend, turn, onTap }: { card: CollectedCard; spectre?: SpectreCard; spectreBack?: (shown: boolean) => React.ReactNode; /** The card's sticker (`features/stickers`), offered under the QR or the dog tag. */ stickerKey?: string; /** The rider's own card only: lets them frame its picture. */ image?: ImageEdit; /** The rider's own card only: which figures have gone up or down since its last tier. */ trend?: CardTrend; /** Turned from outside (the vault): degrees, and what a tap does. Left out, the card turns itself over when tapped. */ turn?: number; onTap?: () => void }) {
   // The sticker is always cut from the photo itself; it's drawn in the pixel-art look where it's shown, so the switch works both ways.
   const sticker = <StickerControl card={stickerKey} name={card.n} src={card.img} className="shrink-0" />;
-  const [flipped, setFlipped] = useState(false);
+  const [own, setOwn] = useState(false);
   const [framing, setFraming] = useState(false);
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
+  const led = turn !== undefined;
+  // Every half turn shows the other face.
+  const flipped = led ? Math.round(turn / 180) % 2 === 1 : own;
   const flip = () => {
     // Not while the picture is being framed: a drag ending on the card would turn it over.
     if (framing) return;
+    if (led) return onTap?.();
     haptics.light();
-    setFlipped((f) => !f);
+    setOwn((f) => !f);
   };
   // A card with controls on it can't be a <button> (no buttons or sliders inside one): it's a div that acts as one.
   const Root = image ? 'div' : 'button';
@@ -449,8 +582,9 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`,
       <div
         className={cn(
           'relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]',
-          flipped && '[transform:rotateY(180deg)]',
+          !led && flipped && '[transform:rotateY(180deg)]',
         )}
+        style={led ? { transform: `rotateY(${turn}deg)`, transitionDuration: '900ms', transitionTimingFunction: 'cubic-bezier(0.3, 0.7, 0.2, 1)' } : undefined}
       >
         <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(0deg)_translateZ(1px)]">
           <FullCard card={card} spectre={spectre} stats={spectre && spectreBack ? <SpectreResult spectre={spectre} /> : undefined} image={image && !flipped ? { ...image, framing, setFraming } : undefined} trend={trend} />
@@ -510,20 +644,26 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`,
 }
 
 /** A card won in Card Wars: its face, and on the back its sticker. */
-function WonFlipCard({ card }: { card: ReturnType<typeof useWonBattleCards>[number] | ReturnType<typeof useRedlineCards>[number] }) {
-  const [flipped, setFlipped] = useState(false);
+function WonFlipCard({ card, turn, onTap }: { card: VaultBattleCard; turn?: number; onTap?: () => void }) {
+  const [own, setOwn] = useState(false);
+  const led = turn !== undefined;
+  const flipped = led ? Math.round(turn / 180) % 2 === 1 : own;
   return (
     <button
       type="button"
       onClick={() => {
+        if (led) return onTap?.();
         haptics.light();
-        setFlipped((f) => !f);
+        setOwn((f) => !f);
       }}
       aria-label={flipped ? tr("Show front of {0}", [card.name]) : tr("Show {0} sticker", [card.name])}
       data-tip="vault-card"
       className="block w-full [perspective:1200px] text-left"
     >
-      <div className={cn('relative w-full transition-transform duration-700 [transform-style:preserve-3d]', flipped && '[transform:rotateY(180deg)]')}>
+      <div
+        className={cn('relative w-full transition-transform duration-700 [transform-style:preserve-3d]', !led && flipped && '[transform:rotateY(180deg)]')}
+        style={led ? { transform: `rotateY(${turn}deg)`, transitionDuration: '900ms', transitionTimingFunction: 'cubic-bezier(0.3, 0.7, 0.2, 1)' } : undefined}
+      >
         <div className="[backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(0deg)_translateZ(1px)]">
           <BattleCard card={card} />
         </div>

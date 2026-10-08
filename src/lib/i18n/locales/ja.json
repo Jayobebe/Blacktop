@@ -4443,5 +4443,8 @@
  "{0} of {1} collected": "{1}枚中{0}枚を収集",
  "{0} {1} is in": "{0} {1} が登場",
  "{0} {1} is yours": "{0} {1} を手に入れました",
- "When a spin lands a card, the lower tiers come up more often:": "スピンでカードが出るとき、低いティアほど出やすくなります:"
+ "When a spin lands a card, the lower tiers come up more often:": "スピンでカードが出るとき、低いティアほど出やすくなります:",
+ "Full vault": "すべてのカード",
+ "Its dog tags": "このカードのドッグタグ",
+ "No battle cards yet": "バトルカードはまだありません"
 }

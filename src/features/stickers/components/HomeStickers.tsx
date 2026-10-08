@@ -1,6 +1,7 @@
 import { useCardArt } from '@/hooks/useCardArt';
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { BringToFront, Check, FlipHorizontal2, Maximize2, Trash2 } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ function StickerArt({ src, className, style }: { src: string; className?: string
  * brought to the front or peeled off from the bar.
  */
 export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> }) {
+  const navigate = useNavigate();
   // A sticker belongs to the way up the phone was when it was stuck on: the buttons sit
   // differently the other way, so there it simply isn't shown.
   const [way, setWay] = useState(orientationNow);
@@ -271,7 +273,16 @@ export function HomeStickers({ columnRef }: { columnRef: RefObject<HTMLElement> 
                 setSelected(null);
               }}
             />
-            <BarButton icon={Check} label={tr("Done")} primary onClick={() => setArranging(false)} />
+            <BarButton
+              icon={Check}
+              label={tr("Done")}
+              primary
+              onClick={() => {
+                setArranging(false);
+                // Back to the vault, where the stickers come from: the next one is a tap away.
+                navigate('/world?vault=1');
+              }}
+            />
           </div>
         </div>,
         document.body,
