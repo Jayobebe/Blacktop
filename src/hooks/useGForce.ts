@@ -1,6 +1,7 @@
 import { noteMotionGranted } from '@/lib/motionPermission';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GVectorTracker, emptyGVector, type GMax } from '@/lib/gForceVector';
+import { getScreenOrientationAngle } from '@/hooks/useLeanAngle';
 
 interface GForceState {
   currentG: number; // total acceleration magnitude in g, including gravity (~1.0 at rest)
@@ -31,10 +32,13 @@ interface GForceOptions {
   onSample?: (g: number) => void;
   /**
    * Current lean in degrees (+ right) for vehicles that lean, read on every
-   * sample: cornering G then comes from tan(lean), since a leaning bike's
-   * phone barely feels sideways force. Leave null for cars.
+   * sample: a leaning bike's phone barely feels sideways force, so cornering
+   * G is worked out from speed and turn rate, with lean giving the side.
+   * Leave null for cars.
    */
   leanRef?: { current: number | null };
+  /** Ground speed in m/s, read on every sample (for cornering G on vehicles that lean). */
+  speedRef?: { current: number | null };
 }
 
 /**
@@ -65,6 +69,8 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
   }
   const leanRef = useRef(options.leanRef);
   leanRef.current = options.leanRef;
+  const speedRef = useRef(options.speedRef);
+  speedRef.current = options.speedRef;
 
   const maxGRef = useRef(options.initialMaxG ?? 0);
 
@@ -117,13 +123,21 @@ export function useGForce(isActive: boolean = false, options: GForceOptions = {}
       if (e.accelerationIncludingGravity) {
         const lin = e.acceleration;
         const linear: [number, number, number] | null = lin && lin.x != null && lin.y != null && lin.z != null ? [lin.x, lin.y, lin.z] : null;
-        const angle = window.screen?.orientation?.angle ?? (typeof window.orientation === 'number' ? window.orientation : 0);
+        // The same reading of the screen's rotation as the lean bar: an installed web app on an iPhone can report 0
+        // while lying on its side, which swapped the meter's axes in landscape.
+        const angle = getScreenOrientationAngle();
+        const rr = e.rotationRate;
+        const rad = Math.PI / 180;
+        // rotationRate is degrees a second about x (beta), y (gamma) and z (alpha).
+        const rot: [number, number, number] | null = rr && rr.alpha != null && rr.beta != null && rr.gamma != null ? [rr.beta * rad, rr.gamma * rad, rr.alpha * rad] : null;
         trackerRef.current?.update(
           [x, y, z],
           linear,
           angle,
           leanRef.current?.current ?? null,
           e.timeStamp || performance.now(),
+          rot,
+          speedRef.current?.current ?? null,
         );
       }
 

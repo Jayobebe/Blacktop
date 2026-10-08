@@ -86,10 +86,12 @@ export function RacerView() {
   const { canLean, vehicles } = useExperience();
   const { cards: vehicleCards } = useVehicleCards();
   const { earnSpectre } = useSpectreCards();
-  // Cornering G for a leaning bike comes from the lean (see lib/gForceVector).
+  // Cornering G for a leaning bike comes from its speed and turn rate, with lean giving the side (see lib/gForceVector).
   const leanForGRef = useRef<number | null>(null);
   leanForGRef.current = canLean && lean.isSupported && lean.permissionGranted ? lean.currentLean : null;
-  const gForce = useGForce(sensorsOn, { leanRef: leanForGRef });
+  const speedForGRef = useRef<number | null>(null);
+  speedForGRef.current = sensorsOn && Number.isFinite(racer.speed) ? racer.speed : null;
+  const gForce = useGForce(sensorsOn, { leanRef: leanForGRef, speedRef: speedForGRef });
   // Gravity-free G (the friction circle's), for the timer, the pit crew and the traces.
   const dynamicG = Math.hypot(gForce.lateralG, gForce.longitudinalG);
   const wakeLock = useWakeLock();

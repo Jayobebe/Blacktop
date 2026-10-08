@@ -222,10 +222,14 @@ export default function ActiveRide() {
   // React state only updates while the G gauge is on (≈10Hz is plenty for a gauge); crash
   // detection reads each sample directly, so with only auto-rescue on the sensor never re-renders the screen.
   const crashSampleRef = useRef<(g: number) => void>(() => {});
+  // Ground speed in m/s for the meter's cornering G (the ride's speed is in mph).
+  const speedForGRef = useRef<number | null>(null);
+  speedForGRef.current = rideState.isActive ? rideState.currentSpeed * 0.44704 : null;
   const gForce = useGForce(rideState.isActive && (settings.gForceEnabled || settings.autoRescueEnabled), {
     display: settings.gForceEnabled,
     displayIntervalMs: 100,
     leanRef: leanForGRef,
+    speedRef: speedForGRef,
     initialVector: rideState.gEnvelope && rideState.gMax ? { envelope: rideState.gEnvelope, max: rideState.gMax } : undefined,
     initialMaxG: rideState.maxGForce,
     onSample: useCallback((g: number) => crashSampleRef.current(g), []),

@@ -13,7 +13,8 @@ interface LeanAngleState {
 
 const SMOOTHING_FACTOR = 0.3;
 
-function getScreenOrientationAngle(): number {
+/** Which way up the screen is drawn, in degrees. Also read by the G-force meter, so the two always agree. */
+export function getScreenOrientationAngle(): number {
   const angle =
     screen.orientation && typeof screen.orientation.angle === 'number'
       ? screen.orientation.angle
