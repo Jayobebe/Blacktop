@@ -421,9 +421,16 @@ button.cw-card:disabled { cursor: default; }
 .cw-reward-show .cw-reward-position, .cw-reward-flip .cw-reward-position { transition-duration: 500ms; }
 .cw-reward-flipper { position: relative; display: block; aspect-ratio: 10 / 13; transform-style: preserve-3d; transition: transform 480ms cubic-bezier(0.4, 0, 0.2, 1); }
 .cw-reward-facedown { transform: rotateY(180deg); }
-.cw-reward-face { position: absolute; inset: 0; display: block; backface-visibility: hidden; pointer-events: none; }
+.cw-reward-face { position: absolute; inset: 0; display: block; backface-visibility: hidden; -webkit-backface-visibility: hidden; pointer-events: none; }
+/* The face turned away is switched off as well, at the half turn. `backface-visibility` alone isn't enough on every phone: a card's own
+   rounded clipping and shadows flatten it there, and the prize's picture and name showed through the back while the cards were shuffled. */
+.cw-reward-front { transform: translateZ(1px); transition: opacity 0s 240ms, visibility 0s 240ms; }
+.cw-reward-back { opacity: 0; visibility: hidden; transition: opacity 0s 240ms, visibility 0s 240ms; }
+.cw-reward-facedown .cw-reward-front { opacity: 0; visibility: hidden; }
+.cw-reward-facedown .cw-reward-back { opacity: 1; visibility: visible; }
+.cw-reward-missed .cw-reward-face { transition-delay: 890ms; }
 .cw-reward-face > .cw-card { height: 100%; }
-.cw-reward-back { transform: rotateY(180deg); }
+.cw-reward-back { transform: rotateY(180deg) translateZ(1px); }
 /* Ready to be picked: the backs catch the light in turn. */
 .cw-reward-pick .cw-reward-position { cursor: pointer; }
 .cw-reward-pick .cw-reward-position:active { scale: 0.95; }
@@ -612,7 +619,7 @@ button.cw-card:disabled { cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .cw-arena-page *, .cw-result *, .cw-won *, .cw-sale *, .cw-wild-in, .cw-pop, .cw-plate-big, .cw-rpm b, .cw-spin-track, .cw-reward-back > button.cw-card, .cw-event, .cw-event *, .cw-beaming, .cw-beam-in { animation: none !important; }
   .cw-beaming::before, .cw-beam-in::before { display: none; }
-  .cw-reward-position, .cw-reward-flipper, .cw-meter-fill, .cw-card, .cw-reel-track, .cw-charred, .cw-tag { transition: none !important; }
+  .cw-reward-position, .cw-reward-flipper, .cw-reward-face, .cw-meter-fill, .cw-card, .cw-reel-track, .cw-charred, .cw-tag { transition: none !important; }
 }
 /* Thermal mode: black, white outlines, nothing moving (index.css stops the motion). */
 html.thermal .cw-arena-page, html.thermal .cw-stage, html.thermal .cw-panel, html.thermal .cw-info { background: #000 !important; border: 1px solid #fff; }

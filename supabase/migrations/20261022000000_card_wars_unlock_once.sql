@@ -1,9 +1,9 @@
 -- Card Wars: a one-time unlock for a test account. Needs 20261021000000_card_wars_redline.sql first.
 --
 -- One code, held here only as its SHA-256, works for the first account that
--- enters it and for nobody after. That account gets every catalogue card, the
--- Wildcard with every Redline card, and for each dog tag power the five
--- strongest tags there are. The app shows the code box only while
+-- enters it and for nobody after. That account gets everything the vault has:
+-- every catalogue card, the Wildcard with every Redline card, and every dog
+-- tag (each of the four powers tied to each of the cards). The app shows the code box only while
 -- cw_unlock_open() says the code hasn't been used; both go in a later migration.
 
 create table if not exists public.cw_unlock_used(
@@ -45,11 +45,11 @@ begin
       then array(select card_id from public.cw_redline_owned where user_id = u order by won_at, card_id limit 5) else redline_wheel end
   where user_id = u;
 
-  -- Each power's strength comes from one rating of the vehicle it's tied to (speed, lean, g-force, distance, corners).
   insert into public.cw_tags(user_id, power, card_id)
-  select u, p.power, t.id
-  from (values ('boost', 3), ('heal', 4), ('reroll', 5), ('flip', 1)) p(power, k)
-  cross join lateral (select c.id from public.cw_catalog c where c.category is not null order by c.ratings[p.k] desc, c.id limit 5) t
+  select u, p.power, c.id
+  from (values ('boost'), ('heal'), ('reroll'), ('flip')) p(power)
+  cross join public.cw_catalog c
+  where c.category is not null
   on conflict do nothing;
 
   return jsonb_build_object('ok', true) || public.cw_shop();
