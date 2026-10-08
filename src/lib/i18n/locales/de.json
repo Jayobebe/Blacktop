@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Wenn ein Spin eine Karte bringt, kommen die niedrigeren Stufen häufiger:",
  "Full vault": "Ganzer Tresor",
  "Its dog tags": "Ihre Hundemarken",
- "No battle cards yet": "Noch keine Kampfkarten"
+ "No battle cards yet": "Noch keine Kampfkarten",
+ "Three different powers, one use each": "Drei verschiedene Kräfte, je einmal nutzbar",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Ein Deck trägt drei Hundemarken, jede mit einer anderen Kraft. Wähle die drei, die zu deinen Karten passen.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Ein Deck trägt drei, jede mit einer anderen Kraft. Aktiviere eine, bevor du spielst; jede wirkt einmal pro Kampf. Eine per Dreh gewonnene Marke gehört zu einem Fahrzeug: Das bestimmt ihre Stärke, und mit derselben Fahrzeugart bewirkt sie mehr. Eine auf einer Track-Day-Bestenliste geholte wirkt mit jedem.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Die Kategorie wird gezogen, dann bleibt der Drehzahlmesser auf einer deiner fünf Redline-Karten stehen, nie auf einer mit 0 in dieser Kategorie, und sie kämpft die Runde anstelle deiner Karte. Ein Sieg trifft mit voller Wucht; eine Niederlage kostet deine Karte nichts.",
+ "A deck takes one dog tag of each power.": "Ein Deck nimmt eine Hundemarke je Kraft.",
+ "Your Redline took the hit: your card is untouched": "Deine Redline-Karte hat den Treffer genommen: deine Karte ist unversehrt"
 }

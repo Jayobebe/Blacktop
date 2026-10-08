@@ -151,9 +151,10 @@ export function CardWarsScreen() {
   const deckTags = vault.tags
     .map((id) => tags.find((t) => t.id === id))
     .filter((t): t is DogTag => !!t)
-    .filter((t, i, all) => all.findIndex((x) => x.id === t.id) === i)
+    // One of each power: a deck saved with two or three of one keeps the first.
+    .filter((t, i, all) => all.findIndex((x) => x.power === t.power) === i)
     .slice(0, TAG_SLOTS);
-  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => t.id === spare.id)) deckTags.push(spare);
+  for (const spare of STARTER_TAGS) if (deckTags.length < TAG_SLOTS && !deckTags.some((t) => t.power === spare.power)) deckTags.push(spare);
   const run = vault.run;
 
   // The Arcade page shows the deck without opening the game: keep a light copy with the vault
@@ -447,7 +448,11 @@ export function CardWarsScreen() {
     if (riding || locked) return;
     const values = (type === 'deck' ? deck : deckTags).map((x) => x.id);
     if (values.some((x, i) => i !== index && x === id)) return;
-    // One tag per power, before builds.
+    // One dog tag of each power.
+    if (type === 'tags') {
+      const power = tags.find((t) => t.id === id)?.power;
+      if (deckTags.some((t, i) => i !== index && t.power === power)) return;
+    }
     values[index] = id;
     updateVault({ [type]: values });
   }

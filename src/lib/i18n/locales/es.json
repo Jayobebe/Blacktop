@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Cuando una tirada da una carta, los niveles más bajos salen más a menudo:",
  "Full vault": "Bóveda completa",
  "Its dog tags": "Sus placas",
- "No battle cards yet": "Aún no hay cartas de combate"
+ "No battle cards yet": "Aún no hay cartas de combate",
+ "Three different powers, one use each": "Tres poderes distintos, un uso cada uno",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Un mazo lleva tres placas, cada una con un poder distinto. Elige las tres que mejor vayan con tus cartas.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Un mazo lleva tres, cada una con un poder distinto. Activa una antes de jugar; cada una funciona una vez por combate. Una placa ganada en una tirada va ligada a un vehículo: eso marca su fuerza, y hace más con el mismo tipo de vehículo. Una conseguida en una tabla de Track Day funciona con cualquiera.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Se sortea la categoría y luego el cuentarrevoluciones se detiene en una de tus cinco cartas Redline, nunca en una con 0 en esa categoría, y esa pelea la ronda en lugar de tu carta. Una victoria golpea con toda su fuerza; una derrota no le cuesta nada a tu carta.",
+ "A deck takes one dog tag of each power.": "Un mazo lleva una placa de cada poder.",
+ "Your Redline took the hit: your card is untouched": "Tu Redline recibió el golpe: tu carta queda intacta"
 }

@@ -11,7 +11,14 @@ import type { BattleCard, DogTag } from '../types';
  * 20261021000000_card_wars_redline.sql): keep ids and ratings in step. Plain
  * data, no app imports: the engine and the check script read it.
  */
-export const REDLINE = { budget: 240, wheel: 5, odds: 2, pity: 40, starter: 5, dailyOneIn: 3 } as const;
+/**
+ * The last three are what a Redline does in a round, to be worth how rare it is (the engine and `cw_action`
+ * both do them): the rev counter never stops on a card whose rating in the drawn category is 0, a Redline
+ * that wins hits as hard as a hit can, and one that loses takes the loss itself (the player's card isn't
+ * touched). Measured on the best deck against itself: the Wildcard alone went from no better than no tag to
+ * the second best tag there is, behind Overdrive.
+ */
+export const REDLINE = { budget: 240, wheel: 5, odds: 2, pity: 40, starter: 5, dailyOneIn: 3, noZero: true, fullHit: true, shield: true };
 
 // id, maker, name, vehicle, speed, lean, g-force, distance, corners
 type Row = [string, string, string, 'car' | 'bike', number, number, number, number, number];

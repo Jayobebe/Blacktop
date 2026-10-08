@@ -400,13 +400,13 @@ export function Garage({
       <section>
         <div className="flex items-baseline justify-between mb-2">
           <h2 className={heading}>{tr("Dog tags")}</h2>
-          <span className="text-[11px] text-muted-foreground">{tr("Any three, one use each")}</span>
+          <span className="text-[11px] text-muted-foreground">{tr("Three different powers, one use each")}</span>
         </div>
         <div className="space-y-2">
           {Array.from({ length: TAG_SLOTS }, (_, slot) => {
             const tag = tags[slot];
             // What could go here instead: any tag not in another slot (before builds: whose power the other two don't carry).
-            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && x.id === t.id)).length;
+            const others = availableTags.filter((t) => t.id !== tag?.id && !tags.some((x, i) => i !== slot && x.power === t.power)).length;
             return (
               <button key={slot} type="button" className="cw-tag-row" disabled={frozen} onClick={() => setOpen({ kind: 'tag', slot })}>
                 {tag ? (
@@ -429,7 +429,8 @@ export function Garage({
         </div>
       </section>
 
-      <RedlineWheel frozen={frozen} />
+      {/* The Redline wheel only matters to a deck that carries the Wildcard */}
+      {tags.some((t) => t.power === 'wild') && <RedlineWheel frozen={frozen} />}
 
       {!mustSpin && cardSpins}
       {!mustSpin && tagSpins}
@@ -801,7 +802,7 @@ export function Garage({
               <SheetHeader className="text-left">
                 <SheetTitle>{tr("Choose a dog tag")}</SheetTitle>
                 <SheetDescription>
-                  {tr("A deck carries three dog tags. Mix the powers or double up: two or three of the same power is a build like any other.")}
+                  {tr("A deck carries three dog tags, each a different power. Pick the three that suit your cards.")}
                 </SheetDescription>
               </SheetHeader>
               {shownPowers().map((power) => (
@@ -817,8 +818,8 @@ export function Garage({
                     .sort((a, b) => tagStrength(b) - tagStrength(a))
                     .map((t) => {
                       const inUse = tags[open.slot]?.id === t.id;
-                      // Under builds a tag sits in one slot only.
-                      const elsewhere = tags.some((x, i) => i !== open.slot && x.id === t.id);
+                      // One of each power: a power another slot carries can't go in this one.
+                      const elsewhere = tags.some((x, i) => i !== open.slot && x.power === t.power);
                       return (
                         <button
                           key={t.id}

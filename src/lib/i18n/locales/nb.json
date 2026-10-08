@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Når et spinn gir et kort, kommer de lavere nivåene oftere:",
  "Full vault": "Hele hvelvet",
  "Its dog tags": "ID-brikkene til kortet",
- "No battle cards yet": "Ingen kampkort ennå"
+ "No battle cards yet": "Ingen kampkort ennå",
+ "Three different powers, one use each": "Tre ulike krefter, én bruk hver",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Et deck har tre ID-brikker, hver med sin egen kraft. Velg de tre som passer kortene dine.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Et deck har tre, hver med sin egen kraft. Aktiver én før du spiller; hver virker én gang per kamp. En brikke vunnet på et spinn er knyttet til et kjøretøy: det avgjør hvor sterk den er, og den gjør mer med samme type kjøretøy. En brikke tatt på en Track Day-tavle virker med alle.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Kategorien trekkes, så stopper turtelleren på ett av dine fem Redline-kort, aldri ett med 0 i den kategorien, og det kjemper runden i stedet for kortet ditt. En seier treffer med full styrke; et tap koster kortet ditt ingenting.",
+ "A deck takes one dog tag of each power.": "Et deck tar én ID-brikke av hver kraft.",
+ "Your Redline took the hit: your card is untouched": "Redline-kortet ditt tok støyten: kortet ditt er urørt"
 }

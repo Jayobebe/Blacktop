@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Quando un giro dà una carta, i livelli più bassi escono più spesso:",
  "Full vault": "Caveau completo",
  "Its dog tags": "Le sue piastrine",
- "No battle cards yet": "Ancora nessuna carta battaglia"
+ "No battle cards yet": "Ancora nessuna carta battaglia",
+ "Three different powers, one use each": "Tre poteri diversi, un uso ciascuno",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Un mazzo porta tre piastrine, ognuna con un potere diverso. Scegli le tre più adatte alle tue carte.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Un mazzo ne porta tre, ognuna con un potere diverso. Armane una prima di giocare; ognuna funziona una volta per battaglia. Una piastrina vinta con un giro è legata a un veicolo: ne decide la forza, e fa di più con lo stesso tipo di veicolo. Una presa su una classifica Track Day funziona con tutti.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Si estrae la categoria, poi il contagiri si ferma su una delle tue cinque carte Redline, mai su una con 0 in quella categoria, e quella combatte il round al posto della tua carta. Una vittoria colpisce a piena forza; una sconfitta non costa nulla alla tua carta.",
+ "A deck takes one dog tag of each power.": "Un mazzo porta una piastrina per ogni potere.",
+ "Your Redline took the hit: your card is untouched": "La tua Redline ha preso il colpo: la tua carta è intatta"
 }

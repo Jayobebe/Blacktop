@@ -52,7 +52,7 @@ export function tagDescription(power: TagPower): string {
     case 'flip':
       return tr("Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.");
     case 'wild':
-      return tr("The category is drawn, then the rev counter lands on one of your five Redline cards, which fights the round in your card's place. Your own card still takes the hit if it loses.");
+      return tr("The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.");
     default:
       return tr("If you lose the round, it's replayed once in another category.");
   }

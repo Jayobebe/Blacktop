@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Når et spin giver et kort, kommer de lavere niveauer oftere:",
  "Full vault": "Hele boksen",
  "Its dog tags": "Dens kendingsmærker",
- "No battle cards yet": "Ingen kampkort endnu"
+ "No battle cards yet": "Ingen kampkort endnu",
+ "Three different powers, one use each": "Tre forskellige kræfter, én brug hver",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Et deck har tre kendingsmærker, hvert med sin egen kraft. Vælg de tre, der passer til dine kort.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Et deck har tre, hver med sin egen kraft. Aktivér ét, før du spiller; hvert virker én gang pr. kamp. Et mærke vundet på et spin er knyttet til et køretøj: det afgør, hvor stærkt det er, og det gør mere med samme slags køretøj. Et mærke taget på en Track Day-tavle virker med alle.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Kategorien trækkes, og så lander omdrejningstælleren på et af dine fem Redline-kort, aldrig et med 0 i den kategori, og det kæmper runden i dit korts sted. En sejr rammer med fuld styrke; et nederlag koster dit kort ingenting.",
+ "A deck takes one dog tag of each power.": "Et deck tager ét kendingsmærke af hver kraft.",
+ "Your Redline took the hit: your card is untouched": "Dit Redline-kort tog slaget: dit kort er urørt"
 }

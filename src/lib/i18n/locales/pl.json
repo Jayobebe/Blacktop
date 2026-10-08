@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Gdy zakręcenie daje kartę, niższe poziomy wypadają częściej:",
  "Full vault": "Cały skarbiec",
  "Its dog tags": "Jej nieśmiertelniki",
- "No battle cards yet": "Brak jeszcze kart bitewnych"
+ "No battle cards yet": "Brak jeszcze kart bitewnych",
+ "Three different powers, one use each": "Trzy różne moce, każda na jeden raz",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Talia ma trzy nieśmiertelniki, każdy o innej mocy. Wybierz trzy, które pasują do twoich kart.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Talia ma trzy, każdy o innej mocy. Uzbrój jeden, zanim zagrasz; każdy działa raz na bitwę. Nieśmiertelnik wygrany w zakręceniu jest przypisany do pojazdu: to on wyznacza jego siłę, a z pojazdem tego samego rodzaju działa mocniej. Zdobyty na tablicy Track Day działa z każdym.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Losowana jest kategoria, potem obrotomierz zatrzymuje się na jednej z twoich pięciu kart Redline, nigdy na takiej z zerem w tej kategorii, i to ona walczy w rundzie zamiast twojej karty. Wygrana uderza z pełną siłą; przegrana nic nie kosztuje twojej karty.",
+ "A deck takes one dog tag of each power.": "Talia bierze po jednym nieśmiertelniku każdej mocy.",
+ "Your Redline took the hit: your card is untouched": "Cios przyjęła twoja karta Redline: twoja karta jest nietknięta"
 }

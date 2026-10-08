@@ -4446,5 +4446,11 @@
  "When a spin lands a card, the lower tiers come up more often:": "Saat spin menghasilkan kartu, tier yang lebih rendah lebih sering muncul:",
  "Full vault": "Brankas lengkap",
  "Its dog tags": "Dog tag-nya",
- "No battle cards yet": "Belum ada kartu pertarungan"
+ "No battle cards yet": "Belum ada kartu pertarungan",
+ "Three different powers, one use each": "Tiga kekuatan berbeda, masing-masing sekali pakai",
+ "A deck carries three dog tags, each a different power. Pick the three that suit your cards.": "Satu dek membawa tiga dog tag, masing-masing dengan kekuatan berbeda. Pilih tiga yang cocok dengan kartumu.",
+ "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Satu dek membawa tiga, masing-masing dengan kekuatan berbeda. Aktifkan satu sebelum bermain; masing-masing berlaku sekali per pertarungan. Tag dari putaran terikat pada sebuah kendaraan: itu menentukan kekuatannya, dan efeknya lebih besar dengan jenis kendaraan yang sama. Tag yang direbut di papan Track Day berlaku dengan semuanya.",
+ "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Kategori diundi, lalu takometer berhenti di salah satu dari lima kartu Redline-mu, tidak pernah yang bernilai 0 di kategori itu, dan kartu itu bertarung di ronde tersebut menggantikan kartumu. Kemenangan memukul dengan kekuatan penuh; kekalahan tidak merugikan kartumu sama sekali.",
+ "A deck takes one dog tag of each power.": "Satu dek memuat satu dog tag untuk tiap kekuatan.",
+ "Your Redline took the hit: your card is untouched": "Redline-mu yang menerima pukulan: kartumu tidak tersentuh"
 }

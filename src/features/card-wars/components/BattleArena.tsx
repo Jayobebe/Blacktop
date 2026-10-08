@@ -642,7 +642,9 @@ export function BattleArena({
                     : reveal.winner === 1
                       ? mineOut
                         ? tr("Your card is out: {0} damage taken", [reveal.damage])
-                        : tr("You lose the round: {0} damage taken", [reveal.damage])
+                        : reveal.wild?.[0] && reveal.damage === 0
+                          ? tr("Your Redline took the hit: your card is untouched")
+                          : tr("You lose the round: {0} damage taken", [reveal.damage])
                       : reveal.event === 'photo' && reveal.damage > 0
                         ? tr("Photo finish: both cards take {0}", [reveal.damage])
                         : reveal.event === 'redflag'

@@ -80,7 +80,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
             );
           })}
           <span>
-            {tr("A deck carries any three: mix the powers, or carry two or three of the same. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.")}
+            {tr("A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.")}
           </span>
         </span>
       ),

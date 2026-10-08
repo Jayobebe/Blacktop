@@ -69,6 +69,7 @@ function refusal(message: string): string {
   if (/expired/i.test(message)) return tr("That invitation has expired.");
   if (/private battle|battle unavailable/i.test(message)) return tr("That battle already has two players.");
   if (/five unique/i.test(message)) return tr("A player battle needs five different cards you own.");
+  if (/one dog tag of each power/i.test(message)) return tr("A deck takes one dog tag of each power.");
   if (/redline cards for your wheel/i.test(message)) return tr("Pick five Redline cards for your wheel first.");
   if (/dog tag not owned/i.test(message)) return tr("One of your dog tags isn't yours on the server. Pick another.");
   if (/already used/i.test(message)) return tr("That dog tag is already used.");

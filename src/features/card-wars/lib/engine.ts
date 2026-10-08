@@ -4,6 +4,7 @@ import { DAMAGE, LEVEL, PRIZE_REACH, QUICK, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
+import { REDLINE } from './redline';
 
 /**
  * Battles against the computer, settled on the phone (player battles are the
@@ -213,8 +214,9 @@ export function deadlocked(state: BattleState): boolean {
  *   Second chance replays a lost round once in another category, with a
  *     rating bonus on the replay;
  *   Wildcard puts one of the wheel's five Redline cards in the card's place
- *     for the round (unworn, and never in Lean). The player's own card still
- *     takes the hit, and the wear.
+ *     for the round (unworn, never in Lean, and never one with 0 in the
+ *     category). If it wins it hits at full strength; if it loses, the
+ *     player's card takes nothing. The wear is still the player's card's.
  */
 export function playRound(previous: BattleState, index: number, tag?: DogTag, random: () => number = Math.random): BattleState {
   if (previous.result || !previous.player[index] || previous.hp[0][index] <= 0) return previous;
@@ -277,11 +279,14 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
       if (low) hp[low.i] = Math.min(100, hp[low.i] + EVENT_NUMBERS.pitHeal);
     }
   }
-  // The Wildcard: the category is already drawn; now the rev counter lands on one of the wheel's five.
-  const wild = live?.power === 'wild' && s.wheel?.length ? s.wheel[Math.floor(random() * s.wheel.length)] : null;
-  // A Redline never fights in Lean, whatever it's facing.
-  const cats = wild ? allowed.filter((c) => c !== 'lean') : allowed;
-  if (wild && category === 'lean') category = cats[Math.floor(random() * cats.length)];
+  // The Wildcard: the category is already drawn (a Redline never fights in Lean, whatever it's facing); now the rev
+  // counter lands on one of the wheel's five. It never stops on a card whose rating in that category is 0.
+  const armedWild = live?.power === 'wild' && !!s.wheel?.length;
+  const cats = armedWild ? allowed.filter((c) => c !== 'lean') : allowed;
+  if (armedWild && category === 'lean') category = cats[Math.floor(random() * cats.length)];
+  const onDial = armedWild ? s.wheel!.filter((c) => !REDLINE.noZero || c.ratings[category] > 0) : [];
+  const dial = onDial.length ? onDial : (armedWild ? s.wheel! : []);
+  const wild = dial.length ? dial[Math.floor(random() * dial.length)] : null;
   if (live?.power === 'heal') s.hp[0][index] = Math.min(100, s.hp[0][index] + tagStrength(live, card));
   const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
   // Hard: the computer has the three standard dog tags, one use each, and arms them by feel:
@@ -341,6 +346,9 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
 
   let winner: number | null = a === b ? null : a > b ? 0 : 1;
   let damage = damageFor(a, b);
+  // A Redline hits as hard as a hit can, and takes the loss itself: the player's card isn't touched.
+  if (wild && winner === 0 && REDLINE.fullHit) damage = DAMAGE.cap;
+  if (wild && winner === 1 && REDLINE.shield) damage = 0;
   const floor = event === 'safety' ? 1 : 0;
   const hit = (side: number, i: number, d: number) => {
     const before = s.hp[side][i];

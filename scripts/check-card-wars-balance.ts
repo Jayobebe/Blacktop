@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { BRAND_CARDS, CATALOG } from '../src/features/card-wars/lib/catalog';
 import { COMPUTER_WIN_TARGET, createComputerDeck, createRun, deadlocked, estimatePlayerWins, playRound, prizesFor, shuffle } from '../src/features/card-wars/lib/engine';
 import { setEventsEnabled } from '../src/features/card-wars/lib/events';
-import { LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, tierOdds, tierOfPrice, wearLoss } from '../src/features/card-wars/lib/rules';
+import { DAMAGE, LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, tierOdds, tierOfPrice, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength, ratingFromStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
 import { REDLINE, REDLINES, WILD_TAG } from '../src/features/card-wars/lib/redline';
@@ -238,10 +238,14 @@ const trials = 400;
     assert.notEqual(last.category, 'lean', 'A Redline never fights in Lean');
     assert.equal(last.player, before.player[i % 5].id, "The round is still logged against the player's own card (it takes the hit and the wear)");
     if (!last.event && !last.first) assert.equal(last.values![0], red.ratings[last.category], "The Redline's rating is what's compared");
-    if (last.winner === 1 && last.event !== 'photo' && last.event !== 'redflag') assert.ok(next.hp[0][i % 5] < before.hp[0][i % 5], "A lost round costs the player's own card");
+    assert.ok(red.ratings[last.first ?? last.category] > 0, 'The rev counter never stops on a 0');
+    if (last.winner === 1 && last.event !== 'photo') assert.equal(next.hp[0][i % 5], before.hp[0][i % 5], "A Redline that loses takes the loss itself: the player's card isn't touched");
+    if (last.winner === 0 && !last.event) assert.equal(last.damage, DAMAGE.cap, 'A Redline that wins hits at full strength');
     if (last.event !== 'redflag') assert.deepEqual(next.usedTags, [WILD_TAG.id], 'One use a battle');
   }
   assert.equal(landed.size, wheel.length, 'Every card on the wheel comes up');
+  // Builds are back to one of each power: the slots a server would refuse are never offered (Garage), so only the
+  // rule's own numbers are checked here.
   // Without a wheel the tag does nothing but get spent.
   const bare = playRound(fresh(), 0, WILD_TAG, rng(11)).log[0];
   assert.ok(!bare.wild);
