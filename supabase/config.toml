@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.burn-account]
 verify_jwt = true
 
+[functions.account-recovery]
+verify_jwt = true
+
 [functions.place-search]
 verify_jwt = true
 

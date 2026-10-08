@@ -275,6 +275,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
  */
 function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null; onToggle: (t: EnterpriseTier) => void }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   // Longest package name first (in the rider's language); equal lengths keep their order.
   const tiers = enterpriseTiers().sort((a, b) => tierName(b.id).length - tierName(a.id).length);
   return (
@@ -327,8 +328,9 @@ function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null
                   style={{ animationDelay: `${200 + t.features.length * 80}ms`, animationFillMode: 'backwards' }}
                   onClick={() => {
                     haptics.light();
-                    // Home's entry remembers the Doorway and this package, so Back lands here again.
-                    navigate('/', { replace: true, state: { deck: 'doorway', tier: t.id } });
+                    // This page's entry (Home, or the Doorway by itself before there's an account) remembers
+                    // the Doorway and this package, so Back lands here again.
+                    navigate(pathname, { replace: true, state: { deck: 'doorway', tier: t.id } });
                     navigate(`/enterprise/demo/${t.id}`);
                   }}
                 >

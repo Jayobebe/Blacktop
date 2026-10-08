@@ -76,6 +76,7 @@ const WRITE_RPCS = new Set([
 
 const WRITE_FUNCTIONS = new Set([
   'burn-account',
+  'account-recovery',
   'send-push',
   'discord-announce-convoy',
   'discord-announce-rescue',

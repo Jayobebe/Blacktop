@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   ChevronRight, ChevronDown, Play, Shield, BarChart2, Users, Mic, ShieldCheck, Map, Wrench, Globe2, Sparkles, Radio,
   Wallet, MonitorSmartphone, SlidersHorizontal, Flame, Navigation, Handshake, UsersRound, Timer, BookOpen, Ghost,
-  BellRing, ShoppingBag,
+  BellRing, ShoppingBag, KeyRound, Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
@@ -128,9 +128,11 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
 
 interface WelcomeScreenProps {
   onStart: () => void;
+  /** Someone who already rides with Blacktop, on a new phone: their code or backup, and no onboarding. */
+  onRecover: () => void;
 }
 
-export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
+export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
   const start = () => {
     haptics.light();
     onStart();
@@ -141,6 +143,24 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
 
       {/* Above the fold */}
       <section className="relative min-h-dvh flex flex-col items-center px-6 pt-10 landscape:pt-4 pb-4 landscape:pb-2 safe-top text-center">
+        {/* For people who know Blacktop already: straight back to their own Home, or to Blacktop Enterprise. */}
+        <div className="self-stretch -mx-3 mt-3 landscape:mt-2 mb-3 landscape:mb-1 flex items-center justify-between gap-2 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => {
+              haptics.light();
+              onRecover();
+            }}
+            className="pressable frost-accent inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-2xl text-[13px] font-semibold"
+          >
+            <KeyRound className="w-4 h-4" />
+            {tr("Recover")}
+          </button>
+          <Link to="/enterprise" onClick={() => haptics.light()} className="pressable frost-accent inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-2xl text-[13px] font-semibold">
+            <Building2 className="w-4 h-4" />
+            {tr("Enterprise")}
+          </Link>
+        </div>
         {/* Hero + actions centred in the space above the scroll prompt */}
         <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-8 landscape:gap-12 w-full">
         <div className="max-w-sm animate-slide-up landscape:text-left">

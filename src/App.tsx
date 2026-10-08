@@ -41,6 +41,7 @@ import SoloLobby from "./pages/SoloLobby";
 import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
 import { installDemoGuard } from '@/lib/demoGuard';
+import { resumePendingRecovery } from '@/lib/recovery';
 import { probeServerCaps } from '@/lib/serverCaps';
 import { loadLocaleExtra } from '@/lib/i18n';
 
@@ -53,6 +54,8 @@ installErrorLog();
 installWarpNavigation();
 // Features shipped ahead of their migration stay hidden until the server has them.
 probeServerCaps();
+// A recovery code made just before the app closed may have signed this phone out: sign back in with it.
+void resumePendingRecovery();
 
 
 const queryClient = new QueryClient();
@@ -98,6 +101,7 @@ function CardWarsLink() {
 const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
 const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
+const EnterpriseWelcome = lazyPage(() => import("./pages/EnterpriseWelcome"));
 const EnterpriseDemo = lazyPage(() => loadLocaleExtra().then(() => import("./pages/EnterpriseDemo")));
 const World = lazyPage(() => import("./pages/World"));
 const CardWars = lazyPage(() => import("./pages/CardWars"));
@@ -238,6 +242,7 @@ function AppRoutes() {
         <Route path="/device-check" element={<DeviceCheck />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/enterprise" element={<EnterpriseWelcome />} />
         <Route path="/enterprise/demo/:tier" element={<EnterpriseDemo />} />
         <Route path="*" element={<Onboarding />} />
       </Routes>

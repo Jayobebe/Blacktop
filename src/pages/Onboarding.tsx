@@ -1,3 +1,4 @@
+import { WelcomeRecovery } from '@/features/settings/components/WelcomeRecovery';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
@@ -18,6 +19,7 @@ export default function Onboarding() {
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [step, setStep] = useState<Step>('landing');
+  const [recovering, setRecovering] = useState(false);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
@@ -49,7 +51,12 @@ export default function Onboarding() {
   };
 
   if (step === 'landing') {
-    return <WelcomeScreen onStart={() => go('consent')} />;
+    return (
+      <>
+        <WelcomeScreen onStart={() => go('consent')} onRecover={() => setRecovering(true)} />
+        <WelcomeRecovery open={recovering} onOpenChange={setRecovering} createProfile={createProfile} />
+      </>
+    );
   }
 
   if (step === 'consent') {

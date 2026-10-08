@@ -5,9 +5,12 @@
  * can bring back on this phone or another. Nothing goes through a server.
  *
  * What isn't in it, on purpose:
- *   - what belongs to the account, not the phone (the profile, Card Wars,
- *     Enterprise workspaces): a new phone signs in as a new anonymous
- *     account, and a stale copy of the server's answer would only mislead;
+ *   - what belongs to the account, not the phone (Card Wars, Enterprise
+ *     workspaces): a stale copy of the server's answer would only mislead
+ *     (`lib/recovery.ts` is how the account itself moves). The rider's name
+ *     is in it, so a backup restored from the welcome screen can make an
+ *     account to go with it; on a phone that has one, the server's name wins
+ *     again at the next start;
  *   - what belongs to this device or this moment (permissions it was given,
  *     its push registration, audio devices, a ride or convoy in progress,
  *     offline map packs whose tiles aren't in the file, demo mode);
@@ -18,7 +21,6 @@
  */
 const PREFIXES = ['blacktop', 'bt.', 'bt-'];
 const LEFT_OUT = new Set([
-  'blacktop_profile',
   'blacktop_profile_country',
   'blacktop_enterprise_workspaces',
   'bt.card_wars.v1',
@@ -30,6 +32,7 @@ const LEFT_OUT = new Set([
   'blacktop_burn_reveal',
   'blacktop_demo_mode',
   'blacktop_crash_trace',
+  'blacktop_recovery_pending',
   'blacktop_devicecheck_last',
   'blacktop_location_granted',
   'blacktop_motion_granted',

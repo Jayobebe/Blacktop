@@ -46,6 +46,9 @@ export default function PrivacyPolicy() {
             {tr("Back up this phone (Settings → Privacy) puts what's listed above, except offline maps and videos, into a file made on your phone. It goes only where you save it and we never receive it. Anyone who has the file can read what's in it, so keep it somewhere you trust.")}
           </p>
           <p className="text-muted-foreground">
+            {tr("If you make a recovery code (Settings → Privacy), it is made on your phone. We keep only a one-way hash of it with your anonymous account, never the code itself, and nothing that says who you are. Entering it on another phone signs that phone in to your account and deletes the account that phone had.")}
+          </p>
+          <p className="text-muted-foreground">
             {tr("Tap")}{" "}<span className="text-foreground font-medium">{tr("Burn All Data")}</span>{" "}{tr("in Settings at any time to permanently erase everything, on your device and on our servers (see Your rights).")}
           </p>
         </section>

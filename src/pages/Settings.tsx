@@ -46,6 +46,7 @@ import { PageTips } from '@/features/guide';
 import { getBlocked, clearBlocked } from '@/features/proximity';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { BackupPanel } from '@/features/settings/components/BackupPanel';
+import { RecoveryPanel } from '@/features/settings/components/RecoveryPanel';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
 import { clearSurveyAnswers, SurveyResultsTable } from '@/features/speedshop';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
@@ -1255,6 +1256,7 @@ export default function Settings() {
             />
           </div>
           <BackupPanel />
+          <RecoveryPanel />
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
             <Button
               variant="outline"
