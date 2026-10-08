@@ -27,7 +27,7 @@ export interface FireState {
 
 /** About 34 blocks across a card, whatever its size; tongues are tuned for a phone-wide fire and tightened to it. */
 export function fireBox(left: number, right: number, top: number, bottom: number, px = Math.max(2, Math.round((right - left) / 34))): FireBox {
-  return { left, right, top, bottom, px, scale: 420 / ((right - left) / px) / px };
+  return { left, right, top, bottom, px, scale: 420 / (right - left) };
 }
 
 export function newFire(box: FireBox, random: () => number = Math.random): FireState {

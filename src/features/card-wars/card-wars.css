@@ -295,14 +295,14 @@ button.cw-card:disabled { cursor: default; }
 /* The hit lights the table. */
 .cw-phase-clash::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(50% 40% at 50% 45%, hsl(0 0% 100% / 0.5), transparent 70%); animation: cw-flash 0.5s 0.22s ease-out both; }
 /* Redline: red is the one colour here that means something (the top of the rev counter). */
-/* The Redline frame: the Burn button's pixel fire along the bottom of the card (a strip of frames from
-   lib/redlineFire.ts, stepped through here), darkened towards the edges so the card's own words stay readable.
+/* The Redline frame: the fire that burns a knocked-out card in a battle, held part-way up the card (a strip of
+   frames from lib/redlineFire.ts, stepped through here), darkened towards the edges so the card's own words stay readable.
    Both layers sit under the card's content (`isolation` makes the card their stacking context). */
 .cw-redline-frame { background: #140806; isolation: isolate; }
 .cw-redline-frame::before {
   content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
-  background-image: var(--cw-redline-fire); background-size: 1000% 100%; background-position: 0 0; background-repeat: no-repeat;
-  image-rendering: pixelated; animation: cw-redline-fire 1s steps(10) infinite;
+  background-image: var(--cw-redline-fire); background-size: 2400% 100%; background-position: 0 0; background-repeat: no-repeat;
+  image-rendering: pixelated; animation: cw-redline-fire 2s steps(24) infinite;
 }
 .cw-redline-frame::after {
   content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
@@ -310,7 +310,7 @@ button.cw-card:disabled { cursor: default; }
     radial-gradient(ellipse 75% 70% at 50% 58%, transparent 30%, hsl(0 0% 0% / 0.78) 100%),
     linear-gradient(to bottom, hsl(0 0% 0% / 0.5) 0%, hsl(0 0% 0% / 0.1) 45%, hsl(0 0% 0% / 0.38) 100%);
 }
-@keyframes cw-redline-fire { to { background-position: 111.1111% 0; } }
+@keyframes cw-redline-fire { to { background-position: 104.3478% 0; } }
 html.thermal .cw-redline-frame::before { animation: none; }
 @media (prefers-reduced-motion: reduce) { .cw-redline-frame::before { animation: none; } }
 /* On fire, the ratings need a darker plate behind them, and the name a shadow. */
