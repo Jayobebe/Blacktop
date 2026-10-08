@@ -1,4 +1,5 @@
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, useEffect, type ReactNode } from 'react';
+import { ensureRedlineFire } from '../lib/redlineFire';
 import { ArrowDown, ArrowUp, Bike, Car, Check, Flame, Swords, Wrench } from 'lucide-react';
 import garageShopAsset from '@/assets/garage-shop.png.asset.json';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
@@ -99,7 +100,10 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   ref,
 ) {
   const tier = tierOf(card);
-  // A Redline card's frame is its own: black, with the rev counter's red zone across one corner.
+  // A Redline card's frame is its own: the Burn button's pixel fire, darkened at the edges.
+  useEffect(() => {
+    if (card.redline) ensureRedlineFire();
+  }, [card.redline]);
   const style = card.redline ? REDLINE_FRAME : TIER_STYLES[tier];
   const out = hp === 0;
   const shell = cn('cw-card no-frost', `cw-card-${size}`, `cw-tier-${card.redline ? 'redline' : tier}`, style.bg, style.border, selected && 'cw-card-selected', out && 'cw-card-out', away && 'cw-card-away', card.redline && 'cw-card-redline', className);
