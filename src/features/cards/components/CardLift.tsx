@@ -9,11 +9,15 @@ import { isThermal } from '@/lib/thermal';
 const FLY_MS = 720;
 /** One and a half turns: the card leaves face up and lands on its back. */
 export const LIFT_TURN = 540;
+/** One whole turn, for a card that lands face up. */
+const LIFT_TURN_FRONT = 360;
 
 /**
  * A card lifted out of the vault: it leaves its place (`source`), comes to the
  * front of a dimmed screen while turning one and a half times, and lands on
- * its back. Back sends it home the same way. A tap on the card turns it over
+ * its back (or, with `front`, turns once right round and lands face up: a
+ * card picked from the full vault's small thumbs, not yet seen at size). Back
+ * sends it home the same way. A tap on the card turns it over
  * (`render` is given the turn in degrees and the tap handler; the card draws
  * both its faces). A `locked` card comes forward without turning: there's no
  * back to show. Under Thermal mode and reduced motion it's simply there.
@@ -21,6 +25,7 @@ export const LIFT_TURN = 540;
 export function CardLift({
   source,
   locked,
+  front,
   title,
   render,
   below,
@@ -29,6 +34,8 @@ export function CardLift({
   /** The card's place in the list, to fly from and back to. */
   source: HTMLElement | null;
   locked?: boolean;
+  /** Land face up, after one whole turn. */
+  front?: boolean;
   title: string;
   render: (turn: number, onTap: () => void) => React.ReactNode;
   /** Under the card: its dog tags, or what can be done with it. */
@@ -37,8 +44,8 @@ export function CardLift({
 }) {
   const still = isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const box = useRef<HTMLDivElement>(null);
-  const home = locked ? 0 : LIFT_TURN;
-  const [turn, setTurn] = useState(still ? (locked ? 0 : 180) : 0);
+  const home = locked ? 0 : front ? LIFT_TURN_FRONT : LIFT_TURN;
+  const [turn, setTurn] = useState(still ? (locked || front ? 0 : 180) : 0);
   const [shown, setShown] = useState(still);
   const closing = useRef(false);
   const done = useRef(onClosed);

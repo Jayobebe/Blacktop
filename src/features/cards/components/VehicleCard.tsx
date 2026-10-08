@@ -177,7 +177,8 @@ export function VehicleCard({ card, editable = true }: Props) {
                     {resizing ? <Check className="w-3 h-3" /> : <Scan className="w-3 h-3" />}
                   </button>
                 )}
-                {!locked && qrPayload && (
+                {/* Only where the card can be turned over: the Speed Shop's preview is a picture of it. */}
+                {!locked && editable && qrPayload && (
                   <button
                     type="button"
                     data-export-hide

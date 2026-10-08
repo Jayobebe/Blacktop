@@ -27,6 +27,8 @@ export interface CardTrend {
   distance: Trend;
   duration: Trend;
   rides: Trend;
+  maxLean: Trend;
+  maxGForce: Trend;
 }
 
 export interface VehicleCardData {
@@ -101,6 +103,8 @@ export function useVehicleCards() {
           distance: move(Math.round(stats.totalDistanceKm * 10), snap ? Math.round(snap.totalDistanceKm * 10) : undefined),
           duration: move(stats.totalDurationSec, snap?.totalDurationSec),
           rides: move(stats.totalRides, snap?.totalRides),
+          maxLean: move(Math.round(stats.maxLean ?? 0), snap ? Math.round(snap.maxLean ?? 0) : undefined),
+          maxGForce: move(Math.round((stats.maxGForce ?? 0) * 10), snap ? Math.round((snap.maxGForce ?? 0) * 10) : undefined),
         };
         const isNewTier = tierRank(tierDef.id) > tierRank(prevSeen) && tierDef.id !== 'locked';
         const next = (() => {

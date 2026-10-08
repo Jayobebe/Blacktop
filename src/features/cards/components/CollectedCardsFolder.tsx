@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
 import { toast } from 'sonner';
-import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon, Scan, Check, ArrowUp, ArrowDown, LayoutGrid, Lock, Swords } from 'lucide-react';
+import { Folder, ArrowLeft, ScanLine, Gauge, Route, Clock, Hash, Sparkles, Trash2, RefreshCw, Ghost, Timer, Sticker as StickerIcon, Scan, Check, ArrowUp, ArrowDown, LayoutGrid, Lock, Swords, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/features/settings';
@@ -50,7 +50,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
   const battle = useBattleCards();
   const redline = useRedlineCards();
   /** The card lifted out of its place (by key), and the place it left. */
-  const [lift, setLift] = useState<{ key: string; source: HTMLElement | null } | null>(null);
+  const [lift, setLift] = useState<{ key: string; source: HTMLElement | null; front: boolean } | null>(null);
   const [showIndex, setShowIndex] = useState(false);
   const stickers = useStickers();
   const navigate = useNavigate();
@@ -245,9 +245,9 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
   const heldCount = scanned.length + battleHeld.length + redlineHeld.length + spectreEntries.length;
   const totalCount = scanned.length + battleAll.length + redlineAll.length + spectreEntries.length;
   const lifted = lift ? [...scanned, ...battleAll, ...redlineAll, ...spectreEntries].find((e) => e.key === lift.key) ?? null : null;
-  const open = (entry: Entry, source: HTMLElement | null) => {
+  const open = (entry: Entry, source: HTMLElement | null, front = false) => {
     haptics.light();
-    setLift({ key: entry.key, source });
+    setLift({ key: entry.key, source, front });
   };
 
   return (
@@ -335,6 +335,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
           key={lifted.key}
           source={lift!.source}
           locked={lifted.locked}
+          front={lift!.front}
           title={lifted.title}
           render={(turn, onTap) => lifted.card(turn, onTap, true)}
           below={lifted.below}
@@ -393,9 +394,10 @@ interface Entry {
 }
 
 /** A card's place in a list. It keeps the place (unseen) while the card is lifted out of it, and is what the card flies back to. */
-function Slot({ entry, thumb, gone, onOpen, className }: { entry: Entry; thumb?: boolean; gone: boolean; onOpen: (entry: Entry, source: HTMLElement | null) => void; className?: string }) {
+function Slot({ entry, thumb, gone, onOpen, className }: { entry: Entry; thumb?: boolean; gone: boolean; onOpen: (entry: Entry, source: HTMLElement | null, front?: boolean) => void; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const tap = () => onOpen(entry, ref.current);
+  // A thumb in the full vault is a card too small to read: it opens face up. A card in a row has been seen, and opens on its back.
+  const tap = () => onOpen(entry, ref.current, !!thumb);
   return (
     <div className={className}>
       <div ref={ref} className={cn(gone && 'invisible')}>
@@ -693,6 +695,7 @@ function WonFlipCard({ card, turn, onTap }: { card: VaultBattleCard; turn?: numb
 export function FullCard({ card, spectre, stats, image, trend }: { card: CollectedCard; spectre?: SpectreCard; stats?: React.ReactNode; /** The rider's own card in the vault: the card image button and its drag-and-zoom. */ image?: ImageEdit & { framing: boolean; setFraming: (on: boolean) => void }; trend?: CardTrend }) {
   const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
+  const dense = settings.leanAngleEnabled || settings.gForceEnabled;
   const style = TIER_STYLES[card.t] ?? TIER_STYLES.bronze;
   const art = useCardArt(card.img);
   const frame = useRef<HTMLDivElement>(null);
@@ -836,29 +839,47 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
         )}
       </div>
 
-      {stats ?? <div className="relative grid grid-cols-2 gap-1.5 mt-auto">
+      {/* The same figures as the rider's card in the Speed Shop: the four every card has, then Max lean and Max G
+          for a rider who has those switched on (theirs, and a scanned card's, which its owner may have kept private). */}
+      {stats ?? <div className={cn('relative grid mt-auto', dense ? 'grid-cols-3 gap-1' : 'grid-cols-2 gap-1.5')}>
         {/* "--" when this rider hides peaks, or the card's owner kept them private (null). */}
-        <Stat trend={peaksHidden ? undefined : trend?.topSpeed} icon={Gauge} label={tr("Top speed")} value={peaksHidden || card.s.topSpeedMph == null ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden || card.s.topSpeedMph == null ? '' : getSpeedLabel(settings.speedUnit)} />
-        <Stat trend={trend?.duration} icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
-        <Stat trend={trend?.distance} icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
-        <Stat trend={trend?.rides} icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />
+        <Stat dense={dense} trend={peaksHidden ? undefined : trend?.topSpeed} icon={Gauge} label={tr("Top speed")} value={peaksHidden || card.s.topSpeedMph == null ? PEAK_HIDDEN : `${formatSpeed(card.s.topSpeedMph, settings.speedUnit)}`} unit={peaksHidden || card.s.topSpeedMph == null ? '' : getSpeedLabel(settings.speedUnit)} />
+        <Stat dense={dense} trend={trend?.duration} icon={Clock} label={tr("Time")} value={formatDuration(card.s.totalDurationSec)} unit="" />
+        <Stat dense={dense} trend={trend?.distance} icon={Route} label={tr("Distance")} value={formatDistance(card.s.totalDistanceMi, settings.distanceUnit)} unit={getDistanceLabel(settings.distanceUnit)} />
+        <Stat dense={dense} trend={trend?.rides} icon={Hash} label={tr("Rides")} value={`${card.s.totalRides}`} unit="" />
+        {settings.leanAngleEnabled && (
+          <Stat dense={dense} trend={peaksHidden ? undefined : trend?.maxLean} label={tr("Max lean")} value={peaksHidden || card.s.maxLean == null ? PEAK_HIDDEN : `${Math.round(card.s.maxLean)}`} unit={peaksHidden || card.s.maxLean == null ? '' : '°'} />
+        )}
+        {settings.gForceEnabled && (
+          <Stat
+            dense={dense}
+            trend={peaksHidden ? undefined : trend?.maxGForce}
+            icon={Zap}
+            label={tr("Max G")}
+            value={peaksHidden || card.s.maxGForce == null ? PEAK_HIDDEN : card.s.maxGForce > 0 ? card.s.maxGForce.toFixed(1) : '—'}
+            unit={!peaksHidden && card.s.maxGForce != null && card.s.maxGForce > 0 ? 'G' : ''}
+          />
+        )}
       </div>}
     </div>
   );
 }
 
-function Stat({ icon: Icon, label, value, unit, trend }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; unit: string; /** Up or down since the card's last tier: a green or red arrow, and the box glows that colour twice. */ trend?: Trend }) {
+function Stat({ icon: Icon, label, value, unit, trend, dense }: { icon?: React.ComponentType<{ className?: string }>; /** One of three across: tighter, so the figure is never cut short. */ dense?: boolean; label: string; value: string; unit: string; /** Up or down since the card's last tier: a green or red arrow, and the box glows that colour twice. */ trend?: Trend }) {
   return (
-    <div className={cn('rounded-lg bg-black/35 backdrop-blur-sm border border-white/10 px-2 py-1.5', trend === 'up' && 'animate-card-stat-pulse', trend === 'down' && 'animate-card-stat-drop')}>
-      <div className="flex items-center gap-1 text-[8px] uppercase tracking-widest text-white/60">
-        <Icon className="w-2.5 h-2.5" />
-        <span className="truncate">{label}</span>
-        {trend === 'up' && <ArrowUp className="w-2.5 h-2.5 text-emerald-300 ml-auto shrink-0" />}
-        {trend === 'down' && <ArrowDown className="w-2.5 h-2.5 text-red-400 ml-auto shrink-0" />}
+    <div className={cn('rounded-lg bg-black/35 backdrop-blur-sm border border-white/10 py-1.5 min-w-0', dense ? 'relative px-1' : 'px-2', trend === 'up' && 'animate-card-stat-pulse', trend === 'down' && 'animate-card-stat-drop')}>
+      <div className={cn('flex items-center gap-1 uppercase text-white/60', dense ? 'text-[7px] tracking-wide' : 'text-[8px] tracking-widest')}>
+        {Icon && !dense && <Icon className="w-2.5 h-2.5" />}
+        <span className={cn('truncate', dense && trend && 'pr-2')}>{label}</span>
+        {!dense && trend === 'up' && <ArrowUp className="w-2.5 h-2.5 text-emerald-300 ml-auto shrink-0" />}
+        {!dense && trend === 'down' && <ArrowDown className="w-2.5 h-2.5 text-red-400 ml-auto shrink-0" />}
       </div>
-      <p className="font-mono text-sm font-bold text-white leading-tight truncate">
+      <p className={cn('font-mono font-bold text-white leading-tight whitespace-nowrap', dense ? 'text-[11px] tracking-tight' : 'text-sm truncate')}>
         {value}
-        {unit && <span className="ml-1 text-[10px] font-normal text-white/70">{unit}</span>}
+        {unit && <span className={cn('font-normal text-white/70', dense ? 'ml-0.5 text-[8px]' : 'ml-1 text-[10px]')}>{unit}</span>}
+        {/* Three across there's no room in the line: the arrow takes the box's corner. */}
+        {dense && trend === 'up' && <ArrowUp className="absolute top-1 right-1 w-2.5 h-2.5 text-emerald-300" />}
+        {dense && trend === 'down' && <ArrowDown className="absolute top-1 right-1 w-2.5 h-2.5 text-red-400" />}
       </p>
     </div>
   );
