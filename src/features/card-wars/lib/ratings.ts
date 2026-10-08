@@ -69,15 +69,16 @@ export function deckRating(cards: BattleCard[]): number | null {
 /**
  * The frame a card wears. A rider's own card keeps the tier it earned on the
  * road; a catalog card's follows its rating when new, so the look says how
- * strong it is (and doesn't change as it wears). Four frames that can't be
- * taken for one another: Bronze (under 60), Gold (60 to 79), Ruby (80 to 89)
- * and Polyatomic (90 and up). The six there were had Silver, Platinum and
- * Diamond looking alike. Every Redline card wears Orion.
+ * strong it is (and doesn't change as it wears). Six frames that can't be
+ * taken for one another, one for each ten points: Bronze (under 50), Gold,
+ * Diamond, Ruby, Polyatomic and Orion (90 and up). Silver and Platinum are
+ * out: with Diamond, the three greys and blues were being mixed up. A Redline
+ * card has a frame of its own, which the card face draws (`CwCard`).
  */
 export function tierOf(card: BattleCard): CardTier {
   if (card.tier) return card.tier;
   // Redline cards all wear the same frame: none outranks another.
-  if (card.redline) return 'orion';
+  if (card.redline) return 'obsidian';
   const rating = overall(cardById(card.id) ?? card);
-  return rating >= 90 ? 'polyatomic' : rating >= 80 ? 'ruby' : rating >= 60 ? 'gold' : 'bronze';
+  return rating >= 90 ? 'orion' : rating >= 80 ? 'polyatomic' : rating >= 70 ? 'ruby' : rating >= 60 ? 'diamond' : rating >= 50 ? 'gold' : 'bronze';
 }

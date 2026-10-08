@@ -25,6 +25,8 @@ export function classLabel(card: BattleCard): string {
   return card.spec === 'race' ? tr("Race") : tr("Road");
 }
 
+const REDLINE_FRAME = { bg: 'cw-redline-frame', border: 'border-[hsl(var(--destructive))]', chip: 'bg-[hsl(var(--destructive))] text-white' };
+
 /** Saved battles keep their cards, but pick up artwork supplied since. */
 const artOf = (card: BattleCard) => (card.source === 'collection' ? card.image : cardById(card.id)?.image ?? card.image);
 
@@ -97,9 +99,10 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   ref,
 ) {
   const tier = tierOf(card);
-  const style = TIER_STYLES[tier];
+  // A Redline card's frame is its own: black, with the rev counter's red zone across one corner.
+  const style = card.redline ? REDLINE_FRAME : TIER_STYLES[tier];
   const out = hp === 0;
-  const shell = cn('cw-card no-frost', `cw-card-${size}`, `cw-tier-${tier}`, style.bg, style.border, selected && 'cw-card-selected', out && 'cw-card-out', away && 'cw-card-away', card.redline && 'cw-card-redline', className);
+  const shell = cn('cw-card no-frost', `cw-card-${size}`, `cw-tier-${card.redline ? 'redline' : tier}`, style.bg, style.border, selected && 'cw-card-selected', out && 'cw-card-out', away && 'cw-card-away', card.redline && 'cw-card-redline', className);
   const name = `${card.manufacturer || ''} ${card.name}`.trim();
 
   // A rider's own or scanned card carries a photo: drawn as it is, or in the set's look (the catalogue's art has it already).

@@ -35,7 +35,7 @@ button.cw-card:disabled { cursor: default; }
 /* Burnt out: what the flames leave. */
 .cw-charred { filter: grayscale(1) brightness(0.3) contrast(1.25) sepia(0.45); box-shadow: 0 0 22px hsl(var(--burn) / 0.55), inset 0 0 18px hsl(var(--burn) / 0.5); transition: filter 0.9s ease 0.2s, box-shadow 0.9s ease; }
 /* The stronger tiers catch the light. */
-.cw-tier-platinum::after, .cw-tier-ruby::after, .cw-tier-diamond::after, .cw-tier-obsidian::after, .cw-tier-polyatomic::after, .cw-tier-orion::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, hsl(0 0% 100% / 0.16) 46%, transparent 58%); mix-blend-mode: screen; }
+.cw-tier-platinum::after, .cw-tier-ruby::after, .cw-tier-diamond::after, .cw-tier-polyatomic::after, .cw-tier-orion::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(115deg, transparent 30%, hsl(0 0% 100% / 0.16) 46%, transparent 58%); mix-blend-mode: screen; }
 .cw-card-thumb::after { display: none; }
 
 .cw-card-in {
@@ -295,6 +295,14 @@ button.cw-card:disabled { cursor: default; }
 /* The hit lights the table. */
 .cw-phase-clash::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(50% 40% at 50% 45%, hsl(0 0% 100% / 0.5), transparent 70%); animation: cw-flash 0.5s 0.22s ease-out both; }
 /* Redline: red is the one colour here that means something (the top of the rev counter). */
+/* The Redline frame: carbon black, and a hard-edged red wedge in one corner like the red zone of a rev counter.
+   Nothing like Ruby (crimson all over) or Orion (deep blue). */
+.cw-redline-frame {
+  background:
+    linear-gradient(128deg, transparent 0 68%, hsl(0 0% 100% / 0.85) 68% 69.2%, transparent 69.2% 72%, hsl(var(--destructive)) 72% 100%),
+    repeating-linear-gradient(45deg, hsl(0 0% 100% / 0.035) 0 2px, transparent 2px 6px),
+    linear-gradient(160deg, hsl(0 0% 10%), hsl(0 0% 3%));
+}
 .cw-card.cw-card-redline { border-color: hsl(var(--destructive)); box-shadow: 0 0 0 1px hsl(var(--destructive) / 0.55), 0 0 18px hsl(var(--destructive) / 0.35); }
 .cw-card-redline .cw-class { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
 .cw-panel.cw-panel-redline { border-color: hsl(var(--destructive) / 0.45); }

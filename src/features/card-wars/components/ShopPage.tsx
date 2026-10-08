@@ -20,8 +20,8 @@ import { Marketplace } from './Marketplace';
 import { RpmPill } from './RpmPill';
 import { SpinPanel } from './SpinPanel';
 
-/** The frame each of the server's six spin steps wears (`tierOfPrice` counts from 1): two steps to Bronze, two to Gold, then Ruby and Polyatomic. */
-const SPIN_TIER_IDS = ['bronze', 'bronze', 'gold', 'gold', 'ruby', 'polyatomic'] as const;
+/** The frame each of the server's six spin steps wears, lowest first (`tierOfPrice` counts from 1). */
+const SPIN_TIER_IDS = ['bronze', 'gold', 'diamond', 'ruby', 'polyatomic', 'orion'] as const;
 
 /** A shelf's name. The racing series keep their own. */
 export function shelfLabel(id: ShopCategory): string {
@@ -63,7 +63,7 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
   const cards = useMemo(() => CATALOG.filter((c) => categoryOf(c) === shelf).sort((a, b) => (a.price ?? 0) - (b.price ?? 0)), [shelf]);
   // Which tier a card from this shelf's wheel is likely to be: the lowest most, the highest least.
   const tierChances = useMemo(() => {
-    // The server draws by six steps; the card shows four frames, so steps that share a frame are added up.
+    // One frame a step (added up, should two steps ever share one).
     const byFrame = new Map<(typeof SPIN_TIER_IDS)[number], number>();
     for (const { tier, share } of tierOdds(cards.map((c) => c.price ?? 0))) byFrame.set(SPIN_TIER_IDS[tier - 1], (byFrame.get(SPIN_TIER_IDS[tier - 1]) ?? 0) + share);
     return Array.from(byFrame, ([frame, share]) => ({ frame, share }));
