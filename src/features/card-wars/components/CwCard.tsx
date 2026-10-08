@@ -10,6 +10,7 @@ import { CATEGORY_ICON, categoriesOf, categoryLabel, isBike, overall, tierOf } f
 import type { BattleCard, Category } from '../types';
 import '../card-wars.css';
 import { useCardArt } from '@/hooks/useCardArt';
+import { TierFx } from '@/components/TierFx';
 
 /**
  * thumb: a hand in battle (picture, rating, name, health).
@@ -141,7 +142,10 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
   const condition = showCondition ? card.condition : undefined;
 
   const body = (
-    <div className="cw-card-in">
+    <>
+      {/* The frame's finish, under everything printed on the card (a Redline's fire is its own). Still on a hand-sized card. */}
+      {!card.redline && <TierFx tier={tier} still={size === 'thumb'} seed={card.id} />}
+      <div className="cw-card-in">
       {size !== 'thumb' && (
         <div className="cw-card-head">
           <div className="min-w-0">
@@ -208,7 +212,8 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
           }
         />
       )}
-    </div>
+      </div>
+    </>
   );
 
   return onClick ? (

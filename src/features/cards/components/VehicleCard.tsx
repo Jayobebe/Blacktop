@@ -13,6 +13,7 @@ import {
   getSpeedLabel,
 } from '@/lib/format';
 import { TIER_STYLES } from '../types';
+import { TierFx } from '@/components/TierFx';
 import { VehicleCardData } from '../hooks/useVehicleCards';
 import { encodeCard } from '../lib/cardCodec';
 import { uploadCardPhoto } from '../lib/cardPhoto';
@@ -139,23 +140,13 @@ export function VehicleCard({ card, editable = true }: Props) {
         {/* FRONT FACE */}
         <div
           className={cn(
-            'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col [backface-visibility:hidden]',
+            'absolute inset-0 isolate rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col [backface-visibility:hidden]',
             style.bg,
             style.border,
             card.isNewTier && 'animate-card-tier-pulse',
           )}
         >
-          {/* Sheen / shimmer */}
-          {style.shine && (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <div className="absolute inset-0 animate-card-shine" />
-            </div>
-          )}
-
-          {/* Sparkle overlay (diamond / polyatomic / orion) */}
-          {style.sparkle && (
-            <div className="absolute inset-0 pointer-events-none opacity-60 [background-image:radial-gradient(circle_at_20%_30%,white_0.5px,transparent_1px),radial-gradient(circle_at_70%_60%,white_0.5px,transparent_1px),radial-gradient(circle_at_45%_80%,white_0.5px,transparent_1px),radial-gradient(circle_at_85%_20%,white_0.5px,transparent_1px)] [background-size:120px_120px,140px_140px,100px_100px,160px_160px]" />
-          )}
+          <TierFx tier={card.tier} seed={card.bike.id} />
 
           {/* Inner content frame */}
           <div className="relative flex-1 flex flex-col p-3.5 gap-2.5">
@@ -383,16 +374,12 @@ export function VehicleCard({ card, editable = true }: Props) {
         {!locked && qrPayload && (
           <div
             className={cn(
-              'absolute inset-0 rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col [backface-visibility:hidden] [transform:rotateY(180deg)]',
+              'absolute inset-0 isolate rounded-2xl border-2 overflow-hidden shadow-lg flex flex-col [backface-visibility:hidden] [transform:rotateY(180deg)]',
               style.bg,
               style.border,
             )}
           >
-            {style.shine && (
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute inset-0 animate-card-shine" />
-              </div>
-            )}
+            <TierFx tier={card.tier} seed={card.bike.id} />
             <div className="relative flex-1 flex flex-col items-center p-4 gap-3">
               <div className="w-full flex items-start justify-between gap-2">
                 <div className="min-w-0">

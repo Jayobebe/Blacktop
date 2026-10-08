@@ -491,17 +491,7 @@
     75% { transform: rotate(3deg); }
   }
 
-  /* Trading card sweep + reveal */
-  @keyframes card-shine {
-    0% { transform: translateX(-120%) skewX(-20deg); opacity: 0; }
-    20% { opacity: 0.4; }
-    100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
-  }
-  .animate-card-shine {
-    background: linear-gradient(100deg, transparent 30%, hsl(0 0% 100% / 0.18) 50%, transparent 70%);
-    animation: card-shine 4.5s ease-in-out infinite;
-  }
-
+  /* Trading card reveal (a card's finish is in components/TierFx) */
   @keyframes card-tier-pulse {
     0% { transform: scale(0.96); box-shadow: 0 0 0 0 hsl(var(--accent) / 0.55); }
     60% { transform: scale(1.02); box-shadow: 0 0 0 16px hsl(var(--accent) / 0); }
@@ -529,7 +519,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .animate-card-shine,
     .animate-card-tier-pulse,
     .animate-card-stat-pulse,
     .animate-card-stat-drop {
@@ -1275,6 +1264,125 @@
 @media (prefers-reduced-motion: reduce) {
   .lava-blob, .backdrop-belt { animation: none !important; }
 }
+
+/* ===== Card finishes (components/TierFx): how each tier catches the light, on every card in the app =====
+   The layer sits between a card's background and what's printed on it (the card is `isolate`). Only transforms and
+   opacity move, and only under .tier-fx-live (the card is on screen); without it each finish rests as a texture. */
+.tier-fx { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; border-radius: inherit; }
+.tier-fx > i { position: absolute; display: block; }
+html.thermal .tier-fx { display: none; }
+
+/* Metal (Bronze, Silver, Gold, Platinum): brushed grain, and a band of light crossing it. */
+.tier-fx-metal .fx-grain { inset: 0; opacity: 0.2; background-image: repeating-linear-gradient(98deg, hsl(0 0% 100% / 0.2) 0 1px, transparent 1px 3px, hsl(0 0% 0% / 0.08) 3px 4px, transparent 4px 7px); }
+.tier-fx .fx-sheen {
+  top: -20%; bottom: -20%; left: 0; width: 55%;
+  background: linear-gradient(100deg, transparent 0%, hsl(0 0% 100% / 0.1) 28%, hsl(0 0% 100% / 0.5) 50%, hsl(0 0% 100% / 0.1) 72%, transparent 100%);
+  transform: translateX(70%) skewX(-18deg); opacity: 0.45;
+}
+.tier-fx-live .fx-sheen { opacity: 0; animation: fx-sweep 5.2s cubic-bezier(0.45, 0, 0.25, 1) var(--fx-shift, 0s) infinite; }
+@keyframes fx-sweep {
+  0% { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+  8% { opacity: 1; }
+  50% { transform: translateX(270%) skewX(-18deg); opacity: 1; }
+  58%, 100% { transform: translateX(270%) skewX(-18deg); opacity: 0; }
+}
+
+/* Stone (Diamond, Ruby): cut facets, and glints that come and go. */
+.tier-fx-stone .fx-facets {
+  inset: 0; opacity: 0.6;
+  background:
+    linear-gradient(125deg, hsl(0 0% 100% / 0.16) 0 17%, transparent 17% 40%, hsl(0 0% 100% / 0.09) 40% 54%, transparent 54% 77%, hsl(0 0% 100% / 0.12) 77% 100%),
+    linear-gradient(38deg, transparent 0 28%, hsl(0 0% 0% / 0.14) 28% 45%, transparent 45% 69%, hsl(0 0% 100% / 0.08) 69% 100%);
+}
+.tier-fx .fx-glint {
+  left: var(--x); top: var(--y); width: 12%; aspect-ratio: 1; margin: -6% 0 0 -6%;
+  background:
+    radial-gradient(ellipse 50% 6% at 50% 50%, #fff, transparent 72%),
+    radial-gradient(ellipse 6% 50% at 50% 50%, #fff, transparent 72%),
+    radial-gradient(circle at 50% 50%, hsl(0 0% 100% / 0.95) 0 7%, transparent 28%);
+  opacity: 0.4; transform: scale(0.6);
+}
+.tier-fx-live .fx-glint { opacity: 0; animation: fx-twinkle var(--d, 3s) ease-in-out calc(var(--delay, 0s) + var(--fx-shift, 0s)) infinite; }
+@keyframes fx-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  42% { opacity: 1; transform: scale(1) rotate(18deg); }
+  58% { opacity: 0.25; transform: scale(0.5) rotate(28deg); }
+}
+
+/* Obsidian: dark glass. A long slow sheen in the rider's accent. */
+.tier-fx-obsidian .fx-glass {
+  inset: 0;
+  background:
+    radial-gradient(120% 60% at 12% 0%, hsl(0 0% 100% / 0.12), transparent 55%),
+    radial-gradient(90% 55% at 100% 100%, hsl(var(--accent) / 0.14), transparent 62%),
+    linear-gradient(140deg, transparent 0 46%, hsl(0 0% 100% / 0.05) 46% 47%, transparent 47% 100%);
+}
+.tier-fx-obsidian .fx-sheen {
+  width: 85%;
+  background: linear-gradient(104deg, transparent 0%, hsl(var(--accent) / 0.08) 22%, hsl(var(--accent) / 0.34) 45%, hsl(0 0% 100% / 0.3) 51%, hsl(var(--accent) / 0.16) 60%, transparent 100%);
+}
+.tier-fx-obsidian.tier-fx-live .fx-sheen { animation-duration: 7.6s; }
+
+/* Polyatomic: every colour, turning slowly over itself. Blurred once, then only rotated. */
+.tier-fx-poly .fx-swirl {
+  inset: -48%; border-radius: 50%; opacity: 0.92; filter: blur(12px) saturate(1.25);
+  background: conic-gradient(from 0deg, hsl(280 88% 58%), hsl(200 92% 60%), hsl(150 78% 55%), hsl(48 96% 60%), hsl(18 92% 60%), hsl(330 88% 60%), hsl(280 88% 58%));
+}
+.tier-fx-poly .fx-swirl-b {
+  inset: -30%; opacity: 0.75; filter: blur(9px);
+  background: conic-gradient(from 90deg at 42% 58%, transparent 0 10%, hsl(0 0% 100% / 0.4) 19%, transparent 31% 52%, hsl(305 95% 72% / 0.55) 64%, transparent 78% 100%);
+}
+.tier-fx-live.tier-fx-poly .fx-swirl { animation: fx-turn 34s linear var(--fx-shift, 0s) infinite; }
+.tier-fx-live.tier-fx-poly .fx-swirl-b { animation: fx-turn-back 21s ease-in-out var(--fx-shift, 0s) infinite; }
+@keyframes fx-turn { to { transform: rotate(360deg); } }
+@keyframes fx-turn-back {
+  0% { transform: rotate(0deg) scale(1.12); }
+  50% { transform: rotate(-180deg) scale(0.88); }
+  100% { transform: rotate(-360deg) scale(1.12); }
+}
+
+/* Orion: a night sky. A field of small stars, a few that twinkle, and now and then a shooting star. */
+.tier-fx-orion .fx-nebula {
+  inset: 0;
+  background:
+    radial-gradient(62% 42% at 72% 24%, hsl(265 85% 62% / 0.32), transparent 70%),
+    radial-gradient(52% 36% at 18% 76%, hsl(200 95% 60% / 0.22), transparent 70%);
+}
+.tier-fx-orion .fx-stars {
+  inset: 0; opacity: 0.85;
+  background-image:
+    radial-gradient(1px 1px at 6% 9%, #fff, transparent), radial-gradient(1px 1px at 23% 31%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 44% 14%, #fff, transparent), radial-gradient(1px 1px at 57% 43%, hsl(0 0% 100% / 0.8), transparent),
+    radial-gradient(1px 1px at 68% 21%, #fff, transparent), radial-gradient(1.4px 1.4px at 81% 47%, #fff, transparent),
+    radial-gradient(1px 1px at 93% 12%, hsl(0 0% 100% / 0.8), transparent), radial-gradient(1px 1px at 12% 63%, #fff, transparent),
+    radial-gradient(1px 1px at 33% 71%, hsl(0 0% 100% / 0.7), transparent), radial-gradient(1.4px 1.4px at 48% 66%, #fff, transparent),
+    radial-gradient(1px 1px at 71% 87%, #fff, transparent), radial-gradient(1px 1px at 88% 91%, hsl(0 0% 100% / 0.8), transparent),
+    radial-gradient(1px 1px at 19% 95%, #fff, transparent), radial-gradient(1px 1px at 63% 6%, hsl(0 0% 100% / 0.7), transparent);
+}
+.tier-fx .fx-star {
+  left: var(--x); top: var(--y); width: 3.4%; aspect-ratio: 1; margin: -1.7% 0 0 -1.7%; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 24%, hsl(215 100% 88% / 0.65) 42%, transparent 72%);
+  opacity: 0.5;
+}
+.tier-fx-live .fx-star { animation: fx-star var(--d, 3.5s) ease-in-out calc(var(--delay, 0s) + var(--fx-shift, 0s)) infinite; }
+@keyframes fx-star { 0%, 100% { opacity: 0.12; transform: scale(0.55); } 50% { opacity: 1; transform: scale(1.3); } }
+/* The shooting star: a card-sized layer tipped over, with a short streak at its edge, slid along its own slope. */
+.tier-fx .fx-shoot {
+  inset: 0; opacity: 0;
+  background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.95)) 0 26% / 26% 1.5px no-repeat;
+  transform: rotate(23deg) translateX(-80%);
+}
+.tier-fx .fx-shoot-b { background-position: 0 58%; }
+.tier-fx-live .fx-shoot { animation: fx-shoot 9s linear var(--fx-shift, 0s) infinite; }
+.tier-fx-live .fx-shoot-b { animation-duration: 16s; animation-delay: calc(6s + var(--fx-shift, 0s)); }
+@keyframes fx-shoot {
+  0%, 90% { opacity: 0; transform: rotate(23deg) translateX(-80%); }
+  91.5% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(23deg) translateX(160%); }
+}
+
+/* A Spectre's fog and shimmer rest while its card is off screen or drawn small. */
+.tier-fx:not(.tier-fx-live) .spectre-fog, .tier-fx:not(.tier-fx-live) .spectre-shimmer { animation: none; }
 
 /* ===== Spectre cards: ghostly grey, drifting fog, cold shimmer, near-translucent ===== */
 .spectre-card {

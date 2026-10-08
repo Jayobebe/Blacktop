@@ -35,6 +35,7 @@ import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { BattleCard, VaultTags, useBattleCards, useRedlineCards, type VaultBattleCard } from '@/features/card-wars/collection';
 import { CardLift } from './CardLift';
+import { TierFx } from '@/components/TierFx';
 import { VaultCarousel } from './VaultCarousel';
 import { StickerControl, StickerPreview, removeStickerFor, setArranging, useStickers } from '@/features/stickers';
 import { useNavigate } from 'react-router-dom';
@@ -483,7 +484,8 @@ function MiniCard({ img, name, tier, spectre, onClick }: { img?: string; name: s
   const style = TIER_STYLES[tier] ?? TIER_STYLES.bronze;
   const art = useCardArt(img);
   return (
-    <button type="button" onClick={onClick} aria-label={name} className={cn('block w-full rounded-lg border overflow-hidden text-left', spectre ? 'spectre-card-back border-white/30' : cn(style.bg, style.border))}>
+    <button type="button" onClick={onClick} aria-label={name} className={cn('relative isolate block w-full rounded-lg border overflow-hidden text-left', spectre ? 'spectre-card-back border-white/30' : cn(style.bg, style.border))}>
+      <TierFx tier={spectre ? 'spectre' : tier} still />
       <span className="relative block aspect-[5/4] bg-cover bg-center" style={{ backgroundImage: `url(${garageShopAsset.url})` }}>
         {art && <img src={art} alt="" className="absolute inset-0 w-full h-full object-contain p-0.5" draggable={false} />}
       </span>
@@ -723,27 +725,13 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
   return (
     <div
       className={cn(
-        'relative w-full aspect-[5/7] rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col p-3.5 gap-2.5',
+        'relative isolate w-full aspect-[5/7] rounded-2xl border-2 overflow-hidden shadow-xl flex flex-col p-3.5 gap-2.5',
         // Spectre: the same card as a translucent ghost in drifting fog.
         spectre ? 'spectre-card' : cn(style.bg, style.border),
       )}
     >
-      {spectre && (
-        <>
-          <div className="spectre-metal" />
-          <div className="spectre-fog" />
-          <div className="spectre-fog alt" />
-          <div className="spectre-shimmer" />
-        </>
-      )}
-      {!spectre && style.shine && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 animate-card-shine" />
-        </div>
-      )}
-      {!spectre && style.sparkle && (
-        <div className="absolute inset-0 pointer-events-none opacity-60 [background-image:radial-gradient(circle_at_20%_30%,white_0.5px,transparent_1px),radial-gradient(circle_at_70%_60%,white_0.5px,transparent_1px),radial-gradient(circle_at_45%_80%,white_0.5px,transparent_1px),radial-gradient(circle_at_85%_20%,white_0.5px,transparent_1px)] [background-size:120px_120px,140px_140px,100px_100px,160px_160px]" />
-      )}
+      {/* The tier's finish (metal, stone, glass, swirl, night sky), or a Spectre's fog */}
+      <TierFx tier={spectre ? 'spectre' : card.t} seed={card.key} />
       <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-widest text-white/60 truncate">

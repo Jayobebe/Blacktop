@@ -223,6 +223,19 @@ Every card the rider has, in two views. Each card is one `Entry` (how it draws w
 - Full vault (the button above the rows; a full-screen portal like the scanner): Scanned, then all 80 battle cards shelf by shelf, then all the Redlines, then Spectres, five across at the size of a hand in battle (`MiniCard` for riders' cards). What isn't held is `vault-locked`: greyed but still readable, and it lifts without turning (no back, no sticker).
 - The sticker bar's Done on Home goes back here (`/world?vault=1`, which scrolls to the vault), so the next sticker is a tap away.
 
+### Card finishes (`components/TierFx`)
+
+Every card in the app catches the light the same way for its tier: the vault's cards (`FullCard`, and `MiniCard` in the full list), the rider's card (`VehicleCard`, both faces) and Card Wars' (`CwCard`). `<TierFx tier seed still />` is the one place it's drawn, with its styles in `index.css` (`.tier-fx`):
+
+- Bronze, Silver, Gold, Platinum are metal: brushed grain and a band of light crossing it.
+- Diamond and Ruby are stone: cut facets and glints that come and go.
+- Obsidian is dark glass: a long slow sheen in the rider's accent.
+- Polyatomic is a slow swirl of every colour (two blurred conic layers turning against each other).
+- Orion is a night sky: a field of stars, a few that twinkle, and now and then a shooting star.
+- A Spectre has its drifting fog and cold shimmer (`tier="spectre"`); a Redline card its own fire.
+
+The layer sits between the card's background and what's printed on it (`z-index: -1`), so the card it goes in must be `isolate` and it reads fine over any finish because the figures keep their own plates. Only transforms and opacity move, and only under `.tier-fx-live`: the card is on screen (`useOnScreen`, one shared observer; a vault holds far more cards than a screen shows), not drawn small (`still`: a hand in battle, the full vault's grid) and not in Thermal mode or reduced motion. Without it each finish rests as a texture. `seed` (the card's id) offsets the timing so two cards side by side don't move in step. The old one-size sheen and dotted sparkle (`TIER_STYLES.shine` / `sparkle`, `.animate-card-shine`, the Card Wars `::after` sheen) are gone. A new tier needs an entry in `FINISH`.
+
 ### Stickers (`src/features/stickers`)
 
 Every card in the vault has a sticker: the vehicle cut out with a white edge (`.sticker-img`). The back of a card offers it (`StickerControl`: Stick on Home / Peel off Home): a won Card Wars card turns over to its sticker (`WonFlipCard` in `CollectedCardsFolder`), and scanned cards, the rider's own and Spectres have the button under the QR or the dog tag. One sticker per card (`card`: `cw:<id>`, `card:<key>`, `spectre:<key>`), `MAX_STICKERS` (12) on Home, kept on the phone only (`blacktop_stickers`; a rider's photo is trimmed and shrunk first, Card Wars artwork is kept as its path; demo mode saves nothing); removing a scanned card peels its sticker.
