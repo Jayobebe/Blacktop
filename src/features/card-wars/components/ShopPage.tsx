@@ -20,8 +20,8 @@ import { Marketplace } from './Marketplace';
 import { RpmPill } from './RpmPill';
 import { SpinPanel } from './SpinPanel';
 
-/** The frames a catalogue card can wear, lowest first (`tierOfPrice` counts from 1). */
-const SPIN_TIER_IDS = ['bronze', 'silver', 'gold', 'ruby', 'diamond', 'obsidian'] as const;
+/** The frame each of the server's six spin steps wears (`tierOfPrice` counts from 1): two steps to Bronze, two to Gold, then Ruby and Polyatomic. */
+const SPIN_TIER_IDS = ['bronze', 'bronze', 'gold', 'gold', 'ruby', 'polyatomic'] as const;
 
 /** A shelf's name. The racing series keep their own. */
 export function shelfLabel(id: ShopCategory): string {
@@ -62,7 +62,12 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
   const tiersOn = useServerCap('cardWarsTiers');
   const cards = useMemo(() => CATALOG.filter((c) => categoryOf(c) === shelf).sort((a, b) => (a.price ?? 0) - (b.price ?? 0)), [shelf]);
   // Which tier a card from this shelf's wheel is likely to be: the lowest most, the highest least.
-  const tierChances = useMemo(() => tierOdds(cards.map((c) => c.price ?? 0)), [cards]);
+  const tierChances = useMemo(() => {
+    // The server draws by six steps; the card shows four frames, so steps that share a frame are added up.
+    const byFrame = new Map<(typeof SPIN_TIER_IDS)[number], number>();
+    for (const { tier, share } of tierOdds(cards.map((c) => c.price ?? 0))) byFrame.set(SPIN_TIER_IDS[tier - 1], (byFrame.get(SPIN_TIER_IDS[tier - 1]) ?? 0) + share);
+    return Array.from(byFrame, ([frame, share]) => ({ frame, share }));
+  }, [cards]);
   const ownedHere = cards.filter((c) => shop.owned.includes(c.id)).length;
   const from = cards[0]?.price ?? 0;
   const to = cards[cards.length - 1]?.price ?? 0;
@@ -147,9 +152,9 @@ export function ShopPage({ onBack, disabled }: { onBack: () => void; disabled?: 
               <>
                 <p className="text-[11px] text-muted-foreground leading-snug text-center">{tr("When a spin lands a card, the lower tiers come up more often:")}</p>
                 <p className="cw-odds font-mono">
-                  {tierChances.map(({ tier, share }) => (
-                    <span key={tier}>
-                      {TIER_LADDER.find((t) => t.id === SPIN_TIER_IDS[tier - 1])?.label} {Math.round(share * 100)}%
+                  {tierChances.map(({ frame, share }) => (
+                    <span key={frame}>
+                      {TIER_LADDER.find((t) => t.id === frame)?.label} {Math.round(share * 100)}%
                     </span>
                   ))}
                 </p>
