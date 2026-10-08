@@ -8,7 +8,7 @@ import { useConvoyState, getConvoySnapshot } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
-import { useRescue, RescueAlert } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useConvoyMergeSync, useProximityState } from '@/features/proximity';
 import { useRideRole, setPillionRiding, clearRideRole, useReactionsListener, sendReaction, REACTIONS, WAVE } from '@/features/pillion';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -100,11 +100,10 @@ export default function PillionRide() {
       void cancelRescueRequest();
       return;
     }
-    if (!confirmRescue) {
-      setConfirmRescue(true);
-      setTimeout(() => setConfirmRescue(false), 4000);
-      return;
-    }
+    // Asked first, on the same "Are you okay?" card as the ride screen: No sends it.
+    setConfirmRescue(true);
+  };
+  const sendRescue = () => {
     setConfirmRescue(false);
     navigator.geolocation.getCurrentPosition(
       (pos) => void sendRescueRequest(pos.coords.latitude, pos.coords.longitude),
@@ -226,6 +225,8 @@ export default function PillionRide() {
 
       <div className="flex-1" />
 
+      {confirmRescue && <CrashCheckPrompt manual timeoutSec={20} onImFine={() => setConfirmRescue(false)} onTimeout={() => setConfirmRescue(false)} onSendNow={sendRescue} />}
+
       {/* Rescue + leave */}
       <div className="space-y-2 pt-4">
         <Button
@@ -235,16 +236,14 @@ export default function PillionRide() {
             'w-full h-14 text-base font-semibold border-2',
             hasPendingRescue
               ? 'border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse'
-              : confirmRescue
-                ? 'border-[hsl(var(--burn))] bg-[hsl(var(--burn))] text-white hover:bg-[hsl(var(--burn))] hover:brightness-110'
-                : 'border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn)/0.1)] hover:text-[hsl(var(--burn))]',
+              : 'border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn)/0.1)] hover:text-[hsl(var(--burn))]',
           )}
         >
           {/* The same R as the ride screen's rescue button. */}
-          <span aria-hidden className={cn('mr-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-black leading-none', confirmRescue && !hasPendingRescue ? 'bg-white text-[hsl(var(--burn))]' : 'bg-[hsl(var(--burn))] text-white')}>
+          <span aria-hidden className="mr-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-black leading-none bg-[hsl(var(--burn))] text-white">
             R
           </span>
-          {hasPendingRescue ? tr("Rescue sent · tap to cancel") : confirmRescue ? tr("Tap again to alert the convoy") : tr("Request rescue")}
+          {hasPendingRescue ? tr("Rescue sent · tap to cancel") : tr("Request rescue")}
         </Button>
         <Button onClick={handleLeave} variant="ghost" className="w-full h-11 text-muted-foreground">
           <LogOut className="w-4 h-4 mr-2" />
