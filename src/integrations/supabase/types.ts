@@ -678,9 +678,14 @@ export type Database = {
           market_count: number
           market_day: string | null
           prize_due: boolean
+          redeem_day: string | null
+          redeem_tries: number
+          redline_wheel: string[] | null
           reward_count: number
           reward_day: string | null
           user_id: string
+          wild_pity: number
+          wildcard: boolean
         }
         Insert: {
           active_code?: string | null
@@ -702,9 +707,14 @@ export type Database = {
           market_count?: number
           market_day?: string | null
           prize_due?: boolean
+          redeem_day?: string | null
+          redeem_tries?: number
+          redline_wheel?: string[] | null
           reward_count?: number
           reward_day?: string | null
           user_id: string
+          wild_pity?: number
+          wildcard?: boolean
         }
         Update: {
           active_code?: string | null
@@ -726,9 +736,14 @@ export type Database = {
           market_count?: number
           market_day?: string | null
           prize_due?: boolean
+          redeem_day?: string | null
+          redeem_tries?: number
+          redline_wheel?: string[] | null
           reward_count?: number
           reward_day?: string | null
           user_id?: string
+          wild_pity?: number
+          wildcard?: boolean
         }
         Relationships: []
       }
@@ -828,6 +843,8 @@ export type Database = {
           tags2: string[] | null
           used1: number[]
           used2: number[]
+          wild1: string[] | null
+          wild2: string[] | null
           winner: string | null
         }
         Insert: {
@@ -856,6 +873,8 @@ export type Database = {
           tags2?: string[] | null
           used1?: number[]
           used2?: number[]
+          wild1?: string[] | null
+          wild2?: string[] | null
           winner?: string | null
         }
         Update: {
@@ -884,6 +903,8 @@ export type Database = {
           tags2?: string[] | null
           used1?: number[]
           used2?: number[]
+          wild1?: string[] | null
+          wild2?: string[] | null
           winner?: string | null
         }
         Relationships: []
@@ -969,6 +990,82 @@ export type Database = {
             columns: ["card_id"]
             isOneToOne: false
             referencedRelation: "cw_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cw_redline_cards: {
+        Row: {
+          id: string
+          maker: string
+          name: string
+          ratings: number[]
+          vehicle: string
+        }
+        Insert: {
+          id: string
+          maker: string
+          name: string
+          ratings: number[]
+          vehicle: string
+        }
+        Update: {
+          id?: string
+          maker?: string
+          name?: string
+          ratings?: number[]
+          vehicle?: string
+        }
+        Relationships: []
+      }
+      cw_redline_codes: {
+        Row: {
+          card_id: string
+          code: string
+          expires_at: string | null
+        }
+        Insert: {
+          card_id: string
+          code: string
+          expires_at?: string | null
+        }
+        Update: {
+          card_id?: string
+          code?: string
+          expires_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_redline_codes_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cw_redline_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cw_redline_owned: {
+        Row: {
+          card_id: string
+          user_id: string
+          won_at: string
+        }
+        Insert: {
+          card_id: string
+          user_id: string
+          won_at?: string
+        }
+        Update: {
+          card_id?: string
+          user_id?: string
+          won_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_redline_owned_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cw_redline_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -2159,6 +2256,11 @@ export type Database = {
         Returns: undefined
       }
       cw_prize_rules: { Args: never; Returns: Json }
+      cw_redline_grant: { Args: { _u: string }; Returns: string }
+      cw_redline_redeem: { Args: { _code: string }; Returns: Json }
+      cw_redline_rules: { Args: never; Returns: Json }
+      cw_redline_state: { Args: never; Returns: Json }
+      cw_redline_wheel_set: { Args: { _cards: string[] }; Returns: Json }
       cw_repair: { Args: { _card: string; _to?: number }; Returns: Json }
       cw_repair_rules: { Args: never; Returns: Json }
       cw_report_wear: {
@@ -2260,6 +2362,7 @@ export type Database = {
         Returns: undefined
       }
       cw_wear_rules: { Args: never; Returns: Json }
+      cw_wildcard_grant: { Args: { _u: string }; Returns: string[] }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {

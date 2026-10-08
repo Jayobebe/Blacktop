@@ -15,6 +15,13 @@
       "when": 1791391287903,
       "tag": "0001_card_wars_repair_to",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791418777949,
+      "tag": "0002_card_wars_redline",
+      "breakpoints": true
     }
   ]
 }
