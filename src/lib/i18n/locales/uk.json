@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "У колоді їх три, кожен з іншою силою. Зарядіть один перед ходом; кожен діє раз за бій. Жетон, виграний обертом, прив'язаний до транспорту: він визначає його силу, а з транспортом того самого типу жетон дає більше. Жетон, здобутий на таблиці Track Day, діє з будь-яким.",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Витягується категорія, потім тахометр зупиняється на одній із твоїх п'яти карток Redline, ніколи на тій, що має 0 у цій категорії, і вона б'ється в раунді замість твоєї картки. Перемога б'є на повну силу; поразка нічого не коштує твоїй картці.",
  "A deck takes one dog tag of each power.": "У колоду входить по одному жетону кожної сили.",
- "Your Redline took the hit: your card is untouched": "Удар прийняла твоя Redline: твоя картка неушкоджена"
+ "Your Redline took the hit: your card is untouched": "Удар прийняла твоя Redline: твоя картка неушкоджена",
+ "You pressed rescue. Nothing is sent unless you answer No.": "Ти натиснув порятунок. Нічого не надсилається, доки не відповіси Ні.",
+ "This closes by itself when the clock runs out.": "Це закриється само, коли спливе час.",
+ "Rescue is sent when the clock runs out.": "Виклик порятунку буде надіслано, коли спливе час."
 }

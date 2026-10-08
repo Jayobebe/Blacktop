@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "덱에는 서로 다른 파워로 세 개를 넣습니다. 내기 전에 하나를 장전하세요. 각각 배틀당 한 번 쓸 수 있습니다. 스핀으로 얻은 태그는 차량에 묶여 있어 그 차량이 세기를 정하고, 같은 종류의 차량과 함께면 더 강해집니다. Track Day 보드에서 빼앗은 태그는 어떤 차량과도 통합니다.",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "카테고리가 정해진 뒤 회전계가 내 Redline 카드 다섯 장 중 하나에 멈추며, 그 카테고리가 0인 카드에는 멈추지 않습니다. 그 카드가 내 카드 대신 라운드를 싸웁니다. 이기면 최대 피해를 주고, 져도 내 카드는 피해를 입지 않습니다.",
  "A deck takes one dog tag of each power.": "덱에는 파워마다 도그태그를 하나만 넣을 수 있습니다.",
- "Your Redline took the hit: your card is untouched": "Redline이 대신 맞았습니다: 내 카드는 멀쩡합니다"
+ "Your Redline took the hit: your card is untouched": "Redline이 대신 맞았습니다: 내 카드는 멀쩡합니다",
+ "You pressed rescue. Nothing is sent unless you answer No.": "구조 버튼을 눌렀습니다. 아니요라고 답하지 않으면 아무것도 전송되지 않습니다.",
+ "This closes by itself when the clock runs out.": "시간이 다 되면 자동으로 닫힙니다.",
+ "Rescue is sent when the clock runs out.": "시간이 다 되면 구조 요청이 전송됩니다."
 }

@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Bir deste, her biri farklı güçte üç tane taşır. Oynamadan önce birini hazırla; her biri savaş başına bir kez çalışır. Çevirmede kazanılan künye bir araca bağlıdır: gücünü o belirler ve aynı türden araçla daha fazlasını yapar. Track Day tablosunda alınan künye hepsiyle çalışır.",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Kategori çekilir, sonra devir saati beş Redline kartından birinde durur, o kategoride 0'ı olan birinde asla durmaz, ve o kart raundu kartının yerine dövüşür. Galibiyet tam güçle vurur; yenilgi kartına hiçbir şeye mal olmaz.",
  "A deck takes one dog tag of each power.": "Bir deste her güçten bir künye alır.",
- "Your Redline took the hit: your card is untouched": "Darbeyi Redline'ın aldı: kartına bir şey olmadı"
+ "Your Redline took the hit: your card is untouched": "Darbeyi Redline'ın aldı: kartına bir şey olmadı",
+ "You pressed rescue. Nothing is sent unless you answer No.": "Kurtarmaya bastın. Hayır demediğin sürece hiçbir şey gönderilmez.",
+ "This closes by itself when the clock runs out.": "Süre dolunca bu kendiliğinden kapanır.",
+ "Rescue is sent when the clock runs out.": "Süre dolunca kurtarma çağrısı gönderilir."
 }

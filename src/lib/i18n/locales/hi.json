@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "एक डेक में तीन होते हैं, हर एक अलग पावर का। खेलने से पहले एक सक्रिय करें; हर एक मुकाबले में एक बार काम करता है। स्पिन में जीता टैग किसी गाड़ी से जुड़ा होता है: उसी से उसकी ताकत तय होती है, और उसी तरह की गाड़ी के साथ वह ज़्यादा असर करता है। Track Day बोर्ड पर जीता टैग हर गाड़ी के साथ काम करता है।",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "श्रेणी निकलती है, फिर रेव काउंटर आपके पाँच Redline कार्डों में से एक पर रुकता है, कभी उस पर नहीं जिसका उस श्रेणी में 0 हो, और वह आपके कार्ड की जगह राउंड लड़ता है। जीत पूरी ताकत से वार करती है; हार से आपके कार्ड को कुछ नहीं होता।",
  "A deck takes one dog tag of each power.": "एक डेक में हर पावर का एक ही डॉग टैग होता है।",
- "Your Redline took the hit: your card is untouched": "चोट आपके Redline ने झेली: आपका कार्ड सुरक्षित है"
+ "Your Redline took the hit: your card is untouched": "चोट आपके Redline ने झेली: आपका कार्ड सुरक्षित है",
+ "You pressed rescue. Nothing is sent unless you answer No.": "आपने रेस्क्यू दबाया। जब तक आप नहीं में जवाब नहीं देते, कुछ नहीं भेजा जाएगा।",
+ "This closes by itself when the clock runs out.": "समय खत्म होने पर यह अपने आप बंद हो जाएगा।",
+ "Rescue is sent when the clock runs out.": "समय खत्म होने पर रेस्क्यू भेज दिया जाएगा।"
 }

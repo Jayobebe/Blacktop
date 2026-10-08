@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Een deck draagt er drie, elk met een andere kracht. Activeer er één voordat je speelt; elke werkt één keer per gevecht. Een tag uit een draai hoort bij een voertuig: dat bepaalt hoe sterk hij is, en hij doet meer met hetzelfde soort voertuig. Een tag van een Track Day-bord werkt met alles.",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "De categorie wordt getrokken, daarna stopt de toerenteller op een van je vijf Redline-kaarten, nooit een met 0 in die categorie, en die vecht de ronde in plaats van je kaart. Een overwinning raakt op volle kracht; een nederlaag kost je kaart niets.",
  "A deck takes one dog tag of each power.": "Een deck neemt één dog tag van elke kracht.",
- "Your Redline took the hit: your card is untouched": "Je Redline ving de klap op: je kaart is ongedeerd"
+ "Your Redline took the hit: your card is untouched": "Je Redline ving de klap op: je kaart is ongedeerd",
+ "You pressed rescue. Nothing is sent unless you answer No.": "Je drukte op redding. Er wordt niets verstuurd tenzij je Nee antwoordt.",
+ "This closes by itself when the clock runs out.": "Dit sluit vanzelf als de tijd om is.",
+ "Rescue is sent when the clock runs out.": "De redding wordt verstuurd als de tijd om is."
 }

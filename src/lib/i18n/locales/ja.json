@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "デッキには3つ、それぞれ異なるパワーのものを入れます。出す前に1つ構えます。それぞれバトルごとに1回使えます。スピンで当てたタグは車両にひも付き、その車両で強さが決まり、同じ種類の車両ならさらに効きます。Track Dayのボードで奪ったタグはどの車両でも効きます。",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "カテゴリーが決まったあと、レブカウンターがあなたの5枚のRedlineカードの1枚で止まります(そのカテゴリーが0のカードには止まりません)。そのカードがあなたのカードの代わりにラウンドを戦います。勝てば最大ダメージを与え、負けても自分のカードはダメージを受けません。",
  "A deck takes one dog tag of each power.": "デッキには各パワーのドッグタグを1つずつしか入れられません。",
- "Your Redline took the hit: your card is untouched": "Redlineが身代わりになりました:自分のカードは無傷です"
+ "Your Redline took the hit: your card is untouched": "Redlineが身代わりになりました:自分のカードは無傷です",
+ "You pressed rescue. Nothing is sent unless you answer No.": "レスキューが押されました。「いいえ」と答えない限り、何も送信されません。",
+ "This closes by itself when the clock runs out.": "時間切れになると自動で閉じます。",
+ "Rescue is sent when the clock runs out.": "時間切れになるとレスキューが送信されます。"
 }

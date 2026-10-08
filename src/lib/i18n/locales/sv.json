@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "En lek har tre, var och en med olika kraft. Aktivera en innan du spelar; var och en fungerar en gång per strid. En bricka vunnen på en snurr hör till ett fordon: det avgör hur stark den är, och den gör mer med samma sorts fordon. En bricka tagen på en Track Day-tavla fungerar med alla.",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Kategorin dras, sedan stannar varvräknaren på ett av dina fem Redline-kort, aldrig ett med 0 i den kategorin, och det slåss rundan i ditt korts ställe. En vinst träffar med full kraft; en förlust kostar ditt kort ingenting.",
  "A deck takes one dog tag of each power.": "En lek tar en ID-bricka av varje kraft.",
- "Your Redline took the hit: your card is untouched": "Ditt Redline-kort tog smällen: ditt kort är orört"
+ "Your Redline took the hit: your card is untouched": "Ditt Redline-kort tog smällen: ditt kort är orört",
+ "You pressed rescue. Nothing is sent unless you answer No.": "Du tryckte på räddning. Inget skickas om du inte svarar Nej.",
+ "This closes by itself when the clock runs out.": "Det här stängs av sig självt när tiden går ut.",
+ "Rescue is sent when the clock runs out.": "Räddning skickas när tiden går ut."
 }

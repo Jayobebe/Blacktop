@@ -1404,6 +1404,19 @@
 .text-accent-2 { color: hsl(var(--lava, var(--accent))); }
 html.thermal .text-accent-2 { color: hsl(var(--accent)); }
 
+/* "Are you okay?" (the rescue button and the crash check): a burn-orange card that glows, slowly. */
+.rescue-ask {
+  background: hsl(240 8% 6%);
+  border: 2px solid hsl(var(--burn));
+  box-shadow: 0 0 0 1px hsl(var(--burn) / 0.5), 0 0 44px hsl(var(--burn) / 0.5);
+  animation: rescue-ask-glow 1.8s ease-in-out infinite;
+}
+@keyframes rescue-ask-glow {
+  0%, 100% { box-shadow: 0 0 0 1px hsl(var(--burn) / 0.5), 0 0 30px hsl(var(--burn) / 0.35); }
+  50% { box-shadow: 0 0 0 1px hsl(var(--burn) / 0.8), 0 0 70px hsl(var(--burn) / 0.7); }
+}
+@media (prefers-reduced-motion: reduce) { .rescue-ask { animation: none; } }
+
 /* The vault: a card lifted out of its row, and what isn't held yet (greyed, but still readable). */
 .vault-lift-card { transform-origin: 0 0; transition: transform 720ms cubic-bezier(0.2, 0.8, 0.25, 1); will-change: transform; }
 .vault-lift-dim { background: hsl(0 0% 0% / 0.84); opacity: 0; transition: opacity 0.35s ease; }

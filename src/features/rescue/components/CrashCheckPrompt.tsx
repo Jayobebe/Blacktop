@@ -1,108 +1,100 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { warningTone } from '@/lib/radioFx';
-import { AlertTriangle, ShieldCheck, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 interface Props {
-  /** Total seconds before auto-firing rescue. */
+  /** Seconds on the clock. */
   timeoutSec: number;
+  /**
+   * The rider pressed the rescue button themselves. Nothing is sent unless
+   * they answer No: when the clock runs out the card just closes (the button
+   * gets pressed by accident mid-ride). Left out, it's the crash check, which
+   * sends when the clock runs out.
+   */
+  manual?: boolean;
+  /** Yes. */
   onImFine: () => void;
+  /** No: send the rescue call. */
   onSendNow: () => void;
-  /** Called automatically when the countdown reaches 0. */
+  /** The clock ran out. */
   onTimeout: () => void;
 }
 
 /**
- * Full-screen "Are you okay?" prompt shown after possible-crash detection.
- * Counts down; auto-fires rescue if the rider doesn't respond in time.
+ * "Are you okay?", in the middle of the screen: one glowing burn-orange card
+ * with a big Yes and a big No, each big enough for a glove. The same card asks
+ * after a possible crash and after the rescue button is pressed; only what an
+ * unanswered clock does differs. Yes and No sit side by side in portrait, and
+ * beside the question in landscape.
  */
-export function CrashCheckPrompt({ timeoutSec, onImFine, onSendNow, onTimeout }: Props) {
+export function CrashCheckPrompt({ timeoutSec, manual, onImFine, onSendNow, onTimeout }: Props) {
   const [remaining, setRemaining] = useState(timeoutSec);
-  const firedRef = useRef(false);
-  const chimeRef = useRef<number | null>(null);
+  // The ride screen redraws many times a second: the clock mustn't restart with it.
+  const timeout = useRef(onTimeout);
+  timeout.current = onTimeout;
+  const fired = useRef(false);
 
-  // Countdown
   useEffect(() => {
-    const id = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(id);
-          if (!firedRef.current) {
-            firedRef.current = true;
-            onTimeout();
-          }
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [onTimeout]);
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      const left = Math.max(0, timeoutSec - Math.floor((Date.now() - started) / 1000));
+      setRemaining(left);
+      if (left === 0 && !fired.current) {
+        fired.current = true;
+        window.clearInterval(id);
+        timeout.current();
+      }
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [timeoutSec]);
 
-  // Repeating haptic + chime while open
+  // The crash check keeps warbling (the rider may be down); a pressed button says it once.
   useEffect(() => {
     haptics.heavy();
-    // The master-caution warble (lib/radioFx), on the app's one shared audio
-    // context rather than a new one per beep.
-    const beep = () => {
+    warningTone('caution');
+    if (manual) return;
+    const id = window.setInterval(() => {
       warningTone('caution');
       haptics.medium();
-    };
-    beep();
-    chimeRef.current = window.setInterval(beep, 3000);
-    return () => {
-      if (chimeRef.current) window.clearInterval(chimeRef.current);
-    };
-  }, []);
+    }, 3000);
+    return () => window.clearInterval(id);
+  }, [manual]);
 
-  const pct = remaining / timeoutSec;
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
+  const answer = 'flex flex-col items-center justify-center gap-0.5 rounded-2xl min-h-24 short:min-h-20 px-3 py-3 font-black text-white transition-transform active:scale-95';
 
   return (
-    <div className="fixed inset-0 z-[60] safe-frame flex items-center justify-center p-3 bg-background/90 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-md short:max-w-2xl max-h-full overflow-y-auto bg-card border-2 border-destructive/60 rounded-3xl p-6 short:p-4 shadow-2xl animate-scale-in text-center short:grid short:grid-cols-2 short:items-center short:gap-x-6">
+    <div className="fixed inset-0 z-[60] safe-frame flex items-center justify-center p-3 bg-background/90 backdrop-blur-md animate-fade-in" role="alertdialog" aria-modal="true" aria-label={tr("Are you okay?")}>
+      <div className="rescue-ask w-full max-w-md short:max-w-3xl max-h-full overflow-y-auto rounded-3xl p-6 short:p-4 text-center short:grid short:grid-cols-2 short:items-center short:gap-5 animate-scale-in">
         <div>
-        <div className="mx-auto w-20 h-20 short:w-12 short:h-12 rounded-full bg-destructive/20 flex items-center justify-center animate-pulse mb-4 short:mb-2">
-          <AlertTriangle className="w-10 h-10 short:w-6 short:h-6 text-destructive" />
-        </div>
-        <h2 className="text-2xl font-bold mb-1">{tr("Are you okay?")}</h2>
-        <p className="text-sm text-muted-foreground mb-5 short:mb-3">
-          {tr("Possible crash detected. If you don't respond, a rescue ping will be sent automatically.")}
-        </p>
-
-        {/* Countdown bar */}
-        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden mb-2">
-          <div
-            className="h-full bg-destructive transition-all duration-1000 ease-linear"
-            style={{ width: `${pct * 100}%` }}
-          />
-        </div>
-        <p className="font-mono text-3xl font-bold text-destructive tabular-nums mb-6 short:mb-0">
-          {mins}:{secs.toString().padStart(2, '0')}
-        </p>
+          <div className="mx-auto mb-3 short:mb-2 flex h-16 w-16 short:h-12 short:w-12 items-center justify-center rounded-full bg-[hsl(var(--burn))] text-white">
+            <span aria-hidden className="text-3xl short:text-2xl font-black leading-none">R</span>
+          </div>
+          <h2 className="text-4xl short:text-3xl font-black tracking-tight text-white leading-none">{tr("Are you okay?")}</h2>
+          <p className="mt-2 text-sm text-white/75 leading-snug">
+            {manual ? tr("You pressed rescue. Nothing is sent unless you answer No.") : tr("Possible crash detected. If you don't respond, a rescue ping will be sent automatically.")}
+          </p>
+          <div className="mt-4 short:mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+            <div className="h-full bg-[hsl(var(--burn))] transition-[width] duration-300 ease-linear" style={{ width: `${(remaining / timeoutSec) * 100}%` }} />
+          </div>
+          <p className="mt-1.5 font-mono text-2xl short:text-xl font-bold text-white tabular-nums leading-none">
+            {mins}:{secs.toString().padStart(2, '0')}
+          </p>
+          <p className="mt-1 mb-5 short:mb-0 text-xs text-white/70">{manual ? tr("This closes by itself when the clock runs out.") : tr("Rescue is sent when the clock runs out.")}</p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <Button
-            size="lg"
-            onClick={onImFine}
-            className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold gap-2"
-          >
-            <ShieldCheck className="w-5 h-5" />
-            {tr("I'm fine")}
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={onSendNow}
-            className="w-full h-12 border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn)/0.1)] hover:text-[hsl(var(--burn))] gap-2"
-          >
-            <Send className="w-4 h-4" />
-            {tr("Send rescue now")}
-          </Button>
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" onClick={onImFine} className={cn(answer, 'bg-emerald-600')}>
+            <span className="text-4xl short:text-3xl leading-none">{tr("Yes")}</span>
+            <span className="text-xs font-semibold text-white/85">{tr("I'm fine")}</span>
+          </button>
+          <button type="button" onClick={onSendNow} className={cn(answer, 'bg-[hsl(var(--burn))]')}>
+            <span className="text-4xl short:text-3xl leading-none">{tr("No")}</span>
+            <span className="text-xs font-semibold text-white/85">{tr("Send rescue")}</span>
+          </button>
         </div>
       </div>
     </div>

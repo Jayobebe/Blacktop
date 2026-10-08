@@ -767,6 +767,8 @@ export default function ActiveRide() {
     navigate('/');
   };
 
+  /** The rescue button was pressed: what to send if the rider answers No to "Are you okay?". */
+  const [rescueAsk, setRescueAsk] = useState<null | (() => void | Promise<void>)>(null);
   const handleRescue = async () => {
     // Get current location from ride state or request fresh position
     const gpsPoints = rideState.gpsPoints;
@@ -955,6 +957,21 @@ export default function ActiveRide() {
         </div>
       )}
 
+      {/* The rescue button asks first: it gets pressed by accident mid-ride. The same card as the crash check; no answer sends nothing. */}
+      {rescueAsk && !crashPromptOpen && (
+        <CrashCheckPrompt
+          manual
+          timeoutSec={20}
+          onImFine={() => setRescueAsk(null)}
+          onTimeout={() => setRescueAsk(null)}
+          onSendNow={() => {
+            const send = rescueAsk;
+            setRescueAsk(null);
+            void send();
+          }}
+        />
+      )}
+
       {/* Auto-rescue crash check */}
       {crashPromptOpen && (
         <CrashCheckPrompt
@@ -1044,7 +1061,7 @@ export default function ActiveRide() {
           {/* First-time tips, only at a standstill: they're put away the moment the rider moves. */}
           <PageTips
             page="ride"
-            when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !showEndConfirm && !tipsShelved}
+            when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !rescueAsk && !showEndConfirm && !tipsShelved}
             // The clock doesn't run while the rider is reading: paused for the tips, and set going again after (unless they'd paused it themselves).
             onShowing={(showing) => {
               window.clearTimeout(tipTimer.current);
@@ -1219,7 +1236,7 @@ export default function ActiveRide() {
               accidental presses. */}
           {rideState.isConvoyMode && !convoy.isLeader && (
             <button
-              onClick={hasPendingRescue ? cancelRescueRequest : handleRescue}
+              onClick={hasPendingRescue ? cancelRescueRequest : () => setRescueAsk(() => handleRescue)}
               data-tip="rescue"
               className={cn(
                 "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
@@ -1232,8 +1249,10 @@ export default function ActiveRide() {
           )}
           {!rideState.isConvoyMode && (
             <button
-              onClick={async () => {
+              onClick={() => {
                 if (soloRescueSending || soloRescueSent) return;
+                // Asked first ("Are you okay?"); this is what a No sends.
+                setRescueAsk(() => async () => {
                 setSoloRescueSending(true);
                 try {
                   const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -1265,6 +1284,7 @@ export default function ActiveRide() {
                 } finally {
                   setSoloRescueSending(false);
                 }
+                });
               }}
               disabled={soloRescueSending || soloRescueSent}
               data-tip="rescue"

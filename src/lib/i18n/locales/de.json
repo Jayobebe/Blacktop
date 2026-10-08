@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "Ein Deck trägt drei, jede mit einer anderen Kraft. Aktiviere eine, bevor du spielst; jede wirkt einmal pro Kampf. Eine per Dreh gewonnene Marke gehört zu einem Fahrzeug: Das bestimmt ihre Stärke, und mit derselben Fahrzeugart bewirkt sie mehr. Eine auf einer Track-Day-Bestenliste geholte wirkt mit jedem.",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "Die Kategorie wird gezogen, dann bleibt der Drehzahlmesser auf einer deiner fünf Redline-Karten stehen, nie auf einer mit 0 in dieser Kategorie, und sie kämpft die Runde anstelle deiner Karte. Ein Sieg trifft mit voller Wucht; eine Niederlage kostet deine Karte nichts.",
  "A deck takes one dog tag of each power.": "Ein Deck nimmt eine Hundemarke je Kraft.",
- "Your Redline took the hit: your card is untouched": "Deine Redline-Karte hat den Treffer genommen: deine Karte ist unversehrt"
+ "Your Redline took the hit: your card is untouched": "Deine Redline-Karte hat den Treffer genommen: deine Karte ist unversehrt",
+ "You pressed rescue. Nothing is sent unless you answer No.": "Du hast Rettung gedrückt. Es wird nichts gesendet, solange du nicht mit Nein antwortest.",
+ "This closes by itself when the clock runs out.": "Das schließt sich von selbst, wenn die Uhr abläuft.",
+ "Rescue is sent when the clock runs out.": "Die Rettung wird gesendet, wenn die Uhr abläuft."
 }

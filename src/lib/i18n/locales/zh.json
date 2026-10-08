@@ -4452,5 +4452,8 @@
  "A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.": "一套牌组带三枚,每枚能力各不相同。出牌前先备好一枚；每枚每场对战可用一次。转盘赢得的身份牌绑定一辆车：车决定它的强度，配同类车辆时效果更强。在 Track Day 榜单上夺得的身份牌配任何车辆都有效。",
  "The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.": "先抽出类别,然后转速表停在你五张 Redline 卡中的一张上(不会停在该类别为 0 的卡上),由它代替你的卡片打这一回合。赢了就打出最大伤害;输了你的卡片毫发无损。",
  "A deck takes one dog tag of each power.": "一套牌组每种能力只能带一枚身份牌。",
- "Your Redline took the hit: your card is untouched": "你的 Redline 挡下了这一击:你的卡片毫发无损"
+ "Your Redline took the hit: your card is untouched": "你的 Redline 挡下了这一击:你的卡片毫发无损",
+ "You pressed rescue. Nothing is sent unless you answer No.": "你按了救援。除非你回答“否”,否则不会发送任何内容。",
+ "This closes by itself when the clock runs out.": "时间到了会自动关闭。",
+ "Rescue is sent when the clock runs out.": "时间到了就会发出救援。"
 }
