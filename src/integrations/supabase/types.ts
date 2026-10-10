@@ -1266,6 +1266,24 @@ export type Database = {
           },
         ]
       }
+      cw_unlock_used: {
+        Row: {
+          code_hash: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cw_wear: {
         Row: {
           card_id: string
@@ -2208,6 +2226,7 @@ export type Database = {
       cw_build_rules: { Args: never; Returns: Json }
       cw_buy: { Args: { _card: string }; Returns: Json }
       cw_card_count: { Args: { _u: string }; Returns: number }
+      cw_card_tier: { Args: { _price: number }; Returns: number }
       cw_check_slots: {
         Args: { _tags: string[]; _user: string }
         Returns: undefined
@@ -2254,6 +2273,10 @@ export type Database = {
           _winner: string
         }
         Returns: undefined
+      }
+      cw_pick_card: {
+        Args: { _cats: string[]; _unowned_by?: string }
+        Returns: string
       }
       cw_prize_rules: { Args: never; Returns: Json }
       cw_redline_grant: { Args: { _u: string }; Returns: string }
@@ -2326,6 +2349,7 @@ export type Database = {
         Returns: number
       }
       cw_take_card: { Args: { _card: string; _u: string }; Returns: boolean }
+      cw_tier_rules: { Args: never; Returns: Json }
       cw_trade_cancel: { Args: { _trade: string }; Returns: Json }
       cw_trade_list: { Args: { _card: string }; Returns: Json }
       cw_trade_offer: { Args: { _code: string; _rpm: number }; Returns: Json }
@@ -2338,6 +2362,8 @@ export type Database = {
       cw_trade_view: { Args: { _code: string }; Returns: Json }
       cw_trade_withdraw: { Args: { _offer: string }; Returns: Json }
       cw_trades_mine: { Args: never; Returns: Json }
+      cw_unlock_all: { Args: { _code: string }; Returns: Json }
+      cw_unlock_open: { Args: never; Returns: boolean }
       cw_wear_for: {
         Args: { _fought: string[]; _user: string }
         Returns: undefined
@@ -2362,6 +2388,10 @@ export type Database = {
         Returns: undefined
       }
       cw_wear_rules: { Args: never; Returns: Json }
+      cw_wheel_pick: {
+        Args: { _cat: number; _wheel: string[] }
+        Returns: string
+      }
       cw_wildcard_grant: { Args: { _u: string }; Returns: string[] }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
