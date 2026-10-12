@@ -243,7 +243,7 @@ export default function DemoShowcase() {
       cards: [
         { icon: AlertTriangle, label: tr("Rescue Calls"), text: tr("A convoy or crew mate needs help, with where they are.") },
         { icon: Handshake, label: tr("Riders Near Me"), text: tr("Opt in to hear when a rider close by calls for rescue, so help can come from whoever's nearest.") },
-        { icon: Fuel, label: tr("Blacktank"), text: tr("Requests to vote on, approvals, chip-ins and payouts.") },
+        ...(paymentsAvailable() ? [{ icon: Fuel, label: tr("Blacktank"), text: tr("Requests to vote on, approvals, chip-ins and payouts.") }] : []),
         { icon: IdCard, label: tr("Cards"), text: tr("Someone picks up a card you dropped.") },
         { icon: Flag, label: tr("Track Records"), text: tr("Someone beats your lap on a circuit leaderboard.") },
         { icon: Trophy, label: tr("Crew"), text: tr("A mate passes you on the board, opens a crew convoy, or a challenge is won, lost or 5 days from closing.") },
@@ -340,7 +340,9 @@ export default function DemoShowcase() {
       id: 'blacktop-world',
       title: tr("Blacktop World"),
       subtitle: tr("Your Crew Hub On A Globe"),
-      description: tr("Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade, the Speedshop and, down on the South Pole, the Blacktank — with an anonymous glow showing where riders are active."),
+      description: paymentsAvailable()
+        ? tr("Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade, the Speedshop and, down on the South Pole, the Blacktank — with an anonymous glow showing where riders are active.")
+        : tr("Opt-in. Spin the globe and tap landmarks for crew convoys, leaderboards, the weekly crew challenge, crew QR joining, your card collection, the arcade and the Speedshop — with an anonymous glow showing where riders are active."),
       icon: Globe2,
       tone: 'accent',
       scene: <WorldScene />,
@@ -349,7 +351,7 @@ export default function DemoShowcase() {
         { icon: Trophy, label: tr("Crew Leaderboards"), text: tr("Named rankings for distance, top speed, lean, rides and arcade, updated after every ride. Get a heads-up when a mate passes you.") },
         { icon: Flag, label: tr("Challenges"), text: tr("Two rotating crew challenges every week — miles, corners, lean, ride count, top speed, night rides and longest ride — plus a monthly Forzathon-style crew goal you chase together, with special event weeks through the year. Notifications for targets hit, results and a 5-days-left nudge.") },
         { icon: Gamepad2, label: tr("Arcade"), text: tr("Hit Heavy, Petrol Head, Derez Legacy and Card Wars — punch scores, traffic runs, live light trails and vehicle-card battles.") },
-        { icon: Fuel, label: tr("Blacktank"), text: tr("On the South Pole: your crew's shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.") },
+        ...(paymentsAvailable() ? [{ icon: Fuel, label: tr("Blacktank"), text: tr("On the South Pole: your crew's shared fuel pot. Chip in, request a top-up and vote, with notifications at every step.") }] : []),
       ],
     },
     {

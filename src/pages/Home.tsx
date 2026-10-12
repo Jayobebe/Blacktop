@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
-import { useRideHistory, useActiveRide, clearSoloRoute } from '@/features/ride';
+import { useRideHistory, useActiveRide, clearSoloRoute, SetOffPrompt } from '@/features/ride';
 import { useConvoyState } from '@/features/convoy';
 import { clearRideRole } from '@/features/pillion';
 import { isRacerRunning } from '@/features/track/lib/racerPhase';
@@ -14,7 +14,7 @@ const HomeGlobe = lazy(() => import('@/components/HomeGlobe').then((m) => ({ def
 const EnterpriseWorkspaceCard = lazy(() => import('@/features/enterprise/components/EnterpriseWorkspaceCard').then((m) => ({ default: m.EnterpriseWorkspaceCard })));
 const EnterpriseDoorway = lazy(() => import('@/features/enterprise/components/EnterpriseDoorway').then((m) => ({ default: m.EnterpriseDoorway })));
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
-import { openBlacktopMap, clearMapDestination, useGuidanceActive } from '@/features/map';
+import { openBlacktopMap, clearMapDestination, useGuidanceActive, useMapOverlay } from '@/features/map';
 import { SafetyStatusCard } from '@/features/rescue';
 import { AlarmButton } from '@/features/alarm';
 import { useExperience } from '@/features/experience';
@@ -50,6 +50,7 @@ export default function Home() {
   // Arranging stickers: drags belong to the stickers, not the deck.
   const arrangingStickers = useArranging() && settings.collectiblesEnabled;
   const deckLocked = rideState.isActive || guiding || arrangingStickers;
+  const mapOpen = useMapOverlay().isOpen;
   const deckKeys = ['home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
   // Back from a package demo page returns to the Doorway (history state).
   const location = useLocation();
@@ -547,6 +548,25 @@ export default function Home() {
         }
       }}
     >
+
+      {/* "On the move?": the app is open on Home and the rider has set off. */}
+      <SetOffPrompt
+        active={
+          !!settings.setOffPromptEnabled && deckKey === 'home' && !rideState.isActive && !convoy.isActive &&
+          !guiding && !mapOpen && !arrangingStickers && !isRacerRunning()
+        }
+        motorised={exp.motorised}
+        startLabel={exp.showSolo ? tr("Start {0}", [exp.terms.Ride]) : tr("Start Convoy")}
+        onStart={() => {
+          if (!exp.showSolo) {
+            navigate('/create-convoy');
+            return;
+          }
+          clearSoloRoute(); // a free ride, as the pared-back Home's Start is
+          if (startRide(false)) navigate('/ride');
+        }}
+        onOpenMap={() => openBlacktopMap()}
+      />
 
       {/* First-time tips: only what isn't obvious here. Not while arranging stickers or off on another card. */}
       <PageTips

@@ -466,6 +466,13 @@ export default function Settings() {
                 </div>
                 <Switch checked={settings.uiSoundsEnabled !== false} onCheckedChange={(v) => updateSetting('uiSoundsEnabled', v)} />
               </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">{tr("Ask when I set off")}</p>
+                  <p className="text-[10px] text-muted-foreground">{tr("With Blacktop open on Home, it notices when you're moving and asks whether to start tracking or open the map. It uses your location only while the app is open, and only if you've already allowed it.")}</p>
+                </div>
+                <Switch checked={!!settings.setOffPromptEnabled} onCheckedChange={(v) => updateSetting('setOffPromptEnabled', v)} />
+              </div>
               {settings.collectiblesEnabled && (
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -1390,7 +1397,9 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
     >
       <div className="space-y-3 text-[13px] text-muted-foreground leading-relaxed">
         <p>
-          {tr("The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew fuel fund) and trading-card drops on the map.")}
+          {paymentsAvailable()
+            ? tr("The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew fuel fund) and trading-card drops on the map.")
+            : tr("The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade and trading-card drops on the map.")}
         </p>
         <p>
           <span className="text-foreground font-medium">{tr("How to open it.")}</span>{" "}{tr("Once it's on, press and hold the spinning globe on the Home screen.")}

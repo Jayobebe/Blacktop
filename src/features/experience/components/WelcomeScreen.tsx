@@ -82,7 +82,9 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: Globe2,
     title: tr("Blacktop World"),
-    body: tr("Opt in to a live globe of riders and crews: crew convoys, leaderboards, weekly and monthly challenges, arcade games and Blacktank, a shared crew fuel fund."),
+    body: paymentsAvailable()
+      ? tr("Opt in to a live globe of riders and crews: crew convoys, leaderboards, weekly and monthly challenges, arcade games and Blacktank, a shared crew fuel fund.")
+      : tr("Opt in to a live globe of riders and crews: crew convoys, leaderboards, weekly and monthly challenges and arcade games."),
   },
   {
     icon: Sparkles,
@@ -97,7 +99,9 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: BellRing,
     title: tr("Notifications"),
-    body: tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups, track records and Blacktank votes."),
+    body: paymentsAvailable()
+      ? tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups, track records and Blacktank votes.")
+      : tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups and track records."),
   },
   {
     icon: Radio,

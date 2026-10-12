@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
+import { paymentsAvailable } from '@/lib/platform';
 import { rescueDisclaimer } from '@/features/rescue';
 
 export default function Terms() {
@@ -186,7 +187,8 @@ export default function Terms() {
           </p>
         </section>
 
-        <section className="space-y-2">
+        {/* Crypto payments aren't in the store apps (paymentsAvailable). */}
+        {paymentsAvailable() && <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Payments — Pay Up &amp; Blacktank")}</h2>
           <p className="text-muted-foreground">
             <span className="text-foreground font-medium">{tr("Pay Up")}</span>{" "}{tr("lets you display your own wallet QR or scan another rider's to send NIM or Polygon USDT via your own Nimiq Pay wallet. Blacktop is not a payment processor: we never hold, route or take custody of funds, we never see your keys, and every transaction is final and irreversible once confirmed in your wallet. You are solely responsible for checking the recipient address before sending.")}
@@ -195,7 +197,7 @@ export default function Terms() {
             <span className="text-foreground font-medium">{tr("Blacktank")}</span>{" "}{tr("is a crew's shared fuel-pot pledge ledger. Pledges are promises between crew members, not deposits — no money is pooled or held by the app. Withdrawal requests require a unanimous vote from the rest of the crew and expire unanswered. Approved requests are settled directly wallet-to-wallet through Nimiq Pay. The app owner and contributors accept")}<span className="text-foreground font-medium">{" "}{tr("no liability")}{" "}</span>
             {tr("for disputes, unpaid pledges, misdirected payments or losses arising from Pay Up or Blacktank.")}
           </p>
-        </section>
+        </section>}
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Blacktop Arcade — Derez Legacy")}</h2>

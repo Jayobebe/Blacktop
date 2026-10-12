@@ -102,7 +102,8 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
         <span>{tr("Swipe or tap")}</span>
       </div>
 
-      <div className="relative h-[390px] mb-4 [@media(max-height:700px)]:h-[340px]">
+      {/* The card is as tall as its text needs (the body scrolls): a fixed height cut long questions off. */}
+      <div className="relative mb-4">
         {/* Upcoming cards peek out behind the top card */}
         {[2, 1].map((offset) => {
           const next = questions[index + offset];
@@ -132,7 +133,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           className={cn(
-            'absolute inset-0 rounded-[28px] border bg-card/80 backdrop-blur-2xl overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing animate-scale-in',
+            'relative min-h-[390px] [@media(max-height:700px)]:min-h-[340px] flex flex-col rounded-[28px] border bg-card/80 backdrop-blur-2xl overflow-hidden touch-pan-y select-none cursor-grab active:cursor-grabbing animate-scale-in',
             current ? 'border-accent/40' : 'border-white/10',
             !dragging && 'transition-[transform,opacity] ease-out'
           )}
@@ -144,7 +145,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           }}
         >
           {/* Hero */}
-          <div className="relative h-[40%] flex items-center justify-center bg-[radial-gradient(ellipse_at_center,hsl(var(--accent)/0.22),transparent_70%)]">
+          <div className="relative h-[156px] [@media(max-height:700px)]:h-[128px] shrink-0 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,hsl(var(--accent)/0.22),transparent_70%)]">
             <div className="absolute w-28 h-28 rounded-full border border-accent/30" />
             <div className="relative w-20 h-20 rounded-3xl bg-accent text-accent-foreground flex items-center justify-center shadow-glow">
               <Icon className="w-10 h-10" />
@@ -171,7 +172,7 @@ export function CareDeck({ questions, index, context, style, onAnswered }: CareD
           </div>
 
           {/* Copy */}
-          <div className="px-6 pb-5 pt-1 flex flex-col h-[60%]">
+          <div className="px-6 pb-5 pt-1 flex flex-col flex-1">
             <h2 className="text-2xl font-semibold tracking-tight leading-tight">{q.question(context)}</h2>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{q.pitch(context)}</p>
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3">

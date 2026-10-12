@@ -38,6 +38,7 @@ const LEFT_OUT = new Set([
   'blacktop_motion_granted',
   'blacktop_motion_refused_at',
   'blacktop_push_nudged',
+  'blacktop_setoff_snooze',
   'blacktop_voice_state',
   'blacktop_audio_input',
   'blacktop_audio_output',

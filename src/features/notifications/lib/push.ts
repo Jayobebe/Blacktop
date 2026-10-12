@@ -5,6 +5,7 @@ import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { getCrewCode, getCrews } from '@/features/crew/useCrew';
 import { tr } from '@/lib/i18n';
+import { paymentsAvailable } from '@/lib/platform';
 import { nativePermission, nativePushAvailable, nativePushEndpoint, requestNativePermission, unregisterNativePush } from './nativePush';
 
 /**
@@ -24,7 +25,7 @@ const CATEGORIES_KEY = 'bt.push.categories.v1';
 const LOCATION_KEY = 'bt.push.location.v1';
 
 /** Kinds of notification a device can switch on or off (ids match send-push). */
-export const PUSH_CATEGORY_DEFS = [
+const CATEGORY_DEFS = [
   { id: 'rescue', label: tr("Rescue calls"), desc: tr("A convoy or crew mate calls for rescue, with where they are") },
   { id: 'rescue_nearby', label: tr("Riders near me who need help"), desc: tr("Another rider close by calls for rescue. Keeps this phone’s rough area (about 11 km) on the server") },
   { id: 'weather', label: tr("Heavy weather"), desc: tr("Storms, heavy rain, snow or strong winds heading to your area") },
@@ -37,7 +38,9 @@ export const PUSH_CATEGORY_DEFS = [
   { id: 'maintenance', label: tr("Maintenance"), desc: tr("Service items coming due or overdue") },
 ] as const;
 
-export type PushCategory = (typeof PUSH_CATEGORY_DEFS)[number]['id'];
+export type PushCategory = (typeof CATEGORY_DEFS)[number]['id'];
+/** Blacktank is a crypto feature: not in the store apps, which don't list or register for it. */
+export const PUSH_CATEGORY_DEFS = CATEGORY_DEFS.filter((d) => paymentsAvailable() || d.id !== 'blacktank');
 const ALL_CATEGORIES = PUSH_CATEGORY_DEFS.map((d) => d.id) as PushCategory[];
 
 function readCategories(): PushCategory[] {

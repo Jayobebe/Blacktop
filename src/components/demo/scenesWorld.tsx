@@ -35,6 +35,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { tr, LANGUAGES } from '@/lib/i18n';
+import { paymentsAvailable } from '@/lib/platform';
 import { ACCENT_COLORS } from '@/features/settings';
 import {
   A,
@@ -99,7 +100,8 @@ const WORLD_MARKS: { I: Icon; name: () => string; at: [number, number] }[] = [
   { I: Flag, name: () => tr("Challenges"), at: [139.7, 35.7] },
   { I: Gamepad2, name: () => tr("Arcade"), at: [151.2, -33.9] },
   { I: ShoppingBag, name: () => tr("Speedshop"), at: [-118.2, 34] },
-  { I: Fuel, name: () => tr("Blacktank"), at: [0, -86] },
+  // Crypto fuel pot: not in the store apps (paymentsAvailable).
+  ...(paymentsAvailable() ? [{ I: Fuel, name: () => tr("Blacktank"), at: [0, -86] as [number, number] }] : []),
 ];
 const GLOW = Array.from({ length: 34 }, (_, i) => [rnd(i) * 300 - 150, rnd(i + 50) * 110 - 45] as [number, number]);
 

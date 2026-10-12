@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Shield } from 'lucide-react';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
+import { paymentsAvailable } from '@/lib/platform';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
@@ -217,11 +218,12 @@ export default function PrivacyPolicy() {
             <li><span className="text-foreground">{tr("Google and Cloudflare STUN")}</span>{" "}{tr("— help two phones find each other for voice chat (they see your IP address)")}</li>
             <li><span className="text-foreground">{tr("Cloudflare TURN")}</span>{" "}{tr("— relays encrypted voice audio when phones can't connect directly (typical on mobile data)")}</li>
             <li><span className="text-foreground">{tr("Discord")}</span>{" "}{tr("— only if you opt in by adding a webhook in your account")}</li>
-            <li><span className="text-foreground">{tr("Nimiq Pay")}</span>{" "}{tr("— only if you use Pay Up or Blacktank; payments happen in your own wallet and we never see your keys")}</li>
+            {paymentsAvailable() && <li><span className="text-foreground">{tr("Nimiq Pay")}</span>{" "}{tr("— only if you use Pay Up or Blacktank; payments happen in your own wallet and we never see your keys")}</li>}
           </ul>
         </section>
 
-        <section className="space-y-2">
+        {/* Crypto payments aren't in the store apps (paymentsAvailable). */}
+        {paymentsAvailable() && <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Payments — Pay Up &amp; Blacktank")}</h2>
           <p className="text-muted-foreground">
             <span className="text-foreground">{tr("Pay Up")}</span>{" "}{tr("lets you show your own wallet QR or scan someone else's to send NIM or Polygon USDT. Your wallet address is stored only on your device, and all transactions are handled by your own Nimiq Pay wallet — we never see, hold or route your funds or keys.")}
@@ -229,7 +231,7 @@ export default function PrivacyPolicy() {
           <p className="text-muted-foreground">
             <span className="text-foreground">{tr("Blacktank")}</span>{" "}{tr("is a crew's shared fuel-pot ledger: pledges, withdrawal requests and votes are stored on our backend under your crew code so crew members can see and approve them. It is a pledge record only — no money is ever pooled or held by the app, and approved payouts are settled directly wallet-to-wallet via Nimiq Pay.")}
           </p>
-        </section>
+        </section>}
 
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Your rights")}</h2>

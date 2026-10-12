@@ -12,6 +12,11 @@ import { useCrew } from '@/features/crew/useCrew';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN } from '@/features/ride';
+import { toast } from 'sonner';
+import { useConvoyState } from '@/features/convoy';
+import { setRideRole } from '@/features/pillion';
+import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
+import { demoBlocked } from '@/lib/demoGuard';
 
 interface CrewConvoyRow {
   id: string;
@@ -64,6 +69,27 @@ export default function CrewConvoys() {
   });
 
   const leader = detail.find((d) => d.is_leader);
+
+  // Joins straight from the list: no trip to the join page with a code to remember.
+  const locked = useDemoLocked();
+  const { joinConvoy } = useConvoyState();
+  const [joining, setJoining] = useState(false);
+  const join = async (code: string) => {
+    if (joining || demoBlocked()) return;
+    setJoining(true);
+    try {
+      if (await joinConvoy(code)) {
+        // Operator or passenger, as set on Home's Join Convoy tile.
+        let pillion = false;
+        try { pillion = localStorage.getItem('bt.join_role') === 'pillion'; } catch { /* storage unavailable */ }
+        setRideRole(pillion ? 'pillion' : 'operator');
+        toast.success(tr("Joined convoy successfully"));
+        navigate('/lobby');
+      }
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
@@ -177,11 +203,13 @@ export default function CrewConvoys() {
 
             <button
               type="button"
-              onClick={() => navigate('/join-convoy')}
-              className="w-full py-3 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors"
+              onClick={() => join(selected.code)}
+              disabled={joining || locked}
+              className="w-full py-3 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors disabled:opacity-50"
             >
-              {tr("Join with code")}{" "}{selected.code}
+              {joining ? tr("Joining...") : tr("Join Convoy")}
             </button>
+            {locked && <DemoLockNote />}
           </div>
         </div>
       )}
