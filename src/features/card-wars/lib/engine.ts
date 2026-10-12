@@ -4,7 +4,7 @@ import { DAMAGE, LEVEL, PRIZE_REACH, QUICK, damageFor } from './rules';
 import { fieldStrength } from './strength';
 import { flipCategory, tagStrength } from './tagRules';
 import { EVENT_NUMBERS, rollEvent } from './events';
-import { REDLINE } from './redline';
+import { REDLINE, WILD, wildKind } from './redline';
 
 /**
  * Battles against the computer, settled on the phone (player battles are the
@@ -156,6 +156,8 @@ export interface RunOptions {
   daily?: string;
   /** The player's Redline wheel: what their Wildcard can land on. */
   wheel?: BattleCard[];
+  /** The Wildcard plays by the combo rules. */
+  combos?: boolean;
 }
 
 export function createRun(player: BattleCard[], random: () => number = Math.random, options: RunOptions = {}): BattleState {
@@ -165,7 +167,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
   const categories = shuffle([...CATEGORIES], random);
   const penaltyRound = random() < 0.125 ? 1 + Math.floor(random() * 4) : -1;
   const prizes = prizesFor(opponent, player, random);
-  const { level, mode, theme, daily, wheel } = options;
+  const { level, mode, theme, daily, wheel, combos } = options;
   return {
     id: crypto.randomUUID(),
     player,
@@ -182,6 +184,7 @@ export function createRun(player: BattleCard[], random: () => number = Math.rand
     rewardClaimed: false,
     ...(level ? { level } : {}),
     ...(wheel?.length ? { wheel } : {}),
+    ...(combos ? { combos } : {}),
     ...(mode ? { mode } : {}),
     ...(theme ? { theme } : {}),
     ...(daily ? { daily } : {}),
@@ -214,9 +217,13 @@ export function deadlocked(state: BattleState): boolean {
  *   Second chance replays a lost round once in another category, with a
  *     rating bonus on the replay;
  *   Wildcard puts one of the wheel's five Redline cards in the card's place
- *     for the round (unworn, never in Lean, and never one with 0 in the
- *     category). If it wins it hits at full strength; if it loses, the
- *     player's card takes nothing. The wear is still the player's card's.
+ *     for the round (unworn). The wear is still the player's card's. Under
+ *     the combo rules (`combos`, numbers in `WILD`): any of the five, a 0
+ *     included, and Lean only for a bike Redline; a win hits for the tag's
+ *     damage, a loss blows up on the player's own card; a combo on a card of
+ *     its kind gives the best Redline half the dial and adds its effect.
+ *     Before them: never Lean, never a 0, a win hits at full strength and a
+ *     loss costs the player's card nothing.
  */
 export function playRound(previous: BattleState, index: number, tag?: DogTag, random: () => number = Math.random): BattleState {
   if (previous.result || !previous.player[index] || previous.hp[0][index] <= 0) return previous;
@@ -283,10 +290,38 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   // counter lands on one of the wheel's five. It never stops on a card whose rating in that category is 0.
   const armedWild = live?.power === 'wild' && !!s.wheel?.length;
   const cats = armedWild ? allowed.filter((c) => c !== 'lean') : allowed;
-  if (armedWild && category === 'lean') category = cats[Math.floor(random() * cats.length)];
-  const onDial = armedWild ? s.wheel!.filter((c) => !REDLINE.noZero || c.ratings[category] > 0) : [];
-  const dial = onDial.length ? onDial : (armedWild ? s.wheel! : []);
-  const wild = dial.length ? dial[Math.floor(random() * dial.length)] : null;
+  let wild: BattleCard | null = null;
+  // Combo rules: what the tag plays as with this card, the coin a Coin flip combo tossed, and the Redline a Second chance combo lost with first.
+  const kind = armedWild && s.combos ? wildKind(live!, card) : null;
+  let wildHeads: boolean | undefined;
+  let wildFirst: string | undefined;
+  /** Where the rev counter stops: the best Redline for the category has half the dial for a combo, `sure` all of it; a coin picks best or worst. */
+  const spin = (cat: Category, not?: BattleCard | null, sure = false): BattleCard => {
+    const pool = s.wheel!.filter((c) => c !== not && (cat !== 'lean' || c.vehicle === 'bike'));
+    const sorted = pool.slice().sort((x, y) => y.ratings[cat] - x.ratings[cat]);
+    if (sure) return sorted[0];
+    if (kind === 'flip') {
+      wildHeads = random() * 100 < WILD.heads;
+      return wildHeads ? sorted[0] : sorted[sorted.length - 1];
+    }
+    const weights = pool.map((c) => (c === sorted[0] && kind !== 'plain' ? Math.max(1, pool.length - 1) : 1));
+    let r = random() * weights.reduce((x, y) => x + y, 0);
+    for (let k = 0; k < pool.length; k++) {
+      r -= weights[k];
+      if (r < 0) return pool[k];
+    }
+    return pool[pool.length - 1];
+  };
+  if (kind) {
+    // Lean stays when the wheel has a bike to fight it.
+    if (category === 'lean' && !s.wheel!.some((c) => c.vehicle === 'bike')) category = cats[Math.floor(random() * cats.length)];
+    wild = spin(category);
+  } else if (armedWild) {
+    if (category === 'lean') category = cats[Math.floor(random() * cats.length)];
+    const onDial = s.wheel!.filter((c) => !REDLINE.noZero || c.ratings[category] > 0);
+    const dial = onDial.length ? onDial : s.wheel!;
+    wild = dial[Math.floor(random() * dial.length)];
+  }
   if (live?.power === 'heal') s.hp[0][index] = Math.min(100, s.hp[0][index] + tagStrength(live, card));
   const boost = live?.power === 'boost' ? tagStrength(live, card) / 100 : 1;
   // Hard: the computer has the three standard dog tags, one use each, and arms them by feel:
@@ -304,7 +339,7 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   if (rivalTag === 'heal') s.hp[1][rival.i] = Math.min(100, s.hp[1][rival.i] + rivalStrength('heal'));
   const rivalBoost = rivalTag === 'boost' ? rivalStrength('boost') / 100 : 1;
   // Fresh tyres: the catalog's ratings, as new.
-  const mineRatings = wild ? wild.ratings : event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
+  let mineRatings = wild ? wild.ratings : event === 'tyres' ? (CATALOG.find((c) => c.id === card.archetype)?.ratings ?? card.ratings) : card.ratings;
   // A Coin flip sets the category itself: against the rival's card, the best one for this card on heads, the worst on tails.
   let flip: CoinFlip | null = null;
   if (live?.power === 'flip') {
@@ -320,6 +355,18 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     return [mineRatings[c] * rain * boost * replay * crowdMine, rival.c.ratings[c] * rain * crowdTheirs * rivalBoost * rivalReplay];
   };
   let [a, b] = score(category);
+  // A Second chance combo: the lost round is spun again in another category, and lands on the best Redline left.
+  if (kind === 'reroll' && wild && a < b) {
+    const others = cats.filter((c) => c !== category);
+    if (others.length && s.wheel!.length > 1) {
+      first = category;
+      category = others[Math.floor(random() * others.length)];
+      wildFirst = wild.id;
+      wild = spin(category, wild, true);
+      mineRatings = wild.ratings;
+      [a, b] = score(category);
+    }
+  }
   if (live?.power === 'reroll') {
     const others = cats.filter((c) => c !== category);
     if (a < b && others.length) {
@@ -346,9 +393,12 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
 
   let winner: number | null = a === b ? null : a > b ? 0 : 1;
   let damage = damageFor(a, b);
-  // A Redline hits as hard as a hit can, and takes the loss itself: the player's card isn't touched.
-  if (wild && winner === 0 && REDLINE.fullHit) damage = DAMAGE.cap;
-  if (wild && winner === 1 && REDLINE.shield) damage = 0;
+  // Combo rules: a Redline's win hits for the tag's damage, its loss blows up on the player's own card (set once the events have had their say).
+  const fixed = !kind || !wild || winner === null ? -1 : winner === 1 ? WILD.blow[kind] : kind === 'flip' && !wildHeads ? WILD.tailsWin : WILD.win[kind];
+  // Before them: a Redline hits as hard as a hit can, and takes the loss itself: the player's card isn't touched.
+  if (!kind && wild && winner === 0 && REDLINE.fullHit) damage = DAMAGE.cap;
+  if (!kind && wild && winner === 1 && REDLINE.shield) damage = 0;
+  let splash: { card: string; damage: number } | undefined;
   const floor = event === 'safety' ? 1 : 0;
   const hit = (side: number, i: number, d: number) => {
     const before = s.hp[side][i];
@@ -367,7 +417,18 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
   } else {
     if (event === 'tailwind' && damage > 0) damage = Math.min(DAMAGE.cap + 15, damage + EVENT_NUMBERS.tailwind);
     if (event === 'oil' && category === 'corners' && damage > 0) damage = Math.min(100, damage * 2);
+    if (fixed >= 0) damage = fixed;
     if (winner !== null) hit(1 - winner, winner === 0 ? rival.i : index, damage);
+    if (kind && wild && winner === 0) {
+      // The hit spills onto their next card standing (a coin's only on heads).
+      const over = kind === 'flip' && !wildHeads ? 0 : WILD.splash[kind];
+      const next = over > 0 ? s.hp[1].findIndex((v, k) => v > 0 && k !== rival.i) : -1;
+      if (next >= 0) {
+        hit(1, next, over);
+        splash = { card: s.opponent[next].id, damage: over };
+      }
+      if (kind === 'heal') s.hp[0] = s.hp[0].map((v, k) => (k === index ? 100 : v > 0 ? Math.min(100, v + WILD.healDeck) : v));
+    }
   }
   s.log.push({
     round: s.round + 1,
@@ -382,6 +443,10 @@ export function playRound(previous: BattleState, index: number, tag?: DogTag, ra
     ...(rivalTag ? { rivalTag } : {}),
     ...(flip ? { flips: [flip, null] as [CoinFlip, null] } : {}),
     ...(wild ? { wild: wild.id } : {}),
+    ...(kind && wild ? { wildKind: kind } : {}),
+    ...(wildHeads !== undefined ? { wildHeads } : {}),
+    ...(wildFirst ? { wildFirst } : {}),
+    ...(splash ? { splash } : {}),
     ...(event ? { event } : {}),
   });
   s.round++;

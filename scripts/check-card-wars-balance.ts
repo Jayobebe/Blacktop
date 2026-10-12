@@ -5,7 +5,8 @@ import { setEventsEnabled } from '../src/features/card-wars/lib/events';
 import { DAMAGE, LEVEL, PRIZE_REACH, QUICK, RULES, levelPay, levelRounds, repairCost, tierOdds, tierOfPrice, wearLoss } from '../src/features/card-wars/lib/rules';
 import { fieldStrength, ratingFromStrength } from '../src/features/card-wars/lib/strength';
 import { flipCategory, slotRef, tagStrength, vehicleTag } from '../src/features/card-wars/lib/tagRules';
-import { REDLINE, REDLINES, WILD_TAG } from '../src/features/card-wars/lib/redline';
+import { REDLINE, REDLINES, WILD, WILD_TAG, parseWildTag, wildTag } from '../src/features/card-wars/lib/redline';
+import { WILD_COMBOS } from '../src/features/card-wars/types';
 import type { BattleCard, DogTag } from '../src/features/card-wars/types';
 
 // npm run cardwars:check
@@ -251,6 +252,88 @@ const trials = 400;
   assert.ok(!bare.wild);
   assert.equal(slotRef(WILD_TAG), 'wild:', 'The slot as the server takes it');
   console.log(`Wildcard: ${rounds} rounds, landed on all ${landed.size} of the wheel, never in Lean`);
+}
+// ── The combo rules: every spin counts, and each combo does what it says with a card of its kind ──
+{
+  const wheel = ['thrustssc', 'chaparral2j', 'escudo', 'rc166', 'tatra815'].map((id) => REDLINES.find((c) => c.id === id)!);
+  const start = () => createRun(player, rng(7), { wheel, combos: true });
+  const bestFor = (cat: keyof typeof wheel[0]['ratings'], not?: string) => Math.max(...wheel.filter((c) => c.id !== not && (cat !== 'lean' || c.vehicle === 'bike')).map((c) => c.ratings[cat]));
+  const worstFor = (cat: keyof typeof wheel[0]['ratings']) => Math.min(...wheel.filter((c) => cat !== 'lean' || c.vehicle === 'bike').map((c) => c.ratings[cat]));
+  const count: Record<string, number> = {};
+  const say = (k: string) => (count[k] = (count[k] ?? 0) + 1);
+  for (const kind of ['plain', ...WILD_COMBOS, 'other'] as const) {
+    let onBest = 0, spins = 0, heads = 0, zeros = 0;
+    for (let i = 0; i < trials; i++) {
+      const before = start();
+      before.hp = [[50, 40, 0, 100, 95], [100, 100, 0, 100, 100]];
+      const index = [0, 1, 3, 4][i % 4];
+      const card = before.player[index];
+      const other = card.vehicle === 'car' ? 'bike' : 'car';
+      // 'other': a combo with the other kind of card, which has to play as a plain Wildcard.
+      const tag = kind === 'plain' ? WILD_TAG : kind === 'other' ? wildTag('boost', other) : wildTag(kind, card.vehicle);
+      const next = playRound(before, index, tag, rng(9000 + i));
+      const last = next.log[0];
+      if (last.event) continue;
+      const as = kind === 'other' ? 'plain' : kind;
+      assert.equal(last.wildKind, as, `${kind}: played as ${as}`);
+      const red = wheel.find((c) => c.id === last.wild)!;
+      assert.ok(red, 'The Wildcard lands on a card from the wheel');
+      if (last.category === 'lean' || last.first === 'lean') assert.equal(red.vehicle, 'bike', 'Lean is fought by a bike Redline');
+      spins++;
+      if (red.ratings[last.first ?? last.category] === 0) zeros++;
+      if (!last.first && red.ratings[last.category] === bestFor(last.category)) onBest++;
+      const theirs = before.opponent.findIndex((c) => c.id === last.opponent);
+      const nextTheirs = before.hp[1].findIndex((v, k) => v > 0 && k !== theirs);
+      if (as === 'flip') {
+        if (last.wildHeads) heads++;
+        assert.equal(red.ratings[last.category], last.wildHeads ? bestFor(last.category) : worstFor(last.category), 'Coin flip combo: heads the best Redline, tails the worst');
+      }
+      if (as === 'reroll' && last.wildFirst) {
+        assert.ok(last.first && last.first !== last.category && last.category !== 'lean', 'Second chance combo: spun again in another category, never Lean');
+        assert.notEqual(last.wild, last.wildFirst, 'Second chance combo: another Redline');
+        assert.equal(red.ratings[last.category], bestFor(last.category, last.wildFirst), 'Second chance combo: the best Redline left');
+        say('respins');
+      }
+      if (last.winner === 0) {
+        const want = as === 'flip' && !last.wildHeads ? WILD.tailsWin : WILD.win[as];
+        assert.equal(last.damage, want, `${kind}: a win hits for ${want}`);
+        assert.equal(next.hp[1][theirs], Math.max(0, 100 - want));
+        const spill = as === 'flip' && !last.wildHeads ? 0 : WILD.splash[as];
+        if (spill) {
+          assert.deepEqual(last.splash, { card: before.opponent[nextTheirs].id, damage: spill }, `${kind}: ${spill} to their next card standing`);
+          assert.equal(next.hp[1][nextTheirs], 100 - spill);
+          assert.equal(next.hp[1][2], 0, 'A card that is out stays out');
+        } else assert.ok(!last.splash, `${kind}: nothing spills`);
+        const healed = before.hp[0].map((v, k) => (k === index ? 100 : v > 0 ? Math.min(100, v + WILD.healDeck) : v));
+        assert.deepEqual(next.hp[0], as === 'heal' ? healed : before.hp[0], as === 'heal' ? 'Pit medic combo: the card to full, the others standing healed' : `${kind}: a win leaves the player's cards alone`);
+      } else if (last.winner === 1) {
+        assert.equal(last.damage, WILD.blow[as], `${kind}: a loss blows up for ${WILD.blow[as]}`);
+        assert.equal(next.hp[0][index], Math.max(0, before.hp[0][index] - WILD.blow[as]), 'on the card that was played');
+        assert.deepEqual(next.hp[1], before.hp[1], 'and their cards are untouched');
+        if (as === 'reroll') assert.ok(last.wildFirst, 'Second chance combo: only blows up once it has spun again');
+        say('blow-ups');
+      }
+    }
+    if (as(kind) === 'plain') assert.ok(zeros > 0, 'A plain spin can stop on a 0');
+    if (kind === 'boost' || kind === 'heal') assert.ok(onBest / spins > 0.42 && onBest / spins < 0.72, `${kind}: the best Redline has about half the dial (${onBest} of ${spins})`);
+    if (kind === 'flip') assert.ok(Math.abs(heads / spins - WILD.heads / 100) < 0.08, `Coin flip combo: heads ${heads} of ${spins}`);
+  }
+  function as(kind: string) {
+    return kind === 'other' ? 'plain' : kind;
+  }
+  assert.ok(count.respins > 5 && count['blow-ups'] > 20, 'Respins and blow-ups both came up');
+  // Lean stays for a wheel with a bike on it, and is drawn again for one without.
+  const bikesOnly = player.every((c) => c.vehicle === 'bike');
+  const carWheel = REDLINES.filter((c) => c.vehicle === 'car');
+  for (let i = 0; i < trials; i++) {
+    const last = playRound(createRun(player, rng(7), { wheel: carWheel, combos: true }), i % 5, WILD_TAG, rng(12000 + i)).log[0];
+    assert.ok(last.category !== 'lean' && last.first !== 'lean', 'A wheel with no bike never fights Lean');
+  }
+  assert.equal(slotRef(wildTag('boost', 'car')), 'wild:boost.car', 'A combo slot as the server takes it');
+  assert.deepEqual(parseWildTag('flip.bike'), wildTag('flip', 'bike'));
+  assert.equal(parseWildTag('wild.car'), null);
+  assert.equal(REDLINES.find((c) => c.id === 'britten')!.ratings.lean, 100, 'The Britten is 100 Lean');
+  console.log(`Combo Wildcards: plain and the four combos played ${trials} rounds each (${count.respins} respins, ${count['blow-ups']} blow-ups)${bikesOnly ? '' : '; Lean needs an all-bike deck to come up'}`);
 }
 // ── Stalemate: the same card left on both sides can never land a hit ──
 {

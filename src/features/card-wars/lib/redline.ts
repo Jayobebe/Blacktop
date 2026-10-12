@@ -1,4 +1,4 @@
-import type { BattleCard, DogTag } from '../types';
+import { WILD_COMBOS, type BattleCard, type DogTag, type WildCombo } from '../types';
 
 /**
  * Redline cards: one-off machines that never sit in a deck. Five of them are
@@ -28,7 +28,7 @@ const rows: Row[] = [
   ['p91730', 'Porsche', '917/30', 'car', 90, 30, 100, 0, 50],
   ['escudo', 'Suzuki', 'Escudo Pikes Peak', 'car', 0, 30, 90, 50, 100],
   ['tatra815', 'Tatra', '815 Dakar', 'car', 0, 30, 70, 100, 70],
-  ['britten', 'Britten', 'V1000', 'bike', 55, 95, 100, 0, 85],
+  ['britten', 'Britten', 'V1000', 'bike', 55, 100, 100, 0, 85],
   ['rc166', 'Honda', 'RC166', 'bike', 60, 90, 0, 80, 100],
   ['busa311', 'Suzuki', 'Hayabusa Turbo 311', 'bike', 100, 35, 95, 45, 0],
   ['xr750', 'Harley-Davidson', 'XR750', 'bike', 0, 70, 60, 100, 80],
@@ -51,3 +51,39 @@ export const redlineById = (id: string | null | undefined): BattleCard | undefin
 
 /** The Wildcard dog tag: one an account, so one a deck. */
 export const WILD_TAG: DogTag = { id: 'tag-wild', name: 'Wildcard', power: 'wild' };
+
+/**
+ * The combo rules (migration 20261026000000_card_wars_wild_combos.sql; the engine and `cw_action` both do
+ * them, and they replace noZero / fullHit / shield once the server has them). Every spin counts: the dial can
+ * stop on any of the five, a 0 included. A Redline that wins hits the rival's card for `win`; one that loses
+ * blows up on the player's own card for `blow`. Lean is fought only by bike Redlines.
+ *
+ * A combo is a Wildcard crossed with a power, in a car and a bike version. On a deck card of its kind the
+ * best Redline for the category takes half the dial and the combo's own effect applies; on the other kind
+ * it's a plain Wildcard.
+ *   heal: the played card heals to full and every other card standing heals `healDeck`;
+ *   reroll: a loss spins again in another category and lands on the best Redline left;
+ *   flip: a coin, heads `heads` %: the best Redline, and `splash` to the rival's next card; tails the worst (`tailsWin` if it still wins);
+ *   boost: `splash` to the rival's next card.
+ * `streak`: wins in a row with a Wildcard in the deck that unlock the next combo.
+ * Simulated (Overdrive + Pit medic + the tag, the best deck against itself on hard, 6,000 battles): no
+ * Wildcard 61.5 %, plain 63.2 %, the combos 71 to 72.5 %.
+ */
+export const WILD = {
+  win: { plain: 80, heal: 80, reroll: 100, flip: 100, boost: 100 },
+  blow: { plain: 10, heal: 20, reroll: 20, flip: 25, boost: 30 },
+  splash: { plain: 0, heal: 0, reroll: 0, flip: 30, boost: 60 },
+  tailsWin: 80,
+  heads: 75,
+  healDeck: 15,
+  streak: 5,
+} as const;
+
+/** A combo Wildcard as the app holds it. The server lists them as "combo.vehicle". */
+export const wildTag = (combo: WildCombo, vehicle: 'car' | 'bike'): DogTag => ({ id: `tag-wild:${combo}:${vehicle}`, name: 'Wildcard', power: 'wild', combo, vehicle });
+export function parseWildTag(entry: string): DogTag | null {
+  const [combo, vehicle] = entry.split('.');
+  return WILD_COMBOS.includes(combo as WildCombo) && (vehicle === 'car' || vehicle === 'bike') ? wildTag(combo as WildCombo, vehicle) : null;
+}
+/** What an armed Wildcard plays as with this card: its combo on a card of its kind, plain otherwise. */
+export const wildKind = (tag: Pick<DogTag, 'combo' | 'vehicle'>, card: Pick<BattleCard, 'vehicle'>): WildCombo | 'plain' => (tag.combo && tag.vehicle === card.vehicle ? tag.combo : 'plain');

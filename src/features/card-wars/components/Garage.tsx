@@ -26,6 +26,7 @@ import { TAG_SLOTS, type BattleCard as Card, type DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
 import { RedlineWheel } from './RedlineWheel';
+import { WildCombos } from './WildCombos';
 import { UnlockBox } from './UnlockBox';
 import { useDemoLocked } from '@/components/DemoLock';
 import { SpinPanel } from './SpinPanel';
@@ -431,6 +432,8 @@ export function Garage({
 
       {/* The Redline wheel only matters to a deck that carries the Wildcard */}
       {tags.some((t) => t.power === 'wild') && <RedlineWheel frozen={frozen} />}
+      {/* The run towards the next combo Wildcard; one that's unlocked waits here for its version, whatever the deck carries. */}
+      {(tags.some((t) => t.power === 'wild') || shop.wildPending) && <WildCombos />}
 
       {!mustSpin && cardSpins}
       {!mustSpin && tagSpins}

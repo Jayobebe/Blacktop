@@ -30,6 +30,7 @@ const WRITE_RPCS = new Set([
   'cw_market_sell',
   'cw_redline_wheel_set',
   'cw_redline_redeem',
+  'cw_wild_pick',
   'cw_unlock_all',
   'cw_trade_up',
   'cw_swap_open',

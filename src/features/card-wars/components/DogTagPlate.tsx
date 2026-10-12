@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Bike, Car, Ghost } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TAG_ICON, tagEffect, tagKindLine, tagName, tagTitle } from '../lib/tags';
+import { TAG_ICON, tagEffect, tagKindLine, tagLabel, tagTitle } from '../lib/tags';
 import type { BattleCard, DogTag } from '../types';
 import '../card-wars.css';
 
@@ -33,7 +33,7 @@ export function DogTagPlate({
       <span className="cw-plate-hole" aria-hidden />
       <Icon className="cw-plate-icon" aria-hidden />
       <span className="cw-plate-text">
-        <b>{tagName(tag.power)}</b>
+        <b>{tagLabel(tag)}</b>
         {size !== 'chip' && <span className="cw-plate-title">{tagTitle(tag)}</span>}
         <span className="cw-plate-effect">
           {tagEffect(tag, card)}

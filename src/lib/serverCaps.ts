@@ -10,7 +10,7 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
  * itself, even a permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
-export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWarsRepair' | 'cardWarsRedline' | 'cardWarsTiers' | 'worldCountries';
+export type ServerCap = 'trackRecords' | 'cardWars' | 'cardWarsRepair' | 'cardWarsRedline' | 'cardWarsTiers' | 'cardWarsCombos' | 'worldCountries';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
   cardWars: () => supabase.rpc('cw_available' as never),
@@ -20,6 +20,8 @@ const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | n
   cardWarsRedline: () => supabase.rpc('cw_redline_rules' as never),
   // A spin's card drawn by tier, the lowest on a shelf likeliest (migration 20261023000000_card_wars_spin_tiers.sql).
   cardWarsTiers: () => supabase.rpc('cw_tier_rules' as never),
+  // Combo Wildcards and the Wildcard's new round (migration 20261026000000_card_wars_wild_combos.sql).
+  cardWarsCombos: () => supabase.rpc('cw_wild_rules' as never),
   // Blacktop World's globe glowing by accounts per country, and its list (lib/profileCountry.ts).
   worldCountries: () => supabase.rpc('profile_country_counts' as never),
   trackRecords: () =>

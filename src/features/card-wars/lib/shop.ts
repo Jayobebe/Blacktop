@@ -6,7 +6,7 @@ import { hasServerCap } from '@/lib/serverCaps';
 import { DEMO_OWNED, DEMO_TAGS, type ShopCategory } from './catalog';
 import { REDLINES } from './redline';
 import { COPIES, RULES } from './rules';
-import type { Level } from '../types';
+import { WILD_COMBOS, type Level, type WildCombo } from '../types';
 import { getVault, updateVault } from './store';
 import { flushPendingWear } from './wear';
 
@@ -40,6 +40,10 @@ export interface ShopState {
   redlines: string[];
   wheel: string[];
   wildPity: number;
+  /** Combo Wildcards held ("boost.car"), the run of wins towards the next, and one unlocked whose version is still to be chosen. */
+  wildTags: string[];
+  wildStreak: number;
+  wildPending: WildCombo | null;
 }
 
 export interface SpinResult {
@@ -54,7 +58,7 @@ export interface SpinResult {
   spins: number;
 }
 
-const EMPTY: ShopState = { balance: null, owned: [], copies: {}, marketLeft: null, freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false, wildcard: false, redlines: [], wheel: [], wildPity: 0 };
+const EMPTY: ShopState = { balance: null, owned: [], copies: {}, marketLeft: null, freeSpins: 0, freeTagSpins: 0, spins: {}, tags: [], rewardsLeft: null, firstWin: false, streak: 0, dailyDone: false, wildcard: false, redlines: [], wheel: [], wildPity: 0, wildTags: [], wildStreak: 0, wildPending: null };
 
 /** Demo mode: a small collection to play with. Nothing here reaches the server. */
 const DEMO_SHOP: ShopState = {
@@ -74,6 +78,9 @@ const DEMO_SHOP: ShopState = {
   redlines: REDLINES.slice(0, 7).map((c) => c.id),
   wheel: REDLINES.slice(0, 5).map((c) => c.id),
   wildPity: 0,
+  wildTags: ['boost.bike', 'heal.car'],
+  wildStreak: 3,
+  wildPending: null,
 };
 
 let state: ShopState = EMPTY;
@@ -106,12 +113,21 @@ const apply = (d: Raw) =>
     redlines: state.redlines,
     wheel: state.wheel,
     wildPity: state.wildPity,
+    wildTags: state.wildTags,
+    wildStreak: state.wildStreak,
+    wildPending: state.wildPending,
   });
 
-type RedlineRaw = Partial<{ wildcard: boolean; pity: number; wheel: string[]; owned: string[] }>;
+type WildRaw = Partial<{ streak: number; pending: string | null; owned: string[] }>;
+type RedlineRaw = Partial<{ wildcard: boolean; pity: number; wheel: string[]; owned: string[]; combos: WildRaw }>;
+/** The combo Wildcards as the server has them (nothing before the combo migration). */
+const wildOf = (w: WildRaw | null | undefined) =>
+  w
+    ? { wildTags: w.owned ?? [], wildStreak: w.streak ?? 0, wildPending: WILD_COMBOS.includes(w.pending as WildCombo) ? (w.pending as WildCombo) : null }
+    : { wildTags: state.wildTags, wildStreak: state.wildStreak, wildPending: state.wildPending };
 const applyRedline = (d: RedlineRaw | null) => {
   if (!d) return;
-  set({ ...state, wildcard: !!d.wildcard, redlines: d.owned ?? [], wheel: d.wheel ?? [], wildPity: d.pity ?? 0 });
+  set({ ...state, wildcard: !!d.wildcard, redlines: d.owned ?? [], wheel: d.wheel ?? [], wildPity: d.pity ?? 0, ...wildOf(d.combos) });
   // The vault keeps its own copy, so Redline cards show there without the game being opened.
   if ((d.owned ?? []).join() !== (getVault().redlines ?? []).join() || !!getVault().wildcard !== !!d.wildcard) updateVault({ redlines: d.owned ?? [], wildcard: !!d.wildcard });
 };
@@ -120,6 +136,15 @@ export async function refreshRedline() {
   if (isDemoModeActive() || !hasServerCap('cardWarsRedline')) return;
   const { data, error } = await rpc('cw_redline_state');
   if (!error) applyRedline(data as RedlineRaw);
+}
+
+/** Chooses the car or bike version of the combo Wildcard a run of wins unlocked. */
+export async function pickWildVersion(vehicle: 'car' | 'bike'): Promise<boolean> {
+  if (isDemoModeActive()) return false;
+  const { data, error } = await rpc('cw_wild_pick', { _vehicle: vehicle });
+  if (error || !data) return false;
+  applyRedline(data as RedlineRaw);
+  return true;
 }
 
 /** Puts these five Redline cards on the wheel. A string is the server's refusal. */
@@ -247,17 +272,23 @@ export interface BattlePay {
   streakBonus?: number;
   /** The daily challenge, when this battle won it. */
   daily?: number;
+  /** This win finished a run: a combo Wildcard is waiting for its version to be chosen. */
+  comboUnlocked?: boolean;
 }
 
 /** RPM for a finished battle against the computer. The server paces it and counts the day's battles. */
-export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Level): Promise<BattlePay> {
+export async function rewardOffline(result: 'win' | 'draw' | 'loss', level?: Level, wild = false): Promise<BattlePay> {
   if (isDemoModeActive()) return { rpm: 0, bonus: 0 };
   // The level sets the pay (easy none, medium half, hard all of it) where the server knows levels.
-  const { data, error } = level ? await rpc('cw_reward_battle', { _result: result, _level: level }) : await rpc('cw_reward_offline', { _result: result });
+  // `wild`: the deck carried a Wildcard, so the battle counts towards the next combo (only a server with combos takes it).
+  const { data, error } = level
+    ? await rpc('cw_reward_battle', { _result: result, _level: level, ...(wild && hasServerCap('cardWarsCombos') ? { _wild: true } : {}) })
+    : await rpc('cw_reward_offline', { _result: result });
   if (error || !data) return { rpm: 0, bonus: 0 };
-  const d = data as { rpm: number; bonus?: number; balance: number; left?: number; streak?: number; streakBonus?: number };
-  set({ ...state, balance: d.balance, rewardsLeft: typeof d.left === 'number' ? d.left : state.rewardsLeft, firstWin: state.firstWin && !(d.bonus && d.bonus > 0), streak: typeof d.streak === 'number' ? d.streak : state.streak });
-  return { rpm: d.rpm, bonus: d.bonus ?? 0, streak: d.streak, streakBonus: d.streakBonus ?? 0 };
+  const d = data as { rpm: number; bonus?: number; balance: number; left?: number; streak?: number; streakBonus?: number; wild?: WildRaw };
+  const comboUnlocked = !!d.wild?.pending && !state.wildPending;
+  set({ ...state, balance: d.balance, rewardsLeft: typeof d.left === 'number' ? d.left : state.rewardsLeft, firstWin: state.firstWin && !(d.bonus && d.bonus > 0), streak: typeof d.streak === 'number' ? d.streak : state.streak, ...wildOf(d.wild) });
+  return { rpm: d.rpm, bonus: d.bonus ?? 0, streak: d.streak, streakBonus: d.streakBonus ?? 0, comboUnlocked };
 }
 
 /** The daily challenge, won: pays once a day (0 when today's is already paid, or the server didn't answer). */
@@ -320,6 +351,9 @@ export async function repairCard(id: string, to = 100): Promise<string | null> {
   markNew(to);
   return null;
 }
+
+/** The shop as it stands now, outside a render. */
+export const getShop = (): ShopState => state;
 
 export function useShop(): ShopState {
   const real = useSyncExternalStore(

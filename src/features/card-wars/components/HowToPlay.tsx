@@ -1,11 +1,12 @@
 import type { ElementType, ReactNode } from 'react';
-import { Coins, Dices, Flame, Layers, Swords, Trophy, Users, Wrench, Zap } from 'lucide-react';
+import { Coins, Dices, Flame, Layers, Sparkles, Swords, Trophy, Users, Wrench, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { tr } from '@/lib/i18n';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
 import { DAMAGE, RULES, showRpm } from '../lib/rules';
-import { TAG_ICON, shownPowers, tagDescription, tagName } from '../lib/tags';
+import { TAG_ICON, combosLive, comboDescription, shownPowers, tagDescription, tagLabel, tagName } from '../lib/tags';
+import { WILD_COMBOS } from '../types';
 
 const SEEN_KEY = 'bt.card_wars_howto';
 
@@ -79,6 +80,19 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
               </span>
             );
           })}
+          {combosLive() && shownPowers().includes('wild') && (
+            <>
+              <span>{tr("A combo Wildcard works with its own kind of card, car or bike: there your best Redline for the category has half the dial. With the other kind it plays as a plain Wildcard.")}</span>
+              {WILD_COMBOS.map((combo) => (
+                <span key={combo} className="flex items-start gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-accent shrink-0 mt-px" />
+                  <span>
+                    <b className="text-foreground">{tagLabel({ power: 'wild', combo })}</b> {comboDescription(combo)}
+                  </span>
+                </span>
+              ))}
+            </>
+          )}
           <span>
             {tr("A deck carries three, each a different power. Arm one before you play; each works once per battle. A tag won on a spin is tied to a vehicle: that sets how strong it is, and it does more with the same kind of vehicle. One taken on a Track Day board works with any.")}
           </span>

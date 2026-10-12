@@ -28,6 +28,15 @@ export interface OnlineRound {
   /** The Redline card each side's Wildcard landed on. */
   w1?: string | null;
   w2?: string | null;
+  /** Combo rules: what each Wildcard played as, a Coin flip combo's toss, the Redline a Second chance combo lost with first, and what the hit spilled onto the other side's next card. */
+  wk1?: string | null;
+  wk2?: string | null;
+  wh1?: boolean | null;
+  wh2?: boolean | null;
+  wf1?: string | null;
+  wf2?: string | null;
+  sp1?: { c: string; d: number } | null;
+  sp2?: { c: string; d: number } | null;
 }
 
 /** A player battle from this player's side. The server settles every round (`cw_action`). */

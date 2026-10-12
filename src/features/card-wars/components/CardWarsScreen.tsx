@@ -23,13 +23,17 @@ import { redlineById } from '../lib/redline';
 import { ownRatings, ratingsArray, ratingsFrom } from '../lib/ownRatings';
 import { computerFacts, onlineFacts, refreshProgress, reportContracts } from '../lib/progress';
 import { LEVEL, RULES, dailyChallenge, showRpm } from '../lib/rules';
-import { claimDaily, claimPrize, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
+import { claimDaily, claimPrize, getShop, refreshRedline, refreshShop, rewardOffline, setRpm, useShop, type BattlePay } from '../lib/shop';
 import { claimReward, getVault, updateVault, useVault } from '../lib/store';
 import { slotRef, tagStrength } from '../lib/tagRules';
 import { allTags } from '../lib/tags';
 import { conditionOf, flushPendingWear, queueWear, roundsFought, syncWear, wearAfterRun, withWear } from '../lib/wear';
 import { CATEGORIES, POWERS, TAG_SLOTS, type BattleCard as Card, type Category, type CoinFlip, type DogTag, type Level, type QuickMode, type TagPower } from '../types';
-import { BattleArena, type Reveal } from './BattleArena';
+import { BattleArena, type Reveal, type WildInfo } from './BattleArena';
+
+/** A side's Wildcard in a player battle's log, as the arena tells it. */
+const wildInfoOf = (kind?: string | null, heads?: boolean | null, splash?: { d: number } | null): WildInfo | null =>
+  kind ? { kind: kind as WildInfo['kind'], heads: heads ?? undefined, splash: splash?.d } : null;
 import { BattleResult } from './BattleResult';
 import { Garage } from './Garage';
 import { HowToPlay } from './HowToPlay';
@@ -141,7 +145,10 @@ export function CardWarsScreen() {
     return cards;
   }, [vault.rewards, vault.unlocks, own, collected, peaksHidden, shop.owned, drives]);
 
-  const tags = useMemo(() => allTags(shop.tags, spectres, shop.wildcard), [shop.tags, spectres, shop.wildcard]);
+  const combos = useServerCap('cardWarsCombos');
+  // `combos` is read by allTags (the combo Wildcards only once the server plays them).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const tags = useMemo(() => allTags(shop.tags, spectres, shop.wildcard, shop.wildTags), [shop.tags, spectres, shop.wildcard, shop.wildTags, combos]);
   // The Redline wheel: what a Wildcard in the deck can land on.
   const wheel = useMemo(() => shop.wheel.map((id) => redlineById(id)).filter((c): c is Card => !!c), [shop.wheel]);
   const wornPool = useMemo(() => pool.map((c) => withWear(c, conditionOf(vault.wear, c.id))), [pool, vault.wear]);
@@ -186,7 +193,10 @@ export function CardWarsScreen() {
     void reportContracts(r.id, computerFacts(r, r.player.every((c) => (c.condition ?? 100) >= 100))).then((earned) => {
       if (earned > 0) toast.success(tr("Contract complete: +{0} RPM", [showRpm(earned)]));
     });
-    void rewardOffline(r.result, r.level).then(async (paid) => {
+    // A Wildcard in the deck (and dog tags in play) counts the battle towards the next combo.
+    const wildDeck = r.mode !== 'bare' && deckTags.some((t) => t.power === 'wild');
+    void rewardOffline(r.result, r.level, wildDeck).then(async (paid) => {
+      if (paid.comboUnlocked) toast.success(tr("Combo Wildcard unlocked!"), { description: tr("Choose its version on the deck page.") });
       // Today's challenge, won: its bonus comes on top, once.
       const claim = r.daily && r.result === 'win' && r.daily === dailyChallenge().day ? await claimDaily() : null;
       const daily = claim?.rpm ?? 0;
@@ -290,6 +300,20 @@ export function CardWarsScreen() {
     }
   }, [online?.status, online?.balance, online?.stake]);
 
+  // A finished player battle with a Wildcard in the deck moves the run towards the next combo: ask the server where it stands.
+  const counted = useRef('');
+  useEffect(() => {
+    if (online?.status !== 'finished' || !online.code || counted.current === online.code || !combos) return;
+    counted.current = online.code;
+    if (!deckTags.some((t) => t.power === 'wild')) return;
+    const had = shop.wildPending;
+    void refreshRedline().then(() => {
+      if (!had && getShop().wildPending) toast.success(tr("Combo Wildcard unlocked!"), { description: tr("Choose its version on the deck page.") });
+    });
+    // Once per finished battle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online?.status, online?.code, combos]);
+
   // A player battle that ended with a card raptured: it beams back into the deck at home.
   const beamed = useRef('');
   useEffect(() => {
@@ -346,6 +370,9 @@ export function CardWarsScreen() {
           flips: last.f1 || last.f2 ? (first ? [flipOf(last.f1), flipOf(last.f2)] : [flipOf(last.f2), flipOf(last.f1)]) : undefined,
           raptured: last.r1 || last.r2 ? (first ? [last.r1 ?? null, last.r2 ?? null] : [last.r2 ?? null, last.r1 ?? null]) : undefined,
           ...(last.w1 || last.w2 ? { wild: [redlineById(first ? last.w1 : last.w2) ?? null, redlineById(first ? last.w2 : last.w1) ?? null] as [Card | null, Card | null], wheel } : {}),
+          ...(last.wk1 || last.wk2
+            ? { wildInfo: (first ? [wildInfoOf(last.wk1, last.wh1, last.sp1), wildInfoOf(last.wk2, last.wh2, last.sp2)] : [wildInfoOf(last.wk2, last.wh2, last.sp2), wildInfoOf(last.wk1, last.wh1, last.sp1)]) as [WildInfo | null, WildInfo | null] }
+            : {}),
         });
         return;
       }
@@ -428,6 +455,7 @@ export function CardWarsScreen() {
       raptured: last.raptured,
       flips: last.flips,
       ...(last.wild && redlineById(last.wild) ? { wild: [redlineById(last.wild)!, null] as [Card, null], wheel: next.wheel } : {}),
+      ...(last.wildKind ? { wildInfo: [{ kind: last.wildKind, heads: last.wildHeads, splash: last.splash?.damage }, null] as [WildInfo, null] } : {}),
     });
     updateVault({ run: next });
   }
@@ -474,7 +502,7 @@ export function CardWarsScreen() {
     setTag(null);
     setReveal(null);
     setSetup(false);
-    updateVault({ run: createRun(deck, Math.random, { level: level ?? 'medium', wheel }) });
+    updateVault({ run: createRun(deck, Math.random, { level: level ?? 'medium', wheel, combos }) });
     go('computer');
   }
 
@@ -483,7 +511,7 @@ export function CardWarsScreen() {
     if (riding || locked || cards.length !== 5) return;
     setTag(null);
     setReveal(null);
-    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme, wheel, ...(quickDaily ? { daily: quickDaily.day } : {}) }) });
+    updateVault({ run: createRun(cards, Math.random, { level: 'hard', mode, theme, wheel, combos, ...(quickDaily ? { daily: quickDaily.day } : {}) }) });
     setQuickDaily(null);
     go('computer');
   }

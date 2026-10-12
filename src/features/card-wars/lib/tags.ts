@@ -3,9 +3,9 @@ import { hasServerCap } from '@/lib/serverCaps';
 import type { SpectreCard } from '@/features/cards';
 import { tr } from '@/lib/i18n';
 import { STARTER_TAGS } from './catalog';
-import { REDLINE, WILD_TAG } from './redline';
+import { REDLINE, WILD, WILD_TAG, parseWildTag } from './redline';
 import { parseOwnedTag, tagMatches, tagStrength } from './tagRules';
-import type { BattleCard, DogTag, TagPower } from '../types';
+import type { BattleCard, DogTag, TagPower, WildCombo } from '../types';
 
 export { tagMatches, tagStrength };
 export type { TagPower };
@@ -14,6 +14,9 @@ export type { TagPower };
 export const TAG_ORDER: TagPower[] = ['boost', 'heal', 'reroll', 'flip', 'wild'];
 /** The powers the app talks about: the Wildcard only once the server has it. */
 export const shownPowers = (): TagPower[] => TAG_ORDER.filter((p) => p !== 'wild' || hasServerCap('cardWarsRedline'));
+
+/** The Wildcard plays by the combo rules (the server has them). */
+export const combosLive = (): boolean => hasServerCap('cardWarsCombos');
 
 export const TAG_ICON: Record<TagPower, LucideIcon> = { reroll: RefreshCw, heal: Heart, boost: Zap, flip: CircleDollarSign, wild: Gauge };
 
@@ -32,8 +35,32 @@ export function tagName(power: TagPower): string {
   }
 }
 
+/** A tag's own name: its power's, or for a combo Wildcard the two it crosses. */
+export const tagLabel = (tag: Pick<DogTag, 'power' | 'combo'>): string => (tag.combo ? tr("{0} × {1}", [tagName('wild'), tagName(tag.combo)]) : tagName(tag.power));
+
+/** What a combo Wildcard does with a card of its kind, as a sentence. */
+export function comboDescription(combo: WildCombo): string {
+  switch (combo) {
+    case 'heal':
+      return tr("A win hits for {0}, heals the card you played to full and every other card of yours by {1}. A loss blows up for {2}.", [WILD.win.heal, WILD.healDeck, WILD.blow.heal]);
+    case 'reroll':
+      return tr("A win hits for {0}. A loss spins again in another category and lands on your best Redline left; lose that too and it blows up for {1}.", [WILD.win.reroll, WILD.blow.reroll]);
+    case 'flip':
+      return tr("A coin, heads {0}% of the time. Heads lands on your best Redline: {1}, and {2} to their next card. Tails lands on your worst: {3} if it still wins. A loss blows up for {4}.", [WILD.heads, WILD.win.flip, WILD.splash.flip, WILD.tailsWin, WILD.blow.flip]);
+    default:
+      return tr("A win hits for {0}, and {1} more goes to their next card. A loss blows up for {2}.", [WILD.win.boost, WILD.splash.boost, WILD.blow.boost]);
+  }
+}
+
 /** What a tag does in a few words, for the card it would be played with (or in general). */
 export function tagEffect(tag: DogTag, card?: BattleCard | null): string {
+  // A combo with the other kind of card is a plain Wildcard.
+  if (tag.power === 'wild' && tag.combo && (!card || card.vehicle === tag.vehicle)) {
+    if (tag.combo === 'heal') return tr("{0}, and your deck heals", [WILD.win.heal]);
+    if (tag.combo === 'reroll') return tr("{0}, and a loss spins again", [WILD.win.reroll]);
+    if (tag.combo === 'flip') return tr("Heads {0}%: your best Redline", [WILD.heads]);
+    return tr("{0}, then {1} to their next card", [WILD.win.boost, WILD.splash.boost]);
+  }
   if (tag.power === 'wild') return tr("A Redline card fights");
   const strength = tagStrength(tag, card);
   if (tag.power === 'boost') return tr("Rating ×{0}", [String(strength / 100)]);
@@ -52,7 +79,9 @@ export function tagDescription(power: TagPower): string {
     case 'flip':
       return tr("Flips a coin for the category: heads, the one where your card has the biggest edge over theirs; tails, the one where it's furthest behind.");
     case 'wild':
-      return tr("The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.");
+      return combosLive()
+        ? tr("The category is drawn, then the rev counter lands on one of your five Redline cards, a 0 included, and it fights the round in your card's place. A win hits for {0}; a loss blows up on your own card for {1}.", [WILD.win.plain, WILD.blow.plain])
+        : tr("The category is drawn, then the rev counter lands on one of your five Redline cards, never one with 0 in that category, and it fights the round in your card's place. A win hits at full strength; a loss costs your card nothing.");
     default:
       return tr("If you lose the round, it's replayed once in another category.");
   }
@@ -68,7 +97,9 @@ export function tagSourceLine(power: TagPower): string {
     case 'flip':
       return tr("A Coin flip lands heads more often the higher its vehicle's Speed.");
     case 'wild':
-      return tr("Only from paid spins on the F1 and MotoGP shelves: {0}% a spin, certain within {1} spins. One a deck.", [REDLINE.odds, REDLINE.pity]);
+      return combosLive()
+        ? tr("Only from paid spins on the F1 and MotoGP shelves: {0}% a spin, certain within {1} spins. One a deck. Win {2} battles in a row with it in your deck to unlock a combo.", [REDLINE.odds, REDLINE.pity, WILD.streak])
+        : tr("Only from paid spins on the F1 and MotoGP shelves: {0}% a spin, certain within {1} spins. One a deck.", [REDLINE.odds, REDLINE.pity]);
     default:
       return tr("A Second chance is as strong as its vehicle's Corners.");
   }
@@ -84,7 +115,8 @@ export function tagTitle(tag: DogTag): string {
 
 /** The line under a tag's title: what it does more with. */
 export function tagKindLine(tag: DogTag): string {
-  if (tag.power === 'wild') return tr("Never Lean");
+  if (tag.power === 'wild' && tag.combo) return tag.vehicle === 'car' ? tr("The combo works with a car") : tr("The combo works with a bike");
+  if (tag.power === 'wild') return combosLive() ? tr("Lean only with a bike Redline") : tr("Never Lean");
   if (!tag.vehicle) return tr("The same with any card");
   if (tag.vehicle === 'any') return tr("Earned on track: stronger with any card");
   return tag.vehicle === 'car' ? tr("Stronger with a car") : tr("Stronger with a bike");
@@ -97,10 +129,12 @@ export function tagKindLine(tag: DogTag): string {
  * (none until its card has been turned over) and, being earned, its bonus
  * with cars and bikes alike.
  */
-export function allTags(owned: string[], spectres: SpectreCard[], wildcard = false): DogTag[] {
+export function allTags(owned: string[], spectres: SpectreCard[], wildcard = false, combos: string[] = []): DogTag[] {
   const track: DogTag[] = spectres.flatMap((s) => (s.power ? [spectreTag(s)] : []));
   const won = owned.flatMap((entry) => parseOwnedTag(entry) ?? []);
-  return [...STARTER_TAGS, ...(wildcard ? [WILD_TAG] : []), ...track, ...won];
+  // The Wildcard and its combos: one family, one a deck.
+  const wild = wildcard ? [WILD_TAG, ...(combosLive() ? combos.flatMap((entry) => parseWildTag(entry) ?? []) : [])] : [];
+  return [...STARTER_TAGS, ...wild, ...track, ...won];
 }
 
 /** The dog tag a Spectre gives, once its power has been spun for. */
@@ -117,7 +151,7 @@ export function spectreTag(s: SpectreCard & { power?: TagPower }): DogTag {
  */
 export function tagPoints(tag: DogTag): number {
   // A Redline's 100 in the right round is worth more than any other tag; its 0 in the wrong one, less than none.
-  if (tag.power === 'wild') return 6;
+  if (tag.power === 'wild') return combosLive() ? (tag.combo ? 8 : 3) : 6;
   const s = tagStrength(tag);
   if (tag.power === 'boost') return Math.round((s - 100) / 10);
   if (tag.power === 'heal') return Math.round(s / 5);

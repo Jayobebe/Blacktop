@@ -8,8 +8,8 @@ import { isThermal } from '@/lib/thermal';
 import { cn } from '@/lib/utils';
 import { CATEGORY_ICON, CATEGORY_ORDER, categoryLabel } from '../lib/ratings';
 import { WEAR_ROUND, wearLoss } from '../lib/rules';
-import { TAG_ICON, TAG_ORDER, tagEffect, tagName } from '../lib/tags';
-import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower } from '../types';
+import { TAG_ICON, TAG_ORDER, tagEffect, tagLabel, tagName } from '../lib/tags';
+import type { BattleCard as Card, Category, CoinFlip, DogTag, TagPower, WildCombo } from '../types';
 import { CardBurn } from './CardBurn';
 import { Coin } from './Coin';
 import { RevCounter } from './RevCounter';
@@ -44,6 +44,15 @@ export interface Reveal {
   /** The Redline card each side's Wildcard landed on (it fights in that side's card's place), and the player's wheel. */
   wild?: [Card | null, Card | null];
   wheel?: Card[];
+  /** Combo rules: what each side's Wildcard played as, and what it did. */
+  wildInfo?: [WildInfo | null, WildInfo | null];
+}
+
+/** One side's Wildcard in a round: what it played as, a Coin flip combo's toss, and what its hit spilled onto the next card. */
+export interface WildInfo {
+  kind: WildCombo | 'plain';
+  heads?: boolean;
+  splash?: number;
 }
 
 type Phase = 'idle' | 'event' | 'beam' | 'coin' | 'spin' | 'replay' | 'wild' | 'clash' | 'done' | 'return';
@@ -351,6 +360,29 @@ export function BattleArena({
   const wildMine = (wildOn && reveal?.wild?.[0]) || null;
   const wildTheirs = (wildOn && reveal?.wild?.[1]) || null;
   const revSide = reveal?.wild?.[0] ? 0 : 1;
+  // Combo rules: a Redline's round has its own verdict (a win for the tag's damage, a loss that blows up on its own card).
+  const myWild = reveal?.wildInfo?.[0] ?? null;
+  const theirWild = reveal?.wildInfo?.[1] ?? null;
+  const wildVerdict =
+    !reveal || reveal.winner === null || reveal.event === 'photo' || reveal.event === 'redflag'
+      ? null
+      : reveal.winner === 0
+        ? myWild
+          ? myWild.splash
+            ? tr("Your Redline wins: {0} damage, and {1} to their next card", [reveal.damage, myWild.splash])
+            : myWild.kind === 'heal'
+              ? tr("Your Redline wins: {0} damage, and your deck heals", [reveal.damage])
+              : tr("Your Redline wins: {0} damage dealt", [reveal.damage])
+          : theirWild
+            ? tr("Their Redline blew up: their card takes {0}", [reveal.damage])
+            : null
+        : theirWild
+          ? theirWild.splash
+            ? tr("Their Redline wins: {0} damage, and {1} to your next card", [reveal.damage, theirWild.splash])
+            : null
+          : myWild
+            ? tr("Your Redline blew up: your card takes {0}", [reveal.damage])
+            : null;
   // What the card being looked at has cost itself so far this battle.
   const focusRounds = focusCard && rounds && focus !== null ? rounds[focus] ?? 0 : null;
   const focusWear = focusCard && focusRounds !== null ? { rounds: focusRounds, loss: wearLoss(focusCard.spec === 'race', focusRounds), hard: focusRounds >= WEAR_ROUND.past } : null;
@@ -633,8 +665,18 @@ export function BattleArena({
                             : tr("Your rival flips tails: their worst category against your card, {0}", [categoryLabel(theirFlip?.category ?? reveal.category)])
                     : phase === 'replay'
                 ? tr("Lost on {0}. Drawing again…", [categoryLabel(reveal.first ?? reveal.category)])
+                : phase === 'wild' && (myWild ?? theirWild)?.kind === 'flip'
+                  ? myWild
+                    ? myWild.heads
+                      ? tr("Heads: your best Redline")
+                      : tr("Tails: your worst Redline")
+                    : theirWild?.heads
+                      ? tr("Heads: their best Redline")
+                      : tr("Tails: their worst Redline")
                 : phase !== 'done' && phase !== 'return'
                   ? tr("Drawing the category…")
+                  : wildVerdict
+                    ? wildVerdict
                   : reveal.winner === 0
                     ? theirsOut
                       ? tr("Knocked out! {0} damage dealt", [reveal.damage])
@@ -666,7 +708,7 @@ export function BattleArena({
                 }}
               >
                 <Swords className="w-5 h-5" />
-                {armed ? tr("Play with {0}", [tagName(armed.power)]) : tr("Play this card")}
+                {armed ? tr("Play with {0}", [tagLabel(armed)]) : tr("Play this card")}
               </Button>
             </>
           ) : theirsCard && !submitted ? (
@@ -698,7 +740,7 @@ export function BattleArena({
             >
               <Icon aria-hidden />
               <span>
-                <b>{tagName(t.power)}</b>
+                <b>{tagLabel(t)}</b>
                 <small>{used ? tr("Used") : tagEffect(t, focusCard)}</small>
               </span>
             </button>
@@ -709,7 +751,7 @@ export function BattleArena({
       <section className="cw-side cw-side-mine">
         <p className="cw-side-label">
           <span>{tr("Your hand")}</span>
-          <span>{armed ? tr("{0} armed for this round", [tagName(armed.power)]) : tr("Arm a dog tag before you play")}</span>
+          <span>{armed ? tr("{0} armed for this round", [tagLabel(armed)]) : tr("Arm a dog tag before you play")}</span>
         </p>
         <div className="cw-strip">
           {player.map((c, i) => (

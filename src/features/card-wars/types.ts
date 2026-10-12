@@ -7,6 +7,9 @@ export const POWERS = ['reroll', 'heal', 'boost', 'flip', 'wild'] as const;
 /** A deck carries three dog tags, each a different power: one of the four stays at home. */
 export const TAG_SLOTS = 3;
 export type TagPower = typeof POWERS[number];
+/** The combo Wildcards: a Wildcard crossed with one of the four powers (each in a car and a bike version). */
+export const WILD_COMBOS = ['heal', 'reroll', 'flip', 'boost'] as const;
+export type WildCombo = typeof WILD_COMBOS[number];
 
 export interface BattleCard {
   bank?: CardBank;
@@ -39,6 +42,8 @@ export interface DogTag {
   vehicle?: 'car' | 'bike' | 'any';
   /** A tag won on a spin: the catalog vehicle it's tied to, which sets how strong it is. */
   card?: string;
+  /** A combo Wildcard: the power it's crossed with. Its `vehicle` is the kind of deck card the combo works on. */
+  combo?: WildCombo;
   /** A tag taken from a rider on a Track Day board. */
   spectre?: import('@/features/cards').SpectreCard;
 }
@@ -72,6 +77,14 @@ export interface RoundLog {
   raptured?: [string | null, string | null];
   /** The Redline card the player's Wildcard landed on: it fought the round in `player`'s place. */
   wild?: string;
+  /** Combo rules: what the Wildcard was played as (a combo on the other kind of card is a plain one). */
+  wildKind?: WildCombo | 'plain';
+  /** A Coin flip combo's toss: heads lands on the best Redline, tails on the worst. */
+  wildHeads?: boolean;
+  /** A Second chance combo spun again: the Redline that lost first. */
+  wildFirst?: string;
+  /** What the hit spilled onto the rival's next card. */
+  splash?: { card: string; damage: number };
 }
 
 /** How hard the computer plays, and with it what a battle pays and wears. */
@@ -109,6 +122,8 @@ export interface BattleState {
   rivalUsed?: TagPower[];
   /** The player's Redline wheel as the battle began (the Wildcard lands on one of these). */
   wheel?: BattleCard[];
+  /** The Wildcard plays by the combo rules (the server has them: cap `cardWarsCombos`). */
+  combos?: boolean;
 }
 
 /** What a finished battle against the computer did to the deck, waiting to reach the server. */
@@ -146,4 +161,6 @@ export interface VaultState {
   owned?: string[];
   ownedTags?: string[];
   wildcard?: boolean;
+  /** The combo Wildcards held ("boost.car"). */
+  wildTags?: string[];
 }

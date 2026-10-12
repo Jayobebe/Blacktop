@@ -54,9 +54,10 @@ export function parseOwnedTag(entry: string): DogTag | null {
  * How a tag is named to the server for a player battle: the vehicle it's tied
  * to (checked against what the player owns), "~all" for a tag taken on a track
  * (plain strength, with the bonus whatever it's played with; "~car" / "~bike"
- * before builds), or nothing for a plain one.
+ * before builds), or nothing for a plain one. A combo Wildcard is "combo.vehicle".
  */
-export const tagRef = (tag: DogTag): string => tag.card ?? (tag.vehicle ? (tag.vehicle === 'any' ? '~all' : `~${tag.vehicle}`) : '');
+export const tagRef = (tag: DogTag): string =>
+  tag.power === 'wild' ? (tag.combo ? `${tag.combo}.${tag.vehicle}` : '') : (tag.card ?? (tag.vehicle ? (tag.vehicle === 'any' ? '~all' : `~${tag.vehicle}`) : ''));
 
 /** A deck slot as the server takes it under builds: "power:ref", or "-" for an empty one. */
 export const slotRef = (tag: DogTag | undefined): string => (tag ? `${tag.power}:${tagRef(tag)}` : '-');
