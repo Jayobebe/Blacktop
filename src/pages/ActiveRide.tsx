@@ -300,6 +300,21 @@ export default function ActiveRide() {
   // Update ref on each render to avoid stale closures
   rideStateRef.current = rideState;
 
+  // A ride that set off alone from an unlocked lobby becomes a convoy ride the moment someone joins it: until
+  // this, the leader's phone stayed a solo ride, so the member list, voice and the shared route never came on
+  // and they couldn't see that anyone had joined.
+  const others = convoy.members.length - 1;
+  useEffect(() => {
+    if (!rideState.isActive || rideState.isConvoyMode || !convoy.isActive || !convoy.id || others < 1) return;
+    attachRideToConvoy(convoy.id);
+    const joined = convoy.members.find((m) => m.userId !== user?.id);
+    toast.success(joined?.name ? tr("{0} joined your ride", [joined.name]) : tr("A rider joined your ride"), {
+      description: tr("You're riding as a convoy now: voice, the member list and the route are shared."),
+    });
+    // The members are read when the count changes; the list itself changes every few seconds with their positions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rideState.isActive, rideState.isConvoyMode, convoy.isActive, convoy.id, others]);
+
   // Backing out of Active Ride during a convoy returns the rider to the lobby
   // (not Home), so they can rejoin the running ride from there.
   useEffect(() => {
@@ -743,6 +758,12 @@ export default function ActiveRide() {
       } else {
         cleanupPromises.push(resetNavigationStatus());
       }
+    } else if (convoyId && wasLeader && convoy.isActive) {
+      // A ride that set off from an unlocked solo lobby and nobody joined: take it off the crew's list
+      // and close it, or it would sit there open with nobody riding.
+      cleanupPromises.push(
+        Promise.resolve(supabase.from('convoys').update({ is_listed: false } as any).eq('id', convoyId)).then(() => leaveConvoy()),
+      );
     }
 
     // Wait for cleanup but don't block UI

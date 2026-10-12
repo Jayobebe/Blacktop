@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { noteLocationGranted } from '@/lib/locationGrant';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
+import { getExperience } from '@/features/experience/lib/profile';
+import { SpeedFilter, speedLimitsFor } from '../lib/speedFilter';
 
 const SPEED_SMOOTHING_FACTOR = 0.75; // Higher = more responsive to current reading
 const MIN_SPEED_THRESHOLD = 0.3; // mph - very low threshold to catch movement early
@@ -240,6 +242,8 @@ App.addListener('appStateChange', ({ isActive }) => {
 let lastPosition: { lat: number; lng: number; timestamp: number } | null = null;
 let rideStartedAtMs: number | null = restoredState?.startedAt ? new Date(restoredState.startedAt).getTime() : null;
 let smoothedSpeed = 0;
+// What a fix's speed is allowed to be, for the vehicle being ridden (lib/speedFilter).
+const speedFilter = new SpeedFilter(speedLimitsFor(getExperience().vehicles[0]));
 let currentConvoyId: string | null = null;
 let isPaused = restoredState?.isPaused ?? false;
 let totalPausedTime = 0;
@@ -397,20 +401,10 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
   const deviceSpeedMph = deviceSpeed != null && deviceSpeed >= 0 ? deviceSpeed * 2.237 : null;
 
   // Prefer device speed - it's hardware-measured and more accurate than position deltas
-  let currentSpeed: number;
-  let speedSource: 'device' | 'calculated' | 'none' = 'none';
-  
-  if (deviceSpeedMph != null) {
-    // Trust device speed even at low values (it can accurately report 0)
-    currentSpeed = deviceSpeedMph;
-    speedSource = 'device';
-  } else if (calculatedSpeed > 0) {
-    // Fall back to calculated speed only when device speed unavailable
-    currentSpeed = calculatedSpeed;
-    speedSource = 'calculated';
-  } else {
-    currentSpeed = 0;
-  }
+  // The phone's own speed when it gives one (it can truly report 0), else worked out over the last few
+  // seconds of fixes; either way held to what the vehicle could do, so a GPS spike never reaches the screen.
+  const currentSpeed = speedFilter.next({ lat: latitude, lng: longitude, t: timestamp, deviceMph: deviceSpeedMph, accuracy: accuracy ?? null });
+  const speedSource = speedFilter.source;
 
   // Adaptive smoothing: less smoothing when speed is changing rapidly (acceleration/braking)
   const speedDelta = Math.abs(currentSpeed - smoothedSpeed);
@@ -423,6 +417,8 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
 
   // Apply minimum threshold to filter GPS drift when stationary
   const displaySpeed = smoothedSpeed < MIN_SPEED_THRESHOLD ? 0 : Math.round(smoothedSpeed);
+
+  const confirmedSpeed = speedFilter.confirmed(displaySpeed);
 
   notifyConvoySyncOfSpeed(displaySpeed);
 
@@ -447,7 +443,8 @@ function handlePositionUpdate(latitude: number, longitude: number, deviceSpeed: 
   setRideState(prev => ({
     ...prev,
     currentSpeed: displaySpeed,
-    maxSpeed: Math.max(prev.maxSpeed, displaySpeed),
+    // A top speed needs two readings running to agree.
+    maxSpeed: Math.max(prev.maxSpeed, confirmedSpeed),
     distance: prev.distance + distanceIncrement,
     gpsPoints: [...prev.gpsPoints, gpsPoint],
     gpsStatus: { accuracy: accuracy ?? null, lastUpdate: timestamp, source: speedSource },
@@ -974,6 +971,8 @@ export function useActiveRide(convoyId?: string | null) {
     const startedAt = new Date().toISOString();
     rideStartedAtMs = Date.now();
     smoothedSpeed = 0;
+    speedFilter.limits = speedLimitsFor(getExperience().vehicles[0]);
+    speedFilter.reset();
     lastPosition = null;
     currentConvoyId = activeConvoyId || convoyId || null;
     isPaused = false;

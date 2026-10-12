@@ -5,7 +5,7 @@ import * as maplibregl from 'maplibre-gl';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { X, Play, Pause, Download, Loader2 } from 'lucide-react';
+import { X, Play, Pause, Download, Loader2, Rewind, SkipBack, LocateFixed, Move3d } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,12 @@ const CANVAS_H = 720;
 const FPS = 30;
 
 const DURATIONS = [10, 15, 30] as const;
+/** How fast it plays on screen, and how fast the downloaded video runs (percent of the length chosen). */
+const RATES = [0.5, 1, 2, 4] as const;
+const VIDEO_SPEEDS = [100, 125, 150, 175, 200] as const;
+/** The chase camera: what a download always uses, and where the on-screen camera starts. */
+const CHASE = { zoom: 15.6, pitch: 62 };
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 interface RideFlyoverProps {
   ride: RideSession;
@@ -40,8 +46,18 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const mapRef = useRef<MapLibreMap | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const startedAtRef = useRef<number>(0);
   const frameIndexRef = useRef(0);
+  // Where playback is, in frames (a fraction between two of them), how fast and which way it's going.
+  const posRef = useRef(0);
+  const rateRef = useRef(1);
+  const dirRef = useRef<1 | -1>(1);
+  /** A download is always the chase camera, whatever the rider has done with theirs. */
+  const chaseRef = useRef(false);
+  /** The rider's own camera: locked on the marker (turned and tilted round it) or let go to roam. */
+  const camRef = useRef({ lock: true, zoom: CHASE.zoom, pitch: CHASE.pitch, turn: 0 });
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; angle: number } | null>(null);
+  const redrawRef = useRef<(() => void) | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordingResolveRef = useRef<((b: Blob | null) => void) | null>(null);
@@ -49,6 +65,11 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const [duration, setDuration] = useState<number>(10);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [pos, setPos] = useState(0);
+  const [rate, setRate] = useState<number>(1);
+  const [reverse, setReverse] = useState(false);
+  const [locked, setLocked] = useState(true);
+  const [videoSpeed, setVideoSpeed] = useState<number>(100);
   const [recording, setRecording] = useState(false);
   const [convertProgress, setConvertProgress] = useState<number | null>(null);
 
@@ -169,6 +190,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
         source: 'flyover-route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': accentColor, 'line-width': 5 },
+      });
+
+      // Paused, nothing redraws the picture by itself: when the map draws again (the camera was moved, or
+      // tiles and terrain arrived), copy it across.
+      map.on('render', () => {
+        if (!rafRef.current) redrawRef.current?.();
       });
 
       setReady(true);
@@ -317,7 +344,10 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     (frame: FlyoverFrame) => {
       const map = mapRef.current;
       if (!map) return;
-      map.jumpTo({ center: [frame.lng, frame.lat], bearing: frame.bearing, pitch: 62, zoom: 15.6 });
+      const cam = camRef.current;
+      if (chaseRef.current) map.jumpTo({ center: [frame.lng, frame.lat], bearing: frame.bearing, pitch: CHASE.pitch, zoom: CHASE.zoom });
+      else if (cam.lock) map.jumpTo({ center: [frame.lng, frame.lat], bearing: frame.bearing + cam.turn, pitch: cam.pitch, zoom: cam.zoom });
+      // Let go, the camera stays wherever the rider put it and the marker rides through the view.
       // Route geometry only needs updating when we pass a new GPS vertex —
       // re-uploading it every animation frame is what made playback stutter.
       if (frame.index !== lastRouteIndexRef.current) {
@@ -368,15 +398,25 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const runLoop = useCallback(
     (onDone?: () => void) => {
       if (!frames.length) return;
-      startedAtRef.current = performance.now();
       lastRouteIndexRef.current = -1;
-      const tick = () => {
-        const elapsed = (performance.now() - startedAtRef.current) / 1000;
-        const pos = Math.min(frames.length - 1, elapsed * FPS);
-        const idx = Math.floor(pos);
-        frameIndexRef.current = idx;
-        applyFrame(frameAt(pos));
-        if (idx >= frames.length - 1) {
+      let last = performance.now();
+      let lastShown = 0;
+      const end = frames.length - 1;
+      const tick = (now: number) => {
+        const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+        last = now;
+        const raw = posRef.current + dirRef.current * rateRef.current * FPS * dt;
+        const at = clamp(raw, 0, end);
+        posRef.current = at;
+        frameIndexRef.current = Math.floor(at);
+        applyFrame(frameAt(at));
+        const done = dirRef.current > 0 ? raw >= end : raw <= 0;
+        // The scrubber follows a few times a second, not every frame.
+        if (done || now - lastShown > 120) {
+          lastShown = now;
+          setPos(at);
+        }
+        if (done) {
           rafRef.current = null;
           setPlaying(false);
           onDone?.();
@@ -389,24 +429,155 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     [applyFrame, frameAt, frames],
   );
 
-  // Draw the first frame as soon as the map is ready.
+  /** Draw wherever playback is now (after a scrub, or the camera being moved while paused). */
+  const redraw = useCallback(() => {
+    if (!frames.length) return;
+    applyFrame(frameAt(clamp(posRef.current, 0, frames.length - 1)));
+  }, [applyFrame, frameAt, frames]);
+  redrawRef.current = () => {
+    if (frames.length) composite(frameAt(clamp(posRef.current, 0, frames.length - 1)));
+  };
+
+  // Draw the first frame as soon as the map is ready (and again from the start when the length changes).
   useEffect(() => {
     if (ready && frames.length) {
+      stopLoop();
+      setPlaying(false);
+      posRef.current = 0;
       frameIndexRef.current = 0;
+      lastRouteIndexRef.current = -1;
+      setPos(0);
       applyFrame(frames[0]);
     }
-  }, [ready, frames, applyFrame]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, frames]);
 
   useEffect(() => () => stopLoop(), [stopLoop]);
 
+  const play = (dir: 1 | -1) => {
+    stopLoop();
+    const end = frames.length - 1;
+    // Play from the end starts over; rewind at the start has nowhere to go.
+    if (dir > 0 && posRef.current >= end) posRef.current = 0;
+    if (dir < 0 && posRef.current <= 0) return setPlaying(false);
+    dirRef.current = dir;
+    setReverse(dir < 0);
+    setPlaying(true);
+    runLoop();
+  };
+
   const handlePlay = () => {
-    if (playing) {
+    if (playing && !reverse) {
       stopLoop();
       setPlaying(false);
       return;
     }
-    setPlaying(true);
-    runLoop();
+    play(1);
+  };
+
+  const handleRewind = () => {
+    if (playing && reverse) {
+      stopLoop();
+      setPlaying(false);
+      return;
+    }
+    play(-1);
+  };
+
+  const handleRestart = () => {
+    stopLoop();
+    setPlaying(false);
+    posRef.current = 0;
+    frameIndexRef.current = 0;
+    setPos(0);
+    redraw();
+  };
+
+  const handleRate = () => {
+    const next = RATES[(RATES.indexOf(rate as (typeof RATES)[number]) + 1) % RATES.length];
+    rateRef.current = next;
+    setRate(next);
+  };
+
+  const handleScrub = (value: number) => {
+    stopLoop();
+    setPlaying(false);
+    posRef.current = value;
+    frameIndexRef.current = Math.floor(value);
+    setPos(value);
+    redraw();
+  };
+
+  const handleLock = () => {
+    const cam = camRef.current;
+    cam.lock = !cam.lock;
+    // Letting go keeps the view as it is; locking on again keeps the zoom the rider had.
+    const map = mapRef.current;
+    if (map) cam.zoom = clamp(map.getZoom(), 10, 18.5);
+    if (cam.lock && map) cam.pitch = clamp(map.getPitch(), 0, 78);
+    setLocked(cam.lock);
+    redraw();
+  };
+
+  // ---- The rider's hand on the camera ---------------------------------------
+  // The map itself is off screen at the video's size (what's seen is the picture made from it), so the gestures
+  // are read here and handed to it: one finger turns and tilts round the marker (or slides the map once let go),
+  // two fingers zoom and turn, the wheel zooms.
+  const perPixel = () => CANVAS_W / (canvasRef.current?.getBoundingClientRect().width || CANVAS_W);
+  const zoomBy = (dz: number) => {
+    const cam = camRef.current;
+    cam.zoom = clamp(cam.zoom + dz, 10, 18.5);
+    if (!cam.lock) mapRef.current?.setZoom(cam.zoom);
+  };
+  const turnBy = (deg: number) => {
+    const cam = camRef.current;
+    if (cam.lock) cam.turn += deg;
+    else mapRef.current?.setBearing((mapRef.current?.getBearing() ?? 0) + deg);
+  };
+  const measurePinch = () => {
+    const [a, b] = [...pointersRef.current.values()];
+    return { dist: Math.hypot(b.x - a.x, b.y - a.y), angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI };
+  };
+  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (recording || !ready) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pinchRef.current = pointersRef.current.size === 2 ? measurePinch() : null;
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const before = pointersRef.current.get(e.pointerId);
+    if (!before || recording) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const k = perPixel();
+    const cam = camRef.current;
+    if (pointersRef.current.size === 1) {
+      const dx = (e.clientX - before.x) * k;
+      const dy = (e.clientY - before.y) * k;
+      if (cam.lock) {
+        cam.turn += dx * 0.25;
+        cam.pitch = clamp(cam.pitch - dy * 0.2, 0, 78);
+      } else {
+        mapRef.current?.panBy([-dx, -dy], { animate: false });
+      }
+    } else if (pointersRef.current.size === 2 && pinchRef.current) {
+      const now = measurePinch();
+      if (pinchRef.current.dist > 0 && now.dist > 0) zoomBy(Math.log2(now.dist / pinchRef.current.dist));
+      let twist = now.angle - pinchRef.current.angle;
+      if (twist > 180) twist -= 360;
+      if (twist < -180) twist += 360;
+      turnBy(-twist);
+      pinchRef.current = now;
+    }
+    if (!rafRef.current) redraw();
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    pinchRef.current = null;
+  };
+  const onWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    if (recording || !ready) return;
+    zoomBy(-e.deltaY * 0.0025);
+    if (!rafRef.current) redraw();
   };
 
   const handleDownload = async () => {
@@ -416,6 +587,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     stopLoop();
     setRecording(true);
     setPlaying(true);
+    setReverse(false);
+    const rateWas = rateRef.current;
+    posRef.current = 0;
+    dirRef.current = 1;
+    rateRef.current = videoSpeed / 100;
+    chaseRef.current = true;
 
     try {
       const stream = canvas.captureStream(FPS);
@@ -476,16 +653,19 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       console.error('[Flyover] download failed', e);
       toast.error(tr("Failed to render the 3D overview"));
     } finally {
+      chaseRef.current = false;
+      rateRef.current = rateWas;
       setConvertProgress(null);
       setRecording(false);
       setPlaying(false);
+      redraw();
     }
   };
 
   const hasRoute = routeCoords.length >= 2;
 
   return (
-    <div className="fixed inset-0 z-[100] safe-frame-x bg-black flex flex-col">
+    <div className="fixed inset-0 z-[100] safe-frame-x bg-black flex flex-col overflow-y-auto overscroll-contain" data-no-pull>
       {/* Offscreen map — the visible frame is the composited canvas below. */}
       <div
         ref={mapContainerRef}
@@ -512,14 +692,19 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
         </Button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-3 relative z-10">
+      <div className="flex-1 shrink-0 flex items-center justify-center px-3 relative z-10">
         {hasRoute ? (
-          <div className="relative w-full">
+          <div className="relative w-full short:max-w-[60vh] short:mx-auto">
             <canvas
               ref={canvasRef}
               width={CANVAS_W}
               height={CANVAS_H}
-              className="w-full rounded-xl border border-border bg-black"
+              className="w-full rounded-xl border border-border bg-black touch-none cursor-grab active:cursor-grabbing"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onWheel={onWheel}
             />
             {!ready && (
               <div className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground text-sm">
@@ -535,7 +720,43 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       </div>
 
       <div className="p-4 safe-bottom space-y-3 relative z-10">
+        {/* Where the replay is: drag to any moment. */}
+        <input
+          type="range"
+          min={0}
+          max={Math.max(1, frames.length - 1)}
+          step={0.01}
+          value={pos}
+          onChange={(e) => handleScrub(Number(e.target.value))}
+          disabled={!ready || !hasRoute || recording}
+          aria-label={tr("Replay position")}
+          className="w-full accent-[hsl(var(--accent))] h-6"
+        />
+
         <div className="flex items-center justify-center gap-2">
+          <Button variant="secondary" size="icon" className="h-12 w-12 rounded-xl" onClick={handleRestart} disabled={!ready || !hasRoute || recording} aria-label={tr("Back to the start")}>
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          <Button variant={playing && reverse ? 'default' : 'secondary'} size="icon" className="h-12 w-12 rounded-xl" onClick={handleRewind} disabled={!ready || !hasRoute || recording} aria-label={tr("Rewind")} aria-pressed={playing && reverse}>
+            <Rewind className="w-5 h-5" />
+          </Button>
+          <Button className="h-12 flex-1 max-w-[9rem] rounded-xl" onClick={handlePlay} disabled={!ready || !hasRoute || recording}>
+            {playing && !reverse ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+            {playing && !reverse ? tr("Pause") : tr("Play")}
+          </Button>
+          <Button variant="secondary" className="h-12 w-14 rounded-xl font-mono text-sm px-0" onClick={handleRate} disabled={recording} aria-label={tr("Playback speed")}>
+            {rate}×
+          </Button>
+          <Button variant={locked ? 'default' : 'secondary'} size="icon" className="h-12 w-12 rounded-xl" onClick={handleLock} disabled={!ready || !hasRoute || recording} aria-pressed={locked} aria-label={locked ? tr("Let go of the rider and look around") : tr("Lock the camera on the rider")}>
+            {locked ? <LocateFixed className="w-5 h-5" /> : <Move3d className="w-5 h-5" />}
+          </Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground text-center">
+          {locked ? tr("Drag to look round the rider, pinch to zoom.") : tr("Drag to move the map, pinch to zoom and turn. Lock on to follow the rider again.")}
+        </p>
+
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <span className="text-[11px] text-muted-foreground">{tr("Length")}</span>
           {DURATIONS.map(d => (
             <button
               key={d}
@@ -553,33 +774,43 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
           ))}
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            className="flex-1"
-            onClick={handlePlay}
-            disabled={!ready || !hasRoute || recording}
-          >
-            {playing ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-            {playing ? tr("Pause") : tr("Play")}
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={handleDownload}
-            disabled={!ready || !hasRoute || recording || convertProgress !== null}
-          >
-            {recording || convertProgress !== null ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4 mr-2" />
-            )}
-            {convertProgress !== null
-              ? tr("Converting {0}%", [convertProgress])
-              : recording
-                ? tr("Recording…")
-                : tr("Download MP4")}
-          </Button>
+        {/* The video is always the chase view, whatever the camera above is doing, at the speed picked here. */}
+        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+          <span className="text-[11px] text-muted-foreground">{tr("Video speed")}</span>
+          {VIDEO_SPEEDS.map(v => (
+            <button
+              key={v}
+              disabled={recording}
+              onClick={() => setVideoSpeed(v)}
+              aria-pressed={videoSpeed === v}
+              className={cn(
+                'px-2.5 py-1.5 rounded-lg text-xs border transition-colors font-mono',
+                videoSpeed === v
+                  ? 'bg-accent/20 border-accent text-accent'
+                  : 'border-border text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {v}%
+            </button>
+          ))}
         </div>
+
+        <Button
+          className="w-full h-12 rounded-xl"
+          onClick={handleDownload}
+          disabled={!ready || !hasRoute || recording || convertProgress !== null}
+        >
+          {recording || convertProgress !== null ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          {convertProgress !== null
+            ? tr("Converting {0}%", [convertProgress])
+            : recording
+              ? tr("Recording…")
+              : tr("Download MP4")}
+        </Button>
       </div>
     </div>
   );

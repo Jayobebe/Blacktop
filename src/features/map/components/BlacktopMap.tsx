@@ -39,6 +39,8 @@ import { loadDarkMapStyle } from "../lib/darkStyle";
 import { getLastView, saveLastView } from "../lib/lastView";
 import { addPinLayers, setMyPins, setPinsVisible, type PinInfo } from "../lib/mapPins";
 import { addCardDropLayer, setCardDropData, type CardPin } from "../lib/cardDropLayer";
+import { CardDropPrompt } from "./CardDropPrompt";
+import { getActiveBikeIdSnapshot } from "@/features/garage/hooks/useGarage";
 import { AlarmControl } from "../lib/alarmControl";
 import { applyWaterWordmark } from "../lib/waterWordmark";
 import {
@@ -1116,6 +1118,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     placedCount,
   );
   const canDropCard = cardsEnabled && !rideState.isActive && ledger.available > 0 && cards.length > 0;
+  // The card that goes down is the vehicle chosen in the garage (the first card if none is).
+  // Looked up only when the prompt opens: reading the garage means parsing its photos.
+  const dropCard = useMemo(() => (droppingCard ? cards.find((c) => c.bike.id === getActiveBikeIdSnapshot()) : undefined) ?? cards[0] ?? null, [droppingCard, cards]);
 
   // Drops within ~55m of each other read as one hot-spot stack on the map.
   const cardStacks = useMemo(() => {
@@ -1203,7 +1208,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
   const confirmDropCard = async () => {
     if (!pendingDrop) return;
-    const card = cards[0];
+    const card = dropCard;
     const spot = pendingDrop;
     setPendingDrop(null);
     setDroppingCard(false);
@@ -2497,34 +2502,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       </div>
       </div>
 
-      {droppingCard && (
-        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-3 py-2 rounded-xl bg-card/95 border border-accent shadow-xl backdrop-blur text-xs text-center">
-          {pendingDrop ? (
-            <>
-              <p className="font-semibold">{tr("Place card here?")}</p>
-              <div className="flex gap-2 mt-2">
-                <Button size="sm" className="h-7 px-4 text-xs" onClick={() => void confirmDropCard()}>
-                  {tr("Yes")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-4 text-xs"
-                  onClick={() => {
-                    setPendingDrop(null);
-                    setDroppingCard(false);
-                  }}
-                >
-                  {tr("No")}
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>{tr("Finding your spot…")}</>
-          )}
-        </div>
+      {droppingCard && dropCard && (
+        <CardDropPrompt
+          card={dropCard}
+          left={ledger.available}
+          ready={!!pendingDrop}
+          onYes={() => void confirmDropCard()}
+          onNo={() => {
+            setPendingDrop(null);
+            setDroppingCard(false);
+          }}
+        />
       )}
-
 
       {showLoopPlanner && (
         <LoopPlannerPanel

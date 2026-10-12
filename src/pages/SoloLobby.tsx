@@ -28,7 +28,7 @@ export default function SoloLobby() {
   const { startRide } = useActiveRide();
   const { settings } = useSettings();
   const { terms, isCarOnly, showGroup } = useExperience();
-  const { convoy, createConvoy, leaveConvoy } = useConvoyState();
+  const { convoy, createConvoy, leaveConvoy, setDestination: setConvoyDestination } = useConvoyState();
   const crew = useCrew();
   const [busyLock, setBusyLock] = useState(false);
   const [destination, setDestination] = useState<ConvoyDestination | null>(null);
@@ -107,9 +107,19 @@ export default function SoloLobby() {
     });
   };
 
+  // An unlocked solo lobby is a convoy of one that the crew can join. Setting off, the convoy is told the ride
+  // has started and where it's going, so whoever joins later gets the route; the ride screen turns into a
+  // convoy ride the moment someone does (it starts as a solo one: there's nobody to ride with yet).
+  const announceOpenRide = (dest: ConvoyDestination | null) => {
+    if (!convoy.isActive || !convoy.isLeader || !convoy.id) return;
+    void supabase.from('convoys').update({ ride_started_at: new Date().toISOString() }).eq('id', convoy.id);
+    if (dest) void setConvoyDestination(dest);
+  };
+
   // Start the ride without opening the map (free-ride, no destination required).
   const handleStartRide = () => {
     persistSoloRoute(destination);
+    announceOpenRide(destination);
     const success = startRide(false);
     if (success) {
       navigate('/ride');
@@ -122,6 +132,7 @@ export default function SoloLobby() {
   const handleNavigate = () => {
     if (!destination) return;
     persistSoloRoute(destination);
+    announceOpenRide(destination);
     const success = startRide(false);
     if (!success) return;
 
