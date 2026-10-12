@@ -15,6 +15,7 @@
     "cardwars:balance": "esbuild scripts/make-card-wars-balance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/card-wars-balance.mjs --log-level=warning && node node_modules/.cache/card-wars-balance.mjs",
     "crash:check": "esbuild scripts/check-crash-detection.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/crash-check.mjs --log-level=warning && node node_modules/.cache/crash-check.mjs",
     "setoff:check": "esbuild scripts/check-set-off.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/setoff-check.mjs --log-level=warning && node node_modules/.cache/setoff-check.mjs",
+    "cardwars:best": "esbuild scripts/search-card-wars-best.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/cw-best.mjs --log-level=warning && node node_modules/.cache/cw-best.mjs",
     "cardwars:wild": "esbuild scripts/sim-card-wars-wild.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/wild-sim.mjs --log-level=warning && node node_modules/.cache/wild-sim.mjs",
     "cardwars:check": "esbuild scripts/check-card-wars-balance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/card-wars-check.mjs --log-level=warning && node node_modules/.cache/card-wars-check.mjs",
     "tracks:build": "esbuild scripts/build-circuit-library.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/build-circuit-library.mjs --log-level=warning && node node_modules/.cache/build-circuit-library.mjs",

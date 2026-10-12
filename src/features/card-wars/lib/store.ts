@@ -14,7 +14,7 @@ import { levelRounds } from './rules';
 const KEY = 'bt.card_wars.v1';
 
 const initial = (): VaultState => ({ deck: [], tags: STARTER_TAGS.slice(0, TAG_SLOTS).map((t) => t.id), rewards: [], unlocks: [], run: null });
-const demo = (): VaultState => ({ ...initial(), deck: [...STARTERS], redlines: REDLINES.slice(0, 7).map((c) => c.id), owned: DEMO_OWNED, ownedTags: DEMO_TAGS, wildcard: true });
+const demo = (): VaultState => ({ ...initial(), deck: [...STARTERS], redlines: REDLINES.slice(0, 7).map((c) => c.id), owned: DEMO_OWNED, ownedTags: DEMO_TAGS, wildcard: true, wildTags: ['boost.bike', 'heal.car'] });
 
 /** What the server needs to know about a finished battle: the deck, which of it fought, and for how many rounds. */
 export const wearReportOf = (run: BattleState): WearReport => ({

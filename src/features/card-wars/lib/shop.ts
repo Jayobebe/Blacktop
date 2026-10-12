@@ -129,7 +129,9 @@ const applyRedline = (d: RedlineRaw | null) => {
   if (!d) return;
   set({ ...state, wildcard: !!d.wildcard, redlines: d.owned ?? [], wheel: d.wheel ?? [], wildPity: d.pity ?? 0, ...wildOf(d.combos) });
   // The vault keeps its own copy, so Redline cards show there without the game being opened.
-  if ((d.owned ?? []).join() !== (getVault().redlines ?? []).join() || !!getVault().wildcard !== !!d.wildcard) updateVault({ redlines: d.owned ?? [], wildcard: !!d.wildcard });
+  const v = getVault();
+  if ((d.owned ?? []).join() !== (v.redlines ?? []).join() || !!v.wildcard !== !!d.wildcard || state.wildTags.join() !== (v.wildTags ?? []).join())
+    updateVault({ redlines: d.owned ?? [], wildcard: !!d.wildcard, wildTags: state.wildTags });
 };
 /** What the server holds of the player's Redline cards and Wildcard (nothing before the Redline migration). */
 export async function refreshRedline() {

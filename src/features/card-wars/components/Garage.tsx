@@ -26,6 +26,7 @@ import { TAG_SLOTS, type BattleCard as Card, type DogTag } from '../types';
 import { CwCard } from './CwCard';
 import { DogTagPlate } from './DogTagPlate';
 import { RedlineWheel } from './RedlineWheel';
+import { WILD } from '../lib/redline';
 import { WildCombos } from './WildCombos';
 import { UnlockBox } from './UnlockBox';
 import { useDemoLocked } from '@/components/DemoLock';
@@ -119,6 +120,7 @@ export function Garage({
   };
   useEffect(() => endHold, []);
   const partRepair = useServerCap('cardWarsRepair');
+  const combos = useServerCap('cardWarsCombos');
 
   const frozen = locked || riding;
   const spare = useMemo(() => pool.filter((c) => !deck.some((d) => d.id === c.id)).sort((a, b) => overall(b) - overall(a)), [pool, deck]);
@@ -432,8 +434,8 @@ export function Garage({
 
       {/* The Redline wheel only matters to a deck that carries the Wildcard */}
       {tags.some((t) => t.power === 'wild') && <RedlineWheel frozen={frozen} />}
-      {/* The run towards the next combo Wildcard; one that's unlocked waits here for its version, whatever the deck carries. */}
-      {(tags.some((t) => t.power === 'wild') || shop.wildPending) && <WildCombos />}
+      {/* A combo Wildcard that's just been unlocked waits here for its version, whatever the deck carries. */}
+      {shop.wildPending && <WildCombos />}
 
       {!mustSpin && cardSpins}
       {!mustSpin && tagSpins}
@@ -815,6 +817,10 @@ export function Garage({
                     <p className="text-[11px] text-muted-foreground leading-snug">
                       {tagDescription(power)} {tagSourceLine(power)}
                     </p>
+                    {/* The run towards the next combo Wildcard, until all eight are held. */}
+                    {power === 'wild' && combos && shop.wildcard && shop.wildTags.length < 8 && (
+                      <p className="text-[11px] font-mono text-accent mt-0.5">{tr("{0} of {1} wins in a row", [Math.min(shop.wildStreak, WILD.streak), WILD.streak])}</p>
+                    )}
                   </div>
                   {availableTags
                     .filter((t) => t.power === power)
