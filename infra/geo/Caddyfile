@@ -26,6 +26,11 @@
 		handle_path /weather/* {
 			reverse_proxy weather:8080
 		}
+		# Cameras and scenic spots: small JSON files by map cell (build-spots.sh).
+		handle_path /spots/* {
+			root * /srv/spots
+			file_server
+		}
 
 		respond "not found" 404
 	}

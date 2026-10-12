@@ -20,7 +20,7 @@
 //    from the first round's results.
 //  - Scenic loops go through real viewpoints, peaks and waterfalls nearby.
 
-import { fetchWithTimeout, hasOwnGeoServer, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
+import { fetchWithTimeout, hasOwn, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
 
 export type LngLat = [number, number];
 /**
@@ -398,7 +398,7 @@ export function analyseStretches(shape: LngLat[], stretches: Stretch[], km: numb
  * public one that would double the load, so there they score as open road,
  * as they always have.
  */
-export async function analyseRoute(route: any, p: Prefs, engine: EngineName, roadData = hasOwnGeoServer): Promise<RouteAnalysis> {
+export async function analyseRoute(route: any, p: Prefs, engine: EngineName, roadData = hasOwn("valhalla")): Promise<RouteAnalysis> {
   const km = (route?.distance ?? 0) / 1000;
   const coords: LngLat[] = route?.geometry?.coordinates ?? [];
   // With both engines in play, every route is scored on the same road data so the scores compare.

@@ -28,4 +28,4 @@ rm -f data/osrm-next/region.osm.pbf
 echo "==> Swapping in the new data"
 if [ -d data/osrm ]; then mv data/osrm data/osrm-old; fi
 mv data/osrm-next data/osrm
-echo "==> Built. Serve it with: docker compose up -d --force-recreate osrm"
+echo "==> Built. Serve it with: ./compose.sh up -d --force-recreate osrm"

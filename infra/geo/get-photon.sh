@@ -24,4 +24,4 @@ fi
 echo "==> Swapping in the new index"
 if [ -d data/photon ]; then mv data/photon data/photon-old; fi
 mv data/photon-next data/photon
-echo "==> Done. Serve it with: docker compose up -d --force-recreate photon"
+echo "==> Done. Serve it with: ./compose.sh up -d --force-recreate photon"

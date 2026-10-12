@@ -7,8 +7,14 @@
 #   /photon    place search and reverse lookup                    (Photon)
 #   /overpass  speed cameras, places, scenic spots, Track Day roads (Overpass)
 #   /weather   forecasts for weather alerts                       (Open-Meteo)
+#   /spots     cameras and scenic spots as static files           (build-spots.sh; Caddy serves them)
+#
+# Each service is a profile of its own name, and only the ones listed in
+# GEO_SERVICES (.env) are started: use ./compose.sh instead of "docker compose",
+# which passes that list on.
 services:
   valhalla:
+    profiles: ["valhalla"]
     image: ${VALHALLA_IMAGE:-ghcr.io/valhalla/valhalla-scripted:latest}
     # Serves the tiles build-valhalla.sh made; never builds here (no PBF in the folder).
     environment:
@@ -24,6 +30,7 @@ services:
     restart: unless-stopped
 
   osrm:
+    profiles: ["osrm"]
     image: ${OSRM_IMAGE:-ghcr.io/project-osrm/osrm-backend:latest}
     command: osrm-routed --algorithm mld /data/region.osrm
     volumes:
@@ -33,6 +40,7 @@ services:
     restart: unless-stopped
 
   photon:
+    profiles: ["photon"]
     build: ./photon
     environment:
       JAVA_OPTS: ${PHOTON_JAVA_OPTS:--Xmx12g}
@@ -43,6 +51,7 @@ services:
     restart: unless-stopped
 
   overpass:
+    profiles: ["overpass"]
     image: ${OVERPASS_IMAGE:-wiktorn/overpass-api:latest}
     # First start downloads the database (see README), then applies OpenStreetMap
     # changes every minute. No areas: Blacktop's queries don't use them.
@@ -62,6 +71,7 @@ services:
     restart: unless-stopped
 
   weather:
+    profiles: ["weather"]
     image: ${OPENMETEO_IMAGE:-ghcr.io/open-meteo/open-meteo:latest}
     volumes:
       - ./data/open-meteo:/app/data
@@ -70,6 +80,7 @@ services:
     restart: unless-stopped
 
   weather-sync:
+    profiles: ["weather"]
     image: ${OPENMETEO_IMAGE:-ghcr.io/open-meteo/open-meteo:latest}
     # Keeps the forecast model fresh (checks for new runs every 10 minutes).
     command: sync ${WEATHER_MODEL:-ecmwf_ifs025} ${WEATHER_VARIABLES:-precipitation,rain,showers,snowfall,cloud_cover,wind_gusts_10m,weather_code} --past-days 1 --repeat-interval 10
@@ -87,14 +98,11 @@ services:
       GEO_TOKEN: ${GEO_TOKEN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/spots:/srv/spots:ro
       - caddy_data:/data
       - caddy_config:/config
-    depends_on:
-      - valhalla
-      - osrm
-      - photon
-      - overpass
-      - weather
+    # No depends_on: a service that isn't running here answers 502, and the Edge
+    # Functions never ask for one that GEO_SERVICES leaves out.
     restart: unless-stopped
 
 volumes:

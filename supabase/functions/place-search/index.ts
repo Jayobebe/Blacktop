@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { fetchWithTimeout, hasOwnGeoServer, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
+import { fetchWithTimeout, hasOwn, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
+import { distanceM, ownSpots } from "./spots.ts";
 import {
   buildLoop,
   buildTwisty,
@@ -274,6 +275,16 @@ async function fetchOverpass(query: string, timeoutMs = 9000) {
 /** Viewpoints, peaks and waterfalls round a point (scenic loops), best-effort. */
 async function scenicSpots(lat: number, lng: number, radiusKm: number): Promise<ScenicSpot[]> {
   const r = Math.round(Math.min(60, radiusKm) * 1000);
+  // Our own extract first: rows of [lon, lat, name] in one-degree cells.
+  const dLat = r / 111320;
+  const dLng = Math.min(1.9, r / (111320 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01)));
+  const own = await ownSpots("scenic", 1, lat - dLat, lng - dLng, lat + dLat, lng + dLng);
+  if (own) {
+    const near = own.filter((s) => Array.isArray(s) && distanceM(lat, lng, s[1], s[0]) <= r);
+    // Overpass handed back 120 of them; take the same number, spread across the lot.
+    const step = Math.max(1, Math.ceil(near.length / 120));
+    return near.filter((_, k) => k % step === 0).map((s) => ({ at: [s[0], s[1]] as LngLat, name: String(s[2] ?? "") }));
+  }
   const q = `[out:json][timeout:8];(node(around:${r},${lat},${lng})[tourism=viewpoint];node(around:${r},${lat},${lng})[natural=peak][name];node(around:${r},${lat},${lng})[waterway=waterfall];node(around:${r},${lat},${lng})[mountain_pass=yes];);out 120;`;
   try {
     const json = await fetchOverpass(q, 8000);
@@ -288,10 +299,12 @@ async function scenicSpots(lat: number, lng: number, radiusKm: number): Promise<
 /**
  * Which engine plans routes. Until our own geo server is set up nothing
  * changes: OSRM as before (Valhalla only for avoid-preferences and bikes).
- * With it, Valhalla routes, and twisty / loop planning tries both engines and
- * keeps the best on Valhalla's road data.
+ * With our own Valhalla, Valhalla routes and its road data scores twisty roads
+ * and loops; with our own OSRM beside it, planning tries both engines and
+ * keeps the best, and routes get an ETA range. A server with Valhalla alone
+ * plans on Valhalla alone (the public OSRM demo is only its fallback).
  */
-const PLAN: PlanOptions = { engine: hasOwnGeoServer ? "both" : "osrm", scenicSpots };
+const PLAN: PlanOptions = { engine: hasOwn("valhalla") ? (hasOwn("osrm") ? "both" : "valhalla") : "osrm", scenicSpots };
 
 /**
  * With both engines on our own server, a route's ETA is given as a range: the
@@ -559,6 +572,16 @@ serve(async (req) => {
         });
       }
 
+      // Our own extract first: the cells are already in the shape the app takes.
+      const ownCameras = await ownSpots("cameras", 0.5, south, west, north, east);
+      if (ownCameras) {
+        const inView = ownCameras.filter((c) => c && c.lat >= south && c.lat <= north && c.lng >= west && c.lng <= east).slice(0, 500);
+        return new Response(JSON.stringify(inView), {
+          headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+          status: 200,
+        });
+      }
+
       const bbox = `${south},${west},${north},${east}`;
       const query = `
         [out:json][timeout:8];
@@ -805,7 +828,7 @@ serve(async (req) => {
     // With our own geo server, search and reverse come from its Photon (no
     // Nominatim: its public server allows one request a second in total, and a
     // self-hosted one is far heavier to run). Without it, Nominatim as before.
-    if (hasOwnGeoServer && (body.kind === "search" || body.kind === "reverse")) {
+    if (hasOwn("photon") && (body.kind === "search" || body.kind === "reverse")) {
       const json = { ...cors, "Content-Type": "application/json" };
       if (body.kind === "search") {
         const q = body.q?.toString().trim();

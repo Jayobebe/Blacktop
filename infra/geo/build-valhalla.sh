@@ -28,6 +28,11 @@ docker run --rm -v "$PWD/data/valhalla-next:/custom_files" \
   -e build_elevation=False \
   -e server_threads="${VALHALLA_THREADS:-8}" \
   "$VALHALLA_IMAGE"
+# Cameras and scenic spots come out of the same download (when GEO_SERVICES lists spots).
+# A failure there keeps last week's and never stops the routing build.
+case ",${GEO_SERVICES// /}," in
+  *",spots,"*) ./build-spots.sh data/valhalla-next/region.osm.pbf || echo "!! spots weren't rebuilt: the previous ones stay" ;;
+esac
 rm -f data/valhalla-next/region.osm.pbf
 
 echo "==> Raising service limits"
@@ -51,4 +56,4 @@ PY
 echo "==> Swapping in the new tiles"
 if [ -d data/valhalla ]; then mv data/valhalla data/valhalla-old; fi
 mv data/valhalla-next data/valhalla
-echo "==> Built. Serve it with: docker compose up -d --force-recreate valhalla"
+echo "==> Built. Serve it with: ./compose.sh up -d --force-recreate valhalla"

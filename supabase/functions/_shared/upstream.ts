@@ -3,10 +3,16 @@
 // Blacktop's own geo server (infra/geo) is used when two Edge Function secrets
 // are set: GEO_SERVER_URL (e.g. https://geo.blacktoplive.com) and
 // GEO_SERVER_TOKEN. Each service lives under its own path on it (/valhalla,
-// /photon, /overpass, /weather). If a call to ours fails (down, rebuilding, or
-// that service not installed), it falls back to the public service and ours is
-// skipped for that service for a minute, so an outage costs one slow request,
-// not one per call.
+// /photon, /overpass, /weather, /spots). If a call to ours fails (down or
+// rebuilding), it falls back to the public service and ours is skipped for
+// that service for a minute, so an outage costs one slow request, not one per
+// call.
+//
+// The server needn't run everything. A third secret, GEO_SERVICES, lists what
+// it has (e.g. "valhalla,photon,weather,spots", the same list as the server's
+// own .env): a service left out is never tried there, and everything about it
+// stays exactly as it is without a server. Without the secret the server is
+// taken to have them all.
 
 const env = (k: string): string => {
   // Deno in the Edge Functions; the local evaluation script runs on Node.
@@ -16,10 +22,12 @@ const env = (k: string): string => {
 
 const GEO_URL = env("GEO_SERVER_URL").replace(/\/+$/, "");
 const GEO_TOKEN = env("GEO_SERVER_TOKEN");
+const GEO_SERVICES = env("GEO_SERVICES").toLowerCase().split(/[\s,]+/).filter(Boolean);
 const REST_MS = 60_000;
 const restingUntil: Record<string, number> = {};
 
-export type GeoService = "valhalla" | "osrm" | "photon" | "overpass" | "weather";
+/** `spots`: the weekly extract of cameras and scenic spots (infra/geo/build-spots.sh), static files by map cell. */
+export type GeoService = "valhalla" | "osrm" | "photon" | "overpass" | "weather" | "spots";
 
 const USER_AGENT = "Blacktop/1.0 (https://blacktoplive.com)";
 
@@ -50,6 +58,8 @@ export function upstreamHeaders(own: boolean, extra: Record<string, string> = {}
 
 /** Whether our server is configured (at all) for this deployment. */
 export const hasOwnGeoServer = GEO_URL !== "";
+/** Whether our server runs this service (it's configured, and GEO_SERVICES lists it or isn't set). */
+export const hasOwn = (service: GeoService): boolean => hasOwnGeoServer && (GEO_SERVICES.length === 0 || GEO_SERVICES.includes(service));
 
 /**
  * Runs `call` against our server's `service` first (unless it's resting), then
@@ -62,7 +72,7 @@ export async function viaGeo<T>(
   call: (base: string, own: boolean) => Promise<T>,
 ): Promise<T> {
   let lastError: unknown = null;
-  if (GEO_URL && (restingUntil[service] ?? 0) < Date.now()) {
+  if (hasOwn(service) && (restingUntil[service] ?? 0) < Date.now()) {
     try {
       return await call(`${GEO_URL}/${service}`, true);
     } catch (e) {
