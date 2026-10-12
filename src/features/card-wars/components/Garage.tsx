@@ -134,6 +134,11 @@ export function Garage({
   const [tagBoxOpen, setTagBoxOpen] = useState(false);
   // Nothing to field and nothing spare: the free spins are the only way in.
   const mustSpin = missing > 0 && spare.length === 0 && freeCards;
+  // Where the spin boxes sit: at the top for a new player, and they stay there once they've been there. The
+  // first spin ends `mustSpin` (there's a card now), and moving the box down the page mid-spin made a new
+  // box of it: the reel and the win it was about to show were lost.
+  const [spinsOnTop, setSpinsOnTop] = useState(mustSpin);
+  if (mustSpin && !spinsOnTop) setSpinsOnTop(true);
 
   const current = open?.kind === 'card' || open?.kind === 'pick' ? deck[open.index] : undefined;
   const shown = open?.kind === 'pick' ? spare.filter((c) => filter === 'all' || (filter === 'bike') === isBike(c)) : [];
@@ -326,8 +331,8 @@ export function Garage({
         )}
       </section>
 
-      {mustSpin && cardSpins}
-      {mustSpin && tagSpins}
+      {spinsOnTop && cardSpins}
+      {spinsOnTop && tagSpins}
 
       {/* Deck */}
       <section>
@@ -437,8 +442,8 @@ export function Garage({
       {/* A combo Wildcard that's just been unlocked waits here for its version, whatever the deck carries. */}
       {shop.wildPending && <WildCombos />}
 
-      {!mustSpin && cardSpins}
-      {!mustSpin && tagSpins}
+      {!spinsOnTop && cardSpins}
+      {!spinsOnTop && tagSpins}
 
 
       {progress.contracts.length > 0 && (
