@@ -5,6 +5,7 @@ import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { getCrewCode, getCrews } from '@/features/crew/useCrew';
 import { tr } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 import { paymentsAvailable } from '@/lib/platform';
 import { nativePermission, nativePushAvailable, nativePushEndpoint, requestNativePermission, unregisterNativePush } from './nativePush';
 
@@ -27,7 +28,7 @@ const LOCATION_KEY = 'bt.push.location.v1';
 /** Kinds of notification a device can switch on or off (ids match send-push). */
 const CATEGORY_DEFS = [
   { id: 'rescue', label: tr("Rescue calls"), desc: tr("A convoy or crew mate calls for rescue, with where they are") },
-  { id: 'rescue_nearby', label: tr("Riders near me who need help"), desc: tr("Another rider close by calls for rescue. Keeps this phone’s rough area (about 11 km) on the server") },
+  { id: 'rescue_nearby', label: tr("Riders near me who need help"), get desc() { return tr("Another rider close by calls for rescue. Keeps this phone’s rough area (about {0}) on the server", [kmText(11)]); } },
   { id: 'weather', label: tr("Heavy weather"), desc: tr("Storms, heavy rain, snow or strong winds heading to your area") },
   { id: 'timeattack', label: tr("Track records"), desc: tr("Someone beats your lap time on a circuit leaderboard") },
   { id: 'card_pickups', label: tr("Card pickups"), desc: tr("Someone picks up a card you dropped") },

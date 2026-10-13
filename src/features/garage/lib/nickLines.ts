@@ -2,6 +2,7 @@ import { Bike } from '../types';
 import { BikeStats } from '../hooks/useBikeStats';
 
 import { tr, lowerName } from '@/lib/i18n';
+import { kmText, milesText, speedText } from '@/lib/units';
 /**
  * Builds Mecha-Nick's dialogue from the actual state of the garage.
  * Only lines that are true for the current bike/stats are returned, so he
@@ -39,6 +40,7 @@ export function buildNickLines(bike: Bike | null, stats: BikeStats, ctx: NickCon
 
   const lines: string[] = [];
   const name = bike.name;
+  // Every distance and speed he quotes is in the rider's own units.
   const km = Math.round(stats.totalDistanceKm);
   const odo = Math.round(stats.odometerKm);
   const hours = stats.totalDurationSec / 3600;
@@ -56,7 +58,7 @@ export function buildNickLines(bike: Bike | null, stats: BikeStats, ctx: NickCon
     .filter((x) => x.dueIn > 0 && x.dueIn <= 200)
     .sort((a, b) => a.dueIn - b.dueIn);
   soon.slice(0, 2).forEach(({ m, dueIn }) =>
-    lines.push(tr("{0} due in about {1} km. Plan for it.", [m.name, Math.round(dueIn)])),
+    lines.push(tr("{0} due in about {1}. Plan for it.", [m.name, kmText(dueIn)])),
   );
 
   if (bike.maintenance.length === 0) {
@@ -75,8 +77,8 @@ export function buildNickLines(bike: Bike | null, stats: BikeStats, ctx: NickCon
   if (stats.totalRides === 1) lines.push(tr("One {0} in the books. Good start.", [ctx.ride]));
   else lines.push(tr("{0} {1} logged on {2}.", [stats.totalRides, ctx.rides, name]));
 
-  if (km > 0) lines.push(tr("That's {0} km through my workshop door.", [km]));
-  if (odo > 0) lines.push(tr("Odometer reads about {0} km. She's earning her keep.", [odo]));
+  if (km > 0) lines.push(tr("That's {0} through my workshop door.", [kmText(km)]));
+  if (odo > 0) lines.push(tr("Odometer reads about {0}. She's earning her keep.", [kmText(odo)]));
   if (hours >= 1) lines.push(
       ctx.vehicle === 'car'
         ? tr("{0} hours behind the wheel. Stretch your back.", [Math.round(hours)])
@@ -86,8 +88,8 @@ export function buildNickLines(bike: Bike | null, stats: BikeStats, ctx: NickCon
   if (ctx.speed && stats.topSpeedMph > 0) {
     lines.push(
       stats.topSpeedMph > 100
-        ? tr("Top speed of {0} mph. Brakes need checking then.", [Math.round(stats.topSpeedMph)])
-        : tr("Best you've seen is {0} mph. Steady.", [Math.round(stats.topSpeedMph)]),
+        ? tr("Top speed of {0}. Brakes need checking then.", [speedText(stats.topSpeedMph)])
+        : tr("Best you've seen is {0}. Steady.", [speedText(stats.topSpeedMph)]),
     );
   }
   const lean = Math.max(stats.maxLeanLeft, stats.maxLeanRight);
@@ -102,7 +104,7 @@ export function buildNickLines(bike: Bike | null, stats: BikeStats, ctx: NickCon
     lines.push(tr("{0}g peak. Someone's been grabbing brake.", [stats.maxGForce.toFixed(1)]));
   }
   if (stats.longestRideMi > 0) {
-    lines.push(tr("Longest run: {0} km in one go.", [Math.round(stats.longestRideMi * 1.60934)]));
+    lines.push(tr("Longest run: {0} in one go.", [milesText(stats.longestRideMi)]));
   }
 
   lines.push(UPKEEP_LINE[ctx.vehicle]);

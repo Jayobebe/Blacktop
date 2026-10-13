@@ -21,6 +21,7 @@ import {
   PackBounds,
 } from '../lib/offlinePacks';
 import { tr } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 
 interface Props {
   map: MapLibreMap | null;
@@ -125,7 +126,7 @@ export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, rou
       mode === 'route'
         ? tr("Route · {0}", [routeName || tr("planned ride")])
         : mode === 'local'
-          ? tr("Around {0}, {1} (15 km)", [userLocation!.lat.toFixed(2), userLocation!.lng.toFixed(2)])
+          ? tr("Around {0}, {1} ({2})", [userLocation!.lat.toFixed(2), userLocation!.lng.toFixed(2), kmText(15)])
           : tr("Area {0}, {1}", [centre.lat.toFixed(2), centre.lng.toFixed(2)]);
     setProgress({ done: 0, total: estimate?.tileCount ?? 0 });
     const pack = await downloadPack({
@@ -165,7 +166,7 @@ export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, rou
         {mode === 'route'
           ? tr("Saves the whole route, plus a strip either side, so it still draws with no signal.")
           : mode === 'local'
-            ? tr("Saves about 15 km around you so the map still draws with no signal. Set a route to save the whole ride instead.")
+            ? tr("Saves about {0} around you so the map still draws with no signal. Set a route to save the whole ride instead.", [kmText(15)])
             : <>{tr("Saves the area you're looking at (zoom")}{" "}{PACK_MIN_ZOOM}–{PACK_MAX_ZOOM}{tr(") so it still draws with no signal.")}</>}
       </p>
 

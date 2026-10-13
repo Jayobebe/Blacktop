@@ -30,6 +30,7 @@ import { TrackVoice } from './TrackVoice';
 import { PostRaceDialog, PostRaceLine } from './PostRacePicker';
 import { loadPostRace, samePostRace, savePostRace, type PostRace } from '../lib/postRace';
 import { tr } from '@/lib/i18n';
+import { metresText } from '@/lib/units';
 
 /**
  * Pit crew phone: scan the racer's QR, or set up the track and show the
@@ -458,7 +459,7 @@ function IdlePanel({ snap, ended }: { snap: RacerSnapshot | null; ended: boolean
     : phase === 'walking'
       ? walk?.closed
         ? tr("Lap recorded. Racer is placing the timing lines")
-        : tr("Recording a new track · {0} m", [Math.round(walk?.travelled ?? 0)])
+        : tr("Recording a new track · {0}", [metresText(walk?.travelled ?? 0, 2)])
       : phase === 'armed'
         ? snap.inPosition === false
           ? tr("Racer is heading to the grid")

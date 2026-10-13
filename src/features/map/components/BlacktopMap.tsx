@@ -101,6 +101,7 @@ import { useCollectedCards, useVehicleCards, useCardKickbacks } from "@/features
 import { copyLedger } from "@/features/cards/lib/dropEconomy";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
+import { metresText } from '@/lib/units';
 import { PageTips } from '@/features/guide';
 import { setGuidanceActive } from '../lib/guidanceState';
 import { etaClock, etaSpread, spreadDuration } from '../lib/eta';
@@ -1361,7 +1362,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       }
       return true;
     } catch {
-      if (!silent) toast.error(tr("Get within {0}m of the card to scan it", [COLLECT_RADIUS_M]));
+      if (!silent) toast.error(tr("Get within {0} of the card to scan it", [metresText(COLLECT_RADIUS_M)]));
       return false;
     }
   };
@@ -1379,7 +1380,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         description: tr("Added to your vault."),
       });
     } else {
-      toast.error(tr("Get within {0}m of the hot-spot to scan these cards", [COLLECT_RADIUS_M]));
+      toast.error(tr("Get within {0} of the hot-spot to scan these cards", [metresText(COLLECT_RADIUS_M)]));
     }
   };
 

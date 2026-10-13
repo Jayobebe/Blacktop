@@ -56,6 +56,7 @@ const NimiqTipCard = __STORE_BUILD__ ? null : lazy(() => import('@/features/tips
 import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type RideMode } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 
 /** iPhone / iPad (iPadOS reports itself as a Mac with touch). */
 const IS_IOS =
@@ -721,7 +722,7 @@ export default function Settings() {
                 ))}
                 {settings.rescueToNearby && (
                   <div>
-                    <p className="text-[11px] text-muted-foreground mb-1.5">{tr("How far to reach (about: riders’ areas are rounded to ~11 km)")}</p>
+                    <p className="text-[11px] text-muted-foreground mb-1.5">{tr("How far to reach (about: riders’ areas are rounded to ~{0})", [kmText(11, settings.distanceUnit)])}</p>
                     <div className="grid grid-cols-4 gap-1.5">
                       {RESCUE_RADIUS_OPTIONS_KM.map((km) => (
                         <button
@@ -732,7 +733,7 @@ export default function Settings() {
                             settings.rescueNearbyKm === km ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground',
                           )}
                         >
-                          {km}{" "}{tr("km")}
+                          {kmText(km, settings.distanceUnit)}
                         </button>
                       ))}
                     </div>
@@ -1239,7 +1240,7 @@ export default function Settings() {
             <li>{tr("• Ride history stored locally on device")}</li>
             <li>{tr("• No background tracking unless ride is active")}</li>
             <li>{tr("• Voice is encrypted and never stored on a server; it's only in overlay videos of riders who opt in")}</li>
-            {settings.blacktopWorldEnabled && <li>{tr("• Blacktop World shows you as an anonymous glow (to about 110 km) while you ride, and crew boards see totals you publish")}</li>}
+            {settings.blacktopWorldEnabled && <li>{tr("• Blacktop World shows you as an anonymous glow (to about {0}) while you ride, and crew boards see totals you publish", [kmText(110, settings.distanceUnit)])}</li>}
             <li>{tr("• Live convoy data is server-burned the moment a ride ends")}</li>
           </ul>
           <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-border/30">

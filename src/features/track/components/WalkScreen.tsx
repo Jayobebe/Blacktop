@@ -8,6 +8,7 @@ import { metres as distanceBetween } from '../lib/geometry';
 import { TrackEditor } from './TrackEditor';
 import { TrackMinimap } from './TrackMinimap';
 import { tr } from '@/lib/i18n';
+import { metresText } from '@/lib/units';
 
 /**
  * Recording a lap with GPS to build a track (the racer riding it, or the pit
@@ -43,7 +44,7 @@ export function WalkScreen({ header, overlay, onSaved }: { header?: React.ReactN
         dot={w.trail[w.trail.length - 1] ?? null}
       />
       <div className="text-center space-y-1">
-        <p className="font-mono text-2xl font-bold">{w.travelled >= 1000 ? tr("{0} km", [(w.travelled / 1000).toFixed(2)]) : tr("{0} m", [Math.round(w.travelled)])}</p>
+        <p className="font-mono text-2xl font-bold">{metresText(w.travelled, 2)}</p>
         <p className="text-xs text-muted-foreground max-w-xs mx-auto">
           {w.trail.length < 2
             ? tr("Ride or walk one lap of the track. Recording starts as soon as GPS locks on.")

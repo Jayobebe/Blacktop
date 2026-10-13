@@ -7,8 +7,9 @@ import { LIBRARY_ATTRIBUTION, layoutLabel, loadCircuitIndex, nearbyVenues, searc
 import { trackLength } from '../lib/trackStore';
 import { metres } from '../lib/geometry';
 import { tr } from '@/lib/i18n';
+import { kmText, metresText } from '@/lib/units';
 
-const km = (m: number | null | undefined) => (m == null ? '' : m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`);
+const km = (m: number | null | undefined) => (m == null ? '' : metresText(m, 2));
 
 /**
  * Track Pack's search bar: the rider's own tracks first, then the circuit
@@ -120,7 +121,7 @@ export function TrackSearch({
           {library.length > 0 && (
             <Section title={query ? tr("Circuit library") : tr("Circuits near you")} icon={query ? <Library className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}>
               {library.map((v) => {
-                const away = here ? tr("{0} km away", [Math.round(metres(here, v) / 1000)]) : null;
+                const away = here ? tr("{0} away", [kmText(metres(here, v) / 1000)]) : null;
                 const saved = (c: LibraryCircuit) => (imported.has(c.id) ? tr("Saved") : null);
                 if (v.layouts.length === 1) {
                   const c = v.layouts[0];

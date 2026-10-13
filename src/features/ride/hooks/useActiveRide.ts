@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { noteLocationGranted } from '@/lib/locationGrant';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
+import { currentUnits, metresText } from '@/lib/units';
 import { getExperience } from '@/features/experience/lib/profile';
 import { SpeedFilter, speedLimitsFor } from '../lib/speedFilter';
 import { countUsage } from '@/lib/usage';
@@ -1148,12 +1149,16 @@ export function useActiveRide(convoyId?: string | null) {
       });
       const tooShort = finalDuration < MIN_RIDE_DURATION_SEC;
       const tooFar = finalDistance < MIN_RIDE_DISTANCE_MI && !hasMovementEvidence;
+      // The floor and the ride, in the rider's units ("0.1 mi" is about 150 m).
+      const metric = currentUnits().distance === 'km';
+      const floor = metric ? metresText(150) : tr("{0} mi", [MIN_RIDE_DISTANCE_MI]);
+      const ridden = metric ? metresText(finalDistance * 1609.344, 2) : tr("{0} mi", [finalDistance.toFixed(2)]);
       toast.info(tr("Ride not saved"), {
         description: tooShort && tooFar
-          ? tr("Rides under 1 min and 0.1 mi are discarded.")
+          ? tr("Rides under 1 min and {0} are discarded.", [floor])
           : tooShort
             ? tr("Ride was under 1 minute ({0}s) — not saved.", [finalDuration])
-            : tr("Ride was under 0.1 mi ({0} mi) — not saved.", [finalDistance.toFixed(2)]),
+            : tr("Ride was under {0} ({1}) — not saved.", [floor, ridden]),
       });
     }
 

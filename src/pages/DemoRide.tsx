@@ -1013,7 +1013,7 @@ export default function DemoRide() {
         {step === 'history-photos' && (
           <div className="p-5 animate-fade-in">
             <h1 className="text-xl font-semibold mb-1">{tr("Dec 15 Ride")}</h1>
-            <p className="text-sm text-muted-foreground mb-4">{tr("67.3 mi • 1:20:00")}</p>
+            <p className="text-sm text-muted-foreground mb-4">{`${formatDistance(67.3, dUnit)} ${getDistanceLabel(dUnit)} • 1:20:00`}</p>
 
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">

@@ -19,6 +19,7 @@ import { TrackBoard } from './TrackBoard';
 import { hasBoard } from '../lib/trackRecords';
 import { useServerCap } from '@/lib/serverCaps';
 import { tr } from '@/lib/i18n';
+import { metresText } from '@/lib/units';
 import { PageTips } from '@/features/guide';
 
 /**
@@ -246,7 +247,7 @@ export function TrackHome({
   );
 }
 
-const km = (m: number | null) => (m == null ? null : m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`);
+const km = (m: number | null) => (m == null ? null : metresText(m, 2));
 
 /** One horizontally scrolling row of track cards, like the card vault's shelves. */
 export function TrackShelf({

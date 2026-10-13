@@ -7,6 +7,7 @@ import { useSettings } from '@/features/settings';
 import { setRescueTarget, clearRescueTarget, registerRescueControls, clearRescueControls } from '../lib/rescueBridge';
 import { describeReach, rescueReach } from '../lib/reach';
 import { tr } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 
 export interface RescueRequest {
   id: string;
@@ -178,7 +179,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       reach.convoy && 'your convoy',
       reach.crew && 'your crew',
       reach.discord && 'Discord',
-      reach.nearbyKm && `riders within ${reach.nearbyKm} km`,
+      reach.nearbyKm && `riders within ${kmText(reach.nearbyKm)}`,
     ].filter((x): x is string => !!x);
     if (told.length) toast.info(tr("Rescue call sent to {0}", [describeReach(told)]));
     else toast.warning(tr("Rescue call not sent to anyone"), { description: tr("Settings → Safety chooses who it reaches.") });

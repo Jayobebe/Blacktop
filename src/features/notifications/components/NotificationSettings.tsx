@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { disablePush, enablePush, PUSH_CATEGORY_DEFS, refreshPushPermission, sendTestPush, setPushCategory, usePush, type PushCategory } from '../lib/push';
 import { tr } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 
 const ICONS = {
   rescue: AlertTriangle,
@@ -126,7 +127,7 @@ export function NotificationSettings() {
               })}
             </ul>
             <p className="text-[10px] text-muted-foreground/80 mt-2 leading-relaxed">
-              {tr("Heavy weather uses where your last ride ended (or your phone's location if you've allowed it), rounded to about 11 km. Crew alerts need Blacktop World on and use your current crew.")}
+              {tr("Heavy weather uses where your last ride ended (or your phone's location if you've allowed it), rounded to about {0}. Crew alerts need Blacktop World on and use your current crew.", [kmText(11)])}
             </p>
           </div>
         </div>

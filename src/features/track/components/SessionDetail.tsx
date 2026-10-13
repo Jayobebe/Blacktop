@@ -18,6 +18,7 @@ import { PitStopLine } from './PitLaneCard';
 import { TrackMinimap } from './TrackMinimap';
 import { LAP_A_COLOR, LAP_B_COLOR, LapTraces } from './LapTraces';
 import { tr } from '@/lib/i18n';
+import { speedUnitText } from '@/lib/units';
 
 // The 3D flyover is the ride one (MapLibre): loaded only when it's opened.
 const RideFlyover = lazy(() => import('@/features/ride/components/RideFlyover').then((m) => ({ default: m.RideFlyover })));
@@ -148,13 +149,13 @@ export function SessionDetail({ session, onBack, autoFlyover = false }: { sessio
                     <div key={i} className="grid grid-cols-[2rem_1fr_1fr_1fr] px-2 py-1 border-t border-border/60 font-mono">
                       <span className="text-muted-foreground">{i + 1}</span>
                       <span className="font-sans">{c.direction === 'left' ? tr("Left") : tr("Right")} {Math.round(c.arc)}°</span>
-                      <span className="text-right">{c.score} · {Math.round(c.apexSpeed)}</span>
-                      <span className="text-right">{cb ? `${cb.score} · ${Math.round(cb.apexSpeed)}` : '—'}</span>
+                      <span className="text-right">{c.score} · {formatSpeed(c.apexSpeed, settings.speedUnit)}</span>
+                      <span className="text-right">{cb ? `${cb.score} · ${formatSpeed(cb.apexSpeed, settings.speedUnit)}` : '—'}</span>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-[9px] text-muted-foreground mt-1">{tr("Score 0–100 · apex speed mph")}</p>
+              <p className="text-[9px] text-muted-foreground mt-1">{tr("Score 0–100 · apex speed {0}", [speedUnitText(settings.speedUnit)])}</p>
             </div>
           )}
         </>

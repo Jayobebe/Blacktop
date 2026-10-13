@@ -14,6 +14,7 @@ import type { LatLng, TrackDef } from '../types';
 import { Centerline, bearingOf, buildTrack, gateAt, loopGap, markersFromTrack, orderedSplits, resampleLoop, sectorsOf, type Markers } from '../lib/centerline';
 import { SATELLITE_STYLE, SF_COLOR, SPLIT_COLOR, accentColor, sectorColor } from '../lib/mapStyle';
 import { tr } from '@/lib/i18n';
+import { metresText } from '@/lib/units';
 
 /**
  * Track builder, part 2 (both methods): a camera runs round the lap, and the
@@ -38,7 +39,7 @@ const CORNER_TURN = (35 * Math.PI) / 180;
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
 const angleDiff = (a: number, b: number) => ((b - a + 540) % 360) - 180;
-const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`);
+const km = (m: number) => metresText(m, 2);
 
 export function ChaseCamPlacer({
   loop,
@@ -275,14 +276,14 @@ export function ChaseCamPlacer({
 
   const placeSf = () => {
     const d = posRef.current;
-    if (tooClose(d, 'sf')) return toast.error(tr("Keep lines at least {0} m apart", [MIN_MARKER_GAP_M]));
+    if (tooClose(d, 'sf')) return toast.error(tr("Keep lines at least {0} apart", [metresText(MIN_MARKER_GAP_M)]));
     setMarkers((m) => ({ ...m, sf: d }));
     haptics.success();
     if (inCorner(d)) cornerNote();
   };
   const addSplit = () => {
     const d = posRef.current;
-    if (tooClose(d)) return toast.error(tr("Keep lines at least {0} m apart", [MIN_MARKER_GAP_M]));
+    if (tooClose(d)) return toast.error(tr("Keep lines at least {0} apart", [metresText(MIN_MARKER_GAP_M)]));
     if (markers.splits.length >= 19) return toast.error(tr("20 sectors is the most a lap can have"));
     setMarkers((m) => ({ ...m, splits: [...m.splits, d] }));
     haptics.medium();

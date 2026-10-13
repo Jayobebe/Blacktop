@@ -37,6 +37,7 @@ import { HeaderButton } from '@/components/PageHeader';
 
 
 import { tr, lowerName } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 
 export default function Garage() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export default function Garage() {
       .map((m) => ({ m, dueIn: m.lastServiceKm + m.intervalKm - stats.odometerKm }))
       .filter((x) => x.dueIn > 0 && x.dueIn <= 200)
       .sort((a, b) => a.dueIn - b.dueIn)[0];
-    if (due) return tr("Heads up — {0} due in {1} km.", [lowerName(due.m.name), Math.round(due.dueIn)]);
+    if (due) return tr("Heads up — {0} due in {1}.", [lowerName(due.m.name), kmText(due.dueIn, settings.distanceUnit)]);
     return null;
   }, [activeBike, stats.odometerKm]);
 

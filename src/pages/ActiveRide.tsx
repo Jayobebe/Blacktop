@@ -44,6 +44,7 @@ import { notifyRescue } from '@/features/notifications';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { tr } from '@/lib/i18n';
+import { metresText } from '@/lib/units';
 import { ScreenOnGuard } from '@/features/ride/components/ScreenOnGuard';
 import { PageTips } from '@/features/guide';
 
@@ -68,19 +69,19 @@ function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
     if (accuracy !== null && accuracy <= 10) {
       SignalIcon = SignalHigh;
       signalColor = 'text-emerald-400';
-      title = tr("GPS: Excellent (±{0}m)", [Math.round(accuracy)]);
+      title = tr("GPS: Excellent (±{0})", [metresText(accuracy)]);
     } else if (accuracy !== null && accuracy <= 30) {
       SignalIcon = SignalMedium;
       signalColor = 'text-accent';
-      title = tr("GPS: Good (±{0}m)", [Math.round(accuracy)]);
+      title = tr("GPS: Good (±{0})", [metresText(accuracy)]);
     } else if (accuracy !== null && accuracy <= 100) {
       SignalIcon = SignalLow;
       signalColor = 'text-yellow-400';
-      title = tr("GPS: Fair (±{0}m)", [Math.round(accuracy)]);
+      title = tr("GPS: Fair (±{0})", [metresText(accuracy)]);
     } else {
       SignalIcon = SignalLow;
       signalColor = 'text-orange-400';
-      title = accuracy ? tr("GPS: Weak (±{0}m)", [Math.round(accuracy)]) : tr("GPS: Active");
+      title = accuracy ? tr("GPS: Weak (±{0})", [metresText(accuracy)]) : tr("GPS: Active");
     }
   } else if (isStale) {
     signalColor = 'text-destructive/70';

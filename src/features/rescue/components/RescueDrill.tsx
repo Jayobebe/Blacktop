@@ -10,6 +10,7 @@ import { useExperience } from '@/features/experience';
 import { requestMotionAccess } from '@/lib/motionPermission';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { kmText } from '@/lib/units';
 import { CrashCheckPrompt } from './CrashCheckPrompt';
 import { useSafetyStatus } from '../hooks/useSafetyStatus';
 import { rescueReach } from '../lib/reach';
@@ -133,7 +134,7 @@ function RescueDrillScreens({ onClose }: { onClose: () => void }) {
   if (showGroup && reach.convoy) who.push(tr("Everyone in your convoy, when you're riding in one"));
   if (reach.crew) for (const c of crew.crews) who.push(c.name);
   if (reach.discord && integration) who.push(tr("Discord: {0}", [integration.server_name || tr("Connected")]));
-  if (reach.nearbyKm) who.push(tr("Riders within {0} km who've opted in to help", [reach.nearbyKm]));
+  if (reach.nearbyKm) who.push(tr("Riders within {0} who've opted in to help", [kmText(reach.nearbyKm, settings.distanceUnit)]));
   if (cleanPhone(settings.emergencyContactPhone ?? '')) {
     const name = settings.emergencyContactName?.trim();
     who.push(name ? tr("{0}, by a text you send from the crash screen", [name]) : tr("Your emergency contact, by a text you send from the crash screen"));

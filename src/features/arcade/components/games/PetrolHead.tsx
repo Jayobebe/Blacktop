@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Fuel, MoveHorizontal, Pause, Play, Shield, Trophy, Wind } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
+import { speedFigure, speedUnitText } from '@/lib/units';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { HeaderButton } from '@/components/PageHeader';
@@ -104,6 +105,8 @@ interface World {
 
 const speedAt = (t: number) => 200 + 4.2 * t + 0.028 * t * t;
 const kmhOf = (speed: number) => Math.round(60 + speed * 0.28);
+/** The game's km/h as the rider reads speed. */
+const shownSpeed = (kmh: number) => speedFigure(kmh / 1.609344);
 
 function newWorld(attract: boolean): World {
   return {
@@ -771,7 +774,7 @@ export function PetrolHead({ accentColor, showSpeed }: PetrolHeadProps) {
     const t = Math.floor(w.t);
     if (t !== h.t && timeRef.current) { timeRef.current.textContent = String(t); h.t = t; }
     const kmh = kmhOf(w.speed);
-    if (kmh !== h.kmh && kmhRef.current) { kmhRef.current.textContent = String(kmh); h.kmh = kmh; }
+    if (kmh !== h.kmh && kmhRef.current) { kmhRef.current.textContent = String(shownSpeed(kmh)); h.kmh = kmh; }
     if (fuelRef.current) fuelRef.current.style.transform = `scaleX(${w.fuel})`;
     const low = w.fuel < 0.25;
     if (low !== h.low && fuelPillRef.current) { fuelPillRef.current.dataset.low = low ? '1' : '0'; h.low = low; }
@@ -899,7 +902,7 @@ export function PetrolHead({ accentColor, showSpeed }: PetrolHeadProps) {
               {showSpeed && (
                 <div className="rounded-full frost px-3 py-1.5 flex items-baseline gap-1">
                   <span ref={kmhRef} className="font-mono text-sm font-semibold text-foreground">0</span>
-                  <span className="text-[10px] text-muted-foreground">{tr("km/h")}</span>
+                  <span className="text-[10px] text-muted-foreground">{speedUnitText()}</span>
                 </div>
               )}
               <HeaderButton
@@ -1007,7 +1010,7 @@ export function PetrolHead({ accentColor, showSpeed }: PetrolHeadProps) {
                 { label: tr("Best combo"), value: result.stats.bestCombo > 1 ? `×${result.stats.bestCombo}` : '—' },
                 { label: tr("Fuel cans"), value: result.stats.cans },
                 showSpeed
-                  ? { label: tr("Top speed"), value: `${result.stats.topKmh} ${tr("km/h")}` }
+                  ? { label: tr("Top speed"), value: `${shownSpeed(result.stats.topKmh)} ${speedUnitText()}` }
                   : { label: tr("Shields used"), value: result.stats.shields },
               ].map((s, i) => (
                 <div key={i} style={{ ['--i' as string]: i }} className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2">
