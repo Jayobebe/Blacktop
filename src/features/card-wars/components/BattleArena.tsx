@@ -77,22 +77,30 @@ function flyIn(el: HTMLElement | null, from: HTMLElement | null | undefined) {
   eventSound('whoosh');
 }
 
+/**
+ * An animation's end, or its time up, whichever comes first: an animation doesn't move while the page is hidden
+ * (the app in the background, the screen off), and a round waiting on one would never finish.
+ */
+const animationEnd = (animation: Animation, ms: number): Promise<unknown> =>
+  Promise.race([animation.finished.catch(() => undefined), new Promise((done) => window.setTimeout(done, ms + 250))]);
+
 /** And goes back. A burnt-out card just crumbles where it is. */
 function flyOut(el: HTMLElement | null, to: HTMLElement | null | undefined, burnt: boolean): Promise<unknown> {
   if (!el || quick()) return Promise.resolve();
   if (burnt || !to) {
-    return el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(18px) scale(.92)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished.catch(() => undefined);
+    return animationEnd(el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(18px) scale(.92)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }), 260);
   }
   const a = el.getBoundingClientRect();
   const b = to.getBoundingClientRect();
   if (!a.width || !b.width) return Promise.resolve();
-  return el
-    .animate([{ transform: 'none' }, { transform: `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width}, ${b.height / a.height})` }], {
+  return animationEnd(
+    el.animate([{ transform: 'none' }, { transform: `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width}, ${b.height / a.height})` }], {
       duration: 320,
       easing: 'cubic-bezier(.5,0,.6,1)',
       fill: 'forwards',
-    })
-    .finished.catch(() => undefined);
+    }),
+    320,
+  );
 }
 
 /**

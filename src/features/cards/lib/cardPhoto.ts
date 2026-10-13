@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { isDemoModeActive } from '@/lib/demoMode';
 
 const BUCKET = 'card-photos';
 
@@ -21,6 +22,8 @@ function blobToDataUrl(blob: Blob): Promise<string> {
  * Returns the storage path to embed in the QR payload, or null on failure.
  */
 export async function uploadCardPhoto(uid: string, heroDataUrl: string): Promise<string | null> {
+  // Demo mode saves nothing: don't try (the refusal came up as a "not available in demo mode" notice on opening Blacktop World).
+  if (isDemoModeActive()) return null;
   try {
     // getUser can briefly return null while the persisted anonymous session is
     // hydrating on app launch. getSession reads that local session directly.

@@ -21,6 +21,11 @@ export default function EnterpriseLink() {
     const payload = parseEnterpriseCode(window.location.href);
     (async () => {
       if (!payload) {
+        // The bare address, with no code in it at all, is just the way in to Blacktop Enterprise: nothing was wrong.
+        if (!/[?&#](token|code)=/.test(window.location.href)) {
+          navigate('/', { replace: true, state: { deck: 'doorway' } });
+          return;
+        }
         toast.error(tr("That isn't a Blacktop Enterprise code"));
       } else {
         const res = await verifyEnterpriseCode(payload.token);

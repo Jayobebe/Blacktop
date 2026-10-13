@@ -155,12 +155,20 @@ export default function History() {
             const displayName = ride.name || formatDate(ride.startedAt);
             const hasBadges = settings.collectiblesEnabled && ride.earnedBadges && ride.earnedBadges.length > 0;
             return (
-              <button
+              // A row with buttons of its own on it (star, rename): a button can't hold buttons, so it's a div that acts as one.
+              <div
                 key={ride.id}
                 data-tip="history-ride"
+                role="button"
+                tabIndex={0}
                 onClick={() => navigate(`/ride/${ride.id}`)}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+                  e.preventDefault();
+                  navigate(`/ride/${ride.id}`);
+                }}
                 className={cn(
-                  "pressable w-full bg-card border rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target",
+                  "pressable w-full bg-card border rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target cursor-pointer",
                   isLatest ? "border-accent/35" : "border-white/[0.06]"
                 )}
                 style={{ animationDelay: `${index * 60}ms` }}
@@ -273,7 +281,7 @@ export default function History() {
                     </span>
                   </div>
                 )}
-              </button>
+              </div>
             );
           })
         )}
