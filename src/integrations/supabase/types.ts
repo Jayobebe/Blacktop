@@ -684,7 +684,9 @@ export type Database = {
           reward_count: number
           reward_day: string | null
           user_id: string
+          wild_pending: string | null
           wild_pity: number
+          wild_streak: number
           wildcard: boolean
         }
         Insert: {
@@ -713,7 +715,9 @@ export type Database = {
           reward_count?: number
           reward_day?: string | null
           user_id: string
+          wild_pending?: string | null
           wild_pity?: number
+          wild_streak?: number
           wildcard?: boolean
         }
         Update: {
@@ -742,7 +746,9 @@ export type Database = {
           reward_count?: number
           reward_day?: string | null
           user_id?: string
+          wild_pending?: string | null
           wild_pity?: number
+          wild_streak?: number
           wildcard?: boolean
         }
         Relationships: []
@@ -1298,6 +1304,45 @@ export type Database = {
         Update: {
           card_id?: string
           condition?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cw_wild_tags: {
+        Row: {
+          combo: string
+          user_id: string
+          vehicle: string
+          won_at: string
+        }
+        Insert: {
+          combo: string
+          user_id: string
+          vehicle: string
+          won_at?: string
+        }
+        Update: {
+          combo?: string
+          user_id?: string
+          vehicle?: string
+          won_at?: string
+        }
+        Relationships: []
+      }
+      cw_wild_wins: {
+        Row: {
+          day: string
+          rival: string
+          user_id: string
+        }
+        Insert: {
+          day?: string
+          rival: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          rival?: string
           user_id?: string
         }
         Relationships: []
@@ -1987,6 +2032,27 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_daily: {
+        Row: {
+          day: string
+          event: string
+          n: number
+          platform: string
+        }
+        Insert: {
+          day?: string
+          event: string
+          n?: number
+          platform: string
+        }
+        Update: {
+          day?: string
+          event?: string
+          n?: number
+          platform?: string
+        }
+        Relationships: []
+      }
       world_locations: {
         Row: {
           last_seen: string
@@ -2010,7 +2076,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      usage_by_day: {
+        Row: {
+          came_back: number | null
+          convoy_rides: number | null
+          day: string | null
+          first_week: number | null
+          new_today: number | null
+          opened: number | null
+          opened_in_app: number | null
+          rides_finished: number | null
+          rides_started: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       area_card_kings: {
@@ -2299,7 +2378,7 @@ export type Database = {
         }[]
       }
       cw_reward_battle: {
-        Args: { _level: string; _result: string }
+        Args: { _level: string; _result: string; _wild?: boolean }
         Returns: Json
       }
       cw_reward_offline: { Args: { _result: string }; Returns: Json }
@@ -2392,6 +2471,24 @@ export type Database = {
         Args: { _cat: number; _wheel: string[] }
         Returns: string
       }
+      cw_wild_count: { Args: { _u: string; _won: boolean }; Returns: undefined }
+      cw_wild_hit: {
+        Args: { _heads: boolean; _kind: string; _won: boolean }
+        Returns: number
+      }
+      cw_wild_pick: { Args: { _vehicle: string }; Returns: Json }
+      cw_wild_rules: { Args: never; Returns: Json }
+      cw_wild_spin: {
+        Args: {
+          _cat: number
+          _kind: string
+          _not: string
+          _sure: boolean
+          _wheel: string[]
+        }
+        Returns: Record<string, unknown>
+      }
+      cw_wild_state: { Args: { _u: string }; Returns: Json }
       cw_wildcard_grant: { Args: { _u: string }; Returns: string[] }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
@@ -2717,6 +2814,10 @@ export type Database = {
       }
       unregister_push_subscription: {
         Args: { _endpoint: string }
+        Returns: undefined
+      }
+      usage_count: {
+        Args: { _event: string; _platform: string }
         Returns: undefined
       }
       verify_enterprise_token: { Args: { token_code: string }; Returns: Json }
