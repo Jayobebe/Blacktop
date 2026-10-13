@@ -301,7 +301,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
       <CardRow icon={<Sparkles className="w-4 h-4 text-accent" />} title={tr("Scanned cards")} entries={scanned} hint={tr("Yours first, then scanned")} empty={tr("Scan another rider's card QR to start your collection.")} lifted={lift?.key} onOpen={open} />
 
       {/* Battle cards: every catalogue card the account holds */}
-      <CardRow icon={<Swords className="w-4 h-4 text-accent" />} title={tr("Battle cards")} entries={battleHeld} hint={tr("Card Wars")} empty={tr("No battle cards yet")} lifted={lift?.key} onOpen={open} />
+      <CardRow icon={<Swords className="w-4 h-4 text-accent" />} title={tr("Battle cards")} entries={battleHeld} hint={tr("BlackGrid")} empty={tr("No battle cards yet")} lifted={lift?.key} onOpen={open} />
 
       {/* Redline cards and Spectres: only there once one is held */}
       {redlineHeld.length > 0 && <CardRow icon={<Gauge className="w-4 h-4 text-destructive" />} title={tr("Redline cards")} entries={redlineHeld} hint={tr("Redline")} lifted={lift?.key} onOpen={open} />}

@@ -116,7 +116,7 @@ export function BackupPanel() {
         }}
       />
       <p className="text-[10px] text-muted-foreground/70 mt-2">
-        {demo ? tr("Not available in demo mode") : tr("Card Wars, crew scores and Track Day records stay with your account and aren't in the file.")}
+        {demo ? tr("Not available in demo mode") : tr("BlackGrid, crew scores and Track Day records stay with your account and aren't in the file.")}
       </p>
 
       <AlertDialog open={!!pending} onOpenChange={(open) => !open && setPending(null)}>

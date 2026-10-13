@@ -12,7 +12,7 @@ export function ArcadeScene() {
   const hit = Math.pow(Math.max(0, Math.sin(t * 2.6)), 8);
   const clash = Math.sin(t * 1.5) ** 8;
   const lane = easeInOut((t % 4) / 2) * 32;
-  const labels = ['Hit Heavy', 'Petrol Head', 'Derez Legacy', 'Card Wars'];
+  const labels = ['Hit Heavy', 'Petrol Head', 'Gridlock', 'BlackGrid'];
   return (
     <Frame sound={{ t, cues: CUES }}>
       <Defs id={id} /><Base id={id} />

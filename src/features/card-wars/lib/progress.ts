@@ -152,7 +152,7 @@ export function contractText(id: ContractId, target: number): string {
     case 'ko3':
       return tr("Knock out {0} cards", [target]);
     case 'f1_ko':
-      return tr("Knock out a card with an F1 car");
+      return tr("Knock out a card with an Open Wheel car");
     case 'second_win':
       return tr("Win a round with Second chance");
     case 'full_deck':

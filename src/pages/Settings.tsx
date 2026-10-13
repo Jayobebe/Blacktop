@@ -481,7 +481,7 @@ export default function Settings() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">{tr("Pixel-art cards")}</p>
-                    <p className="text-[10px] text-muted-foreground">{tr("Redraws the vehicle photos on your cards and the ones you've scanned in the Card Wars art style. Your photos aren't changed.")}</p>
+                    <p className="text-[10px] text-muted-foreground">{tr("Redraws the vehicle photos on your cards and the ones you've scanned in the BlackGrid art style. Your photos aren't changed.")}</p>
                   </div>
                   <Switch checked={!!settings.cardArtStyle} onCheckedChange={(v) => updateSetting('cardArtStyle', v)} />
                 </div>

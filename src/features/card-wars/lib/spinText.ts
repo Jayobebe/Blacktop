@@ -1,5 +1,5 @@
 import { tr } from '@/lib/i18n';
-import { cardById } from './catalog';
+import { BANK_INFO, cardById } from './catalog';
 import { showRpm } from './rules';
 import type { SpinResult } from './shop';
 import { parseOwnedTag } from './tagRules';
@@ -39,6 +39,6 @@ export function spinCaption(r: SpinResult): string {
 /** What flies past on a shelf's reel before it stops. */
 export const REEL_LABELS = [tr("Card"), tr("RPM"), tr("Dog tag"), tr("+1 spin"), tr("RPM"), tr("Card")];
 /** The free card spins only ever land cards. */
-export const CARD_REEL_LABELS = [tr("Road"), tr("Race"), 'GTLM', 'F1', tr("Road"), 'MotoGP', tr("Race"), 'TT'];
+export const CARD_REEL_LABELS = [tr("Road"), tr("Race"), BANK_INFO.gtlm.label, BANK_INFO.f1.label, tr("Road"), BANK_INFO.motogp.label, tr("Race"), BANK_INFO.tt.label];
 /** And the free dog tag spins, dog tags. */
 export const TAG_REEL_LABELS = [tagName('boost'), tagName('heal'), tagName('reroll')];

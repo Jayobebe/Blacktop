@@ -36,13 +36,13 @@ export function CardWarsArcadePanel({ onOpen }: { onOpen: () => void }) {
   const inBattle = !!vault.run && !vault.run.result;
 
   return (
-    <button type="button" data-tip="arcade-cw" onClick={onOpen} className="cw-arcade pressable col-span-2 text-left" aria-label={tr("Open Card Wars")}>
+    <button type="button" data-tip="arcade-cw" onClick={onOpen} className="cw-arcade pressable col-span-2 text-left" aria-label={tr("Open BlackGrid")}>
       <span className="flex items-center gap-3">
         <span className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
           <Swords className="w-5 h-5 text-accent" />
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block text-sm font-semibold tracking-tight text-white leading-none">{tr("Card Wars")}</span>
+          <span className="block text-sm font-semibold tracking-tight text-white leading-none">{tr("BlackGrid")}</span>
           <span className="block text-[10px] text-muted-foreground mt-1 truncate">
             {inBattle ? tr("Battle in progress: round {0}", [vault.run!.round + 1]) : tr("Real cars and bikes, five to a deck")}
           </span>

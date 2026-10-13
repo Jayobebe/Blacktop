@@ -14,5 +14,5 @@ export { SpectreTagBack } from './components/SpectreTagBack';
 /** A finished game of Hit Heavy or Petrol Head: pays RPM for Card Wars (the server caps the day) and says so. */
 export async function payArcadeGame(game: 'hit-heavy' | 'petrol-head', best: boolean) {
   const rpm = await arcadeReward(game, best).catch(() => null);
-  if (rpm) toast.success(tr("+{0} RPM for Card Wars", [showRpm(rpm)]));
+  if (rpm) toast.success(tr("+{0} RPM for BlackGrid", [showRpm(rpm)]));
 }

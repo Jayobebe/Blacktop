@@ -25,7 +25,7 @@ export interface Swap {
 }
 
 export const SWAP_LIMIT = 5;
-export const swapLink = (origin: string, code: string) => `${origin}/arcade/card-wars?swap=${code}`;
+export const swapLink = (origin: string, code: string) => `${origin}/arcade/blackgrid?swap=${code}`;
 
 const rpc = (name: string, args?: object) => supabase.rpc(name as never, args as never);
 type Answer = Swap | string;

@@ -200,9 +200,9 @@ export default function Terms() {
         </section>}
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold">{tr("Blacktop Arcade — Derez Legacy")}</h2>
+          <h2 className="text-base font-semibold">{tr("Blacktop Arcade — Gridlock")}</h2>
           <p className="text-muted-foreground">
-            {tr("Derez Legacy is a multiplayer light-trail game played while riding real vehicles. It is")}{" "}<span className="text-foreground font-medium">{tr("not")}</span>{" "}{tr("a racing tool and must never be treated as one. By playing you acknowledge and agree that:")}
+            {tr("Gridlock is a multiplayer light-trail game played while riding real vehicles. It is")}{" "}<span className="text-foreground font-medium">{tr("not")}</span>{" "}{tr("a racing tool and must never be treated as one. By playing you acknowledge and agree that:")}
           </p>
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li>
@@ -217,7 +217,7 @@ export default function Terms() {
             <li>
               {tr("You are solely responsible for your riding, for every other player's conduct, and for any collision, injury, or property damage arising from play. The app owner and contributors accept")}
               <span className="text-foreground font-medium">{" "}{tr("no liability")}{" "}</span>
-              {tr("for harm arising from Derez Legacy or any other Blacktop Arcade game.")}
+              {tr("for harm arising from Gridlock or any other Blacktop Arcade game.")}
             </li>
             <li>
               {tr("GPS trails are approximate. Collision detection and arena boundaries are informational only and must never be relied on for safety.")}

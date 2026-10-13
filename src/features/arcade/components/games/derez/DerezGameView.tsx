@@ -241,6 +241,7 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
   return (
     <div className="relative flex-1 overflow-hidden bg-black">
       <div ref={containerRef} className="absolute inset-0" />
+      <p className="absolute bottom-1 right-2 z-10 text-[9px] text-white/50 pointer-events-none">{tr("Map © OpenStreetMap contributors, OpenFreeMap")}</p>
 
       {flash && <div className="absolute inset-0 z-30 bg-red-600/50 animate-fade-in pointer-events-none" />}
 
@@ -290,7 +291,7 @@ export function DerezGameView({ lobby, players, me, onDeath }: Props) {
       {!me.isAlive && (
         <div className="absolute inset-x-0 top-1/3 z-30 flex flex-col items-center gap-1 pointer-events-none">
           <Skull className="w-8 h-8 text-white/50" />
-          <p className="font-mono text-xs tracking-widest uppercase text-white/60">{tr("Derezzed — spectating")}</p>
+          <p className="font-mono text-xs tracking-widest uppercase text-white/60">{tr("Boxed in — spectating")}</p>
         </div>
       )}
     </div>

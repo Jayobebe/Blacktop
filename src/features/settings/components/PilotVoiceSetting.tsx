@@ -76,6 +76,7 @@ export function PilotVoiceSetting() {
           </div>
         </>
       )}
+      <p className="text-[10px] text-muted-foreground/80 mt-2">{tr("Voices from the Piper project (CC0, public domain, M-AILABS and CC BY-SA voices), run with ONNX Runtime.")}</p>
     </div>
   );
 }

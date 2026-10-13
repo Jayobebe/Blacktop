@@ -120,7 +120,7 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
         <span className="cw-back-emblem">
           <Swords strokeWidth={1.5} aria-hidden />
         </span>
-        <span className="cw-back-word">{tr("Card Wars")}</span>
+        <span className="cw-back-word">{tr("BlackGrid")}</span>
       </div>
     );
     const cls = cn('cw-card no-frost cw-card-facedown', `cw-card-${size}`, className);

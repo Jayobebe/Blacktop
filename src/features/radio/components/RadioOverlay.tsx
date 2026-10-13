@@ -196,7 +196,10 @@ export function RadioOverlay() {
                 </button>
               )}
               {isLive ? (
-                <p className="text-center text-[10px] uppercase tracking-widest text-destructive font-bold">● {tr("On air")}</p>
+                <>
+                  <p className="text-center text-[10px] uppercase tracking-widest text-destructive font-bold">● {tr("On air")}</p>
+                  <p className="text-center text-[10px] text-muted-foreground">{tr("Streamed by SomaFM, listener-supported radio.")}</p>
+                </>
               ) : (<>
               <input
                 type="range"

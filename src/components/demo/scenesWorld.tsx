@@ -269,7 +269,7 @@ export function SpeedshopScene() {
 }
 
 // =============================================================================
-// Derez Legacy: light walls in a drawn arena; hit one and you're out
+// Gridlock: light walls in a drawn arena; hit one and you're out
 // =============================================================================
 
 const DZ_P = 9;
@@ -313,7 +313,7 @@ export function DerezScene() {
   const alive = DZ_RIDERS.filter((r) => !(r.dies !== undefined && u >= r.dies)).length;
   const lastDeath = DZ_RIDERS.filter((r) => r.dies !== undefined && u >= r.dies).sort((a, b) => (b.dies ?? 0) - (a.dies ?? 0))[0];
   const status =
-    u >= 0.86 ? tr("You win!") : lastDeath && u - (lastDeath.dies ?? 0) < 0.08 ? tr("{0} derezzed!", [lastDeath.name()]) : tr("{0} riders live", [alive]);
+    u >= 0.86 ? tr("You win!") : lastDeath && u - (lastDeath.dies ?? 0) < 0.08 ? tr("{0} boxed in!", [lastDeath.name()]) : tr("{0} riders live", [alive]);
 
   return (
     <Frame sound={{ t, cues: DZ_CUES }}>
@@ -336,7 +336,7 @@ export function DerezScene() {
               {died && (
                 <g>
                   <circle cx={head[0]} cy={head[1]} r={4 + (deadFor / 0.14) * 18} fill="none" stroke={r.color} strokeWidth={1.6} opacity={1 - deadFor / 0.14} />
-                  <T x={head[0]} y={head[1] - 9} anchor="middle" size={7} weight={900} color={r.color}>{tr("DEREZ!")}</T>
+                  <T x={head[0]} y={head[1] - 9} anchor="middle" size={7} weight={900} color={r.color}>{tr("GRIDLOCK!")}</T>
                 </g>
               )}
             </g>

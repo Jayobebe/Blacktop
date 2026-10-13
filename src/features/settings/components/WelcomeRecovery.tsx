@@ -91,7 +91,7 @@ export function WelcomeRecovery({ open, onOpenChange, createProfile }: { open: b
 
         <div>
           <p className="text-sm font-medium">{tr("Recovery code")}</p>
-          <p className="text-[11px] text-muted-foreground mb-1.5">{tr("Your account: Card Wars, crew scores and Track Day records.")}</p>
+          <p className="text-[11px] text-muted-foreground mb-1.5">{tr("Your account: BlackGrid, crew scores and Track Day records.")}</p>
           <Input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}

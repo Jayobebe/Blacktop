@@ -706,6 +706,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
               onPointerCancel={onPointerUp}
               onWheel={onWheel}
             />
+            <p className="absolute bottom-1 right-2 z-10 text-[9px] text-white/50 pointer-events-none">{tr("Map © OpenStreetMap contributors, OpenFreeMap")}</p>
             {!ready && (
               <div className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Loading terrain…")}

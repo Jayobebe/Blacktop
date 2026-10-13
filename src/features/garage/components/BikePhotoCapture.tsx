@@ -125,6 +125,8 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
         ))}
       </div>
 
+      <p className="text-[10px] text-muted-foreground/80 text-center">{tr("Photos are cut out on your phone with the U²-Net model (Apache 2.0).")}</p>
+
       {/* The camera for a photo; any picture for the rider's own (checked by what it is, once picked). */}
       <input ref={photoRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile('photo')} />
       <input ref={ownRef} type="file" accept="image/*" className="hidden" onChange={handleFile('own')} />

@@ -158,6 +158,7 @@ export function TrackSearch({
                   </div>
                 );
               })}
+              <p className="px-3 pt-1 pb-2 text-[10px] text-muted-foreground/80">{tr("Circuits © OpenStreetMap contributors")}</p>
             </Section>
           )}
           {query && !mine.length && !library.length && (

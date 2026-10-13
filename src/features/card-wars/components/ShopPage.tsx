@@ -23,7 +23,7 @@ import { SpinPanel } from './SpinPanel';
 /** The frame each of the server's six spin steps wears, lowest first (`tierOfPrice` counts from 1). */
 const SPIN_TIER_IDS = ['bronze', 'gold', 'diamond', 'ruby', 'polyatomic', 'orion'] as const;
 
-/** A shelf's name. The racing series keep their own. */
+/** A shelf's name. The shop-only shelves have Blacktop's own names (Open Wheel, Prototype Bikes, Mountain Course), never a racing series' trademark. */
 export function shelfLabel(id: ShopCategory): string {
   if (id === 'road') return tr("Road");
   if (id === 'race') return tr("Race");

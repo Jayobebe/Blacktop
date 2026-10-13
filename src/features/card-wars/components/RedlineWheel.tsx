@@ -98,7 +98,7 @@ export function RedlineWheel({ frozen }: { frozen: boolean }) {
         </div>
       ) : (
         <div className="space-y-1.5">
-          <p className="text-xs leading-snug">{tr("The Wildcard comes only from paid spins on the F1 and MotoGP shelves: {0}% a spin.", [REDLINE.odds])}</p>
+          <p className="text-xs leading-snug">{tr("The Wildcard comes only from paid spins on the Open Wheel and Prototype Bikes shelves: {0}% a spin.", [REDLINE.odds])}</p>
           <Progress value={(shop.wildPity / REDLINE.pity) * 100} className="h-1.5" />
           <p className="text-[11px] text-muted-foreground font-mono">{toSpin === 1 ? tr("Certain on your next paid spin") : tr("Certain within {0} more paid spins", [toSpin])}</p>
         </div>

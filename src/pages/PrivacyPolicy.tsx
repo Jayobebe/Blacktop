@@ -152,9 +152,9 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-semibold">{tr("Derez Legacy (multiplayer arcade)")}</h2>
+          <h2 className="text-base font-semibold">{tr("Gridlock (multiplayer arcade)")}</h2>
           <p className="text-muted-foreground">
-            {tr("When you create or join a Derez Legacy lobby, your display name and assigned accent colour are stored in the lobby on our server. During a round your GPS position is broadcast at high frequency to the other players so their screens can draw your light trail — this trail data is ephemeral and is never written to the database. Lobby rows are removed when the lobby is closed. Win tallies are stored locally on your device.")}
+            {tr("When you create or join a Gridlock lobby, your display name and assigned accent colour are stored in the lobby on our server. During a round your GPS position is broadcast at high frequency to the other players so their screens can draw your light trail — this trail data is ephemeral and is never written to the database. Lobby rows are removed when the lobby is closed. Win tallies are stored locally on your device.")}
           </p>
         </section>
 

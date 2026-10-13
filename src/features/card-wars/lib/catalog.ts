@@ -90,7 +90,7 @@ const rows: Row[] = [
  ['fordgt','Ford','GT GTLM','car','race','gtlm',2016,500,1250,305,null,82,90],
  ['vantagegte','Aston Martin','Vantage AMR GTE','car','race','gtlm',2018,510,1245,300,null,80,88],
  ['lexusrcf','Lexus','RC F GT3','car','race','gtlm',2017,500,1300,295,null,76,84],
- // ── RPM bank: F1 ──
+ // ── RPM bank: Open Wheel (id f1) ──
  ['rb19','Red Bull','RB19','car','race','f1',2023,1000,798,350,null,40,99],
  ['w11','Mercedes','W11 EQ Performance','car','race','f1',2020,1000,746,350,null,40,99],
  ['f2004','Ferrari','F2004','car','race','f1',2004,900,605,370,null,38,96],
@@ -101,19 +101,19 @@ const rows: Row[] = [
  ['lotus79','Lotus','79','car','race','f1',1978,480,575,290,null,32,86],
  ['mcl38','McLaren','MCL38','car','race','f1',2024,1000,798,350,null,40,98],
  ['bgp001','Brawn','BGP 001','car','race','f1',2009,750,605,330,null,38,93],
- // ── RPM bank: Isle of Man TT ──
- ['m1000tt','BMW','M 1000 RR TT Superbike','bike','race','tt',2023,230,175,330,58,64,86],
- ['firebladett','Honda','CBR1000RR-R TT Superbike','bike','race','tt',2022,225,175,325,57,62,85],
- ['zx10tt','Kawasaki','Ninja ZX-10RR TT Superbike','bike','race','tt',2019,225,175,320,57,62,84],
- ['gsxrtt','Suzuki','GSX-R1000 TT Superbike','bike','race','tt',2018,215,175,315,57,62,84],
- ['r1tt','Yamaha','YZF-R1 TT Superbike','bike','race','tt',2017,215,177,315,57,62,84],
- ['norton','Norton','SG7 TT','bike','race','tt',2019,215,170,320,56,60,82],
+ // ── RPM bank: Mountain Course (id tt) ──
+ ['m1000tt','BMW','M 1000 RR Road Racer','bike','race','tt',2023,230,175,330,58,64,86],
+ ['firebladett','Honda','CBR1000RR-R Road Racer','bike','race','tt',2022,225,175,325,57,62,85],
+ ['zx10tt','Kawasaki','Ninja ZX-10RR Road Racer','bike','race','tt',2019,225,175,320,57,62,84],
+ ['gsxrtt','Suzuki','GSX-R1000 Road Racer','bike','race','tt',2018,215,175,315,57,62,84],
+ ['r1tt','Yamaha','YZF-R1 Road Racer','bike','race','tt',2017,215,177,315,57,62,84],
+ ['norton','Norton','SG7','bike','race','tt',2019,215,170,320,56,60,82],
  ['shinden','Mugen','Shinden Hachi','bike','race','tt',2019,160,248,270,54,24,76],
  ['rc30','Honda','VFR750R RC30','bike','race','tt',1988,112,185,250,52,58,78],
  ['ow01','Yamaha','FZR750R OW01','bike','race','tt',1989,121,187,255,52,58,78],
  // The id is from the Triumph Street Triple this card used to be: kept, so everyone who owns it still does.
  ['striplett','Suter','MMX 500','bike','race','tt',2017,195,127,310,62,30,92],
- // ── RPM bank: MotoGP ──
+ // ── RPM bank: Prototype Bikes (id motogp) ──
  ['gp23','Ducati','Desmosedici GP23','bike','race','motogp',2023,300,157,366,64,30,96],
  ['rc213v','Honda','RC213V','bike','race','motogp',2014,260,157,350,64,30,97],
  ['m1_15','Yamaha','YZR-M1','bike','race','motogp',2015,240,157,350,64,32,98],
@@ -159,9 +159,9 @@ export const BALANCE: Record<string, readonly [number, number, number, number, n
 /** The four series whose cards are only ever bought or spun for, never won. */
 export const BANK_INFO: Record<CardBank, { label: string; vehicle: 'car' | 'bike' }> = {
  gtlm: { label: 'GTLM', vehicle: 'car' },
- f1: { label: 'F1', vehicle: 'car' },
- tt: { label: 'Isle of Man TT', vehicle: 'bike' },
- motogp: { label: 'MotoGP', vehicle: 'bike' },
+ f1: { label: 'Open Wheel', vehicle: 'car' },
+ tt: { label: 'Mountain Course', vehicle: 'bike' },
+ motogp: { label: 'Prototype Bikes', vehicle: 'bike' },
 };
 
 /** The shop's shelves. A spin on a shelf can land one of its cards. */
@@ -175,7 +175,7 @@ export const SPECS: Record<string, CardSpecs> = {};
 export const CATALOG: BattleCard[] = rows.map(([id, manufacturer, name, vehicle, spec, bank, year, hp, kg, vmaxKmh, leanDeg, distance, corners]) => {
  SPECS[id] = { year, hp, kg, vmaxKmh, ...(leanDeg != null ? { leanDeg } : {}) };
  const b = BALANCE[id];
- if (!b) throw new Error(`Card Wars: ${id} has no BALANCE row (npm run cardwars:balance)`);
+ if (!b) throw new Error(`BlackGrid: ${id} has no BALANCE row (npm run cardwars:balance)`);
  return {
   id, name, manufacturer, vehicle, spec, archetype: id,
   ...(ARTWORK[id] ? { image: ARTWORK[id] } : {}),

@@ -98,8 +98,8 @@ export function tagSourceLine(power: TagPower): string {
       return tr("A Coin flip lands heads more often the higher its vehicle's Speed.");
     case 'wild':
       return combosLive()
-        ? tr("Only from paid spins on the F1 and MotoGP shelves: {0}% a spin, certain within {1} spins. One a deck. Win {2} battles in a row with it in your deck to unlock a combo.", [REDLINE.odds, REDLINE.pity, WILD.streak])
-        : tr("Only from paid spins on the F1 and MotoGP shelves: {0}% a spin, certain within {1} spins. One a deck.", [REDLINE.odds, REDLINE.pity]);
+        ? tr("Only from paid spins on the Open Wheel and Prototype Bikes shelves: {0}% a spin, certain within {1} spins. One a deck. Win {2} battles in a row with it in your deck to unlock a combo.", [REDLINE.odds, REDLINE.pity, WILD.streak])
+        : tr("Only from paid spins on the Open Wheel and Prototype Bikes shelves: {0}% a spin, certain within {1} spins. One a deck.", [REDLINE.odds, REDLINE.pity]);
     default:
       return tr("A Second chance is as strong as its vehicle's Corners.");
   }

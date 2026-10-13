@@ -2724,7 +2724,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         {/* Landscape (short:): the speed card sits bottom-left, credits beside it. */}
         <div className="flex flex-col items-center short:items-start gap-1.5">
           <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none short:hidden">
-            {tr("Weather: RainViewer")}
+            {tr("Weather: RainViewer, Open-Meteo")}
           </div>
 
           {/* Bottom-left action stack (Rescue above Report): beside the speed card in

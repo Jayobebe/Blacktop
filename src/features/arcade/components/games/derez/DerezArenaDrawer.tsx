@@ -119,6 +119,7 @@ export function DerezArenaDrawer({ initialRing, accentColor, onCancel, onConfirm
   return (
     <div className="fixed inset-0 z-[1200] bg-background flex flex-col">
       <div ref={containerRef} className="absolute inset-0" />
+      <p className="absolute bottom-1 right-2 z-10 text-[9px] text-white/50 pointer-events-none">{tr("Map © OpenStreetMap contributors, OpenFreeMap")}</p>
 
       {/* Draw surface */}
       <div

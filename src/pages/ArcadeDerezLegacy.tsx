@@ -87,7 +87,7 @@ export default function ArcadeDerezLegacy() {
   );
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);
-  const joinUrl = lobby ? `${shareOrigin()}/arcade/derez-legacy/${lobby.code}` : '';
+  const joinUrl = lobby ? `${shareOrigin()}/arcade/gridlock/${lobby.code}` : '';
 
   const exit = async () => { await leaveLobby(); navigate('/world'); };
 
@@ -95,7 +95,7 @@ export default function ArcadeDerezLegacy() {
   if (!lobby) {
     return (
       <div className="min-h-dvh flex flex-col safe-top safe-bottom">
-        <Header title={tr("Derez Legacy")} onBack={() => navigate(-1)} />
+        <Header title={tr("Gridlock")} onBack={() => navigate(-1)} />
         <div className="flex-1 px-4 pb-6 flex flex-col gap-4">
           <div className="rounded-2xl border border-border/30 bg-card/50 p-4">
             <p className="text-sm text-white font-semibold">{tr("Real-world lightcycles")}</p>
@@ -137,7 +137,7 @@ export default function ArcadeDerezLegacy() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-auto">
-            {tr("Derez Legacy wins:")}{" "}<span className="font-mono text-white">{scores['legacy-derez']}</span>
+            {tr("Gridlock wins:")}{" "}<span className="font-mono text-white">{scores['legacy-derez']}</span>
           </p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function ArcadeDerezLegacy() {
       <div className="min-h-dvh bg-black flex flex-col safe-top safe-bottom">
         {lobby.state === 'countdown' ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3">
-            <p className="font-mono text-xs tracking-widest uppercase text-white/50">{tr("Derez in")}</p>
+            <p className="font-mono text-xs tracking-widest uppercase text-white/50">{tr("Gridlock in")}</p>
             <p className="font-mono text-8xl font-bold tabular-nums" style={{ color: accent, textShadow: `0 0 30px ${accent}` }}>
               {countdown ?? 5}
             </p>
@@ -183,7 +183,7 @@ export default function ArcadeDerezLegacy() {
         <Trophy className="w-10 h-10" style={{ color: winner ? colorOf(winner.accentColor) : accent }} />
         <div className="text-center">
           <p className="font-mono text-xs tracking-widest uppercase text-muted-foreground">
-            {winner ? tr("Winner") : tr("Everyone derezzed")}
+            {winner ? tr("Winner") : tr("Everyone boxed in")}
           </p>
           <p className="text-3xl font-bold mt-1" style={{ color: winner ? colorOf(winner.accentColor) : undefined }}>
             {lobby.winnerName ?? tr("Draw")}
@@ -225,7 +225,7 @@ export default function ArcadeDerezLegacy() {
   // ---- Lobby -------------------------------------------------------------
   return (
     <div className="min-h-dvh flex flex-col safe-top safe-bottom">
-      <Header title={tr("Derez Legacy")} onBack={exit} />
+      <Header title={tr("Gridlock")} onBack={exit} />
 
       <div className="flex-1 px-4 pb-6 space-y-4 overflow-y-auto">
         {/* Code + QR */}

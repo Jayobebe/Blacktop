@@ -750,7 +750,7 @@ export function CardWarsScreen() {
   return (
     <main className="min-h-dvh flex flex-col p-4 safe-top safe-bottom max-w-3xl mx-auto w-full text-foreground">
       <PageHeader
-        title={tr("Card Wars")}
+        title={tr("BlackGrid")}
         subtitle={tr("Real cars and bikes, card against card")}
         backTo="/arcade"
         right={

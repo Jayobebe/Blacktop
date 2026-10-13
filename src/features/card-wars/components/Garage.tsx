@@ -198,7 +198,7 @@ export function Garage({
         <div>
           <p className="text-sm font-semibold">{shop.freeSpins === 0 ? tr("No free card spins left") : shop.freeSpins === 1 ? tr("1 free card spin") : tr("{0} free card spins", [shop.freeSpins])}</p>
           <p className="text-xs text-muted-foreground leading-snug">
-            {tr("Every free spin wins a card you don't have. Road cards come up most; an F1 or MotoGP card is a {0}% shot.", [RULES.freeOdds.f1 + RULES.freeOdds.motogp])}
+            {tr("Every free spin wins a card you don't have. Road cards come up most; an Open Wheel or Prototype Bikes card is a {0}% shot.", [RULES.freeOdds.f1 + RULES.freeOdds.motogp])}
           </p>
         </div>
       </div>

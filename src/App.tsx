@@ -105,7 +105,7 @@ function JoinLink() {
 }
 function CardWarsLink() {
   const { search, hash } = useLocation();
-  return <Navigate to={`/arcade/card-wars${search}${hash}`} replace />;
+  return <Navigate to={`/arcade/blackgrid${search}${hash}`} replace />;
 }
 const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
@@ -295,9 +295,14 @@ function AppRoutes() {
       <Route path="/crew/join" element={<CrewJoin />} />
       <Route path="/crew/challenges" element={<CrewChallenges />} />
       <Route path="/arcade" element={<Arcade />} />
+      <Route path="/arcade/blackgrid" element={<CardWars />} />
+      {/* The game's old address: battle and swap links already sent still open. */}
       <Route path="/arcade/card-wars" element={<CardWars />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
+      <Route path="/arcade/gridlock" element={<ArcadeDerezLegacy />} />
+      <Route path="/arcade/gridlock/:code" element={<ArcadeDerezLegacy />} />
+      {/* The game's old address: invitations already sent still open. */}
       <Route path="/arcade/derez-legacy" element={<ArcadeDerezLegacy />} />
       <Route path="/arcade/derez-legacy/:code" element={<ArcadeDerezLegacy />} />
       <Route path="/stats" element={<Stats />} />
