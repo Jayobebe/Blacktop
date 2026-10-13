@@ -101,7 +101,7 @@ const WORLD_MARKS: { I: Icon; name: () => string; at: [number, number] }[] = [
   { I: Gamepad2, name: () => tr("Arcade"), at: [151.2, -33.9] },
   { I: ShoppingBag, name: () => tr("Speedshop"), at: [-118.2, 34] },
   // Crypto fuel pot: not in the store apps (paymentsAvailable).
-  ...(paymentsAvailable() ? [{ I: Fuel, name: () => tr("Blacktank"), at: [0, -86] as [number, number] }] : []),
+  ...((!__STORE_BUILD__ && paymentsAvailable()) ? [{ I: Fuel, name: () => tr("Blacktank"), at: [0, -86] as [number, number] }] : []),
 ];
 const GLOW = Array.from({ length: 34 }, (_, i) => [rnd(i) * 300 - 150, rnd(i + 50) * 110 - 45] as [number, number]);
 

@@ -17,7 +17,7 @@ import { tr } from '@/lib/i18n';
  * actually does — every line here is backed by a shipped feature.
  */
 
-const PAY_UP = tr("Pay Up");
+const PAY_UP = __STORE_BUILD__ ? '' : tr("Pay Up");
 const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: SlidersHorizontal,
@@ -82,7 +82,7 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: Globe2,
     title: tr("Blacktop World"),
-    body: paymentsAvailable()
+    body: (!__STORE_BUILD__ && paymentsAvailable())
       ? tr("Opt in to a live globe of riders and crews: crew convoys, leaderboards, weekly and monthly challenges, arcade games and Blacktank, a shared crew fuel fund.")
       : tr("Opt in to a live globe of riders and crews: crew convoys, leaderboards, weekly and monthly challenges and arcade games."),
   },
@@ -99,7 +99,7 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: BellRing,
     title: tr("Notifications"),
-    body: paymentsAvailable()
+    body: (!__STORE_BUILD__ && paymentsAvailable())
       ? tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups, track records and Blacktank votes.")
       : tr("Optional alerts for rescue calls, heavy weather heading your way, service reminders, crew challenges and leaderboards, card pickups and track records."),
   },
@@ -113,11 +113,11 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
     title: tr("Car display mode"),
     body: tr("A large, low-clutter ride screen for Android phone mirroring to a car head unit."),
   },
-  {
+  ...(__STORE_BUILD__ ? [] : [{
     icon: Wallet,
     title: PAY_UP,
     body: tr("Send a mate fuel money or tip with Nimiq Pay (NIM or USDT) by QR code. Payments happen in your own wallet."),
-  },
+  }]),
   {
     icon: ShoppingBag,
     title: tr("Speedshop (coming soon)"),
@@ -216,7 +216,7 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {FEATURES.filter((f) => paymentsAvailable() || f.title !== PAY_UP).map(({ icon: Icon, title, body }) => (
+          {FEATURES.filter((f) => (!__STORE_BUILD__ && paymentsAvailable()) || f.title !== PAY_UP).map(({ icon: Icon, title, body }) => (
             <article key={title} className="rounded-[20px] frost p-4">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <div className="rounded-lg bg-accent/10 p-1.5">

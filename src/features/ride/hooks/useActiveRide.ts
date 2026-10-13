@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { getExperience } from '@/features/experience/lib/profile';
 import { SpeedFilter, speedLimitsFor } from '../lib/speedFilter';
+import { countUsage } from '@/lib/usage';
 
 const SPEED_SMOOTHING_FACTOR = 0.75; // Higher = more responsive to current reading
 const MIN_SPEED_THRESHOLD = 0.3; // mph - very low threshold to catch movement early
@@ -1037,6 +1038,8 @@ export function useActiveRide(convoyId?: string | null) {
       }));
     }, 500);
 
+    // The anonymous tally of rides started (lib/usage.ts): a number, nothing about this ride.
+    void countUsage(isConvoyMode ? 'ride_convoy' : 'ride');
     return true;
   }, [convoyId]);
 
@@ -1074,6 +1077,8 @@ export function useActiveRide(convoyId?: string | null) {
       : rideStartedAtMs
         ? Math.max(0, Math.floor((Date.now() - rideStartedAtMs - totalPausedTime) / 1000))
         : 0;
+    // A ride that lasted is counted as finished (the anonymous tally again).
+    if (finalDuration >= 120) void countUsage('ride_done');
 
     let savedRideId: string | null = null;
 

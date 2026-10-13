@@ -15,7 +15,8 @@ android {
         applicationId "com.blacktoplive.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        // Google Play wants a higher number with every upload: the build workflow passes its run number.
+        versionCode((System.getenv("BT_VERSION_CODE") ?: "1") as Integer)
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

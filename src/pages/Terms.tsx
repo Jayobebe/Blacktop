@@ -188,7 +188,7 @@ export default function Terms() {
         </section>
 
         {/* Crypto payments aren't in the store apps (paymentsAvailable). */}
-        {paymentsAvailable() && <section className="space-y-2">
+        {(!__STORE_BUILD__ && paymentsAvailable()) && <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Payments — Pay Up &amp; Blacktank")}</h2>
           <p className="text-muted-foreground">
             <span className="text-foreground font-medium">{tr("Pay Up")}</span>{" "}{tr("lets you display your own wallet QR or scan another rider's to send NIM or Polygon USDT via your own Nimiq Pay wallet. Blacktop is not a payment processor: we never hold, route or take custody of funds, we never see your keys, and every transaction is final and irreversible once confirmed in your wallet. You are solely responsible for checking the recipient address before sending.")}

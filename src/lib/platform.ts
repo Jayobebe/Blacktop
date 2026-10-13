@@ -17,6 +17,8 @@ export function shareOrigin(): string {
 
 /**
  * Crypto payments (Pay Up tips, Blacktank, /pay through Nimiq Pay) are web and
- * mini-app only: the app stores don't allow them in a store app.
+ * mini-app only: the app stores don't allow them in a store app. In the store
+ * build their code isn't there at all (`__STORE_BUILD__`, see vite-env.d.ts):
+ * call sites write `!__STORE_BUILD__ && paymentsAvailable()` so it folds away.
  */
-export const paymentsAvailable = (): boolean => !isNativeApp();
+export const paymentsAvailable = (): boolean => !__STORE_BUILD__ && !isNativeApp();

@@ -29,7 +29,6 @@ const CATEGORY_DEFS = [
   { id: 'rescue', label: tr("Rescue calls"), desc: tr("A convoy or crew mate calls for rescue, with where they are") },
   { id: 'rescue_nearby', label: tr("Riders near me who need help"), desc: tr("Another rider close by calls for rescue. Keeps this phone’s rough area (about 11 km) on the server") },
   { id: 'weather', label: tr("Heavy weather"), desc: tr("Storms, heavy rain, snow or strong winds heading to your area") },
-  { id: 'blacktank', label: tr("Blacktank"), desc: tr("Requests to vote on, approvals, chip-ins and payouts") },
   { id: 'timeattack', label: tr("Track records"), desc: tr("Someone beats your lap time on a circuit leaderboard") },
   { id: 'card_pickups', label: tr("Card pickups"), desc: tr("Someone picks up a card you dropped") },
   { id: 'leaderboard', label: tr("Crew leaderboard"), desc: tr("A crew mate passes you on the crew board") },
@@ -38,9 +37,11 @@ const CATEGORY_DEFS = [
   { id: 'maintenance', label: tr("Maintenance"), desc: tr("Service items coming due or overdue") },
 ] as const;
 
-export type PushCategory = (typeof CATEGORY_DEFS)[number]['id'];
-/** Blacktank is a crypto feature: not in the store apps, which don't list or register for it. */
-export const PUSH_CATEGORY_DEFS = CATEGORY_DEFS.filter((d) => paymentsAvailable() || d.id !== 'blacktank');
+export type PushCategory = (typeof CATEGORY_DEFS)[number]['id'] | 'blacktank';
+type CategoryDef = { id: PushCategory; label: string; desc: string };
+/** Blacktank is a crypto feature: not in the store apps, which don't list or register for it (and whose build doesn't carry it). */
+const TANK_DEFS: CategoryDef[] = __STORE_BUILD__ ? [] : [{ id: 'blacktank', label: tr("Blacktank"), desc: tr("Requests to vote on, approvals, chip-ins and payouts") }];
+export const PUSH_CATEGORY_DEFS: CategoryDef[] = [...CATEGORY_DEFS.slice(0, 3), ...(paymentsAvailable() ? TANK_DEFS : []), ...CATEGORY_DEFS.slice(3)];
 const ALL_CATEGORIES = PUSH_CATEGORY_DEFS.map((d) => d.id) as PushCategory[];
 
 function readCategories(): PushCategory[] {

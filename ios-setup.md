@@ -15,6 +15,14 @@ Already set up in the repo:
   Bridge View Controller's class in `Main.storyboard`.
 - Bundle id `com.blacktoplive.app`, iOS 15+, iPhone and iPad.
 
+## Without a Mac
+
+GitHub compiles the app on every change to the native projects (`.github/workflows/native.yml`, the "Native apps"
+workflow under the repo's Actions tab; it can also be run by hand there). The iOS job builds for the simulator,
+unsigned: it proves the project, the plugins and the Swift code compile. Its log is in the run's Artifacts. A build
+that goes on a phone or to TestFlight has to be signed, which needs an Apple Developer account and the steps below
+(or the same workflow given a signing certificate, which isn't set up yet).
+
 ## Building (needs a Mac with Xcode 16 or later)
 
 1. Clone the repo and install: `git clone …`, then `cd convoy-comms` and `npm install`.

@@ -8,11 +8,11 @@ import { cn } from '@/lib/utils';
 import { disablePush, enablePush, PUSH_CATEGORY_DEFS, refreshPushPermission, sendTestPush, setPushCategory, usePush, type PushCategory } from '../lib/push';
 import { tr } from '@/lib/i18n';
 
-const ICONS: Record<PushCategory, React.ElementType> = {
+const ICONS = {
   rescue: AlertTriangle,
   rescue_nearby: HeartHandshake,
   weather: CloudLightning,
-  blacktank: Fuel,
+  ...(__STORE_BUILD__ ? {} : { blacktank: Fuel }),
   timeattack: Flag,
   card_pickups: IdCard,
   leaderboard: TrendingDown,
@@ -109,7 +109,7 @@ export function NotificationSettings() {
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">{tr("Notify me about")}</p>
             <ul className="divide-y divide-border/20">
               {PUSH_CATEGORY_DEFS.map((d) => {
-                const Icon = ICONS[d.id];
+                const Icon = (ICONS as Partial<Record<PushCategory, React.ElementType>>)[d.id] ?? Fuel;
                 const on = push.categories.includes(d.id);
                 return (
                   <li key={d.id}>

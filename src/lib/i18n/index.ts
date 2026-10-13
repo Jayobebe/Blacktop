@@ -67,7 +67,8 @@ function detect(): string {
     /* storage blocked */
   }
   // Nimiq Pay sets this before any page script runs (window.nimiqPay.language, ISO 639-1).
-  const host = supported((globalThis as { nimiqPay?: { language?: string } }).nimiqPay?.language);
+  // (Not in the store build. `typeof`: this file also runs in Node scripts, where the build flag doesn't exist.)
+  const host = typeof __STORE_BUILD__ !== 'undefined' && __STORE_BUILD__ ? null : supported((globalThis as { nimiqPay?: { language?: string } }).nimiqPay?.language);
   if (host) return host;
   const langs = typeof navigator !== 'undefined' ? (navigator.languages?.length ? navigator.languages : [navigator.language]) : [];
   for (const l of langs) {

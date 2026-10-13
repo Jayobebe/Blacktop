@@ -42,6 +42,7 @@ import ActiveRide from "./pages/ActiveRide";
 import PillionRide from "./pages/PillionRide";
 import { installDemoGuard } from '@/lib/demoGuard';
 import { resumePendingRecovery } from '@/lib/recovery';
+import { countOpen } from '@/lib/usage';
 import { probeServerCaps } from '@/lib/serverCaps';
 import { loadLocaleExtra } from '@/lib/i18n';
 
@@ -56,6 +57,10 @@ installWarpNavigation();
 probeServerCaps();
 // A recovery code made just before the app closed may have signed this phone out: sign back in with it.
 void resumePendingRecovery();
+// An app left open for days still counts each day it's looked at.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void countOpen();
+});
 
 
 const queryClient = new QueryClient();
@@ -72,6 +77,8 @@ function prefetchPages() {
     pageLoaders.forEach((load) => void load().catch(() => {}));
     // The rider's country for Blacktop World's globe (a no-op unless it's new or they've travelled).
     void import("@/lib/profileCountry").then((m) => m.syncProfileCountry()).catch(() => {});
+    // The anonymous daily tally of devices that opened the app (once a day a device).
+    void countOpen();
   };
   if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 5000 });
   else setTimeout(run, 2000);
@@ -89,7 +96,8 @@ const Install = lazyPage(() => import("./pages/Install"));
 const PrivacyPolicy = lazyPage(() => loadLocaleExtra().then(() => import("./pages/PrivacyPolicy")));
 const Terms = lazyPage(() => loadLocaleExtra().then(() => import("./pages/Terms")));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
-const Pay = lazyPage(() => import("./pages/Pay"));
+// Not in the store build (crypto payments): see __STORE_BUILD__.
+const Pay = __STORE_BUILD__ ? null : lazyPage(() => import("./pages/Pay"));
 function JoinLink() {
   const { search } = useLocation();
   return <Navigate to={`/join-convoy${search}`} replace />;
@@ -238,7 +246,7 @@ function AppRoutes() {
       <Suspense fallback={null}>
       <Routes>
         <Route path="/demo" element={<DemoShowcase />} />
-        <Route path="/pay" element={paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
+        <Route path="/pay" element={Pay && paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
         <Route path="/device-check" element={<DeviceCheck />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
@@ -274,7 +282,7 @@ function AppRoutes() {
       <Route path="/rescue" element={<RescueLocation />} />
       <Route path="/speedshop" element={<Speedshop />} />
       <Route path="/demo" element={<DemoShowcase />} />
-      <Route path="/pay" element={paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
+      <Route path="/pay" element={Pay && paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
       <Route path="/device-check" element={<DeviceCheck />} />
       <Route path="/history" element={<History />} />
       <Route path="/ride/:id" element={<RideDetail />} />
@@ -330,7 +338,7 @@ const App = () => {
               <UiSounds />
               <AutoRescueConsentDialog />
               <RescueDrillHost />
-              <NimiqFullscreenPrompt />
+              {!__STORE_BUILD__ && <NimiqFullscreenPrompt />}
               <PatternGateDialog />
               <BrowserRouter>
                 <BackdropHost mapOpen={isOpen} />

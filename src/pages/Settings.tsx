@@ -1,6 +1,6 @@
 import { resetTips } from '@/features/guide';
 import { paymentsAvailable } from '@/lib/platform';
-import { useState, useRef, useEffect } from 'react';
+import { Suspense, lazy, useState, useRef, useEffect } from 'react';
 import { noteMotionGranted } from '@/lib/motionPermission';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
@@ -51,7 +51,8 @@ import { NotificationSettings, usePush, disablePush } from '@/features/notificat
 import { clearSurveyAnswers, SurveyResultsTable } from '@/features/speedshop';
 import { useDemoMode, setDemoMode } from '@/lib/demoMode';
 import { StationManager, useRadioStations, burnRadioStations, resetRadio } from '@/features/radio';
-import { NimiqTipCard } from '@/features/tips';
+// Loaded with the page, and not in the store build at all (crypto payments): see __STORE_BUILD__.
+const NimiqTipCard = __STORE_BUILD__ ? null : lazy(() => import('@/features/tips').then((m) => ({ default: m.NimiqTipCard })));
 import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type RideMode } from '@/features/experience';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
@@ -71,7 +72,9 @@ export default function Settings() {
   const { burnAllData, stats } = useRideHistory();
   const { burnGarage } = useGarage();
   const exp = useExperience();
-  const nimiqFull = useNimiqFullscreen();
+  // The same on every render of a build, so the hook order never changes.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const nimiqFull = __STORE_BUILD__ ? false : useNimiqFullscreen();
   const { settings, toggleSpeedUnit, toggleDistanceUnit, updateSetting, updateSettings, toggleLeanAngle, setLeanAngleThreshold } = useSettings();
   const { stations: radioStations } = useRadioStations();
   const [showStations, setShowStations] = useState(false);
@@ -507,7 +510,7 @@ export default function Settings() {
                 <Switch checked={settings.thermalMode === true} onCheckedChange={(v) => updateSetting('thermalMode', v)} />
               </div>
               {/* Nimiq Pay mini app: full screen, asked for each time (Nimiq's rule). */}
-              {canNimiqFullscreen() && !nimiqFull && (
+              {!__STORE_BUILD__ && canNimiqFullscreen() && !nimiqFull && (
                 <Button variant="outline" className="w-full rounded-2xl" onClick={askNimiqFullscreen}>
                   <Maximize className="w-4 h-4" />
                   {tr("Go full screen")}
@@ -1340,7 +1343,11 @@ export default function Settings() {
         </section>
 
         {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
-        {paymentsAvailable() && <NimiqTipCard />}
+        {NimiqTipCard && paymentsAvailable() && (
+          <Suspense fallback={null}>
+            <NimiqTipCard />
+          </Suspense>
+        )}
 
         {/* Demo account: every rider's Speedshop survey answers */}
         {demoEnabled && <SurveyResultsTable />}
@@ -1397,7 +1404,7 @@ function BlacktopWorldOptIn({ enabled, onToggle }: { enabled: boolean; onToggle:
     >
       <div className="space-y-3 text-[13px] text-muted-foreground leading-relaxed">
         <p>
-          {paymentsAvailable()
+          {(!__STORE_BUILD__ && paymentsAvailable())
             ? tr("The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade, Blacktank (a shared crew fuel fund) and trading-card drops on the map.")
             : tr("The crew hub: a globe with crew convoys, leaderboards, weekly challenges, the arcade and trading-card drops on the map.")}
         </p>

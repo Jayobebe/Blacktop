@@ -7,7 +7,10 @@
  * before the app starts (lib/i18n initI18n). `extra` is text only the legal
  * pages, the demo tour and the Enterprise demos use (about a third of each
  * language), loaded when one of those pages opens or once the app is idle.
- * Strings no code uses any more aren't shipped at all.
+ * Strings no code uses any more aren't shipped at all, and nor, in the store
+ * build, are the ones about crypto payments (`drop`, a pattern on the English
+ * text: that build has no code left that could show them), nor what's only
+ * said in the payments' own source files (`skip`).
  *
  * Only `vite build` splits; the dev server serves each whole file as `main`.
  * The locale files and the translation tooling (scripts/i18n) don't change.
@@ -43,10 +46,11 @@ function sourceFiles(dir, out = []) {
 }
 
 /** key → 'main' | 'extra' for every string literal in the app. */
-function classify(srcDir) {
+function classify(srcDir, skip = []) {
   const where = new Map();
   for (const file of sourceFiles(srcDir)) {
     const rel = relative(srcDir, file).split(sep).join('/');
+    if (skip.some((re) => re.test(rel))) continue;
     const part = EXTRA.some((re) => re.test(rel)) ? 'extra' : 'main';
     const text = readFileSync(file, 'utf8');
     const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
@@ -62,7 +66,7 @@ function classify(srcDir) {
   return where;
 }
 
-export function i18nSplit({ srcDir, localesDir }) {
+export function i18nSplit({ srcDir, localesDir, drop = null, skip = [] }) {
   let split = false;
   let where = null;
   const langs = () => readdirSync(localesDir).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5));
@@ -100,11 +104,11 @@ export function i18nSplit({ srcDir, localesDir }) {
       let out = all;
       if (!split) out = part === 'main' ? all : {};
       else {
-        where ??= classify(srcDir);
+        where ??= classify(srcDir, skip);
         out = {};
         for (const [k, v] of Object.entries(all)) {
           const w = where.get(k);
-          if (w && w === part) out[k] = v;
+          if (w && w === part && !(drop && drop.test(k))) out[k] = v;
         }
       }
       // JSON.parse of a string is quicker to start than a big object literal.

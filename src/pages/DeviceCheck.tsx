@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { requestMotionAccess } from '@/lib/motionPermission';
-import { isNimiqPayHost } from '@/features/tips/lib/walletBridge';
 import { clearCrashTrace, readCrashTrace } from '@/features/ride/lib/crashTrace';
 import type { CrashEvent } from '@/features/ride/lib/crashDetector';
 
@@ -21,7 +20,8 @@ type Check = { id: string; label: string; uses: string };
 
 const PASSIVE: Check[] = [
   { id: 'secure', label: 'Secure context (https)', uses: 'GPS, sensors, mic, camera' },
-  { id: 'host', label: 'Nimiq Pay host', uses: 'Payments, host language' },
+  // The mini-app host check isn't in the store build (__STORE_BUILD__).
+  ...(__STORE_BUILD__ ? [] : [{ id: 'host', label: 'Nimiq Pay host', uses: 'Payments, host language' }]),
   { id: 'storage', label: 'Local storage', uses: 'Settings, rides, crews' },
   { id: 'persist', label: 'Storage kept since last open', uses: 'Everything saved on the phone' },
   { id: 'idb', label: 'IndexedDB', uses: 'Offline map packs, ride data' },
@@ -89,14 +89,17 @@ function countEvents(type: 'devicemotion' | 'deviceorientation', ms = 2000): Pro
 async function passiveChecks(): Promise<Record<string, Result>> {
   const r: Record<string, Result> = {};
   r.secure = window.isSecureContext ? ok(location.protocol) : fail(location.protocol);
-  const lang = (window as unknown as { nimiqPay?: { language?: string } }).nimiqPay?.language;
-  r.host = isNimiqPayHost() ? ok(`language ${lang ?? '?'}`) : unknown('not inside Nimiq Pay');
+  if (!__STORE_BUILD__) {
+    const lang = (window as unknown as { nimiqPay?: { language?: string } }).nimiqPay?.language;
+    const { isNimiqPayHost } = await import('@/features/tips/lib/walletBridge');
+    r.host = isNimiqPayHost() ? ok(`language ${lang ?? '?'}`) : unknown('not inside Nimiq Pay');
+  }
 
   try {
     const prev = localStorage.getItem(LAST_KEY);
     localStorage.setItem(LAST_KEY, new Date().toISOString());
     r.storage = ok();
-    r.persist = prev ? ok(`last opened ${new Date(prev).toLocaleString()}`) : unknown('first open: close Nimiq Pay fully, reopen and check again');
+    r.persist = prev ? ok(`last opened ${new Date(prev).toLocaleString()}`) : unknown(__STORE_BUILD__ ? 'first open: close the app fully, reopen and check again' : 'first open: close Nimiq Pay fully, reopen and check again');
   } catch (e) {
     r.storage = fail(errText(e));
     r.persist = fail('no storage');

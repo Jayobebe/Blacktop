@@ -1,5 +1,5 @@
 import { paymentsAvailable } from '@/lib/platform';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -18,7 +18,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { X } from 'lucide-react';
 import { useCrew, CREW_QR_PREFIX } from '@/features/crew/useCrew';
 import { CrewList } from '@/features/crew/CrewList';
-import { BlacktankPanel } from '@/features/blacktank';
+// Loaded when it's opened, and not in the store build at all (crypto payments): see __STORE_BUILD__.
+const BlacktankPanel = __STORE_BUILD__ ? null : lazy(() => import('@/features/blacktank').then((m) => ({ default: m.BlacktankPanel })));
 
 import { tr } from '@/lib/i18n';
 import { useServerCap } from '@/lib/serverCaps';
@@ -42,7 +43,7 @@ const CREW_LANDMARKS: (WorldLandmark & { route?: string })[] = [
   // Bottom of the globe, on the Antarctic landmass (Enderby Land): comes into
   // view along the lower edge as the globe turns.
   // Crypto fuel pot: not in the store apps (paymentsAvailable).
-  ...(paymentsAvailable() ? [{ id: 'blacktank', lat: -70, lng: 60, label: tr("Blacktank"), kind: 'tank' as const }] : []),
+  ...((!__STORE_BUILD__ && paymentsAvailable()) ? [{ id: 'blacktank', lat: -70, lng: 60, label: tr("Blacktank"), kind: 'tank' as const }] : []),
 
 ];
 
@@ -66,7 +67,7 @@ export default function World() {
   const [showCrewQr, setShowCrewQr] = useState(false);
   const [searchParams] = useSearchParams();
   // Blacktank notifications open the panel straight away (/world?tank=1).
-  const [showBlacktank, setShowBlacktank] = useState(() => paymentsAvailable() && searchParams.get('tank') === '1');
+  const [showBlacktank, setShowBlacktank] = useState(() => (!__STORE_BUILD__ && paymentsAvailable()) && searchParams.get('tank') === '1');
 
   const crew = useCrew();
   const { settings } = useSettings();
@@ -175,7 +176,7 @@ export default function World() {
       setShowCrewQr(true);
       return;
     }
-    if (id === 'blacktank') {
+    if (!__STORE_BUILD__ && id === 'blacktank') {
       setShowBlacktank(true);
       return;
     }
@@ -350,10 +351,12 @@ export default function World() {
 
       {/* Blacktank — the crew fuel pot landmark. Portalled out of the page so
           the animated (transformed) wrapper doesn't trap the fixed overlay. */}
-      {showBlacktank && createPortal(
+      {showBlacktank && BlacktankPanel && createPortal(
         <div className="fixed inset-0 z-50 safe-frame-x bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 pt-[var(--safe-top)] sm:p-6">
           <div className="w-full sm:max-w-md max-h-[min(88dvh,100%)] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-border/40 bg-card p-4 pb-[calc(1rem+var(--safe-bottom))]">
-            <BlacktankPanel onClose={() => setShowBlacktank(false)} />
+            <Suspense fallback={null}>
+              <BlacktankPanel onClose={() => setShowBlacktank(false)} />
+            </Suspense>
           </div>
         </div>,
         document.body,
