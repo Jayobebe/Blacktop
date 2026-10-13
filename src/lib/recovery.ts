@@ -1,6 +1,7 @@
 import { createClient, type Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { demoBlocked } from '@/lib/demoGuard';
+import { VAULT_KEY, vaultPicks } from '@/lib/backup';
 
 /**
  * Recovery codes: an anonymous account has nothing to sign in with, so a lost
@@ -185,8 +186,13 @@ export async function checkRecoveryCode(text: string): Promise<{ session: Sessio
  * anything is deleted, and the burn is sent by hand with the old account's
  * own token spelled out, so it can only ever delete the account that token
  * belongs to, never the one just recovered.
+ *
+ * `keepPicks`: a backup has just been restored with it, so the Card Wars
+ * choices on the phone (deck, dog tags, cards won here) are the rider's own
+ * from their old phone and stay; only what the other account's server said
+ * is dropped from the game's key.
  */
-export async function switchToRecovered(session: Session): Promise<boolean> {
+export async function switchToRecovered(session: Session, { keepPicks = false } = {}): Promise<boolean> {
   if (demoBlocked()) return false;
   const mine = await supabase.auth.getSession();
   const old = mine.data.session;
@@ -195,7 +201,9 @@ export async function switchToRecovered(session: Session): Promise<boolean> {
   dropPending();
   // Entering your own code on your own phone changes nothing.
   if (old?.user.id === session.user.id) return true;
+  const picks = keepPicks ? vaultPicks(localStorage.getItem(VAULT_KEY)) : null;
   for (const key of ACCOUNT_KEYS) localStorage.removeItem(key);
+  if (picks) localStorage.setItem(VAULT_KEY, picks);
   if (old) {
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/burn-account`, {

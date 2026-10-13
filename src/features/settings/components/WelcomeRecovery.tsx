@@ -9,6 +9,7 @@ import { DemoLockNote } from '@/components/DemoLock';
 import { parseBackup, restoreBackup, type Backup } from '@/lib/backup';
 import { useDemoMode } from '@/lib/demoMode';
 import { tr } from '@/lib/i18n';
+import { BACKUP_ACCEPT } from '@/lib/backup';
 import { checkRecoveryCode, isCodeShaped, switchToRecovered } from '@/lib/recovery';
 
 /** The name a restored backup carries, for an account made to go with it. */
@@ -64,7 +65,7 @@ export function WelcomeRecovery({ open, onOpenChange, createProfile }: { open: b
       return;
     }
     if (account) {
-      if (!(await switchToRecovered(account.session))) {
+      if (!(await switchToRecovered(account.session, { keepPicks: !!backup }))) {
         setBusy(false);
         toast.error(tr("Couldn't reach the server — check your connection and try again."));
         return;
@@ -114,7 +115,7 @@ export function WelcomeRecovery({ open, onOpenChange, createProfile }: { open: b
           <input
             ref={picker}
             type="file"
-            accept="application/json,.json"
+            accept={BACKUP_ACCEPT}
             className="hidden"
             onChange={(e) => {
               void picked(e.target.files?.[0]);

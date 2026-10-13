@@ -5,9 +5,12 @@
  * can bring back on this phone or another. Nothing goes through a server.
  *
  * What isn't in it, on purpose:
- *   - what belongs to the account, not the phone (Card Wars, Enterprise
- *     workspaces): a stale copy of the server's answer would only mislead
- *     (`lib/recovery.ts` is how the account itself moves). The rider's name
+ *   - what belongs to the account, not the phone (Card Wars' cards, RPM and
+ *     dog tags, Enterprise workspaces): a stale copy of the server's answer
+ *     would only mislead (`lib/recovery.ts` is how the account itself moves).
+ *     What the rider chose in Card Wars on this phone does come: the deck,
+ *     its three dog tags, and the cards won and unlocked here (`VAULT_PICKS`,
+ *     cut out of the game's own key, which is otherwise left out). The rider's name
  *     is in it, so a backup restored from the welcome screen can make an
  *     account to go with it; on a phone that has one, the server's name wins
  *     again at the next start;
@@ -50,6 +53,37 @@ const LEFT_OUT = new Set([
 
 const inBackup = (key: string) => PREFIXES.some((p) => key.startsWith(p)) && !LEFT_OUT.has(key);
 
+/**
+ * Card Wars keeps everything under one key (`card-wars/lib/store.ts`): what the
+ * server said (cards held, their condition), a battle in progress, and the
+ * rider's own choices. Only the choices travel: these lists of ids.
+ */
+export const VAULT_KEY = 'bt.card_wars.v1';
+const VAULT_PICKS = ['deck', 'tags', 'rewards', 'unlocks'] as const;
+/** The rider's own Card Wars choices out of a stored vault, as JSON (null: none worth keeping). */
+export function vaultPicks(stored: string | null): string | null {
+  try {
+    const vault = JSON.parse(stored || 'null') as Record<string, unknown> | null;
+    if (!vault || typeof vault !== 'object') return null;
+    const picks: Record<string, string[]> = {};
+    for (const k of VAULT_PICKS) picks[k] = Array.isArray(vault[k]) ? (vault[k] as unknown[]).filter((x): x is string => typeof x === 'string') : [];
+    return VAULT_PICKS.some((k) => picks[k].length) ? JSON.stringify(picks) : null;
+  } catch {
+    return null;
+  }
+}
+/** A vault with the backup's choices put over whatever this phone's had (which keeps its battle in progress and what the server told it). */
+function vaultWith(current: string | null, picks: string): string {
+  let vault: Record<string, unknown> = {};
+  try {
+    const now = JSON.parse(current || 'null');
+    if (now && typeof now === 'object') vault = now;
+  } catch {
+    /* start from the picks */
+  }
+  return JSON.stringify({ ...vault, ...JSON.parse(picks) });
+}
+
 export interface Backup {
   app: 'blacktop';
   kind: 'backup';
@@ -74,8 +108,18 @@ export function makeBackup(): Backup {
     const v = localStorage.getItem(k);
     if (v != null) keys[k] = v;
   }
+  const picks = vaultPicks(localStorage.getItem(VAULT_KEY));
+  if (picks) keys[VAULT_KEY] = picks;
   return { app: 'blacktop', kind: 'backup', v: 1, at: new Date().toISOString(), keys };
 }
+
+/**
+ * What the file picker offers. On Android it's left open: its picker goes by
+ * what each folder says a file is, and a backup that came through a share
+ * sheet or a cloud drive is often filed as plain "binary", which a JSON-only
+ * picker greys out. Whatever is picked is checked by `parseBackup` anyway.
+ */
+export const BACKUP_ACCEPT: string | undefined = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent) ? undefined : 'application/json,.json';
 
 export const backupFileName = (b: Backup) => `blacktop-backup-${b.at.slice(0, 10)}.json`;
 
@@ -86,6 +130,9 @@ export function parseBackup(text: string): Backup | null {
     if (!raw || raw.app !== 'blacktop' || raw.kind !== 'backup' || raw.v !== 1 || typeof raw.keys !== 'object' || !raw.keys) return null;
     const keys: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw.keys)) if (inBackup(k) && typeof v === 'string') keys[k] = v;
+    // Only the choices are ever taken from a file's Card Wars entry, whatever else it holds.
+    const picks = typeof raw.keys[VAULT_KEY] === 'string' ? vaultPicks(raw.keys[VAULT_KEY]) : null;
+    if (picks) keys[VAULT_KEY] = picks;
     if (!Object.keys(keys).length) return null;
     return { app: 'blacktop', kind: 'backup', v: 1, at: typeof raw.at === 'string' ? raw.at : '', keys };
   } catch {
@@ -101,16 +148,20 @@ export function parseBackup(text: string): Backup | null {
 export function restoreBackup(b: Backup): boolean {
   const before: Record<string, string> = {};
   for (const k of ourKeys()) before[k] = localStorage.getItem(k) ?? '';
+  const vaultBefore = localStorage.getItem(VAULT_KEY);
   const put = (keys: Record<string, string>) => {
     for (const k of ourKeys()) localStorage.removeItem(k);
-    for (const [k, v] of Object.entries(keys)) localStorage.setItem(k, v);
+    for (const [k, v] of Object.entries(keys)) if (k !== VAULT_KEY) localStorage.setItem(k, v);
   };
   try {
     put(b.keys);
+    if (b.keys[VAULT_KEY]) localStorage.setItem(VAULT_KEY, vaultWith(vaultBefore, b.keys[VAULT_KEY]));
     return true;
   } catch {
     try {
       put(before);
+      if (vaultBefore === null) localStorage.removeItem(VAULT_KEY);
+      else localStorage.setItem(VAULT_KEY, vaultBefore);
     } catch {
       // It fitted a moment ago; nothing more to try.
     }

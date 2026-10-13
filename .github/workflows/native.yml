@@ -6,7 +6,7 @@
 #   iOS:     compiles the app for the simulator, unsigned: the proof that it builds, with no Mac to hand.
 #            The signed build for TestFlight needs an Apple Developer account (see ios-setup.md).
 #
-# Runs when the native projects or their settings change, and by hand from the Actions tab (Run workflow).
+# Runs when the app or the native projects change, and by hand from the Actions tab (Run workflow).
 # The files are under the run's Artifacts.
 #
 # Secrets for the signed Android bundle (Settings → Secrets and variables → Actions):
@@ -21,6 +21,11 @@ on:
   push:
     branches: [main]
     paths:
+      # The app's own files are bundled into the apps, so a change to the web app is a new build too.
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "vite.config.ts"
       - "android/**"
       - "ios/**"
       - "capacitor.config.ts"

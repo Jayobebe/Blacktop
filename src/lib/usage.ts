@@ -36,14 +36,30 @@ export async function countUsage(event: UsageEvent): Promise<boolean> {
   }
 }
 
-/** Days since this device's profile was made (0 today; null without one). */
-function daysSinceSetup(): number | null {
+/**
+ * Days since this rider set up (0 today; null when not set up yet): by the
+ * date on the phone's profile, or, for a profile that came from the server
+ * without one (an account recovered by its code), the account's own.
+ */
+async function daysSinceSetup(): Promise<number | null> {
+  let made = NaN;
+  let named = false;
   try {
-    const made = Date.parse(JSON.parse(localStorage.getItem(PROFILE_KEY) ?? '{}').createdAt ?? '');
-    return Number.isFinite(made) ? Math.max(0, Math.floor((Date.now() - made) / 86_400_000)) : null;
+    const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) ?? '{}') as { name?: string; createdAt?: string };
+    named = !!profile.name;
+    made = Date.parse(profile.createdAt ?? '');
   } catch {
     return null;
   }
+  if (!named) return null;
+  if (!Number.isFinite(made)) {
+    try {
+      made = Date.parse((await supabase.auth.getSession()).data.session?.user.created_at ?? '');
+    } catch {
+      return null;
+    }
+  }
+  return Number.isFinite(made) ? Math.max(0, Math.floor((Date.now() - made) / 86_400_000)) : null;
 }
 
 /**
@@ -59,7 +75,7 @@ export async function countOpen(): Promise<void> {
   } catch {
     return; // no storage to remember the day in: it would count on every launch
   }
-  const age = daysSinceSetup();
+  const age = await daysSinceSetup();
   if (age === null) return; // not set up yet
   const event: UsageEvent = age === 0 ? 'open_new' : age < 7 ? 'open_week' : age < 30 ? 'open_month' : 'open_old';
   if (await countUsage(event)) {

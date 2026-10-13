@@ -5,7 +5,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { requestPattern } from '@/features/alarm';
 import { getActiveRideStatus, usePeaksHidden } from '@/features/ride';
-import { backupFileName, makeBackup, parseBackup, restoreBackup, type Backup } from '@/lib/backup';
+import { BACKUP_ACCEPT, backupFileName, makeBackup, parseBackup, restoreBackup, type Backup } from '@/lib/backup';
 import { useDemoMode } from '@/lib/demoMode';
 import { tr } from '@/lib/i18n';
 import { shareFileNative } from '@/lib/nativeShare';
@@ -108,7 +108,7 @@ export function BackupPanel() {
       <input
         ref={picker}
         type="file"
-        accept="application/json,.json"
+        accept={BACKUP_ACCEPT}
         className="hidden"
         onChange={(e) => {
           void picked(e.target.files?.[0]);
