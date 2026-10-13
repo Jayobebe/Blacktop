@@ -13,6 +13,24 @@ interface LeanAngleState {
 
 const SMOOTHING_FACTOR = 0.3;
 
+/**
+ * Lean with the phone in portrait, in degrees (+ right), from the orientation event's beta and gamma.
+ *
+ * Lean is how far the phone's side-to-side axis (the one lying across the bike) is off level, whatever angle
+ * the phone is tilted back at on its mount. In landscape that axis is the phone's long one and its tilt is
+ * beta itself. In portrait it's the short one, and its tilt is asin(cos(beta) x sin(gamma)).
+ *
+ * It used to be read as gamma on its own, which is only right for a phone lying flat. Gamma is measured after
+ * beta, so the more upright the phone stands the more it swings for the same lean: on a mount tilted back 20
+ * degrees from upright, a 10 degree lean read 27, and at 10 degrees back it read 45. That was the "super
+ * sensitive" lean bar in portrait. This has no blind spots, so a phone near flat or tipped past upright no
+ * longer needs its samples thrown away or its sign flipped by hand.
+ */
+export function portraitLean(beta: number, gamma: number): number {
+  const rad = Math.PI / 180;
+  return Math.asin(Math.max(-1, Math.min(1, Math.cos(beta * rad) * Math.sin(gamma * rad)))) / rad;
+}
+
 /** Which way up the screen is drawn, in degrees. Also read by the G-force meter, so the two always agree. */
 export function getScreenOrientationAngle(): number {
   const angle =
@@ -169,17 +187,9 @@ export function useLeanAngle(isActive: boolean = false, displayIntervalMs: numbe
       let isScreenFacingUser: boolean;
       
       if (screenAngle === 0 || screenAngle === 180) {
-        // Portrait orientation
-        // Phone is roughly upright if beta is between ~20° and ~160° (or -160°..-20°)
-        // If the phone gets too flat / flips, ignore the sample instead of zeroing out.
-        isScreenFacingUser = Math.abs(beta) > 20 && Math.abs(beta) < 160;
-
-        if (!isScreenFacingUser) return;
-
-        rawLean = gamma;
-        if (beta > 90) {
-          rawLean = -gamma;
-        }
+        // Portrait orientation: the tilt of the phone's short axis (see portraitLean).
+        isScreenFacingUser = true;
+        rawLean = portraitLean(beta, gamma);
         if (screenAngle === 180) {
           rawLean = -rawLean;
         }
