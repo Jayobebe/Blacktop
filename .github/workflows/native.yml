@@ -1,6 +1,7 @@
 # Builds the Android and iOS apps from the store build (the app's own files bundled in, no crypto payments).
 #
-#   Android: a debug APK anyone can install on a phone, every time. With the signing secrets set, also the
+#   Android: a debug APK anyone can install on a phone, every time, also published at a fixed address
+#            (the android-test release) for the hidden download on the welcome screen. With the signing secrets set, also the
 #            signed release bundle (.aab) for Google Play.
 #   iOS:     compiles the app for the simulator, unsigned: the proof that it builds, with no Mac to hand.
 #            The signed build for TestFlight needs an Apple Developer account (see ios-setup.md).
@@ -39,6 +40,8 @@ jobs:
     name: Android
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    permissions:
+      contents: write   # publishes the test app as a release file
     env:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
@@ -71,6 +74,17 @@ jobs:
           name: blacktop-android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      # The same address every time: holding Recover on the welcome screen downloads it (WelcomeScreen, TEST_APK).
+      - name: Publish the test app
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk blacktop-test.apk
+          gh release view android-test >/dev/null 2>&1 || gh release create android-test --prerelease --latest=false \
+            --title "Android test build" \
+            --notes "The newest test build of the Android app, replaced on every build. Not the Play Store version."
+          gh release upload android-test blacktop-test.apk --clobber
       - name: Signing key
         if: env.ANDROID_KEYSTORE_BASE64 != ''
         run: |

@@ -9,6 +9,12 @@ import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
 import { BTLogo } from '@/components/BTLogo';
 import { tr } from '@/lib/i18n';
+import { useRef } from 'react';
+import { toast } from 'sonner';
+import { isNativeApp } from '@/lib/platform';
+
+/** The newest Android test build: GitHub publishes it here on every build (.github/workflows/native.yml). */
+const TEST_APK = 'https://github.com/Jayobebe/Blacktop/releases/download/android-test/blacktop-test.apk';
 
 /**
  * First screen a new user sees. Above the fold: welcome, one-line summary,
@@ -141,6 +147,24 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
     haptics.light();
     onStart();
   };
+  // Hidden, like the code box in Card Wars: holding Recover for three seconds downloads the Android test app.
+  const hold = useRef<{ timer: number; fired: boolean } | null>(null);
+  const endHold = () => {
+    if (hold.current && !hold.current.fired) window.clearTimeout(hold.current.timer);
+  };
+  const startHold = () => {
+    endHold();
+    const mine = { timer: 0, fired: false };
+    mine.timer = window.setTimeout(() => {
+      mine.fired = true;
+      if (isNativeApp()) return; // already in it
+      haptics.medium();
+      if (!/android/i.test(navigator.userAgent)) return void toast(tr("The test app is for Android phones."));
+      toast.success(tr("Downloading the Android test app…"));
+      window.location.href = TEST_APK;
+    }, 3000);
+    hold.current = mine;
+  };
 
   return (
     <main className="relative isolate h-dvh overflow-y-auto overflow-x-hidden overscroll-contain scroll-smooth page-in-fade">
@@ -151,11 +175,18 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
         <div className="self-stretch -mx-3 mt-3 landscape:mt-2 mb-3 landscape:mb-1 flex items-center justify-between gap-2 animate-fade-in">
           <button
             type="button"
+            onPointerDown={startHold}
+            onPointerUp={endHold}
+            onPointerLeave={endHold}
+            onPointerCancel={endHold}
+            onContextMenu={(e) => e.preventDefault()}
             onClick={() => {
+              // The tap that ends a hold isn't a tap.
+              if (hold.current?.fired) return void (hold.current.fired = false);
               haptics.light();
               onRecover();
             }}
-            className="pressable frost-accent inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-2xl text-[13px] font-semibold"
+            className="pressable hold-target frost-accent inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-2xl text-[13px] font-semibold"
           >
             <KeyRound className="w-4 h-4" />
             {tr("Recover")}
