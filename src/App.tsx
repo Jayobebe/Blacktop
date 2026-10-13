@@ -1,4 +1,4 @@
-import { paymentsAvailable } from '@/lib/platform';
+import { hideAppReferrer, paymentsAvailable } from '@/lib/platform';
 import { NativeBackButton, NativeLinks } from '@/components/NativeBridge';
 import { installMotionRegrant } from '@/lib/motionPermission';
 import { installErrorLog } from '@/lib/errorLog';
@@ -48,6 +48,7 @@ import { loadLocaleExtra } from '@/lib/i18n';
 
 // Demo mode never writes to the server (lib/demoGuard).
 installDemoGuard();
+hideAppReferrer();
 // iOS forgets motion access when the app closes: the first tap re-grants it.
 installMotionRegrant();
 installErrorLog();

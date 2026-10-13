@@ -22,3 +22,18 @@ export function shareOrigin(): string {
  * call sites write `!__STORE_BUILD__ && paymentsAvailable()` so it folds away.
  */
 export const paymentsAvailable = (): boolean => !__STORE_BUILD__ && !isNativeApp();
+
+/**
+ * The app's pages live at `https://localhost` (`capacitor://localhost` on
+ * iOS), and that's what it would name as the referrer on every request it
+ * makes. Some hosts turn that address away: SomaFM answered 403 to every live
+ * radio station in the Android app ("Stream unavailable"). The address says
+ * nothing useful to anyone, so the app sends none. The web is unchanged.
+ */
+export function hideAppReferrer(): void {
+  if (!isNativeApp() || document.querySelector('meta[name="referrer"]')) return;
+  const meta = document.createElement('meta');
+  meta.name = 'referrer';
+  meta.content = 'no-referrer';
+  document.head.appendChild(meta);
+}
