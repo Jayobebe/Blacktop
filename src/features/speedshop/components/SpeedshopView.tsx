@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
-import shopAsset from '@/assets/garage-shop.png.asset.json';
+import { GARAGE_SHOP } from '@/lib/pictures';
 import { SHOP_ITEMS } from '../lib/catalogue';
 import { answer, fetchResults, flushPending, sendSuggestion, useSurveyAnswers, type Interest, type ItemResult } from '../lib/surveyStore';
 import { ItemPreview } from './ItemPreview';
@@ -96,7 +96,7 @@ export function SpeedshopView() {
               if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
             }}
           >
-            <img src={shopAsset.url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+            <img src={GARAGE_SHOP} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" draggable={false} />
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 60%, transparent 35%, rgba(0,0,0,0.65) 100%)' }} />
             <div className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none opacity-40" style={{ background: 'linear-gradient(to top, hsl(var(--accent) / 0.18), transparent)' }} />
 

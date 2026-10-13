@@ -3,6 +3,7 @@ import { ImagePlus, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BikePhotos } from '../types';
 import { toast } from 'sonner';
+import { imageKind, isAndroid } from '@/lib/fileKind';
 import { removeImageBackgroundFile } from '../lib/compressImage';
 import { tr } from '@/lib/i18n';
 
@@ -25,7 +26,9 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!/png|webp/i.test(file.type)) {
+    // By what the file is, not what the phone calls it: Android's picker often gives no type at all.
+    const kind = await imageKind(file);
+    if (kind !== 'png' && kind !== 'webp') {
       toast.error(tr("Please use a PNG or WebP vehicle image"));
       return;
     }
@@ -91,7 +94,7 @@ export function BikePhotoCapture({ initial, onComplete, onCancel }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/webp"
+        accept={isAndroid() ? 'image/*' : 'image/png,image/webp'}
         className="hidden"
         onChange={handleFile}
       />

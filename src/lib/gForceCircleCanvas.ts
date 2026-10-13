@@ -78,6 +78,20 @@ export function drawGForceCircle(
       ctx.arc(cx + r * Math.sin(theta), cy - r * Math.cos(theta), 1.4 * u, 0, Math.PI * 2);
       ctx.fill();
     }
+  } else if (!g.hidePeaks) {
+    // Peaks in only one or two directions: a dotted line out from the centre to each (as GForceCircle does).
+    ctx.fillStyle = accent;
+    g.envelope.forEach((val, bin) => {
+      if (!(val > 0)) return;
+      const theta = (bin / ENVELOPE_BINS) * Math.PI * 2;
+      const r = (Math.min(val, scale * 1.08) / scale) * R;
+      const dots = Math.max(2, Math.round(r / (4.3 * u)));
+      for (let i = 1; i <= dots; i++) {
+        ctx.beginPath();
+        ctx.arc(cx + ((r * i) / dots) * Math.sin(theta), cy - ((r * i) / dots) * Math.cos(theta), 1.4 * u, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
   }
 
   // Live dot

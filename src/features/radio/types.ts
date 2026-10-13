@@ -12,6 +12,18 @@ export interface RadioTrack {
    * in which case the track only plays for the current session.
    */
   handle?: FileSystemFileHandle;
+  /**
+   * The file itself, kept with the station in the Android and iOS apps, which
+   * have no file handles: the app holds its own copy, so a station still
+   * plays after a restart.
+   */
+  file?: File;
+  /**
+   * The Android app, for a track from a picked folder: the address Android
+   * gave for the file. The app keeps the right to read that folder, so the
+   * radio plays it from where it is, with nothing copied.
+   */
+  uri?: string;
 }
 
 export interface RadioStation {

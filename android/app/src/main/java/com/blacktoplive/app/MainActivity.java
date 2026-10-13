@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeAudioRoutePlugin.class);
         registerPlugin(AlarmSoundPlugin.class);
+        registerPlugin(MusicFolderPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

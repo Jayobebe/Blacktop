@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, type ReactNode } from 'react';
 import { ensureRedlineFire } from '../lib/redlineFire';
 import { ArrowDown, ArrowUp, Bike, Car, Check, Flame, Swords, Wrench } from 'lucide-react';
-import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { GARAGE_SHOP } from '@/lib/pictures';
 import { TIER_LADDER, TIER_STYLES } from '@/features/cards/types';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
@@ -160,7 +160,7 @@ export const CwCard = forwardRef<HTMLElement, CwCardProps>(function CwCard(
         </div>
       )}
 
-      <div className="cw-photo" style={{ backgroundImage: `url(${garageShopAsset.url})` }}>
+      <div className="cw-photo" style={{ backgroundImage: `url(${GARAGE_SHOP})` }}>
         <span className="cw-photo-floor" aria-hidden />
         {image ? <img src={image} alt="" className="cw-art" draggable={false} /> : <Vehicle className="cw-art-missing" strokeWidth={1} aria-hidden />}
         <span className="cw-rating font-mono" title={tr("Battle rating")}>

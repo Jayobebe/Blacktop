@@ -19,7 +19,7 @@ import {
 import { TIER_STYLES } from '../types';
 import { decodeCard, encodePayload } from '../lib/cardCodec';
 import { QRCodeSVG } from 'qrcode.react';
-import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { GARAGE_SHOP } from '@/lib/pictures';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 import { fetchCardPhoto, uploadCardPhoto } from '../lib/cardPhoto';
 import { encodeCard } from '../lib/cardCodec';
@@ -488,7 +488,7 @@ function MiniCard({ img, name, tier, spectre, onClick }: { img?: string; name: s
   return (
     <button type="button" onClick={onClick} aria-label={name} className={cn('relative isolate block w-full rounded-lg border overflow-hidden text-left', spectre ? 'spectre-card-back border-white/30' : cn(style.bg, style.border))}>
       <TierFx tier={spectre ? 'spectre' : tier} still />
-      <span className="relative block aspect-[5/4] bg-cover bg-center" style={{ backgroundImage: `url(${garageShopAsset.url})` }}>
+      <span className="relative block aspect-[5/4] bg-cover bg-center" style={{ backgroundImage: `url(${GARAGE_SHOP})` }}>
         {art && <img src={art} alt="" className="absolute inset-0 w-full h-full object-contain p-0.5" draggable={false} />}
       </span>
       <span className="block px-1 py-0.5 text-[8px] font-semibold leading-tight truncate text-white">{name}</span>
@@ -783,7 +783,7 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
         <div
           className={cn("absolute inset-0 bg-cover bg-center origin-center", spectre && "grayscale opacity-80")}
           style={{
-            backgroundImage: `url(${garageShopAsset.url})`,
+            backgroundImage: `url(${GARAGE_SHOP})`,
             transform: `translate(${pan.x}%, ${pan.y}%) scale(${zoom})`,
           }}
         >

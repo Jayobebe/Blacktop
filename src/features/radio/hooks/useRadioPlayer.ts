@@ -2,7 +2,7 @@
    and Media Session APIs aren't in the TS lib for this target. */
 import { useSyncExternalStore } from 'react';
 import type { RadioPlayerState, RadioStation } from '../types';
-import { resolveTrackFile } from '../lib/audioFiles';
+import { resolveTrackFile, trackSrc } from '../lib/audioFiles';
 import { getStation } from './useRadioStations';
 import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { LIVE_STATIONS, getLiveStation } from '../lib/liveStations';
@@ -100,15 +100,17 @@ async function loadIndex(station: RadioStation, index: number, autoplay: boolean
   if (!station.tracks.length) return;
   const trackId = state.queue[index];
   const track = station.tracks.find((t) => t.id === trackId) || station.tracks[0];
-  const file = await resolveTrackFile(track);
-  if (!file) {
+  // A folder track in the Android app plays from its own address; everything else from the file in hand.
+  const direct = trackSrc(track);
+  const file = direct ? null : await resolveTrackFile(track);
+  if (!direct && !file) {
     setState({ needsReselect: true, isPlaying: false, trackName: track.name });
     return;
   }
   const el = getAudio();
   if (objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl = URL.createObjectURL(file);
-  el.src = objectUrl;
+  objectUrl = file ? URL.createObjectURL(file) : null;
+  el.src = direct ?? objectUrl!;
   setState({ index, trackName: track.name, needsReselect: false, position: 0, duration: 0 });
   setupMediaSessionHandlers();
   if (autoplay) {

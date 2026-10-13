@@ -81,7 +81,7 @@ export function StationManager({ onClose }: Props) {
           const Icon = getRadioIcon(station.icon);
           const hsl = stationHsl(station.color);
           const isEditing = editingId === station.id;
-          const missing = station.tracks.filter((t) => !t.handle && !hasSessionFile(t.id)).length;
+          const missing = station.tracks.filter((t) => !t.handle && !t.file && !t.uri && !hasSessionFile(t.id)).length;
           return (
             <div key={station.id} className="rounded-2xl border border-border bg-card/70 p-3">
               <div className="flex items-center gap-3">

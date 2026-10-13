@@ -3,7 +3,7 @@ import type { RideSession, RideStats } from '@/types/blacktop';
 import type { ArcadeScores } from '@/features/arcade/types';
 import type { Bike } from '@/features/garage/types';
 import type { SharedCardPayload } from '@/features/cards/lib/cardCodec';
-import demoBikeAsset from '@/assets/demo-bike.png.asset.json';
+import { DEMO_BIKE as DEMO_BIKE_PICTURE } from '@/lib/pictures';
 import { demoTrackData } from '@/lib/demoTrack';
 import { tr } from '@/lib/i18n';
 import { ENVELOPE_BINS } from '@/lib/gForceVector';
@@ -180,7 +180,7 @@ export const DEMO_RIDES: RideSession[] = buildDemoRides();
 
 
 // Demo bike — pixel-art Streetfighter image (background removed).
-const DEMO_BIKE_HERO = demoBikeAsset.url;
+const DEMO_BIKE_HERO = DEMO_BIKE_PICTURE;
 
 export const DEMO_BIKE_ID = 'demo-bike-01';
 

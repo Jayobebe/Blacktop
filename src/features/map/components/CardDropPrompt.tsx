@@ -4,7 +4,7 @@ import { TierFx } from '@/components/TierFx';
 import { TIER_STYLES } from '@/features/cards/types';
 import type { VehicleCardData } from '@/features/cards/hooks/useVehicleCards';
 import { useCardArt } from '@/hooks/useCardArt';
-import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { GARAGE_SHOP } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +29,7 @@ export function CardDropPrompt({ card, left, ready, onYes, onNo }: { card: Vehic
               <span className="text-[11px] font-semibold text-white truncate">{card.bike.name}</span>
               <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider', style.chip)}>{card.tierLabel}</span>
             </div>
-            <div className="relative m-2 rounded-xl overflow-hidden aspect-[4/3] bg-cover bg-center" style={{ backgroundImage: `url(${garageShopAsset.url})` }}>
+            <div className="relative m-2 rounded-xl overflow-hidden aspect-[4/3] bg-cover bg-center" style={{ backgroundImage: `url(${GARAGE_SHOP})` }}>
               {art ? (
                 <img src={art} alt="" className="absolute inset-0 w-full h-full object-contain p-1" draggable={false} />
               ) : (

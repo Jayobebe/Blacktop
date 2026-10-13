@@ -15,7 +15,11 @@
  * on its own, which made the dot a copy of the lean bar: a bike leant on its
  * stand, or a phone tilted in the hand, "cornered" at a standstill. That
  * estimate is still the fallback where there's no gyro or no speed, but fades
- * out below walking pace.
+ * out below walking pace. Below that pace the sideways reading is what the
+ * phone itself feels (gravity taken out, as for a car): nothing on a bike
+ * standing still, the push itself when the phone is moved by hand. For a week
+ * it was a flat zero there, so the dot could only go up and down and the
+ * meter never drew a shape until a corner had been ridden at speed.
  *
  * Sign convention (what the meter plots): +lateral = turning right,
  * +longitudinal = braking. So the dot goes right in a right-hander and up
@@ -143,6 +147,8 @@ export class GVectorTracker {
     const forward = cross(up, right);
 
     const rawLong = -dot(lin, forward) / G; // + braking
+    /** What the phone feels sideways: all there is for a car, and what a bike's reading falls back to at a crawl. */
+    const felt = dot(lin, right) / G;
     let rawLat: number;
     if (leanDeg !== null && Number.isFinite(leanDeg)) {
       const lean = Math.max(-MAX_LEAN_DEG, Math.min(MAX_LEAN_DEG, leanDeg));
@@ -152,12 +158,12 @@ export class GVectorTracker {
         // "up" is signed); the bike leans into the turn, so lean gives the side. Without the OS's fused gravity the
         // vertical drifts towards the bike's own axis in a long corner, which reads the turn low by cos(lean).
         const yaw = Math.abs(dot(rot, up)) / (linear ? 1 : Math.max(0.5, Math.cos((lean * Math.PI) / 180)));
-        rawLat = speedMs < MIN_CORNER_SPEED ? 0 : this.side * Math.min(MAX_CORNER_G, (speedMs * yaw) / G);
+        rawLat = speedMs < MIN_CORNER_SPEED ? felt : this.side * Math.min(MAX_CORNER_G, (speedMs * yaw) / G);
       } else {
         const moving = speedMs === null ? 1 : Math.max(0, Math.min(1, (speedMs - 1) / 4));
-        rawLat = Math.tan((lean * Math.PI) / 180) * moving;
+        rawLat = Math.tan((lean * Math.PI) / 180) * moving + felt * (1 - moving);
       }
-    } else rawLat = dot(lin, right) / G;
+    } else rawLat = felt;
 
     const s = this.state;
     const k = 1 - Math.exp(-dt / SMOOTH_TAU_S);

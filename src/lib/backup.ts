@@ -120,6 +120,7 @@ export function makeBackup(): Backup {
  * picker greys out. Whatever is picked is checked by `parseBackup` anyway.
  */
 export const BACKUP_ACCEPT: string | undefined = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent) ? undefined : 'application/json,.json';
+// (lib/fileKind.ts has the same test as `isAndroid`; this file imports nothing so the check script can run it.)
 
 export const backupFileName = (b: Backup) => `blacktop-backup-${b.at.slice(0, 10)}.json`;
 

@@ -69,6 +69,19 @@ export const GForceCircle = memo(function GForceCircle({ lateral, longitudinal, 
       .join(' ');
   }, [envelope, scale]);
 
+  // With peaks in only one or two directions (braking and accelerating in a straight line) there's no outline to
+  // join up yet: each is drawn as a line out from the centre, so the meter shows what it has from the first push.
+  const spokes = useMemo(() => {
+    if (trace) return null;
+    const lit = envelope.map((g, i) => ({ g, i })).filter((b) => b.g > 0);
+    if (!lit.length) return null;
+    return lit.map(({ g, i }) => {
+      const theta = (i / ENVELOPE_BINS) * 2 * Math.PI;
+      const r = (Math.min(g, scale * 1.08) / scale) * R;
+      return { x: C + r * Math.sin(theta), y: C - r * Math.cos(theta) };
+    });
+  }, [trace, envelope, scale]);
+
   const dot = live ? toXY(Math.max(-scale, Math.min(scale, lateral!)), Math.max(-scale, Math.min(scale, longitudinal!))) : null;
 
   return (
@@ -85,6 +98,9 @@ export const GForceCircle = memo(function GForceCircle({ lateral, longitudinal, 
         <line x1={C} y1={C - R} x2={C} y2={C + R} strokeWidth="1.4" className={k.cross} />
 
         {/* Peak envelope, dotted */}
+        {spokes?.map((p, i) => (
+          <line key={i} x1={C} y1={C} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} strokeWidth="2.6" strokeLinecap="round" strokeDasharray="0.1 4.2" className={k.trace} />
+        ))}
         {trace && (
           <polygon
             points={trace}

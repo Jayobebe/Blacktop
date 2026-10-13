@@ -17,7 +17,7 @@ import { TierFx } from '@/components/TierFx';
 import { VehicleCardData } from '../hooks/useVehicleCards';
 import { encodeCard } from '../lib/cardCodec';
 import { uploadCardPhoto } from '../lib/cardPhoto';
-import garageShopAsset from '@/assets/garage-shop.png.asset.json';
+import { GARAGE_SHOP } from '@/lib/pictures';
 import { DEFAULT_BIKE_PLACEMENT } from '@/features/garage/types';
 
 import { tr } from '@/lib/i18n';
@@ -221,7 +221,7 @@ export function VehicleCard({ card, editable = true }: Props) {
               <div
                 className="absolute inset-0 bg-cover bg-center origin-center"
                 style={{
-                  backgroundImage: `url(${garageShopAsset.url})`,
+                  backgroundImage: `url(${GARAGE_SHOP})`,
                   transform: `translate(${pan.x}%, ${pan.y}%) scale(${zoom})`,
                 }}
               >

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Download, FileUp, Loader2, Trash2, X } from 'lucide-react';
 import { useRef } from 'react';
+import { isAndroid } from '@/lib/fileKind';
 import { parseGpx, type GpxRoute } from '../lib/gpx';
 import { toast } from 'sonner';
 import {
@@ -198,7 +199,8 @@ export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, rou
           <input
             ref={fileRef}
             type="file"
-            accept=".gpx,application/gpx+xml,application/xml,text/xml"
+            // Open on Android, whose picker greys out a GPX it has filed as plain "binary" (the file is checked when read).
+            accept={isAndroid() ? undefined : '.gpx,application/gpx+xml,application/xml,text/xml'}
             className="hidden"
             onChange={async (e) => {
               const f = e.target.files?.[0];

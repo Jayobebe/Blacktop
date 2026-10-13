@@ -1,5 +1,5 @@
 import { resetTips } from '@/features/guide';
-import { paymentsAvailable } from '@/lib/platform';
+import { isNativeApp, paymentsAvailable } from '@/lib/platform';
 import { Suspense, lazy, useState, useRef, useEffect } from 'react';
 import { noteMotionGranted } from '@/lib/motionPermission';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -1267,6 +1267,12 @@ export default function Settings() {
           </div>
           <BackupPanel />
           <RecoveryPanel />
+          {/* In the app there's no address bar to reach it by: what this phone lets Blacktop do, with a report to copy. */}
+          {isNativeApp() && (
+            <Button variant="outline" size="sm" onClick={() => navigate('/device-check')} className="w-full h-11 text-xs rounded-lg touch-target mt-3">
+              {tr("Device check")}
+            </Button>
+          )}
           <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border/30">
             <Button
               variant="outline"

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bike, BikePlacement, DEFAULT_BIKE_PLACEMENT } from '../types';
 import { MechaNick } from './MechaNick';
-import shopAsset from '@/assets/garage-shop.png.asset.json';
+import { GARAGE_SHOP } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
 
 interface Props {
@@ -81,7 +81,7 @@ export function GarageDiorama({ bike, tip, nickLines, editing = false, onPlaceme
     >
       {/* Photographic backdrop */}
       <img
-        src={shopAsset.url}
+        src={GARAGE_SHOP}
         alt=""
         aria-hidden
         className="absolute inset-0 w-full h-full object-cover"

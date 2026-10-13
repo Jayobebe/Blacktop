@@ -3,6 +3,7 @@ import { Plus, X, Image as ImageIcon, Play } from 'lucide-react';
 import { RidePhoto, RideRecording } from '@/types/blacktop';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { imageKind } from '@/lib/fileKind';
 import { tr } from '@/lib/i18n';
 
 interface RidePhotosProps {
@@ -79,7 +80,8 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
     }
 
     const file = files[0];
-    if (!file.type.startsWith('image/')) {
+    // Android's picker often gives a photo no type: go by what's in the file.
+    if (!file.type.startsWith('image/') && !(await imageKind(file))) {
       toast.error(tr("Please select an image file"));
       return;
     }

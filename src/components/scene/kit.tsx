@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- a kit of scene helpers, not a page */
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Volume2, VolumeX, type LucideIcon } from 'lucide-react';
-import bikeAsset from '@/assets/demo-bike.png.asset.json';
+import { DEMO_BIKE } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
 import { sceneCue, type SceneCueKind } from '@/lib/radioFx';
 import { isThermal } from '@/lib/thermal';
@@ -529,7 +529,7 @@ export function BikePhoto({ cx, floor, height, filter, opacity }: BikePlacement 
   const h = IMG.h * s;
   const x = cx - ((IMG.left + IMG.right) / 2) * s;
   const y = floor - IMG.bottom * s;
-  return <image href={bikeAsset.url} x={x} y={y} width={w} height={h} filter={filter} opacity={opacity} preserveAspectRatio="xMidYMid meet" />;
+  return <image href={DEMO_BIKE} x={x} y={y} width={w} height={h} filter={filter} opacity={opacity} preserveAspectRatio="xMidYMid meet" />;
 }
 
 /** Where a point of the bike photo (image pixels) lands in the scene, for a bike placed at `b`. */

@@ -64,7 +64,7 @@ import {
   cues,
   type SceneCue,
 } from '@/components/scene/kit';
-import bikeAsset from '@/assets/demo-bike.png.asset.json';
+import { DEMO_BIKE } from '@/lib/pictures';
 import type { EnterpriseTier } from '../types';
 import { tierName } from '../lib/tiers';
 
@@ -406,7 +406,7 @@ function WorkshopScene() {
           <rect x={0} y={0} width={46} height={34} rx={2} />
         </clipPath>
         <mask id={id('bikeMask')} style={{ maskType: 'alpha' }}>
-          <image href={bikeAsset.url} x={bikeX} y={bikeY} width={BIKE.w} height={BIKE.h} />
+          <image href={DEMO_BIKE} x={bikeX} y={bikeY} width={BIKE.w} height={BIKE.h} />
         </mask>
         <linearGradient id={id('shine')} x1="0" y1="0" x2="1" y2="0.4">
           <stop offset="0" stopColor="#fff" stopOpacity="0" />
@@ -428,7 +428,7 @@ function WorkshopScene() {
 
         {/* The bike on the floor */}
         <ellipse cx={bikeX + BIKE.w / 2} cy={BAY.floor + 2} rx={BIKE.w * 0.42} ry={3} fill="black" opacity={0.55} />
-        <image href={bikeAsset.url} x={bikeX} y={bikeY} width={BIKE.w} height={BIKE.h} />
+        <image href={DEMO_BIKE} x={bikeX} y={bikeY} width={BIKE.w} height={BIKE.h} />
         {/* Ready: a shine across the bike, and a few glints */}
         {shine > 0 && shine < 1 && (
           <g mask={`url(#${id('bikeMask')})`}>
@@ -589,7 +589,7 @@ function WorkshopScene() {
           <rect x={-3} y={-3} width={52} height={46} rx={2} fill="#f4f4f5" />
           <g clipPath={`url(#${id('photo')})`}>
             <rect width={46} height={34} fill="#222" />
-            <image href={bikeAsset.url} x={-36} y={-110} width={BIKE.w * 1.4} height={BIKE.h * 1.4} />
+            <image href={DEMO_BIKE} x={-36} y={-110} width={BIKE.w * 1.4} height={BIKE.h * 1.4} />
           </g>
         </g>
         <g transform={`translate(${panelX + 72} 92)`}>
