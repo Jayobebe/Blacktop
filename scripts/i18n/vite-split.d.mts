@@ -6,8 +6,8 @@ export interface I18nSplitOptions {
   localesDir: string;
   /** English keys matching this are left out of every chunk (the store build). */
   drop?: RegExp | null;
-  /** Files whose strings are left out (the store build). */
-  skip?: string[];
+  /** Patterns for files whose strings are left out (the store build). */
+  skip?: RegExp[];
 }
 
 export function i18nSplit(options: I18nSplitOptions): Plugin;
