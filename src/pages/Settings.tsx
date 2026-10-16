@@ -945,18 +945,20 @@ export default function Settings() {
                    options: [{ id: 'landscape', label: tr("Landscape 16:9") }, { id: 'portrait', label: tr("Vertical 9:16") }],
                  },
                  {
-                   key: 'overlayBackground' as const,
+                   key: 'overlayBackdrop' as const,
                    title: tr("Overlay background"),
-                   desc: settings.overlayBackground === 'green'
+                   desc: settings.overlayBackdrop === 'green'
                      ? tr("Green screen: lay it over your footage and key out the green (chroma key / green screen in your editor).")
-                     : tr("Black: lay it over your footage with the Screen or Lighten blend mode in your editor."),
-                   options: [{ id: 'green', label: tr("Green screen") }, { id: 'black', label: tr("Black") }],
+                     : settings.overlayBackdrop === 'black'
+                       ? tr("Black: lay it over your footage with the Screen or Lighten blend mode in your editor.")
+                       : tr("Transparent WebM: put it on a track above your footage, nothing to key out. If your editor shows it on black, choose Green screen in Settings for your next ride."),
+                   options: [{ id: 'transparent', label: tr("Transparent") }, { id: 'green', label: tr("Green screen") }, { id: 'black', label: tr("Black") }],
                  },
                ]).map((row) => (
                  <div key={row.key}>
                    <p className="text-sm font-medium">{row.title}</p>
                    <p className="text-[10px] text-muted-foreground mb-1.5">{row.desc}</p>
-                   <div className="grid grid-cols-2 gap-1.5">
+                   <div className={cn('grid gap-1.5', row.options.length === 3 ? 'grid-cols-3' : 'grid-cols-2')}>
                      {row.options.map((o) => (
                        <button
                          key={o.id}

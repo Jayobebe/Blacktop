@@ -8,6 +8,7 @@ import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2, Id
 import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
+import { isTransparentOverlay } from '@/lib/overlayFrame';
 import { useState } from 'react';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
@@ -397,7 +398,7 @@ export default function RideDetail() {
               // Generate filename from ride name (same sanitization as recording)
               const baseName = ride.name || formatDate(ride.startedAt);
               const sanitized = baseName.replace(/[/\\?%*:|"<>]/g, '-').trim();
-              const filename = `${sanitized}-overlay.mp4`;
+              let filename = `${sanitized}-overlay.mp4`;
 
               try {
                 // Prefer persisted overlay blob (survives refresh)
@@ -414,13 +415,19 @@ export default function RideDetail() {
                   return;
                 }
 
-                // Convert WebM to MP4
-                setOverlayProgress(0);
-                toast.info(tr("Converting overlay to MP4..."));
-                
-                const mp4Blob = await convertWebmToMp4(webmBlob, (progress) => {
-                  setOverlayProgress(progress);
-                });
+                // A transparent overlay is the WebM as recorded: an MP4 can't keep transparency.
+                let mp4Blob: Blob;
+                if (isTransparentOverlay(webmBlob)) {
+                  filename = `${sanitized}-overlay.webm`;
+                  mp4Blob = new Blob([webmBlob], { type: 'video/webm' });
+                } else {
+                  // Convert WebM to MP4
+                  setOverlayProgress(0);
+                  toast.info(tr("Converting overlay to MP4..."));
+                  mp4Blob = await convertWebmToMp4(webmBlob, (progress) => {
+                    setOverlayProgress(progress);
+                  });
+                }
 
                 // Native app: the share sheet; the overlay is only cleared once it's been saved or sent.
                 if (isNativeApp()) {
@@ -467,9 +474,11 @@ export default function RideDetail() {
                   <p className="text-xs text-muted-foreground">
                     {overlayProgress !== null
                       ? tr("Please wait")
-                      : settings.overlayBackground === 'black'
+                      : settings.overlayBackdrop === 'black'
                         ? tr("Black: lay it over your footage with the Screen or Lighten blend mode in your editor.")
-                        : tr("Green screen: lay it over your footage and key out the green (chroma key / green screen in your editor).")}
+                        : settings.overlayBackdrop === 'green'
+                          ? tr("Green screen: lay it over your footage and key out the green (chroma key / green screen in your editor).")
+                          : tr("Transparent WebM: put it on a track above your footage, nothing to key out. If your editor shows it on black, choose Green screen in Settings for your next ride.")}
                   </p>
                 </div>
               </div>

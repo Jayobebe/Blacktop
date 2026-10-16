@@ -1152,7 +1152,7 @@ export function useActiveRide(convoyId?: string | null) {
       const tooFar = finalDistance < MIN_RIDE_DISTANCE_MI && !hasMovementEvidence;
       // The floor and the ride, in the rider's units ("0.1 mi" is about 150 m).
       const metric = currentUnits().distance === 'km';
-      const floor = metric ? metresText(150) : tr("{0} mi", [MIN_RIDE_DISTANCE_MI]);
+      const floor = metric ? metresText(150) : tr("{0} mi", [(Math.round(MIN_RIDE_DISTANCE_MI * 10) / 10).toString()]);
       const ridden = metric ? metresText(finalDistance * 1609.344, 2) : tr("{0} mi", [finalDistance.toFixed(2)]);
       toast.info(tr("Ride not saved"), {
         description: tooShort && tooFar

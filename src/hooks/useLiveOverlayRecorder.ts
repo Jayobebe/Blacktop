@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { drawMiniMap } from '@/lib/overlayMiniMap';
-import { drawOverlayFrame, MINI_MAP_SIZE, OVERLAY_SIZE, type OverlayBackground, type OverlayShape, type OverlayStats } from '@/lib/overlayFrame';
+import { drawOverlayFrame, MINI_MAP_SIZE, OVERLAY_SIZE, TRANSPARENT_OVERLAY_TYPE, type OverlayBackground, type OverlayShape, type OverlayStats } from '@/lib/overlayFrame';
 import { speedUnitText } from '@/lib/units';
 import { tr } from '@/lib/i18n';
 
@@ -15,7 +15,7 @@ interface LiveOverlayRecorderOptions {
   blacktopMapEnabled: boolean;
   /** Landscape 16:9 or vertical 9:16 (Settings → Ride Overlay). */
   shape?: OverlayShape;
-  /** Green screen to key out, or black to blend (Settings → Ride Overlay). */
+  /** Transparent, or a green screen to key out / black to blend (Settings → Ride Overlay). */
   background?: OverlayBackground;
   /**
    * Convoy voice-channel audio source. When provided, every stream returned is
@@ -26,7 +26,7 @@ interface LiveOverlayRecorderOptions {
 }
 
 export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
-  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled, getVoiceStreams, shape = 'landscape', background = 'green' } = options;
+  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled, getVoiceStreams, shape = 'landscape', background = 'transparent' } = options;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Voice mixing: one AudioContext + destination feeding the recorder, with a
   // poller that attaches peers that join mid-ride.
@@ -72,8 +72,9 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   blacktopMapEnabledRef.current = blacktopMapEnabled;
   const lookRef = useRef({ speedUnit, distanceUnit, shape, background });
   lookRef.current = { speedUnit, distanceUnit, shape, background };
-  // The shape of the clip being recorded: fixed when it starts.
+  // The shape and background of the clip being recorded: fixed when it starts.
   const recordingShapeRef = useRef<OverlayShape>(shape);
+  const recordingBackgroundRef = useRef<OverlayBackground>(background);
 
 
   // Draw a single frame (lib/overlayFrame), with the mini map painted by the
@@ -113,7 +114,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
         latestStatsRef.current,
         {
           shape: recordingShapeRef.current,
-          background: look.background,
+          background: recordingBackgroundRef.current,
           accent: accentColorRef.current,
           speedUnit: speedUnitText(look.speedUnit).toUpperCase(),
           distanceUnit: (look.distanceUnit === 'km' ? tr("km") : tr("mi")).toUpperCase(),
@@ -135,6 +136,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     // Create an offscreen canvas
     const canvas = document.createElement('canvas');
     recordingShapeRef.current = lookRef.current.shape;
+    recordingBackgroundRef.current = lookRef.current.background;
     const { width, height } = OVERLAY_SIZE[recordingShapeRef.current];
     canvas.width = width;
     canvas.height = height;
@@ -180,8 +182,9 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       }
     }
 
-    // VP9, else VP8. The frame is drawn on a solid background (lib/overlayFrame):
-    // recorded video keeps no transparency, and the MP4 it's converted to has none.
+    // VP9, else VP8: both keep the frame's transparency (checked: see-through and
+    // half see-through pixels come back as drawn). An MP4 can't, so a transparent
+    // recording is downloaded as this WebM and never converted.
     const hasAudio = stream.getAudioTracks().length > 0;
     let mimeType = hasAudio ? 'video/webm;codecs=vp9,opus' : 'video/webm;codecs=vp9';
     if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -281,7 +284,7 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       }
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const blob = new Blob(chunksRef.current, { type: recordingBackgroundRef.current === 'transparent' ? TRANSPARENT_OVERLAY_TYPE : 'video/webm' });
         chunksRef.current = [];
         recorderRef.current = null;
         canvasRef.current = null;

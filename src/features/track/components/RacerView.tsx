@@ -141,7 +141,7 @@ export function RacerView() {
     accentColor: `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`,
     blacktopMapEnabled: profile.preferredNavApp === 'blacktop',
     shape: settings.overlayShape,
-    background: settings.overlayBackground,
+    background: settings.overlayBackdrop,
   });
   const overlayRef = useRef(overlay);
   overlayRef.current = overlay;

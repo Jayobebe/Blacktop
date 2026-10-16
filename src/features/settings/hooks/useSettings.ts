@@ -100,8 +100,8 @@ export interface AppSettings {
   voiceRecordingEnabled: boolean;
   /** The overlay video's shape: landscape 16:9 or vertical 9:16 (lib/overlayFrame). */
   overlayShape: 'landscape' | 'portrait';
-  /** The overlay video's background: green screen to key out, or black to blend. */
-  overlayBackground: 'green' | 'black';
+  /** The overlay video's background: transparent (WebM), or a green screen to key out / black to blend for editors without transparency. */
+  overlayBackdrop: 'transparent' | 'green' | 'black';
   // Car Display — oversized, low-chrome Active Ride layout for wired
   // phone-mirroring head units (Android USB/HDMI mirroring).
   carDisplayEnabled: boolean;
@@ -182,7 +182,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,
   overlayShape: 'landscape',
-  overlayBackground: 'green',
+  overlayBackdrop: 'transparent',
   carDisplayEnabled: false,
   radioEnabled: false,
   cardDropVisibility: 'world',

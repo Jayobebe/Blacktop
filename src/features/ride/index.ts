@@ -25,3 +25,4 @@ export { badgeWallet, recordBadges, spendBadgesForCopy, soloBadgesForRide, BADGE
 export type { BadgeWallet } from './lib/badgeWallet';
 export { BadgeWalletPanel } from './components/BadgeWalletPanel';
 export { SetOffPrompt } from './components/SetOffPrompt';
+export { RideDial } from './components/RideDial';

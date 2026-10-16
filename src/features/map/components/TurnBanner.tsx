@@ -1,21 +1,13 @@
 import {
-  ArrowUp,
-  ArrowUpLeft,
-  ArrowUpRight,
-  CornerUpLeft,
-  CornerUpRight,
+  ArrowUp,
   ExternalLink,
-  Flag,
-  GitFork,
-  Loader2,
-  Merge,
-  RotateCcw,
-  RotateCw,
-  Share2,
-  Undo2,
+  Flag,
+  Loader2,
+  Share2,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ManeuverIcon } from './ManeuverIcon';
 import { shortDistance, type DistanceUnit, type NavManeuver, type NavProgress } from '../lib/navigation';
 import { tr } from '@/lib/i18n';
 import { etaClock, spreadDuration, type EtaSpread } from '../lib/eta';
@@ -32,33 +24,6 @@ function timeLeft(seconds: number, spread: EtaSpread): string {
     const m = mins(s);
     return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
   });
-}
-
-function ManeuverIcon({ m, className }: { m: NavManeuver; className?: string }) {
-  const mod = m.modifier ?? 'straight';
-  if (m.type === 'arrive') return <Flag className={className} />;
-  if (m.type === 'roundabout' || m.type === 'rotary' || m.type === 'roundabout turn') {
-    // Round the island the way traffic goes: clockwise where they drive on the left.
-    return m.side === 'left' ? <RotateCw className={className} /> : <RotateCcw className={className} />;
-  }
-  if (m.type === 'merge') return <Merge className={cn(className, mod.includes('left') && '-scale-x-100')} />;
-  if (m.type === 'fork') return <GitFork className={cn(className, 'rotate-180', mod.includes('left') && '-scale-x-100')} />;
-  switch (mod) {
-    case 'uturn':
-      return <Undo2 className={cn(className, '-rotate-90')} />;
-    case 'sharp left':
-    case 'left':
-      return <CornerUpLeft className={className} />;
-    case 'sharp right':
-    case 'right':
-      return <CornerUpRight className={className} />;
-    case 'slight left':
-      return <ArrowUpLeft className={className} />;
-    case 'slight right':
-      return <ArrowUpRight className={className} />;
-    default:
-      return <ArrowUp className={className} />;
-  }
 }
 
 interface Props {

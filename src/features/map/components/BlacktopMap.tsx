@@ -104,6 +104,7 @@ import { tr } from '@/lib/i18n';
 import { metresText } from '@/lib/units';
 import { PageTips } from '@/features/guide';
 import { setGuidanceActive } from '../lib/guidanceState';
+import { setNavShare } from '../lib/navShare';
 import { etaClock, etaSpread, spreadDuration } from '../lib/eta';
 import { W3WAddress } from '@/components/W3WAddress';
 import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
@@ -1087,6 +1088,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       }
 
       alertedCamerasRef.current.add(cam.id);
+      setNavShare({ camera: { type: cam.type, lat: cam.lat, lng: cam.lng, maxspeed: cam.maxspeed ?? undefined, at: Date.now() } });
       if (cam.type === "speed") pingSpeedCamera();
       else pingAnprCamera();
       toast.warning(
@@ -1769,6 +1771,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     onStopReached: handleStopReached,
   });
   const navProgressNow = turnByTurn.progress;
+  // The ride screen's mini map draws the route and the next turn from these (lib/navShare).
+  useEffect(() => {
+    setNavShare({ route: guiding && route ? (route.geometry.coordinates as Array<[number, number]>) : null });
+  }, [guiding, route]);
+  useEffect(() => {
+    const next = guiding && !turnByTurn.arrived ? navProgressNow?.next ?? null : null;
+    setNavShare({
+      next: next ? { type: next.type, modifier: next.modifier ?? undefined, side: next.side } : null,
+      distanceToNext: next && navProgressNow ? Math.round(navProgressNow.distanceToNext / 10) * 10 : null,
+    });
+  }, [guiding, turnByTurn.arrived, navProgressNow]);
+  useEffect(() => () => setNavShare({ route: null, next: null, distanceToNext: null, camera: null }), []);
   // A convoy's next stop can be a shaping point (twisty leg): reaching it isn't an arrival.
   const arrivedAtDestination = turnByTurn.arrived && finalStopName != null;
 

@@ -15,7 +15,7 @@ import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton, usePlayer } from '@/features/radio';
 import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, rescueReach } from '@/features/rescue';
-import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN } from '@/features/ride';
+import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -244,6 +244,7 @@ export default function ActiveRide() {
   // so resolve the literal HSL for the selected accent up front (see BlacktopMap.tsx).
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
+  const gaugeOn = settings.gForceEnabled && gForce.isSupported;
 
   // "Blacktop Maps enabled" = the rider's preferred nav app is our in-app map.
   // Drives whether the downloadable overlay includes the live mini-map card.
@@ -258,7 +259,7 @@ export default function ActiveRide() {
     accentColor,
     blacktopMapEnabled,
     shape: settings.overlayShape,
-    background: settings.overlayBackground,
+    background: settings.overlayBackdrop,
     // Convoy-only: mix the live voice channel into the recorded overlay audio.
     getVoiceStreams: rideState.isConvoyMode && settings.voiceRecordingEnabled ? getAudioStreams : undefined,
   });
@@ -919,6 +920,22 @@ export default function ActiveRide() {
     ? [...convoy.members].sort((a, b) => (b.topSpeed ?? -1) - (a.topSpeed ?? -1)) // private (null) last
     : convoy.members;
 
+  // The round dial: the G meter (when on), turning over to the mini map with a tap; the mini map alone without it.
+  const rideDial = (
+    <RideDial
+      gauge={gaugeOn ? <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope} max={peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax} hidePeaks={peaksHidden} className="w-full" /> : null}
+      position={lastGps ? { lat: lastGps.lat, lng: lastGps.lng } : null}
+      members={convoy.members
+        .filter((m) => m.userId !== user?.id && Number.isFinite(m.currentLat) && Number.isFinite(m.currentLng))
+        .map((m) => ({ userId: m.userId, name: m.name, accentColor: m.accentColor, lat: m.currentLat as number, lng: m.currentLng as number }))}
+      accent={accentColor}
+      distanceUnit={settings.distanceUnit}
+      rescueAt={rescueRequests.find((r) => r.userId !== user?.id) ?? null}
+      convoyId={convoy.id}
+      className="w-40 landscape:w-36"
+    />
+  );
+
   const endRideButton = (
     <div data-tip="end-ride" className="flex justify-center items-center min-h-[2.25rem] md:min-h-[2.5rem] min-w-[230px]">
       {!showEndConfirm ? (
@@ -1134,9 +1151,9 @@ export default function ActiveRide() {
               {speedHero ? getSpeedLabel(settings.speedUnit) : getDistanceLabel(settings.distanceUnit)}
             </p>
             
-            {/* Lean Angle Bar + G-Force Gauge - portrait only */}
+            {/* Lean Angle Bar + the dial (G meter / mini map) - portrait only */}
             <div className="landscape:hidden">
-              {(leanOn || (settings.gForceEnabled && gForce.isSupported)) && (
+              {(
                 <div className="mt-2 flex flex-col">
                   {leanOn && (
                     <div>
@@ -1156,11 +1173,7 @@ export default function ActiveRide() {
                     </div>
                   )}
 
-                  {settings.gForceEnabled && gForce.isSupported && (
-                    <div className="mt-2 flex justify-center">
-                      <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope} max={peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax} hidePeaks={peaksHidden} className="w-40 landscape:w-36" />
-                    </div>
-                  )}
+                  <div className="mt-2 flex justify-center">{rideDial}</div>
                 </div>
               )}
             </div>
@@ -1221,12 +1234,8 @@ export default function ActiveRide() {
         {/* Right flank in landscape: G-Force + buttons, pushed to the right edge.
             `contents` in portrait so children join the vertical flow unchanged. */}
         <div className="contents landscape:flex landscape:flex-row landscape:items-center landscape:justify-end landscape:gap-8 landscape:flex-1 landscape:min-w-0 landscape:max-h-full landscape:pr-2">
-        {/* Landscape: G-Force between speed and buttons */}
-        {settings.gForceEnabled && gForce.isSupported && (
-          <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">
-            <GForceCircle lateral={gForce.lateralG} longitudinal={gForce.longitudinalG} envelope={peaksHidden ? NO_G_ENVELOPE : rideState.gEnvelope ?? gForce.envelope} max={peaksHidden ? NO_G_MAX : rideState.gMax ?? gForce.gMax} hidePeaks={peaksHidden} className="w-40 landscape:w-36" />
-          </div>
-        )}
+        {/* Landscape: the dial (G meter / mini map) between speed and buttons */}
+        <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">{rideDial}</div>
 
         {/* Portrait: the anti-theft lock on its own row, below the stats and just above
             the control buttons (landscape has it beside the live speed). */}
