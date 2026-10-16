@@ -14,6 +14,8 @@ import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
 import { tr } from '@/lib/i18n';
 import { sessionUser } from '@/lib/sessionUser';
+import { setTalkDucked } from '@/lib/audioDuck';
+import { SpeechDetector } from '../lib/speechDetector';
 
 // Warn once per app session, not on every reconnect.
 let relayWarningShown = false;
@@ -115,7 +117,10 @@ const getAudioConstraints = (): MediaTrackConstraints => {
   };
 };
 
-const SPEAKING_THRESHOLD = 0.02; // Audio level threshold for speaking detection
+/** While talking, the "speaking" message is sent again this often, so a lost "stopped" can't leave it stuck. */
+const SPEAKING_REFRESH_MS = 4000;
+/** A rider heard nothing from for this long is taken to have stopped talking. */
+const SPEAKING_STALE_MS = 12000;
 const SPEAKING_DEBOUNCE_MS = 150; // Debounce time for speaking state changes
 const AUDIO_CHECK_INTERVAL_MS = 100; // Check audio levels every 100ms (was 50ms) for battery savings
 const VOICE_REFRESH_INTERVAL_MS = 10000; // Re-announce presence every 10 seconds
@@ -247,6 +252,7 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
   const levelCheckIntervalRef = useRef<number | null>(null);
   const isSpeakingRef = useRef<boolean>(false);
   const speakingTimeoutRef = useRef<number | null>(null);
+  const staleSpeakerTimersRef = useRef<Map<string, number>>(new Map());
   const isMutedRef = useRef<boolean>(true); // Ref to avoid stale closure
   const isConnectingRef = useRef<boolean>(false); // Guard against multiple connection attempts
   const refreshIntervalRef = useRef<number | null>(null); // Periodic refresh for connection maintenance
@@ -402,37 +408,33 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     }
     
     analyserRef.current = audioContextRef.current.createAnalyser();
-    analyserRef.current.fftSize = 512;
-    analyserRef.current.smoothingTimeConstant = 0.3;
+    // The speech detector reads a 2,048-point spectrum lightly smoothed (npm run speech:check plays it the same).
+    analyserRef.current.fftSize = 2048;
+    analyserRef.current.smoothingTimeConstant = 0.2;
     
     const source = audioContextRef.current.createMediaStreamSource(localStreamRef.current);
     source.connect(analyserRef.current);
     
-    // Use time domain data for better voice detection
-    const dataArray = new Uint8Array(analyserRef.current.fftSize);
+    // Talking, not just loud: wind, the engine and road noise used to count (lib/speechDetector.ts).
+    const spectrum = new Float32Array(analyserRef.current.frequencyBinCount);
+    const detector = new SpeechDetector({ sampleRate: audioContextRef.current.sampleRate, fftSize: 2048 });
+    let lastSent = 0;
     
     levelCheckIntervalRef.current = window.setInterval(() => {
       if (!analyserRef.current || !channelRef.current || !userIdRef.current) {
         return;
       }
       
-      // Get time domain data (waveform) for RMS calculation
-      analyserRef.current.getByteTimeDomainData(dataArray);
-      
-      // Calculate RMS (root mean square) for better volume detection
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        const normalized = (dataArray[i] - 128) / 128; // Normalize to -1 to 1
-        sum += normalized * normalized;
-      }
-      const rms = Math.sqrt(sum / dataArray.length);
+      analyserRef.current.getFloatFrequencyData(spectrum);
+      const talking = detector.push(spectrum);
       
       const wasSpeaking = isSpeakingRef.current;
-      const isNowSpeaking = rms > SPEAKING_THRESHOLD && !isMutedRef.current;
-      
-      // Debug log occasionally
-      if (Math.random() < 0.02) {
-        console.log(`[Voice] RMS: ${rms.toFixed(3)}, muted: ${isMutedRef.current}, speaking: ${isNowSpeaking}`);
+      const isNowSpeaking = talking && !isMutedRef.current;
+
+      // Still talking: say so again now and then, so a lost "stopped" can't leave anyone's radio down.
+      if (isNowSpeaking && wasSpeaking && Date.now() - lastSent > SPEAKING_REFRESH_MS) {
+        lastSent = Date.now();
+        channelRef.current.send({ type: 'broadcast', event: 'speaking-state', payload: { oderId: userIdRef.current, isSpeaking: true } });
       }
       
       if (isNowSpeaking && !wasSpeaking) {
@@ -445,6 +447,7 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
         }
         
         // Broadcast speaking state
+        lastSent = Date.now();
         channelRef.current.send({
           type: 'broadcast',
           event: 'speaking-state',
@@ -1287,7 +1290,22 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
         .on('broadcast', { event: 'speaking-state' }, ({ payload }) => {
           // Update speaking state from remote user
           const { oderId, isSpeaking } = payload;
-          console.log(`[Voice] Speaking state from ${oderId}: ${isSpeaking}`);
+          // Forget a talker who goes quiet without saying so (a dropped message, a phone that left).
+          const stale = staleSpeakerTimersRef.current;
+          const old = stale.get(oderId);
+          if (old) window.clearTimeout(old);
+          stale.delete(oderId);
+          if (isSpeaking) {
+            stale.set(oderId, window.setTimeout(() => {
+              stale.delete(oderId);
+              setState((prev) => {
+                if (!prev.speakingUsers.has(oderId)) return prev;
+                const next = new Set(prev.speakingUsers);
+                next.delete(oderId);
+                return { ...prev, speakingUsers: next };
+              });
+            }, SPEAKING_STALE_MS));
+          }
           setState(prev => {
             const newSet = new Set(prev.speakingUsers);
             if (isSpeaking) {
@@ -1594,6 +1612,8 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
   // map's member markers) can read who's talking without their own connection.
   useEffect(() => {
     setSpeakingUsers(state.speakingUsers);
+    // Blacktop Radio dips while anyone else in the convoy is talking (not for this rider's own voice).
+    setTalkDucked([...state.speakingUsers].some((id) => id !== userIdRef.current));
   }, [state.speakingUsers]);
 
   // Cleanup on unmount
@@ -1601,6 +1621,9 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     return () => {
       cleanup();
       setSpeakingUsers(new Set());
+      setTalkDucked(false);
+      staleSpeakerTimersRef.current.forEach((t) => window.clearTimeout(t));
+      staleSpeakerTimersRef.current.clear();
     };
   }, [cleanup]);
 

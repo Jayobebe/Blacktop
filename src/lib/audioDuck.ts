@@ -19,6 +19,22 @@ export function duckVolume(): number {
   return ducked ? DUCKED : 1;
 }
 
+// Blacktop Radio also dips while someone in the convoy is talking (their own
+// voice chat stays at full volume, so this is separate from the prompt duck).
+const TALK_DUCKED = 0.25;
+let talkDucked = false;
+
+export function setTalkDucked(next: boolean) {
+  if (talkDucked === next) return;
+  talkDucked = next;
+  listeners.forEach((l) => l());
+}
+
+/** Volume Blacktop Radio should play at right now: down for a prompt or while a convoy mate talks. */
+export function radioVolume(): number {
+  return Math.min(duckVolume(), talkDucked ? TALK_DUCKED : 1);
+}
+
 export function onAudioDuckChange(l: () => void): () => void {
   listeners.add(l);
   return () => {

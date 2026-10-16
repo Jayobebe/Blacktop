@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 import type { RadioPlayerState, RadioStation } from '../types';
 import { resolveTrackFile, trackSrc } from '../lib/audioFiles';
 import { getStation } from './useRadioStations';
-import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
+import { radioVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { LIVE_STATIONS, getLiveStation } from '../lib/liveStations';
 import { tr } from '@/lib/i18n';
 
@@ -37,10 +37,25 @@ function getAudio(): HTMLAudioElement {
   audio = new Audio();
   audio.preload = 'auto';
   audio.crossOrigin = 'anonymous';
-  // Turn-by-turn prompts lower the radio while they're spoken.
-  audio.volume = duckVolume();
+  // Turn-by-turn prompts and convoy mates talking lower the radio; it slides
+  // down and back over a quarter of a second rather than jumping.
+  audio.volume = radioVolume();
+  let fade: number | null = null;
   onAudioDuckChange(() => {
-    if (audio) audio.volume = duckVolume();
+    if (!audio) return;
+    const el = audio;
+    const from = el.volume;
+    const to = radioVolume();
+    if (fade !== null) window.clearInterval(fade);
+    const start = Date.now();
+    fade = window.setInterval(() => {
+      const k = Math.min(1, (Date.now() - start) / 250);
+      el.volume = from + (to - from) * k;
+      if (k >= 1 && fade !== null) {
+        window.clearInterval(fade);
+        fade = null;
+      }
+    }, 25);
   });
   audio.addEventListener('ended', () => { void next(); });
   audio.addEventListener('timeupdate', () => {
