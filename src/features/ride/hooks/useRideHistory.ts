@@ -122,7 +122,7 @@ export function useRideHistory() {
 
   const updateRideName = useCallback((rideId: string, name: string) => {
     setRides(prev => prev.map(r => 
-      r.id === rideId ? { ...r, name: name.trim() || undefined } : r
+      r.id === rideId ? { ...r, name: name.trim() || undefined, autoNamed: false } : r
     ));
   }, [setRides]);
 

@@ -16,6 +16,8 @@ import { useProfile } from '@/features/profile';
 import { RadioButton, usePlayer } from '@/features/radio';
 import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, rescueReach } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
+import { autoNameRide } from '@/features/ride/lib/rideNames';
+import { useBatterySaver } from '@/features/ride/hooks/useBatterySaver';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
 
@@ -245,6 +247,8 @@ export default function ActiveRide() {
   const accentHsl = ACCENT_COLORS.find((c) => c.id === settings.accentColor)?.hsl ?? ACCENT_COLORS[0].hsl;
   const accentColor = `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`;
   const gaugeOn = settings.gForceEnabled && gForce.isSupported;
+  // Low battery mid-ride: Thermal mode on until plugged in or the ride ends.
+  useBatterySaver(rideState.isActive);
 
   // "Blacktop Maps enabled" = the rider's preferred nav app is our in-app map.
   // Drives whether the downloadable overlay includes the live mini-map card.
@@ -567,8 +571,10 @@ export default function ActiveRide() {
     }
     
     // Run cleanup in background (non-blocking)
+    const target = rideTarget();
     (async () => {
       const rideId = await endRide();
+      if (rideId) void autoNameRide(rideId, target);
       clearMapDestination();
       clearSoloRoute();
       closeBlacktopMap();
@@ -739,7 +745,9 @@ export default function ActiveRide() {
     // UI state. Invalid (too-short) rides return null and must not show a
     // receipt — that also keeps us from churning local storage on rapid
     // start/stop loops.
+    const target = rideTarget();
     const rideId = await endRide();
+    if (rideId) void autoNameRide(rideId, target);
     clearMapDestination();
     clearSoloRoute();
     closeBlacktopMap();
@@ -919,6 +927,12 @@ export default function ActiveRide() {
   const sortedMembers = (settings.showSpeedRankings && settings.speedFocusEnabled) 
     ? [...convoy.members].sort((a, b) => (b.topSpeed ?? -1) - (a.topSpeed ?? -1)) // private (null) last
     : convoy.members;
+
+  /** Where the ride was headed, if a route was set: names the ride ("To Brighton"). */
+  const rideTarget = () => {
+    const name = rideState.isConvoyMode ? convoy.destination?.name : soloRoute.destination?.name;
+    return name ? { name } : null;
+  };
 
   // The round dial: the G meter (when on), turning over to the mini map with a tap; the mini map alone without it.
   const rideDial = (

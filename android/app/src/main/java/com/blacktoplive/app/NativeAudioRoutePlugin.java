@@ -4,8 +4,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
+import android.content.Intent;
 import android.media.AudioManager;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.os.Build;
+import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
 
@@ -28,6 +32,8 @@ public class NativeAudioRoutePlugin extends Plugin {
     private int previousMode = AudioManager.MODE_NORMAL;
     private boolean wasSpeakerphoneOn = false;
     private boolean communicationActive = false;
+    /** Convoy voice's media session: a headset's play / pause reaches the app as "mediaButton". */
+    private MediaSession mediaSession;
 
     @Override
     public void load() {
@@ -136,5 +142,55 @@ public class NativeAudioRoutePlugin extends Plugin {
                 audioManager.setSpeakerphoneOn(true);
             }
         }
+    }
+
+    /**
+     * Takes the phone's media buttons for convoy voice: a headset's or
+     * intercom's play / pause (or its single call button) sends "mediaButton"
+     * to the web app, which mutes or unmutes. The session says it's playing, so
+     * Android hands the buttons here rather than to the last music app.
+     */
+    @PluginMethod
+    public void startMediaButtons(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            if (mediaSession == null) {
+                mediaSession = new MediaSession(getContext(), "BlacktopVoice");
+                mediaSession.setCallback(new MediaSession.Callback() {
+                    @Override
+                    public boolean onMediaButtonEvent(Intent intent) {
+                        KeyEvent key = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                        if (key == null || key.getAction() != KeyEvent.ACTION_DOWN || key.getRepeatCount() > 0) return true;
+                        switch (key.getKeyCode()) {
+                            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                            case KeyEvent.KEYCODE_MEDIA_PLAY:
+                            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                            case KeyEvent.KEYCODE_HEADSETHOOK:
+                                notifyListeners("mediaButton", new JSObject());
+                                return true;
+                            default:
+                                return super.onMediaButtonEvent(intent);
+                        }
+                    }
+                });
+            }
+            mediaSession.setPlaybackState(new PlaybackState.Builder()
+                .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE)
+                .setState(PlaybackState.STATE_PLAYING, 0, 1f)
+                .build());
+            mediaSession.setActive(true);
+            call.resolve(new JSObject());
+        });
+    }
+
+    @PluginMethod
+    public void stopMediaButtons(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            if (mediaSession != null) {
+                mediaSession.setActive(false);
+                mediaSession.release();
+                mediaSession = null;
+            }
+            call.resolve(new JSObject());
+        });
     }
 }

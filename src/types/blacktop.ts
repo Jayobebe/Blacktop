@@ -42,6 +42,10 @@ export interface GForceSample {
 export interface RideSession {
   id: string;
   name?: string; // Optional custom name for the ride
+  /** The name was made by the app (ride/lib/rideNames), not typed: a later automatic name may replace it, the rider's never. */
+  autoNamed?: boolean;
+  /** Towns the ride passed through and the ride time each was reached (the flyover's corner; looked up once). */
+  places?: Array<{ at: number; name: string }>;
   starred?: boolean; // Starred rides are never burned from Ride History
   startedAt: string;
   endedAt: string | null;

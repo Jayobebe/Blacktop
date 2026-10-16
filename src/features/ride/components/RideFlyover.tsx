@@ -16,6 +16,7 @@ import { formatDistance, formatDuration, formatSpeed, getSpeedLabel } from '@/li
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import type { RideSession } from '@/types/blacktop';
 import { buildFlyoverFrames, memberPositionAt, MemberTrack, FlyoverFrame } from '../lib/flyover';
+import { placeAt, placesAlongRide, type RidePlace } from '../lib/rideNames';
 import { tr } from '@/lib/i18n';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
@@ -58,6 +59,21 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ dist: number; angle: number } | null>(null);
   const redrawRef = useRef<(() => void) | null>(null);
+  // The towns along the ride, for the corner: saved on the ride, else looked up now (filling in as they come).
+  const placesRef = useRef<RidePlace[]>(ride.places ?? []);
+  useEffect(() => {
+    let live = true;
+    void placesAlongRide(ride, (p) => {
+      if (live) placesRef.current = p;
+    }).then((p) => {
+      if (live && p.length) placesRef.current = p;
+    });
+    return () => {
+      live = false;
+    };
+  }, [ride]);
+  /** The place in the corner and when it last changed (it fades in when it does). */
+  const shownPlaceRef = useRef<{ name: string | null; at: number }>({ name: null, at: 0 });
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordingResolveRef = useRef<((b: Blob | null) => void) | null>(null);
@@ -292,10 +308,13 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
       ctx.drawImage(map.getCanvas(), 0, 0, CANVAS_W, CANVAS_H);
 
-      // Header — ride name + compressed-time badge
+      // Header — ride name, and the town the rider is in at this moment of the ride.
+      const place = placeAt(placesRef.current, frame.elapsed);
+      const shown = shownPlaceRef.current;
+      if (place !== shown.name) shownPlaceRef.current = { name: place, at: performance.now() };
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
       ctx.beginPath();
-      ctx.roundRect(28, 24, 300, 58, 10);
+      ctx.roundRect(28, 24, 300, place ? 84 : 58, 10);
       ctx.fill();
       ctx.textBaseline = 'top';
       ctx.textAlign = 'left';
@@ -305,6 +324,19 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.fillStyle = 'white';
       ctx.font = 'bold 20px system-ui';
       ctx.fillText(ride.name || formatDuration(ride.duration), 44, 52);
+      if (place) {
+        // A new town fades in over a third of a second.
+        const fadeIn = Math.min(1, (performance.now() - shownPlaceRef.current.at) / 350);
+        ctx.globalAlpha = fadeIn;
+        ctx.fillStyle = accentColor;
+        ctx.beginPath();
+        ctx.arc(50, 87, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = '600 16px system-ui';
+        ctx.fillText(place, 62, 78, 250);
+        ctx.globalAlpha = 1;
+      }
 
       const speedLabel = getSpeedLabel(settings.speedUnit);
       const lines: Array<[string, string]> = [

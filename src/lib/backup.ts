@@ -49,6 +49,8 @@ const LEFT_OUT = new Set([
   'bt.push.enabled.v1',
   'bt.push.location.v1',
   'bt.push.registered.v1',
+  'blacktop_place_names',
+  'blacktop_battery_saver',
   'bt.map.offlinePacks.v1',
 ]);
 

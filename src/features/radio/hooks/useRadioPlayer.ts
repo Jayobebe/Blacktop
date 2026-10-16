@@ -5,6 +5,7 @@ import type { RadioPlayerState, RadioStation } from '../types';
 import { resolveTrackFile, trackSrc } from '../lib/audioFiles';
 import { getStation } from './useRadioStations';
 import { radioVolume, onAudioDuckChange } from '@/lib/audioDuck';
+import { setMediaKeys, voiceHoldsMediaKeys } from '@/lib/mediaKeys';
 import { LIVE_STATIONS, getLiveStation } from '../lib/liveStations';
 import { tr } from '@/lib/i18n';
 
@@ -81,20 +82,19 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 function setupMediaSessionHandlers() {
-  const ms = (navigator as any).mediaSession;
-  if (!ms) return;
-  try {
-    ms.setActionHandler('play', () => { void play(); });
-    ms.setActionHandler('pause', () => pause());
-    ms.setActionHandler('nexttrack', () => { void next(); });
-    ms.setActionHandler('previoustrack', () => { void previous(); });
-    ms.setActionHandler('stop', () => stop());
-  } catch { /* unsupported actions */ }
+  // The radio's layer of the phone's media buttons; convoy voice takes them over while the rider is in it (lib/mediaKeys).
+  setMediaKeys('radio', {
+    play: () => { void play(); },
+    pause: () => pause(),
+    nexttrack: () => { void next(); },
+    previoustrack: () => { void previous(); },
+    stop: () => stop(),
+  });
 }
 
 function syncMediaSession() {
   const ms = (navigator as any).mediaSession;
-  if (!ms) return;
+  if (!ms || voiceHoldsMediaKeys()) return;
   try {
     ms.playbackState = state.isPlaying ? 'playing' : 'paused';
     if (state.trackName) {

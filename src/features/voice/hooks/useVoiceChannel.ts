@@ -8,6 +8,7 @@ import {
   startNativeCommunicationAudio,
   stopBrowserCommunicationAudio,
   stopNativeCommunicationAudio,
+  listenToMediaButtons,
 } from '../lib/nativeAudioRoute';
 import { toast } from 'sonner';
 import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
@@ -15,6 +16,8 @@ import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
 import { tr } from '@/lib/i18n';
 import { sessionUser } from '@/lib/sessionUser';
 import { setTalkDucked } from '@/lib/audioDuck';
+import { setMediaKeys } from '@/lib/mediaKeys';
+import { sceneCue } from '@/lib/radioFx';
 import { SpeechDetector } from '../lib/speechDetector';
 
 // Warn once per app session, not on every reconnect.
@@ -1636,6 +1639,44 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     track.addEventListener('ended', onEnded);
     return () => track.removeEventListener('ended', onEnded);
   }, [state.isConnected]);
+
+  // The headset's or intercom's play / pause button mutes and unmutes while in voice (any page:
+  // the browser's media session, lib/mediaKeys; the Android app: its own, nativeAudioRoute).
+  // A squelch says which way it went, since nobody looks at the phone to press it.
+  const toggleMuteRef = useRef<() => void>(() => {});
+  toggleMuteRef.current = toggleMute;
+  const mutedNowRef = useRef(true);
+  useEffect(() => {
+    if (!state.isConnected) return;
+    const press = () => {
+      const unmuting = mutedNowRef.current;
+      toggleMuteRef.current();
+      sceneCue(unmuting ? 'radioIn' : 'radioOut');
+    };
+    setMediaKeys('voice', { play: press, pause: press, togglemicrophone: press });
+    let stopNative: (() => void) | null = null;
+    let gone = false;
+    void listenToMediaButtons(press).then((stop) => {
+      if (gone) stop();
+      else stopNative = stop;
+    });
+    return () => {
+      gone = true;
+      setMediaKeys('voice', null);
+      stopNative?.();
+    };
+  }, [state.isConnected]);
+  useEffect(() => {
+    mutedNowRef.current = state.isMuted;
+    const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+    if (!ms || !state.isConnected) return;
+    try {
+      ms.playbackState = state.isMuted ? 'paused' : 'playing';
+      ms.metadata = new MediaMetadata({ title: tr("Convoy voice"), artist: state.isMuted ? tr("Muted") : tr("Live"), album: 'Blacktop' });
+    } catch {
+      /* no media session here */
+    }
+  }, [state.isConnected, state.isMuted]);
 
   // Mirror speakingUsers into the shared store so other features (e.g. the
 
