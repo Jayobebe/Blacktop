@@ -44,6 +44,7 @@ import { BurnFlameOverlay, markBurnReveal } from '@/components/BurnFlameOverlay'
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { PageTips } from '@/features/guide';
 import { getBlocked, clearBlocked } from '@/features/proximity';
+import { clearParkedSpot } from '@/lib/parkedSpot';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { BackupPanel } from '@/features/settings/components/BackupPanel';
 import { RecoveryPanel } from '@/features/settings/components/RecoveryPanel';
@@ -845,6 +846,39 @@ export default function Settings() {
              </div>
            </div>
 
+            <div className="mt-4 pt-3 border-t border-border/30">
+              <div className="flex items-center justify-between gap-3">
+                <div className="pr-2">
+                  <p className="text-sm font-medium">{tr("Spoken ride updates")}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {settings.speedFocusEnabled
+                      ? tr("The radio voice reads out your ride time, distance and average.")
+                      : tr("The radio voice reads out your ride time and distance.")}
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.rideUpdatesEnabled}
+                  onCheckedChange={(v) => updateSetting('rideUpdatesEnabled', v)}
+                />
+              </div>
+              {settings.rideUpdatesEnabled && (
+                <div className="grid grid-cols-4 gap-2 mt-3">
+                  {[10, 20, 30, 60].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => updateSetting('rideUpdatesEvery', n)}
+                      className={`rounded-lg py-2 text-xs font-semibold border transition-colors touch-target ${
+                        (settings.rideUpdatesEvery || 30) === n ? 'bg-accent text-accent-foreground border-accent' : 'border-border/50 text-muted-foreground'
+                      }`}
+                    >
+                      {n === 60 ? tr("Every hour") : tr("Every {0} min", [n])}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
               <div>
                 <p className="text-sm font-medium">{tr("Enable G-Force Gauge")}</p>
@@ -1257,6 +1291,22 @@ export default function Settings() {
                 {radioStations.length ? tr("Manage stations ({0})", [radioStations.length]) : tr("Create your first station")}
               </button>
             )}
+          </div>
+
+          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-border/30">
+            <div className="pr-2">
+              <p className="text-sm font-medium">{tr("Remember where I parked")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {tr("After each ride, asks whether to save where you parked: a pin on the map with walking directions back, plus the floor and bay in a multi-storey. Kept on this phone.")}
+              </p>
+            </div>
+            <Switch
+              checked={settings.parkedSpotEnabled}
+              onCheckedChange={(v) => {
+                updateSetting('parkedSpotEnabled', v);
+                if (!v) clearParkedSpot();
+              }}
+            />
           </div>
         </CollapsibleSection>
 

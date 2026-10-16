@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react';
+import { Siren } from 'lucide-react';
 import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
@@ -30,7 +30,7 @@ export function AlarmButton({ variant, className }: { variant: 'home' | 'ride'; 
         className,
       )}
     >
-      <Lock className={cn('text-[hsl(var(--burn))]', variant === 'home' ? 'w-[18px] h-[18px]' : 'w-7 h-7 landscape:w-8 landscape:h-8')} />
+      <Siren className={cn('text-[hsl(var(--burn))]', variant === 'home' ? 'w-[18px] h-[18px]' : 'w-7 h-7 landscape:w-8 landscape:h-8')} />
     </button>
   );
 }

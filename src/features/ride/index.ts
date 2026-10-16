@@ -26,3 +26,5 @@ export type { BadgeWallet } from './lib/badgeWallet';
 export { BadgeWalletPanel } from './components/BadgeWalletPanel';
 export { SetOffPrompt } from './components/SetOffPrompt';
 export { RideDial } from './components/RideDial';
+export { ReceiptFlight } from './components/ReceiptFlight';
+export { flyReceipt } from './lib/receiptFlight';

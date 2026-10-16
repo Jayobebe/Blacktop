@@ -41,3 +41,27 @@ export function emergencyTextAction(
     },
   };
 }
+
+/** "Blacktop: Sam is back safe at Brighton after 84 mi." The distance comes in the rider's own units. */
+export function safeArrivalMessage(name: string, distance: string, place: string | null): string {
+  const who = name.trim() || tr("A Blacktop rider");
+  return place
+    ? tr("Blacktop: {0} is back safe at {1} after {2}.", [who, place, distance])
+    : tr("Blacktop: {0} is back safe after {1}.", [who, distance]);
+}
+
+/**
+ * Opt-in (Settings → Safety, `safeArrivalText`): the end-of-ride card offers to
+ * text the emergency contact that the rider is back. Nothing is sent by
+ * itself: the tap opens the phone's own messages app with the text written,
+ * so it goes from the rider's own number and needs no server. Null without a contact.
+ */
+export function safeArrivalHref(
+  settings: { emergencyContactPhone?: string },
+  riderName: string,
+  distance: string,
+  place: string | null,
+): string | null {
+  const phone = cleanPhone(settings.emergencyContactPhone ?? '');
+  return phone ? emergencySmsHref(phone, safeArrivalMessage(riderName, distance, place)) : null;
+}

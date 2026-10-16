@@ -4,7 +4,7 @@ import { useDemoMode } from '@/lib/demoMode';
 import { demoCrewConvoyDetail, demoCrewConvoys } from '@/features/crew/demo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Radio, Crown, Users, MapPin, X, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Radio, Crown, Users, MapPin, X, RefreshCw, Eye } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ListSkeleton } from '@/components/skeletons';
 import { supabase } from '@/integrations/supabase/client';
@@ -200,6 +200,22 @@ export default function CrewConvoys() {
                 ))}
               </ul>
             </div>
+
+            {/* A ride under way can be watched live, following its leader, without joining it. */}
+            {selected.is_riding && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (demoBlocked()) return;
+                  navigate(`/spectate/${selected.id}`, { state: { name: selected.leader_name } });
+                }}
+                disabled={locked}
+                className="w-full py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Eye className="w-4 h-4" />
+                {tr("Spectate")}
+              </button>
+            )}
 
             <button
               type="button"

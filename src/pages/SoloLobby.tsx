@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useHoldTap } from '@/hooks/useHoldTap';
+import { cn } from '@/lib/utils';
+import { isDemoModeActive } from '@/lib/demoMode';
 import { useNavigate } from 'react-router-dom';
 import { useActiveRide, setSoloRoute, clearSoloRoute } from '@/features/ride';
 import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
@@ -26,7 +29,7 @@ interface UserLocation {
 export default function SoloLobby() {
   const navigate = useNavigate();
   const { startRide } = useActiveRide();
-  const { settings } = useSettings();
+  const { settings, updateSetting } = useSettings();
   const { terms, isCarOnly, showGroup } = useExperience();
   const { convoy, createConvoy, leaveConvoy, setDestination: setConvoyDestination } = useConvoyState();
   const crew = useCrew();
@@ -153,7 +156,7 @@ export default function SoloLobby() {
 
   // Unlocking a solo lobby publishes it to the crew list. The moment another
   // rider joins, it becomes a group lobby and we hand over to /lobby.
-  const toggleUnlocked = async () => {
+  const toggleUnlocked = async (quiet = false) => {
     if (busyLock) return;
     setBusyLock(true);
     try {
@@ -169,9 +172,11 @@ export default function SoloLobby() {
           .update({ is_listed: true, crew_code: crew.code } as any)
           .eq('id', created.id);
         nudgePush(); // the crew hears about the open convoy
-        toast.success(tr("Listed in crew {0}", [crew.code]), {
-          description: tr("Riders who join turn this into a group lobby."),
-        });
+        if (!quiet) {
+          toast.success(tr("Listed in crew {0}", [crew.code]), {
+            description: tr("Riders who join turn this into a group lobby."),
+          });
+        }
       }
     } finally {
       setBusyLock(false);
@@ -179,6 +184,27 @@ export default function SoloLobby() {
   };
 
   const isUnlocked = convoy.isActive && convoy.isLeader;
+
+  // Held on the lock: unlock every lobby from now on (or stop). On, a new solo lobby opens itself to the crew, once.
+  const toggleAlways = () => {
+    const next = !settings.alwaysUnlockRides;
+    updateSetting('alwaysUnlockRides', next);
+    toast.success(next ? tr("Always unlocked") : tr("Always unlock off"), {
+      description: next
+        ? tr("Every lobby you lead will be listed in Crew Convoys. Hold the lock again to stop.")
+        : tr("Lobbies start locked again. This one stays as it is."),
+    });
+    if (next && !isUnlocked) void toggleUnlocked(true);
+  };
+  const lockHold = useHoldTap(() => void toggleUnlocked(), toggleAlways);
+  const autoUnlocked = useRef(false);
+  useEffect(() => {
+    if (autoUnlocked.current || !settings.alwaysUnlockRides || isUnlocked || convoy.isActive || isDemoModeActive()) return;
+    autoUnlocked.current = true;
+    void toggleUnlocked(true);
+    // Once, as the lobby opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Somebody joined the open solo lobby → it's a group ride now.
   useEffect(() => {
@@ -198,13 +224,20 @@ export default function SoloLobby() {
         right={
           <HeaderButton
             data-tip="solo-lock"
-            onClick={toggleUnlocked}
+            {...lockHold.handlers}
             disabled={busyLock}
-            active={isUnlocked}
-            title={isUnlocked ? tr("Locked to crew list — tap to lock") : tr("Tap to list in Crew Convoys")}
+            className={cn('crew-lock hold-target', !isUnlocked ? 'text-muted-foreground' : settings.alwaysUnlockRides ? 'crew-lock-always' : 'crew-lock-open')}
+            title={
+              isUnlocked
+                ? settings.alwaysUnlockRides
+                  ? tr("Always unlocked — tap to lock this one, hold to stop")
+                  : tr("Listed in Crew Convoys — tap to lock, hold to always unlock")
+                : tr("Locked — tap to list in Crew Convoys, hold to always unlock")
+            }
             aria-label={isUnlocked ? tr("Lock lobby") : tr("Unlock lobby to crew")}
           >
-            {isUnlocked ? <Unlock className="w-[18px] h-[18px]" /> : <Lock className="w-[18px] h-[18px]" />}
+            <span aria-hidden className={cn('crew-lock-fill', lockHold.holding && 'holding')} />
+            {isUnlocked ? <Unlock className="relative w-[18px] h-[18px]" /> : <Lock className="relative w-[18px] h-[18px]" />}
           </HeaderButton>
         }
       />

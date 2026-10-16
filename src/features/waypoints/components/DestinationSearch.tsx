@@ -4,6 +4,8 @@ import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCro
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useShortLandscape } from '@/hooks/useShortLandscape';
+import { useStripNudge } from '@/hooks/useStripNudge';
 import { ConvoyDestination } from '@/types/convoy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -365,7 +367,8 @@ export function DestinationSearch({
   const searchIdRef = useRef<number>(0); // Track latest search to prevent race conditions
   const inputWrapRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownRect, setDropdownRect] = useState<{ left: number; top: number; width: number } | null>(null);
+  const [dropdownRect, setDropdownRect] = useState<{ left: number; top: number; width: number; rowTop: number; right: number } | null>(null);
+  const shortLandscape = useShortLandscape();
 
   // Use external location if provided, otherwise use internal
   const userLocation = externalUserLocation ?? internalUserLocation;
@@ -656,7 +659,7 @@ export function DestinationSearch({
       const el = inputWrapRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      setDropdownRect({ left: r.left, top: r.bottom + 8, width: r.width });
+      setDropdownRect({ left: r.left, top: r.bottom + 8, width: r.width, rowTop: r.top, right: r.right });
     };
     updateRect();
     window.addEventListener('scroll', updateRect, true);
@@ -665,7 +668,7 @@ export function DestinationSearch({
       window.removeEventListener('scroll', updateRect, true);
       window.removeEventListener('resize', updateRect);
     };
-  }, [showResults, results, recentLocations, isSearching, activeCategory]);
+  }, [showResults, results, recentLocations, isSearching, activeCategory, shortLandscape]);
 
   const showIdle = query.length < 2 && !activeCategory;
   const showRecent = showIdle && recentLocations.length > 0;
@@ -678,6 +681,8 @@ export function DestinationSearch({
     return { ...r, distance: calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng) };
   });
   const hasDisplayContent = hasSavedPOIs || displayResults.length > 0 || isSearching;
+  const strip = shortLandscape && showResults && hasDisplayContent;
+  const nudging = useStripNudge(strip);
 
   if (destination) {
     return (
@@ -745,8 +750,9 @@ export function DestinationSearch({
         ))}
       </div>
 
-      {/* Search input */}
-      <div ref={inputWrapRef} className="flex gap-2">
+      {/* Search input. On a phone on its side with suggestions up, it narrows and the
+          suggestions run sideways beside it in the same row (the keyboard takes the bottom). */}
+      <div ref={inputWrapRef} className={cn('flex gap-2', strip && 'w-[40%]')}>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -786,19 +792,17 @@ export function DestinationSearch({
       {showResults && hasDisplayContent && dropdownRect && createPortal(
         <div
           ref={dropdownRef}
-          style={{
-            position: 'fixed',
-            left: dropdownRect.left,
-            top: dropdownRect.top,
-            width: dropdownRect.width,
-            zIndex: 9999,
-          }}
-          className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto"
+          style={
+            (strip
+              ? { '--strip-h': '3rem', position: 'fixed', top: dropdownRect.rowTop, left: dropdownRect.right + 8, right: 'calc(0.5rem + var(--safe-right))', zIndex: 9999 }
+              : { position: 'fixed', left: dropdownRect.left, top: dropdownRect.top, width: dropdownRect.width, zIndex: 9999 }) as React.CSSProperties
+          }
+          className={cn('suggest-list bg-card border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto', nudging && 'suggest-nudge')}
         >
           {/* Saved POIs — idle state only */}
           {hasSavedPOIs && (
             <>
-              <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+              <div className="suggest-head px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
                 <Bookmark className="w-3.5 h-3.5" />
                 {tr("Saved places")}
               </div>
@@ -826,13 +830,13 @@ export function DestinationSearch({
 
           {/* Recent destinations — idle state only */}
           {showRecent && (
-            <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+            <div className="suggest-head px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               <Clock className="w-3.5 h-3.5" />
               {tr("Recent destinations")}
             </div>
           )}
           {activeCategory && !isSearching && (
-            <div className="px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+            <div className="suggest-head px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
               {categories.find(c => c.id === activeCategory)?.icon}
               <span>{tr("Nearby")}{" "}{categories.find(c => c.id === activeCategory)?.label}</span>
             </div>

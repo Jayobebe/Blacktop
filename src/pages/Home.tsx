@@ -324,7 +324,7 @@ export default function Home() {
 
   const navItems = [
     ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage"), onClick: () => navigate('/garage') }] : []),
-    { icon: History, label: tr("History"), onClick: () => navigate('/history') },
+    { icon: History, label: tr("History"), onClick: () => navigate('/history'), nav: 'history' },
     { icon: BarChart3, label: tr("Stats"), onClick: () => navigate('/stats') },
     { icon: Settings, label: tr("Settings"), onClick: () => navigate('/settings') },
   ];
@@ -434,8 +434,16 @@ export default function Home() {
         const rect = el.getBoundingClientRect();
         const dy = rect.top + rect.height * 0.3 - cyAbs;
         const chord = Math.abs(dy) < pr ? Math.sqrt(pr * pr - dy * dy) : 0;
+        const left = cxAbs - chord - rect.left;
+        const right = rect.right - (cxAbs + chord);
+        // Join alone with its switch: the label left of the globe and the switch right of it, so the narrower side counts.
+        if (el.dataset.split !== undefined) {
+          const room = Math.min(left, right);
+          el.dataset.room = room < 150 ? 'tight' : room < 185 ? 'snug' : 'wide';
+          return;
+        }
         // Join beside Track keeps its label left of the globe; every other case, right of it.
-        const room = el === join && trackShown ? cxAbs - chord - rect.left : rect.right - (cxAbs + chord);
+        const room = el === join && trackShown ? left : right;
         el.dataset.room = room < 205 ? 'tight' : room < 250 ? 'snug' : 'wide';
       });
 
@@ -606,31 +614,31 @@ export default function Home() {
                     </p>
                     <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
                   </div>
-                  {/* The anti-theft lock, then crash rescue filling the rest of the row.
+                  {/* The anti-theft alarm, then crash rescue filling the rest of the row (in landscape, only as wide as it reads).
                       Riders who said no to crash rescue in setup aren't nagged about it. */}
                   <div className="flex-1 min-w-0 flex items-center gap-2">
                     <AlarmButton variant="home" />
                     {(settings.autoRescueEnabled || !exp.configured) && (
-                      <div className="flex-1 min-w-0">
-                        <SafetyStatusCard compact />
+                      <div className="flex-1 min-w-0 landscape:flex-none landscape:max-w-[17rem]">
+                        <SafetyStatusCard compact className="landscape:w-auto landscape:max-w-full" />
                       </div>
                     )}
                   </div>
                   <HomeRadioDock />
                 </header>
                   <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
-                    {/* Quick Stats */}
+                    {/* Quick Stats: a row in portrait, a tower down the left in landscape */}
                     <div
-                      className="grid grid-cols-[repeat(var(--stat-cols),minmax(0,1fr))] landscape:grid-cols-2 landscape:[&>*:last-child:nth-child(odd)]:col-span-2 gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0 landscape:content-start"
+                      className="grid grid-cols-[repeat(var(--stat-cols),minmax(0,1fr))] landscape:grid-cols-1 landscape:grid-rows-[repeat(var(--stat-cols),minmax(0,1fr))] gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0"
                       style={{ ['--stat-cols' as string]: quickStats.length }}
                     >
                       {quickStats.map((stat, i) => (
                         <div 
                           key={stat.label}
-                          className="bg-card/50 rounded-2xl p-2 md:p-3 border border-border/30 animate-scale-in"
+                          className="bg-card/50 rounded-2xl p-2 md:p-3 landscape:px-3 border border-border/30 animate-scale-in landscape:flex landscape:flex-col landscape:justify-center min-w-0"
                           style={{ animationDelay: `${i * 80}ms` }}
                         >
-                          <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">{stat.label}</p>
+                          <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:tracking-wider landscape:break-words landscape:leading-tight">{stat.label}</p>
                           <p className="text-base md:text-lg font-mono font-bold tracking-tighter leading-tight">
                             {stat.value}
                             {stat.unit && <span className="text-[10px] md:text-xs text-muted-foreground/70 ml-0.5 font-normal">{stat.unit}</span>}
@@ -674,6 +682,7 @@ export default function Home() {
                         <div
                           ref={bottomTileRef}
                           data-sticker-surface
+                          data-split={exp.showGroup && !showTrack ? '' : undefined}
                           role="button"
                           tabIndex={0}
                           onClick={() => {
@@ -687,19 +696,31 @@ export default function Home() {
                           }}
                           className={cn(
                             'group/tile pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
-                            // The globe sits over this tile's centre in landscape, so the label moves right of it;
-                            // with Track beside it the globe is on its right corner, so the label goes left.
-                            showTrack ? 'landscape:justify-start landscape:pl-6 landscape:data-[room=tight]:pl-3' : 'landscape:justify-end landscape:pr-8 landscape:data-[room=tight]:pr-3'
+                            // With Track beside it the globe is on this tile's right corner, so the label goes left.
+                            // Alone, the globe sits over its centre: the label goes left of it and the
+                            // operator / passenger switch right of it.
+                            showTrack
+                              ? 'landscape:justify-start landscape:pl-6 landscape:data-[room=tight]:pl-3'
+                              : exp.showGroup
+                                ? 'landscape:justify-between landscape:px-6 landscape:data-[room=tight]:px-3'
+                                : 'landscape:justify-end landscape:pr-8 landscape:data-[room=tight]:pr-3'
                           )}
                         >
-                          <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
-                            <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent-2" />
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
+                              <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent-2" />
+                            </div>
+                            <div className="text-left flex flex-col items-start gap-1">
+                              <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
+                              {/* Join Convoy: operator or passenger, like Track Day's racer / pit crew. */}
+                              {exp.showGroup ? (
+                                <div className={cn(!showTrack && 'landscape:hidden')}>{joinRoleToggle}</div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-left flex flex-col items-start gap-1">
-                            <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
-                            {/* Join Convoy: operator or passenger, like Track Day's racer / pit crew. */}
-                            {exp.showGroup ? joinRoleToggle : <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>}
-                          </div>
+                          {exp.showGroup && !showTrack && <div className="hidden landscape:block">{joinRoleToggle}</div>}
                         </div>
                         {showTrack && (
                           <div
@@ -782,9 +803,10 @@ export default function Home() {
                 {deckPips}
                 {/* Bottom Navigation */}
                 <nav className="flex justify-around mt-2 pt-3 border-t border-border/30 animate-slide-up delay-300">
-                  {navItems.map(({ icon: Icon, label, onClick }) => (
+                  {navItems.map(({ icon: Icon, label, onClick, ...item }) => (
                     <button
                       key={label}
+                      data-nav={'nav' in item ? item.nav : undefined}
                       onClick={() => {
                         haptics.tick();
                         onClick();

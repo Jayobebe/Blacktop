@@ -51,6 +51,7 @@ const LEFT_OUT = new Set([
   'bt.push.registered.v1',
   'blacktop_place_names',
   'blacktop_battery_saver',
+  'blacktop_parked', // where the last ride ended: belongs to the moment
   'bt.map.offlinePacks.v1',
 ]);
 

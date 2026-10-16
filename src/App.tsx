@@ -30,6 +30,7 @@ import { HazardAlerts } from "@/features/hazards";
 import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
 import { AutoRescueConsentDialog, RescueDrillHost } from "@/features/rescue";
+import { ReceiptFlight } from "@/features/ride/components/ReceiptFlight";
 import { NimiqFullscreenPrompt } from "@/components/NimiqFullscreenPrompt";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
 import Onboarding from "./pages/Onboarding";
@@ -121,6 +122,7 @@ const EnterpriseDemo = lazyPage(() => loadLocaleExtra().then(() => import("./pag
 const World = lazyPage(() => import("./pages/World"));
 const CardWars = lazyPage(() => import("./pages/CardWars"));
 const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
+const Spectate = lazyPage(() => import("./pages/Spectate"));
 const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));
 const CrewJoin = lazyPage(() => import("./pages/CrewJoin"));
 const CrewChallenges = lazyPage(() => import("./pages/CrewChallenges"));
@@ -297,6 +299,7 @@ function AppRoutes() {
       <Route path="/world" element={<World />} />
       <Route path="/world/card-wars" element={<CardWarsLink />} />
       <Route path="/crew/convoys" element={<CrewConvoys />} />
+      <Route path="/spectate/:id" element={<Spectate />} />
       <Route path="/crew/leaderboard" element={<CrewLeaderboard />} />
       <Route path="/crew/join" element={<CrewJoin />} />
       <Route path="/crew/challenges" element={<CrewChallenges />} />
@@ -358,6 +361,7 @@ const App = () => {
                 <NativeLinks />
                 <PushBridge />
                 <PushNudge />
+                <ReceiptFlight />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />
                 {/* Finishes the burn flames after the post-burn reload. */}

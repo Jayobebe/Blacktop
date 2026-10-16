@@ -109,6 +109,7 @@ import { etaClock, etaSpread, spreadDuration } from '../lib/eta';
 import { W3WAddress } from '@/components/W3WAddress';
 import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
+import { ParkedSpotPin } from './ParkedSpotPin';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -2190,6 +2191,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
+      {settings.parkedSpotEnabled && <ParkedSpotPin map={map} hidden={rideState.isActive} rider={userLocation} />}
 
       {/* First-time tips: a walk along the toolbar and the controls, so more than the usual three.
           Only with the map open and at rest: never on a ride or while guiding. */}

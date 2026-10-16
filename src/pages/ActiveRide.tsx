@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useActiveRide, useRideHistory, RideSummary, useSoloRoute, clearSoloRoute } from '@/features/ride';
+import { useActiveRide, useRideHistory, useSoloRoute, clearSoloRoute, flyReceipt } from '@/features/ride';
+import { RideWrapUp } from '@/features/ride/components/RideWrapUp';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState, useRegroupListener, getConvoySnapshot } from '@/features/convoy';
 import { useProximity, useConvoyMergeSync, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
@@ -14,9 +15,12 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton, usePlayer } from '@/features/radio';
-import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, rescueReach } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, rescueReach } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
-import { autoNameRide } from '@/features/ride/lib/rideNames';
+import { autoNameRide, storedRide } from '@/features/ride/lib/rideNames';
+import { useRideUpdates } from '@/features/ride/hooks/useRideUpdates';
+import { useSpectateBroadcast } from '@/features/spectate';
+import { clearParkedSpot } from '@/lib/parkedSpot';
 import { useBatterySaver } from '@/features/ride/hooks/useBatterySaver';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
@@ -38,7 +42,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
-import { Square, Mic, MicOff, PhoneOff, Phone, Navigation, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, Pause, Play, VolumeX } from 'lucide-react';
+import { Square, Mic, MicOff, PhoneOff, Phone, Map as MapIcon, Users, Crown, User, Signal, SignalLow, SignalMedium, SignalHigh, Pause, Play, VolumeX, Eye } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -140,7 +144,7 @@ export default function ActiveRide() {
   // Lean angle only exists for vehicles that lean into corners.
   const leanOn = settings.leanAngleEnabled && canLean;
   const { activeBike } = useGarage();
-  const { updateRideBadges, addRideRecording, setRideOverlayAvailable } = useRideHistory();
+  const { addRideRecording, setRideOverlayAvailable } = useRideHistory();
   const { user, profile } = useProfile();
   // Regroup calls from the convoy status bar (sent by the leader from the map).
   useRegroupListener(rideState.isConvoyMode ? convoy.id : null, user?.id ?? null);
@@ -249,6 +253,55 @@ export default function ActiveRide() {
   const gaugeOn = settings.gForceEnabled && gForce.isSupported;
   // Low battery mid-ride: Thermal mode on until plugged in or the ride ends.
   useBatterySaver(rideState.isActive);
+  // Opt-in: the radio voice reads out distance, time and average every few miles / km.
+  useRideUpdates(rideState);
+  // Crew members can spectate an unlocked ride: the leader's phone sends it while someone watches.
+  const spectators = useSpectateBroadcast(convoy.id ?? null, rideState.isActive, convoy.isLeader, () => {
+    const pts = rideState.gpsPoints;
+    const here = pts[pts.length - 1];
+    if (!here) return null;
+    const prev = pts.length > 1 ? pts[pts.length - 2] : null;
+    let heading: number | null = null;
+    if (prev && rideState.currentSpeed > 3) {
+      const r = Math.PI / 180;
+      const y = Math.sin((here.lng - prev.lng) * r) * Math.cos(here.lat * r);
+      const x = Math.cos(prev.lat * r) * Math.sin(here.lat * r) - Math.sin(prev.lat * r) * Math.cos(here.lat * r) * Math.cos((here.lng - prev.lng) * r);
+      heading = (Math.atan2(y, x) / r + 360) % 360;
+    }
+    const leanLive = leanOn && leanAngle.isSupported;
+    const gm = rideState.gMax ?? gForce.gMax;
+    return {
+      name: profile.name || '',
+      vehicle: getExperience().vehicles[0] ?? 'motorcycle',
+      lat: here.lat,
+      lng: here.lng,
+      heading,
+      speed: rideState.currentSpeed,
+      maxSpeed: peaksHidden ? null : rideState.maxSpeed,
+      distance: rideState.distance,
+      duration: rideState.duration,
+      paused: rideState.isPaused,
+      lean: leanLive ? Math.round(leanAngle.currentLean) : null,
+      maxLean: leanLive && !peaksHidden ? Math.round(Math.max(rideState.maxLeanLeft, rideState.maxLeanRight)) : null,
+      g: gaugeOn ? { lat: +gForce.lateralG.toFixed(2), lng: +gForce.longitudinalG.toFixed(2) } : null,
+      maxG: gaugeOn && !peaksHidden && gm ? +Math.max(gm.left, gm.right, gm.brake, gm.accel).toFixed(2) : null,
+      destination: rideTarget()?.name.split(',')[0].trim() ?? null,
+      riders: Math.max(1, convoy.members.length),
+      at: Date.now(),
+    };
+  });
+  // Read when the ride has ended, from callbacks that may hold an older render.
+  const endRef = useRef({ settings, riderName: profile.name || '' });
+  endRef.current = { settings, riderName: profile.name || '' };
+  // Where the ride was headed (for the safe-arrival text), where it ended (the parking question),
+  // and the wrap-up card finished with.
+  const [endTarget, setEndTarget] = useState<{ name: string } | null>(null);
+  const [endSpot, setEndSpot] = useState<{ lat: number; lng: number } | null>(null);
+  const [finishing, setFinishing] = useState(false);
+  // A new ride: the last parked spot is behind us.
+  useEffect(() => {
+    if (rideState.isActive) clearParkedSpot();
+  }, [rideState.isActive]);
 
   // "Blacktop Maps enabled" = the rider's preferred nav app is our in-app map.
   // Drives whether the downloadable overlay includes the live mini-map card.
@@ -286,7 +339,6 @@ export default function ActiveRide() {
   const [endingFlow, setEndingFlow] = useState(false);
   const [finalMembers, setFinalMembers] = useState<ConvoyMemberInfo[]>([]);
   const [savedRideId, setSavedRideId] = useState<string | null>(null);
-  const [pendingBadges, setPendingBadges] = useState<BadgeType[]>([]);
   const [finalRideStats, setFinalRideStats] = useState<{ duration: number; distance: number; maxSpeed: number; averageSpeed: number; maxLean?: number; maxGForce?: number; gForceSamples?: GForceSample[]; gEnvelope?: number[]; gMax?: { left: number; right: number; brake: number; accel: number } } | null>(null);
   const [soloRescueSending, setSoloRescueSending] = useState(false);
   const [soloRescueSent, setSoloRescueSent] = useState(false);
@@ -336,14 +388,6 @@ export default function ActiveRide() {
   }, [rideState.isConvoyMode, convoy.isActive, navigate]);
 
 
-  // Save pending badges once savedRideId becomes available
-  useEffect(() => {
-    if (savedRideId && pendingBadges.length > 0) {
-      console.log('[ActiveRide] Saving pending badges:', pendingBadges, 'to ride:', savedRideId);
-      updateRideBadges(savedRideId, pendingBadges);
-      setPendingBadges([]); // Clear after saving
-    }
-  }, [savedRideId, pendingBadges, updateRideBadges]);
 
 
 
@@ -365,6 +409,31 @@ export default function ActiveRide() {
       })();
     }
   }, [savedRideId, pendingOverlayBlob, setRideOverlayAvailable]);
+
+  // The ride is saved: show the wrap-up card when there's something on it, else go Home.
+  const wrapUpText = settings.safeArrivalText && !!cleanPhone(settings.emergencyContactPhone ?? '');
+  const wrapUpPark = settings.parkedSpotEnabled && !!endSpot;
+  const showWrapUp = showSummary && !finishing && (wrapUpText || wrapUpPark);
+  useEffect(() => {
+    if (showSummary && savedRideId && !wrapUpText && !wrapUpPark) setFinishing(true);
+  }, [showSummary, savedRideId, wrapUpText, wrapUpPark]);
+  // Home once the overlay video (if any) is stored: the receipt flies into History there.
+  useEffect(() => {
+    if (!finishing || !savedRideId || pendingOverlayBlob) return;
+    flyReceipt({
+      rideId: savedRideId,
+      members: finalMembers,
+      currentUserId: user?.id,
+      rideStats: finalRideStats || undefined,
+      bikeName: activeBike?.name ?? null,
+      bikePhoto: activeBike?.photos?.hero ?? null,
+      gForceSamples: finalRideStats?.gForceSamples,
+    });
+    setShowSummary(false);
+    // Finished convoy lobbies are burned, so never route back into the lobby.
+    navigate('/');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finishing, savedRideId, pendingOverlayBlob]);
 
   // Keep screen awake during active ride
   useEffect(() => {
@@ -574,7 +643,7 @@ export default function ActiveRide() {
     const target = rideTarget();
     (async () => {
       const rideId = await endRide();
-      if (rideId) void autoNameRide(rideId, target);
+      if (rideId) afterRideSaved(rideId, target);
       clearMapDestination();
       clearSoloRoute();
       closeBlacktopMap();
@@ -747,7 +816,7 @@ export default function ActiveRide() {
     // start/stop loops.
     const target = rideTarget();
     const rideId = await endRide();
-    if (rideId) void autoNameRide(rideId, target);
+    if (rideId) afterRideSaved(rideId, target);
     clearMapDestination();
     clearSoloRoute();
     closeBlacktopMap();
@@ -782,26 +851,6 @@ export default function ActiveRide() {
     Promise.all(cleanupPromises).catch(err => {
       console.warn('[ActiveRide] Cleanup error:', err);
     });
-  };
-
-  const handleBadgesEarned = useCallback((badges: BadgeType[]) => {
-    // Only save badges for convoy rides with 2+ members - solo rides never earn badges
-    // RideSummary already gates this callback - it only calls when members.length >= 2
-    // Use finalMembers (captured at ride end, and only for convoy rides) rather than
-    // rideState.isConvoyMode: endRide() has already reset the ride state by the time
-    // the receipt mounts and reports badges, so that flag is always false here and
-    // every convoy badge was silently dropped before reaching the Stats wallet.
-    if (badges.length > 0 && finalMembers.length >= 2) {
-      console.log('[ActiveRide] Badges earned:', badges);
-      // Store badges - they'll be saved when savedRideId becomes available
-      setPendingBadges(badges);
-    }
-  }, [finalMembers.length]);
-
-  const handleCloseSummary = () => {
-    setShowSummary(false);
-    // Finished convoy lobbies are burned, so never route back into the lobby.
-    navigate('/');
   };
 
   /** The rescue button was pressed: what to send if the rider answers No to "Are you okay?". */
@@ -905,18 +954,17 @@ export default function ActiveRide() {
     }
   };
 
-  // Show summary after convoy ride ends - show if we have stats even if no members (solo ride)
+  // After the ride: the wrap-up card (safe-arrival text, parked spot), then Home, where the receipt flies into History.
   if (showSummary) {
+    if (!showWrapUp) return <div className="fixed inset-0 z-50 bg-background/95" />;
     return (
-      <RideSummary 
-        members={finalMembers} 
-        currentUserId={user?.id}
-        rideStats={finalRideStats || undefined}
-        bikeName={activeBike?.name ?? null}
-        bikePhoto={activeBike?.photos?.hero ?? null}
-        gForceSamples={finalRideStats?.gForceSamples}
-        onBadgesEarned={handleBadgesEarned}
-        onClose={handleCloseSummary} 
+      <RideWrapUp
+        riderName={profile.name || ''}
+        distance={finalRideStats?.distance ?? 0}
+        duration={finalRideStats?.duration ?? 0}
+        targetName={endTarget?.name ?? null}
+        endSpot={wrapUpPark ? endSpot : null}
+        onContinue={() => setFinishing(true)}
       />
     );
   }
@@ -927,6 +975,18 @@ export default function ActiveRide() {
   const sortedMembers = (settings.showSpeedRankings && settings.speedFocusEnabled) 
     ? [...convoy.members].sort((a, b) => (b.topSpeed ?? -1) - (a.topSpeed ?? -1)) // private (null) last
     : convoy.members;
+
+  /**
+   * Once a ride is saved: name it, and keep where it was going and where it
+   * ended for the wrap-up card (the safe-arrival text and the parking question).
+   */
+  const afterRideSaved = (rideId: string, target: { name: string } | null) => {
+    void autoNameRide(rideId, target);
+    setEndTarget(target);
+    const ride = storedRide(rideId);
+    const last = ride?.gpsPoints?.[ride.gpsPoints.length - 1];
+    if (endRef.current.settings.parkedSpotEnabled && last) setEndSpot({ lat: last.lat, lng: last.lng });
+  };
 
   /** Where the ride was headed, if a route was set: names the ride ("To Brighton"). */
   const rideTarget = () => {
@@ -1068,9 +1128,9 @@ export default function ActiveRide() {
           Landscape: equal flex-1 flanks (stats left / g-force+buttons right) so the
           speed cluster sits dead-centre. */}
       <div className="flex-1 flex flex-col landscape:flex-row gap-3 md:gap-4 landscape:gap-6 min-h-0 overflow-y-auto landscape:overflow-visible landscape:items-center">
-        {/* Landscape Left: Big Stats List, then the anti-theft lock beside the live speed
-            (mirroring the G meter on the right). */}
-        <div className="hidden landscape:flex flex-row items-center gap-8 flex-1 min-w-0 pl-2">
+        {/* Landscape Left: Big Stats List, then the dial (G meter / mini map) beside the live speed
+            (mirroring the anti-theft alarm on the right). */}
+        <div className="hidden landscape:flex flex-row items-center gap-4 flex-1 min-w-0 pl-2">
         <div className="flex flex-col justify-center items-start gap-7 min-w-0">
           {speedHero && (
           <div className="text-left">
@@ -1095,7 +1155,8 @@ export default function ActiveRide() {
           </div>
           )}
         </div>
-        <AlarmButton variant="ride" className="ml-auto" />
+        {/* Centred in the space between the stats and the speed. */}
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-center">{rideDial}</div>
         </div>
 
         {/* Speed and Stats - centre column in landscape (auto width, centred by equal flanks) */}
@@ -1112,6 +1173,12 @@ export default function ActiveRide() {
               <span className="flex items-center gap-1 text-warning text-xs font-medium px-2 py-0.5 bg-warning/10 rounded animate-pulse">
                 <Pause className="w-3 h-3" />
                 {tr("PAUSED")}
+              </span>
+            )}
+            {spectators.length > 0 && (
+              <span className="flex items-center gap-1 text-accent text-xs font-medium px-2 py-0.5 bg-accent/10 rounded" title={tr("Crew members watching this ride")}>
+                <Eye className="w-3 h-3" />
+                {spectators.length}
               </span>
             )}
             <GpsIndicator gpsStatus={rideState.gpsStatus} />
@@ -1245,14 +1312,17 @@ export default function ActiveRide() {
           </div>
         </div>
 
-        {/* Right flank in landscape: G-Force + buttons, pushed to the right edge.
+        {/* Right flank in landscape: the alarm + buttons, pushed to the right edge.
             `contents` in portrait so children join the vertical flow unchanged. */}
-        <div className="contents landscape:flex landscape:flex-row landscape:items-center landscape:justify-end landscape:gap-8 landscape:flex-1 landscape:min-w-0 landscape:max-h-full landscape:pr-2">
-        {/* Landscape: the dial (G meter / mini map) between speed and buttons */}
-        <div className="hidden landscape:flex flex-col items-center justify-center flex-shrink-0">{rideDial}</div>
+        <div className="contents landscape:flex landscape:flex-row landscape:items-center landscape:justify-end landscape:gap-4 landscape:flex-1 landscape:min-w-0 landscape:max-h-full landscape:pr-2">
+        {/* Landscape: the anti-theft alarm between speed and buttons */}
+        {/* Centred in the space between the speed and the buttons. */}
+        <div className="hidden landscape:flex flex-1 min-w-0 flex-col items-center justify-center">
+          <AlarmButton variant="ride" />
+        </div>
 
-        {/* Portrait: the anti-theft lock on its own row, below the stats and just above
-            the control buttons (landscape has it beside the live speed). */}
+        {/* Portrait: the anti-theft alarm on its own row, below the stats and just above
+            the control buttons (landscape has it right of the live speed). */}
         <div className="flex landscape:hidden justify-center mt-4 [@media(max-height:820px)]:mt-2">
           <AlarmButton variant="ride" />
         </div>
@@ -1376,7 +1446,7 @@ export default function ActiveRide() {
             className="h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full bg-secondary hover:bg-muted touch-target"
             title={tr("Open map with route")}
           >
-            <Navigation className="w-7 h-7 landscape:w-8 landscape:h-8" />
+            <MapIcon className="w-7 h-7 landscape:w-8 landscape:h-8" />
           </Button>
 
           {/* Blacktop Radio — tap to play/pause, hold for the station dial */}
@@ -1558,6 +1628,18 @@ export default function ActiveRide() {
                     </div>
                   );
                 })}
+                {/* Crew members watching an unlocked ride: listed, never counted as riders. */}
+                {spectators.map((s) => (
+                  <div key={s.key} className="flex items-center gap-2 p-1.5 rounded-lg border border-dashed border-border/50">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-accent/10">
+                      <Eye className="w-3.5 h-3.5 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs truncate">{s.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{tr("Spectator")}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

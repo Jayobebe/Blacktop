@@ -1,5 +1,6 @@
 import { MessageSquareText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { useSettings } from '@/features/settings';
@@ -64,6 +65,20 @@ export function EmergencyContactSettings() {
         />
       </div>
       {!valid && <p className="text-[11px] text-destructive mt-1">{tr("That doesn't look like a phone number.")}</p>}
+      <div className="flex items-center justify-between gap-3 mt-3">
+        <div className="pr-2">
+          <p className="text-sm font-medium">{tr("Safe arrival text")}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {tr("When a ride ends, offers to text them that you're back safe, with where and how far. You press send.")}
+          </p>
+        </div>
+        <Switch
+          checked={settings.safeArrivalText}
+          disabled={!cleanPhone(phone) && !settings.safeArrivalText}
+          onCheckedChange={(v) => updateSettings({ safeArrivalText: v })}
+          aria-label={tr("Safe arrival text")}
+        />
+      </div>
     </div>
   );
 }

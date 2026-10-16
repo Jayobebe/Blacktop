@@ -15,6 +15,7 @@ import { useCrew } from '@/features/crew/useCrew';
 import { toast } from 'sonner';
 import { nudgePush } from '@/features/notifications';
 import { cn } from '@/lib/utils';
+import { useHoldTap } from '@/hooks/useHoldTap';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { ConvoyDestination } from '@/types/convoy';
 import { QRCodeSVG } from 'qrcode.react';
@@ -40,7 +41,7 @@ export default function Lobby() {
   const { startRide, rideState } = useActiveRide(convoy.id);
   const { isConnected, isMuted, speakingUsers, connect, disconnect, toggleMute } = useVoiceChannel(convoy.id ?? undefined, { priority: convoy.isLeader });
   const { waypoints, addWaypoint, removeWaypoint, completeWaypoint, reorderWaypoints, nextWaypoint, completedCount, totalCount } = useWaypoints(convoy.id, convoy.isLeader);
-  const { settings } = useSettings();
+  const { settings, updateSetting } = useSettings();
   const { terms } = useExperience();
   const { profile, user } = useProfile();
   const [copied, setCopied] = useState(false);
@@ -59,14 +60,39 @@ export default function Lobby() {
         .select('is_listed')
         .eq('id', convoyId)
         .maybeSingle();
-      if (!cancelled && data) setIsListed(Boolean((data as any).is_listed));
+      if (cancelled || !data) return;
+      const listed = Boolean((data as any).is_listed);
+      setIsListed(listed);
+      // Always unlocked (held on the lock): a lobby this rider leads lists itself, once.
+      if (!listed && alwaysRef.current && convoy.isLeader && !autoListed.current) {
+        autoListed.current = true;
+        void setListed(true);
+      }
     })();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convoy.id]);
 
-  const toggleListed = async () => {
+  const alwaysRef = useRef(settings.alwaysUnlockRides);
+  alwaysRef.current = settings.alwaysUnlockRides;
+  const autoListed = useRef(false);
+  const toggleListed = () => setListed(!isListed);
+  // Held: remember to unlock every lobby from now on, or stop.
+  const toggleAlways = () => {
     if (!convoy.id || !convoy.isLeader) return;
-    const next = !isListed;
+    const next = !settings.alwaysUnlockRides;
+    updateSetting('alwaysUnlockRides', next);
+    toast.success(next ? tr("Always unlocked") : tr("Always unlock off"), {
+      description: next
+        ? tr("Every lobby you lead will be listed in Crew Convoys. Hold the lock again to stop.")
+        : tr("Lobbies start locked again. This one stays as it is."),
+    });
+    if (next && !isListed) void setListed(true, true);
+  };
+  const lockHold = useHoldTap(toggleListed, toggleAlways);
+
+  const setListed = async (next: boolean, quiet = false) => {
+    if (!convoy.id || !convoy.isLeader) return;
     setIsListed(next);
     const { error } = await supabase
       .from('convoys')
@@ -77,7 +103,7 @@ export default function Lobby() {
       toast.error(tr("Could not update crew listing"));
       return;
     }
-    toast.success(next ? tr("Listed in crew {0}", [crew.code]) : tr("Convoy locked"));
+    if (!quiet) toast.success(next ? tr("Listed in crew {0}", [crew.code]) : tr("Convoy locked"));
     if (next) nudgePush(); // the crew hears about the open convoy
   };
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -599,17 +625,26 @@ export default function Lobby() {
           {/* Crew listing lock — unlocked lobbies appear in Crew Convoys */}
           {convoy.isLeader && (
             <button
-              onClick={toggleListed}
+              {...lockHold.handlers}
               className={cn(
-                'p-2 rounded-xl border transition-colors',
-                isListed
-                  ? 'bg-accent/10 border-accent/60 text-accent'
-                  : 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary',
+                'crew-lock hold-target p-2 rounded-xl border transition-colors',
+                !isListed
+                  ? 'bg-card/50 border-border/30 text-muted-foreground hover:bg-secondary'
+                  : settings.alwaysUnlockRides
+                    ? 'crew-lock-always'
+                    : 'crew-lock-open',
               )}
-              title={isListed ? tr("Listed in Crew Convoys — tap to lock") : tr("Locked — tap to list in Crew Convoys")}
+              title={
+                isListed
+                  ? settings.alwaysUnlockRides
+                    ? tr("Always unlocked — tap to lock this one, hold to stop")
+                    : tr("Listed in Crew Convoys — tap to lock, hold to always unlock")
+                  : tr("Locked — tap to list in Crew Convoys, hold to always unlock")
+              }
               aria-label={isListed ? tr("Lock convoy from crew list") : tr("Unlock convoy to crew list")}
             >
-              {isListed ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+              <span aria-hidden className={cn('crew-lock-fill', lockHold.holding && 'holding')} />
+              {isListed ? <Unlock className="relative w-6 h-6" /> : <Lock className="relative w-6 h-6" />}
             </button>
           )}
         </div>

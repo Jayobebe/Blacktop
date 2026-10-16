@@ -78,3 +78,11 @@
     border-top: none;
   }
 }
+
+/* The parked spot's pin (ParkedSpotPin): above the map's own pins, its card above that. */
+.parked-pin {
+  z-index: 3;
+}
+.parked-pin:focus-within {
+  z-index: 6;
+}

@@ -198,3 +198,12 @@ export function placeAt(places: RidePlace[], elapsed: number): string | null {
   }
   return name ?? places[0]?.name ?? null;
 }
+
+/** A saved ride by id, from the phone's ride list. */
+export function storedRide(id: string): RideSession | undefined {
+  try {
+    return (JSON.parse(localStorage.getItem(RIDES_KEY) || '[]') as RideSession[]).find((r) => r.id === id);
+  } catch {
+    return undefined;
+  }
+}

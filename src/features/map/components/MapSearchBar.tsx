@@ -3,6 +3,8 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X, IdCard, Droplet, BatteryCharging } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useShortLandscape } from '@/hooks/useShortLandscape';
+import { useStripNudge } from '@/hooks/useStripNudge';
 import {
   MapSearchResult,
   MapViewBounds,
@@ -267,6 +269,10 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode);
 
   const hasDisplayContent = hasIdleContent || hasSearchContent;
+  // Landscape (short:) with suggestions up: they run sideways in the top row, right of the search column.
+  const strip = showResults && hasDisplayContent;
+  const shortLandscape = useShortLandscape();
+  const nudging = useStripNudge(strip && shortLandscape);
 
   return (
     <div
@@ -315,13 +321,14 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
       </div>
 
       {showResults && hasDisplayContent && (
-        <div className="absolute left-0 right-0 top-full mt-2 pointer-events-auto bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in">
+        <div style={{ '--strip-h': '2.25rem' } as React.CSSProperties}
+          className={cn('suggest-list absolute left-0 right-0 top-full mt-2 short:top-0 short:!mt-0 short:left-[calc(100%+0.5rem)] short:right-auto short:w-[calc(100vw-27.5rem-var(--safe-left)-var(--safe-right))] pointer-events-auto bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in', nudging && 'suggest-nudge')}>
 
 
           {/* ── Saved POIs (idle state only) ── */}
           {showIdle && hasSavedPOIs && (
             <>
-              <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+              <div className="suggest-head px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
                 <Bookmark className="w-3.5 h-3.5" />
                 {tr("Saved places")}
               </div>
@@ -365,7 +372,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
           {/* ── Recent destinations (idle state only) ── */}
           {showIdle && hasRecent && (
             <>
-              <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+              <div className="suggest-head px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
                 <Clock className="w-3.5 h-3.5" />
                 {tr("Recent destinations")}
               </div>

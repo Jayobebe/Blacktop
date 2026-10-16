@@ -1630,3 +1630,164 @@ html.thermal .badge-face { transition: none; }
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
 }
+
+/* The History button catching a ride's receipt as it lands (ride/components/ReceiptFlight). */
+.nav-catch {
+  animation: nav-catch 480ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes nav-catch {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.28); background: hsl(var(--accent) / 0.18); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-catch { animation: none; }
+}
+
+/* The rider being spectated (pages/Spectate): an accent dot, with a nose once they're moving. */
+.spectate-marker {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spectate-marker span {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: hsl(var(--accent));
+  border: 3px solid white;
+  box-shadow: 0 0 0 6px hsl(var(--accent) / 0.25), 0 2px 8px rgb(0 0 0 / 0.6);
+}
+.spectate-marker-dir::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-bottom: 10px solid white;
+}
+
+/* The lobby's crew lock (Lobby, SoloLobby): locked is grey with a closed padlock,
+   unlocked this once the main accent with an open one, always unlocked the second accent (white without one).
+   Holding it fills from the bottom until the hold lands. */
+.crew-lock {
+  position: relative;
+  overflow: hidden;
+}
+.crew-lock-open {
+  color: hsl(var(--accent));
+  border-color: hsl(var(--accent) / 0.6) !important;
+  background-color: hsl(var(--accent) / 0.12) !important;
+}
+.crew-lock-always {
+  color: hsl(var(--lava, 0 0% 100%));
+  border-color: hsl(var(--lava, 0 0% 100%) / 0.7) !important;
+  background-color: hsl(var(--lava, 0 0% 100%) / 0.16) !important;
+}
+.crew-lock-fill {
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--lava, var(--accent)) / 0.35);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  pointer-events: none;
+}
+.crew-lock-fill.holding {
+  transform: scaleY(1);
+  transition: transform 1200ms linear;
+}
+/* The padlock takes the lock's own colour, over .frost-accent's accent icons. */
+.crew-lock svg { color: inherit; }
+.crew-lock.text-muted-foreground svg { color: hsl(var(--muted-foreground)); }
+
+/* Search suggestions on a phone on its side (MapSearchBar, DestinationSearch): the keyboard takes
+   the bottom of the screen, so the list becomes one sideways-scrolling row beside the search bar. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .suggest-list {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none !important;
+    overscroll-behavior-x: contain;
+  }
+  .suggest-list > * {
+    flex: 0 0 13rem;
+    width: 13rem;
+    border-bottom: 0 !important;
+    border-right: 1px solid hsl(var(--border));
+  }
+  /* Each suggestion already says what it is, so the section labels stay out of the row. */
+  .suggest-list > .suggest-head {
+    display: none !important;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  /* One suggestion per swipe: it settles on the next one instead of flying past. */
+  .suggest-list {
+    scroll-snap-type: x mandatory;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+  }
+  .suggest-list > * {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .suggest-list.suggest-nudge > * {
+    animation: suggest-nudge 1100ms cubic-bezier(0.4, 0, 0.2, 1) 250ms 1;
+  }
+}
+@keyframes suggest-nudge {
+  0%, 100% { transform: translateX(0); }
+  35% { transform: translateX(-2.75rem); }
+  60% { transform: translateX(0.4rem); }
+  80% { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .suggest-list.suggest-nudge > * { animation: none; }
+}
+html.thermal .suggest-list.suggest-nudge > * { animation: none; }
+@media (orientation: landscape) and (max-height: 560px) {
+  /* As thin as the search bar beside it (\`--strip-h\`, set by each search): one compact row per place. */
+  .suggest-list {
+    height: var(--strip-h, 2.75rem);
+  }
+  .suggest-list > * {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
+    gap: 0.5rem !important;
+    align-items: center;
+    overflow: hidden;
+  }
+  .suggest-list .w-8.h-8,
+  .suggest-list .w-9.h-9,
+  .suggest-list .w-10.h-10 {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .suggest-list p {
+    line-height: 1.05rem;
+  }
+  .suggest-list .text-xs,
+  .suggest-list .text-\[11px\] {
+    font-size: 11px;
+    line-height: 0.85rem;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .suggest-list { scrollbar-width: none; }
+  .suggest-list::-webkit-scrollbar { display: none; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  /* Rounded on every corner: the scrolling row is clipped to the strip's own shape. */
+  .suggest-list {
+    border-radius: 0.75rem;
+    clip-path: inset(0 round 0.75rem);
+  }
+}

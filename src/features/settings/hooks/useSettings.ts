@@ -92,6 +92,16 @@ export interface AppSettings {
    */
   emergencyContactName: string;
   emergencyContactPhone: string;
+  /** Opt-in: at the end of a ride, offer to text the emergency contact that the rider is back safe (their own messages app). */
+  safeArrivalText: boolean;
+  /** Opt-in: every so many minutes the radio voice reads out distance, time and average (`useRideUpdates`). */
+  rideUpdatesEnabled: boolean;
+  /** How often, in minutes of riding (10, 20, 30, 60). */
+  rideUpdatesEvery: number;
+  /** Every lobby the rider leads starts unlocked (listed in Crew Convoys): held on the lobby's lock to switch. */
+  alwaysUnlockRides: boolean;
+  /** Keep where the ride ended as a parked pin on the map (lib/parkedSpot). */
+  parkedSpotEnabled: boolean;
   // 3D flyover overview button on ride history details.
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
@@ -178,6 +188,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   rescueNearbyKm: 10,
   emergencyContactName: '',
   emergencyContactPhone: '',
+  safeArrivalText: false,
+  rideUpdatesEnabled: false,
+  rideUpdatesEvery: 30,
+  parkedSpotEnabled: true,
+  alwaysUnlockRides: false,
   flyoverEnabled: false,
   rideOverlayEnabled: false,
   voiceRecordingEnabled: false,
