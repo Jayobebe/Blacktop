@@ -257,6 +257,8 @@ export default function ActiveRide() {
     hasGForceData,
     accentColor,
     blacktopMapEnabled,
+    shape: settings.overlayShape,
+    background: settings.overlayBackground,
     // Convoy-only: mix the live voice channel into the recorded overlay audio.
     getVoiceStreams: rideState.isConvoyMode && settings.voiceRecordingEnabled ? getAudioStreams : undefined,
   });

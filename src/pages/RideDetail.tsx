@@ -465,7 +465,11 @@ export default function RideDetail() {
                     {overlayProgress !== null ? tr("Converting... {0}%", [overlayProgress]) : tr("Download Overlay Video")}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {overlayProgress !== null ? tr("Please wait") : tr("MP4 format for video editors")}
+                    {overlayProgress !== null
+                      ? tr("Please wait")
+                      : settings.overlayBackground === 'black'
+                        ? tr("Black: lay it over your footage with the Screen or Lighten blend mode in your editor.")
+                        : tr("Green screen: lay it over your footage and key out the green (chroma key / green screen in your editor).")}
                   </p>
                 </div>
               </div>

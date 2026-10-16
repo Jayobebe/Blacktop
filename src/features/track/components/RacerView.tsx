@@ -140,6 +140,8 @@ export function RacerView() {
     hasGForceData: gForce.isSupported,
     accentColor: `hsl(${accentHsl.trim().split(/\s+/).join(', ')})`,
     blacktopMapEnabled: profile.preferredNavApp === 'blacktop',
+    shape: settings.overlayShape,
+    background: settings.overlayBackground,
   });
   const overlayRef = useRef(overlay);
   overlayRef.current = overlay;

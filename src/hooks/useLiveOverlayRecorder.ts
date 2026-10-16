@@ -1,34 +1,8 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { formatDuration, formatDistance } from '@/lib/format';
-import { drawGForceCircle } from '@/lib/gForceCircleCanvas';
-import type { GMax } from '@/lib/gForceVector';
-import { buildGForcePoints, pointsToAreaPath, pointsToLinePath } from '@/lib/gForceGraph';
 import { drawMiniMap } from '@/lib/overlayMiniMap';
-
+import { drawOverlayFrame, MINI_MAP_SIZE, OVERLAY_SIZE, type OverlayBackground, type OverlayShape, type OverlayStats } from '@/lib/overlayFrame';
+import { speedUnitText } from '@/lib/units';
 import { tr } from '@/lib/i18n';
-/** Mini-map dial diameter in video pixels. */
-const MINI_MAP_SIZE = 300;
-
-interface OverlayStats {
-  speed: number;
-  /** Peaks are null while Public Road Privacy is on: drawn as "--". */
-  maxSpeed: number | null;
-  distance: number;
-  duration: number;
-  leanAngle: number;
-  maxLean: number | null;
-  gForce: number;
-  maxGForce: number | null;
-  /** Friction circle (lib/gForceVector); drawn instead of the old dial when present. */
-  gVector?: { lateral: number; longitudinal: number; envelope: number[]; max: GMax; hidePeaks?: boolean };
-  // Live rider position + heading so the mini-map (when enabled) can centre
-  // the map on the rider and rotate to their direction of travel.
-  lat: number | null;
-  lng: number | null;
-  heading: number | null;
-  /** Live convoy member positions (empty/omitted for solo rides). */
-  members?: Array<{ lat: number; lng: number; name?: string; color?: string }>;
-}
 
 interface LiveOverlayRecorderOptions {
   speedUnit: 'mph' | 'kph';
@@ -37,8 +11,12 @@ interface LiveOverlayRecorderOptions {
   hasGForceData: boolean;
   /** Literal CSS color (e.g. 'hsl(38, 95%, 55%)') - canvas can't resolve `hsl(var(--accent))`. */
   accentColor: string;
-  /** When true, draw a live mini-map (bottom-right) with rider + route. */
+  /** When true, draw a live mini-map (bottom-left) with rider + route. */
   blacktopMapEnabled: boolean;
+  /** Landscape 16:9 or vertical 9:16 (Settings → Ride Overlay). */
+  shape?: OverlayShape;
+  /** Green screen to key out, or black to blend (Settings → Ride Overlay). */
+  background?: OverlayBackground;
   /**
    * Convoy voice-channel audio source. When provided, every stream returned is
    * mixed into the recording's audio track (own mic + remote riders). Omitted
@@ -47,12 +25,8 @@ interface LiveOverlayRecorderOptions {
   getVoiceStreams?: () => MediaStream[];
 }
 
-// Rolling window for the G-force trace: enough to show recent shape on a
-// small sparkline without the per-frame path math growing unbounded over a long ride.
-const GFORCE_HISTORY_MAX_POINTS = 150;
-
 export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
-  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled, getVoiceStreams } = options;
+  const { speedUnit, distanceUnit, hasLeanData, hasGForceData, accentColor, blacktopMapEnabled, getVoiceStreams, shape = 'landscape', background = 'green' } = options;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Voice mixing: one AudioContext + destination feeding the recorder, with a
   // poller that attaches peers that join mid-ride.
@@ -79,7 +53,6 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     lng: null,
     heading: null,
   });
-  const gForceHistoryRef = useRef<number[]>([]);
   // Rider trail for the mini-map polyline. Down-sampled from live GPS points
   // to a bounded ring so a multi-hour ride doesn't grow unbounded memory.
   const routeRef = useRef<Array<{ lat: number; lng: number }>>([]);
@@ -97,180 +70,33 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   accentColorRef.current = accentColor;
   const blacktopMapEnabledRef = useRef(blacktopMapEnabled);
   blacktopMapEnabledRef.current = blacktopMapEnabled;
+  const lookRef = useRef({ speedUnit, distanceUnit, shape, background });
+  lookRef.current = { speedUnit, distanceUnit, shape, background };
+  // The shape of the clip being recorded: fixed when it starts.
+  const recordingShapeRef = useRef<OverlayShape>(shape);
 
-  const speedLabel = speedUnit.toUpperCase();
-  const distLabel = distanceUnit === 'miles' ? 'mi' : 'km';
 
-
-  // Draw a single frame to the canvas
-  const drawFrame = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, stats: OverlayStats, showLean: boolean, showGForce: boolean, showMiniMap: boolean, gForceHistory: number[], route: Array<{ lat: number; lng: number }>, accent: string) => {
-    // Clear with transparency
-    ctx.clearRect(0, 0, width, height);
-
-    // Semi-transparent panels
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-
-    // Top left panel - Max Speed
-    ctx.beginPath();
-    ctx.roundRect(40, 30, 180, 70, 8);
-    ctx.fill();
-
-    // Top right panel - Max Lean (only if ride has lean data)
-    if (showLean) {
-      ctx.beginPath();
-      ctx.roundRect(width - 220, 30, 180, 70, 8);
-      ctx.fill();
+  // Draw a single frame (lib/overlayFrame), with the mini map painted by the
+  // real-map dial once it has a frame, the tile renderer until then.
+  const paintMiniMap = useCallback((ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) => {
+    const stats = latestStatsRef.current;
+    if (stats.lat == null || stats.lng == null) return false;
+    const gl = glMiniMapRef.current;
+    if (gl?.hasFrame) {
+      gl.draw(ctx, cx, cy, size, stats.heading);
+      return true;
     }
-
-    // Bottom gradient bar
-    const gradient = ctx.createLinearGradient(0, height - 120, 0, height);
-    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.4)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, height - 120, width, 120);
-
-    // Text styles
-    ctx.textBaseline = 'top';
-
-    // Top Left - Max Speed
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '14px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText(tr("MAX SPEED"), 55, 45);
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 32px monospace';
-    // "--" (PEAK_HIDDEN) while Public Road Privacy is on.
-    ctx.fillText(stats.maxSpeed == null ? '--' : `${Math.round(stats.maxSpeed)}`, 55, 65);
-    if (stats.maxSpeed != null) {
-      ctx.font = '16px system-ui';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.fillText(speedLabel, 130, 72);
-    }
-
-    // Top Right - Max Lean (only if ride has lean data)
-    if (showLean) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.font = '14px system-ui';
-      ctx.textAlign = 'right';
-      ctx.fillText(tr("MAX LEAN"), width - 55, 45);
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 32px monospace';
-      ctx.fillText(stats.maxLean == null ? '--' : `${Math.round(stats.maxLean)}°`, width - 55, 65);
-      ctx.textAlign = 'left';
-    }
-
-    // Bottom Left — Mini-map (when Blacktop Maps is enabled) with the
-    // Distance readout sitting just above it. Otherwise just the Distance.
-    const { lat: mmLat, lng: mmLng } = stats;
-    if (showMiniMap && mmLat != null && mmLng != null) {
-      const mmWidth = 360;
-      const mmHeight = MINI_MAP_SIZE;
-      const mmX = 40;
-      const mmY = height - mmHeight - 40;
-
-      // Distance label above the mini-map
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 24px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(formatDistance(stats.distance, distanceUnit), mmX, mmY - 34);
-      ctx.font = '14px system-ui';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      const distText = formatDistance(stats.distance, distanceUnit);
-      const distWidth = ctx.measureText(distText).width;
-      ctx.fillText(distLabel, mmX + distWidth + 90, mmY - 28);
-
-      const gl = glMiniMapRef.current;
-      if (gl?.hasFrame) {
-        gl.draw(ctx, mmX + mmHeight / 2, mmY + mmHeight / 2, mmHeight, stats.heading);
-      } else {
-        drawMiniMap({
-          ctx,
-          region: { x: mmX, y: mmY, width: mmWidth, height: mmHeight, radius: 18 },
-          center: { lat: mmLat, lng: mmLng, heading: stats.heading },
-          route,
-          members: stats.members,
-          opacity: 1,
-          accent,
-        });
-      }
-    } else {
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 28px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(formatDistance(stats.distance, distanceUnit), 40, height - 50);
-      ctx.font = '16px system-ui';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.fillText(distLabel, 140, height - 45);
-    }
-
-    // Bottom Center - Live Speed with Lean Arc
-    const centerX = width / 2;
-
-    // Speed label
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '12px system-ui';
-    ctx.fillText('SPEED', centerX, height - 70);
-
-    // Speed value
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 36px monospace';
-    ctx.fillText(`${Math.round(stats.speed)}`, centerX, height - 55);
-    ctx.font = '14px system-ui';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.fillText(speedLabel, centerX, height - 25);
-
-    // Lean Arc (only if ride has lean data)
-    if (showLean) {
-      const arcRadius = 85;
-      const arcCenterY = height - 40;
-      const arcStartAngle = Math.PI * 1.15;
-      const arcEndAngle = Math.PI * 1.85;
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(centerX, arcCenterY, arcRadius, arcStartAngle, arcEndAngle);
-      ctx.stroke();
-
-      const maxLeanAngle = 45;
-      const clampedLean = Math.max(-maxLeanAngle, Math.min(maxLeanAngle, stats.leanAngle));
-      const leanProgress = (clampedLean + maxLeanAngle) / (2 * maxLeanAngle);
-      const dotAngle = arcStartAngle + leanProgress * (arcEndAngle - arcStartAngle);
-
-      const dotX = centerX + Math.cos(dotAngle) * arcRadius;
-      const dotY = arcCenterY + Math.sin(dotAngle) * arcRadius;
-
-      ctx.fillStyle = 'white';
-      ctx.beginPath();
-      ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      const leanTextY = arcCenterY - arcRadius + 20;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 20px monospace';
-      ctx.fillText(`${Math.abs(Math.round(stats.leanAngle))}°`, centerX, leanTextY);
-    }
-
-    // Bottom Right — the friction-circle G meter, same design as the in-app one.
-    if (showGForce && stats.gVector) {
-      drawGForceCircle(ctx, width - 220, height - 280, 300, stats.gVector, accent, {
-        left: tr("LEFT"),
-        right: tr("RIGHT"),
-        brake: tr("BRAKE"),
-        accel: tr("ACCEL"),
-      });
-      ctx.textBaseline = 'top';
-    }
-
-    // Bottom Right — Duration readout (always visible on the right now).
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 28px monospace';
-    ctx.fillText(formatDuration(stats.duration), width - 40, height - 50);
-  }, [speedLabel, distLabel, distanceUnit]);
+    drawMiniMap({
+      ctx,
+      region: { x: cx - size / 2, y: cy - size / 2, width: size, height: size, radius: size / 2 },
+      center: { lat: stats.lat, lng: stats.lng, heading: stats.heading },
+      route: routeRef.current,
+      members: stats.members,
+      opacity: 1,
+      accent: accentColorRef.current,
+    });
+    return true;
+  }, []);
 
   // Animation loop to continuously draw frames, no faster than the 30fps the
   // stream captures (rAF runs at 60Hz+, and every extra 1080p frame is wasted).
@@ -281,34 +107,41 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
     const ctx = now - lastDrawRef.current >= 1000 / 31 ? canvasRef.current.getContext('2d') : null;
     if (ctx) {
       lastDrawRef.current = now;
-      drawFrame(
+      const look = lookRef.current;
+      drawOverlayFrame(
         ctx,
-        canvasRef.current.width,
-        canvasRef.current.height,
         latestStatsRef.current,
-        hasLeanDataRef.current,
-        hasGForceDataRef.current,
-        blacktopMapEnabledRef.current,
-        gForceHistoryRef.current,
-        routeRef.current,
-        accentColorRef.current,
+        {
+          shape: recordingShapeRef.current,
+          background: look.background,
+          accent: accentColorRef.current,
+          speedUnit: speedUnitText(look.speedUnit).toUpperCase(),
+          distanceUnit: (look.distanceUnit === 'km' ? tr("km") : tr("mi")).toUpperCase(),
+          distanceIn: look.distanceUnit,
+          showLean: hasLeanDataRef.current,
+          showGForce: hasGForceDataRef.current,
+          showMiniMap: blacktopMapEnabledRef.current,
+          now: new Date(),
+        },
+        paintMiniMap,
       );
     }
 
     animationFrameRef.current = requestAnimationFrame(animate);
-  }, [drawFrame]);
+  }, [paintMiniMap]);
 
   // Start recording
   const startRecording = useCallback(() => {
     // Create an offscreen canvas
     const canvas = document.createElement('canvas');
-    canvas.width = 1920;
-    canvas.height = 1080;
+    recordingShapeRef.current = lookRef.current.shape;
+    const { width, height } = OVERLAY_SIZE[recordingShapeRef.current];
+    canvas.width = width;
+    canvas.height = height;
     canvasRef.current = canvas;
 
     // Clear the chunks
     chunksRef.current = [];
-    gForceHistoryRef.current = [];
     routeRef.current = [];
 
     // Get stream from canvas
@@ -347,7 +180,8 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
       }
     }
 
-    // Try VP9 for transparency, fall back to VP8
+    // VP9, else VP8. The frame is drawn on a solid background (lib/overlayFrame):
+    // recorded video keeps no transparency, and the MP4 it's converted to has none.
     const hasAudio = stream.getAudioTracks().length > 0;
     let mimeType = hasAudio ? 'video/webm;codecs=vp9,opus' : 'video/webm;codecs=vp9';
     if (!MediaRecorder.isTypeSupported(mimeType)) {
@@ -383,14 +217,6 @@ export function useLiveOverlayRecorder(options: LiveOverlayRecorderOptions) {
   // Update stats (call this frequently during the ride)
   const updateStats = useCallback((stats: OverlayStats) => {
     latestStatsRef.current = stats;
-
-    if (hasGForceDataRef.current) {
-      const history = gForceHistoryRef.current;
-      history.push(stats.gForce);
-      if (history.length > GFORCE_HISTORY_MAX_POINTS) {
-        history.splice(0, history.length - GFORCE_HISTORY_MAX_POINTS);
-      }
-    }
 
     // Append to the mini-map trail if we're rendering it. Skip near-duplicate
     // fixes so a stationary rider doesn't inflate the buffer.

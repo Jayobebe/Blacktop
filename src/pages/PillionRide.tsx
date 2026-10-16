@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Headphones, LogOut, X } from 'lucide-react';
+import { Mic, MicOff, LogOut, Map as MapIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { useConvoyState, getConvoySnapshot } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
 import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
 import { useConvoyMergeSync, useProximityState } from '@/features/proximity';
 import { useRideRole, setPillionRiding, clearRideRole, useReactionsListener, sendReaction, REACTIONS, WAVE } from '@/features/pillion';
@@ -17,10 +16,13 @@ import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { PageTips } from '@/features/guide';
 
+// The map loads on demand: this screen opens eagerly, and MapLibre must stay out of its first load.
+const PassengerMap = lazy(() => import('@/features/pillion/components/PassengerMap'));
+
 /**
- * Passenger screen for a convoy ride: voice, Wave / emoji reactions and
- * rescue — no map, no stats, no ride recording (the operator's phone does
- * all of that for the bike).
+ * Passenger screen for a convoy ride: voice, Wave / emoji reactions, rescue
+ * and a map that follows the bike (`PassengerMap`, nothing drawn on it) —
+ * no stats, no ride recording (the operator's phone does all of that).
  */
 export default function PillionRide() {
   const navigate = useNavigate();
@@ -56,8 +58,8 @@ export default function PillionRide() {
   }, []);
   useBackgroundAudio(isConnected && convoy.members.length > 1);
 
-  const [showAudio, setShowAudio] = useState(false);
   const [confirmRescue, setConfirmRescue] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
 
   // Remember we're mid-ride so a reload comes straight back here.
@@ -148,7 +150,7 @@ export default function PillionRide() {
       <PageTips
         page="pillion"
         scroll
-        when={!confirmRescue && rescueRequests.length === 0}
+        when={!confirmRescue && !showMap && rescueRequests.length === 0}
         tips={[{ target: '[data-tip="pillion-reactions"]', text: tr("Tap a reaction to signal the whole convoy without talking.") }]}
       />
 
@@ -157,8 +159,8 @@ export default function PillionRide() {
         subtitle={`${leader ? tr("{0}'s convoy", [leader.name]) : tr("Convoy")} · ${convoy.members.length === 1 ? tr("1 rider") : tr("{0} riders", [convoy.members.length])}`}
         backTo={false}
         right={
-          <HeaderButton onClick={() => setShowAudio(true)} aria-label={tr("Audio device")}>
-            <Headphones className="w-5 h-5" />
+          <HeaderButton onClick={() => setShowMap(true)} aria-label={tr("Map")}>
+            <MapIcon className="w-5 h-5" />
           </HeaderButton>
         }
       />
@@ -225,6 +227,12 @@ export default function PillionRide() {
 
       <div className="flex-1" />
 
+      {showMap && (
+        <Suspense fallback={null}>
+          <PassengerMap onClose={() => setShowMap(false)} />
+        </Suspense>
+      )}
+
       {confirmRescue && <CrashCheckPrompt manual timeoutSec={20} onImFine={() => setConfirmRescue(false)} onTimeout={() => setConfirmRescue(false)} onSendNow={sendRescue} />}
 
       {/* Rescue + leave */}
@@ -251,28 +259,6 @@ export default function PillionRide() {
         </Button>
       </div>
 
-      {showAudio && (
-        <div
-          className="fixed inset-0 z-[100] safe-frame flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
-          onClick={() => setShowAudio(false)}
-        >
-          <div className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm max-h-full overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Headphones className="w-4 h-4 text-accent" />
-                <h3 className="font-semibold text-sm">{tr("Voice Chat Audio")}</h3>
-              </div>
-              <button onClick={() => setShowAudio(false)} className="p-1 hover:bg-muted rounded-lg transition-colors" aria-label={tr("Close")}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <AudioDeviceSelector compact />
-            <Button onClick={() => setShowAudio(false)} className="w-full mt-4" size="sm">
-              {tr("Done")}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useConvoyState, MAX_CONVOY_MEMBERS } from '@/features/convoy';
 import { useActiveRide } from '@/features/ride';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { AudioDeviceSelector } from '@/features/voice/components/AudioDeviceSelector';
 import { useRideRole, getRideRole } from '@/features/pillion';
 import { LobbyChat } from '@/features/convoy/components/LobbyChat';
 import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoints';
@@ -11,7 +10,7 @@ import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Headphones, Lock, Unlock } from 'lucide-react';
+import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Lock, Unlock } from 'lucide-react';
 import { useCrew } from '@/features/crew/useCrew';
 import { toast } from 'sonner';
 import { nudgePush } from '@/features/notifications';
@@ -85,7 +84,6 @@ export default function Lobby() {
   const [showLeaderSelect, setShowLeaderSelect] = useState(false); // For leader leaving with other members
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
   const [showAddWaypoint, setShowAddWaypoint] = useState(false);
-  const [showAudioDevices, setShowAudioDevices] = useState(false);
 
   // Screen stays on in the lobby (including on the map) while the convoy gathers.
   const wakeLock = useWakeLock();
@@ -616,17 +614,8 @@ export default function Lobby() {
           )}
         </div>
         
-        {/* Voice Toggle + Audio Device Picker */}
+        {/* Voice Toggle */}
         <div className="flex items-center gap-2">
-          {/* Audio Device Picker Button */}
-          <button
-            onClick={() => setShowAudioDevices(true)}
-            className="p-2 bg-card/50 border border-border/30 rounded-xl hover:bg-secondary transition-colors"
-            title={tr("Select audio device")}
-          >
-            <Headphones className="w-5 h-5 text-muted-foreground" />
-          </button>
-          
           {/* Voice Toggle */}
           <button
             data-tip="lobby-voice"
@@ -669,40 +658,6 @@ export default function Lobby() {
           </button>
         </div>
       </header>
-
-      {/* Audio Device Selector Overlay */}
-      {showAudioDevices && (
-        <div 
-          className="fixed inset-0 z-[100] safe-frame flex items-center justify-center bg-background/90 backdrop-blur-sm animate-fade-in p-4"
-          onClick={() => setShowAudioDevices(false)}
-        >
-          <div 
-            className="bg-card border border-border/50 rounded-2xl p-4 w-full max-w-sm max-h-full overflow-y-auto shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Headphones className="w-4 h-4 text-accent" />
-                <h3 className="font-semibold text-sm">{tr("Voice Chat Audio")}</h3>
-              </div>
-              <button
-                onClick={() => setShowAudioDevices(false)}
-                className="p-1 hover:bg-muted rounded-lg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <AudioDeviceSelector compact />
-            <Button
-              onClick={() => setShowAudioDevices(false)}
-              className="w-full mt-4"
-              size="sm"
-            >
-              {tr("Done")}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* QR Code Overlay - tap to dismiss or auto-hide after 15s */}
       {showQR && convoy.code && (

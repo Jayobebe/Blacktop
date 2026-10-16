@@ -85,14 +85,39 @@ interface VoiceChannelState {
 // ICE servers (STUN + fetched TURN relay credentials) live in ../lib/iceServers.
 
 
-const AUDIO_INPUT_KEY = 'blacktop_audio_input';
-const AUDIO_OUTPUT_KEY = 'blacktop_audio_output';
+// The lobby's mic and speaker picker is gone (2026-10-16): a choice saved there pinned voice to one
+// device by its id, and riders with an intercom on heard nothing. Choices older apps saved are dropped.
+try {
+  localStorage.removeItem('blacktop_audio_input');
+  localStorage.removeItem('blacktop_audio_output');
+} catch { /* storage unavailable */ }
 
-const getAudioConstraints = (): MediaTrackConstraints => {
-  const savedDevice = localStorage.getItem(AUDIO_INPUT_KEY);
-  const deviceConstraint = savedDevice && savedDevice !== 'default'
-    ? { deviceId: { exact: savedDevice } }
-    : {};
+/** The phone's own mics and the browser's stand-ins, never what a rider means by "my headset". */
+const PHONE_MIC = /earpiece|speakerphone|built-?in|iphone|ipad|default|communications|phone mic|internal/i;
+/** A Bluetooth headset or intercom, by the names phones give them. */
+const BLUETOOTH_MIC = /bluetooth|hands-?free|airpods|buds|cardo|packtalk|freecom|sena|intercom|headset|helmet|interphone|uclear|bose|jabra|plantronics|poly/i;
+/** A wired or USB headset. */
+const WIRED_MIC = /wired|usb|headphone|earphone|lightning|type-?c/i;
+
+/**
+ * The mic voice should use: a Bluetooth headset or intercom when one is
+ * connected, else a wired one, else none chosen (the phone's default). Every
+ * sound in voice then follows it: in a call the phone sends what it plays to
+ * the same headset. Names are only readable once the mic has been allowed, so
+ * before that this answers nothing and the call starts on the default.
+ */
+async function pickVoiceMic(): Promise<string | undefined> {
+  try {
+    const inputs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput' && d.deviceId && d.label);
+    const named = inputs.filter((d) => !PHONE_MIC.test(d.label));
+    return (named.find((d) => BLUETOOTH_MIC.test(d.label)) ?? named.find((d) => WIRED_MIC.test(d.label)))?.deviceId;
+  } catch {
+    return undefined;
+  }
+}
+
+const getAudioConstraints = (micId?: string): MediaTrackConstraints => {
+  const deviceConstraint = micId ? { deviceId: { exact: micId } } : {};
 
   // iOS/Safari can behave poorly with strict sampleRate constraints.
   // Let the browser pick the native rate, but keep core voice processing toggles.
@@ -487,18 +512,17 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
   }, []); // No deps - uses refs to avoid stale closures
 
   // ---- Bluetooth / audio-device handling -------------------------------
-  // Route every remote audio element to the currently selected output device.
-  // Called when an element is created AND whenever the user picks a different
-  // speaker or a Bluetooth headset connects mid-ride.
+  // Every remote voice plays on the system's own output, never one pinned by id:
+  // in a call the phone routes that to the connected headset or intercom (and to
+  // the loudspeaker without one). Called when an element is created and when a
+  // headset connects or drops mid-ride.
   const applyOutputDevice = useCallback(() => {
-    const saved = localStorage.getItem(AUDIO_OUTPUT_KEY) || 'default';
     audioElementsRef.current.forEach((audio) => {
       if (!('setSinkId' in audio)) return;
-      // '' selects the system default sink.
+      // '' is the system default output.
       (audio as HTMLAudioElement & { setSinkId(id: string): Promise<void> })
-        .setSinkId(saved === 'default' ? '' : saved)
-        .then(() => console.log('[Voice] Audio output routed to', saved))
-        .catch((e: unknown) => console.warn('[Voice] Failed to set output device:', e));
+        .setSinkId('')
+        .catch((e: unknown) => console.warn('[Voice] Failed to reset the output device:', e));
     });
   }, []);
 
@@ -513,10 +537,9 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
 
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: getAudioConstraints() });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: getAudioConstraints(await pickVoiceMic()) });
     } catch (e) {
-      console.warn('[Voice] Preferred mic unavailable, falling back to default:', e);
-      localStorage.removeItem(AUDIO_INPUT_KEY);
+      console.warn('[Voice] Headset mic unavailable, falling back to default:', e);
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (e2) {
@@ -1200,17 +1223,17 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
       startBrowserCommunicationAudio();
       await startNativeCommunicationAudio();
       let stream: MediaStream;
+      const mic = await pickVoiceMic();
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          audio: getAudioConstraints(),
+          audio: getAudioConstraints(mic),
         });
       } catch (caught) {
         const mediaError = (caught ?? {}) as { name?: string };
-        // OverconstrainedError → saved deviceId is no longer available.
-        // Clear the stale preference and retry with default device.
+        // OverconstrainedError → the headset went between finding it and opening it.
+        // Retry with the default device.
         if (mediaError?.name === 'OverconstrainedError' || mediaError?.name === 'ConstraintNotSatisfiedError') {
-          console.warn('[Voice] Saved audio device unavailable, retrying with default');
-          localStorage.removeItem(AUDIO_INPUT_KEY);
+          console.warn('[Voice] Headset mic unavailable, retrying with default');
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               audio: getAudioConstraints(),
@@ -1256,6 +1279,13 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
 
       
       localStreamRef.current = stream;
+      // The first time the mic is allowed its devices have no names yet, so no headset could be
+      // picked: now they have, move to the headset if there is one.
+      if (!mic) {
+        void pickVoiceMic().then((id) => {
+          if (id && localStreamRef.current === stream) swapInputDeviceRef.current?.();
+        });
+      }
 
       // Start muted by default
       stream.getAudioTracks().forEach(track => {

@@ -936,6 +936,45 @@ export default function Settings() {
              />
            </div>
            {settings.rideOverlayEnabled && (
+             <div className="mt-4 pt-3 border-t border-border/30 space-y-3">
+               {([
+                 {
+                   key: 'overlayShape' as const,
+                   title: tr("Overlay shape"),
+                   desc: tr("Match your camera: landscape for most action cams, vertical for clips filmed upright."),
+                   options: [{ id: 'landscape', label: tr("Landscape 16:9") }, { id: 'portrait', label: tr("Vertical 9:16") }],
+                 },
+                 {
+                   key: 'overlayBackground' as const,
+                   title: tr("Overlay background"),
+                   desc: settings.overlayBackground === 'green'
+                     ? tr("Green screen: lay it over your footage and key out the green (chroma key / green screen in your editor).")
+                     : tr("Black: lay it over your footage with the Screen or Lighten blend mode in your editor."),
+                   options: [{ id: 'green', label: tr("Green screen") }, { id: 'black', label: tr("Black") }],
+                 },
+               ]).map((row) => (
+                 <div key={row.key}>
+                   <p className="text-sm font-medium">{row.title}</p>
+                   <p className="text-[10px] text-muted-foreground mb-1.5">{row.desc}</p>
+                   <div className="grid grid-cols-2 gap-1.5">
+                     {row.options.map((o) => (
+                       <button
+                         key={o.id}
+                         onClick={() => updateSetting(row.key, o.id as never)}
+                         className={cn(
+                           'h-10 rounded-lg border text-xs font-semibold',
+                           settings[row.key] === o.id ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground',
+                         )}
+                       >
+                         {o.label}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+           {settings.rideOverlayEnabled && (
              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
                <div>
                   <p className="text-sm font-medium">{tr("Voice Channel Recording")}</p>
