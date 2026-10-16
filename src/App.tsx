@@ -44,6 +44,7 @@ import PillionRide from "./pages/PillionRide";
 import { installDemoGuard } from '@/lib/demoGuard';
 import { resumePendingRecovery } from '@/lib/recovery';
 import { countOpen } from '@/lib/usage';
+import { installStaleBuildReload } from '@/lib/staleBuild';
 import { probeServerCaps } from '@/lib/serverCaps';
 import { loadLocaleExtra } from '@/lib/i18n';
 
@@ -57,6 +58,8 @@ installErrorLog();
 installWarpNavigation();
 // Features shipped ahead of their migration stay hidden until the server has them.
 probeServerCaps();
+// A new version went live under an open page: reload for it instead of failing to open a screen.
+installStaleBuildReload();
 // A recovery code made just before the app closed may have signed this phone out: sign back in with it.
 void resumePendingRecovery();
 // An app left open for days still counts each day it's looked at.

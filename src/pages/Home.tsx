@@ -442,8 +442,13 @@ export default function Home() {
           el.dataset.room = room < 150 ? 'tight' : room < 185 ? 'snug' : 'wide';
           return;
         }
-        // Join beside Track keeps its label left of the globe; every other case, right of it.
-        const room = el === join && trackShown ? left : right;
+        // Join beside Track: each is centred in the part of its tile the globe leaves (Join left of it, Track right).
+        if (trackShown) {
+          const room = el === join ? left : right;
+          el.dataset.room = room < 190 ? 'tight' : room < 215 ? 'snug' : 'wide';
+          return;
+        }
+        const room = right;
         el.dataset.room = room < 205 ? 'tight' : room < 250 ? 'snug' : 'wide';
       });
 
@@ -696,11 +701,11 @@ export default function Home() {
                           }}
                           className={cn(
                             'group/tile pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
-                            // With Track beside it the globe is on this tile's right corner, so the label goes left.
+                            // With Track beside it the globe is on this tile's right corner, so the label is centred in the rest.
                             // Alone, the globe sits over its centre: the label goes left of it and the
                             // operator / passenger switch right of it.
                             showTrack
-                              ? 'landscape:justify-start landscape:pl-6 landscape:data-[room=tight]:pl-3'
+                              ? 'landscape:justify-center landscape:pl-4 landscape:pr-16 landscape:data-[room=tight]:pr-12'
                               : exp.showGroup
                                 ? 'landscape:justify-between landscape:px-6 landscape:data-[room=tight]:px-3'
                                 : 'landscape:justify-end landscape:pr-8 landscape:data-[room=tight]:pr-3'
@@ -730,7 +735,7 @@ export default function Home() {
                             tabIndex={0}
                             onClick={openTrack}
                             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                            className="group/tile pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-end gap-3 pr-6 data-[room=tight]:pr-3 touch-target-lg cursor-pointer"
+                            className="group/tile pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-center gap-3 pr-4 pl-16 data-[room=tight]:pl-12 touch-target-lg cursor-pointer"
                           >
                             <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
                               <Zap className="w-4 h-4 text-accent-2" />

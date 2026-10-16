@@ -1,9 +1,12 @@
 import { Component, ReactNode } from 'react';
 import { tr } from '@/lib/i18n';
 import { copyText, errorReport, noteError } from '@/lib/errorLog';
+import { isStaleBuildError, reloadForNewBuild } from '@/lib/staleBuild';
 
 interface State {
   error: Error | null;
+  /** A screen's code from the previous build was gone: the page is loading again for the new one. */
+  updating?: boolean;
   /** The report has been copied (or couldn't be). */
   copied: 'yes' | 'failed' | null;
 }
@@ -20,11 +23,14 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
   state: State = { error: null, copied: null };
 
   static getDerivedStateFromError(error: Error): Partial<State> {
+    // A new version went live under this page: load it again rather than show an error.
+    if (isStaleBuildError(error) && reloadForNewBuild()) return { error: null, updating: true };
     return { error, copied: null };
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string }) {
     // Surface to the console so it appears in remote-debug sessions too.
+    if (this.state.updating) return;
     console.error('[AppErrorBoundary] Caught render error:', error, info.componentStack);
     noteError(error);
   }
@@ -45,7 +51,12 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
   };
 
   render() {
-    const { error, copied } = this.state;
+    const { error, copied, updating } = this.state;
+    if (updating) {
+      return (
+        <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">{tr("Updating Blacktop…")}</div>
+      );
+    }
     if (!error) return this.props.children;
 
     return (
