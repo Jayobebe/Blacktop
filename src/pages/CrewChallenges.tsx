@@ -145,7 +145,7 @@ export default function CrewChallenges() {
       });
       return (data ?? []) as ChallengeRow[];
     },
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   // Monthly crew goal — combined totals across the crew for the month.
@@ -159,7 +159,7 @@ export default function CrewChallenges() {
       });
       return (data?.[0] ?? null) as { distance: number; ride_count: number; members: number } | null;
     },
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   // Demo mode: the demo rider's row is their own (demo) week, matching "You".

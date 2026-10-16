@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
+import { sessionUser } from '@/lib/sessionUser';
 
 export interface DiscordIntegration {
   webhook_url: string;
@@ -34,7 +35,7 @@ export function useDiscordIntegration() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user) {
       setIntegration(null);
       setLoading(false);
@@ -53,7 +54,7 @@ export function useDiscordIntegration() {
 
   const save = useCallback(async (payload: Partial<DiscordIntegration> & { webhook_url: string }) => {
     if (demoBlocked()) return false;
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user) {
       // Anonymous sign in if needed
       const { error } = await supabase.auth.signInAnonymously();
@@ -62,7 +63,7 @@ export function useDiscordIntegration() {
         return false;
       }
     }
-    const { data: { user: u2 } } = await supabase.auth.getUser();
+    const u2 = await sessionUser();
     if (!u2) return false;
 
     const row = {
@@ -85,7 +86,7 @@ export function useDiscordIntegration() {
   }, [refresh]);
 
   const disconnect = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user) return;
     const { error } = await supabase
       .from('discord_integrations' as any)

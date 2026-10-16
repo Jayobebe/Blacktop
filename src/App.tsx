@@ -64,7 +64,13 @@ document.addEventListener("visibilitychange", () => {
 });
 
 
-const queryClient = new QueryClient();
+// Server reads cost money per request, so nothing refetches just because the app came back to the
+// front (react-query's default: every query on screen, every time), a read is reused for a minute, and a
+// failed one is tried once more, not three times. Screens that need fresher data say so themselves;
+// pull-to-refresh still refetches everything on screen.
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { refetchOnWindowFocus: false, staleTime: 60_000, retry: 1 } },
+});
 
 // Screens off the ride-critical path load on demand, then get prefetched once
 // the app is idle so they still open instantly (and offline) later.

@@ -17,6 +17,7 @@ import { currentUnits, metresText } from '@/lib/units';
 import { getExperience } from '@/features/experience/lib/profile';
 import { SpeedFilter, speedLimitsFor } from '../lib/speedFilter';
 import { countUsage } from '@/lib/usage';
+import { sessionUser } from '@/lib/sessionUser';
 
 const SPEED_SMOOTHING_FACTOR = 0.75; // Higher = more responsive to current reading
 const MIN_SPEED_THRESHOLD = 0.3; // mph - very low threshold to catch movement early
@@ -226,7 +227,7 @@ let convoySyncTimeout: ReturnType<typeof setTimeout> | null = null;
 let convoySyncDelay: number = CONVOY_SYNC_FAST_INTERVAL;
 let belowIdleThresholdSince: number | null = null;
 let worldSyncTimeout: ReturnType<typeof setTimeout> | null = null;
-const WORLD_SYNC_INTERVAL = 30_000; // ms
+const WORLD_SYNC_INTERVAL = 120_000; // ms: the globe counts a rider for 10 minutes after their last write
 let isAppBackgrounded = false;
 
 // App-state changes (background/minimize/deep-link out) override the speed-based
@@ -596,7 +597,7 @@ async function stopGpsWatch() {
 async function syncConvoyStats() {
   if (!currentConvoyId || !rideState.isActive) return;
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await sessionUser();
   if (!user) return;
 
   const { error } = await supabase
@@ -688,7 +689,7 @@ function isWorldSharingEnabled(): boolean {
 
 async function syncWorldLocation() {
   if (!rideState.isActive || !lastPosition || !isWorldSharingEnabled()) return;
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await sessionUser();
   if (!user) return;
   await supabase.from('world_locations').upsert(
     { user_id: user.id, lat: lastPosition.lat, lng: lastPosition.lng, last_seen: new Date().toISOString() },
@@ -697,7 +698,7 @@ async function syncWorldLocation() {
 }
 
 async function clearWorldLocation() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await sessionUser();
   if (!user) return;
   await supabase.from('world_locations').delete().eq('user_id', user.id);
 }

@@ -97,7 +97,7 @@ import { useWaypoints } from "@/features/waypoints";
 
 import { useRescueBridge } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
-import { useCollectedCards, useVehicleCards, useCardKickbacks } from "@/features/cards";
+import { useCollectedCards, useVehicleCards } from "@/features/cards";
 import { copyLedger } from "@/features/cards/lib/dropEconomy";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
@@ -1101,11 +1101,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
   // ── Card drops (Blacktop World trading cards planted on the map) ─────────
   const cardsEnabled = settings.blacktopWorldEnabled;
+  // Only while the map is on screen: the overlay stays mounted when closed, and asking for nearby drops
+  // behind it (through every ride) was database work nobody saw.
   const { drops, myDrops, collectDrop, placeDrop, pickUpDrop } = useCardDrops(
-    cardsEnabled ? userLocation : null,
+    cardsEnabled && isVisible ? userLocation : null,
   );
   const { addCard } = useCollectedCards();
-  useCardKickbacks();
   const { cards } = useVehicleCards();
   const [selectedStack, setSelectedStack] = useState<CardDrop[] | null>(null);
   const selectedDrop = selectedStack?.length === 1 ? selectedStack[0] : null;

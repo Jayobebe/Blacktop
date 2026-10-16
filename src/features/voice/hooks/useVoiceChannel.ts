@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
 import { tr } from '@/lib/i18n';
+import { sessionUser } from '@/lib/sessionUser';
 
 // Warn once per app session, not on every reconnect.
 let relayWarningShown = false;
@@ -1174,7 +1175,7 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
       }
 
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await sessionUser();
       if (!user) {
         console.error('[Voice] No authenticated user');
         isConnectingRef.current = false;

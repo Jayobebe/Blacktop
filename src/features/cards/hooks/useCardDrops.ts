@@ -135,7 +135,8 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
     queryKey: ['card-drops', key, crew.code],
     enabled,
     staleTime: 60_000,
-    refetchInterval: 120_000,
+    // Moving to another area asks again on its own (the key); this only catches drops placed nearby since.
+    refetchInterval: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('list_card_drops', {
         _lat: center!.lat,

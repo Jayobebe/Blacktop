@@ -54,7 +54,11 @@ function set(cap: ServerCap, on: boolean) {
 }
 
 function ask() {
+  // A feature the server has once, it keeps (migrations are never taken back), so only what hasn't
+  // been seen yet is asked about: asking for all of them on every launch, on every phone, was seven
+  // requests each time for answers that never change.
   for (const cap of Object.keys(PROBES) as ServerCap[]) {
+    if (caps[cap]) continue;
     Promise.resolve(PROBES[cap]())
       .then(({ error }) => {
         if (!error) set(cap, true);

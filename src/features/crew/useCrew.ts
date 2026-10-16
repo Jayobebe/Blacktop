@@ -5,6 +5,7 @@ import { tr } from '@/lib/i18n';
 import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
 import { demoBlocked } from '@/lib/demoGuard';
 import { DEMO_ACTIVE_CREW, DEMO_CREW_LIST } from './demo';
+import { sessionUser } from '@/lib/sessionUser';
 
 /**
  * Crew membership. Every rider owns a crew code (generated once, on device).
@@ -226,7 +227,7 @@ export function setActiveCrew(code: string) {
 /** Leaving a crew takes this rider off its boards (their own rows only; best effort). */
 async function removeFromCrewBoards(code: string) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any;

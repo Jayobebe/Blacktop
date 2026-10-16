@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { analyseCorners, burnedAggregate, keepPeakTelemetry, type BurnedTotals } from '@/features/ride';
 import type { RideSession } from '@/types/blacktop';
 import { weekKey, weekStart } from './challenges';
+import { sessionUser } from '@/lib/sessionUser';
 
 /**
  * What a rider shares with their crew: all-time totals for the crew board and
@@ -77,7 +78,7 @@ export function weekStats(rides: RideSession[], now = new Date()): WeekStats {
  * in). Returns false when it couldn't. Hidden peaks go as null.
  */
 export async function publishCrewTotals(crewCode: string, name: string, totals: CrewTotals): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await sessionUser();
   if (!user) return false;
   const row = {
     user_id: user.id,
@@ -99,7 +100,7 @@ export async function publishCrewTotals(crewCode: string, name: string, totals: 
 
 /** Publishes this rider's own row for this week's crew challenges. */
 export async function publishWeekStats(crewCode: string, name: string, stats: WeekStats, key = weekKey()): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await sessionUser();
   if (!user) return false;
   const row = {
     user_id: user.id,

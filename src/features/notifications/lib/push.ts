@@ -5,6 +5,7 @@ import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { getCrewCode, getCrews } from '@/features/crew/useCrew';
 import { tr } from '@/lib/i18n';
+import { sessionUser } from '@/lib/sessionUser';
 import { kmText } from '@/lib/units';
 import { paymentsAvailable } from '@/lib/platform';
 import { nativePermission, nativePushAvailable, nativePushEndpoint, requestNativePermission, unregisterNativePush } from './nativePush';
@@ -299,7 +300,15 @@ async function registerNative() {
   await registerDevice(endpoint, 'native', 'native');
 }
 
-/** Stores this device server-side with its switches, crews and rough area. */
+const REGISTERED_KEY = 'bt.push.registered.v1';
+const REREGISTER_MS = 24 * 3600_000;
+
+/**
+ * Stores this device server-side with its switches, crews and rough area.
+ * The app calls this on every launch, after rides and on every change; when
+ * nothing in it has changed since the last time the server took it (within a
+ * day, so the server still hears the device is alive), the call is skipped.
+ */
 async function registerDevice(endpoint: string, p256dh: string, auth: string) {
   // Rough area (rounded server-side to ~11 km) for weather alerts and for helping nearby riders.
   const loc = state.categories.includes('weather') || state.categories.includes('rescue_nearby') ? await weatherLocation() : null;
@@ -326,10 +335,17 @@ async function registerDevice(endpoint: string, p256dh: string, auth: string) {
   // The rider's units, so crew scores and wind gusts arrive in them. A server
   // without these parameters yet (PGRST202) gets the call without them.
   const units = pushUnits();
+  // The area as the server keeps it (to 0.1°), so a phone moving about town doesn't count as a change.
+  const sent = JSON.stringify({ ...withCrews, _lat: loc ? Math.round(loc.lat * 10) : null, _lng: loc ? Math.round(loc.lng * 10) : null, _user_agent: undefined, units, who: (await sessionUser())?.id ?? null });
+  try {
+    const last = JSON.parse(localStorage.getItem(REGISTERED_KEY) || 'null') as { sent: string; at: number } | null;
+    if (last && last.sent === sent && Date.now() - last.at < REREGISTER_MS) return;
+  } catch { /* ask the server */ }
   let { error } = await supabase.rpc('register_push_subscription' as never, { ...withCrews, _distance_unit: units.distance, _speed_unit: units.speed } as never);
   if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, withCrews as never));
   if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, base as never));
   if (error) throw new PushSetupError(tr("Couldn't register this device ({0}). Try again in a moment.", [error.code || error.message]));
+  try { localStorage.setItem(REGISTERED_KEY, JSON.stringify({ sent, at: Date.now() })); } catch { /* asks again next time */ }
 }
 
 function message(err: unknown) {
@@ -384,6 +400,7 @@ export async function enablePush(): Promise<boolean> {
 
 /** Turns notifications off on this device (also used by the Burn button). */
 export async function disablePush(): Promise<void> {
+  try { localStorage.removeItem(REGISTERED_KEY); } catch { /* nothing kept */ }
   writePref(false);
   set({ busy: true, error: null });
   try {

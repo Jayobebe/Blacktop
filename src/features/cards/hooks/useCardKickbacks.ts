@@ -36,7 +36,9 @@ function writeSeen(ids: Set<string>) {
 
 /**
  * Collection kickbacks — when another rider collects one of your dropped
- * cards, you earn a badge point. Polled while Blacktop World is on; the first
+ * cards, you earn a badge point. Read when Blacktop World opens (never on a timer:
+ * polling it every minute on every phone that had opened the map was wasted
+ * database work); the first
  * ever run seeds the seen-list silently so existing collections don't flood.
  */
 export function useCardKickbacks() {
@@ -46,8 +48,7 @@ export function useCardKickbacks() {
   const { data } = useQuery({
     queryKey: ['card-kickbacks', user?.id],
     enabled: !!user?.id && settings.blacktopWorldEnabled,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('list_my_kickbacks');
       if (error) throw error;

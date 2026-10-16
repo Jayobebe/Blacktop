@@ -48,6 +48,7 @@ const LEFT_OUT = new Set([
   'blacktop_audio_output',
   'bt.push.enabled.v1',
   'bt.push.location.v1',
+  'bt.push.registered.v1',
   'bt.map.offlinePacks.v1',
 ]);
 

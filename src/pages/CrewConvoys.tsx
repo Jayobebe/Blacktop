@@ -54,7 +54,7 @@ export default function CrewConvoys() {
       const { data } = await (supabase as any).rpc('list_crew_convoys', { _crew_code: crew.code });
       return (data ?? []) as CrewConvoyRow[];
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
 
   const { data: detail = [] } = useQuery({
@@ -65,7 +65,7 @@ export default function CrewConvoys() {
       const { data } = await (supabase as any).rpc('crew_convoy_detail', { _convoy_id: selected!.id });
       return (data ?? []) as DetailRow[];
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   });
 
   const leader = detail.find((d) => d.is_leader);

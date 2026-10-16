@@ -9,6 +9,7 @@ import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
 import { eventSound } from '@/lib/appSound';
 import type { Tables } from '@/integrations/supabase/types';
+import { sessionUser } from '@/lib/sessionUser';
 
 export const MAX_CONVOY_MEMBERS = 8;
 const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
@@ -136,6 +137,36 @@ function clearActiveConvoySession() {
   }));
 }
 
+/**
+ * A rider's own row changed (their position and stats, written every few
+ * seconds while moving): put it straight into the member list. False when the
+ * rider isn't in the list yet, which needs the whole list read.
+ */
+function patchMemberFromRow(row: Partial<Tables<'convoy_members'>> | null | undefined): boolean {
+  if (!row?.user_id) return false;
+  if (!convoyState.members.some((m) => m.userId === row.user_id)) return false;
+  setConvoyState((prev) => ({
+    ...prev,
+    members: prev.members.map((m) =>
+      m.userId !== row.user_id
+        ? m
+        : {
+            ...m,
+            hasNavigated: row.has_navigated ?? m.hasNavigated,
+            accentColor: row.accent_color || m.accentColor,
+            currentSpeed: row.current_speed ?? m.currentSpeed,
+            // null: that rider keeps peaks private (Public Road Privacy), shown as "--".
+            topSpeed: 'top_speed' in row ? (row.top_speed == null ? null : row.top_speed) : m.topSpeed,
+            distanceDriven: row.distance_driven ?? m.distanceDriven,
+            stationaryTime: row.stationary_time ?? m.stationaryTime,
+            currentLat: row.current_lat ?? m.currentLat,
+            currentLng: row.current_lng ?? m.currentLng,
+          },
+    ),
+  }));
+  return true;
+}
+
 function acquireConvoyRealtimeSubscription(
   convoyId: string,
   refreshMembers: (convoyId: string) => Promise<void>,
@@ -203,7 +234,12 @@ function acquireConvoyRealtimeSubscription(
           table: 'convoy_members',
           filter: `convoy_id=eq.${convoyId}`,
         },
-        async () => {
+        async (payload) => {
+          // Every rider writes their position and stats every few seconds while moving. Each of
+          // those used to make every phone read the whole member list again (riders × riders reads
+          // a few seconds apart, the convoy's main cost on the database): an update to a rider already
+          // listed is applied as it arrives, and only joins, leaves and newcomers read the list.
+          if (payload.eventType === 'UPDATE' && patchMemberFromRow(payload.new as Partial<Tables<'convoy_members'>>)) return;
           await refreshMembers(convoyId);
         }
       )
@@ -266,7 +302,7 @@ export function useConvoyState() {
     const restoreConvoySession = async () => {
       restoreInFlight = true;
       try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await sessionUser();
       if (!user) {
         setConvoyState((prev) => ({ ...prev, isRestoring: false }));
         return;
@@ -404,7 +440,7 @@ export function useConvoyState() {
   }, [state.id, state.realtimeSuspended]);
 
   const refreshMembers = async (convoyId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     
     const { data: membersData } = await supabase
       .from('convoy_members')
@@ -474,7 +510,7 @@ export function useConvoyState() {
       return null;
     }
 
-    let { data: { user } } = await supabase.auth.getUser();
+    let user = await sessionUser();
 
     // Auto sign in anonymously if not authenticated
     if (!user) {
@@ -567,7 +603,7 @@ export function useConvoyState() {
 
   const joinConvoy = useCallback(async (code: string) => {
     if (demoBlocked()) return false;
-    let { data: { user } } = await supabase.auth.getUser();
+    let user = await sessionUser();
     
     // Auto sign in anonymously if not authenticated
     if (!user) {
@@ -680,7 +716,7 @@ export function useConvoyState() {
 
     // Run DB cleanup FIRST so the restore effect doesn't re-add us after state clears
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await sessionUser();
       if (user) {
         // Remove ALL of this user's memberships (clears stale convoys too)
         const { error: delErr } = await supabase
@@ -773,7 +809,7 @@ export function useConvoyState() {
   }, [state.id, state.isLeader]);
 
   const markAsNavigated = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user || !state.id) return;
 
     console.log('[Convoy] Marking user as navigated:', user.id);
@@ -803,7 +839,7 @@ export function useConvoyState() {
   }, [state.id]);
 
   const resetNavigationStatus = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user || !state.id) return;
 
     // Reset local state

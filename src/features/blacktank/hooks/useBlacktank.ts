@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCrew } from '@/features/crew/useCrew';
 import { nudgePush } from '@/features/notifications';
+import { sessionUser } from '@/lib/sessionUser';
 import type {
   TankCurrency,
   TankPledgeRow,
@@ -29,7 +30,7 @@ export function useBlacktank() {
   const membership = useQuery({
     queryKey: ['blacktank', 'membership', crewCode],
     queryFn: async () => {
-      const { data: auth } = await supabase.auth.getUser();
+      const auth = { user: await sessionUser() };
       const uid = auth.user?.id;
       if (!uid) return false;
       const { data, error } = await (supabase as any)
@@ -68,7 +69,7 @@ export function useBlacktank() {
   const requests = useQuery({
     queryKey: ['blacktank', 'requests', crewCode],
     enabled: isMember,
-    refetchInterval: 20000,
+    refetchInterval: 60000,
     queryFn: async () => {
       const { data, error } = await rpc('blacktank_list_requests', { _crew_code: crewCode });
       if (error) throw error;

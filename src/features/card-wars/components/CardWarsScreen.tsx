@@ -225,12 +225,12 @@ export function CardWarsScreen() {
       void syncWear();
     };
     sync();
-    const timer = setInterval(sync, 15000);
+    // On opening, coming back, reconnecting and pull-to-refresh, never on a timer: condition only changes
+    // with this player's own battles and repairs, which report it as they happen.
     window.addEventListener('focus', sync);
     window.addEventListener('online', sync);
     window.addEventListener('blacktop:refresh', sync);
     return () => {
-      clearInterval(timer);
       window.removeEventListener('focus', sync);
       window.removeEventListener('online', sync);
       window.removeEventListener('blacktop:refresh', sync);

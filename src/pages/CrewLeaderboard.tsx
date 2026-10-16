@@ -63,7 +63,7 @@ export default function CrewLeaderboard() {
       const { data } = await (supabase as any).rpc('list_crew_leaderboard', { _crew_code: crew.code });
       return (data ?? []) as CrewRow[];
     },
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 
   // Demo mode: the demo rider's row is their own (demo) rides, so it matches what they see elsewhere.

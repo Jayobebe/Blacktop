@@ -5,6 +5,7 @@ import { ACCENT_COLORS } from '@/features/settings';
 import type { DerezArena, DerezLobby, DerezPlayer, DerezState } from '../types';
 import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
+import { sessionUser } from '@/lib/sessionUser';
 
 const LS_LOBBY_KEY = 'blacktop_derez_lobby_id';
 
@@ -51,7 +52,7 @@ export function useDerezLobby() {
   const lobbyIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    sessionUser().then((user) => setUserId(user?.id ?? null));
   }, []);
 
   const refresh = useCallback(async (id: string) => {
@@ -97,7 +98,7 @@ export function useDerezLobby() {
     if (demoBlocked()) return null;
     setBusy(true);
     try {
-      const { data: auth } = await supabase.auth.getUser();
+      const auth = { user: await sessionUser() };
       const uid = auth.user?.id;
       if (!uid) throw new Error('Not signed in');
 
@@ -127,7 +128,7 @@ export function useDerezLobby() {
     if (demoBlocked()) return null;
     setBusy(true);
     try {
-      const { data: auth } = await supabase.auth.getUser();
+      const auth = { user: await sessionUser() };
       const uid = auth.user?.id;
       if (!uid) throw new Error('Not signed in');
 

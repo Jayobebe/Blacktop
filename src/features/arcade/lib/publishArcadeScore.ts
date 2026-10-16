@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { nudgePush } from '@/features/notifications';
 import { getCrews } from '@/features/crew/useCrew';
+import { sessionUser } from '@/lib/sessionUser';
 
 /**
  * Push an arcade high score straight to the crew board so crew mates see it
@@ -12,7 +13,7 @@ export async function publishArcadeScore(
   value: number,
 ): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await sessionUser();
     if (!user) return;
 
     let displayName = 'Rider';
