@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Camera, Minus, Plus, ScanEye, Users } from 'lucide-react';
 import { useHazardWarning, HAZARD_BY_KIND, hazardColor } from '@/features/hazards';
 import { useProximityState } from '@/features/proximity';
@@ -11,7 +11,31 @@ import type { MiniMapMember } from './RideMiniMap';
 
 const RideMiniMap = lazy(() => import('./RideMiniMap'));
 
+// Which face is up: whichever the rider left facing them, kept for the next ride
+// (`blacktop_ride_dial`). One store shared by the portrait and landscape dials (both
+// are mounted), so turning the phone shows the same face; each used to keep its own.
 const FACE_KEY = 'blacktop_ride_dial';
+let rideFace: 'g' | 'map' = (() => {
+  try {
+    return localStorage.getItem(FACE_KEY) === 'map' ? 'map' : 'g';
+  } catch {
+    return 'g';
+  }
+})();
+const faceListeners = new Set<() => void>();
+const setRideFace = (f: 'g' | 'map') => {
+  rideFace = f;
+  try {
+    localStorage.setItem(FACE_KEY, f);
+  } catch {
+    /* kept for this launch */
+  }
+  faceListeners.forEach((l) => l());
+};
+const subscribeFace = (l: () => void) => {
+  faceListeners.add(l);
+  return () => faceListeners.delete(l);
+};
 const ZOOM_KEY = 'blacktop_minimap_zoom';
 const ZOOM_MIN = 12;
 const ZOOM_MAX = 18;
@@ -75,13 +99,7 @@ const CAMERA_PILL_MS = 2 * 60_000;
  * between them; the full map is the ride screen's map button.
  */
 export function RideDial({ gauge, position, members, accent, distanceUnit, rescueAt, convoyId, className }: Props) {
-  const [face, setFace] = useState<'g' | 'map'>(() => {
-    try {
-      return localStorage.getItem(FACE_KEY) === 'map' ? 'map' : 'g';
-    } catch {
-      return 'g';
-    }
-  });
+  const face = useSyncExternalStore(subscribeFace, () => rideFace, () => 'g' as const);
   const showing: 'g' | 'map' = gauge ? face : 'map';
   // The map loads the first time it's shown, and stays (flipping back is instant).
   const [mapLoaded, setMapLoaded] = useState(showing === 'map');
@@ -121,13 +139,7 @@ export function RideDial({ gauge, position, members, accent, distanceUnit, rescu
 
   const flip = () => {
     if (!gauge) return;
-    const next = showing === 'g' ? 'map' : 'g';
-    setFace(next);
-    try {
-      localStorage.setItem(FACE_KEY, next);
-    } catch {
-      /* kept for this ride */
-    }
+    setRideFace(showing === 'g' ? 'map' : 'g');
   };
 
   const hazard = useHazardWarning();

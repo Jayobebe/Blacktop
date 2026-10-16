@@ -971,6 +971,83 @@ export default function ActiveRide() {
 
   if (!rideState.isActive && !endingFlow) return null;
 
+  // The rescue button: convoy members ping the convoy, solo riders their crew and Discord;
+  // a convoy's leader has none. Beside the speed in landscape, its own row in portrait.
+  const hasRescueButton = !rideState.isConvoyMode || !convoy.isLeader;
+  const rescueButton = (
+    <>
+            {/* Rescue button - circular icon-only.
+                Convoy: non-leaders ping the leader.
+                Solo: pings user's Discord webhook when enabled.
+                Kept in the controls row (not next to End Ride) to avoid
+                accidental presses. */}
+            {rideState.isConvoyMode && !convoy.isLeader && (
+              <button
+                onClick={hasPendingRescue ? cancelRescueRequest : () => setRescueAsk(() => handleRescue)}
+                data-tip="rescue"
+                className={cn(
+                  "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
+                  hasPendingRescue && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
+                )}
+                title={hasPendingRescue ? tr("Cancel rescue request") : tr("Request rescue")}
+              >
+                <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
+              </button>
+            )}
+            {!rideState.isConvoyMode && (
+              <button
+                onClick={() => {
+                  if (soloRescueSending || soloRescueSent) return;
+                  // Asked first ("Are you okay?"); this is what a No sends.
+                  setRescueAsk(() => async () => {
+                  setSoloRescueSending(true);
+                  try {
+                    const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                      navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 8000,
+                        maximumAge: 5000,
+                      });
+                    });
+                    const at = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    const told = await sendSoloRescue(at.lat, at.lng);
+                    // The emergency contact by plain SMS, offered whatever the server managed.
+                    const text = emergencyTextAction(settings, profile.name || '', at);
+                    if (told.length) {
+                      toast.success(tr("Rescue call sent to {0}", [told.join(' and ')]), { action: text, duration: text ? 15000 : undefined });
+                      setSoloRescueSent(true);
+                      setTimeout(() => setSoloRescueSent(false), 30000);
+                    } else {
+                      toast.error(tr("Nobody to alert yet"), {
+                        description: tr("Connect Discord in Settings, or ask your crew to turn on notifications."),
+                        action: text,
+                        duration: text ? 15000 : undefined,
+                      });
+                    }
+                  } catch (err) {
+                    console.error('[SoloRescue]', err);
+                    const text = emergencyTextAction(settings, profile.name || '', null);
+                    toast.error(tr("Could not get your location"), { action: text, duration: text ? 15000 : undefined });
+                  } finally {
+                    setSoloRescueSending(false);
+                  }
+                  });
+                }}
+                disabled={soloRescueSending || soloRescueSent}
+                data-tip="rescue"
+                className={cn(
+                  "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
+                  soloRescueSent && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
+                )}
+                title={soloRescueSent ? tr("Rescue call sent") : soloRescueSending ? tr("Sending…") : tr("Call for rescue (your crew and Discord)")}
+              >
+                <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
+              </button>
+            )}
+
+    </>
+  );
+
   // Sort members by top speed (highest first) if rankings enabled, otherwise by join time
   const sortedMembers = (settings.showSpeedRankings && settings.speedFocusEnabled) 
     ? [...convoy.members].sort((a, b) => (b.topSpeed ?? -1) - (a.topSpeed ?? -1)) // private (null) last
@@ -1312,20 +1389,21 @@ export default function ActiveRide() {
           </div>
         </div>
 
-        {/* Right flank in landscape: the alarm + buttons, pushed to the right edge.
+        {/* Right flank in landscape: the rescue button + buttons, pushed to the right edge.
             `contents` in portrait so children join the vertical flow unchanged. */}
         <div className="contents landscape:flex landscape:flex-row landscape:items-center landscape:justify-end landscape:gap-4 landscape:flex-1 landscape:min-w-0 landscape:max-h-full landscape:pr-2">
-        {/* Landscape: the anti-theft alarm between speed and buttons */}
-        {/* Centred in the space between the speed and the buttons. */}
+        {/* Landscape: the rescue button between speed and buttons, centred in that space. */}
         <div className="hidden landscape:flex flex-1 min-w-0 flex-col items-center justify-center">
-          <AlarmButton variant="ride" />
+          {rescueButton}
         </div>
 
-        {/* Portrait: the anti-theft alarm on its own row, below the stats and just above
+        {/* Portrait: the rescue button on its own row, below the stats and just above
             the control buttons (landscape has it right of the live speed). */}
-        <div className="flex landscape:hidden justify-center mt-4 [@media(max-height:820px)]:mt-2">
-          <AlarmButton variant="ride" />
-        </div>
+        {hasRescueButton && (
+          <div className="flex landscape:hidden justify-center mt-4 [@media(max-height:820px)]:mt-2">
+            {rescueButton}
+          </div>
+        )}
 
         {/* Controls - row in portrait, column in landscape */}
         <div className="flex flex-wrap landscape:flex-col landscape:flex-wrap-reverse items-center justify-center content-center gap-6 landscape:gap-3 [@media(max-height:420px)]:gap-2 px-2 mt-4 mb-4 landscape:mt-0 landscape:mb-0 landscape:max-h-full landscape:py-1">
@@ -1351,74 +1429,9 @@ export default function ActiveRide() {
             )}
           </button>
 
-          {/* Rescue button - circular icon-only.
-              Convoy: non-leaders ping the leader.
-              Solo: pings user's Discord webhook when enabled.
-              Kept in the controls row (not next to End Ride) to avoid
-              accidental presses. */}
-          {rideState.isConvoyMode && !convoy.isLeader && (
-            <button
-              onClick={hasPendingRescue ? cancelRescueRequest : () => setRescueAsk(() => handleRescue)}
-              data-tip="rescue"
-              className={cn(
-                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
-                hasPendingRescue && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
-              )}
-              title={hasPendingRescue ? tr("Cancel rescue request") : tr("Request rescue")}
-            >
-              <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
-            </button>
-          )}
-          {!rideState.isConvoyMode && (
-            <button
-              onClick={() => {
-                if (soloRescueSending || soloRescueSent) return;
-                // Asked first ("Are you okay?"); this is what a No sends.
-                setRescueAsk(() => async () => {
-                setSoloRescueSending(true);
-                try {
-                  const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                      enableHighAccuracy: true,
-                      timeout: 8000,
-                      maximumAge: 5000,
-                    });
-                  });
-                  const at = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                  const told = await sendSoloRescue(at.lat, at.lng);
-                  // The emergency contact by plain SMS, offered whatever the server managed.
-                  const text = emergencyTextAction(settings, profile.name || '', at);
-                  if (told.length) {
-                    toast.success(tr("Rescue call sent to {0}", [told.join(' and ')]), { action: text, duration: text ? 15000 : undefined });
-                    setSoloRescueSent(true);
-                    setTimeout(() => setSoloRescueSent(false), 30000);
-                  } else {
-                    toast.error(tr("Nobody to alert yet"), {
-                      description: tr("Connect Discord in Settings, or ask your crew to turn on notifications."),
-                      action: text,
-                      duration: text ? 15000 : undefined,
-                    });
-                  }
-                } catch (err) {
-                  console.error('[SoloRescue]', err);
-                  const text = emergencyTextAction(settings, profile.name || '', null);
-                  toast.error(tr("Could not get your location"), { action: text, duration: text ? 15000 : undefined });
-                } finally {
-                  setSoloRescueSending(false);
-                }
-                });
-              }}
-              disabled={soloRescueSending || soloRescueSent}
-              data-tip="rescue"
-              className={cn(
-                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
-                soloRescueSent && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
-              )}
-              title={soloRescueSent ? tr("Rescue call sent") : soloRescueSending ? tr("Sending…") : tr("Call for rescue (your crew and Discord)")}
-            >
-              <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
-            </button>
-          )}
+          {/* The anti-theft alarm, in the row with the other controls (the rescue button has
+              its own place beside the speed in landscape and its own row in portrait). */}
+          <AlarmButton variant="ride" />
 
           {/* Map button — opens Blacktop map overlay with destination + route */}
           <Button
@@ -1446,7 +1459,8 @@ export default function ActiveRide() {
             className="h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full bg-secondary hover:bg-muted touch-target"
             title={tr("Open map with route")}
           >
-            <MapIcon className="w-7 h-7 landscape:w-8 landscape:h-8" />
+            {/* The Button's own [&_svg]:size-4 would shrink it below its neighbours' icons. */}
+            <MapIcon className="!w-7 !h-7 landscape:!w-8 landscape:!h-8" />
           </Button>
 
           {/* Blacktop Radio — tap to play/pause, hold for the station dial */}
