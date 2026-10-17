@@ -19,6 +19,7 @@ import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergenc
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
 import { autoNameRide, storedRide } from '@/features/ride/lib/rideNames';
 import { useRideUpdates } from '@/features/ride/hooks/useRideUpdates';
+import { useRideOrientationLock } from '@/features/ride/hooks/useRideOrientationLock';
 import { useSpectateBroadcast } from '@/features/spectate';
 import { clearParkedSpot } from '@/lib/parkedSpot';
 import { useBatterySaver } from '@/features/ride/hooks/useBatterySaver';
@@ -58,6 +59,18 @@ import { PageTips } from '@/features/guide';
 const liveTerms = () => termsFor(getExperience().vehicles);
 
 // GPS Signal Indicator Component
+/** A rider's sound as it arrives (or this phone's mic as it goes out): a bar that moves with a voice. */
+function SoundBar({ level, label }: { level: number; label: string }) {
+  return (
+    <span className="flex items-center gap-1 text-[10px] text-muted-foreground" title={label}>
+      <span className="sr-only">{label}</span>
+      <span className="relative h-1 w-12 rounded-full bg-border/60 overflow-hidden" aria-hidden>
+        <span className="absolute inset-y-0 left-0 rounded-full bg-green-500 transition-[width] duration-300" style={{ width: `${Math.round(Math.max(0.04, level) * 100)}%` }} />
+      </span>
+    </span>
+  );
+}
+
 function GpsIndicator({ gpsStatus }: { gpsStatus: GpsStatus }) {
   const timeSinceUpdate = gpsStatus.lastUpdate 
     ? Math.floor((Date.now() - gpsStatus.lastUpdate) / 1000)
@@ -136,7 +149,7 @@ export default function ActiveRide() {
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended, createConvoy, joinConvoy, leaveConvoy } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id ?? undefined : undefined, { priority: convoy.isLeader });
-  const { isConnected, isMuted, speakingUsers, peerLinks, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
+  const { isConnected, isMuted, speakingUsers, peerLinks, mutedUsers, peerSound, micSound, playBlocked, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();
   // Riders who said they don't care about speed get distance as the hero number.
@@ -255,6 +268,8 @@ export default function ActiveRide() {
   useBatterySaver(rideState.isActive);
   // Opt-in: the radio voice reads out distance, time and average every few miles / km.
   useRideUpdates(rideState);
+  // At speed the screen holds the way it is, so leaning the bike can't turn it.
+  useRideOrientationLock(rideState.isActive, rideState.isPaused, rideState.currentSpeed);
   // Crew members can spectate an unlocked ride: the leader's phone sends it while someone watches.
   const spectators = useSpectateBroadcast(convoy.id ?? null, rideState.isActive, convoy.isLeader, () => {
     const pts = rideState.gpsPoints;
@@ -478,7 +493,7 @@ export default function ActiveRide() {
   // Sync lean angle to ride state for recording
   useEffect(() => {
     if (rideState.isActive && leanOn && leanAngle.isSupported) {
-      updateLeanAngle(leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight);
+      updateLeanAngle(leanAngle.currentLean);
     }
   }, [rideState.isActive, leanOn, leanAngle.isSupported, leanAngle.currentLean, leanAngle.maxLeanLeft, leanAngle.maxLeanRight, updateLeanAngle]);
 
@@ -1317,7 +1332,7 @@ export default function ActiveRide() {
                     <div>
                       <LeanAngleBar 
                         currentLean={leanAngle.currentLean}
-                        maxLean={leanAngle.maxLean}
+                        maxLean={Math.max(rideState.maxLeanLeft, rideState.maxLeanRight)}
                         hideMax={peaksHidden}
                         threshold={settings.leanAngleThreshold}
                         onReset={() => {
@@ -1343,7 +1358,7 @@ export default function ActiveRide() {
               <LeanAngleBar
                 vertical
                 currentLean={leanAngle.currentLean}
-                maxLean={leanAngle.maxLean}
+                maxLean={Math.max(rideState.maxLeanLeft, rideState.maxLeanRight)}
                         hideMax={peaksHidden}
                 threshold={settings.leanAngleThreshold}
                 onReset={() => {
@@ -1623,6 +1638,37 @@ export default function ActiveRide() {
                             <VolumeX className="w-2.5 h-2.5" />
                             {audioLink === 'connecting' ? tr("Connecting audio…") : tr("No audio link")}
                           </p>
+                        )}
+                        {/* The sound check (useVoiceChannel): what's really arriving from them, and their mic state. */}
+                        {isConnected && member.userId !== user?.id && audioLink === 'connected' && (
+                          mutedUsers.has(member.userId) ? (
+                            <p className="text-[10px] flex items-center gap-1 text-muted-foreground">
+                              <MicOff className="w-2.5 h-2.5" />
+                              {tr("Muted")}
+                            </p>
+                          ) : peerSound[member.userId]?.blocked ? (
+                            <button type="button" onClick={playBlocked} className="text-[10px] flex items-center gap-1 text-warning underline">
+                              <VolumeX className="w-2.5 h-2.5" />
+                              {tr("Tap to hear them")}
+                            </button>
+                          ) : peerSound[member.userId] && !peerSound[member.userId].arriving ? (
+                            <p className="text-[10px] flex items-center gap-1 text-warning">
+                              <VolumeX className="w-2.5 h-2.5" />
+                              {tr("No sound arriving")}
+                            </p>
+                          ) : peerSound[member.userId] ? (
+                            <SoundBar level={peerSound[member.userId].level} label={tr("Their sound")} />
+                          ) : null
+                        )}
+                        {isConnected && member.userId === user?.id && !isMuted && micSound && (
+                          micSound.sending ? (
+                            <SoundBar level={micSound.level} label={tr("Your mic")} />
+                          ) : (
+                            <p className="text-[10px] flex items-center gap-1 text-warning">
+                              <MicOff className="w-2.5 h-2.5" />
+                              {tr("Your mic isn't sending")}
+                            </p>
+                          )
                         )}
                         {(settings.showSpeedRankings && settings.speedFocusEnabled) && (
                           <p className="text-[10px] text-muted-foreground">

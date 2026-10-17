@@ -15,6 +15,7 @@ import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeed
 import { isThermal } from '@/lib/thermal';
 import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN } from '@/features/ride';
+import { glideMarker } from '@/lib/markerGlide';
 import { END_EVENT, LIVE_EVENT, spectateChannelName, type LiveRide } from '@/features/spectate/lib/live';
 
 /** No word from the rider for this long: say the signal's gone. */
@@ -33,7 +34,10 @@ const TRAIL_MAX = 900;
 export default function Spectate() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const startName = (useLocation().state as { name?: string } | null)?.name ?? '';
+  const opened = useLocation().state as { name?: string; riding?: boolean } | null;
+  const startName = opened?.name ?? '';
+  // Opened from a lobby: nothing arrives until the leader sets off.
+  const notStarted = opened?.riding === false;
   const { profile, user } = useProfile();
   const { settings } = useSettings();
   const box = useRef<HTMLDivElement>(null);
@@ -143,7 +147,8 @@ export default function Spectate() {
       markerRef.current = new maplibregl.Marker({ element: el, rotationAlignment: 'map' }).setLngLat(at).addTo(map);
       map.jumpTo({ center: at, zoom: 15.5 });
     } else {
-      markerRef.current.setLngLat(at);
+      // Updates come every 2 s: glide in step with the camera rather than hop.
+      glideMarker(markerRef.current, at[0], at[1], 1800);
     }
     markerRef.current.setRotation(live.heading ?? 0);
     markerRef.current.getElement().classList.toggle('spectate-marker-dir', live.heading != null);
@@ -215,7 +220,9 @@ export default function Spectate() {
               ? tr("{0}'s ride has ended.", [name])
               : quiet
                 ? tr("Lost {0}'s signal. Waiting for them to come back…", [name])
-                : tr("Waiting for {0}'s next update…", [name])}
+                : notStarted
+                  ? tr("Waiting for {0} to set off. The map follows them as soon as they do.", [name])
+                  : tr("Waiting for {0}'s next update…", [name])}
           </p>
         </div>
       )}

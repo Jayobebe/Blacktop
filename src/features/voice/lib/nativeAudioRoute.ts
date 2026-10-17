@@ -6,7 +6,7 @@ interface NativeAudioRoutePlugin {
   stopCommunicationAudio(): Promise<void>;
   startMediaButtons(): Promise<void>;
   stopMediaButtons(): Promise<void>;
-  addListener(event: 'mediaButton', cb: () => void): Promise<{ remove: () => Promise<void> }>;
+  addListener(event: 'mediaButton', cb: (e?: { key?: string; bluetooth?: boolean }) => void): Promise<{ remove: () => Promise<void> }>;
 }
 
 const NativeAudioRoute = registerPlugin<NativeAudioRoutePlugin>('NativeAudioRoute');
@@ -51,19 +51,34 @@ export async function stopNativeCommunicationAudio(): Promise<void> {
     console.warn('[Voice] Native audio route cleanup failed:', error);
   }
 }
+export type MediaButtonKey = 'play' | 'pause' | 'toggle';
+
+/** Convoy voice and the armed alarm can both want the buttons: the session stays up while either does. */
+let mediaButtonUsers = 0;
+
 /**
- * The Android app's own media session for convoy voice: a headset's or
- * intercom's play / pause button calls `onPress` (the web view has no media
- * session of its own to receive it). Returns a stop. A no-op elsewhere.
+ * The Android app's own media session: a headset's or intercom's play / pause
+ * button calls `onPress` (the web view has no media session of its own to
+ * receive it), with whether it came from a connected Bluetooth device (the
+ * alarm takes only those: wired earphones can be plugged into a parked phone
+ * without unlocking it). Returns a stop. A no-op elsewhere.
  */
-export async function listenToMediaButtons(onPress: () => void): Promise<() => void> {
+export async function listenToMediaButtons(onPress: (key: MediaButtonKey, bluetooth: boolean) => void): Promise<() => void> {
   if (Capacitor.getPlatform() !== 'android') return () => {};
   try {
-    const handle = await NativeAudioRoute.addListener('mediaButton', onPress);
+    // Which key: an app built before keys were sent says nothing, which is a toggle (and not known to be Bluetooth).
+    const handle = await NativeAudioRoute.addListener('mediaButton', (e) =>
+      onPress(e?.key === 'play' ? 'play' : e?.key === 'pause' ? 'pause' : 'toggle', e?.bluetooth === true),
+    );
+    mediaButtonUsers += 1;
     await NativeAudioRoute.startMediaButtons();
+    let stopped = false;
     return () => {
+      if (stopped) return;
+      stopped = true;
       void handle.remove();
-      void NativeAudioRoute.stopMediaButtons().catch(() => {});
+      mediaButtonUsers = Math.max(0, mediaButtonUsers - 1);
+      if (mediaButtonUsers === 0) void NativeAudioRoute.stopMediaButtons().catch(() => {});
     };
   } catch (error) {
     console.warn('[Voice] Media buttons unavailable:', error);

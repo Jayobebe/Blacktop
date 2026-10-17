@@ -18,6 +18,7 @@ import { checkAlarmPattern, MIN_PATTERN_DOTS, saveAlarmPattern } from '../lib/pa
 import { TamperDetector, type TamperEvent } from '../lib/detector';
 import { useTamperSensors } from '../hooks/useTamperSensors';
 import { PatternLock } from './PatternLock';
+import { listenToMediaButtons } from '@/features/voice/lib/nativeAudioRoute';
 
 /** Exit delay: mount the phone and step away. */
 const EXIT_DELAY_S = 5;
@@ -37,8 +38,49 @@ const MAX_TRIES = 3;
  */
 export function AlarmOverlay() {
   const alarm = useAlarm();
+  useIntercomDisarm(alarm.phase);
   if (alarm.phase === 'off') return null;
   return createPortal(alarm.phase === 'rescue' ? <RescueSirenScreen /> : <AlarmScreen />, document.body);
+}
+
+/** Two presses of the intercom's button within this long turn the alarm off. */
+const DOUBLE_PRESS_MS = 1500;
+
+/**
+ * The second way to turn the alarm off (opt-in, `alarmIntercomDisarm`, Android
+ * app only): press the play / pause button on the rider's Bluetooth intercom
+ * or headset twice within 1.5 s, while armed or sounding. Only presses that
+ * came from a connected Bluetooth device count (nativeAudioRoute): wired or
+ * USB-C earphones can be plugged into a parked phone without unlocking it.
+ */
+function useIntercomDisarm(phase: string) {
+  const { settings } = useSettings();
+  const listening = settings.alarmIntercomDisarm && (phase === 'armed' || phase === 'entry' || phase === 'alarm');
+  useEffect(() => {
+    if (!listening) return;
+    let last = 0;
+    let stop: (() => void) | null = null;
+    let gone = false;
+    void listenToMediaButtons((_key, bluetooth) => {
+      if (!bluetooth) return;
+      const now = Date.now();
+      if (now - last <= DOUBLE_PRESS_MS) {
+        last = 0;
+        disarmAlarm();
+        alarmChirp('disarm');
+        toast.success(tr("Alarm off from your intercom"));
+      } else {
+        last = now;
+      }
+    }).then((s) => {
+      if (gone) s();
+      else stop = s;
+    });
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, [listening]);
 }
 
 /** The siren and a buzz until stopped (the anti-theft alarm, and auto-rescue). */

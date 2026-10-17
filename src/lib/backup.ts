@@ -52,6 +52,7 @@ const LEFT_OUT = new Set([
   'blacktop_place_names',
   'blacktop_battery_saver',
   'blacktop_parked', // where the last ride ended: belongs to the moment
+  'blacktop_rotation_tip', // the one-time Rotation Lock tip on iPhones: belongs to the device
   'bt.map.offlinePacks.v1',
 ]);
 

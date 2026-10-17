@@ -30,6 +30,7 @@ interface Props {
 }
 
 const ROUTE = 'mini-route';
+/** Other riders' pins glide to each new position over this long (updates come every few seconds). */const GLIDE_MS = 2500;/** Where a gliding pin is now, easing out from where it was to where the rider is. */function pinAt(p: { lng: number; lat: number; fromLng: number; fromLat: number; t0: number }, now: number): [number, number] {  const t = p.t0 ? Math.min(1, (now - p.t0) / GLIDE_MS) : 1;  const k = 1 - (1 - t) * (1 - t);  return [p.fromLng + (p.lng - p.fromLng) * k, p.fromLat + (p.lat - p.fromLat) * k];}
 
 /**
  * The ride screen's mini map (inside RideDial): the Blacktop dark map in a
@@ -42,7 +43,9 @@ const ROUTE = 'mini-route';
 export default function RideMiniMap({ position, heading, zoom, route, members, accent, active }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<maplibregl.Map | null>(null);
-  const pins = useRef(new Map<string, { marker: maplibregl.Marker; el: HTMLDivElement; lng: number; lat: number }>());
+  // lng / lat is where a rider is; from* and t0 let the pin glide there from where it was (GLIDE_MS).
+  const pins = useRef(new Map<string, { marker: maplibregl.Marker; el: HTMLDivElement; lng: number; lat: number; fromLng: number; fromLat: number; t0: number }>());
+  const glideRaf = useRef(0);
   const start = useRef({ position, zoom });
 
   useEffect(() => {
@@ -140,9 +143,13 @@ export default function RideMiniMap({ position, heading, zoom, route, members, a
       if (!p) {
         const el = document.createElement('div');
         el.className = 'flex h-5 w-5 items-center justify-center rounded-full border-2 text-[9px] font-bold';
-        p = { el, lng: m.lng, lat: m.lat, marker: new maplibregl.Marker({ element: el }).setLngLat([m.lng, m.lat]).addTo(map) };
+        p = { el, lng: m.lng, lat: m.lat, fromLng: m.lng, fromLat: m.lat, t0: 0, marker: new maplibregl.Marker({ element: el }).setLngLat([m.lng, m.lat]).addTo(map) };
         pins.current.set(m.userId, p);
-      } else {
+      } else if (p.lng !== m.lng || p.lat !== m.lat) {
+        const now = pinAt(p, performance.now());
+        p.fromLng = now[0];
+        p.fromLat = now[1];
+        p.t0 = performance.now();
         p.lng = m.lng;
         p.lat = m.lat;
       }
@@ -153,7 +160,18 @@ export default function RideMiniMap({ position, heading, zoom, route, members, a
       p.el.style.color = c.text;
     }
     placePins();
+    // Glide the pins to their new places over the next few seconds, the map moving or not.
+    cancelAnimationFrame(glideRaf.current);
+    if (!isThermal() && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      const until = performance.now() + GLIDE_MS;
+      const step = () => {
+        placeRef.current();
+        if (performance.now() < until) glideRaf.current = requestAnimationFrame(step);
+      };
+      glideRaf.current = requestAnimationFrame(step);
+    }
   }, [map, members]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => cancelAnimationFrame(glideRaf.current), []);
 
   // A rider outside the circle sits on its rim, faded, in their direction (a radar), not lost off the edge.
   const placePins = () => {
@@ -162,13 +180,15 @@ export default function RideMiniMap({ position, heading, zoom, route, members, a
     const cx = box.clientWidth / 2;
     const cy = box.clientHeight / 2;
     const rim = Math.min(cx, cy) - 11;
+    const now = performance.now();
     pins.current.forEach((p) => {
-      const pt = map.project([p.lng, p.lat]);
+      const at = pinAt(p, now);
+      const pt = map.project(at);
       const dx = pt.x - cx;
       const dy = pt.y - cy;
       const d = Math.hypot(dx, dy);
       if (d <= rim) {
-        p.marker.setLngLat([p.lng, p.lat]);
+        p.marker.setLngLat(at);
         p.el.style.opacity = '1';
       } else {
         p.marker.setLngLat(map.unproject([cx + (dx / d) * rim, cy + (dy / d) * rim]));

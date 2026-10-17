@@ -11,12 +11,14 @@ import {
   listenToMediaButtons,
 } from '../lib/nativeAudioRoute';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
 import { duckVolume, onAudioDuckChange } from '@/lib/audioDuck';
 import { currentIceServers, loadIceServers, hasRelay } from '../lib/iceServers';
 import { tr } from '@/lib/i18n';
 import { sessionUser } from '@/lib/sessionUser';
 import { setTalkDucked } from '@/lib/audioDuck';
 import { setMediaKeys } from '@/lib/mediaKeys';
+import { isAlarmOn } from '@/features/alarm/lib/alarmStore';
 import { sceneCue } from '@/lib/radioFx';
 import { SpeechDetector } from '../lib/speechDetector';
 
@@ -44,6 +46,8 @@ interface VoicePresence {
   user_id?: string;
   joined_at?: number;
   priority?: boolean;
+  /** The mic is off: the others show "Muted" beside this rider, so silence isn't mistaken for a broken link. */
+  muted?: boolean;
 }
 
 /** The riders voice has room for, from everyone present on the channel. */
@@ -71,6 +75,20 @@ interface PeerConnection {
 
 export type PeerAudioLink = 'connecting' | 'connected' | 'failed';
 
+/**
+ * What's really happening to one rider's sound on this phone, read from the
+ * connection itself every second: whether their audio is arriving at all,
+ * how loud it is (0–1, so a voice shows as a moving bar), and whether this
+ * phone has been stopped from playing it (autoplay rules: a tap plays it).
+ * Tells a silent mic on their side from a link that carries nothing from a
+ * phone that won't play what arrives.
+ */
+export interface PeerSound {
+  arriving: boolean;
+  level: number;
+  blocked: boolean;
+}
+
 interface VoiceChannelState {
   isConnected: boolean;
   isMuted: boolean;
@@ -83,6 +101,12 @@ interface VoiceChannelState {
   peerLinks: Record<string, PeerAudioLink>;
   /** Voice is full and this rider is waiting for a slot: connected to the channel, with no audio links. */
   waiting: boolean;
+  /** Other riders in voice with their mic off (from the channel's presence). */
+  mutedUsers: Set<string>;
+  /** Per rider: is their sound arriving, how loud, can this phone play it (see PeerSound). */
+  peerSound: Record<string, PeerSound>;
+  /** This phone's own mic as it's being sent: whether anything is going out, and how loud. */
+  micSound: { sending: boolean; level: number } | null;
 }
 
 // ICE servers (STUN + fetched TURN relay credentials) live in ../lib/iceServers.
@@ -94,6 +118,14 @@ try {
   localStorage.removeItem('blacktop_audio_input');
   localStorage.removeItem('blacktop_audio_output');
 } catch { /* storage unavailable */ }
+
+/**
+ * Set when the headset's mic turned out to send nothing but digital silence (an
+ * intercom whose call audio never started: the mic opens but carries nothing),
+ * which left riders unheard while they could hear everyone. Voice then uses the
+ * phone's own mic until the app is restarted.
+ */
+let headsetMicFailed = false;
 
 /** The phone's own mics and the browser's stand-ins, never what a rider means by "my headset". */
 const PHONE_MIC = /earpiece|speakerphone|built-?in|iphone|ipad|default|communications|phone mic|internal/i;
@@ -110,12 +142,45 @@ const WIRED_MIC = /wired|usb|headphone|earphone|lightning|type-?c/i;
  * before that this answers nothing and the call starts on the default.
  */
 async function pickVoiceMic(): Promise<string | undefined> {
+  // A headset mic that sent pure silence this session: the phone's own mic from now on.
+  if (headsetMicFailed) return undefined;
   try {
     const inputs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput' && d.deviceId && d.label);
     const named = inputs.filter((d) => !PHONE_MIC.test(d.label));
-    return (named.find((d) => BLUETOOTH_MIC.test(d.label)) ?? named.find((d) => WIRED_MIC.test(d.label)))?.deviceId;
+    const headset = named.find((d) => BLUETOOTH_MIC.test(d.label)) ?? named.find((d) => WIRED_MIC.test(d.label));
+    if (headset) return headset.deviceId;
+    // No headset, Android in a browser (the installed web app included): Chrome lists the phone's
+    // own mic as "Speakerphone" and "Headset earpiece" and plays the call's sound from the matching
+    // speaker. Left to its default, some phones chose the earpiece, so riders with the phone on a
+    // mount heard nothing while they were heard. The Android app routes itself (NativeAudioRoute).
+    if (isAndroidBrowser()) return inputs.find((d) => /speakerphone|speaker/i.test(d.label) && !/earpiece/i.test(d.label))?.deviceId;
+    return undefined;
   } catch {
     return undefined;
+  }
+}
+
+/** Android in a browser or installed web app, not the Android app (which routes audio natively). */
+function isAndroidBrowser(): boolean {
+  return /android/i.test(navigator.userAgent) && Capacitor.getPlatform() === 'web';
+}
+
+/**
+ * Where riders' voices play. Android in a browser: a Bluetooth headset, else wired earphones,
+ * else the loudspeaker, never the earpiece (see pickVoiceMic); where the browser doesn't list
+ * its outputs, or anywhere else, the system default ('').
+ */
+async function pickVoiceOutput(): Promise<string> {
+  if (!isAndroidBrowser()) return '';
+  try {
+    const outs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audiooutput' && d.deviceId && d.label);
+    const pick =
+      outs.find((d) => BLUETOOTH_MIC.test(d.label) && !/earpiece/i.test(d.label)) ??
+      outs.find((d) => WIRED_MIC.test(d.label) && !/earpiece/i.test(d.label)) ??
+      outs.find((d) => /speaker/i.test(d.label) && !/earpiece/i.test(d.label));
+    return pick?.deviceId ?? '';
+  } catch {
+    return '';
   }
 }
 
@@ -244,6 +309,9 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     isConnected: false,
     isMuted: true,
     speakingUsers: new Set(),
+    mutedUsers: new Set(),
+    peerSound: {},
+    micSound: null,
     peerLinks: {},
     waiting: false,
   });
@@ -520,12 +588,14 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
   // the loudspeaker without one). Called when an element is created and when a
   // headset connects or drops mid-ride.
   const applyOutputDevice = useCallback(() => {
-    audioElementsRef.current.forEach((audio) => {
-      if (!('setSinkId' in audio)) return;
-      // '' is the system default output.
-      (audio as HTMLAudioElement & { setSinkId(id: string): Promise<void> })
-        .setSinkId('')
-        .catch((e: unknown) => console.warn('[Voice] Failed to reset the output device:', e));
+    void pickVoiceOutput().then((sink) => {
+      audioElementsRef.current.forEach((audio) => {
+        if (!('setSinkId' in audio)) return;
+        // '' is the system default output (which, in a call, follows the headset).
+        (audio as HTMLAudioElement & { setSinkId(id: string): Promise<void> })
+          .setSinkId(sink)
+          .catch((e: unknown) => console.warn('[Voice] Failed to set the output device:', e));
+      });
     });
   }, []);
 
@@ -533,7 +603,16 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
   // using the currently preferred input and replaces the outgoing track on
   // every peer, so a Bluetooth intercom connecting (or dropping) mid-ride
   // doesn't leave the rider silent.
-  const swapInputDevice = useCallback(async () => {
+  // One swap at a time: a headset connecting fires several device changes, and two swaps
+  // racing each other could leave a link holding a mic the other one had already stopped.
+  const swapChainRef = useRef<Promise<void>>(Promise.resolve());
+  const swapInputDevice = useCallback(() => {
+    const next = swapChainRef.current.then(() => swapInputDeviceNow()).catch((e) => console.warn('[Voice] Mic swap failed:', e));
+    swapChainRef.current = next;
+    return next;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const swapInputDeviceNow = async () => {
     if (!localStreamRef.current) return;
 
     await refreshNativeCommunicationAudio();
@@ -556,24 +635,42 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     newTrack.enabled = !isMutedRef.current;
     console.log('[Voice] Swapped microphone to:', newTrack.label);
 
-    peersRef.current.forEach(({ pc }, remoteUserId) => {
-      pc.getSenders()
-        .filter((s) => s.track?.kind === 'audio' || !s.track)
-        .forEach((sender) => {
-          sender.replaceTrack(newTrack).catch((e) =>
-            console.warn(`[Voice] replaceTrack failed for ${remoteUserId}:`, e)
-          );
-        });
-    });
-
+    // Every link takes the new mic before the old one is stopped: a link whose swap failed
+    // would otherwise be left sending a stopped track, which the other rider hears as silence.
     const oldStream = localStreamRef.current;
     localStreamRef.current = stream;
+    await sendCurrentMic();
     oldStream.getTracks().forEach((t) => t.stop());
 
     // Re-point the speaking-detection analyser at the new stream.
     stopAudioLevelMonitoring();
     startAudioLevelMonitoring();
-  }, [startAudioLevelMonitoring, stopAudioLevelMonitoring]);
+  };
+
+  /**
+   * Makes sure every link is sending the mic in use now (tried twice). Also run by the sound
+   * check every second, so a link left on an old or ended track is put right within a moment.
+   */
+  const sendCurrentMic = useCallback(async () => {
+    const track = localStreamRef.current?.getAudioTracks()[0];
+    if (!track) return;
+    const jobs: Promise<unknown>[] = [];
+    peersRef.current.forEach(({ pc }, remoteUserId) => {
+      pc.getSenders()
+        .filter((s) => s.track?.kind === 'audio' || !s.track)
+        .forEach((sender) => {
+          if (sender.track === track) return;
+          jobs.push(
+            sender.replaceTrack(track).catch(async (e) => {
+              console.warn(`[Voice] replaceTrack failed for ${remoteUserId}, trying again:`, e);
+              await new Promise((r) => setTimeout(r, 300));
+              await sender.replaceTrack(track).catch((e2) => console.warn(`[Voice] replaceTrack failed again for ${remoteUserId}:`, e2));
+            }),
+          );
+        });
+    });
+    await Promise.all(jobs);
+  }, []);
 
   // Keep the late-bound refs (used inside pc callbacks) pointing at the
   // latest implementations.
@@ -1352,7 +1449,10 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
         .on('presence', { event: 'sync' }, () => {
           const presenceState = channel.presenceState();
           console.log('[Voice] Presence sync:', presenceState);
-          applySlots(Object.values(presenceState).flat() as VoicePresence[]);
+          const present = Object.values(presenceState).flat() as VoicePresence[];
+          applySlots(present);
+          const muted = new Set(present.filter((p) => p.muted && p.user_id && p.user_id !== user.id).map((p) => p.user_id as string));
+          setState((prev) => ({ ...prev, mutedUsers: muted }));
         });
 
       await channel.subscribe(async (status) => {
@@ -1361,7 +1461,7 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
           
           // Track our presence
           if (!joinedAtRef.current) joinedAtRef.current = Date.now();
-          await channel.track({ user_id: user.id, joined_at: joinedAtRef.current, priority: priorityRef.current });
+          await channel.track({ user_id: user.id, joined_at: joinedAtRef.current, priority: priorityRef.current, muted: isMutedRef.current });
           
           // Announce we joined
           channel.send({
@@ -1451,6 +1551,9 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
       isConnected: false,
       isMuted: true,
       speakingUsers: new Set(),
+      mutedUsers: new Set(),
+      peerSound: {},
+      micSound: null,
       peerLinks: {},
       waiting: false,
     });
@@ -1513,6 +1616,13 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
       console.warn('[Voice] Failed to persist mute state:', e);
     }
     
+    // Tell the others: they show "Muted" beside this rider while the mic is off.
+    if (channelRef.current && userIdRef.current) {
+      void channelRef.current
+        .track({ user_id: userIdRef.current, joined_at: joinedAtRef.current, priority: priorityRef.current, muted: newMutedState })
+        .catch(() => {});
+    }
+
     // Clear own speaking state when muting
     if (newMutedState && userIdRef.current) {
       isSpeakingRef.current = false;
@@ -1625,6 +1735,97 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     };
   }, [state.isConnected]);
 
+  // The sound check: once a second, read each link's own statistics (nothing goes over the
+  // network) to say whether a rider's audio is arriving, how loud, and whether this phone is
+  // playing it, and whether this phone's mic is actually sending. One-way audio ("they hear me,
+  // I can't hear them") otherwise looks the same from every side.
+  useEffect(() => {
+    if (!state.isConnected) return;
+    type Seen = { bytes: number; energy: number; duration: number };
+    const lastIn = new Map<string, Seen>();
+    let lastOut: Seen | null = null;
+    // Seconds in a row the unmuted mic has sent pure digital silence, and the fixes tried.
+    let deadFor = 0;
+    let micRestarts = 0;
+    const levelFrom = (now: Seen, before: Seen | undefined | null, reported?: number) => {
+      if (typeof reported === 'number') return reported;
+      if (!before || now.duration <= before.duration) return 0;
+      return Math.sqrt(Math.max(0, now.energy - before.energy) / (now.duration - before.duration));
+    };
+    const tick = async () => {
+      const sound: Record<string, PeerSound> = {};
+      let out: Seen = { bytes: 0, energy: 0, duration: 0 };
+      let outLevel: number | undefined;
+      for (const [id, { pc }] of peersRef.current) {
+        try {
+          const stats = await pc.getStats();
+          let inbound: Seen | null = null;
+          let inLevel: number | undefined;
+          stats.forEach((r: RTCStats & Record<string, unknown>) => {
+            if (r.type === 'inbound-rtp' && r.kind === 'audio') {
+              inbound = { bytes: Number(r.bytesReceived) || 0, energy: Number(r.totalAudioEnergy) || 0, duration: Number(r.totalSamplesDuration) || 0 };
+              if (typeof r.audioLevel === 'number') inLevel = r.audioLevel;
+            } else if (r.type === 'outbound-rtp' && r.kind === 'audio') {
+              out = { ...out, bytes: out.bytes + (Number(r.bytesSent) || 0) };
+            } else if (r.type === 'media-source' && r.kind === 'audio') {
+              out = { ...out, energy: Number(r.totalAudioEnergy) || 0, duration: Number(r.totalSamplesDuration) || 0 };
+              if (typeof r.audioLevel === 'number') outLevel = r.audioLevel;
+            }
+          });
+          const seen = inbound as Seen | null;
+          const before = lastIn.get(id);
+          const arriving = !!seen && !!before && seen.bytes > before.bytes;
+          if (seen) lastIn.set(id, seen);
+          const audio = audioElementsRef.current.get(id);
+          sound[id] = {
+            arriving,
+            level: seen ? Math.min(1, levelFrom(seen, before, inLevel) * 3) : 0,
+            blocked: !!audio && audio.paused && arriving,
+          };
+        } catch {
+          /* a link closing as it's read */
+        }
+      }
+      const sending = !!lastOut && out.bytes > lastOut.bytes;
+      const micLevel = Math.min(1, levelFrom(out, lastOut, outLevel) * 3);
+      // A live mic is never perfectly silent (room noise survives noise suppression as a
+      // trace); a mic that opened but carries nothing reads exactly zero. Five seconds of
+      // that while unmuted: move to the phone's own mic, or restart it, at most twice a connection.
+      const measured = !!lastOut && out.duration > lastOut.duration;
+      const silent = measured && out.energy - (lastOut as Seen).energy <= 1e-10;
+      const track = localStreamRef.current?.getAudioTracks()[0];
+      const live = !!track && track.readyState === 'live' && track.enabled && !isMutedRef.current && !waitingRef.current;
+      deadFor = live && silent ? deadFor + 1 : 0;
+      if (deadFor >= 5 && micRestarts < 2) {
+        deadFor = 0;
+        micRestarts += 1;
+        const onHeadset = !!track?.getSettings?.().deviceId && !headsetMicFailed;
+        headsetMicFailed = true;
+        console.warn('[Voice] The mic sent only silence: switching to the phone mic', track?.label);
+        toast.warning(onHeadset ? tr("Your mic sent no sound, so voice switched to the phone's own mic.") : tr("Your mic sent no sound, so voice restarted it."));
+        void swapInputDevice();
+      }
+      // Every link sending the mic in use now (a failed swap could leave one on a stopped track).
+      void sendCurrentMic();
+      lastOut = out;
+      setState((prev) => ({ ...prev, peerSound: sound, micSound: { sending: sending && !isMutedRef.current, level: isMutedRef.current ? 0 : micLevel } }));
+    };
+    const timer = window.setInterval(() => void tick(), 1000);
+    return () => {
+      window.clearInterval(timer);
+      setState((prev) => ({ ...prev, peerSound: {}, micSound: null }));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.isConnected]);
+
+  /** A rider's sound arrived but this phone wasn't allowed to play it: a tap plays it. */
+  const playBlocked = useCallback(() => {
+    unlockIOSAudio();
+    audioElementsRef.current.forEach((audio) => {
+      if (audio.paused) void audio.play().catch((e) => console.warn('[Voice] Tap to play failed:', e?.name));
+    });
+  }, []);
+
   // If the active mic track dies (intercom powered off, OS reclaimed it),
   // transparently grab a replacement rather than going silent.
   useEffect(() => {
@@ -1648,15 +1849,22 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
   const mutedNowRef = useRef(true);
   useEffect(() => {
     if (!state.isConnected) return;
-    const press = () => {
+    // Play only ever unmutes and pause only ever mutes: some intercoms send "play" or "pause"
+    // by themselves when they connect or start a call, which a plain toggle turned into a mute
+    // nobody chose. The one-button keys (togglemicrophone, a headset's hook) still toggle.
+    const press = (want?: 'on' | 'off') => {
+      // The armed alarm owns the buttons (a double press can turn it off): voice leaves them be.
+      if (isAlarmOn()) return;
       const unmuting = mutedNowRef.current;
+      if (want === 'on' && !unmuting) return;
+      if (want === 'off' && unmuting) return;
       toggleMuteRef.current();
       sceneCue(unmuting ? 'radioIn' : 'radioOut');
     };
-    setMediaKeys('voice', { play: press, pause: press, togglemicrophone: press });
+    setMediaKeys('voice', { play: () => press('on'), pause: () => press('off'), togglemicrophone: () => press() });
     let stopNative: (() => void) | null = null;
     let gone = false;
-    void listenToMediaButtons(press).then((stop) => {
+    void listenToMediaButtons((key) => press(key === 'play' ? 'on' : key === 'pause' ? 'off' : undefined)).then((stop) => {
       if (gone) stop();
       else stopNative = stop;
     });
@@ -1716,5 +1924,6 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
     disconnect,
     toggleMute,
     getAudioStreams,
+    playBlocked,
   };
 }

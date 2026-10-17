@@ -808,6 +808,21 @@ export default function Settings() {
                   {tr("Reset")}
                 </Button>
               </div>
+              {/* Android app only: it alone can tell a Bluetooth intercom's press from wired earphones. */}
+              {isNativeApp() && /Android/i.test(navigator.userAgent) && (
+                <div className="flex items-center justify-between gap-3 mt-3">
+                  <div className="pr-2">
+                    <p className="text-sm font-medium">{tr("Turn off with my intercom")}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {tr("Press play / pause on your Bluetooth intercom or headset twice, quickly, to turn the alarm off without drawing the pattern. Only works with a Bluetooth device connected to this phone.")}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.alarmIntercomDisarm}
+                    onCheckedChange={(v) => updateSetting('alarmIntercomDisarm', v)}
+                  />
+                </div>
+              )}
               {IS_IOS && (
                 <p className="text-[11px] text-muted-foreground/80 mt-3">
                   {tr("On iPhone, the lock can be swiped away. To stop that, turn on Guided Access (Settings → Accessibility → Guided Access), then triple-click the side button after arming.")}

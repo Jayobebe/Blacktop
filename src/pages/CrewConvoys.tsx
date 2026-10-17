@@ -201,30 +201,29 @@ export default function CrewConvoys() {
               </ul>
             </div>
 
-            {/* A ride under way can be watched live, following its leader, without joining it. */}
-            {selected.is_riding && (
+            {/* Join, or watch it live without joining: the map follows the leader once the ride sets off. */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => join(selected.code)}
+                disabled={joining || locked}
+                className="py-3 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors disabled:opacity-50"
+              >
+                {joining ? tr("Joining...") : tr("Join Convoy")}
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   if (demoBlocked()) return;
-                  navigate(`/spectate/${selected.id}`, { state: { name: selected.leader_name } });
+                  navigate(`/spectate/${selected.id}`, { state: { name: selected.leader_name, riding: selected.is_riding } });
                 }}
                 disabled={locked}
-                className="w-full py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
+                className="py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Eye className="w-4 h-4" />
                 {tr("Spectate")}
               </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => join(selected.code)}
-              disabled={joining || locked}
-              className="w-full py-3 rounded-xl border border-accent text-accent text-sm font-semibold uppercase tracking-widest hover:bg-accent/10 transition-colors disabled:opacity-50"
-            >
-              {joining ? tr("Joining...") : tr("Join Convoy")}
-            </button>
+            </div>
             {locked && <DemoLockNote />}
           </div>
         </div>

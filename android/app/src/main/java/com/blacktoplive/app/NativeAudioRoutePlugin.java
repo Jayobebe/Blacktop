@@ -2,6 +2,7 @@ package com.blacktoplive.app;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.media.AudioManager;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Build;
+import android.view.InputDevice;
 import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
@@ -165,7 +167,12 @@ public class NativeAudioRoutePlugin extends Plugin {
                             case KeyEvent.KEYCODE_MEDIA_PLAY:
                             case KeyEvent.KEYCODE_MEDIA_PAUSE:
                             case KeyEvent.KEYCODE_HEADSETHOOK:
-                                notifyListeners("mediaButton", new JSObject());
+                                // Which key: play only unmutes and pause only mutes on the web side.
+                                JSObject pressed = new JSObject();
+                                int code = key.getKeyCode();
+                                pressed.put("key", code == KeyEvent.KEYCODE_MEDIA_PLAY ? "play" : code == KeyEvent.KEYCODE_MEDIA_PAUSE ? "pause" : "toggle");
+                                pressed.put("bluetooth", fromBluetooth(key));
+                                notifyListeners("mediaButton", pressed);
                                 return true;
                             default:
                                 return super.onMediaButtonEvent(intent);
@@ -190,6 +197,55 @@ public class NativeAudioRoutePlugin extends Plugin {
                 mediaSession.release();
                 mediaSession = null;
             }
+            call.resolve(new JSObject());
+        });
+    }
+
+    /**
+     * Whether a media key came from a Bluetooth headset or intercom: one is
+     * connected for audio, and the key didn't come from a real wired input
+     * device (Bluetooth's AVRCP keys arrive with no device or a virtual one;
+     * earphones on the jack or USB-C have their own). The armed alarm only
+     * takes these, since earphones can be plugged into a parked phone.
+     */
+    private boolean fromBluetooth(KeyEvent key) {
+        InputDevice dev = key.getDevice();
+        if (dev != null && !dev.isVirtual()) {
+            String name = dev.getName() == null ? "" : dev.getName().toLowerCase();
+            if (!name.contains("avrcp") && !name.contains("bluetooth")) return false;
+        }
+        AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        if (am == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false;
+        for (AudioDeviceInfo d : am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+            int t = d.getType();
+            if (t == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || t == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) return true;
+            if (Build.VERSION.SDK_INT >= 31 && (t == AudioDeviceInfo.TYPE_BLE_HEADSET || t == AudioDeviceInfo.TYPE_BLE_SPEAKER)) return true;
+        }
+        return false;
+    }
+
+    /** What the activity asked for before a ride locked it, put back on unlock. */
+    private Integer orientationBeforeLock = null;
+
+    /**
+     * Holds the screen the way it is now (a ride at speed: leaning the bike
+     * mustn't turn the screen). Kept here with the other ride-time device
+     * controls rather than in a plugin of its own.
+     */
+    @PluginMethod
+    public void lockScreenOrientation(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            if (orientationBeforeLock == null) orientationBeforeLock = getActivity().getRequestedOrientation();
+            getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+            call.resolve(new JSObject());
+        });
+    }
+
+    @PluginMethod
+    public void unlockScreenOrientation(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            getActivity().setRequestedOrientation(orientationBeforeLock != null ? orientationBeforeLock : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+            orientationBeforeLock = null;
             call.resolve(new JSObject());
         });
     }

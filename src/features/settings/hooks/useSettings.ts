@@ -59,6 +59,8 @@ export interface AppSettings {
   hazardVoiceEnabled: boolean;
   /** Anti-theft alarm: how much movement of the parked vehicle it takes. */
   alarmSensitivity: 'low' | 'normal' | 'high';
+  /** Opt-in, Android app: two presses of a Bluetooth intercom's play / pause turn the armed alarm off. */
+  alarmIntercomDisarm: boolean;
   /** Interface sounds: taps, toggles, sliders, dialogs and confirmations. Alerts (hazards, cameras, crash check, alarm, directions) sound regardless. */
   uiSoundsEnabled: boolean;
   /** Home asks "On the move?" (start tracking / open the map) when the app is open and the rider sets off. Only where location is already allowed. */
@@ -175,6 +177,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   navVoiceStyle: 'standard',
   hazardVoiceEnabled: true,
   alarmSensitivity: 'normal',
+  alarmIntercomDisarm: false,
   uiSoundsEnabled: true,
   setOffPromptEnabled: false,
   cardArtStyle: false,

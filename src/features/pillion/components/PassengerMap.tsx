@@ -18,6 +18,7 @@ import { useProfile } from '@/features/profile';
 import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { tr } from '@/lib/i18n';
+import { glideMarker } from '@/lib/markerGlide';
 
 /** A passenger who pans away gets the map to themselves for this long after their last touch. */
 const HOLD_AFTER_TOUCH_MS = 8000;
@@ -97,12 +98,15 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
     for (const m of shown) {
       let p = pins.current.get(m.userId);
       if (!p) {
+        // MapLibre positions the outer box by its transform, so the badge (and its speaking scale) is inside it.
+        const box = document.createElement('div');
         const el = document.createElement('div');
         el.className = 'flex h-8 w-8 items-center justify-center rounded-full border-2 text-[13px] font-bold transition-transform';
-        p = { el, marker: new maplibregl.Marker({ element: el }).setLngLat([m.currentLng, m.currentLat]).addTo(map) };
+        box.appendChild(el);
+        p = { el, marker: new maplibregl.Marker({ element: box }).setLngLat([m.currentLng, m.currentLat]).addTo(map) };
         pins.current.set(m.userId, p);
       } else {
-        p.marker.setLngLat([m.currentLng, m.currentLat]);
+        glideMarker(p.marker, m.currentLng, m.currentLat);
       }
       const c = getMemberColorStyles(m.accentColor);
       const talking = speaking.has(m.userId);

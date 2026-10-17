@@ -37,6 +37,32 @@ const MIN_MOVING_SPEED_FOR_SAVE_MPH = 5;
 
 const RIDE_STATE_KEY = 'blacktop_active_ride';
 
+/**
+ * Max lean only counts real cornering, not the phone being picked up or turned
+ * on its mount: the bike has to be moving at LEAN_MIN_MPH or more (about 10 km/h;
+ * nothing leans much slower, and handling the phone mostly happens stopped or
+ * walking), and an angle has to be held for LEAN_HOLD_MS (a hand flicks the
+ * phone past an angle; a corner stays there). What's held is the smallest lean,
+ * on one side, across that window.
+ */
+const LEAN_MIN_MPH = 6;
+const LEAN_HOLD_MS = 300;
+let leanWindow: Array<{ t: number; a: number }> = [];
+function heldLean(lean: number, speedMph: number, now: number): number {
+  if (!(speedMph >= LEAN_MIN_MPH)) {
+    leanWindow = [];
+    return 0;
+  }
+  leanWindow.push({ t: now, a: lean });
+  while (leanWindow.length && now - leanWindow[0].t > LEAN_HOLD_MS) leanWindow.shift();
+  if (now - leanWindow[0].t < LEAN_HOLD_MS * 0.8) return 0;
+  const right = leanWindow.every((s) => s.a > 0);
+  const left = leanWindow.every((s) => s.a < 0);
+  if (!right && !left) return 0;
+  const least = Math.min(...leanWindow.map((s) => Math.abs(s.a)));
+  return right ? least : -least;
+}
+
 // Battery optimization: track consecutive stationary readings
 let stationaryCount = 0;
 const STATIONARY_THRESHOLD = 3; // Number of zero-speed readings before throttling
@@ -1199,7 +1225,9 @@ export function useActiveRide(convoyId?: string | null) {
   const setRidePaused = useCallback((paused: boolean) => setActiveRidePaused(paused), []);
 
   // Update lean angle during ride (called from components using useLeanAngle)
-  const updateLeanAngle = useCallback((currentLean: number, maxLeanLeft: number, maxLeanRight: number) => {
+  // The sensor's own maximum (the last two arguments) is no longer used: picking the phone up or
+  // turning it set it. A ride's max lean is now only what heldLean() lets through.
+  const updateLeanAngle = useCallback((currentLean: number, _maxLeanLeft?: number, _maxLeanRight?: number) => {
     if (!rideState.isActive || isPaused) return;
     
     // Store current lean for GPS point recording
@@ -1210,11 +1238,12 @@ export function useActiveRide(convoyId?: string | null) {
     const shouldSample = now - lastLeanSampleTime >= LEAN_SAMPLE_INTERVAL - SAMPLE_JITTER_MS;
     
     setRideState(prev => {
+      const held = heldLean(currentLean, prev.currentSpeed, now);
       const newState = {
         ...prev,
         currentLean,
-        maxLeanLeft: Math.max(prev.maxLeanLeft, maxLeanLeft),
-        maxLeanRight: Math.max(prev.maxLeanRight, maxLeanRight),
+        maxLeanLeft: held < 0 ? Math.max(prev.maxLeanLeft, -held) : prev.maxLeanLeft,
+        maxLeanRight: held > 0 ? Math.max(prev.maxLeanRight, held) : prev.maxLeanRight,
       };
       
       // Add lean sample at 10Hz rate

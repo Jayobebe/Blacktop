@@ -110,12 +110,22 @@ import { W3WAddress } from '@/components/W3WAddress';
 import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
 import { ParkedSpotPin } from './ParkedSpotPin';
+import { glideMarker } from '@/lib/markerGlide';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * A convoy rider's pin: an empty box MapLibre positions (it owns that element's
+ * transform) holding the round letter badge, which carries every style. The
+ * speaking scale used to be set on the box itself, which replaced MapLibre's
+ * position with a bare scale: every member update slid the pin towards the
+ * map's corner for a moment before the next redraw put it back.
+ */
 function createMemberMarkerElement(): HTMLDivElement {
+  const box = document.createElement("div");
   const el = document.createElement("div");
+  box.appendChild(el);
   el.style.width = "32px";
   el.style.height = "32px";
   el.style.borderRadius = "50%";
@@ -127,7 +137,7 @@ function createMemberMarkerElement(): HTMLDivElement {
   el.style.fontFamily = "inherit";
   el.style.border = "2px solid transparent";
   el.style.transition = "box-shadow 150ms ease, transform 150ms ease";
-  return el;
+  return box;
 }
 
 /**
@@ -156,11 +166,13 @@ function safeBearing(heading: number | null, map: MapLibreMap): number {
 }
 
 function applyMemberMarkerStyle(
-  el: HTMLDivElement,
+  box: HTMLDivElement,
   name: string,
   colorStyles: ReturnType<typeof getMemberColorStyles>,
   isSpeaking: boolean,
 ) {
+  // The badge inside the box MapLibre moves (see createMemberMarkerElement).
+  const el = box.firstElementChild as HTMLDivElement;
   el.textContent = (name.trim()[0] || "?").toUpperCase();
   el.style.backgroundColor = colorStyles.bg;
   el.style.borderColor = colorStyles.border;
@@ -910,7 +922,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         entry = { marker, el };
         memberMarkersRef.current.set(member.userId, entry);
       } else {
-        entry.marker.setLngLat([member.currentLng, member.currentLat]);
+        // Positions arrive every few seconds: glide between them rather than hop.
+        glideMarker(entry.marker, member.currentLng, member.currentLat);
       }
 
       applyMemberMarkerStyle(entry.el, member.name, colorStyles, isSpeaking);
@@ -1301,7 +1314,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         marker = new maplibregl.Marker({ element: el }).setLngLat([r.lng, r.lat]).addTo(map);
         markers.set(r.userId, marker);
       } else {
-        marker.setLngLat([r.lng, r.lat]);
+        glideMarker(marker, r.lng, r.lat);
       }
       const el = marker.getElement();
       el.title = label;
