@@ -92,6 +92,7 @@ import {
   win,
   type Icon,
   type Pt,
+  Mica,
 } from '@/components/scene/kit';
 
 /*
@@ -154,8 +155,6 @@ export function IntroScene() {
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, INTRO_P)}>
-        <T x={160} y={56} anchor="middle" size={30} weight={800} spacing={6}>BLACKTOP</T>
-        <rect x={160 - 72 * underline} y={64} width={144 * underline} height={1.6} rx={0.8} style={{ fill: A }} />
         <Road d={INTRO_ROAD.d} w={9} />
         <path d={INTRO_ROAD.slice(0, f, 70)} fill="none" style={{ stroke: A }} strokeWidth={2.2} strokeLinecap="round" opacity={0.85} />
         {INTRO_STOPS.map((s, i) => {
@@ -179,6 +178,10 @@ export function IntroScene() {
           );
         })}
         <Arrow p={rider.p} a={rider.a} color={A} glow={id('glow')} />
+        {/* The title above everything that moves, on its own faded backing. */}
+        <Mica id={id} x={44} y={20} w={232} h={62} />
+        <T x={160} y={56} anchor="middle" size={30} weight={800} spacing={6}>BLACKTOP</T>
+        <rect x={160 - 72 * underline} y={64} width={144 * underline} height={1.6} rx={0.8} style={{ fill: A }} />
         <Chip x={8} y={8} label={tr("No signup required")} I={Lock} opacity={easeOut((t - 8.2) / 0.5)} />
       </g>
       <Vignette id={id} />
@@ -838,6 +841,36 @@ export function SafetyScene() {
       <Defs id={id} />
       <Base id={id} />
       {t < SF_P ? <RescueAct t={t} id={id} /> : <AlarmAct t={t - SF_P} id={id} />}
+      <Vignette id={id} />
+    </Frame>
+  );
+}
+
+/** The rescue act on its own (the tour gives it a chapter of its own). */
+export const RESCUE_SECONDS = SF_P;
+export function RescueScene() {
+  const id = useIds();
+  const t = loopT(useSceneTime(0), SF_P);
+  return (
+    <Frame sound={{ t, cues: SF_CUES.filter(([at]) => at < SF_P) }}>
+      <Defs id={id} />
+      <Base id={id} />
+      <RescueAct t={t} id={id} />
+      <Vignette id={id} />
+    </Frame>
+  );
+}
+
+/** The anti-theft act on its own. */
+export const ALARM_SECONDS = AL_P;
+export function AlarmScene() {
+  const id = useIds();
+  const t = loopT(useSceneTime(0), AL_P);
+  return (
+    <Frame sound={{ t, cues: SF_CUES.filter(([at]) => at >= SF_P).map(([at, kind]): SceneCue => [at - SF_P, kind]) }}>
+      <Defs id={id} />
+      <Base id={id} />
+      <AlarmAct t={t} id={id} />
       <Vignette id={id} />
     </Frame>
   );

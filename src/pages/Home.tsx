@@ -26,6 +26,7 @@ import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
 import { PageTips } from '@/features/guide';
+import { TourOffer } from '@/components/TourOffer';
 import { WARP_SWITCH_MS, startWarp } from '@/lib/warp';
 import { isThermal } from '@/lib/thermal';
 
@@ -596,6 +597,8 @@ export default function Home() {
           { target: '[role="tablist"]', text: tr("Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.") },
         ]}
       />
+      {/* Just set up: offer the two-minute tour once (the tips wait for it). */}
+      <TourOffer blocked={deckKey !== 'home' || arrangingStickers || rideState.isActive} />
       {/* Things nobody finds by themselves: a set of its own, so riders past the first tips still get it. */}
       <PageTips
         page="home-more"

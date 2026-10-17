@@ -29,7 +29,7 @@ const PART = 'virtual:i18n-dict/';
 
 /** Files whose text can wait (paths relative to src, forward slashes). */
 const EXTRA = [
-  /^pages\/(Terms|PrivacyPolicy|DemoShowcase|EnterpriseDemo)\.tsx$/,
+  /^pages\/(Terms|PrivacyPolicy|DemoTour|EnterpriseDemo)\.tsx$/,
   /^components\/demo\//,
   /^features\/enterprise\/lib\/demoFlows\.ts$/,
   /^features\/enterprise\/demo\.ts$/,

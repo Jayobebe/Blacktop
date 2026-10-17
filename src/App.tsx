@@ -95,7 +95,7 @@ function prefetchPages() {
   else setTimeout(run, 2000);
 }
 const Track = lazyPage(() => import("./pages/Track"));
-const DemoShowcase = lazyPage(() => loadLocaleExtra().then(() => import("./pages/DemoShowcase")));
+const DemoTour = lazyPage(() => loadLocaleExtra().then(() => import("./pages/DemoTour")));
 const History = lazyPage(() => import("./pages/History"));
 const RideDetail = lazyPage(() => import("./pages/RideDetail"));
 const Garage = lazyPage(() => import("./pages/Garage"));
@@ -257,7 +257,7 @@ function AppRoutes() {
       <PageTransition>
       <Suspense fallback={null}>
       <Routes>
-        <Route path="/demo" element={<DemoShowcase />} />
+        <Route path="/demo" element={<DemoTour />} />
         <Route path="/pay" element={Pay && paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
         <Route path="/device-check" element={<DeviceCheck />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -293,7 +293,7 @@ function AppRoutes() {
       <Route path="/track" element={<Track />} />
       <Route path="/rescue" element={<RescueLocation />} />
       <Route path="/speedshop" element={<Speedshop />} />
-      <Route path="/demo" element={<DemoShowcase />} />
+      <Route path="/demo" element={<DemoTour />} />
       <Route path="/pay" element={Pay && paymentsAvailable() ? <Pay /> : <Navigate to="/" replace />} />
       <Route path="/device-check" element={<DeviceCheck />} />
       <Route path="/history" element={<History />} />

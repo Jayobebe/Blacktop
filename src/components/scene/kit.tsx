@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- a kit of scene helpers, not a page */
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Volume2, VolumeX, type LucideIcon } from 'lucide-react';
 import { DEMO_BIKE } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
@@ -36,26 +36,41 @@ export const SKY = '#38bdf8';
 
 // ---- Time and easing ---------------------------------------------------------
 
-/** Seconds since mount (starting at `from`), ~30 fps; frozen under reduced motion. */
+/**
+ * How a scene is being shown. The demo tour plays them like a film: `paused`
+ * holds every scene clock where it is (the frame freezes, as a video does) and
+ * `bare` draws the frame edge to edge without its own sound button (the tour
+ * has one for everything).
+ */
+export const SceneStage = createContext<{ paused: boolean; bare: boolean; muted?: boolean }>({ paused: false, bare: false });
+
+/** Seconds since mount (starting at `from`), ~30 fps; frozen under reduced motion, and held while the stage is paused. */
 export function useSceneTime(from = 0): number {
+  const { paused } = useContext(SceneStage);
   const [t, setT] = useState(from);
+  const tRef = useRef(from);
   useEffect(() => {
+    if (paused) return;
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     if (isThermal()) return; // Thermal / High-Speed Mode: a still frame
     let raf = 0;
     let last = 0;
-    const start = performance.now() - from * 1000;
+    // Carries on from where it was held.
+    const begin = tRef.current;
+    const start = performance.now() - begin * 1000;
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       if (now - last < 33) return;
       last = now;
       // A frame's timestamp can be a touch earlier than when this effect
       // started the clock: never let time run backwards past the start.
-      setT(Math.max(from, (now - start) / 1000));
+      const next = Math.max(begin, (now - start) / 1000);
+      tRef.current = next;
+      setT(next);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [from]);
+  }, [from, paused]);
   return t;
 }
 
@@ -209,7 +224,9 @@ export type SceneSound = { t: number; cues: SceneCue[] };
  * up) plays nothing rather than a pile-up.
  */
 function useCues(el: { current: HTMLDivElement | null }, sound?: SceneSound | SceneSound[]) {
-  const [on] = useSceneSound();
+  const [switchOn] = useSceneSound();
+  const { muted } = useContext(SceneStage);
+  const on = switchOn && !muted;
   const visible = useRef(false);
   const prev = useRef<(number | null)[]>([]);
   useEffect(() => {
@@ -240,13 +257,17 @@ function useCues(el: { current: HTMLDivElement | null }, sound?: SceneSound | Sc
 export function Frame({ children, sound }: { children: ReactNode; sound?: SceneSound | SceneSound[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [on, setOn] = useSceneSound();
+  const { bare } = useContext(SceneStage);
   useCues(ref, sound);
   return (
-    <div ref={ref} className="relative w-full aspect-[16/10] rounded-2xl border border-border/30 bg-[#0b0b0e] overflow-hidden animate-scale-in no-frost">
+    <div
+      ref={ref}
+      className={bare ? 'relative w-full aspect-[16/10] bg-[#0b0b0e] overflow-hidden no-frost' : 'relative w-full aspect-[16/10] rounded-2xl border border-border/30 bg-[#0b0b0e] overflow-hidden animate-scale-in no-frost'}
+    >
       <svg viewBox={`0 0 ${VW} ${VH}`} className="absolute inset-0 w-full h-full" style={{ fontFamily: 'inherit' }} aria-hidden>
         {children}
       </svg>
-      {sound && (
+      {sound && !bare && (
         <button
           type="button"
           onClick={(e) => {
@@ -287,6 +308,12 @@ export function Defs({ id }: { id: (n: string) => string }) {
         <stop offset="60%" stopColor="#000" stopOpacity="0" />
         <stop offset="100%" stopColor="#000" stopOpacity="0.55" />
       </radialGradient>
+      {/* Mica: a soft dark backing that fades out at its edges, for a title over moving content. */}
+      <radialGradient id={id('mica')} cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#0b0b0e" stopOpacity="0.82" />
+        <stop offset="62%" stopColor="#0b0b0e" stopOpacity="0.62" />
+        <stop offset="100%" stopColor="#0b0b0e" stopOpacity="0" />
+      </radialGradient>
       <pattern id={id('grid')} width="16" height="16" patternUnits="userSpaceOnUse">
         <path d="M16 0H0V16" fill="none" stroke="white" strokeOpacity="0.035" strokeWidth="0.6" />
       </pattern>
@@ -305,6 +332,15 @@ export function Base({ id }: { id: (n: string) => string }) {
 
 export function Vignette({ id }: { id: (n: string) => string }) {
   return <rect width={VW} height={VH} fill={`url(#${id('vignette')})`} pointerEvents="none" />;
+}
+
+/**
+ * A faded backing behind a title drawn over a scene's animation, so it reads
+ * cleanly: dark in the middle, gone at its edges, the animation still showing
+ * round it. Only behind headings, never a whole scene.
+ */
+export function Mica({ id, x, y, w, h }: { id: (n: string) => string; x: number; y: number; w: number; h: number }) {
+  return <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} fill={`url(#${id('mica')})`} pointerEvents="none" />;
 }
 
 export function Road({ d, w = 6 }: { d: string; w?: number }) {
