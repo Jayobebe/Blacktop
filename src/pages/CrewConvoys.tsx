@@ -17,6 +17,7 @@ import { useConvoyState } from '@/features/convoy';
 import { setRideRole } from '@/features/pillion';
 import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
 import { demoBlocked } from '@/lib/demoGuard';
+import { PageTips } from '@/features/guide';
 
 interface CrewConvoyRow {
   id: string;
@@ -104,6 +105,12 @@ export default function CrewConvoys() {
         }
       />
 
+      <PageTips
+        page="crew-convoys"
+        when={!selected}
+        tips={[{ target: '[data-tip="crew-convoy"]', text: tr("Tap a convoy to see who's in it. Join it, or Spectate to watch it live on the map without joining.") }]}
+      />
+
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
         {crew.name} · {convoys.length === 1 ? tr("1 open lobby") : tr("{0} open lobbies", [convoys.length])}
       </p>
@@ -116,10 +123,11 @@ export default function CrewConvoys() {
         </p>
       ) : (
         <ul className="space-y-2">
-          {convoys.map((c) => (
+          {convoys.map((c, i) => (
             <li key={c.id}>
               <button
                 type="button"
+                data-tip={i === 0 ? 'crew-convoy' : undefined}
                 onClick={() => setSelected(c)}
                 className="w-full text-left px-4 py-3 rounded-xl bg-card/40 border border-border/30 hover:bg-secondary/60 transition-colors"
               >

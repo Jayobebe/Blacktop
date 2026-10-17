@@ -252,6 +252,12 @@ export default function SoloLobby() {
           { target: '[data-tip="solo-lock"]', text: tr("Unlock to list this in Crew Convoys, so your crew can join you.") },
         ]}
       />
+      {/* Its own set, so riders who saw the first tips still learn the hold. */}
+      <PageTips
+        page="solo-lobby-more"
+        when={!showAddStop}
+        tips={[{ target: '[data-tip="solo-lock"]', text: tr("Hold the lock to keep every ride you lead unlocked for your crew. Hold it again to stop.") }]}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">

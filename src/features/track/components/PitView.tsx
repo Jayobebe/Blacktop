@@ -31,6 +31,7 @@ import { PostRaceDialog, PostRaceLine } from './PostRacePicker';
 import { loadPostRace, samePostRace, savePostRace, type PostRace } from '../lib/postRace';
 import { tr } from '@/lib/i18n';
 import { metresText } from '@/lib/units';
+import { PageTips } from '@/features/guide';
 
 /**
  * Pit crew phone: scan the racer's QR, or set up the track and show the
@@ -289,7 +290,7 @@ export function PitView() {
         backTo="/"
         right={
           <div className="flex items-center gap-2">
-            <TrackVoice linkToken={token} />
+            <span data-tip="pit-voice"><TrackVoice linkToken={token} /></span>
             <span className={cn('flex items-center gap-1 text-xs', live ? 'text-[#22c55e]' : 'text-muted-foreground')}>
               {live ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
               {live ? tr("Live") : ended ? tr("Ended") : tr("No data")}
@@ -313,6 +314,7 @@ export function PitView() {
       {running && tele?.pit && <PitLaneCard live={tele.pit} speed={tele.v} limit={tele.pit.limit} now={now + offset} />}
       {snap?.pitTiming && snap.pitLimit != null && (
         <PitLimitControl
+          tip
           limit={snap.pitLimit}
           onChange={(mps) => linkRef.current?.send({ type: 'pitLimit', mps })}
         />
@@ -360,7 +362,17 @@ export function PitView() {
       </div>
       )}
 
-      <div>
+      <PageTips
+        page="track-pit"
+        scroll
+        when={!!snap}
+        tips={[
+          { target: '[data-tip="pit-board"]', text: tr("Tap a call and it fills your racer's screen and is read out in their helmet. Or type your own.") },
+          { target: '[data-tip="pit-limit"]', text: tr("The pit lane speed limit. Both phones warn when your racer goes over it in the pits.") },
+          { target: '[data-tip="pit-voice"]', text: tr("Talk to your racer here, if they've joined voice too.") },
+        ]}
+      />
+      <div data-tip="pit-board">
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{tr("Pit board")}</p>
         <div className="grid grid-cols-4 gap-1.5">
           {PIT_PRESETS.map((p) => (
@@ -423,7 +435,7 @@ function Box({ label, value, accent }: { label: string; value: string; accent?: 
  * or just "waiting".
  */
 /** The pit lane speed limit, set by the crew in their own units (steps of 5). */
-function PitLimitControl({ limit, onChange }: { limit: number; onChange: (mps: number) => void }) {
+function PitLimitControl({ limit, onChange, tip }: { limit: number; onChange: (mps: number) => void; tip?: boolean }) {
   const { settings } = useSettings();
   const kph = settings.speedUnit === 'kph';
   const perUnit = kph ? 1 / 3.6 : 0.44704;
@@ -434,7 +446,7 @@ function PitLimitControl({ limit, onChange }: { limit: number; onChange: (mps: n
     haptics.light();
   };
   return (
-    <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/50 px-3 py-2">
+    <div data-tip={tip ? 'pit-limit' : undefined} className="flex items-center gap-2 rounded-2xl border border-border bg-card/50 px-3 py-2">
       <span className="text-xs font-semibold flex-1">{tr("Pit lane limit")}</span>
       <Button variant="outline" size="sm" className="h-10 w-12" onClick={() => set(Math.round(shown / 5) * 5 - 5)} aria-label={tr("Lower the pit limit")}>
         −5

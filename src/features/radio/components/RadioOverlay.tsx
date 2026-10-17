@@ -12,6 +12,7 @@ import { StationManager } from './StationManager';
 import { LIVE_STATIONS } from '../lib/liveStations';
 import { tr } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { PageTips } from '@/features/guide';
 
 /**
  * GTA-style radio dial: stations sit around a wheel, the active one locks to
@@ -77,6 +78,14 @@ export function RadioOverlay() {
         </button>
       </div>
 
+      <PageTips
+        page="radio"
+        when={stations.length > 0 && !showManager}
+        tips={[
+          { target: '[data-tip="radio-dial"]', text: tr("Turn the dial with your finger, or tap a station, to tune in.") },
+          { target: '[data-tip="radio-manage"]', text: tr("Make your own stations here from the music on your phone.") },
+        ]}
+      />
       <div className="flex-1 min-h-0 overflow-y-auto flex flex-col landscape:flex-row items-center justify-center gap-6 landscape:gap-10 px-4 py-4 landscape:px-8 landscape:py-2">
         {stations.length === 0 ? (
           <div className="text-center max-w-xs space-y-3">
@@ -97,6 +106,7 @@ export function RadioOverlay() {
             {/* --dial drives the dial, station orbit and hub, so they stay in proportion at any size.
                 Landscape caps it by viewport height so short phone screens never clip. */}
             <div
+              data-tip="radio-dial"
               className="relative shrink-0 touch-none select-none w-[var(--dial)] h-[var(--dial)] [--dial:280px] landscape:[--dial:min(230px,calc(100dvh-116px))]"
               onPointerDown={(event) => {
                 dragged.current = false;
@@ -236,6 +246,7 @@ export function RadioOverlay() {
 
               <button
                 type="button"
+                data-tip="radio-manage"
                 onClick={() => setShowManager(true)}
                 className="w-full mt-2 landscape:mt-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
               >

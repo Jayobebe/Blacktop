@@ -14,11 +14,12 @@ import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
-import { RadioButton, usePlayer } from '@/features/radio';
+import { RadioButton } from '@/features/radio';
 import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, rescueReach } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
 import { autoNameRide, storedRide } from '@/features/ride/lib/rideNames';
 import { useRideUpdates } from '@/features/ride/hooks/useRideUpdates';
+import { resetRadio } from '@/features/radio/hooks/useRadioPlayer';
 import { useRideOrientationLock } from '@/features/ride/hooks/useRideOrientationLock';
 import { useSpectateBroadcast } from '@/features/spectate';
 import { clearParkedSpot } from '@/lib/parkedSpot';
@@ -145,7 +146,9 @@ export default function ActiveRide() {
   const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { rideState, endRide, setRidePaused, updateLeanAngle, updateGForce } = useActiveRide();
-  const { stop: stopRadio } = usePlayer();
+  // The radio plays across the whole app during a ride and stops when the ride ends, however
+  // it ends (the floating button goes with it: lib resetRadio clears the loaded station).
+  const stopRadio = resetRadio;
   const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended, createConvoy, joinConvoy, leaveConvoy } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id ?? undefined : undefined, { priority: convoy.isLeader });
@@ -611,6 +614,7 @@ export default function ActiveRide() {
   const handleRideEndedByLeader = useCallback(async () => {
     if (endingFlowRef.current) return; // Already ending
     console.log('[ActiveRide] Ride ended by leader');
+    stopRadio();
     toast.info(tr("Leader ended the {0}", [liveTerms().ride]));
     
     // Stop overlay recording and get the blob
@@ -986,6 +990,20 @@ export default function ActiveRide() {
 
   if (!rideState.isActive && !endingFlow) return null;
 
+  // The clock doesn't run while the rider is reading tips: paused for them, and set going again after (unless they'd paused it themselves).
+  const onRideTipsShowing = (showing: boolean) => {
+    window.clearTimeout(tipTimer.current);
+    if (showing) {
+      tipPaused.current = !rideState.isPaused;
+      if (tipPaused.current) setRidePaused(true);
+      // Left unread (the rider has set off with them up): put them away so the ride isn't left paused. They come back next ride.
+      tipTimer.current = window.setTimeout(() => setTipsShelved(true), 45_000);
+    } else if (tipPaused.current) {
+      tipPaused.current = false;
+      setRidePaused(false);
+    }
+  };
+
   // The rescue button: convoy members ping the convoy, solo riders their crew and Discord;
   // a convoy's leader has none. Beside the speed in landscape, its own row in portrait.
   const hasRescueButton = !rideState.isConvoyMode || !convoy.isLeader;
@@ -1282,18 +1300,7 @@ export default function ActiveRide() {
             page="ride"
             when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !rescueAsk && !showEndConfirm && !tipsShelved}
             // The clock doesn't run while the rider is reading: paused for the tips, and set going again after (unless they'd paused it themselves).
-            onShowing={(showing) => {
-              window.clearTimeout(tipTimer.current);
-              if (showing) {
-                tipPaused.current = !rideState.isPaused;
-                if (tipPaused.current) setRidePaused(true);
-                // Left unread (the rider has set off with them up): put them away so the ride isn't left paused. They come back next ride.
-                tipTimer.current = window.setTimeout(() => setTipsShelved(true), 45_000);
-              } else if (tipPaused.current) {
-                tipPaused.current = false;
-                setRidePaused(false);
-              }
-            }}
+            onShowing={onRideTipsShowing}
             tips={[
               { target: '[data-tip="rescue"]', text: tr("R calls for rescue. It sends your location to the people you chose in Settings: your convoy, your crew, Discord, riders nearby.") },
               { target: '[data-tip="alarm"]', text: tr("Stopping for fuel? This locks up with the anti-theft alarm. It pauses your ride until you unlock and press play.") },
@@ -1304,6 +1311,21 @@ export default function ActiveRide() {
                     ? tr("Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 150 metres isn't saved.")
                     : tr("Ending takes two taps, so a glove can't do it by accident. Anything under a minute or under 0.1 miles isn't saved."),
               },
+            ]}
+          />
+          {/* Things a rider wouldn't find by themselves: a set of its own, so riders who saw the first one get these too. */}
+          <PageTips
+            page="ride-more"
+            onShowing={onRideTipsShowing}
+            when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !rescueAsk && !showEndConfirm && !tipsShelved}
+            tips={[
+              {
+                target: '[data-tip="ride-dial"]',
+                text: gaugeOn
+                  ? tr("Tap the dial to turn it between the G meter and a mini map. It stays on the one you leave showing.")
+                  : tr("Your mini map. + and − zoom it, and the pill between them shows what's coming up."),
+              },
+              { target: '[data-tip="radio"]', text: tr("Tap the radio to play or pause. Hold it to pick a station.") },
             ]}
           />
 
@@ -1498,7 +1520,7 @@ export default function ActiveRide() {
                     } else {
                       const result = await connect();
                       if (result.success) {
-                        toast.success(tr("Joined voice channel"), { description: tr("Tap mic to unmute") });
+                        toast.success(tr("Joined voice channel"), { description: tr("You're live. Tap the mic to mute.") });
                       } else {
                         toast.error(tr("Failed to join voice channel"), { description: result.error || tr("Check microphone permissions") });
                       }

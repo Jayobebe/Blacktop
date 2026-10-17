@@ -10,6 +10,7 @@ import { SHOP_ITEMS } from '../lib/catalogue';
 import { answer, fetchResults, flushPending, sendSuggestion, useSurveyAnswers, type Interest, type ItemResult } from '../lib/surveyStore';
 import { ItemPreview } from './ItemPreview';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 
 const INTERESTS: { id: Interest; label: string; icon: React.ElementType }[] = [
   { id: 'yes', label: tr("I'd buy it"), icon: ThumbsUp },
@@ -81,11 +82,20 @@ export function SpeedshopView() {
   return (
     <div className="min-h-dvh flex flex-col p-4 landscape:p-3 safe-top safe-bottom gap-3">
       <PageHeader title={tr("Speedshop")} subtitle={tr("Opening soon · help us stock the shelves")} backTo="/world" backLabel={tr("Back to Blacktop World")} />
+      <PageTips
+        page="speedshop"
+        scroll
+        tips={[
+          { target: '[data-tip="shop-floor"]', text: tr("Swipe the shop floor, or use the arrows, to look at what might go on sale.") },
+          { target: '[data-tip="shop-survey"]', text: tr("Say whether you'd buy it and for how much. Your answers decide what the shop stocks first.") },
+        ]}
+      />
 
       <div className="flex flex-col landscape:flex-row gap-3 flex-1 min-h-0">
         <div className="flex flex-col gap-2 landscape:w-[55%] landscape:h-[calc(100dvh-7rem)]">
           {/* Showcase: the garage floor with the item on it */}
           <div
+            data-tip="shop-floor"
             className="relative w-full aspect-[4/3] landscape:aspect-auto landscape:flex-1 landscape:min-h-0 overflow-hidden rounded-3xl border border-accent/60 bg-black select-none"
             style={{ boxShadow: '0 0 0 1px hsl(var(--accent) / 0.55), 0 18px 40px -12px rgba(0,0,0,0.85)' }}
             onPointerDown={(e) => (swipe.current = e.clientX)}
@@ -152,7 +162,7 @@ export function SpeedshopView() {
         </div>
 
         {/* Survey */}
-        <div className="landscape:flex-1 flex flex-col gap-3 rounded-3xl border border-border bg-card/50 p-4 landscape:overflow-y-auto">
+        <div data-tip="shop-survey" className="landscape:flex-1 flex flex-col gap-3 rounded-3xl border border-border bg-card/50 p-4 landscape:overflow-y-auto">
           {item ? (
             <>
               <p className="text-[13px] text-muted-foreground leading-relaxed">{item.blurb}</p>

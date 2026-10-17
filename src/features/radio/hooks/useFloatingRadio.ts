@@ -42,6 +42,26 @@ export function undockRadio(x: number, y: number) {
   setFloatingRadio({ docked: false, x, y });
 }
 
+// A drag that began on the docked button and pulled it out: the floating button carries on
+// with the same finger (the docked one is gone from under it), until the finger lifts.
+let carrying = false;
+const carryListeners = new Set<() => void>();
+export function setRadioCarry(on: boolean) {
+  if (carrying === on) return;
+  carrying = on;
+  carryListeners.forEach((l) => l());
+}
+export function useRadioCarry() {
+  return useSyncExternalStore(
+    (cb) => {
+      carryListeners.add(cb);
+      return () => { carryListeners.delete(cb); };
+    },
+    () => carrying,
+    () => false,
+  );
+}
+
 export function dockRadio() {
   setFloatingRadio({ docked: true });
 }

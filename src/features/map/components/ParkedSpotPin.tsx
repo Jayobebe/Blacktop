@@ -117,6 +117,7 @@ export function ParkedSpotPin({ map, hidden, rider }: { map: MapLibreMap | null;
       <button
         type="button"
         aria-label={tr("Parked spot")}
+        data-tip="parked"
         onClick={() => setOpen((o) => !o)}
         className="glove-hit relative flex flex-col items-center"
       >

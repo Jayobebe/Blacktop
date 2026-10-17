@@ -91,7 +91,7 @@ export default function PillionRide() {
         toast.error(tr("Could not join voice"), { description: res.error || tr("Check microphone permission") });
         return;
       }
-      toast.success(tr("Voice on"), { description: tr("Tap again to unmute") });
+      toast.success(tr("Voice on"), { description: tr("You're live. Tap again to mute.") });
       return;
     }
     toggleMute();
@@ -153,13 +153,18 @@ export default function PillionRide() {
         when={!confirmRescue && !showMap && rescueRequests.length === 0}
         tips={[{ target: '[data-tip="pillion-reactions"]', text: tr("Tap a reaction to signal the whole convoy without talking.") }]}
       />
+      <PageTips
+        page="pillion-more"
+        when={!confirmRescue && !showMap && rescueRequests.length === 0}
+        tips={[{ target: '[data-tip="pillion-map"]', text: tr("A map that follows the bike, with the other riders on it. Pan it to look around; it comes back by itself.") }]}
+      />
 
       <PageHeader
         title={tr("Pillion")}
         subtitle={`${leader ? tr("{0}'s convoy", [leader.name]) : tr("Convoy")} · ${convoy.members.length === 1 ? tr("1 rider") : tr("{0} riders", [convoy.members.length])}`}
         backTo={false}
         right={
-          <HeaderButton onClick={() => setShowMap(true)} aria-label={tr("Map")}>
+          <HeaderButton data-tip="pillion-map" onClick={() => setShowMap(true)} aria-label={tr("Map")}>
             <MapIcon className="w-5 h-5" />
           </HeaderButton>
         }

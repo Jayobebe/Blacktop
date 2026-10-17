@@ -3,7 +3,7 @@ import { useSettings } from '@/features/settings';
 import { RadioOrb } from './RadioOrb';
 import { useRadioPlayer } from '../hooks/useRadioPlayer';
 import { openRadioOverlay } from '../hooks/useRadioOverlay';
-import { useFloatingRadio, undockRadio } from '../hooks/useFloatingRadio';
+import { useFloatingRadio, undockRadio, setRadioCarry } from '../hooks/useFloatingRadio';
 
 const DRAG_THRESHOLD = 10;
 
@@ -33,6 +33,7 @@ export function HomeRadioDock() {
     if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
     moved.current = true;
     start.current = null;
+    setRadioCarry(true);
     undockRadio(
       Math.min(0.94, Math.max(0.06, e.clientX / window.innerWidth)),
       Math.min(0.94, Math.max(0.06, e.clientY / window.innerHeight)),

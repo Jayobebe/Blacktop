@@ -195,7 +195,7 @@ export function RideDial({ gauge, position, members, accent, distanceUnit, rescu
   })();
 
   return (
-    <div className={cn('relative aspect-square [perspective:800px]', className)}>
+    <div data-tip="ride-dial" className={cn('relative aspect-square [perspective:800px]', className)}>
       <div
         className={cn('absolute inset-0 transition-transform duration-500 ease-out motion-reduce:transition-none [transform-style:preserve-3d]', gauge && showing === 'map' && '[transform:rotateY(180deg)]')}
       >

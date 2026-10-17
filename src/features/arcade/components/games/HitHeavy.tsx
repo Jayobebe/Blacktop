@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { saveModeBest, saveScore, useArcadeScores, useModeBests } from '../../hooks/useArcadeScores';
 import { payArcadeGame } from '@/features/card-wars/light';
+import { PageTips } from '@/features/guide';
 
 /*
  * Hit Heavy: a punch machine on the phone's accelerometer.
@@ -469,7 +470,12 @@ export function HitHeavy() {
   return (
     <div className="flex-1 flex flex-col gap-4 pb-4 min-h-0">
       {/* Mode picker */}
-      <div className={cn('grid grid-cols-3 gap-1 p-1 rounded-2xl bg-card/50 border border-white/[0.06]', sensorOn && 'opacity-50 pointer-events-none')}>
+      <PageTips
+        page="hit-heavy"
+        when={!sensorOn}
+        tips={[{ target: '[data-tip="hh-modes"]', text: tr("Three ways to play. Classic is the one your crew board ranks: your hardest single punch.") }]}
+      />
+      <div data-tip="hh-modes" className={cn('grid grid-cols-3 gap-1 p-1 rounded-2xl bg-card/50 border border-white/[0.06]', sensorOn && 'opacity-50 pointer-events-none')}>
         {MODES.map(m => (
           <button
             key={m.id}

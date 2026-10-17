@@ -31,6 +31,7 @@ import type { LogNote, LogRide, LogbookPackage } from '../types';
 import { passportFor } from '../lib/passport';
 import { tr } from '@/lib/i18n';
 import { keepPeakTelemetry, PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
+import { PageTips } from '@/features/guide';
 
 const RIDES_PER_PAGE = 7;
 /** Rough line budget of a page, used to flow notes onto as many pages as they need. */
@@ -495,7 +496,15 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
       </header>
 
       {/* Open book */}
-      <div className="w-full max-w-md mx-auto h-[46dvh] min-h-[300px] max-h-[440px] rounded-xl border-[3px] border-black/85 bg-gradient-to-br from-[#7a4020] to-[#4a230e] p-2 shadow-[4px_6px_0_rgba(0,0,0,0.55)]">
+      <PageTips
+        page="logbook"
+        when={!handover && !noteOpen}
+        tips={[
+          { target: '[data-tip="logbook-book"]', text: tr("Every ride on this vehicle is written in by itself. Turn the pages to read its history.") },
+          { target: '[data-tip="logbook-end"]', text: tr("Your own notes and the hand-over to a new keeper are at the back.") },
+        ]}
+      />
+      <div data-tip="logbook-book" className="w-full max-w-md mx-auto h-[46dvh] min-h-[300px] max-h-[440px] rounded-xl border-[3px] border-black/85 bg-gradient-to-br from-[#7a4020] to-[#4a230e] p-2 shadow-[4px_6px_0_rgba(0,0,0,0.55)]">
         <div className="relative grid grid-cols-2 h-full gap-0">
           <div
             key={`l-${spread}`}
@@ -542,6 +551,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           variant="ghost"
           size="sm"
           className="gap-1.5 text-xs"
+          data-tip="logbook-end"
           onClick={() => go(Math.floor(handoverPageIndex / 2))}
           disabled={spread === spreads - 1}
         >

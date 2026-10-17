@@ -17,6 +17,7 @@ import { tr } from '@/lib/i18n';
 import { PEAK_HIDDEN } from '@/features/ride';
 import { glideMarker } from '@/lib/markerGlide';
 import { END_EVENT, LIVE_EVENT, spectateChannelName, type LiveRide } from '@/features/spectate/lib/live';
+import { PageTips } from '@/features/guide';
 
 /** No word from the rider for this long: say the signal's gone. */
 const QUIET_MS = 20_000;
@@ -174,9 +175,17 @@ export default function Spectate() {
   // Portaled: the route's page wrapper is transformed, which would size a fixed layer to itself.
   return createPortal(
     <div className="fixed inset-0 z-40 bg-background map-shell" data-no-pull>
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" data-tip="spectate-map">
         <div ref={box} className="h-full w-full" />
       </div>
+      <PageTips
+        page="spectate"
+        when={!!live}
+        tips={[
+          { target: '[data-tip="spectate-who"]', text: tr("The riders can see you're watching: your name shows in their convoy list."), },
+          { target: '[data-tip="spectate-map"]', text: tr("The map follows the rider. Drag it to look around; Follow brings it back to them.") },
+        ]}
+      />
 
       {/* Edge shade so the corners read over any map, as on the overlay video. */}
       <div
@@ -193,7 +202,7 @@ export default function Spectate() {
             <Eye className="w-3 h-3" />
             {tr("Spectating")}
           </p>
-          <p className="text-xl font-bold text-white truncate">{name}</p>
+          <p data-tip="spectate-who" className="text-xl font-bold text-white truncate">{name}</p>
           {live?.destination && (
             <p className="flex items-center gap-1 text-xs text-white/80 truncate">
               <Flag className="w-3 h-3 text-accent flex-shrink-0" />

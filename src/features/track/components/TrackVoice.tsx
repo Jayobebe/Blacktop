@@ -15,7 +15,7 @@ export function TrackVoice({ linkToken, className }: { linkToken: string | null;
         if (!isConnected) {
           const r = await connect();
           if (!r.success) toast.error(tr("Could not join voice"), { description: r.error || tr("Check microphone permission") });
-          else toast.success(tr("Voice on"), { description: tr("Tap again to unmute") });
+          else toast.success(tr("Voice on"), { description: tr("You're live. Tap again to mute.") });
           return;
         }
         toggleMute();

@@ -1387,9 +1387,11 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
         });
       }
 
-      // Start muted by default
+      // Live straight away: joining voice is the tap that means "I want to talk", and a second
+      // tap to unmute left riders talking to nobody. One tap mutes (the button, or the headset).
+      isMutedRef.current = false;
       stream.getAudioTracks().forEach(track => {
-        track.enabled = false;
+        track.enabled = true;
       });
 
       // Start audio level monitoring as early as possible (important for iOS gesture policies)
@@ -1494,7 +1496,7 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
         localStorage.setItem(VOICE_STATE_KEY, JSON.stringify({ 
           convoyId, 
           connected: true,
-          muted: true,
+          muted: false,
           timestamp: Date.now() 
         }));
       } catch (e) {
@@ -1504,7 +1506,7 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
       setState(prev => ({
         ...prev,
         isConnected: true,
-        isMuted: true,
+        isMuted: isMutedRef.current,
       }));
 
       isConnectingRef.current = false;
@@ -1684,8 +1686,8 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
             (Date.now() - voiceState.timestamp) < 5 * 60 * 1000) {
           console.log('[Voice] Auto-reconnecting voice channel after page reload');
           connect().then(result => {
-            if (result.success && !voiceState.muted) {
-              // Restore mute state
+            if (result.success && voiceState.muted) {
+              // Voice comes back live; a rider who had muted stays muted.
               toggleMute();
             }
           });

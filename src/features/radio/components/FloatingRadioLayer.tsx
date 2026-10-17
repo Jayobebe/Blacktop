@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { useSettings } from '@/features/settings';
@@ -6,7 +6,7 @@ import { useMapOverlay } from '@/features/map';
 import { RadioOrb } from './RadioOrb';
 import { useRadioPlayer } from '../hooks/useRadioPlayer';
 import { openRadioOverlay } from '../hooks/useRadioOverlay';
-import { useFloatingRadio, setFloatingRadio, dockRadio } from '../hooks/useFloatingRadio';
+import { useFloatingRadio, setFloatingRadio, dockRadio, setRadioCarry, useRadioCarry } from '../hooks/useFloatingRadio';
 
 const DRAG_THRESHOLD = 6;
 const SNAP_RADIUS_PX = 80;
@@ -32,55 +32,102 @@ function setDockGlow(on: boolean) {
   }
 }
 
+const place = (clientX: number, clientY: number) =>
+  setFloatingRadio({
+    x: Math.min(0.94, Math.max(0.06, clientX / window.innerWidth)),
+    y: Math.min(0.94, Math.max(0.06, clientY / window.innerHeight)),
+  });
+
 /**
- * The free-floating radio button. Persists across pages once undocked, but is
- * hidden on the active ride screen and while the Blacktop Maps overlay is open.
- * Dragging it near the home header slot makes the dock glow; releasing it within
- * snapping distance docks it back into place.
+ * The free-floating radio button. Undocked, it stays wherever it was left on
+ * every page; docked in Home's header, it still floats on the other pages
+ * while a station is loaded, so the radio is never more than a tap away until
+ * the ride ends and stops it. The ride screen and the map have radio buttons
+ * of their own, so it steps aside there. Dragging it near Home's slot makes the
+ * slot glow; letting go within snapping distance docks it.
+ *
+ * Drags follow the finger from where it went down (phones often report no
+ * per-event movement on touch, which stalled the old drag), and a drag that
+ * pulls the button out of its Home slot carries straight on with the same
+ * finger (`useRadioCarry`): the docked button is gone from under it.
  */
 export function FloatingRadioLayer() {
   const { settings } = useSettings();
   const player = useRadioPlayer();
   const { docked, x, y } = useFloatingRadio();
+  const carrying = useRadioCarry();
   const { isOpen: mapOpen } = useMapOverlay();
   const location = useLocation();
   const [dragging, setDragging] = useState(false);
   const [nearDock, setNearDock] = useState(false);
+  const start = useRef<{ x: number; y: number } | null>(null);
   const moved = useRef(false);
 
-  const hidden = !settings.radioEnabled || docked || mapOpen || location.pathname.startsWith('/ride');
+  const follow = (clientX: number, clientY: number) => {
+    place(clientX, clientY);
+    const close = distanceToDock(clientX, clientY) < SNAP_RADIUS_PX;
+    setNearDock(close);
+    setDockGlow(close);
+  };
+  const letGo = (clientX: number, clientY: number) => {
+    setDragging(false);
+    setNearDock(false);
+    setDockGlow(false);
+    if (distanceToDock(clientX, clientY) < SNAP_RADIUS_PX) dockRadio();
+  };
+
+  // Carried out of the dock: follow that finger until it lifts.
+  useEffect(() => {
+    if (!carrying) return;
+    setDragging(true);
+    const onMove = (e: PointerEvent) => follow(e.clientX, e.clientY);
+    const onUp = (e: PointerEvent) => {
+      setRadioCarry(false);
+      letGo(e.clientX, e.clientY);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carrying]);
+
+  const onHome = location.pathname === '/';
+  const ownButtons = mapOpen || location.pathname.startsWith('/ride');
+  const hidden = !settings.radioEnabled || ownButtons || (docked && (onHome || !player.stationId));
   if (hidden) return null;
 
   const onPointerDown = (e: React.PointerEvent) => {
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      /* the drag still follows without capture */
+    }
+    start.current = { x: e.clientX, y: e.clientY };
     moved.current = false;
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (e.buttons === 0 && e.pointerType === 'mouse') return;
-    const dx = Math.abs(e.movementX ?? 0);
-    const dy = Math.abs(e.movementY ?? 0);
-    if (!moved.current && dx + dy < DRAG_THRESHOLD) return;
+    if (!start.current) return;
+    if (!moved.current && Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) < DRAG_THRESHOLD) return;
     moved.current = true;
     setDragging(true);
-    setFloatingRadio({
-      x: Math.min(0.94, Math.max(0.06, e.clientX / window.innerWidth)),
-      y: Math.min(0.94, Math.max(0.06, e.clientY / window.innerHeight)),
-    });
-    const close = distanceToDock(e.clientX, e.clientY) < SNAP_RADIUS_PX;
-    setNearDock(close);
-    setDockGlow(close);
+    follow(e.clientX, e.clientY);
   };
 
   const finish = (e: React.PointerEvent) => {
-    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
-    setDragging(false);
-    setNearDock(false);
-    setDockGlow(false);
-    if (!moved.current) return;
-    if (distanceToDock(e.clientX, e.clientY) < SNAP_RADIUS_PX) {
-      dockRadio();
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+    } catch {
+      /* never captured */
     }
+    start.current = null;
+    if (!moved.current) return;
+    letGo(e.clientX, e.clientY);
   };
 
   const onClick = () => {

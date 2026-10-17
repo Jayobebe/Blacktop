@@ -2230,6 +2230,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           ]}
         />
       )}
+      {/* Its own set, shown once there's a parked spot on the map. */}
+      {isVisible && (
+        <PageTips
+          page="map-parked"
+          when={!rideState.isActive && !guiding && showSearchBar && !droppingCard && !showLoopPlanner && !showOfflinePacks}
+          tips={[{ target: '[data-tip="parked"]', text: tr("Where you parked after your last ride. Tap it for the floor and bay, and walking directions back.") }]}
+        />
+      )}
 
       {/* Top-left column, left of the MapLibre controls: the top slot (search
           bar, or the convoy strip while riding in a convoy) with the toolbar

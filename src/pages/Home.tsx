@@ -596,6 +596,12 @@ export default function Home() {
           { target: '[role="tablist"]', text: tr("Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.") },
         ]}
       />
+      {/* Things nobody finds by themselves: a set of its own, so riders past the first tips still get it. */}
+      <PageTips
+        page="home-more"
+        when={deckKey === 'home' && !arrangingStickers && !rideState.isActive}
+        tips={[{ target: '[data-radio-dock]', text: tr("Blacktop Radio. Tap it for your stations, or drag it out to keep it floating over every page.") }]}
+      />
 
       {/* Swipe deck: the consumer home (with its header and nav), then each
           enterprise workspace and the Doorway, which fill the whole screen.

@@ -10,6 +10,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useDiscordIntegration, announceConvoyToDiscord } from '@/features/integrations/discord';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 
 // Client-side floor on re-clicking "Generate Convoy Code", on top of the
 // persistent already-a-leader guard in createConvoy() itself: a quick retry
@@ -105,6 +106,11 @@ export default function CreateConvoy() {
     <div className="h-dvh max-h-dvh overflow-hidden flex flex-col p-4 landscape:p-3 safe-top safe-bottom">
       {/* Header */}
       <PageHeader title={tr("Start Convoy")} backTo="/" />
+      <PageTips
+        page="create-convoy"
+        when={!!convoyCode}
+        tips={[{ target: '[data-tip="create-code"]', text: tr("Tap the code to copy it and send it to your crew, or let them scan the QR.") }]}
+      />
 
       <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-4 landscape:gap-8 animate-fade-in min-h-0">
         {!convoyCode ? (
@@ -157,6 +163,7 @@ export default function CreateConvoy() {
                 {tr("Your Convoy Code")}
               </p>
               <button
+                data-tip="create-code"
                 onClick={handleCopyCode}
                 className="flex items-center gap-3 bg-card border-2 border-accent rounded-xl px-5 py-3 landscape:px-4 landscape:py-2 hover:bg-accent/5 transition-colors"
               >

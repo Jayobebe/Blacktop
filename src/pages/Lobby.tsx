@@ -598,6 +598,15 @@ export default function Lobby() {
           ...(convoy.isLeader ? [{ target: '[data-tip="lobby-start"]', text: tr("Tap Start for just you. Hold it to start everyone at once.") }] : []),
         ]}
       />
+      {/* Things nobody finds by themselves: their own set, so riders past the first tips still get them. */}
+      <PageTips
+        page="lobby-more"
+        when={!showQR && !showLeaveConfirm && !showAddWaypoint}
+        tips={[
+          ...(convoy.isLeader ? [{ target: '[data-tip="lobby-lock"]', text: tr("Hold the lock to keep every lobby you lead unlocked for your crew. Hold it again to stop.") }] : []),
+          { target: '[data-tip="lobby-voice"]', text: tr("In voice, your headset's play / pause button mutes and unmutes you.") },
+        ]}
+      />
       {/* Header with Code */}
       <header className="mb-3 landscape:mb-2 md:mb-4 animate-fade-in flex items-center justify-between">
         <div data-tip="lobby-code" className="flex items-center gap-2">
@@ -626,6 +635,7 @@ export default function Lobby() {
           {convoy.isLeader && (
             <button
               {...lockHold.handlers}
+              data-tip="lobby-lock"
               className={cn(
                 'crew-lock hold-target p-2 rounded-xl border transition-colors',
                 !isListed
@@ -665,7 +675,7 @@ export default function Lobby() {
                     toast.error(tr("Failed to join voice"), { description: result.error || tr("Check microphone permission") });
                     return;
                   }
-                  toast.success(tr("Joined voice channel"), { description: tr("Tap again to unmute") });
+                  toast.success(tr("Joined voice channel"), { description: tr("You're live. Tap again to mute.") });
                   return;
                 }
                 toggleMute();

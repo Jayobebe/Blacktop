@@ -57,6 +57,7 @@ import { TrackVoice } from './TrackVoice';
 import { postRaceSummary } from './PostRacePicker';
 import { DeltaReadout, SectorBoxes } from './TimingParts';
 import { tr } from '@/lib/i18n';
+import { PageTips } from '@/features/guide';
 
 export function RacerView() {
   const racer = useRacer();
@@ -299,7 +300,7 @@ export function RacerView() {
         <Satellite className="w-3.5 h-3.5" /> {racer.gpsHz || '–'}{" "}{tr("Hz")}
       </span>
       <TrackVoice linkToken={racer.token} />
-      <button onClick={() => setShowQr(true)} className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border" aria-label={tr("Pit crew QR")}>
+      <button data-tip="track-crew" onClick={() => setShowQr(true)} className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border" aria-label={tr("Pit crew QR")}>
         <Users className="w-3.5 h-3.5" /> {racer.crew.length}
       </button>
     </div>
@@ -352,9 +353,17 @@ export function RacerView() {
             {tr("I'm in position")}
           </Button>
         )}
-        <Button variant="secondary" onClick={launchNow}>
+        <Button data-tip="track-rolling" variant="secondary" onClick={launchNow}>
           {tr("Start timing now (rolling start)")}
         </Button>
+        <PageTips
+          page="track-grid"
+          when={!showQr}
+          tips={[
+            { target: '[data-tip="track-crew"]', text: tr("Your pit crew. Tap to show the QR a friend scans to watch your timing and send pit board calls.") },
+            { target: '[data-tip="track-rolling"]', text: tr("Already moving, or no clean launch? This starts the clock now, and the first lap counts from the line.") },
+          ]}
+        />
         <Button variant="ghost" onClick={disarm}>
           {tr("Cancel")}
         </Button>
