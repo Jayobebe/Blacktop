@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Fuel, UtensilsCrossed, ShoppingCart, Building2, Bookmark, IdCard, Droplet, BatteryCharging } from 'lucide-react';
+import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Building2, Bookmark, IdCard, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,10 +12,11 @@ import { toast } from 'sonner';
 import { getSavedPOIs, type SavedPOI } from '@/features/map';
 import { useSettings } from '@/features/settings';
 import { useCardDrops } from '@/features/cards';
-import { useExperience, refuelCategory, REFUEL_NOMINATIM } from '@/features/experience';
+import { useExperience, placeCategories, REFUEL_NOMINATIM } from '@/features/experience';
 
 import { tr } from '@/lib/i18n';
 import { resolveWhat3WordsResult, what3wordsResults } from '@/lib/what3words';
+import { QuickChipRow } from '@/components/QuickChipRow';
 
 interface SearchResult {
   id: string;
@@ -43,35 +44,27 @@ interface UserLocation {
   lng: number;
 }
 
+/** A quick search: the map's own (experience/lib/places), so both look alike; card drops are Blacktop World's. */
 interface QuickCategory {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  Icon: LucideIcon;
+  /** Its colour; none for card drops, which take the accent. */
+  color: string;
   query: string;
+  unnamed?: string;
 }
 
 const RECENT_LOCATIONS_KEY = 'blacktop_recent_locations';
 const MAX_RECENT_LOCATIONS = 4;
-
-// OSM amenity tags for Overpass API
-const REFUEL_ICONS: Record<string, React.ReactNode> = {
-  gas: <Fuel className="w-4 h-4" />,
-  water: <Droplet className="w-4 h-4" />,
-  charge: <BatteryCharging className="w-4 h-4" />,
-};
-
-// The first slot is the rider's "top up" stop (fuel / charging / water), filled in per vehicle.
-const baseCategories: QuickCategory[] = [
-  { id: 'food', label: tr("Food"), icon: <UtensilsCrossed className="w-4 h-4" />, query: 'restaurant|fast_food|cafe' },
-  { id: 'store', label: tr("Store"), icon: <ShoppingCart className="w-4 h-4" />, query: 'supermarket|convenience' },
-];
 
 // Card drops are a Blacktop World feature — the category only appears when
 // the rider has opted in.
 const CARDS_CATEGORY: QuickCategory = {
   id: 'cards',
   label: tr("Cards"),
-  icon: <IdCard className="w-4 h-4" />,
+  Icon: IdCard,
+  color: '',
   query: 'cards',
 };
 
@@ -140,8 +133,17 @@ const MAX_NEARBY_DISTANCE_KM = 30;
 const categoryToNominatimQuery: Record<string, string> = {
   'fuel': 'petrol station',
   'restaurant|fast_food|cafe': 'restaurant',
+  'restaurant|fast_food': 'restaurant',
+  cafe: 'cafe',
   'supermarket|convenience': 'supermarket',
   '24h': '24 hour store',
+  'motorcycle_parking|parking': 'motorcycle parking',
+  parking: 'car park',
+  bicycle_parking: 'bicycle parking',
+  'motorcycle|tyres': 'motorcycle shop',
+  'car_repair|tyres': 'garage',
+  bicycle_repair_station: 'bicycle repair',
+  'pharmacy|hospital': 'pharmacy',
   ...REFUEL_NOMINATIM,
 };
 
@@ -150,7 +152,9 @@ const categoryToNominatimQuery: Record<string, string> = {
 async function searchNearbyPOIs(
   amenityQuery: string,
   userLocation: UserLocation,
-  countryCode: string | null
+  countryCode: string | null,
+  /** Name for places mapped without one (car parks, toilets, taps), which are otherwise left out. */
+  unnamed?: string,
 ): Promise<SearchResult[]> {
   const is24hSearch = amenityQuery === '24h';
   const amenities = is24hSearch ? [] : amenityQuery.split('|').filter(Boolean);
@@ -168,10 +172,10 @@ async function searchNearbyPOIs(
     });
 
     let results: SearchResult[] = (overpass || [])
-      .filter((el) => !!(el.tags?.name || el.tags?.brand || el.tags?.operator))
+      .filter((el) => !!(el.tags?.name || el.tags?.brand || el.tags?.operator || unnamed))
       .map((el) => {
         const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
-        const name = el.tags?.name || el.tags?.brand || el.tags?.operator;
+        const name = el.tags?.name || el.tags?.brand || el.tags?.operator || unnamed || '';
         const address = [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']]
           .filter(Boolean)
           .join(', ') || String(el.tags?.['addr:full'] || '');
@@ -378,8 +382,7 @@ export function DestinationSearch({
   const cardsEnabled = settings.blacktopWorldEnabled && settings.collectiblesEnabled;
   const { drops: cardDrops } = useCardDrops(cardsEnabled ? userLocation ?? null : null);
   const { vehicles } = useExperience();
-  const refuel = refuelCategory(vehicles);
-  const quickCategories: QuickCategory[] = [{ ...refuel, icon: REFUEL_ICONS[refuel.id] }, ...baseCategories];
+  const quickCategories: QuickCategory[] = placeCategories(vehicles);
   const categories = cardsEnabled ? [...quickCategories, CARDS_CATEGORY] : quickCategories;
 
 
@@ -518,7 +521,7 @@ export function DestinationSearch({
       if (cat) {
         const currentSearchId = ++searchIdRef.current;
         setIsSearching(true);
-        searchNearbyPOIs(cat.query, userLocation, countryCode).then(results => {
+        searchNearbyPOIs(cat.query, userLocation, countryCode, cat.unnamed).then(results => {
           if (searchIdRef.current === currentSearchId) {
             setResults(results);
             setIsSearching(false);
@@ -602,7 +605,7 @@ export function DestinationSearch({
       // automatically once geolocation resolves (no toast, no empty flash).
       if (!userLocation) return;
 
-      const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode);
+      const searchResults = await searchNearbyPOIs(category.query, userLocation, countryCode, category.unnamed);
       if (searchIdRef.current === currentSearchId) {
         setResults(searchResults);
       }
@@ -730,25 +733,8 @@ export function DestinationSearch({
 
   return (
     <div ref={containerRef} className="relative z-50 isolate space-y-3">
-      {/* Quick category buttons */}
-      <div className="flex gap-2">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleCategoryClick(cat)}
-            className={cn(
-              "flex-1 flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border transition-all",
-              "active:scale-95",
-              activeCategory === cat.id
-                ? "bg-accent text-accent-foreground border-accent"
-                : "bg-card border-border hover:bg-muted"
-            )}
-          >
-            {cat.icon}
-            <span className="text-xs font-medium">{cat.label}</span>
-          </button>
-        ))}
-      </div>
+      {/* Quick searches: the map's own, each in its colour; as many as fit, then "+N" for the rest */}
+      <QuickChipRow items={categories} active={activeCategory} onPick={handleCategoryClick} look="tile" />
 
       {/* Search input. On a phone on its side with suggestions up, it narrows and the
           suggestions run sideways beside it in the same row (the keyboard takes the bottom). */}
@@ -837,8 +823,16 @@ export function DestinationSearch({
           )}
           {activeCategory && !isSearching && (
             <div className="suggest-head px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
-              {categories.find(c => c.id === activeCategory)?.icon}
-              <span>{tr("Nearby")}{" "}{categories.find(c => c.id === activeCategory)?.label}</span>
+              {(() => {
+                const cat = categories.find((c) => c.id === activeCategory);
+                if (!cat) return null;
+                return (
+                  <>
+                    <cat.Icon className="w-3.5 h-3.5" style={cat.color ? { color: cat.color } : undefined} />
+                    <span>{tr("Nearby: {0}", [cat.label])}</span>
+                  </>
+                );
+              })()}
             </div>
           )}
           {isSearching ? (

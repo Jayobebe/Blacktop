@@ -38,7 +38,7 @@ export function RescueAlert({ requests, isLeader, onAddWaypoint, onRespond, onDi
                 <MapPin className="w-7 h-7" />
               </div>
               <div>
-                <p className="font-bold text-lg">{request.userName}{" "}{tr("needs rescue!")}</p>
+                <p className="font-bold text-lg">{tr("{0} needs rescue!", [request.userName])}</p>
                 <p className="text-sm opacity-80 mt-1">
                   {isLeader
                     ? tr("Add them as a waypoint to route the convoy to them")

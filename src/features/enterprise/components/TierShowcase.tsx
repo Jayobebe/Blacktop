@@ -59,6 +59,8 @@ import {
   Dot,
   Arrow,
   Rings,
+  GarageBackdrop,
+  NickSilhouette,
   type Pt,
   type Icon,
   cues,
@@ -320,8 +322,9 @@ const QR = Array.from({ length: 81 }, (_, i) => {
   return rnd(i * 3.7) > 0.52;
 });
 
-// Bay geometry. The bike stands in for the rider's own vehicle photo (the only
-// photo in the scene); everything else is drawn, in the app's own style.
+// Bay geometry. The bay is the app's own workshop picture (the garage's
+// backdrop), the bike stands in for the rider's own vehicle, and Mecha-Nick is
+// cut from his own picture as a silhouette.
 const BAY = { x: 158, y: 8, w: 154, h: 184, floor: 176 };
 const BIKE = { w: 104, h: (104 * 1094) / 704, bottom: 0.763 };
 
@@ -347,11 +350,15 @@ function WorkshopScene() {
   const weld = win(c, 7.3, 9.0, 0.2);
   const wrench = win(c, 9.0, 10.7, 0.2);
   const flicker = weld * (0.55 + 0.45 * rnd(Math.floor(c * 24)));
-  // Mecha-Nick, seen only as a shadow on the screen: torch held at the engine,
-  // then the wrench going.
-  const mechX = bikeX - 12;
-  const armAngle = weld > 0.01 ? 18 + Math.sin(c * 2.2) * 3 : -8 + wrench * Math.sin(c * 14) * 26;
-  const mechLean = wrench * Math.sin(c * 14 + 0.6) * 2.2;
+  // Mecha-Nick: by the bike to check it in and hand it back, and while the work
+  // goes on, his shadow on the screen: bent to the engine with the torch, then
+  // rocking with the wrench.
+  const mechX = bikeX + 34;
+  const mechLean = weld > 0.01 ? 6 + Math.sin(c * 2.2) * 1.2 : wrench > 0.01 ? 4 + Math.sin(c * 14) * 3 * wrench : 0;
+  const mechSquash = weld > 0.01 ? 0.95 : 1 - 0.03 * wrench * Math.abs(Math.sin(c * 14));
+  const standing = 1 - clamp01(screen * 1.6);
+  const standLean = Math.sin(c * 1.7) * 1.2 + (c > 5.1 && c < 5.8 ? Math.sin((c - 5.1) * 9) * 3 : 0);
+  const standSquash = 1 + 0.008 * Math.sin(c * 2.4);
   const weldPt: Pt = [bikeX + 44, bikeY + BIKE.h * 0.56];
   const viewfinder = win(c, 3.2, 4.3, 0.3);
   const flash = win(c, 3.95, 4.3, 0.08);
@@ -364,10 +371,9 @@ function WorkshopScene() {
   const tagDrop = easeOut((c - 1.7) / 0.5);
   const tagSwing = Math.sin(c * 5) * 14 * Math.exp(-Math.max(0, c - 2.2) * 1.6);
 
-  // Clank marks while wrenching (on each downstroke), at the wrench
+  // Clank marks while wrenching (on each downstroke), at the engine
   const clank = wrench * Math.max(0, Math.sin(c * 14));
-  const armRad = (armAngle * Math.PI) / 180;
-  const hand: Pt = [mechX + 6 + Math.cos(armRad) * 40, BAY.floor - 58 + Math.sin(armRad) * 40];
+  const hand: Pt = [weldPt[0] - 4, weldPt[1] - 4];
 
   const panelX = 8;
   const panelW = 142;
@@ -418,13 +424,9 @@ function WorkshopScene() {
 
       {/* ---- The bay ---- */}
       <g clipPath={`url(#${id('bay')})`}>
-        <rect x={BAY.x} y={BAY.y} width={BAY.w} height={BAY.floor - BAY.y} fill={`url(#${id('wall')})`} />
-        <rect x={BAY.x} y={BAY.floor} width={BAY.w} height={BAY.y + BAY.h - BAY.floor} fill={`url(#${id('floor')})`} />
-        <line x1={BAY.x} x2={BAY.x + BAY.w} y1={BAY.floor} y2={BAY.floor} stroke="white" strokeOpacity={0.07} />
-        {/* Light bar and its wash */}
-        <path d={`M${BAY.x + 44} ${BAY.y} L${BAY.x + 110} ${BAY.y} L${BAY.x + 154} ${BAY.floor} L${BAY.x} ${BAY.floor} Z`} fill={`url(#${id('lamp')})`} />
-        <rect x={BAY.x + 57} y={BAY.y + 1} width={40} height={2} rx={1} style={{ fill: A }} opacity={0.8} />
-        <rect x={BAY.x + 57} y={BAY.y + 1} width={40} height={2} rx={1} style={{ fill: A }} filter={`url(#${id('glow')})`} opacity={0.5} />
+        <GarageBackdrop id={id} x={BAY.x} y={BAY.y} w={BAY.w} h={BAY.h} dim={0.3} />
+        {/* Mecha-Nick at the back of the bike, until the screen goes up */}
+        {standing > 0.01 && <NickSilhouette x={BAY.x + 30} floor={BAY.floor + 1} height={100} lean={standLean} squash={standSquash} opacity={standing} />}
 
         {/* The bike on the floor */}
         <ellipse cx={bikeX + BIKE.w / 2} cy={BAY.floor + 2} rx={BIKE.w * 0.42} ry={3} fill="black" opacity={0.55} />
@@ -476,8 +478,8 @@ function WorkshopScene() {
         </g>
         <rect x={BAY.x} y={BAY.y} width={BAY.w} height={BAY.h} fill="white" opacity={flash * 0.85} />
 
-        {/* In progress: Mecha-Nick works behind a frosted screen. He's only a
-            shadow on it: torch at the engine, then the wrench going. */}
+        {/* In progress: Mecha-Nick works behind a frosted screen, his shadow
+            thrown on it: bent to the engine with the torch, then the wrench. */}
         {screen > 0.001 && (
           <g>
             {/* The screen, lit from behind by the bay lights */}
@@ -487,20 +489,7 @@ function WorkshopScene() {
               <rect x={BAY.x} y={BAY.y + 6} width={BAY.w * screen} height={BAY.floor - BAY.y - 4} />
             </clipPath>
             <g clipPath={`url(#${id('screenClip')})`}>
-              <g opacity={0.72} filter={`url(#${id('shadow')})`} transform={`rotate(${mechLean.toFixed(2)} ${mechX} ${BAY.floor})`}>
-                <rect x={mechX - 8} y={BAY.floor - 34} width={6} height={34} rx={2.5} fill="#050507" />
-                <rect x={mechX + 2} y={BAY.floor - 34} width={6} height={34} rx={2.5} fill="#050507" transform={`rotate(-6 ${mechX + 5} ${BAY.floor - 34})`} />
-                <rect x={mechX - 10} y={BAY.floor - 66} width={20} height={36} rx={7} fill="#050507" />
-                <circle cx={mechX + 1} cy={BAY.floor - 75} r={7.5} fill="#050507" />
-                <g transform={`rotate(${armAngle.toFixed(2)} ${mechX + 6} ${BAY.floor - 58})`}>
-                  <rect x={mechX + 4} y={BAY.floor - 61} width={30} height={5.5} rx={2.7} fill="#050507" />
-                  {weld > 0.01 ? (
-                    <rect x={mechX + 32} y={BAY.floor - 60} width={12} height={2.4} rx={1.2} fill="#050507" />
-                  ) : (
-                    <path d={`M${mechX + 32} ${BAY.floor - 58.2} l9 0 m0 0 l3 -3 m-3 3 l3 3`} stroke="#050507" strokeWidth={2.4} strokeLinecap="round" fill="none" />
-                  )}
-                </g>
-              </g>
+              <NickSilhouette x={mechX} floor={BAY.floor + 2} height={108} shadow lean={mechLean} squash={mechSquash} opacity={0.72} />
             </g>
             <rect x={BAY.x} y={BAY.y + 6} width={BAY.w * screen} height={BAY.floor - BAY.y - 4} fill={`url(#${id('slats')})`} />
             <line

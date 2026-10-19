@@ -1,17 +1,15 @@
+/* eslint-disable react-refresh/only-export-components -- scenes export their running times for the tour */
 import {
-  BookOpen,
   Check,
+  Gauge,
+  QrCode,
   CornerUpRight,
-  Flag,
-  Ghost,
   IdCard,
   Lock,
   Moon,
   Mountain,
   Sparkles,
-  Timer,
   TrendingUp,
-  Trophy,
   Users,
   Video,
   Wrench,
@@ -29,6 +27,9 @@ import {
   Bar,
   Base,
   BikePhoto,
+  GarageBackdrop,
+  NickSilhouette,
+  bikeAt,
   Chip,
   Defs,
   Frame,
@@ -51,6 +52,7 @@ import {
   easeInOut,
   easeOut,
   easeOutBack,
+  fitLines,
   frac,
   lerp,
   loopT,
@@ -75,6 +77,8 @@ const STOCK = {
   track: { paper: '#ffe3f0', ink: '#7a1247' },
 };
 const PURPLE = '#a855f7';
+/** Font size that fits `label` into `maxW` scene units (never above `size`). */
+const fitW = (label: string, maxW: number, size = 7) => Math.min(size, maxW / Math.max(1, textW(label, 1)));
 
 function useUnits() {
   const { settings } = useSettings();
@@ -160,59 +164,51 @@ function Receipt({
 }
 
 // =============================================================================
-// After the ride: the receipt prints, the ride lands in History with its
-// corner grade and badges; a Track Day session prints on pink stock
+// After the ride: the receipt prints and flies into History with the ride's
+// line, corner grade and badges; then the 3D flyover plays it back
 // =============================================================================
 
 const AR_P = 12;
-/** Each receipt's turn: it prints, sits, then slides off for the next (the last one stays). */
-const AR_SLOT = 6;
 const AR_TRACE = new Route([[160, 76], [172, 58], [190, 64], [204, 44], [226, 52], [238, 70], [256, 60], [276, 72], [290, 56]], false, 10);
+/** Where the receipt lands: the ride's entry in History. */
+const AR_HISTORY: Pt = [229, 56];
+/** The flyover: a loop out of town and back, seen from behind the marker. */
+const AR_FLY = new Route([[0, -70], [46, -54], [70, -8], [46, 38], [6, 62], [-40, 50], [-66, 8], [-52, -42]], true, 14);
+const AR_FLY_ROADS = ['M-150 -24 L150 -66', 'M-96 120 L110 -130', 'M-150 44 L150 74', 'M22 -150 L-14 150', 'M-150 -96 L150 -110'];
+/** Blocks of town either side of the roads, for the ground to read as a map from up high. */
+const AR_FLY_BLOCKS = Array.from({ length: 42 }, (_, i) => ({ x: ((i * 53) % 290) - 145, y: ((i * 97 + 31) % 290) - 145, w: 10 + (i % 3) * 5, h: 8 + (i % 4) * 3 }));
+/** The town under the ride's name as the flyover passes through (place names stay as they are). */
+const AR_TOWNS: { from: number; name: string }[] = [
+  { from: 0, name: 'Brighton' },
+  { from: 0.32, name: 'Lewes' },
+  { from: 0.74, name: 'Brighton' },
+];
+const AR_FLY_FROM = 6.4;
+const AR_FLY_FOR = 5.2;
+const AR_FLY_TAP = 6.0;
+const AR_FLY_CHIP = { x: 146, y: 170 };
 
-/** Each receipt prints, the badges bank, and the receipt slides off for the next. */
 const AR_CUES: SceneCue[] = [
   [0.6, 'print'], [3.6, 'tap'], [4.0, 'tap'], [4.4, 'tap'], [4.8, 'tap'], [5.4, 'whoosh'],
-  [6.6, 'print'],
+  [AR_FLY_TAP, 'tap'], [AR_FLY_FROM, 'whoosh'],
 ];
 
 export function AfterRideScene() {
   const id = useIds();
   const u = useUnits();
   const t = loopT(useSceneTime(0), AR_P);
-  const which = Math.min(1, Math.floor(t / AR_SLOT));
-  const local = t - which * AR_SLOT;
-  const f = easeInOut((local - 0.6) / 2.5);
-  const slide = which < 1 ? easeInOut((local - 5.4) / 0.6) : 0;
-  const receipts: { stock: { paper: string; ink: string }; sub: string; rows: [string, string][]; footer: string[] }[] = [
-    {
-      stock: STOCK.ride,
-      sub: tr("— RIDE RECEIPT —"),
-      rows: [
-        [tr("Max Spd"), `${u.speed(104)} ${u.speedLabel}`],
-        [tr("Max Lean"), '44°'],
-        [tr("Distance"), `${u.miles1(45.2)} ${u.distLabel.toUpperCase()}`],
-        [tr("Duration"), '1:23:45'],
-        [tr("Avg Spd"), `${u.speed(32)} ${u.speedLabel}`],
-        [tr("Corners"), '64'],
-      ],
-      footer: [tr("THANK YOU FOR THE RIDE"), tr("ORDER #4C1A9F")],
-    },
-    {
-      stock: STOCK.track,
-      sub: tr("— TRACK DAY RECEIPT —"),
-      rows: [
-        [tr("Track"), 'Brands Hatch Indy'],
-        [tr("Best Lap"), '0:52.318'],
-        [tr("Theoretical"), '0:51.977'],
-        [tr("Laps"), '14'],
-        [tr("Fastest Pit"), '0:31.402'],
-        [tr("Board"), 'P3'],
-        [tr("Dog Tags"), '1'],
-      ],
-      footer: [tr("3x SPEED DEMON"), `${tr("ORDER")} #7F20C4`],
-    },
+  const f = easeInOut((t - 0.6) / 2.5);
+  // Into History: the receipt shrinks into the ride's entry, which glows as it lands.
+  const fly = easeInOut((t - 5.4) / 0.6);
+  const landed = win(t, 5.9, 6.6, 0.25);
+  const rows: [string, string][] = [
+    [tr("Max Spd"), `${u.speed(104)} ${u.speedLabel}`],
+    [tr("Max Lean"), '44°'],
+    [tr("Distance"), `${u.miles1(45.2)} ${u.distLabel.toUpperCase()}`],
+    [tr("Duration"), '1:23:45'],
+    [tr("Avg Spd"), `${u.speed(32)} ${u.speedLabel}`],
+    [tr("Corners"), '64'],
   ];
-  const r = receipts[which];
   const trace = easeInOut((t - 1.2) / 2);
   const corners = [0.92, 0.84, 0.97, 0.78, 0.88];
   const badges: { I: Icon; name: string; at: number }[] = [
@@ -222,34 +218,100 @@ export function AfterRideScene() {
     { I: Moon, name: 'Night Owl', at: 4.8 },
   ];
 
+  // The flyover, chase camera: the world turns so the marker always heads up the screen.
+  const flyIn = easeOut((t - AR_FLY_FROM + 0.25) / 0.45);
+  const p = clamp01((t - AR_FLY_FROM) / AR_FLY_FOR);
+  const here = AR_FLY.at(p).p;
+  const ahead = AR_FLY.at(p + 0.012).p;
+  const behind = AR_FLY.at(p - 0.012).p;
+  const heading = (Math.atan2(ahead[1] - behind[1], ahead[0] - behind[0]) * 180) / Math.PI;
+  const town = [...AR_TOWNS].reverse().find((s) => p >= s.from) ?? AR_TOWNS[0];
+  const townFade = Math.min(1, ...AR_TOWNS.filter((s) => s.from > 0).map((s) => Math.abs(p - s.from) / 0.035));
+  const chipW = 20 + textW(tr("3D flyover"));
+  const tapAt: Pt = [AR_FLY_CHIP.x + chipW / 2, AR_FLY_CHIP.y + 8.5];
+  const tapK = clamp01((t - AR_FLY_TAP) / 0.5);
+  const rideName = tr("Evening ride around {0}", ['Brighton']);
+
   return (
     <Frame sound={{ t, cues: AR_CUES }}>
       <Defs id={id} />
       <Base id={id} />
       <g opacity={loopFade(t, AR_P)}>
         {/* The printer and the receipt */}
-        <rect x={14} y={8} width={120} height={10} rx={4} fill="#26262c" stroke={LINE} />
-        <rect x={20} y={14} width={108} height={1.4} fill="#050506" />
-        <g transform={`translate(${-slide * 40} ${-slide * 20})`} opacity={1 - slide}>
-          <Receipt
-            key={which}
-            clip={id(`r${which}`)}
-            x={20}
-            y={15}
-            w={108}
-            h={168}
-            f={f}
-            paper={r.stock.paper}
-            ink={r.stock.ink}
-            title={tr("BLACKTOP STORE")}
-            sub={r.sub}
-            rows={r.rows}
-            footer={r.footer}
-          />
+        <g opacity={1 - flyIn}>
+          <rect x={14} y={8} width={120} height={10} rx={4} fill="#26262c" stroke={LINE} />
+          <rect x={20} y={14} width={108} height={1.4} fill="#050506" />
         </g>
+        {fly < 1 && (
+          <g
+            transform={`translate(${lerp(74, AR_HISTORY[0], fly).toFixed(1)} ${lerp(99, AR_HISTORY[1], fly).toFixed(1)}) scale(${(1 - 0.88 * fly).toFixed(3)}) translate(-74 -99)`}
+            opacity={1 - fly * fly}
+          >
+            <Receipt
+              clip={id('r0')}
+              x={20}
+              y={15}
+              w={108}
+              h={168}
+              f={f}
+              paper={STOCK.ride.paper}
+              ink={STOCK.ride.ink}
+              title={tr("BLACKTOP STORE")}
+              sub={tr("— RIDE RECEIPT —")}
+              rows={rows}
+              footer={[tr("THANK YOU FOR THE RIDE"), tr("ORDER #4C1A9F")]}
+            />
+          </g>
+        )}
+
+        {/* The flyover plays where the receipt was */}
+        {flyIn > 0 && (
+          <g opacity={flyIn} transform={`translate(74 100) scale(${(0.92 + 0.08 * flyIn).toFixed(3)}) translate(-74 -100)`}>
+            <defs>
+              <clipPath id={id('fly-clip')}>
+                <rect x={14} y={12} width={120} height={176} rx={10} />
+              </clipPath>
+              <linearGradient id={id('fly-sky')} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor={BG} stopOpacity={1} />
+                <stop offset="1" stopColor={BG} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <rect x={14} y={12} width={120} height={176} rx={10} fill="#0d0d11" />
+            <g clipPath={`url(#${id('fly-clip')})`}>
+              <g transform={`translate(74 136) scale(1.7 0.95) rotate(${(-90 - heading).toFixed(2)}) translate(${(-here[0]).toFixed(2)} ${(-here[1]).toFixed(2)})`}>
+                {AR_FLY_BLOCKS.map((b, i) => (
+                  <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx={1.5} fill="#16161b" />
+                ))}
+                {AR_FLY_ROADS.map((d) => (
+                  <path key={d} d={d} fill="none" stroke="#2a2a31" strokeWidth={3} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                ))}
+                <path d={AR_FLY.d} fill="none" stroke="#33333b" strokeWidth={5} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                <path d={AR_FLY.d} fill="none" style={{ stroke: A }} strokeOpacity={0.3} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                {p > 0.002 && (
+                  <path d={AR_FLY.slice(0, p, 60)} fill="none" style={{ stroke: A }} strokeWidth={2.6} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" filter={`url(#${id('glow')})`} />
+                )}
+              </g>
+              <rect x={14} y={12} width={120} height={64} fill={`url(#${id('fly-sky')})`} />
+              <rect x={14} y={150} width={120} height={38} fill={`url(#${id('fly-sky')})`} transform="rotate(180 74 169)" />
+              <Arrow p={[74, 136]} a={-90} color={A} glow={id('glow')} />
+            </g>
+            <rect x={14} y={12} width={120} height={176} rx={10} fill="none" stroke={LINE} />
+            {/* The ride's name, and the town it's in at this moment */}
+            <T x={74} y={27} anchor="middle" size={fitW(rideName, 104, 6.6)} weight={800}>{rideName}</T>
+            <T x={74} y={36} anchor="middle" size={5.6} color={MUTED} opacity={townFade}>{town.name}</T>
+            {/* The player */}
+            <g transform="translate(22 170)">
+              <circle cx={6} cy={4} r={6} style={{ fill: A }} />
+              <path d="M4.2 1.4 L8.6 4 L4.2 6.6 Z" fill="#111" />
+              <rect x={16} y={3} width={82} height={2} rx={1} fill="white" fillOpacity={0.15} />
+              <rect x={16} y={3} width={82 * p} height={2} rx={1} style={{ fill: A }} />
+              <circle cx={16 + 82 * p} cy={4} r={2.4} fill={INK} />
+            </g>
+          </g>
+        )}
 
         {/* History: the ride, its line and its corners */}
-        <Panel x={146} y={8} w={166} h={96}>
+        <Panel x={146} y={8} w={166} h={96} stroke={landed > 0 ? aa(0.35 + 0.5 * landed) : LINE} sw={landed > 0 ? 1.2 : 0.8}>
           <T x={8} y={14} weight={700}>{tr("Today")}</T>
           <T x={158} y={14} anchor="end" size={6.5} color={MUTED} mono>{`${u.miles1(45.2)} ${u.distLabel} · 1:23:45`}</T>
           <path d={AR_TRACE.slice(0, Math.max(0.001, trace), 50)} transform="translate(-146 -8)" fill="none" style={{ stroke: A }} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -257,10 +319,10 @@ export function AfterRideScene() {
             <circle cx={AR_TRACE.at(0).p[0]} cy={AR_TRACE.at(0).p[1]} r={2.4} fill={INK} />
             {trace > 0.98 && <circle cx={AR_TRACE.at(1).p[0]} cy={AR_TRACE.at(1).p[1]} r={2.4} style={{ fill: A }} />}
           </g>
-          <T x={8} y={82} size={6} color={MUTED}>{tr("Corner report")}</T>
+          <T x={8} y={80} size={6} color={MUTED}>{tr("Corner report")}</T>
           {corners.map((c, i) => {
             const k = easeOut((t - 2.6 - i * 0.15) / 0.5);
-            return <rect key={i} x={8 + i * 11} y={88 - 10 * c * k} width={7} height={10 * c * k} rx={1.5} style={{ fill: c > 0.9 ? A : aa(0.5) }} />;
+            return <rect key={i} x={8 + i * 11} y={91 - 7 * c * k} width={7} height={7 * c * k} rx={1.5} style={{ fill: c > 0.9 ? A : aa(0.5) }} />;
           })}
           <T x={158} y={90} anchor="end" size={16} weight={800} opacity={easeOut((t - 3.2) / 0.5)}>A−</T>
         </Panel>
@@ -280,8 +342,11 @@ export function AfterRideScene() {
             );
           })}
         </Panel>
-        <Chip x={146} y={170} label={tr("3D flyover")} I={Mountain} opacity={easeOut((t - 5.2) / 0.4)} />
-        <Chip x={VW - 8} y={170} right label={tr("Overlay MP4")} I={Video} opacity={easeOut((t - 5.6) / 0.4)} />
+        <Chip x={AR_FLY_CHIP.x} y={AR_FLY_CHIP.y} label={tr("3D flyover")} I={Mountain} tone={t > AR_FLY_TAP ? aa(0.7) : undefined} opacity={easeOut((t - 5.2) / 0.4)} />
+        <Chip x={VW - 8} y={170} right label={tr("Overlay video")} I={Video} opacity={easeOut((t - 5.6) / 0.4)} />
+        {tapK > 0 && tapK < 1 && (
+          <circle cx={tapAt[0]} cy={tapAt[1]} r={8 + tapK * 18} fill="none" style={{ stroke: A }} strokeWidth={1.2} opacity={0.8 * (1 - tapK)} />
+        )}
       </g>
       <Vignette id={id} />
     </Frame>
@@ -289,84 +354,269 @@ export function AfterRideScene() {
 }
 
 // =============================================================================
-// Mecha-Nick's garage: the bike on the ramp, its miles rolling up, the chain
-// coming due, serviced, and the logbook written
+// Mecha-Nick's garage: the bike on its stand, the miles rolling up from rides,
+// the chain coming due (the app's own reminder), serviced and stamped in the
+// paper logbook, and the logbook handed on to a new keeper by QR
 // =============================================================================
 
 const GA_P = 12;
+/** The logbook's paper and inks (LogbookView). */
+const PAPER = '#f6eed9';
+const PAPER_DARK = '#e6d9b8';
+const INK_BROWN = '#2b2118';
+const INK_BLUE = '#1f2a5a';
+const STAMP = { ok: '#2f6b2f', soon: '#a86a12' };
+const GA_REMIND = 4.4;
+const GA_DONE = 6.8;
+const GA_TURN = 8.4;
+const GA_HAND = 9.5;
+const GA_GONE = 11.0;
 
-const GA_CUES: SceneCue[] = [[5.6, 'ping'], [8.2, 'success'], [8.6, 'tap']];
+const GA_CUES: SceneCue[] = [
+  [1.3, 'tap'],
+  [2.9, 'tap'],
+  [GA_REMIND, 'ping'],
+  [GA_DONE, 'impact'],
+  [GA_DONE + 0.15, 'success'],
+  [GA_TURN, 'whoosh'],
+  [GA_HAND, 'tap'],
+  [GA_GONE, 'success'],
+];
+
+/** For the tour: how long the garage scene runs. */
+export const GARAGE_SECONDS = GA_P;
+/** The bike on the workshop floor. */
+const GA_BIKE = { cx: 80, floor: 188, height: 98 };
 
 export function GarageScene() {
   const id = useIds();
   const u = useUnits();
   const t = loopT(useSceneTime(0), GA_P);
-  const odo = 12480 + Math.round(132 * easeInOut((t - 0.4) / 5.4));
-  const serviced = t > 8.2;
-  const chain = serviced ? 0.04 + 0.02 * clamp01((t - 8.2) / 3) : 0.7 + 0.32 * easeInOut((t - 0.4) / 5.6);
-  const chainColor = serviced ? GREEN : chain > 0.97 ? RED : chain > 0.85 ? AMBER : GREEN;
-  const due = win(t, 5.6, 8.4, 0.3);
-  const log = easeOut((t - 8.6) / 0.5);
-  const items = [
-    { name: tr("Chain"), f: chain, color: chainColor },
-    { name: tr("Oil"), f: 0.42 + 0.06 * easeInOut(t / 6), color: GREEN },
-    { name: tr("Tyres"), f: 0.58 + 0.05 * easeInOut(t / 6), color: GREEN },
-    { name: tr("Brakes"), f: 0.31 + 0.04 * easeInOut(t / 6), color: GREEN },
+  // Miles land from each ride, then the reminder, the service, the stamp, the hand-over.
+  const ridden = 12480 + 54 * easeOut((t - 1.3) / 0.6) + 66 * easeOut((t - 2.9) / 0.6);
+  const odo = Math.round(ridden);
+  const serviced = t >= GA_DONE;
+  const stampK = serviced ? clamp01((t - GA_DONE) / 0.18) : 0;
+  const remind = win(t, GA_REMIND, 6.0, 0.3);
+  const turn = clamp01((t - GA_TURN) / 0.5);
+  const page = turn < 0.5 ? 'record' : 'keeper';
+  const pageScale = turn < 0.5 ? 1 - turn * 2 : (turn - 0.5) * 2;
+  const qr = easeOutBack((t - GA_HAND - 0.2) / 0.4);
+  const live = clamp01((t - GA_HAND - 0.2) / 1.6);
+  const gone = t >= GA_GONE;
+  const lines: [number, number, string][] = [
+    [1.0, 4.0, tr("Every trip lands in here.")],
+    [6.0, 8.2, tr("Chain's due. Lube it and I'll write it up.")],
+    [8.3, GA_P - 0.5, tr("Selling? The history goes with the bike.")],
   ];
+  const line = lines.find(([a, b]) => t >= a && t < b);
+  // Mecha-Nick: breathing, a nod and a lean while he talks, over to the chain to do it, and back.
+  const walkTo = easeInOut((t - 5.7) / 0.5);
+  const walkBack = easeInOut((t - 7.15) / 0.55);
+  const away = walkTo * (1 - walkBack);
+  const walking = (t > 5.7 && t < 6.2) || (t > 7.15 && t < 7.7);
+  const crouch = win(t, 6.2, 7.1, 0.2);
+  const nickX = lerp(146, 120, away);
+  const step = walking ? Math.abs(Math.sin(t * Math.PI * 4)) * 1.6 : 0;
+  const talkLean = line ? Math.sin(t * 5) * 1.4 : 0;
+  const nickLean = talkLean - 4 * crouch;
+  const nickSquash = (1 + 0.008 * Math.sin(t * 2.4)) * (1 - 0.07 * crouch);
+  const chain = bikeAt(GA_BIKE, 190, 700);
+  const clank = crouch > 0.5 ? Math.max(0, Math.sin(t * 16)) : 0;
+  const bubble = line ? win(t, line[0], line[1], 0.25) : 0;
+  const said = fitLines(line?.[2] ?? '', 90, 6.2, 2);
+  const bubbleH = said.lines.length > 1 ? 30 + said.size + 1.8 : 30;
+  const due = 12610;
+  const items: { name: string; every: number; last: number; ok: boolean }[] = [
+    { name: tr("Chain lube"), every: 500, last: serviced ? odo : 12110, ok: serviced },
+    { name: tr("Oil"), every: 4000, last: 10320, ok: true },
+    { name: tr("Tyres"), every: 6000, last: 9850, ok: true },
+    { name: tr("Brakes"), every: 8000, last: 7900, ok: true },
+  ];
+  const leftToService = Math.max(0, due + 40 - odo);
+  const notifTitle = tr("🔧 {0} due soon", [tr("Chain lube")]);
+  const notifBody = tr("{0}: due in {1} {2}.", ['V4 Ducati', u.miles(leftToService / 1), u.distLabel]);
+  // Under the hand-over: what stays, then who it went to (two lines before it shrinks).
+  const keeperNote = fitLines(
+    gone ? tr("{0} has the logbook now", ['Sam']) : qr > 0 ? `${tr("Handing over to")} Sam…` : tr("Your own ride history and totals stay with you."),
+    108,
+    5.2,
+  );
 
   return (
     <Frame sound={{ t, cues: GA_CUES }}>
       <Defs id={id} />
-      <defs>
-        <linearGradient id={id('floor')} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#15151a" />
-          <stop offset="1" stopColor="#0a0a0c" />
-        </linearGradient>
-        <radialGradient id={id('spot')} cx="50%" cy="0%" r="90%">
-          <stop offset="0" stopColor="white" stopOpacity="0.1" />
-          <stop offset="1" stopColor="white" stopOpacity="0" />
-        </radialGradient>
-        <filter id={id('grey')}>
-          <feColorMatrix type="saturate" values="0.15" />
-        </filter>
-      </defs>
       <rect width={VW} height={VH} fill={BG} />
       <g opacity={loopFade(t, GA_P)}>
-        {/* The bay */}
-        <rect x={0} y={172} width={150} height={28} fill={`url(#${id('floor')})`} />
-        <line x1={0} y1={172} x2={150} y2={172} stroke="white" strokeOpacity={0.08} />
-        <path d="M40 0 L110 0 L150 172 L0 172 Z" fill={`url(#${id('spot')})`} />
-        <ellipse cx={76} cy={174} rx={54} ry={4} fill="black" opacity={0.6} />
-        <BikePhoto cx={76} floor={174} height={104} />
-        <Chip x={8} y={8} label={tr("V4 Ducati · Active")} I={Sparkles} />
-        <Chip x={8} y={148} label={tr("Chain due soon")} I={Wrench} color={AMBER} tone={AMBER} opacity={due} />
-
-        {/* The vehicle's card */}
-        <Panel x={156} y={8} w={156} h={184}>
-          <T x={10} y={18} size={11} weight={800}>V4 Ducati</T>
-          <T x={10} y={28} size={6.5} color={MUTED}>Ducati Streetfighter V4</T>
-          <T x={10} y={44} size={6} color={MUTED}>{tr("Odometer")}</T>
-          <T x={146} y={46} anchor="end" size={13} weight={800} mono>{`${u.miles(odo)} ${u.distLabel}`}</T>
-          {items.map((it, i) => (
-            <g key={i} transform={`translate(10 ${60 + i * 18})`}>
-              <T x={0} y={0} size={6.5}>{it.name}</T>
-              {i === 0 && serviced && <T x={136} y={0} anchor="end" size={6} color={GREEN} weight={700}>{tr("Serviced")}</T>}
-              {i === 0 && !serviced && chain > 0.97 && <T x={136} y={0} anchor="end" size={6} color={RED} weight={700}>{tr("Due")}</T>}
-              <Bar x={0} y={4} w={136} h={3.5} f={it.f} color={it.color} />
-            </g>
-          ))}
-          {/* Logbook entry */}
-          <g transform="translate(10 136)" opacity={log}>
-            <line x1={0} y1={-6} x2={136} y2={-6} stroke={LINE} />
-            <Ico I={BookOpen} x={0} y={0} s={10} />
-            <T x={15} y={7.5} weight={700}>{tr("Logbook")}</T>
-            <T x={0} y={22} size={6.2}>{tr("Chain adjusted & lubed")}</T>
-            <T x={0} y={32} size={5.8} color={MUTED} mono>{`${u.miles(12612)} ${u.distLabel} · ${tr("Today")}`}</T>
+        {/* The workshop the app's garage stands in, Nick at the back of the bike */}
+        <GarageBackdrop id={id} dim={0.32} />
+        <NickSilhouette x={nickX} floor={184 - step} height={118} lean={nickLean} squash={nickSquash} />
+        <ellipse cx={GA_BIKE.cx} cy={GA_BIKE.floor + 1.5} rx={54} ry={3.6} fill="black" opacity={0.6} />
+        <BikePhoto {...GA_BIKE} />
+        {clank > 0.4 && (
+          <g transform={`translate(${chain[0].toFixed(1)} ${chain[1].toFixed(1)})`} opacity={(clank - 0.4) / 0.6}>
+            {[-40, 0, 40].map((a) => (
+              <line key={a} x1={0} y1={-4} x2={0} y2={-9} style={{ stroke: A }} strokeWidth={1.2} strokeLinecap="round" transform={`rotate(${a})`} />
+            ))}
           </g>
-        </Panel>
+        )}
+
+        {/* The bike's miles */}
+        <g transform="translate(8 8)">
+          <rect width={98} height={17} rx={5} style={{ fill: PANEL, stroke: LINE }} strokeWidth={0.8} />
+          <Ico I={Gauge} x={6} y={4} s={9} />
+          <T x={19} y={11.6} size={6.6} weight={700}>V4 Ducati</T>
+          <T x={92} y={11.6} anchor="end" size={6.6} weight={800} mono>{`${u.miles(odo)} ${u.distLabel}`}</T>
+        </g>
+        {[1.3, 2.9].map((at, i) => {
+          const k = clamp01((t - at) / 1.2);
+          if (k <= 0 || k >= 1) return null;
+          return (
+            <T key={i} x={92} y={34 - 10 * easeOut(k)} anchor="end" size={6} weight={800} color={GREEN} opacity={1 - k * k} mono>
+              {`+${u.miles(i ? 66 : 54)} ${u.distLabel}`}
+            </T>
+          );
+        })}
+
+        {/* Mecha-Nick talks: a second line before the words shrink, the bubble growing upwards, clear of his head */}
+        {bubble > 0.01 && line && (
+          <g opacity={bubble} transform={`translate(${(nickX - 92).toFixed(1)} ${(30 - (bubbleH - 30) - 6 * (1 - easeOut((t - line[0]) / 0.3))).toFixed(1)})`}>
+            <rect width={104} height={bubbleH} rx={8} fill="white" />
+            <path d={`M96 ${bubbleH} l2 7 l-9 -7 z`} fill="white" />
+            <T x={8} y={9.5} size={4.4} weight={700} color="#71717a" spacing={0.8}>{tr("Mecha-Nick").toUpperCase()}</T>
+            {said.lines.map((l, i) => (
+              <T key={i} x={8} y={21 + i * (said.size + 1.8)} size={said.size} weight={600} color="#18181b">{l}</T>
+            ))}
+          </g>
+        )}
+
+        {/* The logbook, open */}
+        <g transform="rotate(-1.5 246 100)">
+          <rect x={180} y={12} width={132} height={178} rx={3} fill="#000" opacity={0.35} transform="translate(2 3)" />
+          <g transform={`translate(180 0) scale(${Math.max(0.001, pageScale).toFixed(3)} 1) translate(-180 0)`}>
+            <rect x={180} y={12} width={132} height={178} rx={3} fill={PAPER} />
+            <line x1={180.6} y1={14} x2={180.6} y2={188} stroke={INK_BROWN} strokeOpacity={0.25} strokeWidth={1.2} />
+            {page === 'record' ? (
+              <g transform="translate(190 26)">
+                <T x={0} y={0} size={6.4} weight={900} color={INK_BROWN} spacing={1.4}>{tr("Service record").toUpperCase()}</T>
+                <line x1={0} y1={4} x2={112} y2={4} stroke={INK_BROWN} strokeOpacity={0.7} strokeWidth={1.1} />
+                {items.map((it, i) => {
+                  const y = 18 + i * 30;
+                  const stamped = i > 0 || serviced;
+                  const ok = it.ok;
+                  const color = ok ? STAMP.ok : STAMP.soon;
+                  const label = ok ? tr("OK") : tr("Due soon");
+                  const slam = i === 0 && serviced ? 1.6 - 0.6 * stampK : 1;
+                  return (
+                    <g key={i} transform={`translate(0 ${y})`}>
+                      <T x={0} y={0} size={6.2} weight={800} color={INK_BROWN}>{it.name}</T>
+                      {stamped || !ok ? (
+                        <g transform={`translate(${112 - textW(label, 4.8) / 2 - 4} -2) rotate(-4) scale(${slam.toFixed(3)})`} opacity={i === 0 && serviced ? stampK : 1}>
+                          <rect x={-textW(label, 4.8) / 2 - 3} y={-5} width={textW(label, 4.8) + 6} height={8} rx={1} fill="none" stroke={color} strokeWidth={0.8} />
+                          <T x={0} y={1.4} anchor="middle" size={4.8} weight={900} color={color} spacing={0.6}>{label.toUpperCase()}</T>
+                        </g>
+                      ) : null}
+                      <T x={0} y={9} size={4.8} color="rgba(43,33,24,0.7)" mono>
+                        {`${tr("every")} ${u.miles(it.every)} ${u.distLabel} ${tr("· last")} ${u.miles(it.last)} ${u.distLabel}`}
+                      </T>
+                      {i === 0 && serviced && (
+                        <g opacity={clamp01((t - GA_DONE - 0.3) / 0.5)}>
+                          <T x={0} y={18} size={5.6} color={INK_BLUE}>
+                            <tspan fontStyle="italic" fontFamily="Georgia, 'Times New Roman', serif">{tr("“{0}”", [tr("Chain adjusted & lubed")])}</tspan>
+                          </T>
+                        </g>
+                      )}
+                    </g>
+                  );
+                })}
+                <rect x={0} y={128} width={112} height={22} rx={2} fill={PAPER_DARK} />
+                <T x={56} y={137} anchor="middle" size={4.6} color="rgba(43,33,24,0.75)">{tr("Odometer")}</T>
+                <T x={56} y={146} anchor="middle" size={6.4} weight={800} color={INK_BROWN} mono>{`${u.miles(odo)} ${u.distLabel}`}</T>
+              </g>
+            ) : (
+              <g transform="translate(190 26)">
+                <T x={0} y={0} size={6.4} weight={900} color={INK_BROWN} spacing={1.4}>{tr("Change of keeper").toUpperCase()}</T>
+                <line x1={0} y1={4} x2={112} y2={4} stroke={INK_BROWN} strokeOpacity={0.7} strokeWidth={1.1} />
+                <foreignObject x={0} y={9} width={112} height={44}>
+                  <p style={{ margin: 0, fontSize: 5.4, lineHeight: 1.35, color: INK_BROWN }}>
+                    {tr("Selling or passing it on? The new keeper scans your code and gets this logbook, its trading card and its stats.")}
+                  </p>
+                </foreignObject>
+                {qr > 0 ? (
+                  <g transform={`translate(56 98) scale(${Math.max(0.001, qr).toFixed(3)})`}>
+                    <circle r={34} fill="none" stroke={INK_BROWN} strokeOpacity={0.15} strokeWidth={2} />
+                    <circle r={34} fill="none" stroke={gone ? STAMP.ok : INK_BROWN} strokeWidth={2} strokeDasharray={`${(213.6 * (1 - live)).toFixed(1)} 214`} transform="rotate(-90)" />
+                    <g transform="translate(-22 -22)">
+                      <rect width={44} height={44} rx={3} fill="white" />
+                      {GA_QR.map((on, i) => (on ? <rect key={i} x={2 + (i % 15) * 2.67} y={2 + Math.floor(i / 15) * 2.67} width={2.7} height={2.7} fill={INK_BROWN} /> : null))}
+                    </g>
+                    {gone && (
+                      <g>
+                        <circle r={12} fill={STAMP.ok} />
+                        <path d="M-5 0 l3.5 3.5 l7 -7" fill="none" stroke="white" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" />
+                      </g>
+                    )}
+                  </g>
+                ) : (
+                  <g transform="translate(30 84)">
+                    <rect width={52} height={30} rx={4} fill={INK_BROWN} />
+                    <Ico I={QrCode} x={20} y={5} s={12} color={PAPER} />
+                    <T x={26} y={25} anchor="middle" size={5} weight={900} color={PAPER} spacing={0.8}>{tr("Hand over").toUpperCase()}</T>
+                  </g>
+                )}
+                {keeperNote.lines.map((l, i) => (
+                  <T key={i} x={56} y={146 + i * (keeperNote.size + 1.6)} anchor="middle" size={keeperNote.size} color="rgba(43,33,24,0.75)">
+                    {l}
+                  </T>
+                ))}
+              </g>
+            )}
+          </g>
+        </g>
+        <Tap p={[250, 125]} t={t} at={GA_HAND} />
+        {/* The reminder, as the app sends it */}
+        {remind > 0.01 && (
+          <g opacity={remind} transform={`translate(0 ${(-8 * (1 - easeOut((t - GA_REMIND) / 0.35))).toFixed(1)})`}>
+            <g transform="translate(79 8)">
+              <rect width={162} height={30} rx={9} style={{ fill: 'rgba(24,24,30,0.97)', stroke: `${AMBER}88` }} strokeWidth={0.9} />
+              <rect x={6} y={6} width={18} height={18} rx={5} fill={AMBER} fillOpacity={0.18} />
+              <Ico I={Wrench} x={10} y={10} s={10} color={AMBER} />
+              <T x={30} y={13} size={fitW(notifTitle, 106, 6.8)} weight={800}>{notifTitle}</T>
+              <T x={30} y={23} size={fitW(notifBody, 124, 5.8)} color={MUTED}>{notifBody}</T>
+              <T x={155} y={13} anchor="end" size={5} color={MUTED}>{tr("now")}</T>
+            </g>
+          </g>
+        )}
       </g>
       <Vignette id={id} />
     </Frame>
+  );
+}
+
+/** The hand-over code's look. */
+const GA_QR = Array.from({ length: 15 * 15 }, (_, i) => {
+  const r = Math.floor(i / 15);
+  const c = i % 15;
+  const finder = (fr: number, fc: number) => {
+    const y = r - fr;
+    const x = c - fc;
+    if (x < 0 || y < 0 || x > 4 || y > 4) return null;
+    return x === 0 || y === 0 || x === 4 || y === 4 || (x === 2 && y === 2);
+  };
+  const f = finder(0, 0) ?? finder(0, 10) ?? finder(10, 0);
+  if (f != null) return f;
+  return frac(Math.sin(i * 12.9898 + 4.1) * 43758.5453) > 0.5;
+});
+
+/** A finger tap at `p` around `at`. */
+function Tap({ p, t, at }: { p: Pt; t: number; at: number }) {
+  const k = clamp01((t - at + 0.25) / 0.6);
+  if (k <= 0 || k >= 1) return null;
+  return (
+    <g opacity={win(t, at - 0.25, at + 0.35, 0.12)}>
+      <circle cx={p[0]} cy={p[1]} r={5 + 11 * k} fill="none" stroke="white" strokeOpacity={0.8 * (1 - k)} strokeWidth={1} />
+      <circle cx={p[0]} cy={p[1]} r={5} fill="white" fillOpacity={0.18} stroke="white" strokeOpacity={0.6} strokeWidth={0.8} />
+    </g>
   );
 }
 
@@ -514,135 +764,6 @@ export function TradingCardsScene() {
 }
 
 // =============================================================================
-// Track records: a flying lap on a library circuit, the rider climbs the
-// opt-in board past Rico, and Rico's dog tag (a Spectre of his card) rises
-// =============================================================================
-
-const TR_P = 11;
-const TR_CIRCUIT = new Route(
-  [[40, 62], [86, 50], [122, 58], [134, 84], [112, 104], [96, 122], [112, 146], [132, 166], [100, 182], [54, 178], [28, 150], [22, 104]],
-  true,
-  12,
-);
-const TR_RUN = [0.4, 5.2];
-const TR_LAP = 52.318;
-const TR_RIVAL = 52.904;
-/** Board rows before and after the lap: [name, time, is me]. */
-const TR_BEFORE: [string, string, boolean][] = [['Priya', '52.104', false], ['Rico', '52.904', false], ['Demo Rider', '53.311', true], ['Kit', '53.720', false]];
-
-/** The line, the board shuffling, and the dog tag rising. */
-const TR_CUES: SceneCue[] = [[TR_RUN[0], 'beep'], [TR_RUN[1], 'beep'], [TR_RUN[1] + 0.4, 'success'], [6.4, 'whoosh']];
-
-export function TrackRecordsScene() {
-  const id = useIds();
-  const t = loopT(useSceneTime(0), TR_P);
-  const run = clamp01((t - TR_RUN[0]) / (TR_RUN[1] - TR_RUN[0]));
-  const at = TR_CIRCUIT.at(run);
-  const clock = TR_LAP * run;
-  const delta = (TR_LAP - TR_RIVAL) * run;
-  const finished = t >= TR_RUN[1];
-  const swap = easeInOut((t - TR_RUN[1] - 0.3) / 0.7);
-  const tag = win(t, 6.4, 10.4, 0.5);
-  const rise = easeOutBack((t - 6.4) / 0.8);
-  const sf = TR_CIRCUIT.at(0);
-
-  return (
-    <Frame sound={{ t, cues: TR_CUES }}>
-      <Defs id={id} />
-      <Base id={id} />
-      <defs>
-        <linearGradient id={id('metal')} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#dfe5ec" />
-          <stop offset="0.5" stopColor="#8f9aa8" />
-          <stop offset="1" stopColor="#3b4450" />
-        </linearGradient>
-        <filter id={id('ghost')}>
-          <feColorMatrix type="saturate" values="0" />
-          <feComponentTransfer>
-            <feFuncA type="linear" slope="0.75" />
-          </feComponentTransfer>
-        </filter>
-        <clipPath id={id('tag')}>
-          <rect x={128} y={52} width={64} height={92} rx={14} />
-        </clipPath>
-      </defs>
-      <g opacity={loopFade(t, TR_P)}>
-        <Road d={TR_CIRCUIT.d} w={8} />
-        {run > 0 && <path d={TR_CIRCUIT.slice(0, run, 60)} fill="none" style={{ stroke: A }} strokeWidth={2.6} strokeLinecap="round" />}
-        <g transform={`translate(${sf.p[0]} ${sf.p[1]}) rotate(${sf.a + 90})`}>
-          {[-6, -3, 0, 3].map((x, i) => (
-            <rect key={x} x={x} y={-2.5} width={3} height={2.5} fill={i % 2 ? '#111' : '#fff'} />
-          ))}
-          {[-6, -3, 0, 3].map((x, i) => (
-            <rect key={`b${x}`} x={x} y={0} width={3} height={2.5} fill={i % 2 ? '#fff' : '#111'} />
-          ))}
-        </g>
-        {!finished && <Arrow p={at.p} a={at.a} color={INK} glow={id('glow')} />}
-
-        {/* Live lap against the rival just above */}
-        <Panel x={20} y={8} w={110} h={34} r={8} stroke={aa(0.7)}>
-          <T x={55} y={10} anchor="middle" size={5.5} color={MUTED} weight={700} spacing={1}>{tr("Flying lap").toUpperCase()}</T>
-          <T x={55} y={24} anchor="middle" size={13} weight={800} mono>{`0:${clock.toFixed(3).padStart(6, '0')}`}</T>
-          <T x={55} y={31.5} anchor="middle" size={5.5} weight={800} color={GREEN} mono>{`${tr("vs Rico")} −${Math.abs(delta).toFixed(3)}`}</T>
-        </Panel>
-
-        {/* The board: Brands Hatch Indy, bikes */}
-        <Panel x={160} y={8} w={152} h={92}>
-          <Ico I={Trophy} x={8} y={6} s={8} />
-          <T x={20} y={12.5} size={6.5} weight={700}>Brands Hatch Indy</T>
-          <T x={144} y={12.5} anchor="end" size={5.5} color={MUTED}>{tr("Bikes")}</T>
-          {TR_BEFORE.map(([name, time, me], i) => {
-            // Me and Rico trade places once the lap is in.
-            const slot = me ? 2 - swap : name === 'Rico' ? 1 + swap : i;
-            const y = 28 + slot * 16;
-            const shown = me && swap > 0.5 ? '52.318' : time;
-            const beaten = name === 'Rico' && swap > 0;
-            return (
-              <g key={name}>
-                {me && <rect x={4} y={y - 9} width={144} height={14} rx={4} style={{ fill: aa(0.15) }} />}
-                <T x={12} y={y} size={6.5} weight={800} mono color={me ? A : MUTED}>{`P${Math.round(slot) + 1}`}</T>
-                <T x={32} y={y} size={6.5} weight={me ? 800 : 600} color={beaten ? MUTED : INK}>{me ? tr("You") : name}</T>
-                <T x={144} y={y} anchor="end" size={6.5} weight={800} mono color={me && swap > 0.5 ? GREEN : INK}>{shown}</T>
-              </g>
-            );
-          })}
-        </Panel>
-        <Chip x={160} y={108} label={tr("Opt-in · circuits only")} I={Flag} />
-
-        {/* Rico's dog tag: a Spectre of his card */}
-        {tag > 0 && (
-          <g opacity={tag}>
-            <rect width={VW} height={VH} fill="black" opacity={0.55} />
-            <g transform={`translate(0 ${((1 - clamp01(rise)) * 26).toFixed(1)}) ${popAt([160, 98], 0.75 + 0.25 * clamp01(rise))}`}>
-              <rect x={128} y={52} width={64} height={92} rx={14} fill={`url(#${id('metal')})`} />
-              <g clipPath={`url(#${id('tag')})`}>
-                <BikePhoto cx={160} floor={118} height={40} filter={`url(#${id('ghost')})`} opacity={0.85} />
-                <rect x={128 - 64 + 128 * frac(t * 0.35)} y={40} width={20} height={120} fill="white" opacity={0.15} transform="rotate(18 160 98)" />
-              </g>
-              <rect x={128} y={52} width={64} height={92} rx={14} fill="none" stroke="#e5eaf0" strokeWidth={1.4} />
-              <circle cx={160} cy={61} r={3.2} fill="#050506" stroke="#e5eaf0" strokeWidth={0.8} />
-              <Ico I={Ghost} x={140} y={68} s={6} color="#f1f5f9" />
-              <T x={148} y={73.5} size={5} weight={800} color="#f1f5f9" spacing={0.6}>RICO</T>
-              <T x={160} y={134} anchor="middle" size={8} weight={800} color="#f8fafc" mono>−0.586</T>
-            </g>
-          </g>
-        )}
-        <Chip
-          x={VW - 8}
-          y={175}
-          right
-          label={finished ? tr("3x Speed Demon + dog tag") : tr("Best lap goes on the board")}
-          I={finished ? Check : Timer}
-          color={finished ? GREEN : A}
-          tone={finished ? GREEN : undefined}
-        />
-      </g>
-      <Vignette id={id} />
-    </Frame>
-  );
-}
-
-// =============================================================================
 // Track Day: laps against the clock with coloured sectors, and the pit crew's
 // board spoken in the helmet
 // =============================================================================
@@ -659,10 +780,25 @@ const TD_SECTORS = [
   { color: AMBER, time: '31.832' },
 ];
 
-/** Two laps: a beep at the line and each sector split, and the pit board called over the radio. */
-const TD_CUES: SceneCue[] = [0, TD_LAP].flatMap((lap): SceneCue[] => [
-  [lap + 0.05, 'beep'], [lap + TD_LAP / 3, 'beep'], [lap + (2 * TD_LAP) / 3, 'beep'], [lap + 0.4, 'radioIn'], [lap + 1.4, 'radioOut'],
-]);
+/** Two laps: a beep at the line and each sector split, the pit board called over the radio, and a flourish for the personal best. */
+const TD_CUES: SceneCue[] = [
+  ...[0, TD_LAP].flatMap((lap): SceneCue[] => [
+    [lap + 0.05, 'beep'], [lap + TD_LAP / 3, 'beep'], [lap + (2 * TD_LAP) / 3, 'beep'], [lap + 0.4, 'radioIn'], [lap + 1.4, 'radioOut'],
+  ]),
+  [TD_LAP + 0.1, 'success'],
+];
+/** The live gap to the best lap through the lap: a touch down in sector one, then gaining. */
+const TD_DELTA: [number, number][] = [[0, 0], [1 / 3, 0.042], [2 / 3, -0.118], [1, -0.214]];
+const deltaAt = (f: number) => {
+  for (let i = 0; i < TD_DELTA.length - 1; i++) {
+    const [a, va] = TD_DELTA[i];
+    const [b, vb] = TD_DELTA[i + 1];
+    if (f <= b) return lerp(va, vb, (f - a) / (b - a));
+  }
+  return TD_DELTA[TD_DELTA.length - 1][1];
+};
+/** The circuit's board once the lap is in: you're third. Made-up riders. */
+const TD_BOARD: [string, string][] = [['Rico', '1:31.902'], ['Sam', '1:32.104']];
 
 export function TrackDayScene() {
   const id = useIds();
@@ -673,8 +809,13 @@ export function TrackDayScene() {
   const sector = Math.min(2, Math.floor(f * 3));
   const lapTime = 92.418 * f;
   const fmt = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toFixed(3).padStart(6, '0')}`;
-  const board = loopT(t, TD_LAP * 2) < TD_LAP ? tr("PUSH") : tr("BOX");
+  const second = loopT(t, TD_LAP * 2) >= TD_LAP;
+  const board = second ? tr("BOX") : tr("PUSH");
   const sf = TD_CIRCUIT.at(0);
+  // Over the line: the lap that's just in, in purple, before the clock carries on.
+  const pb = second && lapT < 1.7;
+  const delta = deltaAt(f);
+  const boardK = second ? win(lapT, 0.5, TD_LAP, 0.4) : 0;
 
   return (
     <Frame sound={{ t: loopT(t, TD_LAP * 2), cues: TD_CUES }}>
@@ -706,9 +847,11 @@ export function TrackDayScene() {
 
       {/* Live timing */}
       <Panel x={196} y={8} w={116} h={80}>
-        <T x={58} y={13} anchor="middle" size={6} color={MUTED} weight={700} spacing={1.5}>{tr("Lap {0}", [6])}</T>
-        <T x={58} y={34} anchor="middle" size={17} weight={800} mono>{fmt(lapTime)}</T>
-        <T x={58} y={46} anchor="middle" size={9} weight={800} color={GREEN} mono>−0.214</T>
+        <T x={58} y={13} anchor="middle" size={6} color={pb ? PURPLE : MUTED} weight={700} spacing={1.5}>{pb ? tr("Personal best") : tr("Lap {0}", [second ? 7 : 6])}</T>
+        <T x={58} y={34} anchor="middle" size={17} weight={800} mono color={pb ? PURPLE : INK}>{pb ? fmt(92.418) : fmt(lapTime)}</T>
+        <T x={58} y={46} anchor="middle" size={9} weight={800} color={pb || delta < 0 ? GREEN : RED} mono>
+          {pb ? '−0.214' : `${delta < 0 ? '−' : '+'}${Math.abs(delta).toFixed(3)}`}
+        </T>
         {TD_SECTORS.map((s, i) => {
           const done = i < sector;
           return (
@@ -727,8 +870,25 @@ export function TrackDayScene() {
         <T x={58} y={14} anchor="middle" size={5.5} color={A} weight={800} spacing={2}>{tr("PIT BOARD")}</T>
         <T x={58} y={38} anchor="middle" size={20} weight={900} spacing={2}>{board}</T>
       </g>
-      <Chip x={196} y={154} label={tr("Pit crew · live")} I={Users} />
-      <Chip x={196} y={175} label={tr("Calls spoken in your helmet")} I={Sparkles} opacity={0.9} />
+      <g opacity={1 - boardK}>
+        <Chip x={196} y={154} label={tr("Pit crew · live")} I={Users} />
+        <Chip x={196} y={175} label={tr("Calls spoken in your helmet")} I={Sparkles} opacity={0.9} />
+      </g>
+      {/* The lap goes on the circuit's board */}
+      {boardK > 0.01 && (
+        <g opacity={boardK}>
+          <Panel x={196} y={150} w={116} h={42} r={6}>
+            {[...TD_BOARD, [tr("You"), '1:32.418'] as [string, string]].map(([who, time], i) => (
+              <g key={i} transform={`translate(6 ${4 + i * 12})`}>
+                {i === 2 && <rect x={-3} y={-1} width={110} height={11} rx={3} fill={PURPLE} fillOpacity={0.18} />}
+                <T x={0} y={7.4} size={5.6} weight={800} color={i === 2 ? PURPLE : MUTED} mono>{`P${i + 1}`}</T>
+                <T x={14} y={7.4} size={5.8} weight={i === 2 ? 800 : 600}>{who}</T>
+                <T x={104} y={7.4} anchor="end" size={5.8} weight={700} mono color={i === 2 ? PURPLE : INK}>{time}</T>
+              </g>
+            ))}
+          </Panel>
+        </g>
+      )}
       <Vignette id={id} />
     </Frame>
   );

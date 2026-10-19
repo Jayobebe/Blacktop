@@ -8,6 +8,13 @@
  * members). Peaks the rider keeps private (Public Road Privacy) go as null.
  * Speeds in mph and distance in miles, as the ride keeps them; the watcher's
  * phone shows them in its own units.
+ *
+ * Every rider in the convoy sends their own ride too, so a spectator can move
+ * from rider to rider: the leader on `LIVE_EVENT` as always (an older
+ * spectator app hears only that, and follows the leader as it did), everyone
+ * else on `RIDER_EVENT`. A spectator says in its presence who it's following;
+ * that rider's phone sends every 2 s, the rest only every 6 s, enough to keep
+ * their pins moving.
  */
 export interface LiveRide {
   name: string;
@@ -33,14 +40,23 @@ export interface LiveRide {
   riders: number;
   /** When it was sent (ms). */
   at: number;
+  /** Who sent it (their account id), to tell riders apart. */
+  rider?: string;
+  /** Their accent (an accent id from Settings), for their pin. */
+  color?: string;
 }
 
 export const spectateChannelName = (convoyId: string) => `spectate:${convoyId}`;
 export const LIVE_EVENT = 'live';
 export const END_EVENT = 'end';
+export const RIDER_EVENT = 'rider';
 export const SEND_EVERY_MS = 2000;
+/** A rider no spectator is following sends this often: just their pin. */
+export const SLOW_EVERY_MS = 6000;
 
 /** What a spectator's phone puts in the channel's presence: who is watching. */
 export interface SpectatorPresence {
   name: string;
+  /** The rider being followed (account id); none (an older app) means the leader. */
+  following?: string;
 }

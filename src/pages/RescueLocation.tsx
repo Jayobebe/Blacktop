@@ -42,7 +42,7 @@ export default function RescueLocation() {
       <div className="rounded-2xl border-2 border-warning/60 bg-warning/10 p-4 flex items-start gap-3">
         <AlertTriangle className="w-7 h-7 text-warning shrink-0 mt-0.5" />
         <div className="min-w-0">
-          <p className="text-lg font-bold">{name}{" "}{tr("needs rescue")}</p>
+          <p className="text-lg font-bold">{tr("{0} needs rescue!", [name])}</p>
           {at && <p className="text-xs text-muted-foreground">{tr("Called")}{" "}{ago(at)}</p>}
           <p className="text-sm text-muted-foreground mt-2">
             {coords ? (

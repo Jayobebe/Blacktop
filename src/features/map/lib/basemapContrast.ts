@@ -3,28 +3,53 @@ import type { StyleSpecification } from 'maplibre-gl';
 /**
  * OpenFreeMap's dark style is nearly black on black: minor roads at #181818 on
  * a #0c0c0c background, labels mid-grey with no halo. This keeps its look but
- * lifts what riders read: roads step up in brightness by importance, water and
- * green space get a faint tint, buildings show, and every label gets a dark
- * halo. Layers are matched by id; anything missing is left alone, so a style
- * update upstream can't break the map.
+ * lifts what riders read: roads are coloured by class the way road atlases and
+ * signs do it (motorways blue, primary routes green, A roads red, B roads
+ * amber, smaller roads a muted yellow, the rest grey), toned down for the dark
+ * so the route line stays the brightest thing; fields, parks and woods are dark
+ * greens (the style had no layer for fields at all, so one is added); water and
+ * buildings get a tint and every label a dark halo. Layers are matched by id;
+ * anything missing is left alone, so a style update upstream can't break it.
  */
+const ROAD = {
+  motorway: 'hsl(214, 58%, 44%)',
+  trunk: 'hsl(146, 44%, 32%)',
+  primary: 'hsl(358, 52%, 42%)',
+  secondary: 'hsl(32, 64%, 40%)',
+  tertiary: 'hsl(50, 36%, 36%)',
+} as const;
+/** The major-road layers carry trunk, primary, secondary and tertiary together: coloured per class. */
+const byClass = ['match', ['get', 'class'], 'trunk', ROAD.trunk, 'primary', ROAD.primary, 'secondary', ROAD.secondary, ROAD.tertiary];
+const CASING = 'rgba(0, 0, 0, 0.6)';
+
+/** Grass, meadows and farmland: the dark style draws none of them. */
+const FIELDS = {
+  id: 'bt_landcover_fields',
+  type: 'fill',
+  source: 'openmaptiles',
+  'source-layer': 'landcover',
+  filter: ['match', ['get', 'class'], ['grass', 'farmland'], true, false],
+  paint: { 'fill-color': 'hsl(126, 24%, 11%)', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.5, 9, 0.95] },
+} as unknown as StyleSpecification['layers'][number];
+
 const PAINT: Record<string, Record<string, unknown>> = {
   background: { 'background-color': 'hsl(220, 6%, 6%)' },
   water: { 'fill-color': 'hsl(212, 30%, 13%)' },
   waterway: { 'line-color': 'hsl(212, 30%, 17%)' },
   landuse_residential: { 'fill-color': 'hsl(220, 4%, 8%)' },
-  landcover_wood: { 'fill-color': 'hsl(135, 12%, 10%)' },
-  landuse_park: { 'fill-color': 'hsl(135, 14%, 11%)' },
+  landcover_wood: { 'fill-color': 'hsl(138, 30%, 9%)', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.6, 9, 0.95] },
+  landuse_park: { 'fill-color': 'hsl(130, 26%, 12%)' },
   building: { 'fill-color': 'hsl(220, 4%, 14%)' },
   'aeroway-runway': { 'line-color': 'hsl(0, 0%, 24%)' },
   'aeroway-taxiway': { 'line-color': 'hsl(0, 0%, 20%)' },
   highway_path: { 'line-color': 'hsl(0, 0%, 30%)' },
   highway_minor: { 'line-color': 'hsl(0, 0%, 27%)' },
-  highway_major_casing: { 'line-color': 'hsla(0, 0%, 48%, 0.9)' },
-  highway_major_inner: { 'line-color': 'hsl(0, 0%, 33%)' },
-  highway_major_subtle: { 'line-color': 'hsl(0, 0%, 30%)' },
-  highway_motorway_casing: { 'line-color': 'hsla(0, 0%, 60%, 0.9)' },
-  highway_motorway_subtle: { 'line-color': 'hsl(0, 0%, 34%)' },
+  highway_major_casing: { 'line-color': CASING },
+  highway_major_inner: { 'line-color': byClass },
+  highway_major_subtle: { 'line-color': byClass },
+  highway_motorway_casing: { 'line-color': CASING },
+  highway_motorway_inner: { 'line-color': ROAD.motorway },
+  highway_motorway_subtle: { 'line-color': ROAD.motorway },
   railway: { 'line-color': 'hsl(0, 0%, 30%)' },
   railway_minor: { 'line-color': 'hsl(0, 0%, 26%)' },
   railway_transit: { 'line-color': 'hsl(0, 0%, 28%)' },
@@ -46,15 +71,19 @@ const PAINT: Record<string, Record<string, unknown>> = {
 type Layer = StyleSpecification['layers'][number] & { paint?: Record<string, unknown>; layout?: Record<string, unknown> };
 
 export function boostContrast(style: StyleSpecification): StyleSpecification {
-  const layers = style.layers.map((raw) => {
+  const layers = style.layers.flatMap((raw) => {
     const layer = raw as Layer;
-    const paint = { ...(layer.paint ?? {}), ...(PAINT[layer.id] ?? {}) };
+    const paint: Record<string, unknown> = { ...(layer.paint ?? {}), ...(PAINT[layer.id] ?? {}) };
+    // Woods in a plain dark green: the style's tree pattern drew over any colour.
+    if (layer.id === 'landcover_wood') delete paint['fill-pattern'];
     // Labels: a dark halo so they read over roads and buildings.
     if (layer.type === 'symbol' && layer.layout && 'text-field' in layer.layout) {
       paint['text-halo-color'] = 'rgba(0, 0, 0, 0.9)';
       paint['text-halo-width'] = 1.4;
     }
-    return { ...layer, paint } as StyleSpecification['layers'][number];
+    const out = { ...layer, paint } as StyleSpecification['layers'][number];
+    // Fields go in under the woods (where the tiles' source is there to draw them).
+    return layer.id === 'landcover_wood' && style.sources?.openmaptiles ? [FIELDS, out] : [out];
   });
   return { ...style, layers };
 }

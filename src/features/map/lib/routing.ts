@@ -88,7 +88,8 @@ const ROUTE_TIMEOUT_MS = 15000;
 
 export async function fetchRouteThroughStops(
   stops: { lat: number; lng: number }[],
-  opts: { steps?: boolean } = {},
+  /** `quiet`: a look (a place's card), not the ride's route; failing doesn't put the map in offline mode. */
+  opts: { steps?: boolean; quiet?: boolean } = {},
 ): Promise<RouteResult | null> {
   if (stops.length < 2) return null;
   try {
@@ -121,7 +122,7 @@ export async function fetchRouteThroughStops(
   } catch (err) {
     // No signal, a timeout or the router down: the map follows GPS until it's back.
     console.warn('Map routing failed:', err);
-    setRoutingOffline(true);
+    if (!opts.quiet) setRoutingOffline(true);
     return null;
   }
 }

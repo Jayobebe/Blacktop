@@ -27,9 +27,9 @@ let lastSentAt = 0;
 export function describeRegroup(behindNames: string[], withAdvice = true): string {
   const advice = withAdvice ? tr(" Ease off and regroup.") : '';
   if (behindNames.length === 0) return tr("Ease off and regroup.");
-  if (behindNames.length === 1) return `${behindNames[0]} is behind.${advice}`;
-  if (behindNames.length === 2) return `${behindNames[0]} and ${behindNames[1]} are behind.${advice}`;
-  return `${behindNames.length} riders are behind.${advice}`;
+  if (behindNames.length === 1) return tr("{0} is behind.", [behindNames[0]]) + advice;
+  if (behindNames.length === 2) return tr("{0} and {1} are behind.", [behindNames[0], behindNames[1]]) + advice;
+  return tr("{0} riders are behind.", [behindNames.length]) + advice;
 }
 
 export async function sendRegroup(call: Omit<RegroupCall, 'sentAt'>): Promise<boolean> {

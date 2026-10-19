@@ -16,7 +16,7 @@ export {
 export { VEHICLES, VEHICLE_ORDER, primaryVehicle, vehiclesPatch, type VehicleType, type VehicleInfo } from './lib/vehicles';
 export { RIDE_STYLES } from './lib/styles';
 export { badgeVisible, type BadgeVisibility } from './lib/badges';
-export { refuelCategory, REFUEL_NOMINATIM, type RefuelCategory } from './lib/places';
+export { refuelCategory, REFUEL_NOMINATIM, placeCategories, PLACE_COLORS, type RefuelCategory, type PlaceCategory, type PlaceCategoryId } from './lib/places';
 export {
   CARE_QUESTIONS,
   isCareOn,

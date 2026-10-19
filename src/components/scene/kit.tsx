@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- a kit of scene helpers, not a page */
 import { createContext, useContext, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Volume2, VolumeX, type LucideIcon } from 'lucide-react';
-import { DEMO_BIKE } from '@/lib/pictures';
+import { DEMO_BIKE, GARAGE_SHOP, MECHA_NICK } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
 import { sceneCue, type SceneCueKind } from '@/lib/radioFx';
 import { isThermal } from '@/lib/thermal';
@@ -42,15 +42,15 @@ export const SKY = '#38bdf8';
  * `bare` draws the frame edge to edge without its own sound button (the tour
  * has one for everything).
  */
-export const SceneStage = createContext<{ paused: boolean; bare: boolean; muted?: boolean }>({ paused: false, bare: false });
+export const SceneStage = createContext<{ paused: boolean; bare: boolean; muted?: boolean; at?: number }>({ paused: false, bare: false });
 
 /** Seconds since mount (starting at `from`), ~30 fps; frozen under reduced motion, and held while the stage is paused. */
 export function useSceneTime(from = 0): number {
-  const { paused } = useContext(SceneStage);
+  const { paused, at } = useContext(SceneStage);
   const [t, setT] = useState(from);
   const tRef = useRef(from);
   useEffect(() => {
-    if (paused) return;
+    if (paused || at !== undefined) return;
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     if (isThermal()) return; // Thermal / High-Speed Mode: a still frame
     let raf = 0;
@@ -70,8 +70,9 @@ export function useSceneTime(from = 0): number {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [from, paused]);
-  return t;
+  }, [from, paused, at]);
+  // `at`: a still of the scene at that moment (contact sheets, posters).
+  return at !== undefined ? from + at : t;
 }
 
 export const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
@@ -141,6 +142,19 @@ export class Route {
     const r = (d - this.cum[lo]) / seg;
     const [a, b] = [this.pts[lo], this.pts[hi]];
     return { p: [lerp(a[0], b[0], r), lerp(a[1], b[1], r)], a: (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI };
+  }
+  /** Where along the route (0..1) it passes closest to `p`: for putting a manoeuvre on its junction. */
+  near(p: Pt): number {
+    let best = 0;
+    let bd = Infinity;
+    for (let i = 0; i < this.pts.length; i++) {
+      const d = Math.hypot(this.pts[i][0] - p[0], this.pts[i][1] - p[1]);
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
+    return this.total ? this.cum[best] / this.total : 0;
   }
   /** Path along the route from f0 to f1 (f1 may exceed f0 + wrap on closed routes). */
   slice(f0: number, f1: number, n = 28): string {
@@ -405,6 +419,54 @@ export const textW = (s: string, size = 7.5) => {
   return em * size;
 };
 
+/** Characters a line can break after anywhere (Chinese and Japanese have no spaces); hangul keeps its spaces. */
+const BREAK_ANY = /[⺀-꓏豈-﫿＀-￯]/;
+/** Closing punctuation that stays on the line before it. */
+const NO_START = /^[、。，．！？：；」』）】〉》,.!?:;)]$/;
+
+/** Splits a label into lines no wider than `maxW` at this size: at spaces, or between any two CJK characters. */
+export function wrapText(s: string, maxW: number, size: number): string[] {
+  const parts: { w: string; gap: boolean }[] = [];
+  let gap = false;
+  for (const m of s.trim().matchAll(/\s+|[⺀-꓏豈-﫿＀-￯]|[^\s⺀-꓏豈-﫿＀-￯]+/g)) {
+    const w = m[0];
+    if (/^\s+$/.test(w)) {
+      gap = true;
+      continue;
+    }
+    const last = parts[parts.length - 1];
+    if (last && !gap && (NO_START.test(w) || (!BREAK_ANY.test(w) && !BREAK_ANY.test(last.w.slice(-1))))) last.w += w;
+    else parts.push({ w, gap });
+    gap = false;
+  }
+  const lines: string[] = [];
+  let cur = '';
+  for (const p of parts) {
+    const next = cur ? cur + (p.gap ? ' ' : '') + p.w : p.w;
+    if (cur && textW(next, size) > maxW) {
+      lines.push(cur);
+      cur = p.w;
+    } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+/**
+ * The size and lines for a label in a box `maxW` wide: one line when it fits
+ * at nearly full size, else up to `maxLines` lines, shrinking only if even
+ * that won't do.
+ */
+export function fitLines(s: string, maxW: number, size: number, maxLines = 2): { lines: string[]; size: number } {
+  const one = Math.min(size, maxW / Math.max(1, textW(s, 1)));
+  if (one >= size * 0.9 || maxLines < 2) return { lines: [s], size: one };
+  for (let z = size; z > 3; z -= 0.2) {
+    const lines = wrapText(s, maxW, z);
+    if (lines.length <= maxLines && lines.every((l) => textW(l, z) <= maxW)) return { lines, size: z };
+  }
+  return { lines: [s], size: one };
+}
+
 /** A HUD chip: icon + label, sized to its text. `right` anchors it by its right edge. */
 export function Chip({
   x,
@@ -435,7 +497,7 @@ export function Chip({
   const x0 = right ? x - w : x;
   return (
     <g transform={`translate(${x0} ${y + dy})`} opacity={opacity}>
-      <rect width={w} height={17} rx={5} fill={PANEL} stroke={tone ?? LINE} strokeWidth={0.8} />
+      <rect width={w} height={17} rx={5} style={{ fill: PANEL, stroke: tone ?? LINE }} strokeWidth={0.8} />
       {I && <Ico I={I} x={6} y={4} s={9} color={color} />}
       <T x={I ? 19 : 6} y={11.4}>{label}</T>
       {children && <g transform={`translate(${w - extra - 4} 0)`}>{children}</g>}
@@ -481,7 +543,7 @@ export function Rings({ p, phase, color, max = 26, count = 2 }: { p: Pt; phase: 
     <g transform={`translate(${p[0]} ${p[1]})`}>
       {Array.from({ length: count }, (_, i) => {
         const k = frac(phase + i / count);
-        return <circle key={i} r={6 + k * max} fill="none" stroke={color} strokeWidth={1.2} opacity={(1 - k) * 0.8} />;
+        return <circle key={i} r={6 + k * max} fill="none" style={{ stroke: color }} strokeWidth={1.2} opacity={(1 - k) * 0.8} />;
       })}
     </g>
   );
@@ -532,7 +594,7 @@ export function Panel({
 }) {
   return (
     <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`} opacity={opacity}>
-      <rect width={w} height={h} rx={r} fill={fill} stroke={stroke} strokeWidth={sw} />
+      <rect width={w} height={h} rx={r} style={{ fill, stroke }} strokeWidth={sw} />
       {children}
     </g>
   );
@@ -566,6 +628,85 @@ export function BikePhoto({ cx, floor, height, filter, opacity }: BikePlacement 
   const x = cx - ((IMG.left + IMG.right) / 2) * s;
   const y = floor - IMG.bottom * s;
   return <image href={DEMO_BIKE} x={x} y={y} width={w} height={h} filter={filter} opacity={opacity} preserveAspectRatio="xMidYMid meet" />;
+}
+
+// ---- The workshop and Mecha-Nick ---------------------------------------------------
+
+/** Mecha-Nick's picture is 96 × 172 pixels: his height in scene units makes his width. */
+const NICK_ASPECT = 96 / 172;
+
+/**
+ * Mecha-Nick, cut straight from his own picture as a silhouette, feet at
+ * (x, floor), `height` tall. Lit from behind: dark, with the accent catching
+ * his left edge (`rim`). `shadow` draws him instead as a soft shadow thrown on
+ * a screen. Animate him from outside: `lean` (degrees, about his feet),
+ * `squash` (a breath or a crouch) and `dx` / `dy`.
+ */
+export function NickSilhouette({
+  x,
+  floor,
+  height,
+  lean = 0,
+  squash = 1,
+  rim = 1,
+  shadow = false,
+  opacity = 1,
+}: {
+  x: number;
+  floor: number;
+  height: number;
+  lean?: number;
+  squash?: number;
+  rim?: number;
+  shadow?: boolean;
+  opacity?: number;
+}) {
+  const id = useIds();
+  const w = height * NICK_ASPECT;
+  const pic = { href: MECHA_NICK, width: w, height, style: { imageRendering: 'pixelated' as const } };
+  return (
+    <g opacity={opacity} transform={`translate(${x.toFixed(2)} ${floor.toFixed(2)}) rotate(${lean.toFixed(2)}) scale(1 ${squash.toFixed(4)})`}>
+      <defs>
+        <filter id={id('nick-dark')} x="-20%" y="-10%" width="140%" height="120%" colorInterpolationFilters="sRGB">
+          <feFlood floodColor={shadow ? '#020203' : '#07070a'} />
+          <feComposite in2="SourceAlpha" operator="in" />
+          {shadow && <feGaussianBlur stdDeviation={height / 90} />}
+        </filter>
+        <filter id={id('nick-rim')} x="-20%" y="-10%" width="140%" height="120%" colorInterpolationFilters="sRGB">
+          <feFlood style={{ floodColor: A }} />
+          <feComposite in2="SourceAlpha" operator="in" />
+        </filter>
+      </defs>
+      {!shadow && rim > 0 && <image {...pic} x={-w / 2 - height / 110} y={-height - height / 200} filter={`url(#${id('nick-rim')})`} opacity={rim} />}
+      <image {...pic} x={-w / 2} y={-height} filter={`url(#${id('nick-dark')})`} />
+    </g>
+  );
+}
+
+/**
+ * The workshop the app's garage stands in (its own picture), filling a box:
+ * dimmed for what's drawn over it, with the garage's vignette and a wash of the
+ * accent along the floor.
+ */
+export function GarageBackdrop({ id, x = 0, y = 0, w = VW, h = VH, dim = 0.25 }: { id: (n: string) => string; x?: number; y?: number; w?: number; h?: number; dim?: number }) {
+  return (
+    <g>
+      <defs>
+        <radialGradient id={id('gb-vignette')} cx="50%" cy="60%" r="70%">
+          <stop offset="55%" stopColor="#000" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0.6" />
+        </radialGradient>
+        <linearGradient id={id('gb-floor')} x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" style={{ stopColor: A }} stopOpacity="0.16" />
+          <stop offset="1" style={{ stopColor: A }} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <image href={GARAGE_SHOP} x={x} y={y} width={w} height={h} preserveAspectRatio="xMidYMid slice" style={{ imageRendering: 'pixelated' }} />
+      <rect x={x} y={y} width={w} height={h} fill="#000" opacity={dim} />
+      <rect x={x} y={y} width={w} height={h} fill={`url(#${id('gb-vignette')})`} />
+      <rect x={x} y={y + h * 0.66} width={w} height={h * 0.34} fill={`url(#${id('gb-floor')})`} />
+    </g>
+  );
 }
 
 /** Where a point of the bike photo (image pixels) lands in the scene, for a bike placed at `b`. */

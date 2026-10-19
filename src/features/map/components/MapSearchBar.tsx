@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Search, MapPin, Loader2, Clock, Fuel, UtensilsCrossed, ShoppingCart, Bookmark, X, IdCard, Droplet, BatteryCharging } from 'lucide-react';
+import { Search, MapPin, Loader2, Clock, Bookmark, X, IdCard, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useShortLandscape } from '@/hooks/useShortLandscape';
@@ -8,8 +8,6 @@ import { useStripNudge } from '@/hooks/useStripNudge';
 import {
   MapSearchResult,
   MapViewBounds,
-  QUICK_CATEGORIES,
-  QuickCategory,
   getRecentLocations,
   normaliseName,
   removeRecentLocation,
@@ -21,11 +19,15 @@ import {
 } from '../lib/placeSearch';
 import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
 import { useSettings } from '@/features/settings';
-import { useExperience, refuelCategory } from '@/features/experience';
+import { useExperience, placeCategories, type PlaceCategory } from '@/features/experience';
 import { formatDistance, getDistanceLabel } from '@/lib/format';
 import { tr } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { resolveWhat3WordsResult } from '@/lib/what3words';
+import { QuickChipRow } from '@/components/QuickChipRow';
+import { PriceSigns } from '@/components/PlaceFacts';
+import { openText, openTint, placeStatus } from '@/lib/openingHours';
+import { currencySign } from '@/lib/priceLevel';
 
 // km → miles for formatDistance (which expects miles input).
 const KM_TO_MILES = 0.621371;
@@ -33,14 +35,19 @@ const KM_TO_MILES = 0.621371;
 // Address line: clip with a gradient fade on the right edge instead of truncate.
 const FADE_RIGHT = '[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] whitespace-nowrap overflow-hidden';
 
-const categoryIcons: Record<string, React.ReactNode> = {
-  gas: <Fuel className="w-4 h-4" />,
-  water: <Droplet className="w-4 h-4" />,
-  charge: <BatteryCharging className="w-4 h-4" />,
-  food: <UtensilsCrossed className="w-4 h-4" />,
-  store: <ShoppingCart className="w-4 h-4" />,
-  cards: <IdCard className="w-4 h-4" />,
-};
+/** The card drops chip: Blacktop World's own, in the accent. */
+const CARDS_CHIP = { id: 'cards' as const, label: tr("Cards"), query: 'cards', Icon: IdCard as LucideIcon, color: '' };
+type Chip = PlaceCategory | typeof CARDS_CHIP;
+/** How many of a quick search's places come back (all of them go on the map). */
+const CATEGORY_MAX = 40;
+
+/** Room the map leaves round a quick search's pins: below the search (or beside it in landscape), clear of the controls. */
+export interface FitPadding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
 
 interface MapSearchBarProps {
   map: MapLibreMap | null;
@@ -53,6 +60,21 @@ interface MapSearchBarProps {
   inline?: boolean;
   /** Open straight into typing (e.g. "Add stop"). */
   autoFocus?: boolean;
+  /**
+   * A quick search's places, to put on the map and pull back to (null: take
+   * them off). Sent once the list has drawn, with the room it leaves.
+   */
+  onCategory?: (category: PlaceCategory | null, results: MapSearchResult[], padding: FitPadding) => void;
+  /**
+   * A place picked from the list (any list but card drops): the map flies along
+   * the way there and circles it, with its card and Navigate. Without it, a pick
+   * goes straight to `onSelect`.
+   */
+  onPreview?: (result: MapSearchResult, category: string) => void;
+  /** Bumped by the map when a route is set: the quick search is done. */
+  clearSeq?: number;
+  /** Bumped by the map on Back from a place picked here: the list comes back, scrolled where it was. */
+  reopenSeq?: number;
 }
 
 function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
@@ -66,13 +88,15 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
   };
 }
 
-export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus }: MapSearchBarProps) {
+export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus, onCategory, onPreview, clearSeq, reopenSeq }: MapSearchBarProps) {
   const { settings } = useSettings();
   const { vehicles } = useExperience();
-  // Top-up stop matches the vehicle; card search only for riders who collect.
-  const quickCategories: QuickCategory[] = QUICK_CATEGORIES.map((c) => (c.id === 'gas' ? refuelCategory(vehicles) : c)).filter(
-    (c) => c.id !== 'cards' || (settings.blacktopWorldEnabled && settings.collectiblesEnabled)
-  );
+  // The top-up stop and the rest suit the vehicle; card search only for riders who collect.
+  const quickCategories: Chip[] = [
+    ...placeCategories(vehicles),
+    ...(settings.blacktopWorldEnabled && settings.collectiblesEnabled ? [CARDS_CHIP] : []),
+  ];
+  const placeCategory = (id: string | null) => (id ? (quickCategories.find((c) => c.id === id && c.id !== 'cards') as PlaceCategory | undefined) ?? null : null);
   const distanceText = (lat: number, lng: number): string | null => {
     // what3words suggestions have no position until picked.
     if (!userLocation || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -94,6 +118,53 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchIdRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  /** A quick search's places, waiting for the list to draw before the map fits them in below it. */
+  const fitPending = useRef<{ category: PlaceCategory; results: MapSearchResult[] } | null>(null);
+
+  /** The room the search and its list take over the map. */
+  const fitPadding = useCallback((): FitPadding => {
+    const pad = { top: 48, bottom: 40, left: 32, right: 64 };
+    const box = map?.getContainer().getBoundingClientRect();
+    if (!box) return pad;
+    for (const el of [containerRef.current, listRef.current]) {
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width > box.width * 0.6) pad.top = Math.max(pad.top, r.bottom - box.top + 20);
+      else pad.left = Math.max(pad.left, r.right - box.left + 20);
+    }
+    // Never more than the map can give: MapLibre won't fit into nothing.
+    pad.top = Math.min(pad.top, box.height * 0.6);
+    pad.left = Math.min(pad.left, box.width * 0.6);
+    return pad;
+  }, [map]);
+
+  useEffect(() => {
+    const pending = fitPending.current;
+    if (!pending || isSearching) return;
+    fitPending.current = null;
+    onCategory?.(pending.category, pending.results, fitPadding());
+  }, [results, isSearching, onCategory, fitPadding]);
+
+  // A route was set: the quick search is over.
+  useEffect(() => {
+    if (!clearSeq) return;
+    searchIdRef.current++;
+    setActiveCategory(null);
+    setResults([]);
+    setShowResults(false);
+  }, [clearSeq]);
+
+  // Back from a place picked in the list: the same list again, scrolled where it was.
+  const listScrollRef = useRef(0);
+  useEffect(() => {
+    if (reopenSeq) setShowResults(true);
+  }, [reopenSeq]);
+  useLayoutEffect(() => {
+    if (!showResults || !listRef.current || !listScrollRef.current) return;
+    listRef.current.scrollTop = listScrollRef.current;
+    listScrollRef.current = 0;
+  }, [showResults]);
 
   const refreshSavedPOIs = useCallback(() => {
     setSavedPOIs(getSavedPOIs());
@@ -114,7 +185,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowResults(false);
-        setActiveCategory(null);
+        // A quick search stays up with its pins (a tap on one opens it); card mode goes.
+        setActiveCategory((prev) => (prev === 'cards' ? null : prev));
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -174,6 +246,8 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const handleSearch = (value: string) => {
     setQuery(value);
     setShowResults(true);
+    // Typing ends a quick search, pins and all.
+    if (placeCategory(activeCategory)) onCategory?.(null, [], fitPadding());
     setActiveCategory(null);
     setCardsMode(false);
 
@@ -188,12 +262,14 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     debounceRef.current = setTimeout(() => performSearch(value, currentSearchId), 450);
   };
 
-  const handleCategoryClick = async (category: QuickCategory) => {
+  const handleCategoryClick = async (category: Chip) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setQuery('');
-    setShowResults(true);
+    const wasPlaces = !!placeCategory(activeCategory);
 
     if (category.id === 'cards') {
+      if (wasPlaces) onCategory?.(null, [], fitPadding());
+      setShowResults(true);
       setActiveCategory((prev) => {
         const next = prev === 'cards' ? null : 'cards';
         setCardsMode(next === 'cards');
@@ -202,6 +278,18 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
       return;
     }
 
+    // The chip that's lit: tapping it again takes its places off the map.
+    if (activeCategory === category.id) {
+      searchIdRef.current++;
+      setActiveCategory(null);
+      setResults([]);
+      setShowResults(false);
+      setIsSearching(false);
+      onCategory?.(null, [], fitPadding());
+      return;
+    }
+
+    setShowResults(true);
     setActiveCategory(category.id);
     setCardsMode(false);
     setIsSearching(true);
@@ -218,8 +306,12 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     }
 
     try {
-      const searchResults = await searchNearbyPOIs(category.query, origin, countryCode);
-      if (searchIdRef.current === currentSearchId) setResults(searchResults);
+      const searchResults = await searchNearbyPOIs(category.query, origin, countryCode, { unnamed: category.unnamed, max: CATEGORY_MAX });
+      if (searchIdRef.current === currentSearchId) {
+        // On the map as soon as the list below the search has drawn (it sets the room left).
+        fitPending.current = { category, results: searchResults };
+        setResults(searchResults);
+      }
     } finally {
       if (searchIdRef.current === currentSearchId) setIsSearching(false);
     }
@@ -230,6 +322,17 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     const result = await resolveWhat3WordsResult(picked);
     if (!result) {
       toast.error(tr("Couldn't find that what3words address"));
+      return;
+    }
+    // Looked at before it's ridden to: the map flies along the way there and circles it, its card has Navigate;
+    // Back brings this list back. (Card drops go straight to theirs.)
+    if (onPreview && !cardsMode) {
+      const quick = placeCategory(activeCategory);
+      const saved = result.id.startsWith('poi:');
+      const recent = !saved && recentLocations.some((r) => r.id === result.id);
+      listScrollRef.current = listRef.current?.scrollTop ?? 0;
+      setShowResults(false);
+      onPreview(result, quick ? quick.label : saved ? tr("Saved place") : recent ? tr("Visited recently") : result.address || result.name);
       return;
     }
     saveRecentLocation(result);
@@ -295,33 +398,25 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             onFocus={() => setShowResults(true)}
             autoFocus={autoFocus}
             placeholder={tr("Search destination...")}
-            className="pl-10 bg-card/95 border-border h-11 short:h-9 text-sm shadow-lg backdrop-blur"
+            className="pl-10 bg-card/95 border-border h-12 short:h-9 rounded-xl text-sm shadow-lg backdrop-blur"
           />
         </div>
       </div>
 
-      {/* Landscape (short:): the chips only come out while searching, to leave the map clear. */}
-      <div className={cn('flex gap-1.5 w-fit max-w-full overflow-x-auto scrollbar-hide pointer-events-auto', !showResults && 'short:hidden')}>
-        {quickCategories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleCategoryClick(cat)}
-            aria-pressed={cat.id === 'cards' ? cardsMode : activeCategory === cat.id}
-            className={cn(
-              'flex flex-shrink-0 items-center gap-1.5 py-1.5 px-3 rounded-full border text-xs font-medium shadow-lg backdrop-blur transition-all active:scale-95',
-              activeCategory === cat.id
-                ? 'bg-accent text-accent-foreground border-accent'
-                : 'bg-card/95 border-border hover:bg-muted',
-            )}
-          >
-            {categoryIcons[cat.id]}
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      {/* Each in its own colour, the one that's on filled with it (card drops in the accent): as many as fit, then "+N".
+          Landscape (short:): the chips only come out while searching, to leave the map clear
+          (kept out while a quick search is up, so its lit chip can be tapped off). */}
+      <QuickChipRow
+        items={quickCategories}
+        active={activeCategory}
+        onPick={handleCategoryClick}
+        look="compact"
+        resetKey={clearSeq}
+        className={cn(!showResults && !placeCategory(activeCategory) && 'short:hidden')}
+      />
 
       {showResults && hasDisplayContent && (
-        <div style={{ '--strip-h': '2.25rem' } as React.CSSProperties}
+        <div ref={listRef} style={{ '--strip-h': placeCategory(activeCategory) ? '3rem' : '2.25rem' } as React.CSSProperties}
           className={cn('suggest-list absolute left-0 right-0 top-full mt-2 short:top-0 short:!mt-0 short:left-[calc(100%+0.5rem)] short:right-auto short:w-[calc(100vw-27.5rem-var(--safe-left)-var(--safe-right))] pointer-events-auto bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in', nudging && 'suggest-nudge')}>
 
 
@@ -454,6 +549,40 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                 const isCard = result.id.startsWith('card:');
                 const isSavedPOI = result.id.startsWith('poi:');
                 const isRecent = !isSavedPOI && recentLocations.some(r => r.id === result.id);
+                const quick = !cardsMode ? placeCategory(activeCategory) : null;
+                if (quick) {
+                  // A quick search's place: its category tile, as on the map; the nearest marked; tinted green while
+                  // it's open and red while it's shut, and how dear it is where that's known.
+                  const status = placeStatus(result.hours);
+                  return (
+                    <button
+                      key={result.id}
+                      onClick={() => handleSelect(result)}
+                      className={cn(
+                        'w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors',
+                        openTint(status),
+                        index !== displayResults.length - 1 && 'border-b border-border',
+                      )}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white" style={{ background: quick.color }}>
+                        <quick.Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{result.name}</p>
+                        {(index === 0 || (result.address && result.address !== result.name)) && (
+                          <p className={cn('text-xs text-muted-foreground short:hidden', FADE_RIGHT)}>{index === 0 ? tr("Nearest") : result.address}</p>
+                        )}
+                        {status && <p className={cn('text-[11px] font-semibold', openText(status), FADE_RIGHT)}>{status.label}</p>}
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-1">
+                        {distanceText(result.lat, result.lng) && (
+                          <span className="text-[10px] font-mono text-muted-foreground/80">{distanceText(result.lat, result.lng)}</span>
+                        )}
+                        {result.price && <PriceSigns info={result.price} sign={currencySign(countryCode)} className="text-[11px]" />}
+                      </div>
+                    </button>
+                  );
+                }
                 return (
                   <button
                     key={result.id}

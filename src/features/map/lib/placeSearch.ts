@@ -3,6 +3,7 @@ import { isDemoModeActive, DEMO_RECENT_LOCATIONS } from '@/lib/demoMode';
 import { supabase } from '@/integrations/supabase/client';
 import { tr } from '@/lib/i18n';
 import { what3wordsResults } from '@/lib/what3words';
+import { priceInfo, type PriceInfo } from '@/lib/priceLevel';
 
 export interface MapSearchResult {
   id: string;
@@ -11,12 +12,10 @@ export interface MapSearchResult {
   lat: number;
   lng: number;
   distance?: number;
-}
-
-export interface QuickCategory {
-  id: string;
-  label: string;
-  query: string;
+  /** OpenStreetMap's `opening_hours`, as mapped (read with lib/openingHours). */
+  hours?: string;
+  /** How dear it is next to its kind, where there's something to go on (lib/priceLevel). */
+  price?: PriceInfo | null;
 }
 
 // Visible map viewport, used as a *soft* proximity bias for free-text search
@@ -44,13 +43,6 @@ interface OverpassElement {
   tags?: Record<string, string>;
 }
 
-export const QUICK_CATEGORIES: QuickCategory[] = [
-  { id: 'gas', label: tr("Gas"), query: 'fuel' },
-  { id: 'food', label: tr("Food"), query: 'restaurant|fast_food|cafe' },
-  { id: 'store', label: tr("Store"), query: 'supermarket|convenience' },
-  { id: 'cards', label: tr("Cards"), query: 'cards' },
-];
-
 const RECENT_LOCATIONS_KEY = 'blacktop_maps_recent_locations';
 const MAX_RECENT_LOCATIONS = 4;
 const MAX_NEARBY_DISTANCE_KM = 30;
@@ -58,10 +50,19 @@ const MAX_NEARBY_DISTANCE_KM = 30;
 const categoryToNominatimQuery: Record<string, string> = {
   fuel: 'petrol station',
   'restaurant|fast_food|cafe': 'restaurant',
+  'restaurant|fast_food': 'restaurant',
+  cafe: 'cafe',
   'supermarket|convenience': 'supermarket',
   '24h': '24 hour store',
   drinking_water: 'drinking water',
   charging_station: 'charging station',
+  'motorcycle_parking|parking': 'motorcycle parking',
+  parking: 'car park',
+  bicycle_parking: 'bicycle parking',
+  'motorcycle|tyres': 'motorcycle shop',
+  'car_repair|tyres': 'garage',
+  bicycle_repair_station: 'bicycle repair',
+  'pharmacy|hospital': 'pharmacy',
 };
 
 export function getRecentLocations(): MapSearchResult[] {
@@ -265,11 +266,52 @@ export async function searchPlaces(
   }
 }
 
+export interface PlaceDetails {
+  hours?: string;
+  price: PriceInfo | null;
+}
+const details = new Map<string, PlaceDetails | null>();
+
+/**
+ * Opening hours and price for a place tapped on the basemap, whose tiles carry
+ * neither: one look round it for its kind (`osm`, the tile's subclass, e.g.
+ * "cafe"), matched by name, else the nearest within 60 m. Asked once a place
+ * (remembered for the session), and only when a pin is opened.
+ */
+export async function placeDetails(name: string, lat: number, lng: number, osm: string | undefined): Promise<PlaceDetails | null> {
+  if (!osm || !/^[a-z_]+$/.test(osm)) return null;
+  const key = `${osm}:${name.toLowerCase()}:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  if (details.has(key)) return details.get(key)!;
+  let found: PlaceDetails | null = null;
+  try {
+    const els = await callPlaceSearch<OverpassElement[]>({ kind: 'overpass', lat, lon: lng, radius_m: 1000, amenities: [osm], limit: 60 });
+    const near = (els || [])
+      .map((el) => ({ el, km: calculateDistance(lat, lng, el.lat, el.lon) }))
+      .filter(({ km }) => km < 0.25)
+      .sort((a, b) => a.km - b.km);
+    const lower = name.toLowerCase();
+    const hit = near.find(({ el }) => [el.tags?.name, el.tags?.brand].some((n) => n && n.toLowerCase() === lower)) ?? near.find(({ km }) => km < 0.06);
+    if (hit) found = { hours: hit.el.tags?.opening_hours, price: priceInfo(hit.el.tags) };
+  } catch {
+    return null; // not remembered: a failed look can be tried again
+  }
+  details.set(key, found);
+  return found;
+}
+
+/**
+ * Places of one kind near the rider, nearest first: Overpass through the
+ * place-search function, the search service as a fallback. `unnamed` names the
+ * places mapped without one (most car parks, toilets and taps; left out
+ * otherwise), and `max` is how many come back (the map shows them all as pins).
+ */
 export async function searchNearbyPOIs(
   amenityQuery: string,
   userLocation: { lat: number; lng: number },
   countryCode: string | null,
+  opts: { unnamed?: string; max?: number } = {},
 ): Promise<MapSearchResult[]> {
+  const max = opts.max ?? 8;
   const is24hSearch = amenityQuery === '24h';
   const amenities = is24hSearch ? [] : amenityQuery.split('|').filter(Boolean);
 
@@ -285,20 +327,20 @@ export async function searchNearbyPOIs(
     });
 
     let results: MapSearchResult[] = (overpass || [])
-      .filter((el) => !!(el.tags?.name || el.tags?.brand || el.tags?.operator))
+      .filter((el) => !!(el.tags?.name || el.tags?.brand || el.tags?.operator || opts.unnamed))
       .map((el) => {
         const distance = calculateDistance(userLocation.lat, userLocation.lng, el.lat, el.lon);
-        const name = el.tags?.name || el.tags?.brand || el.tags?.operator || '';
+        const name = el.tags?.name || el.tags?.brand || el.tags?.operator || opts.unnamed || '';
         const address =
           [el.tags?.['addr:street'], el.tags?.['addr:city'], el.tags?.['addr:postcode']].filter(Boolean).join(', ') ||
           name;
-        return { id: `op:${el.id}`, name, address, lat: el.lat, lng: el.lon, distance };
+        return { id: `op:${el.id}`, name, address, lat: el.lat, lng: el.lon, distance, hours: el.tags?.opening_hours, price: priceInfo(el.tags) };
       });
 
     results = results
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .filter((r) => (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM)
-      .slice(0, 8);
+      .slice(0, max);
 
     if (results.length > 0) return results;
   } catch {
@@ -329,7 +371,7 @@ export async function searchNearbyPOIs(
     results = results
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .filter((r) => (r.distance || 0) <= MAX_NEARBY_DISTANCE_KM)
-      .slice(0, 8);
+      .slice(0, max);
 
     return results;
   } catch (error) {

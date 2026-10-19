@@ -15,21 +15,25 @@ export interface ReportPosition {
 }
 
 /**
- * The Report button and its picker: tap a category, then the hazard. Reports
- * where the rider is right now, with an Undo for a mis-tap. Big targets
- * throughout, for gloves.
+ * The Report button and its picker: tap a category, then the hazard. The
+ * report goes where the rider was when they pressed Report, the moment they
+ * saw it: taken when the type was picked, two taps later, it landed tens of
+ * metres past the hazard at speed. Undo for a mis-tap. Big targets throughout,
+ * for gloves.
  */
 export function HazardReport({ getPosition, className }: { getPosition?: () => ReportPosition | null; className?: string }) {
   const [open, setOpen] = useState(false);
+  const [seenAt, setSeenAt] = useState<ReportPosition | null>(null);
   return (
     <>
       <button
         onClick={() => {
           haptics.light();
+          setSeenAt(getPosition?.() ?? getLastHazardPosition());
           setOpen(true);
         }}
         className={cn(
-          'pointer-events-auto flex items-center gap-1.5 h-12 pl-3.5 pr-4 rounded-full frost-accent shadow-lg text-sm font-semibold active:scale-95 transition-transform',
+          'pointer-events-auto flex items-center gap-1.5 h-12 pl-3.5 pr-4 rounded-xl frost-accent shadow-lg text-sm font-semibold active:scale-95 transition-transform',
           className,
         )}
         aria-label={tr("Report a hazard")}
@@ -37,12 +41,12 @@ export function HazardReport({ getPosition, className }: { getPosition?: () => R
       >
         <Megaphone className="w-4 h-4" />{" "}{tr("Report")}
       </button>
-      {open && <HazardPicker onClose={() => setOpen(false)} getPosition={getPosition} />}
+      {open && <HazardPicker onClose={() => setOpen(false)} seenAt={seenAt} getPosition={getPosition} />}
     </>
   );
 }
 
-function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPosition?: () => ReportPosition | null }) {
+function HazardPicker({ onClose, seenAt, getPosition }: { onClose: () => void; seenAt: ReportPosition | null; getPosition?: () => ReportPosition | null }) {
   const [category, setCategory] = useState<HazardCategoryId | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -53,7 +57,8 @@ function HazardPicker({ onClose, getPosition }: { onClose: () => void; getPositi
   }, [onClose]);
 
   const report = async (kind: HazardKind) => {
-    const pos = getPosition?.() ?? getLastHazardPosition();
+    // Where they were when they pressed Report; where they are now only if there was no fix then.
+    const pos = seenAt ?? getPosition?.() ?? getLastHazardPosition();
     if (!pos) {
       toast.error(tr("No GPS fix yet"), { description: tr("Reports go where you are. Try again in a moment.") });
       return;

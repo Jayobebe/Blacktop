@@ -22,7 +22,11 @@ function metres(aLat: number, aLng: number, bLat: number, bLng: number) {
   return Math.sqrt(x * x + y * y) * 6371e3;
 }
 
-export function glideMarker(marker: Marker, lng: number, lat: number, ms = 2500) {
+/**
+ * `ease`: "out" for positions from others (quick to respond, settling), "linear" for the rider's own pin, glided
+ * over the gap between fixes so it moves at a steady speed and meets the next fix as it arrives.
+ */
+export function glideMarker(marker: Marker, lng: number, lat: number, ms = 2500, ease: "out" | "linear" = "out") {
   const prev = gliding.get(marker);
   if (prev) cancelAnimationFrame(prev);
   gliding.delete(marker);
@@ -41,7 +45,7 @@ export function glideMarker(marker: Marker, lng: number, lat: number, ms = 2500)
   const step = (now: number) => {
     const t = Math.min(1, (now - start) / ms);
     // Gentle ease-out: quick to respond, settling onto the new spot.
-    const k = 1 - (1 - t) * (1 - t);
+    const k = ease === "linear" ? t : 1 - (1 - t) * (1 - t);
     marker.setLngLat([from.lng + (lng - from.lng) * k, from.lat + (lat - from.lat) * k]);
     if (t < 1) gliding.set(marker, requestAnimationFrame(step));
     else gliding.delete(marker);

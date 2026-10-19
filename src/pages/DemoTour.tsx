@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BookOpen,
   ChevronLeft,
+  CloudRain,
   Flame,
   Gamepad2,
   Gauge,
@@ -11,8 +12,8 @@ import {
   IdCard,
   Lock,
   MapPin,
-  MessageSquare,
   Mic,
+  Navigation,
   Pause,
   QrCode,
   Radio,
@@ -42,13 +43,15 @@ import { tr } from '@/lib/i18n';
 import { sceneCue } from '@/lib/radioFx';
 import { warpScreen } from '@/lib/warp';
 import { isThermal } from '@/lib/thermal';
-import { pilotVoiceReady } from '@/lib/pilotVoice';
-import { speak } from '@/features/map/lib/speech';
+import { pilotVoiceReady, primePilotVoice, warmPilotVoice } from '@/lib/pilotVoice';
+import { speak, stopSpeaking } from '@/features/map/lib/speech';
 import { useExperience } from '@/features/experience';
 import { SceneStage, useSceneSound } from '@/components/scene/kit';
-import { AlarmScene, IntroScene, LiveDataScene, NavigationScene, HazardScene, PillionScene, RescueScene, RideTogetherScene } from '@/components/demo/scenesRide';
-import { AfterRideScene, GarageScene, TrackDayScene, TradingCardsScene } from '@/components/demo/scenesGarage';
-import { ArcadeScene } from '@/components/demo/ArcadeScene';
+import { AlarmScene, ALARM_SECONDS, IntroScene, LiveDataScene } from '@/components/demo/scenesRide';
+import { HazardScene, HAZARD_SECONDS, NavigationScene, NAVIGATION_SECONDS, RescueScene, RESCUE_SECONDS } from '@/components/demo/scenesRoads';
+import { PillionScene, PILLION_SECONDS, RideTogetherScene, RIDE_TOGETHER_SECONDS } from '@/components/demo/scenesConvoy';
+import { AfterRideScene, GarageScene, GARAGE_SECONDS, TrackDayScene, TradingCardsScene } from '@/components/demo/scenesGarage';
+import { ArcadeScene, ARCADE_SECONDS } from '@/components/demo/ArcadeScene';
 import { BurnScene, ReadyScene, WorldScene } from '@/components/demo/scenesWorld';
 
 /** One cut of a chapter: a scene, played for this long. */
@@ -64,7 +67,10 @@ interface Chapter {
   line: string;
   /** What the pause says: one or two sentences. */
   caption: string;
-  points: { I: LucideIcon; text: string }[];
+  /** The callouts that land on the card as the film plays: each at its moment (seconds in), as the voice says it. */
+  points: { I: LucideIcon; text: string; at: number }[];
+  /** The pilot voice over the chapter: each line at its moment (seconds in), timed to the scenes. */
+  voice: [number, string][];
   shots: Shot[];
   /** Burn orange for the safety chapters, the accent for the rest. */
   burn?: boolean;
@@ -76,19 +82,22 @@ const CUT_MS = 650;
 const END_EARLY = 0.75;
 /** How long the chapter's title sits in the lower third. */
 const TITLE_SECONDS = 3.4;
+/** A line whose moment has long gone (a jump back in the film) isn't read out late. */
+const VOICE_LATE = 1.5;
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
  * The demo tour (`/demo`, and offered once after onboarding): Blacktop as one
  * short film. Each chapter plays its scene (or two, cut together), its title
- * in a lower third, then pauses on the frame with a caption card that says
- * what it was; Continue (or a tap, Space, Enter, →) carries on, with the app's
- * pixel warp between chapters and a squelch for every caption, like a radio
- * call. Ten chapters, about two and a half minutes straight through; Track Day
- * is offered at the end for the riders who want lap times. The progress bar at
- * the top jumps between chapters. Scenes freeze when paused (`SceneStage`),
- * and the chapter's name is called in the pilot voice when it's downloaded.
+ * in a lower third and a pilot's radio voice telling the story as it happens
+ * (the downloaded pilot voice, or the phone's own voice in radio style), then
+ * pauses on the frame with a caption card that says what it was; Continue (or
+ * a tap, Space, Enter, →) carries on, with the app's pixel warp between
+ * chapters and a squelch for every caption. Ten chapters, about three minutes
+ * straight through; Track Day is offered at the end for the riders who want lap
+ * times. The progress bar at the top jumps between chapters. Scenes freeze when
+ * paused (`SceneStage`). The speaker button mutes the voice and the sounds.
  */
 export default function DemoTour() {
   const navigate = useNavigate();
@@ -103,9 +112,14 @@ export default function DemoTour() {
         line: tr("A companion for every ride"),
         caption: tr("Whatever you ride and wherever you're going, Blacktop records the journey, keeps your group together, watches your back and keeps the story. No account to make: it's ready when you are."),
         points: [
-          { I: Route, text: tr("Every journey recorded") },
-          { I: Users, text: tr("Ride out together") },
-          { I: Shield, text: tr("Safety built in") },
+          { I: Route, text: tr("Every journey recorded"), at: 2.4 },
+          { I: Users, text: tr("Ride out together"), at: 5.6 },
+          { I: Shield, text: tr("Safety built in"), at: 7.6 },
+        ],
+        voice: [
+          [0.4, tr("This is Blacktop.")],
+          [2.2, tr("A companion for every ride, whatever you ride.")],
+          [5.4, tr("It records the journey, keeps your group together, and watches your back.")],
         ],
         shots: [{ Scene: IntroScene, seconds: 10 }],
       },
@@ -115,13 +129,20 @@ export default function DemoTour() {
         line: tr("Convoys, voice and passengers"),
         caption: tr("Start a convoy and share its code. Everyone gets the same route, sees each other on the map and talks through their intercoms, and a passenger can come along on their own phone. When the ride ends, the convoy's data is wiped from the server."),
         points: [
-          { I: QrCode, text: tr("Join with a code or a QR") },
-          { I: Mic, text: tr("Voice through your intercom") },
-          { I: UserRound, text: tr("A screen for the passenger") },
+          { I: QrCode, text: tr("Join with a code or a QR"), at: 1.6 },
+          { I: Mic, text: tr("Voice through your intercom"), at: 5.6 },
+          { I: UserRound, text: tr("A screen for the passenger"), at: 14.8 },
+        ],
+        voice: [
+          [0.4, tr("Ride together.")],
+          [1.6, tr("Start a convoy and share the code. Your crew joins in seconds.")],
+          [5.4, tr("Everyone's on the map, on the same route, talking through their intercoms.")],
+          [9.0, tr("Someone dropping back? One tap, and the convoy regroups.")],
+          [14.6, tr("Riding two up? Your passenger gets a screen of their own, to wave, talk, or ask for a stop.")],
         ],
         shots: [
-          { Scene: RideTogetherScene, seconds: 14 },
-          { Scene: PillionScene, seconds: 8 },
+          { Scene: RideTogetherScene, seconds: RIDE_TOGETHER_SECONDS },
+          { Scene: PillionScene, seconds: PILLION_SECONDS },
         ],
       },
       {
@@ -130,11 +151,17 @@ export default function DemoTour() {
         line: tr("Crash detection and rescue"),
         caption: tr("A hard knock, then a stop, and Blacktop asks if you're OK. No answer, and it calls for help with your location: your convoy, your crew, riders nearby and your emergency contact. Made it home? One tap texts them you're safe, from your own phone."),
         points: [
-          { I: AlertTriangle, text: tr("Asks before it calls") },
-          { I: MapPin, text: tr("Sends where you are") },
-          { I: MessageSquare, text: tr("Texts your emergency contact") },
+          { I: AlertTriangle, text: tr("Asks before it calls"), at: 3.6 },
+          { I: MapPin, text: tr("Sends where you are"), at: 7.0 },
+          { I: Navigation, text: tr("Routes help straight to you"), at: 10.4 },
         ],
-        shots: [{ Scene: RescueScene, seconds: 14 }],
+        voice: [
+          [0.4, tr("Got your back.")],
+          [3.5, tr("A hard knock, then a stop, and Blacktop asks if you're okay.")],
+          [6.9, tr("No answer, and it calls for help: your convoy, your crew, riders nearby.")],
+          [10.3, tr("And the nearest rider is routed straight to you.")],
+        ],
+        shots: [{ Scene: RescueScene, seconds: RESCUE_SECONDS }],
         burn: true,
       },
       {
@@ -143,26 +170,40 @@ export default function DemoTour() {
         line: tr("A lock for a quick stop"),
         caption: tr("Paying for fuel or nipping into a shop? Lock up with the anti-theft alarm. A nudge chirps, a proper shove sets off the siren, and only your pattern stops it. Your ride waits, paused, until you're back."),
         points: [
-          { I: Siren, text: tr("A siren on the phone's own speaker") },
-          { I: Lock, text: tr("Only your pattern stops it") },
-          { I: Pause, text: tr("Your ride waits for you") },
+          { I: Siren, text: tr("A siren on the phone's own speaker"), at: 4.6 },
+          { I: Lock, text: tr("Only your pattern stops it"), at: 8.4 },
+          { I: Pause, text: tr("Your ride waits for you"), at: 9.8 },
         ],
-        shots: [{ Scene: AlarmScene, seconds: 12 }],
+        voice: [
+          [0.4, tr("Grabbing fuel?")],
+          [1.3, tr("Lock up from the ride screen. The first time, you set a pattern.")],
+          [4.6, tr("A nudge gets a chirp. A proper shove sets off the siren.")],
+          [8.4, tr("Only your pattern stops it, and your ride waits, paused, till you're back.")],
+        ],
+        shots: [{ Scene: AlarmScene, seconds: ALARM_SECONDS }],
         burn: true,
       },
       {
         id: 'roads',
         title: tr("Roads worth riding"),
         line: tr("Routes, calls and hazards"),
-        caption: tr("Plan a twisty route, or a loop from your door, and follow it turn by turn in a pilot's radio voice. Speed cameras are called out, and riders ahead report hazards so everyone behind is warned in time."),
+        caption: tr("Plan a twisty route or a loop from your door; if heavy rain sits on it, take the dry line round it. Then follow it turn by turn in a pilot's radio voice, with speed cameras called out, while riders ahead report hazards so everyone behind is warned in time."),
         points: [
-          { I: Route, text: tr("Twisty routes and loops") },
-          { I: Radio, text: tr("Directions in a radio voice") },
-          { I: AlertTriangle, text: tr("Hazards from the riders ahead") },
+          { I: CloudRain, text: tr("Drier routes"), at: 1.2 },
+          { I: Radio, text: tr("Directions in a radio voice"), at: 4.0 },
+          { I: AlertTriangle, text: tr("Hazards from the riders ahead"), at: 19.2 },
+        ],
+        voice: [
+          [0.3, tr("Roads worth riding.")],
+          [1.1, tr("Heavy rain on the route? Take the dry line round it.")],
+          [3.9, tr("Then follow it turn by turn, called out in a pilot's radio voice.")],
+          [7.0, tr("Speed cameras are called out before you reach them.")],
+          [14.4, tr("Spot a hazard? Report it in two taps.")],
+          [19.1, tr("Riders behind are warned in time, and ease off as they pass.")],
         ],
         shots: [
-          { Scene: NavigationScene, seconds: 14 },
-          { Scene: HazardScene, seconds: 10 },
+          { Scene: NavigationScene, seconds: NAVIGATION_SECONDS },
+          { Scene: HazardScene, seconds: HAZARD_SECONDS },
         ],
       },
       {
@@ -173,9 +214,14 @@ export default function DemoTour() {
           ? tr("Speed, lean angle and G-force on one screen you can read at a glance, with a mini map of what's coming. Rather keep your peaks to yourself? They can stay private.")
           : tr("Speed and G-force on one screen you can read at a glance, with a mini map of what's coming. Rather keep your peaks to yourself? They can stay private."),
         points: [
-          { I: Gauge, text: tr("Speed that glows past your limits") },
-          ...(canLean ? [{ I: Waves, text: tr("Lean angle, left and right") }] : []),
-          { I: Zap, text: tr("A G-force circle") },
+          { I: Gauge, text: tr("Speed that glows past your limits"), at: 1.6 },
+          ...(canLean ? [{ I: Waves, text: tr("Lean angle, left and right"), at: 3.4 }] : []),
+          { I: Zap, text: tr("A G-force circle"), at: 4.6 },
+        ],
+        voice: [
+          [0.4, tr("Your ride, live.")],
+          [1.5, canLean ? tr("Speed, lean and G-force, on one screen you can read at a glance.") : tr("Speed and G-force, on one screen you can read at a glance.")],
+          [5.4, tr("Rather keep your peaks private? They never have to leave your phone.")],
         ],
         shots: [{ Scene: LiveDataScene, seconds: 10 }],
       },
@@ -185,9 +231,16 @@ export default function DemoTour() {
         line: tr("Receipts, replays and cards"),
         caption: tr("Every {0} ends with a receipt and names itself. Relive it as a 3D flyover, or download an overlay video for your action camera. And your riding builds your vehicle its own trading card, tier by tier.", [terms.ride]),
         points: [
-          { I: Receipt, text: tr("A receipt every time") },
-          { I: Video, text: tr("Flyovers and overlay videos") },
-          { I: IdCard, text: tr("A card that grows with you") },
+          { I: Receipt, text: tr("A receipt every time"), at: 1.4 },
+          { I: Video, text: tr("Flyovers and overlay videos"), at: 6.4 },
+          { I: IdCard, text: tr("A card that grows with you"), at: 12.4 },
+        ],
+        voice: [
+          [0.4, tr("After the ride.")],
+          [1.3, terms.car ? tr("Every drive prints a receipt, and names itself.") : tr("Every ride prints a receipt, and names itself.")],
+          [3.9, tr("Badges for how you rode, and a grade for your corners.")],
+          [6.3, tr("Relive it as a 3D flyover, or put your numbers over your camera footage.")],
+          [12.4, tr("And your riding builds your vehicle a trading card, tier by tier.")],
         ],
         shots: [
           { Scene: AfterRideScene, seconds: 12 },
@@ -200,13 +253,19 @@ export default function DemoTour() {
         line: tr("Blacktop World"),
         caption: tr("Start a crew and light up the globe together, as an anonymous glow, never a pin. Weekly boards and challenges, rides your crew can join or watch live, and an arcade for between rides: BlackGrid card battles, a punch machine and more."),
         points: [
-          { I: Globe2, text: tr("Crews on a globe") },
-          { I: Trophy, text: tr("Boards and challenges") },
-          { I: Gamepad2, text: tr("An arcade between rides") },
+          { I: Globe2, text: tr("Crews on a globe"), at: 1.6 },
+          { I: Trophy, text: tr("Boards and challenges"), at: 5.4 },
+          { I: Gamepad2, text: tr("An arcade between rides"), at: 10.4 },
+        ],
+        voice: [
+          [0.4, tr("Your crew.")],
+          [1.5, tr("Crews light up the globe as an anonymous glow, never a pin.")],
+          [5.3, tr("Weekly boards and challenges, and rides your crew can join or watch live.")],
+          [10.3, tr("And between rides, the arcade: a punch machine, a traffic run, light trails and BlackGrid card battles.")],
         ],
         shots: [
           { Scene: WorldScene, seconds: 10 },
-          { Scene: ArcadeScene, seconds: 8 },
+          { Scene: ArcadeScene, seconds: ARCADE_SECONDS },
         ],
       },
       {
@@ -215,11 +274,17 @@ export default function DemoTour() {
         line: tr("Mecha-Nick and the logbook"),
         caption: tr("Keep your vehicles in Mecha-Nick's garage. Each one has a logbook that writes itself, and service reminders that count down as you ride. Selling up? Hand the logbook over to the new keeper."),
         points: [
-          { I: Wrench, text: tr("Reminders that count down") },
-          { I: BookOpen, text: tr("A logbook that writes itself") },
-          { I: QrCode, text: tr("Hand it on when you sell") },
+          { I: Wrench, text: tr("Reminders that count down"), at: 5.2 },
+          { I: BookOpen, text: tr("A logbook that writes itself"), at: 7.4 },
+          { I: QrCode, text: tr("Hand it on when you sell"), at: 9.4 },
         ],
-        shots: [{ Scene: GarageScene, seconds: 12 }],
+        voice: [
+          [0.4, tr("The garage.")],
+          [1.5, tr("Mecha-Nick looks after your vehicles, logging every trip you make.")],
+          [5.1, tr("Service reminders count down, and the logbook writes itself.")],
+          [9.2, tr("Selling up? Hand the logbook to the new keeper.")],
+        ],
+        shots: [{ Scene: GarageScene, seconds: GARAGE_SECONDS }],
       },
       {
         id: 'yours',
@@ -227,15 +292,20 @@ export default function DemoTour() {
         line: tr("Private by design"),
         caption: tr("No account, no email, no adverts. Your rides live on your phone, back them up whenever you like, and Burn wipes everything, from the phone and the server, with one hold."),
         points: [
-          { I: Shield, text: tr("Nothing to sign up for") },
-          { I: Smartphone, text: tr("Your rides stay on your phone") },
-          { I: Flame, text: tr("Burn wipes it all") },
+          { I: Shield, text: tr("Nothing to sign up for"), at: 1.4 },
+          { I: Smartphone, text: tr("Your rides stay on your phone"), at: 3.4 },
+          { I: Flame, text: tr("Burn wipes it all"), at: 5.6 },
+        ],
+        voice: [
+          [0.4, tr("Yours alone.")],
+          [1.3, tr("No account to make, no email, no adverts. Your rides live on your phone.")],
+          [5.5, tr("And Burn wipes it all, phone and server, with one hold.")],
         ],
         shots: [{ Scene: BurnScene, seconds: 10 }],
         burn: true,
       },
     ],
-    [terms.ride, canLean],
+    [terms.ride, terms.car, canLean],
   );
 
   const track: Chapter = useMemo(
@@ -245,9 +315,15 @@ export default function DemoTour() {
       line: tr("For the lap-timers"),
       caption: tr("Take it to a circuit: laps timed to the thousandth with sectors, a pit crew on a friend's phone sending pit board calls to your helmet, and records on real circuits around the world."),
       points: [
-        { I: Timer, text: tr("Laps and sectors") },
-        { I: Users, text: tr("A pit crew on a friend's phone") },
-        { I: Trophy, text: tr("Records on real circuits") },
+        { I: Timer, text: tr("Laps and sectors"), at: 1.4 },
+        { I: Users, text: tr("A pit crew on a friend's phone"), at: 4.6 },
+        { I: Trophy, text: tr("Records on real circuits"), at: 8.4 },
+      ],
+      voice: [
+        [0.4, tr("Track Day.")],
+        [1.3, tr("Laps timed to the thousandth, with sectors.")],
+        [4.5, tr("A friend's phone becomes your pit crew, with calls spoken in your helmet.")],
+        [8.3, tr("And records on real circuits around the world.")],
       ],
       shots: [{ Scene: TrackDayScene, seconds: 12 }],
     }),
@@ -269,8 +345,8 @@ export default function DemoTour() {
     return (chapter?.shots ?? []).map((s) => (sum += s.seconds));
   }, [chapter]);
   const total = Math.max(0, (ends[ends.length - 1] ?? 0) - END_EARLY);
-  // The chapter's points land over the film, one at a time; all of them by the pause.
-  const landed = !chapter ? 0 : phase === 'caption' ? chapter.points.length : chapter.points.filter((_, i) => elapsed >= total * (0.18 + (0.62 * i) / Math.max(1, chapter.points.length - 1))).length;
+  // The chapter's points land as the voice gets to them; all of them by the pause.
+  const landed = !chapter ? 0 : phase === 'caption' ? chapter.points.length : chapter.points.filter((p) => elapsed >= Math.min(p.at, total)).length;
   const shot = phase === 'caption' ? ends.length - 1 : Math.max(0, ends.findIndex((e) => elapsed < e));
 
   // The shot that's fading out after a cut.
@@ -321,17 +397,53 @@ export default function DemoTour() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, idx]);
 
-  // Each chapter comes in with a sweep, and its name called in the pilot voice when it's downloaded.
+  // Each chapter comes in with a sweep.
   useEffect(() => {
     if (!soundOn) return;
     sceneCue('whoosh');
-    if (chapter && pilotVoiceReady()) speak(chapter.title);
-    if (idx === CLOSING) window.setTimeout(() => sceneCue('success'), 350);
+    if (idx === CLOSING) {
+      window.setTimeout(() => sceneCue('success'), 350);
+      window.setTimeout(() => speak(tr("That's Blacktop. Let's ride."), { radio: true }), 700);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx]);
 
+  // The pilot voice tells the story: each line goes out on the radio as the film reaches it.
+  const said = useRef(-1);
+  useEffect(() => {
+    said.current = -1;
+  }, [idx]);
+  useEffect(() => {
+    if (!chapter || phase !== 'playing' || !soundOn) return;
+    const lines = chapter.voice;
+    while (said.current + 1 < lines.length && lines[said.current + 1][0] <= elapsed) {
+      said.current += 1;
+      const [at, line] = lines[said.current];
+      if (elapsed - at < VOICE_LATE) speak(line, { radio: true });
+    }
+  }, [chapter, elapsed, phase, soundOn]);
+
+  // The pilot voice makes each chapter's lines while the one before is on, so they go out on time.
+  useEffect(() => {
+    if (!pilotVoiceReady()) return;
+    warmPilotVoice();
+    chapter?.voice.forEach(([, line]) => primePilotVoice(line));
+  }, [chapter]);
+  useEffect(() => {
+    if (phase !== 'caption' || !pilotVoiceReady()) return;
+    const next = idx === TRACK ? null : idx + 1 < main.length ? main[idx + 1] : null;
+    next?.voice.forEach(([, line]) => primePilotVoice(line));
+  }, [phase, idx, main, TRACK]);
+
+  // Nothing talks on after the tour, a chapter change or the sound going off.
+  useEffect(() => () => stopSpeaking(), []);
+  useEffect(() => {
+    if (!soundOn) stopSpeaking();
+  }, [soundOn]);
+
   const go = useCallback(
     (next: number) => {
+      stopSpeaking();
       warpScreen();
       lastShot.current = 0;
       setFading(null);
@@ -387,7 +499,7 @@ export default function DemoTour() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col bg-black/85 safe-frame no-frost tour-root"
+      className="fixed inset-0 z-[60] flex flex-col safe-frame no-frost tour-root"
       style={{ ['--tour' as string]: accentVar }}
       data-no-pull
     >

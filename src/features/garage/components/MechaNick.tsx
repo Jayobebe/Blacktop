@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-// Mecha-Nick as pixel art, so he sits with the pixel-art vehicles: 96 pixels across, scaled up without smoothing (scripts/make-mecha-nick.py).
-const NICK = '/garage/mecha-nick.png';
 import { tr } from '@/lib/i18n';
+import { MECHA_NICK } from '@/lib/pictures';
+
+// Mecha-Nick as pixel art, so he sits with the pixel-art vehicles: 96 pixels across, scaled up without smoothing (scripts/make-mecha-nick.py).
+const NICK = MECHA_NICK;
 
 interface MechaNickProps {
   /** Highest-priority message — always shown first when present. */

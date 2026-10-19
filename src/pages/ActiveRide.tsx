@@ -273,7 +273,7 @@ export default function ActiveRide() {
   useRideUpdates(rideState);
   // At speed the screen holds the way it is, so leaning the bike can't turn it.
   useRideOrientationLock(rideState.isActive, rideState.isPaused, rideState.currentSpeed);
-  // Crew members can spectate an unlocked ride: the leader's phone sends it while someone watches.
+  // Crew members can spectate an unlocked ride: every rider's phone sends theirs while someone watches.
   const spectators = useSpectateBroadcast(convoy.id ?? null, rideState.isActive, convoy.isLeader, () => {
     const pts = rideState.gpsPoints;
     const here = pts[pts.length - 1];
@@ -306,6 +306,7 @@ export default function ActiveRide() {
       destination: rideTarget()?.name.split(',')[0].trim() ?? null,
       riders: Math.max(1, convoy.members.length),
       at: Date.now(),
+      color: settings.accentColor,
     };
   });
   // Read when the ride has ended, from callbacks that may hold an older render.

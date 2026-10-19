@@ -8,3 +8,5 @@
 export const GARAGE_SHOP = '/img/garage-shop.png';
 /** The demo bike: demo mode's vehicle, and the stand-in for a rider's own in the tour and the Enterprise scenes. */
 export const DEMO_BIKE = '/img/demo-bike.png';
+/** Mecha-Nick as pixel art, 96 pixels across (scripts/make-mecha-nick.py): the garage, and his silhouette in the tour and the Enterprise workshop. */
+export const MECHA_NICK = '/garage/mecha-nick.png';

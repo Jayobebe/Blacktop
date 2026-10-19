@@ -1,21 +1,64 @@
-/* Recolor MapLibre's default controls to the app's dark theme + accent token. */
+/*
+ * MapLibre's own controls (zoom, compass, the alarm's AlarmControl, locate) in
+ * the same family as everything else on the map (the quick searches, the
+ * toolbar, Report): rounded-xl cards with a hairline border and a soft shadow,
+ * and icons with lucide's line and weight, drawn in the button's own colour
+ * (a mask over currentColor), so a state is a colour change, as on the toolbar.
+ */
 .blacktop-maplibre .maplibregl-ctrl-group {
   background: hsl(var(--card) / 0.95);
   border: 1px solid hsl(var(--border));
-  box-shadow: var(--shadow-md);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.35), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+  overflow: hidden;
 }
 
 .blacktop-maplibre .maplibregl-ctrl-group button + button {
   border-top: 1px solid hsl(var(--border));
 }
 
-.blacktop-maplibre .maplibregl-ctrl-icon {
-  filter: invert(1) brightness(1.6);
+.blacktop-maplibre .maplibregl-ctrl-group button {
+  color: hsl(var(--foreground) / 0.85);
+  transition: background-color 150ms, color 150ms;
+}
+.blacktop-maplibre .maplibregl-ctrl-group button:not(:disabled):hover {
+  background-color: hsl(var(--secondary));
 }
 
-.blacktop-maplibre .maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon {
-  filter: none;
+.blacktop-maplibre .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon,
+.blacktop-maplibre .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon,
+.blacktop-maplibre .maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  background-image: none !important;
+  background-color: currentColor;
+  -webkit-mask: var(--bt-icon) center / 20px 20px no-repeat;
+  mask: var(--bt-icon) center / 20px 20px no-repeat;
+}
+.blacktop-maplibre .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
+  --bt-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3Cpath d='M12 5v14'/%3E%3C/svg%3E");
+}
+.blacktop-maplibre .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+  --bt-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
+}
+.blacktop-maplibre .maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  --bt-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12h3M19 12h3M12 2v3M12 19v3'/%3E%3Ccircle cx='12' cy='12' r='7'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+}
+/* No location to be had (permission refused): crossed out and faded. */
+.blacktop-maplibre .maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon {
+  --bt-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12h3M19 12h3M12 2v3M12 19v3'/%3E%3Cpath d='M7.11 7.11C5.83 8.39 5 10.1 5 12c0 3.87 3.13 7 7 7 1.9 0 3.61-.83 4.89-2.11'/%3E%3Cpath d='M18.71 13.96c.19-.63.29-1.29.29-1.96 0-3.87-3.13-7-7-7-.67 0-1.33.1-1.96.29'/%3E%3Cpath d='m2 2 20 20'/%3E%3C/svg%3E");
+  opacity: 0.45;
+}
+/* Following the rider: filled with the accent, as a toolbar button is when it's on. */
+.blacktop-maplibre .maplibregl-ctrl-group button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active {
   background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+/* Still following, but the map's been moved away: the icon alone in the accent. */
+.blacktop-maplibre .maplibregl-ctrl-group button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background {
+  color: hsl(var(--accent));
+}
+.blacktop-maplibre .maplibregl-ctrl-group button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error,
+.blacktop-maplibre .maplibregl-ctrl-group button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error {
+  color: hsl(var(--destructive));
 }
 
 /* We render attribution ourselves (centered below the speed cluster). */
@@ -26,8 +69,8 @@
 /* Ensure zoom (+/-) and compass controls are always tappable above overlay UI. */
 .blacktop-maplibre .maplibregl-ctrl-top-right {
   z-index: 20;
-  /* Push below the iPhone notch / status bar and inward from the side notch in landscape. */
-  top: calc(10px + var(--safe-top));
+  /* Below the notch / status bar, and level with the search bar (0.75rem down, less MapLibre's own 10px margin). */
+  top: calc(2px + var(--safe-top));
   right: calc(10px + var(--safe-right));
 }
 
@@ -43,8 +86,8 @@
   z-index: 20;
 }
 
-/* The anti-theft alarm's lock (AlarmControl): red, like the lock screen. */
-.blacktop-maplibre .bt-alarm-ctrl {
+/* The anti-theft alarm's siren (AlarmControl): burn orange, as everywhere the alarm appears. */
+.blacktop-maplibre .maplibregl-ctrl-group button.bt-alarm-ctrl {
   display: flex;
   align-items: center;
   justify-content: center;

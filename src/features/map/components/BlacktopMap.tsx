@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { Map as MapLibreMap, Marker } from "maplibre-gl";
@@ -8,7 +8,7 @@ import "./blacktopMap.css";
 import { closeBlacktopMap, clearMapDestination, setBlacktopMapReady } from "../hooks/useMapOverlay";
 import { useRadarOverlay } from "../hooks/useRadarOverlay";
 import { registerTileCacheProtocol, toCachedTileUrl } from "../lib/tileCache";
-import { calculateDistance, getCountryCode, getRecentLocations, type MapSearchResult } from "../lib/placeSearch";
+import { calculateDistance, getCountryCode, getRecentLocations, placeDetails, saveRecentLocation, type MapSearchResult } from "../lib/placeSearch";
 import {
   fetchTrafficCameras,
   fetchCamerasOnRoute,
@@ -22,7 +22,7 @@ import { isRoutingOffline, useRoutingOffline } from "../lib/routingStatus";
 import { checkRouteWeather, findDryRoute, HEAVY_MM } from "../lib/weatherRoute";
 import { RadioButton } from "@/features/radio";
 import { useNextWaypoint } from "@/features/waypoints";
-import { MapSearchBar } from "./MapSearchBar";
+import { MapSearchBar, type FitPadding } from "./MapSearchBar";
 import { LoopPlannerPanel } from "./LoopPlannerPanel";
 import { OfflinePacksPanel } from "./OfflinePacksPanel";
 import { TurnBanner } from "./TurnBanner";
@@ -31,13 +31,13 @@ import { useTurnByTurn } from "../hooks/useTurnByTurn";
 import { remainingLine, shortDistance } from "../lib/navigation";
 import { navAppLabel, openInNavApp } from "../lib/navHandoff";
 import { shareText } from "../lib/shareText";
-import { useExperience } from "@/features/experience";
+import { useExperience, type PlaceCategory } from "@/features/experience";
 import { stopSpeaking } from "../lib/speech";
 import { MapDestination } from "../types";
 import { deletePOI, getSavedPOIs, savePOI } from "../lib/poiStore";
 import { loadDarkMapStyle } from "../lib/darkStyle";
 import { getLastView, saveLastView } from "../lib/lastView";
-import { addPinLayers, setMyPins, setPinsVisible, type PinInfo } from "../lib/mapPins";
+import { addPinLayers, clearCategoryPins, setMyPins, setPinsVisible, showCategoryPins, type PinInfo } from "../lib/mapPins";
 import { addCardDropLayer, setCardDropData, type CardPin } from "../lib/cardDropLayer";
 import { CardDropPrompt } from "./CardDropPrompt";
 import { getActiveBikeIdSnapshot } from "@/features/garage/hooks/useGarage";
@@ -56,7 +56,7 @@ import {
 } from "@/features/hazards";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookmarkPlus, Trash2, WifiOff } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, ChevronDown, Clock3, Trash2, WifiOff } from "lucide-react";
 import { useMapPresentUserIds } from "../hooks/useMapPresence";
 import { ACCENT_COLORS, useSettings } from "@/features/settings";
 import { useProfile } from "@/features/profile";
@@ -75,6 +75,7 @@ import { useSpeakingUsers } from "@/features/voice";
 import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { isThermal } from "@/lib/thermal";
 import {
   Navigation,
   Loader2,
@@ -105,7 +106,10 @@ import { metresText } from '@/lib/units';
 import { PageTips } from '@/features/guide';
 import { setGuidanceActive } from '../lib/guidanceState';
 import { setNavShare } from '../lib/navShare';
-import { etaClock, etaSpread, spreadDuration } from '../lib/eta';
+import { etaClock, etaSpread, travelTime } from '../lib/eta';
+import { openText, openTint, parseOpeningHours, placeStatus, weekLines } from '@/lib/openingHours';
+import { currencySign, type PriceInfo } from '@/lib/priceLevel';
+import { PriceSigns } from '@/components/PlaceFacts';
 import { W3WAddress } from '@/components/W3WAddress';
 import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
@@ -179,6 +183,20 @@ function applyMemberMarkerStyle(
   el.style.color = colorStyles.text;
   el.style.boxShadow = isSpeaking ? colorStyles.glow : "none";
   el.style.transform = isSpeaking ? "scale(1.15)" : "scale(1)";
+}
+
+/** The way to a pin whose card is up: dashed, under the pins (it isn't the ride's route). */
+const PIN_ROUTE_SOURCE_ID = "blacktop-pin-route";
+const PIN_ROUTE_CASING_ID = "blacktop-pin-route-casing";
+const PIN_ROUTE_LINE_ID = "blacktop-pin-route-line";
+/** Where a pin is, as a key (its card's route and facts belong to the place, not to the pin object). */
+const pinKeyOf = (p: { lat: number; lng: number }) => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
+/** Compass bearing from one [lng, lat] to another. */
+function bearingOf([lng1, lat1]: [number, number], [lng2, lat2]: [number, number]): number {
+  const r = Math.PI / 180;
+  const y = Math.sin((lng2 - lng1) * r) * Math.cos(lat2 * r);
+  const x = Math.cos(lat1 * r) * Math.sin(lat2 * r) - Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lng2 - lng1) * r);
+  return (Math.atan2(y, x) / r + 360) % 360;
 }
 
 const ROUTE_SOURCE_ID = "blacktop-route";
@@ -318,6 +336,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   /** The rider's navigation zoom (see NAV_ZOOM_KEY). */
   const navZoomRef = useRef(readNavZoom());
   const preOrbitCameraRef = useRef<{ center: [number, number]; zoom: number; bearing: number; pitch: number } | null>(null);
+  /** The gap between the last two GPS fixes, and when the last came: the rider's pin and the follow camera move over it. */
+  const fixGapRef = useRef(1000);
+  const lastFixAtRef = useRef(0);
+  /** A quick search's tiles are on the map (Back from one of its places returns to that overview). */
+  const quickUpRef = useRef(false);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const { convoy, clearDestination } = useConvoyState();
   // If the overlay was opened without an explicit destination but the
@@ -492,8 +515,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       // Compass only turns with the bearing: with visualizePitch it also squashed in 3D as
       // the map tilted (orbiting a pin, 3D mode), which looked broken. Tilt has its own button.
       instance.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
-      // The anti-theft alarm's lock, straight under the compass.
-      instance.addControl(new AlarmControl(), "top-right");
+      // Recentre straight under the compass, then the anti-theft alarm's siren.
       const geolocate = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
@@ -502,6 +524,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         showAccuracyCircle: false,
       });
       instance.addControl(geolocate, "top-right");
+      instance.addControl(new AlarmControl(), "top-right");
       // The locate button hands the camera back to GPS follow after free panning.
       const resumeFollow = () => { freePanRef.current = false; };
       geolocate.on("geolocate", resumeFollow);
@@ -678,6 +701,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         const loc = { lat: position.coords.latitude, lng: position.coords.longitude };
         if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
         noteLocationGranted();
+        // How long since the last fix: the pin and the camera take that long to get to this one.
+        const fixAt = Date.now();
+        fixGapRef.current = lastFixAtRef.current ? Math.min(2000, Math.max(250, fixAt - lastFixAtRef.current)) : 1000;
+        lastFixAtRef.current = fixAt;
         setUserLocation(loc);
         // Hazard warnings: the ride feeds them during a ride; the map does otherwise.
         if (!rideActiveRef.current) pushHazardFix({ ...loc, speed: position.coords.speed ?? null, t: position.timestamp || Date.now() });
@@ -737,7 +764,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             zoom: zoomFor(currentZoom),
             bearing: safeBearing(headingRef.current, map),
             pitch: threeDRef.current ? THREE_D_PITCH : 0,
-            duration: 800,
+            // Over the gap between fixes at an even pace, alongside the pin: an eased 800 ms move then a
+            // standstill made the map pulse once a second.
+            duration: fixGapRef.current,
+            easing: (t: number) => t,
             essential: true,
           });
         }
@@ -857,7 +887,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       const el = userMarkerRef.current.getElement();
       el.textContent = letter;
       el.style.background = accentColor;
-      userMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
+      // Glided over the gap between fixes, at a steady speed, in step with the follow camera (it stepped from fix to fix).
+      glideMarker(userMarkerRef.current, userLocation.lng, userLocation.lat, fixGapRef.current, "linear");
     }
   }, [map, userLocation, accentColor, profile.name]);
 
@@ -1542,18 +1573,101 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     return whenStyleReady(map, () => setHazardData(map, hazards));
   }, [map, hazards]);
 
-  // Tapped pin: fly in, tilt to a third-person view and slowly circle it.
-  // Touching the map stops the circling; Back / Navigate end the orbit.
+  // ── A pin's card: the way there (drawn, with how far and how long), its hours and how dear ──
+  const pinKey = pin ? pinKeyOf(pin) : null;
+  const pinRef = useRef(pin);
+  pinRef.current = pin;
+  const [pinRoute, setPinRoute] = useState<{ key: string; route: RouteResult | null; loading: boolean } | null>(null);
+  const pinRouteRef = useRef(pinRoute);
+  pinRouteRef.current = pinRoute;
+  const [pinFacts, setPinFacts] = useState<{ key: string; hours?: string; price: PriceInfo | null } | null>(null);
+  /** The card waits for the camera when it flies there from the list; a pin tapped on the map has it at once. */
+  const [pinArrived, setPinArrived] = useState(false);
+  const [pinHoursOpen, setPinHoursOpen] = useState(false);
   useEffect(() => {
-    if (!map || !pin || !isVisible) return; // hidden: no circling in the background
+    setPinHoursOpen(false);
+    const target = pinRef.current;
+    if (!target || !pinKey) {
+      setPinRoute(null);
+      return;
+    }
+    const from = userLocationRef.current;
+    if (!from) {
+      setPinRoute({ key: pinKey, route: null, loading: false });
+      return;
+    }
+    let live = true;
+    setPinRoute({ key: pinKey, route: null, loading: true });
+    void fetchRouteThroughStops([from, { lat: target.lat, lng: target.lng }], { quiet: true }).then((route) => {
+      if (live) setPinRoute({ key: pinKey, route, loading: false });
+    });
+    return () => {
+      live = false;
+    };
+  }, [pinKey]);
+  // A place tapped on the basemap: its tiles carry no hours or price, so they're looked up once it's opened.
+  useEffect(() => {
+    const target = pinRef.current;
+    if (!target || !pinKey || target.kind !== "poi" || !target.osm || target.hours !== undefined) {
+      setPinFacts(null);
+      return;
+    }
+    let live = true;
+    void placeDetails(target.name, target.lat, target.lng, target.osm).then((d) => {
+      if (live && d) setPinFacts({ key: pinKey, hours: d.hours, price: d.price });
+    });
+    return () => {
+      live = false;
+    };
+  }, [pinKey]);
+  // The way there on the map, dashed in the accent, under the pins.
+  useEffect(() => {
+    if (!map) return;
+    const route = pinRoute?.route;
+    if (!route) return;
+    const cancel = whenStyleReady(map, () => {
+      const data = { type: "Feature" as const, geometry: route.geometry, properties: {} };
+      const src = map.getSource(PIN_ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+      if (src) {
+        src.setData(data);
+        return;
+      }
+      map.addSource(PIN_ROUTE_SOURCE_ID, { type: "geojson", data });
+      const before = ["bt-cat", "bt-mine", "bt-poi"].find((id) => map.getLayer(id));
+      map.addLayer(
+        { id: PIN_ROUTE_CASING_ID, type: "line", source: PIN_ROUTE_SOURCE_ID, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#000000", "line-opacity": 0.45, "line-width": 7 } },
+        before,
+      );
+      map.addLayer(
+        { id: PIN_ROUTE_LINE_ID, type: "line", source: PIN_ROUTE_SOURCE_ID, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": accentColor, "line-width": 3.5, "line-dasharray": [1.4, 1.1] } },
+        before,
+      );
+    });
+    return () => {
+      cancel();
+      for (const id of [PIN_ROUTE_LINE_ID, PIN_ROUTE_CASING_ID]) if (map.getLayer(id)) map.removeLayer(id);
+      if (map.getSource(PIN_ROUTE_SOURCE_ID)) map.removeSource(PIN_ROUTE_SOURCE_ID);
+    };
+  }, [map, pinRoute, accentColor]);
+
+  // Tapped pin: fly in, tilt to a third-person view and slowly circle it. Picked
+  // from the list: first along the way there at speed, the map turning with the
+  // road, then the same. Touching the map stops wherever it's got to and puts the
+  // card up; Back / Navigate end the orbit.
+  useEffect(() => {
+    const target = pinRef.current;
+    if (!map || !target || !isVisible) return; // hidden: no circling in the background
     if (!preOrbitCameraRef.current) {
       const c = map.getCenter();
       preOrbitCameraRef.current = { center: [c.lng, c.lat], zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
     }
     orbitingRef.current = true;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || isThermal();
     let raf = 0;
+    let fly = 0;
     let last = 0;
+    let startT = 0;
+    let waitT = 0;
     const spin = (now: number) => {
       // Back / Navigate end the orbit before React tears this down: a late
       // frame here would cancel the camera move they just started.
@@ -1563,21 +1677,94 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       map.setBearing((map.getBearing() + dt * ORBIT_DEG_PER_S) % 360);
       raf = requestAnimationFrame(spin);
     };
-    map.easeTo({ center: [pin.lng, pin.lat], zoom: Math.max(map.getZoom(), 16.8), pitch: 60, duration: reduce ? 0 : 1200, essential: true });
-    const startT = reduce ? 0 : window.setTimeout(() => (raf = requestAnimationFrame(spin)), 1250);
+    /** Over the pin, tilted, then circling; the card comes up as the camera gets there. */
+    const settle = (duration: number) => {
+      setPinArrived(true);
+      map.easeTo({ center: [target.lng, target.lat], zoom: Math.max(map.getZoom(), 16.8), pitch: 60, duration: reduce ? 0 : duration, essential: true });
+      if (!reduce) startT = window.setTimeout(() => (raf = requestAnimationFrame(spin)), duration + 50);
+    };
+    /** Along the line at speed: out a little for a long way, in again to arrive, the map turning with the road. */
+    const flyAlong = (line: [number, number][]) => {
+      const cum = [0];
+      for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversineM(line[i - 1][1], line[i - 1][0], line[i][1], line[i][0]));
+      const total = cum[cum.length - 1];
+      if (total < 150) {
+        settle(1000);
+        return;
+      }
+      const at = (d: number): [number, number] => {
+        let lo = 0;
+        let hi = cum.length - 1;
+        while (hi - lo > 1) {
+          const mid = (lo + hi) >> 1;
+          if (cum[mid] <= d) lo = mid;
+          else hi = mid;
+        }
+        const f = Math.min(1, Math.max(0, (d - cum[lo]) / (cum[hi] - cum[lo] || 1)));
+        return [line[lo][0] + (line[hi][0] - line[lo][0]) * f, line[lo][1] + (line[hi][1] - line[lo][1]) * f];
+      };
+      const duration = Math.min(3600, 1500 + Math.log2(1 + total / 400) * 380);
+      const z0 = Math.min(map.getZoom(), 16);
+      const z1 = 16.8;
+      const zMid = Math.min(z0, z1) - Math.min(5, Math.max(0, Math.log2(total / 1500)));
+      let bearing = map.getBearing();
+      const go = () => {
+        const began = performance.now();
+        const step = (now: number) => {
+          if (!orbitingRef.current) return;
+          const u = Math.min(1, (now - began) / duration);
+          const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+          const d = e * total;
+          // The road ahead, looked at a little ahead and behind so a junction doesn't spin the map.
+          const want = bearingOf(at(Math.max(0, d - total * 0.03)), at(Math.min(total, d + total * 0.06)));
+          bearing += ((((want - bearing) % 360) + 540) % 360 - 180) * 0.12;
+          const zoom = (1 - e) * (1 - e) * z0 + 2 * e * (1 - e) * zMid + e * e * z1;
+          map.jumpTo({ center: at(d), zoom, bearing, pitch: 40 + 20 * e });
+          if (u < 1) fly = requestAnimationFrame(step);
+          else settle(450);
+        };
+        fly = requestAnimationFrame(step);
+      };
+      // Off somewhere else: over to the start of the line first.
+      const c = map.getCenter();
+      if (haversineM(c.lat, c.lng, line[0][1], line[0][0]) > 300) {
+        map.easeTo({ center: line[0], zoom: z0, duration: 500, essential: true });
+        waitT = window.setTimeout(go, 520);
+      } else go();
+    };
+    if (!target.fromList || reduce) settle(1200);
+    else {
+      setPinArrived(false);
+      // A moment for the way there to arrive; without it, straight to the place.
+      const began = performance.now();
+      const ready = () => {
+        const r = pinRouteRef.current;
+        if (r && r.key === pinKeyOf(target) && !r.loading) {
+          if (r.route && r.route.geometry.coordinates.length > 1) flyAlong(r.route.geometry.coordinates as [number, number][]);
+          else settle(1200);
+        } else if (performance.now() - began > 2500) settle(1200);
+        else waitT = window.setTimeout(ready, 100);
+      };
+      ready();
+    }
     const stopSpin = (e: { originalEvent?: unknown }) => {
-      if (!e.originalEvent) return; // our own easeTo
+      if (!e.originalEvent) return; // our own camera moves
       window.clearTimeout(startT);
+      window.clearTimeout(waitT);
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(fly);
+      setPinArrived(true); // a hand on the map: stop where it's got to, card up
     };
     const events = ["dragstart", "zoomstart", "rotatestart", "pitchstart"] as const;
     events.forEach((ev) => map.on(ev, stopSpin));
     return () => {
       window.clearTimeout(startT);
+      window.clearTimeout(waitT);
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(fly);
       events.forEach((ev) => map.off(ev, stopSpin));
     };
-  }, [map, pin, isVisible]);
+  }, [map, pinKey, isVisible]);
 
   /**
    * Leave the orbit. Back returns the camera to where it was; Navigate goes
@@ -1586,12 +1773,23 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
    */
   const exitOrbit = (restore: boolean) => {
     const saved = preOrbitCameraRef.current;
+    const fromList = !!pin?.fromList;
     preOrbitCameraRef.current = null;
     orbitingRef.current = false;
     setPin(null);
+    setPinArrived(false);
     if (!map) return;
     if (restore) {
       lastInteractionAtRef.current = Date.now();
+      if (fromList) {
+        // From the list: back to the rider (a quick search's overview has them in it), with the same list to pick from.
+        setSearchReopenSeq((n) => n + 1);
+        const loc = userLocationRef.current;
+        if (!(quickUpRef.current && saved) && loc) {
+          map.easeTo({ center: [loc.lng, loc.lat], zoom: 15, bearing: 0, pitch: threeDRef.current ? THREE_D_PITCH : 0, duration: 1100, essential: true });
+          return;
+        }
+      }
       if (saved) map.easeTo({ ...saved, duration: 900, essential: true });
       else map.easeTo({ pitch: threeDRef.current ? THREE_D_PITCH : 0, bearing: 0, duration: 600, essential: true });
       return;
@@ -1748,6 +1946,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     orbitingRef.current = false;
     freePanRef.current = false; // the next open follows the rider again
     setPin(null);
+    if (map) clearCategoryPins(map);
+    setSearchClearSeq((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSeq]);
 
@@ -1828,7 +2028,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
       const worst = weather.worst;
       const minsIn = Math.round((worst.etaMs - Date.now()) / 60000);
-      toast.warning(tr("Heavy rain on your route{0}", [minsIn > 0 ? ` in ~${minsIn} min` : ""]), {
+      toast.warning(minsIn > 0 ? tr("Heavy rain on your route in ~{0} min", [minsIn]) : tr("Heavy rain on your route"), {
         description: tr("{0} mm/h forecast where you'll be. Want a route around it?", [worst.mm.toFixed(1)]),
         duration: 12000,
         action: {
@@ -2095,7 +2295,59 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     }
   }, [map, rescueTarget]);
 
+  // ── Quick searches: every place found on the map, the camera pulled back to show them ──
+  const [searchClearSeq, setSearchClearSeq] = useState(0);
+  /** Bumped to bring the search list back (Back from a place picked in it). */
+  const [searchReopenSeq, setSearchReopenSeq] = useState(0);
+  const handleCategory = useCallback(
+    (category: PlaceCategory | null, results: MapSearchResult[], padding: FitPadding) => {
+      if (!map) return;
+      if (!category || !results.length) {
+        quickUpRef.current = false;
+        clearCategoryPins(map);
+        return;
+      }
+      quickUpRef.current = true;
+      void showCategoryPins(map, category, results);
+      // From the rider out to the nearest dozen: they're all there to pick from, and the camera stays put (locate re-centres).
+      const loc = userLocationRef.current;
+      const bounds = new maplibregl.LngLatBounds();
+      if (loc) bounds.extend([loc.lng, loc.lat]);
+      for (const r of results.slice(0, 12)) bounds.extend([r.lng, r.lat]);
+      lastInteractionAtRef.current = Date.now();
+      if (!destinationRef.current) freePanRef.current = true;
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      map.fitBounds(bounds, { padding, maxZoom: 15.5, pitch: 0, bearing: 0, duration: reduce ? 0 : 1200, essential: true });
+    },
+    [map],
+  );
+  /**
+   * A place picked from the search list is looked at before it's ridden to:
+   * the camera flies along the way there and circles it, and its card has how
+   * far, how long, whether it's open and Navigate.
+   */
+  const handlePreview = useCallback((result: MapSearchResult, category: string) => {
+    lastInteractionAtRef.current = Date.now();
+    const saved = result.id.startsWith("poi:");
+    setPin({
+      name: result.name,
+      category,
+      kind: saved ? "saved" : "poi",
+      id: saved ? result.id.slice(4) : undefined,
+      address: result.address,
+      lat: result.lat,
+      lng: result.lng,
+      hours: result.hours,
+      price: result.price,
+      fromList: true,
+    });
+  }, []);
+
   const handleSearchSelect = (result: MapSearchResult, opts: { follow?: boolean } = {}) => {
+    // A route or a stop from here on: a quick search's pins have done their job.
+    quickUpRef.current = false;
+    if (map) clearCategoryPins(map);
+    setSearchClearSeq((n) => n + 1);
     // A what3words suggestion: find where it is first.
     if (result.id.startsWith(W3W_RESULT_PREFIX)) {
       void resolveWhat3WordsResult(result).then((found) =>
@@ -2324,6 +2576,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                 : undefined
             }
             onSelect={handleSearchSelect}
+            onCategory={handleCategory}
+            onPreview={handlePreview}
+            clearSeq={searchClearSeq}
+            reopenSeq={searchReopenSeq}
           />
         )}
 
@@ -2364,7 +2620,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         )}
 
       <div className="flex flex-row flex-wrap landscape:flex-nowrap items-start gap-2 pointer-events-auto">
-        <div className="flex flex-row flex-wrap landscape:flex-nowrap items-center max-w-[calc(100vw-5rem)] landscape:max-w-none rounded-lg overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
+        <div className="flex flex-row flex-wrap landscape:flex-nowrap items-center max-w-[calc(100vw-5rem)] landscape:max-w-none rounded-xl overflow-hidden border border-border shadow-lg bg-card/95 backdrop-blur">
           <button
             type="button"
             onClick={() => setBasemap("dark")}
@@ -2527,11 +2783,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                 setSaveName("");
                 setShowSaveUI(true);
               }}
-              className="p-2.5 rounded-full bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
+              className="w-[38px] h-[38px] landscape:w-[34px] landscape:h-[34px] flex items-center justify-center rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
               aria-label={tr("Save current location as a POI")}
               data-tip="map-save"
             >
-              <BookmarkPlus className="w-5 h-5" />
+              <BookmarkPlus className="w-4 h-4 landscape:w-3.5 landscape:h-3.5" />
             </button>
           )}
         </div>
@@ -2694,11 +2950,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                   )}{" "}
                   {getDistanceLabel(settings.distanceUnit)}
                   {" · "}
-                  {spreadDuration(
-                    guiding && navProgressNow ? navProgressNow.remainingSeconds : route.durationSeconds,
-                    etaSpread(route),
-                    (s) => formatDuration(Math.round(s)),
-                  )}
+                  {travelTime(guiding && navProgressNow ? navProgressNow.remainingSeconds : route.durationSeconds, etaSpread(route))}
                 </p>
               ) : null}
             </div>
@@ -2759,14 +3011,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           </div>
         )}
 
-        {/* Landscape (short:): the speed card sits bottom-left, credits beside it. */}
+        {/* Landscape (short:): the speed card sits in the left-hand column, between the toolbar and Report. */}
         <div className="flex flex-col items-center short:items-start gap-1.5">
           <div className="px-2 py-0.5 text-[10px] text-muted-foreground/70 pointer-events-none short:hidden">
             {tr("Weather: RainViewer, Open-Meteo")}
           </div>
 
           {/* Bottom-left action stack (Rescue above Report): beside the speed card in
-              portrait, directly above it in landscape (short:). */}
+              portrait; in landscape (short:) the speed card goes above it, out of the way of the map. */}
           <div className="w-full grid grid-cols-[1fr_auto_1fr] items-end gap-2 short:flex short:flex-col short:items-start short:gap-1.5">
             <div className="flex flex-col items-start gap-2 justify-self-start pointer-events-auto">
               {/* Rescue — available while the map overlay covers ActiveRide. */}
@@ -2776,7 +3028,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                     void (rescue.hasPending ? rescue.cancel?.() : rescue.send?.());
                   }}
                   className={cn(
-                    "p-2.5 rounded-full border shadow-lg backdrop-blur transition-colors",
+                    "w-12 h-12 flex items-center justify-center rounded-xl border shadow-lg backdrop-blur transition-colors",
                     rescue.hasPending
                       ? "bg-[hsl(var(--burn))]/25 border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse"
                       : "bg-card/95 border-border text-warning hover:bg-warning/20",
@@ -2795,7 +3047,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             {(rideState.isActive || geoSpeed > 0) && (
               <div
                 className={cn(
-                  "flex items-baseline gap-1.5 px-5 py-3 short:px-4 short:py-2 rounded-2xl bg-card/95 border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors",
+                  "short:order-first flex items-baseline gap-1.5 px-5 py-3 short:px-4 short:py-2 rounded-2xl bg-card/95 border shadow-lg backdrop-blur font-mono font-bold tabular-nums transition-colors",
                   speedColorClass,
                 )}
               >
@@ -2827,16 +3079,38 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         />
       )}
 
-      {/* Tapped pin: the camera orbits it; Back unlocks, Navigate sets the route. */}
-      {pin && (
+      {/* Tapped pin, or a place picked from the list once the camera's there: it circles the place. The card says
+          how far and how long by road, whether it's open and how dear; Back unlocks (from the list: back to the
+          rider and the list), Navigate sets the route. */}
+      {pin && pinArrived && (
         <div className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] bottom-[calc(0.75rem+var(--safe-bottom))] short:right-auto short:w-[22rem] z-30 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-3 animate-slide-up">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-sm truncate">{pin.name}</p>
-              <p className="text-xs text-muted-foreground truncate">
-                {pin.category}
-                {userLocation ? tr(" · {0} {1} away", [formatDistance(metersToMiles(calculateDistance(userLocation.lat, userLocation.lng, pin.lat, pin.lng) * 1000), settings.distanceUnit), getDistanceLabel(settings.distanceUnit)]) : ""}
-              </p>
+              <p className="text-xs text-muted-foreground truncate">{pin.category}</p>
+              {(() => {
+                const way = pinRoute?.key === pinKey ? pinRoute : null;
+                const dist = (m: number) => `${formatDistance(metersToMiles(m), settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`;
+                if (way?.route) {
+                  const spread = etaSpread(way.route);
+                  return (
+                    <p className="text-xs font-medium text-foreground/90 mt-0.5 truncate">
+                      {tr("{0} · {1} · ETA {2}", [
+                        dist(way.route.distanceMeters),
+                        travelTime(way.route.durationSeconds, spread),
+                        etaClock(way.route.durationSeconds, spread),
+                      ])}
+                    </p>
+                  );
+                }
+                if (!userLocation) return null;
+                const straight = dist(calculateDistance(userLocation.lat, userLocation.lng, pin.lat, pin.lng) * 1000);
+                return (
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {way?.loading ? tr("{0} away · finding the way…", [straight]) : tr("{0} away", [straight])}
+                  </p>
+                );
+              })()}
               {/* The place's what3words (when Blacktop has what3words). */}
               <W3WAddress lat={pin.lat} lng={pin.lng} className="mt-0.5 text-xs items-start text-left" />
             </div>
@@ -2858,7 +3132,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                 onClick={() => {
                   const saved = savePOI({ name: pin.name, lat: pin.lat, lng: pin.lng });
                   toast.success(tr("{0} saved", [pin.name]));
-                  setPin({ ...pin, kind: "saved", category: "Saved place", id: saved.id });
+                  setPin({ ...pin, kind: "saved", category: tr("Saved place"), id: saved.id });
                 }}
                 aria-label={tr("Save this place")}
               >
@@ -2866,6 +3140,43 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               </button>
             )}
           </div>
+          {/* Open or shut (green / red) and how dear, with the week's hours a tap away. */}
+          {(() => {
+            const hours = pin.hours ?? (pinFacts?.key === pinKey ? pinFacts.hours : undefined);
+            const price = pin.price ?? (pinFacts?.key === pinKey ? pinFacts.price : null);
+            const status = placeStatus(hours);
+            const week = hours ? parseOpeningHours(hours) : null;
+            if (!status && !price) return null;
+            return (
+              <>
+                <div className={cn("mt-2 rounded-lg px-2.5 min-h-[2.25rem] flex items-center gap-2", status ? openTint(status) : "bg-muted/40")}>
+                  {status && <Clock3 className={cn("w-3.5 h-3.5 flex-shrink-0", openText(status))} />}
+                  <span className={cn("text-xs font-semibold flex-1 min-w-0 truncate", status ? openText(status) : "text-muted-foreground")}>
+                    {status ? status.label : tr("Hours not known")}
+                  </span>
+                  {price && <PriceSigns info={price} sign={currencySign(countryCode)} className="text-xs flex-shrink-0" />}
+                  {week && (
+                    <button
+                      type="button"
+                      onClick={() => setPinHoursOpen((v) => !v)}
+                      aria-expanded={pinHoursOpen}
+                      aria-label={tr("Opening hours")}
+                      className="glove-hit -mr-1 p-1 rounded-md text-muted-foreground hover:text-foreground"
+                    >
+                      <ChevronDown className={cn("w-4 h-4 transition-transform", pinHoursOpen && "rotate-180")} />
+                    </button>
+                  )}
+                </div>
+                {pinHoursOpen && week && (
+                  <ul className="mt-1.5 px-2.5 space-y-0.5 text-[11px] text-muted-foreground">
+                    {weekLines(week).map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            );
+          })()}
           <div className="mt-2.5 flex gap-2">
             <Button size="sm" variant="outline" className="gap-1" onClick={() => exitOrbit(true)}>
               <ArrowLeft className="w-3.5 h-3.5" />{" "}{tr("Back")}
@@ -2875,6 +3186,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               className="flex-1 gap-1"
               onClick={() => {
                 const target = pin;
+                // Somewhere ridden to from the list goes on the recent list, as a search pick always did.
+                if (target.fromList && target.kind !== "saved") {
+                  saveRecentLocation({ id: `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng });
+                }
                 exitOrbit(false);
                 handleSearchSelect(
                   { id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng },

@@ -1,6 +1,9 @@
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
+import type { LucideIcon } from 'lucide-react';
 import type { SavedPOI } from './poiStore';
 import type { MapSearchResult } from './placeSearch';
+import { lucideImage } from '@/lib/iconImage';
+import type { PriceInfo } from '@/lib/priceLevel';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -9,7 +12,10 @@ import { tr } from '@/lib/i18n';
  *     `poi` layer: no extra requests). Only the most important show when zoomed
  *     out; more appear as you zoom in (by the tiles' per-area `rank`);
  *   - the rider's saved places and recently visited destinations, always on
- *     top of the others.
+ *     top of the others;
+ *   - a quick search's results (fuel, food, open 24h…): every place it found,
+ *     as a tile in the category's colour with its icon, the nearest one bigger.
+ *     While they're up the basemap's own places step aside.
  * Pin images are drawn here: a coloured circle per category with the style's
  * own icon recoloured white (the sprite's icons are dark, for light maps).
  * Hidden while the rider is moving, like the search bar.
@@ -18,6 +24,13 @@ import { tr } from '@/lib/i18n';
 export const POI_LAYER = 'bt-poi';
 export const MINE_LAYER = 'bt-mine';
 const MINE_SOURCE = 'bt-mine';
+export const CAT_LAYER = 'bt-cat';
+const CAT_SOURCE = 'bt-cat';
+const CAT_PREFIX = 'btcat-';
+/** A quick search's pins are up (the basemap's places stay hidden until they go). */
+let categoryUp = false;
+/** Pins hidden while the rider is moving. */
+let pinsShown = true;
 const PIN_PREFIX = 'btpoi-';
 const PR = 2; // images drawn at 2× for sharp pins
 
@@ -141,6 +154,42 @@ function drawMinePin(kind: 'saved' | 'recent', accent: string): ImageData {
   return g.getImageData(0, 0, size, size);
 }
 
+/** A quick search's pin: a rounded tile in the category's colour, its icon in white; the nearest ringed in white. */
+async function drawCategoryPin(color: string, Icon: LucideIcon, nearest: boolean): Promise<ImageData> {
+  const size = 26 * PR;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d')!;
+  const inset = 1.5 * PR;
+  const r = 7 * PR;
+  // A rounded square by hand: canvas roundRect is missing from older Android web views.
+  const x0 = inset;
+  const x1 = size - inset;
+  g.beginPath();
+  g.moveTo(x0 + r, x0);
+  g.arcTo(x1, x0, x1, x1, r);
+  g.arcTo(x1, x1, x0, x1, r);
+  g.arcTo(x0, x1, x0, x0, r);
+  g.arcTo(x0, x0, x1, x0, r);
+  g.closePath();
+  g.fillStyle = color;
+  g.fill();
+  g.lineWidth = (nearest ? 2 : 1.5) * PR;
+  g.strokeStyle = nearest ? '#ffffff' : 'rgba(0,0,0,0.85)';
+  g.stroke();
+  try {
+    const img = await lucideImage(Icon, { color: '#ffffff', strokeWidth: 2.4 });
+    const box = 15 * PR;
+    g.drawImage(img, (size - box) / 2, (size - box) / 2, box, box);
+  } catch {
+    g.beginPath();
+    g.arc(size / 2, size / 2, 3 * PR, 0, Math.PI * 2);
+    g.fillStyle = '#fff';
+    g.fill();
+  }
+  return g.getImageData(0, 0, size, size);
+}
+
 // ── layers ───────────────────────────────────────────────────────────────────
 
 function textColor(): unknown {
@@ -242,32 +291,65 @@ export function addPinLayers(map: MapLibreMap, accent: string, onPick: (pin: Pin
     });
   }
 
+  // A quick search's results: filled by showCategoryPins.
+  if (!map.getSource(CAT_SOURCE)) map.addSource(CAT_SOURCE, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  if (!map.getLayer(CAT_LAYER)) {
+    map.addLayer({
+      id: CAT_LAYER,
+      type: 'symbol',
+      source: CAT_SOURCE,
+      layout: {
+        'icon-image': ['get', 'img'],
+        'icon-size': ['case', ['get', 'near'], 1.25, 1],
+        'icon-allow-overlap': true,
+        'text-field': ['get', 'name'],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': 11,
+        'text-anchor': 'top',
+        'text-offset': ['case', ['get', 'near'], ['literal', [0, 1.5]], ['literal', [0, 1.25]]],
+        'text-max-width': 9,
+        'text-optional': true,
+        // The nearest first: its name is the one kept where labels collide.
+        'symbol-sort-key': ['get', 'rank'],
+      },
+      paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.9)', 'text-halo-width': 1.5 },
+    });
+  }
+
   const click = (e: { features?: { properties: Record<string, unknown>; geometry: GeoJSON.Geometry; layer: { id: string } }[] }) => {
     const f = e.features?.[0];
     if (!f || f.geometry.type !== 'Point') return;
     const [lng, lat] = f.geometry.coordinates;
     const p = f.properties;
     const mine = f.layer.id === MINE_LAYER;
+    const found = f.layer.id === CAT_LAYER;
+    // A quick search's tile carries what the search found; a basemap place only its kind, to be looked up.
+    const level = Number(p.price);
     onPick({
       name: String(p.name ?? p['name:latin'] ?? 'Place'),
-      category: mine ? (p.kind === 'saved' ? 'Saved place' : 'Visited recently') : groupOf(String(p.class)).label,
+      category: mine ? (p.kind === 'saved' ? tr("Saved place") : tr("Visited recently")) : found ? String(p.label ?? '') : groupOf(String(p.class)).label,
       kind: mine ? (p.kind as 'saved' | 'recent') : 'poi',
       id: mine ? String(p.id) : undefined,
-      address: mine ? String(p.address ?? '') : undefined,
+      address: mine || found ? String(p.address ?? '') : undefined,
       lat,
       lng,
+      ...(found
+        ? { hours: p.hours ? String(p.hours) : undefined, price: level === 0 ? { free: true as const } : level > 0 ? { level } : null }
+        : !mine && p.subclass
+          ? { osm: String(p.subclass) }
+          : {}),
     });
   };
   const enter = () => (map.getCanvas().style.cursor = 'pointer');
   const leave = () => (map.getCanvas().style.cursor = '');
-  for (const id of [POI_LAYER, MINE_LAYER]) {
+  for (const id of [POI_LAYER, MINE_LAYER, CAT_LAYER]) {
     map.on('click', id, click as never);
     map.on('mouseenter', id, enter);
     map.on('mouseleave', id, leave);
   }
   return () => {
     map.setMissingStyleImageResolver(null);
-    for (const id of [POI_LAYER, MINE_LAYER]) {
+    for (const id of [POI_LAYER, MINE_LAYER, CAT_LAYER]) {
       map.off('click', id, click as never);
       map.off('mouseenter', id, enter);
       map.off('mouseleave', id, leave);
@@ -284,6 +366,14 @@ export interface PinInfo {
   address?: string;
   lat: number;
   lng: number;
+  /** OpenStreetMap's `opening_hours`, where known. */
+  hours?: string;
+  /** How dear it is next to its kind, where known. */
+  price?: PriceInfo | null;
+  /** The basemap tile's own word for it ("cafe"), to look its hours and price up by. */
+  osm?: string;
+  /** Picked from the search list: the camera flies along the route to it before circling. */
+  fromList?: boolean;
 }
 
 /** The rider's own places: saved (on top) and recently visited (not duplicating a saved one). */
@@ -302,7 +392,61 @@ export function setMyPins(map: MapLibreMap, saved: SavedPOI[], recent: MapSearch
 }
 
 export function setPinsVisible(map: MapLibreMap, visible: boolean) {
-  for (const id of [POI_LAYER, MINE_LAYER]) {
-    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+  pinsShown = visible;
+  for (const id of [POI_LAYER, MINE_LAYER, CAT_LAYER]) {
+    // The basemap's places stay hidden while a quick search's are up.
+    const on = visible && !(id === POI_LAYER && categoryUp);
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
   }
+}
+
+/** What a quick search needs to draw its pins: the category's name, colour and icon. */
+export interface PinCategory {
+  id: string;
+  label: string;
+  color: string;
+  Icon: LucideIcon;
+}
+
+/**
+ * Puts a quick search's results on the map, nearest first (the nearest drawn
+ * bigger and ringed), and stands the basemap's own places down meanwhile.
+ */
+export async function showCategoryPins(map: MapLibreMap, cat: PinCategory, results: MapSearchResult[]) {
+  for (const nearest of [false, true]) {
+    const id = `${CAT_PREFIX}${cat.id}${nearest ? '-near' : ''}`;
+    if (map.hasImage(id)) continue;
+    const data = await drawCategoryPin(cat.color, cat.Icon, nearest);
+    if (!map.hasImage(id)) map.addImage(id, data, { pixelRatio: PR });
+  }
+  const src = map.getSource(CAT_SOURCE) as GeoJSONSource | undefined;
+  if (!src) return;
+  src.setData({
+    type: 'FeatureCollection',
+    features: results.map((r, i) => ({
+      type: 'Feature' as const,
+      properties: {
+        name: r.name,
+        address: r.address,
+        label: cat.label,
+        img: `${CAT_PREFIX}${cat.id}${i === 0 ? '-near' : ''}`,
+        near: i === 0,
+        rank: i,
+        hours: r.hours ?? '',
+        // 0 free, a level, or -1 unknown (properties are flat).
+        price: r.price ? ('free' in r.price ? 0 : r.price.level) : -1,
+      },
+      geometry: { type: 'Point' as const, coordinates: [r.lng, r.lat] },
+    })),
+  });
+  categoryUp = results.length > 0;
+  setPinsVisible(map, pinsShown);
+}
+
+/** Takes a quick search's pins off the map and brings the basemap's places back. */
+export function clearCategoryPins(map: MapLibreMap) {
+  const src = map.getSource(CAT_SOURCE) as GeoJSONSource | undefined;
+  src?.setData({ type: 'FeatureCollection', features: [] });
+  categoryUp = false;
+  setPinsVisible(map, pinsShown);
 }

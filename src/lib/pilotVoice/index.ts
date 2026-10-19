@@ -296,6 +296,15 @@ export async function pilotSay(
   return true;
 }
 
+/**
+ * Make `text` ahead of time, so it goes out without a wait when it's said
+ * (the tour's narration, a line or two before it's needed).
+ */
+export function primePilotVoice(text: string) {
+  if (!pilotVoiceReady() || phrases.has(text)) return;
+  void synth(text);
+}
+
 export function stopPilotVoice() {
   generation++;
   current?.stop();

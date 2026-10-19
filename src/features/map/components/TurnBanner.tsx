@@ -1,30 +1,19 @@
 import {
-  ArrowUp,
+  ArrowUp,
   ExternalLink,
-  Flag,
-  Loader2,
-  Share2,
+  Flag,
+  Loader2,
+  Share2,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ManeuverIcon } from './ManeuverIcon';
 import { shortDistance, type DistanceUnit, type NavManeuver, type NavProgress } from '../lib/navigation';
 import { tr } from '@/lib/i18n';
-import { etaClock, spreadDuration, type EtaSpread } from '../lib/eta';
+import { etaClock, travelTime, type EtaSpread } from '../lib/eta';
 
-function timeLeft(seconds: number, spread: EtaSpread): string {
-  const mins = (s: number) => Math.max(1, Math.round(s / 60));
-  // "25–31 min" rather than "25 min–31 min" when both ends are under an hour.
-  if (spread && mins(seconds * spread[1]) < 60) {
-    const a = mins(seconds * spread[0]);
-    const b = mins(seconds * spread[1]);
-    return a === b ? `${a} min` : `${a}–${b} min`;
-  }
-  return spreadDuration(seconds, spread, (s) => {
-    const m = mins(s);
-    return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
-  });
-}
+/** "25–31 min" rather than "25 min–31 min" when both ends are under an hour (lib/eta). */
+const timeLeft = travelTime;
 
 interface Props {
   progress: NavProgress | null;

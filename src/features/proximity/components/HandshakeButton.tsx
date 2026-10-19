@@ -75,13 +75,11 @@ export function HandshakeButton({
   };
 
   // ── button ─────────────────────────────────────────────────────────────────
-  const R = 21;
-  const C = 2 * Math.PI * R;
   const button = (
     <button
       onClick={onButton}
       className={cn(
-        'relative w-[42px] h-[42px] rounded-full flex items-center justify-center border shadow-lg backdrop-blur transition-colors',
+        'relative w-[38px] h-[38px] landscape:w-[34px] landscape:h-[34px] rounded-xl flex items-center justify-center border shadow-lg backdrop-blur transition-colors',
         receiving
           ? 'bg-accent/25 border-accent text-accent animate-pulse shadow-[0_0_18px_hsl(var(--accent)/0.7)]'
           : st.outgoing
@@ -92,19 +90,23 @@ export function HandshakeButton({
         receiving ? tr("Request from {0}, {1}s left", [st.incoming!.fromName, left]) : st.outgoing ? tr("Waiting for {0}", [st.outgoing.toName]) : tr("Nearby riders")
       }
     >
-      {st.busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Handshake className="w-5 h-5" />}
+      {st.busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Handshake className="w-4 h-4" />}
       {left !== null && (
         <>
-          <svg className="absolute inset-0 -rotate-90 pointer-events-none" viewBox="0 0 44 44" aria-hidden>
-            <circle
-              cx="22"
-              cy="22"
-              r={R}
+          {/* The time left runs round the button's own edge. */}
+          <svg className="absolute -inset-px pointer-events-none" viewBox="0 0 40 40" preserveAspectRatio="none" aria-hidden>
+            <rect
+              x="1"
+              y="1"
+              width="38"
+              height="38"
+              rx="11"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              strokeDasharray={C}
-              strokeDashoffset={C * (1 - progress)}
+              pathLength={100}
+              strokeDasharray={100}
+              strokeDashoffset={100 * (1 - progress)}
               strokeLinecap="round"
             />
           </svg>
