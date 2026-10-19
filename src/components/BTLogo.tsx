@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n';
 
 interface BTLogoProps {
   className?: string;
@@ -7,28 +8,24 @@ interface BTLogoProps {
 
 export function BTLogo({ className, size = 'md' }: BTLogoProps) {
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-11 h-11',
-    lg: 'w-16 h-16',
+    sm: 'w-8 h-8 text-xs',
+    md: 'w-11 h-11 text-sm',
+    lg: 'w-16 h-16 text-lg',
   };
 
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-lg bg-background border border-accent/30 overflow-hidden",
+        "flex items-center justify-center rounded-lg bg-background border border-accent/30 font-display font-black tracking-tighter text-accent",
         sizeClasses[size],
         className
       )}
       style={{
-        boxShadow: '0 0 12px hsl(var(--accent) / 0.5)',
+        textShadow: '0 0 12px hsl(var(--accent) / 0.5)',
       }}
     >
-      <img
-        src="/img/bt-mark.png"
-        alt="Blacktop"
-        className="w-full h-full object-cover"
-        draggable={false}
-      />
+      <span className="-mr-[0.1em]">{tr("B")}</span>
+      <span className="-ml-[0.1em]">{tr("T")}</span>
     </div>
   );
 }
