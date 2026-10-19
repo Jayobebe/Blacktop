@@ -72,7 +72,7 @@ function metaFor(path: string): Meta {
     [/^\/settings$/, 'Settings'],
     [/^\/setup$/, 'Settings'],
     [/^\/world/, 'Blacktop World'],
-    [/^\/arcade\/(blackgrid|card-wars)/, 'BlackGrid'],
+    [/^\/arcade\/(switchback|blackgrid|card-wars)/, 'SwitchBack'],
     [/^\/arcade\/hit-heavy/, 'Hit Heavy'],
     [/^\/arcade\/petrol-head/, 'Petrol Head'],
     [/^\/arcade\/(gridlock|derez-legacy)/, 'Gridlock'],

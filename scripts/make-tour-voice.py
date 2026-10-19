@@ -18,6 +18,7 @@ phone's voice in radio style.
     py -3.11 -m pip install piper-tts soundfile numpy
     py -3.11 scripts/make-tour-voice.py            # every language
     py -3.11 scripts/make-tour-voice.py en de      # just these
+    py -3.11 scripts/make-tour-voice.py --force    # remake lines that are already there too
 
 Writes public/tour-voice/<lang>/<id>.mp3 (id = FNV-1a of the line as it's spoken,
 in that language, as `voiceId` in src/components/demo/tourVoice.ts works it out:
@@ -110,7 +111,7 @@ def resample(audio: np.ndarray, rate: int) -> np.ndarray:
 def main():
     lines = tour_lines()
     voices = pilot_voices()
-    langs = sys.argv[1:] or list(voices)
+    langs = [a for a in sys.argv[1:] if not a.startswith("--")] or list(voices)
     index_file = OUT / "index.json"
     index = json.loads(index_file.read_text(encoding="utf-8")) if index_file.exists() else {}
     for lang in langs:
@@ -132,11 +133,15 @@ def main():
                 print(f"  {lang}: no translation for {line!r}, left to the phone's voice")
                 continue
             ident = fnv1a(text)
+            made.append(ident)
+            # A file is named by its text, so one already there is this line: kept as it is
+            # (Piper never says a line quite the same twice, so remaking it only churns the repo).
+            if (folder / f"{ident}.mp3").exists() and "--force" not in sys.argv:
+                continue
             chunks = list(voice.synthesize(text))
             audio = np.concatenate([c.audio_float_array for c in chunks]).astype(np.float32)
             audio = resample(audio, chunks[0].sample_rate)
             sf.write(folder / f"{ident}.mp3", audio, SAMPLE_RATE, format="MP3", bitrate_mode="CONSTANT", compression_level=0.9)
-            made.append(ident)
         for old in folder.glob("*.mp3"):
             if old.stem not in made:
                 old.unlink()

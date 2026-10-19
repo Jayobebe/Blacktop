@@ -363,9 +363,10 @@ export default function World() {
       )}
 
 
-      {/* Crew QR — mates scan this to join your crew */}
+      {/* Crew QR — mates scan this to join your crew. Portaled to body: inside the page (which
+          moves for the page transitions) "fixed" sat at the page's top, a whole scroll away. */}
 
-      {showCrewQr && (
+      {showCrewQr && createPortal(
         <div className="fixed inset-0 z-50 safe-frame-x bg-black/85 backdrop-blur-sm flex items-start justify-center p-6 safe-top safe-bottom overflow-y-auto">
           <div className="w-full max-w-xs rounded-2xl border border-border/40 bg-card p-6 text-center space-y-4 my-auto">
             <div className="flex items-center justify-between">
@@ -392,7 +393,8 @@ export default function World() {
             {/* Every crew this rider is in: switch, rename, leave (up to four). */}
             <CrewList />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

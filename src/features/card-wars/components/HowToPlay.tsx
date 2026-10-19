@@ -133,7 +133,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
     {
       icon: Coins,
       title: tr("RPM stays in the game"),
-      text: tr("RPM is only for BlackGrid. It can't be bought, sold or sent to anyone."),
+      text: tr("RPM is only for SwitchBack. It can't be bought, sold or sent to anyone."),
     },
   ];
   return (
@@ -141,7 +141,7 @@ export function HowToPlay({ open, onClose, players }: { open: boolean; onClose: 
       <SheetContent side="bottom" className="rounded-t-3xl max-h-[88dvh] overflow-y-auto safe-bottom">
         <div className="max-w-md mx-auto space-y-4">
           <SheetHeader className="text-left">
-            <SheetTitle>{tr("How BlackGrid works")}</SheetTitle>
+            <SheetTitle>{tr("How SwitchBack works")}</SheetTitle>
             <SheetDescription>{tr("A quick battle of real cars and bikes. Two minutes to learn.")}</SheetDescription>
           </SheetHeader>
           <ol className="space-y-3">

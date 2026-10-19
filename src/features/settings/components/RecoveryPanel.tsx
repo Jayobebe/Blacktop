@@ -122,7 +122,7 @@ export function RecoveryPanel() {
     <div className="mt-4 pt-3 border-t border-border/30">
       <p className="text-sm font-medium">{tr("Recovery code")}</p>
       <p className="text-[10px] text-muted-foreground mt-0.5">
-        {tr("A recovery code brings your account (BlackGrid, crew scores, Track Day records) back on another phone. Blacktop keeps no email or name for you, so the code is the only way in: write it down.")}
+        {tr("A recovery code brings your account (SwitchBack, crew scores, Track Day records) back on another phone. Blacktop keeps no email or name for you, so the code is the only way in: write it down.")}
       </p>
       <div className="grid grid-cols-2 gap-2 mt-2">
         <Button variant="outline" size="sm" onClick={make} disabled={busy} className="h-12 text-xs rounded-lg touch-target">
@@ -196,7 +196,7 @@ export function RecoveryPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>{tr("Switch this phone to that account?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {tr("The account on this phone now, with its BlackGrid cards, crew scores and Track Day records, is deleted and replaced by the one you're recovering. This can't be undone.")}
+              {tr("The account on this phone now, with its SwitchBack cards, crew scores and Track Day records, is deleted and replaced by the one you're recovering. This can't be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

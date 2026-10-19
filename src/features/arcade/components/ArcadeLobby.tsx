@@ -27,7 +27,7 @@ export function ArcadeLobby() {
         tips={[
           { target: '[data-tip="arcade-hit"]', text: tr("Hold your phone tight in your fist and punch. Blacktop measures the hit in G.") },
           { target: '[data-tip="arcade-petrol"]', text: tr("Dodge traffic and grab fuel cans. Near misses charge a shield.") },
-          { target: '[data-tip="arcade-cw"]', text: tr("Finishing a game here pays RPM for BlackGrid. A personal best pays more.") },
+          { target: '[data-tip="arcade-cw"]', text: tr("Finishing a game here pays RPM for SwitchBack. A personal best pays more.") },
         ]}
       />
       {/* Game tiles */}
@@ -84,7 +84,7 @@ export function ArcadeLobby() {
           </div>
         </button>
         {/* Card Wars has more to show than a best score: its panel takes the rest of the page. */}
-        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && <CardWarsArcadePanel onOpen={() => navigate('/arcade/blackgrid')} />}
+        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && <CardWarsArcadePanel onOpen={() => navigate('/arcade/switchback')} />}
       </div>
     </section>
   );

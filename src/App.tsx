@@ -116,7 +116,7 @@ function JoinLink() {
 }
 function CardWarsLink() {
   const { search, hash } = useLocation();
-  return <Navigate to={`/arcade/blackgrid${search}${hash}`} replace />;
+  return <Navigate to={`/arcade/switchback${search}${hash}`} replace />;
 }
 const DeviceCheck = lazyPage(() => import("./pages/DeviceCheck"));
 const Setup = lazyPage(() => import("./pages/Setup"));
@@ -308,6 +308,8 @@ function AppRoutes() {
       <Route path="/crew/join" element={<CrewJoin />} />
       <Route path="/crew/challenges" element={<CrewChallenges />} />
       <Route path="/arcade" element={<Arcade />} />
+      <Route path="/arcade/switchback" element={<CardWars />} />
+      {/* Its old addresses, for battle and swap links already sent. */}
       <Route path="/arcade/blackgrid" element={<CardWars />} />
       {/* The game's old address: battle and swap links already sent still open. */}
       <Route path="/arcade/card-wars" element={<CardWars />} />

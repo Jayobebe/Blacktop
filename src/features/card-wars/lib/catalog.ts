@@ -175,7 +175,7 @@ export const SPECS: Record<string, CardSpecs> = {};
 export const CATALOG: BattleCard[] = rows.map(([id, manufacturer, name, vehicle, spec, bank, year, hp, kg, vmaxKmh, leanDeg, distance, corners]) => {
  SPECS[id] = { year, hp, kg, vmaxKmh, ...(leanDeg != null ? { leanDeg } : {}) };
  const b = BALANCE[id];
- if (!b) throw new Error(`BlackGrid: ${id} has no BALANCE row (npm run cardwars:balance)`);
+ if (!b) throw new Error(`SwitchBack: ${id} has no BALANCE row (npm run cardwars:balance)`);
  return {
   id, name, manufacturer, vehicle, spec, archetype: id,
   ...(ARTWORK[id] ? { image: ARTWORK[id] } : {}),

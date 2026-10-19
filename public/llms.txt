@@ -70,7 +70,7 @@ Blacktop suits riders looking for: a motorcycle group ride app, a convoy or road
 
 - Crews (up to four), shown on a globe as an anonymous glow, never a pin.
 - Weekly boards and challenges, monthly crew goals, and crew convoys anyone in the crew can join or watch live.
-- An arcade between rides: BlackGrid card battles with real cars and bikes, Hit Heavy (a punch machine on the phone's accelerometer), Petrol Head (a traffic run) and Gridlock (light trails).
+- An arcade between rides: SwitchBack card battles with real cars and bikes, Hit Heavy (a punch machine on the phone's accelerometer), Petrol Head (a traffic run) and Gridlock (light trails).
 - Blacktop Radio: stations made from your own music, lowered under voice and directions.
 
 ## Privacy

@@ -250,7 +250,7 @@ export default function DemoTour() {
         id: 'crew',
         title: tr("Your crew"),
         line: tr("Blacktop World"),
-        caption: tr("Start a crew and light up the globe together, as an anonymous glow, never a pin. Weekly boards and challenges, rides your crew can join or watch live, and an arcade for between rides: BlackGrid card battles, a punch machine and more."),
+        caption: tr("Start a crew and light up the globe together, as an anonymous glow, never a pin. Weekly boards and challenges, rides your crew can join or watch live, and an arcade for between rides: SwitchBack card battles, a punch machine and more."),
         points: [
           { I: Globe2, text: tr("Crews on a globe"), at: 1.6 },
           { I: Trophy, text: tr("Boards and challenges"), at: 5.4 },
@@ -260,7 +260,7 @@ export default function DemoTour() {
           [0.4, tr("Your crew.")],
           [1.5, tr("Crews light up the globe as an anonymous glow, never a pin.")],
           [5.3, tr("Weekly boards and challenges, and rides your crew can join or watch live.")],
-          [10.3, tr("And between rides, the arcade: a punch machine, a traffic run, light trails and BlackGrid card battles.")],
+          [10.3, tr("And between rides, the arcade: a punch machine, a traffic run, light trails and SwitchBack card battles.")],
         ],
         shots: [
           { Scene: WorldScene, seconds: 10 },

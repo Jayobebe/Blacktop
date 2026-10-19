@@ -16,7 +16,7 @@ const CODE = /^[a-f0-9-]{36}$/i;
 
 /** Share sheet where the phone has one, otherwise the link on the clipboard. */
 async function shareInvitation(url: string) {
-  const text = tr("Battle me at BlackGrid on Blacktop: {0}", [url]);
+  const text = tr("Battle me at SwitchBack on Blacktop: {0}", [url]);
   try {
     if (typeof navigator.share === 'function') {
       await navigator.share({ text });
@@ -68,7 +68,7 @@ export function PlayerBattleSheet({
   const demo = useDemoLocked();
   const [scan, setScan] = useState(false);
   const waiting = online?.status === 'waiting' && !!online.code;
-  const link = waiting ? `${shareOrigin()}/arcade/blackgrid?battle=${online.code}` : '';
+  const link = waiting ? `${shareOrigin()}/arcade/switchback?battle=${online.code}` : '';
   const blocked = !!why || demo || busy;
 
   useEffect(() => {

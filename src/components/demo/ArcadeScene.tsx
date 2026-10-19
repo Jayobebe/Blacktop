@@ -37,14 +37,14 @@ import {
 /*
  * The arcade, one game at a time: each tile plays a short round of its game in
  * turn (a punch on Hit Heavy, a late lane change and a fuel can on Petrol Head,
- * a rival run into a wall on Gridlock, a round won in BlackGrid), then rests on
+ * a rival run into a wall on Gridlock, a round won in SwitchBack), then rests on
  * how it ended. Drawn for the tour, never the games themselves.
  */
 
 /** Each game's turn, in seconds. */
 const SLOT = 2.6;
 /** Product names stay in English. */
-const GAMES = ['Hit Heavy', 'Petrol Head', 'Gridlock', 'BlackGrid'] as const;
+const GAMES = ['Hit Heavy', 'Petrol Head', 'Gridlock', 'SwitchBack'] as const;
 export const ARCADE_SECONDS = SLOT * GAMES.length;
 const TILE = { w: 148, h: 74 };
 /** Where a game still waiting its turn sits: its opening moment, everything on the tile. */
@@ -65,7 +65,7 @@ const GL_ORANGE: Pt[] = [[16, 58], [52, 58], [52, 30], [100, 30], [100, 62], [70
 const GL_BLUE: Pt[] = [[131, 56], [116, 56], [116, 40], [100, 40]];
 const GL_ORANGE_V = 62;
 const GL_CRASH = 2.1;
-// BlackGrid: Speed is drawn, 81 beats 70, the rival's card takes the hit.
+// SwitchBack: Speed is drawn, 81 beats 70, the rival's card takes the hit.
 const BG_HIT = 1.2;
 const BG_DAMAGE = Math.round(35 + 0.8 * (81 - 70));
 
@@ -276,7 +276,7 @@ function Gridlock({ s, id }: { s: number; id: (n: string) => string }) {
   );
 }
 
-/** A BlackGrid card: its artwork, the drawn category's rating, and health under it. */
+/** A SwitchBack card: its artwork, the drawn category's rating, and health under it. */
 function GridCard({ x, y, art, edge, rating, show, hp }: { x: number; y: number; art: string; edge: string; rating: number; show: number; hp: number }) {
   return (
     <g transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
@@ -290,7 +290,7 @@ function GridCard({ x, y, art, edge, rating, show, hp }: { x: number; y: number;
   );
 }
 
-function BlackGrid({ s }: { s: number }) {
+function SwitchBack({ s }: { s: number }) {
   const inL = easeOut(s / 0.35);
   const inR = easeOut((s - 0.08) / 0.35);
   const cat = easeOutBack((s - 0.4) / 0.35);
@@ -350,7 +350,7 @@ export function ArcadeScene() {
                 {i === 0 && <HitHeavy s={s} id={id} />}
                 {i === 1 && <PetrolHead s={s} id={id} />}
                 {i === 2 && <Gridlock s={s} id={id} />}
-                {i === 3 && <BlackGrid s={s} />}
+                {i === 3 && <SwitchBack s={s} />}
               </g>
             </g>
           );
