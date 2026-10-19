@@ -25,60 +25,118 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=VT323&display=swap" rel="stylesheet">
     
-    <title>Blacktop — Ride Tracking, Live Convoys, Voice Chat &amp; Crash Rescue</title>
-    <meta name="description" content="Free ride companion for motorcycles, cars, bicycles, e-bikes and e-scooters: ride tracking and stats, live GPS convoys, voice chat, crash rescue, turn-by-turn maps, track-day lap timing, garage and logbook. No sign-up, no ads." />
+    <!-- The landing page's own title and description. Per-page metadata (titles, descriptions,
+         canonical addresses, noindex on the rider's own screens) is set by src/components/RouteMeta.tsx,
+         which repeats these two for "/": keep them in step. public/llms.txt is the same story for AI search. -->
+    <title>Blacktop: free ride app with live convoys, voice chat, crash rescue and ride tracking</title>
+    <meta name="description" content="Free ride companion for motorcycles, cars, bicycles, e-bikes and e-scooters: ride tracking with lean angle and G-force, live GPS convoys with intercom voice chat, crash detection and rescue alerts, an anti-theft alarm, turn-by-turn maps with twisty routes, hazard reports and rain radar, track-day lap timing, a garage and logbook. No account, no ads, 18 languages." />
+    <meta name="keywords" content="motorcycle app, motorbike app, group ride app, convoy app, ride tracker, lean angle app, G-force meter, crash detection, motorcycle crash alert, rescue alert, motorcycle intercom app, group voice chat, Bluetooth intercom, twisty roads, curvy route planner, loop route planner, motorcycle navigation, turn-by-turn, hazard reports, speed cameras, rain radar, anti-theft alarm, track day lap timer, pit crew app, circuit lap times, motorcycle garage, service reminders, vehicle logbook, cycling convoy, e-bike app, e-scooter app, car convoy, road trip app, ride with friends" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="author" content="Blacktop" />
     <link rel="canonical" href="https://blacktoplive.com/" />
+    <link rel="alternate" type="text/plain" title="Blacktop for AI assistants" href="https://blacktoplive.com/llms.txt" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Blacktop — Every road. Your way." />
-    <meta property="og:description" content="Track your rides, ride together with live convoys and voice chat, and get help if you crash. For motorcycles, cars, bikes and scooters. Free, no sign-up." />
+    <meta property="og:site_name" content="Blacktop" />
+    <meta property="og:title" content="Blacktop: free ride app with live convoys, voice chat, crash rescue and ride tracking" />
+    <meta property="og:description" content="Track your rides, ride out together with live convoys and intercom voice chat, and get help if you crash. For motorcycles, cars, bicycles, e-bikes and e-scooters. Free, no account, no ads." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://blacktoplive.com/" />
     <meta property="og:image" content="https://blacktoplive.com/pwa-512x512.png" />
+    <meta property="og:image:alt" content="The Blacktop app icon" />
+    <meta property="og:locale" content="en_GB" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:image" content="https://blacktoplive.com/pwa-512x512.png" />
-    <meta name="twitter:title" content="Blacktop — Every road. Your way." />
-    <meta name="twitter:description" content="Track your rides, ride together with live convoys and voice chat, and get help if you crash. For motorcycles, cars, bikes and scooters. Free, no sign-up." />
+    <meta name="twitter:title" content="Blacktop: free ride app with live convoys, voice chat, crash rescue and ride tracking" />
+    <meta name="twitter:description" content="Track your rides, ride out together with live convoys and intercom voice chat, and get help if you crash. For motorcycles, cars, bicycles, e-bikes and e-scooters. Free, no account, no ads." />
 
-    <!-- Structured data so search engines and AI assistants can discover the full feature set.
-         Keep in sync with src/features/experience/components/WelcomeScreen.tsx. -->
+    <!-- Structured data, so search engines and AI assistants know the whole app: what it is, every
+         feature, the languages, and the questions new riders ask. Keep it in step with what the app
+         does (CLAUDE.md), with public/llms.txt and with the welcome screen's feature list. -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "MobileApplication",
-      "name": "Blacktop",
-      "url": "https://blacktoplive.com",
-      "applicationCategory": "TravelApplication",
-      "operatingSystem": "iOS, Android, Web",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "description": "Free, privacy-first ride companion for motorcycles, cars, bicycles, e-bikes and e-scooters. Ride tracking and stats, live GPS convoys, encrypted in-ride voice chat, crash detection and rescue alerts, turn-by-turn maps, track-day lap timing with a pit crew link, a garage with service reminders, a transferable vehicle logbook, Nearby Riders, Pillion Mode, badges, trading and ghost cards, local radio and Nimiq Pay. No sign-up required; the app tailors itself to how you ride.",
-      "keywords": "motorcycle app, group ride app, convoy tracking, ride tracker, lean angle, crash detection, rescue alert, motorcycle intercom, voice chat, turn-by-turn navigation, lap timer, track day, bicycle ride tracker, e-bike, e-scooter, car convoy, vehicle logbook, service reminders",
-      "featureList": [
-        "Personalised setup: vehicle types (motorcycle, car, bicycle, e-bike, e-scooter), solo or group riding, and the features you care about",
-        "Ride tracking: distance, time, speed, lean angle and G-force, solo or in a group",
-        "Ride history with saveable receipts, 3D route flyovers, corner reports, shareable recap cards and weekly or monthly Burn trips",
-        "Live GPS convoys with shared codes and QR invites, lobby chat, destinations, waypoints and leadership transfer",
-        "Convoy status bar: rider count, average speed, group ETA, riders dropped behind and a regroup prompt",
-        "Nearby Riders: handshake with riders close by to share a convoy, map and voice; merge and split convoys",
-        "Encrypted in-ride voice chat with Bluetooth headset and intercom support",
-        "Pillion Mode: passengers join on their own phone for voice, Wave and emoji reactions and rescue alerts",
-        "Crash detection with an are-you-okay check-in; rescue alerts to the whole convoy, crew and Discord with location, a rescue route for every rider and on-my-way replies",
-        "Blacktop Map: place search, multi-stop routes, direct or twisty routes, Twisty/Scenic/Relaxed loop routes, rain radar, drier-route suggestions, speed cameras and offline map packs",
-        "Turn-by-turn directions with optional spoken guidance that ducks music and voice chat",
-        "Track Pack: track-day lap timing with start/finish and sector lines, pit crew live timing and pit board, lap comparison with speed/lean/G traces and racing lines, CSV and GPX export",
-        "Garage: vehicles, photos, mileage and service reminders for bikes, cars, bicycles and scooters",
-        "Logbook and Vehicle Passport: ride and service history per vehicle, handed over phone to phone to the next keeper",
-        "Blacktop World (opt-in): live globe of riders and crews, crew leaderboards, weekly and monthly challenges, arcade games and Blacktank crew fuel fund",
-        "Badges, trading cards, card drops hidden on the map and card time attacks",
-        "Ghost Cards (Spectre): untradeable ghost editions earned by beating a card's time attack",
-        "Push notifications: rescue calls, heavy weather, service reminders, crew challenges, card pickups, time attacks and Blacktank votes",
-        "Blacktop Radio: stations built from your own music files",
-        "Car display mode for Android phone mirroring",
-        "Pay Up: Nimiq Pay (NIM and USDT) QR payments and tips",
-        "Speedshop (coming soon): printed vehicle cards, ride receipts, logbooks and merch",
-        "Private by default: no sign-up, no ads, ride history stored on your device, Burn button wipes everything"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://blacktoplive.com/#website",
+          "url": "https://blacktoplive.com/",
+          "name": "Blacktop",
+          "description": "Free ride companion app for motorcycles, cars, bicycles, e-bikes and e-scooters.",
+          "inLanguage": ["en", "es", "fr", "de", "it", "pt", "nl", "pl", "sv", "da", "nb", "tr", "uk", "ja", "ko", "zh", "id", "hi"]
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://blacktoplive.com/#org",
+          "name": "Blacktop",
+          "url": "https://blacktoplive.com/",
+          "logo": "https://blacktoplive.com/pwa-512x512.png"
+        },
+        {
+          "@type": ["MobileApplication", "WebApplication"],
+          "@id": "https://blacktoplive.com/#app",
+          "name": "Blacktop",
+          "alternateName": "Blacktop ride companion",
+          "url": "https://blacktoplive.com/",
+          "image": "https://blacktoplive.com/pwa-512x512.png",
+          "publisher": { "@id": "https://blacktoplive.com/#org" },
+          "applicationCategory": "TravelApplication",
+          "applicationSubCategory": "Motorcycle, group ride and road trip companion",
+          "operatingSystem": "Web, iOS, Android",
+          "browserRequirements": "Any modern browser; installs to the home screen on iPhone and Android",
+          "isAccessibleForFree": true,
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "availableLanguage": ["English", "Spanish", "French", "German", "Italian", "Portuguese", "Dutch", "Polish", "Swedish", "Danish", "Norwegian", "Turkish", "Ukrainian", "Japanese", "Korean", "Chinese (Simplified)", "Indonesian", "Hindi"],
+          "audience": { "@type": "Audience", "audienceType": "Motorcyclists, car drivers, cyclists, e-bike and e-scooter riders, riding groups and crews, track-day riders, riding schools, dealers and tour operators" },
+          "description": "Blacktop is a free, privacy-first ride companion for motorcycles, cars, bicycles, e-bikes and e-scooters. It records every ride (speed, distance, time, lean angle and G-force), keeps a riding group together with live GPS convoys and intercom voice chat, watches your back with crash detection, rescue alerts and an anti-theft alarm, plans and guides routes with twisty roads, loops, hazard reports, speed cameras and rain radar, times laps on real circuits with a pit crew on a friend's phone, and keeps your vehicles in a garage with service reminders and a logbook. There is no account to make and no adverts; rides stay on your phone. Setup asks what you ride, who you ride with and what you care about, and the app hides everything else. It runs in the browser, installs to the home screen, works in 18 languages and has Android and iOS apps.",
+          "featureList": [
+            "Set up around you: motorcycle, car, bicycle, e-bike or e-scooter, solo or group riding, and only the features you care about",
+            "Ride tracking: live speed, distance, time, lean angle (for vehicles that lean) and a G-force friction circle, with a mini map on the ride screen",
+            "After every ride: a receipt, an automatic name, badges, a corner report, a 3D flyover video and an overlay video for action-camera footage",
+            "Live GPS convoys: start one and share a code or QR; everyone sees each other on the map on the same route, with waypoints, a convoy status bar and a regroup call",
+            "In-ride voice chat for up to 8 riders over Bluetooth intercoms and headsets, with talk detection that ignores wind and engine noise, and the headset button to mute",
+            "Passenger screen: a pillion joins on their own phone to wave, talk, follow the map and ask for a stop",
+            "Spectate: friends and crew watch a convoy live on a map, following any rider",
+            "Nearby Riders: meet riders close by and join or merge convoys",
+            "Crash detection: a hard impact followed by a stop asks if you're okay; no answer sends a rescue call with your location to your convoy, crew, Discord and riders nearby, and routes the nearest rider to you",
+            "Rescue without a ride, an emergency-contact text from your own phone, what3words addresses and a rescue drill",
+            "Anti-theft alarm for a parked vehicle: motion detection, a pattern lock and a siren on the phone's own speaker",
+            "Blacktop Map: place search, quick searches for fuel or charging, parking, coffee and food with opening hours and prices, multi-stop routes, twisty routes and Twisty, Scenic or Relaxed loop routes",
+            "Route preferences: avoid motorways, tolls, ferries or unpaved roads",
+            "Weather: rain radar on the map and a drier route around heavy rain",
+            "Turn-by-turn directions with spoken guidance in a plain voice or a pilot's radio voice, rally-style pace notes, speed-camera calls and ETA sharing, or hand-off to Google Maps, Apple Maps or Waze",
+            "Hazard reports: riders report hazards in two taps, riders behind are warned in time",
+            "Offline map packs and a remembered parking spot",
+            "Track Day: a library of real circuits from OpenStreetMap or a GPS lap, start/finish and sector lines, lap timing, a pit crew on a friend's phone with pit board calls spoken in your helmet, pit lane timing and records on real circuits",
+            "Garage with Mecha-Nick: vehicles, service reminders that count down as you ride, and a logbook that writes itself and hands over to the next keeper",
+            "Vehicle trading cards that grow with your riding, and stickers",
+            "Blacktop World (opt-in): crews on a globe as an anonymous glow, weekly boards and challenges, crew convoys",
+            "Arcade: BlackGrid card battles, Hit Heavy punch machine, Petrol Head traffic run and Gridlock light trails",
+            "Blacktop Radio: stations from your own music, ducked under voice and directions",
+            "Spoken ride updates, battery saver and a high-speed Thermal mode",
+            "Private by design: no account, no ads, rides on your phone, peaks kept private if you choose, a backup file, a recovery code, and Burn to wipe everything from the phone and the server",
+            "18 languages",
+            "Blacktop Enterprise for riding schools, dealers, workshops, tour operators and race teams"
+          ],
+          "keywords": "motorcycle app, group ride app, convoy app, ride tracker, lean angle, G-force, crash detection, rescue alert, motorcycle intercom, voice chat, twisty route planner, loop routes, turn-by-turn, hazard reports, speed cameras, rain radar, anti-theft alarm, track day lap timer, pit crew, garage, service reminders, vehicle logbook, e-bike, e-scooter, car convoy, road trip"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://blacktoplive.com/#faq",
+          "mainEntity": [
+            { "@type": "Question", "name": "What is Blacktop?", "acceptedAnswer": { "@type": "Answer", "text": "Blacktop is a free ride companion app for motorcycles, cars, bicycles, e-bikes and e-scooters. It tracks your rides, keeps a group together with live GPS convoys and intercom voice chat, detects crashes and calls for help, plans twisty routes, times laps at track days and looks after your vehicles. No account and no adverts." } },
+            { "@type": "Question", "name": "Is there an app for riding in a group with live locations and voice chat?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. In Blacktop one rider starts a convoy and shares a code or QR; everyone joins, sees each other on the map on the same route, and talks over their Bluetooth intercoms or headsets, up to 8 riders in voice. Passengers and spectators can join too." } },
+            { "@type": "Question", "name": "Does Blacktop detect motorcycle crashes?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, if you switch it on. A hard impact while moving, followed by a stop, makes Blacktop ask if you're okay. If you don't answer, it sends a rescue call with your location to your convoy, your crew, Discord and riders nearby, and you can text an emergency contact from your own phone. Blacktop isn't an emergency service." } },
+            { "@type": "Question", "name": "Can Blacktop plan twisty or scenic motorcycle routes?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The map plans a direct or a twisty route between places, and round-trip loops in Twisty, Scenic or Relaxed styles that score real bends and route through viewpoints. It can avoid motorways, tolls, ferries or unpaved roads, and offers a drier line around heavy rain." } },
+            { "@type": "Question", "name": "Does Blacktop measure lean angle and G-force?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The ride screen shows live lean angle for bikes and a G-force friction circle, and every ride keeps its peaks, a corner report and a 3D flyover. Peaks can be kept private." } },
+            { "@type": "Question", "name": "Can I use Blacktop as a track day lap timer?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Pick a real circuit from the built-in library or record a GPS lap, place start/finish and sector lines, and Blacktop times your laps. A friend's phone becomes your pit crew, sending pit board calls that are spoken in your helmet." } },
+            { "@type": "Question", "name": "Is Blacktop free and does it need an account?", "acceptedAnswer": { "@type": "Answer", "text": "Blacktop is free, with no account to create and no adverts. Your rides stay on your phone; you can back them up to a file or keep a recovery code, and Burn deletes everything." } },
+            { "@type": "Question", "name": "Does Blacktop work for cars, bicycles, e-bikes and e-scooters?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Setup asks what you ride and adapts the app: drive wording for cars, no lean angle for vehicles that don't lean, bicycle-friendly routing, and the right fuel, charging or water stops on the map." } },
+            { "@type": "Question", "name": "Which languages and phones does Blacktop support?", "acceptedAnswer": { "@type": "Answer", "text": "Blacktop runs in any modern browser and installs to the home screen on iPhone and Android, with Android and iOS apps as well. It's available in 18 languages: English, Spanish, French, German, Italian, Portuguese, Dutch, Polish, Swedish, Danish, Norwegian, Turkish, Ukrainian, Japanese, Korean, Chinese, Indonesian and Hindi." } }
+          ]
+        }
       ]
     }
     </script>
@@ -87,30 +145,26 @@
     <div id="root"></div>
     <noscript>
       <main style="font-family: sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; color: #eee; background: #0a0a0a;">
-        <h1>Welcome to Blacktop — every road, your way</h1>
-        <p>Blacktop is a free ride companion for motorcycles, cars, bicycles, e-bikes and e-scooters. Track your rides, ride together with live convoys and voice chat, and get help if you crash. No sign-up, no ads.</p>
+        <h1>Blacktop: every road, your way</h1>
+        <p>Blacktop is a free ride companion for motorcycles, cars, bicycles, e-bikes and e-scooters. Track your rides, ride out together with live convoys and intercom voice chat, and get help if you crash. No account, no ads, 18 languages.</p>
         <h2>What Blacktop does</h2>
         <ul>
-          <li><strong>Set up for how you ride:</strong> motorcycles, cars, bicycles, e-bikes and e-scooters; tell Blacktop what you ride, who with and what you care about, and it hides everything else.</li>
-          <li><strong>Ride tracking and stats:</strong> distance, time, speed, lean angle and G-force, with ride history, saveable receipts, 3D flyovers, corner reports, recap cards and Burn trips.</li>
-          <li><strong>Live convoys:</strong> share a code or QR, see everyone on the map in real time, lobby chat, shared destination and waypoints, and a status bar with rider count, average speed, ETA and a regroup prompt.</li>
-          <li><strong>Nearby Riders:</strong> handshake with riders close by to share a convoy, map and voice; merge and split convoys.</li>
-          <li><strong>In-ride voice chat:</strong> encrypted, works with Bluetooth headsets and intercoms, never stored on a server.</li>
-          <li><strong>Pillion Mode:</strong> passengers join on their own phone for voice, reactions and rescue alerts.</li>
-          <li><strong>Crash rescue:</strong> optional crash detection that checks you're okay, then alerts your convoy, crew and Discord with your location; every rider gets a route to you.</li>
-          <li><strong>Blacktop Map:</strong> search, multi-stop routes, twisty routes, loop routes, rain radar and drier routes, speed cameras, offline map packs.</li>
-          <li><strong>Turn-by-turn directions:</strong> on-map guidance with optional spoken directions.</li>
-          <li><strong>Track Pack:</strong> track-day lap timing with sector lines, a pit crew link with live timing, lap comparison and CSV/GPX export.</li>
-          <li><strong>Garage:</strong> vehicles, photos, mileage and service reminders.</li>
-          <li><strong>Logbook and Vehicle Passport:</strong> each vehicle's ride and service history, handed over to the next keeper.</li>
-          <li><strong>Blacktop World:</strong> opt-in crews, leaderboards, weekly challenges, arcade games and Blacktank crew fuel fund.</li>
-          <li><strong>Badges, trading cards and Ghost Cards:</strong> earn badges, collect cards, hunt card drops on the map and race time attacks.</li>
-          <li><strong>Notifications:</strong> rescue calls, heavy weather, service reminders and crew updates.</li>
-          <li><strong>Blacktop Radio:</strong> stations from your own music.</li>
-          <li><strong>Pay Up:</strong> Nimiq Pay (NIM and USDT) QR payments and tips.</li>
-          <li><strong>Private by default:</strong> ride history stays on your phone, live convoy data is deleted when a ride ends, and the Burn button wipes everything.</li>
+          <li><strong>Set up around you:</strong> tell Blacktop what you ride, who you ride with and what you care about, and it hides everything else.</li>
+          <li><strong>Ride tracking:</strong> live speed, distance, time, lean angle and a G-force circle, with a mini map on the ride screen.</li>
+          <li><strong>After the ride:</strong> a receipt, an automatic name, badges, a corner report, a 3D flyover and an overlay video for your action camera.</li>
+          <li><strong>Live convoys:</strong> share a code or QR, see everyone on the map on the same route, waypoints and a regroup call.</li>
+          <li><strong>Voice chat:</strong> up to 8 riders over Bluetooth intercoms and headsets.</li>
+          <li><strong>Passengers and spectators:</strong> a pillion screen of their own, and friends watching the convoy live.</li>
+          <li><strong>Crash rescue:</strong> optional crash detection that asks if you're okay, then alerts your convoy, crew, Discord and riders nearby with your location.</li>
+          <li><strong>Anti-theft alarm:</strong> motion detection, a pattern lock and a siren for a parked vehicle.</li>
+          <li><strong>Blacktop Map:</strong> search, quick stops with opening hours and prices, twisty routes and loop routes, route preferences, rain radar and drier routes, speed cameras, hazard reports, offline maps.</li>
+          <li><strong>Turn-by-turn:</strong> spoken directions in a plain voice or a pilot's radio voice, rally pace notes and ETA sharing.</li>
+          <li><strong>Track Day:</strong> real circuits, lap and sector timing, a pit crew on a friend's phone and records on real circuits.</li>
+          <li><strong>Garage:</strong> vehicles, service reminders and a logbook that hands over to the next keeper.</li>
+          <li><strong>Blacktop World:</strong> opt-in crews, boards, challenges and an arcade with BlackGrid card battles.</li>
+          <li><strong>Private by design:</strong> rides stay on your phone, convoy data is wiped when a ride ends, and Burn deletes everything.</li>
         </ul>
-        <p>This app needs JavaScript — open <a href="https://blacktoplive.com">blacktoplive.com</a> in a modern browser or install it to your home screen.</p>
+        <p>Blacktop needs JavaScript: open <a href="https://blacktoplive.com">blacktoplive.com</a> in a modern browser or install it to your home screen. A plain-text guide is at <a href="https://blacktoplive.com/llms.txt">blacktoplive.com/llms.txt</a>.</p>
       </main>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>

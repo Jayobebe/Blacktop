@@ -26,6 +26,7 @@ import { AppBackdrop } from "@/components/AppBackdrop";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { setBackdropCruise, surgeBackdrop } from "@/lib/backdropMotion";
 import { MapLoading } from "@/components/MapLoading";
+import { RouteMeta } from "@/components/RouteMeta";
 import { HazardAlerts } from "@/features/hazards";
 import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
@@ -369,6 +370,8 @@ const App = () => {
                 <HazardAlerts />
                 {/* Finishes the burn flames after the post-burn reload. */}
                 <BurnReveal />
+                {/* Each page's title, description and indexing (index.html has the landing page's). */}
+                <RouteMeta />
                 <AppRoutes />
                 {hasEverOpened && (
                   <Suspense fallback={<MapLoading />}>

@@ -8,12 +8,40 @@ import {
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
 import { BTLogo } from '@/components/BTLogo';
-import { tr } from '@/lib/i18n';
-import { useRef } from 'react';
+import { LANGUAGES, getLanguage, tr } from '@/lib/i18n';
+import { useMemo, useRef, useState } from 'react';
+import { LanguagePicker } from '@/components/LanguagePicker';
+import { PixelSwapText } from '@/components/PixelSwapText';
 import { toast } from 'sonner';
 import { isNativeApp } from '@/lib/platform';
 
 /** The newest Android test build: GitHub publishes it here on every build (.github/workflows/native.yml). */
+/**
+ * "Welcome to Blacktop" in every language, for the welcome line that steps
+ * through them (each language's dictionary only loads when it's chosen, so they
+ * live here). Copied from the locale files: keep them in step.
+ */
+const WELCOME: Record<string, string> = {
+  en: 'Welcome to Blacktop',
+  es: 'Bienvenido a Blacktop',
+  fr: 'Bienvenue sur Blacktop',
+  de: 'Willkommen bei Blacktop',
+  it: 'Benvenuto in Blacktop',
+  pt: 'Bem-vindo ao Blacktop',
+  nl: 'Welkom bij Blacktop',
+  pl: 'Witaj w Blacktop',
+  sv: 'Välkommen till Blacktop',
+  da: 'Velkommen til Blacktop',
+  nb: 'Velkommen til Blacktop',
+  tr: "Blacktop'a hoş geldiniz",
+  uk: 'Ласкаво просимо до Blacktop',
+  ja: 'Blacktop へようこそ',
+  ko: 'Blacktop에 오신 걸 환영합니다',
+  zh: '欢迎使用 Blacktop',
+  id: 'Selamat datang di Blacktop',
+  hi: 'Blacktop में स्वागत है',
+};
+
 const TEST_APK = 'https://github.com/Jayobebe/Blacktop/releases/download/android-test/blacktop-test.apk';
 
 /**
@@ -143,6 +171,19 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const language = getLanguage();
+  // The app's own language first, then round the rest in the picker's order (a line the same as the last is skipped).
+  const welcomeLines = useMemo(() => {
+    const at = Math.max(0, LANGUAGES.findIndex((l) => l.code === language));
+    const order = [...LANGUAGES.slice(at), ...LANGUAGES.slice(0, at)];
+    const out: string[] = [];
+    for (const l of order) {
+      const line = l.code === language ? tr("Welcome to Blacktop") : WELCOME[l.code];
+      if (line && !out.includes(line)) out.push(line);
+    }
+    return out;
+  }, [language]);
   const start = () => {
     haptics.light();
     onStart();
@@ -191,6 +232,19 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
             <KeyRound className="w-4 h-4" />
             {tr("Recover")}
           </button>
+          {/* The language, before anything else: the app reloads in the one picked. */}
+          <button
+            type="button"
+            onClick={() => {
+              haptics.light();
+              setLanguageOpen(true);
+            }}
+            aria-label={tr("Language")}
+            className="pressable frost-accent inline-flex items-center gap-1.5 min-h-12 px-3 rounded-2xl text-[13px] font-semibold"
+          >
+            <Globe2 className="w-4 h-4" />
+            {language.toUpperCase()}
+          </button>
           <Link to="/enterprise" onClick={() => haptics.light()} className="pressable frost-accent inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-2xl text-[13px] font-semibold">
             <Building2 className="w-4 h-4" />
             {tr("Enterprise")}
@@ -200,7 +254,10 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
         <div className="flex-1 flex flex-col landscape:flex-row items-center justify-center gap-8 landscape:gap-12 w-full">
         <div className="max-w-sm animate-slide-up landscape:text-left">
           <BTLogo size="lg" className="mx-auto mb-6 landscape:hidden rounded-2xl" />
-          <p className="text-[13px] font-medium text-accent mb-2 landscape:mb-1.5">{tr("Welcome to Blacktop")}</p>
+          {/* Welcome in every language in turn, a pixel swap between each; a tap opens the language picker. */}
+          <button type="button" onClick={() => setLanguageOpen(true)} className="block w-full mb-2 landscape:mb-1.5">
+            <PixelSwapText lines={welcomeLines} label={tr("Welcome to Blacktop")} className="text-[13px] font-medium text-accent text-center landscape:text-left" />
+          </button>
           <h1 className="text-[40px] landscape:text-3xl font-semibold tracking-[-0.035em] leading-[1.02] mb-4 landscape:mb-3">
             {tr("Every road.")}<br />{tr("Your way.")}
           </h1>
@@ -272,6 +329,7 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
           </p>
         </div>
       </section>
+      <LanguagePicker open={languageOpen} onOpenChange={setLanguageOpen} />
     </main>
   );
 }

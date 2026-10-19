@@ -31,14 +31,12 @@ export default defineConfig(({ mode }) => {
       mode === "development" && componentTagger(),
       // Each language ships as first-load text + the rest (legal, demo tour), see the plugin.
       i18nSplit({ srcDir: path.resolve(__dirname, "./src"), localesDir: path.resolve(__dirname, "./src/lib/i18n/locales"), drop: storeBuild ? STORE_DROP : null, skip: storeBuild ? STORE_SKIP : [] }),
-      // The page's own description of the app (for search engines) names the payments too: not in the store build.
+      // The page's own description of the app (for search engines) leaves the payments out already;
+      // any line that does mention them is dropped from the store build.
       storeBuild && {
         name: "blacktop-store-html",
         transformIndexHtml: (html: string) =>
           html
-            .replace(", local radio and Nimiq Pay.", " and local radio.")
-            .split(", arcade games and Blacktank crew fuel fund").join(" and arcade games")
-            .replace(", time attacks and Blacktank votes", " and time attacks")
             .split("\n")
             .filter((line) => !STORE_DROP.test(line))
             .join("\n"),

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The public pages (everything else is the rider's own, and noindex: src/components/RouteMeta.tsx). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://blacktoplive.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://blacktoplive.com/demo</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise/demo/academy</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise/demo/showroom</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise/demo/workshop</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise/demo/touring</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise/demo/track_pro</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://blacktoplive.com/enterprise/demo/billion</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://blacktoplive.com/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://blacktoplive.com/terms</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+</urlset>

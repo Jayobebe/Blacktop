@@ -1,0 +1,94 @@
+# Blacktop
+
+> Blacktop is a free, privacy-first ride companion app for motorcycles, cars, bicycles, e-bikes and e-scooters. It records every ride, keeps a riding group together with live GPS convoys and intercom voice chat, watches your back with crash detection, rescue alerts and an anti-theft alarm, plans and guides twisty routes, times laps at track days and looks after your vehicles. No account, no adverts, 18 languages. Web app at https://blacktoplive.com, installable to the home screen on iPhone and Android, with Android and iOS apps.
+
+Blacktop suits riders looking for: a motorcycle group ride app, a convoy or road-trip app with live locations, a motorcycle intercom or group voice chat app, a crash detection and rescue alert app, a lean angle and G-force tracker, a twisty or scenic route planner, a track day lap timer with a pit crew, a motorcycle anti-theft alarm, a garage with service reminders and a vehicle logbook, or a cycling, e-bike or e-scooter ride tracker. It is free, needs no sign-up and shows no adverts.
+
+## Set up around the rider
+
+- Setup asks what you ride (motorcycle, car, bicycle, e-bike, e-scooter; more than one is fine), whether you ride solo, in a group or both, and which features you care about; the app hides everything else.
+- Wording, gauges and map stops follow the vehicle: "drive" for cars, no lean angle for vehicles that don't lean, fuel, charging or water stops.
+- Every distance and speed is in the rider's units (miles or kilometres, mph or km/h).
+- 18 languages: English, Spanish, French, German, Italian, Portuguese, Dutch, Polish, Swedish, Danish, Norwegian, Turkish, Ukrainian, Japanese, Korean, Chinese (Simplified), Indonesian and Hindi.
+
+## Ride tracking
+
+- Live speed, distance, time, lean angle (from the phone on its mount, portrait or landscape) and a G-force friction circle with peaks for braking, acceleration and each side.
+- A round dial that turns between the G meter and a mini map with the route, hazards, convoy riders and the next turn.
+- Ride GPS keeps going with the screen locked in the Android and iOS apps; the screen holds its orientation at speed.
+- Spoken ride updates, a battery saver that switches to a light Thermal mode at low battery, and a high-speed Thermal mode.
+
+## After the ride
+
+- A receipt for every ride, an automatic name ("Evening ride around Brighton", "To Brighton Marina"), badges (Speed Demon, Lean Fiend, Corner Carver and more) and a corner-by-corner report.
+- A 3D flyover of the ride, downloadable as a video, and a live overlay video (speed, lean, G meter, mini map) to put over action-camera footage, with a transparent background.
+- A reminder of where you parked (with the floor and bay in a multi-storey), and a "back safe" text to your emergency contact from your own phone.
+- Ride history, stats, and a vehicle trading card that moves up tiers as you ride.
+
+## Ride together
+
+- Live GPS convoys: start one and share its code or QR; everyone sees each other on the map, on the same route, with waypoints, a convoy status bar (riders, average speed, ETA, who has dropped back) and a regroup call.
+- In-ride voice chat for up to 8 riders, through Bluetooth motorcycle intercoms and headsets. Talk detection ignores wind and engine noise; the headset's play / pause button mutes; a sound check shows whether each rider's audio is arriving.
+- Passenger (pillion) screen on the passenger's own phone: voice, reactions, a map following the bike, and asking for a stop.
+- Spectate: crew members watch a convoy live on a map, following any rider, and riders see who is watching.
+- Nearby Riders: meet riders close by and join or merge convoys.
+- Every convoy member can show the convoy's QR mid-ride for someone joining late.
+- When a ride ends, the convoy's data is wiped from the server.
+
+## Safety
+
+- Crash detection (opt-in): a hard impact while moving, followed by a stop, asks "Are you okay?". No answer sends a rescue call with your location to your convoy, your crew, Discord and riders nearby (5 to 50 km, your choice); every rider in the convoy gets a route to you and can answer "I'm on my way".
+- A rescue call can also be made by hand: on the ride screen, on the map (held, then confirmed) or from Home with no ride.
+- An emergency contact on the phone gets a text with a maps link (and the what3words address where available) from your own messages app.
+- A rescue drill checks it all without sending anything.
+- Anti-theft alarm for a parked vehicle: motion detection, a pattern lock, a warning chirp, then a siren on the phone's own speaker.
+- Blacktop is not an emergency service.
+
+## Maps and navigation
+
+- Place search and quick searches (fuel or charging, parking, coffee, open 24 hours, food, shops, repairs, pharmacy), each place with opening hours and how dear it is.
+- Multi-stop routes, a direct or twisty route between places, and round-trip loops in Twisty, Scenic or Relaxed styles that score real bends and route through viewpoints.
+- Route preferences: avoid motorways, tolls, ferries or unpaved roads; bicycle-friendly routing.
+- Rain radar on the map and a drier route around heavy rain.
+- Turn-by-turn directions with spoken guidance in a plain voice or a pilot's radio voice (downloadable, works offline), rally-style pace notes, speed-camera calls, ETA windows and Share ETA, or hand-off to Google Maps, Apple Maps or Waze.
+- Hazard reports (potholes, debris, oil, gravel, flooding, ice, fog, crashes, roadworks, closed roads, standstill traffic and more): reported in two taps, riders coming up behind are warned in time and asked later whether it is still there.
+- Offline map packs.
+
+## Track Day
+
+- A library of real circuits from OpenStreetMap (searched offline), or a lap recorded by GPS.
+- Start/finish and sector lines placed on a chase-cam replay of the lap; lap and sector timing from a launch or a rolling start.
+- A friend's phone becomes the pit crew: live timing, a pit board with calls spoken in the rider's helmet, the pit lane speed limit and pit stop timing.
+- Results with a 3D flyover, an overlay video, and opt-in records on real circuits.
+
+## Garage
+
+- Vehicles with photos, service reminders that count down as you ride, and Mecha-Nick the mechanic.
+- A logbook per vehicle that writes itself from rides and service, and hands over to the next keeper phone to phone.
+
+## Crews and Blacktop World (opt-in)
+
+- Crews (up to four), shown on a globe as an anonymous glow, never a pin.
+- Weekly boards and challenges, monthly crew goals, and crew convoys anyone in the crew can join or watch live.
+- An arcade between rides: BlackGrid card battles with real cars and bikes, Hit Heavy (a punch machine on the phone's accelerometer), Petrol Head (a traffic run) and Gridlock (light trails).
+- Blacktop Radio: stations made from your own music, lowered under voice and directions.
+
+## Privacy
+
+- No account to create, no email, no adverts.
+- Rides, the garage and the logbook live on the phone; back them up to a file, or keep a recovery code to move the account to a new phone.
+- Public Road Privacy: peaks (top speed, max lean, peak G) can be hidden everywhere and never leave the phone.
+- Burn deletes everything, from the phone and the server, with one hold.
+- Only anonymous daily counts (how many devices opened the app, how many rides) are kept.
+
+## Blacktop Enterprise
+
+- For riding schools, dealers, workshops, tour operators and race teams: a workspace on the rider's phone from a QR code or a code, with timed guest passes. Nothing of the rider's rides, garage or profile goes to the organisation. Packages are coming soon.
+
+## Links
+
+- App: https://blacktoplive.com/
+- Narrated demo tour: https://blacktoplive.com/demo
+- Blacktop Enterprise: https://blacktoplive.com/enterprise
+- Privacy Policy: https://blacktoplive.com/privacy
+- Terms and Safety: https://blacktoplive.com/terms

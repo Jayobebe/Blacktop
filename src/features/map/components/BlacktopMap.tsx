@@ -222,14 +222,13 @@ function createRescueMarkerElement(name: string): HTMLDivElement {
 }
 
 const LOCATE_RESUME_DELAY_MS = 5000;
-// Zoom level used to auto-follow the rider. We push in tighter when there's an
-// active destination so the route + rider fill the screen without pinch-zoom.
-const FOLLOW_ZOOM_WITH_DESTINATION = 17;
-const FOLLOW_ZOOM_NO_DESTINATION = 16;
+/** The follow zoom until the rider zooms for themselves (see NAV_ZOOM_KEY). */
+const DEFAULT_FOLLOW_ZOOM = 16.5;
 
-// Navigating, the follow camera holds the rider's own zoom: pinching or the
-// +/- buttons with a destination set makes that the navigation zoom, kept
-// across rides, so zooming out to see the next turns doesn't snap back in.
+// The follow camera holds the rider's own zoom: any zoom they make themselves
+// (pinch, wheel, the +/- buttons), with a route or without, becomes the follow
+// zoom, kept across sessions, so the camera never puts its own zoom back.
+// (Without a route it used to be pushed to at least 16 on every fix.)
 const NAV_ZOOM_KEY = 'blacktop_nav_zoom';
 const NAV_ZOOM_MIN = 12;
 const NAV_ZOOM_MAX = 19;
@@ -237,9 +236,9 @@ const clampNavZoom = (z: number) => Math.min(NAV_ZOOM_MAX, Math.max(NAV_ZOOM_MIN
 function readNavZoom(): number {
   try {
     const z = parseFloat(localStorage.getItem(NAV_ZOOM_KEY) ?? '');
-    return Number.isFinite(z) ? clampNavZoom(z) : FOLLOW_ZOOM_WITH_DESTINATION;
+    return Number.isFinite(z) ? clampNavZoom(z) : DEFAULT_FOLLOW_ZOOM;
   } catch {
-    return FOLLOW_ZOOM_WITH_DESTINATION;
+    return DEFAULT_FOLLOW_ZOOM;
   }
 }
 
@@ -527,11 +526,23 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         showAccuracyCircle: false,
       });
       instance.addControl(geolocate, "top-right");
+      // Its own camera off: while lit it re-fitted the view to every fix (up to zoom 15), so a
+      // zoom bounced straight back. Blacktop's follow camera (the GPS watch below) is the only one.
+      (geolocate as unknown as { _updateCamera: (p: GeolocationPosition) => void })._updateCamera = () => {};
       instance.addControl(new AlarmControl(), "top-right");
       // The locate button hands the camera back to GPS follow after free panning: only the press
       // itself (tracking starting). Every fix the control reports ("geolocate") used to count too,
       // so once it had been pressed, panning away snapped back to the rider five seconds later.
-      const resumeFollow = () => { freePanRef.current = false; };
+      const resumeFollow = () => {
+        freePanRef.current = false;
+        lastInteractionAtRef.current = 0;
+        // Back over the rider now, at their own zoom (the switch camera does it from far away).
+        const loc = userLocationRef.current;
+        const m = mapRef.current;
+        if (m && loc && !orbitingRef.current && !returnStopRef.current) {
+          m.easeTo({ center: [loc.lng, loc.lat], zoom: navZoomRef.current, bearing: safeBearing(headingRef.current, m), pitch: threeDRef.current ? THREE_D_PITCH : 0, duration: 800, essential: true });
+        }
+      };
       geolocate.on("trackuserlocationstart", resumeFollow);
       // Far from the rider, recentre is the switch camera back onto them (switchHomeRef),
       // and MapLibre's own tracking (the button's lit state) starts once it has landed.
@@ -552,8 +563,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         // No route: free panning stays put (no auto snap-back); the locate button re-centres.
         if (!destinationRef.current) freePanRef.current = true;
       };
+      // Zooming isn't panning away: following carries on (at the new zoom) once the hand is off.
+      const markZoom = (e: { originalEvent?: unknown }) => {
+        if (e.originalEvent) lastInteractionAtRef.current = Date.now();
+      };
       instance.on("dragstart", markInteraction);
-      instance.on("zoomstart", markInteraction);
+      instance.on("zoomstart", markZoom);
       instance.on("rotatestart", markInteraction);
       instance.on("pitchstart", markInteraction);
 
@@ -759,10 +774,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         if (orbitingRef.current) return; // looking round a pin: don't yank the camera away
         if (returnStopRef.current) return; // the switch camera is taking them back
 
-        const hasDestination = !!destinationRef.current;
-        const followZoom = hasDestination ? navZoomRef.current : FOLLOW_ZOOM_NO_DESTINATION;
-        // Navigating: exactly the rider's zoom. Otherwise only ever nudge in (never yank them out).
-        const zoomFor = (current: number) => (hasDestination ? followZoom : Math.max(current, followZoom));
+        // Always the rider's own remembered zoom.
+        const followZoom = navZoomRef.current;
 
         if (!hasFollowedUserRef.current) {
           hasFollowedUserRef.current = true;
@@ -776,8 +789,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         } else {
           if (Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) return;
           if (freePanRef.current && !destinationRef.current) return; // free panning: stay put
-          // Re-snap to a tight follow zoom whenever we resume after the rider
-          // stopped panning; only nudge zoom up (never yank them out).
+          // Following again after a hand on the map: over the rider at their own zoom.
           const currentZoom = map.getZoom();
           // Stopped (lights, a break): leave the camera alone so the map can idle
           // instead of animating a near-identical frame every second.
@@ -785,10 +797,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           const bearingNow = safeBearing(headingRef.current, map);
           const movedM = haversineM(centre.lat, centre.lng, loc.lat, loc.lng);
           const turned = Math.abs(((bearingNow - map.getBearing() + 540) % 360) - 180);
-          if (movedM < 3 && turned < 3 && Math.abs(zoomFor(currentZoom) - currentZoom) < 0.05) return;
+          if (movedM < 3 && turned < 3 && Math.abs(followZoom - currentZoom) < 0.05) return;
           map.easeTo({
             center: [loc.lng, loc.lat],
-            zoom: zoomFor(currentZoom),
+            zoom: followZoom,
             bearing: safeBearing(headingRef.current, map),
             pitch: threeDRef.current ? THREE_D_PITCH : 0,
             // Over the gap between fixes at an even pace, alongside the pin: an eased 800 ms move then a
@@ -809,12 +821,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
   // ── The rider's navigation zoom ──────────────────────────────────────────
   // A zoom the rider makes themselves (pinch, wheel, the +/- buttons: events
-  // with an originalEvent, never the camera's own moves) while a destination is
-  // set becomes their navigation zoom. Not while looking round a pin.
+  // with an originalEvent, never the camera's own moves) becomes their follow
+  // zoom, route or no route. Not while looking round a pin.
   useEffect(() => {
     if (!map) return;
     const onZoomEnd = (e: { originalEvent?: unknown }) => {
-      if (!e.originalEvent || !destinationRef.current || orbitingRef.current) return;
+      if (!e.originalEvent || orbitingRef.current) return;
       const z = clampNavZoom(map.getZoom());
       navZoomRef.current = z;
       try {
@@ -858,11 +870,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
       const loc = userLocationRef.current;
       if (!loc) return;
-      const followZoom = destinationRef.current ? navZoomRef.current : FOLLOW_ZOOM_NO_DESTINATION;
-      const currentZoom = map.getZoom();
       map.easeTo({
         center: [loc.lng, loc.lat],
-        zoom: destinationRef.current ? followZoom : Math.max(currentZoom, followZoom),
+        zoom: navZoomRef.current,
         bearing: safeBearing(headingRef.current, map),
         pitch: threeDRef.current ? THREE_D_PITCH : 0,
         duration: 800,
@@ -1977,7 +1987,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     returnStopRef.current?.();
     const to: Cam = {
       center: [loc.lng, loc.lat],
-      zoom: destinationRef.current ? navZoomRef.current : FOLLOW_ZOOM_NO_DESTINATION,
+      zoom: navZoomRef.current,
       bearing: safeBearing(headingRef.current, map),
       pitch: threeDRef.current ? THREE_D_PITCH : 0,
     };
