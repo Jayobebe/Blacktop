@@ -226,10 +226,13 @@ function frame(now: number) {
 
   if (!w.to) {
     // Leaving: into pixels, then back from the tap; held there (still easing away a touch) until the next page is in.
+    // A longer wait breathes: a slow pull in and out, the pixels growing coarser, so it reads as loading, not stuck.
     const pull = t < p.pixel ? 0 : Math.min(1, (t - p.pixel) / p.pull);
     const wait = Math.max(0, t - switchAt);
-    w.held = 1 - (1 - p.back) * (1 - (1 - pull) ** 3) - 0.03 * Math.min(1, wait / 900);
-    draw(w.from, w.held, 1 + (p.grain - 1) * Math.min(1, t / Math.max(1, switchAt)), 1 - 0.3 * Math.min(1, wait / 500));
+    const breath = Math.min(1, Math.max(0, (wait - 250) / 600)) * Math.sin((2 * Math.PI * Math.max(0, wait - 250)) / 1800);
+    w.held = 1 - (1 - p.back) * (1 - (1 - pull) ** 3) - 0.03 * Math.min(1, wait / 900) - 0.018 * breath;
+    const grain = (1 + (p.grain - 1) * Math.min(1, t / Math.max(1, switchAt))) * (1 + 0.45 * Math.min(1, wait / 2500));
+    draw(w.from, w.held, grain, 1 - 0.3 * Math.min(1, wait / 500) - 0.06 * breath);
     c.style.opacity = p.pixel ? String(Math.min(1, t / p.pixel)) : '1';
   } else {
     const u = now - w.arrivedAt;
@@ -258,7 +261,7 @@ function frame(now: number) {
  * page changes in the same breath. Without either it's the unhurried
  * Home-and-World pace, with the real page fading into its pixels.
  */
-export function startWarp(x: number, y: number, options: { quick?: boolean; instant?: boolean } = {}) {
+export function startWarp(x: number, y: number, options: { quick?: boolean; instant?: boolean; holdMs?: number } = {}) {
   if (typeof document === 'undefined' || warp || still()) return false;
   const c = ensureCanvas();
   const W = Math.max(40, Math.ceil(window.innerWidth / BLOCK));
@@ -282,7 +285,7 @@ export function startWarp(x: number, y: number, options: { quick?: boolean; inst
       // And if frames aren't being drawn at all (the tab is hidden), don't sit on the screen.
       failsafe = window.setTimeout(finish, 1500);
     },
-    options.quick ? 2500 : 4500,
+    options.holdMs ?? (options.quick ? 2500 : 4500),
   );
   return true;
 }
@@ -300,10 +303,10 @@ let tap = { x: 0, y: 0, at: -1e9 };
  * of address (the map opening over Home). The caller says when the new screen
  * is up (`endWarp`).
  */
-export function warpFromTap() {
+export function warpFromTap(options: { holdMs?: number } = {}) {
   if (typeof window === 'undefined') return false;
   const recent = performance.now() - tap.at < 1500;
-  return startWarp(recent ? tap.x : window.innerWidth / 2, recent ? tap.y : window.innerHeight / 2, { quick: true, instant: true });
+  return startWarp(recent ? tap.x : window.innerWidth / 2, recent ? tap.y : window.innerHeight / 2, { quick: true, instant: true, ...options });
 }
 
 /** The same, for a screen swapped in place (Card Wars' shop, a battle): it lets go once the new screen has drawn. */

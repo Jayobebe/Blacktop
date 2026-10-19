@@ -39,8 +39,17 @@ function warpOver() {
   if (warpFromTap()) setTimeout(endWarp, 120);
 }
 
+/** A warp is held over the map until its first full draw (its loading screen); this many ms at most. */
+const MAP_LOAD_HOLD_MS = 12_000;
+let warpHeldForMap = false;
+
 export function openBlacktopMap(destination?: MapDestination) {
-  if (!overlayState.isOpen) warpOver();
+  if (!overlayState.isOpen) {
+    // Not drawn yet (the first open, or after the map was rebuilt): the warp
+    // stays up, breathing, until it has, instead of a loading screen.
+    if (!overlayState.ready) warpHeldForMap = warpFromTap({ holdMs: MAP_LOAD_HOLD_MS });
+    else warpOver();
+  }
   // If a destination is provided, update it; otherwise keep the existing one.
   overlayState = {
     ...overlayState,
@@ -79,6 +88,10 @@ export function resetBlacktopMap() {
 
 /** BlacktopMap reports its first full draw (and resets it when the map is torn down). */
 export function setBlacktopMapReady(ready: boolean) {
+  if (ready && warpHeldForMap) {
+    warpHeldForMap = false;
+    endWarp();
+  }
   if (overlayState.ready === ready) return;
   overlayState = { ...overlayState, ready };
   emitChange();

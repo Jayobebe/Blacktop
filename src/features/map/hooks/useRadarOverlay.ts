@@ -6,11 +6,25 @@ import { whenStyleReady } from '../lib/whenStyleReady';
 const TIMELINE_URL = 'https://api.rainviewer.com/public/weather-maps.json';
 const TIMELINE_REFRESH_MS = 5 * 60 * 1000; // throttle window: at most one timeline fetch per 5 minutes
 const FRAME_DELAY_MS = 500; // 500ms per frame for animation
-const RADAR_OPACITY = 0.55;
+/**
+ * How strong the rain is drawn: noticeable on the map, and lighter while
+ * guiding, so the road and the route stay the first thing the eye finds.
+ */
+const RADAR_OPACITY = 0.45;
+const RADAR_OPACITY_GUIDING = 0.28;
+/** The route's own layers: rain goes under them, as it goes under the labels and pins. */
+const ROUTE_LAYERS = new Set(['blacktop-route-casing', 'blacktop-route', 'blacktop-pin-route-casing', 'blacktop-pin-route-line']);
+
+/** The first layer the rain should sit under: the route, or the first label / pin layer, whichever is lowest. */
+function radarBeforeId(map: MapLibreMap): string | undefined {
+  for (const l of map.getStyle()?.layers ?? []) {
+    if (ROUTE_LAYERS.has(l.id) || l.type === 'symbol') return l.id;
+  }
+  return undefined;
+}
 const TILE_SIZE = 256;
 const STATIONARY_PAUSE_MS = 2 * 60 * 1000; // freeze animation after 2 minutes with no speed
 const STATIONARY_CHECK_INTERVAL_MS = 5000;
-const PAN_ZOOM_SETTLE_MS = 400; // let MapLibre settle on the final viewport before resuming the loop
 
 interface RadarFrame {
   time: number;
@@ -72,14 +86,16 @@ async function fetchTimelineThrottled(): Promise<RadarTimeline | null> {
 //   fetchTimelineThrottled above), not just per mount.
 // - The frame-cycling loop freezes on the single latest frame (no further
 //   layer/opacity churn) while the app is backgrounded, the vehicle has been
-//   stationary for 2+ minutes, or the map is actively being panned/zoomed -
-//   each of those otherwise causes layers to fade in/out and MapLibre to
-//   request tiles for frames or viewports nobody is looking at.
+//   stationary for 2+ minutes - each of those otherwise causes layers to fade
+//   in/out for frames nobody is looking at. (It plays on while the map moves.)
 export function useRadarOverlay(
   mapOrNull: MapLibreMap | null,
   currentSpeedMph: number,
   enabled = true,
+  guiding = false,
 ) {
+  const opacityRef = useRef(RADAR_OPACITY);
+  opacityRef.current = guiding ? RADAR_OPACITY_GUIDING : RADAR_OPACITY;
   const frameCountRef = useRef(0);
   const currentIndexRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,12 +110,11 @@ export function useRadarOverlay(
     let cancelled = false;
     let refreshTimer: ReturnType<typeof setInterval> | null = null;
     let stationaryCheckTimer: ReturnType<typeof setInterval> | null = null;
-    let settleTimer: ReturnType<typeof setTimeout> | null = null;
     let appStateHandle: { remove: () => void } | undefined;
     let stationarySince: number | null = null;
 
     // Combined freeze state: animate only while none of these are true.
-    const pauseFlags = { background: false, stationary: false, settling: false };
+    const pauseFlags = { background: false, stationary: false };
     let isFrozen = false;
 
     function clearFrames() {
@@ -124,7 +139,7 @@ export function useRadarOverlay(
       const prevIndex = currentIndexRef.current;
 
       if (map.getLayer(layerIdFor(nextIndex))) {
-        map.setPaintProperty(layerIdFor(nextIndex), 'raster-opacity', RADAR_OPACITY);
+        map.setPaintProperty(layerIdFor(nextIndex), 'raster-opacity', opacityRef.current);
       }
       if (prevIndex !== nextIndex && map.getLayer(layerIdFor(prevIndex))) {
         map.setPaintProperty(layerIdFor(prevIndex), 'raster-opacity', 0);
@@ -145,7 +160,7 @@ export function useRadarOverlay(
       const latest = count - 1;
       for (let i = 0; i < count; i++) {
         if (map.getLayer(layerIdFor(i))) {
-          map.setPaintProperty(layerIdFor(i), 'raster-opacity', i === latest ? RADAR_OPACITY : 0);
+          map.setPaintProperty(layerIdFor(i), 'raster-opacity', i === latest ? opacityRef.current : 0);
         }
       }
       currentIndexRef.current = latest;
@@ -157,7 +172,7 @@ export function useRadarOverlay(
     }
 
     function recomputeFrozenState() {
-      const shouldFreeze = pauseFlags.background || pauseFlags.stationary || pauseFlags.settling;
+      const shouldFreeze = pauseFlags.background || pauseFlags.stationary;
       if (shouldFreeze === isFrozen) return;
       isFrozen = shouldFreeze;
       if (isFrozen) {
@@ -199,16 +214,19 @@ export function useRadarOverlay(
           tileSize: TILE_SIZE,
           maxzoom: 7,
         });
-        map.addLayer({
-          id: layerId,
-          type: 'raster',
-          source: sourceId,
-          paint: {
-            'raster-opacity': 0,
-            'raster-opacity-transition': { duration: 200, delay: 0 },
-            'raster-fade-duration': 0,
+        map.addLayer(
+          {
+            id: layerId,
+            type: 'raster',
+            source: sourceId,
+            paint: {
+              'raster-opacity': 0,
+              'raster-opacity-transition': { duration: 200, delay: 0 },
+              'raster-fade-duration': 0,
+            },
           },
-        });
+          radarBeforeId(map),
+        );
       });
 
       frameCountRef.current = frames.length;
@@ -256,35 +274,31 @@ export function useRadarOverlay(
       }
     }, STATIONARY_CHECK_INTERVAL_MS);
 
-    // --- Guard 3: debounce pan/zoom so the loop resumes only once the
-    // viewport has settled, instead of fading layers in/out (and prompting
-    // MapLibre to fetch tiles) mid-gesture. `move`/`moveend` cover zoom too. ---
-    function handleMoveStart() {
-      if (settleTimer) {
-        clearTimeout(settleTimer);
-        settleTimer = null;
-      }
-      setPauseFlag('settling', true);
-    }
-    function handleMoveEnd() {
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(() => {
-        settleTimer = null;
-        setPauseFlag('settling', false);
-      }, PAN_ZOOM_SETTLE_MS);
-    }
-    map.on('movestart', handleMoveStart);
-    map.on('moveend', handleMoveEnd);
+    // No pause while the map moves: the radar used to freeze mid-pan, and the
+    // follow camera moving after every fix kept it frozen for most of a guided
+    // ride. Its tiles are coarse (zoom 7 at most) and every frame's layer loads
+    // them either way, so playing on costs little.
 
     return () => {
       cancelled = true;
       if (refreshTimer) clearInterval(refreshTimer);
       if (stationaryCheckTimer) clearInterval(stationaryCheckTimer);
-      if (settleTimer) clearTimeout(settleTimer);
       appStateHandle?.remove();
-      map.off('movestart', handleMoveStart);
-      map.off('moveend', handleMoveEnd);
       clearFrames();
     };
   }, [mapOrNull, enabled]);
+
+  // Guiding on or off: the frame on screen takes the new strength straight away.
+  useEffect(() => {
+    const map = mapOrNull;
+    if (!map || !enabled) return;
+    const id = layerIdFor(currentIndexRef.current);
+    try {
+      if (map.getLayer(id) && (map.getPaintProperty(id, 'raster-opacity') as number) > 0) {
+        map.setPaintProperty(id, 'raster-opacity', opacityRef.current);
+      }
+    } catch {
+      /* style not ready: the next frame shown uses the new strength */
+    }
+  }, [mapOrNull, enabled, guiding]);
 }
