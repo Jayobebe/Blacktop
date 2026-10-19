@@ -43,8 +43,7 @@ import { tr } from '@/lib/i18n';
 import { sceneCue } from '@/lib/radioFx';
 import { warpScreen } from '@/lib/warp';
 import { isThermal } from '@/lib/thermal';
-import { pilotVoiceReady, primePilotVoice, warmPilotVoice } from '@/lib/pilotVoice';
-import { speak, stopSpeaking } from '@/features/map/lib/speech';
+import { tourSay, prepareTourLines, stopTourVoice } from '@/components/demo/tourVoice';
 import { useExperience } from '@/features/experience';
 import { SceneStage, useSceneSound } from '@/components/scene/kit';
 import { AlarmScene, ALARM_SECONDS, IntroScene, LiveDataScene } from '@/components/demo/scenesRide';
@@ -403,12 +402,13 @@ export default function DemoTour() {
     sceneCue('whoosh');
     if (idx === CLOSING) {
       window.setTimeout(() => sceneCue('success'), 350);
-      window.setTimeout(() => speak(tr("That's Blacktop. Let's ride."), { radio: true }), 700);
+      window.setTimeout(() => tourSay(tr("That's Blacktop. Let's ride.")), 700);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx]);
 
-  // The pilot voice tells the story: each line goes out on the radio as the film reaches it.
+  // The pilot voice tells the story: each line goes out on the radio as the film reaches it
+  // (recorded ahead, components/demo/tourVoice: always the cockpit voice, on time).
   const said = useRef(-1);
   useEffect(() => {
     said.current = -1;
@@ -419,31 +419,29 @@ export default function DemoTour() {
     while (said.current + 1 < lines.length && lines[said.current + 1][0] <= elapsed) {
       said.current += 1;
       const [at, line] = lines[said.current];
-      if (elapsed - at < VOICE_LATE) speak(line, { radio: true });
+      if (elapsed - at < VOICE_LATE) tourSay(line);
     }
   }, [chapter, elapsed, phase, soundOn]);
 
-  // The pilot voice makes each chapter's lines while the one before is on, so they go out on time.
+  // Each chapter's recordings load while the one before is on, so they go out on time.
   useEffect(() => {
-    if (!pilotVoiceReady()) return;
-    warmPilotVoice();
-    chapter?.voice.forEach(([, line]) => primePilotVoice(line));
+    if (chapter) prepareTourLines(chapter.voice.map(([, line]) => line));
   }, [chapter]);
   useEffect(() => {
-    if (phase !== 'caption' || !pilotVoiceReady()) return;
+    if (phase !== 'caption') return;
     const next = idx === TRACK ? null : idx + 1 < main.length ? main[idx + 1] : null;
-    next?.voice.forEach(([, line]) => primePilotVoice(line));
+    prepareTourLines(next ? next.voice.map(([, line]) => line) : [tr("That's Blacktop. Let's ride.")]);
   }, [phase, idx, main, TRACK]);
 
   // Nothing talks on after the tour, a chapter change or the sound going off.
-  useEffect(() => () => stopSpeaking(), []);
+  useEffect(() => () => stopTourVoice(), []);
   useEffect(() => {
-    if (!soundOn) stopSpeaking();
+    if (!soundOn) stopTourVoice();
   }, [soundOn]);
 
   const go = useCallback(
     (next: number) => {
-      stopSpeaking();
+      stopTourVoice();
       warpScreen();
       lastShot.current = 0;
       setFading(null);

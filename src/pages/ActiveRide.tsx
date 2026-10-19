@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useActiveRide, useRideHistory, useSoloRoute, clearSoloRoute, flyReceipt } from '@/features/ride';
 import { RideWrapUp } from '@/features/ride/components/RideWrapUp';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { useConvoyState, useRegroupListener, getConvoySnapshot } from '@/features/convoy';
+import { useConvoyState, useRegroupListener, getConvoySnapshot, ConvoyQrButton } from '@/features/convoy';
 import { useProximity, useConvoyMergeSync, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
 import { attachRideToConvoy } from '@/features/ride';
 import { useReactionsListener } from '@/features/pillion';
@@ -15,7 +15,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton } from '@/features/radio';
-import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, rescueReach } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, sendSoloRescue as sendSoloRescueCall } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
 import { autoNameRide, storedRide } from '@/features/ride/lib/rideNames';
 import { useRideUpdates } from '@/features/ride/hooks/useRideUpdates';
@@ -27,7 +27,7 @@ import { useBatterySaver } from '@/features/ride/hooks/useBatterySaver';
 import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettings';
 import { useWaypoints } from '@/features/waypoints';
 
-import { announceSoloRescueToDiscord, useDiscordIntegration } from '@/features/integrations/discord';
+import { useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
@@ -48,7 +48,6 @@ import { Square, Mic, MicOff, PhoneOff, Phone, Map as MapIcon, Users, Crown, Use
 import { formatDuration, formatDistance, formatSpeed, getSpeedLabel, getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { notifyRescue } from '@/features/notifications';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { tr } from '@/lib/i18n';
@@ -896,22 +895,11 @@ export default function ActiveRide() {
 
   // Solo rescue call: Discord (when connected) plus a push to the rider's crew.
   // Returns who was told.
-  const sendSoloRescue = useCallback(async (lat: number, lng: number, auto = false): Promise<string[]> => {
-    // Settings → Safety decides who hears it.
-    const reach = rescueReach(settings);
-    const [discord, push] = await Promise.all([
-      discordEnabled && reach.discord
-        ? announceSoloRescueToDiscord({ riderName: profile.name || 'Rider', lat, lng })
-        : Promise.resolve({ ok: false, skipped: true }),
-      reach.crew || reach.nearbyKm
-        ? notifyRescue({ lat, lng, auto, crewCode: reach.crew ? undefined : null, nearbyKm: reach.nearbyKm })
-        : Promise.resolve({ sent: 0 }),
-    ]);
-    return [
-      discord.ok ? 'Discord' : null,
-      push.sent ? (reach.nearbyKm ? (reach.crew ? 'your crew and riders nearby' : 'riders nearby') : 'your crew') : null,
-    ].filter((x): x is string => !!x);
-  }, [discordEnabled, profile.name, settings]);
+  const sendSoloRescue = useCallback(
+    (lat: number, lng: number, auto = false): Promise<string[]> =>
+      sendSoloRescueCall({ settings, discordEnabled, riderName: profile.name || '', lat, lng, auto }),
+    [discordEnabled, profile.name, settings],
+  );
 
   // ---- Auto-rescue (crash detection) ----
   const fireAutoRescue = useCallback(async () => {
@@ -1266,8 +1254,10 @@ export default function ActiveRide() {
           </div>
           )}
         </div>
-        {/* Centred in the space between the stats and the speed. */}
-        <div className="flex-1 min-w-0 flex flex-col items-center justify-center">{rideDial}</div>
+        {/* Centred in the space between the stats and the speed: the space reaches on into
+            the gap before the speed column (-mr-12), or on a phone the dial is wider than its
+            share and sat over the stats, too far left. */}
+        <div className="flex-1 min-w-0 -mr-12 flex flex-col items-center justify-center">{rideDial}</div>
         </div>
 
         {/* Speed and Stats - centre column in landscape (auto width, centred by equal flanks) */}
@@ -1332,6 +1322,14 @@ export default function ActiveRide() {
 
           {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">
+            {/* The number sits in its own box so the convoy's QR can sit centred above it,
+                taking no room of its own (beside it, it crowded the mini map in landscape). */}
+            <div className="relative inline-block">
+            {rideState.isConvoyMode && convoy.code && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-10">
+                <ConvoyQrButton code={convoy.code} />
+              </div>
+            )}
             <div data-ride-speed className={cn(
               "font-mono font-black transition-all leading-none",
               speedHero
@@ -1342,6 +1340,7 @@ export default function ActiveRide() {
               rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
             )}>
               {speedHero ? formatSpeed(rideState.currentSpeed, settings.speedUnit) : formatDistance(rideState.distance, settings.distanceUnit)}
+            </div>
             </div>
             <p className="text-muted-foreground text-base landscape:text-sm -mt-3">
               {speedHero ? getSpeedLabel(settings.speedUnit) : getDistanceLabel(settings.distanceUnit)}

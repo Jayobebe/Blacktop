@@ -82,7 +82,7 @@ export default function Terms() {
             <li>{tr("Your phone can miss a real crash (for example if it's thrown clear, switched off or has no signal) and can mistake a dropped phone or a hard jolt for one.")}</li>
             <li>{tr("Crash detection looks for a hard impact while you're moving, followed by a stop. It can miss a fall at low speed, a crash without a hard impact, or one where your phone keeps moving.")}</li>
             <li>{tr("After a possible crash your phone asks \"Are you okay?\" on a countdown. If nobody answers before it ends, the rescue call is sent.")}</li>
-            <li>{tr("Pressing the rescue button asks \"Are you okay?\" first and sends the call only when you answer No. If that question goes unanswered, nothing is sent.")}</li>
+            <li>{tr("Pressing the rescue button asks \"Are you okay?\" first and sends the call only when you press Send rescue. If that question goes unanswered, nothing is sent.")}</li>
             <li>{tr("When crash detection sends a call by itself, your phone sounds a loud siren through its speaker so people nearby notice. The Stop siren button silences it.")}</li>
             <li>{tr("Agree with the people you ride with how they should respond to a call, and don't rely on Blacktop to get you help.")}</li>
           </ul>

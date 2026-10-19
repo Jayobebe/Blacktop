@@ -9,7 +9,7 @@ interface Props {
   timeoutSec: number;
   /**
    * The rider pressed the rescue button themselves. Nothing is sent unless
-   * they answer No: when the clock runs out the card just closes (the button
+   * they press Send rescue: when the clock runs out the card just closes (the button
    * gets pressed by accident mid-ride). Left out, it's the crash check, which
    * sends when the clock runs out.
    */
@@ -75,7 +75,7 @@ export function CrashCheckPrompt({ timeoutSec, manual, onImFine, onSendNow, onTi
           </div>
           <h2 className="text-4xl short:text-3xl font-black tracking-tight text-white leading-none">{tr("Are you okay?")}</h2>
           <p className="mt-2 text-sm text-white/75 leading-snug">
-            {manual ? tr("You pressed rescue. Nothing is sent unless you answer No.") : tr("Possible crash detected. If you don't respond, a rescue ping will be sent automatically.")}
+            {manual ? tr("You pressed rescue. Nothing is sent unless you press Send rescue.") : tr("Possible crash detected. If you don't respond, a rescue ping will be sent automatically.")}
           </p>
           <div className="mt-4 short:mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
             <div className="h-full bg-[hsl(var(--burn))] transition-[width] duration-300 ease-linear" style={{ width: `${(remaining / timeoutSec) * 100}%` }} />
@@ -86,14 +86,13 @@ export function CrashCheckPrompt({ timeoutSec, manual, onImFine, onSendNow, onTi
           <p className="mt-1 mb-5 short:mb-0 text-xs text-white/70">{manual ? tr("This closes by itself when the clock runs out.") : tr("Rescue is sent when the clock runs out.")}</p>
         </div>
 
+        {/* The answers say what they do: a Yes / No under "Are you okay?" read both ways round to riders. Green is fine, burn orange sends. */}
         <div className="grid grid-cols-2 gap-3">
           <button type="button" onClick={onImFine} className={cn(answer, 'bg-emerald-600')}>
-            <span className="text-4xl short:text-3xl leading-none">{tr("Yes")}</span>
-            <span className="text-xs font-semibold text-white/85">{tr("I'm fine")}</span>
+            <span className="text-2xl short:text-xl leading-tight text-balance">{tr("I'm okay")}</span>
           </button>
           <button type="button" onClick={onSendNow} className={cn(answer, 'bg-[hsl(var(--burn))]')}>
-            <span className="text-4xl short:text-3xl leading-none">{tr("No")}</span>
-            <span className="text-xs font-semibold text-white/85">{tr("Send rescue")}</span>
+            <span className="text-2xl short:text-xl leading-tight text-balance">{tr("Send rescue")}</span>
           </button>
         </div>
       </div>

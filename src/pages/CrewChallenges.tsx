@@ -203,7 +203,7 @@ export default function CrewChallenges() {
     <div className="min-h-dvh safe-top safe-bottom px-4 pt-4 pb-8">
       <PageHeader title={tr("Crew Challenge")} backTo="/world" backLabel={tr("Back to Blacktop World")} />
 
-      {/* Monthly crew goal (Forzathon-style) */}
+      {/* Monthly crew goal */}
       <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/15 to-accent/5 p-4 mb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

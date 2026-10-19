@@ -1,7 +1,8 @@
 import { RescueDrillButton } from './RescueDrill';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, ShieldOff, ShieldAlert, ChevronRight, MapPin, Users, MessageSquare, Settings2 } from 'lucide-react';
+import { ShieldCheck, ShieldOff, ShieldAlert, ChevronRight, MapPin, Users, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +16,9 @@ import { cn } from '@/lib/utils';
 import { useSafetyStatus, type SafetyLevel } from '../hooks/useSafetyStatus';
 import { tr } from '@/lib/i18n';
 import { requestAutoRescueConsent } from '../lib/rescueConsent';
+import { sendSoloRescueHere } from '../lib/soloRescue';
+import { CrashCheckPrompt } from './CrashCheckPrompt';
+import { useProfile } from '@/features/profile';
 
 const LEVELS: Record<SafetyLevel, { icon: typeof ShieldCheck; title: string; hint: string; tone: string; bg: string }> = {
   active: {
@@ -55,6 +59,31 @@ const COMPACT_HINTS: Record<SafetyLevel, string> = {
 
 export function SafetyStatusCard({ className, compact = false }: { className?: string; compact?: boolean }) {
   const [open, setOpen] = useState(false);
+  /** The "Are you okay?" card is up for a rescue asked for from the panel. */
+  const [asking, setAsking] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { settings } = useSettings();
+  const { profile } = useProfile();
+  const { integration } = useDiscordIntegration();
+  const discordEnabled = !!integration?.webhook_url && integration.auto_announce !== false;
+
+  /**
+   * A rescue call with no ride going: the same as a solo ride's rescue button
+   * (crew, Discord, riders nearby, as Settings → Safety says, and the emergency
+   * contact's text offered whatever the server managed), from where the phone is now.
+   */
+  const sendRescue = async () => {
+    setSending(true);
+    try {
+      if (await sendSoloRescueHere({ settings, discordEnabled, riderName: profile.name || '' })) {
+        setSent(true);
+        window.setTimeout(() => setSent(false), 30000);
+      }
+    } finally {
+      setSending(false);
+    }
+  };
   const status = useSafetyStatus();
   const { showGroup } = useExperience();
   const { icon: Icon, title, tone, bg } = LEVELS[status.level];
@@ -94,14 +123,51 @@ export function SafetyStatusCard({ className, compact = false }: { className?: s
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl max-h-[85dvh] overflow-auto safe-bottom">
-          {open && <SafetyPanel status={status} onClose={() => setOpen(false)} />}
+          {open && (
+            <SafetyPanel
+              status={status}
+              onClose={() => setOpen(false)}
+              rescueState={sending ? 'sending' : sent ? 'sent' : 'idle'}
+              onRescue={() => {
+                // The sheet goes first: the card has to be on top of everything to be pressed.
+                setOpen(false);
+                setAsking(true);
+              }}
+            />
+          )}
         </SheetContent>
       </Sheet>
+
+      {/* Asked first, as on the ride screen: Yes closes it, No sends, and no answer sends nothing.
+          Portaled to body: in Home's header it sat under the tiles (the header is its own stacking context). */}
+      {asking && createPortal(
+        <CrashCheckPrompt
+          manual
+          timeoutSec={20}
+          onImFine={() => setAsking(false)}
+          onTimeout={() => setAsking(false)}
+          onSendNow={() => {
+            setAsking(false);
+            void sendRescue();
+          }}
+        />,
+        document.body,
+      )}
     </>
   );
 }
 
-function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyStatus>; onClose: () => void }) {
+function SafetyPanel({
+  status,
+  onClose,
+  onRescue,
+  rescueState,
+}: {
+  status: ReturnType<typeof useSafetyStatus>;
+  onClose: () => void;
+  onRescue: () => void;
+  rescueState: 'idle' | 'sending' | 'sent';
+}) {
   const navigate = useNavigate();
   const { settings, updateSetting } = useSettings();
   const { integration, loading: discordLoading } = useDiscordIntegration();
@@ -202,10 +268,19 @@ function SafetyPanel({ status, onClose }: { status: ReturnType<typeof useSafetyS
 
       <RescueDrillButton onOpen={onClose} />
 
-      <Button variant="outline" className="w-full h-11 rounded-2xl" onClick={goToSettings}>
-        <Settings2 className="w-4 h-4 mr-2" />
-        {tr("All safety settings")}
-      </Button>
+      {/* A rescue call without starting a ride: burn orange with the R, as rescue is everywhere. */}
+      <button
+        type="button"
+        onClick={onRescue}
+        disabled={rescueState !== 'idle'}
+        className={cn(
+          'pressable w-full h-12 rounded-2xl flex items-center justify-center gap-2.5 touch-target bg-[hsl(var(--burn))] text-white font-semibold hover:brightness-110 disabled:opacity-100',
+          rescueState === 'sent' && 'animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]',
+        )}
+      >
+        <span aria-hidden className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-base font-black leading-none">R</span>
+        {rescueState === 'sent' ? tr("Rescue call sent") : rescueState === 'sending' ? tr("Sending…") : tr("Request rescue")}
+      </button>
     </div>
   );
 }

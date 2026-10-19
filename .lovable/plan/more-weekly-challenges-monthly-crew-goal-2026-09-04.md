@@ -1,15 +1,15 @@
-# More weekly challenges + monthly crew Forzathon
+# More weekly challenges + monthly crew goal
 
 Grow the crew challenge system from one rotating challenge a week into a fuller
 programme: a bigger weekly pool, brand-new riding metrics, two challenges running
-each week, special event weeks, and a monthly Forzathon-style goal the whole crew
+each week, special event weeks, and a monthly goal the whole crew
 chases together.
 
 ## What you'll see
 
 **Crew Challenge page, reorganised top to bottom:**
 
-1. **Monthly Crew Goal (Forzathon-style)** — a banner card at the top with the
+1. **Monthly Crew Goal** — a banner card at the top with the
    month's shared objective (e.g. "Crew Marathon — 2,000 combined miles"). One
    collective progress bar fed by *everyone's* weekly score rows for the month,
    so the bar moves whenever any crew member rides. When the crew hits the goal,

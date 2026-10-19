@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { PageTips } from '@/features/guide';
 
 /**
- * GTA-style radio dial: stations sit around a wheel, the active one locks to
+ * Radio dial: stations sit around a wheel, the active one locks to
  * the top. Everything renders in a portal so switching stations never
  * navigates away from the ride or map underneath.
  */

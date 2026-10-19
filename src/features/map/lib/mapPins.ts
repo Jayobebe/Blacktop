@@ -7,7 +7,7 @@ import type { PriceInfo } from '@/lib/priceLevel';
 import { tr } from '@/lib/i18n';
 
 /**
- * Pins on the map, Google-style:
+ * Pins on the map:
  *   - nearby places straight from the basemap's own vector tiles (OpenMapTiles
  *     `poi` layer: no extra requests). Only the most important show when zoomed
  *     out; more appear as you zoom in (by the tiles' per-area `rank`);

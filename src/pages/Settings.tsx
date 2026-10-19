@@ -497,6 +497,8 @@ export default function Settings() {
                   size="sm"
                   className="h-11 shrink-0"
                   onClick={() => {
+                    // Home first, then the tips come back: cleared here, Settings' own tips came straight up over the button.
+                    navigate('/');
                     resetTips();
                     toast.success(tr("Tips will show again as you open each page."));
                   }}
@@ -1285,7 +1287,7 @@ export default function Settings() {
                   <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Blacktop Radio")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {tr("Build stations from the music already on your device and switch between them on a GTA-style dial during a ride. Files stay on your phone — nothing is uploaded.")}
+                  {tr("Build stations from the music already on your device and switch between them on a radio dial during a ride. Files stay on your phone — nothing is uploaded.")}
                 </p>
               </div>
               <Switch

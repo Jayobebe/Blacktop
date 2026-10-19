@@ -76,6 +76,7 @@ import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isThermal } from "@/lib/thermal";
+import { eventSound } from "@/lib/appSound";
 import {
   Navigation,
   Loader2,
@@ -96,7 +97,7 @@ import {
 import { toast } from "sonner";
 import { useWaypoints } from "@/features/waypoints";
 
-import { useRescueBridge } from "@/features/rescue";
+import { useRescueBridge, MapRescueButton } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
 import { useCollectedCards, useVehicleCards } from "@/features/cards";
 import { copyLedger } from "@/features/cards/lib/dropEconomy";
@@ -191,13 +192,6 @@ const PIN_ROUTE_CASING_ID = "blacktop-pin-route-casing";
 const PIN_ROUTE_LINE_ID = "blacktop-pin-route-line";
 /** Where a pin is, as a key (its card's route and facts belong to the place, not to the pin object). */
 const pinKeyOf = (p: { lat: number; lng: number }) => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
-/** Compass bearing from one [lng, lat] to another. */
-function bearingOf([lng1, lat1]: [number, number], [lng2, lat2]: [number, number]): number {
-  const r = Math.PI / 180;
-  const y = Math.sin((lng2 - lng1) * r) * Math.cos(lat2 * r);
-  const x = Math.cos(lat1 * r) * Math.sin(lat2 * r) - Math.sin(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lng2 - lng1) * r);
-  return (Math.atan2(y, x) / r + 360) % 360;
-}
 
 const ROUTE_SOURCE_ID = "blacktop-route";
 const ROUTE_CASING_LAYER_ID = "blacktop-route-casing";
@@ -335,6 +329,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const orbitingRef = useRef(false);
   /** The rider's navigation zoom (see NAV_ZOOM_KEY). */
   const navZoomRef = useRef(readNavZoom());
+  /** The haze the switch camera climbs into (opacity and scale set per frame, outside React). */
+  const switchHazeRef = useRef<HTMLDivElement>(null);
   const preOrbitCameraRef = useRef<{ center: [number, number]; zoom: number; bearing: number; pitch: number } | null>(null);
   /** The gap between the last two GPS fixes, and when the last came: the rider's pin and the follow camera move over it. */
   const fixGapRef = useRef(1000);
@@ -419,6 +415,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   // Rider panned the map with no route set: don't snap back until they tap locate.
   const freePanRef = useRef(false);
   const userLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+  /** The rider's speed (m/s) and its rate of change (m/s², smoothed), for the camera's sway while guiding. */
+  const motionRef = useRef<{ speed: number; accel: number; at: number }>({ speed: 0, accel: 0, at: 0 });
   useEffect(() => {
     userLocationRef.current = userLocation;
   }, [userLocation]);
@@ -509,6 +507,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         center: center as [number, number],
         zoom: initialDestination ? 15 : last?.zoom ?? 14,
         attributionControl: false,
+        // The switch camera's jumps zoom in quick steps: keep the tiles they asked for coming.
+        cancelPendingTileRequestsWhileZooming: false,
       });
 
       instance.addControl(new maplibregl.AttributionControl({ compact: true }));
@@ -718,6 +718,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
         const heading = position.coords.heading;
         const speed = position.coords.speed ?? 0;
+        {
+          // Speed and how fast it's changing: braking dips the camera, pulling away lifts it.
+          const m = motionRef.current;
+          const v = Number.isFinite(speed) && speed >= 0 ? speed : m.speed;
+          const dt = m.at ? (fixAt - m.at) / 1000 : 0;
+          const raw = dt > 0.2 && dt < 5 ? (v - m.speed) / dt : 0;
+          motionRef.current = { speed: v, accel: m.accel + (Math.max(-8, Math.min(8, raw)) - m.accel) * 0.5, at: fixAt };
+        }
         if (heading != null && Number.isFinite(heading) && speed > 0.5) {
           headingRef.current = heading;
         }
@@ -1578,8 +1586,6 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const pinRef = useRef(pin);
   pinRef.current = pin;
   const [pinRoute, setPinRoute] = useState<{ key: string; route: RouteResult | null; loading: boolean } | null>(null);
-  const pinRouteRef = useRef(pinRoute);
-  pinRouteRef.current = pinRoute;
   const [pinFacts, setPinFacts] = useState<{ key: string; hours?: string; price: PriceInfo | null } | null>(null);
   /** The card waits for the camera when it flies there from the list; a pin tapped on the map has it at once. */
   const [pinArrived, setPinArrived] = useState(false);
@@ -1650,10 +1656,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     };
   }, [map, pinRoute, accentColor]);
 
-  // Tapped pin: fly in, tilt to a third-person view and slowly circle it. Picked
-  // from the list: first along the way there at speed, the map turning with the
-  // road, then the same. Touching the map stops wherever it's got to and puts the
-  // card up; Back / Navigate end the orbit.
+  // Tapped pin: in to it, tilting to a third-person view, and circling it without
+  // a pause. Picked from the list: the switch camera, three jumps up into a haze
+  // in the second accent (else the accent), across high above, three jumps down
+  // onto the place, then the same. Every frame is one camera on one timeline, so
+  // the orbit carries on from the landing at its own speed, centred on the place.
+  // Touching the map stops wherever it's got to and puts the card up; Back /
+  // Navigate end the orbit.
   useEffect(() => {
     const target = pinRef.current;
     if (!map || !target || !isVisible) return; // hidden: no circling in the background
@@ -1663,108 +1672,325 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     }
     orbitingRef.current = true;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || isThermal();
+    const haze = switchHazeRef.current;
+    const spot: [number, number] = [target.lng, target.lat];
+    const GROUND = Math.max(16.8, Math.min(map.getZoom(), 18));
     let raf = 0;
-    let fly = 0;
-    let last = 0;
-    let startT = 0;
-    let waitT = 0;
-    const spin = (now: number) => {
-      // Back / Navigate end the orbit before React tears this down: a late
-      // frame here would cancel the camera move they just started.
-      if (!orbitingRef.current) return;
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
-      last = now;
-      map.setBearing((map.getBearing() + dt * ORBIT_DEG_PER_S) % 360);
+    const setHaze = (o: number, scale = 1) => {
+      if (!haze) return;
+      haze.style.opacity = o > 0.005 ? o.toFixed(3) : "0";
+      haze.style.transform = `scale(${scale.toFixed(3)})`;
+    };
+
+    type Cam = { center: [number, number]; zoom: number; bearing: number; pitch: number };
+    /**
+     * One stretch of the camera's path. `spinIn` winds the orbit up over it, ending at full speed.
+     * `hold`: at its end, wait up to this long for the tiles in view to arrive before going on.
+     * `swerve`: a swing of the bearing and a lift of the pitch that rise and fall over the leg (the 3D sway).
+     */
+    type Leg = {
+      ms: number;
+      to: Cam;
+      ease: (u: number) => number;
+      whoosh?: boolean;
+      spinIn?: boolean;
+      hold?: number;
+      swerve?: { bearing: number; pitch: number };
+    };
+    const outExpo = (u: number) => (u >= 1 ? 1 : 1 - Math.pow(2, -10 * u));
+    const outCubic = (u: number) => 1 - Math.pow(1 - u, 3);
+    const inOutCubic = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+    const turn = (a: number, b: number) => ((((b - a) % 360) + 540) % 360) - 180;
+    /** The basemap's own tiles are in (radar, hazards and the rest can keep loading behind). */
+    const basemapReady = () => {
+      try {
+        return map.getSource("openmaptiles") ? map.isSourceLoaded("openmaptiles") : map.areTilesLoaded();
+      } catch {
+        return true;
+      }
+    };
+
+    /** Circle the place for as long as the card is up, carrying on from the bearing the landing left. */
+    const orbit = () => {
+      let last = 0;
+      let bearing = map.getBearing();
+      const spin = (now: number) => {
+        // Back / Navigate end the orbit before React tears this down: a late
+        // frame here would cancel the camera move they just started.
+        if (!orbitingRef.current) return;
+        const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+        last = now;
+        bearing = (bearing + dt * ORBIT_DEG_PER_S) % 360;
+        map.jumpTo({ center: spot, bearing });
+        raf = requestAnimationFrame(spin);
+      };
       raf = requestAnimationFrame(spin);
     };
-    /** Over the pin, tilted, then circling; the card comes up as the camera gets there. */
-    const settle = (duration: number) => {
-      setPinArrived(true);
-      map.easeTo({ center: [target.lng, target.lat], zoom: Math.max(map.getZoom(), 16.8), pitch: 60, duration: reduce ? 0 : duration, essential: true });
-      if (!reduce) startT = window.setTimeout(() => (raf = requestAnimationFrame(spin)), duration + 50);
-    };
-    /** Along the line at speed: out a little for a long way, in again to arrive, the map turning with the road. */
-    const flyAlong = (line: [number, number][]) => {
-      const cum = [0];
-      for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + haversineM(line[i - 1][1], line[i - 1][0], line[i][1], line[i][0]));
-      const total = cum[cum.length - 1];
-      if (total < 150) {
-        settle(1000);
-        return;
-      }
-      const at = (d: number): [number, number] => {
-        let lo = 0;
-        let hi = cum.length - 1;
-        while (hi - lo > 1) {
-          const mid = (lo + hi) >> 1;
-          if (cum[mid] <= d) lo = mid;
-          else hi = mid;
-        }
-        const f = Math.min(1, Math.max(0, (d - cum[lo]) / (cum[hi] - cum[lo] || 1)));
-        return [line[lo][0] + (line[hi][0] - line[lo][0]) * f, line[lo][1] + (line[hi][1] - line[lo][1]) * f];
-      };
-      const duration = Math.min(3600, 1500 + Math.log2(1 + total / 400) * 380);
-      const z0 = Math.min(map.getZoom(), 16);
-      const z1 = 16.8;
-      const zMid = Math.min(z0, z1) - Math.min(5, Math.max(0, Math.log2(total / 1500)));
-      let bearing = map.getBearing();
-      const go = () => {
-        const began = performance.now();
-        const step = (now: number) => {
-          if (!orbitingRef.current) return;
-          const u = Math.min(1, (now - began) / duration);
-          const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-          const d = e * total;
-          // The road ahead, looked at a little ahead and behind so a junction doesn't spin the map.
-          const want = bearingOf(at(Math.max(0, d - total * 0.03)), at(Math.min(total, d + total * 0.06)));
-          bearing += ((((want - bearing) % 360) + 540) % 360 - 180) * 0.12;
-          const zoom = (1 - e) * (1 - e) * z0 + 2 * e * (1 - e) * zMid + e * e * z1;
-          map.jumpTo({ center: at(d), zoom, bearing, pitch: 40 + 20 * e });
-          if (u < 1) fly = requestAnimationFrame(step);
-          else settle(450);
-        };
-        fly = requestAnimationFrame(step);
-      };
-      // Off somewhere else: over to the start of the line first.
+
+    /** Plays the legs one after another, then hands over to the orbit. `high` is the top of the climb, for the haze. */
+    const play = (legs: Leg[], high: number | null) => {
       const c = map.getCenter();
-      if (haversineM(c.lat, c.lng, line[0][1], line[0][0]) > 300) {
-        map.easeTo({ center: line[0], zoom: z0, duration: 500, essential: true });
-        waitT = window.setTimeout(go, 520);
-      } else go();
-    };
-    if (!target.fromList || reduce) settle(1200);
-    else {
-      setPinArrived(false);
-      // A moment for the way there to arrive; without it, straight to the place.
-      const began = performance.now();
-      const ready = () => {
-        const r = pinRouteRef.current;
-        if (r && r.key === pinKeyOf(target) && !r.loading) {
-          if (r.route && r.route.geometry.coordinates.length > 1) flyAlong(r.route.geometry.coordinates as [number, number][]);
-          else settle(1200);
-        } else if (performance.now() - began > 2500) settle(1200);
-        else waitT = window.setTimeout(ready, 100);
+      let from: Cam = { center: [c.lng, c.lat], zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
+      let i = 0;
+      let began = performance.now();
+      let flashAt = -1e9;
+      let spun = 0;
+      let heldFrom = 0;
+      // Waiting for tiles shares one allowance across the whole move, so a slow connection can't make it drag.
+      let holdLeft = 800;
+      let lastHeld = 0;
+      const startLeg = (now: number) => {
+        began = now;
+        spun = 0;
+        heldFrom = 0;
+        if (legs[i].whoosh) {
+          flashAt = now;
+          eventSound("whoosh");
+        }
       };
-      ready();
+      startLeg(began);
+      const step = (now: number) => {
+        if (!orbitingRef.current) return;
+        let leg = legs[i];
+        let u = Math.min(1, (now - began) / leg.ms);
+        if (u >= 1 && leg.hold && !basemapReady()) {
+          // Hold the pose (the haze stays up) until the tiles have caught up, or the wait runs out.
+          if (!heldFrom) heldFrom = now;
+          if (lastHeld) holdLeft -= now - lastHeld;
+          lastHeld = now;
+          if (now - heldFrom < leg.hold && holdLeft > 0) {
+            raf = requestAnimationFrame(step);
+            return;
+          }
+          lastHeld = 0;
+        }
+        if (u >= 1) {
+          map.jumpTo({ ...leg.to, bearing: leg.to.bearing + spun });
+          from = { ...leg.to, bearing: leg.to.bearing + spun };
+          if (++i >= legs.length) {
+            setHaze(0);
+            setPinArrived(true);
+            orbit();
+            return;
+          }
+          startLeg(now);
+          leg = legs[i];
+          u = 0;
+        }
+        const e = leg.ease(u);
+        const lerp = (a: number, b: number) => a + (b - a) * e;
+        // Winding up from still to the orbit's speed over the leg: the speed rises in a straight line, so the turn is its square.
+        spun = leg.spinIn ? (ORBIT_DEG_PER_S * (leg.ms / 1000) * u * u) / 2 : 0;
+        const zoom = lerp(from.zoom, leg.to.zoom);
+        const sway = leg.swerve ? Math.sin(Math.PI * e) : 0;
+        map.jumpTo({
+          center: [lerp(from.center[0], leg.to.center[0]), lerp(from.center[1], leg.to.center[1])],
+          zoom,
+          bearing: from.bearing + turn(from.bearing, leg.to.bearing) * e + spun + sway * (leg.swerve?.bearing ?? 0),
+          pitch: lerp(from.pitch, leg.to.pitch) + sway * (leg.swerve?.pitch ?? 0),
+        });
+        if (high != null) {
+          // Thicker the higher the camera, a flash of it at every jump, and the cloud swelling as the camera drops through it.
+          const alt = Math.min(1, Math.max(0, (GROUND - zoom) / (GROUND - high)));
+          const flash = Math.max(0, 1 - (now - flashAt) / 320);
+          setHaze(Math.min(0.9, 0.72 * Math.pow(alt, 0.75) + 0.35 * flash), 1.25 - 0.25 * alt);
+        }
+        raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    };
+
+    if (reduce) {
+      setPinArrived(true);
+      map.jumpTo({ center: spot, zoom: GROUND, pitch: 60 });
+    } else if (!target.fromList) {
+      // A pin tapped on the map: straight in, the orbit winding up on the way.
+      play([{ ms: 1200, to: { center: spot, zoom: GROUND, bearing: map.getBearing(), pitch: 60 }, ease: inOutCubic, spinIn: true }], null);
+    } else {
+      setPinArrived(false);
+      const c = map.getCenter();
+      const start: [number, number] = [c.lng, c.lat];
+      const z0 = map.getZoom();
+      // High enough to have both ends in view, and always three real jumps up and down.
+      const canvas = map.getCanvas();
+      const room = Math.max(120, Math.min(canvas.clientWidth, canvas.clientHeight) - 160);
+      const lat = ((c.lat + target.lat) / 2) * (Math.PI / 180);
+      const spanM = Math.max(50, haversineM(c.lat, c.lng, target.lat, target.lng));
+      const fit = Math.log2((156543.03 * Math.cos(lat) * room) / spanM);
+      const high = Math.max(2, Math.min(fit, GROUND - 3.6, z0 - 2.4));
+      const up = (k: number) => z0 + ((high - z0) * k) / 3;
+      const down = (k: number) => high + ((GROUND - high) * k) / 3;
+      const DRIFT = 0.14; // each jump overshoots a touch and drifts back, so it never stops dead
+      const pitchUp = map.getPitch();
+      const legs: Leg[] = [];
+      // Up: three jumps over where the camera is, flattening to look straight down, north up.
+      for (let k = 1; k <= 3; k++) {
+        const p = k === 1 ? pitchUp * 0.35 : 0;
+        legs.push({ ms: 260, to: { center: start, zoom: up(k) - DRIFT, bearing: k === 1 ? map.getBearing() * 0.4 : 0, pitch: p }, ease: outExpo, whoosh: true, swerve: { bearing: 0, pitch: 6 } });
+        legs.push({ ms: k === 3 ? 160 : 210, to: { center: start, zoom: up(k), bearing: k === 1 ? map.getBearing() * 0.4 : 0, pitch: p }, ease: outCubic, hold: 450 });
+      }
+      // Across, high above, swinging round and lifting towards where it's heading and settling flat over the place.
+      const east = target.lng >= c.lng ? 1 : -1;
+      const sideways = Math.min(1, Math.abs(target.lng - c.lng) * Math.cos(lat) / Math.max(1e-9, Math.hypot((target.lng - c.lng) * Math.cos(lat), target.lat - c.lat)));
+      legs.push({
+        ms: Math.round(750 + 300 * Math.min(1, spanM / 20_000)),
+        to: { center: spot, zoom: high, bearing: 0, pitch: 0 },
+        ease: inOutCubic,
+        swerve: { bearing: east * (4 + 8 * sideways), pitch: 24 },
+      });
+      legs.push({ ms: 140, to: { center: spot, zoom: high + 0.05, bearing: 0, pitch: 0 }, ease: outCubic, hold: 600 });
+      // Down: three jumps onto the place; the last one tilts into the view the orbit keeps, winding the turn up as it lands.
+      for (let k = 1; k <= 3; k++) {
+        legs.push({ ms: 240, to: { center: spot, zoom: down(k) + (k === 3 ? -0.1 : DRIFT), bearing: 0, pitch: 0 }, ease: outExpo, whoosh: true, swerve: { bearing: 0, pitch: 6 }, hold: k === 3 ? 450 : 0 });
+        if (k < 3) legs.push({ ms: 190, to: { center: spot, zoom: down(k), bearing: 0, pitch: 0 }, ease: outCubic, hold: 450 });
+      }
+      legs.push({ ms: 650, to: { center: spot, zoom: GROUND, bearing: 0, pitch: 60 }, ease: outCubic, spinIn: true });
+      play(legs, high);
     }
     const stopSpin = (e: { originalEvent?: unknown }) => {
       if (!e.originalEvent) return; // our own camera moves
-      window.clearTimeout(startT);
-      window.clearTimeout(waitT);
       cancelAnimationFrame(raf);
-      cancelAnimationFrame(fly);
+      setHaze(0);
       setPinArrived(true); // a hand on the map: stop where it's got to, card up
     };
     const events = ["dragstart", "zoomstart", "rotatestart", "pitchstart"] as const;
     events.forEach((ev) => map.on(ev, stopSpin));
     return () => {
-      window.clearTimeout(startT);
-      window.clearTimeout(waitT);
       cancelAnimationFrame(raf);
-      cancelAnimationFrame(fly);
+      setHaze(0);
       events.forEach((ev) => map.off(ev, stopSpin));
     };
   }, [map, pinKey, isVisible]);
+
+  // The camera has weight. Panning by hand sways the map the way it's dragged:
+  // the drag's speed is averaged (so the lean turns smoothly as a finger
+  // circles). While guiding, the ride does it: the camera swings into a bend by
+  // how hard it's being taken (turn rate times speed, the sideways G) with a
+  // little bank, dips under braking and lifts pulling away. Either way the tilt
+  // hangs on a damped spring that lags a touch behind, carries through a change
+  // of direction and settles with a slight overshoot, as a camera with some mass
+  // would. A few degrees of 3D tilt on the canvas alone (its container, which
+  // MapLibre reads the finger from, stays put, so the drag stays under it). Only
+  // a transform; it runs on its own frames while guiding with the map on screen,
+  // otherwise only while it moves, and is cleared once still.
+  const navSway = guiding && isVisible;
+  useEffect(() => {
+    if (!map || isThermal() || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = map.getCanvas();
+    const MAX = 3; // degrees
+    const STIFF = 55; // spring (1/s²): how hard the tilt is pulled towards the lean
+    const DAMP = 2 * Math.sqrt(STIFF) * 0.72; // a little under critical: one soft overshoot
+    /** The finger's speed, averaged (px per ms). */
+    let vel = { x: 0, y: 0 };
+    /** The tilt (degrees) and how fast it's moving. */
+    let tilt = { x: 0, y: 0 };
+    let spin = { x: 0, y: 0 };
+    let last: { x: number; y: number; t: number } | null = null;
+    let raf = 0;
+    let prev = 0;
+    /** Bank (degrees about the screen's middle), on its own lighter spring. */
+    let roll = 0;
+    let rollSpin = 0;
+    let bearingWas: number | null = null;
+    let yawRate = 0;
+    /** What the ride asks of the camera: only while following (not panned away, not round a pin). */
+    const fromRide = (dt: number) => {
+      if (!navSway || orbitingRef.current || Date.now() - lastInteractionAtRef.current < LOCATE_RESUME_DELAY_MS) {
+        bearingWas = null;
+        yawRate *= Math.exp(-dt * 6);
+        return { x: 0, y: 0, roll: 0 };
+      }
+      const b = map.getBearing();
+      const raw = bearingWas == null || dt <= 0 ? 0 : (((b - bearingWas + 540) % 360) - 180) / dt;
+      bearingWas = b;
+      yawRate += (Math.max(-120, Math.min(120, raw)) - yawRate) * Math.min(1, dt * 6); // deg/s, smoothed
+      const { speed, accel } = motionRef.current;
+      const sideG = (speed * yawRate * (Math.PI / 180)) / 9.81; // the bend's sideways G
+      return {
+        // Braking (accel < 0) tips the top away: the nose dips.
+        x: clamp(-accel * 0.9),
+        // Swung towards the inside of the bend, up to the limit at about half a G.
+        y: clamp(sideG * 6),
+        roll: Math.max(-2.5, Math.min(2.5, sideG * 5)),
+      };
+    };
+    const pointOf = (ev: unknown) => {
+      const t = (ev as TouchEvent).touches?.[0] ?? (ev as TouchEvent).changedTouches?.[0];
+      const p = t ?? (ev as MouseEvent);
+      return typeof p?.clientX === "number" ? { x: p.clientX, y: p.clientY } : null;
+    };
+    const clamp = (v: number) => Math.max(-MAX, Math.min(MAX, v));
+    const frame = (now: number) => {
+      const dt = prev ? Math.min(0.05, (now - prev) / 1000) : 1 / 60;
+      prev = now;
+      // A finger that stops, or lets go, lets the speed die away (quicker once let go).
+      const fade = Math.exp(-dt * (last ? 5 : 9));
+      vel = { x: vel.x * fade, y: vel.y * fade };
+      // The side the map is pulled towards dips away, as a camera swinging after it would see.
+      const ride = fromRide(dt);
+      const want = { x: clamp(-vel.y * 4 + ride.x), y: clamp(vel.x * 4 + ride.y) };
+      rollSpin += (STIFF * 0.6 * (ride.roll - roll) - DAMP * 0.8 * rollSpin) * dt;
+      roll += rollSpin * dt;
+      spin = {
+        x: spin.x + (STIFF * (want.x - tilt.x) - DAMP * spin.x) * dt,
+        y: spin.y + (STIFF * (want.y - tilt.y) - DAMP * spin.y) * dt,
+      };
+      tilt = { x: tilt.x + spin.x * dt, y: tilt.y + spin.y * dt };
+      const still =
+        !navSway &&
+        !last &&
+        Math.abs(roll) < 0.01 &&
+        Math.hypot(tilt.x, tilt.y) < 0.01 &&
+        Math.hypot(spin.x, spin.y) < 0.02 &&
+        Math.hypot(vel.x, vel.y) < 0.005;
+      if (still) {
+        canvas.style.transform = "";
+        tilt = spin = vel = { x: 0, y: 0 };
+        roll = rollSpin = 0;
+        raf = 0;
+        prev = 0;
+        return;
+      }
+      const lean = Math.min(1, (Math.hypot(tilt.x, tilt.y) + Math.abs(roll)) / MAX);
+      canvas.style.transform = `perspective(1400px) rotateX(${tilt.x.toFixed(3)}deg) rotateY(${tilt.y.toFixed(3)}deg) rotateZ(${roll.toFixed(3)}deg) scale(${(1 + 0.045 * Math.min(1, lean)).toFixed(4)})`;
+      raf = requestAnimationFrame(frame);
+    };
+    const run = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+    const onDrag = (e: { originalEvent?: unknown }) => {
+      if (!e.originalEvent || orbitingRef.current) return;
+      const p = pointOf(e.originalEvent);
+      if (!p) return;
+      const t = performance.now();
+      if (last && t > last.t) {
+        const dt = Math.max(8, t - last.t);
+        // Averaged over the last few moves: one jumpy event can't kick the camera.
+        const k = 0.3;
+        vel = { x: vel.x + ((p.x - last.x) / dt - vel.x) * k, y: vel.y + ((p.y - last.y) / dt - vel.y) * k };
+        run();
+      }
+      last = { ...p, t };
+    };
+    const onStart = () => {
+      last = null;
+    };
+    const onEnd = () => {
+      last = null;
+      run();
+    };
+    map.on("dragstart", onStart);
+    map.on("drag", onDrag);
+    map.on("dragend", onEnd);
+    if (navSway) run();
+    return () => {
+      map.off("dragstart", onStart);
+      map.off("drag", onDrag);
+      map.off("dragend", onEnd);
+      cancelAnimationFrame(raf);
+      canvas.style.transform = "";
+    };
+  }, [map, navSway]);
 
   /**
    * Leave the orbit. Back returns the camera to where it was; Navigate goes
@@ -2454,8 +2680,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   }
 
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 overflow-hidden">
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
+      <div ref={switchHazeRef} aria-hidden className="map-switch-haze" />
       {settings.parkedSpotEnabled && <ParkedSpotPin map={map} hidden={rideState.isActive} rider={userLocation} />}
 
       {/* First-time tips: a walk along the toolbar and the controls, so more than the usual three.
@@ -2794,6 +3021,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
         {/* Nearby riders (opt-in): between save-location and the MapLibre controls. */}
         <HandshakeButton convoy={convoy} placement="down" />
+
+        {/* Rescue: held, then asked; out of the way of Report and the close button. In
+            portrait always on its own line under the toolbar's left end (the row has no room
+            for it once nearby riders shows, and it shouldn't move about); in landscape at the
+            row's end. */}
+        <div className="basis-full landscape:basis-auto flex">
+          <MapRescueButton isLeader={!!convoy.isLeader} />
+        </div>
       </div>
       </div>
 
@@ -3017,28 +3252,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             {tr("Weather: RainViewer, Open-Meteo")}
           </div>
 
-          {/* Bottom-left action stack (Rescue above Report): beside the speed card in
-              portrait; in landscape (short:) the speed card goes above it, out of the way of the map. */}
+          {/* Bottom-left: Report, beside the speed card in portrait; in landscape (short:)
+              the speed card goes above it, out of the way of the map. Rescue isn't here (a
+              tap away from Report, it sent on one press): it's held, at the toolbar's end. */}
           <div className="w-full grid grid-cols-[1fr_auto_1fr] items-end gap-2 short:flex short:flex-col short:items-start short:gap-1.5">
             <div className="flex flex-col items-start gap-2 justify-self-start pointer-events-auto">
-              {/* Rescue — available while the map overlay covers ActiveRide. */}
-              {rescue.canRequest && (
-                <button
-                  onClick={() => {
-                    void (rescue.hasPending ? rescue.cancel?.() : rescue.send?.());
-                  }}
-                  className={cn(
-                    "w-12 h-12 flex items-center justify-center rounded-xl border shadow-lg backdrop-blur transition-colors",
-                    rescue.hasPending
-                      ? "bg-[hsl(var(--burn))]/25 border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse"
-                      : "bg-card/95 border-border text-warning hover:bg-warning/20",
-                  )}
-                  aria-label={rescue.hasPending ? tr("Cancel rescue request") : tr("Request rescue")}
-                  title={rescue.hasPending ? tr("Cancel rescue request") : tr("Request rescue")}
-                >
-                  <AlertTriangle className="w-5 h-5" />
-                </button>
-              )}
               <HazardReport
                 getPosition={() => (userLocation ? { ...userLocation, heading: headingRef.current ?? null } : null)}
               />
@@ -3183,7 +3401,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             </Button>
             <Button
               size="sm"
-              className="flex-1 gap-1"
+              // The second accent where one is chosen, else the accent.
+              className="flex-1 gap-1 bg-[hsl(var(--lava,var(--accent)))] hover:bg-[hsl(var(--lava,var(--accent)))] hover:brightness-110"
               onClick={() => {
                 const target = pin;
                 // Somewhere ridden to from the list goes on the recent list, as a search pick always did.

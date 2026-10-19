@@ -85,7 +85,7 @@ function valhallaCosting(p: Prefs): { costing: string; options: Record<string, u
     if (p.avoid.ferries) opts.use_ferry = 0;
     if (p.avoid.unpaved) opts.avoid_bad_surfaces = 1;
   } else {
-    // Soft avoidance, like Waze: kept off them unless there's no other way.
+    // Soft avoidance: kept off them unless there's no other way.
     if (p.avoid.motorways) opts.use_highways = 0;
     if (p.avoid.tolls) opts.use_tolls = 0;
     if (p.avoid.ferries) opts.use_ferry = 0;

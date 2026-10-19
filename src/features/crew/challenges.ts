@@ -151,7 +151,7 @@ export function specialForWeek(key = weekKey()): SpecialEvent | null {
   return null;
 }
 
-// ── Monthly crew goal (Forzathon-style) ──────────────────────────────────────
+// ── Monthly crew goal ─────────────────────────────────────────────────────────
 
 export interface MonthlyGoal {
   id: string;

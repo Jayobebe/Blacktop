@@ -245,10 +245,15 @@ function synth(text: string): Promise<AudioBuffer | null> {
   });
 }
 
-/** How long a call may take to make before the system voice says it instead. */
-const MAX_WAIT_MS = 3500;
-/** The first call also starts the engine, which takes a few seconds. */
-const FIRST_WAIT_MS = 9000;
+/**
+ * How long a call may take to make. The pilot voice is waited for: handing a
+ * slow call to the phone's voice put two voices on the air (the first radio
+ * check, and the tour's early lines, came out in the wrong one), so the phone's
+ * voice only steps in when the engine has actually failed, or is stuck.
+ */
+const MAX_WAIT_MS = 20_000;
+/** The first call also starts the engine, which can take a while on a slower phone. */
+const FIRST_WAIT_MS = 45_000;
 
 let current: { stop: () => void } | null = null;
 let chainEnd: Promise<void> = Promise.resolve();
@@ -262,8 +267,10 @@ export function pilotVoiceReady(): boolean {
 
 /**
  * Say `text` as a radio call in the pilot voice. Resolves true once it has
- * started (or is queued behind the call already on air), false if the caller
- * should use the system voice. `onStart` / `onEnd` bracket the call on air.
+ * started (or is queued behind the call already on air), false if the engine
+ * failed and the caller should use the system voice. A call cut off by an
+ * interrupt or `stopPilotVoice` while it was being made resolves true and
+ * says nothing. `onStart` / `onEnd` bracket the call on air.
  */
 export async function pilotSay(
   text: string,
@@ -271,11 +278,14 @@ export async function pilotSay(
 ): Promise<boolean> {
   if (!pilotVoiceReady()) return false;
   const cold = !ready;
+  const asked = generation;
   const buf = await Promise.race([
     synth(text),
     new Promise<null>((r) => setTimeout(() => r(null), cold ? FIRST_WAIT_MS : MAX_WAIT_MS)),
   ]);
   if (!buf) return false;
+  // Stopped while it was being made (a chapter change, the sound going off): say nothing, and nothing else instead.
+  if (generation !== asked && !opts.interrupt) return true;
   if (opts.interrupt) {
     generation++;
     current?.stop();

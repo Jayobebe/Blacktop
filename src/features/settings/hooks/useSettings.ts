@@ -46,7 +46,7 @@ export interface AppSettings {
   weatherOverlayEnabled: boolean;
   /** Warn about heavy rain on the planned route and offer a drier line. */
   weatherRoutingEnabled: boolean;
-  /** Route preferences (like Waze's): steer routes off these where there's another way. */
+  /** Route preferences: steer routes off these where there's another way. */
   navAvoidMotorways: boolean;
   navAvoidTolls: boolean;
   navAvoidFerries: boolean;

@@ -1,4 +1,4 @@
--- Hazard reports (Waze style): riders report what's on the road where they
+-- Hazard reports: riders report what's on the road where they
 -- are; everyone sees them on the map and gets a warning riding up to one.
 --
 -- Anonymous: the reporter is kept only for rate limiting, merging, "is this

@@ -34,7 +34,7 @@
     --muted: 240 4% 17%;
     --muted-foreground: 240 5% 62%;
 
-    /* Warm orange-yellow accent - Apple-like vibrant but sophisticated */
+    /* Warm orange-yellow accent: vibrant but sophisticated */
     --accent: 38 95% 55%;
     --accent-foreground: 220 15% 6%;
 
@@ -367,7 +367,7 @@
     min-width: 56px;
   }
 
-  /* Animations - smoother, more Apple-like */
+  /* Animations: smooth */
   @keyframes fade-in {
     from { 
       opacity: 0; 

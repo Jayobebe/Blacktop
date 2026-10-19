@@ -110,18 +110,6 @@
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Phone on its side (the `short:` screen in tailwind.config.ts): pinch zooms,
-   so drop the +/- buttons and keep the compass and locate. More map, less chrome. */
-@media (orientation: landscape) and (max-height: 560px) {
-  .blacktop-maplibre .maplibregl-ctrl-zoom-in,
-  .blacktop-maplibre .maplibregl-ctrl-zoom-out {
-    display: none;
-  }
-  .blacktop-maplibre .maplibregl-ctrl-group button + button {
-    border-top: none;
-  }
-}
-
 /* The parked spot's pin (ParkedSpotPin): above the map's own pins, its card above that. */
 .parked-pin {
   z-index: 3;
@@ -129,3 +117,22 @@
 .parked-pin:focus-within {
   z-index: 6;
 }
+
+/* The switch camera's haze: cloud in the second accent (else the accent) the
+   camera climbs into between places. Opacity and scale are set per frame from
+   BlacktopMap; nothing blurs, so it costs the map nothing. */
+.map-switch-haze {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity, transform;
+  background:
+    radial-gradient(38% 30% at 22% 28%, hsl(var(--lava, var(--accent)) / 0.55), transparent 72%),
+    radial-gradient(34% 26% at 78% 22%, hsl(0 0% 100% / 0.16), transparent 72%),
+    radial-gradient(44% 34% at 70% 74%, hsl(var(--lava, var(--accent)) / 0.5), transparent 72%),
+    radial-gradient(30% 24% at 24% 82%, hsl(0 0% 100% / 0.12), transparent 72%),
+    radial-gradient(60% 50% at 50% 50%, hsl(var(--lava, var(--accent)) / 0.22), transparent 80%),
+    hsl(var(--lava, var(--accent)) / 0.14);
+}
+html.thermal .map-switch-haze { display: none; }

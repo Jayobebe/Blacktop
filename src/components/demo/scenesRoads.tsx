@@ -857,7 +857,7 @@ export function RescueScene() {
           </g>
         )}
 
-        {/* Are you okay? (the app's card: burn orange, the R, Yes and No, the clock) */}
+        {/* Are you okay? (the app's card: burn orange, the R, I'm okay and Send rescue, the clock) */}
         {ask > 0.01 && (
           <g opacity={ask} transform={`translate(160 100) scale(${(0.94 + 0.06 * easeOutBack((t - RS_ASK) / 0.35)).toFixed(3)}) translate(-160 -100)`}>
             <rect x={76} y={58} width={168} height={84} rx={12} style={{ fill: BURN }} opacity={0.1 + 0.06 * Math.sin(t * 6)} filter={`url(#${id('glow')})`} />
@@ -871,11 +871,9 @@ export function RescueScene() {
               <rect x={8} y={33} width={144} height={3} rx={1.5} fill="white" fillOpacity={0.15} />
               <rect x={8} y={33} width={(144 * clock) / 300} height={3} rx={1.5} style={{ fill: BURN }} />
               <rect x={8} y={42} width={70} height={26} rx={7} fill="#059669" />
-              <T x={43} y={54.5} anchor="middle" size={11} weight={900} color="#fff">{tr("Yes")}</T>
-              <T x={43} y={63} anchor="middle" size={fitText(tr("I'm fine"), 62, 5.2)} weight={600} color="#e7fff5">{tr("I'm fine")}</T>
+              <T x={43} y={58} anchor="middle" size={fitText(tr("I'm okay"), 62, 8.5)} weight={900} color="#fff">{tr("I'm okay")}</T>
               <rect x={82} y={42} width={70} height={26} rx={7} style={{ fill: BURN }} />
-              <T x={117} y={54.5} anchor="middle" size={11} weight={900} color="#fff">{tr("No")}</T>
-              <T x={117} y={63} anchor="middle" size={fitText(tr("Send rescue"), 62, 5.2)} weight={600} color="#fff3ec">{tr("Send rescue")}</T>
+              <T x={117} y={58} anchor="middle" size={fitText(tr("Send rescue"), 62, 8.5)} weight={900} color="#fff">{tr("Send rescue")}</T>
             </g>
           </g>
         )}

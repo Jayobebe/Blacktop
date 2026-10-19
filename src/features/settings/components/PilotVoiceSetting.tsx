@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Radio, Download, Trash2, X, Loader2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +9,7 @@ import {
   downloadPilotVoice,
   cancelPilotVoiceDownload,
   removePilotVoice,
+  warmPilotVoice,
 } from '@/lib/pilotVoice';
 
 function mb(bytes: number) {
@@ -20,6 +22,10 @@ function mb(bytes: number) {
  */
 export function PilotVoiceSetting() {
   const pv = usePilotVoice();
+  // Start the engine as soon as the setting is on screen, so the first radio check is quick and in the pilot's voice.
+  useEffect(() => {
+    if (pv.status === 'installed') warmPilotVoice();
+  }, [pv.status]);
   if (pv.status === 'unsupported') return null;
 
   return (

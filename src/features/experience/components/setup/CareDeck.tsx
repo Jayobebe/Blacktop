@@ -23,7 +23,7 @@ interface CareDeckProps {
 }
 
 /**
- * Tinder-style stack of "Do you care about…" cards. Swipe right / tap Yes to
+ * A swipeable stack of "Do you care about…" cards. Swipe right / tap Yes to
  * switch the features on, swipe left / tap No to hide them. Each answer is
  * written to AppSettings immediately, so the preview that follows is live.
  */

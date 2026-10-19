@@ -18,11 +18,10 @@ export function BlacktopMapOverlay() {
 
   const inLobby = !rideState.isActive && location.pathname === '/lobby';
 
-  // The map keeps the screen on during a ride or when opened from a lobby,
-  // whichever page is underneath it.
+  // The map keeps the screen on whenever it's open: on a ride, from a lobby,
+  // and from Home (a rider following it on the bars).
   const wakeLock = useWakeLock();
-  const keepAwake =
-    isOpen && (rideState.isActive || location.pathname === '/lobby' || location.pathname === '/solo-lobby');
+  const keepAwake = isOpen;
   useEffect(() => {
     if (!keepAwake) return;
     void wakeLock.request();
