@@ -350,7 +350,8 @@ export default function SaveRoute() {
       </div>
 
       <div className="relative flex-1 min-h-[180px] rounded-2xl overflow-hidden border border-border/60">
-        <div ref={boxRef} className="absolute inset-0" />
+        {/* MapLibre makes its container position: relative, so it sits inside the placed box. */}
+        <div className="absolute inset-0"><div ref={boxRef} className="w-full h-full" /></div>
         <div ref={hazeRef} aria-hidden className="map-switch-haze" />
         {routing && !candidate && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
