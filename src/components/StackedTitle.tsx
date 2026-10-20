@@ -23,8 +23,9 @@ export interface TitleSquare {
   label: string;
   onPress: () => void;
 }
-/** The square's side, as a share of the title's font size. */
+/** The square's side, and the gap before it, as shares of the title's font size. */
 const SQUARE = 0.86;
+const SQUARE_GAP = 0.1;
 
 export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?: string[]; square?: TitleSquare; label: string }>(function StackedTitle({ second, pill: pillWords = [], square, label }, pillRef) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -39,6 +40,8 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
     if (!box) return;
     const measure = () => {
       const W = box.clientWidth;
+      // Never more than about a ninth of the screen's height a line: a phone on its side is wide but short.
+      const tall = window.innerHeight * 0.11;
       const wB = measureB.current?.getBoundingClientRect().width ?? 0; // at 100px
       const wE = measureE.current?.getBoundingClientRect().width ?? 0; // at 100px
       const words = Array.from(measureWords.current?.children ?? []) as HTMLElement[];
@@ -46,7 +49,7 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
       if (!W || !wB || !wE) return;
       if (square) {
         // BLACKTOP edge to edge, the second word and its square on the line under it, never taller than a fifth of the width.
-        const size = Math.min((W / wB) * 100, (W - 8) / (wE / 100 + SQUARE), W * 0.2);
+        const size = Math.min((W / wB) * 100, (W - 2) / (wE / 100 + SQUARE_GAP + SQUARE), W * 0.2, tall);
         setFit((f) => (f && Math.abs(f.size - size) < 0.2 ? f : { size, pill: 0, room: 0, spread: 0, secondW: (wE * size) / 100 }));
         return;
       }
@@ -55,7 +58,7 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
       const MIN_PILL = 8.5;
       const MAX_PILL = 13;
       // ENTERPRISE edge to edge, but never taller than a fifth of the width.
-      let size = Math.min((W / wE) * 100, W * 0.2);
+      let size = Math.min((W / wE) * 100, W * 0.2, tall);
       const pillWidthAt = (fs: number) => (wWord / 10) * fs + 2 * PILL_PAD * fs;
       let room = W - (wB * size) / 100 - GAP;
       let pill = room / (wWord / 10 + 2 * PILL_PAD);
@@ -80,9 +83,13 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(box);
+    window.addEventListener('resize', measure);
     // Webfonts can land after the first measure.
     void document.fonts?.ready.then(measure);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
   }, [second, pillLabel, !!square]);
 
   const word = 'font-black uppercase tracking-tight leading-[0.9] whitespace-nowrap';
@@ -90,7 +97,8 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
 
   const side = fit ? fit.size * SQUARE : 0;
   return (
-    <div className="relative w-full">
+    // Clipped: nothing in the title can reach past its own column (the deck's next card sits right beside it).
+    <div className="relative w-full overflow-hidden">
     <div ref={boxRef} className="relative w-full select-none" role="heading" aria-level={1} aria-label={label}>
       {/* Measuring copies, off screen */}
       <div aria-hidden className="absolute invisible pointer-events-none left-0 top-0 w-0 h-0 overflow-hidden whitespace-nowrap">
@@ -141,7 +149,7 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
           onClick={square.onPress}
           aria-label={square.label}
           className="pressable absolute flex flex-col items-center justify-center rounded-[22%] bg-[hsl(var(--lava,var(--accent)))] text-[hsl(0_0%_6%)] shadow-lg leading-none"
-          style={{ left: (fit.secondW ?? 0) + fit.size * 0.1, top: fit.size * 0.9 + (fit.size * 0.9 - side) / 2, width: side, height: side }}
+          style={{ left: (fit.secondW ?? 0) + fit.size * SQUARE_GAP, top: fit.size * 0.9 + (fit.size * 0.9 - side) / 2, width: side, height: side }}
         >
           <span className="font-black uppercase tracking-wide" style={{ fontSize: side * 0.2 }}>{square.top}</span>
           <span className="font-black font-mono" style={{ fontSize: side * 0.48, marginTop: side * 0.02 }}>{square.big}</span>

@@ -1,3 +1,4 @@
+import { HoldRescueButton } from './HoldRescueButton';
 import { RescueDrillButton } from './RescueDrill';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -269,18 +270,19 @@ function SafetyPanel({
       <RescueDrillButton onOpen={onClose} />
 
       {/* A rescue call without starting a ride: burn orange with the R, as rescue is everywhere. */}
-      <button
-        type="button"
-        onClick={onRescue}
+      <HoldRescueButton
+        onHeld={onRescue}
         disabled={rescueState !== 'idle'}
         className={cn(
-          'pressable w-full h-12 rounded-2xl flex items-center justify-center gap-2.5 touch-target bg-[hsl(var(--burn))] text-white font-semibold hover:brightness-110 disabled:opacity-100',
+          'w-full h-12 rounded-2xl touch-target bg-[hsl(var(--burn))] text-white font-semibold',
           rescueState === 'sent' && 'animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]',
         )}
       >
-        <span aria-hidden className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-base font-black leading-none">R</span>
-        {rescueState === 'sent' ? tr("Rescue call sent") : rescueState === 'sending' ? tr("Sending…") : tr("Request rescue")}
-      </button>
+        <span className="flex items-center justify-center gap-2.5">
+          <span aria-hidden className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-base font-black leading-none">R</span>
+          {rescueState === 'sent' ? tr("Rescue call sent") : rescueState === 'sending' ? tr("Sending…") : tr("Hold to request rescue")}
+        </span>
+      </HoldRescueButton>
     </div>
   );
 }

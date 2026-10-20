@@ -24,7 +24,7 @@ import { useSavedRoutes, type SavedRoute } from '@/features/map/lib/savedRoutes'
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
 import { useGarage, useBikeStats, dueItems } from '@/features/garage';
 import { armAlarm } from '@/features/alarm';
-import { useCrew } from '@/features/crew/useCrew';
+import { useCrew, setActiveCrew } from '@/features/crew/useCrew';
 import { crewTotals, weekStats } from '@/features/crew/stats';
 import { challengesForWeek, challengeScore, daysLeftInWeek, type CrewUnits } from '@/features/crew/challenges';
 import { demoCrewConvoys, demoLeaderboard } from '@/features/crew/demo';
@@ -62,10 +62,13 @@ function Card({
   pin,
   active,
   tone,
+  top,
 }: {
   icon: LucideIcon;
   label: string;
   right?: ReactNode;
+  /** Stays put above the faces (the crew card's switcher). */
+  top?: ReactNode;
   faces: ReactNode[];
   pin?: number | null;
   active: boolean;
@@ -116,6 +119,7 @@ function Card({
         )}
         {right}
       </div>
+      {top}
       <div className="grid">
         {list.map((face, i) => (
           <div
@@ -639,15 +643,17 @@ function CrewCard({ active }: { active: boolean }) {
   const rank = board.length > 1 ? 1 + board.filter((r) => r.total_distance > mine + 0.05).length : null;
 
   // Where the rider stood the last time they looked: up or down since.
+  // (Kept per crew, so switching between them shows each one's own movement.)
   const [moved, setMoved] = useState(0);
-  const checked = useRef(false);
+  const checked = useRef('');
   useEffect(() => {
-    if (!rank || checked.current || !active) return;
-    checked.current = true;
+    if (!rank || !active || checked.current === crew.code) return;
+    checked.current = crew.code;
     try {
-      const last = JSON.parse(localStorage.getItem(RANK_KEY) || 'null') as { code: string; rank: number } | null;
-      if (last && last.code === crew.code) setMoved(last.rank - rank);
-      localStorage.setItem(RANK_KEY, JSON.stringify({ code: crew.code, rank }));
+      const raw = JSON.parse(localStorage.getItem(RANK_KEY) || '{}') as Record<string, number>;
+      const last = raw && typeof raw === 'object' ? raw[crew.code] : undefined;
+      setMoved(typeof last === 'number' ? last - rank : 0);
+      localStorage.setItem(RANK_KEY, JSON.stringify({ ...(raw && typeof raw === 'object' ? raw : {}), [crew.code]: rank }));
     } catch {
       /* this launch only */
     }
@@ -702,9 +708,39 @@ function CrewCard({ active }: { active: boolean }) {
     </div>
   );
 
+  // In more than one crew: a chip for each, the active one lit; picking one makes it the active crew everywhere.
+  const switcher =
+    crew.crews.length > 1 ? (
+      <div className="flex flex-wrap gap-1.5 mb-2.5" role="radiogroup" aria-label={tr("Your crews")}>
+        {crew.crews.map((c) => {
+          const on = c.code === crew.code;
+          return (
+            <button
+              key={c.code}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => {
+                if (on) return;
+                haptics.tick();
+                setMoved(0);
+                setActiveCrew(c.code);
+              }}
+              className={cn(
+                'tall-hit h-8 max-w-[45%] px-3 rounded-full text-[12px] font-semibold truncate border transition-colors',
+                on ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 text-foreground border-border/60',
+              )}
+            >
+              {c.name}
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
+
   // A crew ride you can join takes the card; otherwise it steps through lobbies, the board and this week's challenges.
   if (riding.length) {
-    return <Card icon={Users} tone="live" label={tr("Crew live · {0}", [crew.name])} active={active} faces={riding.slice(0, 3).map((c) => convoyFace(c, true))} />;
+    return <Card key={crew.code} icon={Users} tone="live" label={tr("Crew live · {0}", [crew.name])} active={active} top={switcher} faces={riding.slice(0, 3).map((c) => convoyFace(c, true))} />;
   }
   const faces: ReactNode[] = open.slice(0, 2).map((c) => convoyFace(c, false));
   if (rank) {
@@ -763,7 +799,9 @@ function CrewCard({ active }: { active: boolean }) {
       </button>,
     );
   }
-  return <Card icon={Users} label={tr("Crew · {0}", [crew.name])} active={active} faces={faces} />;
+  // Nothing for this crew yet: still the switcher, so another crew can be picked.
+  if (!faces.length && switcher) faces.push(<p key="quiet" className="text-xs text-muted-foreground min-h-[44px] flex items-center">{tr("Nothing happening in this crew yet.")}</p>);
+  return <Card key={crew.code} icon={Users} label={tr("Crew · {0}", [crew.name])} active={active} top={switcher} faces={faces} />;
 }
 
 // ── Hazards near you ─────────────────────────────────────────────────────────

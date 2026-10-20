@@ -7,7 +7,7 @@ import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { useConvoyState, getConvoySnapshot } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
-import { useRescue, RescueAlert, CrashCheckPrompt } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, HoldRescueButton } from '@/features/rescue';
 import { useConvoyMergeSync, useProximityState } from '@/features/proximity';
 import { useRideRole, setPillionRiding, clearRideRole, useReactionsListener, sendReaction, REACTIONS, WAVE } from '@/features/pillion';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -242,22 +242,23 @@ export default function PillionRide() {
 
       {/* Rescue + leave */}
       <div className="space-y-2 pt-4">
-        <Button
-          onClick={handleRescue}
-          variant="outline"
+        <HoldRescueButton
+          onHeld={handleRescue}
+          onTap={hasPendingRescue ? handleRescue : undefined}
+          fill="bg-[hsl(var(--burn)/0.25)]"
           className={cn(
-            'w-full h-14 text-base font-semibold border-2',
+            'w-full h-14 rounded-md text-base font-semibold border-2 bg-transparent',
             hasPendingRescue
               ? 'border-[hsl(var(--burn))] text-[hsl(var(--burn))] animate-pulse'
-              : 'border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))] hover:bg-[hsl(var(--burn)/0.1)] hover:text-[hsl(var(--burn))]',
+              : 'border-[hsl(var(--burn)/0.7)] text-[hsl(var(--burn))]',
           )}
         >
           {/* The same R as the ride screen's rescue button. */}
           <span aria-hidden className="mr-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-black leading-none bg-[hsl(var(--burn))] text-white">
             R
           </span>
-          {hasPendingRescue ? tr("Rescue sent · tap to cancel") : tr("Request rescue")}
-        </Button>
+          {hasPendingRescue ? tr("Rescue sent · tap to cancel") : tr("Hold to request rescue")}
+        </HoldRescueButton>
         <Button onClick={handleLeave} variant="ghost" className="w-full h-11 text-muted-foreground">
           <LogOut className="w-4 h-4 mr-2" />
           {confirmLeave ? tr("Tap again to leave the convoy") : tr("Leave convoy")}

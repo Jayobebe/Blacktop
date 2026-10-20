@@ -18,7 +18,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton } from '@/features/radio';
-import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, sendSoloRescue as sendSoloRescueCall } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, sendSoloRescue as sendSoloRescueCall, HoldRescueButton } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
 import { autoNameRide, storedRide } from '@/features/ride/lib/rideNames';
 import { useRideUpdates } from '@/features/ride/hooks/useRideUpdates';
@@ -1062,9 +1062,12 @@ export default function ActiveRide() {
                 Kept in the controls row (not next to End Ride) to avoid
                 accidental presses. */}
             {rideState.isConvoyMode && !convoy.isLeader && (
-              <button
-                onClick={hasPendingRescue ? cancelRescueRequest : () => setRescueAsk(() => handleRescue)}
-                data-tip="rescue"
+              <HoldRescueButton
+                onHeld={() => {
+                  if (!hasPendingRescue) setRescueAsk(() => handleRescue);
+                }}
+                onTap={hasPendingRescue ? () => void cancelRescueRequest() : undefined}
+                dataTip="rescue"
                 className={cn(
                   "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
                   hasPendingRescue && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
@@ -1072,11 +1075,11 @@ export default function ActiveRide() {
                 title={hasPendingRescue ? tr("Cancel rescue request") : tr("Request rescue")}
               >
                 <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
-              </button>
+              </HoldRescueButton>
             )}
             {!rideState.isConvoyMode && (
-              <button
-                onClick={() => {
+              <HoldRescueButton
+                onHeld={() => {
                   if (soloRescueSending || soloRescueSent) return;
                   // Asked first ("Are you okay?"); this is what a No sends.
                   setRescueAsk(() => async () => {
@@ -1114,7 +1117,7 @@ export default function ActiveRide() {
                   });
                 }}
                 disabled={soloRescueSending || soloRescueSent}
-                data-tip="rescue"
+                dataTip="rescue"
                 className={cn(
                   "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
                   soloRescueSent && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
@@ -1122,7 +1125,7 @@ export default function ActiveRide() {
                 title={soloRescueSent ? tr("Rescue call sent") : soloRescueSending ? tr("Sending…") : tr("Call for rescue (your crew and Discord)")}
               >
                 <span aria-hidden className="text-2xl landscape:text-3xl font-black leading-none">R</span>
-              </button>
+              </HoldRescueButton>
             )}
 
     </>

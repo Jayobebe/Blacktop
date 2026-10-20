@@ -7,6 +7,7 @@ export { EmergencyTextButton, EmergencyContactSettings } from './components/Emer
 export { emergencyTextAction, safeArrivalHref, safeArrivalMessage, emergencySmsHref, cleanPhone } from './lib/emergencyText';
 export { SafetyStatusCard } from './components/SafetyStatusCard';
 export { MapRescueButton, RESCUE_HOLD_MS } from './components/MapRescueButton';
+export { HoldRescueButton } from './components/HoldRescueButton';
 export { RescueAskHost } from './components/RescueAskHost';
 export { askRescue, useRescueAsk } from './lib/askStore';
 export { RescueDisclaimer } from './components/RescueDisclaimer';
